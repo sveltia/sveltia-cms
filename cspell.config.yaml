@@ -1,0 +1,49 @@
+version: "0.2"
+language: en
+dictionaries:
+  - css
+  - html
+  - typescript
+enableFiletypes:
+  - ignore
+  - properties
+  - svelte
+  - xml
+files:
+  - "**/.*"
+  - "**/*.{css,js,json,jsonc,html,md,scss,svelte,svg,yaml,yml,xml}"
+useGitignore: true
+ignorePaths:
+  - pnpm-lock.yaml
+  - data/**/*.json
+  - dist/**
+words:
+  - camelcase
+  - Decap
+  - DeepL
+  - dompurify
+  - gzipped
+  - hotlinking
+  - iarna
+  - jsdoc
+  - pexels
+  - Pixabay
+  - plusplus
+  - pnpm
+  - postcss
+  - prefs
+  - proxyfied
+  - reimagined
+  - Roadmap
+  - safesearch
+  - singleline
+  - stylelint
+  - Sveitia
+  - sveltejs
+  - Sveltia
+  - Typecheck
+  - uncategorized
+  - unflatten
+  - weba
+  - webformat
+  - xslx

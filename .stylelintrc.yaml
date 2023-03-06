@@ -1,0 +1,18 @@
+extends:
+  - stylelint-config-recommended-scss
+ignoreFiles:
+  - node_modules/**
+  - build/**
+  - package/**
+customSyntax: postcss-html
+rules:
+  no-descending-specificity: null
+  rule-empty-line-before:
+    - always
+    - except:
+        - after-single-line-comment
+        - first-nested
+  selector-pseudo-class-no-unknown:
+    - true
+    - ignorePseudoClasses:
+        - global

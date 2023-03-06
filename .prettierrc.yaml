@@ -1,0 +1,19 @@
+useTabs: false
+singleQuote: true
+trailingComma: all
+printWidth: 100
+overrides:
+  - files:
+      - "*.css"
+      - "*.scss"
+      - "*.yaml"
+    options:
+      singleQuote: false
+  - files:
+      - "*.svelte"
+    options:
+      parser: svelte
+  - files:
+      - "*.md"
+    options:
+      proseWrap: never
