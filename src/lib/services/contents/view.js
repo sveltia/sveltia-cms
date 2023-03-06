@@ -108,7 +108,7 @@ const sortEntries = (entries, { key, order } = {}) => {
    * @returns {(string | Date)} Value.
    */
   const getValue = (entry) => {
-    const { locales, meta: { commitAuthor: { name, email } = {}, commitDate } = {} } = entry;
+    const { locales, commitAuthor: { name, email } = {}, commitDate } = entry;
 
     if (key === 'commit_author') {
       return name || email;

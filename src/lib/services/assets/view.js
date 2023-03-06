@@ -89,7 +89,7 @@ const sortAssets = (assets, { key, order } = {}) => {
    * @returns {*} Value.
    */
   const getValue = (asset) => {
-    const { meta: { commitAuthor: { name, email } = {}, commitDate } = {} } = asset;
+    const { commitAuthor: { name, email } = {}, commitDate } = asset;
 
     if (key === 'commit_author') {
       return name || email;
