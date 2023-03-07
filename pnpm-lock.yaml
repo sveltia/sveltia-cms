@@ -5,13 +5,14 @@ specifiers:
   '@babel/eslint-parser': ^7.19.1
   '@ltd/j-toml': ^1.38.0
   '@sveltejs/vite-plugin-svelte': ^2.0.3
+  '@sveltia/ui': ^0.1.1
   '@types/flat': ^5.0.2
   '@types/marked': ^4.0.8
   cspell: ^6.28.0
   deep-is: ^0.1.4
   eslint: ^8.35.0
   eslint-config-airbnb-base: ^15.0.0
-  eslint-config-prettier: ^8.6.0
+  eslint-config-prettier: ^8.7.0
   eslint-plugin-jsdoc: ^40.0.1
   eslint-plugin-svelte3: ^4.0.0
   flat: ^5.0.2
@@ -36,6 +37,7 @@ specifiers:
 
 dependencies:
   '@ltd/j-toml': 1.38.0
+  '@sveltia/ui': 0.1.1_svelte@3.55.1
   deep-is: 0.1.4
   flat: 5.0.2
   isomorphic-dompurify: 1.0.0
@@ -52,7 +54,7 @@ devDependencies:
   cspell: 6.28.0
   eslint: 8.35.0
   eslint-config-airbnb-base: 15.0.0_t7ev3uflic5sb7aktwkyuiuumi
-  eslint-config-prettier: 8.6.0_eslint@8.35.0
+  eslint-config-prettier: 8.7.0_eslint@8.35.0
   eslint-plugin-jsdoc: 40.0.1_eslint@8.35.0
   eslint-plugin-svelte3: 4.0.0_n4ieifq2d7jq3sqoe474cgqlim
   npm-run-all: 4.1.5
@@ -958,6 +960,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@sveltia/ui/0.1.1_svelte@3.55.1:
+    resolution: {integrity: sha512-Gg5jpgmQdeg6n8DJGfF6WU80T/RPHe1m06Ex0ruDNGTct6I2wQ8DND+rqwndDAbokmtQ9emadU4i+HoBduLbWg==}
+    peerDependencies:
+      svelte: ^3.55.1
+    dependencies:
+      svelte: 3.55.1
+    dev: false
 
   /@tootallnate/once/2.0.0:
     resolution: {integrity: sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==}
@@ -1868,8 +1878,8 @@ packages:
       semver: 6.3.0
     dev: true
 
-  /eslint-config-prettier/8.6.0_eslint@8.35.0:
-    resolution: {integrity: sha512-bAF0eLpLVqP5oEVUFKpMA+NnRFICwn9X8B5jrR9FcqnYBuPbqWEjTEspPWMj5ye6czoSLDweCzSo3Ko7gGrZaA==}
+  /eslint-config-prettier/8.7.0_eslint@8.35.0:
+    resolution: {integrity: sha512-HHVXLSlVUhMSmyW4ZzEuvjpwqamgmlfkutD53cYXLikh4pt/modINRcCIApJ84czDxM4GZInwUrromsDdTImTA==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
@@ -4045,7 +4055,6 @@ packages:
   /svelte/3.55.1:
     resolution: {integrity: sha512-S+87/P0Ve67HxKkEV23iCdAh/SX1xiSfjF1HOglno/YTbSTW7RniICMCofWGdJJbdjw3S+0PfFb1JtGfTXE0oQ==}
     engines: {node: '>= 8'}
-    dev: true
 
   /svg-tags/1.0.0:
     resolution: {integrity: sha512-ovssysQTa+luh7A5Weu3Rta6FJlFBBbInjOh722LIt6klpU2/HtdUbszju/G4devcvk8PGt7FCLv5wftu3THUA==}
