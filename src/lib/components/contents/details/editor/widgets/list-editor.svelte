@@ -81,6 +81,10 @@
       .filter((val) => val !== undefined);
 
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+        return;
+      }
+
       Object.keys($entryDraft.currentValues[_locale]).forEach((_keyPath) => {
         if (_keyPath.match(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`))) {
           delete $entryDraft.currentValues[_locale][_keyPath];
@@ -100,6 +104,10 @@
    */
   const addItem = (toTop = false) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+        return;
+      }
+
       if (toTop) {
         // Increase the index, e.g. `foo.bar.0` -> `foo.bar.1`, before adding `foo.bar.0`
         Object.keys($entryDraft.currentValues[_locale])
@@ -135,6 +143,10 @@
    */
   const deleteItem = (index) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+        return;
+      }
+
       Object.keys($entryDraft.currentValues[_locale]).forEach((_keyPath) => {
         if (_keyPath.match(new RegExp(`^${escapeRegExp(keyPath)}\\.${index}\\b`))) {
           delete $entryDraft.currentValues[_locale][_keyPath];
@@ -153,6 +165,10 @@
    */
   const moveUpItem = (index) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+        return;
+      }
+
       (fields || [field]).forEach(({ name }) => {
         [
           $entryDraft.currentValues[_locale][`${keyPath}.${index}.${name}`],
@@ -172,6 +188,10 @@
    */
   const moveDownItem = (index) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+        return;
+      }
+
       (fields || [field]).forEach(({ name }) => {
         [
           $entryDraft.currentValues[_locale][`${keyPath}.${index + 1}.${name}`],

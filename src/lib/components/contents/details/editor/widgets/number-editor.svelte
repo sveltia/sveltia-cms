@@ -5,7 +5,6 @@
 -->
 <script>
   import { NumberInput } from '@sveltia/ui';
-  import { onMount } from 'svelte';
   import { defaultContentLocale } from '$lib/services/config';
 
   export let locale = '';
@@ -24,36 +23,38 @@
   } = fieldConfig);
   $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
 
-  let mounted = false;
   /** @type {string} */
   let inputValue = '';
 
-  $: {
-    if (inputValue !== '' && inputValue !== String(currentValue)) {
-      if (
-        (valueType === 'int' && Number.isInteger(Number(inputValue))) ||
-        (valueType === 'float' && !Number.isNaN(inputValue) && inputValue.includes('.'))
-      ) {
-        currentValue = Number(inputValue);
-      } else {
-        currentValue = inputValue;
-      }
-    }
-  }
-
-  $: {
-    if (mounted && inputValue === '') {
-      currentValue = '';
-    }
-  }
-
-  onMount(() => {
-    if (currentValue) {
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  const onCurrentValueChange = () => {
+    if (currentValue !== undefined && inputValue !== String(currentValue)) {
       inputValue = String(currentValue);
     }
+  };
 
-    mounted = true;
-  });
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  const onInputValueChange = () => {
+    let _currentValue = undefined;
+
+    if (inputValue === '') {
+      _currentValue = '';
+    } else if (
+      (valueType === 'int' && Number.isInteger(Number(inputValue))) ||
+      (valueType === 'float' && !Number.isNaN(inputValue) && inputValue.includes('.'))
+    ) {
+      _currentValue = Number(inputValue);
+    } else {
+      _currentValue = inputValue;
+    }
+
+    if (_currentValue !== undefined && currentValue !== _currentValue) {
+      currentValue = _currentValue;
+    }
+  };
+
+  $: onCurrentValueChange(currentValue);
+  $: onInputValueChange(inputValue);
 </script>
 
 <NumberInput {min} {max} {step} {disabled} bind:value={inputValue} />

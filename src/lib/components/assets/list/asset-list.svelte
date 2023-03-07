@@ -25,7 +25,7 @@
             <h3>{groupName}</h3>
           {/if}
           <svelte:component this={$currentView.type === 'list' ? BasicListView : BasicGridView}>
-            {#each assets as asset (asset.sha)}
+            {#each assets as asset (asset.path)}
               <AssetListItem {asset} />
             {/each}
           </svelte:component>

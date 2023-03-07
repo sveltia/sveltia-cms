@@ -126,7 +126,7 @@ const getHandleByPath = async (path) => {
   for (const name of pathParts) {
     handle = await (name.includes('.')
       ? handle.getFileHandle(name, { create: true })
-      : handle.getDirectoryHandle(name));
+      : handle.getDirectoryHandle(name, { create: true }));
   }
 
   return handle;

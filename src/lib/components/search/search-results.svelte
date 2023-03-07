@@ -18,7 +18,7 @@
     <div>
       {#if $searchResults?.entries?.length}
         <BasicListView>
-          {#each $searchResults.entries as { sha, slug, locales, fileName, collectionName } (sha)}
+          {#each $searchResults.entries as { slug, locales, fileName, collectionName } (`${collectionName}/${fileName}/${slug}`)}
             {@const collection = getCollection(collectionName)}
             {@const file = fileName
               ? collection.files.find(({ name }) => name === fileName)
@@ -71,7 +71,7 @@
     <div>
       {#if $searchResults?.assets?.length}
         <BasicListView>
-          {#each $searchResults.assets as asset (asset.sha)}
+          {#each $searchResults.assets as asset (asset.path)}
             {@const { path, name, folder, kind } = asset}
             <Row
               on:click={() => {

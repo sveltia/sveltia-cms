@@ -115,11 +115,6 @@ const getFrontmatterDelimiters = (format, delimiter) => {
  * @returns {object} Parsed content.
  */
 const parseEntryFile = ({ text, path, config: { extension, format, frontmatterDelimiter } }) => {
-  if (!extension && !format) {
-    extension = 'md';
-    format = 'yaml-frontmatter';
-  }
-
   format ||= extension || path.match(/\.([^.]+)$/)[1];
 
   try {
@@ -193,11 +188,6 @@ export const formatEntryFile = ({
   content,
   config: { extension, format, frontmatterDelimiter },
 }) => {
-  if (!extension && !format) {
-    extension = 'md';
-    format = 'yaml-frontmatter';
-  }
-
   format ||= extension;
 
   try {
@@ -274,7 +264,7 @@ export const parseEntryFiles = (entryFiles) => {
       entry.locales = { default: { content: parsedFile, path, sha } };
     }
 
-    if (hasLocales && structure === 'single_file') {
+    if (hasLocales && (structure === 'single_file' || fileName)) {
       entry.locales = Object.fromEntries(
         locales
           .filter((locale) => locale in parsedFile)

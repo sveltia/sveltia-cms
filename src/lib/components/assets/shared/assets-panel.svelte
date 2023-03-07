@@ -28,7 +28,7 @@
         });
       }}
     >
-      {#each filteredAssets as asset (asset.sha)}
+      {#each filteredAssets as asset (asset.path)}
         <Option value={asset.sha}>
           {#if asset.kind === 'image'}
             <Image src={getAssetURL(asset)} alt={asset.name} checkerboard={true} />

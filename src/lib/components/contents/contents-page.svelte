@@ -8,6 +8,7 @@
   import PrimaryToolbar from '$lib/components/contents/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
+  import { siteConfig } from '$lib/services/config';
   import { getCollection, selectedCollection } from '$lib/services/contents';
   import { createDraft, entryDraft } from '$lib/services/contents/editor';
   import { listedEntries } from '$lib/services/contents/view';
@@ -42,13 +43,23 @@
     if ($selectedCollection.files) {
       // File collection
       if (_state === 'entries' && _id) {
-        const _selectedEntry = $listedEntries.find(
+        const selectedEntry = $listedEntries.find(
           ({ collectionName, fileName }) =>
             collectionName === $selectedCollection.name && fileName === _id,
         );
 
-        if (_selectedEntry) {
-          createDraft($selectedCollection.name, _selectedEntry);
+        const collectionFile = $selectedCollection.files.find((f) => f.name === _id);
+
+        if (selectedEntry) {
+          createDraft($selectedCollection.name, selectedEntry);
+        } else if (collectionFile) {
+          // File is not yet created
+          createDraft($selectedCollection.name, {
+            fileName: collectionFile.name,
+            locales: Object.fromEntries(
+              ($siteConfig.i18n?.locales || ['default']).map((_locale) => [_locale, {}]),
+            ),
+          });
         }
       }
     } else {
@@ -58,10 +69,10 @@
       }
 
       if (_state === 'entries' && _id) {
-        const _selectedEntry = $listedEntries.find(({ slug }) => slug === _id);
+        const selectedEntry = $listedEntries.find(({ slug }) => slug === _id);
 
-        if (_selectedEntry) {
-          createDraft($selectedCollection.name, _selectedEntry);
+        if (selectedEntry) {
+          createDraft($selectedCollection.name, selectedEntry);
         }
       }
     }

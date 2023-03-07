@@ -12,6 +12,6 @@
   export let currentValue = undefined;
 </script>
 
-{#if typeof currentValue === 'number'}
+{#if currentValue !== undefined}
   <p>{Intl.NumberFormat(locale).format(currentValue)}</p>
 {/if}

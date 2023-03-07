@@ -21,7 +21,7 @@
           {/if}
           <!-- @todo Implement custom table column option that can replace summary template -->
           <svelte:component this={$currentView.type === 'grid' ? BasicGridView : BasicListView}>
-            {#each entries as entry (entry.sha)}
+            {#each entries as entry (entry.slug)}
               {@const { content } = entry.locales[$defaultContentLocale] || {}}
               {#if content}
                 <EntryListItem {entry} {content} />
