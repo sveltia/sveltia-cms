@@ -1,6 +1,6 @@
 {
   "name": "@sveltia/cms",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:watch": "vite build --watch",
     "preview": "vite preview",
+    "publish": "vite build && npm publish --access public",
     "check": "svelte-check",
     "format": "prettier --plugin-search-dir . --write .",
     "lint": "npm-run-all lint:*",
