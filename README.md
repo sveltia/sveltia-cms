@@ -26,22 +26,22 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Better productivity
 
 - Integrating Pexels, Pixabay and Unsplash to allow inserting free stock photos into image fields with no hassle.
-- Able to work on a local Git repository without installing a proxy server. See below for details.
+- Able to work on a local Git repository without installing a proxy server. [See below](#work-with-a-local-git-repository) for details.
 - Able to delete multiple entries and assets at once.
 - Solving various outstanding Netlify/Decap CMS bugs[^11].
 
 ### Better i18n support
 
 - Making it easier to switch between locales while editing.
-- Integrating DeepL to allow translating text fields from another locale with one click. See below for details.
-- You can now use a random ID for an entry slug, which is a good option for locales writing in non-Latin characters. See below for details.
+- Integrating DeepL to allow translating text fields from another locale with one click. [See below](#use-deepl-to-translate-entry-fields) for details.
+- You can now use a random ID for an entry slug, which is a good option for locales writing in non-Latin characters. [See below](#use-a-random-id-for-an-entry-slug) for details.
 - Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://www.netlifycms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected[^7].
 - Users can now choose their preferred UI locale. English and Japanese only at this time.
 
 ### Collection enhancements
 
-- You can set an icon for each collection[^3]. See below for details.
-- A per-collection media folder will now appear aside of entries. See below for details.
+- You can set an icon for each collection[^3]. [See below](#use-a-custom-icon-for-a-collection) for details.
+- A per-collection media folder will now appear aside of entries. [See below](#use-a-custom-media-folder-for-a-collection) for details.
 
 ### Media library enhancements
 
@@ -65,7 +65,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, we pla
 | Custom widgets | Not yet supported. |
 | Custom previews | Not yet supported. |
 
-### Widgets
+### Widget limitations
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
@@ -82,14 +82,14 @@ While we’re not recreating all the features found in Netlify/Decap CMS, we pla
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
-| Working with a Local Git Repository | Supported. See below for details. |
+| Working with a Local Git Repository | Supported. [See below](#work-with-a-local-git-repository) for details. |
 | GitLab and BitBucket Editorial Workflow Support | The GitLab backend is not yet supported. No plan to support BitBucket. |
 | i18n Support | Supported. In fact, i18n is at the core of Sveltia CMS! |
 | GitHub GraphQL API | Sveltia CMS uses GraphQL with no configuration. It cannot be disabled. |
 | GitLab GraphQL API | The GitLab backend is not yet supported. |
 | Open Authoring | Not yet supported. |
 | Folder Collections Path | Not yet supported. |
-| Folder Collections Media and Public Folder | Only the _undocumented_, absolute path per-collection folder configuration is currently supported. See below. |
+| Folder Collections Media and Public Folder | Only the _undocumented_, absolute path per-collection folder configuration is currently supported. [See below](#use-a-custom-media-folder-for-a-collection). |
 | List Widget: Variable Types | Coming soon. |
 | Custom Mount Element | Supported. |
 | Manual Initialization | Not yet supported. |
@@ -123,7 +123,7 @@ Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don�
 
 ### Migration
 
-If you’re already using Netlify/Decap CMS with the GitHub backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS script URL, and push the change to your repository:
+If you’re already using Netlify/Decap CMS with the GitHub backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS script tag, and push the change to your repository:
 
 ```diff
 -<script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
