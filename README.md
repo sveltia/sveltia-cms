@@ -20,23 +20,23 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating one single line of code.
 - Existing [configuration files](https://www.netlifycms.org/docs/configuration-options/) can be reused as is.
-- Many features are still missing though; see the chart below for details.
+- Many features are still missing though; [see the chart below](#compatibility) for details.
 
 ### Better UX
 
-- A modern, intuitive UI powered by the [Sveitia UI component library](https://github.com/sveltia/sveltia-ui), with some inspiration from the Netlify/Decap CMS v3 prototype[^1].
+- Offering a modern, intuitive UI, with some inspiration from the Netlify/Decap CMS v3 prototype[^1].
 - Immersive dark mode[^2].
 
 ### Better performance
 
-- Built completely from scratch with [Svelte](https://svelte.dev/). The app starts fast and stays fast.
-- Using the GraphQL API for GitHub by default to fetch contents quickly at once, so showing and searching entries and media are now instant. Saving entries and media is also faster.
+- Built completely from scratch with [Svelte](https://svelte.dev/) rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast.
+- Using the GraphQL API for GitHub by default to fetch contents quickly at once, so showing and searching entries and media are now instant. Saving entries and media is also much faster.
 - Small footprint: less than 250 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS.
 
 ### Better productivity
 
 - Integrating Pexels, Pixabay and Unsplash to allow inserting free stock photos into image fields with no hassle.
-- Able to work on a local Git repository without installing a proxy server. [See below](#work-with-a-local-git-repository) for details.
+- Able to work on a local Git repository without having to run a proxy server. [See below](#work-with-a-local-git-repository) for details.
 - Able to delete multiple entries and assets at once.
 - Solving various outstanding Netlify/Decap CMS bugs[^11].
 
@@ -46,7 +46,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Integrating DeepL to allow translating text fields from another locale with one click. [See below](#use-deepl-to-translate-entry-fields) for details.
 - You can now use a random ID for an entry slug, which is a good option for locales writing in non-Latin characters. [See below](#use-a-random-id-for-an-entry-slug) for details.
 - Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://www.netlifycms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected[^7].
-- Users can now choose their preferred UI locale. English and Japanese only at this time.
+- Users can now choose their preferred UI locale.
 
 ### Collection enhancements
 
@@ -61,12 +61,12 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ## Compatibility
 
-While we’re not recreating all the features found in Netlify/Decap CMS, we plan to gradually expand the compatible areas where possible so that more users can migrate to our alternative.
+While we’re not recreating all the features found in Netlify/Decap CMS, our plan is to gradually expand the compatible areas where possible so that more users can migrate to our alternative.
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | UI locales | Only English and Japanese are available at this time. No registration is needed. It can be changed in Preferences. |
-| Account | Only the GitHub backend is available at this time. You can use Netlify Identity or an external OAuth client to sign in with GitHub, just like Netlify/Decap CMS. GitLab could be supported later, but other backends are unlikely to be added, mainly due to the lack of GraphQL API. |
+| Account | Only the GitHub backend is available at this time. You can use Netlify Identity or an external OAuth client to sign in with GitHub, just like Netlify/Decap CMS. GitLab could be supported later, but other backends are unlikely to be added, mainly due to the lack of an API method fetching contents in bulk. We’ll support the `test-repo` backend for a demo site. |
 | Configuration | Supported. |
 | Media | External media storage services are not yet supported. |
 | Editorial Workflow | Coming soon. |
@@ -80,8 +80,8 @@ While we’re not recreating all the features found in Netlify/Decap CMS, we pla
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | Code | Not yet supported. |
-| Color | It’s a native `<input>` widget at this time. The `enableAlpha` option is not yet supported. |
-| Date/DateTime | It’s also a native `<input>` widget. The `date_format` and `time_format` options with Moment.js tokens are not yet supported. We may deprecate the Moment.js format support anyway. |
+| Color | It’s a native `<input>` element at this time. The `enableAlpha` option is not yet supported. |
+| Date/DateTime | It’s also a native `<input>` element. The `date_format` and `time_format` options with Moment.js tokens are not yet supported. We may deprecate the Moment.js format support anyway. |
 | File/Image | The `media_library` options are not yet supported other than `max_file_size` and `choose_url`. |
 | List/Object | We haven’t tested with deeply nested fields. |
 | Map | Not yet supported. |
@@ -123,6 +123,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, we pla
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
 - Config editor[^10]
 - Documentation
+- Demo site
 - Starter templates
 
 ## Getting started
@@ -288,4 +289,4 @@ This software is provided “as is” without any express or implied warranty. T
 [^6]: [Netlify/Decap CMS #3240](https://github.com/netlify/netlify-cms/issues/3240)
 [^7]: [Netlify/Decap CMS #4386](https://github.com/netlify/netlify-cms/issues/4386)
 [^10]: [Netlify/Decap CMS #341](https://github.com/netlify/netlify-cms/issues/341)
-[^11]: [Netlify/Decap CMS #1382](https://github.com/netlify/netlify-cms/issues/1382)
+[^11]: [Netlify/Decap CMS #1382](https://github.com/netlify/netlify-cms/issues/1382) and many more. We’ll be updating this list after reviewing their issue list.
