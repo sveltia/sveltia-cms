@@ -605,15 +605,18 @@ export const saveEntry = async () => {
   };
 
   if (collectionFile || !hasLocales || i18n?.structure === 'single_file') {
+    const { path, content } = savingEntryLocales[defaultLocale];
+
     savingFiles.push({
       slug,
-      path: savingEntry.locales[defaultLocale].path,
+      path,
       data: formatEntryFile({
         content: hasLocales
           ? Object.fromEntries(
-              Object.entries(savingEntry.locales).map(([locale, { content }]) => [locale, content]),
+              Object.entries(savingEntryLocales).map(([locale, le]) => [locale, le.content]),
             )
-          : savingEntry.locales[defaultLocale].content,
+          : content,
+        path,
         config: collectionFile
           ? { extension: (collectionFile?.file.match(/\.([a-zA-Z0-9]+)$/) || [])[1] }
           : collection,
@@ -621,11 +624,14 @@ export const saveEntry = async () => {
     });
   } else {
     i18n?.locales.map(async (locale) => {
+      const { path, content } = savingEntryLocales[locale];
+
       savingFiles.push({
         slug,
-        path: savingEntry.locales[locale].path,
+        path,
         data: formatEntryFile({
-          content: savingEntry.locales[locale].content,
+          content,
+          path,
           config: collection,
         }),
       });
