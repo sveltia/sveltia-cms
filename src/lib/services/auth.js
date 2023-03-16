@@ -40,7 +40,7 @@ export const authorize = async (provider) => {
 
       // First message
       if (data === `authorizing:${provider}`) {
-        popup.postMessage('', baseURL);
+        popup.postMessage(data, origin);
 
         return;
       }
