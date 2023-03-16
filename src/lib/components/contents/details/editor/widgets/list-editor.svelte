@@ -56,11 +56,13 @@
   $: parentExpanded = !minimizeCollapsed;
   $: itemExpandedList = items.map(() => !collapsed);
 
+  let mounted = false;
   let widgetId;
   let initialValue = [];
   let inputValue = '';
 
   onMount(() => {
+    mounted = true;
     widgetId = window.crypto.randomUUID().split('-').pop();
 
     if (hasSubFields) {
@@ -205,7 +207,7 @@
   };
 
   $: {
-    if (!hasSubFields) {
+    if (mounted && !hasSubFields) {
       updateSimpleListValue(inputValue);
     }
   }

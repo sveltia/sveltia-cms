@@ -16,7 +16,7 @@
 
   $: ({ name: fieldName, fields, field } = fieldConfig);
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
-  $: listFormatter = new Intl.ListFormat(locale, { style: 'short', type: 'conjunction' });
+  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
   $: items =
     unflatten(
