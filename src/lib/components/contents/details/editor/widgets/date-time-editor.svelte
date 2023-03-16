@@ -36,15 +36,7 @@
    * Set the current value given the input value.
    */
   const setCurrentValue = () => {
-    if (format) {
-      currentValue = moment(inputValue).format(format);
-    } else {
-      const timeZoneStr = pickerUTC ? 'Z' : dateTimeParts.timeZoneName.replace('GMT', '');
-
-      currentValue = dateOnly
-        ? `${inputValue}T:00:00${timeZoneStr}`
-        : `${inputValue}${timeZoneStr}`;
-    }
+    currentValue = format ? moment(inputValue).format(format) : new Date(inputValue).toISOString();
   };
 
   onMount(() => {
