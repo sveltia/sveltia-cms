@@ -195,6 +195,8 @@ export const formatEntryFile = ({
   path,
   config: { extension, format, frontmatterDelimiter },
 }) => {
+  content = JSON.parse(JSON.stringify(content));
+
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
@@ -202,7 +204,7 @@ export const formatEntryFile = ({
 
   try {
     if (format.match(/^ya?ml$/)) {
-      return `${YAML.stringify(content)}\n`;
+      return `${YAML.stringify(content)}`;
     }
 
     if (format === 'toml') {
@@ -224,7 +226,7 @@ export const formatEntryFile = ({
 
     try {
       if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-        return `${startDelimiter}\n${YAML.stringify(content)}\n${endDelimiter}\n{${body}`;
+        return `${startDelimiter}\n${YAML.stringify(content)}${endDelimiter}\n${body}`;
       }
 
       if (format === 'toml-frontmatter') {
