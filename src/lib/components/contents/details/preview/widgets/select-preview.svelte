@@ -11,7 +11,7 @@
   export let currentValue = undefined;
 
   $: ({ multiple } = fieldConfig);
-  $: listFormatter = new Intl.ListFormat(locale, { style: 'short', type: 'conjunction' });
+  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 </script>
 
 {#if multiple && Array.isArray(currentValue) && currentValue.length}

@@ -21,7 +21,7 @@
     multiple = false,
   } = fieldConfig);
   $: refEntries = getEntries(collection);
-  $: listFormatter = new Intl.ListFormat(locale, { style: 'short', type: 'conjunction' });
+  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
   $: refValues = (multiple ? currentValue : [currentValue])
     .map((val) => {
