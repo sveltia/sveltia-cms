@@ -42,11 +42,11 @@
     "svelte-check": "^3.1.4",
     "svelte-i18n": "^3.6.0",
     "svelte-preprocess": "^5.0.2",
-    "vite": "^4.1.4"
+    "vite": "^4.2.0"
   },
   "dependencies": {
     "@ltd/j-toml": "^1.38.0",
-    "@sveltia/ui": "^0.1.1",
+    "@sveltia/ui": "^0.1.2",
     "deep-is": "^0.1.4",
     "flat": "^5.0.2",
     "isomorphic-dompurify": "^1.2.0",
