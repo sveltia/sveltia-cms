@@ -411,6 +411,7 @@ const createSlug = (collection, draft) => {
 
   const dateTimeParts = getDateTimeParts();
 
+  /** @type {string} */
   let slug = slugTemplate.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
     if (tag.startsWith('fields.')) {
       return currentValues[defaultLocale][tag.replace(/^fields\./, '')] || '';
@@ -447,8 +448,8 @@ const createSlug = (collection, draft) => {
     slug = slug.replaceAll(/[^\p{L}\p{N}]/gu, ' ');
   }
 
-  // Replace all the spaces with replacers (hyphens by default)
-  slug = slug.trim().replaceAll(/\s+/g, sanitizeReplacement);
+  // Make the string lowercase; replace all the spaces with replacers (hyphens by default)
+  slug = slug.toLocaleLowerCase().trim().replaceAll(/\s+/g, sanitizeReplacement);
 
   if (!slug) {
     // Use a random slug as a fallback
