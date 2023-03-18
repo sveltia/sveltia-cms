@@ -1,3 +1,5 @@
+/* eslint-disable jsdoc/require-jsdoc */
+
 import TOML from '@ltd/j-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
@@ -202,17 +204,21 @@ export const formatEntryFile = ({
       ? 'yaml-frontmatter'
       : extension || path.match(/\.([^.]+)$/)[1];
 
+  const formatYAML = () => YAML.stringify(content, null, { lineWidth: 0 }).trim();
+  const formatTOML = () => TOML.stringify(content).trim();
+  const formatJSON = () => JSON.stringify(content, null, 2).trim();
+
   try {
     if (format.match(/^ya?ml$/)) {
-      return `${YAML.stringify(content)}`;
+      return `${formatYAML()}\n`;
     }
 
     if (format === 'toml') {
-      return `${TOML.stringify(content)}\n`;
+      return `${formatTOML()}\n`;
     }
 
     if (format === 'json') {
-      return `${JSON.stringify(content, null, 2)}\n`;
+      return `${formatJSON()}\n`;
     }
   } catch {
     return '';
@@ -226,15 +232,15 @@ export const formatEntryFile = ({
 
     try {
       if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-        return `${startDelimiter}\n${YAML.stringify(content)}${endDelimiter}\n${body}`;
+        return `${startDelimiter}\n${formatYAML()}\n${endDelimiter}\n${body}`;
       }
 
       if (format === 'toml-frontmatter') {
-        return `${startDelimiter}\n${TOML.stringify(content)}\n${endDelimiter}\n${body}`;
+        return `${startDelimiter}\n${formatTOML()}\n${endDelimiter}\n${body}`;
       }
 
       if (format === 'json-frontmatter') {
-        return `${startDelimiter}\n${JSON.stringify(content, null, 2)}\n${endDelimiter}\n${body}`;
+        return `${startDelimiter}\n${formatJSON()}\n${endDelimiter}\n${body}`;
       }
     } catch {
       //
