@@ -79,6 +79,7 @@ siteConfig.subscribe((config) => {
   }
 
   const { media_folder: mediaFolder, public_folder: publicFolder, collections, i18n } = config;
+  const _mediaFolder = mediaFolder.match(/^\/?(.+)\/?$/)[1];
   const _defaultContentLocale = i18n?.default_locale || i18n?.locales?.[0] || 'default';
 
   defaultContentLocale.set(_defaultContentLocale);
@@ -131,8 +132,8 @@ siteConfig.subscribe((config) => {
     [
       {
         collectionName: null,
-        internalPath: mediaFolder.match(/^\/?(.+)\/?$/)[1],
-        publicPath: publicFolder,
+        internalPath: _mediaFolder,
+        publicPath: publicFolder || `/${_mediaFolder}`,
       },
       ...collections
         .filter((c) => c.media_folder?.startsWith('/') && c.public_folder)
