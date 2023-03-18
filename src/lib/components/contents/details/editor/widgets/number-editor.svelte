@@ -16,7 +16,7 @@
   $: ({
     i18n,
     // Widget-specific options
-    value_type: valueType,
+    value_type: valueType = 'int',
     min,
     max,
     step = 1,
