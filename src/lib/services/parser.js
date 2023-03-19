@@ -111,13 +111,21 @@ const getFrontmatterDelimiters = (format, delimiter) => {
  * @param {string} entry.text Raw content.
  * @param {string} entry.path File path.
  * @param {object} entry.config File’s collection configuration.
+ * @param {string} [entry.config.file] File path for a file collection item.
  * @param {string} [entry.config.extension] Configured file extension.
  * @param {string} [entry.config.format] Configured file format.
  * @param {string} [entry.config.frontmatterDelimiter] Configured Frontmatter delimiter.
  * @returns {object} Parsed content.
  */
-const parseEntryFile = ({ text, path, config: { extension, format, frontmatterDelimiter } }) => {
-  format ||= extension === 'md' || path.endsWith('.md') ? 'yaml-frontmatter' : extension;
+const parseEntryFile = ({
+  text,
+  path,
+  config: { file, extension, format, frontmatterDelimiter },
+}) => {
+  format ||=
+    extension === 'md' || path.endsWith('.md')
+      ? 'yaml-frontmatter'
+      : extension || file?.match(/\.([^.]+)$/)[1];
 
   // Ignore files with unknown format
   if (!format) {
@@ -125,22 +133,22 @@ const parseEntryFile = ({ text, path, config: { extension, format, frontmatterDe
   }
 
   try {
-    if (format.match(/^ya?ml$/)) {
+    if (format.match(/^ya?ml$/) && path.match(/\.ya?ml$/)) {
       return YAML.parse(text);
     }
 
-    if (format === 'toml') {
+    if (format === 'toml' && path.match(/\.toml$/)) {
       return TOML.parse(text);
     }
 
-    if (format === 'json') {
+    if (format === 'json' && path.match(/\.json$/)) {
       return JSON.parse(text);
     }
   } catch {
     return null;
   }
 
-  if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/)) {
+  if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/) && path.match(/\.(?:md|markdown)$/)) {
     const [startDelimiter, endDelimiter] = getFrontmatterDelimiters(format, frontmatterDelimiter);
 
     const [, head, body = ''] =
