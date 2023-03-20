@@ -18,6 +18,7 @@
   export let currentValue = undefined;
 
   $: ({
+    required = true,
     i18n,
     // Widget-specific options
     format,
@@ -36,29 +37,37 @@
    * Set the current value given the input value.
    */
   const setCurrentValue = () => {
-    currentValue = format ? moment(inputValue).format(format) : new Date(inputValue).toISOString();
+    try {
+      currentValue = format
+        ? (pickerUTC ? moment.utc(inputValue) : moment(inputValue)).format(format)
+        : new Date(inputValue).toISOString();
+    } catch {
+      currentValue = undefined;
+    }
   };
 
   onMount(() => {
-    dateTimeParts = getDateTimeParts({
-      date: currentValue ? moment(currentValue, format).toDate() : new Date(),
-      timeZone: pickerUTC ? 'UTC' : undefined,
-    });
+    if (required || currentValue) {
+      dateTimeParts = getDateTimeParts({
+        date: currentValue ? moment(currentValue, format).toDate() : new Date(),
+        timeZone: pickerUTC ? 'UTC' : undefined,
+      });
 
-    const { year, month, day, hour, minute } = dateTimeParts;
+      const { year, month, day, hour, minute } = dateTimeParts;
 
-    initialValue = dateOnly
-      ? `${year}-${month}-${day}`
-      : `${year}-${month}-${day}T${hour}:${minute}`;
-    inputValue = initialValue;
+      initialValue = dateOnly
+        ? `${year}-${month}-${day}`
+        : `${year}-${month}-${day}T${hour}:${minute}`;
+      inputValue = initialValue;
 
-    if (!currentValue) {
-      setCurrentValue();
+      if (!currentValue) {
+        setCurrentValue();
+      }
     }
   });
 
   $: {
-    if (inputValue && inputValue !== initialValue) {
+    if (inputValue !== undefined && inputValue !== initialValue) {
       setCurrentValue();
     }
   }

@@ -10,7 +10,8 @@
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import { defaultContentLocale } from '$lib/services/config';
-  import { entryDraft, getFieldByKeyPath } from '$lib/services/contents/editor';
+  import { getFieldByKeyPath } from '$lib/services/contents';
+  import { entryDraft } from '$lib/services/contents/editor';
   import { isObject } from '$lib/services/utils/misc';
   import { escapeRegExp } from '$lib/services/utils/strings';
 

@@ -7,6 +7,7 @@ import { defaultContentLocale } from '$lib/services/config';
 import {
   allEntries,
   getEntries,
+  getFieldByKeyPath,
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
@@ -29,6 +30,7 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
 export const parseSummary = (collection, content) =>
   collection.summary.replace(/{{(.+?)}}/g, (_match, tag) => {
     const [fieldName, ...transformations] = tag.split(/\s*\|\s*/);
+    const fieldConfig = getFieldByKeyPath(collection.name, undefined, fieldName) || {};
     let result = content[fieldName];
 
     if (!result) {
@@ -50,8 +52,9 @@ export const parseSummary = (collection, content) =>
 
       if (tf.startsWith('date')) {
         const [, format] = tf.match(/^date\('(.*?)'\)$/);
+        const { picker_utc: pickerUTC = false } = fieldConfig;
 
-        result = moment(result).format(format);
+        result = (pickerUTC ? moment.utc(result) : moment(result)).format(format);
       }
 
       if (tf.startsWith('default')) {

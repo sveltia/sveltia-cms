@@ -28,9 +28,9 @@
   <p>
     <time datetime={date.toJSON()}>
       {#if dateOnly}
-        {date.toDateString(locale)}
+        {date.toLocaleDateString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
       {:else}
-        {date.toLocaleString(locale)}
+        {date.toLocaleString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
       {/if}
     </time>
   </p>
