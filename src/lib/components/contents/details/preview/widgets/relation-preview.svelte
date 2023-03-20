@@ -25,25 +25,32 @@
 
   $: refValues = (multiple ? currentValue : [currentValue])
     .map((val) => {
-      const refEntry = refEntries.find(
-        ({ locales }) =>
-          flatten(locales[locale]?.content || {})[
-            valueField.replace(/(?:{{)?(.+)(?:}})?/, '$1')
-          ] === val,
+      if (val === undefined) {
+        return undefined;
+      }
+
+      const refEntry = refEntries.find(({ slug, locales }) =>
+        valueField === '{{slug}}'
+          ? slug === val
+          : flatten(locales[locale]?.content || {})[
+              valueField.replace(/(?:{{)?(.+)(?:}})?/, '$1')
+            ] === val,
       );
 
       const content = refEntry ? flatten(refEntry.locales[locale]?.content) : undefined;
 
-      return content
-        ? (displayFields || [valueField])
-            .map(
-              (fieldName) =>
-                content[fieldName] ||
-                fieldName.replaceAll(/{{(.+?)}}/g, (_match, p1) => content[p1] || '') ||
-                '',
-            )
-            .join(' ')
-        : val;
+      if (!content) {
+        return val;
+      }
+
+      return (displayFields || [valueField])
+        .map(
+          (fieldName) =>
+            content[fieldName] ||
+            fieldName.replaceAll(/{{(.+?)}}/g, (_match, p1) => content[p1] || '') ||
+            '',
+        )
+        .join(' ');
     })
     .filter((val) => val !== undefined);
 </script>

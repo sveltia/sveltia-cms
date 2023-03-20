@@ -45,4 +45,4 @@
   });
 </script>
 
-<SelectEditor {locale} {keyPath} {fieldConfig} {currentValue} {options} />
+<SelectEditor {locale} {keyPath} {fieldConfig} bind:currentValue {options} />
