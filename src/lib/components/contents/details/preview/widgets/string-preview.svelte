@@ -12,11 +12,23 @@
   export let currentValue = undefined;
 
   $: ({ name: fieldName } = fieldConfig);
+
+  $: isURL = (() => {
+    try {
+      // eslint-disable-next-line no-new
+      new URL(currentValue);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
   {#if fieldName === 'title'}
     <p class="title">{currentValue}</p>
+  {:else if isURL}
+    <p><a href={currentValue}>{currentValue}</a></p>
   {:else}
     <p>{currentValue}</p>
   {/if}
