@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://www.netlifycms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, if the content is managed on a Git repository. The product is now in public beta, with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, if the content is managed on a Git repository. The product is now in public beta, with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.jpg)<br>
 
@@ -19,7 +19,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Compatible with Netlify/Decap CMS
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating one single line of code.
-- Existing [configuration files](https://www.netlifycms.org/docs/configuration-options/) can be reused as is.
+- Existing [configuration files](https://decapcms.org/docs/configuration-options/) can be reused as is.
 - Many features are still missing though; [see the chart below](#compatibility) for details.
 
 ### Better UX
@@ -45,7 +45,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Making it easier to switch between locales while editing.
 - Integrating DeepL to allow translating text fields from another locale with one click. [See below](#use-deepl-to-translate-entry-fields) for details.
 - You can now use a random ID for an entry slug, which is a good option for locales writing in non-Latin characters. [See below](#use-a-random-id-for-an-entry-slug) for details.
-- Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://www.netlifycms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected[^7].
+- Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected[^7].
 - Users can now choose their preferred UI locale.
 
 ### Collection enhancements
@@ -66,7 +66,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | UI locales | Only English and Japanese are available at this time. No registration is needed. It can be changed in Preferences. |
-| Account | Only the GitHub backend is available at this time. You can use Netlify Identity or an external OAuth client to sign in with GitHub, just like Netlify/Decap CMS. GitLab could be supported later, but other backends are unlikely to be added, mainly due to the lack of an API method fetching contents in bulk. We’ll support the `test-repo` backend for a demo site. |
+| Account | Only the GitHub backend is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. GitLab could be supported later, but other backends are unlikely to be added, mainly due to the lack of an API method fetching contents in bulk. We’ll support the `test-repo` backend for a demo site. |
 | Configuration | Supported. |
 | Media | External media storage services are not yet supported. |
 | Editorial Workflow | Coming soon. |
@@ -130,7 +130,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 
 ### New users
 
-Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://www.netlifycms.org/docs/intro/) to install it and configure your site first. Then migrate to Sveltia CMS as described below.
+Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/intro/) to install it and configure your site first. Then migrate to Sveltia CMS as described below.
 
 ### Migration
 
@@ -151,9 +151,13 @@ Sveltia CMS is still in early beta, so we do expect various bugs. Please [report
 
 ## Tips & tricks
 
+### Move your site from Netlify to another hosting service
+
+You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
+
 ### Work with a local Git repository
 
-You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://www.netlifycms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/).
+You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/).
 
 1. Launch the local development server for your frontend framework, typically with `npm run dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with [Chrome or Edge](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
@@ -183,7 +187,7 @@ As shown in the screenshot above, you can use different icons for collections in
 
 ### Use a custom media folder for a collection
 
-This is actually not new in Sveltia CMS but rather an _undocumented_ feature in Netlify/Decap CMS[^4]. You can specify media and public folders for each collection that override the [global media folder](https://www.netlifycms.org/docs/configuration-options/#media-and-public-folders). Well, it’s [documented](https://www.netlifycms.org/docs/beta-features/#folder-collections-media-and-public-folder) as a beta feature, but that’s probably not what you want.
+This is actually not new in Sveltia CMS but rather an _undocumented_ feature in Netlify/Decap CMS[^4]. You can specify media and public folders for each collection that override the [global media folder](https://decapcms.org/docs/configuration-options/#media-and-public-folders). Well, it’s [documented](https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder) as a beta feature, but that’s probably not what you want.
 
 Rather, if you’d like to add all the media files for a collection in one single folder, specify both `media_folder` and `public_folder` instead of leaving them empty. The trick is to use an _absolute path_ for `media_folder` like the example below. You can try this with Netlify/Decap CMS first if you prefer.
 
@@ -214,7 +218,7 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 
 ### Use a random ID for an entry slug
 
-By default, the [slug for a new entry file](https://www.netlifycms.org/docs/configuration-options/#slug) will be generated based on the entry’s title field. Or, you can specify the collection’s `slug` option to use the file creation date or other fields. While the behavior is generally acceptable and SEO-friendly, it’s not useful if the title might change later or if it contains non-Latin characters like Chinese. In Sveltia CMS, you can easily generate a random [UUID](https://developer.mozilla.org/en-US/docs/Glossary/UUID) without a custom widget!
+By default, the [slug for a new entry file](https://decapcms.org/docs/configuration-options/#slug) will be generated based on the entry’s title field. Or, you can specify the collection’s `slug` option to use the file creation date or other fields. While the behavior is generally acceptable and SEO-friendly, it’s not useful if the title might change later or if it contains non-Latin characters like Chinese. In Sveltia CMS, you can easily generate a random [UUID](https://developer.mozilla.org/en-US/docs/Glossary/UUID) without a custom widget!
 
 It’s simple — just specify `{{uuid}}` (full UUID v4) or `{{uuid_short}}` (last 12 characters only) in the `slug` option. The results would look like `4fc0917c-8aea-4ad5-a476-392bdcf3b642` and `392bdcf3b642`, respectively.
 
