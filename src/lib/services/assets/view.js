@@ -23,13 +23,13 @@ const storageKey = 'sveltia-cms.assets-view';
  * @returns {string} URL that can be displayed in the app.
  */
 export const getAssetURL = (asset, { pathOnly = false } = {}) => {
-  if (asset.tempURL) {
+  if (asset.tempURL && !pathOnly) {
     return asset.tempURL;
   }
 
-  const { publicPath } = get(allAssetPaths).find(
-    ({ collectionName }) => collectionName === (asset.collectionName || null),
-  );
+  const { publicPath } =
+    get(allAssetPaths).find(({ collectionName }) => collectionName === asset.collectionName) ||
+    get(allAssetPaths).find(({ collectionName }) => collectionName === null);
 
   const baseURL = pathOnly ? '' : get(siteConfig).site_url || '';
   const path = asset.path.replace(asset.folder, publicPath);
