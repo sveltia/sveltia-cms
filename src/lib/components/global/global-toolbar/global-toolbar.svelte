@@ -6,9 +6,10 @@
   import PageSwitcher from '$lib/components/global/global-toolbar/items/page-switcher.svelte';
   import QuickSearchBar from '$lib/components/global/global-toolbar/items/quick-search-bar.svelte';
   import SiteLogo from '$lib/components/global/global-toolbar/items/site-logo.svelte';
+  import { entryDraft } from '$lib/services/contents/editor';
 </script>
 
-<div class="toolbar-wrapper">
+<div class="toolbar-wrapper" hidden={$entryDraft ? 'hidden' : undefined}>
   <Toolbar>
     <SiteLogo />
     <PageSwitcher />
@@ -24,6 +25,10 @@
 <style lang="scss">
   .toolbar-wrapper {
     display: contents;
+
+    &[hidden] {
+      display: none;
+    }
 
     & > :global(.toolbar) {
       --toolbar-size: 48px;

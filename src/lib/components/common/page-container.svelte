@@ -1,5 +1,6 @@
 <script>
   import { Group } from '@sveltia/ui';
+  import { entryDraft } from '$lib/services/contents/editor';
 
   /**
    * CSS class name on the button.
@@ -9,7 +10,7 @@
   export { className as class };
 </script>
 
-<div class="outer">
+<div class="outer" hidden={$entryDraft ? 'hidden' : undefined}>
   <Group class="browser {className}" {...$$restProps}>
     <slot name="primary_sidebar" />
     <Group class="main">
@@ -31,6 +32,10 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+
+    &[hidden] {
+      display: none;
+    }
 
     & > :global([role='toolbar']) {
       flex: none;

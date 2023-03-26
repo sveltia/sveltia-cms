@@ -26,6 +26,7 @@
   };
 
   const focusShortcut = isMac ? 'Meta+F' : 'Ctrl+F';
+  let wrapper;
   let searchBar;
 
   $: {
@@ -38,20 +39,32 @@
 
 <svelte:window
   on:keydown={(event) => {
-    if (matchShortcut(event, focusShortcut)) {
+    if (
+      !event.target.matches('input, textarea') &&
+      !!wrapper.querySelector('.search-bar').offsetParent &&
+      matchShortcut(event, focusShortcut)
+    ) {
       event.preventDefault();
       searchBar.focus();
     }
   }}
 />
 
-<SearchBar
-  bind:this={searchBar}
-  aria-label={$_('search_placeholder')}
-  aria-keyshortcuts={focusShortcut}
-  --input-label-align="center"
-  on:input={({ target }) => {
-    // @todo Implement quick search dropdown.
-    navigate(target.value.trim());
-  }}
-/>
+<div class="wrapper" bind:this={wrapper}>
+  <SearchBar
+    bind:this={searchBar}
+    aria-label={$_('search_placeholder')}
+    aria-keyshortcuts={focusShortcut}
+    --input-label-align="center"
+    on:input={({ target }) => {
+      // @todo Implement quick search dropdown.
+      navigate(target.value.trim());
+    }}
+  />
+</div>
+
+<style lang="scss">
+  .wrapper {
+    display: contents;
+  }
+</style>
