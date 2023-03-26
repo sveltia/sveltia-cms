@@ -84,7 +84,7 @@
       .filter((val) => val !== undefined);
 
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+      if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
@@ -107,7 +107,7 @@
    */
   const addItem = (toTop = false) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+      if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
@@ -146,13 +146,31 @@
    */
   const deleteItem = (index) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+      if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
       Object.keys($entryDraft.currentValues[_locale]).forEach((_keyPath) => {
-        if (_keyPath.match(new RegExp(`^${escapeRegExp(keyPath)}\\.${index}\\b`))) {
+        const [, matchedIndexStr] = _keyPath.match(keyPathRegex) || [];
+        const matchedIndex = matchedIndexStr !== undefined ? Number(matchedIndexStr) : undefined;
+
+        if (matchedIndex === undefined) {
+          return;
+        }
+
+        if (matchedIndex === index) {
           delete $entryDraft.currentValues[_locale][_keyPath];
+        }
+
+        if (matchedIndex > index) {
+          // Decrease index
+          const newKeyPath = _keyPath.replace(
+            keyPathRegex,
+            (_match, p1, p2) => `${keyPath}.${Number(p1) - 1}${p2}`,
+          );
+
+          $entryDraft.currentValues[_locale][newKeyPath] =
+            $entryDraft.currentValues[_locale][_keyPath];
         }
       });
 
@@ -168,7 +186,7 @@
    */
   const moveUpItem = (index) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+      if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
@@ -191,7 +209,7 @@
    */
   const moveDownItem = (index) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== $defaultContentLocale) {
+      if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
