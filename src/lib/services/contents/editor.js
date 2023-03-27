@@ -325,7 +325,7 @@ const validateEntry = () => {
         }
       }
 
-      if (!['relation', 'object', 'list'].includes(widget)) {
+      if (!['object', 'list'].includes(widget)) {
         if (required !== false && (value === undefined || value === '')) {
           valueMissing = true;
         }
