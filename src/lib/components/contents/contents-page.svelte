@@ -21,7 +21,7 @@
    */
   const navigate = () => {
     const { path } = parseLocation();
-    const match = path.match(/^\/collections\/(\w+)(?:\/(new|entries))?(?:\/(.+?))?$/);
+    const match = path.match(/^\/collections\/([^/]+)(?:\/(new|entries))?(?:\/(.+?))?$/);
 
     if (!match) {
       return; // Not Found
