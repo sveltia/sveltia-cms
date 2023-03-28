@@ -183,20 +183,12 @@ export const copyFromLocale = async (
 
       if (
         (keyPath && !_keyPath.startsWith(keyPath)) ||
-        value === undefined ||
-        value === currentValues[targetLocale][_keyPath]
+        typeof value !== 'string' ||
+        !['markdown', 'text', 'string', 'list'].includes(field?.widget) ||
+        (field?.widget === 'list' && (field?.field || field?.fields)) ||
+        (!translate && value === currentValues[targetLocale][_keyPath])
       ) {
         return false;
-      }
-
-      if (translate) {
-        if (
-          typeof value !== 'string' ||
-          !['markdown', 'text', 'string', 'list'].includes(field?.widget) ||
-          (field?.widget === 'list' && (field?.field || field?.fields))
-        ) {
-          return false;
-        }
       }
 
       return true;
