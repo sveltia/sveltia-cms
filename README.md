@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, if the content is managed on a Git repository. The product is now in public beta, with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, to manage the content as static files on a Git repository. The product is now in public beta, with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.jpg)<br>
 
@@ -13,6 +13,12 @@ Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [N
 ![Screenshot: Single-Line Migration from Netlify/Decap CMS; Sveltia CMS](docs/screenshot-5.jpg)<br>
 
 ## Features
+
+Sveltia CMS is a Git-based lightweight headless CMS, which means:
+
+- Git-based: Your content is saved as static JSON, YAML, TOML or Front Matter files on a Git repository. No database or API is involved.
+- Lightweight: The app is compiled as a single small JavaScript file served via a CDN. You don’t have to sign up for a service or install the software.
+- Headless: The CMS only takes care of raw data. You can read it and render the final content with your favourite framework.
 
 Here are some highlights mainly compared to Netlify/Decap CMS:
 
@@ -56,7 +62,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Media library enhancements
 
 - A whole new media library makes it easier to manage all your assets.
-- You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them on the media library[^5].
+- You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
 - You can now navigate between the global media folder and a per-collection media folder[^6] and soon move assets between them.
 
 ## Compatibility
@@ -130,7 +136,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 
 ### New users
 
-Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/intro/) to install it and configure your site first. Then migrate to Sveltia CMS as described below.
+Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/add-to-your-site/) to add it to your site first. Then migrate to Sveltia CMS as described below.
 
 ### Migration
 
@@ -143,11 +149,11 @@ If you’re already using Netlify/Decap CMS with the GitHub backend and don’t 
 
 That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
-That said, we highly recommend testing your new Sveltia CMS instance first on your local machine. See below for how.
+That said, we highly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#work-with-a-local-git-repository) for how.
 
 ### Bug Report
 
-Sveltia CMS is still in early beta, so we do expect various bugs. Please [report any bug to us](https://github.com/sveltia/sveltia-cms/issues/new).
+Sveltia CMS is still in early beta, so we do expect various issues. Please [report any bug to us](https://github.com/sveltia/sveltia-cms/issues/new).
 
 ## Tips & tricks
 
@@ -218,7 +224,7 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 
 ### Use a random ID for an entry slug
 
-By default, the [slug for a new entry file](https://decapcms.org/docs/configuration-options/#slug) will be generated based on the entry’s title field. Or, you can specify the collection’s `slug` option to use the file creation date or other fields. While the behavior is generally acceptable and SEO-friendly, it’s not useful if the title might change later or if it contains non-Latin characters like Chinese. In Sveltia CMS, you can easily generate a random [UUID](https://developer.mozilla.org/en-US/docs/Glossary/UUID) without a custom widget!
+By default, the [slug for a new entry file](https://decapcms.org/docs/configuration-options/#slug) will be generated based on the entry’s `title` field. Or, you can specify the collection’s `slug` option to use the file creation date or other fields. While the behaviour is generally acceptable and SEO-friendly, it’s not useful if the title might change later or if it contains non-Latin characters like Chinese. In Sveltia CMS, you can easily generate a random [UUID](https://developer.mozilla.org/en-US/docs/Glossary/UUID) without a custom widget!
 
 It’s simple — just specify `{{uuid}}` (full UUID v4) or `{{uuid_short}}` (last 12 characters only) in the `slug` option. The results would look like `4fc0917c-8aea-4ad5-a476-392bdcf3b642` and `392bdcf3b642`, respectively.
 
@@ -273,13 +279,23 @@ And combine the following policies depending on your Git backend and enabled int
   connect-src https://api.deepl.com;
   ```
 
+If you have image field(s) and expect that images will be inserted as URLs, you may want to allow any source using a wildcard instead of specifying individual origins:
+
+```csp
+img-src 'self' blob: data: https://*;
+```
+
 ## Support
 
 Visit the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page on this GitHub repository.
 
 ## Contributions
 
-Feel free to [file an issue](https://github.com/sveltia/sveltia-cms/issues/new) for a bug report or feature request! Meanwhile, pull requests are not accepted now due to limited review resources.
+Feel free to [file an issue](https://github.com/sveltia/sveltia-cms/issues/new) for a bug report or feature request! Meanwhile, pull requests can probably not be accepted now due to limited review resources. Things may change in late 2023!
+
+## Links
+
+- **Introducing Sveltia CMS**: a presentation during the This Week in Svelte online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
 
 ## Disclaimer
 
