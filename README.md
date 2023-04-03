@@ -16,7 +16,7 @@ Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [N
 
 Sveltia CMS is a Git-based lightweight headless CMS, which means:
 
-- Git-based: Your content is saved as static JSON, YAML, TOML or Front Matter files on a Git repository. No database or API is involved.
+- Git-based: Your content is saved as static JSON, YAML or TOML files on a Git repository. No database or API is involved.
 - Lightweight: The app is compiled as a single small JavaScript file served via a CDN. You don’t have to sign up for a service or install the software.
 - Headless: The CMS only takes care of raw data. You can read it and render the final content with your favourite framework.
 
@@ -32,6 +32,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Offering a modern, intuitive UI, with some inspiration from the Netlify/Decap CMS v3 prototype[^1].
 - Immersive dark mode[^2].
+- The screenshots above are worth a thousand words!
 
 ### Better performance
 
@@ -63,11 +64,11 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - A whole new media library makes it easier to manage all your assets.
 - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
-- You can now navigate between the global media folder and a per-collection media folder[^6] and soon move assets between them.
+- You can now navigate between the global media folder and a per-collection media folder[^6].
 
 ## Compatibility
 
-While we’re not recreating all the features found in Netlify/Decap CMS, our plan is to gradually expand the compatible areas where possible so that more users can migrate to our alternative.
+While we’re not recreating all the features found in Netlify/Decap CMS, our plan is to gradually expand the compatible areas where possible so that more users can migrate to our modern alternative.
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
@@ -77,7 +78,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | Media | External media storage services are not yet supported. |
 | Editorial Workflow | Coming soon. |
 | Collections | Supported. |
-| Widgets | See below. |
+| Widgets | [See below](#widget-limitations) for the current limitations. |
 | Custom widgets | Not yet supported. |
 | Custom previews | Not yet supported. |
 
@@ -166,7 +167,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/).
 
 1. Launch the local development server for your frontend framework, typically with `npm run dev`.
-1. Visit `http://localhost:[port]/admin/index.html` with [Chrome or Edge](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
+1. Visit `http://localhost:[port]/admin/index.html` with [Chrome, Edge or other Chromium-based browser](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility). The port number depends on your framework.
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
 1. Make some changes on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like GitHub Desktop.
@@ -176,8 +177,8 @@ You can use Sveltia CMS with a local Git repository, just like the [beta feature
 
 As shown in the screenshot above, you can use different icons for collections in Sveltia CMS.
 
-1. Visit [Google Fonts](https://fonts.google.com/icons?icon.set=Material+Symbols) and select a Material Symbols icon.
-1. Select the Android tab within the right panel, and copy the icon name.
+1. Visit the [Material Symbols](https://fonts.google.com/icons?icon.set=Material+Symbols&icon.platform=android) page on Google Fonts.
+1. Search and select an icon, and copy the icon name displayed on the right panel.
 1. Add it to one of your collection definitions in `config.yml` as the new `icon` property, like the example below.
 1. Repeat the same steps for all the collections if desired.
 1. Commit and push the changes to your Git repository.
@@ -285,9 +286,9 @@ If you have image field(s) and expect that images will be inserted as URLs, you 
 img-src 'self' blob: data: https://*;
 ```
 
-## Support
+## Support & feedback
 
-Visit the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page on this GitHub repository.
+Visit the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page on this GitHub repository and start a new discussion. Tell us your use cases!
 
 ## Contributions
 
@@ -295,11 +296,11 @@ Feel free to [file an issue](https://github.com/sveltia/sveltia-cms/issues/new) 
 
 ## Links
 
-- **Introducing Sveltia CMS**: a presentation during the This Week in Svelte online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
+- Introducing Sveltia CMS: a short presentation by [@kyoshino](https://github.com/kyoshino) during the _This Week in Svelte_ online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
 
 ## Disclaimer
 
-This software is provided “as is” without any express or implied warranty. This product is not affiliated with Netlify, Decap CMS or any other integrated services. All product names, logos, and brands are the property of their respective owners.
+This software is provided “as is” without any express or implied warranty. This product is not affiliated with or endorsed by Netlify, Decap CMS or any other integrated services. All product names, logos, and brands are the property of their respective owners.
 
 [^1]: [Netlify/Decap CMS #2557](https://github.com/netlify/netlify-cms/issues/2557)
 [^2]: [Netlify/Decap CMS #3267](https://github.com/netlify/netlify-cms/issues/3267)

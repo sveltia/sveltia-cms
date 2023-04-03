@@ -26,6 +26,7 @@ words:
   - hotlinking
   - iarna
   - jsdoc
+  - kyoshino
   - pexels
   - Pixabay
   - plusplus
@@ -47,3 +48,6 @@ words:
   - weba
   - webformat
   - xslx
+overrides:
+  - language: en-gb
+    filename: "**/*.md"
