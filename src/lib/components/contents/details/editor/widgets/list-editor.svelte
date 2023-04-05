@@ -5,12 +5,12 @@
 -->
 <script>
   import { Button, Group, Spacer, TextInput } from '@sveltia/ui';
-  import { unflatten } from 'flat';
+  import { flatten, unflatten } from 'flat';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import AddItemButton from '$lib/components/contents/details/editor/widgets/list-editor/add-item-button.svelte';
   import { defaultContentLocale } from '$lib/services/config';
-  import { getFieldByKeyPath } from '$lib/services/contents';
   import { entryDraft } from '$lib/services/contents/editor';
   import { isObject } from '$lib/services/utils/misc';
   import { escapeRegExp } from '$lib/services/utils/strings';
@@ -25,7 +25,7 @@
     label,
     i18n,
     // Widget-specific options
-    default: defaultValue,
+    default: defaultValues,
     allow_add: allowAdd = true,
     collapsed = false,
     summary,
@@ -35,12 +35,13 @@
     fields,
     max,
     min,
-    add_to_top: addToTop,
+    add_to_top: addToTop = false,
+    types,
+    typeKey = 'type',
   } = fieldConfig);
   $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
-  $: hasSubFields = field || fields;
+  $: hasSubFields = !!(field || fields || types);
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
-  $: ({ collectionName, fileName } = $entryDraft);
 
   $: items =
     unflatten(
@@ -77,7 +78,7 @@
   /**
    * Update the value for the List widget w/o subfield(s).
    */
-  const updateSimpleListValue = () => {
+  const updateSimpleList = () => {
     const normalizedValue = inputValue
       .match(/^\s*(?:,\s*)?(.*?)(?:\s*,)?\s*$/)[1]
       .split(/,\s*/g)
@@ -101,40 +102,65 @@
   };
 
   /**
+   * Update the value for the List widget with subfield(s).
+   *
+   * @param {LocaleCode} _locale Target locale.
+   * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
+   * list itself. The typical usage is `list.splice()`.
+   */
+  const updateComplexList = (_locale, manipulate) => {
+    const unflattenObj = unflatten($entryDraft.currentValues[_locale]);
+
+    // Traverse the object by decoding dot-connected `keyPath`
+    const list = keyPath.split('.').reduce((obj, key) => {
+      const _key = key.match(/^\d+$/) ? Number(key) : key;
+
+      // Create a new array when adding a new item
+      obj[_key] ||= [];
+
+      return obj[_key];
+    }, unflattenObj);
+
+    manipulate(list);
+
+    // Flatten the object again
+    $entryDraft.currentValues[_locale] = flatten(unflattenObj);
+  };
+
+  /**
    * Add a new subfield to the list.
    *
-   * @param {boolean} [toTop] Whether to add a new item at the beginning of the list.
+   * @param {string} [subFieldName] Sub field name from one of the variable type options.
+   * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
+   * @todo Deal with nested objects.
    */
-  const addItem = (toTop = false) => {
+  const addItem = (subFieldName) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
       if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
-      if (toTop) {
-        // Increase the index, e.g. `foo.bar.0` -> `foo.bar.1`, before adding `foo.bar.0`
-        Object.keys($entryDraft.currentValues[_locale])
-          .reverse()
-          .forEach((_keyPath) => {
-            if (_keyPath.match(keyPathRegex)) {
-              const newKeyPath = _keyPath.replace(
-                keyPathRegex,
-                (_match, p1, p2) => `${keyPath}.${Number(p1) + 1}${p2}`,
-              );
+      const newItem = {};
 
-              $entryDraft.currentValues[_locale][newKeyPath] =
-                $entryDraft.currentValues[_locale][_keyPath];
-            }
-          });
+      const subFields = subFieldName
+        ? types.find(({ name }) => name === subFieldName)?.fields || []
+        : fields || [field];
+
+      subFields.forEach(({ name, default: defaultValue }) => {
+        const _defaultValue =
+          isObject(defaultValues) && name in defaultValues ? defaultValues[name] : defaultValue;
+
+        if (_defaultValue) {
+          newItem[name] = _defaultValue;
+        }
+      });
+
+      if (subFieldName) {
+        newItem[typeKey] = subFieldName;
       }
 
-      (fields || [field]).forEach(({ name }) => {
-        const _keyPath = `${keyPath}.${toTop ? 0 : items.length}.${name}`;
-
-        $entryDraft.currentValues[_locale][_keyPath] =
-          isObject(defaultValue) && name in defaultValue
-            ? defaultValue[name]
-            : getFieldByKeyPath(collectionName, fileName, _keyPath).default;
+      updateComplexList(_locale, (list) => {
+        list.splice(addToTop ? 0 : list.length, 0, newItem);
       });
     });
   };
@@ -150,32 +176,9 @@
         return;
       }
 
-      Object.keys($entryDraft.currentValues[_locale]).forEach((_keyPath) => {
-        const [, matchedIndexStr] = _keyPath.match(keyPathRegex) || [];
-        const matchedIndex = matchedIndexStr !== undefined ? Number(matchedIndexStr) : undefined;
-
-        if (matchedIndex === undefined) {
-          return;
-        }
-
-        if (matchedIndex === index) {
-          delete $entryDraft.currentValues[_locale][_keyPath];
-        }
-
-        if (matchedIndex > index) {
-          // Decrease index
-          const newKeyPath = _keyPath.replace(
-            keyPathRegex,
-            (_match, p1, p2) => `${keyPath}.${Number(p1) - 1}${p2}`,
-          );
-
-          $entryDraft.currentValues[_locale][newKeyPath] =
-            $entryDraft.currentValues[_locale][_keyPath];
-        }
+      updateComplexList(_locale, (list) => {
+        list.splice(index, 1);
       });
-
-      // `delete` doesn’t update the store, so reassign the value
-      $entryDraft.currentValues[_locale] = $entryDraft.currentValues[_locale];
     });
   };
 
@@ -190,14 +193,8 @@
         return;
       }
 
-      (fields || [field]).forEach(({ name }) => {
-        [
-          $entryDraft.currentValues[_locale][`${keyPath}.${index}.${name}`],
-          $entryDraft.currentValues[_locale][`${keyPath}.${index - 1}.${name}`],
-        ] = [
-          $entryDraft.currentValues[_locale][`${keyPath}.${index - 1}.${name}`],
-          $entryDraft.currentValues[_locale][`${keyPath}.${index}.${name}`],
-        ];
+      updateComplexList(_locale, (list) => {
+        [list[index], list[index - 1]] = [list[index - 1], list[index]];
       });
     });
   };
@@ -213,21 +210,15 @@
         return;
       }
 
-      (fields || [field]).forEach(({ name }) => {
-        [
-          $entryDraft.currentValues[_locale][`${keyPath}.${index + 1}.${name}`],
-          $entryDraft.currentValues[_locale][`${keyPath}.${index}.${name}`],
-        ] = [
-          $entryDraft.currentValues[_locale][`${keyPath}.${index}.${name}`],
-          $entryDraft.currentValues[_locale][`${keyPath}.${index + 1}.${name}`],
-        ];
+      updateComplexList(_locale, (list) => {
+        [list[index], list[index + 1]] = [list[index + 1], list[index]];
       });
     });
   };
 
   $: {
     if (mounted && !hasSubFields) {
-      updateSimpleListValue(inputValue);
+      updateSimpleList(inputValue);
     }
   }
 </script>
@@ -250,15 +241,7 @@
       </div>
       <Spacer flex />
       {#if allowAdd && (addToTop || !items.length)}
-        <Button
-          class="secondary"
-          disabled={max && items.length === max}
-          iconName="add"
-          label={$_('add_x', { values: { name: labelSingular || label } })}
-          on:click={() => {
-            addItem(true);
-          }}
-        />
+        <AddItemButton {fieldConfig} {items} {addItem} />
       {/if}
     </div>
     <div class="item-list" id="list-{widgetId}-item-list" class:collapsed={!parentExpanded}>
@@ -266,45 +249,61 @@
         <!-- @todo Support drag sorting. -->
         <div class="item">
           <div class="header">
-            <Button
-              iconName={itemExpandedList[index] ? 'expand_more' : 'chevron_right'}
-              iconLabel={itemExpandedList[index] ? $_('collapse') : $_('expand')}
-              aria-expanded={itemExpandedList[index]}
-              aria-controls="list-{widgetId}-item-{index}-body"
-              on:click={() => {
-                itemExpandedList[index] = !itemExpandedList[index];
-              }}
-            />
-            <Spacer flex={true} />
-            <Button
-              iconName="arrow_upward"
-              iconLabel={$_('move_up')}
-              disabled={index === 0}
-              on:click={() => {
-                moveUpItem(index);
-              }}
-            />
-            <Spacer />
-            <Button
-              iconName="arrow_downward"
-              iconLabel={$_('move_down')}
-              disabled={index === items.length - 1}
-              on:click={() => {
-                moveDownItem(index);
-              }}
-            />
-            <Spacer flex={true} />
-            <Button
-              iconName="close"
-              iconLabel={$_('delete')}
-              on:click={() => {
-                deleteItem(index);
-              }}
-            />
+            <div>
+              <Button
+                iconName={itemExpandedList[index] ? 'expand_more' : 'chevron_right'}
+                iconLabel={itemExpandedList[index] ? $_('collapse') : $_('expand')}
+                aria-expanded={itemExpandedList[index]}
+                aria-controls="list-{widgetId}-item-{index}-body"
+                on:click={() => {
+                  itemExpandedList[index] = !itemExpandedList[index];
+                }}
+              >
+                {#if types}
+                  <span class="type">
+                    {types.find(({ name }) => name === item[typeKey])?.label || ''}
+                  </span>
+                {/if}
+              </Button>
+            </div>
+            <div>
+              <Button
+                iconName="arrow_upward"
+                iconLabel={$_('move_up')}
+                disabled={index === 0}
+                on:click={() => {
+                  moveUpItem(index);
+                }}
+              />
+              <Spacer />
+              <Button
+                iconName="arrow_downward"
+                iconLabel={$_('move_down')}
+                disabled={index === items.length - 1}
+                on:click={() => {
+                  moveDownItem(index);
+                }}
+              />
+            </div>
+            <div>
+              <Button
+                iconName="close"
+                iconLabel={$_('delete')}
+                on:click={() => {
+                  deleteItem(index);
+                }}
+              />
+            </div>
           </div>
           <div class="item-body" id="list-{widgetId}-item-{index}-body">
             {#if itemExpandedList[index]}
-              {#each fields || [field] as subField (subField.name)}
+              {@const subFieldName = Array.isArray(types)
+                ? $entryDraft.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
+                : undefined}
+              {@const subFields = subFieldName
+                ? types.find(({ name }) => name === subFieldName)?.fields || []
+                : fields || [field]}
+              {#each subFields as subField (subField.name)}
                 <FieldEditor
                   keyPath={[keyPath, index, subField.name].join('.')}
                   {locale}
@@ -333,15 +332,7 @@
     {#if allowAdd && !addToTop && items.length}
       <div class="toolbar bottom">
         <Spacer flex />
-        <Button
-          class="secondary"
-          disabled={max && items.length === max}
-          iconName="add"
-          label={$_('add_x', { values: { name: labelSingular || label } })}
-          on:click={() => {
-            addItem();
-          }}
-        />
+        <AddItemButton {fieldConfig} {items} {addItem} />
       </div>
     {/if}
   {:else}
@@ -374,8 +365,34 @@
       padding: 4px;
       background-color: var(--primary-border-color);
 
+      & > div {
+        display: flex;
+        align-items: center;
+
+        &:first-child {
+          justify-content: flex-start;
+          width: 40%;
+        }
+
+        &:nth-child(2) {
+          width: 20%;
+          justify-content: center;
+        }
+
+        &:last-child {
+          width: 40%;
+          justify-content: flex-end;
+        }
+      }
+
       :global(.icon) {
         font-size: 16px;
+      }
+
+      .type {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--secondary-foreground-color);
       }
     }
 

@@ -14,7 +14,15 @@
   export let fieldConfig = {};
   export let currentValue = undefined;
 
-  $: ({ name: fieldName, fields, field } = fieldConfig);
+  $: ({
+    name: fieldName,
+    // Widget-specific options
+    field,
+    fields,
+    types,
+    typeKey = 'type',
+  } = fieldConfig);
+  $: hasSubFields = !!(field || fields || types);
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
@@ -31,10 +39,16 @@
     )[fieldName] || [];
 </script>
 
-{#if fields || field}
+{#if hasSubFields}
   {#each items as item, index}
+    {@const subFieldName = Array.isArray(types)
+      ? $entryDraft.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
+      : undefined}
+    {@const subFields = subFieldName
+      ? types.find(({ name }) => name === subFieldName)?.fields || []
+      : fields || [field]}
     <section class="subsection">
-      {#each fields || [field] as subField (subField.name)}
+      {#each subFields as subField (subField.name)}
         <FieldPreview
           keyPath={[keyPath, index, subField.name].join('.')}
           {locale}
