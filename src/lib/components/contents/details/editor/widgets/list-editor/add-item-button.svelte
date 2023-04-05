@@ -1,5 +1,5 @@
 <script>
-  import { Button, MenuButton, MenuItem } from '@sveltia/ui';
+  import { Button, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   export let fieldConfig = {};
@@ -21,13 +21,13 @@
   this={hasTypes ? MenuButton : Button}
   class="secondary"
   disabled={max && items.length === max}
-  iconName="add"
   label={$_('add_x', { values: { name: labelSingular || label } })}
   on:click={hasTypes ? undefined : () => addItem()}
 >
-  {#if hasTypes}
+  <Icon slot="start-icon" name="add" />
+  <svelte:component this={hasTypes ? Menu : undefined} slot="popup">
     {#each types as { name, label } (name)}
       <MenuItem {label} on:click={() => addItem(name)} />
     {/each}
-  {/if}
+  </svelte:component>
 </svelte:component>

@@ -1,5 +1,5 @@
 <script>
-  import { Dialog, Tab, TabList } from '@sveltia/ui';
+  import { Dialog, Icon, Tab, TabList } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import AppearancePanel from '$lib/components/prefs/panels/appearance-panel.svelte';
   import EditorPanel from '$lib/components/prefs/panels/editor-panel.svelte';
@@ -16,16 +16,17 @@
     <TabList orientation="vertical">
       <Tab
         label={$_('prefs.appearance.title')}
-        iconName="design_services"
         aria-selected={true}
         aria-controls="prefs-tab-appearance"
-      />
-      <Tab label={$_('prefs.editor.title')} iconName="edit_note" aria-controls="prefs-tab-editor" />
-      <Tab
-        label={$_('prefs.media.title')}
-        iconName="photo_library"
-        aria-controls="prefs-tab-media"
-      />
+      >
+        <Icon slot="start-icon" name="design_services" />
+      </Tab>
+      <Tab label={$_('prefs.editor.title')} aria-controls="prefs-tab-editor">
+        <Icon slot="start-icon" name="edit_note" />
+      </Tab>
+      <Tab label={$_('prefs.media.title')} aria-controls="prefs-tab-media">
+        <Icon slot="start-icon" name="photo_library" />
+      </Tab>
     </TabList>
     <AppearancePanel />
     <EditorPanel />

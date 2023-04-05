@@ -4,7 +4,7 @@
   @see https://www.netlifycms.org/docs/widgets/#list
 -->
 <script>
-  import { Button, Group, Spacer, TextInput } from '@sveltia/ui';
+  import { Button, Group, Icon, Spacer, TextInput } from '@sveltia/ui';
   import { flatten, unflatten } from 'flat';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -228,14 +228,18 @@
     <div class="toolbar top">
       <Button
         disabled={!items.length}
-        iconName={parentExpanded ? 'expand_more' : 'chevron_right'}
-        iconLabel={parentExpanded ? $_('collapse') : $_('expand')}
         aria-expanded={parentExpanded}
         aria-controls="list-{widgetId}-item-list"
         on:click={() => {
           parentExpanded = !parentExpanded;
         }}
-      />
+      >
+        <Icon
+          slot="start-icon"
+          name={parentExpanded ? 'expand_more' : 'chevron_right'}
+          label={parentExpanded ? $_('collapse') : $_('expand')}
+        />
+      </Button>
       <div class="summary" id="oblect-{widgetId}-summary">
         {`${items.length} ${items.length === 1 ? labelSingular || label : label}`}
       </div>
@@ -251,14 +255,17 @@
           <div class="header">
             <div>
               <Button
-                iconName={itemExpandedList[index] ? 'expand_more' : 'chevron_right'}
-                iconLabel={itemExpandedList[index] ? $_('collapse') : $_('expand')}
                 aria-expanded={itemExpandedList[index]}
                 aria-controls="list-{widgetId}-item-{index}-body"
                 on:click={() => {
                   itemExpandedList[index] = !itemExpandedList[index];
                 }}
               >
+                <Icon
+                  slot="start-icon"
+                  name={itemExpandedList[index] ? 'expand_more' : 'chevron_right'}
+                  label={itemExpandedList[index] ? $_('collapse') : $_('expand')}
+                />
                 {#if types}
                   <span class="type">
                     {types.find(({ name }) => name === item[typeKey])?.label || ''}
@@ -268,31 +275,31 @@
             </div>
             <div>
               <Button
-                iconName="arrow_upward"
-                iconLabel={$_('move_up')}
                 disabled={index === 0}
                 on:click={() => {
                   moveUpItem(index);
                 }}
-              />
+              >
+                <Icon slot="start-icon" name="arrow_upward" label={$_('move_up')} />
+              </Button>
               <Spacer />
               <Button
-                iconName="arrow_downward"
-                iconLabel={$_('move_down')}
                 disabled={index === items.length - 1}
                 on:click={() => {
                   moveDownItem(index);
                 }}
-              />
+              >
+                <Icon slot="start-icon" name="arrow_downward" label={$_('move_down')} />
+              </Button>
             </div>
             <div>
               <Button
-                iconName="close"
-                iconLabel={$_('delete')}
                 on:click={() => {
                   deleteItem(index);
                 }}
-              />
+              >
+                <Icon slot="start-icon" name="close" label={$_('delete')} />
+              </Button>
             </div>
           </div>
           <div class="item-body" id="list-{widgetId}-item-{index}-body">

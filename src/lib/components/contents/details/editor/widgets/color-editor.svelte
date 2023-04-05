@@ -6,7 +6,7 @@
   @todo Support the `enableAlpha` option.
 -->
 <script>
-  import { Button, TextInput } from '@sveltia/ui';
+  import { Button, Icon, TextInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { defaultContentLocale } from '$lib/services/config';
 
@@ -37,12 +37,12 @@
   <Button
     class="ternary iconic"
     disabled={!currentValue}
-    iconName="delete"
-    iconLabel={$_('clear')}
     on:click={() => {
       currentValue = '';
     }}
-  />
+  >
+    <Icon slot="start-icon" name="delete" label={$_('clear')} />
+  </Button>
 </div>
 
 <style lang="scss">

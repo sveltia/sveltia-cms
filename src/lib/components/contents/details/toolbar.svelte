@@ -3,6 +3,8 @@
   import {
     Button,
     Dialog,
+    Icon,
+    Menu,
     MenuButton,
     MenuItem,
     MenuItemCheckbox,
@@ -35,12 +37,12 @@
 <Toolbar class="primary">
   <Button
     class="ternary iconic"
-    iconName="arrow_back_ios_new"
-    iconLabel={$_('cancel')}
     on:click={() => {
       goBack(`/collections/${collection.name}`);
     }}
-  />
+  >
+    <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel')} />
+  </Button>
   <h2>
     {#if isNew}
       {$_('creating_x', { values: { name: collection.label } })}
@@ -53,59 +55,57 @@
     {/if}
   </h2>
   <Spacer flex={true} />
-  <MenuButton
-    class="ternary iconic"
-    iconName="more_vert"
-    iconLabel={$_('show_menu')}
-    position="bottom-right"
-  >
-    <MenuItemCheckbox
-      label={$_('show_preview')}
-      checked={$entryViewSettings.showPreview}
-      disabled={!canPreview}
-      on:click={() => {
-        entryViewSettings.update((view) => ({
-          ...view,
-          showPreview: !view.showPreview,
-        }));
-      }}
-    />
-    <MenuItemCheckbox
-      label={$_('sync_scrolling')}
-      checked={$entryViewSettings.syncScrolling}
-      disabled={!canPreview && Object.keys(currentValues).length === 1}
-      on:click={() => {
-        entryViewSettings.update((view) => ({
-          ...view,
-          syncScrolling: !view.syncScrolling,
-        }));
-      }}
-    />
-    <Separator />
-    <MenuItem
-      label={$_('revert_all_changes')}
-      disabled={!modified}
-      on:click={() => {
-        revertChanges();
-      }}
-    />
-    <Separator />
-    <!-- @todo Implement this!
-    <MenuItem
-      label={$_('duplicate')}
-      disabled={!$entryDraft}
-      on:click={() => {
-        goto(`/collections/${collection.name}/new`);
-      }}
-    />
-    -->
-    <MenuItem
-      disabled={collection.delete === false || isNew}
-      label={$_('delete')}
-      on:click={() => {
-        showDeleteDialog = true;
-      }}
-    />
+  <MenuButton class="ternary iconic" popupPosition="bottom-right">
+    <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
+    <Menu slot="popup">
+      <MenuItemCheckbox
+        label={$_('show_preview')}
+        checked={$entryViewSettings.showPreview}
+        disabled={!canPreview}
+        on:click={() => {
+          entryViewSettings.update((view) => ({
+            ...view,
+            showPreview: !view.showPreview,
+          }));
+        }}
+      />
+      <MenuItemCheckbox
+        label={$_('sync_scrolling')}
+        checked={$entryViewSettings.syncScrolling}
+        disabled={!canPreview && Object.keys(currentValues).length === 1}
+        on:click={() => {
+          entryViewSettings.update((view) => ({
+            ...view,
+            syncScrolling: !view.syncScrolling,
+          }));
+        }}
+      />
+      <Separator />
+      <MenuItem
+        label={$_('revert_all_changes')}
+        disabled={!modified}
+        on:click={() => {
+          revertChanges();
+        }}
+      />
+      <Separator />
+      <!-- @todo Implement this!
+      <MenuItem
+        label={$_('duplicate')}
+        disabled={!$entryDraft}
+        on:click={() => {
+          goto(`/collections/${collection.name}/new`);
+        }}
+      />
+      -->
+      <MenuItem
+        disabled={collection.delete === false || isNew}
+        label={$_('delete')}
+        on:click={() => {
+          showDeleteDialog = true;
+        }}
+      />
+    </Menu>
   </MenuButton>
   <Button
     class="primary"

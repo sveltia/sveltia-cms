@@ -1,5 +1,5 @@
 <script>
-  import { Button, Separator, Spacer, Toolbar } from '@sveltia/ui';
+  import { Button, Icon, Separator, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
@@ -46,14 +46,14 @@
       class="ternary iconic"
       disabled={!$listedAssets.length}
       pressed={!!$currentView?.showInfo}
-      iconName="info"
-      iconLabel={$_('show_info')}
       on:click={() => {
         currentView.update((view) => ({
           ...view,
           showInfo: !$currentView?.showInfo,
         }));
       }}
-    />
+    >
+      <Icon slot="start-icon" name="info" label={$_('show_info')} />
+    </Button>
   </Toolbar>
 {/if}

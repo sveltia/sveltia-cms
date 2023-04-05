@@ -1,5 +1,5 @@
 <script>
-  import { Button, Spacer, Toolbar } from '@sveltia/ui';
+  import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import DeleteAssetsDialog from '$lib/components/assets/shared/delete-assets-dialog.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
@@ -27,41 +27,45 @@
   <Button
     class="secondary"
     disabled={!$selectedAssets.length}
-    iconName="delete"
     label={$_('delete')}
     on:click={() => {
       showDeleteDialog = true;
     }}
-  />
+  >
+    <Icon slot="start-icon" name="delete" />
+  </Button>
   <!-- @todo Implement these actions. -->
   <!--
   <Button
     class="secondary"
     disabled={$selectedAssets.length !== 1}
-    iconName="file_copy"
     label={$_('copy')}
     on:click={() => {
       //
     }}
-  />
+  >
+    <Icon slot="start-icon" name="file_copy" />
+  </Button>
   <Button
     class="secondary"
     disabled={!$selectedAssets.length}
-    iconName="download"
     label={$_('download')}
     on:click={() => {
       //
     }}
-  />
+  >
+    <Icon slot="start-icon" name="download" />
+  </Button>
   -->
   <Button
     class="primary"
-    iconName="cloud_upload"
     label={$_('upload')}
     on:click={() => {
       filePicker.open();
     }}
-  />
+  >
+    <Icon slot="start-icon" name="cloud_upload" />
+  </Button>
 </Toolbar>
 
 <FilePicker

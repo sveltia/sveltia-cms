@@ -1,5 +1,5 @@
 <script>
-  import { Group, Listbox, Option } from '@sveltia/ui';
+  import { Group, Icon, Listbox, Option } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { allAssetPaths, selectedAssetFolderPath } from '$lib/services/assets';
   import { getFolderLabel } from '$lib/services/assets/view';
@@ -14,7 +14,6 @@
         {@const selected = folderPath === $selectedAssetFolderPath}
         <Option
           {selected}
-          iconName="folder"
           label={getFolderLabel(folderPath)}
           on:click={() => {
             goto(folderPath ? `/assets/${folderPath}` : `/assets`);
@@ -43,7 +42,9 @@
             // @todo Move the assets while updating entries using the files, after showing a
             // confirmation dialog.
           }}
-        />
+        >
+          <Icon slot="start-icon" name="folder" />
+        </Option>
       {/each}
     </Listbox>
   </section>

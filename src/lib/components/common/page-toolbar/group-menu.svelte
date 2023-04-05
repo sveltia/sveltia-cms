@@ -1,5 +1,5 @@
 <script>
-  import { MenuButton, MenuItemRadio } from '@sveltia/ui';
+  import { Icon, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   export let label = '';
@@ -10,26 +10,29 @@
 </script>
 
 <MenuButton class="ternary" label={label || $_('group_by')} {disabled}>
-  <MenuItemRadio
-    label={noneLabel || $_('sort_keys.none')}
-    checked={!$currentView.group}
-    on:click={() => {
-      currentView.update((view) => ({
-        ...view,
-        group: undefined,
-      }));
-    }}
-  />
-  {#each groups as { label, field, pattern }}
+  <Icon slot="end-icon" name="arrow_drop_down" />
+  <Menu slot="popup">
     <MenuItemRadio
-      {label}
-      checked={$currentView.group?.field === field && $currentView.group?.pattern === pattern}
+      label={noneLabel || $_('sort_keys.none')}
+      checked={!$currentView.group}
       on:click={() => {
         currentView.update((view) => ({
           ...view,
-          group: { field, pattern },
+          group: undefined,
         }));
       }}
     />
-  {/each}
+    {#each groups as { label, field, pattern }}
+      <MenuItemRadio
+        {label}
+        checked={$currentView.group?.field === field && $currentView.group?.pattern === pattern}
+        on:click={() => {
+          currentView.update((view) => ({
+            ...view,
+            group: { field, pattern },
+          }));
+        }}
+      />
+    {/each}
+  </Menu>
 </MenuButton>

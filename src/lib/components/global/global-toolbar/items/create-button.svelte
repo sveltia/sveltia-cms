@@ -1,5 +1,5 @@
 <script>
-  import { MenuButton, MenuItem, Separator } from '@sveltia/ui';
+  import { Icon, Menu, MenuButton, MenuItem, Separator } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
   import { uploadingAssets } from '$lib/services/assets';
@@ -9,26 +9,29 @@
   let filePicker;
 </script>
 
-<MenuButton class="ternary iconic" iconName="add" iconLabel={$_('create')} position="bottom-right">
-  {#each $siteConfig.collections as { name, label, folder, hide = false, create = false } (name)}
-    {#if folder && !hide}
-      <MenuItem
-        {label}
-        disabled={!create}
-        on:click={() => {
-          goto(`/collections/${name}/new`);
-        }}
-      />
-    {/if}
-  {/each}
-  <Separator />
-  <MenuItem
-    label={$_('assets')}
-    on:click={() => {
-      goto(`/assets`);
-      filePicker.open();
-    }}
-  />
+<MenuButton class="ternary iconic" popupPosition="bottom-right">
+  <Icon slot="start-icon" name="add" label={$_('create')} />
+  <Menu slot="popup">
+    {#each $siteConfig.collections as { name, label, folder, hide = false, create = false } (name)}
+      {#if folder && !hide}
+        <MenuItem
+          {label}
+          disabled={!create}
+          on:click={() => {
+            goto(`/collections/${name}/new`);
+          }}
+        />
+      {/if}
+    {/each}
+    <Separator />
+    <MenuItem
+      label={$_('assets')}
+      on:click={() => {
+        goto(`/assets`);
+        filePicker.open();
+      }}
+    />
+  </Menu>
 </MenuButton>
 
 <FilePicker

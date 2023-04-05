@@ -4,7 +4,7 @@
   @see https://www.netlifycms.org/docs/widgets/#select
 -->
 <script>
-  import { Button, Combobox, Option, Select } from '@sveltia/ui';
+  import { Button, Combobox, Icon, Option, Select } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { defaultContentLocale } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/editor';
@@ -41,12 +41,12 @@
           {label}
           <Button
             {disabled}
-            iconName="close"
-            iconLabel={$_('delete')}
             on:click={() => {
               $entryDraft.currentValues[locale][`${keyPath}.${index}`] = undefined;
             }}
-          />
+          >
+            <Icon slot="start-icon" name="close" label={$_('delete')} />
+          </Button>
         </span>
       {/if}
     {/each}

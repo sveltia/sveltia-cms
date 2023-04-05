@@ -1,5 +1,5 @@
 <script>
-  import { Button, Separator, Spacer, Toolbar } from '@sveltia/ui';
+  import { Button, Icon, Separator, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
   import GroupMenu from '$lib/components/common/page-toolbar/group-menu.svelte';
@@ -60,14 +60,14 @@
       class="ternary iconic"
       disabled={!$selectedCollection.media_folder}
       pressed={!!$currentView?.showMedia}
-      iconName="photo_library"
-      iconLabel={$_('show_assets')}
       on:click={() => {
         currentView.update((view) => ({
           ...view,
           showMedia: !$currentView?.showMedia,
         }));
       }}
-    />
+    >
+      <Icon slot="start-icon" name="photo_library" label={$_('show_assets')} />
+    </Button>
   </Toolbar>
 {/if}

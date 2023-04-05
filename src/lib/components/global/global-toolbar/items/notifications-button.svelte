@@ -1,14 +1,14 @@
 <script>
-  import { Button } from '@sveltia/ui';
+  import { Button, Icon } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 </script>
 
 <Button
   class="ternary iconic"
-  iconName="notifications"
-  iconLabel={$_('notifications')}
   hidden={true}
   on:click={() => {
     // @todo Implement this!
   }}
-/>
+>
+  <Icon slot="start-icon" name="notifications" label={$_('notifications')} />
+</Button>

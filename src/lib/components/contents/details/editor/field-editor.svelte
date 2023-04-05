@@ -1,5 +1,5 @@
 <script>
-  import { MenuButton, MenuItem, Separator } from '@sveltia/ui';
+  import { Icon, Menu, MenuButton, MenuItem, Separator } from '@sveltia/ui';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
   import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
@@ -78,33 +78,31 @@
     <header>
       <h4>{label}</h4>
       {#if canCopy || canRevert}
-        <MenuButton
-          class="ternary iconic small"
-          iconName="more_vert"
-          iconLabel={$_('show_menu')}
-          position="bottom-right"
-        >
-          {#if canCopy}
-            {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widget)}
-              <CopyMenuItem {keyPath} {locale} translate={true} />
-              {#if otherLocales.length > 1}
-                <Separator />
+        <MenuButton class="ternary iconic small" popupPosition="bottom-right">
+          <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
+          <Menu slot="popup">
+            {#if canCopy}
+              {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widget)}
+                <CopyMenuItem {keyPath} {locale} translate={true} />
+                {#if otherLocales.length > 1}
+                  <Separator />
+                {/if}
               {/if}
+              <CopyMenuItem {keyPath} {locale} />
             {/if}
-            <CopyMenuItem {keyPath} {locale} />
-          {/if}
-          {#if canCopy && canRevert}
-            <Separator />
-          {/if}
-          {#if canRevert}
-            <MenuItem
-              label={$_('revert_changes')}
-              disabled={currentValue === originalValue}
-              on:click={() => {
-                revertChanges(locale, keyPath);
-              }}
-            />
-          {/if}
+            {#if canCopy && canRevert}
+              <Separator />
+            {/if}
+            {#if canRevert}
+              <MenuItem
+                label={$_('revert_changes')}
+                disabled={currentValue === originalValue}
+                on:click={() => {
+                  revertChanges(locale, keyPath);
+                }}
+              />
+            {/if}
+          </Menu>
         </MenuButton>
       {/if}
     </header>

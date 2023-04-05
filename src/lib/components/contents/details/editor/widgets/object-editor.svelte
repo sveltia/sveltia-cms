@@ -4,7 +4,7 @@
   @see https://www.netlifycms.org/docs/widgets/#object
 -->
 <script>
-  import { Button, Group, Spacer } from '@sveltia/ui';
+  import { Button, Group, Icon, Spacer } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { entryDraft } from '$lib/services/contents/editor';
@@ -36,14 +36,18 @@
 <Group aria-labelledby="oblect-{widgetId}-summary">
   <div class="toolbar top">
     <Button
-      iconName={parentExpanded ? 'expand_more' : 'chevron_right'}
-      iconLabel={parentExpanded ? $_('collapse') : $_('expand')}
       aria-expanded={parentExpanded}
       aria-controls="oblect-{widgetId}-item-list"
       on:click={() => {
         parentExpanded = !parentExpanded;
       }}
-    />
+    >
+      <Icon
+        slot="start-icon"
+        name={parentExpanded ? 'expand_more' : 'chevron_right'}
+        label={parentExpanded ? $_('collapse') : $_('expand')}
+      />
+    </Button>
     <div class="summary" id="oblect-{widgetId}-summary">
       {#if summary}
         {summary.replaceAll(

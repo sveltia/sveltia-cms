@@ -1,5 +1,7 @@
 <script>
   import {
+    Icon,
+    Menu,
     MenuButton,
     MenuItem,
     SelectButton,
@@ -69,27 +71,25 @@
     {/if}
     <Spacer flex={true} />
     {#if $thisPane.mode === 'edit'}
-      <MenuButton
-        class="ternary iconic"
-        iconName="more_vert"
-        iconLabel={$_('show_menu')}
-        position="bottom-right"
-      >
-        {#if canCopy}
-          <CopyMenuItem locale={$thisPane.locale} translate={true} />
-          {#if otherLocales.length > 1}
+      <MenuButton class="ternary iconic" popupPosition="bottom-right">
+        <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
+        <Menu slot="popup">
+          {#if canCopy}
+            <CopyMenuItem locale={$thisPane.locale} translate={true} />
+            {#if otherLocales.length > 1}
+              <Separator />
+            {/if}
+            <CopyMenuItem locale={$thisPane.locale} />
             <Separator />
           {/if}
-          <CopyMenuItem locale={$thisPane.locale} />
-          <Separator />
-        {/if}
-        <MenuItem
-          label={$_('revert_changes')}
-          disabled={!canRevert}
-          on:click={() => {
-            revertChanges($thisPane.locale);
-          }}
-        />
+          <MenuItem
+            label={$_('revert_changes')}
+            disabled={!canRevert}
+            on:click={() => {
+              revertChanges($thisPane.locale);
+            }}
+          />
+        </Menu>
       </MenuButton>
     {/if}
   </Toolbar>

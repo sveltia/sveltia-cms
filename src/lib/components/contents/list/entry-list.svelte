@@ -1,5 +1,5 @@
 <script>
-  import { Button, Group } from '@sveltia/ui';
+  import { Button, Group, Icon } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import BasicGridView from '$lib/components/common/basic-grid-view.svelte';
   import BasicListView from '$lib/components/common/basic-list-view.svelte';
@@ -40,12 +40,13 @@
         <Button
           class="primary"
           disabled={!$selectedCollection.create}
-          iconName="edit"
           label={$_('create_new_entry')}
           on:click={() => {
             goto(`/collections/${$selectedCollection.name}/new`);
           }}
-        />
+        >
+          <Icon slot="start-icon" name="edit" />
+        </Button>
       </EmptyState>
     {/if}
   {:else}

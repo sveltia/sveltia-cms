@@ -1,5 +1,5 @@
 <script>
-  import { Button } from '@sveltia/ui';
+  import { Button, Icon } from '@sveltia/ui';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
@@ -53,12 +53,13 @@
         <div>
           <Button
             class="primary"
-            iconName="cloud_upload"
             label={$_('upload')}
             on:click={() => {
               filePicker.open();
             }}
-          />
+          >
+            <Icon slot="start-icon" name="cloud_upload" />
+          </Button>
         </div>
       {/if}
       {#if showFilePreview && files.length}

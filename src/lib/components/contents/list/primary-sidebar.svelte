@@ -1,5 +1,5 @@
 <script>
-  import { Group, Listbox, Option } from '@sveltia/ui';
+  import { Group, Icon, Listbox, Option } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { siteConfig } from '$lib/services/config';
   import { selectedCollection } from '$lib/services/contents';
@@ -15,13 +15,14 @@
       {#each collections as { name, label, icon, hide = false } (name)}
         {#if !hide}
           <Option
-            iconName={icon || 'edit_note'}
             {label}
             selected={$selectedCollection.name === name}
             on:click={() => {
               goto(`/collections/${name}`);
             }}
-          />
+          >
+            <Icon slot="start-icon" name={icon || 'edit_note'} />
+          </Option>
         {/if}
       {/each}
     </Listbox>

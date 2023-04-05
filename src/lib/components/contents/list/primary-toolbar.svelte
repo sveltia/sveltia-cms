@@ -1,5 +1,5 @@
 <script>
-  import { Button, Toolbar } from '@sveltia/ui';
+  import { Button, Icon, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
@@ -24,22 +24,24 @@
     {#if !files}
       <Button
         class="secondary"
-        iconName="delete"
         label={$_('delete')}
         disabled={!$selectedEntries.length || !canDelete}
         on:click={() => {
           showDeleteDialog = true;
         }}
-      />
+      >
+        <Icon slot="start-icon" name="delete" />
+      </Button>
       <Button
         class="primary"
         disabled={!create}
-        iconName="edit"
         label={$_('create')}
         on:click={() => {
           goto(`/collections/${name}/new`);
         }}
-      />
+      >
+        <Icon slot="start-icon" name="edit" />
+      </Button>
     {/if}
   </Toolbar>
 {/if}

@@ -1,5 +1,5 @@
 <script>
-  import { MenuButton, MenuItemRadio } from '@sveltia/ui';
+  import { Icon, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   export let label = '';
@@ -10,26 +10,29 @@
 </script>
 
 <MenuButton class="ternary" label={label || $_('filter_by')} {disabled}>
-  <MenuItemRadio
-    label={noneLabel || $_('sort_keys.none')}
-    checked={!$currentView.filter}
-    on:click={() => {
-      currentView.update((view) => ({
-        ...view,
-        filter: undefined,
-      }));
-    }}
-  />
-  {#each filters as { label, field, pattern }}
+  <Icon slot="end-icon" name="arrow_drop_down" />
+  <Menu slot="popup">
     <MenuItemRadio
-      {label}
-      checked={$currentView.filter?.field === field && $currentView.filter?.pattern === pattern}
+      label={noneLabel || $_('sort_keys.none')}
+      checked={!$currentView.filter}
       on:click={() => {
         currentView.update((view) => ({
           ...view,
-          filter: { field, pattern },
+          filter: undefined,
         }));
       }}
     />
-  {/each}
+    {#each filters as { label, field, pattern }}
+      <MenuItemRadio
+        {label}
+        checked={$currentView.filter?.field === field && $currentView.filter?.pattern === pattern}
+        on:click={() => {
+          currentView.update((view) => ({
+            ...view,
+            filter: { field, pattern },
+          }));
+        }}
+      />
+    {/each}
+  </Menu>
 </MenuButton>

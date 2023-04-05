@@ -1,5 +1,5 @@
 <script>
-  import { Button, Spacer, Toolbar } from '@sveltia/ui';
+  import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import DeleteAssetsDialog from '$lib/components/assets/shared/delete-assets-dialog.svelte';
   import { selectedAsset, selectedAssetFolderPath } from '$lib/services/assets';
@@ -11,12 +11,12 @@
 <Toolbar class="primary">
   <Button
     class="ternary iconic"
-    iconName="arrow_back_ios_new"
-    iconLabel={$_('cancel')}
     on:click={() => {
       goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
     }}
-  />
+  >
+    <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel')} />
+  </Button>
   <h2>{$selectedAsset.name}</h2>
   <Spacer flex={true} />
   <!-- @todo Implement these actions.
@@ -25,12 +25,13 @@
   -->
   <Button
     class="secondary"
-    iconName="delete"
     label={$_('delete')}
     on:click={() => {
       showDeleteDialog = true;
     }}
-  />
+  >
+    <Icon slot="start-icon" name="delete" />
+  </Button>
 </Toolbar>
 
 <DeleteAssetsDialog
