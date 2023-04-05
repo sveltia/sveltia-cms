@@ -107,7 +107,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | Open Authoring | Not yet supported. |
 | Folder Collections Path | Not yet supported. |
 | Folder Collections Media and Public Folder | Only the _undocumented_, absolute path per-collection folder configuration is currently supported. [See below](#use-a-custom-media-folder-for-a-collection). |
-| List Widget: Variable Types | Coming soon. |
+| List Widget: Variable Types | Supported. |
 | Custom Mount Element | Supported. |
 | Manual Initialization | Not yet supported. |
 | Raw CSS in registerPreviewStyle | Not yet supported. |
@@ -138,6 +138,12 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 ### New users
 
 Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/add-to-your-site/) to add it to your site first. Then migrate to Sveltia CMS as described below.
+
+As the product evolves, we’ll implement the configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
+
+Here are some starter templates for popular frameworks created by our contributors. More to follow!
+
+- [Eleventy](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
 
 ### Migration
 
