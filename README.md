@@ -16,8 +16,8 @@ Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [N
 
 Sveltia CMS is a Git-based lightweight headless CMS, which means:
 
-- Git-based: Your content is saved as static JSON, YAML or TOML files on a Git repository. No database or API is involved.
-- Lightweight: The app is compiled as a single small JavaScript file served via a CDN. You don’t have to sign up for a service or install the software.
+- Git-based: Your content is saved as static JSON, YAML or TOML files on your Git repository. No database or API is involved. Your data is yours.
+- Lightweight: The app is compiled as a single small JavaScript file served via a CDN. You don’t have to sign up for a service or install additional software.
 - Headless: The CMS only takes care of raw data. You can read it and render the final content with your favourite framework.
 
 Here are some highlights mainly compared to Netlify/Decap CMS:
@@ -36,7 +36,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better performance
 
-- Built completely from scratch with [Svelte](https://svelte.dev/) rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast.
+- Built completely from scratch with [Svelte](https://svelte.dev/) rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript; you can use it with any framework.
 - Using the GraphQL API for GitHub by default to fetch contents quickly at once, so showing and searching entries and media are now instant. Saving entries and media is also much faster.
 - Small footprint: less than 250 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS.
 
@@ -73,7 +73,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | UI locales | Only English and Japanese are available at this time. No registration is needed. It can be changed in Preferences. |
-| Account | Only the GitHub backend is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. GitLab could be supported later, but other backends are unlikely to be added, mainly due to the lack of an API method fetching contents in bulk. We’ll support the `test-repo` backend for a demo site. |
+| Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. We plan to add support for the [Git Gateway](https://decapcms.org/docs/git-gateway-backend/) and [Test](https://decapcms.org/docs/test-backend/) backends. GitLab could also be supported, but the Azure and Bitbucket backends are unlikely to be added, mainly due to the lack of an API method fetching contents in bulk. |
 | Configuration | Supported. |
 | Media | External media storage services are not yet supported. |
 | Editorial Workflow | Coming soon. |
