@@ -73,7 +73,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | UI locales | Only English and Japanese are available at this time. No registration is needed. It can be changed in Preferences. |
-| Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. We plan to add support for the [Git Gateway](https://decapcms.org/docs/git-gateway-backend/) and [Test](https://decapcms.org/docs/test-backend/) backends. GitLab could also be supported, but the Azure and Bitbucket backends are unlikely to be added, mainly due to the lack of an API method fetching contents in bulk. |
+| Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own client](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. GitLab could also be supported, but the Azure, Bitbucket and Git Gateway backends are unlikely to be added, mainly due to the lack of an API method fetching contents in bulk. We plan to add support for the [Test backend](https://decapcms.org/docs/test-backend/) for our demo site and perhaps implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
 | Media | External media storage services are not yet supported. |
 | Editorial Workflow | Coming soon. |
@@ -102,7 +102,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | Working with a Local Git Repository | Supported. [See below](#work-with-a-local-git-repository) for details. |
 | GitLab and BitBucket Editorial Workflow Support | The GitLab backend is not yet supported. No plan to support BitBucket. |
 | i18n Support | Supported. In fact, i18n is at the core of Sveltia CMS! |
-| GitHub GraphQL API | Sveltia CMS uses GraphQL with no configuration. It cannot be disabled. |
+| GitHub GraphQL API | Sveltia CMS uses GraphQL with no configuration for a better performance. It cannot be disabled. |
 | GitLab GraphQL API | The GitLab backend is not yet supported. |
 | Open Authoring | Not yet supported. |
 | Folder Collections Path | Not yet supported. |
