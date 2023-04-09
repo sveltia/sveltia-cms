@@ -26,15 +26,18 @@
   } = fieldConfig);
   $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
 
-  $: options ||= fieldOptions.map((option) => ({
-    label: isObject(option) ? option.label : option,
-    value: isObject(option) ? option.value : option,
-  }));
+  $: sortedOptions = (
+    options ||
+    fieldOptions.map((option) => ({
+      label: isObject(option) ? option.label : option,
+      value: isObject(option) ? option.value : option,
+    }))
+  ).sort((a, b) => a.label.localeCompare(b.label));
 </script>
 
 {#if multiple}
   <div class="multi-selector" class:disabled>
-    {#each options as { label, value } (value)}
+    {#each sortedOptions as { label, value } (value)}
       {@const index = currentValue.indexOf(value)}
       {#if index > -1}
         <span>
@@ -50,7 +53,7 @@
         </span>
       {/if}
     {/each}
-    {#if (!max || currentValue.length < max) && currentValue.length < options.length}
+    {#if (!max || currentValue.length < max) && currentValue.length < sortedOptions.length}
       <Combobox
         {disabled}
         on:change={({ detail: { target, value } }) => {
@@ -67,7 +70,7 @@
           });
         }}
       >
-        {#each options as { label, value } (value)}
+        {#each sortedOptions as { label, value } (value)}
           {#if !currentValue.includes(value)}
             <Option {label} {value} />
           {/if}
@@ -79,9 +82,9 @@
   <Select
     {disabled}
     bind:value={currentValue}
-    label={options.find(({ value }) => value === currentValue)?.label || undefined}
+    label={sortedOptions.find(({ value }) => value === currentValue)?.label || undefined}
   >
-    {#each options as { label, value } (value)}
+    {#each sortedOptions as { label, value } (value)}
       <Option {label} {value} selected={value === currentValue} />
     {/each}
   </Select>
