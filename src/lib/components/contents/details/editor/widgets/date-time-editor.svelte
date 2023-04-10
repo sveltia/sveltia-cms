@@ -28,8 +28,8 @@
   } = fieldConfig);
   $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
   $: dateOnly = timeFormat === false;
+  $: timeOnly = dateFormat === false;
 
-  let dateTimeParts;
   let initialValue;
   let inputValue;
 
@@ -37,27 +37,34 @@
    * Set the current value given the input value.
    */
   const setCurrentValue = () => {
-    try {
-      currentValue = format
-        ? (pickerUTC ? moment.utc(inputValue) : moment(inputValue)).format(format)
-        : new Date(inputValue).toISOString();
-    } catch {
-      currentValue = undefined;
+    if (timeOnly) {
+      currentValue = inputValue;
+    } else {
+      try {
+        currentValue = format
+          ? (pickerUTC ? moment.utc(inputValue) : moment(inputValue)).format(format)
+          : new Date(inputValue).toISOString();
+      } catch {
+        currentValue = undefined;
+      }
     }
   };
 
   onMount(() => {
     if (required || currentValue) {
-      dateTimeParts = getDateTimeParts({
-        date: currentValue ? moment(currentValue, format).toDate() : new Date(),
-        timeZone: pickerUTC ? 'UTC' : undefined,
-      });
+      if (timeOnly) {
+        initialValue = currentValue || '';
+      } else {
+        const { year, month, day, hour, minute } = getDateTimeParts({
+          date: currentValue ? moment(currentValue, format).toDate() : new Date(),
+          timeZone: pickerUTC ? 'UTC' : undefined,
+        });
 
-      const { year, month, day, hour, minute } = dateTimeParts;
+        initialValue = dateOnly
+          ? `${year}-${month}-${day}`
+          : `${year}-${month}-${day}T${hour}:${minute}`;
+      }
 
-      initialValue = dateOnly
-        ? `${year}-${month}-${day}`
-        : `${year}-${month}-${day}T${hour}:${minute}`;
       inputValue = initialValue;
 
       if (!currentValue) {
@@ -76,6 +83,8 @@
 <div>
   {#if dateOnly}
     <input type="date" {disabled} bind:value={inputValue} />
+  {:else if timeOnly}
+    <input type="time" {disabled} bind:value={inputValue} />
   {:else}
     <input type="datetime-local" {disabled} bind:value={inputValue} />
   {/if}

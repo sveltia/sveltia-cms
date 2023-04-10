@@ -21,17 +21,26 @@
     picker_utc: pickerUTC = false,
   } = fieldConfig);
   $: dateOnly = timeFormat === false;
-  $: date = currentValue ? new Date(currentValue) : undefined;
+  $: timeOnly = dateFormat === false;
+  $: date = currentValue
+    ? new Date(
+        timeOnly ? new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`) : currentValue,
+      )
+    : undefined;
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
   <p>
-    <time datetime={date.toJSON()}>
-      {#if dateOnly}
-        {date.toLocaleDateString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
-      {:else}
-        {date.toLocaleString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
-      {/if}
-    </time>
+    {#if timeOnly}
+      {date.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric', hour12: true })}
+    {:else}
+      <time datetime={date.toJSON()}>
+        {#if dateOnly}
+          {date.toLocaleDateString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
+        {:else}
+          {date.toLocaleString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
+        {/if}
+      </time>
+    {/if}
   </p>
 {/if}
