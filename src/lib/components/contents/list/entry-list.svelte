@@ -55,3 +55,11 @@
     </EmptyState>
   {/if}
 </div>
+
+<style lang="scss">
+  h3 {
+    padding: 8px;
+    color: var(--secondary-foreground-color);
+    background-color: var(--secondary-background-color);
+  }
+</style>
