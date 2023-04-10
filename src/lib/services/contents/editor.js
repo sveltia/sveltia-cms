@@ -81,6 +81,49 @@ const createNewContent = (fields) => {
 };
 
 /**
+ * Create a Proxy that automatically copies a field value to other locale if the field’s i18n
+ * strategy is “duplicate.”
+ *
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.prop Property name in the {@link entryDraft} store that contains a
+ * locale/Proxy map.
+ * @param {string} args.locale Source locale.
+ * @param {object} [args.target] Target object.
+ * @returns {Proxy.<object>} Created proxy.
+ */
+const createProxy = ({
+  draft: { collectionName, fileName },
+  prop: entryDraftProp,
+  locale: sourceLocale,
+  target = {},
+}) => {
+  const defaultLocale = get(defaultContentLocale);
+
+  return new Proxy(target, {
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    set: (obj, keyPath, value) => {
+      const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, obj);
+
+      if (!fieldConfig) {
+        return true;
+      }
+
+      // Copy value to other locales
+      if (fieldConfig.i18n === 'duplicate' && sourceLocale === defaultLocale) {
+        Object.entries(get(entryDraft)[entryDraftProp]).forEach(([targetLocale, content]) => {
+          if (targetLocale !== sourceLocale && content[keyPath] !== value) {
+            content[keyPath] = value;
+          }
+        });
+      }
+
+      return Reflect.set(obj, keyPath, value);
+    },
+  });
+};
+
+/**
  * Create an entry draft.
  *
  * @param {string} collectionName Collection name.
@@ -88,7 +131,6 @@ const createNewContent = (fields) => {
  */
 export const createDraft = (collectionName, entry) => {
   const { i18n } = get(siteConfig);
-  const defaultLocale = get(defaultContentLocale);
   const collection = getCollection(collectionName);
   const isNew = !entry;
   const { slug, fileName, locales } = entry || {};
@@ -100,39 +142,6 @@ export const createDraft = (collectionName, entry) => {
   const { fields } = collectionFile || collection;
   const newContent = createNewContent(fields);
   const allLocales = i18n?.locales || ['default'];
-
-  /**
-   * Create a Proxy that automatically copies a field value to other locale if the field’s i18n
-   * strategy is “duplicate.”
-   *
-   * @param {string} entryDraftProp Property name in the {@link entryDraft} store that contains a
-   * locale/Proxy map.
-   * @param {string} sourceLocale Source locale.
-   * @param {object} [target] Target object.
-   * @returns {Proxy.<object>} Created proxy.
-   */
-  const createProxy = (entryDraftProp, sourceLocale, target = {}) =>
-    new Proxy(target, {
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      set: (obj, keyPath, value) => {
-        const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, obj);
-
-        if (!fieldConfig) {
-          return true;
-        }
-
-        // Copy value to other locales
-        if (fieldConfig.i18n === 'duplicate' && sourceLocale === defaultLocale) {
-          Object.entries(get(entryDraft)[entryDraftProp]).forEach(([targetLocale, content]) => {
-            if (targetLocale !== sourceLocale && content[keyPath] !== value) {
-              content[keyPath] = value;
-            }
-          });
-        }
-
-        return Reflect.set(obj, keyPath, value);
-      },
-    });
 
   entryDraft.set({
     isNew,
@@ -148,15 +157,67 @@ export const createDraft = (collectionName, entry) => {
       allLocales.map((locale) => [
         locale,
         allLocales.length
-          ? createProxy('currentValues', locale, flatten(locales?.[locale]?.content || newContent))
+          ? createProxy({
+              draft: { collectionName, fileName },
+              prop: 'currentValues',
+              locale,
+              target: flatten(locales?.[locale]?.content || newContent),
+            })
           : flatten(locales?.[locale]?.content || newContent),
       ]),
     ),
     files: Object.fromEntries(
-      allLocales.map((locale) => [locale, allLocales.length ? createProxy('files', locale) : {}]),
+      allLocales.map((locale) => [
+        locale,
+        allLocales.length
+          ? createProxy({
+              draft: { collectionName, fileName },
+              prop: 'files',
+              locale,
+            })
+          : {},
+      ]),
     ),
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
   });
+};
+
+/**
+ * Update the value in a list field.
+ *
+ * @param {LocaleCode} locale Target locale.
+ * @param {string} keyPath Dot-connected field name.
+ * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
+ * list itself. The typical usage is `list.splice()`.
+ */
+export const updateListField = (locale, keyPath, manipulate) => {
+  const unflattenObj = unflatten(get(entryDraft).currentValues[locale]);
+
+  // Traverse the object by decoding dot-connected `keyPath`
+  const list = keyPath.split('.').reduce((obj, key) => {
+    const _key = key.match(/^\d+$/) ? Number(key) : key;
+
+    // Create a new array when adding a new item
+    obj[_key] ||= [];
+
+    return obj[_key];
+  }, unflattenObj);
+
+  manipulate(list);
+
+  entryDraft.update((draft) => ({
+    ...draft,
+    currentValues: {
+      ...draft.currentValues,
+      // Flatten & proxify the object again
+      [locale]: createProxy({
+        draft,
+        prop: 'currentValues',
+        locale,
+        target: flatten(unflattenObj),
+      }),
+    },
+  }));
 };
 
 /**

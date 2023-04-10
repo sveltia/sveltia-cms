@@ -5,13 +5,13 @@
 -->
 <script>
   import { Button, Group, Icon, Spacer, TextInput } from '@sveltia/ui';
-  import { flatten, unflatten } from 'flat';
+  import { unflatten } from 'flat';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/editor/widgets/list-editor/add-item-button.svelte';
   import { defaultContentLocale } from '$lib/services/config';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft, updateListField } from '$lib/services/contents/editor';
   import { isObject } from '$lib/services/utils/misc';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
@@ -104,27 +104,15 @@
   /**
    * Update the value for the List widget with subfield(s).
    *
-   * @param {LocaleCode} _locale Target locale.
    * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
    * list itself. The typical usage is `list.splice()`.
    */
-  const updateComplexList = (_locale, manipulate) => {
-    const unflattenObj = unflatten($entryDraft.currentValues[_locale]);
-
-    // Traverse the object by decoding dot-connected `keyPath`
-    const list = keyPath.split('.').reduce((obj, key) => {
-      const _key = key.match(/^\d+$/) ? Number(key) : key;
-
-      // Create a new array when adding a new item
-      obj[_key] ||= [];
-
-      return obj[_key];
-    }, unflattenObj);
-
-    manipulate(list);
-
-    // Flatten the object again
-    $entryDraft.currentValues[_locale] = flatten(unflattenObj);
+  const updateComplexList = (manipulate) => {
+    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (!(i18n !== 'duplicate' && _locale !== locale)) {
+        updateListField(_locale, keyPath, manipulate);
+      }
+    });
   };
 
   /**
@@ -135,11 +123,7 @@
    * @todo Deal with nested objects.
    */
   const addItem = (subFieldName) => {
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== locale) {
-        return;
-      }
-
+    updateComplexList((list) => {
       const newItem = {};
 
       const subFields = subFieldName
@@ -159,9 +143,7 @@
         newItem[typeKey] = subFieldName;
       }
 
-      updateComplexList(_locale, (list) => {
-        list.splice(addToTop ? 0 : list.length, 0, newItem);
-      });
+      list.splice(addToTop ? 0 : list.length, 0, newItem);
     });
   };
 
@@ -171,14 +153,8 @@
    * @param {number} index Target index.
    */
   const deleteItem = (index) => {
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== locale) {
-        return;
-      }
-
-      updateComplexList(_locale, (list) => {
-        list.splice(index, 1);
-      });
+    updateComplexList((list) => {
+      list.splice(index, 1);
     });
   };
 
@@ -188,14 +164,8 @@
    * @param {number} index Target index.
    */
   const moveUpItem = (index) => {
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== locale) {
-        return;
-      }
-
-      updateComplexList(_locale, (list) => {
-        [list[index], list[index - 1]] = [list[index - 1], list[index]];
-      });
+    updateComplexList((list) => {
+      [list[index], list[index - 1]] = [list[index - 1], list[index]];
     });
   };
 
@@ -205,14 +175,8 @@
    * @param {number} index Target index.
    */
   const moveDownItem = (index) => {
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== locale) {
-        return;
-      }
-
-      updateComplexList(_locale, (list) => {
-        [list[index], list[index + 1]] = [list[index + 1], list[index]];
-      });
+    updateComplexList((list) => {
+      [list[index], list[index + 1]] = [list[index + 1], list[index]];
     });
   };
 

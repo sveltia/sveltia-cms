@@ -5,10 +5,9 @@
 -->
 <script>
   import { Button, Combobox, Icon, Option, Select } from '@sveltia/ui';
-  import { flatten, unflatten } from 'flat';
   import { _ } from 'svelte-i18n';
   import { defaultContentLocale } from '$lib/services/config';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft, updateListField } from '$lib/services/contents/editor';
   import { isObject } from '$lib/services/utils/misc';
 
   export let locale = '';
@@ -38,27 +37,15 @@
   /**
    * Update the value for the list.
    *
-   * @param {LocaleCode} _locale Target locale.
    * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
    * list itself. The typical usage is `list.splice()`.
    */
-  const updateList = (_locale, manipulate) => {
-    const unflattenObj = unflatten($entryDraft.currentValues[_locale]);
-
-    // Traverse the object by decoding dot-connected `keyPath`
-    const list = keyPath.split('.').reduce((obj, key) => {
-      const _key = key.match(/^\d+$/) ? Number(key) : key;
-
-      // Create a new array when adding a new item
-      obj[_key] ||= [];
-
-      return obj[_key];
-    }, unflattenObj);
-
-    manipulate(list);
-
-    // Flatten the object again
-    $entryDraft.currentValues[_locale] = flatten(unflattenObj);
+  const updateList = (manipulate) => {
+    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (!(i18n !== 'duplicate' && _locale !== locale)) {
+        updateListField(_locale, keyPath, manipulate);
+      }
+    });
   };
 
   /**
@@ -67,14 +54,8 @@
    * @param {string} value New value.
    */
   const addValue = (value) => {
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== locale) {
-        return;
-      }
-
-      updateList(_locale, (list) => {
-        list.push(value);
-      });
+    updateList((list) => {
+      list.push(value);
     });
   };
 
@@ -84,14 +65,8 @@
    * @param {number} index Target index.
    */
   const removeValue = (index) => {
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== locale) {
-        return;
-      }
-
-      updateList(_locale, (list) => {
-        list.splice(index, 1);
-      });
+    updateList((list) => {
+      list.splice(index, 1);
     });
   };
 </script>
