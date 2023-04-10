@@ -19,6 +19,7 @@ ignorePaths:
   - dist/**
 words:
   - camelcase
+  - danurbanowicz
   - Decap
   - DeepL
   - dompurify
