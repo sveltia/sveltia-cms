@@ -15,7 +15,7 @@
 </script>
 
 {#if multiple && Array.isArray(currentValue) && currentValue.length}
-  <p>{listFormatter.format(currentValue)}</p>
+  <p>{listFormatter.format(currentValue.sort((a, b) => a.localeCompare(b)))}</p>
 {:else if typeof currentValue === 'string' && currentValue.trim()}
   <p>{currentValue}</p>
 {/if}

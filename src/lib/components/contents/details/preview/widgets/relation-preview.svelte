@@ -52,7 +52,8 @@
         )
         .join(' ');
     })
-    .filter((val) => val !== undefined);
+    .filter((val) => val !== undefined)
+    .sort((a, b) => a.localeCompare(b));
 </script>
 
 {#if refValues?.length}

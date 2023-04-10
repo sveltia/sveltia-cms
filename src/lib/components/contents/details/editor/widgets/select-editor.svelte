@@ -5,6 +5,7 @@
 -->
 <script>
   import { Button, Combobox, Icon, Option, Select } from '@sveltia/ui';
+  import { flatten, unflatten } from 'flat';
   import { _ } from 'svelte-i18n';
   import { defaultContentLocale } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/editor';
@@ -33,6 +34,66 @@
       value: isObject(option) ? option.value : option,
     }))
   ).sort((a, b) => a.label.localeCompare(b.label));
+
+  /**
+   * Update the value for the list.
+   *
+   * @param {LocaleCode} _locale Target locale.
+   * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
+   * list itself. The typical usage is `list.splice()`.
+   */
+  const updateList = (_locale, manipulate) => {
+    const unflattenObj = unflatten($entryDraft.currentValues[_locale]);
+
+    // Traverse the object by decoding dot-connected `keyPath`
+    const list = keyPath.split('.').reduce((obj, key) => {
+      const _key = key.match(/^\d+$/) ? Number(key) : key;
+
+      // Create a new array when adding a new item
+      obj[_key] ||= [];
+
+      return obj[_key];
+    }, unflattenObj);
+
+    manipulate(list);
+
+    // Flatten the object again
+    $entryDraft.currentValues[_locale] = flatten(unflattenObj);
+  };
+
+  /**
+   * Add a value to the list.
+   *
+   * @param {string} value New value.
+   */
+  const addValue = (value) => {
+    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (i18n !== 'duplicate' && _locale !== locale) {
+        return;
+      }
+
+      updateList(_locale, (list) => {
+        list.push(value);
+      });
+    });
+  };
+
+  /**
+   * Remove a value from the list.
+   *
+   * @param {number} index Target index.
+   */
+  const removeValue = (index) => {
+    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (i18n !== 'duplicate' && _locale !== locale) {
+        return;
+      }
+
+      updateList(_locale, (list) => {
+        list.splice(index, 1);
+      });
+    });
+  };
 </script>
 
 {#if multiple}
@@ -45,7 +106,7 @@
           <Button
             {disabled}
             on:click={() => {
-              $entryDraft.currentValues[locale][`${keyPath}.${index}`] = undefined;
+              removeValue(index);
             }}
           >
             <Icon slot="start-icon" name="close" label={$_('delete')} />
@@ -62,7 +123,7 @@
             return;
           }
 
-          $entryDraft.currentValues[locale][`${keyPath}.${currentValue.length}`] = value;
+          addValue(value);
 
           // Make the textbox empty
           window.requestAnimationFrame(() => {
