@@ -115,7 +115,7 @@ export const createDraft = (collectionName, entry) => {
     new Proxy(target, {
       // eslint-disable-next-line jsdoc/require-jsdoc
       set: (obj, keyPath, value) => {
-        const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath);
+        const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, obj);
 
         if (!fieldConfig) {
           return true;
@@ -176,10 +176,11 @@ export const copyFromLocale = async (
   translate = false,
 ) => {
   const { collectionName, fileName, currentValues } = get(entryDraft);
+  const valueMap = currentValues[sourceLocale];
 
   const copingFields = Object.fromEntries(
-    Object.entries(currentValues[sourceLocale]).filter(([_keyPath, value]) => {
-      const field = getFieldByKeyPath(collectionName, fileName, _keyPath);
+    Object.entries(valueMap).filter(([_keyPath, value]) => {
+      const field = getFieldByKeyPath(collectionName, fileName, _keyPath, valueMap);
 
       if (
         (keyPath && !_keyPath.startsWith(keyPath)) ||
@@ -272,7 +273,7 @@ const validateEntry = () => {
     const valueEntries = Object.entries(valueMap);
 
     valueEntries.forEach(([keyPath, value]) => {
-      const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath);
+      const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, valueMap);
 
       if (!fieldConfig) {
         return;

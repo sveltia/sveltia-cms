@@ -1,9 +1,9 @@
 import equal from 'deep-is';
+import { flatten } from 'flat';
 import moment from 'moment';
 import { _ } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
-import { user } from '$lib/services/auth';
-import { defaultContentLocale } from '$lib/services/config';
+import LocalStorage from '$lib/services/utils/local-storage';
 import {
   allEntries,
   getEntries,
@@ -11,7 +11,8 @@ import {
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
-import LocalStorage from '$lib/services/utils/local-storage';
+import { defaultContentLocale } from '$lib/services/config';
+import { user } from '$lib/services/auth';
 
 const storageKey = 'sveltia-cms.contents-view';
 /**
@@ -23,15 +24,17 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
  * Parse the summary template to generate the summary to be displayed on the entry list, etc.
  *
  * @param {object} collection Entry’s collection.
- * @param {LocalizedEntry} content Entry content.
+ * @param {EntryContent} content Entry content.
  * @returns {string} Formatted summary.
  * @see https://www.netlifycms.org/docs/beta-features/#summary-string-template-transformations
  */
-export const parseSummary = (collection, content) =>
-  collection.summary.replace(/{{(.+?)}}/g, (_match, tag) => {
+export const parseSummary = (collection, content) => {
+  const valueMap = flatten(content);
+
+  return collection.summary.replace(/{{(.+?)}}/g, (_match, tag) => {
     const [fieldName, ...transformations] = tag.split(/\s*\|\s*/);
-    const fieldConfig = getFieldByKeyPath(collection.name, undefined, fieldName) || {};
-    let result = content[fieldName];
+    const fieldConfig = getFieldByKeyPath(collection.name, undefined, fieldName, valueMap) || {};
+    let result = valueMap[fieldName];
 
     if (!result) {
       return '';
@@ -80,6 +83,7 @@ export const parseSummary = (collection, content) =>
 
     return result;
   });
+};
 
 /**
  * Sort the given entries.
