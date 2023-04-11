@@ -460,7 +460,13 @@ const createSlug = (collection, draft) => {
     }
 
     if (tag === 'uuid_short') {
+      // Last 12 characters
       return window.crypto.randomUUID().split('-').pop();
+    }
+
+    if (tag === 'uuid_shorter') {
+      // First 8 characters
+      return window.crypto.randomUUID().split('-').shift();
     }
 
     return currentValues[defaultLocale][tag] || '';
