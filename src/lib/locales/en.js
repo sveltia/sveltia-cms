@@ -213,7 +213,7 @@ export const strings = {
 
   // Backends
   unsupported: {
-    backend: 'The configured backend is not supported.',
+    backend_x: 'The configured backend “{name}” is not supported.',
     browser:
       'Local development is not supported in your browser. Please use Chrome or Edge instead.',
     unexpected: 'There was an unexpected error while signing in. Please try again later.',

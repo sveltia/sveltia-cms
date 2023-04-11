@@ -7,36 +7,29 @@
   import { siteConfig } from '$lib/services/config';
   import LocalStorage from '$lib/services/utils/local-storage';
 
+  let backendName = $siteConfig.backend?.name;
   let isLocal = false;
   let isLocalUnsupported = false;
   let showErrorDialog = false;
   let errorReason;
 
+  $: $backend = allBackendServices[backendName];
+
   /**
    * Sign in with the given backend.
    *
-   * @param {string} backendName Backend name like `github`.
    * @param {string} [savedToken] User’s auth token. Can be empty for the local backend or when a
    * token is not saved in the local storage.
    */
-  const signIn = async (backendName, savedToken = '') => {
-    const handler = allBackendServices[backendName];
+  const signIn = async (savedToken = '') => {
+    try {
+      const _user = await $backend.signIn(savedToken);
 
-    if (handler) {
-      $backend = handler;
-
-      try {
-        const _user = await $backend.signIn(savedToken);
-
-        $user = _user;
-        LocalStorage.set('sveltia-cms.user', _user);
-      } catch {
-        showErrorDialog = true;
-        errorReason = 'unexpected';
-      }
-    } else {
+      $user = _user;
+      LocalStorage.set('sveltia-cms.user', _user);
+    } catch {
       showErrorDialog = true;
-      errorReason = 'backend';
+      errorReason = 'unexpected';
     }
   };
 
@@ -48,17 +41,25 @@
     // Check if the browser supports the File System Access API
     isLocalUnsupported = isLocal && !('showDirectoryPicker' in window);
 
+    if (isLocal) {
+      backendName = 'local';
+    }
+
     // Automatically sign into a Git-based backend if the user info is cached. Check the compatible
     // Netlify CMS cache as well. Don’t try to sign in if the local backend is being used, because
     // it requires user interaction to acquire file/directory handles.
     (async () => {
-      const { backendName, token } =
+      const { backendName: name, token } =
         (await LocalStorage.get('sveltia-cms.user')) ||
         (await LocalStorage.get('netlify-cms-user')) ||
         {};
 
-      if (backendName && backendName !== 'local' && token) {
-        await signIn(backendName, token);
+      if (name && name !== 'local') {
+        backendName = name;
+
+        if ($backend && token) {
+          await signIn(token);
+        }
       }
     })();
   });
@@ -71,22 +72,24 @@
       label={$_('work_with_local_repo')}
       disabled={isLocalUnsupported}
       on:click={async () => {
-        await signIn('local');
+        await signIn();
       }}
     />
     {#if isLocalUnsupported}
       {$_(`unsupported.browser`)}
     {/if}
-  {:else}
+  {:else if $backend}
     <Button
       class="primary"
       label={$_('sign_in_with_x', {
-        values: { name: allBackendServices[$siteConfig.backend?.name]?.label },
+        values: { name: $backend.label },
       })}
       on:click={async () => {
-        await signIn($siteConfig.backend?.name);
+        await signIn();
       }}
     />
+  {:else}
+    {$_('unsupported.backend_x', { values: { name: backendName } })}
   {/if}
 </div>
 

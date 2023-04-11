@@ -213,7 +213,7 @@ export const strings = {
 
   // Backends
   unsupported: {
-    backend: '設定されているバックエンドは非対応です。',
+    backend_x: '設定されているバックエンド「{name}」は非対応です。',
     browser:
       'お使いのブラウザーはローカル開発に対応していません。代わりに Chrome か Edge を使ってください。',
     unexpected: 'ログイン中に予期せぬ問題が発生しました。後で再度お試しください。',
