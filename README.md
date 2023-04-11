@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, to manage the content as static files on a Git repository. The product is now in public beta, with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, to manage the content as static files on a Git repository. The Netlify/Decap CMS alternative is now in public beta, with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.jpg)<br>
 
@@ -233,7 +233,7 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 
 By default, the [slug for a new entry file](https://decapcms.org/docs/configuration-options/#slug) will be generated based on the entry’s `title` field. Or, you can specify the collection’s `slug` option to use the file creation date or other fields. While the behaviour is generally acceptable and SEO-friendly, it’s not useful if the title might change later or if it contains non-Latin characters like Chinese. In Sveltia CMS, you can easily generate a random [UUID](https://developer.mozilla.org/en-US/docs/Glossary/UUID) without a custom widget!
 
-It’s simple — just specify `{{uuid}}` (full UUID v4) or `{{uuid_short}}` (last 12 characters only) in the `slug` option. The results would look like `4fc0917c-8aea-4ad5-a476-392bdcf3b642` and `392bdcf3b642`, respectively.
+It’s simple — just specify `{{uuid}}` (full UUID v4), `{{uuid_short}}` (last 12 characters only) or `{{uuid_shorter}}` (first 8 characters only) in the `slug` option. The results would look like `4fc0917c-8aea-4ad5-a476-392bdcf3b642`, `392bdcf3b642` and `4fc0917c`, respectively.
 
 ```diff
    - name: members
