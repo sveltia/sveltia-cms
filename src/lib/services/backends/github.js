@@ -103,11 +103,11 @@ const fetchFiles = async () => {
     repository(owner: "${owner}", name: "${repo}") {
       ${[...entryFiles, ...assetFiles]
         .map(
-          ({ sha, path, slug }) => `
+          ({ path, slug }, index) => `
             ${
               slug // entry file
                 ? `
-                  _${sha}_content: object(expression: "${branch}:${path}") {
+                  content_${index}: object(expression: "${branch}:${path}") {
                     ... on Blob {
                       text
                     }
@@ -115,7 +115,7 @@ const fetchFiles = async () => {
                 `
                 : ''
             }
-            _${sha}_commit: ref(qualifiedName: "${branch}") {
+            commit_${index}: ref(qualifiedName: "${branch}") {
               target {
                 ... on Commit {
                   history(first: 1, path: "${path}") {
@@ -134,13 +134,13 @@ const fetchFiles = async () => {
   }`);
 
   /**
-   * Get the file metadata for the given hash.
+   * Get the file metadata.
    *
-   * @param {string} sha SHA-1 hash.
+   * @param {number} index Array index to be searched in the GraphQL response.
    * @returns {object} Metadata including the commit date and author.
    */
-  const getMeta = (sha) => {
-    const { author, committedDate } = repository[`_${sha}_commit`].target.history.nodes[0];
+  const getMeta = (index) => {
+    const { author, committedDate } = repository[`commit_${index}`].target.history.nodes[0];
 
     return {
       commitAuthor: author,
@@ -150,20 +150,20 @@ const fetchFiles = async () => {
 
   allEntries.set(
     parseEntryFiles(
-      entryFiles.map((entry) => ({
+      entryFiles.map((entry, index) => ({
         ...entry,
-        text: repository[`_${entry.sha}_content`].text,
-        meta: { ...(entry.meta || {}), ...getMeta(entry.sha) },
+        text: repository[`content_${index}`].text,
+        meta: { ...(entry.meta || {}), ...getMeta(index) },
       })),
     ),
   );
 
   allAssets.set(
     parseAssetFiles(
-      assetFiles.map((asset) => ({
+      assetFiles.map((asset, index) => ({
         ...asset,
         name: asset.path.split('/').pop(),
-        meta: { ...(asset.meta || {}), ...getMeta(asset.sha) },
+        meta: { ...(asset.meta || {}), ...getMeta(entryFiles.length + index) },
       })),
     ),
   );
