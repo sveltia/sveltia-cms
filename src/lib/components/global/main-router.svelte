@@ -10,7 +10,6 @@
   import SearchPage from '$lib/components/search/search-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
   import { selectedCollection } from '$lib/services/contents';
-  import { entryDraft } from '$lib/services/contents/editor';
   import { parseLocation, selectedPageName } from '$lib/services/navigation';
 
   export const pages = {
@@ -29,9 +28,6 @@
   export const selectPage = () => {
     const { path } = parseLocation();
     const [, _pageName] = path.match(new RegExp(`^\\/(${Object.keys(pages).join('|')})\\b`)) || [];
-
-    // Reset the draft to prevent the page from becoming blank when navigating back
-    $entryDraft = null;
 
     if (!_pageName) {
       // Redirect any invalid page to the contents page

@@ -1,5 +1,6 @@
 <script>
   import { Group } from '@sveltia/ui';
+  import { onMount } from 'svelte';
   import ColumnHeader from '$lib/components/contents/details/column-header.svelte';
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
@@ -76,6 +77,14 @@
       (rightColumnContent || {}).scrollTop = 0;
     }
   }
+
+  onMount(() =>
+    // onUnmount
+    () => {
+      // Reset the draft to prevent the page from becoming blank when navigating back
+      $entryDraft = null;
+    },
+  );
 </script>
 
 <div class="editor">
