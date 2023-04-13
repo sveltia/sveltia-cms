@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, to manage the content as static files on a Git repository. The Netlify/Decap CMS alternative is now in public beta, with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, to manage the content as static files on a Git repository. The open source Netlify/Decap CMS alternative is now in public beta, with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.jpg)<br>
 
@@ -16,7 +16,7 @@ Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [N
 
 Sveltia CMS is a Git-based lightweight headless CMS, which means:
 
-- Git-based: Your content is saved as static JSON, YAML or TOML files on your Git repository. No database or API is involved. Your data is yours.
+- Git-based: The content is saved as static JSON, YAML or TOML files on your Git repository. No 3rd party database or API is involved. Your data is yours.
 - Lightweight: The app is compiled as a single small JavaScript file served via a CDN. You don’t have to sign up for a service or install additional software.
 - Headless: The CMS only takes care of raw data. You can read it and render the final content with your favourite framework.
 
@@ -51,7 +51,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Making it easier to switch between locales while editing.
 - Integrating DeepL to allow translating text fields from another locale with one click. [See below](#use-deepl-to-translate-entry-fields) for details.
-- You can now use a random ID for an entry slug, which is a good option for locales writing in non-Latin characters. [See below](#use-a-random-id-for-an-entry-slug) for details.
+- You can now use a random UUID for an entry slug, which is a good option for locales writing in non-Latin characters[^12]. [See below](#use-a-random-id-for-an-entry-slug) for details.
 - Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected[^7].
 - Users can now choose their preferred UI locale.
 
@@ -147,7 +147,7 @@ Here are some starter templates for popular frameworks created by our contributo
 
 ### Migration
 
-If you’re already using Netlify/Decap CMS with the GitHub backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS script tag, and push the change to your repository:
+If you’re already using Netlify/Decap CMS with the GitHub backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository:
 
 ```diff
 -<script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
@@ -176,7 +176,7 @@ You can use Sveltia CMS with a local Git repository, just like the [beta feature
 1. Visit `http://localhost:[port]/admin/index.html` with [Chrome, Edge or other Chromium-based browser](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility). The port number depends on your framework.
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
 1. Make some changes on Sveltia CMS.
-1. See if the produced changes look good using `git diff` or a GUI like GitHub Desktop.
+1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
 ### Use a custom icon for a collection
@@ -317,3 +317,4 @@ This software is provided “as is” without any express or implied warranty. T
 [^7]: [Netlify/Decap CMS #4386](https://github.com/netlify/netlify-cms/issues/4386)
 [^10]: [Netlify/Decap CMS #341](https://github.com/netlify/netlify-cms/issues/341)
 [^11]: [Netlify/Decap CMS #1382](https://github.com/netlify/netlify-cms/issues/1382) and many more. We’ll be updating this list after reviewing their issue list.
+[^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
