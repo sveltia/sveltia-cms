@@ -292,6 +292,16 @@ If you have image field(s) and expect that images will be inserted as URLs, you 
 img-src 'self' blob: data: https://*;
 ```
 
+### Self-host the CMS
+
+Sveltia CMS is open source for sure! If you prefer, you can host it on your server rather than loading it from UNPKG. Simply copy the latest [`sveltia-cms.js`](https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js) file from the CDN, or build it yourself:
+
+1. Clone this Git repository.
+1. Run `pnpm install && pnpm build` at the project root.
+1. `sveltia-cms.js` will be generated under the `dist` directory.
+
+Importing the CMS as an npm package is not supported yet.
+
 ## Support & feedback
 
 Visit the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page on this GitHub repository and start a new discussion. Tell us your use cases!
@@ -302,7 +312,7 @@ Feel free to [file an issue](https://github.com/sveltia/sveltia-cms/issues/new) 
 
 ## Links
 
-- Introducing Sveltia CMS: a short presentation by [@kyoshino](https://github.com/kyoshino) during the _This Week in Svelte_ online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
+- Introducing Sveltia CMS: a short technical presentation by [@kyoshino](https://github.com/kyoshino) during the _This Week in Svelte_ online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
 
 ## Disclaimer
 
