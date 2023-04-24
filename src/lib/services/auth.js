@@ -7,7 +7,6 @@ export const user = writable();
 /**
  * Authenticate with the Git service through Netlify Identity or 3rd party OAuth client specified
  * with the configuration file.
- *
  * @param {string} provider Provider name, e.g. `github`.
  * @returns {Promise<?string>} Auth token or `null` if authentication failed.
  * @see https://www.netlifycms.org/docs/backends-overview/

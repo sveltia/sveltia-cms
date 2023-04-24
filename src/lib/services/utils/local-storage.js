@@ -1,14 +1,12 @@
 /**
  * Implement a wrapper for the Web Storage API. These methods are async just like the experimental
  * KV Storage and automatically parse/stringify JSON data.
- *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Storage
  * @see https://developer.chrome.com/blog/kv-storage/
  */
 export default class LocalStorage {
   /**
    * Save data.
-   *
    * @param {string} key Storage key.
    * @param {*} value Serializable value.
    * @throws {DOMException} When storage access is denied.
@@ -19,7 +17,6 @@ export default class LocalStorage {
 
   /**
    * Retrieve data by key.
-   *
    * @param {string} key Storage key.
    * @returns {Promise<*>} Data.
    * @throws {DOMException} When storage access is denied.
@@ -30,7 +27,6 @@ export default class LocalStorage {
 
   /**
    * Delete data by key.
-   *
    * @param {string} key Storage key.
    * @throws {DOMException} When storage access is denied.
    */
@@ -40,7 +36,6 @@ export default class LocalStorage {
 
   /**
    * Clear the storage.
-   *
    * @throws {DOMException} When storage access is denied.
    */
   static async clear() {
@@ -49,7 +44,6 @@ export default class LocalStorage {
 
   /**
    * Get a list of storage keys.
-   *
    * @returns {Promise<string[]>} Keys.
    * @throws {DOMException} When storage access is denied.
    */
@@ -59,7 +53,6 @@ export default class LocalStorage {
 
   /**
    * Get a list of storage values.
-   *
    * @returns {Promise<*[]>} Values.
    * @throws {DOMException} When storage access is denied.
    */
@@ -69,7 +62,6 @@ export default class LocalStorage {
 
   /**
    * Get a list of storage entries.
-   *
    * @returns {Promise<Array<Array>>} Entries.
    * @throws {DOMException} When storage access is denied.
    */

@@ -18,7 +18,6 @@ const rootDirHandleKey = 'root_dir_handle';
 let database;
 /**
  * Get the object store.
- *
  * @returns {IDBObjectStore} Store.
  */
 const getStore = () => database.transaction([storeName], 'readwrite').objectStore(storeName);
@@ -26,7 +25,6 @@ const getStore = () => database.transaction([storeName], 'readwrite').objectStor
 /**
  * Get the project’s root directory handle so the app can read all the files under the directory.
  * The handle will be cached in IndexedDB for later use.
- *
  * @param {object} [options] Options.
  * @param {boolean} [options.forceReload] Whether to force getting the handle.
  * @returns {Promise<FileSystemDirectoryHandle>} Directory handle.
@@ -61,7 +59,6 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
       /**
        * Called when the store data is retrieved. Check if a handle is cached, and if not, request
        * permission to use it. Note that we need to request permission each time the app is loaded.
-       *
        * @see https://developer.chrome.com/articles/file-system-access/#stored-file-or-directory-handles-and-permissions
        */
       _request.onsuccess = async () => {
@@ -96,7 +93,6 @@ const discardDirHandle = async () => {
 /**
  * Sign in with the local Git repository. There is no actual sign-in; just show the directory picker
  * to get the handle, so we can read/write files.
- *
  * @returns {Promise<object>} User info.
  */
 const signIn = async () => {
@@ -115,7 +111,6 @@ const signOut = async () => {
 
 /**
  * Get a file or directory handle at the given path.
- *
  * @param {string} path Path to the file/directory.
  * @returns {Promise<(FileSystemFileHandle|FileSystemDirectoryHandle)>} Handle.
  */
@@ -134,7 +129,6 @@ const getHandleByPath = async (path) => {
 
 /**
  * Retrieve all files under the static directory.
- *
  * @returns {object[]} File list.
  */
 const getAllFiles = async () => {
@@ -148,7 +142,6 @@ const getAllFiles = async () => {
 
   /**
    * Retrieve all the files under the given directory recursively.
-   *
    * @param {FileSystemDirectoryHandle} dirHandle Directory handle.
    */
   const iterate = async (dirHandle) => {
@@ -199,7 +192,6 @@ const fetchFiles = async () => {
 
 /**
  * Save entries or assets locally.
- *
  * @param {object[]} items Entries or files.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  */
@@ -217,7 +209,6 @@ const saveFiles = async (items) => {
 
 /**
  * Delete files at the given paths.
- *
  * @param {object[]} items Entries or files.
  */
 const deleteFiles = async (items) => {

@@ -19,7 +19,6 @@ export const selectedEntries = writable([]);
 
 /**
  * Get a collection by name.
- *
  * @param {string} name Collection name.
  * @returns {object} Collection.
  */
@@ -27,7 +26,6 @@ export const getCollection = (name) => get(siteConfig).collections.find((c) => c
 
 /**
  * Get entries by the given collection name, while applying a filer if needed.
- *
  * @param {string} name Collection name.
  * @returns {Entry[]} Entries.
  * @see https://www.netlifycms.org/docs/collection-types#filtered-folder-collections
@@ -58,7 +56,6 @@ if (import.meta.env.DEV) {
 
 /**
  * Get a field that matches the given key path: dot-connected object field name.
- *
  * @param {string} collectionName Collection name.
  * @param {string} [fileName] File name if the collection is a file collection.
  * @param {string} keyPath Key path, e.g. `author.name`.

@@ -26,7 +26,6 @@ export const targetLanguages = [
 /**
  * Translate the given text with DeepL API. Note that the API request uses the GET method, because
  * POST doesn’t work due to a CORS issue. Too long URL params may lead to an HTTP error.
- *
  * @param {string[]} texts Array of original texts.
  * @param {object} options Options.
  * @param {string} [options.sourceLocale] Source language. Detect automatically if omitted.

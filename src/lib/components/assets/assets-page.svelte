@@ -19,7 +19,6 @@
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.
-   *
    * @todo Show Not Found page.
    */
   const navigate = () => {

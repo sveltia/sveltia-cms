@@ -37,7 +37,6 @@
 
   /**
    * Sync the scroll position with the other edit/preview pane.
-   *
    * @param {HTMLElement} thisContentArea Element that the user is scrolling.
    * @param {HTMLElement} [thatContentArea] The other pane’s content area. Can be empty if there is
    * one locale and preview for the collection is disabled.

@@ -12,7 +12,6 @@ const url = 'https://github.com/{repo}';
 
 /**
  * Send a request to GitHub REST/GraphQL API.
- *
  * @param {string} path Endpoint.
  * @param {object} [options] Request options.
  * @param {string} [options.method] Request method.
@@ -38,7 +37,6 @@ const fetchAPI = async (path, { method = 'GET', body = null, token = get(user).t
 
 /**
  * Send a request to GitHub GraphQL API.
- *
  * @param {string} query Query string.
  * @param {object} [variables] Any variable to be applied.
  * @returns {Promise<object>} Response data.
@@ -54,7 +52,6 @@ const fetchGraphQL = async (query, variables = {}) => {
 
 /**
  * Sign in with GitHub REST API.
- *
  * @param {string} [savedToken] OAuth token. Can be empty when a token is not saved in the local
  * storage. Then, open the sign-in dialog.
  * @returns {Promise<object>} User info.
@@ -135,7 +132,6 @@ const fetchFiles = async () => {
 
   /**
    * Get the file metadata.
-   *
    * @param {number} index Array index to be searched in the GraphQL response.
    * @returns {object} Metadata including the commit date and author.
    */
@@ -171,7 +167,6 @@ const fetchFiles = async () => {
 
 /**
  * Get the latest commit’s SHA-1 hash.
- *
  * @returns {Promise<string>} Hash.
  */
 const getLastCommitHash = async () => {
@@ -207,7 +202,6 @@ const getLastCommitHash = async () => {
 
 /**
  * Default commit message templates.
- *
  * @see https://www.netlifycms.org/docs/beta-features/#commit-message-templates
  */
 const defaultCommitMessages = {
@@ -221,7 +215,6 @@ const defaultCommitMessages = {
 
 /**
  * Create a Git commit message.
- *
  * @param {object[]} items Entries or files.
  * @param {object} [options] Options.
  * @param {CommitType} [options.commitType] Git commit type.
@@ -267,7 +260,6 @@ const createCommitMessage = (items, { commitType = 'update', collection } = {}) 
 
 /**
  * Author a commit on the repository.
- *
  * @param {string} message Commit message.
  * @param {object} changes File changes.
  * @param {object[]} [changes.additions] Files to add.
@@ -305,7 +297,6 @@ const createCommit = async (message, { additions = [], deletions = [] }) => {
 
 /**
  * Save entries or assets remotely.
- *
  * @param {object[]} items Entries or files.
  * @param {object} [options] Options.
  * @param {string} [options.commitType] Commit type.
@@ -324,7 +315,6 @@ const saveFiles = async (items, { commitType = 'update', collection } = {}) => {
 
 /**
  * Delete files at the given paths.
- *
  * @param {object[]} items Entries or files.
  * @param {object} [options] Options.
  * @param {string} [options.commitType] Commit type.

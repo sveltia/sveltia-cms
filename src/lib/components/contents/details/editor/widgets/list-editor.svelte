@@ -103,7 +103,6 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   *
    * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
    * list itself. The typical usage is `list.splice()`.
    */
@@ -117,7 +116,6 @@
 
   /**
    * Add a new subfield to the list.
-   *
    * @param {string} [subFieldName] Sub field name from one of the variable type options.
    * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
    * @todo Deal with nested objects.
@@ -149,7 +147,6 @@
 
   /**
    * Delete a subfield.
-   *
    * @param {number} index Target index.
    */
   const deleteItem = (index) => {
@@ -160,7 +157,6 @@
 
   /**
    * Swap a subfield with the previous one.
-   *
    * @param {number} index Target index.
    */
   const moveUpItem = (index) => {
@@ -171,7 +167,6 @@
 
   /**
    * Swap a subfield with the next one.
-   *
    * @param {number} index Target index.
    */
   const moveDownItem = (index) => {

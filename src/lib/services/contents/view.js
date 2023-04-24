@@ -22,7 +22,6 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
 
 /**
  * Parse the summary template to generate the summary to be displayed on the entry list, etc.
- *
  * @param {object} collection Entry’s collection.
  * @param {EntryContent} content Entry content.
  * @returns {string} Formatted summary.
@@ -87,7 +86,6 @@ export const parseSummary = (collection, content) => {
 
 /**
  * Sort the given entries.
- *
  * @param {object[]} entries Entry list.
  * @param {object} [condition] Sort condition.
  * @param {string} condition.key Sort key.
@@ -110,7 +108,6 @@ const sortEntries = (entries, { key, order } = {}) => {
 
   /**
    * Get a property value by key.
-   *
    * @param {Entry} entry Entry.
    * @returns {(string | Date)} Value.
    */
@@ -144,7 +141,6 @@ const sortEntries = (entries, { key, order } = {}) => {
 
 /**
  * Filter the given entries.
- *
  * @param {object[]} entries Entry list.
  * @param {object} [condition] Filter condition.
  * @param {string} condition.field Field name.
@@ -173,7 +169,6 @@ const filterEntries = (entries, { field, pattern } = {}) => {
 
 /**
  * Group the given entries.
- *
  * @param {object[]} entries Entry list.
  * @param {object} [condition] Group condition.
  * @param {string} condition.field Field name.

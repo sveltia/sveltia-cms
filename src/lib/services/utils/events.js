@@ -6,7 +6,6 @@ export const isMac =
 
 /**
  * Whether the event matches the given keyboard shortcut.
- *
  * @param {KeyboardEvent} event `keydown` or `keypress` event.
  * @param {string} shortcut Keyboard shortcut, such as `Enter` or `Ctrl+F`. Note that, on macOS, the
  * primary modifier key is not Ctrl but Meta, so you should offer proper keyboard shortcuts by

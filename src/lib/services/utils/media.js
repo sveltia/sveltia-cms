@@ -1,6 +1,5 @@
 /**
  * Get the metadata of an image, video or audio asset.
- *
  * @param {string} src Source URL.
  * @param {string} kind Media type: `image`, `video` or `audio`.
  * @returns {Promise<object>} Dimensions (width/height) and/or duration.
@@ -32,7 +31,6 @@ export const getMediaMetadata = (src, kind) => {
 /**
  * Format the given duration in the `hh:mm:ss` format. Note that it assumes the duration is less
  * than 24 hours.
- *
  * @param {number} duration Duration in seconds.
  * @returns {string} Formatted duration.
  */

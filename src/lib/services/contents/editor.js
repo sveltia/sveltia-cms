@@ -34,7 +34,6 @@ export const entryDraft = writable();
 
 /**
  * Create a new entry content with default values populated.
- *
  * @param {object[]} fields Field list of a collection.
  * @returns {EntryContent} Entry content.
  */
@@ -83,7 +82,6 @@ const createNewContent = (fields) => {
 /**
  * Create a Proxy that automatically copies a field value to other locale if the field’s i18n
  * strategy is “duplicate.”
- *
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.prop Property name in the {@link entryDraft} store that contains a
@@ -125,7 +123,6 @@ const createProxy = ({
 
 /**
  * Create an entry draft.
- *
  * @param {string} collectionName Collection name.
  * @param {Entry} [entry] Entry to be edited or `undefined` for a new entry.
  */
@@ -184,7 +181,6 @@ export const createDraft = (collectionName, entry) => {
 
 /**
  * Update the value in a list field.
- *
  * @param {LocaleCode} locale Target locale.
  * @param {string} keyPath Dot-connected field name.
  * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
@@ -222,7 +218,6 @@ export const updateListField = (locale, keyPath, manipulate) => {
 
 /**
  * Copy or translate field value(s) from another locale.
- *
  * @param {string} sourceLocale Source locale, e.g. `en`.
  * @param {string} targetLocale Target locale, e.g. `ja.
  * @param {string} [keyPath] Flatten (dot-connected) object keys that will be used for searching the
@@ -322,7 +317,6 @@ export const revertChanges = (locale = '', keyPath = '') => {
 /**
  * Validate the current entry draft, update the validity for all the fields, and return the final
  * results as a boolean. Mimic the native `ValidityState` API.
- *
  * @returns {boolean} Whether the draft is valid.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
@@ -417,7 +411,6 @@ const validateEntry = () => {
 
 /**
  * Create a slug for the current entry draft.
- *
  * @param {object} collection Collection
  * @param {EntryDraft} draft Draft.
  * @returns {string} Slug.
@@ -500,7 +493,6 @@ const createSlug = (collection, draft) => {
 
 /**
  * Save the entry draft.
- *
  * @throws {Error} When the entry could not be validated or saved.
  */
 export const saveEntry = async () => {

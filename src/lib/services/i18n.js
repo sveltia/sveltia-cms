@@ -3,7 +3,6 @@ import { get } from 'svelte/store';
 
 /**
  * Load strings and initialize the locales.
- *
  * @see https://github.com/kaisermann/svelte-i18n/blob/main/docs/Getting%20Started.md
  * @see https://vitejs.dev/guide/features.html#glob-import
  */
@@ -24,7 +23,6 @@ export const initLocales = () => {
 
 /**
  * Translate the given locale code in the application UI locale.
- *
  * @param {string} locale Locale code like `en`.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
  * locale code as is.

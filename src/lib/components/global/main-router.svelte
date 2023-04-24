@@ -22,7 +22,6 @@
 
   /**
    * Select one of the pages given the URL pash.
-   *
    * @todo Show Not Found page.
    */
   export const selectPage = () => {

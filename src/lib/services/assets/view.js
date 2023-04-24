@@ -16,7 +16,6 @@ const storageKey = 'sveltia-cms.assets-view';
 
 /**
  * Get the public URL for the given asset.
- *
  * @param {Asset} asset Asset file, such as an image.
  * @param {object} [options] Options.
  * @param {boolean} [options.pathOnly] Whether to use the absolute path instead of the complete URL.
@@ -40,7 +39,6 @@ export const getAssetURL = (asset, { pathOnly = false } = {}) => {
 /**
  * Get the label for the given folder path. It can be a category name if the folder is a
  * collection-specific asset folder.
- *
  * @param {string} folderPath Media folder path.
  * @returns {string} Human-readable label.
  */
@@ -65,7 +63,6 @@ export const getFolderLabel = (folderPath) => {
 
 /**
  * Sort the given assets.
- *
  * @param {Asset[]} assets Asset list.
  * @param {object} [condition] Sort condition.
  * @param {string} condition.key Sort key.
@@ -84,7 +81,6 @@ const sortAssets = (assets, { key, order } = {}) => {
 
   /**
    * Get an asset’s property value.
-   *
    * @param {Asset} asset Asset.
    * @returns {*} Value.
    */
@@ -118,7 +114,6 @@ const sortAssets = (assets, { key, order } = {}) => {
 
 /**
  * Filter the given assets.
- *
  * @param {Asset[]} assets Asset list.
  * @param {object} [condition] Filter condition.
  * @param {string} condition.field Field name.
@@ -153,7 +148,6 @@ const filterAssets = (assets, { field, pattern } = {}) => {
 
 /**
  * Group the given assets.
- *
  * @param {Asset[]} assets Asset list.
  * @param {object} [condition] Group condition.
  * @param {string} condition.field Field name.

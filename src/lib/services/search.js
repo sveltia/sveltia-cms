@@ -7,7 +7,6 @@ export const searchTerms = writable('');
 
 /**
  * Hold search results for the current search terms.
- *
  * @todo Make this smarter (prioritize titles; count the number of appearance; split words;
  * search relation fields; add snippets)
  */

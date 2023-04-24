@@ -16,7 +16,6 @@
 
   /**
    * Navigate to the content list or content details page given the URL hash.
-   *
    * @todo Show Not Found page.
    */
   const navigate = () => {

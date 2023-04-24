@@ -12,7 +12,6 @@ import { escapeRegExp } from '$lib/services/utils/strings';
 /**
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
- *
  * @param {object[]} files Unfiltered file list.
  * @returns {object} File list, including both entries and assets.
  */
@@ -79,7 +78,6 @@ export const getFileExtension = ({ format, extension }) => {
 
 /**
  * Get the Frontmatter format’s delimiters.
- *
  * @param {string} format File format.
  * @param {string} [delimiter] Configured delimiter.
  * @returns {string[]} Start and end delimiters.
@@ -106,7 +104,6 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 
 /**
  * Parse raw content with given file details.
- *
  * @param {object} entry File entry.
  * @param {string} entry.text Raw content.
  * @param {string} entry.path File path.
@@ -190,7 +187,6 @@ const parseEntryFile = ({
 
 /**
  * Parse raw content with given file details.
- *
  * @param {object} entry File entry.
  * @param {object} entry.content Content object.
  * @param {string} entry.path File path.
@@ -260,7 +256,6 @@ export const formatEntryFile = ({
 
 /**
  * Parse the given entry files to create a complete, serialized entry list.
- *
  * @param {object[]} entryFiles Entry file list.
  * @returns {Entry[]} Entry list.
  */
@@ -326,7 +321,6 @@ export const parseEntryFiles = (entryFiles) => {
 
 /**
  * Parse the given asset files to create a complete, serialized asset list.
- *
  * @param {object[]} assetFiles Asset file list.
  * @returns {Asset[]} Asset list.
  */

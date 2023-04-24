@@ -21,7 +21,6 @@
 
   /**
    * Copy or translate field value(s) from another locale.
-   *
    * @param {string} otherLocale Source locale, e.g. `en`.
    */
   const _copyFromLocale = async (otherLocale) => {

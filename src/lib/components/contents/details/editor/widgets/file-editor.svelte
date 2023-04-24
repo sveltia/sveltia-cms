@@ -43,7 +43,6 @@
 
   /**
    * Handle selected asset.
-   *
    * @param {SelectedAsset} selectedAsset Selected asset details.
    */
   const onAssetSelect = async (selectedAsset) => {

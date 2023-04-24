@@ -4,7 +4,6 @@ import { allEntries, selectedCollection } from '$lib/services/contents';
 
 /**
  * Delete entries by slugs.
- *
  * @param {string[]} slugs List of entry slugs.
  */
 export const deleteEntries = async (slugs) => {

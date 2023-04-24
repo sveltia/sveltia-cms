@@ -1,7 +1,6 @@
 /**
  * Get an object containing date parts that can be used for the `YYYY-MM-DD` format, especially in
  * the local time zone.
- *
  * @param {object} [options] Options.
  * @param {Date} [options.date] Date to use.
  * @param {string} [options.timeZone] Time zone, e.g. `UTC`.

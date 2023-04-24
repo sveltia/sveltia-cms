@@ -3,7 +3,6 @@ import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
  * Scan local files in nested folders and return them in a flat array, sorted by name.
- *
  * @param {DataTransfer} dataTransfer From `drop` event.
  * @param {object} [options] Options.
  * @param {string} [options.accept] Accepted file types, which is the same as the `accept` property
@@ -16,7 +15,6 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
 
   /**
    * Read files recursively from the filesystem.
-   *
    * @param {(FileSystemFileEntry|FileSystemDirectoryEntry)} entry Either a file or directory entry.
    * @returns {Promise<File>} File.
    */
@@ -58,7 +56,6 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
 
 /**
  * Read the file as plaintext.
- *
  * @param {File} file File.
  * @returns {Promise<string>} Content.
  */
@@ -79,7 +76,6 @@ export const readAsText = async (file) => {
 
 /**
  * Read the file as array buffer.
- *
  * @param {File} file File.
  * @returns {Promise<ArrayBuffer>} Content.
  */
@@ -100,7 +96,6 @@ export const readAsArrayBuffer = async (file) => {
 
 /**
  * Get the SHA-1 hash of the given file.
- *
  * @param {File} file File.
  * @returns {Promise<string>} Hash.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
@@ -115,7 +110,6 @@ export const getHash = async (file) => {
 
 /**
  * Get the Base64 encoding of the given input.
- *
  * @param {(File | Blob | string)} input Input file or string.
  * @returns {Promise<string>} Data URL like `data:text/plain;base64,...`.
  */
@@ -137,7 +131,6 @@ export const getDataURL = async (input) => {
 
 /**
  * Get the data URL of the given input.
- *
  * @param {(File | Blob | string)} input Input file or string.
  * @returns {Promise<string>} Base64.
  */
@@ -145,7 +138,6 @@ export const getBase64 = async (input) => (await getDataURL(input)).split(',')[1
 
 /**
  * Format the given file size in bytes, KB, MB, GB or TB.
- *
  * @param {number} size File size
  * @returns {string} Formatted size.
  */
@@ -178,7 +170,6 @@ export const formatSize = (size) => {
 /**
  * Check if the given file name or slug has duplicate(s) or its variant in the other names. If
  * found, rename it by prepending a number like `summer-beach-2.jpg`.
- *
  * @param {string} name Original name.
  * @param {string[]} otherNames Other names (of files in the same folder).
  * @returns {string} Determined name.

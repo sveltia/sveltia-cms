@@ -4,7 +4,6 @@ export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
 
 /**
  * Common file extension regex list that can be used for filtering.
- *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
  */
 export const assetExtensions = {
@@ -44,7 +43,6 @@ export const showUploadAssetsDialog = derived([uploadingAssets], ([_uploadingAss
 
 /**
  * Get an asset internal/public paths by collection name.
- *
  * @param {string} collectionName Collection name.
  * @returns {CollectionAssetPaths} Path config.
  */
@@ -53,7 +51,6 @@ export const getAssetFolder = (collectionName) =>
 
 /**
  * Determine the asset’s kind from the file extension.
- *
  * @param {string} name File name or path.
  * @returns {string} One of {@link assetKinds}.
  */
@@ -62,7 +59,6 @@ export const getAssetKind = (name) =>
 
 /**
  * Get an asset by a public URL path (stored as an image field value.)
- *
  * @param {string} path Path starting with `/`.
  * @returns {?Asset} Corresponding asset.
  */

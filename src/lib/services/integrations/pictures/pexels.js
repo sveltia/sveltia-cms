@@ -22,7 +22,6 @@ const endpoint = 'https://api.pexels.com/v1';
 
 /**
  * Search images or fetch curated pictures if no query is given.
- *
  * @param {string} query Search query
  * @param {string} apiKey API key.
  * @returns {Promise<StockPhoto[]>} Photos.

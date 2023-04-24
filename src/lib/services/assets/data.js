@@ -5,7 +5,6 @@ import { getHash } from '$lib/services/utils/files';
 
 /**
  * Upload/save the given assets to the backend.
- *
  * @param {object} uploadingAssets  Assets to be uploaded.
  * @param {File[]} uploadingAssets.files File list.
  * @param {string} uploadingAssets.folder Target folder name.
@@ -46,7 +45,6 @@ export const saveAssets = async ({ files, folder }, options) => {
 
 /**
  * Delete the given assets.
- *
  * @param {Asset[]} assets List of assets to be deleted.
  * @todo Update entries to remove these asset paths.
  */
@@ -59,7 +57,6 @@ export const deleteAssets = async (assets) => {
 
 /**
  * Move assets between folders.
- *
  * @param {Assets[]} assets Assets.
  * @param {string} directory Target directory.
  * @todo Implement this!

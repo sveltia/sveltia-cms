@@ -23,7 +23,6 @@
 
   /**
    * Function to search images for the service.
-   *
    * @returns {Promise<StockPhoto[]>} Photos.
    */
   export let searchImages = async () => [];
@@ -37,7 +36,6 @@
 
   /**
    * Search images.
-   *
    * @param {string} [query] Search query.
    */
   const _searchImages = async (query = '') => {
@@ -53,7 +51,6 @@
   /**
    * Download the selected image and notify the file and credit. If hotlinking is allowed/required
    * by the provider, notify the URL instead of downloading the file.
-   *
    * @param {StockPhoto} photo Selected photo.
    */
   const selectImage = async (photo) => {

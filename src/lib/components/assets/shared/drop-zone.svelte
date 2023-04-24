@@ -18,7 +18,6 @@
 
   /**
    * Notify the selected files.
-   *
    * @param {File[]} allFiles Files.
    */
   const onSelect = (allFiles) => {

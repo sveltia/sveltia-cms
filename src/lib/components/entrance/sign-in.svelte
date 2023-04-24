@@ -17,7 +17,6 @@
 
   /**
    * Sign in with the given backend.
-   *
    * @param {string} [savedToken] User’s auth token. Can be empty for the local backend or when a
    * token is not saved in the local storage.
    */

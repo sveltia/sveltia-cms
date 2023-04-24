@@ -36,7 +36,6 @@
 
   /**
    * Update the value for the list.
-   *
    * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
    * list itself. The typical usage is `list.splice()`.
    */
@@ -50,7 +49,6 @@
 
   /**
    * Add a value to the list.
-   *
    * @param {string} value New value.
    */
   const addValue = (value) => {
@@ -61,7 +59,6 @@
 
   /**
    * Remove a value from the list.
-   *
    * @param {number} index Target index.
    */
   const removeValue = (index) => {

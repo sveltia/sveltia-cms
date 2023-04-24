@@ -5,7 +5,6 @@ export const selectedPageName = writable('');
 
 /**
  * Parse the URL and return the decoded result.
- *
  * @param {string} [loc] URL. Omit this to use the current URL.
  * @returns {object} Path and search params.
  */
@@ -21,7 +20,6 @@ export const parseLocation = (loc = window.location) => {
 /**
  * Navigate to a different URL. This is similar to SvelteKit’s `goto` method but assumes hash-based
  * SPA routing.
- *
  * @param {string} path URL path. It will appear in th URL hash but omit the leading `#` sign here.
  * @param {object} [options] Options.
  * @param {object} [options.state] History state to be included.
@@ -43,7 +41,6 @@ export const goto = (path, { state = {}, replaceState = false } = {}) => {
 
 /**
  * Go back to the previous page if possible, or navigate to the given fallback URL.
- *
  * @param {string} path Fallback URL path.
  * @param {object} [options] Options to be passed to {@link goto}.
  */
