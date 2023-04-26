@@ -46,7 +46,7 @@
         border-color: var(--primary-border-color);
         padding: 0 16px;
         height: 40px;
-        background-color: var(--ternary-background-color);
+        background-color: var(--tertiary-background-color);
       }
     }
   }

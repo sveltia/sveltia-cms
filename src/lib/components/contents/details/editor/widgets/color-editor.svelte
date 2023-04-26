@@ -35,7 +35,7 @@
     {/if}
   </span>
   <Button
-    class="ternary iconic"
+    class="tertiary iconic"
     disabled={!currentValue}
     on:click={() => {
       currentValue = '';

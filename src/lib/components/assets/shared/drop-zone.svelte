@@ -110,7 +110,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 24px;
+      font-size: var(--font-size--xxx-large);
       border-width: 8px;
       border-style: dashed;
       border-color: var(--primary-accent-color-foreground);

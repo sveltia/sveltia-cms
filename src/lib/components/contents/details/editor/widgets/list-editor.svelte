@@ -352,11 +352,11 @@
       }
 
       :global(.icon) {
-        font-size: 16px;
+        font-size: var(--font-size--large);
       }
 
       .type {
-        font-size: 12px;
+        font-size: var(--font-size--small);
         font-weight: 600;
         color: var(--secondary-foreground-color);
       }

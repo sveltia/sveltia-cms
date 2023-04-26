@@ -34,7 +34,7 @@
       --toolbar-size: 48px;
       border-width: 0 0 1px 0 !important;
       border-color: var(--primary-border-color) !important;
-      background-color: var(--ternary-background-color);
+      background-color: var(--tertiary-background-color);
 
       :global(.search-bar) {
         width: 640px;

@@ -19,7 +19,7 @@
 
 <svelte:component
   this={hasTypes ? MenuButton : Button}
-  class="secondary"
+  class="tertiary"
   disabled={max && items.length === max}
   label={$_('add_x', { values: { name: labelSingular || label } })}
   on:click={hasTypes ? undefined : () => addItem()}

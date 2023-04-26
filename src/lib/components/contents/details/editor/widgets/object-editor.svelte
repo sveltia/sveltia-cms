@@ -75,7 +75,7 @@
     padding: 4px;
 
     .summary {
-      font-size: 12px;
+      font-size: var(--font-size--small);
       font-weight: 600;
       color: var(--secondary-foreground-color);
     }

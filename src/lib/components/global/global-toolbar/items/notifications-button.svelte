@@ -4,7 +4,7 @@
 </script>
 
 <Button
-  class="ternary iconic"
+  class="ghost iconic"
   hidden={true}
   on:click={() => {
     // @todo Implement this!

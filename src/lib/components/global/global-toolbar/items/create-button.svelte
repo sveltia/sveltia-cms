@@ -9,7 +9,7 @@
   let filePicker;
 </script>
 
-<MenuButton class="ternary iconic" popupPosition="bottom-right">
+<MenuButton class="ghost iconic" popupPosition="bottom-right">
   <Icon slot="start-icon" name="add" label={$_('create')} />
   <Menu slot="popup">
     {#each $siteConfig.collections as { name, label, folder, hide = false, create = false } (name)}

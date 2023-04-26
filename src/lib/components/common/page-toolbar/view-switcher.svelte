@@ -11,7 +11,7 @@
   <SelectButton
     {disabled}
     selected={$currentView.type !== 'grid'}
-    class="secondary iconic"
+    class="ghost iconic"
     on:click={() => {
       currentView.update((view) => ({
         ...view,
@@ -24,7 +24,7 @@
   <SelectButton
     {disabled}
     selected={$currentView.type === 'grid'}
-    class="secondary iconic"
+    class="ghost iconic"
     on:click={() => {
       currentView.update((view) => ({
         ...view,

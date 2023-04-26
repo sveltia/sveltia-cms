@@ -95,7 +95,7 @@
     <div>
       <Button
         {disabled}
-        class="secondary small"
+        class="tertiary small"
         label={currentValue ? $_('replace') : $_('add')}
         on:click={() => {
           showSelectAssetsDialog = true;
@@ -104,7 +104,7 @@
       {#if currentValue}
         <Button
           {disabled}
-          class="secondary small"
+          class="tertiary small"
           label={$_('remove')}
           on:click={() => {
             currentValue = '';

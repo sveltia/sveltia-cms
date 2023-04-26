@@ -16,7 +16,7 @@
       >
         {#each ['auto', 'dark', 'light'] as value}
           <SelectButton
-            class="secondary"
+            class="tertiary"
             label={$_(`prefs.theme.${value}`)}
             {value}
             selected={(!$prefs.theme && value === 'auto') || $prefs.theme === value}

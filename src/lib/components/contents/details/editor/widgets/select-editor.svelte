@@ -147,7 +147,7 @@
       background-color: var(--secondary-background-color);
 
       :global(.icon) {
-        font-size: 16px;
+        font-size: var(--font-size--large);
       }
     }
   }

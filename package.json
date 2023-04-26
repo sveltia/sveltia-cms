@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@ltd/j-toml": "^1.38.0",
-    "@sveltia/ui": "^0.1.5",
+    "@sveltia/ui": "^0.2.2",
     "deep-is": "^0.1.4",
     "flat": "^5.0.2",
     "isomorphic-dompurify": "^1.3.0",

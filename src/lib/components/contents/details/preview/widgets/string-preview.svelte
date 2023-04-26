@@ -40,7 +40,7 @@
   }
 
   .title {
-    font-size: 24px;
+    font-size: var(--font-size--xxx-large);
     font-weight: 600;
   }
 </style>

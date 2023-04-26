@@ -59,7 +59,7 @@
       flex: none;
       width: 240px;
       overflow-y: auto;
-      background-color: var(--ternary-background-color);
+      background-color: var(--tertiary-background-color);
       border-width: 0 1px 0 0;
       border-color: var(--primary-border-color);
 
@@ -140,7 +140,7 @@
       }
 
       :global(.primary:not(.global)[role='toolbar']) {
-        background-color: var(--ternary-background-color);
+        background-color: var(--tertiary-background-color);
       }
 
       :global(.secondary[role='toolbar']) {

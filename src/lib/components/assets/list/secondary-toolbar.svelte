@@ -12,7 +12,7 @@
 {#if !$selectedCollection.files}
   <Toolbar class="secondary">
     <Button
-      class="ternary"
+      class="ghost"
       disabled={$selectedAssets.length === Object.values($assetGroups).flat(1).length}
       label={$_('select_all')}
       on:click={() => {
@@ -20,7 +20,7 @@
       }}
     />
     <Button
-      class="ternary"
+      class="ghost"
       disabled={!$selectedAssets.length}
       label={$_('clear_selection')}
       on:click={() => {
@@ -43,7 +43,7 @@
     <ViewSwitcher disabled={!$listedAssets.length} {currentView} />
     <Separator />
     <Button
-      class="ternary iconic"
+      class="ghost iconic"
       disabled={!$listedAssets.length}
       pressed={!!$currentView?.showInfo}
       on:click={() => {

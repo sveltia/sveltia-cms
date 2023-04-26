@@ -14,7 +14,7 @@
 {#if $selectedCollection.folder}
   <Toolbar class="secondary">
     <Button
-      class="ternary"
+      class="ghost"
       disabled={$selectedEntries.length === Object.values($entryGroups).flat(1).length}
       label={$_('select_all')}
       on:click={() => {
@@ -22,7 +22,7 @@
       }}
     />
     <Button
-      class="ternary"
+      class="ghost"
       disabled={!$selectedEntries.length}
       label={$_('clear_selection')}
       on:click={() => {
@@ -57,7 +57,7 @@
     <ViewSwitcher disabled={!$listedEntries.length || !firstImageField} {currentView} />
     <Separator />
     <Button
-      class="ternary iconic"
+      class="ghost iconic"
       disabled={!$selectedCollection.media_folder}
       pressed={!!$currentView?.showMedia}
       on:click={() => {

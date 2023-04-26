@@ -5,9 +5,9 @@
   import MainRouter from '$lib/components/global/main-router.svelte';
   import { user } from '$lib/services/auth';
   import { entriesLoaded } from '$lib/services/contents';
-  import { initLocales } from '$lib/services/i18n';
+  import { initAppLocale } from '$lib/services/i18n';
 
-  initLocales();
+  initAppLocale();
 </script>
 
 <svelte:head>

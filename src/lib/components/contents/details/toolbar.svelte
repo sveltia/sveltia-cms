@@ -36,7 +36,7 @@
 
 <Toolbar class="primary">
   <Button
-    class="ternary iconic"
+    class="ghost iconic"
     on:click={() => {
       goBack(`/collections/${collection.name}`);
     }}
@@ -55,7 +55,7 @@
     {/if}
   </h2>
   <Spacer flex={true} />
-  <MenuButton class="ternary iconic" popupPosition="bottom-right">
+  <MenuButton class="ghost iconic" popupPosition="bottom-right">
     <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
     <Menu slot="popup">
       <MenuItemCheckbox

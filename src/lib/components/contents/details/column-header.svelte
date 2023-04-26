@@ -41,7 +41,7 @@
           {#if !($thatPane.mode === 'edit' && $thatPane.locale === locale)}
             <SelectButton
               selected={$thisPane.mode === 'edit' && $thisPane.locale === locale}
-              class="secondary small {invalid ? 'error' : ''}"
+              class="tertiary small {invalid ? 'error' : ''}"
               label={invalid
                 ? $_('edit_x_error', { values: { locale: localeLabel } })
                 : localeLabel}
@@ -58,7 +58,7 @@
         {#if $thatPane.mode === 'edit' && canPreview && $entryViewSettings.showPreview}
           <SelectButton
             selected={$thisPane.mode === 'preview'}
-            class="secondary small"
+            class="tertiary small"
             label={$_('preview')}
             on:click={() => {
               $thisPane = { mode: 'preview', locale: $thatPane.locale };
@@ -71,7 +71,7 @@
     {/if}
     <Spacer flex={true} />
     {#if $thisPane.mode === 'edit'}
-      <MenuButton class="ternary iconic" popupPosition="bottom-right">
+      <MenuButton class="ghost iconic" popupPosition="bottom-right">
         <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
         <Menu slot="popup">
           {#if canCopy}
@@ -101,7 +101,7 @@
 
     & > :global([role='toolbar']) {
       :global(h3) {
-        font-size: 14px;
+        font-size: var(--font-size--default);
       }
 
       :global(button.error) {

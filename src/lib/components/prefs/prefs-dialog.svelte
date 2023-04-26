@@ -67,7 +67,7 @@
         & ~ :global(p) {
           margin: 8px 0 0;
           color: var(--secondary-foreground-color);
-          font-size: 12px;
+          font-size: var(--font-size--small);
         }
       }
     }

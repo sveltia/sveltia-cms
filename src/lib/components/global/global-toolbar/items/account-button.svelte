@@ -11,7 +11,7 @@
   let showPrefsDialog = false;
 </script>
 
-<MenuButton class="ternary iconic" popupPosition="bottom-right">
+<MenuButton class="ghost iconic" popupPosition="bottom-right">
   <Icon
     slot="start-icon"
     name={$user?.avatar_url ? undefined : 'account_circle'}

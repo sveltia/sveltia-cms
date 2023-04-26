@@ -51,7 +51,7 @@
 <style lang="scss">
   .description {
     flex: auto;
-    font-size: 12px;
+    font-size: var(--font-size--small);
     opacity: 0.8;
     overflow: hidden;
     text-overflow: ellipsis;

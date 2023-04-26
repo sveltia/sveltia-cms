@@ -78,7 +78,7 @@
     <header>
       <h4>{label}</h4>
       {#if canCopy || canRevert}
-        <MenuButton class="ternary iconic small" popupPosition="bottom-right">
+        <MenuButton class="ghost iconic small" popupPosition="bottom-right">
           <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
           <Menu slot="popup">
             {#if canCopy}
@@ -168,7 +168,7 @@
     margin: 0 0 8px;
 
     h4 {
-      font-size: 12px;
+      font-size: var(--font-size--small);
       font-weight: 600;
       color: var(--secondary-foreground-color);
     }
@@ -235,7 +235,7 @@
 
   .hint {
     margin: 8px 0 0;
-    font-size: 12px;
+    font-size: var(--font-size--small);
     opacity: 0.75;
 
     :global(p) {

@@ -1,4 +1,5 @@
-import { addMessages, locale as appLocale, getLocaleFromNavigator, init } from 'svelte-i18n';
+import { initLocales } from '@sveltia/ui';
+import { addMessages, locale as appLocale, getLocaleFromNavigator } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
 /**
@@ -6,7 +7,7 @@ import { get } from 'svelte/store';
  * @see https://github.com/kaisermann/svelte-i18n/blob/main/docs/Getting%20Started.md
  * @see https://vitejs.dev/guide/features.html#glob-import
  */
-export const initLocales = () => {
+export const initAppLocale = () => {
   const modules = import.meta.glob('../locales/*.js', { eager: true });
 
   Object.entries(modules).forEach(([path, { strings }]) => {
@@ -15,7 +16,7 @@ export const initLocales = () => {
     addMessages(locale, strings);
   });
 
-  init({
+  initLocales({
     fallbackLocale: 'en',
     initialLocale: (getLocaleFromNavigator() || '').split('-')[0] || 'en',
   });

@@ -7,7 +7,7 @@
 </script>
 
 <Button
-  class="ternary iconic"
+  class="ghost iconic"
   pressed={$selectedPageName === 'collections'}
   on:click={() => {
     goto(`/collections/${$selectedCollection.name}`);
@@ -16,7 +16,7 @@
   <Icon slot="start-icon" name="library_books" label={$_('entries')} />
 </Button>
 <Button
-  class="ternary iconic"
+  class="ghost iconic"
   pressed={$selectedPageName === 'assets'}
   on:click={() => {
     goto($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
@@ -25,7 +25,7 @@
   <Icon slot="start-icon" name="photo_library" label={$_('assets')} />
 </Button>
 <Button
-  class="ternary iconic"
+  class="ghost iconic"
   hidden={true}
   pressed={$selectedPageName === 'workflow'}
   on:click={() => {
@@ -35,7 +35,7 @@
   <Icon slot="start-icon" name="rebase_edit" label={$_('editorial_workflow')} />
 </Button>
 <Button
-  class="ternary iconic"
+  class="ghost iconic"
   hidden={true}
   pressed={$selectedPageName === 'config'}
   on:click={() => {

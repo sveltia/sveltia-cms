@@ -57,7 +57,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: var(--ternary-background-color);
+      background-color: var(--tertiary-background-color);
     }
 
     .meta {
@@ -66,7 +66,7 @@
       gap: 4px;
 
       .size {
-        font-size: 11px;
+        font-size: var(--font-size--small);
         color: var(--secondary-foreground-color);
       }
     }

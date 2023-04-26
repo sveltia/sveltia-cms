@@ -8,7 +8,7 @@
   export let fields = [];
 </script>
 
-<MenuButton class="ternary" label={label || $_('sort_by')} {disabled}>
+<MenuButton class="ghost" label={label || $_('sort_by')} {disabled}>
   <Icon slot="end-icon" name="arrow_drop_down" />
   <Menu slot="popup">
     <MenuItemGroup ariaLabel={$_('sort_field')}>

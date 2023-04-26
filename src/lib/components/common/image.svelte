@@ -13,7 +13,7 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background-color: var(--ternary-background-color);
+    background-color: var(--tertiary-background-color);
 
     &.cover {
       object-fit: cover;

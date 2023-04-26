@@ -62,7 +62,7 @@
 
     h4 {
       color: var(--secondary-foreground-color);
-      font-size: 12px;
+      font-size: var(--font-size--small);
 
       &:not(:last-child) {
         margin: 0 0 8px;

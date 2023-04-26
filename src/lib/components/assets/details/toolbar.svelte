@@ -10,7 +10,7 @@
 
 <Toolbar class="primary">
   <Button
-    class="ternary iconic"
+    class="ghost iconic"
     on:click={() => {
       goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
     }}

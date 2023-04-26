@@ -76,12 +76,12 @@
     }
 
     .logo ~ h1 {
-      font-size: 24px;
+      font-size: var(--font-size--xxx-large);
     }
 
     :global(h2) {
       margin: 0 0 16px;
-      font-size: 16px;
+      font-size: var(--font-size--large);
       font-weight: normal;
     }
   }
