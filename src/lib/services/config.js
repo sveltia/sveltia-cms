@@ -8,6 +8,8 @@ import { isObject } from '$lib/services/utils/misc';
 export const siteConfig = writable();
 export const defaultContentLocale = writable('default');
 
+const { DEV, VITE_CONFIG_PORT } = import.meta.env;
+
 /**
  * Validate the site configuration file.
  * @param {object} config Config object.
@@ -61,6 +63,12 @@ export const fetchSiteConfig = async () => {
     }
 
     validate(config);
+
+    // Set the site URL for development. See also `/src/app.svelte`
+    if (DEV && !config.site_url) {
+      config.site_url = `http://localhost:${VITE_CONFIG_PORT || 5174}`;
+    }
+
     siteConfig.set(config);
   } catch ({ message }) {
     siteConfig.set({ error: message });
@@ -68,7 +76,7 @@ export const fetchSiteConfig = async () => {
 };
 
 siteConfig.subscribe((config) => {
-  if (import.meta.env.DEV) {
+  if (DEV) {
     // eslint-disable-next-line no-console
     console.info('siteConfig', config);
   }
