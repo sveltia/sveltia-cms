@@ -1,7 +1,7 @@
 <script>
   import { Button } from '@sveltia/ui';
   import { flatten } from 'flat';
-  import { locale as appLocale, _ } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import { getAssetURL } from '$lib/services/assets/view';
   import { user } from '$lib/services/auth';
   import { allBackendServices } from '$lib/services/backends';

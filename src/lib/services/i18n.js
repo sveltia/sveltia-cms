@@ -1,4 +1,4 @@
-import { addMessages, getLocaleFromNavigator, init, locale as appLocale } from 'svelte-i18n';
+import { addMessages, locale as appLocale, getLocaleFromNavigator, init } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
 /**

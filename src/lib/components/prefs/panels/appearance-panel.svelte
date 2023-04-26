@@ -1,6 +1,6 @@
 <script>
   import { Option, Select, SelectButton, SelectButtonGroup, TabPanel } from '@sveltia/ui';
-  import { locale as appLocale, locales, _ } from 'svelte-i18n';
+  import { _, locale as appLocale, locales } from 'svelte-i18n';
   import { getLocaleLabel } from '$lib/services/i18n';
   import { prefs } from '$lib/services/prefs';
 </script>
