@@ -53,6 +53,7 @@ export const strings = {
   move_to: 'Move to…',
   search: 'Search',
   searching: 'Searching…',
+  error: 'error',
 
   // Entrance
   loading_site_config: 'Loading Site Configuration…',
@@ -128,7 +129,6 @@ export const strings = {
   sync_scrolling: 'Sync Scrolling',
   edit: 'Edit',
   preview: 'Preview',
-  edit_x_error: '{locale} (Error)',
   unsupported_widget_x: 'Unsupported widget: {name}',
   copy_from: 'Copy from…',
   copy_from_x: 'Copy from {locale}',

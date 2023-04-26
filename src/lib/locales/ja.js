@@ -53,6 +53,7 @@ export const strings = {
   move_to: 'フォルダへ移動…',
   search: '検索',
   searching: '検索中…',
+  error: 'エラー',
 
   // Entrance
   loading_site_config: 'サイト設定を読み込んでいます…',
@@ -128,7 +129,6 @@ export const strings = {
   sync_scrolling: 'スクロールを同期',
   edit: '編集',
   preview: 'プレビュー',
-  edit_x_error: '{locale} (エラー)',
   unsupported_widget_x: '非対応ウィジェット: {name}',
   copy_from: '他の言語からコピー…',
   copy_from_x: '{locale} からコピー',

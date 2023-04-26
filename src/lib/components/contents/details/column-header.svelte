@@ -42,9 +42,7 @@
             <SelectButton
               selected={$thisPane.mode === 'edit' && $thisPane.locale === locale}
               class="tertiary small {invalid ? 'error' : ''}"
-              label={invalid
-                ? $_('edit_x_error', { values: { locale: localeLabel } })
-                : localeLabel}
+              label={localeLabel}
               on:click={() => {
                 $thisPane = { mode: 'edit', locale };
 
@@ -52,7 +50,11 @@
                   $thatPane = { mode: 'preview', locale };
                 }
               }}
-            />
+            >
+              {#if invalid}
+                <Icon slot="end-icon" name="error" label={$_('error')} />
+              {/if}
+            </SelectButton>
           {/if}
         {/each}
         {#if $thatPane.mode === 'edit' && canPreview && $entryViewSettings.showPreview}

@@ -109,16 +109,28 @@
     {#if validity?.valid === false}
       <div class="validation">
         {#if validity.valueMissing}
-          <div>{$_('validation.value_missing')}</div>
+          <div>
+            <Icon name="error" label={$_('error')} />
+            {$_('validation.value_missing')}
+          </div>
         {/if}
         {#if validity.rangeUnderflow}
-          <div>{$_('validation.range_underflow', { values: { min: fieldConfig.min } })}</div>
+          <div>
+            <Icon name="error" label={$_('error')} />
+            {$_('validation.range_underflow', { values: { min: fieldConfig.min } })}
+          </div>
         {/if}
         {#if validity.rangeOverflow}
-          <div>{$_('validation.range_overflow', { values: { max: fieldConfig.max } })}</div>
+          <div>
+            <Icon name="error" label={$_('error')} />
+            {$_('validation.range_overflow', { values: { max: fieldConfig.max } })}
+          </div>
         {/if}
         {#if validity.patternMismatch}
-          <div>{pattern[1]}</div>
+          <div>
+            <Icon name="error" label={$_('error')} />
+            {pattern[1]}
+          </div>
         {/if}
       </div>
     {/if}
@@ -229,7 +241,14 @@
     color: var(--danger-foreground-color);
 
     div {
+      display: flex;
+      gap: 4px;
       margin: 8px 0;
+
+      :global(.icon) {
+        flex: none;
+        font-size: 20px; // !hardcoded
+      }
     }
   }
 
