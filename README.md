@@ -294,7 +294,7 @@ img-src 'self' blob: data: https://*;
 
 ### Self-host the CMS
 
-Sveltia CMS is open source for sure! If you prefer, you can host it on your server rather than loading it from UNPKG. Simply copy the latest [`sveltia-cms.js`](https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js) file from the CDN, or build it yourself:
+Sveltia CMS is open source for sure! You can host it on your server rather than loading it from UNPKG, though it’s not recommended due to missing bug fixes. Simply copy the latest [`sveltia-cms.js`](https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js) file from the CDN, or build it yourself:
 
 1. Clone this Git repository.
 1. Run `pnpm install && pnpm build` at the project root.
