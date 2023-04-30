@@ -9,7 +9,7 @@ const serviceLabel = 'Unsplash';
 const hotlinking = true;
 const landingURL = 'https://unsplash.com/developers';
 const apiKeyURL = 'https://unsplash.com/oauth/applications';
-const apiKeyPattern = /^[a-zA-Z\d]{43}$/;
+const apiKeyPattern = /^[a-zA-Z\d-]{40,}$/;
 
 const supportedLocales = [
   'af,am,ar,az,be,bg,bn,bs,ca,ceb,co,cs,cy,da,de,el,en,eo,es,et,eu,fa,fi,fr,fy,ga,gd,gl,gu,ha,haw',
