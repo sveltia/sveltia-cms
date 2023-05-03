@@ -209,7 +209,7 @@ export const formatEntryFile = ({
       : extension || path.match(/\.([^.]+)$/)[1];
 
   const formatYAML = () => YAML.stringify(content, null, { lineWidth: 0 }).trim();
-  const formatTOML = () => TOML.stringify(content).trim();
+  const formatTOML = () => TOML.stringify(content, { newline: '\n' }).trim();
   const formatJSON = () => JSON.stringify(content, null, 2).trim();
 
   try {
