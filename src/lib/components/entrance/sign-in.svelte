@@ -1,6 +1,6 @@
 <script>
   import { Button, Dialog } from '@sveltia/ui';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { user } from '$lib/services/auth';
   import { allBackendServices, backend } from '$lib/services/backends';
@@ -57,6 +57,7 @@
 
         if (name && name !== 'local') {
           backendName = name;
+          await tick();
 
           if ($backend && token) {
             await signIn(token);
