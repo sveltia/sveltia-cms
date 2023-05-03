@@ -99,11 +99,17 @@ const fetchFiles = async () => {
   const { tree: files } = await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
   // Then filter what’s managed in CMS
   const { entryFiles, assetFiles } = createFileList(files.filter(({ type }) => type === 'blob'));
+  const allFiles = [...entryFiles, ...assetFiles];
+
+  // Skip fetching files if no files found
+  if (!allFiles.length) {
+    return;
+  }
 
   // Fetch all the text contents with the GraphQL API
   const { repository } = await fetchGraphQL(`query {
     repository(owner: "${owner}", name: "${repo}") {
-      ${[...entryFiles, ...assetFiles]
+      ${allFiles
         .map(
           ({ path, slug }, index) => `
             ${
