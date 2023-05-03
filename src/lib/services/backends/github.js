@@ -67,7 +67,12 @@ const signIn = async (savedToken) => {
     return { ...(await fetchAPI('/user', { token })), backendName: 'github', token };
   } catch {
     user.set(null);
-    LocalStorage.delete('sveltia-cms.user');
+
+    try {
+      await LocalStorage.delete('sveltia-cms.user');
+    } catch {
+      //
+    }
 
     throw new Error('Token is not valid');
   }

@@ -9,7 +9,8 @@
 
   let backendName = $siteConfig.backend?.name;
   let isLocal = false;
-  let isLocalUnsupported = false;
+  let isFileAccessUnsupported = false;
+  let isLocalStorageDisabled = false;
   let showErrorDialog = false;
   let errorReason;
 
@@ -25,7 +26,7 @@
       const _user = await $backend.signIn(savedToken);
 
       $user = _user;
-      LocalStorage.set('sveltia-cms.user', _user);
+      await LocalStorage.set('sveltia-cms.user', _user);
     } catch {
       showErrorDialog = true;
       errorReason = 'unexpected';
@@ -38,7 +39,7 @@
     isLocal = window.location.hostname.match(/^(?:.+\.)?localhost$/);
 
     // Check if the browser supports the File System Access API
-    isLocalUnsupported = isLocal && !('showDirectoryPicker' in window);
+    isFileAccessUnsupported = isLocal && !('showDirectoryPicker' in window);
 
     if (isLocal) {
       backendName = 'local';
@@ -48,52 +49,64 @@
     // Netlify CMS cache as well. Don’t try to sign in if the local backend is being used, because
     // it requires user interaction to acquire file/directory handles.
     (async () => {
-      const { backendName: name, token } =
-        (await LocalStorage.get('sveltia-cms.user')) ||
-        (await LocalStorage.get('netlify-cms-user')) ||
-        {};
+      try {
+        const { backendName: name, token } =
+          (await LocalStorage.get('sveltia-cms.user')) ||
+          (await LocalStorage.get('netlify-cms-user')) ||
+          {};
 
-      if (name && name !== 'local') {
-        backendName = name;
+        if (name && name !== 'local') {
+          backendName = name;
 
-        if ($backend && token) {
-          await signIn(token);
+          if ($backend && token) {
+            await signIn(token);
+          }
         }
+      } catch {
+        isLocalStorageDisabled = true;
       }
     })();
   });
 </script>
 
 <div class="buttons">
-  {#if isLocal}
-    <Button
-      class="primary"
-      label={$_('work_with_local_repo')}
-      disabled={isLocalUnsupported}
-      on:click={async () => {
-        await signIn();
-      }}
-    />
-    {#if isLocalUnsupported}
-      {$_(`unsupported.browser`)}
+  {#if isLocalStorageDisabled}
+    <div role="alert">
+      {$_('unsupported.storage')}
+    </div>
+  {:else if isLocal}
+    {#if isFileAccessUnsupported}
+      <div role="alert">
+        {$_(`unsupported.browser`)}
+      </div>
+    {:else}
+      <Button
+        class="primary"
+        label={$_('work_with_local_repo')}
+        on:click={async () => {
+          await signIn();
+        }}
+      />
     {/if}
   {:else if $backend}
     <Button
       class="primary"
-      label={$_('sign_in_with_x', {
-        values: { name: $backend.label },
-      })}
+      label={$_('sign_in_with_x', { values: { name: $backend.label } })}
       on:click={async () => {
         await signIn();
       }}
     />
   {:else}
-    {$_('unsupported.backend_x', { values: { name: backendName } })}
+    <div role="alert">
+      {$_('unsupported.backend_x', { values: { name: backendName } })}
+    </div>
   {/if}
 </div>
 
 <Dialog bind:open={showErrorDialog} showCancel={false}>
-  {$_(`unsupported.${errorReason}`)}
+  <div role="alert">
+    {$_(`unsupported.${errorReason}`)}
+  </div>
 </Dialog>
 
 <style lang="scss">

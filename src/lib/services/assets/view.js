@@ -192,7 +192,11 @@ const groupAssets = (assets, { field, pattern } = {}) => {
  */
 const assetsViewSettings = writable({}, (set) => {
   (async () => {
-    set((await LocalStorage.get(storageKey)) || {});
+    try {
+      set((await LocalStorage.get(storageKey)) || {});
+    } catch {
+      //
+    }
   })();
 });
 
@@ -281,7 +285,7 @@ currentView.subscribe((view) => {
 assetsViewSettings.subscribe((settings) => {
   (async () => {
     try {
-      if (settings && !equal(settings, LocalStorage.get(storageKey))) {
+      if (settings && !equal(settings, await LocalStorage.get(storageKey))) {
         await LocalStorage.set(storageKey, settings);
       }
     } catch {

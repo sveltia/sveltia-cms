@@ -216,6 +216,8 @@ export const strings = {
     backend_x: 'The configured backend “{name}” is not supported.',
     browser:
       'Local development is not supported in your browser. Please use Chrome or Edge instead.',
+    storage:
+      'Local storage is disabled in your browser. Please check your privacy (cookies) settings and try again.',
     unexpected: 'There was an unexpected error while signing in. Please try again later.',
   },
 

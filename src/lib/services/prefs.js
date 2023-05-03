@@ -7,10 +7,14 @@ const storageKey = 'sveltia-cms.prefs';
 
 export const prefs = writable({}, (set) => {
   (async () => {
-    const _prefs = (await LocalStorage.get(storageKey)) || {};
+    try {
+      const _prefs = (await LocalStorage.get(storageKey)) || {};
 
-    _prefs.apiKeys ||= {};
-    set(_prefs);
+      _prefs.apiKeys ||= {};
+      set(_prefs);
+    } catch {
+      //
+    }
   })();
 });
 
@@ -19,8 +23,12 @@ prefs.subscribe(async (newPrefs) => {
     return;
   }
 
-  if (!equal(newPrefs, LocalStorage.get(storageKey))) {
-    LocalStorage.set(storageKey, newPrefs);
+  try {
+    if (!equal(newPrefs, await LocalStorage.get(storageKey))) {
+      await LocalStorage.set(storageKey, newPrefs);
+    }
+  } catch {
+    //
   }
 
   const { locale, theme } = newPrefs;

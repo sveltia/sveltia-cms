@@ -25,7 +25,11 @@ export const editorRightPane = writable({});
 
 export const entryViewSettings = writable({}, (set) => {
   (async () => {
-    set((await LocalStorage.get(storageKey)) || { showPreview: true, syncScrolling: true });
+    try {
+      set((await LocalStorage.get(storageKey)) || { showPreview: true, syncScrolling: true });
+    } catch {
+      //
+    }
   })();
 });
 
@@ -701,7 +705,7 @@ if (import.meta.env.DEV) {
 entryViewSettings.subscribe((settings) => {
   (async () => {
     try {
-      if (settings && !equal(settings, LocalStorage.get(storageKey))) {
+      if (settings && !equal(settings, await LocalStorage.get(storageKey))) {
         await LocalStorage.set(storageKey, settings);
       }
     } catch {

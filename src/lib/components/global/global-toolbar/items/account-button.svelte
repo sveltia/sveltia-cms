@@ -64,9 +64,13 @@
     <Separator />
     <MenuItem
       label={$_('sign_out')}
-      on:click={() => {
-        LocalStorage.delete('sveltia-cms.user');
-        LocalStorage.delete('netlify-cms-user');
+      on:click={async () => {
+        try {
+          await LocalStorage.delete('sveltia-cms.user');
+          await LocalStorage.delete('netlify-cms-user');
+        } catch {
+          //
+        }
 
         // Wait a bit before the menu is closed
         window.requestAnimationFrame(() => {
