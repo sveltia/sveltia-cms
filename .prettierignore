@@ -1,7 +1,3 @@
-.DS_Store
 node_modules
-.env
-.env.*
-!.env.example
 /dist
 pnpm-lock.yaml
