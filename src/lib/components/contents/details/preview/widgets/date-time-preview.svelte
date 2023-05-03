@@ -8,14 +8,13 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  // svelte-ignore unused-export-let
   export let fieldConfig = {};
   export let currentValue = undefined;
 
   $: ({
-    i18n,
+    // i18n,
     // Widget-specific options
-    format,
+    // format,
     date_format: dateFormat,
     time_format: timeFormat,
     picker_utc: pickerUTC = false,

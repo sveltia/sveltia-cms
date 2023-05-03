@@ -18,12 +18,12 @@
     // Widget-specific options
     collection,
     value_field: valueField,
-    search_fields: searchFields,
-    file,
+    // search_fields: searchFields,
+    // file,
     display_fields: displayFields,
-    multiple = false,
-    min,
-    max,
+    // multiple = false,
+    // min,
+    // max,
   } = fieldConfig);
   $: relCollection = getCollection(collection);
   $: refEntries = relCollection ? getEntries(collection) : [];

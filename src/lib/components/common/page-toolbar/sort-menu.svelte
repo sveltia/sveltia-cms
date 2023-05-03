@@ -12,9 +12,9 @@
   <Icon slot="end-icon" name="arrow_drop_down" />
   <Menu slot="popup">
     <MenuItemGroup ariaLabel={$_('sort_field')}>
-      {#each fields as { key, label } (key)}
+      {#each fields as { key, label: _label } (key)}
         <MenuItemRadio
-          {label}
+          {_label}
           checked={$currentView.sort?.key === key}
           on:click={() => {
             // Sort dates from new to old by default

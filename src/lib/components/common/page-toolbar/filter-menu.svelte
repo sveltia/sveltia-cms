@@ -22,9 +22,9 @@
         }));
       }}
     />
-    {#each filters as { label, field, pattern }}
+    {#each filters as { label: _label, field, pattern }}
       <MenuItemRadio
-        {label}
+        {_label}
         checked={$currentView.filter?.field === field && $currentView.filter?.pattern === pattern}
         on:click={() => {
           currentView.update((view) => ({

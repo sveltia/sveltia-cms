@@ -40,6 +40,7 @@
 </script>
 
 {#if hasSubFields}
+  <!-- eslint-disable-next-line no-unused-vars -->
   {#each items as item, index}
     {@const subFieldName = Array.isArray(types)
       ? $entryDraft.currentValues[locale][`${keyPath}.${index}.${typeKey}`]

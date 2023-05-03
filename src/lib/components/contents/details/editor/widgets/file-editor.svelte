@@ -32,9 +32,9 @@
     i18n,
     // Widget-specific options
     media_library: {
-      allow_multiple: allowMultiple = true,
+      // allow_multiple: allowMultiple = true,
       config: { max_file_size: maxFileSize = undefined } = {},
-      media_folder: mediaFolder,
+      // media_folder: mediaFolder,
       choose_url: canEnterURL = true,
     } = {},
   } = fieldConfig);
@@ -79,8 +79,8 @@
 
 <div class="image-widget">
   {#if isImageWidget && currentValue}
-    {@const asset = currentValue.startsWith('/') ? getAssetByPublicPath(currentValue) : undefined}
-    <Image src={asset ? getAssetURL(asset) : currentValue} checkerboard={true} />
+    {@const _asset = currentValue.startsWith('/') ? getAssetByPublicPath(currentValue) : undefined}
+    <Image src={_asset ? getAssetURL(_asset) : currentValue} checkerboard={true} />
   {/if}
   <div>
     {#if typeof currentValue === 'string'}

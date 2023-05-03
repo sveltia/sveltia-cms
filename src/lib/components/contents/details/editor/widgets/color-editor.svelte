@@ -20,7 +20,7 @@
     i18n,
     // Widget-specific options
     allowInput = false,
-    enableAlpha = false,
+    // enableAlpha = false,
   } = fieldConfig);
   $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
 </script>

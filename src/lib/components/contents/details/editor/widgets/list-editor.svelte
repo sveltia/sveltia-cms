@@ -33,8 +33,8 @@
     label_singular: labelSingular,
     field,
     fields,
-    max,
-    min,
+    // max,
+    // min,
     add_to_top: addToTop = false,
     types,
     typeKey = 'type',
@@ -60,7 +60,6 @@
 
   let mounted = false;
   let widgetId;
-  let initialValue = [];
   let inputValue = '';
 
   onMount(() => {
@@ -70,7 +69,6 @@
     if (hasSubFields) {
       //
     } else if (Array.isArray(currentValue)) {
-      initialValue = currentValue;
       inputValue = currentValue.join(', ');
     }
   });

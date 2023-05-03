@@ -18,7 +18,9 @@
     <div>
       {#if $searchResults?.entries?.length}
         <BasicListView>
-          {#each $searchResults.entries as { slug, locales, fileName, collectionName } (`${collectionName}/${fileName}/${slug}`)}
+          <!-- prettier-ignore -->
+          {#each $searchResults.entries as
+            { slug, locales, fileName, collectionName } (`${collectionName}/${fileName}/${slug}`)}
             {@const collection = getCollection(collectionName)}
             {@const file = fileName
               ? collection.files.find(({ name }) => name === fileName)

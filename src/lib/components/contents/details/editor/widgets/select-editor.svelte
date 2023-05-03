@@ -21,7 +21,7 @@
     // Widget-specific options
     options: fieldOptions,
     multiple,
-    min,
+    // min,
     max,
   } = fieldConfig);
   $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;

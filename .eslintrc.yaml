@@ -1,24 +1,18 @@
 root: true
-parser: "@babel/eslint-parser"
 parserOptions:
   requireConfigFile: false
   sourceType: module
-  ecmaVersion: 2020
+  ecmaVersion: latest
 extends:
-  - eslint:recommended
-  - eslint-config-airbnb-base
-  - plugin:import/recommended
-  - plugin:jsdoc/recommended
+  - airbnb-base
   - prettier
+  - plugin:jsdoc/recommended
+  - plugin:svelte/recommended
+  - plugin:svelte/prettier
 plugins:
   - jsdoc
-  - svelte3
 ignorePatterns:
   - "*.cjs"
-overrides:
-  - files:
-      - "*.svelte"
-    processor: svelte3/svelte3
 env:
   browser: true
   es2017: true
@@ -26,7 +20,6 @@ env:
 rules:
   class-methods-use-this: off
   import/extensions: off
-  import/first: off
   import/no-extraneous-dependencies: off
   import/no-mutable-exports: off
   import/no-unresolved: off
@@ -49,6 +42,8 @@ rules:
       ignoreUrls: true
       ignoreStrings: true
   no-param-reassign: off
+  # https://github.com/sveltejs/eslint-plugin-svelte#white_check_mark-rules
+  svelte/no-at-html-tags: off
   # https://svelte.dev/docs#component-format-script
   no-undef-init: off
   no-underscore-dangle: off
