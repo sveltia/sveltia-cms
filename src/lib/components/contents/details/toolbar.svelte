@@ -1,5 +1,4 @@
 <script>
-  import equal from 'deep-is';
   import {
     Button,
     Dialog,
@@ -12,6 +11,7 @@
     Spacer,
     Toolbar,
   } from '@sveltia/ui';
+  import equal from 'deep-is';
   import { _ } from 'svelte-i18n';
   import { user } from '$lib/services/auth';
   import { deleteEntries } from '$lib/services/contents/data';

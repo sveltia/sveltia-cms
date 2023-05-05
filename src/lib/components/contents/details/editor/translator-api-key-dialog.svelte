@@ -1,6 +1,6 @@
 <script>
-  import DOMPurify from 'isomorphic-dompurify';
   import { Dialog, TextInput } from '@sveltia/ui';
+  import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import { copyFromLocale } from '$lib/services/contents/editor';
   import {
