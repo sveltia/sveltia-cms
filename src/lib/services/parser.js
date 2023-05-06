@@ -4,10 +4,11 @@ import TOML from '@ltd/j-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { allAssetPaths, getAssetKind } from '$lib/services/assets';
-import { siteConfig } from '$lib/services/config';
-import { allContentPaths } from '$lib/services/contents';
+import { defaultContentLocale, siteConfig } from '$lib/services/config';
+import { allContentPaths, getCollection } from '$lib/services/contents';
+import { normalizeSlug } from '$lib/services/contents/entry';
 import { isObject } from '$lib/services/utils/misc';
-import { escapeRegExp } from '$lib/services/utils/strings';
+import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
 /**
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
@@ -33,7 +34,7 @@ export const createFileList = (files) => {
     if (contentPathConfig && path.match(/\.(?:json|markdown|md|toml|ya?ml)$/i)) {
       entryFiles.push({
         ...fileInfo,
-        slug: path.match(/([^/]+?)(?:\.\w+)?$/)[1],
+        type: 'entry',
         config: contentPathConfig,
       });
     }
@@ -41,6 +42,7 @@ export const createFileList = (files) => {
     if (mediaPathConfig) {
       assetFiles.push({
         ...fileInfo,
+        type: 'asset',
         config: mediaPathConfig,
       });
     }
@@ -255,11 +257,49 @@ export const formatEntryFile = ({
 };
 
 /**
+ * Determine the slug for the given entry content.
+ * @param {string} collectionName Collection name.
+ * @param {string} filePath File path without the collection folder and extension. It’s a slug in
+ * most cases, but it may be a path containing slash(es) when the Folder Collections Path is
+ * configured.
+ * @param {EntryContent} content Entry content.
+ * @returns {string} Slug.
+ * @see https://decapcms.org/docs/configuration-options/#slug
+ * @see https://decapcms.org/docs/beta-features/#folder-collections-path
+ */
+const getSlug = (collectionName, filePath, content) => {
+  const { path: pathTemplate, identifier_field: identifierField = 'title' } =
+    getCollection(collectionName);
+
+  if (!pathTemplate) {
+    // It’s a slug
+    return filePath;
+  }
+
+  if (pathTemplate.includes('{{slug}}')) {
+    const [, slug] =
+      filePath.match(
+        new RegExp(`^${escapeRegExp(pathTemplate).replace('\\{\\{slug\\}\\}', '(.+)')}$`),
+      ) || [];
+
+    if (slug) {
+      return slug;
+    }
+  }
+
+  // We can’t determine the slug from the file path. Let’s fallback using the content
+  return normalizeSlug(
+    content[identifierField] || content.title || content.name || content.label || '',
+  );
+};
+
+/**
  * Parse the given entry files to create a complete, serialized entry list.
  * @param {object[]} entryFiles Entry file list.
  * @returns {Entry[]} Entry list.
  */
 export const parseEntryFiles = (entryFiles) => {
+  const defaultLocale = get(defaultContentLocale);
   const { i18n: { locales, structure } = {} } = get(siteConfig);
   const hasLocales = Array.isArray(locales);
   const entries = [];
@@ -268,24 +308,37 @@ export const parseEntryFiles = (entryFiles) => {
     const parsedFile = parseEntryFile(file);
 
     if (!isObject(parsedFile)) {
-      return Promise.resolve();
+      return;
     }
 
     const {
-      slug,
       path,
       sha,
       meta = {},
-      config: { collectionName, fileName },
+      config: { folder: configFolder, collectionName, fileName },
     } = file;
 
-    const entry = { sha, slug, collectionName, fileName, ...meta };
+    const extension = getFileExtension(getCollection(collectionName));
+
+    const [, filePath] = fileName
+      ? []
+      : path.match(
+          new RegExp(`^${escapeRegExp(stripSlashes(configFolder))}\\/(.+)\\.${extension}$`),
+        ) || [];
+
+    if (!fileName && !filePath) {
+      return;
+    }
+
+    const entry = { sha, collectionName, fileName, ...meta };
 
     if (!hasLocales) {
+      entry.slug = getSlug(collectionName, filePath, parsedFile);
       entry.locales = { default: { content: parsedFile, path, sha } };
     }
 
     if (hasLocales && (structure === 'single_file' || fileName)) {
+      entry.slug = fileName || getSlug(collectionName, filePath, parsedFile[defaultLocale]);
       entry.locales = Object.fromEntries(
         locales
           .filter((locale) => locale in parsedFile)
@@ -294,26 +347,29 @@ export const parseEntryFiles = (entryFiles) => {
     }
 
     if (hasLocales && (structure === 'multiple_folders' || structure === 'multiple_files')) {
-      const regex =
-        structure === 'multiple_folders'
-          ? new RegExp(`^(${locales.join('|')})\\/`)
-          : new RegExp(`\\/(${locales.join('|')})\\.[a-zA-Z0-9]+$`);
+      let _filePath;
+      let locale;
 
-      const [, locale] = path.match(regex) || [];
-      const index = entries.findIndex((_entry) => _entry.slug === slug);
+      if (structure === 'multiple_folders') {
+        [, locale, _filePath] = filePath.match(new RegExp(`^(${locales.join('|')})\\/(.+)$`)) || [];
+      } else {
+        [, _filePath, locale] = filePath.match(new RegExp(`^(.+)\\.(${locales.join('|')})$`)) || [];
+      }
 
-      if (locale && parsedFile[locale]) {
+      if (_filePath && locale) {
+        const slug = getSlug(collectionName, _filePath, parsedFile);
+        const index = entries.findIndex((_entry) => _entry.slug === slug);
+
         if (index > -1) {
-          entries[index].locales[locale] = { content: parsedFile[locale], path, sha };
+          entries[index].locales[locale] = { content: parsedFile, path, sha };
         } else {
-          entry.locales = { [locale]: { content: parsedFile[locale], path, sha } };
+          entry.slug = slug;
+          entry.locales = { [locale]: { content: parsedFile, path, sha } };
         }
       }
     }
 
     entries.push(entry);
-
-    return Promise.resolve();
   });
 
   return entries;

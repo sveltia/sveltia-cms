@@ -111,9 +111,9 @@ const fetchFiles = async () => {
     repository(owner: "${owner}", name: "${repo}") {
       ${allFiles
         .map(
-          ({ path, slug }, index) => `
+          ({ type, path }, index) => `
             ${
-              slug // entry file
+              type === 'entry'
                 ? `
                   content_${index}: object(expression: "${branch}:${path}") {
                     ... on Blob {

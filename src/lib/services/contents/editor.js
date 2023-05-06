@@ -10,13 +10,14 @@ import { user } from '$lib/services/auth';
 import { backend } from '$lib/services/backends';
 import { defaultContentLocale, siteConfig } from '$lib/services/config';
 import { allEntries, getCollection, getEntries, getFieldByKeyPath } from '$lib/services/contents';
+import { normalizeSlug } from '$lib/services/contents/entry';
 import { translator } from '$lib/services/integrations/translators';
 import { formatEntryFile, getFileExtension } from '$lib/services/parser';
 import { prefs } from '$lib/services/prefs';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import { getHash, renameIfNeeded } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { escapeRegExp } from '$lib/services/utils/strings';
+import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.entry-view';
 
@@ -134,7 +135,7 @@ export const createDraft = (collectionName, entry) => {
   const { i18n } = get(siteConfig);
   const collection = getCollection(collectionName);
   const isNew = !entry;
-  const { slug, fileName, locales } = entry || {};
+  const { fileName, locales } = entry || {};
 
   const collectionFile = fileName
     ? collection.files?.find(({ name }) => name === fileName)
@@ -146,11 +147,11 @@ export const createDraft = (collectionName, entry) => {
 
   entryDraft.set({
     isNew,
-    slug,
     collectionName,
     collection,
     fileName,
     collectionFile,
+    originalEntry: entry,
     originalValues: Object.fromEntries(
       allLocales.map((locale) => [locale, flatten(locales?.[locale]?.content || newContent)]),
     ),
@@ -414,85 +415,109 @@ const validateEntry = () => {
 };
 
 /**
- * Create a slug for the current entry draft.
- * @param {object} collection Collection
+ * Create a slug or path for the given entry draft.
  * @param {EntryDraft} draft Draft.
- * @returns {string} Slug.
+ * @param {string} template Template string containing tags like `{{title}}`.
+ * @param {string} [currentSlug] Entry slug already created for the path.
+ * @returns {string} Slug or path.
  * @see https://www.netlifycms.org/docs/configuration-options/#slug-type
  * @see https://www.netlifycms.org/docs/configuration-options/#slug
  */
-const createSlug = (collection, draft) => {
-  const defaultLocale = get(defaultContentLocale);
-  const { currentValues } = draft;
-
+const createSlug = (draft, template, currentSlug) => {
   const {
-    slug: {
-      encoding = 'unicode',
-      clean_accents: cleanAccents = false,
-      sanitize_replacement: sanitizeReplacement = '-',
-    } = {},
-  } = get(siteConfig);
+    collection: { name: collectionName, identifier_field: identifierField = 'title' },
+    currentValues,
+  } = draft;
 
-  const { slug: slugTemplate = '{{title}}', identifier_field: identifierField = 'title' } =
-    collection;
-
+  const content = currentValues[get(defaultContentLocale)];
   const dateTimeParts = getDateTimeParts();
 
-  /** @type {string} */
-  let slug = slugTemplate.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
-    if (tag.startsWith('fields.')) {
-      return currentValues[defaultLocale][tag.replace(/^fields\./, '')] || '';
-    }
-
+  const slug = template.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
     if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
       return dateTimeParts[tag];
     }
 
-    if (tag === 'slug') {
-      return currentValues[defaultLocale][identifierField] || '';
+    if (tag === 'slug' && currentSlug) {
+      return currentSlug;
     }
 
     if (tag === 'uuid') {
-      return window.crypto.randomUUID();
+      return generateUUID();
     }
 
     if (tag === 'uuid_short') {
       // Last 12 characters
-      return window.crypto.randomUUID().split('-').pop();
+      return generateUUID().split('-').pop();
     }
 
     if (tag === 'uuid_shorter') {
       // First 8 characters
-      return window.crypto.randomUUID().split('-').shift();
+      return generateUUID().split('-').shift();
     }
 
-    return currentValues[defaultLocale][tag] || '';
+    let value = '';
+
+    if (tag.startsWith('fields.')) {
+      value = content[tag.replace(/^fields\./, '')] || '';
+    } else if (tag === 'slug') {
+      value = content[identifierField] || content.title || content.name || content.label || '';
+    } else {
+      value = content[tag] || '';
+    }
+
+    // Normalize it; use a random ID as a fallback
+    return normalizeSlug(value) || generateUUID().split('-').pop();
   });
 
-  if (cleanAccents) {
-    // Remove any accent @see https://stackoverflow.com/q/990904
-    slug = slug.normalize('NFD').replace(/\p{Diacritic}/gu, '');
-  }
-
-  if (encoding === 'ascii') {
-    slug = slug.replaceAll(/[^\w-~]/g, ' ');
-  } else {
-    // Allow Unicode letters and numbers @see https://stackoverflow.com/q/280712
-    slug = slug.replaceAll(/[^\p{L}\p{N}]/gu, ' ');
-  }
-
-  // Make the string lowercase; replace all the spaces with replacers (hyphens by default)
-  slug = slug.toLocaleLowerCase().trim().replaceAll(/\s+/g, sanitizeReplacement);
-
-  if (!slug) {
-    // Use a random slug as a fallback
-    return window.crypto.randomUUID().split('-').pop();
+  // We don’t have to rename it when creating a path with a slug given
+  if (currentSlug) {
+    return slug;
   }
 
   return renameIfNeeded(
     slug,
-    getEntries(collection.name).map((e) => e.slug),
+    getEntries(collectionName).map((e) => e.slug),
   );
+};
+
+/**
+ * Determine the file path for the given entry draft depending on the collection type, i18n config
+ * and folder collections path.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {LocaleCode} locale Locale code.
+ * @param {string} slug Entry slug.
+ * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
+ * @see https://decapcms.org/docs/beta-features/#i18n-support
+ * @see https://decapcms.org/docs/beta-features/#folder-collections-path
+ */
+const createEntryPath = (draft, locale, slug) => {
+  const { collection, collectionFile, originalEntry } = draft;
+
+  if (collectionFile) {
+    return collectionFile.file;
+  }
+
+  if (originalEntry?.locales[locale]) {
+    return originalEntry?.locales[locale].path;
+  }
+
+  const { i18n } = get(siteConfig);
+  const collectionFolder = collection.folder?.replace(/\/$/, '');
+  const path = collection.path ? createSlug(draft, collection.path, slug) : slug;
+  const extension = getFileExtension(collection);
+  const defaultOption = `${collectionFolder}/${path}.${extension}`;
+
+  if (!i18n?.structure) {
+    return defaultOption;
+  }
+
+  const pathOptions = {
+    multiple_folders: `${collectionFolder}/${locale}/${path}.${extension}`,
+    multiple_files: `${collectionFolder}/${path}.${locale}.${extension}`,
+    single_file: defaultOption,
+  };
+
+  return pathOptions[i18n.structure] || pathOptions.single_file;
 };
 
 /**
@@ -513,7 +538,7 @@ export const saveEntry = async () => {
   const {
     collection,
     isNew,
-    slug: originalSlug,
+    originalEntry,
     collectionName,
     collectionFile,
     fileName,
@@ -521,9 +546,7 @@ export const saveEntry = async () => {
     files,
   } = draft;
 
-  const collectionFolder = collection.folder?.replace(/\/$/, '');
-  const slug = originalSlug || createSlug(collection, draft);
-  const extension = getFileExtension(collection);
+  const slug = originalEntry?.slug || createSlug(draft, collection.slug || '{{title}}');
 
   const { internalPath: internalAssetFolder, publicPath: publicAssetFolder } =
     getAssetFolder(collectionName);
@@ -611,17 +634,9 @@ export const saveEntry = async () => {
           }
         }
 
-        const pathOptions = {
-          multiple_folders: `${collectionFolder}/${locale}/${slug}.${extension}`,
-          multiple_files: `${collectionFolder}/${slug}.${locale}.${extension}`,
-          single_file: `${collectionFolder}/${slug}.${extension}`,
-        };
-
         const content = unflatten(valueMap);
         const sha = await getHash(new Blob([content], { type: 'text/plain' }));
-
-        const path =
-          collectionFile?.file || pathOptions[i18n?.structure] || pathOptions.single_file;
+        const path = createEntryPath(draft, locale, slug);
 
         return [locale, { content, sha, path }];
       }),
@@ -641,7 +656,6 @@ export const saveEntry = async () => {
     const { path, content } = savingEntryLocales[defaultLocale];
 
     savingFiles.push({
-      slug,
       path,
       data: formatEntryFile({
         content: hasLocales
@@ -660,7 +674,6 @@ export const saveEntry = async () => {
       const { path, content } = savingEntryLocales[locale];
 
       savingFiles.push({
-        slug,
         path,
         data: formatEntryFile({
           content,
