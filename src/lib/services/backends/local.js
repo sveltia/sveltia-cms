@@ -8,6 +8,7 @@ import { siteConfig } from '$lib/services/config';
 import { allContentPaths, allEntries } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
 import { getHash, readAsText } from '$lib/services/utils/files';
+import { stripSlashes } from '$lib/services/utils/strings';
 
 const label = 'Local Repository';
 const url = null;
@@ -115,7 +116,7 @@ const signOut = async () => {
  * @returns {Promise<(FileSystemFileHandle|FileSystemDirectoryHandle)>} Handle.
  */
 const getHandleByPath = async (path) => {
-  const pathParts = path.match(/^\/?(.+?)\/?$/)[1].split('/');
+  const pathParts = stripSlashes(path).split('/');
   let handle = get(rootDirHandle);
 
   for (const name of pathParts) {
@@ -214,7 +215,7 @@ const saveFiles = async (items) => {
 const deleteFiles = async (items) => {
   await Promise.all(
     items.map(async ({ path }) => {
-      const pathArray = path.match(/^\/?(.+?)\/?$/)[1].split('/');
+      const pathArray = stripSlashes(path).split('/');
       const entryName = pathArray.pop();
       const handle = await getHandleByPath(pathArray.join('/'));
 

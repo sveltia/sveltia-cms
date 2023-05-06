@@ -13,7 +13,7 @@
   import { defaultContentLocale } from '$lib/services/config';
   import { entryDraft, updateListField } from '$lib/services/contents/editor';
   import { isObject } from '$lib/services/utils/misc';
-  import { escapeRegExp } from '$lib/services/utils/strings';
+  import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
   export let locale = '';
   export let keyPath = '';
@@ -64,7 +64,7 @@
 
   onMount(() => {
     mounted = true;
-    widgetId = window.crypto.randomUUID().split('-').pop();
+    widgetId = generateUUID().split('-').pop();
 
     if (hasSubFields) {
       //

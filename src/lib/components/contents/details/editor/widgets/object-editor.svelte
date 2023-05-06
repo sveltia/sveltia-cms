@@ -7,8 +7,9 @@
   import { Button, Group, Icon, Spacer } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { entryDraft } from '$lib/services/contents/editor';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import { entryDraft } from '$lib/services/contents/editor';
+  import { generateUUID } from '$lib/services/utils/strings';
 
   export let locale = '';
   export let keyPath = '';
@@ -29,7 +30,7 @@
   let widgetId;
 
   onMount(() => {
-    widgetId = window.crypto.randomUUID().split('-').pop();
+    widgetId = generateUUID().split('-').pop();
   });
 </script>
 

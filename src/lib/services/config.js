@@ -4,6 +4,7 @@ import { allAssetPaths } from '$lib/services/assets';
 import { allContentPaths, selectedCollection } from '$lib/services/contents';
 import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
 import { isObject } from '$lib/services/utils/misc';
+import { stripSlashes } from '$lib/services/utils/strings';
 
 export const siteConfig = writable();
 export const defaultContentLocale = writable('default');
@@ -86,7 +87,7 @@ siteConfig.subscribe((config) => {
   }
 
   const { media_folder: mediaFolder, public_folder: publicFolder, collections, i18n } = config;
-  const _mediaFolder = mediaFolder.match(/^\/?(.+)\/?$/)[1];
+  const _mediaFolder = stripSlashes(mediaFolder);
   const _defaultContentLocale = i18n?.default_locale || i18n?.locales?.[0] || 'default';
 
   defaultContentLocale.set(_defaultContentLocale);
@@ -146,7 +147,7 @@ siteConfig.subscribe((config) => {
         .filter((c) => c.media_folder?.startsWith('/') && c.public_folder)
         .map((c) => ({
           collectionName: c.name,
-          internalPath: c.media_folder.match(/^\/?(.+)\/?$/)[1],
+          internalPath: stripSlashes(c.media_folder),
           publicPath: c.public_folder,
         })),
     ].sort((a, b) => a.internalPath.localeCompare(b.internalPath)),

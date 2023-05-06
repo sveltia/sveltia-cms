@@ -9,6 +9,7 @@
   import { selectedCollection } from '$lib/services/contents';
   import { allPictureServices } from '$lib/services/integrations/pictures';
   import { prefs } from '$lib/services/prefs';
+  import { generateUUID, stripSlashes } from '$lib/services/utils/strings';
 
   export let open = false;
   export let kind = undefined;
@@ -23,8 +24,7 @@
   let enteredURL = '';
   let searchTerms = '';
 
-  $: [, collectionMediaFolder] =
-    ($selectedCollection.media_folder || '').match(/^\/?(.+)\/?$/) || [];
+  $: collectionMediaFolder = stripSlashes($selectedCollection.media_folder || '');
 
   $: {
     if (open) {
@@ -34,7 +34,7 @@
   }
 
   onMount(() => {
-    tabPanelIdPrefix = `tabs-${window.crypto.randomUUID().split('-').pop()}-panel`;
+    tabPanelIdPrefix = `tabs-${generateUUID().split('-').pop()}-panel`;
   });
 </script>
 

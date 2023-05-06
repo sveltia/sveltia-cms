@@ -6,9 +6,10 @@
   import { selectedCollection } from '$lib/services/contents';
   import { currentView } from '$lib/services/contents/view';
   import { goto } from '$lib/services/navigation';
+  import { stripSlashes } from '$lib/services/utils/strings';
 
   $: mediaFolder = $selectedCollection.media_folder || '';
-  $: [, canonicalMediaFolder] = mediaFolder.match(/^\/?(.+)\/?$/) || [];
+  $: canonicalMediaFolder = stripSlashes(mediaFolder);
 </script>
 
 {#if mediaFolder.startsWith('/') && $currentView?.showMedia}
