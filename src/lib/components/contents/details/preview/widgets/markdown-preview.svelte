@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Markdown widget.
-  @see https://www.netlifycms.org/docs/widgets/#markdown
+  @see https://decapcms.org/docs/widgets/#markdown
 -->
 <script>
   import { marked } from 'marked';

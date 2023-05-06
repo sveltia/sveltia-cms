@@ -1,8 +1,8 @@
 <!--
   @component
   Implement the preview for the DataTime and (deprecated) Date widgets.
-  @see https://www.netlifycms.org/docs/widgets/#datetime
-  @see https://www.netlifycms.org/docs/widgets/#date
+  @see https://decapcms.org/docs/widgets/#datetime
+  @see https://decapcms.org/docs/widgets/#date
 -->
 <script>
   export let locale = '';

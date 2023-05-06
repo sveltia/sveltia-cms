@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the List widget.
-  @see https://www.netlifycms.org/docs/widgets/#list
+  @see https://decapcms.org/docs/widgets/#list
 -->
 <script>
   import { Button, Group, Icon, Spacer, TextInput } from '@sveltia/ui';

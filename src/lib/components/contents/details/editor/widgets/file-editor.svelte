@@ -1,8 +1,8 @@
 <!--
   @component
   Implement the editor for the File and Image widgets.
-  @see https://www.netlifycms.org/docs/widgets/#file
-  @see https://www.netlifycms.org/docs/widgets/#image
+  @see https://decapcms.org/docs/widgets/#file
+  @see https://decapcms.org/docs/widgets/#image
 -->
 <script>
   import { Button, Dialog, TextArea } from '@sveltia/ui';
@@ -54,7 +54,7 @@
 
     if (file) {
       // Check the max file size
-      // @see https://www.netlifycms.org/docs/beta-features/#image-widget-file-size-limit
+      // @see https://decapcms.org/docs/beta-features/#image-widget-file-size-limit
       if (isImageWidget && Number.isInteger(maxFileSize) && file.size > maxFileSize) {
         showSizeLimitDialog = true;
       } else {

@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the String widget.
-  @see https://www.netlifycms.org/docs/widgets/#string
+  @see https://decapcms.org/docs/widgets/#string
 -->
 <script>
   // svelte-ignore unused-export-let

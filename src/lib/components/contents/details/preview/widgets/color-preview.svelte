@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Color widget.
-  @see https://www.netlifycms.org/docs/widgets/#color
+  @see https://decapcms.org/docs/widgets/#color
 -->
 <script>
   // svelte-ignore unused-export-let

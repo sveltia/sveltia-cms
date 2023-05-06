@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Object widget.
-  @see https://www.netlifycms.org/docs/widgets/#object
+  @see https://decapcms.org/docs/widgets/#object
 -->
 <script>
   import { Button, Group, Icon, Spacer } from '@sveltia/ui';

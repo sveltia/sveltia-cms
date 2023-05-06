@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Number widget.
-  @see https://www.netlifycms.org/docs/widgets/#number
+  @see https://decapcms.org/docs/widgets/#number
 -->
 <script>
   import { NumberInput } from '@sveltia/ui';

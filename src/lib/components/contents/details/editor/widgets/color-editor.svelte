@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Color widget.
-  @see https://www.netlifycms.org/docs/widgets/#color
+  @see https://decapcms.org/docs/widgets/#color
   @todo Replace the native `<input>` with a custom component.
   @todo Support the `enableAlpha` option.
 -->

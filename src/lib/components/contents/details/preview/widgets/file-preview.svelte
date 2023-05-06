@@ -1,8 +1,8 @@
 <!--
   @component
   Implement the preview for the File and Image widgets.
-  @see https://www.netlifycms.org/docs/widgets/#file
-  @see https://www.netlifycms.org/docs/widgets/#image
+  @see https://decapcms.org/docs/widgets/#file
+  @see https://decapcms.org/docs/widgets/#image
 -->
 <script>
   import { getAssetByPublicPath } from '$lib/services/assets';

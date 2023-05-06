@@ -15,7 +15,7 @@ const { DEV, VITE_CONFIG_PORT } = import.meta.env;
  * Validate the site configuration file.
  * @param {object} config Config object.
  * @throws {Error} If there is an error in the config.
- * @see https://www.netlifycms.org/docs/configuration-options/
+ * @see https://decapcms.org/docs/configuration-options/
  * @todo Add more validations.
  */
 const validate = (config) => {

@@ -28,7 +28,7 @@ export const getCollection = (name) => get(siteConfig).collections.find((c) => c
  * Get entries by the given collection name, while applying a filer if needed.
  * @param {string} name Collection name.
  * @returns {Entry[]} Entries.
- * @see https://www.netlifycms.org/docs/collection-types#filtered-folder-collections
+ * @see https://decapcms.org/docs/collection-types#filtered-folder-collections
  */
 export const getEntries = (name) => {
   const collection = getCollection(name);

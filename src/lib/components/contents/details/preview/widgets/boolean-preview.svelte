@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Boolean widget.
-  @see https://www.netlifycms.org/docs/widgets/#boolean
+  @see https://decapcms.org/docs/widgets/#boolean
 -->
 <script>
   import { _ } from 'svelte-i18n';

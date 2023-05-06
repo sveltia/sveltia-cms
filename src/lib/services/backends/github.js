@@ -213,7 +213,7 @@ const getLastCommitHash = async () => {
 
 /**
  * Default commit message templates.
- * @see https://www.netlifycms.org/docs/beta-features/#commit-message-templates
+ * @see https://decapcms.org/docs/beta-features/#commit-message-templates
  */
 const defaultCommitMessages = {
   create: 'Create {{collection}} “{{slug}}”',

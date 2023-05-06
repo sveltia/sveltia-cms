@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Select widget.
-  @see https://www.netlifycms.org/docs/widgets/#select
+  @see https://decapcms.org/docs/widgets/#select
 -->
 <script>
   export let locale = '';

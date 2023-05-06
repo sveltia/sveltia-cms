@@ -420,8 +420,8 @@ const validateEntry = () => {
  * @param {string} template Template string containing tags like `{{title}}`.
  * @param {string} [currentSlug] Entry slug already created for the path.
  * @returns {string} Slug or path.
- * @see https://www.netlifycms.org/docs/configuration-options/#slug-type
- * @see https://www.netlifycms.org/docs/configuration-options/#slug
+ * @see https://decapcms.org/docs/configuration-options/#slug-type
+ * @see https://decapcms.org/docs/configuration-options/#slug
  */
 const createSlug = (draft, template, currentSlug) => {
   const {

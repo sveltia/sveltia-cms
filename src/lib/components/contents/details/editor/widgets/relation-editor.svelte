@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Relation widget.
-  @see https://www.netlifycms.org/docs/widgets/#relation
+  @see https://decapcms.org/docs/widgets/#relation
   @todo Support search fields.
   @todo Support file collection & wildcard matching.
 -->

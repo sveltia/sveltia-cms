@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Select widget.
-  @see https://www.netlifycms.org/docs/widgets/#select
+  @see https://decapcms.org/docs/widgets/#select
 -->
 <script>
   import { Button, Combobox, Icon, Option, Select } from '@sveltia/ui';

@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Markdown widget.
-  @see https://www.netlifycms.org/docs/widgets/#markdown
+  @see https://decapcms.org/docs/widgets/#markdown
   @todo Implement the editor!
 -->
 <script>

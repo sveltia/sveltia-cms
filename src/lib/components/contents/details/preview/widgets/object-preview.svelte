@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Object widget.
-  @see https://www.netlifycms.org/docs/widgets/#object
+  @see https://decapcms.org/docs/widgets/#object
 -->
 <script>
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';

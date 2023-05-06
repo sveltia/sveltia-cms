@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Boolean widget.
-  @see https://www.netlifycms.org/docs/widgets/#boolean
+  @see https://decapcms.org/docs/widgets/#boolean
 -->
 <script>
   import { Switch } from '@sveltia/ui';

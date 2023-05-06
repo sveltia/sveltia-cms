@@ -9,7 +9,7 @@ export const user = writable();
  * with the configuration file.
  * @param {string} provider Provider name, e.g. `github`.
  * @returns {Promise<?string>} Auth token or `null` if authentication failed.
- * @see https://www.netlifycms.org/docs/backends-overview/
+ * @see https://decapcms.org/docs/backends-overview/
  */
 export const authorize = async (provider) => {
   const {

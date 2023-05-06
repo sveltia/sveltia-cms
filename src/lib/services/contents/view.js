@@ -16,7 +16,7 @@ import { user } from '$lib/services/auth';
 
 const storageKey = 'sveltia-cms.contents-view';
 /**
- * @see https://www.netlifycms.org/docs/configuration-options/#sortable_fields
+ * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
 const defaultSortableFields = ['title', 'name', 'date', 'author', 'description'];
 
@@ -25,7 +25,7 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
  * @param {object} collection Entry’s collection.
  * @param {EntryContent} content Entry content.
  * @returns {string} Formatted summary.
- * @see https://www.netlifycms.org/docs/beta-features/#summary-string-template-transformations
+ * @see https://decapcms.org/docs/beta-features/#summary-string-template-transformations
  */
 export const parseSummary = (collection, content) => {
   const valueMap = flatten(content);
@@ -91,7 +91,7 @@ export const parseSummary = (collection, content) => {
  * @param {string} condition.key Sort key.
  * @param {string} condition.order Sort order, either `ascending` or `descending`.
  * @returns {object[]} Sorted entry list.
- * @see https://www.netlifycms.org/docs/configuration-options/#sortable_fields
+ * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
 const sortEntries = (entries, { key, order } = {}) => {
   if (!key || !order) {
@@ -146,7 +146,7 @@ const sortEntries = (entries, { key, order } = {}) => {
  * @param {string} condition.field Field name.
  * @param {string} condition.pattern Regular expression.
  * @returns {object[]} Filtered entry list.
- * @see https://www.netlifycms.org/docs/configuration-options/#view_filters
+ * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
 const filterEntries = (entries, { field, pattern } = {}) => {
   if (!field) {
@@ -174,7 +174,7 @@ const filterEntries = (entries, { field, pattern } = {}) => {
  * @param {string} condition.field Field name.
  * @param {string} condition.pattern Regular expression.
  * @returns {object} Grouped entries, where key is a group label and value is an entry list.
- * @see https://www.netlifycms.org/docs/configuration-options/#view_groups
+ * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
 const groupEntries = (entries, { field, pattern } = {}) => {
   if (!field) {
@@ -302,7 +302,7 @@ selectedCollection.subscribe((_collection = {}) => {
     sort: {
       // Every folder collection should have at least the `title` (or `name`) field, or the
       // `identifier_field` property.
-      // @see https://www.netlifycms.org/docs/configuration-options/#identifier_field
+      // @see https://decapcms.org/docs/configuration-options/#identifier_field
       key: customIdField || fields.find((f) => defaultSortableFields.includes(f.name))?.name,
       order: 'ascending',
     },

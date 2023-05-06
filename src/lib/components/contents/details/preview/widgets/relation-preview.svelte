@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Relation widget.
-  @see https://www.netlifycms.org/docs/widgets/#relation
+  @see https://decapcms.org/docs/widgets/#relation
   @todo Support wildcard matching
 -->
 <script>
