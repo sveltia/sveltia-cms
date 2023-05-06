@@ -362,10 +362,13 @@ export const parseEntryFiles = (entryFiles) => {
 
         if (index > -1) {
           entries[index].locales[locale] = { content: parsedFile, path, sha };
-        } else {
-          entry.slug = slug;
-          entry.locales = { [locale]: { content: parsedFile, path, sha } };
+
+          // Don’t add another `entry`
+          return;
         }
+
+        entry.slug = slug;
+        entry.locales = { [locale]: { content: parsedFile, path, sha } };
       }
     }
 
