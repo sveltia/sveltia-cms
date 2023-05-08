@@ -5,7 +5,7 @@
 -->
 <script>
   import { NumberInput } from '@sveltia/ui';
-  import { defaultContentLocale } from '$lib/services/config';
+  import { entryDraft } from '$lib/services/contents/editor';
 
   export let locale = '';
   // svelte-ignore unused-export-let
@@ -21,7 +21,8 @@
     max,
     step = 1,
   } = fieldConfig);
-  $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
+  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 
   /** @type {string} */
   let inputValue = '';

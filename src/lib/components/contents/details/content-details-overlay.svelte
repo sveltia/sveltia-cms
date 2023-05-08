@@ -5,7 +5,6 @@
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
-  import { siteConfig } from '$lib/services/config';
   import {
     editorLeftPane,
     editorRightPane,
@@ -17,15 +16,14 @@
   let rightColumnContent;
 
   $: ({ collection, collectionFile } = $entryDraft || {});
+  $: ({ hasLocales, locales } = collection._i18n);
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
 
   $: {
     // Hide preview if it’s disabled by the user or the collection/file
     if (!$entryViewSettings.showPreview || !canPreview) {
-      const otherLocales = ($siteConfig.i18n?.locales || []).filter(
-        (l) => l !== $editorLeftPane.locale,
-      );
+      const otherLocales = hasLocales ? locales.filter((l) => l !== $editorLeftPane.locale) : [];
 
       $editorLeftPane.mode = 'edit';
       $editorRightPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;

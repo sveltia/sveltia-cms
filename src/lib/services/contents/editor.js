@@ -8,7 +8,6 @@ import { get, writable } from 'svelte/store';
 import { allAssets, getAssetFolder, getAssetKind } from '$lib/services/assets';
 import { user } from '$lib/services/auth';
 import { backend } from '$lib/services/backends';
-import { defaultContentLocale, siteConfig } from '$lib/services/config';
 import { allEntries, getCollection, getEntries, getFieldByKeyPath } from '$lib/services/contents';
 import { normalizeSlug } from '$lib/services/contents/entry';
 import { translator } from '$lib/services/integrations/translators';
@@ -101,7 +100,8 @@ const createProxy = ({
   locale: sourceLocale,
   target = {},
 }) => {
-  const defaultLocale = get(defaultContentLocale);
+  const collection = getCollection(collectionName);
+  const { defaultLocale = 'default' } = collection._i18n;
 
   return new Proxy(target, {
     // eslint-disable-next-line jsdoc/require-jsdoc
@@ -132,8 +132,8 @@ const createProxy = ({
  * @param {Entry} [entry] Entry to be edited or `undefined` for a new entry.
  */
 export const createDraft = (collectionName, entry) => {
-  const { i18n } = get(siteConfig);
   const collection = getCollection(collectionName);
+  const { hasLocales, locales: collectionLocales } = collection._i18n;
   const isNew = !entry;
   const { fileName, locales } = entry || {};
 
@@ -143,7 +143,7 @@ export const createDraft = (collectionName, entry) => {
 
   const { fields } = collectionFile || collection;
   const newContent = createNewContent(fields);
-  const allLocales = i18n?.locales || ['default'];
+  const allLocales = hasLocales ? collectionLocales : ['default'];
 
   entryDraft.set({
     isNew,
@@ -299,8 +299,10 @@ export const copyFromLocale = async (
  * this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
-  const locales = locale ? [locale] : get(siteConfig).i18n?.locales || ['default'];
-  const { currentValues, originalValues } = get(entryDraft);
+  const { collection, currentValues, originalValues } = get(entryDraft);
+  const { hasLocales, locales: collectionLocales } = collection._i18n;
+  // eslint-disable-next-line no-nested-ternary
+  const locales = locale ? [locale] : hasLocales ? collectionLocales : ['default'];
 
   locales.forEach((_locale) => {
     Object.keys(currentValues[_locale]).forEach((_keyPath) => {
@@ -425,11 +427,12 @@ const validateEntry = () => {
  */
 const createSlug = (draft, template, currentSlug) => {
   const {
-    collection: { name: collectionName, identifier_field: identifierField = 'title' },
+    collection: { name: collectionName, identifier_field: identifierField = 'title', _i18n },
     currentValues,
   } = draft;
 
-  const content = currentValues[get(defaultContentLocale)];
+  const { defaultLocale = 'default' } = _i18n;
+  const content = currentValues[defaultLocale];
   const dateTimeParts = getDateTimeParts();
 
   const slug = template.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
@@ -501,15 +504,11 @@ const createEntryPath = (draft, locale, slug) => {
     return originalEntry?.locales[locale].path;
   }
 
-  const { i18n } = get(siteConfig);
+  const { structure } = collection._i18n;
   const collectionFolder = collection.folder?.replace(/\/$/, '');
   const path = collection.path ? createSlug(draft, collection.path, slug) : slug;
   const extension = getFileExtension(collection);
   const defaultOption = `${collectionFolder}/${path}.${extension}`;
-
-  if (!i18n?.structure) {
-    return defaultOption;
-  }
 
   const pathOptions = {
     multiple_folders: `${collectionFolder}/${locale}/${path}.${extension}`,
@@ -517,7 +516,7 @@ const createEntryPath = (draft, locale, slug) => {
     single_file: defaultOption,
   };
 
-  return pathOptions[i18n.structure] || pathOptions.single_file;
+  return pathOptions[structure] || pathOptions.single_file;
 };
 
 /**
@@ -530,9 +529,6 @@ export const saveEntry = async () => {
   }
 
   const _user = get(user);
-  const { i18n } = get(siteConfig);
-  const hasLocales = Array.isArray(i18n?.locales);
-  const defaultLocale = get(defaultContentLocale);
   const draft = get(entryDraft);
 
   const {
@@ -547,6 +543,7 @@ export const saveEntry = async () => {
   } = draft;
 
   const slug = originalEntry?.slug || createSlug(draft, collection.slug || '{{title}}');
+  const { structure, hasLocales, locales, defaultLocale = 'default' } = collection._i18n;
 
   const { internalPath: internalAssetFolder, publicPath: publicAssetFolder } =
     getAssetFolder(collectionName);
@@ -652,7 +649,7 @@ export const saveEntry = async () => {
     locales: savingEntryLocales,
   };
 
-  if (collectionFile || !hasLocales || i18n?.structure === 'single_file') {
+  if (collectionFile || !hasLocales || structure === 'single_file') {
     const { path, content } = savingEntryLocales[defaultLocale];
 
     savingFiles.push({
@@ -670,7 +667,7 @@ export const saveEntry = async () => {
       }),
     });
   } else {
-    i18n?.locales.map(async (locale) => {
+    locales.map(async (locale) => {
       const { path, content } = savingEntryLocales[locale];
 
       savingFiles.push({

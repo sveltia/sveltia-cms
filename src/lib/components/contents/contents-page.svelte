@@ -8,7 +8,6 @@
   import PrimaryToolbar from '$lib/components/contents/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
-  import { siteConfig } from '$lib/services/config';
   import { getCollection, selectedCollection } from '$lib/services/contents';
   import { createDraft, entryDraft } from '$lib/services/contents/editor';
   import { listedEntries } from '$lib/services/contents/view';
@@ -53,10 +52,12 @@
           createDraft($selectedCollection.name, selectedEntry);
         } else if (collectionFile) {
           // File is not yet created
+          const { hasLocales, locales } = $selectedCollection._i18n;
+
           createDraft($selectedCollection.name, {
             fileName: collectionFile.name,
             locales: Object.fromEntries(
-              ($siteConfig.i18n?.locales || ['default']).map((_locale) => [_locale, {}]),
+              (hasLocales ? locales : ['default']).map((_locale) => [_locale, {}]),
             ),
           });
         }

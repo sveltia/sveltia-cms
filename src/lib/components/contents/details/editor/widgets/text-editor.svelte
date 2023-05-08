@@ -5,7 +5,7 @@
 -->
 <script>
   import { TextArea } from '@sveltia/ui';
-  import { defaultContentLocale } from '$lib/services/config';
+  import { entryDraft } from '$lib/services/contents/editor';
 
   export let locale = '';
   // svelte-ignore unused-export-let
@@ -14,7 +14,8 @@
   export let currentValue = undefined;
 
   $: ({ i18n } = fieldConfig);
-  $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
+  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 </script>
 
 <TextArea autoResize={true} {disabled} bind:value={currentValue} />

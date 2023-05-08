@@ -12,7 +12,6 @@
   import Image from '$lib/components/common/image.svelte';
   import { getAssetByPublicPath } from '$lib/services/assets';
   import { getAssetURL } from '$lib/services/assets/view';
-  import { defaultContentLocale } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/editor';
   import { formatSize, getDataURL } from '$lib/services/utils/files';
 
@@ -38,7 +37,8 @@
       choose_url: canEnterURL = true,
     } = {},
   } = fieldConfig);
-  $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
+  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
   $: isImageWidget = widget === 'image';
 
   /**

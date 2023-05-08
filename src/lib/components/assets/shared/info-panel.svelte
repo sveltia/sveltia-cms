@@ -5,7 +5,7 @@
   import { getAssetURL } from '$lib/services/assets/view';
   import { user } from '$lib/services/auth';
   import { allBackendServices } from '$lib/services/backends';
-  import { defaultContentLocale, siteConfig } from '$lib/services/config';
+  import { siteConfig } from '$lib/services/config';
   import { allEntries, getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
   import { formatSize } from '$lib/services/utils/files';
@@ -100,7 +100,8 @@
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as { sha, slug, locales, collectionName, fileName } (sha)}
       {@const collection = getCollection(collectionName)}
-      {@const { content } = locales[$defaultContentLocale] || {}}
+      {@const { defaultLocale = 'default' } = collection._i18n}
+      {@const { content } = locales[defaultLocale] || {}}
       <p>
         <Button
           class="link"

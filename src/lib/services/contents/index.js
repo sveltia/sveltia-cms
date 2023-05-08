@@ -1,5 +1,6 @@
 import { get, writable } from 'svelte/store';
-import { defaultContentLocale, siteConfig } from '$lib/services/config';
+import { siteConfig } from '$lib/services/config';
+import { isObject } from '$lib/services/utils/misc';
 
 export const entriesLoaded = writable(false);
 
@@ -18,11 +19,61 @@ export const selectedCollection = writable();
 export const selectedEntries = writable([]);
 
 /**
+ * Get the i18n config for the given collection.
+ * @param {object} collection Collection.
+ * @returns {I18nConfig} Config.
+ * @see https://decapcms.org/docs/beta-features/#i18n-support
+ */
+const getCollectionI18n = (collection) => {
+  const _siteConfig = get(siteConfig);
+  let structure = 'single_file';
+  let locales = [];
+  let defaultLocale;
+
+  if (collection.i18n === true && isObject(_siteConfig.i18n)) {
+    ({
+      structure = 'single_file',
+      locales = [],
+      default_locale: defaultLocale = undefined,
+    } = _siteConfig.i18n);
+  }
+
+  if (isObject(collection.i18n)) {
+    ({
+      structure = 'single_file',
+      locales = [],
+      default_locale: defaultLocale = undefined,
+    } = collection.i18n);
+  }
+
+  const hasLocales = !!locales.length;
+
+  return {
+    structure,
+    hasLocales,
+    locales: hasLocales ? locales : [],
+    // eslint-disable-next-line no-nested-ternary
+    defaultLocale: !hasLocales
+      ? undefined
+      : defaultLocale && locales.includes(defaultLocale)
+      ? defaultLocale
+      : locales[0],
+  };
+};
+
+/**
  * Get a collection by name.
  * @param {string} name Collection name.
  * @returns {object} Collection.
  */
-export const getCollection = (name) => get(siteConfig).collections.find((c) => c.name === name);
+export const getCollection = (name) => {
+  const collection = get(siteConfig).collections.find((c) => c.name === name);
+
+  return {
+    ...collection,
+    _i18n: getCollectionI18n(collection),
+  };
+};
 
 /**
  * Get entries by the given collection name, while applying a filer if needed.
@@ -37,8 +88,8 @@ export const getEntries = (name) => {
     return [];
   }
 
-  const { filter } = collection;
-  const defaultLocale = get(defaultContentLocale);
+  const { filter, _i18n } = collection;
+  const { defaultLocale = 'default' } = _i18n;
 
   return (get(allEntries) || []).filter(
     (entry) =>
@@ -46,13 +97,6 @@ export const getEntries = (name) => {
       (!filter || entry.locales[defaultLocale]?.content[filter.field] === filter.value),
   );
 };
-
-if (import.meta.env.DEV) {
-  selectedCollection.subscribe((collection) => {
-    // eslint-disable-next-line no-console
-    console.info('selectedCollection', collection);
-  });
-}
 
 /**
  * Get a field that matches the given key path: dot-connected object field name.

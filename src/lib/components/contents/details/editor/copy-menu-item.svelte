@@ -1,8 +1,7 @@
 <script>
   import { MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { siteConfig } from '$lib/services/config';
-  import { copyFromLocale } from '$lib/services/contents/editor';
+  import { copyFromLocale, entryDraft } from '$lib/services/contents/editor';
   import { getLocaleLabel } from '$lib/services/i18n';
   import {
     pendingTranslatorRequest,
@@ -15,7 +14,8 @@
   export let keyPath = '';
   export let translate = false;
 
-  $: otherLocales = ($siteConfig.i18n?.locales || []).filter((l) => l !== locale);
+  $: ({ hasLocales, locales } = $entryDraft.collection._i18n);
+  $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
   $: ({ serviceId, sourceLanguages = [], targetLanguages = [] } = $translator || {});
   $: apiKey = $prefs.apiKeys[serviceId] || '';
 

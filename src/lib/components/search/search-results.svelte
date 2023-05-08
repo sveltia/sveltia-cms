@@ -6,7 +6,6 @@
   import Video from '$lib/components/common/video.svelte';
   import { getAssetByPublicPath } from '$lib/services/assets';
   import { getAssetURL, getFolderLabel } from '$lib/services/assets/view';
-  import { defaultContentLocale } from '$lib/services/config';
   import { getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
   import { searchResults } from '$lib/services/search';
@@ -25,7 +24,8 @@
             {@const file = fileName
               ? collection.files.find(({ name }) => name === fileName)
               : undefined}
-            {@const { content } = locales[$defaultContentLocale] || {}}
+            {@const { defaultLocale = 'default' } = collection._i18n}
+            {@const { content } = locales[defaultLocale] || {}}
             {#if content}
               <Row
                 on:click={() => {

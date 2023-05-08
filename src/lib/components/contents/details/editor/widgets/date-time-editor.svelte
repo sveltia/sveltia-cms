@@ -8,7 +8,7 @@
 <script>
   import moment from 'moment';
   import { onMount } from 'svelte';
-  import { defaultContentLocale } from '$lib/services/config';
+  import { entryDraft } from '$lib/services/contents/editor';
   import { getDateTimeParts } from '$lib/services/utils/datetime';
 
   export let locale = '';
@@ -26,7 +26,8 @@
     time_format: timeFormat,
     picker_utc: pickerUTC = false,
   } = fieldConfig);
-  $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
+  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
   $: dateOnly = timeFormat === false;
   $: timeOnly = dateFormat === false;
 

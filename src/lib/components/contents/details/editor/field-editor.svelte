@@ -15,7 +15,6 @@
   import SelectEditor from '$lib/components/contents/details/editor/widgets/select-editor.svelte';
   import StringEditor from '$lib/components/contents/details/editor/widgets/string-editor.svelte';
   import TextEditor from '$lib/components/contents/details/editor/widgets/text-editor.svelte';
-  import { defaultContentLocale, siteConfig } from '$lib/services/config';
   import { entryDraft, revertChanges } from '$lib/services/contents/editor';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
@@ -51,7 +50,8 @@
     pattern = undefined,
     multiple = false,
   } = fieldConfig);
-  $: otherLocales = ($siteConfig.i18n?.locales || []).filter((l) => l !== locale);
+  $: ({ hasLocales, locales, defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
   $: isList = multiple || widget === 'list';
 
@@ -73,7 +73,7 @@
 
 {#if widget !== 'hidden'}
   {@const canCopy = i18n === true && otherLocales.length}
-  {@const canRevert = !(i18n === 'duplicate' && locale !== $defaultContentLocale)}
+  {@const canRevert = !(i18n === 'duplicate' && locale !== defaultLocale)}
   <section data-widget={widget} data-key-path={keyPath}>
     <header>
       <h4>{label}</h4>

@@ -4,6 +4,7 @@ import moment from 'moment';
 import { _ } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import LocalStorage from '$lib/services/utils/local-storage';
+import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
 import {
   allEntries,
   getEntries,
@@ -11,7 +12,6 @@ import {
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
-import { defaultContentLocale } from '$lib/services/config';
 import { user } from '$lib/services/auth';
 
 const storageKey = 'sveltia-cms.contents-view';
@@ -99,11 +99,11 @@ const sortEntries = (entries, { key, order } = {}) => {
   }
 
   const _entries = [...entries];
-  const locale = get(defaultContentLocale);
+  const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
 
   const type =
     { commit_author: String, commit_date: Date }[key] ||
-    _entries[0]?.locales[locale]?.content[key]?.constructor ||
+    _entries[0]?.locales[defaultLocale]?.content[key]?.constructor ||
     String;
 
   /**
@@ -122,7 +122,7 @@ const sortEntries = (entries, { key, order } = {}) => {
       return commitDate;
     }
 
-    return locales[locale]?.content[key] || entry[key] || '';
+    return locales[defaultLocale]?.content[key] || entry[key] || '';
   };
 
   _entries.sort((a, b) => {
@@ -153,11 +153,11 @@ const filterEntries = (entries, { field, pattern } = {}) => {
     return entries;
   }
 
-  const locale = get(defaultContentLocale);
+  const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
 
   return entries.filter((entry) => {
-    const value = entry.locales[locale]?.content[field] || entry[field];
+    const value = entry.locales[defaultLocale]?.content[field] || entry[field];
 
     if (regex) {
       return String(value || '').match(regex);
@@ -181,13 +181,13 @@ const groupEntries = (entries, { field, pattern } = {}) => {
     return entries.length ? { '*': entries } : {};
   }
 
-  const locale = get(defaultContentLocale);
+  const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
   const groups = {};
   const otherKey = get(_)('other');
 
   entries.forEach((entry) => {
-    const value = entry.locales[locale]?.content[field] || entry[field];
+    const value = entry.locales[defaultLocale]?.content[field] || entry[field];
     let key;
 
     if (regex) {
@@ -289,8 +289,26 @@ listedEntries.subscribe((entries) => {
   }
 });
 
-selectedCollection.subscribe((_collection = {}) => {
-  const { name: collectionName, identifier_field: customIdField, fields = [] } = _collection;
+selectedCollection.subscribe((collection) => {
+  if (!collection) {
+    return;
+  }
+
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.info('selectedCollection', collection);
+  }
+
+  const {
+    name: collectionName,
+    identifier_field: customIdField,
+    fields = [],
+    _i18n: { defaultLocale = 'default' },
+  } = collection;
+
+  // Reset the editor panes
+  editorLeftPane.set({ mode: 'edit', locale: defaultLocale });
+  editorRightPane.set({ mode: 'preview', locale: defaultLocale });
 
   // This only works for folder (entry) collections
   if (!fields.length) {

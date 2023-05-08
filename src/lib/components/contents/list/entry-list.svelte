@@ -5,7 +5,6 @@
   import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
-  import { defaultContentLocale } from '$lib/services/config';
   import { selectedCollection } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
   import { goto } from '$lib/services/navigation';
@@ -14,6 +13,7 @@
 <div class="list-container">
   {#if $selectedCollection}
     {#if Object.values($entryGroups).flat(1).length}
+      {@const { defaultLocale = 'default' } = $selectedCollection._i18n}
       {#each Object.entries($entryGroups) as [groupName, entries] (groupName)}
         <Group>
           {#if groupName !== '*'}
@@ -22,7 +22,7 @@
           <!-- @todo Implement custom table column option that can replace summary template -->
           <svelte:component this={$currentView.type === 'grid' ? BasicGridView : BasicListView}>
             {#each entries as entry (entry.slug)}
-              {@const { content } = entry.locales[$defaultContentLocale] || {}}
+              {@const { content } = entry.locales[defaultLocale] || {}}
               {#if content}
                 <EntryListItem {entry} {content} />
               {/if}

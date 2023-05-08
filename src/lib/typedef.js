@@ -10,6 +10,15 @@
  */
 
 /**
+ * @typedef {object} I18nConfig Collection’s i18n configuration.
+ * @property {'single_file' | 'multiple_files' | 'multiple_folders'} structure File structure.
+ * @property {boolean} hasLocales Whether i18n is enabled for the collection.
+ * @property {LocaleCode[]} locales List of locales. Can be an empty array if i18n is not enabled.
+ * @property {string | undefined} defaultLocale Default locale. Can be `undefined` if i18n is not
+ * enabled.
+ */
+
+/**
  * @typedef {object} Entry Entry item.
  * @property {string} sha SHA-1 hash from one of the locales. It serves as the ID of an entry, so it
  * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different

@@ -4,7 +4,6 @@ import TOML from '@ltd/j-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { allAssetPaths, getAssetKind } from '$lib/services/assets';
-import { defaultContentLocale, siteConfig } from '$lib/services/config';
 import { allContentPaths, getCollection } from '$lib/services/contents';
 import { normalizeSlug } from '$lib/services/contents/entry';
 import { isObject } from '$lib/services/utils/misc';
@@ -299,9 +298,6 @@ const getSlug = (collectionName, filePath, content) => {
  * @returns {Entry[]} Entry list.
  */
 export const parseEntryFiles = (entryFiles) => {
-  const defaultLocale = get(defaultContentLocale);
-  const { i18n: { locales, structure } = {} } = get(siteConfig);
-  const hasLocales = Array.isArray(locales);
   const entries = [];
 
   entryFiles.forEach((file) => {
@@ -318,7 +314,9 @@ export const parseEntryFiles = (entryFiles) => {
       config: { folder: configFolder, collectionName, fileName },
     } = file;
 
-    const extension = getFileExtension(getCollection(collectionName));
+    const collection = getCollection(collectionName);
+    const extension = getFileExtension(collection);
+    const { structure, hasLocales, locales, defaultLocale } = collection._i18n;
 
     const [, filePath] = fileName
       ? []

@@ -10,7 +10,6 @@
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/editor/widgets/list-editor/add-item-button.svelte';
-  import { defaultContentLocale } from '$lib/services/config';
   import { entryDraft, updateListField } from '$lib/services/contents/editor';
   import { isObject } from '$lib/services/utils/misc';
   import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
@@ -39,7 +38,8 @@
     types,
     typeKey = 'type',
   } = fieldConfig);
-  $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
+  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
   $: hasSubFields = !!(field || fields || types);
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
 

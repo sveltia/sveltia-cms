@@ -6,7 +6,6 @@
 <script>
   import { Button, Combobox, Icon, Option, Select } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { defaultContentLocale } from '$lib/services/config';
   import { entryDraft, updateListField } from '$lib/services/contents/editor';
   import { isObject } from '$lib/services/utils/misc';
 
@@ -24,7 +23,8 @@
     // min,
     max,
   } = fieldConfig);
-  $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
+  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 
   $: sortedOptions = (
     options ||

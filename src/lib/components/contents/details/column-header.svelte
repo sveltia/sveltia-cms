@@ -13,17 +13,17 @@
   import equal from 'deep-is';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
-  import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
-  import { siteConfig } from '$lib/services/config';
-  import { entryDraft, entryViewSettings, revertChanges } from '$lib/services/contents/editor';
   import { getLocaleLabel } from '$lib/services/i18n';
+  import { entryDraft, entryViewSettings, revertChanges } from '$lib/services/contents/editor';
+  import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
 
   export let thisPane = writable({});
   export let thatPane = writable({});
 
   $: ({ collection, collectionFile, currentValues, originalValues, validities } =
     $entryDraft || {});
-  $: otherLocales = ($siteConfig.i18n?.locales || []).filter((l) => l !== $thisPane.locale);
+  $: ({ hasLocales, locales } = collection._i18n);
+  $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane.locale) : [];
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: canCopy = !!otherLocales.length;
@@ -32,10 +32,10 @@
 
 <div class="header">
   <Toolbar class="secondary">
-    {#if $siteConfig.i18n?.locales?.length}
+    {#if hasLocales}
       <!-- @todo Use a dropdown list when there are 5+ locales. -->
       <SelectButtonGroup>
-        {#each $siteConfig.i18n?.locales as locale}
+        {#each locales as locale}
           {@const localeLabel = getLocaleLabel(locale)}
           {@const invalid = Object.values(validities[locale]).some(({ valid }) => !valid)}
           {#if !($thatPane.mode === 'edit' && $thatPane.locale === locale)}

@@ -1,13 +1,11 @@
 import { writable } from 'svelte/store';
 import YAML from 'yaml';
 import { allAssetPaths } from '$lib/services/assets';
-import { allContentPaths, selectedCollection } from '$lib/services/contents';
-import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
+import { allContentPaths, getCollection, selectedCollection } from '$lib/services/contents';
 import { isObject } from '$lib/services/utils/misc';
 import { stripSlashes } from '$lib/services/utils/strings';
 
 export const siteConfig = writable();
-export const defaultContentLocale = writable('default');
 
 const { DEV, VITE_CONFIG_PORT } = import.meta.env;
 
@@ -91,14 +89,10 @@ siteConfig.subscribe((config) => {
     return;
   }
 
-  const { media_folder: mediaFolder, public_folder: publicFolder, collections, i18n } = config;
+  const { media_folder: mediaFolder, public_folder: publicFolder, collections } = config;
   const _mediaFolder = stripSlashes(mediaFolder);
-  const _defaultContentLocale = i18n?.default_locale || i18n?.locales?.[0] || 'default';
 
-  defaultContentLocale.set(_defaultContentLocale);
-  selectedCollection.set(collections[0]);
-  editorLeftPane.set({ mode: 'edit', locale: _defaultContentLocale });
-  editorRightPane.set({ mode: 'preview', locale: _defaultContentLocale });
+  selectedCollection.set(getCollection(collections[0].name));
 
   allContentPaths.set([
     ...collections

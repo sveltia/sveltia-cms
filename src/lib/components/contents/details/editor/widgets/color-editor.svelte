@@ -8,7 +8,7 @@
 <script>
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { defaultContentLocale } from '$lib/services/config';
+  import { entryDraft } from '$lib/services/contents/editor';
 
   export let locale = '';
   // svelte-ignore unused-export-let
@@ -22,7 +22,8 @@
     allowInput = false,
     // enableAlpha = false,
   } = fieldConfig);
-  $: disabled = i18n === 'duplicate' && locale !== $defaultContentLocale;
+  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 </script>
 
 <div>
