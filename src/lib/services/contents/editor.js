@@ -567,7 +567,7 @@ export const saveEntry = async () => {
     commitDate: new Date(), // Use the current datetime
   };
 
-  /** @type {Object<LocaleCode, LocalizedEntry>} */
+  /** @type {{ [key: LocaleCode]: LocalizedEntry }} */
   const savingEntryLocales = Object.fromEntries(
     await Promise.all(
       Object.entries(currentValues).map(async ([locale, valueMap]) => {

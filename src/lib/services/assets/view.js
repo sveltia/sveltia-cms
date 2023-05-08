@@ -152,7 +152,7 @@ const filterAssets = (assets, { field, pattern } = {}) => {
  * @param {object} [condition] Group condition.
  * @param {string} condition.field Field name.
  * @param {string} condition.pattern Regular expression.
- * @returns {Object<string, Asset[]>} Grouped assets, where key is a group label and value is an
+ * @returns {{ [key: string]: Asset[] }} Grouped assets, where key is a group label and value is an
  * asset list.
  */
 const groupAssets = (assets, { field, pattern } = {}) => {

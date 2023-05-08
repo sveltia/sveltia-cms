@@ -15,9 +15,9 @@
  * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
  * @property {string} slug Entry slug.
- * @property {Object<LocaleCode, LocalizedEntry>} locales Localized content map keyed with a locale
- * code. When i18n is not enabled with the site configuration, there will be one single property
- * named `default`.
+ * @property {{ [key: LocaleCode]: LocalizedEntry }} locales Localized content map keyed with a
+ * locale code. When i18n is not enabled with the site configuration, there will be one single
+ * property named `default`.
  * @property {string} collectionName Collection name.
  * @property {boolean} [isNew] `true` if it’s a new entry draft.
  * @property {string} [fileName] File name for a file collection.
@@ -37,21 +37,21 @@
  */
 
 /**
- * @typedef {Object<string, *>} FlattenedEntryContent Flattened {@link EntryContent} object, where
- * key is a key path: dot-connected field name like `author.name` and value is the corresponding
- * field value.
+ * @typedef {{ [key: string]: any }} FlattenedEntryContent Flattened {@link EntryContent} object,
+ * where key is a key path: dot-connected field name like `author.name` and value is the
+ * corresponding field value.
  * @see https://www.npmjs.com/package/flatten
  */
 
 /**
- * @typedef {Object<string, ValidityState>} FlattenedEntryContentValidityState Flattened
+ * @typedef {{ [key: string]: ValidityState }} FlattenedEntryContentValidityState Flattened
  * {@link EntryContent} object, where key is a key path, but value will be the value’s validity,
  * using the same properties as the native HTML5 constraint validation.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
- * @typedef {Object<string, File>} FlattenedEntryContentFileList Flattened {@link EntryContent}
+ * @typedef {{ [key: string]: File }} FlattenedEntryContentFileList Flattened {@link EntryContent}
  * object, where key is a key path, but value will be a file to be uploaded.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
@@ -64,12 +64,12 @@
  * @property {object} collection Collection details.
  * @property {string} [fileName] File name. (File collection only)
  * @property {string} [collectionFile] File details. (File collection only)
- * @property {Object<LocaleCode, FlattenedEntryContent>} originalValues Key is a locale code, value
- * is an flattened object containing all the original field values.
- * @property {Object<LocaleCode, FlattenedEntryContent>} currentValues Key is a locale code, value
- * is an flattened object containing all the current field values while editing.
- * @property {object<LocaleCode, FlattenedEntryContentFileList} files Files to be uploaded.
- * @property {Object<LocaleCode, FlattenedEntryContentValidityState>} validities Key is a locale
+ * @property {{ [key: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,
+ * value is an flattened object containing all the original field values.
+ * @property {{ [key: LocaleCode]: FlattenedEntryContent }} currentValues Key is a locale code,
+ * value is an flattened object containing all the current field values while editing.
+ * @property {{ [key: LocaleCode]: FlattenedEntryContentFileList }} files Files to be uploaded.
+ * @property {{ [key: LocaleCode]: FlattenedEntryContentValidityState }} validities Key is a locale
  * code, value is an flattened object containing validation results of all the current field values
  * while editing.
  */
