@@ -27,9 +27,14 @@
 
       $user = _user;
       await LocalStorage.set('sveltia-cms.user', _user);
-    } catch {
+    } catch (error) {
       showErrorDialog = true;
       errorReason = 'unexpected';
+
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error(error);
+      }
     }
   };
 

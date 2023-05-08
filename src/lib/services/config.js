@@ -71,8 +71,13 @@ export const fetchSiteConfig = async () => {
     }
 
     siteConfig.set(config);
-  } catch ({ message }) {
-    siteConfig.set({ error: message });
+  } catch (error) {
+    siteConfig.set({ error: error.message });
+
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
   }
 };
 
