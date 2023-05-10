@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, to manage the content as static files on a Git repository. The open source Netlify/Decap CMS alternative is now in public beta, with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Next.js and Hugo, to manage the content as static files on a Git repository. Our open source Netlify/Decap CMS alternative is now in public beta, with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.jpg)<br>
 
@@ -49,7 +49,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better i18n support
 
-- Making it easier to switch between locales while editing.
+- Making it easier to switch between locales while editing with just a click on a button.
 - Integrating DeepL to allow translating text fields from another locale with one click. [See below](#use-deepl-to-translate-entry-fields) for details.
 - You can now use a random UUID for an entry slug, which is a good option for locales writing in non-Latin characters[^12]. [See below](#use-a-random-id-for-an-entry-slug) for details.
 - Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected[^7].
@@ -57,7 +57,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Collection enhancements
 
-- You can set an icon for each collection[^3]. [See below](#use-a-custom-icon-for-a-collection) for details.
+- You can choose a custom icon for each collection[^3]. [See below](#use-a-custom-icon-for-a-collection) for details.
 - A per-collection media folder will now appear aside of entries. [See below](#use-a-custom-media-folder-for-a-collection) for details.
 
 ### Media library enhancements
@@ -68,11 +68,11 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ## Compatibility
 
-While we’re not recreating all the features found in Netlify/Decap CMS, our plan is to gradually expand the compatible areas where possible so that more users can migrate to our modern alternative.
+While recreating all the features found in Netlify/Decap CMS is not our goal, we plan to maximize the compatibility before reaching the 1.0 release so that more users can migrate to our modern alternative.
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
-| UI locales | Only English and Japanese are available at this time. No registration is needed. It can be changed in Preferences. |
+| UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Preferences. (Click on the Account button at the top right corner of the CMS.) |
 | Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own client](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. GitLab could also be supported, but the Azure, Bitbucket and Git Gateway backends are unlikely to be added, mainly due to the lack of an API method fetching contents in bulk. We plan to add support for the [Test backend](https://decapcms.org/docs/test-backend/) for our demo site and perhaps implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
 | Media | External media storage services are not yet supported. |
@@ -88,9 +88,8 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | --- | --- |
 | Code | Not yet supported. |
 | Color | It’s a native `<input>` element at this time. The `enableAlpha` option is not yet supported. |
-| Date/DateTime | It’s also a native `<input>` element. The `date_format` and `time_format` options with Moment.js tokens are not yet supported. We may deprecate the Moment.js format support anyway. |
+| Date/DateTime | These are also native `<input>` elements. The `date_format` and `time_format` options with Moment.js tokens are not yet supported. We may deprecate the Moment.js format support anyway. |
 | File/Image | The `media_library` options are not yet supported other than `max_file_size` and `choose_url`. |
-| List/Object | We haven’t tested with deeply nested fields. |
 | Map | Not yet supported. |
 | Markdown | It’s a plain text editor at this time. We’ll soon implement a rich text editor with i18n issues addressed. |
 | Relation | The `search_fields` and `file` options are not yet supported. The `options_length` option will be ignored because it confuses users and Sveltia CMS doesn’t have the search performance issue. |
@@ -102,7 +101,7 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | Working with a Local Git Repository | Supported. [See below](#work-with-a-local-git-repository) for details. |
 | GitLab and BitBucket Editorial Workflow Support | The GitLab backend is not yet supported. No plan to support BitBucket. |
 | i18n Support | Supported. In fact, i18n is at the core of Sveltia CMS! |
-| GitHub GraphQL API | Sveltia CMS uses GraphQL with no configuration for a better performance. It cannot be disabled. |
+| GitHub GraphQL API | Supported. Sveltia CMS uses GraphQL by default for a better performance. It cannot be disabled. |
 | GitLab GraphQL API | The GitLab backend is not yet supported. |
 | Open Authoring | Not yet supported. |
 | Folder Collections Path | Supported. |
@@ -170,7 +169,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Work with a local Git repository
 
-You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/).
+You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in some modern browsers.
 
 1. Launch the local development server for your frontend framework, typically with `npm run dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with [Chrome, Edge or other Chromium-based browser](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility). The port number depends on your framework.
@@ -318,13 +317,13 @@ Feel free to [file an issue](https://github.com/sveltia/sveltia-cms/issues/new) 
 
 This software is provided “as is” without any express or implied warranty. This product is not affiliated with or endorsed by Netlify, Decap CMS or any other integrated services. All product names, logos, and brands are the property of their respective owners.
 
-[^1]: [Netlify/Decap CMS #2557](https://github.com/netlify/netlify-cms/issues/2557)
-[^2]: [Netlify/Decap CMS #3267](https://github.com/netlify/netlify-cms/issues/3267)
-[^3]: [Netlify/Decap CMS #1040](https://github.com/netlify/netlify-cms/issues/1040)
-[^4]: [Netlify/Decap CMS #3671](https://github.com/netlify/netlify-cms/issues/3671)
-[^5]: [Netlify/Decap CMS #1032](https://github.com/netlify/netlify-cms/issues/1032)
-[^6]: [Netlify/Decap CMS #3240](https://github.com/netlify/netlify-cms/issues/3240)
-[^7]: [Netlify/Decap CMS #4386](https://github.com/netlify/netlify-cms/issues/4386)
-[^10]: [Netlify/Decap CMS #341](https://github.com/netlify/netlify-cms/issues/341)
-[^11]: [Netlify/Decap CMS #1382](https://github.com/netlify/netlify-cms/issues/1382) and many more. We’ll be updating this list after reviewing their issue list.
+[^1]: [Netlify/Decap CMS #2557](https://github.com/decaporg/decap-cms/issues/2557)
+[^2]: [Netlify/Decap CMS #3267](https://github.com/decaporg/decap-cms/issues/3267)
+[^3]: [Netlify/Decap CMS #1040](https://github.com/decaporg/decap-cms/issues/1040)
+[^4]: [Netlify/Decap CMS #3671](https://github.com/decaporg/decap-cms/issues/3671)
+[^5]: [Netlify/Decap CMS #1032](https://github.com/decaporg/decap-cms/issues/1032)
+[^6]: [Netlify/Decap CMS #3240](https://github.com/decaporg/decap-cms/issues/3240)
+[^7]: [Netlify/Decap CMS #4386](https://github.com/decaporg/decap-cms/issues/4386)
+[^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341)
+[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382) and many more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
