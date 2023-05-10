@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { get } from 'svelte/store';
+  import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { user } from '$lib/services/auth';
   import { backend } from '$lib/services/backends';
@@ -25,9 +26,12 @@
 
 <div class="container">
   <div>
-    {#if $siteConfig?.logo_url}
-      <img loading="lazy" src={$siteConfig.logo_url} alt="" class="logo" />
-    {/if}
+    <img
+      loading="lazy"
+      src={$siteConfig?.logo_url || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
+      alt=""
+      class="logo"
+    />
     <h1>Sveltia CMS</h1>
     {#if !$siteConfig}
       <h2>{$_('loading_site_config')}</h2>

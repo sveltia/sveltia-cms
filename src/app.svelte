@@ -2,6 +2,7 @@
   import { AppShell } from '@sveltia/ui';
   import { marked } from 'marked';
   import { isLoading } from 'svelte-i18n';
+  import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
   import { user } from '$lib/services/auth';
@@ -20,6 +21,7 @@
   <meta name="referrer" content="same-origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google" content="notranslate" />
+  <link rel="icon" href="data:image/svg+xml;base64,{btoa(SveltiaLogo)}" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   {#if import.meta.env.DEV}
