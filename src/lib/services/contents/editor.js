@@ -594,8 +594,10 @@ export const saveEntry = async () => {
                 const response = await fetch(value);
                 const blob = await response.blob();
                 const [type, subtype] = mimeType.split('/');
+                // MIME type can be `image/svg+xml`, then we only need `svg` as the file extension
+                const [extension] = subtype.split('+');
 
-                return new File([blob], `${type}-${Date.now()}.${subtype}`, { type: mimeType });
+                return new File([blob], `${type}-${Date.now()}.${extension}`, { type: mimeType });
               })());
 
             const sha = await getHash(file);
