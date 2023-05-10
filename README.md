@@ -105,8 +105,8 @@ While we’re not recreating all the features found in Netlify/Decap CMS, our pl
 | GitHub GraphQL API | Sveltia CMS uses GraphQL with no configuration for a better performance. It cannot be disabled. |
 | GitLab GraphQL API | The GitLab backend is not yet supported. |
 | Open Authoring | Not yet supported. |
-| Folder Collections Path | Not yet supported. |
-| Folder Collections Media and Public Folder | Only the _undocumented_, absolute path per-collection folder configuration is currently supported. [See below](#use-a-custom-media-folder-for-a-collection). |
+| Folder Collections Path | Supported. |
+| Folder Collections Media and Public Folder | Only the _undocumented_, [absolute path per-collection folder](#use-a-custom-media-folder-for-a-collection) configuration is currently supported. The relative path support is coming soon. |
 | List Widget: Variable Types | Supported. |
 | Custom Mount Element | Supported. |
 | Manual Initialization | Not yet supported. |
