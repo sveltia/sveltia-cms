@@ -15,14 +15,17 @@
   let leftColumnContent;
   let rightColumnContent;
 
+  $: ({ showPreview, syncScrolling } = $entryViewSettings);
   $: ({ collection, collectionFile } = $entryDraft || {});
   $: ({ hasLocales, locales } = collection._i18n);
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
 
-  $: {
-    // Hide preview if it’s disabled by the user or the collection/file
-    if (!$entryViewSettings.showPreview || !canPreview) {
+  /**
+   * Hide the preview pane if it’s disabled by the user or the collection/file.
+   */
+  const switchPanes = () => {
+    if (!showPreview || !canPreview) {
       const otherLocales = hasLocales ? locales.filter((l) => l !== $editorLeftPane.locale) : [];
 
       $editorLeftPane.mode = 'edit';
@@ -31,7 +34,9 @@
       $editorLeftPane.mode = 'edit';
       $editorRightPane = { mode: 'preview', locale: $editorLeftPane.locale };
     }
-  }
+  };
+
+  $: switchPanes(showPreview, canPreview);
 
   /**
    * Sync the scroll position with the other edit/preview pane.
@@ -40,7 +45,7 @@
    * one locale and preview for the collection is disabled.
    */
   const syncScrollPosition = (thisContentArea, thatContentArea) => {
-    if (!$entryViewSettings.syncScrolling || !thatContentArea) {
+    if (!syncScrolling || !thatContentArea) {
       return;
     }
 
