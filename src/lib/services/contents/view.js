@@ -343,9 +343,13 @@ currentView.subscribe((view) => {
 });
 
 contentsViewSettings.subscribe((settings) => {
+  if (!settings || !Object.keys(settings).length) {
+    return;
+  }
+
   (async () => {
     try {
-      if (settings && !equal(settings, await LocalStorage.get(storageKey))) {
+      if (!equal(settings, await LocalStorage.get(storageKey))) {
         await LocalStorage.set(storageKey, settings);
       }
     } catch {
