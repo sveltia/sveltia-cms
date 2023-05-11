@@ -328,21 +328,24 @@ export const revertChanges = (locale = '', keyPath = '') => {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 const validateEntry = () => {
-  const { collectionName, fileName, currentValues, validities } = get(entryDraft);
+  const { collection, fileName, currentValues, validities } = get(entryDraft);
+  const { defaultLocale = 'default' } = collection._i18n;
   let validated = true;
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     const valueEntries = Object.entries(valueMap);
 
     valueEntries.forEach(([keyPath, value]) => {
-      const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, valueMap);
+      const fieldConfig = getFieldByKeyPath(collection.name, fileName, keyPath, valueMap);
 
       if (!fieldConfig) {
         return;
       }
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
-      const { widget, required = true, pattern, min, max } = fieldConfig;
+      const { widget, required = true, i18n = false, pattern, min, max } = fieldConfig;
+      const canTranslate = i18n === true || i18n === 'translate';
+      const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;
       let rangeUnderflow = false;
       let rangeOverflow = false;
@@ -367,7 +370,7 @@ const validateEntry = () => {
             .map(([, savedValue]) => savedValue)
             .filter((val) => val !== undefined) || [];
 
-        if (required && !values.length) {
+        if (_required && !values.length) {
           valueMissing = true;
         }
 
@@ -381,7 +384,7 @@ const validateEntry = () => {
       }
 
       if (!['object', 'list'].includes(widget)) {
-        if (required !== false && (value === undefined || value === '')) {
+        if (_required && (value === undefined || value === '')) {
           valueMissing = true;
         }
 

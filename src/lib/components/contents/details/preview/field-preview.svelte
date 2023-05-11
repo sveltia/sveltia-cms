@@ -35,7 +35,10 @@
     text: TextPreview,
   };
 
-  $: ({ label = '', widget = 'string', multiple = false } = fieldConfig);
+  $: ({ label = '', widget = 'string', i18n = false, multiple = false } = fieldConfig);
+  $: ({ hasLocales, defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
+  $: canDuplicate = hasLocales && i18n === 'duplicate';
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
   $: isList = multiple || widget === 'list';
 
@@ -48,12 +51,14 @@
     : $entryDraft.currentValues[locale][keyPath];
 </script>
 
-<section data-widget={widget} data-key-path={keyPath}>
-  <h4>{label}</h4>
-  {#if widget in widgets}
-    <svelte:component this={widgets[widget]} {keyPath} {locale} {fieldConfig} {currentValue} />
-  {/if}
-</section>
+{#if widget !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
+  <section data-widget={widget} data-key-path={keyPath}>
+    <h4>{label}</h4>
+    {#if widget in widgets}
+      <svelte:component this={widgets[widget]} {keyPath} {locale} {fieldConfig} {currentValue} />
+    {/if}
+  </section>
+{/if}
 
 <style lang="scss">
   section {

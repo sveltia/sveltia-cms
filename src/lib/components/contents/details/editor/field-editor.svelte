@@ -52,6 +52,8 @@
   } = fieldConfig);
   $: ({ hasLocales, locales, defaultLocale = 'default' } = $entryDraft.collection._i18n);
   $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
+  $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
+  $: canDuplicate = hasLocales && i18n === 'duplicate';
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
   $: isList = multiple || widget === 'list';
 
@@ -71,9 +73,9 @@
   $: validity = $entryDraft.validities[locale][keyPath];
 </script>
 
-{#if widget !== 'hidden'}
-  {@const canCopy = i18n === true && otherLocales.length}
-  {@const canRevert = !(i18n === 'duplicate' && locale !== defaultLocale)}
+{#if widget !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
+  {@const canCopy = canTranslate && otherLocales.length}
+  {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
   <section data-widget={widget} data-key-path={keyPath}>
     <header>
       <h4>{label}</h4>
