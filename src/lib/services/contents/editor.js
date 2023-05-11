@@ -329,7 +329,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
  */
 const validateEntry = () => {
   const { collection, fileName, currentValues, validities } = get(entryDraft);
-  const { defaultLocale = 'default' } = collection._i18n;
+  const { hasLocales, defaultLocale = 'default' } = collection._i18n;
   let validated = true;
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
@@ -344,7 +344,7 @@ const validateEntry = () => {
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
       const { widget, required = true, i18n = false, pattern, min, max } = fieldConfig;
-      const canTranslate = i18n === true || i18n === 'translate';
+      const canTranslate = hasLocales && (i18n === true || i18n === 'translate');
       const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;
       let rangeUnderflow = false;
