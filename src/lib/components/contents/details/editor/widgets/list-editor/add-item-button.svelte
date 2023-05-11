@@ -27,7 +27,7 @@
   <Icon slot="start-icon" name="add" />
   <svelte:component this={hasTypes ? Menu : undefined} slot="popup">
     {#each types as { name, label: _label } (name)}
-      <MenuItem {_label} on:click={() => addItem(name)} />
+      <MenuItem label={_label} on:click={() => addItem(name)} />
     {/each}
   </svelte:component>
 </svelte:component>

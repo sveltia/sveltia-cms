@@ -14,7 +14,7 @@
     <MenuItemGroup ariaLabel={$_('sort_field')}>
       {#each fields as { key, label: _label } (key)}
         <MenuItemRadio
-          {_label}
+          label={_label}
           checked={$currentView.sort?.key === key}
           on:click={() => {
             // Sort dates from new to old by default

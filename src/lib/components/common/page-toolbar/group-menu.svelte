@@ -24,7 +24,7 @@
     />
     {#each groups as { label: _label, field, pattern }}
       <MenuItemRadio
-        {_label}
+        label={_label}
         checked={$currentView.group?.field === field && $currentView.group?.pattern === pattern}
         on:click={() => {
           currentView.update((view) => ({
