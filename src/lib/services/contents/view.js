@@ -21,6 +21,11 @@ const storageKey = 'sveltia-cms.contents-view';
 const defaultSortableFields = ['title', 'name', 'date', 'author', 'description'];
 
 /**
+ * View settings for the selected folder collection.
+ */
+export const currentView = writable({});
+
+/**
  * Parse the summary template to generate the summary to be displayed on the entry list, etc.
  * @param {object} collection Entry’s collection.
  * @param {EntryContent} content Entry content.
@@ -173,14 +178,16 @@ const filterEntries = (entries, { field, pattern } = {}) => {
  * @param {object} [condition] Group condition.
  * @param {string} condition.field Field name.
  * @param {string} condition.pattern Regular expression.
- * @returns {object} Grouped entries, where key is a group label and value is an entry list.
+ * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
+ * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
 const groupEntries = (entries, { field, pattern } = {}) => {
   if (!field) {
-    return entries.length ? { '*': entries } : {};
+    return entries.length ? [{ name: '*', entries }] : [];
   }
 
+  const sortCondition = get(currentView).sort;
   const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
   const groups = {};
@@ -204,9 +211,16 @@ const groupEntries = (entries, { field, pattern } = {}) => {
   });
 
   // Sort groups by key
-  return Object.fromEntries(
-    Object.entries(groups).sort(([aKey], [bKey]) => aKey.localeCompare(bKey)),
-  );
+  const sortedGroups = Object.entries(groups)
+    .map(([name, _entries]) => ({ name, entries: _entries }))
+    .sort(({ name: aKey }, { name: bKey }) => aKey.localeCompare(bKey));
+
+  // Keep the descending order if already sorted, especially on the date field
+  if (sortCondition?.key === field && sortCondition?.order === 'descending') {
+    sortedGroups.reverse();
+  }
+
+  return sortedGroups;
 };
 
 /**
@@ -221,11 +235,6 @@ const contentsViewSettings = writable({}, (set) => {
     }
   })();
 });
-
-/**
- * View settings for the selected folder collection.
- */
-export const currentView = writable({});
 
 /**
  * List of sort fields for the selected folder collection.

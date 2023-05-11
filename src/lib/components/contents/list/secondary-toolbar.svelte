@@ -8,6 +8,7 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
+  $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
 </script>
 
@@ -15,10 +16,10 @@
   <Toolbar class="secondary">
     <Button
       class="ghost"
-      disabled={$selectedEntries.length === Object.values($entryGroups).flat(1).length}
+      disabled={$selectedEntries.length === allEntries.length}
       label={$_('select_all')}
       on:click={() => {
-        $selectedEntries = Object.values($entryGroups).flat(1);
+        $selectedEntries = allEntries;
       }}
     />
     <Button

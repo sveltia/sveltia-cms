@@ -8,16 +8,18 @@
   import { selectedCollection } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
   import { goto } from '$lib/services/navigation';
+
+  $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
 </script>
 
 <div class="list-container">
   {#if $selectedCollection}
-    {#if Object.values($entryGroups).flat(1).length}
+    {#if allEntries.length}
       {@const { defaultLocale = 'default' } = $selectedCollection._i18n}
-      {#each Object.entries($entryGroups) as [groupName, entries] (groupName)}
+      {#each $entryGroups as { name, entries } (name)}
         <Group>
-          {#if groupName !== '*'}
-            <h3>{groupName}</h3>
+          {#if name !== '*'}
+            <h3>{name}</h3>
           {/if}
           <!-- @todo Implement custom table column option that can replace summary template -->
           <svelte:component this={$currentView.type === 'grid' ? BasicGridView : BasicListView}>
