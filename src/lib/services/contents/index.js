@@ -20,7 +20,7 @@ export const selectedEntries = writable([]);
 
 /**
  * Get the i18n config for the given collection.
- * @param {object} collection Collection.
+ * @param {Collection} collection Collection.
  * @returns {I18nConfig} Config.
  * @see https://decapcms.org/docs/beta-features/#i18n-support
  */

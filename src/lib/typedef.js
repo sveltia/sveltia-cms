@@ -19,6 +19,72 @@
  */
 
 /**
+ * @typedef {object} SiteConfig Global site configuration.
+ * @property {object} backend Backend config.
+ * @property {string} [site_url] Site URL.
+ * @property {string} [display_url] Site URL linked from the UI.
+ * @property {string} [logo_url] Site logo URL.
+ * @property {string} media_folder Global internal media folder path.
+ * @property {string} [public_folder] Global public media folder path.
+ * @property {object} [media_library] External media library configuration.
+ * @property {object} [slug] Slug options.
+ * @property {Collection[]} collections Collections.
+ * @property {object} [i18n] Global i18n configuration.
+ * @property {string} [publish_mode] Enable Editorial Workflow.
+ * @property {boolean} [show_preview_links] Whether to show preview links in Editorial Workflow.
+ * @see https://decapcms.org/docs/configuration-options/
+ */
+
+/**
+ * @typedef {object} Collection Collection definition.
+ * @property {string} name Collection name.
+ * @property {string} [label] UI label.
+ * @property {string} [label_singular] Singular UI label.
+ * @property {string} [description] Description.
+ * @property {string} [icon] Material Symbols icon name.
+ * @property {string} [identifier_field] Field name to be used as the ID of a collection item.
+ * @property {object[]} [files] File list for a file collection.
+ * @property {string} [folder] Folder path for a folder/entry collection.
+ * @property {Field[]} [fields] Fields for a folder/entry collection.
+ * @property {string} [path] Subfolder path for a folder/entry collection.
+ * @property {string} [media_folder] Internal media folder path for a folder/entry collection.
+ * @property {string} [public_folder] Public media folder path for a folder/entry collection.
+ * @property {object} [filter] Filter for a folder/entry collection.
+ * @property {object} [nested] Nested collection config for a folder/entry collection.
+ * @property {boolean} [hide] Whether to hide the collection in the UI.
+ * @property {boolean} [create] Whether to allow creating items in a folder/entry collection.
+ * @property {boolean} [delete] Whether to allow deleting items in a folder/entry collection.
+ * @property {boolean} [publish] Whether to hide the publishing control UI for Editorial Workflow.
+ * @property {string} [format] File format.
+ * @property {string} [extension] File extension.
+ * @property {(string|string[])} [frontmatter_delimiter] Delimiters used for the Frontmatter format.
+ * @property {string} [slug] Item slug template for a folder/entry collection.
+ * @property {string} [summary] Item summary template for a folder/entry collection.
+ * @property {string[]} [sortable_fields] Custom sorting fields.
+ * @property {object[]} [view_filters] Predefined view filters.
+ * @property {object[]} [view_groups] Predefined view groups.
+ * @property {(boolean|object)} [i18n] I18n configuration.
+ * @property {I18nConfig} _i18n Normalized i18n configuration with the global i18n config combined.
+ * @property {string} [preview_path] Preview URL template.
+ * @property {string} [preview_path_date_field] Date field used for the preview URL template.
+ * @property {object} [editor] Editor view config with the optional `preview` property.
+ * @see https://decapcms.org/docs/configuration-options/#collections
+ */
+
+/**
+ * @typedef {object} Field Field definition.
+ * @property {string} name Field name.
+ * @property {string} [label] Field label.
+ * @property {string} [comment] Field description.
+ * @property {string} [widget] Widget name.
+ * @property {any} [default] Default value.
+ * @property {boolean} [required] Whether to require input.
+ * @property {string[]} [pattern] Validation format.
+ * @see https://decapcms.org/docs/configuration-options/#fields
+ * @see https://decapcms.org/docs/widgets
+ */
+
+/**
  * @typedef {object} Entry Entry item.
  * @property {string} sha SHA-1 hash from one of the locales. It serves as the ID of an entry, so it
  * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
@@ -70,7 +136,7 @@
  * @property {boolean} [isNew] `true` if it’s a new entry draft.
  * @property {string} [slug] Entry slug. Empty if it’s new.
  * @property {string} collectionName Collection name.
- * @property {object} collection Collection details.
+ * @property {Collection} collection Collection details.
  * @property {string} [fileName] File name. (File collection only)
  * @property {string} [collectionFile] File details. (File collection only)
  * @property {{ [key: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,

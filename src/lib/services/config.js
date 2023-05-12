@@ -5,13 +5,16 @@ import { allContentPaths, getCollection, selectedCollection } from '$lib/service
 import { isObject } from '$lib/services/utils/misc';
 import { stripSlashes } from '$lib/services/utils/strings';
 
+/**
+ * @type {?import('svelte/store').Writable<SiteConfig>}
+ */
 export const siteConfig = writable();
 
 const { DEV, VITE_CONFIG_PORT } = import.meta.env;
 
 /**
  * Validate the site configuration file.
- * @param {object} config Config object.
+ * @param {SiteConfig} config Config object.
  * @throws {Error} If there is an error in the config.
  * @see https://decapcms.org/docs/configuration-options/
  * @todo Add more validations.
@@ -36,6 +39,7 @@ const validate = (config) => {
 
 /**
  * Fetch the configuration file and set the parsed result or any error.
+ * @todo Normalize configuration object.
  */
 export const fetchSiteConfig = async () => {
   const { href = '/admin/config.yml' } =

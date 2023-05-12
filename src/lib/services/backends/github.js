@@ -144,7 +144,8 @@ const fetchFiles = async () => {
   /**
    * Get the file metadata.
    * @param {number} index Array index to be searched in the GraphQL response.
-   * @returns {object} Metadata including the commit date and author.
+   * @returns {{ commitAuthor: { name: string, email: string }, commitDate: Date }} Metadata
+   * including the commit author and date.
    */
   const getMeta = (index) => {
     const { author, committedDate } = repository[`commit_${index}`].target.history.nodes[0];

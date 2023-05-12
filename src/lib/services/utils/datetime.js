@@ -4,7 +4,8 @@
  * @param {object} [options] Options.
  * @param {Date} [options.date] Date to use.
  * @param {string} [options.timeZone] Time zone, e.g. `UTC`.
- * @returns {object} Result like `{ year: '2023', month: '01', day: '23', ... }`.
+ * @returns {{ year: string, month: string, day: string, hour: string, minute: string, second:
+ * string }} Result like `{ year: '2023', month: '01', day: '23', ... }`.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/formatToParts
  */
 export const getDateTimeParts = ({ date = new Date(), timeZone = undefined } = {}) => {

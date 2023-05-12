@@ -6,7 +6,7 @@ export const selectedPageName = writable('');
 /**
  * Parse the URL and return the decoded result.
  * @param {string} [loc] URL. Omit this to use the current URL.
- * @returns {object} Path and search params.
+ * @returns {{ path: string, params: object }} Path and search params.
  */
 export const parseLocation = (loc = window.location) => {
   const { pathname, searchParams } = new URL(`${loc.origin}${loc.hash.substring(1)}`);

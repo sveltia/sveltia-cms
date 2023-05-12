@@ -27,7 +27,7 @@ export const currentView = writable({});
 
 /**
  * Parse the summary template to generate the summary to be displayed on the entry list, etc.
- * @param {object} collection Entry’s collection.
+ * @param {Collection} collection Entry’s collection.
  * @param {EntryContent} content Entry content.
  * @returns {string} Formatted summary.
  * @see https://decapcms.org/docs/beta-features/#summary-string-template-transformations
@@ -319,7 +319,7 @@ selectedCollection.subscribe((collection) => {
   editorLeftPane.set({ mode: 'edit', locale: defaultLocale });
   editorRightPane.set({ mode: 'preview', locale: defaultLocale });
 
-  // This only works for folder (entry) collections
+  // This only works for folder/entry collections
   if (!fields.length) {
     return;
   }
