@@ -47,7 +47,7 @@
                   {/if}
                 </GridCell>
                 <GridCell class="collection">
-                  {collection.label}
+                  {collection.label || collection.name}
                 </GridCell>
                 <GridCell class="title">
                   {#if file}

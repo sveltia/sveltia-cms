@@ -12,10 +12,18 @@
 <MenuButton class="ghost iconic" popupPosition="bottom-right">
   <Icon slot="start-icon" name="add" label={$_('create')} />
   <Menu slot="popup">
-    {#each $siteConfig.collections as { name, label, folder, hide = false, create = false } (name)}
+    {#each $siteConfig.collections as collection (collection.name)}
+      {@const {
+        name,
+        label,
+        label_singular: labelSingular,
+        folder,
+        hide = false,
+        create = false,
+      } = collection}
       {#if folder && !hide}
         <MenuItem
-          {label}
+          label={labelSingular || label || name}
           disabled={!create}
           on:click={() => {
             goto(`/collections/${name}/new`);

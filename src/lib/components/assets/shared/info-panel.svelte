@@ -110,7 +110,7 @@
           }}
         >
           <span>
-            {collection.label} »
+            {collection.label || collection.name} »
             {#if collection.files}
               {collection.files.find(({ name }) => name === fileName).label}
             {:else if content}

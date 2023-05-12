@@ -15,7 +15,7 @@
       {#each collections as { name, label, icon, hide = false } (name)}
         {#if !hide}
           <Option
-            {label}
+            label={label || name}
             selected={$selectedCollection.name === name}
             on:click={() => {
               goto(`/collections/${name}`);

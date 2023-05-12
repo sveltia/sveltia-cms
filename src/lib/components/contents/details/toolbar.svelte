@@ -29,6 +29,8 @@
 
   $: ({ collection, collectionFile, isNew, slug, currentValues, originalValues } =
     $entryDraft || {});
+  $: collectionLabel = collection.label || collection.name;
+  $: collectionLabelSingular = collection.label_singular || collectionLabel;
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: modified = !equal(currentValues, originalValues);
@@ -45,11 +47,13 @@
   </Button>
   <h2>
     {#if isNew}
-      {$_('creating_x', { values: { name: collection.label } })}
+      {$_('creating_x', { values: { name: collectionLabelSingular } })}
     {:else}
       {$_('editing_x', {
         values: {
-          name: collectionFile ? `${collection.label} » ${collectionFile.label}` : collection.label,
+          name: collectionFile
+            ? `${collectionLabel} » ${collectionFile.label}`
+            : collectionLabelSingular,
         },
       })}
     {/if}
