@@ -39,7 +39,7 @@
 <svelte:window
   on:keydown={(event) => {
     if (
-      !event.target.matches('input, textarea') &&
+      !(/** @type {HTMLElement} */ (event.target).matches('input, textarea')) &&
       !!wrapper.querySelector('.search-bar').offsetParent &&
       matchShortcut(event, focusShortcut)
     ) {
@@ -57,7 +57,7 @@
     --input-label-align="center"
     on:input={({ target }) => {
       // @todo Implement quick search dropdown.
-      navigate(target.value.trim());
+      navigate(/** @type {HTMLInputElement} */ (target).value.trim());
     }}
   />
 </div>

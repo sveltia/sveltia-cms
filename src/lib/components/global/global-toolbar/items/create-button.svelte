@@ -45,6 +45,9 @@
 <FilePicker
   bind:this={filePicker}
   on:change={({ target }) => {
-    $uploadingAssets = { folder: $siteConfig.media_folder, files: [...target.files] };
+    $uploadingAssets = {
+      folder: $siteConfig.media_folder,
+      files: [.../** @type {HTMLInputElement} */ (target).files],
+    };
   }}
 />

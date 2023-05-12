@@ -10,7 +10,7 @@
   export { className as class };
 </script>
 
-<div class="outer" hidden={$entryDraft ? 'hidden' : undefined}>
+<div class="outer" hidden={$entryDraft ? true : undefined}>
   <Group class="browser {className}" {...$$restProps}>
     <slot name="primary_sidebar" />
     <Group class="main">

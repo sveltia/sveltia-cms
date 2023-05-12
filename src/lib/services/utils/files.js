@@ -1,4 +1,5 @@
 import { locale as appLocale } from 'svelte-i18n';
+import { get } from 'svelte/store';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
@@ -15,7 +16,8 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
 
   /**
    * Read files recursively from the filesystem.
-   * @param {(FileSystemFileEntry|FileSystemDirectoryEntry)} entry Either a file or directory entry.
+   * @param {(FileSystemFileEntry | FileSystemDirectoryEntry | any)} entry Either a file or
+   * directory entry.
    * @returns {Promise<File>} File.
    */
   const readEntry = (entry) =>
@@ -43,6 +45,7 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
         );
       } else {
         entry.createReader().readEntries((entries) => {
+          // @ts-ignore
           resolve(Promise.all(entries.map(readEntry)));
         });
       }
@@ -67,7 +70,7 @@ export const readAsText = async (file) => {
      * Return the result once the content is read.
      */
     reader.onload = () => {
-      resolve(reader.result);
+      resolve(/** @type {string} */ (reader.result));
     };
 
     reader.readAsText(file);
@@ -76,7 +79,7 @@ export const readAsText = async (file) => {
 
 /**
  * Read the file as array buffer.
- * @param {File} file File.
+ * @param {(File | Blob)} file File.
  * @returns {Promise<ArrayBuffer>} Content.
  */
 export const readAsArrayBuffer = async (file) => {
@@ -87,7 +90,7 @@ export const readAsArrayBuffer = async (file) => {
      * Return the result once the content is read.
      */
     reader.onload = () => {
-      resolve(reader.result);
+      resolve(/** @type {ArrayBuffer} */ (reader.result));
     };
 
     reader.readAsArrayBuffer(file);
@@ -96,7 +99,7 @@ export const readAsArrayBuffer = async (file) => {
 
 /**
  * Get the SHA-1 hash of the given file.
- * @param {File} file File.
+ * @param {(File | Blob)} file File.
  * @returns {Promise<string>} Hash.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
  */
@@ -122,7 +125,7 @@ export const getDataURL = async (input) => {
      * Return the result once the content is read.
      */
     reader.onload = () => {
-      resolve(reader.result);
+      resolve(/** @type {string} */ (reader.result));
     };
 
     reader.readAsDataURL(blob);
@@ -142,7 +145,7 @@ export const getBase64 = async (input) => (await getDataURL(input)).split(',')[1
  * @returns {string} Formatted size.
  */
 export const formatSize = (size) => {
-  const formatter = new Intl.NumberFormat(appLocale);
+  const formatter = new Intl.NumberFormat(get(appLocale));
   const kb = 1000;
   const mb = kb * 1000;
   const gb = mb * 1000;

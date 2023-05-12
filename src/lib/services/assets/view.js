@@ -65,8 +65,8 @@ export const getFolderLabel = (folderPath) => {
  * Sort the given assets.
  * @param {Asset[]} assets Asset list.
  * @param {object} [condition] Sort condition.
- * @param {string} condition.key Sort key.
- * @param {string} condition.order Sort order, either `ascending` or `descending`.
+ * @param {string} [condition.key] Sort key.
+ * @param {string} [condition.order] Sort order, either `ascending` or `descending`.
  * @returns {Asset[]} Sorted asset list.
  */
 const sortAssets = (assets, { key, order } = {}) => {
@@ -116,8 +116,8 @@ const sortAssets = (assets, { key, order } = {}) => {
  * Filter the given assets.
  * @param {Asset[]} assets Asset list.
  * @param {object} [condition] Filter condition.
- * @param {string} condition.field Field name.
- * @param {string} condition.pattern Regular expression.
+ * @param {string} [condition.field] Field name.
+ * @param {string} [condition.pattern] Regular expression.
  * @returns {Asset[]} Filtered asset list.
  */
 const filterAssets = (assets, { field, pattern } = {}) => {
@@ -150,8 +150,8 @@ const filterAssets = (assets, { field, pattern } = {}) => {
  * Group the given assets.
  * @param {Asset[]} assets Asset list.
  * @param {object} [condition] Group condition.
- * @param {string} condition.field Field name.
- * @param {string} condition.pattern Regular expression.
+ * @param {string} [condition.field] Field name.
+ * @param {string} [condition.pattern] Regular expression.
  * @returns {{ [key: string]: Asset[] }} Grouped assets, where key is a group label and value is an
  * asset list.
  */
@@ -188,7 +188,20 @@ const groupAssets = (assets, { field, pattern } = {}) => {
 };
 
 /**
+ * Default view settings for the selected asset collection.
+ * @type {AssetView}
+ */
+const defaultView = {
+  type: 'grid',
+  sort: {
+    key: 'name',
+    order: 'ascending',
+  },
+};
+
+/**
  * View settings for all the asset collection.
+ * @type {import('svelte/store').Writable<{ [key: string]: AssetView }>}
  */
 const assetsViewSettings = writable({}, (set) => {
   (async () => {
@@ -202,6 +215,7 @@ const assetsViewSettings = writable({}, (set) => {
 
 /**
  * View settings for the selected asset collection.
+ * @type {import('svelte/store').Writable<(AssetView)>}
  */
 export const currentView = writable({});
 
@@ -238,6 +252,7 @@ export const listedAssets = derived(
 export const assetGroups = derived(
   [listedAssets, currentView],
   ([_listedAssets, _currentView], set) => {
+    /** @type {(object[] | object)} */
     let assets = [..._listedAssets];
 
     assets = sortAssets(assets, _currentView?.sort);
@@ -258,15 +273,7 @@ listedAssets.subscribe((assets) => {
 });
 
 selectedAssetFolderPath.subscribe((path) => {
-  const defaultView = {
-    type: 'grid',
-    sort: {
-      key: 'name',
-      order: 'ascending',
-    },
-  };
-
-  const view = get(assetsViewSettings)[path || '*'] || defaultView;
+  const view = get(assetsViewSettings)[path || '*'] || JSON.parse(JSON.stringify(defaultView));
 
   if (!equal(view, currentView)) {
     currentView.set(view);

@@ -4,8 +4,8 @@
 
   export let fieldConfig = {};
   export let items = [];
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  export let addItem = () => undefined;
+  // eslint-disable-next-line jsdoc/require-jsdoc, no-unused-vars
+  export let addItem = (name) => undefined;
 
   $: ({
     label,

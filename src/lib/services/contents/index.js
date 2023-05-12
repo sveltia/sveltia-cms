@@ -7,14 +7,14 @@ export const entriesLoaded = writable(false);
 export const allContentPaths = writable([]);
 
 /**
- * @type {?import('svelte/store').Writable<Entry[]>}
+ * @type {import('svelte/store').Writable<Entry[]>}
  */
 export const allEntries = writable([]);
 
 export const selectedCollection = writable();
 
 /**
- * @type {?import('svelte/store').Writable<Entry[]>}
+ * @type {import('svelte/store').Writable<Entry[]>}
  */
 export const selectedEntries = writable([]);
 
@@ -26,6 +26,7 @@ export const selectedEntries = writable([]);
  */
 const getCollectionI18n = (collection) => {
   const _siteConfig = get(siteConfig);
+  /** @type {I18nFileStructure} */
   let structure = 'single_file';
   let locales = [];
   let defaultLocale;
@@ -101,7 +102,7 @@ export const getEntries = (name) => {
 /**
  * Get a field that matches the given key path: dot-connected object field name.
  * @param {string} collectionName Collection name.
- * @param {string} [fileName] File name if the collection is a file collection.
+ * @param {string} fileName File name if the collection is a file collection.
  * @param {string} keyPath Key path, e.g. `author.name`.
  * @param {FlattenedEntryContent} valueMap Object holding current entry values keyed with `keyPath`.
  * @returns {object} Field configuration.

@@ -1,6 +1,26 @@
 /* eslint-disable jsdoc/require-property */
 
 /**
+ * @typedef {object} User User details. Most properties are from the GitHub API.
+ * @property {string} backendName Backend name, e.g. `github`.
+ * @property {string} token Backend OAuth token.
+ * @property {string} name User display name.
+ * @property {string} login User account name.
+ * @property {string} email User email.
+ * @property {string} avatar_url Avatar URL.
+ * @property {string} html_url Profile URL.
+ * @property {object} detail Account detail.
+ */
+
+/**
+ * @typedef {object} Preferences User preferences.
+ * @property {object} [apiKeys] API keys for integrations.
+ * @property {string} [theme] Selected UI theme, either `dark` or `light`.
+ * @property {string} [locale] Selected UI locale, e.g. `en`.
+ * @property {string} [error] Error message.
+ */
+
+/**
  * @typedef {('create'|'update'|'delete'|'uploadMedia'|'deleteMedia'|'openAuthoring')} CommitType
  * Git commit type.
  */
@@ -10,28 +30,33 @@
  */
 
 /**
+ * @typedef {('single_file' | 'multiple_files' | 'multiple_folders')} I18nFileStructure
+ */
+
+/**
  * @typedef {object} I18nConfig Collection’s i18n configuration.
- * @property {'single_file' | 'multiple_files' | 'multiple_folders'} structure File structure.
+ * @property {I18nFileStructure} structure File structure.
  * @property {boolean} hasLocales Whether i18n is enabled for the collection.
  * @property {LocaleCode[]} locales List of locales. Can be an empty array if i18n is not enabled.
- * @property {string | undefined} defaultLocale Default locale. Can be `undefined` if i18n is not
+ * @property {string} [defaultLocale] Default locale. Can be `undefined` if i18n is not
  * enabled.
  */
 
 /**
  * @typedef {object} SiteConfig Global site configuration.
- * @property {object} backend Backend config.
+ * @property {object} [backend] Backend config.
  * @property {string} [site_url] Site URL.
  * @property {string} [display_url] Site URL linked from the UI.
  * @property {string} [logo_url] Site logo URL.
- * @property {string} media_folder Global internal media folder path.
+ * @property {string} [media_folder] Global internal media folder path.
  * @property {string} [public_folder] Global public media folder path.
  * @property {object} [media_library] External media library configuration.
  * @property {object} [slug] Slug options.
- * @property {Collection[]} collections Collections.
+ * @property {Collection[]} [collections] Collections.
  * @property {object} [i18n] Global i18n configuration.
  * @property {string} [publish_mode] Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] Whether to show preview links in Editorial Workflow.
+ * @property {string} [error] Custom error message.
  * @see https://decapcms.org/docs/configuration-options/
  */
 
@@ -96,7 +121,8 @@
  * @property {string} collectionName Collection name.
  * @property {boolean} [isNew] `true` if it’s a new entry draft.
  * @property {string} [fileName] File name for a file collection.
- * @property {string} [commitAuthor] Git committer’s name or email for a Git backend.
+ * @property {{ name: string, email: string }} [commitAuthor] Git committer’s name or email for a
+ * Git backend.
  * @property {Date} [commitDate] Commit date for a Git backend.
  */
 
@@ -119,7 +145,7 @@
  */
 
 /**
- * @typedef {{ [key: string]: ValidityState }} FlattenedEntryContentValidityState Flattened
+ * @typedef {{ [key: string]: any }} FlattenedEntryContentValidityState Flattened
  * {@link EntryContent} object, where key is a key path, but value will be the value’s validity,
  * using the same properties as the native HTML5 constraint validation.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
@@ -138,7 +164,8 @@
  * @property {string} collectionName Collection name.
  * @property {Collection} collection Collection details.
  * @property {string} [fileName] File name. (File collection only)
- * @property {string} [collectionFile] File details. (File collection only)
+ * @property {object} [collectionFile] File details. (File collection only)
+ * @property {Entry} [originalEntry] Original entry if it’s not a new entry draft.
  * @property {{ [key: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,
  * value is an flattened object containing all the original field values.
  * @property {{ [key: LocaleCode]: FlattenedEntryContent }} currentValues Key is a locale code,
@@ -167,7 +194,8 @@
  * @property {string} [collectionName] Collection name if it belongs to a collection asset folder.
  * @property {string} folder Path of a collection-specific folder that contains the file or global
  * media folder.
- * @property {string} [commitAuthor] Git committer’s name or email for a Git backend.
+ * @property {{ name: string, email: string }} [commitAuthor] Git committer’s name or email for a
+ * Git backend.
  * @property {Date} [commitDate] Commit date for a Git backend.
  * @property {string} [tempURL] Temporary blob URL for a local file being uploaded.
  */
@@ -191,4 +219,38 @@
  * @property {string} [url] URL from direct input or a hotlinking stock photo.
  * @property {string} [credit] Attribution HTML string for a stock photo, including the photographer
  * name/link and service name/link.
+ */
+
+/**
+ * @typedef {('ascending' | 'descending')} SortOrder Sorting order condition.
+ */
+
+/**
+ * @typedef {object} EntryView Entry view settings.
+ * @property {('grid' | 'list')} [type] View type.
+ * @property {object} [sort] Sorting conditions.
+ * @property {string} [sort.key] Target field name.
+ * @property {SortOrder} [sort.order] Sort order.
+ * @property {object} [filter] Filtering conditions.
+ * @property {string} [filter.field] Target field name.
+ * @property {string} [filter.pattern] Regex pattern.
+ * @property {object} [group] Grouping conditions.
+ * @property {string} [group.field] Target field name.
+ * @property {string} [group.pattern] Regex pattern.
+ * @property {boolean} [showMedia] Whether to show the Media pane.
+ */
+
+/**
+ * @typedef {object} AssetView Asset view settings.
+ * @property {('grid' | 'list')} [type] View type.
+ * @property {object} [sort] Sort conditions.
+ * @property {string} [sort.key] Target field name.
+ * @property {SortOrder} [sort.order] Sort order.
+ * @property {object} [filter] Filtering conditions.
+ * @property {string} [filter.field] Target field name.
+ * @property {string} [filter.pattern] Regex pattern.
+ * @property {object} [group] Grouping conditions.
+ * @property {string} [group.field] Target field name.
+ * @property {string} [group.pattern] Regex pattern.
+ * @property {boolean} [showInfo] Whether to show the Info pane.
  */

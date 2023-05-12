@@ -1,13 +1,20 @@
+// @ts-ignore
 import App from './app.svelte';
 
 const app = new App({ target: document.getElementById('nc-root') || document.body });
 
 export default app;
 
+// @ts-ignore
 window.CMS = new Proxy(
   {},
   {
-    // eslint-disable-next-line jsdoc/require-jsdoc
+    /**
+     * Define the getter.
+     * @param {object} obj Object itself.
+     * @param {string} key Property name.
+     * @returns {any} Property value.
+     */
     get: (obj, key) => {
       if (key in obj) {
         return obj[key];

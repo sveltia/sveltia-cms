@@ -9,7 +9,7 @@
   import { entryDraft } from '$lib/services/contents/editor';
 </script>
 
-<div class="toolbar-wrapper" hidden={$entryDraft ? 'hidden' : undefined}>
+<div class="toolbar-wrapper" hidden={$entryDraft ? true : undefined}>
   <Toolbar>
     <SiteLogo />
     <PageSwitcher />

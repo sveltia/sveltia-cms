@@ -25,20 +25,20 @@
               event.dataTransfer.dropEffect = 'none';
             } else {
               event.dataTransfer.dropEffect = 'move';
-              event.target.classList.add('dragover');
+              /** @type {HTMLElement} */ (event.target).classList.add('dragover');
             }
           }}
           on:dragleave={(event) => {
             event.preventDefault();
-            event.target.classList.remove('dragover');
+            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
           }}
           on:dragend={(event) => {
             event.preventDefault();
-            event.target.classList.remove('dragover');
+            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
           }}
           on:drop={(event) => {
             event.preventDefault();
-            event.target.classList.remove('dragover');
+            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
             // @todo Move the assets while updating entries using the files, after showing a
             // confirmation dialog.
           }}

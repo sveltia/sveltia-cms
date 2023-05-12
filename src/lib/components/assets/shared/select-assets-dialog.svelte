@@ -64,8 +64,8 @@
   <div class="wrapper">
     <TabList
       orientation="vertical"
-      on:select={({ detail: { name } }) => {
-        tabName = name;
+      on:select={(/** @type {CustomEvent} */ event) => {
+        tabName = event.detail.name;
       }}
     >
       <Tab

@@ -37,12 +37,14 @@ const searchImages = async (query, apiKey) => {
 
   if (query) {
     for (let page = 1; page <= 5; page += 1) {
-      const params = new URLSearchParams({
-        query,
-        lang: supportedLocales.includes(locale) ? locale : 'en',
-        page,
-        per_page: 30,
-      });
+      const params = new URLSearchParams(
+        /** @type {any} */ ({
+          query,
+          lang: supportedLocales.includes(locale) ? locale : 'en',
+          page,
+          per_page: 30,
+        }),
+      );
 
       const response = await fetch(`${endpoint}/search/photos?${params.toString()}`, { headers });
 
@@ -62,9 +64,11 @@ const searchImages = async (query, apiKey) => {
       await sleep(50);
     }
   } else {
-    const params = new URLSearchParams({
-      per_page: 30,
-    });
+    const params = new URLSearchParams(
+      /** @type {any} */ ({
+        per_page: 30,
+      }),
+    );
 
     const response = await fetch(`${endpoint}/photos?${params.toString()}`, { headers });
 

@@ -23,6 +23,7 @@
 
   /**
    * Function to search images for the service.
+   * @type {Function?}
    * @returns {Promise<StockPhoto[]>} Photos.
    */
   export let searchImages = async () => [];
@@ -42,6 +43,7 @@
     searchResults = null;
 
     try {
+      // @ts-ignore
       searchResults = await searchImages(query, apiKey);
     } catch {
       error = 'search_fetch_failed';
@@ -111,8 +113,8 @@
     </EmptyState>
   {:else}
     <SimpleImageGrid
-      on:select={({ detail: { value } }) => {
-        selectImage(searchResults.find(({ id }) => id === value));
+      on:select={(/** @type {CustomEvent} */ event) => {
+        selectImage(searchResults.find(({ id }) => id === event.detail.value));
       }}
     >
       {#each searchResults as { id, previewURL, description } (id)}
@@ -142,8 +144,8 @@
         aria-label={$_('prefs.media.stock_photo.field_label', {
           values: { service: serviceLabel },
         })}
-        on:input={({ target: { value } }) => {
-          const _value = value.trim();
+        on:input={(/** @type {CustomEvent} */ event) => {
+          const _value = event.detail.value.trim();
 
           if (apiKeyPattern && _value.match(apiKeyPattern)) {
             apiKey = _value;

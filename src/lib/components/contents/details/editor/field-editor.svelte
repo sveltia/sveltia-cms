@@ -42,7 +42,6 @@
   // @todo Save & restore draft from local storage.
 
   $: ({
-    widget,
     label = '',
     hint = '',
     widget = 'string',

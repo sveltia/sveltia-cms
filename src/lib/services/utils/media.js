@@ -6,7 +6,10 @@
  */
 export const getMediaMetadata = (src, kind) => {
   const isImage = kind === 'image';
-  const element = isImage ? new Image() : document.createElement(kind);
+
+  const element = isImage
+    ? new Image()
+    : /** @type {HTMLMediaElement} */ (document.createElement(kind));
 
   return new Promise((resolve) => {
     // eslint-disable-next-line jsdoc/require-jsdoc
@@ -16,10 +19,14 @@ export const getMediaMetadata = (src, kind) => {
           kind === 'audio'
             ? undefined
             : {
-                width: isImage ? element.naturalWidth : element.videoWidth,
-                height: isImage ? element.naturalHeight : element.videoHeight,
+                width: isImage
+                  ? /** @type {HTMLImageElement} */ (element).naturalWidth
+                  : /** @type {HTMLVideoElement} */ (element).videoWidth,
+                height: isImage
+                  ? /** @type {HTMLImageElement} */ (element).naturalHeight
+                  : /** @type {HTMLVideoElement} */ (element).videoHeight,
               },
-        duration: isImage ? undefined : element.duration,
+        duration: isImage ? undefined : /** @type {HTMLMediaElement} */ (element).duration,
       });
     };
 

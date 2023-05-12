@@ -57,7 +57,7 @@ export const deleteAssets = async (assets) => {
 
 /**
  * Move assets between folders.
- * @param {Assets[]} assets Assets.
+ * @param {Asset[]} assets Assets.
  * @param {string} directory Target directory.
  * @todo Implement this!
  */

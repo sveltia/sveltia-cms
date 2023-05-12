@@ -20,9 +20,19 @@ import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.entry-view';
 
+/**
+ * @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>}
+ */
 export const editorLeftPane = writable({});
+
+/**
+ * @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>}
+ */
 export const editorRightPane = writable({});
 
+/**
+ * @type {import('svelte/store').Writable<{ showPreview?: boolean, syncScrolling?: boolean }>}
+ */
 export const entryViewSettings = writable({}, (set) => {
   (async () => {
     try {
@@ -33,7 +43,9 @@ export const entryViewSettings = writable({}, (set) => {
   })();
 });
 
-/** @type {import('svelte/store').Writable<EntryDraft>} */
+/**
+ * @type {import('svelte/store').Writable<EntryDraft?>}
+ */
 export const entryDraft = writable();
 
 /**
@@ -87,7 +99,7 @@ const createNewContent = (fields) => {
  * Create a Proxy that automatically copies a field value to other locale if the field’s i18n
  * strategy is “duplicate.”
  * @param {object} args Arguments.
- * @param {EntryDraft} args.draft Entry draft.
+ * @param {EntryDraft | any} args.draft Entry draft.
  * @param {string} args.prop Property name in the {@link entryDraft} store that contains a
  * locale/Proxy map.
  * @param {string} args.locale Source locale.
@@ -105,7 +117,7 @@ const createProxy = ({
 
   return new Proxy(target, {
     // eslint-disable-next-line jsdoc/require-jsdoc
-    set: (obj, keyPath, value) => {
+    set: (obj, /** @type {string} */ keyPath, value) => {
       const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, obj);
 
       if (!fieldConfig) {
@@ -391,7 +403,7 @@ const validateEntry = () => {
         if (
           Array.isArray(pattern) &&
           pattern.length === 2 &&
-          !String.value.match(new RegExp(escapeRegExp(pattern[0])))
+          !String(value).match(new RegExp(escapeRegExp(pattern[0])))
         ) {
           patternMismatch = true;
         }

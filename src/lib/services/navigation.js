@@ -5,7 +5,7 @@ export const selectedPageName = writable('');
 
 /**
  * Parse the URL and return the decoded result.
- * @param {string} [loc] URL. Omit this to use the current URL.
+ * @param {Location} [loc] URL. Omit this to use the current URL.
  * @returns {{ path: string, params: object }} Path and search params.
  */
 export const parseLocation = (loc = window.location) => {
@@ -31,8 +31,10 @@ export const goto = (path, { state = {}, replaceState = false } = {}) => {
   const args = [{ ...state, from: oldURL }, '', newURL];
 
   if (replaceState) {
+    // @ts-ignore
     window.history.replaceState(...args);
   } else {
+    // @ts-ignore
     window.history.pushState(...args);
   }
 

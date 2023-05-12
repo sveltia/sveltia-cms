@@ -20,7 +20,10 @@
   export let fieldConfig = {};
   export let currentValue = undefined;
 
-  let { asset, file, url, credit } = {};
+  let asset;
+  let file;
+  let url;
+  let credit;
   let showSelectAssetsDialog = false;
   let showSizeLimitDialog = false;
   let showPhotoCreditDialog = false;
@@ -108,7 +111,10 @@
           label={$_('remove')}
           on:click={() => {
             currentValue = '';
-            ({ asset, file, url, credit } = {});
+            asset = undefined;
+            file = undefined;
+            url = undefined;
+            credit = undefined;
           }}
         />
       {/if}
@@ -143,8 +149,8 @@
       readonly="readonly"
       value={photoCredit}
       on:click={(event) => {
-        event.target.focus();
-        event.target.select();
+        /** @type {HTMLTextAreaElement} */ (event.target).focus();
+        /** @type {HTMLTextAreaElement} */ (event.target).select();
       }}
     />
   </div>

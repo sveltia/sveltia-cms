@@ -32,8 +32,8 @@
         <Select
           label={getLocaleLabel($appLocale)}
           value={$appLocale}
-          on:change={({ detail: { value } }) => {
-            $prefs = { ...$prefs, locale: value };
+          on:change={(/** @type {CustomEvent} */ event) => {
+            $prefs = { ...$prefs, locale: event.detail.value };
           }}
         >
           {#each $locales as locale}

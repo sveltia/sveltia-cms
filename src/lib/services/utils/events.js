@@ -2,7 +2,8 @@
  * Check if the user agent is macOS.
  */
 export const isMac =
-  navigator.userAgentData?.platform === 'macOS' || navigator.platform.startsWith('Mac');
+  /** @type {any} */ (navigator).userAgentData?.platform === 'macOS' ||
+  navigator.platform.startsWith('Mac');
 
 /**
  * Whether the event matches the given keyboard shortcut.

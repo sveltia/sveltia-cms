@@ -12,7 +12,7 @@
   import { formatDuration, getMediaMetadata } from '$lib/services/utils/media';
 
   /** @type {Asset} */
-  export let asset = {};
+  export let asset;
 
   let repoFileURL = undefined;
   let dimensions = undefined;

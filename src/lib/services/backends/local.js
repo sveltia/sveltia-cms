@@ -73,7 +73,7 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
             return;
           }
         } else {
-          handle = await window.showDirectoryPicker();
+          handle = await /** @type {any} */ (window).showDirectoryPicker();
           getStore().add(handle, rootDirHandleKey);
         }
 
@@ -130,7 +130,7 @@ const getHandleByPath = async (path) => {
 
 /**
  * Retrieve all files under the static directory.
- * @returns {object[]} File list.
+ * @returns {Promise.<object[]>} File list.
  */
 const getAllFiles = async () => {
   const _rootDirHandle = get(rootDirHandle);
@@ -143,7 +143,7 @@ const getAllFiles = async () => {
 
   /**
    * Retrieve all the files under the given directory recursively.
-   * @param {FileSystemDirectoryHandle} dirHandle Directory handle.
+   * @param {(FileSystemDirectoryHandle | any)} dirHandle Directory handle.
    */
   const iterate = async (dirHandle) => {
     for await (const [name, handle] of dirHandle.entries()) {
@@ -199,6 +199,7 @@ const fetchFiles = async () => {
 const saveFiles = async (items) => {
   await Promise.all(
     items.map(async ({ path, data }) => {
+      /** @type {any} */
       const handle = await getHandleByPath(path);
       const writer = await handle.createWritable();
 
@@ -217,6 +218,7 @@ const deleteFiles = async (items) => {
     items.map(async ({ path }) => {
       const pathArray = stripSlashes(path).split('/');
       const entryName = pathArray.pop();
+      /** @type {any} */
       const handle = await getHandleByPath(pathArray.join('/'));
 
       await handle.removeEntry(entryName);

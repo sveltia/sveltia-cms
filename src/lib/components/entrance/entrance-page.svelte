@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { get } from 'svelte/store';
+  // @ts-ignore
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { user } from '$lib/services/auth';

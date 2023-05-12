@@ -78,7 +78,7 @@
   {multiple}
   bind:this={filePicker}
   on:change={({ target }) => {
-    onSelect([...target.files]);
+    onSelect([.../** @type {HTMLInputElement} */ (target).files]);
   }}
 />
 

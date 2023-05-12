@@ -1,4 +1,5 @@
 <script>
+  /** @type {('lazy' | 'eager')} */
   export let loading = 'lazy';
   export let src = '';
   export let alt = '';

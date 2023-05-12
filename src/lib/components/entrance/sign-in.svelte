@@ -41,7 +41,7 @@
   onMount(() => {
     // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
     // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
-    isLocal = window.location.hostname.match(/^(?:.+\.)?localhost$/);
+    isLocal = !!window.location.hostname.match(/^(?:.+\.)?localhost$/);
 
     // Check if the browser supports the File System Access API
     isFileAccessUnsupported = isLocal && !('showDirectoryPicker' in window);

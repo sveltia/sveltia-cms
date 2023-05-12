@@ -54,6 +54,7 @@
           // File is not yet created
           const { hasLocales, locales } = $selectedCollection._i18n;
 
+          // @ts-ignore
           createDraft($selectedCollection.name, {
             fileName: collectionFile.name,
             locales: Object.fromEntries(

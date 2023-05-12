@@ -175,6 +175,7 @@
 
   $: {
     if (mounted && !hasSubFields) {
+      // @ts-ignore
       updateSimpleList(inputValue);
     }
   }

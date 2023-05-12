@@ -14,24 +14,27 @@ export const assetExtensions = {
 };
 
 /**
- * @type {?import('svelte/store').Writable<Asset[]>}
+ * @type {import('svelte/store').Writable<Asset[]>}
  */
 export const allAssets = writable([]);
 
 /**
- * @type {?import('svelte/store').Writable<CollectionAssetPaths[]>}
+ * @type {import('svelte/store').Writable<CollectionAssetPaths[]>}
  */
 export const allAssetPaths = writable([]);
 
+/**
+ * @type {import('svelte/store').Writable<string?>}
+ */
 export const selectedAssetFolderPath = writable();
 
 /**
- * @type {?import('svelte/store').Writable<Asset[]>}
+ * @type {import('svelte/store').Writable<Asset[]>}
  */
 export const selectedAssets = writable([]);
 
 /**
- * @type {?import('svelte/store').Writable<Asset>}
+ * @type {import('svelte/store').Writable<Asset?>}
  */
 export const selectedAsset = writable();
 

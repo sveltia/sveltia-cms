@@ -74,7 +74,7 @@
   on:change={({ target }) => {
     $uploadingAssets = {
       folder: $selectedAssetFolderPath || $siteConfig.media_folder,
-      files: [...target.files],
+      files: [.../** @type {HTMLInputElement} */ (target).files],
     };
   }}
 />

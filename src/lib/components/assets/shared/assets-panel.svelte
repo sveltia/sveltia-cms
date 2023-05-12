@@ -22,7 +22,7 @@
 {#if filteredAssets.length}
   <div class="grid-wrapper">
     <SimpleImageGrid
-      on:select={(event) => {
+      on:select={(/** @type {CustomEvent} */ event) => {
         dispatch('select', {
           asset: assets.find(({ sha }) => sha === event.detail.value),
         });

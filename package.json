@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@ltd/j-toml": "^1.38.0",
-    "@sveltia/ui": "^0.2.3",
+    "@sveltia/ui": "^0.2.4",
     "deep-is": "^0.1.4",
     "flat": "^5.0.2",
     "isomorphic-dompurify": "^1.4.0",

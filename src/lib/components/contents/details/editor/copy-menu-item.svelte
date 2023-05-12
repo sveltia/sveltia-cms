@@ -16,7 +16,17 @@
 
   $: ({ hasLocales, locales } = $entryDraft.collection._i18n);
   $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
-  $: ({ serviceId, sourceLanguages = [], targetLanguages = [] } = $translator || {});
+
+  $: ({
+    serviceId,
+    sourceLanguages = [],
+    targetLanguages = [],
+  } = $translator || {
+    serviceId: undefined,
+    sourceLanguages: undefined,
+    targetLanguages: undefined,
+  });
+
   $: apiKey = $prefs.apiKeys[serviceId] || '';
 
   /**

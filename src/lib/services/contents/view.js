@@ -22,6 +22,7 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
 
 /**
  * View settings for the selected folder collection.
+ * @type {import('svelte/store').Writable<EntryView>}
  */
 export const currentView = writable({});
 
@@ -93,8 +94,8 @@ export const parseSummary = (collection, content) => {
  * Sort the given entries.
  * @param {object[]} entries Entry list.
  * @param {object} [condition] Sort condition.
- * @param {string} condition.key Sort key.
- * @param {string} condition.order Sort order, either `ascending` or `descending`.
+ * @param {string} [condition.key] Sort key.
+ * @param {string} [condition.order] Sort order, either `ascending` or `descending`.
  * @returns {object[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
@@ -134,7 +135,9 @@ const sortEntries = (entries, { key, order } = {}) => {
     const aValue = getValue(a);
     const bValue = getValue(b);
 
-    return type === String ? aValue.localeCompare(bValue) : aValue - bValue;
+    return type === String
+      ? /** @type {string} */ (aValue).localeCompare(/** @type {string} */ (bValue))
+      : Number(/** @type {Date} */ aValue) - Number(/** @type {Date} */ bValue);
   });
 
   if (order === 'descending') {
@@ -148,8 +151,8 @@ const sortEntries = (entries, { key, order } = {}) => {
  * Filter the given entries.
  * @param {object[]} entries Entry list.
  * @param {object} [condition] Filter condition.
- * @param {string} condition.field Field name.
- * @param {string} condition.pattern Regular expression.
+ * @param {string} [condition.field] Field name.
+ * @param {string} [condition.pattern] Regular expression.
  * @returns {object[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
@@ -176,8 +179,8 @@ const filterEntries = (entries, { field, pattern } = {}) => {
  * Group the given entries.
  * @param {object[]} entries Entry list.
  * @param {object} [condition] Group condition.
- * @param {string} condition.field Field name.
- * @param {string} condition.pattern Regular expression.
+ * @param {string} [condition.field] Field name.
+ * @param {string} [condition.pattern] Regular expression.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups

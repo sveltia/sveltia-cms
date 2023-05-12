@@ -10,7 +10,13 @@
   } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/prefs';
 
-  $: ({ serviceId, serviceLabel, landingURL, apiKeyURL, apiKeyPattern } = $translator || {});
+  $: ({ serviceId, serviceLabel, landingURL, apiKeyURL, apiKeyPattern } = $translator || {
+    serviceId: undefined,
+    serviceLabel: undefined,
+    landingURL: undefined,
+    apiKeyURL: undefined,
+    apiKeyPattern: undefined,
+  });
 </script>
 
 <Dialog
@@ -38,8 +44,8 @@
       aria-label={$_('prefs.editor.translator.field_label', {
         values: { service: serviceLabel },
       })}
-      on:input={({ target: { value } }) => {
-        const _value = value.trim();
+      on:input={(event) => {
+        const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
 
         if (apiKeyPattern && _value.match(apiKeyPattern)) {
           $prefs.apiKeys ||= {};
@@ -47,7 +53,8 @@
           $showTranslatorApiKeyDialog = false;
 
           if ($pendingTranslatorRequest) {
-            copyFromLocale(...$pendingTranslatorRequest);
+            // @ts-ignore
+            copyFromLocale.apply(...$pendingTranslatorRequest);
             $pendingTranslatorRequest = null;
           }
         }

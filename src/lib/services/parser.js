@@ -13,7 +13,8 @@ import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
  * @param {object[]} files Unfiltered file list.
- * @returns {{ entryFiles: [], assetFiles: [] }} File list, including both entries and assets.
+ * @returns {{ entryFiles: object[], assetFiles: object[] }} File list, including both entries and
+ * assets.
  */
 export const createFileList = (files) => {
   const entryFiles = [];
@@ -53,8 +54,6 @@ export const createFileList = (files) => {
 /**
  *
  * @param {Collection} collection File’s collection configuration.
- * @param {string} [collection.format] Configured file format.
- * @param {string} [collection.extension] Configured File extension.
  * @returns {string} Determined extension.
  */
 export const getFileExtension = ({ format, extension }) => {

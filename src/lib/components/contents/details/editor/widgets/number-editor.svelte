@@ -54,7 +54,9 @@
     }
   };
 
+  // @ts-ignore
   $: onCurrentValueChange(currentValue);
+  // @ts-ignore
   $: onInputValueChange(inputValue);
 </script>
 

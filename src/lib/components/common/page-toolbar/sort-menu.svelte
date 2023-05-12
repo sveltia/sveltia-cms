@@ -1,10 +1,12 @@
 <script>
   import { Icon, Menu, MenuButton, MenuItemGroup, MenuItemRadio, Separator } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import { writable } from 'svelte/store';
 
   export let label = '';
   export let disabled = false;
-  export let currentView = {};
+  /** @type {import('svelte/store').Writable<EntryView>} */
+  export let currentView = writable({});
   export let fields = [];
 </script>
 
@@ -38,7 +40,8 @@
           on:click={() => {
             currentView.update((view) => ({
               ...view,
-              sort: { key: $currentView.sort?.key, order },
+              // eslint-disable-next-line object-shorthand
+              sort: { key: $currentView.sort?.key, order: /** @type {SortOrder} */ (order) },
             }));
           }}
         />

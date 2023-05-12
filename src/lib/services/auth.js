@@ -2,6 +2,9 @@ import { get, writable } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { isObject } from '$lib/services/utils/misc';
 
+/**
+ * @type {import('svelte/store').Writable<User?>}
+ */
 export const user = writable();
 
 /**

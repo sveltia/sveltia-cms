@@ -34,12 +34,14 @@ const searchImages = async (query, apiKey) => {
 
   if (query) {
     for (let page = 1; page <= 2; page += 1) {
-      const params = new URLSearchParams({
-        query,
-        locale: supportedLocales.find((code) => code.split('-')[0] === locale) || 'en-US',
-        page,
-        per_page: 80,
-      });
+      const params = new URLSearchParams(
+        /** @type {any} */ ({
+          query,
+          locale: supportedLocales.find((code) => code.split('-')[0] === locale) || 'en-US',
+          page,
+          per_page: 80,
+        }),
+      );
 
       const response = await fetch(`${endpoint}/search?${params.toString()}`, { headers });
 
@@ -59,9 +61,11 @@ const searchImages = async (query, apiKey) => {
       await sleep(50);
     }
   } else {
-    const params = new URLSearchParams({
-      per_page: 80,
-    });
+    const params = new URLSearchParams(
+      /** @type {any} */ ({
+        per_page: 80,
+      }),
+    );
 
     const response = await fetch(`${endpoint}/curated?${params.toString()}`, { headers });
 

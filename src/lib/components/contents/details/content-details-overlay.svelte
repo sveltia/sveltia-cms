@@ -16,7 +16,12 @@
   let rightColumnContent;
 
   $: ({ showPreview, syncScrolling } = $entryViewSettings);
-  $: ({ collection, collectionFile } = $entryDraft || {});
+
+  $: ({ collection, collectionFile } = $entryDraft || {
+    collection: undefined,
+    collectionFile: undefined,
+  });
+
   $: ({ hasLocales, locales } = collection._i18n);
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
@@ -36,6 +41,7 @@
     }
   };
 
+  // @ts-ignore
   $: switchPanes(showPreview, canPreview);
 
   /**
@@ -52,9 +58,9 @@
     window.requestAnimationFrame(() => {
       const { x, y } = thisContentArea.getBoundingClientRect();
 
-      const thisElement = document
-        .elementsFromPoint(x + 80, y)
-        .find((e) => e.matches('[data-key-path]'));
+      const thisElement = /** @type {HTMLElement?} */ (
+        document.elementsFromPoint(x + 80, y).find((e) => e.matches('[data-key-path]'))
+      );
 
       if (!thisElement) {
         return;
@@ -63,7 +69,10 @@
       const { keyPath } = thisElement.dataset;
       const { top, height } = thisElement.getBoundingClientRect();
       const ratio = (y - top) / height;
-      const thatElement = thatContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath)}"]`);
+
+      const thatElement = /** @type {HTMLElement?} */ (
+        thatContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath)}"]`)
+      );
 
       if (ratio < 0 || ratio > 1 || !thatElement) {
         return;

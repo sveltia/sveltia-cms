@@ -27,8 +27,15 @@
   let showErrorDialog = false;
   let saving = false;
 
-  $: ({ collection, collectionFile, isNew, slug, currentValues, originalValues } =
-    $entryDraft || {});
+  $: ({ collection, collectionFile, isNew, slug, currentValues, originalValues } = $entryDraft || {
+    collection: undefined,
+    collectionFile: undefined,
+    isNew: undefined,
+    slug: undefined,
+    currentValues: undefined,
+    originalValues: undefined,
+  });
+
   $: collectionLabel = collection.label || collection.name;
   $: collectionLabelSingular = collection.label_singular || collectionLabel;
   $: canPreview =

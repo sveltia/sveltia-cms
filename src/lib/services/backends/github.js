@@ -158,7 +158,7 @@ const fetchFiles = async () => {
 
   allEntries.set(
     parseEntryFiles(
-      entryFiles.map((entry, index) => ({
+      entryFiles.map((/** @type {object} */ entry, index) => ({
         ...entry,
         text: repository[`content_${index}`].text,
         meta: { ...(entry.meta || {}), ...getMeta(index) },
@@ -168,7 +168,7 @@ const fetchFiles = async () => {
 
   allAssets.set(
     parseAssetFiles(
-      assetFiles.map((asset, index) => ({
+      assetFiles.map((/** @type {object} */ asset, index) => ({
         ...asset,
         name: asset.path.split('/').pop(),
         meta: { ...(asset.meta || {}), ...getMeta(entryFiles.length + index) },
@@ -311,7 +311,7 @@ const createCommit = async (message, { additions = [], deletions = [] }) => {
  * Save entries or assets remotely.
  * @param {object[]} items Entries or files.
  * @param {object} [options] Options.
- * @param {string} [options.commitType] Commit type.
+ * @param {CommitType} [options.commitType] Commit type.
  * @param {string} [options.collection] Collection name. Required for entries.
  */
 const saveFiles = async (items, { commitType = 'update', collection } = {}) => {
@@ -329,7 +329,7 @@ const saveFiles = async (items, { commitType = 'update', collection } = {}) => {
  * Delete files at the given paths.
  * @param {object[]} items Entries or files.
  * @param {object} [options] Options.
- * @param {string} [options.commitType] Commit type.
+ * @param {CommitType} [options.commitType] Commit type.
  * @param {string} [options.collection] Collection name. Required for entries.
  */
 const deleteFiles = async (items, { commitType = 'delete', collection } = {}) => {

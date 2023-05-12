@@ -6,7 +6,7 @@ import { isObject } from '$lib/services/utils/misc';
 import { stripSlashes } from '$lib/services/utils/strings';
 
 /**
- * @type {?import('svelte/store').Writable<SiteConfig>}
+ * @type {import('svelte/store').Writable<SiteConfig?>}
  */
 export const siteConfig = writable();
 
@@ -43,7 +43,9 @@ const validate = (config) => {
  */
 export const fetchSiteConfig = async () => {
   const { href = '/admin/config.yml' } =
-    document.querySelector('link[type="text/yaml"][rel="cms-config-url"]') || {};
+    /** @type {HTMLAnchorElement?} */ (
+      document.querySelector('link[type="text/yaml"][rel="cms-config-url"]')
+    ) || {};
 
   let response;
   let config;
@@ -74,7 +76,7 @@ export const fetchSiteConfig = async () => {
 
     siteConfig.set(config);
   } catch (error) {
-    siteConfig.set({ error: error.message });
+    siteConfig.set({ error: /** @type {string} */ (error.message) });
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console

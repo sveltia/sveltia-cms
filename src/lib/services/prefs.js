@@ -5,6 +5,9 @@ import LocalStorage from '$lib/services/utils/local-storage';
 
 const storageKey = 'sveltia-cms.prefs';
 
+/**
+ * @type {import('svelte/store').Writable<Preferences>}
+ */
 export const prefs = writable({}, (set) => {
   (async () => {
     try {

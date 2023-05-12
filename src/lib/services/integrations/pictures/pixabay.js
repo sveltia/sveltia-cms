@@ -23,16 +23,18 @@ const endpoint = 'https://pixabay.com/api';
 const searchImages = async (query, apiKey) => {
   const [locale] = get(appLocale).toLowerCase().split('-');
 
-  const params = new URLSearchParams({
-    key: apiKey,
-    q: query,
-    lang: supportedLocales.includes(locale) ? locale : 'en',
-    image_type: 'photo',
-    min_width: 1280,
-    editors_choice: !query,
-    safesearch: true,
-    per_page: 150,
-  });
+  const params = new URLSearchParams(
+    /** @type {any} */ ({
+      key: apiKey,
+      q: query,
+      lang: supportedLocales.includes(locale) ? locale : 'en',
+      image_type: 'photo',
+      min_width: 1280,
+      editors_choice: !query,
+      safesearch: true,
+      per_page: 150,
+    }),
+  );
 
   const response = await fetch(`${endpoint}/?${params.toString()}`);
 
