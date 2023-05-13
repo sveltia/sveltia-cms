@@ -92,7 +92,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 | File/Image | The `media_library` options are not yet supported other than `max_file_size` and `choose_url`. |
 | Map | Not yet supported. |
 | Markdown | It’s a plain text editor at this time. We’ll soon implement a rich text editor with i18n issues addressed. |
-| Relation | The `search_fields` and `file` options are not yet supported. The `options_length` option will be ignored because it confuses users and Sveltia CMS doesn’t have the search performance issue. |
+| Relation | The `search_fields` and `file` options are not yet supported. The `options_length` option will be ignored because it confuses users and Sveltia CMS doesn’t have the search performance issue. Referencing a file collection list field (with wildcards) is not supported yet. |
 
 ### Beta features in Netlify/Decap CMS
 
@@ -121,7 +121,8 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 
 ### Known issues
 
-- Auto-saving a draft entry isn’t implemented yet.
+- Auto-saving a draft entry is not implemented yet.
+- Duplicating an entry is not implemented yet.
 - Accessibility support is limited.
 
 ### Roadmap
@@ -131,6 +132,11 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 - Documentation
 - Demo site
 - Starter templates
+
+### Non goals
+
+- Mobile support
+- WYSIWYG editing
 
 ## Getting started
 
