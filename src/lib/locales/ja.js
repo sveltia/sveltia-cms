@@ -60,7 +60,8 @@ export const strings = {
   loading_site_data: 'サイトデータを読み込んでいます…',
 
   // Global toolbar
-  search_placeholder: 'エントリーとアセットを検索…',
+  search_placeholder: 'エントリーとファイルを検索…',
+  asset: 'ファイル',
 
   // Library
   collection_not_found: 'コレクションが見つかりませんでした',

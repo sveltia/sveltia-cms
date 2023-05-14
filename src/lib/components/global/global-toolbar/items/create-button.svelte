@@ -33,7 +33,7 @@
     {/each}
     <Separator />
     <MenuItem
-      label={$_('assets')}
+      label={$_('asset')}
       on:click={() => {
         goto(`/assets`);
         filePicker.open();

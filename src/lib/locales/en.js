@@ -61,6 +61,7 @@ export const strings = {
 
   // Global toolbar
   search_placeholder: 'Search for entries and assets…',
+  asset: 'Asset',
 
   // Library
   collection_not_found: 'Collection not found.',
