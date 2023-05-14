@@ -131,10 +131,8 @@
         if (error.message !== 'validation_failed') {
           showErrorDialog = true;
 
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console
-            console.error(error);
-          }
+          // eslint-disable-next-line no-console
+          console.error(error);
         }
       } finally {
         saving = false;
