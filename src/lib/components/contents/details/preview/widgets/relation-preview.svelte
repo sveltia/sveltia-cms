@@ -30,7 +30,7 @@
       }
 
       const refEntry = refEntries.find(({ slug, locales }) =>
-        valueField === '{{slug}}'
+        valueField === '{{slug}}' || valueField === 'slug'
           ? slug === val
           : flatten(locales[locale]?.content || {})[
               valueField.replace(/(?:{{)?(.+)(?:}})?/, '$1')
