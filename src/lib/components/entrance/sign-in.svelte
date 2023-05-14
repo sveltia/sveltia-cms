@@ -49,8 +49,7 @@
     }
 
     // Automatically sign into a Git-based backend if the user info is cached. Check the compatible
-    // Netlify CMS cache as well. Don’t try to sign in if the local backend is being used, because
-    // it requires user interaction to acquire file/directory handles.
+    // Netlify CMS cache as well.
     (async () => {
       try {
         const { backendName: name, token } =
@@ -58,7 +57,14 @@
           (await LocalStorage.get('netlify-cms-user')) ||
           {};
 
-        if (name && name !== 'local') {
+        if (name) {
+          // Don’t try to sign in automatically if the local backend is being used, because it
+          // requires user interaction to acquire file/directory handles. Also, ignore the `proxy`
+          // backend that was set when using the Netlify CMS local proxy server.
+          if (['local', 'proxy'].includes(name)) {
+            return;
+          }
+
           backendName = name;
           await tick();
 
