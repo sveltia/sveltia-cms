@@ -58,7 +58,8 @@ export const getAssetFolder = (collectionName) =>
  * @returns {string} One of {@link assetKinds}.
  */
 export const getAssetKind = (name) =>
-  Object.entries(assetExtensions).find(([, regex]) => name.match(regex))?.[0] || 'other';
+  Object.entries(assetExtensions).find(([, regex]) => name.toLocaleLowerCase().match(regex))?.[0] ||
+  'other';
 
 /**
  * Get an asset by a public URL path (stored as an image field value.)
