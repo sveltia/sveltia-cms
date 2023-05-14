@@ -7,10 +7,10 @@ export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
  */
 export const assetExtensions = {
-  image: /\.(?:avif|bmp|gif|ico|jpe?g|png|svg|tiff|webp)$/,
-  video: /\.(?:avi|mp4|mpeg|ogv|ts|webm|3gp|3g2)$/,
-  audio: /\.(?:aac|midi?|mp3|opus|wav|weba)$/,
-  document: /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/,
+  image: /\.(?:avif|bmp|gif|ico|jpe?g|png|svg|tiff|webp)$/i,
+  video: /\.(?:avi|mp4|mpeg|ogv|ts|webm|3gp|3g2)$/i,
+  audio: /\.(?:aac|midi?|mp3|opus|wav|weba)$/i,
+  document: /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/i,
 };
 
 /**
@@ -58,8 +58,7 @@ export const getAssetFolder = (collectionName) =>
  * @returns {string} One of {@link assetKinds}.
  */
 export const getAssetKind = (name) =>
-  Object.entries(assetExtensions).find(([, regex]) => name.toLocaleLowerCase().match(regex))?.[0] ||
-  'other';
+  Object.entries(assetExtensions).find(([, regex]) => name.match(regex))?.[0] || 'other';
 
 /**
  * Get an asset by a public URL path (stored as an image field value.)
