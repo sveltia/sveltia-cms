@@ -67,7 +67,6 @@
       on:click={async () => {
         try {
           await LocalStorage.delete('sveltia-cms.user');
-          await LocalStorage.delete('netlify-cms-user');
         } catch {
           //
         }
