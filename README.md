@@ -92,7 +92,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 | File/Image | The `media_library` options are not yet supported other than `max_file_size` and `choose_url`. |
 | Map | Not yet supported. |
 | Markdown | It’s a plain text editor at this time. We’ll soon implement a rich text editor with i18n issues addressed. |
-| Relation | The `search_fields` and `file` options are not yet supported. The `options_length` option will be ignored because it confuses users and Sveltia CMS doesn’t have the search performance issue. Referencing a file collection list field (with wildcards) is not supported yet. |
+| Relation | The `search_fields` and `file` options are not yet supported. The `options_length` option will be ignored because it confuses users and Sveltia CMS doesn’t have the search performance issue. Referencing a file collection list field (with wildcards) is not yet supported. |
 
 ### Beta features in Netlify/Decap CMS
 
@@ -175,10 +175,10 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Work with a local Git repository
 
-You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in some modern browsers.
+You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 1. Launch the local development server for your frontend framework, typically with `npm run dev`.
-1. Visit `http://localhost:[port]/admin/index.html` with [Chrome, Edge or other Chromium-based browser](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility). The port number depends on your framework.
+1. Visit `http://localhost:[port]/admin/index.html` with Chrome, Edge or other Chromium-based desktop browser. The port number depends on your framework.
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
 1. Make some changes on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
@@ -305,7 +305,7 @@ Sveltia CMS is open source for sure! You can host it on your server rather than 
 1. Run `pnpm install && pnpm build` at the project root.
 1. `sveltia-cms.js` will be generated under the `dist` directory.
 
-Importing the CMS as an npm package is not supported yet.
+Importing the CMS as an npm package is not yet supported.
 
 ## Support & feedback
 
