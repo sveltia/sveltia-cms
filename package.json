@@ -18,7 +18,8 @@
     "lint:svelte": "svelte-check",
     "lint:prettier": "prettier --check --plugin-search-dir=. .",
     "lint:eslint": "eslint .",
-    "lint:stylelint": "stylelint '**/*.{css,scss,svelte}'"
+    "lint:stylelint": "stylelint '**/*.{css,scss,svelte}'",
+    "test": "vitest"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.2.0",
@@ -44,7 +45,8 @@
     "svelte-check": "^3.3.2",
     "svelte-i18n": "^3.6.0",
     "svelte-preprocess": "^5.0.3",
-    "vite": "^4.3.6"
+    "vite": "^4.3.6",
+    "vitest": "^0.31.1"
   },
   "dependencies": {
     "@ltd/j-toml": "^1.38.0",
