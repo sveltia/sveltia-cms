@@ -1,16 +1,16 @@
 <script>
-  import BooleanPreview from '$lib/components/contents/details/preview/widgets/boolean-preview.svelte';
-  import ColorPreview from '$lib/components/contents/details/preview/widgets/color-preview.svelte';
-  import DateTimePreview from '$lib/components/contents/details/preview/widgets/date-time-preview.svelte';
-  import FilePreview from '$lib/components/contents/details/preview/widgets/file-preview.svelte';
-  import ListPreview from '$lib/components/contents/details/preview/widgets/list-preview.svelte';
-  import MarkdownPreview from '$lib/components/contents/details/preview/widgets/markdown-preview.svelte';
-  import NumberPreview from '$lib/components/contents/details/preview/widgets/number-preview.svelte';
-  import ObjectPreview from '$lib/components/contents/details/preview/widgets/object-preview.svelte';
-  import RelationPreview from '$lib/components/contents/details/preview/widgets/relation-preview.svelte';
-  import SelectPreview from '$lib/components/contents/details/preview/widgets/select-preview.svelte';
-  import StringPreview from '$lib/components/contents/details/preview/widgets/string-preview.svelte';
-  import TextPreview from '$lib/components/contents/details/preview/widgets/text-preview.svelte';
+  import BooleanPreview from '$lib/components/contents/details/widgets/boolean/boolean-preview.svelte';
+  import ColorPreview from '$lib/components/contents/details/widgets/color/color-preview.svelte';
+  import DateTimePreview from '$lib/components/contents/details/widgets/date-time/date-time-preview.svelte';
+  import FilePreview from '$lib/components/contents/details/widgets/file/file-preview.svelte';
+  import ListPreview from '$lib/components/contents/details/widgets/list/list-preview.svelte';
+  import MarkdownPreview from '$lib/components/contents/details/widgets/markdown/markdown-preview.svelte';
+  import NumberPreview from '$lib/components/contents/details/widgets/number/number-preview.svelte';
+  import ObjectPreview from '$lib/components/contents/details/widgets/object/object-preview.svelte';
+  import RelationPreview from '$lib/components/contents/details/widgets/relation/relation-preview.svelte';
+  import SelectPreview from '$lib/components/contents/details/widgets/select/select-preview.svelte';
+  import StringPreview from '$lib/components/contents/details/widgets/string/string-preview.svelte';
+  import TextPreview from '$lib/components/contents/details/widgets/text/text-preview.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
   import { escapeRegExp } from '$lib/services/utils/strings';
 

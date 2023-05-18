@@ -6,7 +6,7 @@
   @todo Support file collection & wildcard matching.
 -->
 <script>
-  import SelectEditor from '$lib/components/contents/details/editor/widgets/select-editor.svelte';
+  import SelectEditor from '$lib/components/contents/details/widgets/select/select-editor.svelte';
   import { getCollection, getEntries } from '$lib/services/contents';
 
   export let locale = '';
