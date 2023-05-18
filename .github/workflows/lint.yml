@@ -1,15 +1,10 @@
-# https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
+name: Lint
 
-name: Publish Package to npmjs
-
-on:
-  release:
-    types:
-      - published
+on: push
 
 jobs:
-  build-and-publish:
-    name: Build and Publish
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the branch
@@ -23,10 +18,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-          registry-url: https://registry.npmjs.org/
       - name: Install dependencies
         run: pnpm install
-      - name: Build & publish the app
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Run all lint checks
+        run: pnpm lint
