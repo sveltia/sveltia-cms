@@ -100,6 +100,18 @@ export const getEntries = (name) => {
 };
 
 /**
+ * Get a file collection entry.
+ * @param {string} collectionName Collection name.
+ * @param {string} fileName File name.
+ * @returns {Entry} File.
+ * @see https://decapcms.org/docs/collection-types/#file-collections
+ */
+export const getFile = (collectionName, fileName) =>
+  get(allEntries).find(
+    (entry) => entry.collectionName === collectionName && entry.fileName === fileName,
+  );
+
+/**
  * Get a field that matches the given key path: dot-connected object field name.
  * @param {string} collectionName Collection name.
  * @param {string} fileName File name if the collection is a file collection.

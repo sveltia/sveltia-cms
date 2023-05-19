@@ -8,7 +8,7 @@
   import PrimaryToolbar from '$lib/components/contents/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
-  import { getCollection, selectedCollection } from '$lib/services/contents';
+  import { getCollection, getFile, selectedCollection } from '$lib/services/contents';
   import { createDraft, entryDraft } from '$lib/services/contents/editor';
   import { listedEntries } from '$lib/services/contents/view';
   import { parseLocation } from '$lib/services/navigation';
@@ -41,11 +41,7 @@
     if ($selectedCollection.files) {
       // File collection
       if (_state === 'entries' && _id) {
-        const selectedEntry = $listedEntries.find(
-          ({ collectionName, fileName }) =>
-            collectionName === $selectedCollection.name && fileName === _id,
-        );
-
+        const selectedEntry = getFile($selectedCollection.name, _id);
         const collectionFile = $selectedCollection.files.find((f) => f.name === _id);
 
         if (selectedEntry) {

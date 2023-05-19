@@ -97,7 +97,8 @@
  */
 
 /**
- * @typedef {object} Field Field definition.
+ * Common field properties.
+ * @typedef {object} CommonFieldProps
  * @property {string} name Field name.
  * @property {string} [label] Field label.
  * @property {string} [comment] Field description.
@@ -107,6 +108,30 @@
  * @property {string[]} [pattern] Validation format.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets
+ */
+
+/**
+ * Common field definition.
+ * @typedef {CommonFieldProps} Field
+ */
+
+/**
+ * Relation field properties.
+ * @typedef {object} RelationFieldProps
+ * @property {string} collection Referenced collection name.
+ * @property {string} [file] Referenced file name for a file collection.
+ * @property {string} value_field Name of field to be stored as the value.
+ * @property {string[]} search_fields Name of fields to be searched.
+ * @property {string[]} [display_fields] Name of fields to be displayed.
+ * @property {boolean} [multiple] Whether to accept multiple values.
+ * @property {number} [min] Minimum number of items.
+ * @property {number} [max] Maximum number of items.
+ * @see https://decapcms.org/docs/widgets/#relation
+ */
+
+/**
+ * Relation field definition.
+ * @typedef {CommonFieldProps & RelationFieldProps} RelationField
  */
 
 /**
