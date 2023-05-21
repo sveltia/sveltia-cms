@@ -31,7 +31,7 @@ const getCollectionI18n = (collection) => {
   let locales = [];
   let defaultLocale;
 
-  if (collection.i18n === true && isObject(_siteConfig.i18n)) {
+  if (collection?.i18n === true && isObject(_siteConfig?.i18n)) {
     ({
       structure = 'single_file',
       locales = [],
@@ -39,7 +39,7 @@ const getCollectionI18n = (collection) => {
     } = _siteConfig.i18n);
   }
 
-  if (isObject(collection.i18n)) {
+  if (isObject(collection?.i18n)) {
     ({
       structure = 'single_file',
       locales = [],
