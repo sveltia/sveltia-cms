@@ -42,7 +42,7 @@ const validate = (config) => {
  * @todo Normalize configuration object.
  */
 export const fetchSiteConfig = async () => {
-  const { href = '/admin/config.yml' } =
+  const { href = './config.yml' } =
     /** @type {HTMLAnchorElement?} */ (
       document.querySelector('link[type="text/yaml"][rel="cms-config-url"]')
     ) || {};
