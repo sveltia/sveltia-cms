@@ -8,26 +8,28 @@
   export let addItem = (name) => undefined;
 
   $: ({
-    label,
+    label: labelPlural,
     // Widget-specific options
     label_singular: labelSingular,
     max,
     types,
   } = fieldConfig);
-  $: hasTypes = Array.isArray(types);
+
+  $: label = $_('add_x', { values: { name: labelSingular || labelPlural } });
+  $: disabled = max && items.length === max;
 </script>
 
-<svelte:component
-  this={hasTypes ? MenuButton : Button}
-  class="tertiary"
-  disabled={max && items.length === max}
-  label={$_('add_x', { values: { name: labelSingular || label } })}
-  on:click={hasTypes ? undefined : () => addItem()}
->
-  <Icon slot="start-icon" name="add" />
-  <svelte:component this={hasTypes ? Menu : undefined} slot="popup">
-    {#each types as { name, label: _label } (name)}
-      <MenuItem label={_label} on:click={() => addItem(name)} />
-    {/each}
-  </svelte:component>
-</svelte:component>
+{#if Array.isArray(types)}
+  <MenuButton class="tertiary" {label} {disabled}>
+    <Icon slot="start-icon" name="add" />
+    <Menu slot="popup">
+      {#each types as { name, label: itemLabel } (name)}
+        <MenuItem label={itemLabel} on:click={() => addItem(name)} />
+      {/each}
+    </Menu>
+  </MenuButton>
+{:else}
+  <Button class="tertiary" {label} {disabled} on:click={() => addItem()}>
+    <Icon slot="start-icon" name="add" />
+  </Button>
+{/if}
