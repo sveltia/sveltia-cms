@@ -28,8 +28,7 @@
     multiple ? /** @type {string[]} */ (currentValue) : /** @type {string[]} */ ([currentValue])
   )
     .filter((value) => value !== undefined)
-    .map((value) => options.find((option) => option.value === value)?.label || value)
-    .sort((a, b) => a.localeCompare(b));
+    .map((value) => options.find((option) => option.value === value)?.label || value);
 
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 </script>

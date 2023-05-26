@@ -70,11 +70,11 @@
 
 {#if multiple}
   <div class="multi-selector" class:disabled>
-    {#each sortedOptions as { label, value } (value)}
-      {@const index = currentValue.indexOf(value)}
-      {#if index > -1}
+    {#each currentValue as value, index}
+      {@const option = sortedOptions.find((o) => o.value === value)}
+      {#if option}
         <span>
-          {label}
+          {option.label}
           <Button
             {disabled}
             on:click={() => {
