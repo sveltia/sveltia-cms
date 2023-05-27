@@ -1,34 +1,5 @@
-import { flatten } from 'flat';
+import { flatten, unflatten } from 'flat';
 import { escapeRegExp } from '$lib/services/utils/strings';
-
-/**
- * Get entry values that matches the given field name.
- * @param {Entry} refEntry Referenced entry.
- * @param {FlattenedEntryContent} flattenContent Flatten `refEntry.locales[locale].content`.
- * @param {string} fieldName Field name, e.g. `userId`, `{{slug}}`, `name.first` (nested),
- * `cities.*.id` (with wildcard), `{{twitterHandle}} - {{followerCount}}` (template).
- * @returns {any[]} Entry values. Even if there is only one value, it will be returned in an array.
- */
-const getEntryValues = (refEntry, flattenContent, fieldName) => {
-  if (fieldName === '{{slug}}') {
-    return [refEntry.slug];
-  }
-
-  if (fieldName.includes('*')) {
-    const regex = new RegExp(`^${escapeRegExp(fieldName).replaceAll('\\*', '[^.]')}$`);
-
-    return Object.entries(flattenContent)
-      .filter(([keyPath]) => !!keyPath.match(regex))
-      .map(([, value]) => value);
-  }
-
-  const value =
-    flattenContent[fieldName] ||
-    fieldName.replaceAll(/{{(.+?)}}/g, (_match, p1) => flattenContent[p1] || '') ||
-    undefined;
-
-  return value ? [value] : [];
-};
 
 /**
  * Get options for a Relation field.
@@ -38,7 +9,15 @@ const getEntryValues = (refEntry, flattenContent, fieldName) => {
  * @returns {{ label: string, value: any }[]} Options.
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
-  const { value_field: valueField, display_fields: displayFields } = fieldConfig;
+  /**
+   * @example 'userId', 'name.first', 'cities.*.id', '{{slug}}'
+   */
+  const valueField = fieldConfig.value_field;
+  /**
+   * @example ['userId'], ['name.first'] (nested), ['cities.*.id', 'cities.*.name'] (with wildcard,
+   * multiple), ['{{twitterHandle}} - {{followerCount}}'] (template).
+   */
+  const displayFields = fieldConfig.display_fields;
 
   return refEntries
     .map((refEntry) => {
@@ -50,36 +29,80 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
       const flattenContent = flatten(content);
 
-      /** @type {string[]} */
-      const labels = (displayFields || [valueField]).reduce((current, displayField) => {
-        const _labels = getEntryValues(refEntry, flattenContent, displayField).map((_label) =>
-          String(_label),
-        );
+      /**
+       * Canonical, templatized display field
+       * @example '{{twitterHandle}} {{followerCount}}', '{{sections.*.name}}',
+       * '{{route}}: {{sections.*.name}} ({{sections.*.id}})'
+       */
+      const displayField = (displayFields || [valueField])
+        .map((fieldName) => (fieldName.match(/{{.+?}}/) ? fieldName : `{{${fieldName}}}`))
+        .join(' ');
 
-        if (!current.length) {
-          return _labels;
-        }
+      /**
+       * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
+       * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
+       * multiple references can be replaced at once. Otherwise, the key is a complete key path
+       * except for `{{slug}}`, and the value is the actual value.
+       */
+      const replacers = Object.fromEntries(
+        [
+          ...new Set(
+            [...[...displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]), valueField].map(
+              (fieldName) =>
+                fieldName.includes('.')
+                  ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
+                  : fieldName,
+            ),
+          ),
+        ].map((fieldName) => {
+          if (fieldName.endsWith('.*')) {
+            const regex = new RegExp(
+              `^${escapeRegExp(fieldName).replace('\\.\\*', '\\.\\d+\\.[^.]+')}$`,
+            );
 
-        const arr = [];
+            const valueMap = unflatten(
+              Object.fromEntries(
+                Object.entries(flattenContent).filter(([keyPath]) => !!keyPath.match(regex)),
+              ),
+            );
 
-        current.forEach((label) => {
-          _labels.forEach((_label) => {
-            arr.push([label, _label].join(' '));
+            return [fieldName, valueMap[Object.keys(valueMap)[0]]];
+          }
+
+          return [fieldName, fieldName === '{{slug}}' ? refEntry.slug : flattenContent[fieldName]];
+        }),
+      );
+
+      /**
+       * The number of options.
+       */
+      const count = Math.max(
+        ...Object.values(replacers).map((value) => (Array.isArray(value) ? value.length : 1)),
+      );
+
+      let labels = new Array(count).fill(displayField);
+      let values = new Array(count).fill(valueField);
+
+      Object.entries(replacers).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((valueMap, valueIndex) => {
+            Object.entries(valueMap).forEach(([k, v]) => {
+              labels.forEach((_label, labelIndex) => {
+                if (valueIndex % labelIndex === 0) {
+                  labels[valueIndex] = labels[valueIndex].replaceAll(`{{${key}.${k}}}`, v);
+                  values[valueIndex] = values[valueIndex].replaceAll(`${key}.${k}`, v);
+                }
+              });
+            });
           });
-        });
+        } else {
+          labels = labels.map((l) => l.replaceAll(`{{${key}}}`, value));
+          values = values.map((v) => v.replaceAll(key, value));
+        }
+      });
 
-        return arr;
-      }, []);
-
-      /** @type {any[]} */
-      const values = getEntryValues(refEntry, flattenContent, valueField);
-
-      return labels.map((label, index) => ({
-        label,
-        value: values[index] || values[0],
-      }));
+      return labels.map((label, index) => ({ label, value: values[index] }));
     })
     .flat(1)
-    .filter(Boolean)
     .sort((a, b) => a.label.localeCompare(b.label));
 };

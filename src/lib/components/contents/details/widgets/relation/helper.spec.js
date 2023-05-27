@@ -146,6 +146,19 @@ describe('Test getOptions()', () => {
       { value: 'YYZ', label: 'Toronto' },
       { value: 'YVR', label: 'Vancouver' },
     ]);
+
+    expect(
+      getOptions(
+        locale,
+        { ...config, display_fields: ['{{cities.*.name}} ({{cities.*.id}})'] },
+        // @ts-ignore
+        entries,
+      ),
+    ).toEqual([
+      { value: 'YYC', label: 'Calgary (YYC)' },
+      { value: 'YYZ', label: 'Toronto (YYZ)' },
+      { value: 'YVR', label: 'Vancouver (YVR)' },
+    ]);
   });
 
   // https://github.com/sveltia/sveltia-cms/issues/13
@@ -220,10 +233,42 @@ describe('Test getOptions()', () => {
     expect(
       getOptions(
         locale,
+        { ...config, display_fields: ['{{route}}: {{sections.*.name}} ({{sections.*.id}})'] },
+        // @ts-ignore
+        entries,
+      ),
+    ).toEqual([
+      { label: '/about: Contact (contact)', value: 'contact' },
+      { label: '/about: Team (team)', value: 'team' },
+      { label: '/projects: Members (members)', value: 'members' },
+      { label: '/projects: Overview (overview)', value: 'overview' },
+    ]);
+
+    // Invalid
+    expect(
+      getOptions(
+        locale,
         { ...config, display_fields: ['sections.*.label'] },
         // @ts-ignore
         entries,
       ),
-    ).toEqual([]);
+    ).toEqual([
+      {
+        label: '{{sections.*.label}}',
+        value: 'team',
+      },
+      {
+        label: '{{sections.*.label}}',
+        value: 'contact',
+      },
+      {
+        label: '{{sections.*.label}}',
+        value: 'overview',
+      },
+      {
+        label: '{{sections.*.label}}',
+        value: 'members',
+      },
+    ]);
   });
 });
