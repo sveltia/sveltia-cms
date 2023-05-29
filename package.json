@@ -22,7 +22,7 @@
     "test": "vitest"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^2.3.0",
+    "@sveltejs/vite-plugin-svelte": "^2.4.1",
     "@types/flat": "^5.0.2",
     "@types/marked": "^5.0.0",
     "cspell": "^6.31.1",
@@ -30,22 +30,22 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsdoc": "^44.2.4",
+    "eslint-plugin-jsdoc": "^45.0.0",
     "eslint-plugin-svelte": "^2.29.0",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.4.23",
+    "postcss": "^8.4.24",
     "postcss-html": "^1.5.0",
     "prettier": "^2.8.8",
-    "prettier-plugin-svelte": "^2.10.0",
+    "prettier-plugin-svelte": "^2.10.1",
     "sass": "^1.62.1",
     "stylelint": "^15.6.2",
     "stylelint-config-recommended-scss": "^12.0.0",
     "stylelint-scss": "^5.0.0",
     "svelte": "^3.59.1",
-    "svelte-check": "^3.3.2",
+    "svelte-check": "^3.4.3",
     "svelte-i18n": "^3.6.0",
-    "svelte-preprocess": "^5.0.3",
-    "vite": "^4.3.8",
+    "svelte-preprocess": "^5.0.4",
+    "vite": "^4.3.9",
     "vitest": "^0.31.1"
   },
   "dependencies": {
@@ -54,9 +54,9 @@
     "deep-is": "^0.1.4",
     "flat": "^5.0.2",
     "isomorphic-dompurify": "^1.5.0",
-    "marked": "^5.0.2",
+    "marked": "^5.0.3",
     "moment": "^2.29.4",
-    "yaml": "^2.2.2"
+    "yaml": "^2.3.1"
   },
   "files": [
     "dist"
