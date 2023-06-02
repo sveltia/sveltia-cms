@@ -4,13 +4,13 @@
   @see https://decapcms.org/docs/widgets/#markdown
 -->
 <script>
+  import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
 
   // svelte-ignore unused-export-let
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  // svelte-ignore unused-export-let
   /**
    * @type {MarkdownField}
    */
@@ -19,11 +19,18 @@
    * @type {string}
    */
   export let currentValue = undefined;
+
+  $: ({
+    // Widget-specific options
+    sanitize_preview: sanitize = false,
+  } = fieldConfig);
+
+  $: rawHTML = marked.parse(currentValue);
 </script>
 
 <div role="document">
   {#if typeof currentValue === 'string' && currentValue.trim()}
-    {@html marked.parse(currentValue)}
+    {@html sanitize ? DOMPurify.sanitize(rawHTML) : rawHTML}
   {/if}
 </div>
 
