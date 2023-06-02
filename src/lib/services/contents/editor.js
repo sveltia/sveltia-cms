@@ -677,6 +677,7 @@ export const saveEntry = async () => {
     const { path, content } = savingEntryLocales[defaultLocale];
 
     savingFiles.push({
+      slug,
       path,
       data: formatEntryFile({
         content: hasLocales
@@ -695,6 +696,7 @@ export const saveEntry = async () => {
       const { path, content } = savingEntryLocales[locale];
 
       savingFiles.push({
+        slug,
         path,
         data: formatEntryFile({
           content,
