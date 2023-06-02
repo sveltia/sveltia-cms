@@ -21,6 +21,40 @@
  */
 
 /**
+ * @typedef {object} BackendService Backend service.
+ * @property {string} label Service label.
+ * @property {?string} url Service URL.
+ * @property {Function} signIn Function to sign in.
+ * @property {Function} signOut Function to sign out.
+ * @property {Function} fetchFiles Function to fetch files.
+ * @property {Function} saveFiles Function to save files.
+ * @property {Function} deleteFiles Function to delete files.
+ */
+
+/**
+ * @typedef {object} PictureService Picture service.
+ * @property {string} serviceId Service ID.
+ * @property {string} serviceLabel Service label.
+ * @property {boolean} hotlinking Whether to hotlink images.
+ * @property {string} landingURL Landing page URL.
+ * @property {string} apiKeyURL URL of the page that provides an API key.
+ * @property {RegExp} apiKeyPattern API key pattern.
+ * @property {Function} searchImages Function to search images.
+ */
+
+/**
+ * @typedef {object} TranslationService Translation service.
+ * @property {string} serviceId Service ID.
+ * @property {string} serviceLabel Service label.
+ * @property {string} landingURL Landing page URL.
+ * @property {string} apiKeyURL URL of the page that provides an API key.
+ * @property {RegExp} apiKeyPattern API key pattern.
+ * @property {string[]} sourceLanguages Supported source languages.
+ * @property {string[]} targetLanguages Supported target languages.
+ * @property {Function} translate Function to translate strings.
+ */
+
+/**
  * @typedef {('create'|'update'|'delete'|'uploadMedia'|'deleteMedia'|'openAuthoring')} CommitType
  * Git commit type.
  */
@@ -61,6 +95,14 @@
  */
 
 /**
+ * @typedef {object} ViewFilter View filter.
+ * @property {string} label Label.
+ * @property {string} field Field name.
+ * @property {string | boolean} [pattern] Regex matching pattern or exact value.
+ * @see https://decapcms.org/docs/configuration-options/#view_filters
+ */
+
+/**
  * @typedef {object} Collection Collection definition.
  * @property {string} name Collection name.
  * @property {string} [label] UI label.
@@ -86,9 +128,9 @@
  * @property {string} [slug] Item slug template for a folder/entry collection.
  * @property {string} [summary] Item summary template for a folder/entry collection.
  * @property {string[]} [sortable_fields] Custom sorting fields.
- * @property {object[]} [view_filters] Predefined view filters.
- * @property {object[]} [view_groups] Predefined view groups.
- * @property {(boolean|object)} [i18n] I18n configuration.
+ * @property {ViewFilter[]} [view_filters] Predefined view filters.
+ * @property {ViewFilter[]} [view_groups] Predefined view groups.
+ * @property {boolean | object} [i18n] I18n configuration.
  * @property {I18nConfig} _i18n Normalized i18n configuration with the global i18n config combined.
  * @property {string} [preview_path] Preview URL template.
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
@@ -103,9 +145,10 @@
  * @property {string} [label] Field label.
  * @property {string} [comment] Field description.
  * @property {string} [widget] Widget name.
- * @property {any} [default] Default value.
  * @property {boolean} [required] Whether to require input.
  * @property {string[]} [pattern] Validation format.
+ * @property {string} [hint] Value hint to be displayed below the input.
+ * @property {boolean | 'translate' | 'duplicate'} [i18n] I18n configuration.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets
  */
@@ -116,6 +159,141 @@
  */
 
 /**
+ * Boolean field properties.
+ * @typedef {object} BooleanFieldProps
+ * @property {boolean} [default] Default value.
+ * @see https://decapcms.org/docs/widgets/#boolean
+ */
+
+/**
+ * Boolean field definition.
+ * @typedef {CommonFieldProps & BooleanFieldProps} BooleanField
+ */
+
+/**
+ * Color field properties.
+ * @typedef {object} ColorFieldProps
+ * @property {string} [default] Default value.
+ * @property {boolean} [allowInput] Whether to show the textbox to allow editing the value.
+ * @property {boolean} [enableAlpha] Whether to save the alpha channel value.
+ * @see https://decapcms.org/docs/widgets/#color
+ */
+
+/**
+ * Color field definition.
+ * @typedef {CommonFieldProps & ColorFieldProps} ColorField
+ */
+
+/**
+ * DateTime field properties.
+ * @typedef {object} DateTimeFieldProps
+ * @property {string} [default] Default value.
+ * @property {string} [format] Moment.js format to save the value.
+ * @property {boolean | string} [date_format] Moment.js format to show the value, `true` to use the
+ * default locale format, `false` to hide the input.
+ * @property {boolean | string} [time_format] Moment.js format to show the value, `true` to use the
+ * default locale format, `false` to hide the input.
+ * @property {boolean} [picker_utc] Whether to show the value in UTC.
+ * @see https://decapcms.org/docs/widgets/#datetime
+ */
+
+/**
+ * DateTime field definition.
+ * @typedef {CommonFieldProps & DateTimeFieldProps} DateTimeField
+ */
+
+/**
+ * File field properties.
+ * @typedef {object} FileFieldProps
+ * @property {string} [default] Default value.
+ * @property {object} [media_library] Media library options.
+ * @property {number} [media_library.max_file_size] Maximum file size in bytes.
+ * @property {string} [media_library.media_folder] Folder to save the selected media.
+ * @property {boolean} [media_library.choose_url] Whether to hide the Insert from URL button.
+ * @property {object} [media_library.config] Config to be passed to the external media library.
+ * @property {boolean} [media_library.allow_multiple] Whether to disable multiple inputs in the
+ * external media library.
+ * @see https://decapcms.org/docs/widgets/#file
+ */
+
+/**
+ * File field definition.
+ * @typedef {CommonFieldProps & FileFieldProps} FileField
+ */
+
+/**
+ * List field properties.
+ * @typedef {object} ListFieldProps
+ * @property {string[] | object[]} [default] Default value.
+ * @property {boolean} [allow_add] Whether to allow adding new values.
+ * @property {boolean} [add_to_top] Whether show the Add button at the top of items.
+ * @property {string} [label_singular] Label to be displayed on the Add button.
+ * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
+ * @property {boolean} [collapsed] Whether to collapse the UI by default.
+ * @property {boolean} [minimize_collapsed] Whether to collapse the entire UI.
+ * @property {number} [min] Minimum number of items.
+ * @property {number} [max] Maximum number of items.
+ * @property {object} [field] Single widget to be repeated.
+ * @property {object[]} [fields] Multiple widgets to be repeated.
+ * @property {object[]} [types] Multiple Object widgets (variable types) to be selected.
+ * @property {string} [typeKey] Property name to store the type.
+ * @see https://decapcms.org/docs/widgets/#list
+ */
+
+/**
+ * List field definition.
+ * @typedef {CommonFieldProps & ListFieldProps} ListField
+ */
+
+/**
+ * Markdown field properties.
+ * @typedef {object} MarkdownFieldProps
+ * @property {string} [default] Default value.
+ * @property {boolean} [minimal] Whether to minimize the toolbar height.
+ * @property {string[]} [buttons] Formatting button list.
+ * @property {string[]} [editor_components] Editor button list.
+ * @property {string[]} [modes] `raw` and/or `rich_text`.
+ * @property {boolean} [sanitize_preview] Whether to sanitize the preview HTML.
+ * @see https://decapcms.org/docs/widgets/#markdown
+ */
+
+/**
+ * Markdown field definition.
+ * @typedef {CommonFieldProps & MarkdownFieldProps} MarkdownField
+ */
+
+/**
+ * Number field properties.
+ * @typedef {object} NumberFieldProps
+ * @property {string | number} [default] Default value.
+ * @property {'int' | 'float'} [value_type] Type of value to be saved.
+ * @property {number} [min] Minimum value.
+ * @property {number} [max] Maximum value.
+ * @property {number} [step] Number to increase/decrease with the arrow key/button.
+ * @see https://decapcms.org/docs/widgets/#number
+ */
+
+/**
+ * Number field definition.
+ * @typedef {CommonFieldProps & NumberFieldProps} NumberField
+ */
+
+/**
+ * Object field properties.
+ * @typedef {object} ObjectFieldProps
+ * @property {object} [default] Default values.
+ * @property {boolean} [collapsed] Whether to collapse the UI by default.
+ * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
+ * @property {object[]} [fields] Nested fields.
+ * @see https://decapcms.org/docs/widgets/#object
+ */
+
+/**
+ * Object field definition.
+ * @typedef {CommonFieldProps & ObjectFieldProps} ObjectField
+ */
+
+/**
  * Relation field properties.
  * @typedef {object} RelationFieldProps
  * @property {string} collection Referenced collection name.
@@ -123,6 +301,7 @@
  * @property {string} value_field Name of field to be stored as the value.
  * @property {string[]} search_fields Name of fields to be searched.
  * @property {string[]} [display_fields] Name of fields to be displayed.
+ * @property {any} [default] Default value.
  * @property {boolean} [multiple] Whether to accept multiple values.
  * @property {number} [min] Minimum number of items.
  * @property {number} [max] Maximum number of items.
@@ -132,6 +311,46 @@
 /**
  * Relation field definition.
  * @typedef {CommonFieldProps & RelationFieldProps} RelationField
+ */
+
+/**
+ * Select field properties.
+ * @typedef {object} SelectFieldProps
+ * @property {string[]} [default] Default values.
+ * @property {string[] | { label: string, value: string }[]} options Options.
+ * @property {boolean} [multiple] Whether to accept multiple values.
+ * @property {number} [min] Minimum number of items.
+ * @property {number} [max] Maximum number of items.
+ * @see https://decapcms.org/docs/widgets/#select
+ */
+
+/**
+ * Select field definition.
+ * @typedef {CommonFieldProps & SelectFieldProps} SelectField
+ */
+
+/**
+ * String field properties.
+ * @typedef {object} StringFieldProps
+ * @property {string} [default] Default value.
+ * @see https://decapcms.org/docs/widgets/#string
+ */
+
+/**
+ * String field definition.
+ * @typedef {CommonFieldProps & StringFieldProps} StringField
+ */
+
+/**
+ * Text field properties.
+ * @typedef {object} TextFieldProps
+ * @property {string} [default] Default value.
+ * @see https://decapcms.org/docs/widgets/#text
+ */
+
+/**
+ * Text field definition.
+ * @typedef {CommonFieldProps & TextFieldProps} TextField
  */
 
 /**
@@ -157,9 +376,9 @@
 
 /**
  * @typedef {object} LocalizedEntry Each locale’s content and metadata.
- * @property {EntryContent} content Parsed, localized entry content.
- * @property {string} path File path.
- * @property {string} sha SHA-1 hash for the file.
+ * @property {EntryContent} [content] Parsed, localized entry content.
+ * @property {string} [path] File path.
+ * @property {string} [sha] SHA-1 hash for the file.
  */
 
 /**
@@ -258,10 +477,10 @@
  * @property {SortOrder} [sort.order] Sort order.
  * @property {object} [filter] Filtering conditions.
  * @property {string} [filter.field] Target field name.
- * @property {string} [filter.pattern] Regex pattern.
+ * @property {string | boolean} [filter.pattern] Regex matching pattern or exact value.
  * @property {object} [group] Grouping conditions.
  * @property {string} [group.field] Target field name.
- * @property {string} [group.pattern] Regex pattern.
+ * @property {string | boolean} [group.pattern] Regex matching pattern or exact value.
  * @property {boolean} [showMedia] Whether to show the Media pane.
  */
 
@@ -273,9 +492,9 @@
  * @property {SortOrder} [sort.order] Sort order.
  * @property {object} [filter] Filtering conditions.
  * @property {string} [filter.field] Target field name.
- * @property {string} [filter.pattern] Regex pattern.
+ * @property {string | boolean} [filter.pattern] Regex matching pattern or exact value.
  * @property {object} [group] Grouping conditions.
  * @property {string} [group.field] Target field name.
- * @property {string} [group.pattern] Regex pattern.
+ * @property {string | boolean} [group.pattern] Regex matching pattern or exact value.
  * @property {boolean} [showInfo] Whether to show the Info pane.
  */

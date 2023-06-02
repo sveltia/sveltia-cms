@@ -344,8 +344,14 @@ export const parseEntryFiles = (entryFiles) => {
     }
 
     if (hasLocales && (structure === 'multiple_folders' || structure === 'multiple_files')) {
-      let _filePath;
-      let locale;
+      /**
+       * @type {string}
+       */
+      let _filePath = undefined;
+      /**
+       * @type {string}
+       */
+      let locale = undefined;
 
       if (structure === 'multiple_folders') {
         [, locale, _filePath] = filePath.match(new RegExp(`^(${locales.join('|')})\\/(.+)$`)) || [];

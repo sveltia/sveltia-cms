@@ -47,8 +47,14 @@ export const fetchSiteConfig = async () => {
       document.querySelector('link[type="text/yaml"][rel="cms-config-url"]')
     ) || {};
 
-  let response;
-  let config;
+  /**
+   * @type {Response}
+   */
+  let response = undefined;
+  /**
+   * @type {SiteConfig}
+   */
+  let config = undefined;
 
   try {
     try {

@@ -117,7 +117,7 @@ const sortAssets = (assets, { key, order } = {}) => {
  * @param {Asset[]} assets Asset list.
  * @param {object} [condition] Filter condition.
  * @param {string} [condition.field] Field name.
- * @param {string} [condition.pattern] Regular expression.
+ * @param {string | boolean} [condition.pattern] Matching pattern, maybe a regular expression.
  * @returns {Asset[]} Filtered asset list.
  */
 const filterAssets = (assets, { field, pattern } = {}) => {
@@ -151,7 +151,7 @@ const filterAssets = (assets, { field, pattern } = {}) => {
  * @param {Asset[]} assets Asset list.
  * @param {object} [condition] Group condition.
  * @param {string} [condition.field] Field name.
- * @param {string} [condition.pattern] Regular expression.
+ * @param {string | boolean} [condition.pattern] Matching pattern, maybe a regular expression.
  * @returns {{ [key: string]: Asset[] }} Grouped assets, where key is a group label and value is an
  * asset list.
  */
@@ -166,7 +166,10 @@ const groupAssets = (assets, { field, pattern } = {}) => {
 
   assets.forEach((asset) => {
     const value = asset[field];
-    let key;
+    /**
+     * @type {string}
+     */
+    let key = undefined;
 
     if (regex) {
       [key = otherKey] = String(value || '').match(regex) || [];
@@ -215,12 +218,13 @@ const assetsViewSettings = writable({}, (set) => {
 
 /**
  * View settings for the selected asset collection.
- * @type {import('svelte/store').Writable<(AssetView)>}
+ * @type {import('svelte/store').Writable<AssetView>}
  */
 export const currentView = writable({});
 
 /**
  * List of sort fields for the selected asset collection.
+ * @type {import('svelte/store').Readable<string[]>}
  */
 export const sortFields = derived([user], ([_user], set) => {
   const _sortFields = ['name'];
@@ -234,6 +238,7 @@ export const sortFields = derived([user], ([_user], set) => {
 
 /**
  * List of all the assets for the selected asset collection.
+ * @type {import('svelte/store').Readable<Asset[]>}
  */
 export const listedAssets = derived(
   [allAssets, selectedAssetFolderPath],
@@ -248,11 +253,14 @@ export const listedAssets = derived(
 
 /**
  * Sorted, filtered and grouped assets for the selected asset collection.
+ * @type {import('svelte/store').Readable<{ [key: string]: Asset[] }>}
  */
 export const assetGroups = derived(
   [listedAssets, currentView],
   ([_listedAssets, _currentView], set) => {
-    /** @type {(object[] | object)} */
+    /**
+     * @type {(object[] | object)}
+     */
     let assets = [..._listedAssets];
 
     assets = sortAssets(assets, _currentView?.sort);

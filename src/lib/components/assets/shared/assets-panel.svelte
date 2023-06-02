@@ -10,7 +10,9 @@
 
   const dispatch = createEventDispatcher();
 
-  /** @type {Asset[]} */
+  /**
+   * @type {Asset[]}
+   */
   export let assets = [];
   export let searchTerms = '';
 

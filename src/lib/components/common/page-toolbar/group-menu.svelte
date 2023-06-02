@@ -5,9 +5,14 @@
 
   export let label = '';
   export let disabled = false;
-  /** @type {import('svelte/store').Writable<EntryView>} */
+  /**
+   * @type {import('svelte/store').Writable<EntryView>}
+   */
   export let currentView = writable({});
   export let noneLabel = '';
+  /**
+   * @type {ViewFilter[]}
+   */
   export let groups = [];
 </script>
 

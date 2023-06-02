@@ -6,6 +6,9 @@
   import { deleteAssets } from '$lib/services/assets/data';
 
   export let open = false;
+  /**
+   * @type {Asset[]}
+   */
   export let assets = [];
 
   const dispatch = createEventDispatcher();

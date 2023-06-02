@@ -25,8 +25,14 @@
   };
 
   const focusShortcut = isMac ? 'Meta+F' : 'Ctrl+F';
-  let wrapper;
-  let searchBar;
+  /**
+   * @type {HTMLElement}
+   */
+  let wrapper = undefined;
+  /**
+   * @type {import('svelte').SvelteComponentTyped}
+   */
+  let searchBar = undefined;
 
   $: {
     // Restore search terms when the page is reloaded
@@ -40,7 +46,7 @@
   on:keydown={(event) => {
     if (
       !(/** @type {HTMLElement} */ (event.target).matches('input, textarea')) &&
-      !!wrapper.querySelector('.search-bar').offsetParent &&
+      !!(/** @type {HTMLElement} */ (wrapper.querySelector('.search-bar')).offsetParent) &&
       matchShortcut(event, focusShortcut)
     ) {
       event.preventDefault();

@@ -4,7 +4,9 @@
   import { writable } from 'svelte/store';
 
   export let disabled = false;
-  /** @type {import('svelte/store').Writable<EntryView>} */
+  /**
+   * @type {import('svelte/store').Writable<EntryView>}
+   */
   export let currentView = writable({});
 </script>
 

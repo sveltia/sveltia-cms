@@ -86,6 +86,9 @@ const searchImages = async (query, apiKey) => {
   }));
 };
 
+/**
+ * @type {PictureService}
+ */
 export default {
   serviceId,
   serviceLabel,

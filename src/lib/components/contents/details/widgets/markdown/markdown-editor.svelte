@@ -11,7 +11,13 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {MarkdownField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string}
+   */
   export let currentValue = undefined;
 
   $: ({ i18n } = fieldConfig);

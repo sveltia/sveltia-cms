@@ -20,7 +20,10 @@
 
   export let locale = '';
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {Field}
+   */
+  export let fieldConfig = undefined;
 
   const widgets = {
     boolean: BooleanEditor,
@@ -47,6 +50,7 @@
     widget = 'string',
     i18n = false,
     pattern = undefined,
+    // @ts-ignore
     multiple = false,
   } = fieldConfig);
   $: ({ hasLocales, locales, defaultLocale = 'default' } = $entryDraft.collection._i18n);
@@ -118,13 +122,23 @@
         {#if validity.rangeUnderflow}
           <div>
             <Icon name="error" label={$_('error')} />
-            {$_('validation.range_underflow', { values: { min: fieldConfig.min } })}
+            {$_('validation.range_underflow', {
+              values: {
+                // @ts-ignore
+                min: fieldConfig.min,
+              },
+            })}
           </div>
         {/if}
         {#if validity.rangeOverflow}
           <div>
             <Icon name="error" label={$_('error')} />
-            {$_('validation.range_overflow', { values: { max: fieldConfig.max } })}
+            {$_('validation.range_overflow', {
+              values: {
+                // @ts-ignore
+                max: fieldConfig.max,
+              },
+            })}
           </div>
         {/if}
         {#if validity.patternMismatch}

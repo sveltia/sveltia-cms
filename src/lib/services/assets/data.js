@@ -22,7 +22,9 @@ export const saveAssets = async ({ files, folder }, options) => {
   const { collectionName = null } =
     get(allAssetPaths).findLast(({ internalPath }) => folder === internalPath) || {};
 
-  /** @type {Asset[]} */
+  /**
+   * @type {Asset[]}
+   */
   const newAssets = await Promise.all(
     files.map(async (file) => ({
       name: file.name,

@@ -16,7 +16,10 @@
 
   export let locale = '';
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {Field}
+   */
+  export let fieldConfig = undefined;
 
   const widgets = {
     boolean: BooleanPreview,
@@ -35,7 +38,13 @@
     text: TextPreview,
   };
 
-  $: ({ label = '', widget = 'string', i18n = false, multiple = false } = fieldConfig);
+  $: ({
+    label = '',
+    widget = 'string',
+    i18n = false,
+    // @ts-ignore
+    multiple = false,
+  } = fieldConfig);
   $: ({ hasLocales, defaultLocale = 'default' } = $entryDraft.collection._i18n);
   $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
   $: canDuplicate = hasLocales && i18n === 'duplicate';

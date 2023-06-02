@@ -7,7 +7,13 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {SelectField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string | string[]}
+   */
   export let currentValue = undefined;
 
   $: ({ multiple } = fieldConfig);

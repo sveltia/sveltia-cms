@@ -6,14 +6,23 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { scanFiles } from '$lib/services/utils/files';
 
+  /**
+   * @type {string}
+   */
   export let accept = undefined;
   export let multiple = false;
   export let showUploadButton = false;
   export let showFilePreview = false;
 
   const dispatch = createEventDispatcher();
-  let dragging;
-  let filePicker;
+  let dragging = false;
+  /**
+   * @type {import('svelte').SvelteComponentTyped}
+   */
+  let filePicker = undefined;
+  /**
+   * @type {File[]}
+   */
   let files = [];
 
   /**

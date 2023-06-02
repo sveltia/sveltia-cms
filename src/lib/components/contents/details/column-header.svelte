@@ -17,9 +17,13 @@
   import { entryDraft, entryViewSettings, revertChanges } from '$lib/services/contents/editor';
   import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
 
-  /** @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>} */
+  /**
+   * @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>}
+   */
   export let thisPane = writable({});
-  /** @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>} */
+  /**
+   * @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>}
+   */
   export let thatPane = writable({});
 
   $: ({ collection, collectionFile, currentValues, originalValues, validities } = $entryDraft || {

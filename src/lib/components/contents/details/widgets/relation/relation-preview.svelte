@@ -10,8 +10,13 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  /** @type {RelationField} */
-  export let fieldConfig;
+  /**
+   * @type {RelationField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string | string[]}
+   */
   export let currentValue = undefined;
 
   $: ({

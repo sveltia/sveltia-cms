@@ -11,7 +11,13 @@
 
   export let locale = '';
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {ListField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string[]}
+   */
   export let currentValue = undefined;
 
   $: ({

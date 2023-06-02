@@ -17,13 +17,31 @@
 
   export let locale = '';
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {FileField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string}
+   */
   export let currentValue = undefined;
 
-  let asset;
-  let file;
-  let url;
-  let credit;
+  /**
+   * @type {Asset}
+   */
+  let asset = undefined;
+  /**
+   * @type {File}
+   */
+  let file = undefined;
+  /**
+   * @type {string}
+   */
+  let url = undefined;
+  /**
+   * @type {string}
+   */
+  let credit = undefined;
   let showSelectAssetsDialog = false;
   let showSizeLimitDialog = false;
   let showPhotoCreditDialog = false;

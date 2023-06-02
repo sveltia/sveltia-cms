@@ -2,7 +2,9 @@
   import { Checkbox } from '@sveltia/ui';
   import { selectedAssets } from '$lib/services/assets';
 
-  /** @type {Asset} */
+  /**
+   * @type {Asset}
+   */
   export let asset = undefined;
 </script>
 

@@ -10,7 +10,13 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {NumberField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string | number}
+   */
   export let currentValue = undefined;
 
   $: ({
@@ -24,7 +30,9 @@
   $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
   $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 
-  /** @type {string} */
+  /**
+   * @type {string}
+   */
   let inputValue = '';
 
   // eslint-disable-next-line jsdoc/require-jsdoc

@@ -12,7 +12,13 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {FileField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string}
+   */
   export let currentValue = undefined;
 
   $: ({ widget } = fieldConfig);

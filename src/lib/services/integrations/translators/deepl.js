@@ -51,6 +51,9 @@ export const translate = async (texts, { sourceLocale = '', targetLocale, apiKey
   return translations.map((t) => t.text);
 };
 
+/**
+ * @type {TranslationService}
+ */
 export default {
   serviceId,
   serviceLabel,

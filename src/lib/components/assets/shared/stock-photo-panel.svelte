@@ -19,6 +19,9 @@
   export let hotlinking = false;
   export let landingURL = '';
   export let apiKeyURL = '';
+  /**
+   * @type {RegExp}
+   */
   export let apiKeyPattern = undefined;
 
   /**
@@ -31,8 +34,13 @@
   const dispatch = createEventDispatcher();
   let apiKey = '';
   let debounceTimer = 0;
-  /** @type {?StockPhoto[]} */
+  /**
+   * @type {?StockPhoto[]}
+   */
   let searchResults = null;
+  /**
+   * @type {string}
+   */
   let error = undefined;
 
   /**
@@ -145,6 +153,9 @@
           values: { service: serviceLabel },
         })}
         on:input={(/** @type {CustomEvent} */ event) => {
+          /**
+           * @type {string}
+           */
           const _value = event.detail.value.trim();
 
           if (apiKeyPattern && _value.match(apiKeyPattern)) {

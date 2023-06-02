@@ -238,6 +238,9 @@ const createCommitMessage = (items, { commitType = 'update', collection } = {}) 
   const [firstSlug] = items.map(({ slug }) => slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = items.map(({ path }) => path);
   const { backend: { commit_messages: customCommitMessages = {} } = {} } = get(siteConfig);
+  /**
+   * @type {string}
+   */
   let message = customCommitMessages[commitType] || defaultCommitMessages[commitType] || '';
 
   if (['create', 'update', 'delete'].includes(commitType)) {
@@ -338,6 +341,9 @@ const deleteFiles = async (items, { commitType = 'delete', collection } = {}) =>
   });
 };
 
+/**
+ * @type {BackendService}
+ */
 export default {
   label,
   url,

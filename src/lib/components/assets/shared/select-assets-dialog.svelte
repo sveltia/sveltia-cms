@@ -12,6 +12,9 @@
   import { generateUUID, stripSlashes } from '$lib/services/utils/strings';
 
   export let open = false;
+  /**
+   * @type {string}
+   */
   export let kind = undefined;
   export let canEnterURL = true;
 
@@ -19,7 +22,9 @@
   const title = kind === 'image' ? $_('select_image') : $_('select_file');
   let tabName = 'upload';
   let tabPanelIdPrefix = '';
-  /** @type {?SelectedAsset} */
+  /**
+   * @type {?SelectedAsset}
+   */
   let selectedAsset = null;
   let enteredURL = '';
   let searchTerms = '';

@@ -10,12 +10,17 @@ import { escapeRegExp } from '$lib/services/utils/strings';
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
   /**
-   * @example 'userId', 'name.first', 'cities.*.id', '{{slug}}'
+   * @example 'userId'
+   * @example 'name.first'
+   * @example 'cities.*.id'
+   * @example '{{slug}}'
    */
   const valueField = fieldConfig.value_field;
   /**
-   * @example ['userId'], ['name.first'] (nested), ['cities.*.id', 'cities.*.name'] (with wildcard,
-   * multiple), ['{{twitterHandle}} - {{followerCount}}'] (template).
+   * @example ['userId']
+   * @example ['name.first'] (nested)
+   * @example ['cities.*.id', 'cities.*.name'] (with wildcard, multiple)
+   * @example ['{{twitterHandle}} - {{followerCount}}'] (template)
    */
   const displayFields = fieldConfig.display_fields;
 
@@ -27,12 +32,16 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
         return undefined;
       }
 
+      /**
+       * @type {FlattenedEntryContent}
+       */
       const flattenContent = flatten(content);
 
       /**
-       * Canonical, templatized display field
-       * @example '{{twitterHandle}} {{followerCount}}', '{{sections.*.name}}',
-       * '{{route}}: {{sections.*.name}} ({{sections.*.id}})'
+       * Canonical, templatized display field.
+       * @example '{{twitterHandle}} {{followerCount}}'
+       * @example '{{sections.*.name}}'
+       * @example '{{route}}: {{sections.*.name}} ({{sections.*.id}})'
        */
       const displayField = (displayFields || [valueField])
         .map((fieldName) => (fieldName.match(/{{.+?}}/) ? fieldName : `{{${fieldName}}}`))

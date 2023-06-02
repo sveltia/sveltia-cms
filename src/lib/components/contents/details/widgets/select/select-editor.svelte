@@ -11,9 +11,14 @@
 
   export let locale = '';
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {SelectField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {any} // string | string[]
+   */
   export let currentValue = undefined;
-  export let options = undefined;
 
   $: ({
     i18n,
@@ -26,13 +31,15 @@
   $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
   $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 
-  $: sortedOptions = (
-    options ||
-    fieldOptions.map((option) => ({
+  /**
+   * @type {{ label: string, value: string }[]}
+   */
+  $: sortedOptions = fieldOptions
+    .map((option) => ({
       label: isObject(option) ? option.label : option,
       value: isObject(option) ? option.value : option,
     }))
-  ).sort((a, b) => a.label.localeCompare(b.label));
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   /**
    * Update the value for the list.

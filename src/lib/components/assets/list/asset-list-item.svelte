@@ -6,8 +6,10 @@
   import { selectedAsset, selectedAssets } from '$lib/services/assets';
   import { currentView, getAssetURL } from '$lib/services/assets/view';
 
-  /** @type {Asset} */
-  export let asset;
+  /**
+   * @type {Asset}
+   */
+  export let asset = undefined;
 
   $: ({ name, kind } = asset);
 </script>

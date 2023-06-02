@@ -11,11 +11,22 @@
   import { formatSize } from '$lib/services/utils/files';
   import { formatDuration, getMediaMetadata } from '$lib/services/utils/media';
 
-  /** @type {Asset} */
-  export let asset;
+  /**
+   * @type {Asset}
+   */
+  export let asset = undefined;
 
+  /**
+   * @type {string}
+   */
   let repoFileURL = undefined;
+  /**
+   * @type {{ width: number, height: number }}
+   */
   let dimensions = undefined;
+  /**
+   * @type {number}
+   */
   let duration = undefined;
 
   $: ({ path, size, kind, commitAuthor, commitDate } = asset);

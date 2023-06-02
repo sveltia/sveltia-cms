@@ -40,6 +40,9 @@ export const selectedAsset = writable();
 
 export const uploadingAssets = writable({ folder: null, files: [] });
 
+/**
+ * @type {import('svelte/store').Readable<boolean>}
+ */
 export const showUploadAssetsDialog = derived([uploadingAssets], ([_uploadingAssets], set) => {
   set(!!_uploadingAssets.files?.length);
 });

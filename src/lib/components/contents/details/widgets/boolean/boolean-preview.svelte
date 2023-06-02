@@ -11,7 +11,13 @@
   // svelte-ignore unused-export-let
   export let keyPath = '';
   // svelte-ignore unused-export-let
-  export let fieldConfig = {};
+  /**
+   * @type {BooleanField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {boolean}
+   */
   export let currentValue = undefined;
 </script>
 

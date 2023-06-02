@@ -21,12 +21,12 @@ import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 const storageKey = 'sveltia-cms.entry-view';
 
 /**
- * @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>}
+ * @type {import('svelte/store').Writable<{ locale?: string, mode?: string }>}
  */
 export const editorLeftPane = writable({});
 
 /**
- * @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>}
+ * @type {import('svelte/store').Writable<{ locale?: string, mode?: string }>}
  */
 export const editorRightPane = writable({});
 
@@ -107,7 +107,7 @@ const createNewContent = (fields) => {
  * @param {Function} [args.getValueMap] Optional function to get an object holding the current entry
  * values. It will be used for the `valueMap` argument of {@link getFieldByKeyPath}. If omitted, the
  * proxy target will be used instead.
- * @returns {Proxy.<object>} Created proxy.
+ * @returns {Proxy<object>} Created proxy.
  */
 const createProxy = ({
   draft: { collectionName, fileName },
@@ -575,7 +575,9 @@ export const saveEntry = async () => {
     .filter((p) => p.match(new RegExp(`^\\/${escapeRegExp(internalAssetFolder)}\\/[^\\/]+$`)));
 
   const savingFiles = [];
-  /** @type {Asset[]} */
+  /**
+   * @type {Asset[]}
+   */
   const savingAssets = [];
 
   const savingAssetProps = {
@@ -586,7 +588,9 @@ export const saveEntry = async () => {
     commitDate: new Date(), // Use the current datetime
   };
 
-  /** @type {{ [key: LocaleCode]: LocalizedEntry }} */
+  /**
+   * @type {{ [key: LocaleCode]: LocalizedEntry }}
+   */
   const savingEntryLocales = Object.fromEntries(
     await Promise.all(
       Object.entries(currentValues).map(async ([locale, valueMap]) => {
@@ -664,7 +668,9 @@ export const saveEntry = async () => {
     ),
   );
 
-  /** @type {Entry} */
+  /**
+   * @type {Entry}
+   */
   const savingEntry = {
     collectionName,
     fileName,

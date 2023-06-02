@@ -4,6 +4,9 @@
   import Image from '$lib/components/common/image.svelte';
   import { formatSize } from '$lib/services/utils/files';
 
+  /**
+   * @type {File[]}
+   */
   export let files = [];
 </script>
 

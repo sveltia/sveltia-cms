@@ -12,8 +12,14 @@
     entryViewSettings,
   } from '$lib/services/contents/editor';
 
-  let leftColumnContent;
-  let rightColumnContent;
+  /**
+   * @type {HTMLElement}
+   */
+  let leftColumnContent = undefined;
+  /**
+   * @type {HTMLElement}
+   */
+  let rightColumnContent = undefined;
 
   $: ({ showPreview, syncScrolling } = $entryViewSettings);
 
@@ -83,9 +89,14 @@
   };
 
   $: {
-    if (leftColumnContent || rightColumnContent) {
-      (leftColumnContent || {}).scrollTop = 0;
-      (rightColumnContent || {}).scrollTop = 0;
+    if (leftColumnContent) {
+      leftColumnContent.scrollTop = 0;
+    }
+  }
+
+  $: {
+    if (rightColumnContent) {
+      rightColumnContent.scrollTop = 0;
     }
   }
 

@@ -51,7 +51,10 @@ export const authorize = async (provider) => {
       const [, state, _result] =
         data.match(new RegExp(`^authorization:${provider}:(success|error):(.+)`)) || [];
 
-      let result;
+      /**
+       * @type {{ token: string }}
+       */
+      let result = undefined;
 
       try {
         result = _result ? JSON.parse(_result) : undefined;

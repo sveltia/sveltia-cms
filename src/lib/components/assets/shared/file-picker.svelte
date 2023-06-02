@@ -1,6 +1,12 @@
 <script>
-  let filePicker;
+  /**
+   * @type {HTMLInputElement}
+   */
+  let filePicker = undefined;
 
+  /**
+   * @type {string}
+   */
   export let accept = undefined;
   export let multiple = false;
 

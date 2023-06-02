@@ -2,7 +2,13 @@
   import { Button, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
-  export let fieldConfig = {};
+  /**
+   * @type {ListField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {object[]}
+   */
   export let items = [];
   // eslint-disable-next-line jsdoc/require-jsdoc, no-unused-vars
   export let addItem = (name) => undefined;

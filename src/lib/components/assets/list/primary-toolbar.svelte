@@ -8,7 +8,10 @@
   import { siteConfig } from '$lib/services/config';
 
   const searchTerms = '';
-  let filePicker;
+  /**
+   * @type {import('svelte').SvelteComponentTyped}
+   */
+  let filePicker = undefined;
   let showDeleteDialog = false;
 </script>
 

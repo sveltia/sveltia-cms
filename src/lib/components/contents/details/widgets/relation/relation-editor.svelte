@@ -11,8 +11,13 @@
 
   export let locale = '';
   export let keyPath = '';
-  /** @type {RelationField} */
-  export let fieldConfig;
+  /**
+   * @type {RelationField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string}
+   */
   export let currentValue = undefined;
 
   $: ({
@@ -26,4 +31,4 @@
   $: options = getOptions(locale, fieldConfig, refEntries);
 </script>
 
-<SelectEditor {locale} {keyPath} {fieldConfig} bind:currentValue {options} />
+<SelectEditor {locale} {keyPath} fieldConfig={{ ...fieldConfig, options }} bind:currentValue />

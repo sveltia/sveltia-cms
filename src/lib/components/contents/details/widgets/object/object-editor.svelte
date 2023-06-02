@@ -13,8 +13,14 @@
 
   export let locale = '';
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {ObjectField}
+   */
+  export let fieldConfig = undefined;
   // svelte-ignore unused-export-let
+  /**
+   * @type {object}
+   */
   export let currentValue = undefined;
 
   $: ({
@@ -27,7 +33,7 @@
   $: keyValueMap = $entryDraft.currentValues[locale];
   $: parentExpanded = !collapsed;
 
-  let widgetId;
+  let widgetId = '';
 
   onMount(() => {
     widgetId = generateUUID().split('-').pop();

@@ -13,9 +13,14 @@ import { stripSlashes } from '$lib/services/utils/strings';
 const label = 'Local Repository';
 const url = null;
 const storeName = 'file-system-handles';
+/**
+ * @type {import('svelte/store').Writable<?FileSystemDirectoryHandle>}
+ */
 const rootDirHandle = writable(null);
 const rootDirHandleKey = 'root_dir_handle';
-/** @type {?IDBDatabase} */
+/**
+ * @type {?IDBDatabase}
+ */
 let database;
 /**
  * Get the object store.
@@ -63,11 +68,15 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
        * @see https://developer.chrome.com/articles/file-system-access/#stored-file-or-directory-handles-and-permissions
        */
       _request.onsuccess = async () => {
+        /**
+         * @type {FileSystemDirectoryHandle}
+         */
         let handle = _request.result;
 
         if (handle && !forceReload) {
           const options = { mode: 'readwrite' };
 
+          // @ts-ignore
           if ((await handle.requestPermission(options)) !== 'granted') {
             reject(new Error('permission_denied'));
             return;
@@ -117,12 +126,16 @@ const signOut = async () => {
  */
 const getHandleByPath = async (path) => {
   const pathParts = stripSlashes(path).split('/');
+  const create = true;
+  /**
+   * @type {FileSystemFileHandle | FileSystemDirectoryHandle}
+   */
   let handle = get(rootDirHandle);
 
   for (const name of pathParts) {
     handle = await (name.includes('.')
-      ? handle.getFileHandle(name, { create: true })
-      : handle.getDirectoryHandle(name, { create: true }));
+      ? /** @type {FileSystemDirectoryHandle} */ (handle).getFileHandle(name, { create })
+      : /** @type {FileSystemDirectoryHandle} */ (handle).getDirectoryHandle(name, { create }));
   }
 
   return handle;
@@ -130,7 +143,7 @@ const getHandleByPath = async (path) => {
 
 /**
  * Retrieve all files under the static directory.
- * @returns {Promise.<object[]>} File list.
+ * @returns {Promise<object[]>} File list.
  */
 const getAllFiles = async () => {
   const _rootDirHandle = get(rootDirHandle);
@@ -199,8 +212,8 @@ const fetchFiles = async () => {
 const saveFiles = async (items) => {
   await Promise.all(
     items.map(async ({ path, data }) => {
-      /** @type {any} */
       const handle = await getHandleByPath(path);
+      // @ts-ignore
       const writer = await handle.createWritable();
 
       await writer.write(data);
@@ -218,14 +231,17 @@ const deleteFiles = async (items) => {
     items.map(async ({ path }) => {
       const pathArray = stripSlashes(path).split('/');
       const entryName = pathArray.pop();
-      /** @type {any} */
       const handle = await getHandleByPath(pathArray.join('/'));
 
+      // @ts-ignore
       await handle.removeEntry(entryName);
     }),
   );
 };
 
+/**
+ * @type {BackendService}
+ */
 export default {
   label,
   url,

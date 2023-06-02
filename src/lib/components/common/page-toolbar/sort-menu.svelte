@@ -5,8 +5,13 @@
 
   export let label = '';
   export let disabled = false;
-  /** @type {import('svelte/store').Writable<EntryView>} */
+  /**
+   * @type {import('svelte/store').Writable<EntryView>}
+   */
   export let currentView = writable({});
+  /**
+   * @type {{ label: string, key: string }[]}
+   */
   export let fields = [];
 </script>
 

@@ -26,6 +26,9 @@
     }
 
     const [, _collectionName, _state, _id] = match;
+    /**
+     * @type {Collection | undefined}
+     */
     const collection = _collectionName ? getCollection(_collectionName) : undefined;
 
     if (collection && !collection.hide && $selectedCollection !== collection) {

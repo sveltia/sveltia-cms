@@ -8,7 +8,9 @@ import { get } from 'svelte/store';
  * @see https://vitejs.dev/guide/features.html#glob-import
  */
 export const initAppLocale = () => {
-  /** @type {{ [key: string]: { strings: object }}} */
+  /**
+   * @type {{ [key: string]: { strings: object }}}
+   */
   const modules = import.meta.glob('../locales/*.js', { eager: true });
 
   Object.entries(modules).forEach(([path, { strings }]) => {

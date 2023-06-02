@@ -7,12 +7,18 @@
   import { siteConfig } from '$lib/services/config';
   import LocalStorage from '$lib/services/utils/local-storage';
 
+  /**
+   * @type {string}
+   */
   let backendName = $siteConfig.backend?.name;
   let isLocal = false;
   let isFileAccessUnsupported = false;
   let isLocalStorageDisabled = false;
   let showErrorDialog = false;
-  let errorReason;
+  /**
+   * @type {string}
+   */
+  let errorReason = undefined;
 
   $: $backend = allBackendServices[backendName];
 

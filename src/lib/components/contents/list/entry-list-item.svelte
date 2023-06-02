@@ -7,11 +7,15 @@
   import { parseSummary } from '$lib/services/contents/view';
   import { goto } from '$lib/services/navigation';
 
-  /** @type {Entry} */
-  export let entry;
+  /**
+   * @type {Entry}
+   */
+  export let entry = undefined;
 
-  /** @type {EntryContent} */
-  export let content;
+  /**
+   * @type {EntryContent}
+   */
+  export let content = undefined;
 
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
 </script>

@@ -16,7 +16,13 @@
 
   export let locale = '';
   export let keyPath = '';
-  export let fieldConfig = {};
+  /**
+   * @type {ListField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string[]}
+   */
   export let currentValue = undefined;
 
   $: ({
@@ -59,7 +65,7 @@
   $: itemExpandedList = items.map(() => !collapsed);
 
   let mounted = false;
-  let widgetId;
+  let widgetId = '';
   let inputValue = '';
 
   onMount(() => {

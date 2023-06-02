@@ -8,10 +8,16 @@
   // svelte-ignore unused-export-let
   export let keyPath = '';
   // svelte-ignore unused-export-let
-  export let fieldConfig = {};
+  /**
+   * @type {NumberField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string | number}
+   */
   export let currentValue = undefined;
 </script>
 
 {#if currentValue !== undefined}
-  <p>{Intl.NumberFormat(locale).format(currentValue)}</p>
+  <p>{Intl.NumberFormat(locale).format(Number(currentValue))}</p>
 {/if}

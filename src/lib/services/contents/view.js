@@ -39,6 +39,9 @@ export const parseSummary = (collection, content) => {
   return collection.summary.replace(/{{(.+?)}}/g, (_match, tag) => {
     const [fieldName, ...transformations] = tag.split(/\s*\|\s*/);
     const fieldConfig = getFieldByKeyPath(collection.name, undefined, fieldName, valueMap) || {};
+    /**
+     * @type {string}
+     */
     let result = valueMap[fieldName];
 
     if (!result) {
@@ -80,9 +83,9 @@ export const parseSummary = (collection, content) => {
       if (tf.startsWith('truncate')) {
         const [, number, string = ''] = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
         const max = Number(number);
-        const truncated = result.substring(0, max);
+        const truncated = String(result).substring(0, max);
 
-        result = result.length > max ? `${truncated}${string}` : truncated;
+        result = String(result).length > max ? `${truncated}${string}` : truncated;
       }
     });
 
@@ -152,7 +155,7 @@ const sortEntries = (entries, { key, order } = {}) => {
  * @param {object[]} entries Entry list.
  * @param {object} [condition] Filter condition.
  * @param {string} [condition.field] Field name.
- * @param {string} [condition.pattern] Regular expression.
+ * @param {string | boolean} [condition.pattern] Matching pattern, maybe a regular expression.
  * @returns {object[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
@@ -180,7 +183,7 @@ const filterEntries = (entries, { field, pattern } = {}) => {
  * @param {object[]} entries Entry list.
  * @param {object} [condition] Group condition.
  * @param {string} [condition.field] Field name.
- * @param {string} [condition.pattern] Regular expression.
+ * @param {string | boolean} [condition.pattern] Matching pattern, maybe a regular expression.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
@@ -198,7 +201,10 @@ const groupEntries = (entries, { field, pattern } = {}) => {
 
   entries.forEach((entry) => {
     const value = entry.locales[defaultLocale]?.content[field] || entry[field];
-    let key;
+    /**
+     * @type {string}
+     */
+    let key = undefined;
 
     if (regex) {
       [key = otherKey] = String(value || '').match(regex) || [];
@@ -264,6 +270,7 @@ export const sortFields = derived([user, selectedCollection], ([_user, _collecti
 
 /**
  * List of all the entries for the selected folder collection.
+ * @type {import('svelte/store').Readable<Entry[]>}
  */
 export const listedEntries = derived(
   [allEntries, selectedCollection],
@@ -282,7 +289,9 @@ export const listedEntries = derived(
 export const entryGroups = derived(
   [listedEntries, currentView],
   ([_listedEntries, _currentView], set) => {
-    /** @type {Entry[]} */
+    /**
+     * @type {Entry[]}
+     */
     let entries = [..._listedEntries];
 
     entries = sortEntries(entries, _currentView?.sort);

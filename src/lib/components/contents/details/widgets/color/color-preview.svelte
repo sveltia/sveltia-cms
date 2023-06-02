@@ -9,7 +9,13 @@
   // svelte-ignore unused-export-let
   export let keyPath = '';
   // svelte-ignore unused-export-let
-  export let fieldConfig = {};
+  /**
+   * @type {ColorField}
+   */
+  export let fieldConfig = undefined;
+  /**
+   * @type {string}
+   */
   export let currentValue = undefined;
 </script>
 

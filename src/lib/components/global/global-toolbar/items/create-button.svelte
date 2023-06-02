@@ -6,7 +6,10 @@
   import { siteConfig } from '$lib/services/config';
   import { goto } from '$lib/services/navigation';
 
-  let filePicker;
+  /**
+   * @type {import('svelte').SvelteComponentTyped}
+   */
+  let filePicker = undefined;
 </script>
 
 <MenuButton class="ghost iconic" popupPosition="bottom-right">
