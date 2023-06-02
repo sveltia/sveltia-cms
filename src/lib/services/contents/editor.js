@@ -104,6 +104,9 @@ const createNewContent = (fields) => {
  * locale/Proxy map.
  * @param {string} args.locale Source locale.
  * @param {object} [args.target] Target object.
+ * @param {Function} [args.getValueMap] Optional function to get an object holding the current entry
+ * values. It will be used for the `valueMap` argument of {@link getFieldByKeyPath}. If omitted, the
+ * proxy target will be used instead.
  * @returns {Proxy.<object>} Created proxy.
  */
 const createProxy = ({
@@ -111,6 +114,7 @@ const createProxy = ({
   prop: entryDraftProp,
   locale: sourceLocale,
   target = {},
+  getValueMap = undefined,
 }) => {
   const collection = getCollection(collectionName);
   const { defaultLocale = 'default' } = collection._i18n;
@@ -118,7 +122,8 @@ const createProxy = ({
   return new Proxy(target, {
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {string} */ keyPath, value) => {
-      const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, obj);
+      const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
+      const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, valueMap);
 
       if (!fieldConfig) {
         return true;
@@ -188,6 +193,8 @@ export const createDraft = (collectionName, entry) => {
               draft: { collectionName, fileName },
               prop: 'files',
               locale,
+              // eslint-disable-next-line jsdoc/require-jsdoc
+              getValueMap: () => get(entryDraft).currentValues[locale],
             })
           : {},
       ]),
