@@ -23,6 +23,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example 'cities.*.id'
    * @example '{{cities.*.id}}'
    * @example '{{slug}}'
+   * @example '{{fields.slug}}'
    */
   const valueField = fieldConfig.value_field;
   /**
@@ -63,7 +64,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
        * multiple references can be replaced at once. Otherwise, the key is a complete key path
-       * except for `{{slug}}`, and the value is the actual value.
+       * except for `slug`, and the value is the actual value.
        * @type {{ [key: string]: string | number | object[] }}
        */
       const replacers = Object.fromEntries(
@@ -93,7 +94,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             return [fieldName, valueMap[Object.keys(valueMap)[0]]];
           }
 
-          return [fieldName, fieldName === 'slug' ? refEntry.slug : flattenContent[fieldName]];
+          if (fieldName === 'slug') {
+            return [fieldName, refEntry.slug];
+          }
+
+          return [fieldName, flattenContent[fieldName.replace(/^fields\./, '')]];
         }),
       );
 

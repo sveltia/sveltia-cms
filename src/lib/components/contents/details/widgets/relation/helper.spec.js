@@ -26,6 +26,7 @@ describe('Test getOptions()', () => {
         locales: {
           default: {
             content: {
+              slug: 'member-melvin-lucas',
               name: {
                 first: 'Melvin',
                 last: 'Lucas',
@@ -41,6 +42,7 @@ describe('Test getOptions()', () => {
         locales: {
           default: {
             content: {
+              slug: 'member-elsie-mcbride',
               name: {
                 first: 'Elsie',
                 last: 'Mcbride',
@@ -56,6 +58,7 @@ describe('Test getOptions()', () => {
         locales: {
           default: {
             content: {
+              slug: 'member-maxine-field',
               name: {
                 first: 'Maxine',
                 last: 'Field',
@@ -96,6 +99,24 @@ describe('Test getOptions()', () => {
       { label: 'Elsie Mcbride (@ElsieMcbride)', value: 'elsie-mcbride' },
       { label: 'Maxine Field (@MaxineField)', value: 'maxine-field' },
       { label: 'Melvin Lucas (@MelvinLucas)', value: 'melvin-lucas' },
+    ]);
+
+    // In-field slug
+    expect(
+      getOptions(
+        locale,
+        {
+          ...config,
+          value_field: '{{fields.slug}}',
+          display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
+        },
+        // @ts-ignore
+        entries,
+      ),
+    ).toEqual([
+      { label: 'Elsie Mcbride (@ElsieMcbride)', value: 'member-elsie-mcbride' },
+      { label: 'Maxine Field (@MaxineField)', value: 'member-maxine-field' },
+      { label: 'Melvin Lucas (@MelvinLucas)', value: 'member-melvin-lucas' },
     ]);
   });
 

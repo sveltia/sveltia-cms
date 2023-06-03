@@ -24,6 +24,7 @@
     collection: collectionName,
     file: fileName,
     multiple = false,
+    value_field: valueField,
   } = fieldConfig);
 
   $: refEntries = fileName ? [getFile(collectionName, fileName)] : getEntries(collectionName);
@@ -33,7 +34,19 @@
     multiple ? /** @type {string[]} */ (currentValue) : /** @type {string[]} */ ([currentValue])
   )
     .filter((value) => value !== undefined)
-    .map((value) => options.find((option) => option.value === value)?.label || value);
+    .map((value) => {
+      const label = options.find((option) => option.value === value)?.label;
+
+      if (label && label !== value) {
+        if (['slug', '{{slug}}', '{{fields.slug}}'].includes(valueField)) {
+          return label;
+        }
+
+        return `${label} (${value})`;
+      }
+
+      return value;
+    });
 
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 </script>
