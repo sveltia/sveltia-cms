@@ -2,6 +2,14 @@ import { flatten, unflatten } from 'flat';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
+ * Enclose the given field name in brackets if it doesn’t contain any brackets.
+ * @param {string} fieldName Field name e.g. `{{name.first}}` or `name.first`.
+ * @returns {string} Bracketed field name, e.g. `{{name.first}}`.
+ */
+const normalizeFieldName = (fieldName) =>
+  fieldName.match(/{{.+?}}/) ? fieldName : `{{${fieldName}}}`;
+
+/**
  * Get options for a Relation field.
  * @param {LocaleCode} locale Current locale.
  * @param {RelationField} fieldConfig Field configuration.
@@ -13,6 +21,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example 'userId'
    * @example 'name.first'
    * @example 'cities.*.id'
+   * @example '{{cities.*.id}}'
    * @example '{{slug}}'
    */
   const valueField = fieldConfig.value_field;
@@ -23,6 +32,19 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example ['{{twitterHandle}} - {{followerCount}}'] (template)
    */
   const displayFields = fieldConfig.display_fields;
+  /**
+   * Canonical, templatized value field.
+   * @example '{{name.first}}'
+   * @example '{{route}}#{{sections.*.name}}'
+   */
+  const _valueField = normalizeFieldName(valueField);
+  /**
+   * Canonical, templatized display field.
+   * @example '{{twitterHandle}} {{followerCount}}'
+   * @example '{{sections.*.name}}'
+   * @example '{{route}}: {{sections.*.name}} ({{sections.*.id}})'
+   */
+  const _displayField = (displayFields || [valueField]).map(normalizeFieldName).join(' ');
 
   return refEntries
     .map((refEntry) => {
@@ -38,29 +60,22 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       const flattenContent = flatten(content);
 
       /**
-       * Canonical, templatized display field.
-       * @example '{{twitterHandle}} {{followerCount}}'
-       * @example '{{sections.*.name}}'
-       * @example '{{route}}: {{sections.*.name}} ({{sections.*.id}})'
-       */
-      const displayField = (displayFields || [valueField])
-        .map((fieldName) => (fieldName.match(/{{.+?}}/) ? fieldName : `{{${fieldName}}}`))
-        .join(' ');
-
-      /**
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
        * multiple references can be replaced at once. Otherwise, the key is a complete key path
        * except for `{{slug}}`, and the value is the actual value.
+       * @type {{ [key: string]: string | number | object[] }}
        */
       const replacers = Object.fromEntries(
         [
           ...new Set(
-            [...[...displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]), valueField].map(
-              (fieldName) =>
-                fieldName.includes('.')
-                  ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
-                  : fieldName,
+            [
+              ...[..._displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+              ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+            ].map((fieldName) =>
+              fieldName.includes('.')
+                ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
+                : fieldName,
             ),
           ),
         ].map((fieldName) => {
@@ -78,7 +93,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             return [fieldName, valueMap[Object.keys(valueMap)[0]]];
           }
 
-          return [fieldName, fieldName === '{{slug}}' ? refEntry.slug : flattenContent[fieldName]];
+          return [fieldName, fieldName === 'slug' ? refEntry.slug : flattenContent[fieldName]];
         }),
       );
 
@@ -89,8 +104,8 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
         ...Object.values(replacers).map((value) => (Array.isArray(value) ? value.length : 1)),
       );
 
-      let labels = new Array(count).fill(displayField);
-      let values = new Array(count).fill(valueField);
+      let labels = new Array(count).fill(_displayField);
+      let values = new Array(count).fill(_valueField);
 
       Object.entries(replacers).forEach(([key, value]) => {
         if (Array.isArray(value)) {
@@ -99,14 +114,14 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
               labels.forEach((_label, labelIndex) => {
                 if (valueIndex % labelIndex === 0) {
                   labels[valueIndex] = labels[valueIndex].replaceAll(`{{${key}.${k}}}`, v);
-                  values[valueIndex] = values[valueIndex].replaceAll(`${key}.${k}`, v);
+                  values[valueIndex] = values[valueIndex].replaceAll(`{{${key}.${k}}}`, v);
                 }
               });
             });
           });
         } else {
           labels = labels.map((l) => l.replaceAll(`{{${key}}}`, value));
-          values = values.map((v) => v.replaceAll(key, value));
+          values = values.map((v) => v.replaceAll(`{{${key}}}`, value));
         }
       });
 

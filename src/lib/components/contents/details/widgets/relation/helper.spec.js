@@ -244,6 +244,25 @@ describe('Test getOptions()', () => {
       { label: '/projects: Overview (overview)', value: 'overview' },
     ]);
 
+    // Value field variant
+    expect(
+      getOptions(
+        locale,
+        {
+          ...config,
+          display_fields: ['{{route}} {{sections.*.id}}'],
+          value_field: '{{route}}#{{sections.*.id}}',
+        },
+        // @ts-ignore
+        entries,
+      ),
+    ).toEqual([
+      { label: '/about contact', value: '/about#contact' },
+      { label: '/about team', value: '/about#team' },
+      { label: '/projects members', value: '/projects#members' },
+      { label: '/projects overview', value: '/projects#overview' },
+    ]);
+
     // Invalid
     expect(
       getOptions(
