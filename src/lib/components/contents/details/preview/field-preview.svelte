@@ -49,7 +49,7 @@
   $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
   $: canDuplicate = hasLocales && i18n === 'duplicate';
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
-  $: isList = multiple || widget === 'list';
+  $: isList = widget === 'list' || ((widget === 'relation' || widget === 'select') && multiple);
 
   // Multiple values are flattened in the value map object
   $: currentValue = isList
