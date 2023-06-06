@@ -32,7 +32,7 @@
  */
 
 /**
- * @typedef {object} PictureService Picture service.
+ * @typedef {object} MediaService Media service.
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
  * @property {boolean} hotlinking Whether to hotlink images.

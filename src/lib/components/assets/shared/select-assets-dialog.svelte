@@ -7,7 +7,7 @@
   import StockPhotoPanel from '$lib/components/assets/shared/stock-photo-panel.svelte';
   import { allAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
-  import { allPictureServices } from '$lib/services/integrations/pictures';
+  import { allMediaServices } from '$lib/services/integrations/media';
   import { prefs } from '$lib/services/prefs';
   import { generateUUID, stripSlashes } from '$lib/services/utils/strings';
 
@@ -54,13 +54,13 @@
   }}
 >
   <svelte:fragment slot="header-extra">
-    {#if ['collection_files', 'all_files', ...Object.keys(allPictureServices)].includes(tabName)}
+    {#if ['collection_files', 'all_files', ...Object.keys(allMediaServices)].includes(tabName)}
       <SearchBar bind:value={searchTerms} />
     {/if}
   </svelte:fragment>
   <svelte:fragment slot="footer-extra">
-    {#if Object.keys(allPictureServices).includes(tabName) && $prefs?.apiKeys?.[tabName]}
-      {@const { serviceLabel, landingURL } = allPictureServices[tabName]}
+    {#if Object.keys(allMediaServices).includes(tabName) && $prefs?.apiKeys?.[tabName]}
+      {@const { serviceLabel, landingURL } = allMediaServices[tabName]}
       <a href={landingURL}>
         {$_('prefs.media.stock_photo.credit', { values: { service: serviceLabel } })}
       </a>
@@ -90,7 +90,7 @@
         />
       {/if}
       <Tab name="all_files" label={$_('all_files')} aria-controls="{tabPanelIdPrefix}-all-assets" />
-      {#each Object.values(allPictureServices) as { serviceId, serviceLabel } (serviceId)}
+      {#each Object.values(allMediaServices) as { serviceId, serviceLabel } (serviceId)}
         <Tab name={serviceId} label={serviceLabel} aria-controls="{tabPanelIdPrefix}-{serviceId}" />
       {/each}
     </TabList>
@@ -139,7 +139,7 @@
         }}
       />
     </TabPanel>
-    {#each Object.entries(allPictureServices) as [serviceId, props] (serviceId)}
+    {#each Object.entries(allMediaServices) as [serviceId, props] (serviceId)}
       <TabPanel id="{tabPanelIdPrefix}-{serviceId}">
         {#if tabName === serviceId}
           <StockPhotoPanel

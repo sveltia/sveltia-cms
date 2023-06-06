@@ -3,10 +3,10 @@ import pixabay from './pixabay';
 import unsplash from './unsplash';
 
 /**
- * List of all the supported picture services.
- * @type {{ [name: string]: PictureService }}
+ * List of all the supported media services.
+ * @type {{ [name: string]: MediaService }}
  */
-export const allPictureServices = {
+export const allMediaServices = {
   pexels,
   pixabay,
   unsplash,

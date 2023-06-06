@@ -65,7 +65,7 @@ const searchImages = async (query, apiKey) => {
 };
 
 /**
- * @type {PictureService}
+ * @type {MediaService}
  */
 export default {
   serviceId,
