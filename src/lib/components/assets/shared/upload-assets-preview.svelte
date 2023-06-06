@@ -1,5 +1,5 @@
 <script>
-  import { Icon } from '@sveltia/ui';
+  import { Button, Icon } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import Image from '$lib/components/common/image.svelte';
   import { formatSize } from '$lib/services/utils/files';
@@ -11,7 +11,7 @@
 </script>
 
 <div class="files">
-  {#each files as file}
+  {#each files as file, index}
     {@const { name, type, size } = file}
     {@const [, extension = ''] = name.match(/\.([^.]+)$/) || []}
     <div class="file">
@@ -30,6 +30,16 @@
           {$_(`file_type_labels.${extension}`, { default: extension.toUpperCase() })}
         </div>
       </div>
+      <Button
+        class="ghost iconic"
+        on:click={(event) => {
+          event.stopPropagation();
+          files.splice(index, 1);
+          files = files;
+        }}
+      >
+        <Icon name="close" label={$_('remove')} />
+      </Button>
     </div>
   {/each}
 </div>
@@ -64,6 +74,7 @@
     }
 
     .meta {
+      flex: auto;
       display: flex;
       flex-direction: column;
       gap: 4px;

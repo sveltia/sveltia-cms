@@ -6,6 +6,7 @@ import { sleep } from '$lib/services/utils/misc';
 
 const serviceId = 'pexels';
 const serviceLabel = 'Pexels';
+const showServiceLink = true;
 const hotlinking = false;
 const landingURL = 'https://www.pexels.com/api/';
 const apiKeyURL = 'https://www.pexels.com/api/new/';
@@ -92,6 +93,7 @@ const searchImages = async (query, apiKey) => {
 export default {
   serviceId,
   serviceLabel,
+  showServiceLink,
   hotlinking,
   landingURL,
   apiKeyURL,

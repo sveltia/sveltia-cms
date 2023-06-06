@@ -37,5 +37,5 @@
       })}
     {/if}
   </div>
-  <UploadAssetsPreview files={$uploadingAssets.files} />
+  <UploadAssetsPreview bind:files={$uploadingAssets.files} />
 </Dialog>

@@ -3,6 +3,7 @@ import { get } from 'svelte/store';
 
 const serviceId = 'pixabay';
 const serviceLabel = 'Pixabay';
+const showServiceLink = true;
 const hotlinking = false;
 const landingURL = 'https://pixabay.com/service/about/api/';
 const apiKeyURL = 'https://pixabay.com/api/docs/#api_key';
@@ -70,6 +71,7 @@ const searchImages = async (query, apiKey) => {
 export default {
   serviceId,
   serviceLabel,
+  showServiceLink,
   hotlinking,
   landingURL,
   apiKeyURL,

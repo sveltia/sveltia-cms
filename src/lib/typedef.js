@@ -35,6 +35,7 @@
  * @typedef {object} MediaService Media service.
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
+ * @property {boolean} showServiceLink Whether to show a link to the service in the media library.
  * @property {boolean} hotlinking Whether to hotlink images.
  * @property {string} landingURL Landing page URL.
  * @property {string} apiKeyURL URL of the page that provides an API key.

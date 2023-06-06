@@ -26,13 +26,21 @@
   let files = [];
 
   /**
-   * Notify the selected files.
+   * Open the file picker to let the user choose file(s).
+   */
+  export const openFilePicker = () => {
+    filePicker.open();
+  };
+
+  /**
+   * Cache the selected files, and notify the list.
    * @param {File[]} allFiles Files.
    */
   const onSelect = (allFiles) => {
     files = multiple ? allFiles : allFiles.slice(0, 1);
-    dispatch('select', { files });
   };
+
+  $: dispatch('select', { files });
 </script>
 
 <div
@@ -52,7 +60,16 @@
     onSelect(await scanFiles(dataTransfer, { accept }));
   }}
 >
-  {#if $$slots.default}
+  <!--
+    File(s) can be selected when `openFilePicker()` is called from outside the component, typically
+    with an external upload button. In that case, the file preview, if enabled, should replace the
+    default slot content.
+  -->
+  {#if !showUploadButton && showFilePreview && files.length}
+    <div class="content">
+      <UploadAssetsPreview bind:files />
+    </div>
+  {:else if $$slots.default}
     <slot />
   {:else}
     <div class="content">
@@ -63,7 +80,7 @@
             class="primary"
             label={$_('upload')}
             on:click={() => {
-              filePicker.open();
+              openFilePicker();
             }}
           >
             <Icon slot="start-icon" name="cloud_upload" />
@@ -71,7 +88,7 @@
         </div>
       {/if}
       {#if showFilePreview && files.length}
-        <UploadAssetsPreview {files} />
+        <UploadAssetsPreview bind:files />
       {/if}
     </div>
   {/if}

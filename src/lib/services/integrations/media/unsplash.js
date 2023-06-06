@@ -6,6 +6,7 @@ import { sleep } from '$lib/services/utils/misc';
 
 const serviceId = 'unsplash';
 const serviceLabel = 'Unsplash';
+const showServiceLink = true;
 const hotlinking = true;
 const landingURL = 'https://unsplash.com/developers';
 const apiKeyURL = 'https://unsplash.com/oauth/applications';
@@ -97,6 +98,7 @@ const searchImages = async (query, apiKey) => {
 export default {
   serviceId,
   serviceLabel,
+  showServiceLink,
   hotlinking,
   landingURL,
   apiKeyURL,

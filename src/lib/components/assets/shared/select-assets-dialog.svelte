@@ -1,5 +1,5 @@
 <script>
-  import { Dialog, SearchBar, Tab, TabList, TabPanel, TextInput } from '@sveltia/ui';
+  import { Button, Dialog, SearchBar, Tab, TabList, TabPanel, TextInput } from '@sveltia/ui';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
@@ -20,7 +20,14 @@
 
   const dispatch = createEventDispatcher();
   const title = kind === 'image' ? $_('select_image') : $_('select_file');
-  let tabName = 'upload';
+  /**
+   * @type {import('svelte').SvelteComponentTyped}
+   */
+  let collectionAssetsDropZone = undefined;
+  /**
+   * @type {import('svelte').SvelteComponentTyped}
+   */
+  let allAssetsDropZone = undefined;
   let tabPanelIdPrefix = '';
   /**
    * @type {?SelectedAsset}
@@ -30,6 +37,10 @@
   let searchTerms = '';
 
   $: collectionMediaFolder = stripSlashes($selectedCollection.media_folder || '');
+  $: libraryName = collectionMediaFolder ? 'collection-files' : 'all-files';
+  $: isLocalLibrary = ['collection-files', 'all-files'].includes(libraryName);
+  $: isEnabledMediaService =
+    Object.keys(allMediaServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName];
 
   $: {
     if (open) {
@@ -54,55 +65,101 @@
   }}
 >
   <svelte:fragment slot="header-extra">
-    {#if ['collection_files', 'all_files', ...Object.keys(allMediaServices)].includes(tabName)}
-      <SearchBar bind:value={searchTerms} />
+    {#if isLocalLibrary}
+      <Button
+        class="secondary"
+        label={$_('upload')}
+        on:click={() => {
+          if (libraryName === 'collection-files') {
+            collectionAssetsDropZone.openFilePicker();
+          } else {
+            allAssetsDropZone.openFilePicker();
+          }
+        }}
+      />
+    {/if}
+    {#if isLocalLibrary || isEnabledMediaService}
+      <SearchBar bind:value={searchTerms} disabled={!!selectedAsset?.file} />
     {/if}
   </svelte:fragment>
   <svelte:fragment slot="footer-extra">
-    {#if Object.keys(allMediaServices).includes(tabName) && $prefs?.apiKeys?.[tabName]}
-      {@const { serviceLabel, landingURL } = allMediaServices[tabName]}
-      <a href={landingURL}>
-        {$_('prefs.media.stock_photo.credit', { values: { service: serviceLabel } })}
-      </a>
+    {#if isEnabledMediaService}
+      {@const { showServiceLink, serviceLabel, landingURL } = allMediaServices[libraryName]}
+      {#if showServiceLink}
+        <a href={landingURL}>
+          {$_('prefs.media.stock_photo.credit', { values: { service: serviceLabel } })}
+        </a>
+      {/if}
     {/if}
   </svelte:fragment>
   <div class="wrapper">
     <TabList
       orientation="vertical"
       on:select={(/** @type {CustomEvent} */ event) => {
-        tabName = event.detail.name;
+        libraryName = event.detail.name;
+        selectedAsset = null;
       }}
     >
+      {#if collectionMediaFolder}
+        <Tab
+          name="collection-files"
+          label={$_('collection_files')}
+          aria-selected={libraryName === 'collection-files'}
+          aria-controls="{tabPanelIdPrefix}-collection-assets"
+        />
+      {/if}
       <Tab
-        name="upload"
-        label={$_('upload')}
-        aria-selected={true}
-        aria-controls="{tabPanelIdPrefix}-upload"
+        name="all-files"
+        label={$_('all_files')}
+        aria-selected={libraryName === 'all-files'}
+        aria-controls="{tabPanelIdPrefix}-all-assets"
       />
       {#if canEnterURL}
         <Tab name="enter_url" label={$_('enter_url')} aria-controls="{tabPanelIdPrefix}-url" />
       {/if}
-      {#if collectionMediaFolder}
-        <Tab
-          name="collection_files"
-          label={$_('collection_files')}
-          aria-controls="{tabPanelIdPrefix}-collection-assets"
-        />
-      {/if}
-      <Tab name="all_files" label={$_('all_files')} aria-controls="{tabPanelIdPrefix}-all-assets" />
       {#each Object.values(allMediaServices) as { serviceId, serviceLabel } (serviceId)}
         <Tab name={serviceId} label={serviceLabel} aria-controls="{tabPanelIdPrefix}-{serviceId}" />
       {/each}
     </TabList>
-    <TabPanel id="{tabPanelIdPrefix}-upload">
+    {#if collectionMediaFolder}
+      <TabPanel id="{tabPanelIdPrefix}-collection-assets">
+        <DropZone
+          bind:this={collectionAssetsDropZone}
+          accept={kind === 'image' ? 'image/*' : undefined}
+          showFilePreview={true}
+          on:select={({ detail: { files } }) => {
+            selectedAsset = files.length ? { file: files[0] } : null;
+          }}
+        >
+          <AssetsPanel
+            assets={$allAssets.filter(
+              (asset) => (!kind || kind === asset.kind) && collectionMediaFolder === asset.folder,
+            )}
+            {searchTerms}
+            on:select={({ detail }) => {
+              selectedAsset = detail;
+            }}
+          />
+        </DropZone>
+      </TabPanel>
+    {/if}
+    <TabPanel id="{tabPanelIdPrefix}-all-assets">
       <DropZone
+        bind:this={allAssetsDropZone}
         accept={kind === 'image' ? 'image/*' : undefined}
-        showUploadButton
-        showFilePreview
+        showFilePreview={true}
         on:select={({ detail: { files } }) => {
           selectedAsset = files.length ? { file: files[0] } : null;
         }}
-      />
+      >
+        <AssetsPanel
+          assets={$allAssets.filter((asset) => !kind || kind === asset.kind)}
+          {searchTerms}
+          on:select={({ detail }) => {
+            selectedAsset = detail;
+          }}
+        />
+      </DropZone>
     </TabPanel>
     {#if canEnterURL}
       <TabPanel id="{tabPanelIdPrefix}-url">
@@ -117,31 +174,9 @@
         </div>
       </TabPanel>
     {/if}
-    {#if collectionMediaFolder}
-      <TabPanel id="{tabPanelIdPrefix}-collection-assets">
-        <AssetsPanel
-          assets={$allAssets.filter(
-            (asset) => (!kind || kind === asset.kind) && collectionMediaFolder === asset.folder,
-          )}
-          {searchTerms}
-          on:select={({ detail }) => {
-            selectedAsset = detail;
-          }}
-        />
-      </TabPanel>
-    {/if}
-    <TabPanel id="{tabPanelIdPrefix}-all-assets">
-      <AssetsPanel
-        assets={$allAssets.filter((asset) => !kind || kind === asset.kind)}
-        {searchTerms}
-        on:select={({ detail }) => {
-          selectedAsset = detail;
-        }}
-      />
-    </TabPanel>
     {#each Object.entries(allMediaServices) as [serviceId, props] (serviceId)}
       <TabPanel id="{tabPanelIdPrefix}-{serviceId}">
-        {#if tabName === serviceId}
+        {#if libraryName === serviceId}
           <StockPhotoPanel
             {...props}
             {searchTerms}
