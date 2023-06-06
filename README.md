@@ -42,7 +42,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better productivity
 
-- Integrating Pexels, Pixabay and Unsplash to allow inserting free stock photos into image fields with no hassle.
+- Integrating Pexels, Pixabay and Unsplash to allow inserting free stock photos into image fields with no hassle[^8].
 - Able to work on a local Git repository without having to run a proxy server. [See below](#work-with-a-local-git-repository) for details.
 - Able to delete multiple entries and assets at once.
 - Solving various outstanding Netlify/Decap CMS bugs[^11].
@@ -330,6 +330,7 @@ This software is provided “as is” without any express or implied warranty. T
 [^5]: [Netlify/Decap CMS #1032](https://github.com/decaporg/decap-cms/issues/1032)
 [^6]: [Netlify/Decap CMS #3240](https://github.com/decaporg/decap-cms/issues/3240)
 [^7]: [Netlify/Decap CMS #4386](https://github.com/decaporg/decap-cms/issues/4386)
+[^8]: [Netlify/Decap CMS #2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341)
 [^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382) and many more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
