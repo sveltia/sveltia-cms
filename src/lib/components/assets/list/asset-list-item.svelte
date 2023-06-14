@@ -1,5 +1,5 @@
 <script>
-  import { GridCell, Row } from '@sveltia/ui';
+  import { TableCell, TableRow } from '@sveltia/ui';
   import AssetCheckbox from '$lib/components/assets/list/asset-checkbox.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
@@ -16,7 +16,7 @@
 
 <!-- @todo Add support for drag to move. -->
 
-<Row
+<TableRow
   aria-selected={$selectedAssets.includes(asset)}
   on:click={() => {
     $selectedAsset = asset;
@@ -29,18 +29,18 @@
     }
   }}
 >
-  <GridCell class="checkbox">
+  <TableCell class="checkbox">
     <AssetCheckbox {asset} />
-  </GridCell>
-  <GridCell class="image">
+  </TableCell>
+  <TableCell class="image">
     {#if kind === 'image'}
       <Image src={getAssetURL(asset)} checkerboard={true} />
     {/if}
     {#if kind === 'video'}
       <Video src={getAssetURL(asset)} />
     {/if}
-  </GridCell>
-  <GridCell class="title">
+  </TableCell>
+  <TableCell class="title">
     <span>{name}</span>
-  </GridCell>
-</Row>
+  </TableCell>
+</TableRow>

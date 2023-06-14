@@ -1,13 +1,13 @@
 <script>
-  import { Grid, RowGroup } from '@sveltia/ui';
+  import { Table, TableBody } from '@sveltia/ui';
 </script>
 
 <div class="basic-list-view">
-  <Grid>
-    <RowGroup>
+  <Table>
+    <TableBody>
       <slot />
-    </RowGroup>
-  </Grid>
+    </TableBody>
+  </Table>
 </div>
 
 <style lang="scss">

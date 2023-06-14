@@ -2,12 +2,12 @@
   import {
     Button,
     Dialog,
+    Divider,
     Icon,
     Menu,
     MenuButton,
     MenuItem,
     MenuItemCheckbox,
-    Separator,
     Spacer,
     Toolbar,
   } from '@sveltia/ui';
@@ -91,7 +91,7 @@
           }));
         }}
       />
-      <Separator />
+      <Divider />
       <MenuItem
         label={$_('revert_all_changes')}
         disabled={!modified}
@@ -99,7 +99,7 @@
           revertChanges();
         }}
       />
-      <Separator />
+      <Divider />
       <!-- @todo Implement this!
       <MenuItem
         label={$_('duplicate')}

@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -9,8 +9,8 @@ dependencies:
     specifier: ^1.38.0
     version: 1.38.0
   '@sveltia/ui':
-    specifier: ^0.2.5
-    version: 0.2.5(svelte@3.59.1)
+    specifier: ^0.3.1
+    version: 0.3.1(svelte@3.59.1)
   deep-is:
     specifier: ^0.1.4
     version: 0.1.4
@@ -802,8 +802,8 @@ packages:
       - supports-color
     dev: true
 
-  /@sveltia/ui@0.2.5(svelte@3.59.1):
-    resolution: {integrity: sha512-zEtBJlR88umMBXojEwBTrdiyFfVUCsg5mUiDp1VoX4ONf6v8VWy81FUdwkHe5nxk3jmsZ0ltlJWX+FH4LreO1g==}
+  /@sveltia/ui@0.3.1(svelte@3.59.1):
+    resolution: {integrity: sha512-A+KAo7FzfyuiXjdwqQ0r+sidF7ImOBA2lcUZPpHqiYeEDij/FivqJygiJkq9kofNd8UVRLk1j8KhC8Fq29/ZMg==}
     peerDependencies:
       svelte: ^3.55.1
     dependencies:

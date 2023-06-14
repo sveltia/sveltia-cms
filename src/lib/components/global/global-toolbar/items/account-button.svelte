@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItem, Separator } from '@sveltia/ui';
+  import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
   import { user } from '$lib/services/auth';
@@ -34,7 +34,7 @@
         window.open($user?.html_url, '_blank');
       }}
     />
-    <Separator />
+    <Divider />
     <MenuItem
       label={$_('live_site')}
       on:click={() => {
@@ -48,7 +48,7 @@
         window.open($backend.url.replace('{repo}', $siteConfig.backend.repo));
       }}
     />
-    <Separator />
+    <Divider />
     <MenuItem
       label={$_('help')}
       on:click={() => {
@@ -61,7 +61,7 @@
         showPrefsDialog = true;
       }}
     />
-    <Separator />
+    <Divider />
     <MenuItem
       label={$_('sign_out')}
       on:click={async () => {

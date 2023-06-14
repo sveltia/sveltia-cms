@@ -1,5 +1,5 @@
 <script>
-  import { Checkbox, GridCell, Row } from '@sveltia/ui';
+  import { Checkbox, TableCell, TableRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
   import { getAssetByPublicPath } from '$lib/services/assets';
   import { getAssetURL } from '$lib/services/assets/view';
@@ -20,13 +20,13 @@
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
 </script>
 
-<Row
+<TableRow
   aria-selected={$selectedEntries.includes(entry)}
   on:click={() => {
     goto(`/collections/${$selectedCollection.name}/entries/${entry.slug}`);
   }}
 >
-  <GridCell class="checkbox">
+  <TableCell class="checkbox">
     <Checkbox
       checked={$selectedEntries.includes(entry)}
       on:change={({ detail: { checked } }) => {
@@ -45,16 +45,16 @@
         });
       }}
     />
-  </GridCell>
+  </TableCell>
   {#if firstImageField}
-    <GridCell class="image">
+    <TableCell class="image">
       {#if content[firstImageField.name]}
         {@const asset = getAssetByPublicPath(content[firstImageField.name])}
         <Image src={asset ? getAssetURL(asset) : content[firstImageField.name]} cover={true} />
       {/if}
-    </GridCell>
+    </TableCell>
   {/if}
-  <GridCell class="title">
+  <TableCell class="title">
     <span>
       {#if $selectedCollection.summary}
         {parseSummary($selectedCollection, content)}
@@ -69,5 +69,5 @@
           content.label}
       {/if}
     </span>
-  </GridCell>
-</Row>
+  </TableCell>
+</TableRow>

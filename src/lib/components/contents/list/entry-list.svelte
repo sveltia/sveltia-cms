@@ -64,7 +64,7 @@
     color: var(--secondary-foreground-color);
     background-color: var(--secondary-background-color);
 
-    & + :global(.basic-grid-view .grid) {
+    & + :global(.basic-grid-view .table) {
       margin: 16px 0;
     }
   }

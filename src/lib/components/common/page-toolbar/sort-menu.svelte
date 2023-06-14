@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItemGroup, MenuItemRadio, Separator } from '@sveltia/ui';
+  import { Divider, Icon, Menu, MenuButton, MenuItemGroup, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
 
@@ -35,7 +35,7 @@
         />
       {/each}
     </MenuItemGroup>
-    <Separator />
+    <Divider />
     <MenuItemGroup ariaLabel={$_('sort_order')}>
       {#each ['ascending', 'descending'] as order}
         <MenuItemRadio

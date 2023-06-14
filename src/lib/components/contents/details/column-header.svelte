@@ -1,12 +1,12 @@
 <script>
   import {
+    Divider,
     Icon,
     Menu,
     MenuButton,
     MenuItem,
     SelectButton,
     SelectButtonGroup,
-    Separator,
     Spacer,
     Toolbar,
   } from '@sveltia/ui';
@@ -91,10 +91,10 @@
           {#if canCopy}
             <CopyMenuItem locale={$thisPane.locale} translate={true} />
             {#if otherLocales.length > 1}
-              <Separator />
+              <Divider />
             {/if}
             <CopyMenuItem locale={$thisPane.locale} />
-            <Separator />
+            <Divider />
           {/if}
           <MenuItem
             label={$_('revert_changes')}

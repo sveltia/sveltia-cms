@@ -1,5 +1,5 @@
 <script>
-  import { GridCell, Group, Row } from '@sveltia/ui';
+  import { Group, TableCell, TableRow } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import Image from '$lib/components/common/image.svelte';
@@ -27,12 +27,12 @@
             {@const { defaultLocale = 'default' } = collection._i18n}
             {@const { content } = locales[defaultLocale] || {}}
             {#if content}
-              <Row
+              <TableRow
                 on:click={() => {
                   goto(`/collections/${collectionName}/entries/${fileName || slug}`);
                 }}
               >
-                <GridCell class="image">
+                <TableCell class="image">
                   {#if !file}
                     {@const firstImageField = collection.fields?.find(
                       ({ widget }) => widget === 'image',
@@ -45,11 +45,11 @@
                       />
                     {/if}
                   {/if}
-                </GridCell>
-                <GridCell class="collection">
+                </TableCell>
+                <TableCell class="collection">
                   {collection.label || collection.name}
-                </GridCell>
-                <GridCell class="title">
+                </TableCell>
+                <TableCell class="title">
                   {#if file}
                     {file.label}
                   {:else}
@@ -58,8 +58,8 @@
                       content.name ||
                       content.label}
                   {/if}
-                </GridCell>
-              </Row>
+                </TableCell>
+              </TableRow>
             {/if}
           {/each}
         </BasicListView>
@@ -75,26 +75,26 @@
         <BasicListView>
           {#each $searchResults.assets as asset (asset.path)}
             {@const { path, name, folder, kind } = asset}
-            <Row
+            <TableRow
               on:click={() => {
                 goto(`/assets/${path}`);
               }}
             >
-              <GridCell class="image">
+              <TableCell class="image">
                 {#if kind === 'image'}
                   <Image src={getAssetURL(asset)} checkerboard={true} cover={true} />
                 {/if}
                 {#if kind === 'video'}
                   <Video src={getAssetURL(asset)} cover={true} />
                 {/if}
-              </GridCell>
-              <GridCell class="collection">
+              </TableCell>
+              <TableCell class="collection">
                 {getFolderLabel(folder)}
-              </GridCell>
-              <GridCell class="title">
+              </TableCell>
+              <TableCell class="title">
                 {name}
-              </GridCell>
-            </Row>
+              </TableCell>
+            </TableRow>
           {/each}
         </BasicListView>
       {:else}

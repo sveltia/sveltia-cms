@@ -1,5 +1,5 @@
 <script>
-  import { GridCell, Row } from '@sveltia/ui';
+  import { TableCell, TableRow } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
@@ -11,15 +11,15 @@
   {#if $selectedCollection.files?.length}
     <BasicListView>
       {#each $selectedCollection.files as { name, label } (name)}
-        <Row
+        <TableRow
           on:click={() => {
             goto(`/collections/${$selectedCollection.name}/entries/${name}`);
           }}
         >
-          <GridCell class="title">
+          <TableCell class="title">
             {label}
-          </GridCell>
-        </Row>
+          </TableCell>
+        </TableRow>
       {/each}
     </BasicListView>
   {:else}

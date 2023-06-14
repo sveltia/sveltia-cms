@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon, Separator, Spacer, Toolbar } from '@sveltia/ui';
+  import { Button, Divider, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
   import GroupMenu from '$lib/components/common/page-toolbar/group-menu.svelte';
@@ -56,7 +56,7 @@
       />
     {/if}
     <ViewSwitcher disabled={!$listedEntries.length || !firstImageField} {currentView} />
-    <Separator />
+    <Divider />
     <Button
       class="ghost iconic"
       disabled={!$selectedCollection.media_folder}

@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon, Separator, Spacer, Toolbar } from '@sveltia/ui';
+  import { Button, Divider, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
@@ -41,7 +41,7 @@
       filters={assetKinds.map((type) => ({ label: $_(type), field: 'fileType', pattern: type }))}
     />
     <ViewSwitcher disabled={!$listedAssets.length} {currentView} />
-    <Separator />
+    <Divider />
     <Button
       class="ghost iconic"
       disabled={!$listedAssets.length}

@@ -1,20 +1,20 @@
 <script>
-  import { Grid, RowGroup } from '@sveltia/ui';
+  import { Table, TableBody } from '@sveltia/ui';
 </script>
 
 <div class="basic-grid-view">
-  <Grid aria-multiselectable="true">
-    <RowGroup>
+  <Table aria-multiselectable="true">
+    <TableBody>
       <slot />
-    </RowGroup>
-  </Grid>
+    </TableBody>
+  </Table>
 </div>
 
 <style lang="scss">
   .basic-grid-view {
     display: contents;
 
-    :global(.row-group) {
+    :global(.table-body) {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(var(--grid-size, 200px), 1fr));
       gap: 16px;
@@ -34,7 +34,7 @@
       text-align: left;
       cursor: pointer;
 
-      :global(.grid-cell) {
+      :global(.table-cell) {
         display: block;
         position: absolute;
       }

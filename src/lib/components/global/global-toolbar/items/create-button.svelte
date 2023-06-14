@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItem, Separator } from '@sveltia/ui';
+  import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
   import { uploadingAssets } from '$lib/services/assets';
@@ -34,7 +34,7 @@
         />
       {/if}
     {/each}
-    <Separator />
+    <Divider />
     <MenuItem
       label={$_('asset')}
       on:click={() => {

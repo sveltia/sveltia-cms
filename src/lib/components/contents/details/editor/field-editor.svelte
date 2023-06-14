@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItem, Separator } from '@sveltia/ui';
+  import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
   import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
@@ -90,13 +90,13 @@
               {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widget)}
                 <CopyMenuItem {keyPath} {locale} translate={true} />
                 {#if otherLocales.length > 1}
-                  <Separator />
+                  <Divider />
                 {/if}
               {/if}
               <CopyMenuItem {keyPath} {locale} />
             {/if}
             {#if canCopy && canRevert}
-              <Separator />
+              <Divider />
             {/if}
             {#if canRevert}
               <MenuItem
