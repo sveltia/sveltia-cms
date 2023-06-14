@@ -25,7 +25,7 @@
     sanitize_preview: sanitize = false,
   } = fieldConfig);
 
-  $: rawHTML = marked.parse(currentValue);
+  $: rawHTML = marked.parse(currentValue || '');
 </script>
 
 <div role="document">
