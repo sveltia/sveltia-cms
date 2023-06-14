@@ -3,11 +3,11 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import { prefs } from '$lib/services/prefs';
-  import { allMediaServices } from '$lib/services/integrations/media';
+  import { allStockPhotoServices } from '$lib/services/integrations/stock-photos';
 </script>
 
 <TabPanel id="prefs-tab-media">
-  {#each Object.entries(allMediaServices) as [serviceId, service] (serviceId)}
+  {#each Object.entries(allStockPhotoServices) as [serviceId, service] (serviceId)}
     {@const { serviceLabel, landingURL, apiKeyURL } = service}
     <section>
       <h4>

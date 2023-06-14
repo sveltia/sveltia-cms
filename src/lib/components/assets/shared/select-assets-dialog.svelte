@@ -1,13 +1,23 @@
 <script>
-  import { Button, Dialog, SearchBar, Tab, TabList, TabPanel, TextInput } from '@sveltia/ui';
+  import {
+    Button,
+    Dialog,
+    Group,
+    Listbox,
+    Option,
+    OptionGroup,
+    SearchBar,
+    TextInput,
+  } from '@sveltia/ui';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import StockPhotoPanel from '$lib/components/assets/shared/stock-photo-panel.svelte';
+  import EmptyState from '$lib/components/common/empty-state.svelte';
   import { allAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
-  import { allMediaServices } from '$lib/services/integrations/media';
+  import { allStockPhotoServices } from '$lib/services/integrations/stock-photos';
   import { prefs } from '$lib/services/prefs';
   import { generateUUID, stripSlashes } from '$lib/services/utils/strings';
 
@@ -28,7 +38,7 @@
    * @type {import('svelte').SvelteComponentTyped}
    */
   let allAssetsDropZone = undefined;
-  let tabPanelIdPrefix = '';
+  let elementIdPrefix = '';
   /**
    * @type {?SelectedAsset}
    */
@@ -40,7 +50,7 @@
   $: libraryName = collectionMediaFolder ? 'collection-files' : 'all-files';
   $: isLocalLibrary = ['collection-files', 'all-files'].includes(libraryName);
   $: isEnabledMediaService =
-    Object.keys(allMediaServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName];
+    Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName];
 
   $: {
     if (open) {
@@ -50,7 +60,7 @@
   }
 
   onMount(() => {
-    tabPanelIdPrefix = `tabs-${generateUUID().split('-').pop()}-panel`;
+    elementIdPrefix = `library-${generateUUID().split('-').pop()}`;
   });
 </script>
 
@@ -84,7 +94,7 @@
   </svelte:fragment>
   <svelte:fragment slot="footer-extra">
     {#if isEnabledMediaService}
-      {@const { showServiceLink, serviceLabel, landingURL } = allMediaServices[libraryName]}
+      {@const { showServiceLink, serviceLabel, landingURL } = allStockPhotoServices[libraryName]}
       {#if showServiceLink}
         <a href={landingURL}>
           {$_('prefs.media.stock_photo.credit', { values: { service: serviceLabel } })}
@@ -93,36 +103,41 @@
     {/if}
   </svelte:fragment>
   <div class="wrapper">
-    <TabList
-      orientation="vertical"
+    <Listbox
+      aria-controls="{elementIdPrefix}-content-pane"
+      class="tabs"
       on:select={(/** @type {CustomEvent} */ event) => {
         libraryName = event.detail.name;
         selectedAsset = null;
       }}
     >
-      {#if collectionMediaFolder}
-        <Tab
-          name="collection-files"
-          label={$_('collection_files')}
-          aria-selected={libraryName === 'collection-files'}
-          aria-controls="{tabPanelIdPrefix}-collection-assets"
+      <OptionGroup label={$_('library_locations.this_repository')}>
+        {#if collectionMediaFolder}
+          <Option
+            name="collection-files"
+            label={$_('collection_files')}
+            aria-selected={libraryName === 'collection-files'}
+          />
+        {/if}
+        <Option
+          name="all-files"
+          label={$_('all_files')}
+          aria-selected={libraryName === 'all-files'}
         />
-      {/if}
-      <Tab
-        name="all-files"
-        label={$_('all_files')}
-        aria-selected={libraryName === 'all-files'}
-        aria-controls="{tabPanelIdPrefix}-all-assets"
-      />
-      {#if canEnterURL}
-        <Tab name="enter_url" label={$_('enter_url')} aria-controls="{tabPanelIdPrefix}-url" />
-      {/if}
-      {#each Object.values(allMediaServices) as { serviceId, serviceLabel } (serviceId)}
-        <Tab name={serviceId} label={serviceLabel} aria-controls="{tabPanelIdPrefix}-{serviceId}" />
-      {/each}
-    </TabList>
-    {#if collectionMediaFolder}
-      <TabPanel id="{tabPanelIdPrefix}-collection-assets">
+      </OptionGroup>
+      <OptionGroup label={$_('library_locations.external_locations')}>
+        {#if canEnterURL}
+          <Option name="enter-url" label={$_('enter_url')} />
+        {/if}
+      </OptionGroup>
+      <OptionGroup label={$_('library_locations.stock_photos')}>
+        {#each Object.values(allStockPhotoServices) as { serviceId, serviceLabel } (serviceId)}
+          <Option name={serviceId} label={serviceLabel} />
+        {/each}
+      </OptionGroup>
+    </Listbox>
+    <Group id="{elementIdPrefix}-content-pane" class="content-pane">
+      {#if collectionMediaFolder && libraryName === 'collection-files'}
         <DropZone
           bind:this={collectionAssetsDropZone}
           accept={kind === 'image' ? 'image/*' : undefined}
@@ -141,29 +156,27 @@
             }}
           />
         </DropZone>
-      </TabPanel>
-    {/if}
-    <TabPanel id="{tabPanelIdPrefix}-all-assets">
-      <DropZone
-        bind:this={allAssetsDropZone}
-        accept={kind === 'image' ? 'image/*' : undefined}
-        showFilePreview={true}
-        on:select={({ detail: { files } }) => {
-          selectedAsset = files.length ? { file: files[0] } : null;
-        }}
-      >
-        <AssetsPanel
-          assets={$allAssets.filter((asset) => !kind || kind === asset.kind)}
-          {searchTerms}
-          on:select={({ detail }) => {
-            selectedAsset = detail;
+      {/if}
+      {#if libraryName === 'all-files'}
+        <DropZone
+          bind:this={allAssetsDropZone}
+          accept={kind === 'image' ? 'image/*' : undefined}
+          showFilePreview={true}
+          on:select={({ detail: { files } }) => {
+            selectedAsset = files.length ? { file: files[0] } : null;
           }}
-        />
-      </DropZone>
-    </TabPanel>
-    {#if canEnterURL}
-      <TabPanel id="{tabPanelIdPrefix}-url">
-        <div class="panel-content">
+        >
+          <AssetsPanel
+            assets={$allAssets.filter((asset) => !kind || kind === asset.kind)}
+            {searchTerms}
+            on:select={({ detail }) => {
+              selectedAsset = detail;
+            }}
+          />
+        </DropZone>
+      {/if}
+      {#if canEnterURL && libraryName === 'enter-url'}
+        <EmptyState>
           <div>{$_('enter_image_url')}</div>
           <TextInput
             bind:value={enteredURL}
@@ -171,11 +184,9 @@
               selectedAsset = enteredURL.trim() ? { url: enteredURL.trim() } : null;
             }}
           />
-        </div>
-      </TabPanel>
-    {/if}
-    {#each Object.entries(allMediaServices) as [serviceId, props] (serviceId)}
-      <TabPanel id="{tabPanelIdPrefix}-{serviceId}">
+        </EmptyState>
+      {/if}
+      {#each Object.entries(allStockPhotoServices) as [serviceId, props] (serviceId)}
         {#if libraryName === serviceId}
           <StockPhotoPanel
             {...props}
@@ -185,32 +196,24 @@
             }}
           />
         {/if}
-      </TabPanel>
-    {/each}
+      {/each}
+    </Group>
   </div>
 </Dialog>
 
 <style lang="scss">
   .wrapper {
     display: flex;
+    gap: 16px;
     height: 60vh;
 
-    :global(.tab-list) {
+    :global(.listbox) {
       flex: none;
     }
 
-    :global(.tabpanel) {
+    :global(.content-pane) {
       overflow: auto;
       flex: auto;
     }
-  }
-
-  .panel-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    height: 100%;
   }
 </style>

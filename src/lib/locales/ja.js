@@ -169,10 +169,14 @@ export const strings = {
   select_file: 'ファイルを選択',
   select_image: '画像を選択',
   select_from_library: 'ライブラリから選択',
-  select_from_x: '{service} から選択',
+  library_locations: {
+    this_repository: 'このレポジトリ',
+    external_locations: '外部の場所',
+    stock_photos: 'ストックフォト',
+  },
   enter_url: 'URL を入力',
   enter_image_url: '画像の URL を入力:',
-  insert_stock_photo: 'ストック写真を挿入',
+  insert_stock_photo: 'ストックフォトを挿入',
   large_file: {
     title: '大きなファイル',
     description: 'このファイルは最大サイズ {size} を超えています。他のファイルを選んでください。',
@@ -263,7 +267,7 @@ export const strings = {
         title: '{service} 無料画像素材',
         field_label: '{service} API キー',
         description:
-          '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された API キー</a> をここに入力すると、画像エントリー項目に無料のストック写真を挿入できます。',
+          '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された API キー</a> をここに入力すると、画像エントリー項目に無料のストックフォトを挿入できます。',
         credit: '写真提供: {service}',
       },
     },

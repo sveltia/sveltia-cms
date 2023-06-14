@@ -32,7 +32,7 @@
  */
 
 /**
- * @typedef {object} MediaService Media service.
+ * @typedef {object} StockPhotoService Stock photo service.
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
  * @property {boolean} showServiceLink Whether to show a link to the service in the media library.
@@ -460,7 +460,7 @@
  * @typedef {object} SelectedAsset Asset selected on `<SelectAssetsDialog>`.
  * @property {Asset} [asset] One of the existing assets available in the CMS.
  * @property {File} [file] File selected from the user’s computer, or an image file downloaded from
- * a stock photo provider.
+ * a stock photo service.
  * @property {string} [url] URL from direct input or a hotlinking stock photo.
  * @property {string} [credit] Attribution HTML string for a stock photo, including the photographer
  * name/link and service name/link.

@@ -93,7 +93,7 @@ const searchImages = async (query, apiKey) => {
 };
 
 /**
- * @type {MediaService}
+ * @type {StockPhotoService}
  */
 export default {
   serviceId,

@@ -169,7 +169,11 @@ export const strings = {
   select_file: 'Select File',
   select_image: 'Select Image',
   select_from_library: 'Select from Library',
-  select_from_x: 'Select from {service}',
+  library_locations: {
+    this_repository: 'This Repository',
+    external_locations: 'External Locations',
+    stock_photos: 'Stock Photos',
+  },
   enter_url: 'Enter URL',
   enter_image_url: 'Enter URL of the image:',
   insert_stock_photo: 'Insert Stock Photo',
