@@ -11,9 +11,13 @@ export const strings = {
   site_config: 'サイト設定',
   preferences: '個人設定',
   account: 'アカウント',
-  help: 'ヘルプ',
   live_site: '本番サイト',
   git_repository: 'Git レポジトリ',
+  help: {
+    documentation: 'ドキュメンテーション',
+    issue: '問題を報告',
+    feedback: 'フィードバックを共有',
+  },
 
   // Account
   sign_in: 'ログイン',

@@ -50,15 +50,28 @@
     />
     <Divider />
     <MenuItem
-      label={$_('help')}
-      on:click={() => {
-        window.open('https://github.com/sveltia/sveltia-cms#readme', '_blank');
-      }}
-    />
-    <MenuItem
       label={$_('preferences')}
       on:click={() => {
         showPrefsDialog = true;
+      }}
+    />
+    <Divider />
+    <MenuItem
+      label={$_('help.documentation')}
+      on:click={() => {
+        window.open('https://github.com/sveltia/sveltia-cms/blob/main/README.md', '_blank');
+      }}
+    />
+    <MenuItem
+      label={$_('help.issue')}
+      on:click={() => {
+        window.open('https://github.com/sveltia/sveltia-cms/issues', '_blank');
+      }}
+    />
+    <MenuItem
+      label={$_('help.feedback')}
+      on:click={() => {
+        window.open('https://github.com/sveltia/sveltia-cms/discussions', '_blank');
       }}
     />
     <Divider />

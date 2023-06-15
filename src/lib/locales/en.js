@@ -11,9 +11,13 @@ export const strings = {
   site_config: 'Site Configuration',
   preferences: 'Preferences',
   account: 'Account',
-  help: 'Help',
   live_site: 'Live Site',
   git_repository: 'Git Repository',
+  help: {
+    documentation: 'Documentation',
+    issue: 'Report Issue',
+    feedback: 'Share Feedback',
+  },
 
   // Account
   sign_in: 'Sign In',
