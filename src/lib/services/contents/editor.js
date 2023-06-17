@@ -52,23 +52,34 @@ export const entryDraft = writable();
  * Create a new entry content with default values populated.
  * @param {object[]} fields Field list of a collection.
  * @returns {EntryContent} Entry content.
+ * @todo Make this more diligent.
  */
 const createNewContent = (fields) => {
   const newContent = {};
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
-    const { widget, default: defaultValue, fields: subFields, field: subField } = fieldConfig;
+    const {
+      widget,
+      multiple = false,
+      default: defaultValue,
+      fields: subFields,
+      field: subField,
+    } = fieldConfig;
+
+    const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widget === 'list') {
-      if (subFields || subField) {
-        (defaultValue || []).forEach((items, index) => {
+      if (!isArray) {
+        newContent[keyPath] = [];
+      } else if (subFields || subField) {
+        defaultValue.forEach((items, index) => {
           Object.entries(items).forEach(([key, val]) => {
             newContent[[keyPath, index, key].join('.')] = val;
           });
         });
       } else {
-        (defaultValue || []).forEach((val, index) => {
+        defaultValue.forEach((val, index) => {
           newContent[[keyPath, index].join('.')] = val;
         });
       }
@@ -79,9 +90,12 @@ const createNewContent = (fields) => {
           fieldConfig: _subField,
         });
       });
-      // @todo Figure out how to set the default
+    } else if (widget === 'boolean') {
+      newContent[keyPath] = typeof defaultValue === 'boolean' ? defaultValue : false;
+    } else if ((widget === 'relation' || widget === 'select') && multiple) {
+      newContent[keyPath] = isArray ? defaultValue : [];
     } else {
-      newContent[keyPath] = defaultValue;
+      newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
     }
   };
 

@@ -40,7 +40,7 @@
   $: collectionLabelSingular = collection.label_singular || collectionLabel;
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
-  $: modified = !equal(currentValues, originalValues);
+  $: modified = isNew || !equal(currentValues, originalValues);
 </script>
 
 <Toolbar class="primary">

@@ -71,22 +71,30 @@
   onMount(() => {
     mounted = true;
     widgetId = generateUUID().split('-').pop();
-
-    if (hasSubFields) {
-      //
-    } else if (Array.isArray(currentValue)) {
-      inputValue = currentValue.join(', ');
-    }
   });
 
   /**
-   * Update the value for the List widget w/o subfield(s).
+   * Update the input field value when the {@link currentValue} is reverted. This also cleans up the
+   * input field value by removing extra spaces or commas.
+   */
+  const updateInputValue = () => {
+    const currentValueStr = currentValue.join(', ');
+
+    if (!inputValue.match(/,\s*$/) && inputValue !== currentValueStr) {
+      inputValue = currentValueStr;
+    }
+  };
+
+  /**
+   * Update the value for the List widget w/o subfield(s). This has to be called from the `input`
+   * event handler on `<TextInput>`, not a `inputValue` reaction, because it causes an infinite loop
+   * due to {@link updateInputValue}.
    */
   const updateSimpleList = () => {
     const normalizedValue = inputValue
-      .match(/^\s*(?:,\s*)?(.*?)(?:\s*,)?\s*$/)[1]
-      .split(/,\s*/g)
-      .filter((val) => val !== undefined);
+      .split(/,/g)
+      .map((val) => val.trim())
+      .filter((val) => val !== '');
 
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
       if (i18n !== 'duplicate' && _locale !== locale) {
@@ -181,8 +189,8 @@
 
   $: {
     if (mounted && !hasSubFields) {
-      // @ts-ignore
-      updateSimpleList(inputValue);
+      // @ts-ignore Arguments are triggers
+      updateInputValue(currentValue);
     }
   }
 </script>
@@ -307,7 +315,13 @@
       </div>
     {/if}
   {:else}
-    <TextInput {disabled} bind:value={inputValue} />
+    <TextInput
+      {disabled}
+      bind:value={inputValue}
+      on:input={() => {
+        updateSimpleList();
+      }}
+    />
   {/if}
 </Group>
 

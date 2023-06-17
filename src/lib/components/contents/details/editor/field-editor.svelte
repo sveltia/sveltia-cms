@@ -1,5 +1,6 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
+  import equal from 'fast-deep-equal';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
   import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
@@ -101,7 +102,7 @@
             {#if canRevert}
               <MenuItem
                 label={$_('revert_changes')}
-                disabled={currentValue === originalValue}
+                disabled={equal(currentValue, originalValue)}
                 on:click={() => {
                   revertChanges(locale, keyPath);
                 }}
