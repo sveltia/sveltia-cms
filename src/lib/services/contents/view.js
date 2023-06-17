@@ -1,4 +1,4 @@
-import equal from 'deep-is';
+import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
 import moment from 'moment';
 import { _ } from 'svelte-i18n';

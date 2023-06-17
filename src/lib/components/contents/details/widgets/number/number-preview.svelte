@@ -7,7 +7,6 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  // svelte-ignore unused-export-let
   /**
    * @type {NumberField}
    */
@@ -16,8 +15,17 @@
    * @type {string | number}
    */
   export let currentValue = undefined;
+
+  $: ({
+    // Widget-specific options
+    value_type: valueType = 'int',
+  } = fieldConfig);
 </script>
 
-{#if currentValue !== undefined}
+{#if currentValue === ''}
+  <!--  -->
+{:else if valueType === 'int' || valueType === 'float'}
   <p>{Intl.NumberFormat(locale).format(Number(currentValue))}</p>
+{:else}
+  <p>{currentValue}</p>
 {/if}

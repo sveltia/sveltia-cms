@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-continue */
 
-import equal from 'deep-is';
+import equal from 'fast-deep-equal';
 import { flatten, unflatten } from 'flat';
 import { get, writable } from 'svelte/store';
 import { allAssets, getAssetFolder, getAssetKind } from '$lib/services/assets';

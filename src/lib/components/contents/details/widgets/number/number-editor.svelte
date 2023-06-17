@@ -44,21 +44,20 @@
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const onInputValueChange = () => {
-    let _currentValue = undefined;
+    let newValue;
 
-    if (inputValue === '') {
-      _currentValue = '';
-    } else if (
-      (valueType === 'int' && Number.isInteger(Number(inputValue))) ||
-      (valueType === 'float' && !Number.isNaN(inputValue) && inputValue.includes('.'))
-    ) {
-      _currentValue = Number(inputValue);
+    if ((valueType === 'int' || valueType === 'float') && Number.isNaN(Number(inputValue))) {
+      newValue = '';
+    } else if (valueType === 'int') {
+      newValue = Number.parseInt(inputValue, 10);
+    } else if (valueType === 'float') {
+      newValue = Number.parseFloat(inputValue);
     } else {
-      _currentValue = inputValue;
+      newValue = inputValue;
     }
 
-    if (_currentValue !== undefined && currentValue !== _currentValue) {
-      currentValue = _currentValue;
+    if (currentValue !== newValue) {
+      currentValue = newValue;
     }
   };
 

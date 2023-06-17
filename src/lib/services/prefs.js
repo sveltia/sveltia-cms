@@ -1,4 +1,4 @@
-import equal from 'deep-is';
+import equal from 'fast-deep-equal';
 import { locale as appLocale, locales } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import LocalStorage from '$lib/services/utils/local-storage';

@@ -11,7 +11,7 @@
     Spacer,
     Toolbar,
   } from '@sveltia/ui';
-  import equal from 'deep-is';
+  import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import { user } from '$lib/services/auth';
   import { deleteEntries } from '$lib/services/contents/data';
