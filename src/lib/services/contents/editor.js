@@ -81,18 +81,28 @@ const createNewContent = (fields, defaultValues = {}) => {
 
       if (!isArray) {
         newContent[keyPath] = [];
-      } else if (subFields || subField) {
+
+        return;
+      }
+
+      if (subFields || subField) {
         defaultValue.forEach((items, index) => {
           Object.entries(items).forEach(([key, val]) => {
             newContent[[keyPath, index, key].join('.')] = val;
           });
         });
-      } else {
-        defaultValue.forEach((val, index) => {
-          newContent[[keyPath, index].join('.')] = val;
-        });
+
+        return;
       }
-    } else if (widget === 'object') {
+
+      defaultValue.forEach((val, index) => {
+        newContent[[keyPath, index].join('.')] = val;
+      });
+
+      return;
+    }
+
+    if (widget === 'object') {
       const { fields: subFields } = /** @type {ObjectField} */ (fieldConfig);
 
       subFields.forEach((_subField) => {
@@ -101,17 +111,27 @@ const createNewContent = (fields, defaultValues = {}) => {
           fieldConfig: _subField,
         });
       });
-    } else if (widget === 'boolean') {
+
+      return;
+    }
+
+    if (widget === 'boolean') {
       newContent[keyPath] = typeof defaultValue === 'boolean' ? defaultValue : false;
-    } else if (widget === 'relation' || widget === 'select') {
+
+      return;
+    }
+
+    if (widget === 'relation' || widget === 'select') {
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
       if (multiple) {
         newContent[keyPath] = isArray ? defaultValue : [];
+
+        return;
       }
-    } else {
-      newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
     }
+
+    newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
   };
 
   fields.forEach((_field) => {
