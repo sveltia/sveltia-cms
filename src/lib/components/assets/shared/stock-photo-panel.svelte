@@ -16,6 +16,8 @@
 
   export let serviceId = '';
   export let serviceLabel = '';
+  // svelte-ignore unused-export-let
+  export let showServiceLink = true;
   export let hotlinking = false;
   export let landingURL = '';
   export let apiKeyURL = '';
