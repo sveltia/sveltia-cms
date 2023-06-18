@@ -22,7 +22,7 @@
   } = fieldConfig);
 </script>
 
-{#if currentValue === ''}
+{#if currentValue === undefined || currentValue === ''}
   <!--  -->
 {:else if valueType === 'int' || valueType === 'float'}
   <p>{Intl.NumberFormat(locale).format(Number(currentValue))}</p>

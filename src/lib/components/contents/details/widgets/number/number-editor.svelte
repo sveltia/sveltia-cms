@@ -46,14 +46,16 @@
   const onInputValueChange = () => {
     let newValue;
 
-    if ((valueType === 'int' || valueType === 'float') && Number.isNaN(Number(inputValue))) {
-      newValue = '';
-    } else if (valueType === 'int') {
+    if (valueType === 'int') {
       newValue = Number.parseInt(inputValue, 10);
     } else if (valueType === 'float') {
       newValue = Number.parseFloat(inputValue);
     } else {
       newValue = inputValue;
+    }
+
+    if ((valueType === 'int' || valueType === 'float') && Number.isNaN(newValue)) {
+      newValue = '';
     }
 
     if (currentValue !== newValue) {
