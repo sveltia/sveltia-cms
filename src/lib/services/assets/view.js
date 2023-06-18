@@ -116,7 +116,7 @@ const sortAssets = (assets, { key, order } = {}) => {
  * @param {FilteringConditions} [conditions] Filtering conditions.
  * @returns {Asset[]} Filtered asset list.
  */
-const filterAssets = (assets, { field, pattern } = {}) => {
+const filterAssets = (assets, { field, pattern } = { field: undefined, pattern: undefined }) => {
   if (!field) {
     return assets;
   }
@@ -149,7 +149,7 @@ const filterAssets = (assets, { field, pattern } = {}) => {
  * @returns {{ [key: string]: Asset[] }} Grouped assets, where key is a group label and value is an
  * asset list.
  */
-const groupAssets = (assets, { field, pattern } = {}) => {
+const groupAssets = (assets, { field, pattern } = { field: undefined, pattern: undefined }) => {
   if (!field) {
     return assets.length ? { '*': assets } : {};
   }
@@ -253,15 +253,14 @@ export const assetGroups = derived(
   [listedAssets, currentView],
   ([_listedAssets, _currentView], set) => {
     /**
-     * @type {object[] | object}
+     * @type {Asset[]}
      */
     let assets = [..._listedAssets];
 
     assets = sortAssets(assets, _currentView?.sort);
     assets = filterAssets(assets, _currentView?.filter);
-    assets = groupAssets(assets, _currentView?.group);
 
-    set(assets);
+    set(groupAssets(assets, _currentView?.group));
   },
 );
 

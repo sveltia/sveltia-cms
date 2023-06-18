@@ -38,6 +38,9 @@ export const selectedAssets = writable([]);
  */
 export const selectedAsset = writable();
 
+/**
+ * @type {import('svelte/store').Writable<UploadingAssets>}
+ */
 export const uploadingAssets = writable({ folder: null, files: [] });
 
 /**

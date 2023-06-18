@@ -51,7 +51,8 @@ export const entryDraft = writable();
 /**
  * Create a new entry content with default values populated.
  * @param {Field[]} fields Field list of a collection.
- * @param {object} [defaultValues] Dynamic default values for a new entry passed through URL params.
+ * @param {{ [key: string]: string }} [defaultValues] Dynamic default values for a new entry passed
+ * through URL parameters.
  * @returns {EntryContent} Entry content.
  * @todo Make this more diligent.
  */
@@ -196,7 +197,8 @@ const createProxy = ({
  * Create an entry draft.
  * @param {string} collectionName Collection name.
  * @param {Entry} [entry] Entry to be edited or `undefined` for a new entry.
- * @param {object} [defaultValues] Dynamic default values for a new entry passed through URL params.
+ * @param {{ [key: string]: string }} [defaultValues] Dynamic default values for a new entry passed
+ * through URL parameters.
  */
 export const createDraft = (collectionName, entry, defaultValues) => {
   const collection = getCollection(collectionName);

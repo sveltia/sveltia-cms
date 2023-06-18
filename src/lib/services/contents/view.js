@@ -155,7 +155,7 @@ const sortEntries = (entries, { key, order } = {}) => {
  * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
-const filterEntries = (entries, { field, pattern } = {}) => {
+const filterEntries = (entries, { field, pattern } = { field: undefined, pattern: undefined }) => {
   if (!field) {
     return entries;
   }
@@ -182,7 +182,7 @@ const filterEntries = (entries, { field, pattern } = {}) => {
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
-const groupEntries = (entries, { field, pattern } = {}) => {
+const groupEntries = (entries, { field, pattern } = { field: undefined, pattern: undefined }) => {
   if (!field) {
     return entries.length ? [{ name: '*', entries }] : [];
   }

@@ -84,6 +84,7 @@
  * @property {LocaleCode[]} locales List of locales. Can be an empty array if i18n is not enabled.
  * @property {string} [defaultLocale] Default locale. Can be `undefined` if i18n is not
  * enabled.
+ * @see https://decapcms.org/docs/beta-features/#i18n-support
  */
 
 /**
@@ -123,7 +124,7 @@
  * @property {string} [description] Description.
  * @property {string} [icon] Material Symbols icon name.
  * @property {string} [identifier_field] Field name to be used as the ID of a collection item.
- * @property {object[]} [files] File list for a file collection.
+ * @property {CollectionFile[]} [files] File list for a file collection.
  * @property {string} [folder] Folder path for a folder/entry collection.
  * @property {Field[]} [fields] Fields for a folder/entry collection.
  * @property {string} [path] Subfolder path for a folder/entry collection.
@@ -149,6 +150,16 @@
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
  * @property {object} [editor] Editor view config with the optional `preview` property.
  * @see https://decapcms.org/docs/configuration-options/#collections
+ */
+
+/**
+ * Collection file.
+ * @typedef {object} CollectionFile
+ * @property {string} label File label.
+ * @property {string} name File name.
+ * @property {string} file File path.
+ * @property {Field[]} fields Fields.
+ * @see https://decapcms.org/docs/collection-types/#file-collections
  */
 
 /**
@@ -241,11 +252,23 @@
  * @property {boolean} [minimize_collapsed] Whether to collapse the entire UI.
  * @property {number} [min] Minimum number of items.
  * @property {number} [max] Maximum number of items.
- * @property {object} [field] Single widget to be repeated.
- * @property {object[]} [fields] Multiple widgets to be repeated.
- * @property {object[]} [types] Multiple Object widgets (variable types) to be selected.
+ * @property {Field} [field] Single widget to be repeated.
+ * @property {Field[]} [fields] Multiple widgets to be repeated.
+ * @property {ListFieldType[]} [types] Multiple Object widgets (variable types) to be selected.
  * @property {string} [typeKey] Property name to store the type.
  * @see https://decapcms.org/docs/widgets/#list
+ * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
+ */
+
+/**
+ * List field variable type.
+ * @typedef {object} ListFieldType
+ * @property {string} label Label to distinguish the different types.
+ * @property {string} name Type name.
+ * @property {string} [widget] Widget type. `object` only.
+ * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
+ * @property {Field[]} fields Nested fields.
+ * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
  */
 
 /**
@@ -292,7 +315,7 @@
  * @property {object} [default] Default values.
  * @property {boolean} [collapsed] Whether to collapse the UI by default.
  * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
- * @property {object[]} [fields] Nested fields.
+ * @property {Field[]} fields Nested fields.
  * @see https://decapcms.org/docs/widgets/#object
  */
 
@@ -362,7 +385,7 @@
  */
 
 /**
- * Any {@link Entry} field.
+ * Any supported {@link Entry} field.
  * @typedef {BooleanField | ColorField | DateTimeField | FileField | ListField | MarkdownField |
  * NumberField | ObjectField | RelationField | SelectField | StringField | TextField} Field
  */
@@ -409,7 +432,7 @@
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
  * validity, using the same properties as the native HTML5 constraint validation.
- * @typedef {{ [key: string]: any }} FlattenedEntryContentValidityState
+ * @typedef {{ [key: string]: { [key: string]: boolean } }} FlattenedEntryContentValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
@@ -417,7 +440,6 @@
  * Flattened {@link EntryContent} object, where key is a key path, but value will be a file to be
  * uploaded.
  * @typedef {{ [key: string]: File }} FlattenedEntryContentFileList
- * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
@@ -428,7 +450,7 @@
  * @property {string} collectionName Collection name.
  * @property {Collection} collection Collection details.
  * @property {string} [fileName] File name. (File collection only)
- * @property {object} [collectionFile] File details. (File collection only)
+ * @property {CollectionFile} [collectionFile] File details. (File collection only)
  * @property {Entry} [originalEntry] Original entry if it’s not a new entry draft.
  * @property {{ [key: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,
  * value is an flattened object containing all the original field values.
@@ -453,6 +475,14 @@
  * File to be deleted.
  * @typedef {object} DeletingFile
  * @property {string} path File path.
+ * @property {string} [slug] Entry slug or `undefined` for an asset.
+ */
+
+/**
+ * Asset to be uploaded.
+ * @typedef {object} UploadingAssets
+ * @property {?string} folder Target folder path.
+ * @property {File[]} files File list.
  */
 
 /**
@@ -514,26 +544,34 @@
  * @typedef {object} SortingConditions
  * @property {string} [key] Target field name.
  * @property {SortOrder} [order] Sort order.
+ * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
 
 /**
  * Entry/Asset filtering conditions.
  * @typedef {object} FilteringConditions
- * @property {string} [field] Target field name.
- * @property {string | boolean} [pattern] Regex matching pattern or exact value.
+ * @property {string} field Target field name.
+ * @property {string | boolean} pattern Regex matching pattern or exact value.
+ * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
 
 /**
  * Entry/Asset grouping conditions.
  * @typedef {object} GroupingConditions
- * @property {string} [field] Target field name.
+ * @property {string} field Target field name.
  * @property {string | boolean} [pattern] Regex matching pattern or exact value.
+ * @see https://decapcms.org/docs/configuration-options/#view_groups
+ */
+
+/**
+ * Entry/Asset view type.
+ * @typedef {'grid' | 'list'} ViewType
  */
 
 /**
  * Entry view settings.
  * @typedef {object} EntryView
- * @property {'grid' | 'list'} [type] View type.
+ * @property {ViewType} [type] View type.
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions.
  * @property {GroupingConditions} [group] Grouping conditions.
@@ -543,7 +581,7 @@
 /**
  * Asset view settings.
  * @typedef {object} AssetView
- * @property {'grid' | 'list'} [type] View type.
+ * @property {ViewType} [type] View type.
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions.
  * @property {GroupingConditions} [group] Grouping conditions.

@@ -124,23 +124,22 @@ siteConfig.subscribe((config) => {
       ),
     ...collections
       .filter(({ files }) => !!files)
-      .map(({ name: collectionName, files }) =>
-        files.map(
-          ({
-            name: fileName,
-            file,
-            extension,
-            format,
-            frontmatter_delimiter: frontmatterDelimiter,
-          }) => ({
+      .map(
+        ({
+          name: collectionName,
+          files,
+          extension,
+          format,
+          frontmatter_delimiter: frontmatterDelimiter,
+        }) =>
+          files.map(({ name: fileName, file }) => ({
             collectionName,
             fileName,
             file,
             extension,
             format,
             frontmatterDelimiter,
-          }),
-        ),
+          })),
       )
       .flat(1),
   ]);
