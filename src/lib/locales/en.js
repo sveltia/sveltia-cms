@@ -141,6 +141,7 @@ export const strings = {
   translate_from_x: 'Translate from {locale}',
   revert_changes: 'Revert Changes',
   revert_all_changes: 'Revert All Changes',
+  required: 'Required',
   validation: {
     value_missing: 'This field is required.',
     range_underflow: 'You have to select at least {min} items.',

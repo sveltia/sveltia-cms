@@ -46,6 +46,7 @@
   // @todo Save & restore draft from local storage.
 
   $: ({
+    required = true,
     label = '',
     hint = '',
     widget = 'string',
@@ -82,7 +83,7 @@
   {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
   <section data-widget={widget} data-key-path={keyPath}>
     <header>
-      <h4>{label}</h4>
+      <h4>{label} {required ? `(${$_('required')})` : ''}</h4>
       {#if canCopy || canRevert}
         <MenuButton class="ghost iconic small" popupPosition="bottom-right">
           <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />

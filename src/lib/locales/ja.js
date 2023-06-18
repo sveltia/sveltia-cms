@@ -141,6 +141,7 @@ export const strings = {
   translate_from_x: '{locale} から翻訳',
   revert_changes: '変更を取り消す',
   revert_all_changes: 'すべての変更を取り消す',
+  required: '必須',
   validation: {
     value_missing: 'この項目は必須です。',
     range_underflow: '少なくとも {min} 個の項目を選択してください。',
