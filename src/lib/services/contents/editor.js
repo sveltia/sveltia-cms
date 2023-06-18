@@ -50,26 +50,35 @@ export const entryDraft = writable();
 
 /**
  * Create a new entry content with default values populated.
- * @param {object[]} fields Field list of a collection.
+ * @param {Field[]} fields Field list of a collection.
+ * @param {object} [defaultValues] Dynamic default values for a new entry passed through URL params.
  * @returns {EntryContent} Entry content.
  * @todo Make this more diligent.
  */
-const createNewContent = (fields) => {
+const createNewContent = (fields, defaultValues = {}) => {
   const newContent = {};
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
+  /**
+   * Get the default value for the given field. Check if a dynamic default value is specified, then
+   * look for the field configuration’s `default` property.
+   * @param {object} args Arguments.
+   * @param {Field} args.fieldConfig Field configuration.
+   * @param {string} args.keyPath Field key path, e.g. `author.name`.
+   * @see https://decapcms.org/docs/beta-features/#dynamic-default-values
+   */
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
-    const {
-      widget,
-      multiple = false,
-      default: defaultValue,
-      fields: subFields,
-      field: subField,
-    } = fieldConfig;
+    if (keyPath in defaultValues) {
+      newContent[keyPath] = defaultValues[keyPath];
 
+      return;
+    }
+
+    const { widget, default: defaultValue } = fieldConfig;
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widget === 'list') {
+      const { fields: subFields, field: subField } = /** @type {ListField} */ (fieldConfig);
+
       if (!isArray) {
         newContent[keyPath] = [];
       } else if (subFields || subField) {
@@ -84,6 +93,8 @@ const createNewContent = (fields) => {
         });
       }
     } else if (widget === 'object') {
+      const { fields: subFields } = /** @type {ObjectField} */ (fieldConfig);
+
       subFields.forEach((_subField) => {
         getDefaultValue({
           keyPath: [keyPath, _subField.name].join('.'),
@@ -92,8 +103,12 @@ const createNewContent = (fields) => {
       });
     } else if (widget === 'boolean') {
       newContent[keyPath] = typeof defaultValue === 'boolean' ? defaultValue : false;
-    } else if ((widget === 'relation' || widget === 'select') && multiple) {
-      newContent[keyPath] = isArray ? defaultValue : [];
+    } else if (widget === 'relation' || widget === 'select') {
+      const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
+
+      if (multiple) {
+        newContent[keyPath] = isArray ? defaultValue : [];
+      }
     } else {
       newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
     }
@@ -161,8 +176,9 @@ const createProxy = ({
  * Create an entry draft.
  * @param {string} collectionName Collection name.
  * @param {Entry} [entry] Entry to be edited or `undefined` for a new entry.
+ * @param {object} [defaultValues] Dynamic default values for a new entry passed through URL params.
  */
-export const createDraft = (collectionName, entry) => {
+export const createDraft = (collectionName, entry, defaultValues) => {
   const collection = getCollection(collectionName);
   const { hasLocales, locales: collectionLocales } = collection._i18n;
   const isNew = !entry;
@@ -173,7 +189,7 @@ export const createDraft = (collectionName, entry) => {
     : undefined;
 
   const { fields } = collectionFile || collection;
-  const newContent = createNewContent(fields);
+  const newContent = createNewContent(fields, defaultValues);
   const allLocales = hasLocales ? collectionLocales : ['default'];
 
   entryDraft.set({

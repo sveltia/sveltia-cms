@@ -18,7 +18,7 @@
    * @todo Show Not Found page.
    */
   const navigate = () => {
-    const { path } = parseLocation();
+    const { path, params } = parseLocation();
     const match = path.match(/^\/collections\/([^/]+)(?:\/(new|entries))?(?:\/(.+?))?$/);
 
     if (!match) {
@@ -65,7 +65,7 @@
     } else {
       // Folder collection
       if (_state === 'new' && !_id && $selectedCollection.create) {
-        createDraft($selectedCollection.name);
+        createDraft($selectedCollection.name, undefined, params);
       }
 
       if (_state === 'entries' && _id) {
