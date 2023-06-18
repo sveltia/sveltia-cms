@@ -9,6 +9,9 @@ import { allEntries, selectedCollection } from '$lib/services/contents';
 export const deleteEntries = async (slugs) => {
   const _allEntries = get(allEntries);
 
+  /**
+   * @type {DeletingFile[]}
+   */
   const items = slugs
     .map((slug) => {
       const entry = _allEntries.find((e) => e.slug === slug);

@@ -312,7 +312,7 @@ const createCommit = async (message, { additions = [], deletions = [] }) => {
 
 /**
  * Save entries or assets remotely.
- * @param {object[]} items Entries or files.
+ * @param {SavingFile[]} items Entries or files.
  * @param {object} [options] Options.
  * @param {CommitType} [options.commitType] Commit type.
  * @param {string} [options.collection] Collection name. Required for entries.
@@ -330,7 +330,7 @@ const saveFiles = async (items, { commitType = 'update', collection } = {}) => {
 
 /**
  * Delete files at the given paths.
- * @param {object[]} items Entries or files.
+ * @param {DeletingFile[]} items Entries or files.
  * @param {object} [options] Options.
  * @param {CommitType} [options.commitType] Commit type.
  * @param {string} [options.collection] Collection name. Required for entries.

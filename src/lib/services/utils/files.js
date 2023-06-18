@@ -16,7 +16,7 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
 
   /**
    * Read files recursively from the filesystem.
-   * @param {(FileSystemFileEntry | FileSystemDirectoryEntry | any)} entry Either a file or
+   * @param {FileSystemFileEntry | FileSystemDirectoryEntry | any} entry Either a file or
    * directory entry.
    * @returns {Promise<File>} File.
    */
@@ -79,7 +79,7 @@ export const readAsText = async (file) => {
 
 /**
  * Read the file as array buffer.
- * @param {(File | Blob)} file File.
+ * @param {File | Blob} file File.
  * @returns {Promise<ArrayBuffer>} Content.
  */
 export const readAsArrayBuffer = async (file) => {
@@ -99,7 +99,7 @@ export const readAsArrayBuffer = async (file) => {
 
 /**
  * Get the SHA-1 hash of the given file.
- * @param {(File | Blob)} file File.
+ * @param {File | Blob} file File.
  * @returns {Promise<string>} Hash.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
  */
@@ -113,7 +113,7 @@ export const getHash = async (file) => {
 
 /**
  * Get the Base64 encoding of the given input.
- * @param {(File | Blob | string)} input Input file or string.
+ * @param {File | Blob | string} input Input file or string.
  * @returns {Promise<string>} Data URL like `data:text/plain;base64,...`.
  */
 export const getDataURL = async (input) => {
@@ -134,7 +134,7 @@ export const getDataURL = async (input) => {
 
 /**
  * Get the data URL of the given input.
- * @param {(File | Blob | string)} input Input file or string.
+ * @param {File | Blob | string} input Input file or string.
  * @returns {Promise<string>} Base64.
  */
 export const getBase64 = async (input) => (await getDataURL(input)).split(',')[1];

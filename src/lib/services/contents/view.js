@@ -63,7 +63,7 @@ export const parseSummary = (collection, content) => {
 
       if (tf.startsWith('date')) {
         const [, format] = tf.match(/^date\('(.*?)'\)$/);
-        const { picker_utc: pickerUTC = false } = fieldConfig;
+        const { picker_utc: pickerUTC = false } = /** @type {DateTimeField} */ (fieldConfig);
 
         result = (pickerUTC ? moment.utc(result) : moment(result)).format(format);
       }
@@ -95,11 +95,9 @@ export const parseSummary = (collection, content) => {
 
 /**
  * Sort the given entries.
- * @param {object[]} entries Entry list.
- * @param {object} [condition] Sort condition.
- * @param {string} [condition.key] Sort key.
- * @param {string} [condition.order] Sort order, either `ascending` or `descending`.
- * @returns {object[]} Sorted entry list.
+ * @param {Entry[]} entries Entry list.
+ * @param {SortingConditions} [conditions] Sorting conditions.
+ * @returns {Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
 const sortEntries = (entries, { key, order } = {}) => {
@@ -118,7 +116,7 @@ const sortEntries = (entries, { key, order } = {}) => {
   /**
    * Get a property value by key.
    * @param {Entry} entry Entry.
-   * @returns {(string | Date)} Value.
+   * @returns {string | Date} Value.
    */
   const getValue = (entry) => {
     const { locales, commitAuthor: { name, email } = {}, commitDate } = entry;
@@ -152,11 +150,9 @@ const sortEntries = (entries, { key, order } = {}) => {
 
 /**
  * Filter the given entries.
- * @param {object[]} entries Entry list.
- * @param {object} [condition] Filter condition.
- * @param {string} [condition.field] Field name.
- * @param {string | boolean} [condition.pattern] Matching pattern, maybe a regular expression.
- * @returns {object[]} Filtered entry list.
+ * @param {Entry[]} entries Entry list.
+ * @param {FilteringConditions} [conditions] Filtering conditions.
+ * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
 const filterEntries = (entries, { field, pattern } = {}) => {
@@ -180,10 +176,8 @@ const filterEntries = (entries, { field, pattern } = {}) => {
 
 /**
  * Group the given entries.
- * @param {object[]} entries Entry list.
- * @param {object} [condition] Group condition.
- * @param {string} [condition.field] Field name.
- * @param {string | boolean} [condition.pattern] Matching pattern, maybe a regular expression.
+ * @param {Entry[]} entries Entry list.
+ * @param {GroupingConditions} [conditions] Grouping conditions.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups

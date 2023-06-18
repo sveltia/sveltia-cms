@@ -1,7 +1,8 @@
 /* eslint-disable jsdoc/require-property */
 
 /**
- * @typedef {object} User User details. Most properties are from the GitHub API.
+ * User details. Most properties are from the GitHub API.
+ * @typedef {object} User
  * @property {string} backendName Backend name, e.g. `github`.
  * @property {string} token Backend OAuth token.
  * @property {string} name User display name.
@@ -13,7 +14,8 @@
  */
 
 /**
- * @typedef {object} Preferences User preferences.
+ * User preferences.
+ * @typedef {object} Preferences
  * @property {object} [apiKeys] API keys for integrations.
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
  * @property {string} [locale] Selected UI locale, e.g. `en`.
@@ -21,7 +23,8 @@
  */
 
 /**
- * @typedef {object} BackendService Backend service.
+ * Backend service.
+ * @typedef {object} BackendService
  * @property {string} label Service label.
  * @property {?string} url Service URL.
  * @property {Function} signIn Function to sign in.
@@ -32,7 +35,8 @@
  */
 
 /**
- * @typedef {object} StockPhotoService Stock photo service.
+ * Stock photo service.
+ * @typedef {object} StockPhotoService
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
  * @property {boolean} showServiceLink Whether to show a link to the service in the media library.
@@ -44,7 +48,8 @@
  */
 
 /**
- * @typedef {object} TranslationService Translation service.
+ * Translation service.
+ * @typedef {object} TranslationService
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
  * @property {string} landingURL Landing page URL.
@@ -56,20 +61,24 @@
  */
 
 /**
- * @typedef {('create'|'update'|'delete'|'uploadMedia'|'deleteMedia'|'openAuthoring')} CommitType
  * Git commit type.
+ * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia' |
+ * 'openAuthoring'} CommitType
  */
 
 /**
- * @typedef {string} LocaleCode ISO 639-1 locale code like `en`.
+ * ISO 639-1 locale code like `en`.
+ * @typedef {string} LocaleCode
  */
 
 /**
- * @typedef {('single_file' | 'multiple_files' | 'multiple_folders')} I18nFileStructure
+ * Internationalization (i18n) file structure type.
+ * @typedef {'single_file' | 'multiple_files' | 'multiple_folders'} I18nFileStructure
  */
 
 /**
- * @typedef {object} I18nConfig Collection’s i18n configuration.
+ * Collection’s i18n configuration.
+ * @typedef {object} I18nConfig
  * @property {I18nFileStructure} structure File structure.
  * @property {boolean} hasLocales Whether i18n is enabled for the collection.
  * @property {LocaleCode[]} locales List of locales. Can be an empty array if i18n is not enabled.
@@ -78,7 +87,8 @@
  */
 
 /**
- * @typedef {object} SiteConfig Global site configuration.
+ * Global site configuration.
+ * @typedef {object} SiteConfig
  * @property {object} [backend] Backend config.
  * @property {string} [site_url] Site URL.
  * @property {string} [display_url] Site URL linked from the UI.
@@ -96,7 +106,8 @@
  */
 
 /**
- * @typedef {object} ViewFilter View filter.
+ * View filter.
+ * @typedef {object} ViewFilter
  * @property {string} label Label.
  * @property {string} field Field name.
  * @property {string | boolean} [pattern] Regex matching pattern or exact value.
@@ -104,7 +115,8 @@
  */
 
 /**
- * @typedef {object} Collection Collection definition.
+ * Collection definition.
+ * @typedef {object} Collection
  * @property {string} name Collection name.
  * @property {string} [label] UI label.
  * @property {string} [label_singular] Singular UI label.
@@ -125,7 +137,7 @@
  * @property {boolean} [publish] Whether to hide the publishing control UI for Editorial Workflow.
  * @property {string} [format] File format.
  * @property {string} [extension] File extension.
- * @property {(string|string[])} [frontmatter_delimiter] Delimiters used for the Frontmatter format.
+ * @property {string | string[]} [frontmatter_delimiter] Delimiters used for the Frontmatter format.
  * @property {string} [slug] Item slug template for a folder/entry collection.
  * @property {string} [summary] Item summary template for a folder/entry collection.
  * @property {string[]} [sortable_fields] Custom sorting fields.
@@ -152,11 +164,6 @@
  * @property {boolean | 'translate' | 'duplicate'} [i18n] I18n configuration.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets
- */
-
-/**
- * Common field definition.
- * @typedef {CommonFieldProps} Field
  */
 
 /**
@@ -355,7 +362,14 @@
  */
 
 /**
- * @typedef {object} Entry Entry item.
+ * Any {@link Entry} field.
+ * @typedef {BooleanField | ColorField | DateTimeField | FileField | ListField | MarkdownField |
+ * NumberField | ObjectField | RelationField | SelectField | StringField | TextField} Field
+ */
+
+/**
+ * Entry item.
+ * @typedef {object} Entry
  * @property {string} sha SHA-1 hash from one of the locales. It serves as the ID of an entry, so it
  * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
@@ -372,38 +386,43 @@
  */
 
 /**
- * @typedef {object} EntryContent Parsed, localized entry content.
+ * Parsed, localized entry content.
+ * @typedef {object} EntryContent
  */
 
 /**
- * @typedef {object} LocalizedEntry Each locale’s content and metadata.
+ * Each locale’s content and metadata.
+ * @typedef {object} LocalizedEntry
  * @property {EntryContent} [content] Parsed, localized entry content.
  * @property {string} [path] File path.
  * @property {string} [sha] SHA-1 hash for the file.
  */
 
 /**
- * @typedef {{ [key: string]: any }} FlattenedEntryContent Flattened {@link EntryContent} object,
+ * Flattened {@link EntryContent} object,
+ * @typedef {{ [key: string]: any }} FlattenedEntryContent
  * where key is a key path: dot-connected field name like `author.name` and value is the
  * corresponding field value.
  * @see https://www.npmjs.com/package/flatten
  */
 
 /**
- * @typedef {{ [key: string]: any }} FlattenedEntryContentValidityState Flattened
- * {@link EntryContent} object, where key is a key path, but value will be the value’s validity,
- * using the same properties as the native HTML5 constraint validation.
+ * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
+ * validity, using the same properties as the native HTML5 constraint validation.
+ * @typedef {{ [key: string]: any }} FlattenedEntryContentValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
- * @typedef {{ [key: string]: File }} FlattenedEntryContentFileList Flattened {@link EntryContent}
- * object, where key is a key path, but value will be a file to be uploaded.
+ * Flattened {@link EntryContent} object, where key is a key path, but value will be a file to be
+ * uploaded.
+ * @typedef {{ [key: string]: File }} FlattenedEntryContentFileList
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
- * @typedef {object} EntryDraft Entry draft.
+ * Entry draft.
+ * @typedef {object} EntryDraft
  * @property {boolean} [isNew] `true` if it’s a new entry draft.
  * @property {string} [slug] Entry slug. Empty if it’s new.
  * @property {string} collectionName Collection name.
@@ -422,14 +441,31 @@
  */
 
 /**
- * @typedef {object} CollectionAssetPaths Asset path configuration by collection.
+ * File to be saved.
+ * @typedef {object} SavingFile
+ * @property {string} path File path.
+ * @property {string} [slug] Entry slug or `undefined` for an asset.
+ * @property {string | File} data File data.
+ * @property {string} [base64] Base64 of the data.
+ */
+
+/**
+ * File to be deleted.
+ * @typedef {object} DeletingFile
+ * @property {string} path File path.
+ */
+
+/**
+ * Asset path configuration by collection.
+ * @typedef {object} CollectionAssetPaths
  * @property {string} collectionName Collection name or `*` for the global folder.
  * @property {string} internalPath Folder path on the repository/filesystem.
  * @property {string} publicPath Folder path that will appear in the URL.
  */
 
 /**
- * @typedef {object} Asset Asset item.
+ * Asset item.
+ * @typedef {object} Asset
  * @property {string} name File name.
  * @property {string} path File path.
  * @property {string} sha SHA-1 hash for the file.
@@ -446,7 +482,8 @@
  */
 
 /**
- * @typedef {object} StockPhoto Stock photo.
+ * Stock photo.
+ * @typedef {object} StockPhoto
  * @property {string} id Photo ID.
  * @property {string} description Photo description.
  * @property {string} previewURL Thumbnail image URL.
@@ -457,7 +494,8 @@
  */
 
 /**
- * @typedef {object} SelectedAsset Asset selected on `<SelectAssetsDialog>`.
+ * Asset selected on `<SelectAssetsDialog>`.
+ * @typedef {object} SelectedAsset
  * @property {Asset} [asset] One of the existing assets available in the CMS.
  * @property {File} [file] File selected from the user’s computer, or an image file downloaded from
  * a stock photo service.
@@ -467,35 +505,47 @@
  */
 
 /**
- * @typedef {('ascending' | 'descending')} SortOrder Sorting order condition.
+ * Sorting order condition.
+ * @typedef {'ascending' | 'descending'} SortOrder
  */
 
 /**
- * @typedef {object} EntryView Entry view settings.
- * @property {('grid' | 'list')} [type] View type.
- * @property {object} [sort] Sorting conditions.
- * @property {string} [sort.key] Target field name.
- * @property {SortOrder} [sort.order] Sort order.
- * @property {object} [filter] Filtering conditions.
- * @property {string} [filter.field] Target field name.
- * @property {string | boolean} [filter.pattern] Regex matching pattern or exact value.
- * @property {object} [group] Grouping conditions.
- * @property {string} [group.field] Target field name.
- * @property {string | boolean} [group.pattern] Regex matching pattern or exact value.
+ * Entry/Asset sorting conditions.
+ * @typedef {object} SortingConditions
+ * @property {string} [key] Target field name.
+ * @property {SortOrder} [order] Sort order.
+ */
+
+/**
+ * Entry/Asset filtering conditions.
+ * @typedef {object} FilteringConditions
+ * @property {string} [field] Target field name.
+ * @property {string | boolean} [pattern] Regex matching pattern or exact value.
+ */
+
+/**
+ * Entry/Asset grouping conditions.
+ * @typedef {object} GroupingConditions
+ * @property {string} [field] Target field name.
+ * @property {string | boolean} [pattern] Regex matching pattern or exact value.
+ */
+
+/**
+ * Entry view settings.
+ * @typedef {object} EntryView
+ * @property {'grid' | 'list'} [type] View type.
+ * @property {SortingConditions} [sort] Sorting conditions.
+ * @property {FilteringConditions} [filter] Filtering conditions.
+ * @property {GroupingConditions} [group] Grouping conditions.
  * @property {boolean} [showMedia] Whether to show the Media pane.
  */
 
 /**
- * @typedef {object} AssetView Asset view settings.
- * @property {('grid' | 'list')} [type] View type.
- * @property {object} [sort] Sort conditions.
- * @property {string} [sort.key] Target field name.
- * @property {SortOrder} [sort.order] Sort order.
- * @property {object} [filter] Filtering conditions.
- * @property {string} [filter.field] Target field name.
- * @property {string | boolean} [filter.pattern] Regex matching pattern or exact value.
- * @property {object} [group] Grouping conditions.
- * @property {string} [group.field] Target field name.
- * @property {string | boolean} [group.pattern] Regex matching pattern or exact value.
+ * Asset view settings.
+ * @typedef {object} AssetView
+ * @property {'grid' | 'list'} [type] View type.
+ * @property {SortingConditions} [sort] Sorting conditions.
+ * @property {FilteringConditions} [filter] Filtering conditions.
+ * @property {GroupingConditions} [group] Grouping conditions.
  * @property {boolean} [showInfo] Whether to show the Info pane.
  */

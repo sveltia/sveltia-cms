@@ -64,9 +64,7 @@ export const getFolderLabel = (folderPath) => {
 /**
  * Sort the given assets.
  * @param {Asset[]} assets Asset list.
- * @param {object} [condition] Sort condition.
- * @param {string} [condition.key] Sort key.
- * @param {string} [condition.order] Sort order, either `ascending` or `descending`.
+ * @param {SortingConditions} [conditions] Sorting conditions.
  * @returns {Asset[]} Sorted asset list.
  */
 const sortAssets = (assets, { key, order } = {}) => {
@@ -115,9 +113,7 @@ const sortAssets = (assets, { key, order } = {}) => {
 /**
  * Filter the given assets.
  * @param {Asset[]} assets Asset list.
- * @param {object} [condition] Filter condition.
- * @param {string} [condition.field] Field name.
- * @param {string | boolean} [condition.pattern] Matching pattern, maybe a regular expression.
+ * @param {FilteringConditions} [conditions] Filtering conditions.
  * @returns {Asset[]} Filtered asset list.
  */
 const filterAssets = (assets, { field, pattern } = {}) => {
@@ -149,9 +145,7 @@ const filterAssets = (assets, { field, pattern } = {}) => {
 /**
  * Group the given assets.
  * @param {Asset[]} assets Asset list.
- * @param {object} [condition] Group condition.
- * @param {string} [condition.field] Field name.
- * @param {string | boolean} [condition.pattern] Matching pattern, maybe a regular expression.
+ * @param {GroupingConditions} [conditions] Grouping conditions.
  * @returns {{ [key: string]: Asset[] }} Grouped assets, where key is a group label and value is an
  * asset list.
  */
@@ -259,7 +253,7 @@ export const assetGroups = derived(
   [listedAssets, currentView],
   ([_listedAssets, _currentView], set) => {
     /**
-     * @type {(object[] | object)}
+     * @type {object[] | object}
      */
     let assets = [..._listedAssets];
 

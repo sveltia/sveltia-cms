@@ -136,7 +136,7 @@ export const getFile = (collectionName, fileName) =>
  * @param {string} fileName File name if the collection is a file collection.
  * @param {string} keyPath Key path, e.g. `author.name`.
  * @param {FlattenedEntryContent} valueMap Object holding current entry values keyed with `keyPath`.
- * @returns {object} Field configuration.
+ * @returns {Field} Field configuration.
  */
 export const getFieldByKeyPath = (collectionName, fileName, keyPath, valueMap) => {
   const collection = getCollection(collectionName);

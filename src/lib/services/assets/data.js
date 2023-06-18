@@ -5,7 +5,7 @@ import { getHash } from '$lib/services/utils/files';
 
 /**
  * Upload/save the given assets to the backend.
- * @param {object} uploadingAssets  Assets to be uploaded.
+ * @param {object} uploadingAssets Assets to be uploaded.
  * @param {File[]} uploadingAssets.files File list.
  * @param {string} uploadingAssets.folder Target folder name.
  * @param {object} [options] Options for the backend handler.
@@ -48,9 +48,13 @@ export const saveAssets = async ({ files, folder }, options) => {
 /**
  * Delete the given assets.
  * @param {Asset[]} assets List of assets to be deleted.
- * @todo Update entries to remove these asset paths.
+ * @todo Update entries to remove these asset paths. If an asset is used for a required field, show
+ * an error message and abort the operation.
  */
 export const deleteAssets = async (assets) => {
+  /**
+   * @type {DeletingFile[]}
+   */
   const items = assets.map(({ path }) => ({ path }));
 
   await get(backend).deleteFiles(items, { commitType: 'deleteMedia' });

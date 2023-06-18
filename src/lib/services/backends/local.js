@@ -156,7 +156,7 @@ const getAllFiles = async () => {
 
   /**
    * Retrieve all the files under the given directory recursively.
-   * @param {(FileSystemDirectoryHandle | any)} dirHandle Directory handle.
+   * @param {FileSystemDirectoryHandle | any} dirHandle Directory handle.
    */
   const iterate = async (dirHandle) => {
     for await (const [name, handle] of dirHandle.entries()) {
@@ -206,7 +206,7 @@ const fetchFiles = async () => {
 
 /**
  * Save entries or assets locally.
- * @param {object[]} items Entries or files.
+ * @param {SavingFile[]} items Entries or files.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  */
 const saveFiles = async (items) => {
@@ -224,7 +224,7 @@ const saveFiles = async (items) => {
 
 /**
  * Delete files at the given paths.
- * @param {object[]} items Entries or files.
+ * @param {DeletingFile[]} items Entries or files.
  */
 const deleteFiles = async (items) => {
   await Promise.all(

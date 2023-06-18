@@ -130,7 +130,6 @@
    * Add a new subfield to the list.
    * @param {string} [subFieldName] Sub field name from one of the variable type options.
    * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
-   * @todo Deal with nested objects.
    */
   const addItem = (subFieldName) => {
     updateComplexList((list) => {

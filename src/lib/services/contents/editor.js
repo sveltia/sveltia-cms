@@ -257,7 +257,7 @@ export const updateListField = (locale, keyPath, manipulate) => {
 /**
  * Copy or translate field value(s) from another locale.
  * @param {string} sourceLocale Source locale, e.g. `en`.
- * @param {string} targetLocale Target locale, e.g. `ja.
+ * @param {string} targetLocale Target locale, e.g. `ja`.
  * @param {string} [keyPath] Flatten (dot-connected) object keys that will be used for searching the
  * source values. Omit this if copying all the fields. If the triggered widget is List or Object,
  * this will likely match multiple fields.
@@ -276,11 +276,13 @@ export const copyFromLocale = async (
     Object.entries(valueMap).filter(([_keyPath, value]) => {
       const field = getFieldByKeyPath(collectionName, fileName, _keyPath, valueMap);
 
+      // prettier-ignore
       if (
         (keyPath && !_keyPath.startsWith(keyPath)) ||
         typeof value !== 'string' ||
         !['markdown', 'text', 'string', 'list'].includes(field?.widget) ||
-        (field?.widget === 'list' && (field?.field || field?.fields)) ||
+        (field?.widget === 'list' &&
+          (/** @type {ListField} */ (field).field || /** @type {ListField} */ (field).fields)) ||
         (!translate && value === currentValues[targetLocale][_keyPath])
       ) {
         return false;
@@ -325,8 +327,8 @@ export const copyFromLocale = async (
 };
 
 /**
- *
- * @param {string} [locale] Target locale, e.g. `ja. Can be empty if reverting everything.
+ * Revert the changes made to the given field or all the fields to the default value(s).
+ * @param {string} [locale] Target locale, e.g. `ja`. Can be empty if reverting everything.
  * @param {string} [keyPath] Flatten (dot-connected) object keys that will be used for searching the
  * source values. Omit this if copying all the fields. If the triggered widget is List or Object,
  * this will likely match multiple fields.
@@ -376,6 +378,7 @@ const validateEntry = () => {
       }
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
+      // @ts-ignore
       const { widget, required = true, i18n = false, pattern, min, max } = fieldConfig;
       const canTranslate = hasLocales && (i18n === true || i18n === 'translate');
       const _required = required !== false && (locale === defaultLocale || canTranslate);
@@ -588,6 +591,9 @@ export const saveEntry = async () => {
     .map((a) => a.path)
     .filter((p) => p.match(new RegExp(`^\\/${escapeRegExp(internalAssetFolder)}\\/[^\\/]+$`)));
 
+  /**
+   * @type {SavingFile[]}
+   */
   const savingFiles = [];
   /**
    * @type {Asset[]}

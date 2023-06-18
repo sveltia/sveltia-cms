@@ -52,7 +52,7 @@ export const createFileList = (files) => {
 };
 
 /**
- *
+ * Get the file extension for the given collection.
  * @param {Collection} collection File’s collection configuration.
  * @returns {string} Determined extension.
  */

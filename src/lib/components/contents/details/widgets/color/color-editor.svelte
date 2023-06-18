@@ -2,8 +2,7 @@
   @component
   Implement the editor for the Color widget.
   @see https://decapcms.org/docs/widgets/#color
-  @todo Replace the native `<input>` with a custom component.
-  @todo Support the `enableAlpha` option.
+  @todo Replace the native `<input>` with a custom component and support the `enableAlpha` option.
 -->
 <script>
   import { Button, Icon, TextInput } from '@sveltia/ui';
