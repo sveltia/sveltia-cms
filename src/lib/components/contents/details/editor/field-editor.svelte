@@ -186,7 +186,13 @@
 
     &:not(:last-child) {
       border-width: 0 0 1px;
-      border-color: var(--primary-border-color);
+      border-color: var(--secondary-border-color);
+    }
+
+    & > * {
+      margin-right: auto;
+      margin-left: auto;
+      max-width: 768px;
     }
   }
 
@@ -194,7 +200,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 0 0 8px;
+    margin-bottom: 8px;
 
     h4 {
       font-size: var(--font-size--small);
@@ -270,7 +276,7 @@
   }
 
   .hint {
-    margin: 8px 0 0;
+    margin-top: 8px;
     font-size: var(--font-size--small);
     opacity: 0.75;
 

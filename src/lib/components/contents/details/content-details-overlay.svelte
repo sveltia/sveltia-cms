@@ -171,7 +171,7 @@
         min-width: 480px;
         transition: all 500ms;
 
-        &:first-child {
+        &:first-child:not(:last-child) {
           border-width: 0 1px 0 0;
           border-color: var(--primary-border-color);
         }

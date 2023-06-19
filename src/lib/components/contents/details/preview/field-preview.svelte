@@ -74,17 +74,23 @@
     overflow: hidden;
     padding: 8px 0;
 
+    & > :global(*) {
+      margin-right: auto;
+      margin-left: auto;
+      max-width: 768px;
+    }
+
     h4 {
       color: var(--secondary-foreground-color);
       font-size: var(--font-size--small);
 
       &:not(:last-child) {
-        margin: 0 0 8px;
+        margin-bottom: 8px;
       }
     }
 
     :global(p) {
-      margin: 8px 0 0;
+      margin-top: 8px;
     }
 
     :global(img) {

@@ -41,10 +41,6 @@
 {/if}
 
 <style lang="scss">
-  p {
-    margin: 8px 0;
-  }
-
   .title {
     font-size: var(--font-size--xxx-large);
     font-weight: 600;

@@ -112,8 +112,13 @@
 <style lang="scss">
   .header {
     flex: none !important;
+    background-color: var(--tertiary-background-color);
 
     & > :global([role='toolbar']) {
+      margin-right: auto;
+      margin-left: auto;
+      max-width: 800px;
+
       :global(h3) {
         font-size: var(--font-size--default);
       }
