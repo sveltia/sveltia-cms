@@ -1,5 +1,5 @@
 <script>
-  import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
+  import { Divider, Icon, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
@@ -83,7 +83,11 @@
   {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
   <section data-widget={widget} data-key-path={keyPath}>
     <header>
-      <h4>{label} {required ? `(${$_('required')})` : ''}</h4>
+      <h4>{label}</h4>
+      {#if required}
+        <div class="required">{$_('required')}</div>
+      {/if}
+      <Spacer flex={true} />
       {#if canCopy || canRevert}
         <MenuButton class="ghost iconic small" popupPosition="bottom-right">
           <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
@@ -198,14 +202,22 @@
 
   header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-bottom: 8px;
 
     h4 {
       font-size: var(--font-size--small);
       font-weight: 600;
       color: var(--secondary-foreground-color);
+    }
+
+    .required {
+      border: 1px solid var(--control-border-color);
+      border-radius: 4px;
+      padding: 2px 4px;
+      color: var(--info-foreground-color);
+      font-size: var(--font-size--x-small);
     }
 
     & + div {
