@@ -173,10 +173,6 @@ siteConfig.subscribe((config) => {
       path: entryPath,
     } = collection;
 
-    if (!entryPath) {
-      return null;
-    }
-
     let {
       // relative path, e.g. `` (an empty string), `./` (same as an empty string),
       // `{{media_folder}}/posts`, etc. or absolute path, e.g. `/static/images/posts`, etc.
@@ -184,6 +180,10 @@ siteConfig.subscribe((config) => {
       // same as `media_folder`
       public_folder: publicFolder = '',
     } = collection;
+
+    if (!entryPath && !mediaFolder) {
+      return null;
+    }
 
     const entryRelative = !(
       mediaFolder &&

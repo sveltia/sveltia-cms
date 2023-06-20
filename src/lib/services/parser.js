@@ -21,7 +21,8 @@ export const createFileList = (files) => {
   const assetFiles = [];
 
   files.forEach((fileInfo) => {
-    const { path, name } = fileInfo;
+    const { path } = fileInfo;
+    const name = path.split('/').pop();
 
     const contentPathConfig = get(allContentPaths).find(
       ({ folder, file }) => path.startsWith(folder) || path === file,
