@@ -40,6 +40,10 @@
           outline-width: 4px;
           outline-style: solid;
           outline-color: var(--primary-accent-color);
+
+          :global(.icon) {
+            display: none;
+          }
         }
       }
     }
