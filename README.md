@@ -105,7 +105,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 | GitLab GraphQL API | The GitLab backend is not yet supported. |
 | Open Authoring | Not yet supported. |
 | Folder Collections Path | Supported. |
-| Folder Collections Media and Public Folder | Only the _undocumented_, [absolute path per-collection folder](#use-a-custom-media-folder-for-a-collection) configuration is currently supported. The relative path support is coming soon. |
+| Folder Collections Media and Public Folder | Supported. We recommend using an [absolute path per-collection folder](#use-a-custom-media-folder-for-a-collection) for easier asset management rather than a relative path per-entry folder. |
 | List Widget: Variable Types | Supported. |
 | Custom Mount Element | Supported. |
 | Manual Initialization | Not yet supported. |
@@ -115,7 +115,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 | Image widget file size limit | Supported. |
 | Summary string template transformations | Supported. |
 | Registering to CMS Events | Not yet supported. |
-| Dynamic Default Values | Not yet supported. |
+| Dynamic Default Values | Supported. |
 | Nested Collections | Not yet supported. |
 | Remark plugins | Not yet supported. |
 
