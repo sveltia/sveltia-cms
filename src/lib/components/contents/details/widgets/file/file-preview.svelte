@@ -5,8 +5,9 @@
   @see https://decapcms.org/docs/widgets/#image
 -->
 <script>
-  import { getAssetByPublicPath } from '$lib/services/assets';
-  import { getAssetURL } from '$lib/services/assets/view';
+  import Image from '$lib/components/common/image.svelte';
+  import { getMediaFieldURL } from '$lib/services/assets';
+  import { entryDraft } from '$lib/services/contents/editor';
 
   // svelte-ignore unused-export-let
   export let locale = '';
@@ -25,10 +26,12 @@
 </script>
 
 {#if widget === 'image' && currentValue}
-  {@const asset = currentValue.startsWith('/') ? getAssetByPublicPath(currentValue) : undefined}
-  <p>
-    <img loading="lazy" src={asset ? getAssetURL(asset) : currentValue} alt="" />
-  </p>
+  {@const src = getMediaFieldURL(currentValue, $entryDraft.originalEntry)}
+  {#if src}
+    <p>
+      <Image {src} />
+    </p>
+  {/if}
 {:else if typeof currentValue === 'string' && currentValue.trim()}
   <p>{currentValue}</p>
 {/if}

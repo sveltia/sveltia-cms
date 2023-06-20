@@ -5,28 +5,25 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { selectedAsset } from '$lib/services/assets';
-  import { getAssetURL } from '$lib/services/assets/view';
+  import { getAssetURL, selectedAsset } from '$lib/services/assets';
 </script>
 
 <div class="editor">
-  {#key $selectedAsset}
-    <Toolbar />
-    <div class="row">
-      <div class="preview">
-        {#if $selectedAsset.kind === 'image'}
-          <Image src={getAssetURL($selectedAsset)} alt={$selectedAsset.name} checkerboard={true} />
-        {:else if $selectedAsset.kind === 'video'}
-          <Video src={getAssetURL($selectedAsset)} controls />
-        {:else}
-          <EmptyState>
-            <span>{$_('no_preview_available')}</span>
-          </EmptyState>
-        {/if}
-      </div>
-      <InfoPanel asset={$selectedAsset} />
+  <Toolbar />
+  <div class="row">
+    <div class="preview">
+      {#if $selectedAsset.kind === 'image'}
+        <Image src={getAssetURL($selectedAsset)} alt={$selectedAsset.name} checkerboard={true} />
+      {:else if $selectedAsset.kind === 'video'}
+        <Video src={getAssetURL($selectedAsset)} controls />
+      {:else}
+        <EmptyState>
+          <span>{$_('no_preview_available')}</span>
+        </EmptyState>
+      {/if}
     </div>
-  {/key}
+    <InfoPanel asset={$selectedAsset} />
+  </div>
 </div>
 
 <style lang="scss">

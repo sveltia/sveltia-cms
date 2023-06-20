@@ -196,3 +196,28 @@ export const renameIfNeeded = (name, otherNames) => {
 
   return `${slug}-${Number(dupName.match(regex)[1] || 0) + 1}${extension ? `.${extension}` : ''}`;
 };
+
+/**
+ * Resolve the given file path.
+ * @param {string} path Unresolved path, e.g. `foo/bar/baz/../../image.jpg`.
+ * @returns {string} Resolved path, e.g. `foo/image.jpg`.
+ */
+export const resolvePath = (path) => {
+  const segments = path.split('/');
+
+  segments.forEach((segment, index) => {
+    if (segment === '..') {
+      const _index = segments.findLastIndex((s, i) => !!s && i < index);
+
+      if (_index > -1) {
+        segments[_index] = null;
+      }
+    }
+
+    if (segment === '..' || segment === '.') {
+      segments[index] = null;
+    }
+  });
+
+  return segments.filter(Boolean).join('/');
+};

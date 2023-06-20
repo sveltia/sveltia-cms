@@ -1,4 +1,6 @@
+import { flatten } from 'flat';
 import { get, writable } from 'svelte/store';
+import { getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { isObject } from '$lib/services/utils/misc';
 
@@ -96,29 +98,6 @@ export const getCollection = (name) => {
 };
 
 /**
- * Get entries by the given collection name, while applying a filer if needed.
- * @param {string} name Collection name.
- * @returns {Entry[]} Entries.
- * @see https://decapcms.org/docs/collection-types#filtered-folder-collections
- */
-export const getEntries = (name) => {
-  const collection = getCollection(name);
-
-  if (!collection) {
-    return [];
-  }
-
-  const { filter, _i18n } = collection;
-  const { defaultLocale = 'default' } = _i18n;
-
-  return (get(allEntries) || []).filter(
-    (entry) =>
-      entry.collectionName === name &&
-      (!filter || entry.locales[defaultLocale]?.content[filter.field] === filter.value),
-  );
-};
-
-/**
  * Get a file collection entry.
  * @param {string} collectionName Collection name.
  * @param {string} fileName File name.
@@ -174,4 +153,56 @@ export const getFieldByKeyPath = (collectionName, fileName, keyPath, valueMap) =
   });
 
   return field;
+};
+
+/**
+ * Get entries by the given collection name, while applying a filer if needed.
+ * @param {string} collectionName Collection name.
+ * @returns {Entry[]} Entries.
+ * @see https://decapcms.org/docs/collection-types#filtered-folder-collections
+ */
+export const getEntriesByCollection = (collectionName) => {
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    return [];
+  }
+
+  const {
+    filter,
+    _i18n: { defaultLocale = 'default' },
+  } = collection;
+
+  return get(allEntries).filter(
+    (entry) =>
+      entry.collectionName === collectionName &&
+      (!filter || entry.locales[defaultLocale]?.content[filter.field] === filter.value),
+  );
+};
+
+/**
+ * Get a list of entries using the given asset.
+ * @param {string} url Asset URL.
+ * @returns {Entry[]} Entries.
+ */
+export const getEntriesByAssetURL = (url) => {
+  const path = url.replace(get(siteConfig).site_url, '');
+
+  return get(allEntries).filter((entry) => {
+    const { locales, collectionName, fileName } = entry;
+
+    return Object.values(locales).some(({ content }) => {
+      const valueMap = flatten(content);
+
+      return Object.entries(valueMap).some(([keyPath, value]) => {
+        const field = getFieldByKeyPath(collectionName, fileName, keyPath, valueMap);
+
+        if (!field || !['image', 'file'].includes(field.widget)) {
+          return false;
+        }
+
+        return getMediaFieldURL(value, entry) === path;
+      });
+    });
+  });
 };

@@ -4,7 +4,7 @@
   import DeleteAssetsDialog from '$lib/components/assets/shared/delete-assets-dialog.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
   import { selectedAssetFolderPath, selectedAssets, uploadingAssets } from '$lib/services/assets';
-  import { getFolderLabel } from '$lib/services/assets/view';
+  import { getFolderLabelByPath } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
 
   const searchTerms = '';
@@ -20,7 +20,7 @@
     {#if searchTerms}
       {$_('search_results_for_x', { values: { terms: searchTerms } })}
     {:else}
-      {getFolderLabel($selectedAssetFolderPath)}
+      {getFolderLabelByPath($selectedAssetFolderPath)}
       {#if $selectedAssetFolderPath}
         <span>/{$selectedAssetFolderPath}</span>
       {/if}

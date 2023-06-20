@@ -4,8 +4,8 @@
   import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { getAssetByPublicPath } from '$lib/services/assets';
-  import { getAssetURL, getFolderLabel } from '$lib/services/assets/view';
+  import { getAssetURL, getMediaFieldURL } from '$lib/services/assets';
+  import { getFolderLabelByPath } from '$lib/services/assets/view';
   import { getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
   import { searchResults } from '$lib/services/search';
@@ -17,9 +17,8 @@
     <div>
       {#if $searchResults?.entries?.length}
         <BasicListView>
-          <!-- prettier-ignore -->
-          {#each $searchResults.entries as
-            { slug, locales, fileName, collectionName } (`${collectionName}/${fileName}/${slug}`)}
+          {#each $searchResults.entries as entry (entry.id)}
+            {@const { slug, locales, fileName, collectionName } = entry}
             {@const collection = getCollection(collectionName)}
             {@const file = fileName
               ? collection.files.find(({ name }) => name === fileName)
@@ -37,12 +36,9 @@
                     {@const firstImageField = collection.fields?.find(
                       ({ widget }) => widget === 'image',
                     )}
-                    {#if firstImageField && content[firstImageField.name]}
-                      {@const asset = getAssetByPublicPath(content[firstImageField.name])}
-                      <Image
-                        src={asset ? getAssetURL(asset) : content[firstImageField.name]}
-                        cover={true}
-                      />
+                    {@const src = getMediaFieldURL(content[firstImageField?.name], entry)}
+                    {#if src}
+                      <Image {src} cover={true} />
                     {/if}
                   {/if}
                 </TableCell>
@@ -89,7 +85,7 @@
                 {/if}
               </TableCell>
               <TableCell class="collection">
-                {getFolderLabel(folder)}
+                {getFolderLabelByPath(folder)}
               </TableCell>
               <TableCell class="title">
                 {name}

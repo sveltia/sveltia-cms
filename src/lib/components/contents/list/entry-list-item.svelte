@@ -1,8 +1,7 @@
 <script>
   import { Checkbox, TableCell, TableRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
-  import { getAssetByPublicPath } from '$lib/services/assets';
-  import { getAssetURL } from '$lib/services/assets/view';
+  import { getMediaFieldURL } from '$lib/services/assets';
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { parseSummary } from '$lib/services/contents/view';
   import { goto } from '$lib/services/navigation';
@@ -47,10 +46,10 @@
     />
   </TableCell>
   {#if firstImageField}
+    {@const src = getMediaFieldURL(content[firstImageField?.name], entry)}
     <TableCell class="image">
-      {#if content[firstImageField.name]}
-        {@const asset = getAssetByPublicPath(content[firstImageField.name])}
-        <Image src={asset ? getAssetURL(asset) : content[firstImageField.name]} cover={true} />
+      {#if src}
+        <Image {src} cover={true} />
       {/if}
     </TableCell>
   {/if}

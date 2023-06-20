@@ -3,8 +3,8 @@
   import AssetCheckbox from '$lib/components/assets/list/asset-checkbox.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { selectedAsset, selectedAssets } from '$lib/services/assets';
-  import { currentView, getAssetURL } from '$lib/services/assets/view';
+  import { getAssetURL, selectedAsset, selectedAssets } from '$lib/services/assets';
+  import { currentView } from '$lib/services/assets/view';
 
   /**
    * @type {Asset}

@@ -393,6 +393,8 @@
 /**
  * Entry item.
  * @typedef {object} Entry
+ * @property {string} id Unique entry ID mainly used on the cross-collection search page, where the
+ * `sha`, `slug` or `fileName` property may duplicate.
  * @property {string} sha SHA-1 hash from one of the locales. It serves as the ID of an entry, so it
  * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
@@ -451,7 +453,7 @@
  * @property {Collection} collection Collection details.
  * @property {string} [fileName] File name. (File collection only)
  * @property {CollectionFile} [collectionFile] File details. (File collection only)
- * @property {Entry} [originalEntry] Original entry if it’s not a new entry draft.
+ * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
  * @property {{ [key: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,
  * value is an flattened object containing all the original field values.
  * @property {{ [key: LocaleCode]: FlattenedEntryContent }} currentValues Key is a locale code,
@@ -488,14 +490,24 @@
 /**
  * Asset path configuration by collection.
  * @typedef {object} CollectionAssetPaths
- * @property {string} collectionName Collection name or `*` for the global folder.
- * @property {string} internalPath Folder path on the repository/filesystem.
- * @property {string} publicPath Folder path that will appear in the URL.
+ * @property {?string} collectionName Collection name or `null` for the global folder.
+ * @property {string} internalPath Folder path on the repository/filesystem, relative to the project
+ * root directory. It can be a partial path if the collection’s `media_folder` property is a
+ * relative path, because the complete path is entry-specific in that case.
+ * @property {string} publicPath Absolute folder path that will appear in the public URL, starting
+ * with `/`. It can be empty if the collection’s `public_folder` property is a relative path,
+ * because the complete path cannot be easily determined.
+ * @property {boolean} entryRelative Whether the `internalPath` is a relative path from the assets’s
+ * associated entry.
+ * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
  */
 
 /**
  * Asset item.
  * @typedef {object} Asset
+ * @property {File} [file] File object. Local backend only.
+ * @property {string} url Public file URL for a Git backend, blob URL for the local backend, or
+ * temporary blob URL for a local file being uploaded.
  * @property {string} name File name.
  * @property {string} path File path.
  * @property {string} sha SHA-1 hash for the file.
@@ -508,7 +520,18 @@
  * @property {{ name: string, email: string }} [commitAuthor] Git committer’s name or email for a
  * Git backend.
  * @property {Date} [commitDate] Commit date for a Git backend.
- * @property {string} [tempURL] Temporary blob URL for a local file being uploaded.
+ * @property {string} [repoFileURL] Web-accessible URL on the Git repository. Git backend only.
+ */
+
+/**
+ * Asset details.
+ * @typedef {object} AssetDetails
+ * @property {string} displayURL URL that can be linked in the app UI. It can be a temporary,
+ * non-public blob URL for a local file.
+ * @property {{ width: number, height: number }} [dimensions] Media dimensions available for an
+ * image, video or audio file.
+ * @property {number} [duration] Media duration available for a video or audio file, in seconds.
+ * @property {Entry[]} usedEntries List of entries using the asset.
  */
 
 /**

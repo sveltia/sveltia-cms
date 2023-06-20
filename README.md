@@ -264,7 +264,7 @@ And combine the following policies depending on your Git backend and enabled int
 
 - GitHub:
   ```csp
-  img-src https://avatars.githubusercontent.com;
+  img-src https://avatars.githubusercontent.com https://raw.githubusercontent.com;
   connect-src https://api.github.com https://www.githubstatus.com;
   ```
 - Pexels:

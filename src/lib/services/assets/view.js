@@ -2,7 +2,6 @@ import equal from 'fast-deep-equal';
 import { _ } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import {
-  allAssetPaths,
   allAssets,
   assetExtensions,
   selectedAssetFolderPath,
@@ -15,34 +14,13 @@ import LocalStorage from '$lib/services/utils/local-storage';
 const storageKey = 'sveltia-cms.assets-view';
 
 /**
- * Get the public URL for the given asset.
- * @param {Asset} asset Asset file, such as an image.
- * @param {object} [options] Options.
- * @param {boolean} [options.pathOnly] Whether to use the absolute path instead of the complete URL.
- * @returns {string} URL that can be displayed in the app.
- */
-export const getAssetURL = (asset, { pathOnly = false } = {}) => {
-  if (asset.tempURL && !pathOnly) {
-    return asset.tempURL;
-  }
-
-  const { publicPath } =
-    get(allAssetPaths).find(({ collectionName }) => collectionName === asset.collectionName) ||
-    get(allAssetPaths).find(({ collectionName }) => collectionName === null);
-
-  const baseURL = pathOnly ? '' : get(siteConfig).site_url || '';
-  const path = asset.path.replace(asset.folder, publicPath);
-
-  return `${baseURL}${path}`;
-};
-
-/**
  * Get the label for the given folder path. It can be a category name if the folder is a
  * collection-specific asset folder.
  * @param {string} folderPath Media folder path.
  * @returns {string} Human-readable label.
+ * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
  */
-export const getFolderLabel = (folderPath) => {
+export const getFolderLabelByPath = (folderPath) => {
   const { media_folder: defaultMediaFolder, collections } = get(siteConfig);
 
   if (!folderPath) {
@@ -55,10 +33,32 @@ export const getFolderLabel = (folderPath) => {
 
   return (
     collections.find(
-      ({ media_folder: folder = '' }) =>
-        folder.startsWith('/') && folder.substring(1) === folderPath,
+      ({ media_folder: mediaFolder = '', folder }) =>
+        // Relative path (assets saved along with an entry)
+        folder === folderPath ||
+        // Absolute path (assets saved in a single collection media folder)
+        (mediaFolder.startsWith('/') && mediaFolder.substring(1) === folderPath),
     )?.label || ''
   );
+};
+
+/**
+ * Get the label for the given collection. It can be a category name if the folder is a
+ * collection-specific asset folder.
+ * @param {string} collectionName Collection name.
+ * @returns {string} Human-readable label.
+ * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+ */
+export const getFolderLabelByCollection = (collectionName) => {
+  if (collectionName === '*') {
+    return get(_)('all_files');
+  }
+
+  if (!collectionName) {
+    return get(_)('uncategorized');
+  }
+
+  return get(siteConfig).collections.find(({ name }) => name === collectionName)?.label || '';
 };
 
 /**

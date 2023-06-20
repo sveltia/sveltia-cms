@@ -1,4 +1,10 @@
+import { flatten } from 'flat';
 import { derived, get, writable } from 'svelte/store';
+import { siteConfig } from '$lib/services/config';
+import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
+import { fillSlugTemplate } from '$lib/services/contents/slug';
+import { resolvePath } from '$lib/services/utils/files';
+import { getMediaMetadata } from '$lib/services/utils/media';
 
 export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
 
@@ -51,12 +57,36 @@ export const showUploadAssetsDialog = derived([uploadingAssets], ([_uploadingAss
 });
 
 /**
- * Get an asset internal/public paths by collection name.
- * @param {string} collectionName Collection name.
- * @returns {CollectionAssetPaths} Path config.
+ * Get the internal/public asset path configuration by collection.
+ * @param {Collection} collection Collection.
+ * @param {object} fillSlugOptions Options to be passed to {@link fillSlugTemplate}.
+ * @returns {{ internalAssetFolder: string, publicAssetFolder: string }} Determined paths.
  */
-export const getAssetFolder = (collectionName) =>
-  get(allAssetPaths).findLast((p) => [null, collectionName].includes(p.collectionName));
+export const getAssetFolder = (collection, fillSlugOptions) => {
+  const { entryRelative, internalPath, publicPath } = get(allAssetPaths).findLast((p) =>
+    [null, collection.name].includes(p.collectionName),
+  );
+
+  if (entryRelative) {
+    const entryFolder = collection.path ? collection.path.split('/').slice(0, -1).join('/') : '.';
+
+    return {
+      internalAssetFolder: resolvePath(
+        fillSlugTemplate(`${internalPath}/${entryFolder}`, fillSlugOptions),
+      ),
+      // Dot-only public path is a special case; the final path stored as the field value will be
+      // `./image.png` rather than `image.png`
+      publicAssetFolder: publicPath.match(/^\.?$/)
+        ? publicPath
+        : resolvePath(fillSlugTemplate(publicPath, fillSlugOptions)),
+    };
+  }
+
+  return {
+    internalAssetFolder: internalPath,
+    publicAssetFolder: publicPath,
+  };
+};
 
 /**
  * Determine the asset’s kind from the file extension.
@@ -67,23 +97,131 @@ export const getAssetKind = (name) =>
   Object.entries(assetExtensions).find(([, regex]) => name.match(regex))?.[0] || 'other';
 
 /**
- * Get an asset by a public URL path (stored as an image field value.)
- * @param {string} path Path starting with `/`.
- * @returns {?Asset} Corresponding asset.
+ * Get an asset by a public path typically stored as an image field value.
+ * @param {string} savedPath Saved absolute path or relative path.
+ * @param {Entry} entry Associated entry to be used to help locale an asset from a relative path.
+ * @returns {(Asset | undefined)} Corresponding asset.
  */
-export const getAssetByPublicPath = (path) => {
-  const [, publicPath, fileName] = path.match(/(.+?)\/([^/]+)$/) || [];
+export const getAssetByPath = (savedPath, entry) => {
+  // Handle relative path
+  if (!savedPath.startsWith('/')) {
+    if (!entry) {
+      return undefined;
+    }
+
+    const collection = getCollection(entry.collectionName);
+
+    const {
+      _i18n: { defaultLocale = 'default' },
+      public_folder: publicFolder,
+    } = collection;
+
+    const { path: entryFilePath, content: entryContent } = entry.locales[defaultLocale];
+    const entryFolder = entryFilePath.split('/').slice(0, -1).join('/');
+
+    const slug = publicFolder
+      ? fillSlugTemplate(publicFolder, {
+          collection,
+          content: flatten(entryContent),
+          currentSlug: entry.slug,
+          isMediaFolder: true,
+          entryFilePath,
+        })
+      : '.';
+
+    const resolvedPath = resolvePath(`${entryFolder}/${slug}/${savedPath}`);
+
+    return get(allAssets).find((asset) => asset.path === resolvedPath);
+  }
+
+  const [, publicPath, fileName] = savedPath.match(/(.+?)\/([^/]+)$/) || [];
 
   if (!publicPath) {
-    return null;
+    return undefined;
   }
 
   const { internalPath } =
     get(allAssetPaths).findLast((config) => config.publicPath === publicPath) || {};
 
   if (!internalPath) {
-    return null;
+    return undefined;
   }
 
   return get(allAssets).find((asset) => asset.path === `${internalPath}/${fileName}`);
+};
+
+/**
+ * Get the public URL for the given asset.
+ * @param {Asset} asset Asset file, such as an image.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.pathOnly] Whether to use the absolute path instead of the complete URL.
+ * @returns {(string | undefined)} URL that can be displayed in the app UI.
+ */
+export const getAssetURL = (asset, { pathOnly = false } = {}) => {
+  if (!asset) {
+    return undefined;
+  }
+
+  const isBlobURL = asset.url?.startsWith('blob:');
+
+  if (isBlobURL && !pathOnly) {
+    return asset.url;
+  }
+
+  const { publicPath, entryRelative } =
+    get(allAssetPaths).find(({ collectionName }) => collectionName === asset.collectionName) ||
+    get(allAssetPaths).find(({ collectionName }) => collectionName === null);
+
+  // Can’t determine the public path for assets with a relative path; use a fallback URL
+  // @todo This doesn’t work with private repos; need a workaround
+  if (entryRelative) {
+    return isBlobURL ? asset.url : undefined;
+  }
+
+  const baseURL = pathOnly ? '' : get(siteConfig).site_url || '';
+  const path = asset.path.replace(asset.folder, publicPath);
+
+  return `${baseURL}${path}`;
+};
+
+/**
+ * Get the public URL from the given image/file entry field value.
+ * @param {string} value Saved field value. It can be an absolute path, entry-relative path, or a
+ * complete/external URL.
+ * @param {Entry} entry Associated entry.
+ * @returns {(string | undefined)} URL that can be displayed in the app UI.
+ */
+export const getMediaFieldURL = (value, entry) => {
+  if (!value) {
+    return undefined;
+  }
+
+  if (value.match(/^(?:https?|data):/)) {
+    return value;
+  }
+
+  return getAssetURL(getAssetByPath(value, entry));
+};
+
+/**
+ * Get the given asset’s extra info.
+ * @param {Asset} asset Asset.
+ * @returns {Promise<AssetDetails>} Details.
+ */
+export const getAssetDetails = async (asset) => {
+  const { kind } = asset;
+  const url = getAssetURL(asset);
+  let dimensions;
+  let duration;
+
+  if (['image', 'video', 'audio'].includes(kind) && url) {
+    ({ dimensions, duration } = await getMediaMetadata(url, kind));
+  }
+
+  return {
+    displayURL: url,
+    dimensions,
+    duration,
+    usedEntries: getEntriesByAssetURL(url),
+  };
 };

@@ -25,6 +25,7 @@ export const saveAssets = async ({ files, folder }, options) => {
    */
   const newAssets = await Promise.all(
     files.map(async (file) => ({
+      url: URL.createObjectURL(file),
       name: file.name,
       path: [folder, file.name].join('/'),
       sha: await getHash(file),
@@ -33,7 +34,6 @@ export const saveAssets = async ({ files, folder }, options) => {
       text: null,
       collectionName,
       folder,
-      tempURL: URL.createObjectURL(file),
     })),
   );
 

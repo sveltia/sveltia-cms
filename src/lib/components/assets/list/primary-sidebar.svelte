@@ -2,26 +2,28 @@
   import { Group, Icon, Listbox, Option } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { allAssetPaths, selectedAssetFolderPath } from '$lib/services/assets';
-  import { getFolderLabel } from '$lib/services/assets/view';
+  import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { goto } from '$lib/services/navigation';
+
+  $: folders = [{ collectionName: '*', internalPath: undefined }, ...$allAssetPaths];
 </script>
 
 <Group class="primary-sidebar">
   <section>
     <h2>{$_('collections')}</h2>
     <Listbox>
-      {#each ['', ...$allAssetPaths.map(({ internalPath }) => internalPath)] as folderPath}
-        {@const selected = folderPath === $selectedAssetFolderPath}
+      {#each folders as { collectionName, internalPath } (collectionName)}
+        {@const selected = internalPath === $selectedAssetFolderPath}
         <Option
           {selected}
-          label={getFolderLabel(folderPath)}
+          label={getFolderLabelByCollection(collectionName)}
           on:click={() => {
-            goto(folderPath ? `/assets/${folderPath}` : `/assets`);
+            goto(internalPath ? `/assets/${internalPath}` : `/assets`);
           }}
           on:dragover={(event) => {
             event.preventDefault();
 
-            if (!folderPath || selected) {
+            if (!internalPath || selected) {
               event.dataTransfer.dropEffect = 'none';
             } else {
               event.dataTransfer.dropEffect = 'move';

@@ -170,6 +170,10 @@ const fetchFiles = async () => {
     parseAssetFiles(
       assetFiles.map((/** @type {object} */ asset, index) => ({
         ...asset,
+        // @todo This doesn’t work with private repos; need a workaround
+        // @see https://stackoverflow.com/q/18126559
+        url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${asset.path}`,
+        repoFileURL: `https://github.com/${owner}/${repo}/blob/${branch}/${asset.path}`,
         name: asset.path.split('/').pop(),
         meta: { ...(asset.meta || {}), ...getMeta(entryFiles.length + index) },
       })),

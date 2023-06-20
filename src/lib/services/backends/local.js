@@ -174,6 +174,7 @@ const getAllFiles = async () => {
         const file = await handle.getFile();
 
         allFiles.push({
+          file,
           path,
           name,
           sha: await getHash(file),

@@ -99,12 +99,15 @@ siteConfig.subscribe((config) => {
     return;
   }
 
-  const { media_folder: mediaFolder, public_folder: publicFolder, collections } = config;
-  const _mediaFolder = stripSlashes(mediaFolder);
+  const {
+    media_folder: _globalMediaFolder,
+    public_folder: _globalPublicFolder,
+    collections,
+  } = config;
 
   selectedCollection.set(getCollection(collections[0].name));
 
-  allContentPaths.set([
+  const _allContentPaths = [
     ...collections
       .filter(({ folder }) => !!folder)
       .map(
@@ -142,22 +145,76 @@ siteConfig.subscribe((config) => {
           })),
       )
       .flat(1),
-  ]);
+  ];
 
-  allAssetPaths.set(
-    [
-      {
-        collectionName: null,
-        internalPath: _mediaFolder,
-        publicPath: publicFolder || `/${_mediaFolder}`,
-      },
-      ...collections
-        .filter((c) => c.media_folder?.startsWith('/') && c.public_folder)
-        .map((c) => ({
-          collectionName: c.name,
-          internalPath: stripSlashes(c.media_folder),
-          publicPath: c.public_folder,
-        })),
-    ].sort((a, b) => a.internalPath.localeCompare(b.internalPath)),
-  );
+  const globalMediaFolder = stripSlashes(_globalMediaFolder);
+
+  const globalPublicFolder = _globalPublicFolder
+    ? `/${stripSlashes(_globalPublicFolder)}`
+    : `/${globalMediaFolder}`;
+
+  const globalAssetPath = {
+    collectionName: null,
+    internalPath: globalMediaFolder,
+    publicPath: globalPublicFolder,
+    entryRelative: false,
+  };
+
+  /**
+   * Folder Collections Media and Public Folder.
+   * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+   */
+  const collectionAssetPaths = collections.map((collection) => {
+    const {
+      name: collectionName,
+      // e.g. `content/posts`
+      folder: collectionFolder,
+      // e.g. `{{slug}}/index`
+      path: entryPath,
+    } = collection;
+
+    if (!entryPath) {
+      return null;
+    }
+
+    let {
+      // relative path, e.g. `` (an empty string), `./` (same as an empty string),
+      // `{{media_folder}}/posts`, etc. or absolute path, e.g. `/static/images/posts`, etc.
+      media_folder: mediaFolder = '',
+      // same as `media_folder`
+      public_folder: publicFolder = '',
+    } = collection;
+
+    const entryRelative = !(
+      mediaFolder &&
+      (mediaFolder.startsWith('/') || mediaFolder.includes('{{media_folder}}'))
+    );
+
+    mediaFolder = mediaFolder.replace('{{media_folder}}', globalMediaFolder);
+    publicFolder = publicFolder.replace('{{public_folder}}', globalPublicFolder);
+
+    return {
+      collectionName,
+      internalPath: stripSlashes(entryRelative ? collectionFolder : mediaFolder),
+      publicPath: publicFolder,
+      entryRelative,
+    };
+  });
+
+  const _allAssetPaths = [
+    globalAssetPath,
+    ...collectionAssetPaths
+      .filter(Boolean)
+      .sort((a, b) => a.internalPath.localeCompare(b.internalPath)),
+  ];
+
+  allContentPaths.set(_allContentPaths);
+  allAssetPaths.set(_allAssetPaths);
+
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.info('allContentPaths', _allContentPaths);
+    // eslint-disable-next-line no-console
+    console.info('allAssetPaths', _allAssetPaths);
+  }
 });

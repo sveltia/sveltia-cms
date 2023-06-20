@@ -8,15 +8,14 @@ import { get, writable } from 'svelte/store';
 import { allAssets, getAssetFolder, getAssetKind } from '$lib/services/assets';
 import { user } from '$lib/services/auth';
 import { backend } from '$lib/services/backends';
-import { allEntries, getCollection, getEntries, getFieldByKeyPath } from '$lib/services/contents';
-import { normalizeSlug } from '$lib/services/contents/entry';
+import { allEntries, getCollection, getFieldByKeyPath } from '$lib/services/contents';
+import { fillSlugTemplate } from '$lib/services/contents/slug';
 import { translator } from '$lib/services/integrations/translators';
 import { formatEntryFile, getFileExtension } from '$lib/services/parser';
 import { prefs } from '$lib/services/prefs';
-import { getDateTimeParts } from '$lib/services/utils/datetime';
 import { getHash, renameIfNeeded } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
+import { escapeRegExp } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.entry-view';
 
@@ -494,73 +493,6 @@ const validateEntry = () => {
 };
 
 /**
- * Create a slug or path for the given entry draft.
- * @param {EntryDraft} draft Draft.
- * @param {string} template Template string containing tags like `{{title}}`.
- * @param {string} [currentSlug] Entry slug already created for the path.
- * @returns {string} Slug or path.
- * @see https://decapcms.org/docs/configuration-options/#slug-type
- * @see https://decapcms.org/docs/configuration-options/#slug
- */
-const createSlug = (draft, template, currentSlug) => {
-  const {
-    collection: { name: collectionName, identifier_field: identifierField = 'title', _i18n },
-    currentValues,
-  } = draft;
-
-  const { defaultLocale = 'default' } = _i18n;
-  const content = currentValues[defaultLocale];
-  const dateTimeParts = getDateTimeParts();
-
-  const slug = template.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
-    if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
-      return dateTimeParts[tag];
-    }
-
-    if (tag === 'slug' && currentSlug) {
-      return currentSlug;
-    }
-
-    if (tag === 'uuid') {
-      return generateUUID();
-    }
-
-    if (tag === 'uuid_short') {
-      // Last 12 characters
-      return generateUUID().split('-').pop();
-    }
-
-    if (tag === 'uuid_shorter') {
-      // First 8 characters
-      return generateUUID().split('-').shift();
-    }
-
-    let value = '';
-
-    if (tag.startsWith('fields.')) {
-      value = content[tag.replace(/^fields\./, '')] || '';
-    } else if (tag === 'slug') {
-      value = content[identifierField] || content.title || content.name || content.label || '';
-    } else {
-      value = content[tag] || '';
-    }
-
-    // Normalize it; use a random ID as a fallback
-    return normalizeSlug(value) || generateUUID().split('-').pop();
-  });
-
-  // We don’t have to rename it when creating a path with a slug given
-  if (currentSlug) {
-    return slug;
-  }
-
-  return renameIfNeeded(
-    slug,
-    getEntries(collectionName).map((e) => e.slug),
-  );
-};
-
-/**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and folder collections path.
  * @param {EntryDraft} draft Entry draft.
@@ -568,10 +500,9 @@ const createSlug = (draft, template, currentSlug) => {
  * @param {string} slug Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
  * @see https://decapcms.org/docs/beta-features/#i18n-support
- * @see https://decapcms.org/docs/beta-features/#folder-collections-path
  */
 const createEntryPath = (draft, locale, slug) => {
-  const { collection, collectionFile, originalEntry } = draft;
+  const { collection, collectionFile, originalEntry, currentValues } = draft;
 
   if (collectionFile) {
     return collectionFile.file;
@@ -581,9 +512,21 @@ const createEntryPath = (draft, locale, slug) => {
     return originalEntry?.locales[locale].path;
   }
 
-  const { structure } = collection._i18n;
+  const { structure, defaultLocale } = collection._i18n;
   const collectionFolder = collection.folder?.replace(/\/$/, '');
-  const path = collection.path ? createSlug(draft, collection.path, slug) : slug;
+
+  /**
+   * Support folder collections path.
+   * @see https://decapcms.org/docs/beta-features/#folder-collections-path
+   */
+  const path = collection.path
+    ? fillSlugTemplate(collection.path, {
+        collection,
+        content: currentValues[defaultLocale],
+        currentSlug: slug,
+      })
+    : slug;
+
   const extension = getFileExtension(collection);
   const defaultOption = `${collectionFolder}/${path}.${extension}`;
 
@@ -619,11 +562,18 @@ export const saveEntry = async () => {
     files,
   } = draft;
 
-  const slug = originalEntry?.slug || createSlug(draft, collection.slug || '{{title}}');
   const { structure, hasLocales, locales, defaultLocale = 'default' } = collection._i18n;
+  const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
 
-  const { internalPath: internalAssetFolder, publicPath: publicAssetFolder } =
-    getAssetFolder(collectionName);
+  const slug =
+    originalEntry?.slug || fillSlugTemplate(collection.slug || '{{title}}', fillSlugOptions);
+
+  const { internalAssetFolder, publicAssetFolder } = getAssetFolder(collection, {
+    ...fillSlugOptions,
+    currentSlug: slug,
+    isMediaFolder: true,
+    entryFilePath: createEntryPath(draft, defaultLocale, slug),
+  });
 
   const assetsInSameFolder = get(allAssets)
     .map((a) => a.path)
@@ -689,7 +639,9 @@ export const saveEntry = async () => {
 
             // Check if the file has already been added for other field or locale
             if (dupFile) {
-              valueMap[keyPath] = `${publicAssetFolder}/${dupFile.name}`;
+              valueMap[keyPath] = publicAssetFolder
+                ? `${publicAssetFolder}/${dupFile.name}`
+                : dupFile.name;
 
               continue;
             }
@@ -705,15 +657,15 @@ export const saveEntry = async () => {
 
             savingAssets.push({
               ...savingAssetProps,
+              url: URL.createObjectURL(file),
               name: _fileName,
               path,
               sha,
               size: file.size,
               kind: getAssetKind(_fileName),
-              tempURL: URL.createObjectURL(file),
             });
 
-            valueMap[keyPath] = `${publicAssetFolder}/${_fileName}`;
+            valueMap[keyPath] = publicAssetFolder ? `${publicAssetFolder}/${_fileName}` : _fileName;
           }
         }
 
@@ -730,6 +682,7 @@ export const saveEntry = async () => {
    * @type {Entry}
    */
   const savingEntry = {
+    id: `${collectionName}/${fileName}/${slug}`,
     collectionName,
     fileName,
     slug,

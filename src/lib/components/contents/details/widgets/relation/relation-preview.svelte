@@ -5,7 +5,7 @@
 -->
 <script>
   import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
-  import { getEntries, getFile } from '$lib/services/contents';
+  import { getEntriesByCollection, getFile } from '$lib/services/contents';
 
   export let locale = '';
   // svelte-ignore unused-export-let
@@ -27,7 +27,9 @@
     value_field: valueField,
   } = fieldConfig);
 
-  $: refEntries = fileName ? [getFile(collectionName, fileName)] : getEntries(collectionName);
+  $: refEntries = fileName
+    ? [getFile(collectionName, fileName)]
+    : getEntriesByCollection(collectionName);
   $: options = getOptions(locale, fieldConfig, refEntries);
 
   $: refValues = (

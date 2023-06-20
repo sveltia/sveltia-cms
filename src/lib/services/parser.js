@@ -5,7 +5,7 @@ import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { allAssetPaths, getAssetKind } from '$lib/services/assets';
 import { allContentPaths, getCollection } from '$lib/services/contents';
-import { normalizeSlug } from '$lib/services/contents/entry';
+import { normalizeSlug } from '$lib/services/contents/slug';
 import { isObject } from '$lib/services/utils/misc';
 import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
@@ -21,7 +21,7 @@ export const createFileList = (files) => {
   const assetFiles = [];
 
   files.forEach((fileInfo) => {
-    const { path } = fileInfo;
+    const { path, name } = fileInfo;
 
     const contentPathConfig = get(allContentPaths).find(
       ({ folder, file }) => path.startsWith(folder) || path === file,
@@ -31,7 +31,7 @@ export const createFileList = (files) => {
       path.startsWith(internalPath),
     );
 
-    if (contentPathConfig && path.match(/\.(?:json|markdown|md|toml|ya?ml)$/i)) {
+    if (contentPathConfig && name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i)) {
       entryFiles.push({
         ...fileInfo,
         type: 'entry',
@@ -39,7 +39,10 @@ export const createFileList = (files) => {
       });
     }
 
-    if (mediaPathConfig) {
+    // Exclude files with a leading `+` sign, which are Svelte page/layout files. Also exclude files
+    // already listed as entries. These files can appear in the file list when a relative media path
+    // is configured for a collection
+    if (mediaPathConfig && !name.startsWith('+') && !entryFiles.find((e) => e.path === path)) {
       assetFiles.push({
         ...fileInfo,
         type: 'asset',
@@ -375,6 +378,7 @@ export const parseEntryFiles = (entryFiles) => {
       }
     }
 
+    entry.id = `${collectionName}/${fileName}/${entry.slug}`;
     entries.push(entry);
   });
 
@@ -389,6 +393,9 @@ export const parseEntryFiles = (entryFiles) => {
 export const parseAssetFiles = (assetFiles) =>
   assetFiles.map((assetInfo) => {
     const {
+      file,
+      url,
+      repoFileURL,
       path,
       name,
       sha,
@@ -399,6 +406,9 @@ export const parseAssetFiles = (assetFiles) =>
     } = assetInfo;
 
     return {
+      file,
+      url: file && !url ? URL.createObjectURL(file) : url,
+      repoFileURL,
       path,
       name,
       sha,

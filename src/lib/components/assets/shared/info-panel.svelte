@@ -1,25 +1,24 @@
 <script>
   import { Button } from '@sveltia/ui';
-  import { flatten } from 'flat';
   import { _, locale as appLocale } from 'svelte-i18n';
-  import { getAssetURL } from '$lib/services/assets/view';
-  import { user } from '$lib/services/auth';
-  import { allBackendServices } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
-  import { allEntries, getCollection } from '$lib/services/contents';
+  import { getAssetDetails } from '$lib/services/assets';
+  import { getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
   import { formatSize } from '$lib/services/utils/files';
-  import { formatDuration, getMediaMetadata } from '$lib/services/utils/media';
+  import { formatDuration } from '$lib/services/utils/media';
 
   /**
    * @type {Asset}
    */
   export let asset = undefined;
 
+  $: ({ path, size, kind, commitAuthor, commitDate, repoFileURL } = asset);
+  $: [, extension = ''] = path.match(/\.([^.]+)$/) || [];
+
   /**
    * @type {string}
    */
-  let repoFileURL = undefined;
+  let displayURL = undefined;
   /**
    * @type {{ width: number, height: number }}
    */
@@ -28,36 +27,20 @@
    * @type {number}
    */
   let duration = undefined;
+  /**
+   * @type {Entry[]}
+   */
+  let usedEntries = [];
 
-  $: ({ path, size, kind, commitAuthor, commitDate } = asset);
-  $: src = getAssetURL(asset);
-  $: srcPath = getAssetURL(asset, { pathOnly: true });
-  $: [, extension = ''] = path.match(/\.([^.]+)$/) || [];
+  /**
+   * Update the properties above.
+   */
+  const updateProps = async () => {
+    ({ displayURL, dimensions, duration, usedEntries } = await getAssetDetails(asset));
+  };
 
-  $: {
-    if (['image', 'video', 'audio'].includes(kind) && src) {
-      (async () => {
-        ({ dimensions, duration } = await getMediaMetadata(src, kind));
-      })();
-    }
-  }
-
-  $: {
-    if ($user?.backendName !== 'local') {
-      const { name, repo, branch = 'master' } = $siteConfig.backend;
-
-      repoFileURL = `${allBackendServices[name].url.replace(
-        '{repo}',
-        repo,
-      )}/tree/${branch}/${path}`;
-    }
-  }
-
-  $: usedEntries = $allEntries.filter(({ locales }) =>
-    Object.values(locales).find((content) =>
-      Object.values(flatten(content)).find((value) => value === srcPath),
-    ),
-  );
+  // @ts-ignore Arguments are triggers
+  $: updateProps(asset);
 </script>
 
 <div class="detail">
@@ -83,7 +66,13 @@
   {/if}
   <section>
     <h4>{$_('public_url')}</h4>
-    <p><a href={src}>{src}</a></p>
+    <p>
+      {#if !displayURL || displayURL.startsWith('blob:')}
+        –
+      {:else}
+        <a href={displayURL}>{displayURL}</a>
+      {/if}
+    </p>
   </section>
   <section>
     <h4>{$_('file_path')}</h4>

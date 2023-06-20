@@ -7,7 +7,7 @@ import LocalStorage from '$lib/services/utils/local-storage';
 import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
 import {
   allEntries,
-  getEntries,
+  getEntriesByCollection,
   getFieldByKeyPath,
   selectedCollection,
   selectedEntries,
@@ -270,7 +270,7 @@ export const listedEntries = derived(
   [allEntries, selectedCollection],
   ([_allEntries, _collection], set) => {
     if (_allEntries && _collection) {
-      set(getEntries(_collection.name));
+      set(getEntriesByCollection(_collection.name));
     } else {
       set([]);
     }

@@ -10,8 +10,7 @@
   import { _ } from 'svelte-i18n';
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
   import Image from '$lib/components/common/image.svelte';
-  import { getAssetByPublicPath } from '$lib/services/assets';
-  import { getAssetURL } from '$lib/services/assets/view';
+  import { getAssetURL, getMediaFieldURL } from '$lib/services/assets';
   import { entryDraft } from '$lib/services/contents/editor';
   import { formatSize, getDataURL } from '$lib/services/utils/files';
 
@@ -100,8 +99,10 @@
 
 <div class="image-widget">
   {#if isImageWidget && currentValue}
-    {@const _asset = currentValue.startsWith('/') ? getAssetByPublicPath(currentValue) : undefined}
-    <Image src={_asset ? getAssetURL(_asset) : currentValue} checkerboard={true} />
+    {@const src = getMediaFieldURL(currentValue, $entryDraft.originalEntry)}
+    {#if src}
+      <Image {src} checkerboard={true} />
+    {/if}
   {/if}
   <div>
     {#if typeof currentValue === 'string'}

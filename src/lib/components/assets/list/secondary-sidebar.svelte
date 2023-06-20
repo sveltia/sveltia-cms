@@ -10,9 +10,7 @@
 {#if $currentView?.showInfo}
   <Group class="secondary-sidebar">
     {#if $selectedAsset}
-      {#key $selectedAsset}
-        <InfoPanel asset={$selectedAsset} />
-      {/key}
+      <InfoPanel asset={$selectedAsset} />
     {:else}
       <EmptyState>
         <span>{$_('select_asset_show_info')}</span>
