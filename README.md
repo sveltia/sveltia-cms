@@ -124,6 +124,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 - Auto-saving a draft entry is not implemented yet.
 - Duplicating an entry is not implemented yet.
 - Accessibility support is limited.
+- Assets cannot be previewed when using relative path per-entry media folders.
 
 ### Roadmap
 
