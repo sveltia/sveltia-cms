@@ -43,7 +43,7 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
 
   const { backend } = get(siteConfig);
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const request = window.indexedDB.open(`${backend.name}:${backend.repo}`, 1);
 
     /**
@@ -69,19 +69,24 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
        */
       _request.onsuccess = async () => {
         /**
-         * @type {FileSystemDirectoryHandle}
+         * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function }}
          */
-        let handle = _request.result;
+        let handle = forceReload ? undefined : _request.result;
 
-        if (handle && !forceReload) {
-          const options = { mode: 'readwrite' };
-
-          // @ts-ignore
-          if ((await handle.requestPermission(options)) !== 'granted') {
-            reject(new Error('permission_denied'));
-            return;
+        if (handle) {
+          if ((await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') {
+            handle = undefined;
+          } else {
+            try {
+              await handle.entries().next();
+            } catch {
+              // The directory may have been (re)moved
+              handle = undefined;
+            }
           }
-        } else {
+        }
+
+        if (!handle) {
           handle = await /** @type {any} */ (window).showDirectoryPicker();
           getStore().add(handle, rootDirHandleKey);
         }
@@ -165,22 +170,27 @@ const getAllFiles = async () => {
       }
 
       if (handle.kind === 'file') {
-        const path = (await _rootDirHandle.resolve(handle)).join('/');
+        try {
+          const path = (await _rootDirHandle.resolve(handle)).join('/');
 
-        if (!scanningPaths.some((scanningPath) => path.startsWith(scanningPath))) {
-          continue;
+          if (!scanningPaths.some((scanningPath) => path.startsWith(scanningPath))) {
+            continue;
+          }
+
+          const file = await handle.getFile();
+
+          allFiles.push({
+            file,
+            path,
+            name,
+            sha: await getHash(file),
+            size: file.size,
+            text: name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? await readAsText(file) : null,
+          });
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error(error);
         }
-
-        const file = await handle.getFile();
-
-        allFiles.push({
-          file,
-          path,
-          name,
-          sha: await getHash(file),
-          size: file.size,
-          text: name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? await readAsText(file) : null,
-        });
       }
 
       if (handle.kind === 'directory') {
