@@ -250,15 +250,17 @@ export const strings = {
     appearance: {
       title: 'Appearance',
       theme: 'Theme',
-      language: 'Language',
     },
     theme: {
       auto: 'Auto',
       dark: 'Dark',
       light: 'Light',
     },
-    editor: {
-      title: 'Editor',
+    languages: {
+      title: 'Languages',
+      ui_language: {
+        title: 'User Interface Language',
+      },
       translator: {
         title: '{service} Translator',
         field_label: '{service} API Authentication Key',

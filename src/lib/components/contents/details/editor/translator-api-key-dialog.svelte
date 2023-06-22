@@ -28,7 +28,7 @@
 >
   <p>
     {@html DOMPurify.sanitize(
-      $_('prefs.editor.translator.description', {
+      $_('prefs.languages.translator.description', {
         values: {
           service: serviceLabel,
           homeHref: `href="${landingURL}"`,
@@ -41,7 +41,7 @@
   <div>
     <TextInput
       spellcheck="false"
-      aria-label={$_('prefs.editor.translator.field_label', {
+      aria-label={$_('prefs.languages.translator.field_label', {
         values: { service: serviceLabel },
       })}
       on:input={(event) => {

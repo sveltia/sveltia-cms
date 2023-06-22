@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
   import AppearancePanel from '$lib/components/prefs/panels/appearance-panel.svelte';
-  import EditorPanel from '$lib/components/prefs/panels/editor-panel.svelte';
+  import LanguagesPanel from '$lib/components/prefs/panels/languages-panel.svelte';
   import MediaPanel from '$lib/components/prefs/panels/media-panel.svelte';
 
   /**
@@ -20,20 +20,20 @@
         aria-selected={true}
         aria-controls="prefs-tab-appearance"
       >
-        <Icon slot="start-icon" name="design_services" />
+        <Icon slot="start-icon" name="palette" />
       </Tab>
-      <Tab label={$_('prefs.editor.title')} aria-controls="prefs-tab-editor">
-        <Icon slot="start-icon" name="edit_note" />
+      <Tab label={$_('prefs.languages.title')} aria-controls="prefs-tab-languages">
+        <Icon slot="start-icon" name="language" />
       </Tab>
       <Tab label={$_('prefs.media.title')} aria-controls="prefs-tab-media">
         <Icon slot="start-icon" name="photo_library" />
       </Tab>
       <Tab label={$_('prefs.advanced.title')} aria-controls="prefs-tab-advanced">
-        <Icon slot="start-icon" name="handyman" />
+        <Icon slot="start-icon" name="build" />
       </Tab>
     </TabList>
     <AppearancePanel />
-    <EditorPanel />
+    <LanguagesPanel />
     <MediaPanel />
     <AdvancedPanel />
   </div>

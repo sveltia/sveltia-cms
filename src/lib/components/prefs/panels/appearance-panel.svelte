@@ -1,7 +1,6 @@
 <script>
-  import { Option, Select, SelectButton, SelectButtonGroup, TabPanel } from '@sveltia/ui';
-  import { _, locale as appLocale, locales } from 'svelte-i18n';
-  import { getLocaleLabel } from '$lib/services/i18n';
+  import { SelectButton, SelectButtonGroup, TabPanel } from '@sveltia/ui';
+  import { _ } from 'svelte-i18n';
   import { prefs } from '$lib/services/prefs';
 </script>
 
@@ -23,28 +22,6 @@
           />
         {/each}
       </SelectButtonGroup>
-    </p>
-  </section>
-  <section>
-    <h4>{$_('prefs.appearance.language')}</h4>
-    <p>
-      {#key $appLocale}
-        <Select
-          label={getLocaleLabel($appLocale)}
-          value={$appLocale}
-          on:change={(/** @type {CustomEvent} */ event) => {
-            $prefs = { ...$prefs, locale: event.detail.value };
-          }}
-        >
-          {#each $locales as locale}
-            <Option
-              label={getLocaleLabel(locale)}
-              value={locale}
-              selected={locale === $appLocale}
-            />
-          {/each}
-        </Select>
-      {/key}
     </p>
   </section>
 </TabPanel>
