@@ -7,7 +7,6 @@
   import { getFolderLabelByPath } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
 
-  const searchTerms = '';
   /**
    * @type {import('svelte').SvelteComponentTyped}
    */
@@ -17,13 +16,9 @@
 
 <Toolbar class="primary">
   <h2>
-    {#if searchTerms}
-      {$_('search_results_for_x', { values: { terms: searchTerms } })}
-    {:else}
-      {getFolderLabelByPath($selectedAssetFolderPath)}
-      {#if $selectedAssetFolderPath}
-        <span>/{$selectedAssetFolderPath}</span>
-      {/if}
+    {getFolderLabelByPath($selectedAssetFolderPath)}
+    {#if $selectedAssetFolderPath}
+      <span>/{$selectedAssetFolderPath}</span>
     {/if}
   </h2>
   <Spacer flex={true} />

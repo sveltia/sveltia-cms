@@ -2,6 +2,7 @@ import equal from 'fast-deep-equal';
 import { _ } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import {
+  allAssetPaths,
   allAssets,
   assetExtensions,
   selectedAssetFolderPath,
@@ -13,35 +14,6 @@ import { prefs } from '$lib/services/prefs';
 import LocalStorage from '$lib/services/utils/local-storage';
 
 const storageKey = 'sveltia-cms.assets-view';
-
-/**
- * Get the label for the given folder path. It can be a category name if the folder is a
- * collection-specific asset folder.
- * @param {string} folderPath Media folder path.
- * @returns {string} Human-readable label.
- * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
- */
-export const getFolderLabelByPath = (folderPath) => {
-  const { media_folder: defaultMediaFolder, collections } = get(siteConfig);
-
-  if (!folderPath) {
-    return get(_)('all_files');
-  }
-
-  if (folderPath === defaultMediaFolder) {
-    return get(_)('uncategorized');
-  }
-
-  return (
-    collections.find(
-      ({ media_folder: mediaFolder = '', folder }) =>
-        // Relative path (assets saved along with an entry)
-        folder === folderPath ||
-        // Absolute path (assets saved in a single collection media folder)
-        (mediaFolder.startsWith('/') && mediaFolder.substring(1) === folderPath),
-    )?.label || ''
-  );
-};
 
 /**
  * Get the label for the given collection. It can be a category name if the folder is a
@@ -60,6 +32,33 @@ export const getFolderLabelByCollection = (collectionName) => {
   }
 
   return get(siteConfig).collections.find(({ name }) => name === collectionName)?.label || '';
+};
+
+/**
+ * Get the label for the given folder path. It can be a category name if the folder is a
+ * collection-specific asset folder.
+ * @param {string} folderPath Media folder path.
+ * @returns {string} Human-readable label.
+ * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+ */
+export const getFolderLabelByPath = (folderPath) => {
+  const { media_folder: defaultMediaFolder } = get(siteConfig);
+
+  if (!folderPath) {
+    return getFolderLabelByCollection('*');
+  }
+
+  if (folderPath === defaultMediaFolder) {
+    return getFolderLabelByCollection(undefined);
+  }
+
+  const folder = get(allAssetPaths).find(({ internalPath }) => internalPath === folderPath);
+
+  if (folder) {
+    return getFolderLabelByCollection(folder.collectionName);
+  }
+
+  return '';
 };
 
 /**
