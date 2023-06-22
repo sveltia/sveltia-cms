@@ -3,6 +3,9 @@ import { derived, writable } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { allEntries } from '$lib/services/contents';
 
+/**
+ * @type {import('svelte/store').Writable<string>}
+ */
 export const searchTerms = writable('');
 
 /**

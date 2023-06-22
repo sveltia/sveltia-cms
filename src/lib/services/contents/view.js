@@ -229,6 +229,7 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
 
 /**
  * View settings for all the folder collections.
+ * @type {import('svelte/store').Writable<{ [key: string]: EntryView }>}
  */
 const contentsViewSettings = writable({}, (set) => {
   (async () => {
@@ -242,6 +243,7 @@ const contentsViewSettings = writable({}, (set) => {
 
 /**
  * List of sort fields for the selected folder collection.
+ * @type {import('svelte/store').Readable<string[]>}
  */
 export const sortFields = derived([user, selectedCollection], ([_user, _collection], set) => {
   const { sortable_fields: customSortableFields, fields = [] } = _collection || {};
@@ -280,6 +282,7 @@ export const listedEntries = derived(
 
 /**
  * Sorted, filtered and grouped entries for the selected folder collection.
+ * @type {import('svelte/store').Readable<{ name: string, entries: Entry[] }[]>}
  */
 export const entryGroups = derived(
   [listedEntries, currentView],
@@ -331,6 +334,9 @@ selectedCollection.subscribe((collection) => {
     return;
   }
 
+  /**
+   * @type {EntryView}
+   */
   const defaultView = {
     type: 'list',
     sort: {

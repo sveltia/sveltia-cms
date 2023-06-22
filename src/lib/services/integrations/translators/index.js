@@ -14,6 +14,12 @@ export const allTranslationServices = {
  */
 export const translator = writable(deepl);
 
+/**
+ * @type {import('svelte/store').Writable<boolean>}
+ */
 export const showTranslatorApiKeyDialog = writable(false);
 
+/**
+ * @type {import('svelte/store').Writable<[string, string, string, boolean]>}
+ */
 export const pendingTranslatorRequest = writable();

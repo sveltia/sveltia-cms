@@ -1,6 +1,9 @@
 import { get, writable } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 
+/**
+ * @type {import('svelte/store').Writable<string>}
+ */
 export const selectedPageName = writable('');
 
 /**
