@@ -10,6 +10,7 @@
 
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
+  $: hasListedEntries = !!$listedEntries.length;
 </script>
 
 {#if $selectedCollection.folder}
@@ -32,7 +33,7 @@
     />
     <Spacer flex={true} />
     <SortMenu
-      disabled={!$listedEntries.length || !$sortFields.length}
+      disabled={!hasListedEntries || !$sortFields.length}
       {currentView}
       fields={$sortFields.map((key) => ({
         key,
@@ -43,23 +44,23 @@
     />
     {#if $selectedCollection.view_filters?.length}
       <FilterMenu
-        disabled={!$listedEntries.length}
+        disabled={!hasListedEntries}
         {currentView}
         filters={$selectedCollection.view_filters}
       />
     {/if}
     {#if $selectedCollection.view_groups?.length}
       <GroupMenu
-        disabled={!$listedEntries.length}
+        disabled={!hasListedEntries}
         {currentView}
         groups={$selectedCollection.view_groups}
       />
     {/if}
-    <ViewSwitcher disabled={!$listedEntries.length || !firstImageField} {currentView} />
+    <ViewSwitcher disabled={!hasListedEntries || !firstImageField} {currentView} />
     <Divider />
     <Button
       class="ghost iconic"
-      disabled={!$selectedCollection.media_folder}
+      disabled={!hasListedEntries || !$selectedCollection.media_folder}
       pressed={!!$currentView?.showMedia}
       on:click={() => {
         currentView.update((view) => ({

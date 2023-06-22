@@ -7,6 +7,8 @@
   import { assetKinds, selectedAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
   import { selectedCollection } from '$lib/services/contents';
+
+  $: hasListedAssets = !!$listedAssets.length;
 </script>
 
 {#if !$selectedCollection.files}
@@ -29,22 +31,22 @@
     />
     <Spacer flex={true} />
     <SortMenu
-      disabled={!$listedAssets.length}
+      disabled={!hasListedAssets}
       {currentView}
       fields={$sortFields.map((key) => ({ key, label: $_(`sort_keys.${key}`) }))}
     />
     <FilterMenu
       label={$_('file_type')}
-      disabled={!$listedAssets.length}
+      disabled={!hasListedAssets}
       {currentView}
       noneLabel={$_('all')}
       filters={assetKinds.map((type) => ({ label: $_(type), field: 'fileType', pattern: type }))}
     />
-    <ViewSwitcher disabled={!$listedAssets.length} {currentView} />
+    <ViewSwitcher disabled={!hasListedAssets} {currentView} />
     <Divider />
     <Button
       class="ghost iconic"
-      disabled={!$listedAssets.length}
+      disabled={!hasListedAssets}
       pressed={!!$currentView?.showInfo}
       on:click={() => {
         currentView.update((view) => ({
