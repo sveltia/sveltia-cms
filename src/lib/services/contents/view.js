@@ -3,8 +3,7 @@ import { flatten } from 'flat';
 import moment from 'moment';
 import { _ } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
-import LocalStorage from '$lib/services/utils/local-storage';
-import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
+import { user } from '$lib/services/auth';
 import {
   allEntries,
   getEntriesByCollection,
@@ -12,7 +11,9 @@ import {
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
-import { user } from '$lib/services/auth';
+import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
+import { prefs } from '$lib/services/prefs';
+import LocalStorage from '$lib/services/utils/local-storage';
 
 const storageKey = 'sveltia-cms.contents-view';
 /**
@@ -298,7 +299,7 @@ export const entryGroups = derived(
 listedEntries.subscribe((entries) => {
   selectedEntries.set([]);
 
-  if (import.meta.env.DEV) {
+  if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('listedEntries', entries);
   }
@@ -309,7 +310,7 @@ selectedCollection.subscribe((collection) => {
     return;
   }
 
-  if (import.meta.env.DEV) {
+  if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('selectedCollection', collection);
   }

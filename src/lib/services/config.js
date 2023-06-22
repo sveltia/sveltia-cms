@@ -1,7 +1,8 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
 import { allAssetPaths } from '$lib/services/assets';
 import { allContentPaths, getCollection, selectedCollection } from '$lib/services/contents';
+import { prefs } from '$lib/services/prefs';
 import { isObject } from '$lib/services/utils/misc';
 import { stripSlashes } from '$lib/services/utils/strings';
 
@@ -90,7 +91,7 @@ export const fetchSiteConfig = async () => {
 };
 
 siteConfig.subscribe((config) => {
-  if (DEV) {
+  if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('siteConfig', config);
   }
@@ -211,7 +212,7 @@ siteConfig.subscribe((config) => {
   allContentPaths.set(_allContentPaths);
   allAssetPaths.set(_allAssetPaths);
 
-  if (import.meta.env.DEV) {
+  if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('allContentPaths', _allContentPaths);
     // eslint-disable-next-line no-console

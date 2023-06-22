@@ -9,6 +9,7 @@ import {
 } from '$lib/services/assets';
 import { user } from '$lib/services/auth';
 import { siteConfig } from '$lib/services/config';
+import { prefs } from '$lib/services/prefs';
 import LocalStorage from '$lib/services/utils/local-storage';
 
 const storageKey = 'sveltia-cms.assets-view';
@@ -267,7 +268,7 @@ export const assetGroups = derived(
 listedAssets.subscribe((assets) => {
   selectedAssets.set([]);
 
-  if (import.meta.env.DEV) {
+  if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('listedAssets', assets);
   }

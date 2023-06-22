@@ -19,6 +19,7 @@
  * @property {object} [apiKeys] API keys for integrations.
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
  * @property {string} [locale] Selected UI locale, e.g. `en`.
+ * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
  * @property {string} [error] Error message.
  */
 

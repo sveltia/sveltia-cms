@@ -1,6 +1,7 @@
 <script>
   import { Dialog, Icon, Tab, TabList } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
   import AppearancePanel from '$lib/components/prefs/panels/appearance-panel.svelte';
   import EditorPanel from '$lib/components/prefs/panels/editor-panel.svelte';
   import MediaPanel from '$lib/components/prefs/panels/media-panel.svelte';
@@ -27,10 +28,14 @@
       <Tab label={$_('prefs.media.title')} aria-controls="prefs-tab-media">
         <Icon slot="start-icon" name="photo_library" />
       </Tab>
+      <Tab label={$_('prefs.advanced.title')} aria-controls="prefs-tab-advanced">
+        <Icon slot="start-icon" name="handyman" />
+      </Tab>
     </TabList>
     <AppearancePanel />
     <EditorPanel />
     <MediaPanel />
+    <AdvancedPanel />
   </div>
 </Dialog>
 

@@ -276,6 +276,15 @@ export const strings = {
         credit: '写真提供: {service}',
       },
     },
+    advanced: {
+      title: '詳細',
+      developer_mode: {
+        title: '開発者モード',
+        description:
+          '詳細なコンソールログやネイティブコンテキストメニューなど、いくつかの機能を有効化します。',
+        switch_label: '開発者モードを有効にする',
+      },
+    },
   },
 
   // File types

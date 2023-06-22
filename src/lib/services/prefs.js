@@ -34,7 +34,7 @@ prefs.subscribe(async (newPrefs) => {
     //
   }
 
-  const { locale, theme } = newPrefs;
+  const { locale, theme, devModeEnabled = false } = newPrefs;
 
   if (locale && get(locales).includes(locale)) {
     appLocale.set(locale);
@@ -46,5 +46,6 @@ prefs.subscribe(async (newPrefs) => {
   Object.assign(document.documentElement.dataset, {
     theme: autoTheming ? autoTheme : theme,
     autoTheming,
+    env: devModeEnabled ? 'dev' : 'prod',
   });
 });

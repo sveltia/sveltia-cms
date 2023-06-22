@@ -276,6 +276,15 @@ export const strings = {
         credit: 'Photos provided by {service}',
       },
     },
+    advanced: {
+      title: 'Advanced',
+      developer_mode: {
+        title: 'Developer Mode',
+        description:
+          'Enable some features, including detailed console logs and native context menus.',
+        switch_label: 'Enable Developer Mode',
+      },
+    },
   },
 
   // File types

@@ -748,12 +748,12 @@ export const saveEntry = async () => {
   entryDraft.set(null);
 };
 
-if (import.meta.env.DEV) {
-  entryDraft.subscribe((draft) => {
+entryDraft.subscribe((draft) => {
+  if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('entryDraft', draft);
-  });
-}
+  }
+});
 
 entryViewSettings.subscribe((settings) => {
   if (!settings || !Object.keys(settings).length) {
