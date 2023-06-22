@@ -1,7 +1,9 @@
 <script>
   import { Button } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
-  import { getAssetDetails } from '$lib/services/assets';
+  import Image from '$lib/components/common/image.svelte';
+  import Video from '$lib/components/common/video.svelte';
+  import { getAssetDetails, getAssetURL } from '$lib/services/assets';
   import { getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
   import { formatSize } from '$lib/services/utils/files';
@@ -12,8 +14,14 @@
    */
   export let asset = undefined;
 
+  /**
+   * Whether to show the image/video preview.
+   */
+  export let showPreview = false;
+
   $: ({ path, size, kind, commitAuthor, commitDate, repoFileURL } = asset);
   $: [, extension = ''] = path.match(/\.([^.]+)$/) || [];
+  $: canPreview = ['image', 'video'].includes(kind);
 
   /**
    * @type {string}
@@ -44,6 +52,16 @@
 </script>
 
 <div class="detail">
+  {#if showPreview && canPreview}
+    <div class="preview">
+      {#if kind === 'image'}
+        <Image src={getAssetURL(asset)} checkerboard={true} />
+      {/if}
+      {#if kind === 'video'}
+        <Video src={getAssetURL(asset)} />
+      {/if}
+    </div>
+  {/if}
   <section>
     <h4>{$_('kind')}</h4>
     <p>{$_(`file_type_labels.${extension}`, { default: extension.toUpperCase() })}</p>
@@ -52,7 +70,7 @@
     <h4>{$_('size')}</h4>
     <p>{formatSize(size)}</p>
   </section>
-  {#if ['image', 'video'].includes(kind)}
+  {#if canPreview}
     <section>
       <h4>{$_('dimensions')}</h4>
       <p>{dimensions ? `${dimensions.width}×${dimensions.height}` : '–'}</p>
@@ -135,6 +153,13 @@
     overflow-y: auto;
     width: 320px;
     padding: 16px;
+
+    .preview {
+      overflow: hidden;
+      margin: 0 0 16px;
+      border-radius: var(--control--medium--border-radius);
+      aspect-ratio: 1 / 1;
+    }
 
     section {
       margin: 0 0 16px;
