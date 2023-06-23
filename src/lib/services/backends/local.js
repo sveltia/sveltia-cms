@@ -8,33 +8,30 @@ import { siteConfig } from '$lib/services/config';
 import { allContentPaths, allEntries } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
 import { getHash, readAsText } from '$lib/services/utils/files';
+import IndexedDB from '$lib/services/utils/indexeddb';
 import { stripSlashes } from '$lib/services/utils/strings';
 
 const label = 'Local Repository';
 const url = null;
-const storeName = 'file-system-handles';
 /**
  * @type {import('svelte/store').Writable<?FileSystemDirectoryHandle>}
  */
 const rootDirHandle = writable(null);
 const rootDirHandleKey = 'root_dir_handle';
 /**
- * @type {?IDBDatabase}
+ * @type {IndexedDB}
  */
-let database;
-/**
- * Get the object store.
- * @returns {IDBObjectStore} Store.
- */
-const getStore = () => database.transaction([storeName], 'readwrite').objectStore(storeName);
+let rootDirHandleDB;
 
 /**
  * Get the project’s root directory handle so the app can read all the files under the directory.
- * The handle will be cached in IndexedDB for later use.
+ * The handle will be cached in IndexedDB for later use. Note that we need to request permission
+ * each time the app is loaded.
  * @param {object} [options] Options.
  * @param {boolean} [options.forceReload] Whether to force getting the handle.
  * @returns {Promise<FileSystemDirectoryHandle>} Directory handle.
  * @throws {Error} When the File System Access API is not supported by the user’s browser.
+ * @see https://developer.chrome.com/articles/file-system-access/#stored-file-or-directory-handles-and-permissions
  */
 const getRootDirHandle = async ({ forceReload = false } = {}) => {
   if (!('showDirectoryPicker' in window)) {
@@ -43,66 +40,39 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
 
   const { backend } = get(siteConfig);
 
-  return new Promise((resolve) => {
-    const request = window.indexedDB.open(`${backend.name}:${backend.repo}`, 1);
+  rootDirHandleDB = new IndexedDB(`${backend.name}:${backend.repo}`, 'file-system-handles');
 
-    /**
-     * Called when the database is created or upgraded. Create a store.
-     */
-    request.onupgradeneeded = () => {
-      database = request.result;
-      database.createObjectStore(storeName);
-    };
+  /**
+   * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function }}
+   */
+  let handle = forceReload ? undefined : await rootDirHandleDB.get(rootDirHandleKey);
 
-    /**
-     * Called when the database is available.
-     */
-    request.onsuccess = () => {
-      database = request.result;
+  if (handle) {
+    if ((await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') {
+      handle = undefined;
+    } else {
+      try {
+        await handle.entries().next();
+      } catch {
+        // The directory may have been (re)moved
+        handle = undefined;
+      }
+    }
+  }
 
-      const _request = getStore().get(rootDirHandleKey);
+  if (!handle) {
+    handle = await /** @type {any} */ (window).showDirectoryPicker();
+    await rootDirHandleDB.set(rootDirHandleKey, handle);
+  }
 
-      /**
-       * Called when the store data is retrieved. Check if a handle is cached, and if not, request
-       * permission to use it. Note that we need to request permission each time the app is loaded.
-       * @see https://developer.chrome.com/articles/file-system-access/#stored-file-or-directory-handles-and-permissions
-       */
-      _request.onsuccess = async () => {
-        /**
-         * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function }}
-         */
-        let handle = forceReload ? undefined : _request.result;
-
-        if (handle) {
-          if ((await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') {
-            handle = undefined;
-          } else {
-            try {
-              await handle.entries().next();
-            } catch {
-              // The directory may have been (re)moved
-              handle = undefined;
-            }
-          }
-        }
-
-        if (!handle) {
-          handle = await /** @type {any} */ (window).showDirectoryPicker();
-          getStore().add(handle, rootDirHandleKey);
-        }
-
-        rootDirHandle.set(handle);
-        resolve(handle);
-      };
-    };
-  });
+  return handle;
 };
 
 /**
  * Discard the root directory handle stored in the IndexedDB.
  */
 const discardDirHandle = async () => {
-  getStore().delete(rootDirHandleKey);
+  await rootDirHandleDB.delete(rootDirHandleKey);
 };
 
 /**
@@ -111,7 +81,7 @@ const discardDirHandle = async () => {
  * @returns {Promise<object>} User info.
  */
 const signIn = async () => {
-  await getRootDirHandle();
+  rootDirHandle.set(await getRootDirHandle());
 
   return { backendName: 'local' };
 };
