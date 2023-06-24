@@ -8,9 +8,11 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { prefs } from '$lib/services/prefs';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
+  import EmptyState from '$lib/components/common/empty-state.svelte';
+  import Image from '$lib/components/common/image.svelte';
+  import { selectAssetsView } from '$lib/services/contents/editor';
+  import { prefs } from '$lib/services/prefs';
 
   export let searchTerms = '';
 
@@ -123,13 +125,15 @@
     </EmptyState>
   {:else}
     <SimpleImageGrid
+      viewType={$selectAssetsView?.type}
       on:select={(/** @type {CustomEvent} */ event) => {
         selectImage(searchResults.find(({ id }) => id === event.detail.value));
       }}
     >
       {#each searchResults as { id, previewURL, description } (id)}
         <Option value={id}>
-          <img loading="lazy" crossorigin="anonymous" src={previewURL} alt={description} />
+          <Image src={previewURL} crossorigin="anonymous" />
+          <span class="name">{description}</span>
         </Option>
       {/each}
     </SimpleImageGrid>

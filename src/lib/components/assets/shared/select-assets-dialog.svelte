@@ -15,8 +15,10 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import StockPhotoPanel from '$lib/components/assets/shared/stock-photo-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
+  import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
+  import { selectAssetsView } from '$lib/services/contents/editor';
   import { allStockPhotoServices } from '$lib/services/integrations/stock-photos';
   import { prefs } from '$lib/services/prefs';
   import { generateUUID, stripSlashes } from '$lib/services/utils/strings';
@@ -89,6 +91,7 @@
       />
     {/if}
     {#if isLocalLibrary || isEnabledMediaService}
+      <ViewSwitcher currentView={selectAssetsView} />
       <SearchBar bind:value={searchTerms} disabled={!!selectedAsset?.file} />
     {/if}
   </svelte:fragment>

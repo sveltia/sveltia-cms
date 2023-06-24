@@ -30,12 +30,25 @@ export const editorLeftPane = writable({});
 export const editorRightPane = writable({});
 
 /**
+ * View settings for the Select Assets dialog.
+ * @type {import('svelte/store').Writable<SelectAssetsView>}
+ */
+export const selectAssetsView = writable({});
+
+/**
  * @type {import('svelte/store').Writable<EntryEditorView>}
  */
 export const entryEditorSettings = writable({}, (set) => {
   (async () => {
     try {
-      set((await LocalStorage.get(storageKey)) || { showPreview: true, syncScrolling: true });
+      const settings = (await LocalStorage.get(storageKey)) || {
+        showPreview: true,
+        syncScrolling: true,
+        selectAssetsView: { type: 'grid' },
+      };
+
+      set(settings);
+      selectAssetsView.set(settings.selectAssetsView);
     } catch {
       //
     }
@@ -752,6 +765,14 @@ entryDraft.subscribe((draft) => {
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('entryDraft', draft);
+  }
+});
+
+selectAssetsView.subscribe((view) => {
+  const savedView = get(entryEditorSettings).selectAssetsView || {};
+
+  if (!equal(view, savedView)) {
+    entryEditorSettings.update((settings) => ({ ...settings, selectAssetsView: view }));
   }
 });
 

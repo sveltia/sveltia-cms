@@ -603,11 +603,18 @@
  */
 
 /**
+ * Select Assets dialog view settings.
+ * @typedef {object} SelectAssetsView
+ * @property {ViewType} [type] View type.
+ */
+
+/**
  * Entry editor view settings.
  * @typedef {object} EntryEditorView
  * @property {boolean} [showPreview] Whether to show the preview pane.
  * @property {boolean} [syncScrolling] Whether to sync the scrolling position between the editor and
  * preview panes.
+ * @property {SelectAssetsView} [selectAssetsView] View settings for the Select Assets dialog.
  */
 
 /**

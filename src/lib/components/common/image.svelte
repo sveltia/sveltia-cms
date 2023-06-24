@@ -9,7 +9,7 @@
   export let cover = false;
 </script>
 
-<img class:checkerboard class:cover {loading} {src} {alt} />
+<img class:checkerboard class:cover {loading} {src} {alt} {...$$restProps} />
 
 <style lang="scss">
   img {

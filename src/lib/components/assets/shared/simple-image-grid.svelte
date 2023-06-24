@@ -1,9 +1,11 @@
 <script>
   import { Listbox } from '@sveltia/ui';
+
+  export let viewType = 'grid';
 </script>
 
 <div class="wrapper">
-  <Listbox class="grid" on:select>
+  <Listbox class={viewType} on:select>
     <slot />
   </Listbox>
 </div>
@@ -13,24 +15,22 @@
     display: contents;
 
     :global(.listbox) {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 8px;
+      gap: 4px;
       overflow-y: auto;
       border-width: 0;
-      padding: 16px;
 
       :global(.option) {
         :global(button) {
-          border-radius: 0;
-          padding: 0;
+          border-radius: var(--control--medium--border-radius);
+          padding: 4px;
           width: 100%;
           height: auto;
           transition: none;
 
-          :global(img) {
-            width: 100%;
-            height: 100%;
+          :global(img),
+          :global(video) {
+            flex: none;
+            border-radius: var(--control--medium--border-radius);
             aspect-ratio: 1 / 1;
             object-fit: contain;
           }
@@ -43,6 +43,42 @@
 
           :global(.icon) {
             display: none;
+          }
+        }
+      }
+    }
+
+    :global(.listbox.grid) {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+
+      :global(.option) {
+        :global(button) {
+          :global(img),
+          :global(video) {
+            width: 100%;
+          }
+
+          :global(.name:not(:only-child)) {
+            position: absolute;
+            left: -99999px;
+          }
+        }
+      }
+    }
+
+    :global(.listbox.list) {
+      :global(.option) {
+        :global(button) {
+          gap: 16px;
+
+          :global(img),
+          :global(video) {
+            width: 48px;
+          }
+
+          :global(.name) {
+            flex: auto;
           }
         }
       }

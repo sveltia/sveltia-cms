@@ -7,6 +7,7 @@
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
   import { getAssetURL } from '$lib/services/assets';
+  import { selectAssetsView } from '$lib/services/contents/editor';
 
   const dispatch = createEventDispatcher();
 
@@ -24,6 +25,7 @@
 {#if filteredAssets.length}
   <div class="grid-wrapper">
     <SimpleImageGrid
+      viewType={$selectAssetsView?.type}
       on:select={(/** @type {CustomEvent} */ event) => {
         dispatch('select', {
           asset: assets.find(({ sha }) => sha === event.detail.value),
@@ -33,12 +35,12 @@
       {#each filteredAssets as asset (asset.path)}
         <Option value={asset.sha}>
           {#if asset.kind === 'image'}
-            <Image src={getAssetURL(asset)} alt={asset.name} checkerboard={true} />
-          {:else if asset.kind === 'video'}
-            <Video src={getAssetURL(asset)} />
-          {:else}
-            <span class="name">{asset.name}</span>
+            <Image src={getAssetURL(asset)} checkerboard={true} />
           {/if}
+          {#if asset.kind === 'video'}
+            <Video src={getAssetURL(asset)} />
+          {/if}
+          <span class="name">{asset.name}</span>
         </Option>
       {/each}
     </SimpleImageGrid>
@@ -52,22 +54,5 @@
 <style lang="scss">
   .grid-wrapper {
     display: contents;
-
-    :global(.listbox .option button) {
-      border: 1px solid var(--secondary-border-color);
-      border-radius: var(--control--medium--border-radius);
-    }
-
-    .name {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-      padding: 8px;
-      aspect-ratio: 1/1;
-      word-break: break-all;
-    }
   }
 </style>

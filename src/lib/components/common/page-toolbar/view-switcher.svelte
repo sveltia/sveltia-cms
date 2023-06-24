@@ -5,7 +5,7 @@
 
   export let disabled = false;
   /**
-   * @type {import('svelte/store').Writable<EntryListView | AssetListView>}
+   * @type {import('svelte/store').Writable<EntryListView | AssetListView | SelectAssetsView>}
    */
   export let currentView = writable({});
 </script>
