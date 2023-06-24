@@ -9,7 +9,7 @@
     editorLeftPane,
     editorRightPane,
     entryDraft,
-    entryViewSettings,
+    entryEditorSettings,
   } from '$lib/services/contents/editor';
 
   /**
@@ -21,7 +21,7 @@
    */
   let rightColumnContent = undefined;
 
-  $: ({ showPreview, syncScrolling } = $entryViewSettings);
+  $: ({ showPreview, syncScrolling } = $entryEditorSettings);
 
   $: ({ collection, collectionFile } = $entryDraft || {
     collection: undefined,

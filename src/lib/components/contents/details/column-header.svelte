@@ -14,7 +14,7 @@
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
   import { getLocaleLabel } from '$lib/services/i18n';
-  import { entryDraft, entryViewSettings, revertChanges } from '$lib/services/contents/editor';
+  import { entryDraft, entryEditorSettings, revertChanges } from '$lib/services/contents/editor';
   import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
 
   /**
@@ -69,7 +69,7 @@
             </SelectButton>
           {/if}
         {/each}
-        {#if $thatPane.mode === 'edit' && canPreview && $entryViewSettings.showPreview}
+        {#if $thatPane.mode === 'edit' && canPreview && $entryEditorSettings.showPreview}
           <SelectButton
             selected={$thisPane.mode === 'preview'}
             class="tertiary small"

@@ -6,7 +6,7 @@
   export let label = '';
   export let disabled = false;
   /**
-   * @type {import('svelte/store').Writable<EntryView>}
+   * @type {import('svelte/store').Writable<EntryListView | AssetListView>}
    */
   export let currentView = writable({});
   export let noneLabel = '';

@@ -17,7 +17,7 @@
   import { deleteEntries } from '$lib/services/contents/data';
   import {
     entryDraft,
-    entryViewSettings,
+    entryEditorSettings,
     revertChanges,
     saveEntry,
   } from '$lib/services/contents/editor';
@@ -71,10 +71,10 @@
     <Menu slot="popup">
       <MenuItemCheckbox
         label={$_('show_preview')}
-        checked={$entryViewSettings.showPreview}
+        checked={$entryEditorSettings.showPreview}
         disabled={!canPreview}
         on:click={() => {
-          entryViewSettings.update((view) => ({
+          entryEditorSettings.update((view) => ({
             ...view,
             showPreview: !view.showPreview,
           }));
@@ -82,10 +82,10 @@
       />
       <MenuItemCheckbox
         label={$_('sync_scrolling')}
-        checked={$entryViewSettings.syncScrolling}
+        checked={$entryEditorSettings.syncScrolling}
         disabled={!canPreview && Object.keys(currentValues).length === 1}
         on:click={() => {
-          entryViewSettings.update((view) => ({
+          entryEditorSettings.update((view) => ({
             ...view,
             syncScrolling: !view.syncScrolling,
           }));

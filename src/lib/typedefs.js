@@ -588,13 +588,13 @@
  */
 
 /**
- * Entry/Asset view type.
+ * Entry/Asset list view type.
  * @typedef {'grid' | 'list'} ViewType
  */
 
 /**
- * Entry view settings.
- * @typedef {object} EntryView
+ * Entry list view settings.
+ * @typedef {object} EntryListView
  * @property {ViewType} [type] View type.
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions.
@@ -603,8 +603,16 @@
  */
 
 /**
- * Asset view settings.
- * @typedef {object} AssetView
+ * Entry editor view settings.
+ * @typedef {object} EntryEditorView
+ * @property {boolean} [showPreview] Whether to show the preview pane.
+ * @property {boolean} [syncScrolling] Whether to sync the scrolling position between the editor and
+ * preview panes.
+ */
+
+/**
+ * Asset list view settings.
+ * @typedef {object} AssetListView
  * @property {ViewType} [type] View type.
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions.

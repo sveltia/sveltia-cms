@@ -23,7 +23,7 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
 
 /**
  * View settings for the selected folder collection.
- * @type {import('svelte/store').Writable<EntryView>}
+ * @type {import('svelte/store').Writable<EntryListView>}
  */
 export const currentView = writable({});
 
@@ -229,9 +229,9 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
 
 /**
  * View settings for all the folder collections.
- * @type {import('svelte/store').Writable<{ [key: string]: EntryView }>}
+ * @type {import('svelte/store').Writable<{ [key: string]: EntryListView }>}
  */
-const contentsViewSettings = writable({}, (set) => {
+const entryListSettings = writable({}, (set) => {
   (async () => {
     try {
       set((await LocalStorage.get(storageKey)) || {});
@@ -335,7 +335,7 @@ selectedCollection.subscribe((collection) => {
   }
 
   /**
-   * @type {EntryView}
+   * @type {EntryListView}
    */
   const defaultView = {
     type: 'list',
@@ -348,7 +348,7 @@ selectedCollection.subscribe((collection) => {
     },
   };
 
-  const view = get(contentsViewSettings)[collectionName] || defaultView;
+  const view = get(entryListSettings)[collectionName] || defaultView;
 
   if (!equal(view, get(currentView))) {
     currentView.set(view);
@@ -357,14 +357,14 @@ selectedCollection.subscribe((collection) => {
 
 currentView.subscribe((view) => {
   const { name } = get(selectedCollection) || {};
-  const savedView = get(contentsViewSettings)[name] || {};
+  const savedView = get(entryListSettings)[name] || {};
 
   if (!equal(view, savedView)) {
-    contentsViewSettings.update((settings) => ({ ...settings, [name]: view }));
+    entryListSettings.update((settings) => ({ ...settings, [name]: view }));
   }
 });
 
-contentsViewSettings.subscribe((settings) => {
+entryListSettings.subscribe((settings) => {
   if (!settings || !Object.keys(settings).length) {
     return;
   }

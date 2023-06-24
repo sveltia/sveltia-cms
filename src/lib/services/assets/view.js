@@ -186,7 +186,7 @@ const groupAssets = (assets, { field, pattern } = { field: undefined, pattern: u
 
 /**
  * Default view settings for the selected asset collection.
- * @type {AssetView}
+ * @type {AssetListView}
  */
 const defaultView = {
   type: 'grid',
@@ -198,9 +198,9 @@ const defaultView = {
 
 /**
  * View settings for all the asset collection.
- * @type {import('svelte/store').Writable<{ [key: string]: AssetView }>}
+ * @type {import('svelte/store').Writable<{ [key: string]: AssetListView }>}
  */
-const assetsViewSettings = writable({}, (set) => {
+const assetListSettings = writable({}, (set) => {
   (async () => {
     try {
       set((await LocalStorage.get(storageKey)) || {});
@@ -212,7 +212,7 @@ const assetsViewSettings = writable({}, (set) => {
 
 /**
  * View settings for the selected asset collection.
- * @type {import('svelte/store').Writable<AssetView>}
+ * @type {import('svelte/store').Writable<AssetListView>}
  */
 export const currentView = writable({});
 
@@ -274,7 +274,7 @@ listedAssets.subscribe((assets) => {
 });
 
 selectedAssetFolderPath.subscribe((path) => {
-  const view = get(assetsViewSettings)[path || '*'] || JSON.parse(JSON.stringify(defaultView));
+  const view = get(assetListSettings)[path || '*'] || JSON.parse(JSON.stringify(defaultView));
 
   if (!equal(view, currentView)) {
     currentView.set(view);
@@ -283,14 +283,14 @@ selectedAssetFolderPath.subscribe((path) => {
 
 currentView.subscribe((view) => {
   const path = get(selectedAssetFolderPath) || '*';
-  const savedView = get(assetsViewSettings)[path] || {};
+  const savedView = get(assetListSettings)[path] || {};
 
   if (!equal(view, savedView)) {
-    assetsViewSettings.update((settings) => ({ ...settings, [path]: view }));
+    assetListSettings.update((settings) => ({ ...settings, [path]: view }));
   }
 });
 
-assetsViewSettings.subscribe((settings) => {
+assetListSettings.subscribe((settings) => {
   if (!settings || !Object.keys(settings).length) {
     return;
   }

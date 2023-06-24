@@ -30,9 +30,9 @@ export const editorLeftPane = writable({});
 export const editorRightPane = writable({});
 
 /**
- * @type {import('svelte/store').Writable<{ showPreview?: boolean, syncScrolling?: boolean }>}
+ * @type {import('svelte/store').Writable<EntryEditorView>}
  */
-export const entryViewSettings = writable({}, (set) => {
+export const entryEditorSettings = writable({}, (set) => {
   (async () => {
     try {
       set((await LocalStorage.get(storageKey)) || { showPreview: true, syncScrolling: true });
@@ -755,7 +755,7 @@ entryDraft.subscribe((draft) => {
   }
 });
 
-entryViewSettings.subscribe((settings) => {
+entryEditorSettings.subscribe((settings) => {
   if (!settings || !Object.keys(settings).length) {
     return;
   }
