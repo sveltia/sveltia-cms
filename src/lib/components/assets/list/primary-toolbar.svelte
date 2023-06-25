@@ -8,7 +8,7 @@
   import { siteConfig } from '$lib/services/config';
 
   /**
-   * @type {import('svelte').SvelteComponentTyped}
+   * @type {import('svelte').SvelteComponent}
    */
   let filePicker = undefined;
   let showDeleteDialog = false;

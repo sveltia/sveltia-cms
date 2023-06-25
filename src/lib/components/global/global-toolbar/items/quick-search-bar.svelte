@@ -30,7 +30,7 @@
    */
   let wrapper = undefined;
   /**
-   * @type {import('svelte').SvelteComponentTyped}
+   * @type {import('svelte').SvelteComponent}
    */
   let searchBar = undefined;
 

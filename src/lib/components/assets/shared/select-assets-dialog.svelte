@@ -33,11 +33,11 @@
   const dispatch = createEventDispatcher();
   const title = kind === 'image' ? $_('select_image') : $_('select_file');
   /**
-   * @type {import('svelte').SvelteComponentTyped}
+   * @type {import('svelte').SvelteComponent}
    */
   let collectionAssetsDropZone = undefined;
   /**
-   * @type {import('svelte').SvelteComponentTyped}
+   * @type {import('svelte').SvelteComponent}
    */
   let allAssetsDropZone = undefined;
   let elementIdPrefix = '';

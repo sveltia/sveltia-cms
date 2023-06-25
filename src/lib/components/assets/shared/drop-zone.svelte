@@ -17,7 +17,7 @@
   const dispatch = createEventDispatcher();
   let dragging = false;
   /**
-   * @type {import('svelte').SvelteComponentTyped}
+   * @type {import('svelte').SvelteComponent}
    */
   let filePicker = undefined;
   /**
@@ -45,6 +45,7 @@
 
 <div
   class="drop-target"
+  role="none"
   on:dragover|preventDefault={({ dataTransfer }) => {
     dataTransfer.dropEffect = 'copy';
     dragging = true;
