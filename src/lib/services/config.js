@@ -1,6 +1,8 @@
+import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
 import { allAssetPaths } from '$lib/services/assets';
+import { allBackendServices } from '$lib/services/backends';
 import { allContentPaths, getCollection, selectedCollection } from '$lib/services/contents';
 import { prefs } from '$lib/services/prefs';
 import { isObject } from '$lib/services/utils/misc';
@@ -22,19 +24,25 @@ const { DEV, VITE_CONFIG_PORT } = import.meta.env;
  */
 const validate = (config) => {
   if (!isObject(config)) {
-    throw new Error('parse_failed');
+    throw new Error(get(_)('config.error.parse_failed'));
   }
 
   if (!config.collections?.length) {
-    throw new Error('no_collection');
+    throw new Error(get(_)('config.error.no_collection'));
   }
 
-  if (!config.backend?.repo) {
-    throw new Error('no_backend');
+  if (!config.backend?.name) {
+    throw new Error(get(_)('config.error.no_backend'));
+  }
+
+  if (!(config.backend.name in allBackendServices)) {
+    throw new Error(
+      get(_)('config.error.unsupported_backend', { values: { name: config.backend.name } }),
+    );
   }
 
   if (!config.media_folder) {
-    throw new Error('no_media_folder');
+    throw new Error(get(_)('config.error.no_media_folder'));
   }
 };
 
@@ -61,17 +69,17 @@ export const fetchSiteConfig = async () => {
     try {
       response = await fetch(href);
     } catch {
-      throw new Error('fetch_failed');
+      throw new Error(get(_)('config.error.fetch_failed'));
     }
 
     if (!response.ok) {
-      throw new Error('fetch_failed');
+      throw new Error(get(_)('config.error.fetch_failed'));
     }
 
     try {
       config = YAML.parse(await response.text());
     } catch {
-      throw new Error('parse_failed');
+      throw new Error(get(_)('config.error.parse_failed'));
     }
 
     validate(config);
@@ -83,7 +91,9 @@ export const fetchSiteConfig = async () => {
 
     siteConfig.set(config);
   } catch (error) {
-    siteConfig.set({ error: /** @type {string} */ (error.message) });
+    siteConfig.set({
+      error: error.name === 'Error' ? error.message : get(_)('config.error.unexpected'),
+    });
 
     // eslint-disable-next-line no-console
     console.error(error);

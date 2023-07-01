@@ -215,6 +215,7 @@ export const strings = {
       parse_failed: 'The configuration file could not be parsed.',
       no_collection: 'Collections are not defined in the configuration file.',
       no_backend: 'The backend is not defined in the configuration file.',
+      unsupported_backend: 'The configured “{name}” backend is not supported.',
       no_media_folder: 'The media folder is not defined in the configuration file.',
       unexpected: 'There was an unexpected error while validating the configuration file.',
       try_again: 'Please solve the issue and try again.',
@@ -223,7 +224,6 @@ export const strings = {
 
   // Backends
   unsupported: {
-    backend_x: 'The configured backend “{name}” is not supported.',
     browser:
       'Local development is not supported in your browser. Please use Chrome or Edge instead.',
     storage:

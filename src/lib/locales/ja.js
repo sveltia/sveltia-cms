@@ -215,6 +215,7 @@ export const strings = {
       parse_failed: '設定ファイルを解析できませんでした。',
       no_collection: '設定ファイル内でコレクションが定義されていません。',
       no_backend: '設定ファイル内でバックエンドが定義されていません。',
+      unsupported_backend: '設定されている「{name}」バックエンドは非対応です。',
       no_media_folder: '設定ファイル内でメディアフォルダーが定義されていません。',
       unexpected: '設定ファイルを検証中に予期せぬ問題が発生しました。',
       try_again: '問題を解決してから再度お試しください。',
@@ -223,7 +224,6 @@ export const strings = {
 
   // Backends
   unsupported: {
-    backend_x: '設定されているバックエンド「{name}」は非対応です。',
     browser:
       'お使いのブラウザーはローカル開発に対応していません。代わりに Chrome か Edge を使ってください。',
     storage:

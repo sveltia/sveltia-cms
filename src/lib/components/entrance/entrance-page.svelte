@@ -38,7 +38,7 @@
       <h2>{$_('loading_site_config')}</h2>
     {:else if $siteConfig.error}
       <h2>
-        {$_(`config.error.${$siteConfig.error}`, { default: $_('config.error.unexpected') })}
+        {$siteConfig.error}
         {$_('config.error.try_again')}
       </h2>
     {:else if $prefs?.error}

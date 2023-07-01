@@ -114,7 +114,7 @@
     />
   {:else}
     <div role="alert">
-      {$_('unsupported.backend_x', { values: { name: backendName } })}
+      {$_('config.error.unsupported_backend', { values: { name: backendName } })}
     </div>
   {/if}
 </div>
