@@ -124,7 +124,7 @@
       }
 
       :global(button.error) {
-        color: var(--danger-foreground-color);
+        color: var(--error-foreground-color);
       }
     }
   }

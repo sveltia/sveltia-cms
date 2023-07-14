@@ -273,7 +273,7 @@
   }
 
   .validation {
-    color: var(--danger-foreground-color);
+    color: var(--error-foreground-color);
 
     div {
       display: flex;
