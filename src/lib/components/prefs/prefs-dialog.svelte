@@ -71,8 +71,8 @@
 
         & ~ :global(p) {
           margin: 8px 0 0;
-          color: var(--secondary-foreground-color);
-          font-size: var(--font-size--small);
+          color: var(--sui-secondary-foreground-color);
+          font-size: var(--sui-font-size-small);
         }
       }
     }

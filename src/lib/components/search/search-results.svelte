@@ -121,7 +121,7 @@
     h3 {
       flex: none;
       margin: 0 0 8px;
-      color: var(--secondary-foreground-color);
+      color: var(--sui-secondary-foreground-color);
 
       & + div {
         overflow: auto;

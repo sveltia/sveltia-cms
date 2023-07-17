@@ -21,7 +21,7 @@
 
       :global(.option) {
         :global(button) {
-          border-radius: var(--control--medium--border-radius);
+          border-radius: var(--sui-control-medium-border-radius);
           padding: 4px;
           width: 100%;
           height: auto;
@@ -30,7 +30,7 @@
           :global(img),
           :global(video) {
             flex: none;
-            border-radius: var(--control--medium--border-radius);
+            border-radius: var(--sui-control-medium-border-radius);
             aspect-ratio: 1 / 1;
             object-fit: contain;
           }
@@ -39,7 +39,7 @@
         :global(button[aria-selected='true']) {
           outline-width: 4px;
           outline-style: solid;
-          outline-color: var(--primary-accent-color);
+          outline-color: var(--sui-primary-accent-color);
 
           :global(.icon) {
             display: none;

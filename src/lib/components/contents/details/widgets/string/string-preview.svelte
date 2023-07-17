@@ -42,7 +42,7 @@
 
 <style lang="scss">
   .title {
-    font-size: var(--font-size--xxx-large);
+    font-size: var(--sui-font-size-xxx-large);
     font-weight: 600;
   }
 </style>

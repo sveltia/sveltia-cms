@@ -127,7 +127,7 @@
     position: absolute;
     inset: 0;
     z-index: 10;
-    background-color: hsl(var(--background-color-4-hsl) / 80%);
+    background-color: hsl(var(--sui-background-color-4-hsl) / 80%);
     backdrop-filter: blur(8px);
     pointer-events: none;
 
@@ -137,10 +137,10 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: var(--font-size--xxx-large);
+      font-size: var(--sui-font-size-xxx-large);
       border-width: 8px;
       border-style: dashed;
-      border-color: var(--primary-accent-color-foreground);
+      border-color: var(--sui-primary-accent-color-foreground);
       border-radius: 8px;
     }
   }

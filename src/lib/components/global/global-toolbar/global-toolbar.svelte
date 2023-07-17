@@ -33,8 +33,8 @@
     & > :global(.toolbar) {
       --toolbar-size: 48px;
       border-width: 0 0 1px 0 !important;
-      border-color: var(--primary-border-color) !important;
-      background-color: var(--tertiary-background-color);
+      border-color: var(--sui-primary-border-color) !important;
+      background-color: var(--sui-tertiary-background-color);
 
       :global(.search-bar) {
         width: 640px;

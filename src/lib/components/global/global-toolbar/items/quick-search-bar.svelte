@@ -60,7 +60,7 @@
     bind:this={searchBar}
     aria-label={$_('search_placeholder')}
     aria-keyshortcuts={focusShortcut}
-    --input-label-align="center"
+    --sui-input-label-align="center"
     on:input={({ target }) => {
       // @todo Implement quick search dropdown.
       navigate(/** @type {HTMLInputElement} */ (target).value.trim());

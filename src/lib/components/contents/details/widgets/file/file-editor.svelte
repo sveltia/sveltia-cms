@@ -186,8 +186,8 @@
       width: 160px !important;
       height: 160px !important;
       border-width: 1px;
-      border-color: var(--control-border-color);
-      border-radius: var(--control--medium--border-radius);
+      border-color: var(--sui-control-border-color);
+      border-radius: var(--sui-control-medium-border-radius);
     }
 
     & > div {

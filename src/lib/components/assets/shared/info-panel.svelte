@@ -157,7 +157,7 @@
     .preview {
       overflow: hidden;
       margin: 0 0 16px;
-      border-radius: var(--control--medium--border-radius);
+      border-radius: var(--sui-control-medium-border-radius);
       aspect-ratio: 1 / 1;
     }
 

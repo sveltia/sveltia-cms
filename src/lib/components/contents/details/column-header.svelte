@@ -112,7 +112,7 @@
 <style lang="scss">
   .header {
     flex: none !important;
-    background-color: var(--tertiary-background-color);
+    background-color: var(--sui-tertiary-background-color);
 
     & > :global([role='toolbar']) {
       margin-right: auto;
@@ -120,11 +120,11 @@
       max-width: 800px;
 
       :global(h3) {
-        font-size: var(--font-size--default);
+        font-size: var(--sui-font-size-default);
       }
 
       :global(button.error) {
-        color: var(--error-foreground-color);
+        color: var(--sui-error-foreground-color);
       }
     }
   }

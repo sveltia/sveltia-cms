@@ -81,12 +81,12 @@
     }
 
     .logo ~ h1 {
-      font-size: var(--font-size--xxx-large);
+      font-size: var(--sui-font-size-xxx-large);
     }
 
     :global(h2) {
       margin: 0 0 16px;
-      font-size: var(--font-size--large);
+      font-size: var(--sui-font-size-large);
       font-weight: normal;
     }
   }

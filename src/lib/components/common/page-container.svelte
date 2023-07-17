@@ -59,9 +59,9 @@
       flex: none;
       width: 240px;
       overflow-y: auto;
-      background-color: var(--tertiary-background-color);
+      background-color: var(--sui-tertiary-background-color);
       border-width: 0 1px 0 0;
-      border-color: var(--primary-border-color);
+      border-color: var(--sui-primary-border-color);
 
       :global([role='radiogroup']) {
         width: 100%;
@@ -87,7 +87,7 @@
           :global(button) {
             display: flex;
             justify-content: flex-start;
-            border-radius: var(--control--medium--border-radius);
+            border-radius: var(--sui-control-medium-border-radius);
             padding: 0 12px;
             height: 32px;
             width: 100%;
@@ -117,13 +117,13 @@
           }
 
           :global([role='option'][aria-selected='true']) {
-            color: var(--highlight-foreground-color);
-            background-color: var(--highlight-background-color);
+            color: var(--sui-highlight-foreground-color);
+            background-color: var(--sui-highlight-background-color);
           }
 
           :global([role='option'].dragover) {
-            color: var(--primary-accent-color-foreground) !important;
-            background-color: var(--primary-accent-color) !important;
+            color: var(--sui-primary-accent-color-foreground) !important;
+            background-color: var(--sui-primary-accent-color) !important;
           }
         }
       }
@@ -140,12 +140,12 @@
       }
 
       :global(.primary:not(.global)[role='toolbar']) {
-        background-color: var(--tertiary-background-color);
+        background-color: var(--sui-tertiary-background-color);
       }
 
       :global(.secondary[role='toolbar']) {
         border-width: 0 0 1px;
-        border-color: var(--primary-border-color);
+        border-color: var(--sui-primary-border-color);
       }
 
       :global(.list-container) {
@@ -153,7 +153,7 @@
         overflow-y: auto;
         overscroll-behavior-y: contain;
         padding: 16px;
-        border-radius: var(--control--medium--border-radius);
+        border-radius: var(--sui-control-medium-border-radius);
       }
     }
 
@@ -173,7 +173,7 @@
         flex: none;
         overflow: auto;
         width: 320px;
-        border-left: 1px solid var(--primary-border-color);
+        border-left: 1px solid var(--sui-primary-border-color);
       }
     }
   }

@@ -63,14 +63,14 @@
       height: 48px;
       aspect-ratio: 1 / 1;
       object-fit: cover;
-      border-radius: var(--control--medium--border-radius);
+      border-radius: var(--sui-control-medium-border-radius);
     }
 
     .image {
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: var(--tertiary-background-color);
+      background-color: var(--sui-tertiary-background-color);
     }
 
     .meta {
@@ -80,8 +80,8 @@
       gap: 4px;
 
       .size {
-        font-size: var(--font-size--small);
-        color: var(--secondary-foreground-color);
+        font-size: var(--sui-font-size-small);
+        color: var(--sui-secondary-foreground-color);
       }
     }
   }

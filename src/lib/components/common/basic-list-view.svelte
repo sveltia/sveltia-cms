@@ -22,7 +22,7 @@
       }
 
       :global([role='row']:hover) {
-        background-color: var(--highlight-background-color);
+        background-color: var(--sui-highlight-background-color);
       }
 
       :global([role='gridcell']) {
@@ -32,7 +32,7 @@
         height: 40px;
         padding: 0 8px;
         max-width: 100%;
-        color: var(--secondary-foreground-color);
+        color: var(--sui-secondary-foreground-color);
         white-space: nowrap;
 
         :global(.label) {
@@ -51,7 +51,7 @@
 
       :global([role='row'] [role='gridcell']) {
         border-width: 1px 0 0;
-        border-color: var(--control-border-color);
+        border-color: var(--sui-control-border-color);
       }
 
       :global([role='row']:last-child [role='gridcell']) {
@@ -64,21 +64,21 @@
 
       :global([role='gridcell'].title) {
         width: 100%; // flex: auto
-        color: var(--primary-foreground-color);
+        color: var(--sui-primary-foreground-color);
       }
 
       :global([role='gridcell'].image) {
         width: 32px;
 
         :global(img) {
-          background-color: var(--primary-accent-color-foreground);
+          background-color: var(--sui-primary-accent-color-foreground);
         }
 
         :global(img),
         :global(video) {
           width: 32px;
           height: 32px;
-          border-radius: var(--control--medium--border-radius);
+          border-radius: var(--sui-control-medium-border-radius);
         }
       }
     }

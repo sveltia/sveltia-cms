@@ -26,8 +26,8 @@
       overflow: hidden;
       border-width: 1px;
       border-style: solid;
-      border-color: var(--secondary-border-color);
-      border-radius: var(--control--medium--border-radius);
+      border-color: var(--sui-secondary-border-color);
+      border-radius: var(--sui-control-medium-border-radius);
       padding: 0;
       height: auto;
       aspect-ratio: 1 / 1;
@@ -48,7 +48,7 @@
         inset: auto 0 0 0;
         z-index: 1;
         padding: 16px 16px 16px 16px;
-        background-color: hsl(var(--background-color-4-hsl) / 80%);
+        background-color: hsl(var(--sui-background-color-4-hsl) / 80%);
 
         :global(span) {
           display: -webkit-box;
@@ -67,7 +67,7 @@
     }
 
     :global([role='row'][aria-selected='true']) {
-      border-color: var(--primary-accent-color);
+      border-color: var(--sui-primary-accent-color);
     }
   }
 </style>

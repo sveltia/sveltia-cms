@@ -81,8 +81,8 @@
     }
 
     h4 {
-      color: var(--secondary-foreground-color);
-      font-size: var(--font-size--small);
+      color: var(--sui-secondary-foreground-color);
+      font-size: var(--sui-font-size-small);
 
       &:not(:last-child) {
         margin-bottom: 8px;
@@ -100,7 +100,7 @@
     :global(.subsection) {
       border-width: 2px 2px 0;
       border-style: solid;
-      border-color: var(--secondary-border-color);
+      border-color: var(--sui-secondary-border-color);
       padding: 8px 16px;
 
       :global(.title) {
@@ -110,14 +110,14 @@
     }
 
     :global(.subsection:first-of-type) {
-      border-top-right-radius: var(--control--medium--border-radius);
-      border-top-left-radius: var(--control--medium--border-radius);
+      border-top-right-radius: var(--sui-control-medium-border-radius);
+      border-top-left-radius: var(--sui-control-medium-border-radius);
     }
 
     :global(.subsection:last-of-type) {
-      border-bottom: 2px solid var(--secondary-border-color);
-      border-bottom-right-radius: var(--control--medium--border-radius);
-      border-bottom-left-radius: var(--control--medium--border-radius);
+      border-bottom: 2px solid var(--sui-secondary-border-color);
+      border-bottom-right-radius: var(--sui-control-medium-border-radius);
+      border-bottom-left-radius: var(--sui-control-medium-border-radius);
     }
   }
 </style>

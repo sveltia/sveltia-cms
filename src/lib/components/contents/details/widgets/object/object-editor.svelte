@@ -82,9 +82,9 @@
     padding: 4px;
 
     .summary {
-      font-size: var(--font-size--small);
+      font-size: var(--sui-font-size-small);
       font-weight: 600;
-      color: var(--secondary-foreground-color);
+      color: var(--sui-secondary-foreground-color);
     }
   }
 

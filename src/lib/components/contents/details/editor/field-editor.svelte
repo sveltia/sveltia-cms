@@ -183,14 +183,14 @@
     &[data-widget='object'] {
       & > header + div {
         border-width: 2px;
-        border-color: var(--secondary-border-color);
-        border-radius: var(--control--medium--border-radius);
+        border-color: var(--sui-secondary-border-color);
+        border-radius: var(--sui-control-medium-border-radius);
       }
     }
 
     &:not(:last-child) {
       border-width: 0 0 1px;
-      border-color: var(--secondary-border-color);
+      border-color: var(--sui-secondary-border-color);
     }
 
     & > * {
@@ -207,17 +207,17 @@
     margin-bottom: 8px;
 
     h4 {
-      font-size: var(--font-size--small);
+      font-size: var(--sui-font-size-small);
       font-weight: 600;
-      color: var(--secondary-foreground-color);
+      color: var(--sui-secondary-foreground-color);
     }
 
     .required {
-      border: 1px solid var(--control-border-color);
+      border: 1px solid var(--sui-control-border-color);
       border-radius: 4px;
       padding: 2px 4px;
-      color: var(--info-foreground-color);
-      font-size: var(--font-size--x-small);
+      color: var(--sui-info-foreground-color);
+      font-size: var(--sui-font-size-x-small);
     }
 
     & + div {
@@ -238,10 +238,10 @@
 
       :global(input[type='color']),
       :global(input[type='number']) {
-        background-color: var(--input-background-color);
+        background-color: var(--sui-input-background-color);
         border-width: 1px;
-        border-color: var(--primary-border-color);
-        border-radius: var(--control--medium--border-radius);
+        border-color: var(--sui-primary-border-color);
+        border-radius: var(--sui-control-medium-border-radius);
       }
 
       :global(input[type='file']),
@@ -273,7 +273,7 @@
   }
 
   .validation {
-    color: var(--error-foreground-color);
+    color: var(--sui-error-foreground-color);
 
     div {
       display: flex;
@@ -289,7 +289,7 @@
 
   .hint {
     margin-top: 8px;
-    font-size: var(--font-size--small);
+    font-size: var(--sui-font-size-small);
     opacity: 0.75;
 
     :global(p) {

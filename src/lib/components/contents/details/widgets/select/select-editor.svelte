@@ -150,11 +150,11 @@
       align-items: center;
       gap: 8px;
       padding: 4px 12px;
-      border-radius: var(--control--medium--border-radius);
-      background-color: var(--secondary-background-color);
+      border-radius: var(--sui-control-medium-border-radius);
+      background-color: var(--sui-secondary-background-color);
 
       :global(.icon) {
-        font-size: var(--font-size--large);
+        font-size: var(--sui-font-size-large);
       }
     }
   }

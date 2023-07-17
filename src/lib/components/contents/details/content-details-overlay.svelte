@@ -158,7 +158,7 @@
     z-index: 100;
     display: flex;
     flex-direction: column;
-    background-color: var(--primary-background-color);
+    background-color: var(--sui-primary-background-color);
 
     .cols {
       flex: auto;
@@ -173,7 +173,7 @@
 
         &:first-child:not(:last-child) {
           border-width: 0 1px 0 0;
-          border-color: var(--primary-border-color);
+          border-color: var(--sui-primary-border-color);
         }
 
         & > :global(.content) {

@@ -33,7 +33,7 @@
     z-index: 100;
     display: flex;
     flex-direction: column;
-    background-color: var(--primary-background-color);
+    background-color: var(--sui-primary-background-color);
 
     .row {
       flex: auto;
@@ -43,7 +43,7 @@
       .preview {
         flex: auto;
         overflow: hidden;
-        border-right: 1px solid var(--primary-border-color);
+        border-right: 1px solid var(--sui-primary-border-color);
       }
     }
   }

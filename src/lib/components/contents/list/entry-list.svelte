@@ -61,8 +61,8 @@
 <style lang="scss">
   h3 {
     padding: 8px;
-    color: var(--secondary-foreground-color);
-    background-color: var(--secondary-background-color);
+    color: var(--sui-secondary-foreground-color);
+    background-color: var(--sui-secondary-background-color);
 
     & + :global(.basic-grid-view .table) {
       margin: 16px 0;

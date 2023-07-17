@@ -340,14 +340,14 @@
   .item {
     margin: 4px 0;
     border-width: 2px;
-    border-color: var(--secondary-border-color);
-    border-radius: var(--control--medium--border-radius);
+    border-color: var(--sui-secondary-border-color);
+    border-radius: var(--sui-control-medium-border-radius);
 
     .header {
       display: flex;
       align-items: center;
       padding: 4px;
-      background-color: var(--primary-border-color);
+      background-color: var(--sui-primary-border-color);
 
       & > div {
         display: flex;
@@ -370,13 +370,13 @@
       }
 
       :global(.icon) {
-        font-size: var(--font-size--large);
+        font-size: var(--sui-font-size-large);
       }
 
       .type {
-        font-size: var(--font-size--small);
+        font-size: var(--sui-font-size-small);
         font-weight: 600;
-        color: var(--secondary-foreground-color);
+        color: var(--sui-secondary-foreground-color);
       }
     }
 
