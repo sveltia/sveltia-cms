@@ -22,8 +22,8 @@
       object-fit: cover;
     }
 
+    /* prettier-ignore */
     &.checkerboard {
-      // prettier-ignore
       background-image:
         linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%),
         linear-gradient(45deg, #eee 25%, #fff 25%, #fff 75%, #eee 75%);

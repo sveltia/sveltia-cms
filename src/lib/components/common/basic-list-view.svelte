@@ -63,7 +63,7 @@
       }
 
       :global([role='gridcell'].title) {
-        width: 100%; // flex: auto
+        width: 100%; /* flex: auto */
         color: var(--sui-primary-foreground-color);
       }
 

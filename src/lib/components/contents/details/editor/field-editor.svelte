@@ -282,7 +282,7 @@
 
       :global(.icon) {
         flex: none;
-        font-size: 20px; // !hardcoded
+        font-size: 20px; /* !hardcoded */
       }
     }
   }

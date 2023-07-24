@@ -179,7 +179,7 @@
         & > :global(.content) {
           flex: auto;
           overflow-y: auto;
-          scroll-behavior: auto; // Don’t use smooth scroll for syncing
+          scroll-behavior: auto; /* Don’t use smooth scroll for syncing */
           overscroll-behavior-y: contain;
         }
       }
