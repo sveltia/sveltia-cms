@@ -138,7 +138,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 - Demo site
 - Starter templates
 
-### Non goals
+### Non goals (for now)
 
 - Mobile support
 - WYSIWYG editing
@@ -179,7 +179,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 1. Launch the local development server for your frontend framework, typically with `npm run dev`.
-1. Visit `http://localhost:[port]/admin/index.html` with Chrome, Edge or other Chromium-based desktop browser. The port number depends on your framework.
+1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number depends on your framework.
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
 1. Make some changes on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
