@@ -62,15 +62,16 @@
     )[fieldName] || [];
 
   $: parentExpanded = !minimizeCollapsed;
-  $: itemExpandedList = items.map(() => !collapsed);
 
   let mounted = false;
   let widgetId = '';
   let inputValue = '';
+  let itemExpandedList = [];
 
   onMount(() => {
     mounted = true;
     widgetId = generateUUID().split('-').pop();
+    itemExpandedList = items.map(() => !collapsed);
   });
 
   /**
@@ -152,7 +153,10 @@
         newItem[typeKey] = subFieldName;
       }
 
-      list.splice(addToTop ? 0 : list.length, 0, newItem);
+      const index = addToTop ? 0 : list.length;
+
+      list.splice(index, 0, newItem);
+      itemExpandedList.splice(index, 0, true);
     });
   };
 
@@ -163,6 +167,7 @@
   const deleteItem = (index) => {
     updateComplexList((list) => {
       list.splice(index, 1);
+      itemExpandedList.splice(index, 1);
     });
   };
 
@@ -173,6 +178,10 @@
   const moveUpItem = (index) => {
     updateComplexList((list) => {
       [list[index], list[index - 1]] = [list[index - 1], list[index]];
+      [itemExpandedList[index], itemExpandedList[index - 1]] = [
+        itemExpandedList[index - 1],
+        itemExpandedList[index],
+      ];
     });
   };
 
@@ -183,6 +192,10 @@
   const moveDownItem = (index) => {
     updateComplexList((list) => {
       [list[index], list[index + 1]] = [list[index + 1], list[index]];
+      [itemExpandedList[index], itemExpandedList[index + 1]] = [
+        itemExpandedList[index + 1],
+        itemExpandedList[index],
+      ];
     });
   };
 
