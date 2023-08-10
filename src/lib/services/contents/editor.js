@@ -41,10 +41,11 @@ export const selectAssetsView = writable({});
 export const entryEditorSettings = writable({}, (set) => {
   (async () => {
     try {
-      const settings = (await LocalStorage.get(storageKey)) || {
+      const settings = {
         showPreview: true,
         syncScrolling: true,
         selectAssetsView: { type: 'grid' },
+        ...((await LocalStorage.get(storageKey)) || {}),
       };
 
       set(settings);
