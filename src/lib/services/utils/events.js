@@ -1,7 +1,8 @@
 /**
  * Check if the user agent is macOS.
+ * @returns {boolean} Result.
  */
-export const isMac =
+export const isMac = () =>
   /** @type {any} */ (navigator).userAgentData?.platform === 'macOS' ||
   navigator.platform.startsWith('Mac');
 

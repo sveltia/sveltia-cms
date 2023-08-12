@@ -1,5 +1,6 @@
 <script>
   import { SearchBar } from '@sveltia/ui';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { selectedCollection } from '$lib/services/contents';
   import { goBack, goto, parseLocation } from '$lib/services/navigation';
@@ -24,7 +25,6 @@
     }
   };
 
-  const focusShortcut = isMac ? 'Meta+F' : 'Ctrl+F';
   /**
    * @type {HTMLElement}
    */
@@ -33,6 +33,11 @@
    * @type {import('svelte').SvelteComponent}
    */
   let searchBar = undefined;
+  /**
+   * Keyboard shortcut to focus on the search bar. This has to be redefined within `onMount` because
+   * {@link isMac} requires `navigator` that doesn’t exist during SSR.
+   */
+  let focusShortcut = 'Ctrl+F';
 
   $: {
     // Restore search terms when the page is reloaded
@@ -40,6 +45,10 @@
       searchBar.value = $searchTerms;
     }
   }
+
+  onMount(() => {
+    focusShortcut = isMac() ? 'Meta+F' : 'Ctrl+F';
+  });
 </script>
 
 <svelte:window
