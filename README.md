@@ -75,6 +75,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
+| Installation | Installing with npm is not yet supported. |
 | UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Preferences. (Click on the Account button at the top right corner of the CMS.) |
 | Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. We plan to add the GitLab and Test backends, but Azure and Bitbucket are unlikely to be supported, mainly due to the lack of an API method to fetch content in bulk. Later we may implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
