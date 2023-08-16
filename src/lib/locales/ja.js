@@ -20,6 +20,8 @@ export const strings = {
   },
 
   // Account
+  user_name: 'ユーザー名',
+  password: 'パスワード',
   sign_in: 'ログイン',
   sign_in_with_x: '{name} でログイン',
   signed_in_as_x: '{name} としてログイン中',
@@ -171,24 +173,33 @@ export const strings = {
   current_time: '現在時刻',
   add_x: '{name} を追加',
   drag_to_sort_items: 'ドラッグしてアイテムを並び替え',
-  select_file: 'ファイルを選択',
-  select_image: '画像を選択',
-  select_from_library: 'ライブラリから選択',
-  library_locations: {
-    this_repository: 'このレポジトリ',
-    external_locations: '外部の場所',
-    stock_photos: 'ストックフォト',
-  },
-  enter_url: 'URL を入力',
-  enter_image_url: '画像の URL を入力:',
-  insert_stock_photo: 'ストックフォトを挿入',
-  large_file: {
-    title: '大きなファイル',
-    description: 'このファイルは最大サイズ {size} を超えています。他のファイルを選んでください。',
-  },
-  photo_credit: {
-    title: '写真クレジット',
-    description: '可能であれば以下のクレジットを使ってください:',
+  assets_dialog: {
+    title: {
+      file: 'ファイルを選択',
+      image: '画像を選択',
+    },
+    location: {
+      this_repository: 'このレポジトリ',
+      external_locations: '外部の場所',
+      stock_photos: 'ストックフォト',
+    },
+    error: {
+      invalid_key: 'あなたの API キーは正しくないか期限切れです。確認の上、再度お試しください。',
+      search_fetch_failed: 'ファイルを検索中に問題が発生しました。後で再度お試しください。',
+      image_fetch_failed:
+        '選択されたファイルをダウンロード中に問題が発生しました。後で再度お試しください。',
+    },
+    enter_url: 'URL を入力',
+    enter_file_url: 'ファイルの URL を入力:',
+    enter_image_url: '画像の URL を入力:',
+    large_file: {
+      title: '大きなファイル',
+      description: 'このファイルは最大サイズ {size} を超えています。他のファイルを選んでください。',
+    },
+    photo_credit: {
+      title: '写真クレジット',
+      description: '可能であれば以下のクレジットを使ってください:',
+    },
   },
 
   // Content preview
@@ -198,13 +209,12 @@ export const strings = {
   },
 
   // Integrations
-  stock_photos: {
-    not_found: '写真は見つかりませんでした。',
-    error: {
-      invalid_key: 'あなたの API Key は正しくないか期限切れです。確認の上、再度お試しください。',
-      search_fetch_failed: '写真を検索中に問題が発生しました。後で再度お試しください。',
-      image_fetch_failed:
-        '選択された写真をダウンロード中に問題が発生しました。後で再度お試しください。',
+  cloud_storage: {
+    invalid: 'このサービスは正しく設定されていません。',
+    auth: {
+      initial: '{service} へログインすると、ストレージ上のメディアをエントリー項目へ挿入できます。',
+      requested: 'ログイン中…',
+      error: 'ユーザー名またはパスワードが間違っています。確認の上、再度お試しください。',
     },
   },
 
@@ -270,7 +280,7 @@ export const strings = {
     },
     media: {
       title: 'メディア',
-      stock_photo: {
+      stock_photos: {
         title: '{service} 無料画像素材',
         field_label: '{service} API キー',
         description:

@@ -13,25 +13,28 @@
   import { _ } from 'svelte-i18n';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import StockPhotoPanel from '$lib/components/assets/shared/stock-photo-panel.svelte';
+  import ExternalAssetsPanel from '$lib/components/assets/shared/external-assets-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
   import { selectAssetsView } from '$lib/services/contents/editor';
-  import { allStockPhotoServices } from '$lib/services/integrations/stock-photos';
+  import {
+    allCloudStorageServices,
+    allStockPhotoServices,
+  } from '$lib/services/integrations/media-libraries';
   import { prefs } from '$lib/services/prefs';
   import { generateUUID, stripSlashes } from '$lib/services/utils/strings';
 
   export let open = false;
   /**
-   * @type {string}
+   * @type {'image' | 'any'}
    */
-  export let kind = undefined;
+  export let kind = 'image';
   export let canEnterURL = true;
 
   const dispatch = createEventDispatcher();
-  const title = kind === 'image' ? $_('select_image') : $_('select_file');
+  const title = kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file');
   /**
    * @type {import('svelte').SvelteComponent}
    */
@@ -52,7 +55,8 @@
   $: libraryName = collectionMediaFolder ? 'collection-files' : 'all-files';
   $: isLocalLibrary = ['collection-files', 'all-files'].includes(libraryName);
   $: isEnabledMediaService =
-    Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName];
+    (Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName]) ||
+    (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]);
 
   $: {
     if (open) {
@@ -97,9 +101,10 @@
   </svelte:fragment>
   <svelte:fragment slot="footer-extra">
     {#if isEnabledMediaService}
-      {@const { showServiceLink, serviceLabel, landingURL } = allStockPhotoServices[libraryName]}
+      {@const { showServiceLink, serviceLabel, serviceURL } =
+        allStockPhotoServices[libraryName] || {}}
       {#if showServiceLink}
-        <a href={landingURL}>
+        <a href={serviceURL}>
           {$_('prefs.media.stock_photo.credit', { values: { service: serviceLabel } })}
         </a>
       {/if}
@@ -114,7 +119,7 @@
         selectedAsset = null;
       }}
     >
-      <OptionGroup label={$_('library_locations.this_repository')}>
+      <OptionGroup label={$_('assets_dialog.location.this_repository')}>
         {#if collectionMediaFolder}
           <Option
             name="collection-files"
@@ -128,12 +133,15 @@
           aria-selected={libraryName === 'all-files'}
         />
       </OptionGroup>
-      <OptionGroup label={$_('library_locations.external_locations')}>
+      <OptionGroup label={$_('assets_dialog.location.external_locations')}>
         {#if canEnterURL}
-          <Option name="enter-url" label={$_('enter_url')} />
+          <Option name="enter-url" label={$_('assets_dialog.enter_url')} />
         {/if}
+        {#each Object.values(allCloudStorageServices) as { serviceId, serviceLabel } (serviceId)}
+          <Option name={serviceId} label={serviceLabel} />
+        {/each}
       </OptionGroup>
-      <OptionGroup label={$_('library_locations.stock_photos')}>
+      <OptionGroup label={$_('assets_dialog.location.stock_photos')}>
         {#each Object.values(allStockPhotoServices) as { serviceId, serviceLabel } (serviceId)}
           <Option name={serviceId} label={serviceLabel} />
         {/each}
@@ -180,7 +188,11 @@
       {/if}
       {#if canEnterURL && libraryName === 'enter-url'}
         <EmptyState>
-          <div>{$_('enter_image_url')}</div>
+          <div>
+            {kind === 'image'
+              ? $_('assets_dialog.enter_image_url')
+              : $_('assets_dialog.enter_file_url')}
+          </div>
           <TextInput
             bind:value={enteredURL}
             on:input={() => {
@@ -189,11 +201,24 @@
           />
         </EmptyState>
       {/if}
-      {#each Object.entries(allStockPhotoServices) as [serviceId, props] (serviceId)}
+      {#each Object.entries(allCloudStorageServices) as [serviceId, serviceProps] (serviceId)}
         {#if libraryName === serviceId}
-          <StockPhotoPanel
-            {...props}
+          <ExternalAssetsPanel
+            {kind}
             {searchTerms}
+            {serviceProps}
+            on:select={({ detail }) => {
+              selectedAsset = detail;
+            }}
+          />
+        {/if}
+      {/each}
+      {#each Object.entries(allStockPhotoServices) as [serviceId, serviceProps] (serviceId)}
+        {#if libraryName === serviceId}
+          <ExternalAssetsPanel
+            {kind}
+            {searchTerms}
+            {serviceProps}
             on:select={({ detail }) => {
               selectedAsset = detail;
             }}

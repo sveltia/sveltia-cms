@@ -4,14 +4,6 @@ import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import { sleep } from '$lib/services/utils/misc';
 
-const serviceId = 'pexels';
-const serviceLabel = 'Pexels';
-const showServiceLink = true;
-const hotlinking = false;
-const landingURL = 'https://www.pexels.com/api/';
-const apiKeyURL = 'https://www.pexels.com/api/new/';
-const apiKeyPattern = /^[a-zA-Z\d]{56}$/;
-
 const supportedLocales = [
   'en-US,pt-BR,es-ES,ca-ES,de-DE,it-IT,fr-FR,sv-SE,id-ID,pl-PL,ja-JP,zh-TW,zh-CN,ko-KR,th-TH,nl-NL',
   'hu-HU,vi-VN,cs-CZ,da-DK,fi-FI,uk-UA,el-GR,ro-RO,nb-NO,sk-SK,tr-TR,ru-RU',
@@ -23,12 +15,14 @@ const endpoint = 'https://api.pexels.com/v1';
 
 /**
  * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query
- * @param {string} apiKey API key.
- * @returns {Promise<StockPhoto[]>} Photos.
+ * @param {string} query Search query.
+ * @param {object} options Options.
+ * @param {string} options.apiKey API key.
+ * @returns {Promise<ExternalAsset[]>} Assets.
  * @see https://www.pexels.com/api/documentation/
+ * @todo Support video files.
  */
-const searchImages = async (query, apiKey) => {
+const search = async (query, { apiKey }) => {
   const headers = { Authorization: apiKey };
   const [locale] = get(appLocale).toLowerCase().split('-');
   let results = [];
@@ -83,20 +77,24 @@ const searchImages = async (query, apiKey) => {
     previewURL: tiny,
     downloadURL: large2x,
     fileName: `pexels-${photographer.split(/\s+/).join('-').toLowerCase()}-${id}.jpg`,
+    kind: 'image',
     credit: `<a href="${url}">Photo by ${photographer} on Pexels</a>`,
   }));
 };
 
 /**
- * @type {StockPhotoService}
+ * @type {MediaLibraryService}
  */
 export default {
-  serviceId,
-  serviceLabel,
-  showServiceLink,
-  hotlinking,
-  landingURL,
-  apiKeyURL,
-  apiKeyPattern,
-  searchImages,
+  serviceType: 'stock_photos',
+  serviceId: 'pexels',
+  serviceLabel: 'Pexels',
+  serviceURL: 'https://www.pexels.com/',
+  showServiceLink: true,
+  hotlinking: false,
+  authType: 'api_key',
+  developerURL: 'https://www.pexels.com/api/',
+  apiKeyURL: 'https://www.pexels.com/api/new/',
+  apiKeyPattern: /^[a-zA-Z\d]{56}$/,
+  search,
 };

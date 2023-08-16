@@ -91,10 +91,12 @@ export const getAssetFolder = (collection, fillSlugOptions) => {
 /**
  * Determine the asset’s kind from the file extension.
  * @param {string} name File name or path.
- * @returns {string} One of {@link assetKinds}.
+ * @returns {AssetKind} One of {@link assetKinds}.
  */
 export const getAssetKind = (name) =>
-  Object.entries(assetExtensions).find(([, regex]) => name.match(regex))?.[0] || 'other';
+  /** @type {AssetKind} */ (
+    Object.entries(assetExtensions).find(([, regex]) => name.match(regex))?.[0] || 'other'
+  );
 
 /**
  * Get an asset by a public path typically stored as an image field value.

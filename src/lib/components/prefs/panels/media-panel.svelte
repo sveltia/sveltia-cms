@@ -3,22 +3,22 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import { prefs } from '$lib/services/prefs';
-  import { allStockPhotoServices } from '$lib/services/integrations/stock-photos';
+  import { allStockPhotoServices } from '$lib/services/integrations/media-libraries';
 </script>
 
 <TabPanel id="prefs-tab-media">
   {#each Object.entries(allStockPhotoServices) as [serviceId, service] (serviceId)}
-    {@const { serviceLabel, landingURL, apiKeyURL } = service}
+    {@const { serviceLabel, developerURL, apiKeyURL } = service}
     <section>
       <h4>
-        {$_('prefs.media.stock_photo.title', { values: { service: serviceLabel } })}
+        {$_('prefs.media.stock_photos.title', { values: { service: serviceLabel } })}
       </h4>
       <p>
         {@html DOMPurify.sanitize(
-          $_('prefs.media.stock_photo.description', {
+          $_('prefs.media.stock_photos.description', {
             values: {
               service: serviceLabel,
-              homeHref: `href="${landingURL}"`,
+              homeHref: `href="${developerURL}"`,
               apiKeyHref: `href="${apiKeyURL}"`,
             },
           }),
@@ -29,7 +29,7 @@
         <TextInput
           bind:value={$prefs.apiKeys[serviceId]}
           spellcheck="false"
-          aria-label={$_('prefs.media.stock_photo.field_label', {
+          aria-label={$_('prefs.media.stock_photos.field_label', {
             values: { service: serviceLabel },
           })}
         />

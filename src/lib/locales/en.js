@@ -20,6 +20,8 @@ export const strings = {
   },
 
   // Account
+  user_name: 'User Name',
+  password: 'Password',
   sign_in: 'Sign In',
   sign_in_with_x: 'Sign In with {name}',
   signed_in_as_x: 'Signed In as {name}',
@@ -171,24 +173,33 @@ export const strings = {
   current_time: 'Current Time',
   add_x: 'Add {name}',
   drag_to_sort_items: 'Drag to sort items',
-  select_file: 'Select File',
-  select_image: 'Select Image',
-  select_from_library: 'Select from Library',
-  library_locations: {
-    this_repository: 'This Repository',
-    external_locations: 'External Locations',
-    stock_photos: 'Stock Photos',
-  },
-  enter_url: 'Enter URL',
-  enter_image_url: 'Enter URL of the image:',
-  insert_stock_photo: 'Insert Stock Photo',
-  large_file: {
-    title: 'Large File',
-    description: 'This file exceeds the maximum size of {size}. Please choose another.',
-  },
-  photo_credit: {
-    title: 'Photo Credit',
-    description: 'Use the following credit if possible:',
+  assets_dialog: {
+    title: {
+      file: 'Select File',
+      image: 'Select Image',
+    },
+    location: {
+      this_repository: 'This Repository',
+      external_locations: 'External Locations',
+      stock_photos: 'Stock Photos',
+    },
+    error: {
+      invalid_key: 'Your API Key is invalid or expired. Please double check and try again.',
+      search_fetch_failed: 'There was an error while searching assets. Please try again later.',
+      image_fetch_failed:
+        'There was an error while downloading the selected asset. Please try again later.',
+    },
+    enter_url: 'Enter URL',
+    enter_file_url: 'Enter URL of the file:',
+    enter_image_url: 'Enter URL of the image:',
+    large_file: {
+      title: 'Large File',
+      description: 'This file exceeds the maximum size of {size}. Please choose another.',
+    },
+    photo_credit: {
+      title: 'Photo Credit',
+      description: 'Use the following credit if possible:',
+    },
   },
 
   // Content preview
@@ -198,13 +209,12 @@ export const strings = {
   },
 
   // Integrations
-  stock_photos: {
-    not_found: 'No photos found.',
-    error: {
-      invalid_key: 'Your API Key is invalid or expired. Please double check and try again.',
-      search_fetch_failed: 'There was an error while searching photos. Please try again later.',
-      image_fetch_failed:
-        'There was an error while downloading the selected photo. Please try again later.',
+  cloud_storage: {
+    invalid: 'The service is not configured properly.',
+    auth: {
+      initial: 'Sign into {service} to insert media on the storage to entry fields.',
+      requested: 'Signing in…',
+      error: 'User name or password is incorrect. Please double check and try again.',
     },
   },
 
@@ -270,7 +280,7 @@ export const strings = {
     },
     media: {
       title: 'Media',
-      stock_photo: {
+      stock_photos: {
         title: '{service} Free Images',
         field_label: '{service} API Key',
         description:

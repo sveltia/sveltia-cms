@@ -142,7 +142,7 @@
 </div>
 
 <SelectAssetsDialog
-  kind={isImageWidget ? widget : undefined}
+  kind={isImageWidget ? 'image' : 'any'}
   {canEnterURL}
   bind:open={showSelectAssetsDialog}
   on:select={({ detail }) => {
@@ -150,19 +150,23 @@
   }}
 />
 
-<Dialog bind:open={showSizeLimitDialog} title={$_('large_file.title')} showCancel={false}>
-  {$_('large_file.description', { values: { size: formatSize(maxFileSize) } })}
+<Dialog
+  bind:open={showSizeLimitDialog}
+  title={$_('assets_dialog.large_file.title')}
+  showCancel={false}
+>
+  {$_('assets_dialog.large_file.description', { values: { size: formatSize(maxFileSize) } })}
 </Dialog>
 
 <Dialog
   bind:open={showPhotoCreditDialog}
-  title={$_('photo_credit.title')}
+  title={$_('assets_dialog.photo_credit.title')}
   okLabel={$_('copy')}
   on:ok={() => {
     navigator.clipboard.writeText(photoCredit);
   }}
 >
-  <div>{$_('photo_credit.description')}</div>
+  <div>{$_('assets_dialog.photo_credit.description')}</div>
   <div>
     <TextArea
       readonly="readonly"

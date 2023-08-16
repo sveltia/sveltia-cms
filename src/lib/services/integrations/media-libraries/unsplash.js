@@ -4,14 +4,6 @@ import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import { sleep } from '$lib/services/utils/misc';
 
-const serviceId = 'unsplash';
-const serviceLabel = 'Unsplash';
-const showServiceLink = true;
-const hotlinking = true;
-const landingURL = 'https://unsplash.com/developers';
-const apiKeyURL = 'https://unsplash.com/oauth/applications';
-const apiKeyPattern = /^[a-zA-Z\d-]{40,}$/;
-
 const supportedLocales = [
   'af,am,ar,az,be,bg,bn,bs,ca,ceb,co,cs,cy,da,de,el,en,eo,es,et,eu,fa,fi,fr,fy,ga,gd,gl,gu,ha,haw',
   'hi,hmn,hr,ht,hu,hy,id,ig,is,it,iw,ja,jw,ka,kk,km,kn,ko,ku,ky,la,lb,lo,lt,lv,mg,mi,mk,ml,mn,mr',
@@ -26,12 +18,14 @@ const creditLinkParams = 'utm_source=sveltia-cms&utm_medium=referral';
 
 /**
  * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query
- * @param {string} apiKey API key.
- * @returns {Promise<StockPhoto[]>} Photos.
+ * @param {string} query Search query.
+ * @param {object} options Options.
+ * @param {string} options.apiKey API key.
+ * @returns {Promise<ExternalAsset[]>} Assets.
  * @see https://unsplash.com/documentation
+ * @todo Support video files.
  */
-const searchImages = async (query, apiKey) => {
+const search = async (query, { apiKey }) => {
   const headers = { Authorization: `Client-ID ${apiKey}` };
   const [locale] = get(appLocale).toLowerCase().split('-');
   let results = [];
@@ -86,6 +80,7 @@ const searchImages = async (query, apiKey) => {
     previewURL: thumb,
     downloadURL: regular,
     fileName: `${name.split(/\s+/).join('-').toLowerCase()}-${id}-unsplash.jpg`,
+    kind: 'image',
     credit:
       `Photo by <a href="https://unsplash.com/@${username}?${creditLinkParams}">${name}</a> on ` +
       `<a href="https://unsplash.com/?${creditLinkParams}">Unsplash</a>`,
@@ -93,15 +88,18 @@ const searchImages = async (query, apiKey) => {
 };
 
 /**
- * @type {StockPhotoService}
+ * @type {MediaLibraryService}
  */
 export default {
-  serviceId,
-  serviceLabel,
-  showServiceLink,
-  hotlinking,
-  landingURL,
-  apiKeyURL,
-  apiKeyPattern,
-  searchImages,
+  serviceType: 'stock_photos',
+  serviceId: 'unsplash',
+  serviceLabel: 'Unsplash',
+  serviceURL: 'https://unsplash.com/',
+  showServiceLink: true,
+  hotlinking: true,
+  authType: 'api_key',
+  developerURL: 'https://unsplash.com/developers',
+  apiKeyURL: 'https://unsplash.com/oauth/applications',
+  apiKeyPattern: /^[a-zA-Z\d-]{40,}$/,
+  search,
 };

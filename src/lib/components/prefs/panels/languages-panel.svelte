@@ -33,7 +33,7 @@
   </section>
   {#if $siteConfig.i18n?.locales?.length}
     {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
-      {@const { serviceLabel, landingURL, apiKeyURL } = service}
+      {@const { serviceLabel, developerURL, apiKeyURL } = service}
       <section>
         <h4>{$_('prefs.languages.translator.title', { values: { service: serviceLabel } })}</h4>
         <p>
@@ -41,7 +41,7 @@
             $_('prefs.languages.translator.description', {
               values: {
                 service: serviceLabel,
-                homeHref: `href="${landingURL}"`,
+                homeHref: `href="${developerURL}"`,
                 apiKeyHref: `href="${apiKeyURL}"`,
               },
             }),

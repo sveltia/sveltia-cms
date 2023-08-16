@@ -10,10 +10,10 @@
   } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/prefs';
 
-  $: ({ serviceId, serviceLabel, landingURL, apiKeyURL, apiKeyPattern } = $translator || {
+  $: ({ serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } = $translator || {
     serviceId: undefined,
     serviceLabel: undefined,
-    landingURL: undefined,
+    developerURL: undefined,
     apiKeyURL: undefined,
     apiKeyPattern: undefined,
   });
@@ -31,7 +31,7 @@
       $_('prefs.languages.translator.description', {
         values: {
           service: serviceLabel,
-          homeHref: `href="${landingURL}"`,
+          homeHref: `href="${developerURL}"`,
           apiKeyHref: `href="${apiKeyURL}"`,
         },
       }),

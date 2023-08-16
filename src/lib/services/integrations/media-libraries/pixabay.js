@@ -1,14 +1,6 @@
 import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
-const serviceId = 'pixabay';
-const serviceLabel = 'Pixabay';
-const showServiceLink = true;
-const hotlinking = false;
-const landingURL = 'https://pixabay.com/service/about/api/';
-const apiKeyURL = 'https://pixabay.com/api/docs/#api_key';
-const apiKeyPattern = /^\d+-[a-f\d]{25}$/;
-
 const supportedLocales =
   'cs,da,de,en,es,fr,id,it,hu,nl,no,pl,pt,ro,sk,fi,sv,tr,vi,th,bg,ru,el,ja,ko,zh'.split(',');
 
@@ -16,12 +8,14 @@ const endpoint = 'https://pixabay.com/api';
 
 /**
  * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query
- * @param {string} apiKey API key.
- * @returns {Promise<StockPhoto[]>} Photos.
+ * @param {string} query Search query.
+ * @param {object} options Options.
+ * @param {string} options.apiKey API key.
+ * @returns {Promise<ExternalAsset[]>} Assets.
  * @see https://pixabay.com/api/docs/
+ * @todo Support video files.
  */
-const searchImages = async (query, apiKey) => {
+const search = async (query, { apiKey }) => {
   const [locale] = get(appLocale).toLowerCase().split('-');
 
   const params = new URLSearchParams(
@@ -60,21 +54,25 @@ const searchImages = async (query, apiKey) => {
       previewURL: webformatURL.replace('_640.', imageWidth > imageHeight ? '_180.' : '_340.'),
       downloadURL: largeImageURL,
       fileName: previewURL.split('/').pop().replace('_150.', '_1280.'),
+      kind: 'image',
       credit: `<a href="${pageURL}">Photo by ${user} on Pixabay`,
     }),
   );
 };
 
 /**
- * @type {StockPhotoService}
+ * @type {MediaLibraryService}
  */
 export default {
-  serviceId,
-  serviceLabel,
-  showServiceLink,
-  hotlinking,
-  landingURL,
-  apiKeyURL,
-  apiKeyPattern,
-  searchImages,
+  serviceType: 'stock_photos',
+  serviceId: 'pixabay',
+  serviceLabel: 'Pixabay',
+  serviceURL: 'https://pixabay.com/',
+  showServiceLink: true,
+  hotlinking: false,
+  authType: 'api_key',
+  developerURL: 'https://pixabay.com/service/about/api/',
+  apiKeyURL: 'https://pixabay.com/api/docs/#api_key',
+  apiKeyPattern: /^\d+-[a-f\d]{25}$/,
+  search,
 };

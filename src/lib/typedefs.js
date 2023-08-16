@@ -17,6 +17,7 @@
  * User preferences.
  * @typedef {object} Preferences
  * @property {object} [apiKeys] API keys for integrations.
+ * @property {object} [logins] Log-in credentials (user name and password) for integrations.
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
  * @property {string} [locale] Selected UI locale, e.g. `en`.
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
@@ -36,16 +37,21 @@
  */
 
 /**
- * Stock photo service.
- * @typedef {object} StockPhotoService
+ * External media library service, such as a stock photo provider or a cloud storage service.
+ * @typedef {object} MediaLibraryService
+ * @property {'stock_photos' | 'cloud_storage'} serviceType Service type.
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
+ * @property {string} serviceURL Service URL.
  * @property {boolean} showServiceLink Whether to show a link to the service in the media library.
- * @property {boolean} hotlinking Whether to hotlink images.
- * @property {string} landingURL Landing page URL.
- * @property {string} apiKeyURL URL of the page that provides an API key.
- * @property {RegExp} apiKeyPattern API key pattern.
- * @property {Function} searchImages Function to search images.
+ * @property {boolean} hotlinking Whether to hotlink files.
+ * @property {'api_key' | 'password'} authType Authentication type.
+ * @property {string} [developerURL] URL of the page that provides the API/developer service.
+ * @property {string} [apiKeyURL] URL of the page that provides an API key.
+ * @property {RegExp} [apiKeyPattern] API key pattern.
+ * @property {Function} [init] Function to initialize the service.
+ * @property {Function} [signIn] Function to sign in to the service.
+ * @property {Function} search Function to search files.
  */
 
 /**
@@ -53,7 +59,7 @@
  * @typedef {object} TranslationService
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
- * @property {string} landingURL Landing page URL.
+ * @property {string} developerURL URL of the page that provides the API/developer service.
  * @property {string} apiKeyURL URL of the page that provides an API key.
  * @property {RegExp} apiKeyPattern API key pattern.
  * @property {string[]} sourceLanguages Supported source languages.
@@ -65,6 +71,11 @@
  * Git commit type.
  * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia' |
  * 'openAuthoring'} CommitType
+ */
+
+/**
+ * Basic file type.
+ * @typedef {'image' | 'audio' | 'video' | 'document' | 'other'} AssetKind
  */
 
 /**
@@ -513,7 +524,7 @@
  * @property {string} path File path.
  * @property {string} sha SHA-1 hash for the file.
  * @property {number} size File size in bytes.
- * @property {string} kind Basic file type, one of `image`, `audio`, `video`, `document` or `other`.
+ * @property {AssetKind} kind Basic file type.
  * @property {?number} text Raw text for a plaintext file, like HTML or Markdown.
  * @property {string} [collectionName] Collection name if it belongs to a collection asset folder.
  * @property {string} folder Path of a collection-specific folder that contains the file or global
@@ -536,14 +547,17 @@
  */
 
 /**
- * Stock photo.
- * @typedef {object} StockPhoto
- * @property {string} id Photo ID.
- * @property {string} description Photo description.
- * @property {string} previewURL Thumbnail image URL.
- * @property {string} downloadURL Large image URL for download.
+ * Asset on an external media library, such as a stock photo or a file on cloud storage.
+ * @typedef {object} ExternalAsset
+ * @property {string} id Asset ID.
+ * @property {string} description Asset description.
+ * @property {string} previewURL Thumbnail (small image) URL.
+ * @property {string} downloadURL Asset (large image) URL for download.
  * @property {string} fileName File name for download.
- * @property {string} credit Attribution HTML string, including the photographer name/link and
+ * @property {Date} [lastModified] Last modified date.
+ * @property {number} [size] File size in bytes.
+ * @property {AssetKind} kind Basic file type.
+ * @property {string} [credit] Attribution HTML string, including the photographer name/link and
  * service name/link.
  */
 
