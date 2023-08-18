@@ -23,6 +23,9 @@ dependencies:
   marked:
     specifier: ^7.0.2
     version: 7.0.2
+  mime:
+    specifier: ^3.0.0
+    version: 3.0.0
   moment:
     specifier: ^2.29.4
     version: 2.29.4
@@ -40,6 +43,9 @@ devDependencies:
   '@types/marked':
     specifier: ^5.0.1
     version: 5.0.1
+  '@types/mime':
+    specifier: ^3.0.1
+    version: 3.0.1
   cspell:
     specifier: ^7.0.0
     version: 7.0.0
@@ -895,6 +901,10 @@ packages:
 
   /@types/marked@5.0.1:
     resolution: {integrity: sha512-Y3pAUzHKh605fN6fvASsz5FDSWbZcs/65Q6xYRmnIP9ZIYz27T4IOmXfH9gWJV1dpi7f1e7z7nBGUTx/a0ptpA==}
+    dev: true
+
+  /@types/mime@3.0.1:
+    resolution: {integrity: sha512-Y4XFY5VJAuw0FgAqPNd6NNoV44jbq9Bz2L7Rh/J6jLTiHBSBJa9fxqQIvkIld4GsoDOcCbvzOUAbLPsSKKg+uA==}
     dev: true
 
   /@types/minimist@1.2.2:
@@ -3182,6 +3192,12 @@ packages:
     engines: {node: '>= 0.6'}
     dependencies:
       mime-db: 1.52.0
+    dev: false
+
+  /mime@3.0.0:
+    resolution: {integrity: sha512-jSCU7/VB1loIWBZe14aEYHU/+1UMEHoaO7qxCOVJOw9GgH72VAWppxNcjU+x9a2k3GSIBXNKxXQFqRvvZ7vr3A==}
+    engines: {node: '>=10.0.0'}
+    hasBin: true
     dev: false
 
   /min-indent@1.0.1:

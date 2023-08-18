@@ -1,3 +1,4 @@
+import { getType } from 'mime';
 import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { authorize, user } from '$lib/services/auth';
@@ -18,7 +19,8 @@ const repoURL = 'https://github.com/{repo}';
  * @param {object} [options.headers] Request headers.
  * @param {string} [options.body] Request body for POST.
  * @param {string} [options.token] OAuth token.
- * @param {('json' | 'text' | 'blob')} [options.responseType] Response type.
+ * @param {('json' | 'text' | 'blob' | 'raw')} [options.responseType] Response type. The default is
+ * `json`, while `raw` returns a `Response` object as is.
  * @returns {Promise<(object | string | Blob)>} Response data.
  */
 const fetchAPI = async (
@@ -41,6 +43,10 @@ const fetchAPI = async (
 
   if (!response.ok) {
     throw new Error('Invalid request');
+  }
+
+  if (responseType === 'raw') {
+    return response;
   }
 
   if (responseType === 'blob') {
@@ -203,15 +209,24 @@ const fetchFiles = async () => {
 
 /**
  * Fetch an asset as a Blob via the API.
- * @param {string} url Fetch URL to retrieve the file content.
+ * @param {Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
  * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
  */
-const fetchBlob = async (url) =>
-  fetchAPI(url.replace('https://api.github.com', ''), {
+const fetchBlob = async (asset) => {
+  /** @type {Response} */
+  const response = await fetchAPI(asset.fetchURL.replace('https://api.github.com', ''), {
     headers: { Accept: 'application/vnd.github.raw' },
-    responseType: 'blob',
+    responseType: 'raw',
   });
+
+  // Handle SVG and other non-binary files
+  if (response.headers.get('Content-Type') !== 'application/octet-stream') {
+    return new Blob([await response.text()], { type: getType(asset.path) });
+  }
+
+  return response.blob();
+};
 
 /**
  * Get the latest commit’s SHA-1 hash.

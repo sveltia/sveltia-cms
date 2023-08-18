@@ -173,7 +173,7 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
   }
 
   if (!asset.url && (asset.file || asset.fetchURL) && !pathOnly) {
-    const url = URL.createObjectURL(asset.file || (await get(backend).fetchBlob(asset.fetchURL)));
+    const url = URL.createObjectURL(asset.file || (await get(backend).fetchBlob(asset)));
 
     // Cache the URL
     allAssets.update((assets) => [
