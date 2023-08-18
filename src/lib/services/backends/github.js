@@ -8,28 +8,47 @@ import { getBase64 } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
 
 const label = 'GitHub';
-const url = 'https://github.com/{repo}';
+const repoURL = 'https://github.com/{repo}';
 
 /**
  * Send a request to GitHub REST/GraphQL API.
  * @param {string} path Endpoint.
- * @param {object} [options] Request options.
+ * @param {object} [options] Options.
  * @param {string} [options.method] Request method.
+ * @param {object} [options.headers] Request headers.
  * @param {string} [options.body] Request body for POST.
  * @param {string} [options.token] OAuth token.
- * @returns {Promise<object>} Response data.
+ * @param {('json' | 'text' | 'blob')} [options.responseType] Response type.
+ * @returns {Promise<(object | string | Blob)>} Response data.
  */
-const fetchAPI = async (path, { method = 'GET', body = null, token = get(user).token } = {}) => {
+const fetchAPI = async (
+  path,
+  {
+    method = 'GET',
+    headers = {},
+    body = null,
+    token = get(user).token,
+    responseType = 'json',
+  } = {},
+) => {
   const { api_root: apiRoot = 'https://api.github.com' } = get(siteConfig).backend;
 
   const response = await fetch(`${apiRoot}${path}`, {
     method,
-    headers: { Authorization: `token ${token}` },
+    headers: { Authorization: `token ${token}`, ...headers },
     body,
   });
 
   if (!response.ok) {
     throw new Error('Invalid request');
+  }
+
+  if (responseType === 'blob') {
+    return response.blob();
+  }
+
+  if (responseType === 'text') {
+    return response.text();
   }
 
   return response.json();
@@ -170,9 +189,10 @@ const fetchFiles = async () => {
     parseAssetFiles(
       assetFiles.map((/** @type {object} */ asset, index) => ({
         ...asset,
-        // @todo This doesn’t work with private repos; need a workaround
-        // @see https://stackoverflow.com/q/18126559
-        url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${asset.path}`,
+        /** Blob URL to be set later via {@link fetchBlob} */
+        url: null,
+        /** starting with `https://api.github.com`, to be used by {@link fetchBlob} */
+        fetchURL: asset.url,
         repoFileURL: `https://github.com/${owner}/${repo}/blob/${branch}/${asset.path}`,
         name: asset.path.split('/').pop(),
         meta: { ...(asset.meta || {}), ...getMeta(entryFiles.length + index) },
@@ -180,6 +200,18 @@ const fetchFiles = async () => {
     ),
   );
 };
+
+/**
+ * Fetch an asset as a Blob via the API.
+ * @param {string} url Fetch URL to retrieve the file content.
+ * @returns {Promise<Blob>} Blob data.
+ * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
+ */
+const fetchBlob = async (url) =>
+  fetchAPI(url.replace('https://api.github.com', ''), {
+    headers: { Accept: 'application/vnd.github.raw' },
+    responseType: 'blob',
+  });
 
 /**
  * Get the latest commit’s SHA-1 hash.
@@ -350,10 +382,11 @@ const deleteFiles = async (items, { commitType = 'delete', collection } = {}) =>
  */
 export default {
   label,
-  url,
+  repoURL,
   signIn,
   signOut,
   fetchFiles,
+  fetchBlob,
   saveFiles,
   deleteFiles,
 };

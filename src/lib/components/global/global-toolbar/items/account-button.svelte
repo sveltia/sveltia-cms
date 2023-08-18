@@ -45,7 +45,7 @@
       label={$_('git_repository')}
       disabled={$user?.backendName === 'local'}
       on:click={() => {
-        window.open($backend.url.replace('{repo}', $siteConfig.backend.repo));
+        window.open($backend.repoURL.replace('{repo}', $siteConfig.backend.repo));
       }}
     />
     <Divider />

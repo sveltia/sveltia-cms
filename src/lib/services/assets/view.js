@@ -5,6 +5,7 @@ import {
   allAssetPaths,
   allAssets,
   assetExtensions,
+  getAssetURL,
   selectedAssetFolderPath,
   selectedAssets,
 } from '$lib/services/assets';
@@ -14,6 +15,30 @@ import { prefs } from '$lib/services/prefs';
 import LocalStorage from '$lib/services/utils/local-storage';
 
 const storageKey = 'sveltia-cms.assets-view';
+
+/**
+ * Lazily or eagerly load the asset’s URL to be used on the UI.
+ * @param {Asset} asset Asset.
+ * @param {'lazy' | 'eager'} loading How to load the media.
+ * @param {HTMLElement} element Element to observe.
+ * @returns {Promise<string>} Media source URL.
+ */
+export const getAssetViewURL = (asset, loading, element) => {
+  if (loading === 'eager') {
+    return getAssetURL(asset);
+  }
+
+  return new Promise((resolve) => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        observer.disconnect();
+        resolve(getAssetURL(asset));
+      }
+    });
+
+    observer.observe(element);
+  });
+};
 
 /**
  * Get the label for the given collection. It can be a category name if the folder is a

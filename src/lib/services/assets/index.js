@@ -1,5 +1,6 @@
 import { flatten } from 'flat';
 import { derived, get, writable } from 'svelte/store';
+import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
@@ -157,9 +158,9 @@ export const getAssetByPath = (savedPath, entry) => {
  * @param {Asset} asset Asset file, such as an image.
  * @param {object} [options] Options.
  * @param {boolean} [options.pathOnly] Whether to use the absolute path instead of the complete URL.
- * @returns {(string | undefined)} URL that can be displayed in the app UI.
+ * @returns {Promise<(string | undefined)>} URL that can be used or displayed in the app UI.
  */
-export const getAssetURL = (asset, { pathOnly = false } = {}) => {
+export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
   if (!asset) {
     return undefined;
   }
@@ -170,12 +171,21 @@ export const getAssetURL = (asset, { pathOnly = false } = {}) => {
     return asset.url;
   }
 
+  if (!asset.url && asset.fetchURL && !pathOnly) {
+    const url = URL.createObjectURL(await get(backend).fetchBlob(asset.fetchURL));
+
+    allAssets.update((assets) => [
+      ...assets.filter(({ fetchURL }) => fetchURL !== asset.fetchURL),
+      { ...asset, url },
+    ]);
+
+    return url;
+  }
+
   const { publicPath, entryRelative } =
     get(allAssetPaths).find(({ collectionName }) => collectionName === asset.collectionName) ||
     get(allAssetPaths).find(({ collectionName }) => collectionName === null);
 
-  // Can’t determine the public path for assets with a relative path; use a fallback URL
-  // @todo This doesn’t work with private repos; need a workaround
   if (entryRelative) {
     return isBlobURL ? asset.url : undefined;
   }
@@ -191,9 +201,9 @@ export const getAssetURL = (asset, { pathOnly = false } = {}) => {
  * @param {string} value Saved field value. It can be an absolute path, entry-relative path, or a
  * complete/external URL.
  * @param {Entry} entry Associated entry.
- * @returns {(string | undefined)} URL that can be displayed in the app UI.
+ * @returns {Promise<(string | undefined)>} URL that can be displayed in the app UI.
  */
-export const getMediaFieldURL = (value, entry) => {
+export const getMediaFieldURL = async (value, entry) => {
   if (!value) {
     return undefined;
   }
@@ -212,7 +222,7 @@ export const getMediaFieldURL = (value, entry) => {
  */
 export const getAssetDetails = async (asset) => {
   const { kind } = asset;
-  const url = getAssetURL(asset);
+  const url = await getAssetURL(asset);
   let dimensions;
   let duration;
 
@@ -224,6 +234,6 @@ export const getAssetDetails = async (asset) => {
     displayURL: url,
     dimensions,
     duration,
-    usedEntries: getEntriesByAssetURL(url),
+    usedEntries: await getEntriesByAssetURL(url),
   };
 };

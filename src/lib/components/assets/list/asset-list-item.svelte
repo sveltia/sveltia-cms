@@ -3,7 +3,7 @@
   import AssetCheckbox from '$lib/components/assets/list/asset-checkbox.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { getAssetURL, selectedAsset, selectedAssets } from '$lib/services/assets';
+  import { selectedAsset, selectedAssets } from '$lib/services/assets';
   import { currentView } from '$lib/services/assets/view';
 
   /**
@@ -34,10 +34,10 @@
   </TableCell>
   <TableCell class="image">
     {#if kind === 'image'}
-      <Image src={getAssetURL(asset)} checkerboard={true} />
+      <Image {asset} checkerboard={true} />
     {/if}
     {#if kind === 'video'}
-      <Video src={getAssetURL(asset)} />
+      <Video {asset} />
     {/if}
   </TableCell>
   <TableCell class="title">

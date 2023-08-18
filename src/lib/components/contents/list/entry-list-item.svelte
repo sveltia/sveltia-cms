@@ -46,11 +46,10 @@
     />
   </TableCell>
   {#if firstImageField}
-    {@const src = getMediaFieldURL(content[firstImageField?.name], entry)}
     <TableCell class="image">
-      {#if src}
+      {#await getMediaFieldURL(content[firstImageField?.name], entry) then src}
         <Image {src} cover={true} />
-      {/if}
+      {/await}
     </TableCell>
   {/if}
   <TableCell class="title">

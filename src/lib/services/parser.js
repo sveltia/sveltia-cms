@@ -396,6 +396,7 @@ export const parseAssetFiles = (assetFiles) =>
     const {
       file,
       url,
+      fetchURL,
       repoFileURL,
       path,
       name,
@@ -409,6 +410,7 @@ export const parseAssetFiles = (assetFiles) =>
     return {
       file,
       url: file && !url ? URL.createObjectURL(file) : url,
+      fetchURL,
       repoFileURL,
       path,
       name,

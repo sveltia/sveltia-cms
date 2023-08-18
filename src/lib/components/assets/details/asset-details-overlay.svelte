@@ -5,7 +5,7 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { getAssetURL, selectedAsset } from '$lib/services/assets';
+  import { selectedAsset } from '$lib/services/assets';
 </script>
 
 <div class="editor">
@@ -13,9 +13,9 @@
   <div class="row">
     <div class="preview">
       {#if $selectedAsset.kind === 'image'}
-        <Image src={getAssetURL($selectedAsset)} alt={$selectedAsset.name} checkerboard={true} />
+        <Image asset={$selectedAsset} alt={$selectedAsset.name} checkerboard={true} />
       {:else if $selectedAsset.kind === 'video'}
-        <Video src={getAssetURL($selectedAsset)} controls />
+        <Video asset={$selectedAsset} controls />
       {:else}
         <EmptyState>
           <span>{$_('no_preview_available')}</span>

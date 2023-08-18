@@ -3,7 +3,7 @@
   import { _, locale as appLocale } from 'svelte-i18n';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { getAssetDetails, getAssetURL } from '$lib/services/assets';
+  import { getAssetDetails } from '$lib/services/assets';
   import { getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
   import { formatSize } from '$lib/services/utils/files';
@@ -55,10 +55,10 @@
   {#if showPreview && canPreview}
     <div class="preview">
       {#if kind === 'image'}
-        <Image src={getAssetURL(asset)} checkerboard={true} />
+        <Image {asset} checkerboard={true} />
       {/if}
       {#if kind === 'video'}
-        <Video src={getAssetURL(asset)} />
+        <Video {asset} />
       {/if}
     </div>
   {/if}

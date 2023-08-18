@@ -69,7 +69,7 @@
     ({ asset, file, url, credit } = selectedAsset);
 
     if (asset) {
-      currentValue = getAssetURL(asset, { pathOnly: true });
+      currentValue = await getAssetURL(asset, { pathOnly: true });
     }
 
     if (file) {
@@ -99,10 +99,9 @@
 
 <div class="image-widget">
   {#if isImageWidget && currentValue}
-    {@const src = getMediaFieldURL(currentValue, $entryDraft.originalEntry)}
-    {#if src}
+    {#await getMediaFieldURL(currentValue, $entryDraft.originalEntry) then src}
       <Image {src} checkerboard={true} />
-    {/if}
+    {/await}
   {/if}
   <div>
     {#if typeof currentValue === 'string'}

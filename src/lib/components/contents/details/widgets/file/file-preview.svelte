@@ -26,12 +26,11 @@
 </script>
 
 {#if widget === 'image' && currentValue}
-  {@const src = getMediaFieldURL(currentValue, $entryDraft.originalEntry)}
-  {#if src}
+  {#await getMediaFieldURL(currentValue, $entryDraft.originalEntry) then src}
     <p>
       <Image {src} />
     </p>
-  {/if}
+  {/await}
 {:else if typeof currentValue === 'string' && currentValue.trim()}
   <p>{currentValue}</p>
 {/if}

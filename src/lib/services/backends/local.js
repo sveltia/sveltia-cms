@@ -12,7 +12,6 @@ import IndexedDB from '$lib/services/utils/indexeddb';
 import { stripSlashes } from '$lib/services/utils/strings';
 
 const label = 'Local Repository';
-const url = null;
 /**
  * @type {import('svelte/store').Writable<?FileSystemDirectoryHandle>}
  */
@@ -225,7 +224,6 @@ const deleteFiles = async (items) => {
  */
 export default {
   label,
-  url,
   signIn,
   signOut,
   fetchFiles,

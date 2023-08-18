@@ -1,15 +1,35 @@
 <script>
+  import { onMount } from 'svelte';
+  import { getAssetViewURL } from '$lib/services/assets/view';
+
   /**
    * @type {'lazy' | 'eager'}
    */
   export let loading = 'lazy';
-  export let src = '';
+  /**
+   * @type {Asset}
+   */
+  export let asset = undefined;
+  /**
+   * @type {string}
+   */
+  export let src = undefined;
   export let alt = '';
   export let checkerboard = false;
   export let cover = false;
+
+  let element;
+
+  onMount(() => {
+    if (asset && !src) {
+      (async () => {
+        src = await getAssetViewURL(asset, loading, element);
+      })();
+    }
+  });
 </script>
 
-<img class:checkerboard class:cover {loading} {src} {alt} {...$$restProps} />
+<img class:checkerboard class:cover {loading} {src} {alt} {...$$restProps} bind:this={element} />
 
 <style lang="scss">
   img {

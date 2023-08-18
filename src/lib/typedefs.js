@@ -28,10 +28,12 @@
  * Backend service.
  * @typedef {object} BackendService
  * @property {string} label Service label.
- * @property {?string} url Service URL.
+ * @property {?string} [repoURL] Repository URL. Git backend only.
  * @property {Function} signIn Function to sign in.
  * @property {Function} signOut Function to sign out.
  * @property {Function} fetchFiles Function to fetch files.
+ * @property {(url: string) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
+ * backend only.
  * @property {Function} saveFiles Function to save files.
  * @property {Function} deleteFiles Function to delete files.
  */
@@ -518,8 +520,8 @@
  * Asset item.
  * @typedef {object} Asset
  * @property {File} [file] File object. Local backend only.
- * @property {string} url Public file URL for a Git backend, blob URL for the local backend, or
- * temporary blob URL for a local file being uploaded.
+ * @property {?string} url Blob URL for the asset or temporary Blob URL for a local file being
+ * uploaded. It can be `null` if an asset on a Git backend doesn’t have the Blob URL yet.
  * @property {string} name File name.
  * @property {string} path File path.
  * @property {string} sha SHA-1 hash for the file.
@@ -532,6 +534,7 @@
  * @property {{ name: string, email: string }} [commitAuthor] Git committer’s name or email for a
  * Git backend.
  * @property {Date} [commitDate] Commit date for a Git backend.
+ * @property {string} [fetchURL] URL to fetch the file content. Git backend only.
  * @property {string} [repoFileURL] Web-accessible URL on the Git repository. Git backend only.
  */
 

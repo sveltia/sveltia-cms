@@ -183,26 +183,39 @@ export const getEntriesByCollection = (collectionName) => {
 /**
  * Get a list of entries using the given asset.
  * @param {string} url Asset URL.
- * @returns {Entry[]} Entries.
+ * @returns {Promise<Entry[]>} Entries.
  */
-export const getEntriesByAssetURL = (url) => {
+export const getEntriesByAssetURL = async (url) => {
   const path = url.replace(get(siteConfig).site_url, '');
+  const entries = get(allEntries);
 
-  return get(allEntries).filter((entry) => {
-    const { locales, collectionName, fileName } = entry;
+  const results = await Promise.all(
+    entries.map(async (entry) => {
+      const { locales, collectionName, fileName } = entry;
 
-    return Object.values(locales).some(({ content }) => {
-      const valueMap = flatten(content);
+      const _results = await Promise.all(
+        Object.values(locales).map(async ({ content }) => {
+          const valueMap = flatten(content);
 
-      return Object.entries(valueMap).some(([keyPath, value]) => {
-        const field = getFieldByKeyPath(collectionName, fileName, keyPath, valueMap);
+          const __results = await Promise.all(
+            Object.entries(valueMap).map(async ([keyPath, value]) => {
+              const field = getFieldByKeyPath(collectionName, fileName, keyPath, valueMap);
 
-        if (!field || !['image', 'file'].includes(field.widget)) {
-          return false;
-        }
+              if (!field || !['image', 'file'].includes(field.widget)) {
+                return false;
+              }
 
-        return getMediaFieldURL(value, entry) === path;
-      });
-    });
-  });
+              return (await getMediaFieldURL(value, entry)) === path;
+            }),
+          );
+
+          return __results.includes(true);
+        }),
+      );
+
+      return _results.includes(true);
+    }),
+  );
+
+  return entries.filter((_entry, index) => results[index]);
 };

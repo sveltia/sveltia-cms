@@ -6,7 +6,6 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { getAssetURL } from '$lib/services/assets';
   import { selectAssetsView } from '$lib/services/contents/editor';
 
   const dispatch = createEventDispatcher();
@@ -35,10 +34,10 @@
       {#each filteredAssets as asset (asset.path)}
         <Option value={asset.sha}>
           {#if asset.kind === 'image'}
-            <Image src={getAssetURL(asset)} checkerboard={true} />
+            <Image {asset} checkerboard={true} />
           {/if}
           {#if asset.kind === 'video'}
-            <Video src={getAssetURL(asset)} />
+            <Video {asset} />
           {/if}
           <span class="name">{asset.name}</span>
         </Option>

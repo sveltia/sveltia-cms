@@ -4,7 +4,7 @@
   import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { getAssetURL, getMediaFieldURL } from '$lib/services/assets';
+  import { getMediaFieldURL } from '$lib/services/assets';
   import { getFolderLabelByPath } from '$lib/services/assets/view';
   import { getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
@@ -36,10 +36,9 @@
                     {@const firstImageField = collection.fields?.find(
                       ({ widget }) => widget === 'image',
                     )}
-                    {@const src = getMediaFieldURL(content[firstImageField?.name], entry)}
-                    {#if src}
+                    {#await getMediaFieldURL(content[firstImageField?.name], entry) then src}
                       <Image {src} cover={true} />
-                    {/if}
+                    {/await}
                   {/if}
                 </TableCell>
                 <TableCell class="collection">
@@ -78,10 +77,10 @@
             >
               <TableCell class="image">
                 {#if kind === 'image'}
-                  <Image src={getAssetURL(asset)} checkerboard={true} cover={true} />
+                  <Image {asset} checkerboard={true} cover={true} />
                 {/if}
                 {#if kind === 'video'}
-                  <Video src={getAssetURL(asset)} cover={true} />
+                  <Video {asset} cover={true} />
                 {/if}
               </TableCell>
               <TableCell class="collection">
