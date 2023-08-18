@@ -32,7 +32,7 @@
  * @property {Function} signIn Function to sign in.
  * @property {Function} signOut Function to sign out.
  * @property {Function} fetchFiles Function to fetch files.
- * @property {(url: string) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
+ * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backend only.
  * @property {Function} saveFiles Function to save files.
  * @property {Function} deleteFiles Function to delete files.
