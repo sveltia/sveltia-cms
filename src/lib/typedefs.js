@@ -521,7 +521,7 @@
  * @typedef {object} Asset
  * @property {File} [file] File object. Local backend only.
  * @property {?string} url Blob URL for the asset or temporary Blob URL for a local file being
- * uploaded. It can be `null` if an asset on a Git backend doesn’t have the Blob URL yet.
+ * uploaded. It can be `null` if the Blob URL is not generated yet.
  * @property {string} name File name.
  * @property {string} path File path.
  * @property {string} sha SHA-1 hash for the file.
