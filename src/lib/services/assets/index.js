@@ -158,7 +158,8 @@ export const getAssetByPath = (savedPath, entry) => {
  * @param {Asset} asset Asset file, such as an image.
  * @param {object} [options] Options.
  * @param {boolean} [options.pathOnly] Whether to use the absolute path instead of the complete URL.
- * @returns {Promise<(string | undefined)>} URL that can be used or displayed in the app UI.
+ * @returns {Promise<(string | undefined)>} URL that can be used or displayed in the app UI. This is
+ * mostly a Blob URL of the asset.
  */
 export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
   if (!asset) {
@@ -171,11 +172,12 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
     return asset.url;
   }
 
-  if (!asset.url && asset.fetchURL && !pathOnly) {
-    const url = URL.createObjectURL(await get(backend).fetchBlob(asset.fetchURL));
+  if (!asset.url && (asset.file || asset.fetchURL) && !pathOnly) {
+    const url = URL.createObjectURL(asset.file || (await get(backend).fetchBlob(asset.fetchURL)));
 
+    // Cache the URL
     allAssets.update((assets) => [
-      ...assets.filter(({ fetchURL }) => fetchURL !== asset.fetchURL),
+      ...assets.filter(({ sha, path }) => !(sha === asset.sha && path === asset.path)),
       { ...asset, url },
     ]);
 

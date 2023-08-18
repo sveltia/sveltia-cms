@@ -409,7 +409,7 @@ export const parseAssetFiles = (assetFiles) =>
 
     return {
       file,
-      url: file && !url ? URL.createObjectURL(file) : url,
+      url,
       fetchURL,
       repoFileURL,
       path,

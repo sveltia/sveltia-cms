@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { getAssetViewURL } from '$lib/services/assets/view';
+  import { getAssetPreviewURL } from '$lib/services/assets/view';
 
   /**
    * @type {'lazy' | 'eager'}
@@ -21,7 +21,7 @@
   onMount(() => {
     if (asset && !src) {
       (async () => {
-        src = await getAssetViewURL(asset, loading, element);
+        src = await getAssetPreviewURL(asset, loading, element);
       })();
     }
   });

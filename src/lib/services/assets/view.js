@@ -17,13 +17,15 @@ import LocalStorage from '$lib/services/utils/local-storage';
 const storageKey = 'sveltia-cms.assets-view';
 
 /**
- * Lazily or eagerly load the asset’s URL to be used on the UI.
+ * Lazily or eagerly generate the asset’s Blob URL on demand to be used for a `<Image>` or `<Video>`
+ * component. For a Git backend, this will be done by fetching the Blob via the API.
  * @param {Asset} asset Asset.
- * @param {'lazy' | 'eager'} loading How to load the media.
- * @param {HTMLElement} element Element to observe.
- * @returns {Promise<string>} Media source URL.
+ * @param {('lazy' | 'eager')} loading How to load the media.
+ * @param {(HTMLImageElement | HTMLVideoElement)} element Element to observe the visibility using
+ * the Intersection Observer API.
+ * @returns {Promise<string>} Blob URL.
  */
-export const getAssetViewURL = (asset, loading, element) => {
+export const getAssetPreviewURL = (asset, loading, element) => {
   if (loading === 'eager') {
     return getAssetURL(asset);
   }
