@@ -77,7 +77,7 @@ const discardDirHandle = async () => {
 /**
  * Sign in with the local Git repository. There is no actual sign-in; just show the directory picker
  * to get the handle, so we can read/write files.
- * @returns {Promise<object>} User info.
+ * @returns {Promise<User>} User info.
  */
 const signIn = async () => {
   rootDirHandle.set(await getRootDirHandle());

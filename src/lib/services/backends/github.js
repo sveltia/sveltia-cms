@@ -79,7 +79,7 @@ const fetchGraphQL = async (query, variables = {}) => {
  * Sign in with GitHub REST API.
  * @param {string} [savedToken] OAuth token. Can be empty when a token is not saved in the local
  * storage. Then, open the sign-in dialog.
- * @returns {Promise<object>} User info.
+ * @returns {Promise<User>} User info.
  */
 const signIn = async (savedToken) => {
   const token = savedToken || (await authorize('github'));

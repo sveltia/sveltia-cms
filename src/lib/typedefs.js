@@ -1,16 +1,17 @@
 /* eslint-disable jsdoc/require-property */
 
 /**
- * User details. Most properties are from the GitHub API.
+ * User details. Most properties are from the GitHub API. The properties other than `backendName`
+ * are not available for the local backend.
  * @typedef {object} User
  * @property {string} backendName Backend name, e.g. `github`.
- * @property {string} token Backend OAuth token.
- * @property {string} name User display name.
- * @property {string} login User account name.
- * @property {string} email User email.
- * @property {string} avatar_url Avatar URL.
- * @property {string} html_url Profile URL.
- * @property {object} detail Account detail.
+ * @property {string} [token] Backend OAuth token.
+ * @property {string} [name] User display name.
+ * @property {string} [login] User account name.
+ * @property {string} [email] User email.
+ * @property {string} [avatar_url] Avatar URL.
+ * @property {string} [html_url] Profile URL.
+ * @property {object} [detail] Account detail.
  */
 
 /**
@@ -29,13 +30,15 @@
  * @typedef {object} BackendService
  * @property {string} label Service label.
  * @property {?string} [repoURL] Repository URL. Git backend only.
- * @property {Function} signIn Function to sign in.
- * @property {Function} signOut Function to sign out.
- * @property {Function} fetchFiles Function to fetch files.
+ * @property {(token: string) => Promise<User>} signIn Function to sign in.
+ * @property {() => Promise<void>} signOut Function to sign out.
+ * @property {() => Promise<void>} fetchFiles Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backend only.
- * @property {Function} saveFiles Function to save files.
- * @property {Function} deleteFiles Function to delete files.
+ * @property {(items: SavingFile[], options: object) => Promise<void>} saveFiles Function to save
+ * files.
+ * @property {(items: DeletingFile[], options: object) => Promise<void>} deleteFiles Function to
+ * delete files.
  */
 
 /**
@@ -51,9 +54,11 @@
  * @property {string} [developerURL] URL of the page that provides the API/developer service.
  * @property {string} [apiKeyURL] URL of the page that provides an API key.
  * @property {RegExp} [apiKeyPattern] API key pattern.
- * @property {Function} [init] Function to initialize the service.
- * @property {Function} [signIn] Function to sign in to the service.
- * @property {Function} search Function to search files.
+ * @property {() => Promise<boolean>} [init] Function to initialize the service.
+ * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
+ * to the service.
+ * @property {(query: string, options: object) => Promise<ExternalAsset[]>} search Function to
+ * search files.
  */
 
 /**
@@ -66,7 +71,8 @@
  * @property {RegExp} apiKeyPattern API key pattern.
  * @property {string[]} sourceLanguages Supported source languages.
  * @property {string[]} targetLanguages Supported target languages.
- * @property {Function} translate Function to translate strings.
+ * @property {(texts: string[], options: object) => Promise<string[]>} translate Function to
+ * translate strings.
  */
 
 /**

@@ -43,8 +43,8 @@
 
   /**
    * Update the value for the list.
-   * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
-   * list itself. The typical usage is `list.splice()`.
+   * @param {(list: any[]) => void} manipulate A function to manipulate the list, which takes one
+   * argument of the list itself. The typical usage is `list.splice()`.
    */
   const updateList = (manipulate) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {

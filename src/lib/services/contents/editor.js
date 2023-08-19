@@ -167,9 +167,9 @@ const createNewContent = (fields, defaultValues = {}) => {
  * locale/Proxy map.
  * @param {string} args.locale Source locale.
  * @param {object} [args.target] Target object.
- * @param {Function} [args.getValueMap] Optional function to get an object holding the current entry
- * values. It will be used for the `valueMap` argument of {@link getFieldByKeyPath}. If omitted, the
- * proxy target will be used instead.
+ * @param {() => FlattenedEntryContent} [args.getValueMap] Optional function to get an object
+ * holding the current entry values. It will be used for the `valueMap` argument of
+ * {@link getFieldByKeyPath}. If omitted, the proxy target will be used instead.
  * @returns {Proxy<object>} Created proxy.
  */
 const createProxy = ({
@@ -272,8 +272,8 @@ export const createDraft = (collectionName, entry, defaultValues) => {
  * Update the value in a list field.
  * @param {LocaleCode} locale Target locale.
  * @param {string} keyPath Dot-connected field name.
- * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
- * list itself. The typical usage is `list.splice()`.
+ * @param {(list: any[]) => void} manipulate A function to manipulate the list, which takes one
+ * argument of the list itself. The typical usage is `list.splice()`.
  */
 export const updateListField = (locale, keyPath, manipulate) => {
   const unflattenObj = unflatten(get(entryDraft).currentValues[locale]);

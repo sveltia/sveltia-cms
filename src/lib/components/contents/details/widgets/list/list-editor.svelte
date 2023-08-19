@@ -116,8 +116,8 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   * @param {Function} manipulate A function to manipulate the list, which takes one argument of the
-   * list itself. The typical usage is `list.splice()`.
+   * @param {(list: any[]) => void} manipulate A function to manipulate the list, which takes one
+   * argument of the list itself. The typical usage is `list.splice()`.
    */
   const updateComplexList = (manipulate) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
