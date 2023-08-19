@@ -38,6 +38,10 @@
     object-fit: contain;
     background-color: var(--sui-tertiary-background-color);
 
+    &:not([src]) {
+      visibility: hidden;
+    }
+
     &.cover {
       object-fit: cover;
     }

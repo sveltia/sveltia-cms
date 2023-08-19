@@ -36,6 +36,10 @@
     height: 100%;
     object-fit: contain;
 
+    &:not([src]) {
+      visibility: hidden;
+    }
+
     &.cover {
       object-fit: cover;
     }
