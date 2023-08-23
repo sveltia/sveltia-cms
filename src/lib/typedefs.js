@@ -228,10 +228,10 @@
  * @typedef {object} DateTimeFieldProps
  * @property {string} [default] Default value.
  * @property {string} [format] Moment.js format to save the value.
- * @property {boolean | string} [date_format] Moment.js format to show the value, `true` to use the
- * default locale format, `false` to hide the input.
- * @property {boolean | string} [time_format] Moment.js format to show the value, `true` to use the
- * default locale format, `false` to hide the input.
+ * @property {boolean | string} [date_format] Moment.js format (string) to display the date in the
+ * UI, `true` to use the default locale format, or `false` to disable the date input.
+ * @property {boolean | string} [time_format] Moment.js format (string) to display the time in the
+ * UI, `true` to use the default locale format, or `false` to disable the time input.
  * @property {boolean} [picker_utc] Whether to show the value in UTC.
  * @see https://decapcms.org/docs/widgets/#datetime
  */
