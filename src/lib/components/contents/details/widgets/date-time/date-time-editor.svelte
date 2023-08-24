@@ -40,55 +40,57 @@
   /**
    * @type {string}
    */
-  let initialValue = undefined;
-  /**
-   * @type {string}
-   */
   let inputValue = undefined;
 
   /**
-   * Set the current value given the input value.
+   * Get the current value given the input value.
+   * @returns {(string | undefined)} New value.
    */
-  const setCurrentValue = () => {
+  const getCurrentValue = () => {
+    if (!inputValue) {
+      return undefined;
+    }
+
     if (timeOnly) {
-      currentValue = inputValue;
-    } else {
-      try {
-        currentValue = format
-          ? (pickerUTC ? moment.utc(inputValue) : moment(inputValue)).format(format)
-          : new Date(inputValue).toISOString();
-      } catch {
-        currentValue = undefined;
+      return inputValue;
+    }
+
+    try {
+      if (format) {
+        if (pickerUTC) {
+          return moment.utc(inputValue).format(format);
+        }
+
+        return moment(inputValue).format(format);
       }
+
+      return new Date(inputValue).toISOString();
+    } catch {
+      return undefined;
     }
   };
 
   onMount(() => {
     if (required || currentValue) {
       if (timeOnly) {
-        initialValue = currentValue || '';
+        inputValue = currentValue || '';
       } else {
         const { year, month, day, hour, minute } = getDateTimeParts({
           date: currentValue ? moment(currentValue, format).toDate() : new Date(),
           timeZone: pickerUTC ? 'UTC' : undefined,
         });
 
-        initialValue = dateOnly
+        inputValue = dateOnly
           ? `${year}-${month}-${day}`
           : `${year}-${month}-${day}T${hour}:${minute}`;
-      }
-
-      inputValue = initialValue;
-
-      if (!currentValue) {
-        setCurrentValue();
       }
     }
   });
 
   $: {
-    if (inputValue !== undefined && inputValue !== initialValue) {
-      setCurrentValue();
+    if (inputValue !== undefined) {
+      // @ts-ignore Arguments are triggers
+      currentValue = getCurrentValue(inputValue);
     }
   }
 </script>
