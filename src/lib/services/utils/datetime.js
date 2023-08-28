@@ -19,7 +19,7 @@ export const getDateTimeParts = ({ date = new Date(), timeZone = undefined } = {
   };
 
   return Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', /** @type {any} */ ({ ...options, timeZone }))
+    new Intl.DateTimeFormat('en-US', /** @type {any} */ ({ ...options, hour12: false, timeZone }))
       .formatToParts(date)
       .filter(({ type }) => type in options)
       .map(({ type, value }) => [type, value]),
