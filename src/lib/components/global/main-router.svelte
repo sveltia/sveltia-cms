@@ -21,7 +21,7 @@
   };
 
   /**
-   * Select one of the pages given the URL pash.
+   * Select one of the pages given the URL path.
    * @todo Show Not Found page.
    */
   export const selectPage = () => {
