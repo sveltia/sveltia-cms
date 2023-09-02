@@ -334,7 +334,7 @@ export const parseEntryFiles = (entryFiles) => {
     const entry = { sha, collectionName, fileName, ...meta };
 
     if (!hasLocales) {
-      entry.slug = getSlug(collectionName, filePath, parsedFile);
+      entry.slug = fileName || getSlug(collectionName, filePath, parsedFile);
       entry.locales = { default: { content: parsedFile, path, sha } };
     }
 
@@ -364,7 +364,7 @@ export const parseEntryFiles = (entryFiles) => {
       }
 
       if (_filePath && locale) {
-        const slug = getSlug(collectionName, _filePath, parsedFile);
+        const slug = fileName || getSlug(collectionName, _filePath, parsedFile);
         const index = entries.findIndex((_entry) => _entry.slug === slug);
 
         if (index > -1) {
@@ -379,7 +379,7 @@ export const parseEntryFiles = (entryFiles) => {
       }
     }
 
-    entry.id = `${collectionName}/${fileName}/${entry.slug}`;
+    entry.id = `${collectionName}/${entry.slug}`;
     entries.push(entry);
   });
 
