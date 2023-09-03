@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS partially compatible with [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator, such as SvelteKit, Eleventy, Next.js and Hugo, to manage the content as static files on a Git repository. The open source Netlify/Decap CMS alternative is now in public beta, with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta, with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.webp)<br>
 
@@ -26,7 +26,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating one single line of code.
 - Existing [configuration files](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Various features are still missing though; [see the chart below](#compatibility) for details.
+- Various features are still missing though; [see the compatibility chart below](#compatibility) for details.
 
 ### Better UX
 
