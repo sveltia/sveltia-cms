@@ -53,8 +53,7 @@
           $showTranslatorApiKeyDialog = false;
 
           if ($pendingTranslatorRequest) {
-            // @ts-ignore
-            copyFromLocale.apply(...$pendingTranslatorRequest);
+            copyFromLocale(...$pendingTranslatorRequest);
             $pendingTranslatorRequest = null;
           }
         }
