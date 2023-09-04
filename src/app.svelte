@@ -1,6 +1,5 @@
 <script>
   import { AppShell } from '@sveltia/ui';
-  import { marked } from 'marked';
   import { isLoading } from 'svelte-i18n';
   // @ts-ignore
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
@@ -11,10 +10,6 @@
   import { initAppLocale } from '$lib/services/i18n';
 
   initAppLocale();
-
-  // Disable deprecation warnings in Marked 5.0.0+
-  // https://github.com/markedjs/marked/releases/tag/v5.0.1
-  marked.use({ mangle: false, headerIds: false });
 </script>
 
 <svelte:head>
