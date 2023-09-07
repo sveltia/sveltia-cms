@@ -27,14 +27,15 @@
   let showErrorDialog = false;
   let saving = false;
 
-  $: ({ collection, collectionFile, isNew, slug, currentValues, originalValues } = $entryDraft || {
-    collection: undefined,
-    collectionFile: undefined,
-    isNew: undefined,
-    slug: undefined,
-    currentValues: undefined,
-    originalValues: undefined,
-  });
+  $: ({ collection, collectionFile, isNew, originalEntry, currentValues, originalValues } =
+    $entryDraft || {
+      collection: undefined,
+      collectionFile: undefined,
+      isNew: undefined,
+      originalEntry: undefined,
+      currentValues: undefined,
+      originalValues: undefined,
+    });
 
   $: collectionLabel = collection.label || collection.name;
   $: collectionLabelSingular = collection.label_singular || collectionLabel;
@@ -110,7 +111,7 @@
       />
       -->
       <MenuItem
-        disabled={collection.delete === false || isNew}
+        disabled={collection.delete === false || isNew || !!collectionFile}
         label={$_('delete')}
         on:click={() => {
           showDeleteDialog = true;
@@ -146,7 +147,7 @@
   title={$_('delete_entry')}
   okLabel={$_('delete')}
   on:ok={async () => {
-    await deleteEntries([slug]);
+    await deleteEntries([originalEntry?.slug]);
     goBack(`/collections/${collection.name}`);
   }}
 >
