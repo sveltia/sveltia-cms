@@ -41,21 +41,26 @@
       return; // Not Found
     }
 
-    if ($selectedCollection.files) {
+    const {
+      name: collectionName,
+      files,
+      _i18n: { hasLocales, locales },
+    } = $selectedCollection;
+
+    if (files) {
       // File collection
       if (_state === 'entries' && _id) {
-        const selectedEntry = getFile($selectedCollection.name, _id);
-        const collectionFile = $selectedCollection.files.find((f) => f.name === _id);
+        const selectedEntry = getFile(collectionName, _id);
+        const collectionFile = files.find((f) => f.name === _id);
 
         if (selectedEntry) {
-          createDraft($selectedCollection.name, selectedEntry);
+          createDraft(selectedEntry);
         } else if (collectionFile) {
           // File is not yet created
-          const { hasLocales, locales } = $selectedCollection._i18n;
-
-          // @ts-ignore
-          createDraft($selectedCollection.name, {
+          createDraft({
+            collectionName,
             fileName: collectionFile.name,
+            slug: collectionFile.name,
             locales: Object.fromEntries(
               (hasLocales ? locales : ['default']).map((_locale) => [_locale, {}]),
             ),
@@ -65,14 +70,14 @@
     } else {
       // Folder collection
       if (_state === 'new' && !_id && $selectedCollection.create) {
-        createDraft($selectedCollection.name, undefined, params);
+        createDraft({ collectionName }, params);
       }
 
       if (_state === 'entries' && _id) {
         const selectedEntry = $listedEntries.find(({ slug }) => slug === _id);
 
         if (selectedEntry) {
-          createDraft($selectedCollection.name, selectedEntry);
+          createDraft(selectedEntry);
         }
       }
     }

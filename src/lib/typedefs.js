@@ -423,7 +423,6 @@
  * locale code. When i18n is not enabled with the site configuration, there will be one single
  * property named `default`.
  * @property {string} collectionName Collection name.
- * @property {boolean} [isNew] `true` if it’s a new entry draft.
  * @property {string} [fileName] File name for a file collection.
  * @property {{ name: string, email: string }} [commitAuthor] Git committer’s name or email for a
  * Git backend.
@@ -467,7 +466,7 @@
 /**
  * Entry draft.
  * @typedef {object} EntryDraft
- * @property {boolean} [isNew] `true` if it’s a new entry draft.
+ * @property {boolean} [isNew] `true` if it’s a new folder collection entry draft.
  * @property {string} [slug] Entry slug. Empty if it’s new.
  * @property {string} collectionName Collection name.
  * @property {Collection} collection Collection details.

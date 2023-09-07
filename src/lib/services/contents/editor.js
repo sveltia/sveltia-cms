@@ -208,16 +208,16 @@ const createProxy = ({
 
 /**
  * Create an entry draft.
- * @param {string} collectionName Collection name.
- * @param {Entry} [entry] Entry to be edited or `undefined` for a new entry.
+ * @param {Entry | object} entry Entry to be edited, or a partial `Entry` object containing at least
+ * the collection name for a new entry.
  * @param {{ [key: string]: string }} [defaultValues] Dynamic default values for a new entry passed
  * through URL parameters.
  */
-export const createDraft = (collectionName, entry, defaultValues) => {
+export const createDraft = (entry, defaultValues) => {
+  const { id, collectionName, fileName, locales } = entry;
+  const isNew = id === undefined;
   const collection = getCollection(collectionName);
   const { hasLocales, locales: collectionLocales } = collection._i18n;
-  const isNew = !entry;
-  const { fileName, locales } = entry || {};
 
   const collectionFile = fileName
     ? collection.files?.find(({ name }) => name === fileName)
@@ -228,12 +228,12 @@ export const createDraft = (collectionName, entry, defaultValues) => {
   const allLocales = hasLocales ? collectionLocales : ['default'];
 
   entryDraft.set({
-    isNew,
+    isNew: isNew && !fileName,
     collectionName,
     collection,
     fileName,
     collectionFile,
-    originalEntry: entry,
+    originalEntry: isNew ? undefined : entry,
     originalValues: Object.fromEntries(
       allLocales.map((locale) => [locale, flatten(locales?.[locale]?.content || newContent)]),
     ),
@@ -580,7 +580,9 @@ export const saveEntry = async () => {
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
 
   const slug =
-    originalEntry?.slug || fillSlugTemplate(collection.slug || '{{title}}', fillSlugOptions);
+    fileName ||
+    originalEntry?.slug ||
+    fillSlugTemplate(collection.slug || '{{title}}', fillSlugOptions);
 
   const { internalAssetFolder, publicAssetFolder } = getAssetFolder(collection, {
     ...fillSlugOptions,
