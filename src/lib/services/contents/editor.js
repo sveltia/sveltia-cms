@@ -706,6 +706,15 @@ export const saveEntry = async () => {
     locales: savingEntryLocales,
   };
 
+  const {
+    extension,
+    format,
+    frontmatter_delimiter: frontmatterDelimiter,
+    yaml_quote: yamlQuote,
+  } = collection;
+
+  const config = { extension, format, frontmatterDelimiter, yamlQuote };
+
   if (collectionFile || !hasLocales || structure === 'single_file') {
     const { path, content } = savingEntryLocales[defaultLocale];
 
@@ -719,9 +728,7 @@ export const saveEntry = async () => {
             )
           : content,
         path,
-        config: collectionFile
-          ? { extension: (collectionFile?.file.match(/\.([a-zA-Z0-9]+)$/) || [])[1] }
-          : collection,
+        config,
       }),
     });
   } else {
@@ -734,7 +741,7 @@ export const saveEntry = async () => {
         data: formatEntryFile({
           content,
           path,
-          config: collection,
+          config,
         }),
       });
     });

@@ -159,6 +159,8 @@
  * @property {string} [format] File format.
  * @property {string} [extension] File extension.
  * @property {string | string[]} [frontmatter_delimiter] Delimiters used for the Frontmatter format.
+ * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
+ * format is used for file output. Default: `false`.
  * @property {string} [slug] Item slug template for a folder/entry collection.
  * @property {string} [summary] Item summary template for a folder/entry collection.
  * @property {string[]} [sortable_fields] Custom sorting fields.

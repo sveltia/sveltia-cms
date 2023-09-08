@@ -83,7 +83,7 @@ export const getFileExtension = ({ format, extension }) => {
 /**
  * Get the Frontmatter format’s delimiters.
  * @param {string} format File format.
- * @param {string} [delimiter] Configured delimiter.
+ * @param {string | string[]} [delimiter] Configured delimiter.
  * @returns {string[]} Start and end delimiters.
  */
 const getFrontmatterDelimiters = (format, delimiter) => {
@@ -115,7 +115,7 @@ const getFrontmatterDelimiters = (format, delimiter) => {
  * @param {string} [entry.config.file] File path for a file collection item.
  * @param {string} [entry.config.extension] Configured file extension.
  * @param {string} [entry.config.format] Configured file format.
- * @param {string} [entry.config.frontmatterDelimiter] Configured Frontmatter delimiter.
+ * @param {string | string[]} [entry.config.frontmatterDelimiter] Configured Frontmatter delimiter.
  * @returns {object} Parsed content.
  */
 const parseEntryFile = ({
@@ -197,13 +197,14 @@ const parseEntryFile = ({
  * @param {object} entry.config File’s collection configuration.
  * @param {string} [entry.config.extension] Configured file extension.
  * @param {string} [entry.config.format] Configured file format.
- * @param {string} [entry.config.frontmatterDelimiter] Configured Frontmatter delimiter.
+ * @param {string | string[]} [entry.config.frontmatterDelimiter] Configured Frontmatter delimiter.
+ * @param {boolean} [entry.config.yamlQuote] Configured YAML string value quotation.
  * @returns {string} Formatted string.
  */
 export const formatEntryFile = ({
   content,
   path,
-  config: { extension, format, frontmatterDelimiter },
+  config: { extension, format, frontmatterDelimiter, yamlQuote = false },
 }) => {
   content = JSON.parse(JSON.stringify(content));
 
@@ -212,7 +213,13 @@ export const formatEntryFile = ({
       ? 'yaml-frontmatter'
       : extension || path.match(/\.([^.]+)$/)[1];
 
-  const formatYAML = () => YAML.stringify(content, null, { lineWidth: 0 }).trim();
+  const formatYAML = () =>
+    YAML.stringify(content, null, {
+      lineWidth: 0,
+      defaultKeyType: 'PLAIN',
+      defaultStringType: yamlQuote ? 'QUOTE_DOUBLE' : 'PLAIN',
+    }).trim();
+
   const formatTOML = () => TOML.stringify(content, { newline: '\n' }).trim();
   const formatJSON = () => JSON.stringify(content, null, 2).trim();
 

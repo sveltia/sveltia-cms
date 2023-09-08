@@ -12,7 +12,7 @@ export const entriesLoaded = writable(false);
 /**
  * @type {import('svelte/store').Writable<{ collectionName: string, fileName?: string,
  * file?: string, folder?: string, extension: string, format: string,
- * frontmatterDelimiter: string | string[] }[]>}
+ * frontmatterDelimiter: string | string[], yamlQuote: boolean }[]>}
  */
 export const allContentPaths = writable([]);
 

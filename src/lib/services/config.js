@@ -128,12 +128,14 @@ siteConfig.subscribe((config) => {
           extension,
           format,
           frontmatter_delimiter: frontmatterDelimiter,
+          yaml_quote: yamlQuote,
         }) => ({
           collectionName,
           folder,
           extension,
           format,
           frontmatterDelimiter,
+          yamlQuote,
         }),
       ),
     ...collections
@@ -145,6 +147,7 @@ siteConfig.subscribe((config) => {
           extension,
           format,
           frontmatter_delimiter: frontmatterDelimiter,
+          yaml_quote: yamlQuote,
         }) =>
           files.map(({ name: fileName, file }) => ({
             collectionName,
@@ -153,6 +156,7 @@ siteConfig.subscribe((config) => {
             extension,
             format,
             frontmatterDelimiter,
+            yamlQuote,
           })),
       )
       .flat(1),
