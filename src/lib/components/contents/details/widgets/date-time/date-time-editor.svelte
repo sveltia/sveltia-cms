@@ -6,29 +6,37 @@
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
-  import { entryDraft } from '$lib/services/contents/editor';
-  import { getCurrentValue, getInputValue } from './helpers';
+  import {
+    getCurrentValue,
+    getInputValue,
+  } from '$lib/components/contents/details/widgets/date-time/helper';
 
+  // svelte-ignore unused-export-let
   export let locale = '';
+
   // svelte-ignore unused-export-let
   export let keyPath = '';
+
   /**
    * @type {DateTimeField}
    */
   export let fieldConfig = undefined;
+
   /**
    * @type {string}
    */
   export let currentValue = undefined;
 
+  /**
+   * @type {boolean}
+   */
+  export let disabled = false;
+
   $: ({
-    i18n,
     // Widget-specific options
     date_format: dateFormat,
     time_format: timeFormat,
   } = fieldConfig);
-  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
-  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
   $: dateOnly = timeFormat === false;
   $: timeOnly = dateFormat === false;
 

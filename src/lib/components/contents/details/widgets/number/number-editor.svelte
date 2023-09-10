@@ -5,30 +5,35 @@
 -->
 <script>
   import { NumberInput } from '@sveltia/ui';
-  import { entryDraft } from '$lib/services/contents/editor';
 
+  // svelte-ignore unused-export-let
   export let locale = '';
+
   // svelte-ignore unused-export-let
   export let keyPath = '';
+
   /**
    * @type {NumberField}
    */
   export let fieldConfig = undefined;
+
   /**
    * @type {string | number}
    */
   export let currentValue = undefined;
 
+  /**
+   * @type {boolean}
+   */
+  export let disabled = false;
+
   $: ({
-    i18n,
     // Widget-specific options
     value_type: valueType = 'int',
     min,
     max,
     step = 1,
   } = fieldConfig);
-  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
-  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 
   /**
    * @type {string}
@@ -63,9 +68,9 @@
     }
   };
 
-  // @ts-ignore
+  // @ts-ignore Arguments are triggers
   $: onCurrentValueChange(currentValue);
-  // @ts-ignore
+  // @ts-ignore Arguments are triggers
   $: onInputValueChange(inputValue);
 </script>
 

@@ -15,15 +15,23 @@
   import { formatSize, getDataURL } from '$lib/services/utils/files';
 
   export let locale = '';
+
   export let keyPath = '';
+
   /**
    * @type {FileField}
    */
   export let fieldConfig = undefined;
+
   /**
    * @type {string}
    */
   export let currentValue = undefined;
+
+  /**
+   * @type {boolean}
+   */
+  export let disabled = false;
 
   /**
    * @type {Asset}
@@ -48,7 +56,6 @@
 
   $: ({
     widget,
-    i18n,
     // Widget-specific options
     media_library: {
       // allow_multiple: allowMultiple = true,
@@ -57,8 +64,6 @@
       choose_url: canEnterURL = true,
     } = {},
   } = fieldConfig);
-  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
-  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
   $: isImageWidget = widget === 'image';
 
   /**

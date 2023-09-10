@@ -10,15 +10,23 @@
   import { getEntriesByCollection, getFile } from '$lib/services/contents';
 
   export let locale = '';
+
   export let keyPath = '';
+
   /**
    * @type {RelationField}
    */
   export let fieldConfig = undefined;
+
   /**
    * @type {string}
    */
   export let currentValue = undefined;
+
+  /**
+   * @type {boolean}
+   */
+  export let disabled = false;
 
   $: ({
     // Widget-specific options
@@ -33,4 +41,10 @@
   $: options = getOptions(locale, fieldConfig, refEntries);
 </script>
 
-<SelectEditor {locale} {keyPath} fieldConfig={{ ...fieldConfig, options }} bind:currentValue />
+<SelectEditor
+  {locale}
+  {keyPath}
+  fieldConfig={{ ...fieldConfig, options }}
+  bind:currentValue
+  {disabled}
+/>

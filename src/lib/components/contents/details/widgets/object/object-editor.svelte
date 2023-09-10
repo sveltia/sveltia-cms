@@ -12,16 +12,25 @@
   import { generateUUID } from '$lib/services/utils/strings';
 
   export let locale = '';
+
   export let keyPath = '';
+
   /**
    * @type {ObjectField}
    */
   export let fieldConfig = undefined;
-  // svelte-ignore unused-export-let
+
   /**
    * @type {object}
    */
+  // svelte-ignore unused-export-let
   export let currentValue = undefined;
+
+  /**
+   * @type {boolean}
+   */
+  // svelte-ignore unused-export-let
+  export let disabled = false;
 
   $: ({
     // Widget-specific options

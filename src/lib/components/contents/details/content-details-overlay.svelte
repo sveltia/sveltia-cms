@@ -47,7 +47,7 @@
     }
   };
 
-  // @ts-ignore
+  // @ts-ignore Arguments are triggers
   $: switchPanes(showPreview, canPreview);
 
   /**

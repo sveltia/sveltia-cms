@@ -15,15 +15,23 @@
   import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
   export let locale = '';
+
   export let keyPath = '';
+
   /**
    * @type {ListField}
    */
   export let fieldConfig = undefined;
+
   /**
    * @type {string[]}
    */
   export let currentValue = undefined;
+
+  /**
+   * @type {boolean}
+   */
+  export let disabled = false;
 
   $: ({
     name: fieldName,
@@ -44,8 +52,6 @@
     types,
     typeKey = 'type',
   } = fieldConfig);
-  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
-  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
   $: hasSubFields = !!(field || fields || types);
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
 

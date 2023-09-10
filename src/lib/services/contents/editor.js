@@ -600,17 +600,13 @@ export const saveEntry = async () => {
   } = draft;
 
   const {
-    slug: slugTemplate,
     identifier_field: identifierField = 'title',
+    slug: slugTemplate = `{{${identifierField}}}`,
     _i18n: { structure, hasLocales, locales, defaultLocale = 'default' },
   } = collection;
 
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
-
-  const slug =
-    fileName ||
-    originalEntry?.slug ||
-    fillSlugTemplate(slugTemplate || `{{${identifierField}}}`, fillSlugOptions);
+  const slug = fileName || originalEntry?.slug || fillSlugTemplate(slugTemplate, fillSlugOptions);
 
   const { internalAssetFolder, publicAssetFolder } = getAssetFolder(collection, {
     ...fillSlugOptions,

@@ -7,28 +7,33 @@
 <script>
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { entryDraft } from '$lib/services/contents/editor';
 
+  // svelte-ignore unused-export-let
   export let locale = '';
+
   // svelte-ignore unused-export-let
   export let keyPath = '';
+
   /**
    * @type {ColorField}
    */
   export let fieldConfig = undefined;
+
   /**
    * @type {string}
    */
   export let currentValue = undefined;
 
+  /**
+   * @type {boolean}
+   */
+  export let disabled = false;
+
   $: ({
-    i18n,
     // Widget-specific options
     allowInput = false,
     // enableAlpha = false,
   } = fieldConfig);
-  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
-  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 </script>
 
 <div>

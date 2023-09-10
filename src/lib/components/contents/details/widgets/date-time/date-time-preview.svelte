@@ -5,7 +5,7 @@
   @see https://decapcms.org/docs/widgets/#date
 -->
 <script>
-  import { getDate } from './helpers';
+  import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
 
   export let locale = '';
   // svelte-ignore unused-export-let

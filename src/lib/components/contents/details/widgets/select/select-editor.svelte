@@ -10,15 +10,23 @@
   import { isObject } from '$lib/services/utils/misc';
 
   export let locale = '';
+
   export let keyPath = '';
+
   /**
    * @type {SelectField}
    */
   export let fieldConfig = undefined;
+
   /**
    * @type {any} // string | string[]
    */
   export let currentValue = undefined;
+
+  /**
+   * @type {boolean}
+   */
+  export let disabled = false;
 
   $: ({
     i18n,
@@ -28,8 +36,6 @@
     // min,
     max,
   } = fieldConfig);
-  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
-  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
 
   /**
    * @type {{ label: string, value: string }[]}

@@ -59,6 +59,7 @@
   $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
   $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
   $: canDuplicate = hasLocales && i18n === 'duplicate';
+  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
   $: isList = widget === 'list' || ((widget === 'relation' || widget === 'select') && multiple);
 
@@ -159,7 +160,14 @@
       {#if !(widget in widgets)}
         <div>{$_('unsupported_widget_x', { values: { name: widget } })}</div>
       {:else if isList}
-        <svelte:component this={widgets[widget]} {keyPath} {locale} {fieldConfig} {currentValue} />
+        <svelte:component
+          this={widgets[widget]}
+          {keyPath}
+          {locale}
+          {fieldConfig}
+          {currentValue}
+          {disabled}
+        />
       {:else}
         <svelte:component
           this={widgets[widget]}
@@ -167,6 +175,7 @@
           {locale}
           {fieldConfig}
           bind:currentValue={$entryDraft.currentValues[locale][keyPath]}
+          {disabled}
         />
       {/if}
     </div>

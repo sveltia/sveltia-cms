@@ -6,23 +6,28 @@
 -->
 <script>
   import { TextArea } from '@sveltia/ui';
-  import { entryDraft } from '$lib/services/contents/editor';
 
+  // svelte-ignore unused-export-let
   export let locale = '';
+
   // svelte-ignore unused-export-let
   export let keyPath = '';
+
   /**
    * @type {MarkdownField}
    */
+  // svelte-ignore unused-export-let
   export let fieldConfig = undefined;
+
   /**
    * @type {string}
    */
   export let currentValue = undefined;
 
-  $: ({ i18n } = fieldConfig);
-  $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
-  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
+  /**
+   * @type {boolean}
+   */
+  export let disabled = false;
 </script>
 
 <TextArea autoResize={true} {disabled} bind:value={currentValue} />
