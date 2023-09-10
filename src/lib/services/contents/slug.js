@@ -117,15 +117,16 @@ export const fillSlugTemplate = (
       value = content[tag];
     }
 
-    // Normalize it
-    value = normalizeSlug(value);
-
-    if (!value && tag === 'slug') {
-      // Use a random ID as a fallback
-      return generateUUID().split('-').pop();
+    if (value) {
+      value = normalizeSlug(value);
     }
 
-    return value;
+    if (value) {
+      return value;
+    }
+
+    // Use a random ID as a fallback
+    return generateUUID().split('-').pop();
   });
 
   // We don’t have to rename it when creating a path with a slug given

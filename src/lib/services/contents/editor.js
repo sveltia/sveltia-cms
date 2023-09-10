@@ -599,13 +599,18 @@ export const saveEntry = async () => {
     files,
   } = draft;
 
-  const { structure, hasLocales, locales, defaultLocale = 'default' } = collection._i18n;
+  const {
+    slug: slugTemplate,
+    identifier_field: identifierField = 'title',
+    _i18n: { structure, hasLocales, locales, defaultLocale = 'default' },
+  } = collection;
+
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
 
   const slug =
     fileName ||
     originalEntry?.slug ||
-    fillSlugTemplate(collection.slug || '{{title}}', fillSlugOptions);
+    fillSlugTemplate(slugTemplate || `{{${identifierField}}}`, fillSlugOptions);
 
   const { internalAssetFolder, publicAssetFolder } = getAssetFolder(collection, {
     ...fillSlugOptions,
