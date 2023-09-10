@@ -6,10 +6,8 @@
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
-  import moment from 'moment';
-  import { onMount } from 'svelte';
   import { entryDraft } from '$lib/services/contents/editor';
-  import { getDateTimeParts } from '$lib/services/utils/datetime';
+  import { getCurrentValue, getInputValue } from './helpers';
 
   export let locale = '';
   // svelte-ignore unused-export-let
@@ -24,13 +22,10 @@
   export let currentValue = undefined;
 
   $: ({
-    required = true,
     i18n,
     // Widget-specific options
-    format,
     date_format: dateFormat,
     time_format: timeFormat,
-    picker_utc: pickerUTC = false,
   } = fieldConfig);
   $: ({ defaultLocale = 'default' } = $entryDraft.collection._i18n);
   $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
@@ -43,56 +38,31 @@
   let inputValue = undefined;
 
   /**
-   * Get the current value given the input value.
-   * @returns {(string | undefined)} New value.
+   * Set the current value. Make sure to prevent a cycle dependency.
    */
-  const getCurrentValue = () => {
-    if (!inputValue) {
-      return undefined;
-    }
+  const setCurrentValue = () => {
+    const _currentValue = getCurrentValue(inputValue, fieldConfig);
 
-    if (timeOnly) {
-      return inputValue;
-    }
-
-    try {
-      if (format) {
-        if (pickerUTC) {
-          return moment.utc(inputValue).format(format);
-        }
-
-        return moment(inputValue).format(format);
-      }
-
-      return new Date(inputValue).toISOString();
-    } catch {
-      return undefined;
+    if (_currentValue !== undefined && _currentValue !== currentValue) {
+      currentValue = _currentValue;
     }
   };
 
-  onMount(() => {
-    if (required || currentValue) {
-      if (timeOnly) {
-        inputValue = currentValue || '';
-      } else {
-        const { year, month, day, hour, minute } = getDateTimeParts({
-          date: currentValue ? moment(currentValue, format).toDate() : new Date(),
-          timeZone: pickerUTC ? 'UTC' : undefined,
-        });
+  /**
+   * Set the input value. Make sure to prevent a cycle dependency.
+   */
+  const setInputValue = () => {
+    const _inputValue = getInputValue(currentValue, fieldConfig);
 
-        inputValue = dateOnly
-          ? `${year}-${month}-${day}`
-          : `${year}-${month}-${day}T${hour}:${minute}`;
-      }
+    if (_inputValue !== undefined && _inputValue !== inputValue) {
+      inputValue = _inputValue;
     }
-  });
+  };
 
-  $: {
-    if (inputValue !== undefined) {
-      // @ts-ignore Arguments are triggers
-      currentValue = getCurrentValue(inputValue);
-    }
-  }
+  // @ts-ignore Arguments are triggers
+  $: setCurrentValue(inputValue);
+  // @ts-ignore Arguments are triggers
+  $: setInputValue(currentValue);
 </script>
 
 <div>

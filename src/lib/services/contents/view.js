@@ -64,9 +64,19 @@ export const parseSummary = (collection, content) => {
 
       if (tf.startsWith('date')) {
         const [, format] = tf.match(/^date\('(.*?)'\)$/);
-        const { picker_utc: pickerUTC = false } = /** @type {DateTimeField} */ (fieldConfig);
 
-        result = (pickerUTC ? moment.utc(result) : moment(result)).format(format);
+        const { time_format: timeFormat, picker_utc: pickerUTC = false } =
+          /** @type {DateTimeField} */ (fieldConfig);
+
+        const dateOnly = timeFormat === false;
+
+        result = (
+          pickerUTC ||
+          (dateOnly && !!result?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
+          (dateOnly && !!result.match(/T00:00(?::00)?(?:\.000)?Z$/))
+            ? moment.utc(result)
+            : moment(result)
+        ).format(format);
       }
 
       if (tf.startsWith('default')) {

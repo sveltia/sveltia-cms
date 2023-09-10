@@ -22,6 +22,6 @@ export const getDateTimeParts = ({ date = new Date(), timeZone = undefined } = {
     new Intl.DateTimeFormat('en-US', /** @type {any} */ ({ ...options, hour12: false, timeZone }))
       .formatToParts(date)
       .filter(({ type }) => type in options)
-      .map(({ type, value }) => [type, value]),
+      .map(({ type, value }) => [type, type === 'hour' && value === '24' ? '00' : value]),
   );
 };

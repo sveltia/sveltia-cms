@@ -5,7 +5,7 @@
   @see https://decapcms.org/docs/widgets/#date
 -->
 <script>
-  import moment from 'moment';
+  import { getDate } from './helpers';
 
   export let locale = '';
   // svelte-ignore unused-export-let
@@ -22,7 +22,6 @@
   $: ({
     // i18n,
     // Widget-specific options
-    format,
     date_format: dateFormat,
     time_format: timeFormat,
     picker_utc: pickerUTC = false,
@@ -30,36 +29,7 @@
   $: dateOnly = timeFormat === false;
   $: timeOnly = dateFormat === false;
 
-  /**
-   * Get a `Date` object given the current value.
-   * @returns {(Date | undefined)} Date.
-   */
-  const getDate = () => {
-    if (!currentValue) {
-      return undefined;
-    }
-
-    try {
-      if (format) {
-        if (pickerUTC) {
-          return moment.utc(currentValue, format).toDate();
-        }
-
-        return moment(currentValue, format).toDate();
-      }
-
-      if (timeOnly) {
-        return new Date(new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`));
-      }
-
-      return new Date(currentValue);
-    } catch {
-      return undefined;
-    }
-  };
-
-  // @ts-ignore Arguments are triggers
-  $: date = getDate(currentValue);
+  $: date = getDate(currentValue, fieldConfig);
 </script>
 
 {#if date}
@@ -69,7 +39,14 @@
     {:else}
       <time datetime={date.toJSON()}>
         {#if dateOnly}
-          {date.toLocaleDateString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
+          {date.toLocaleDateString(locale, {
+            timeZone:
+              pickerUTC ||
+              (dateOnly && !!currentValue?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
+              (dateOnly && !!currentValue?.match(/T00:00(?::00)?(?:\.000)?Z$/))
+                ? 'UTC'
+                : undefined,
+          })}
         {:else}
           {date.toLocaleString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
         {/if}
