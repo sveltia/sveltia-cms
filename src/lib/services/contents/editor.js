@@ -265,30 +265,49 @@ export const createDraft = (entry, defaultValues) => {
       ]),
     ),
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
+    viewStates: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
   });
 };
+
+/**
+ * Unproxify & unflatten the given object.
+ * @param {Proxy | object} obj Original proxy or object.
+ * @returns {object} Processed object.
+ */
+const unflattenObj = (obj) => unflatten(JSON.parse(JSON.stringify(obj)));
+
+/**
+ * Traverse the given object by decoding dot-connected `keyPath`.
+ * @param {object} obj Unflatten object.
+ * @param {string} keyPath Dot-connected field name.
+ * @returns {object[]} Values.
+ */
+const getItemList = (obj, keyPath) =>
+  keyPath.split('.').reduce((_obj, key) => {
+    const _key = key.match(/^\d+$/) ? Number(key) : key;
+
+    // Create a new array when adding a new item
+    _obj[_key] ||= [];
+
+    return _obj[_key];
+  }, obj);
 
 /**
  * Update the value in a list field.
  * @param {LocaleCode} locale Target locale.
  * @param {string} keyPath Dot-connected field name.
- * @param {(list: any[]) => void} manipulate A function to manipulate the list, which takes one
- * argument of the list itself. The typical usage is `list.splice()`.
+ * @param {({ valueList, viewList }) => void} manipulate A function to manipulate the list, which
+ * takes one object argument containing the value list and view state list. The typical usage is
+ * `list.splice()`.
  */
 export const updateListField = (locale, keyPath, manipulate) => {
-  const unflattenObj = unflatten(get(entryDraft).currentValues[locale]);
+  const currentValues = unflattenObj(get(entryDraft).currentValues[locale]);
+  const viewStates = unflattenObj(get(entryDraft).viewStates[locale]);
 
-  // Traverse the object by decoding dot-connected `keyPath`
-  const list = keyPath.split('.').reduce((obj, key) => {
-    const _key = key.match(/^\d+$/) ? Number(key) : key;
-
-    // Create a new array when adding a new item
-    obj[_key] ||= [];
-
-    return obj[_key];
-  }, unflattenObj);
-
-  manipulate(list);
+  manipulate({
+    valueList: getItemList(currentValues, keyPath),
+    viewList: getItemList(viewStates, keyPath),
+  });
 
   entryDraft.update((draft) => ({
     ...draft,
@@ -299,8 +318,12 @@ export const updateListField = (locale, keyPath, manipulate) => {
         draft,
         prop: 'currentValues',
         locale,
-        target: flatten(unflattenObj),
+        target: flatten(currentValues),
       }),
+    },
+    viewStates: {
+      ...draft.viewStates,
+      [locale]: flatten(viewStates),
     },
   }));
 };

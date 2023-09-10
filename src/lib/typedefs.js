@@ -453,6 +453,12 @@
  */
 
 /**
+ * Flattened {@link EntryContent} object, where key is a key path, but value will be a file to be
+ * uploaded.
+ * @typedef {{ [key: string]: File }} FlattenedEntryContentFileList
+ */
+
+/**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
  * validity, using the same properties as the native HTML5 constraint validation.
  * @typedef {{ [key: string]: { [key: string]: boolean } }} FlattenedEntryContentValidityState
@@ -460,9 +466,9 @@
  */
 
 /**
- * Flattened {@link EntryContent} object, where key is a key path, but value will be a file to be
- * uploaded.
- * @typedef {{ [key: string]: File }} FlattenedEntryContentFileList
+ * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
+ * UI state.
+ * @typedef {{ [key: string]: any }} FlattenedEntryContentViewState
  */
 
 /**
@@ -476,13 +482,15 @@
  * @property {CollectionFile} [collectionFile] File details. (File collection only)
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
  * @property {{ [key: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,
- * value is an flattened object containing all the original field values.
+ * value is a flattened object containing all the original field values.
  * @property {{ [key: LocaleCode]: FlattenedEntryContent }} currentValues Key is a locale code,
- * value is an flattened object containing all the current field values while editing.
+ * value is a flattened object containing all the current field values while editing.
  * @property {{ [key: LocaleCode]: FlattenedEntryContentFileList }} files Files to be uploaded.
  * @property {{ [key: LocaleCode]: FlattenedEntryContentValidityState }} validities Key is a locale
- * code, value is an flattened object containing validation results of all the current field values
+ * code, value is a flattened object containing validation results of all the current field values
  * while editing.
+ * @property {{ [key: LocaleCode]: FlattenedEntryContentViewState }} viewStates Key is a locale
+ * code, value is a flattened object containing the UI state.
  */
 
 /**

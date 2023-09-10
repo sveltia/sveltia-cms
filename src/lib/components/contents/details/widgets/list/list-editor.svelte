@@ -66,12 +66,14 @@
   let mounted = false;
   let widgetId = '';
   let inputValue = '';
-  let itemExpandedList = [];
 
   onMount(() => {
     mounted = true;
     widgetId = generateUUID().split('-').pop();
-    itemExpandedList = items.map(() => !collapsed);
+
+    items.forEach((__, index) => {
+      $entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`] = !collapsed;
+    });
   });
 
   /**
@@ -116,8 +118,7 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   * @param {(list: any[]) => void} manipulate A function to manipulate the list, which takes one
-   * argument of the list itself. The typical usage is `list.splice()`.
+   * @param {({ valueList, viewList }) => void} manipulate See {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
@@ -133,7 +134,7 @@
    * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
    */
   const addItem = (subFieldName) => {
-    updateComplexList((list) => {
+    updateComplexList(({ valueList, viewList }) => {
       const newItem = {};
 
       const subFields = subFieldName
@@ -153,10 +154,10 @@
         newItem[typeKey] = subFieldName;
       }
 
-      const index = addToTop ? 0 : list.length;
+      const index = addToTop ? 0 : valueList.length;
 
-      list.splice(index, 0, newItem);
-      itemExpandedList.splice(index, 0, true);
+      valueList.splice(index, 0, newItem);
+      viewList.splice(index, 0, { expanded: true });
     });
   };
 
@@ -165,9 +166,9 @@
    * @param {number} index Target index.
    */
   const deleteItem = (index) => {
-    updateComplexList((list) => {
-      list.splice(index, 1);
-      itemExpandedList.splice(index, 1);
+    updateComplexList(({ valueList, viewList }) => {
+      valueList.splice(index, 1);
+      viewList.splice(index, 1);
     });
   };
 
@@ -176,12 +177,9 @@
    * @param {number} index Target index.
    */
   const moveUpItem = (index) => {
-    updateComplexList((list) => {
-      [list[index], list[index - 1]] = [list[index - 1], list[index]];
-      [itemExpandedList[index], itemExpandedList[index - 1]] = [
-        itemExpandedList[index - 1],
-        itemExpandedList[index],
-      ];
+    updateComplexList(({ valueList, viewList }) => {
+      [valueList[index], valueList[index - 1]] = [valueList[index - 1], valueList[index]];
+      [viewList[index], viewList[index - 1]] = [viewList[index - 1], viewList[index]];
     });
   };
 
@@ -190,12 +188,9 @@
    * @param {number} index Target index.
    */
   const moveDownItem = (index) => {
-    updateComplexList((list) => {
-      [list[index], list[index + 1]] = [list[index + 1], list[index]];
-      [itemExpandedList[index], itemExpandedList[index + 1]] = [
-        itemExpandedList[index + 1],
-        itemExpandedList[index],
-      ];
+    updateComplexList(({ valueList, viewList }) => {
+      [valueList[index], valueList[index + 1]] = [valueList[index + 1], valueList[index]];
+      [viewList[index], viewList[index + 1]] = [viewList[index + 1], viewList[index]];
     });
   };
 
@@ -234,21 +229,22 @@
     </div>
     <div class="item-list" id="list-{widgetId}-item-list" class:collapsed={!parentExpanded}>
       {#each items as item, index}
+        {@const expanded = !!$entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`]}
         <!-- @todo Support drag sorting. -->
         <div class="item">
           <div class="header">
             <div>
               <Button
-                aria-expanded={itemExpandedList[index]}
+                aria-expanded={expanded}
                 aria-controls="list-{widgetId}-item-{index}-body"
                 on:click={() => {
-                  itemExpandedList[index] = !itemExpandedList[index];
+                  $entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`] = !expanded;
                 }}
               >
                 <Icon
                   slot="start-icon"
-                  name={itemExpandedList[index] ? 'expand_more' : 'chevron_right'}
-                  label={itemExpandedList[index] ? $_('collapse') : $_('expand')}
+                  name={expanded ? 'expand_more' : 'chevron_right'}
+                  label={expanded ? $_('collapse') : $_('expand')}
                 />
                 {#if types}
                   <span class="type">
@@ -287,7 +283,7 @@
             </div>
           </div>
           <div class="item-body" id="list-{widgetId}-item-{index}-body">
-            {#if itemExpandedList[index]}
+            {#if expanded}
               {@const subFieldName = Array.isArray(types)
                 ? $entryDraft.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
                 : undefined}
