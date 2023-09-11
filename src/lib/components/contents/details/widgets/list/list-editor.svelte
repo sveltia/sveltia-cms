@@ -244,7 +244,9 @@
                 aria-expanded={expanded}
                 aria-controls="list-{widgetId}-item-{index}-body"
                 on:click={() => {
-                  $entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`] = !expanded;
+                  Object.keys($entryDraft.viewStates).forEach((_locale) => {
+                    $entryDraft.viewStates[_locale][`${keyPath}.${index}.expanded`] = !expanded;
+                  });
                 }}
               >
                 <Icon
