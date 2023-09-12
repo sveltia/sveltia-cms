@@ -54,7 +54,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Making it easier to switch between locales while editing with just a click on a button.
 - [Integrating DeepL](#use-deepl-to-translate-entry-fields) to allow translating text fields from another locale with one click.
 - You can now [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales writing in non-Latin characters[^12].
-- Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected[^7].
+- Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 - Users can now choose their preferred UI locale.
 
 ### Collection enhancements
@@ -78,7 +78,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 | --- | --- |
 | Installation | Installing with npm is not yet supported. |
 | UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Preferences. (Click on the Account button at the top right corner of the CMS.) |
-| Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. We plan to add the GitLab and Test backends, but Azure and Bitbucket are unlikely to be supported, mainly due to the lack of an API method to fetch content in bulk. Later we may implement a performant Git Gateway alternative using GraphQL. |
+| Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. The GitLab backend is coming soon. We plan to add the Test backend as well for our demo site, but Azure and Bitbucket are unlikely to be supported, mainly due to the lack of an API method to fetch content in bulk. Later we may implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
 | Media | External media storage services are not yet supported. |
 | Editorial Workflow | Coming soon. |
@@ -124,14 +124,19 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 | Nested Collections | Not yet supported. |
 | Remark plugins | Not yet supported. |
 
-### Known issues
+### Other features
 
 - Comprehensive config validation is not implemented yet.
 - Auto-saving a draft entry is not implemented yet.
 - Duplicating an entry is not implemented yet.
+- Downloading an asset in the media library is not implemented yet.
+- [Backend health check](https://www.githubstatus.com/api) is not implemented yet.
+
+## Known issues
+
 - Accessibility support is limited.
 
-### Roadmap
+## Roadmap
 
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
 - Config editor[^10]
