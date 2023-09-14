@@ -26,10 +26,20 @@
  */
 
 /**
+ * Basic Git repository information retrieved from the config file.
+ * @typedef {object} RepositoryInfo
+ * @property {string} owner Owner name, which could be either an organization or individual user.
+ * @property {string} repo Repository name.
+ * @property {string} branch Branch name. It’s `master` by default for historical reasons, though
+ * the current default branch name on GitHub is `main`.
+ * @property {string} url Repository URL that can be linked from the CMS UI to the backend service.
+ */
+
+/**
  * Backend service.
  * @typedef {object} BackendService
  * @property {string} label Service label.
- * @property {?string} [repoURL] Repository URL. Git backend only.
+ * @property {RepositoryInfo} [repository] Basic repository info. Git backend only.
  * @property {(token: string) => Promise<User>} signIn Function to sign in.
  * @property {() => Promise<void>} signOut Function to sign out.
  * @property {() => Promise<void>} fetchFiles Function to fetch files.

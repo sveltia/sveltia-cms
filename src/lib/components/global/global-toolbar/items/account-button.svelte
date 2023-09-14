@@ -4,7 +4,6 @@
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
   import { user } from '$lib/services/auth';
   import { backend } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
   import { openProductionSite } from '$lib/services/navigation';
   import LocalStorage from '$lib/services/utils/local-storage';
 
@@ -45,7 +44,7 @@
       label={$_('git_repository')}
       disabled={$user?.backendName === 'local'}
       on:click={() => {
-        window.open($backend.repoURL.replace('{repo}', $siteConfig.backend.repo));
+        window.open($backend.repository.url);
       }}
     />
     <Divider />

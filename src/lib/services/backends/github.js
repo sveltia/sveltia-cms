@@ -10,7 +10,10 @@ import { getBase64 } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
 
 const label = 'GitHub';
-const repoURL = 'https://github.com/{repo}';
+/**
+ * @type {RepositoryInfo}
+ */
+const repository = { owner: '', repo: '', branch: '', url: '' };
 
 /**
  * Send a request to GitHub REST/GraphQL API.
@@ -77,12 +80,27 @@ const fetchGraphQL = async (query, variables = {}) => {
 };
 
 /**
- * Sign in with GitHub REST API.
+ * Retrieve the repository configuration and sign in with GitHub REST API.
  * @param {string} [savedToken] OAuth token. Can be empty when a token is not saved in the local
  * storage. Then, open the sign-in dialog.
  * @returns {Promise<User>} User info.
+ * @throws {Error} When the backend is not configured properly or there was an authentication error.
  */
 const signIn = async (savedToken) => {
+  const { backend: { repo: repoPath = '', branch = 'master' } = {} } = get(siteConfig) || {};
+  const [owner, repo] = typeof repoPath === 'string' ? repoPath.split('/') : [];
+
+  if (!owner || !repo || !branch) {
+    throw new Error('Backend is not defined');
+  }
+
+  Object.assign(repository, {
+    owner,
+    repo,
+    branch,
+    url: `https://github.com/${owner}/${repo}/tree/${branch}`,
+  });
+
   const token = savedToken || (await authorize('github'));
 
   if (!token) {
@@ -114,13 +132,7 @@ const signOut = async () => {};
  * {@link allAssets} stores.
  */
 const fetchFiles = async () => {
-  const { backend: { repo: repoPath = '', branch = 'master' } = {} } = get(siteConfig) || {};
-
-  if (!repoPath.trim()) {
-    throw new Error('Backend is not defined');
-  }
-
-  const [owner, repo] = repoPath.split('/');
+  const { owner, repo, branch } = repository;
   // Get a complete file list first with the REST API
   const { tree: files } = await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
   // Then filter what’s managed in CMS
@@ -133,7 +145,7 @@ const fetchFiles = async () => {
   }
 
   // Fetch all the text contents with the GraphQL API
-  const { repository } = await fetchGraphQL(`query {
+  const { repository: result } = await fetchGraphQL(`query {
     repository(owner: "${owner}", name: "${repo}") {
       ${allFiles
         .map(
@@ -174,7 +186,7 @@ const fetchFiles = async () => {
    * including the commit author and date.
    */
   const getMeta = (index) => {
-    const { author, committedDate } = repository[`commit_${index}`].target.history.nodes[0];
+    const { author, committedDate } = result[`commit_${index}`].target.history.nodes[0];
 
     return {
       commitAuthor: author,
@@ -186,7 +198,7 @@ const fetchFiles = async () => {
     parseEntryFiles(
       entryFiles.map((/** @type {object} */ entry, index) => ({
         ...entry,
-        text: repository[`content_${index}`].text,
+        text: result[`content_${index}`].text,
         meta: { ...(entry.meta || {}), ...getMeta(index) },
       })),
     ),
@@ -234,8 +246,7 @@ const fetchBlob = async (asset) => {
  * @returns {Promise<string>} Hash.
  */
 const getLastCommitHash = async () => {
-  const { backend: { repo: repoPath = '', branch = 'master' } = {} } = get(siteConfig) || {};
-  const [owner, repo] = repoPath.split('/');
+  const { owner, repo, branch } = repository;
 
   const {
     repository: {
@@ -274,7 +285,7 @@ const getLastCommitHash = async () => {
  * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
  */
 const createCommit = async (message, { additions = [], deletions = [] }) => {
-  const { backend: { repo: repoPath = '', branch = 'master' } = {} } = get(siteConfig) || {};
+  const { owner, repo, branch } = repository;
   const expectedHeadOid = await getLastCommitHash();
 
   const {
@@ -288,7 +299,7 @@ const createCommit = async (message, { additions = [], deletions = [] }) => {
     {
       input: {
         branch: {
-          repositoryNameWithOwner: repoPath,
+          repositoryNameWithOwner: `${owner}/${repo}`,
           branchName: branch,
         },
         message: { headline: message },
@@ -337,7 +348,7 @@ const deleteFiles = async (items, { commitType = 'delete', collection } = {}) =>
  */
 export default {
   label,
-  repoURL,
+  repository,
   signIn,
   signOut,
   fetchFiles,
