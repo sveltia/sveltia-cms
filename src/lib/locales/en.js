@@ -64,6 +64,8 @@ export const strings = {
   // Entrance
   loading_site_config: 'Loading Site Configuration…',
   loading_site_data: 'Loading Site Data…',
+  loading_site_data_error: 'There was an error while loading site data.',
+  unexpected_error: 'Unexpected Error',
 
   // Global toolbar
   search_placeholder: 'Search for entries and assets…',

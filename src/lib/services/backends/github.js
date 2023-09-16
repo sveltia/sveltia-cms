@@ -26,6 +26,7 @@ const repository = { owner: '', repo: '', branch: '', url: '' };
  * @param {('json' | 'text' | 'blob' | 'raw')} [options.responseType] Response type. The default is
  * `json`, while `raw` returns a `Response` object as is.
  * @returns {Promise<(object | string | Blob)>} Response data.
+ * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
  */
 const fetchAPI = async (
   path,
@@ -46,7 +47,15 @@ const fetchAPI = async (
   });
 
   if (!response.ok) {
-    throw new Error('Invalid request');
+    let message;
+
+    try {
+      ({ message } = (await response.json()) || {});
+    } catch {
+      //
+    }
+
+    throw new Error('Invalid API request', { cause: message });
   }
 
   if (responseType === 'raw') {

@@ -64,6 +64,8 @@ export const strings = {
   // Entrance
   loading_site_config: 'サイト設定を読み込んでいます…',
   loading_site_data: 'サイトデータを読み込んでいます…',
+  loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',
+  unexpected_error: '予期せぬエラー',
 
   // Global toolbar
   search_placeholder: 'エントリーとファイルを検索…',

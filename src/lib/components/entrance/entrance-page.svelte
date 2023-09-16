@@ -1,4 +1,6 @@
 <script>
+  import DOMPurify from 'isomorphic-dompurify';
+  import { marked } from 'marked';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { get } from 'svelte/store';
@@ -11,6 +13,8 @@
   import { entriesLoaded } from '$lib/services/contents';
   import { prefs } from '$lib/services/prefs';
 
+  let loadingError;
+
   onMount(() => {
     fetchSiteConfig();
   });
@@ -18,15 +22,19 @@
   $: {
     if ($siteConfig && !$siteConfig.error && $prefs && !$prefs.error && $user) {
       (async () => {
-        await get(backend).fetchFiles();
-        $entriesLoaded = true;
+        try {
+          await get(backend).fetchFiles();
+          $entriesLoaded = true;
+        } catch (ex) {
+          loadingError = ex.cause || $_('unexpected_error');
+        }
       })();
     }
   }
 </script>
 
 <div class="container">
-  <div>
+  <div class="inner">
     <img
       loading="lazy"
       src={$siteConfig?.logo_url || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
@@ -47,6 +55,16 @@
       </h2>
     {:else if !$user}
       <SignIn />
+    {:else if loadingError}
+      <div>
+        <h2>{$_('loading_site_data_error')}</h2>
+        <div class="error" role="alert">
+          {@html DOMPurify.sanitize(/** @type {string } */ (marked.parseInline(loadingError)), {
+            ALLOWED_TAGS: ['a', 'code'],
+            ALLOWED_ATTR: ['href'],
+          })}
+        </div>
+      </div>
     {:else if !$entriesLoaded}
       <h2>{$_('loading_site_data')}</h2>
     {/if}
@@ -56,18 +74,19 @@
 <style lang="scss">
   .container {
     position: fixed;
-    inset: 0;
+    inset: 32px;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 16px;
 
-    div {
+    .inner {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 32px;
       min-width: 240px;
+      max-width: 800px;
       height: 240px;
     }
 
@@ -88,6 +107,16 @@
       margin: 0 0 16px;
       font-size: var(--sui-font-size-large);
       font-weight: normal;
+      text-align: center;
+    }
+
+    .error {
+      border-radius: var(--sui-control-medium-border-radius);
+      padding: 12px;
+      background-color: var(--sui-secondary-background-color);
+      font-size: var(--sui-font-size-default);
+      line-height: 1.5;
+      text-align: center;
     }
   }
 </style>
