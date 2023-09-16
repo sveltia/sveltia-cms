@@ -30,16 +30,22 @@
   $: timeOnly = dateFormat === false;
 
   $: date = getDate(currentValue, fieldConfig);
+
+  /** @type {Intl.DateTimeFormatOptions} */
+  const dateFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  /** @type {Intl.DateTimeFormatOptions} */
+  const timeFormatOptions = { hour: 'numeric', minute: 'numeric', hour12: true };
 </script>
 
 {#if date}
   <p>
     {#if timeOnly}
-      {date.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric', hour12: true })}
+      {date.toLocaleTimeString(locale, timeFormatOptions)}
     {:else}
       <time datetime={date.toJSON()}>
         {#if dateOnly}
           {date.toLocaleDateString(locale, {
+            ...dateFormatOptions,
             timeZone:
               pickerUTC ||
               (dateOnly && !!currentValue?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
@@ -48,7 +54,11 @@
                 : undefined,
           })}
         {:else}
-          {date.toLocaleString(locale, { timeZone: pickerUTC ? 'UTC' : undefined })}
+          {date.toLocaleString(locale, {
+            ...dateFormatOptions,
+            ...timeFormatOptions,
+            timeZone: pickerUTC ? 'UTC' : undefined,
+          })}
         {/if}
       </time>
     {/if}
