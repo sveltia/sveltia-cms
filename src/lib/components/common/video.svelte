@@ -1,5 +1,4 @@
 <script>
-  import { onMount } from 'svelte';
   import { getAssetPreviewURL } from '$lib/services/assets/view';
 
   /**
@@ -18,13 +17,13 @@
 
   let element;
 
-  onMount(() => {
-    if (asset && !src) {
+  $: {
+    if (element && asset) {
       (async () => {
         src = await getAssetPreviewURL(asset, loading, element);
       })();
     }
-  });
+  }
 </script>
 
 <!-- svelte-ignore a11y-media-has-caption -->

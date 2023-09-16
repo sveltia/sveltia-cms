@@ -1,5 +1,4 @@
 <script>
-  import { onMount } from 'svelte';
   import { getAssetPreviewURL } from '$lib/services/assets/view';
 
   /**
@@ -20,13 +19,13 @@
 
   let element;
 
-  onMount(() => {
-    if (asset && !src) {
+  $: {
+    if (element && asset) {
       (async () => {
         src = await getAssetPreviewURL(asset, loading, element);
       })();
     }
-  });
+  }
 </script>
 
 <img class:checkerboard class:cover {loading} {src} {alt} {...$$restProps} bind:this={element} />
