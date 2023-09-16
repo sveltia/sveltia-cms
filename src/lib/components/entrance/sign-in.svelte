@@ -60,6 +60,7 @@
       try {
         const { backendName: name, token } =
           (await LocalStorage.get('sveltia-cms.user')) ||
+          (await LocalStorage.get('decap-cms-user')) ||
           (await LocalStorage.get('netlify-cms-user')) ||
           {};
 
