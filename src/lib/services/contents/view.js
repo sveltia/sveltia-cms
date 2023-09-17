@@ -127,7 +127,7 @@ const sortEntries = (entries, { key, order } = {}) => {
   /**
    * Get a property value by key.
    * @param {Entry} entry Entry.
-   * @returns {string | Date} Value.
+   * @returns {*} Value.
    */
   const getValue = (entry) => {
     const { locales, commitAuthor: { name, email } = {}, commitDate } = entry;
@@ -147,9 +147,15 @@ const sortEntries = (entries, { key, order } = {}) => {
     const aValue = getValue(a);
     const bValue = getValue(b);
 
-    return type === String
-      ? /** @type {string} */ (aValue).localeCompare(/** @type {string} */ (bValue))
-      : Number(/** @type {Date} */ aValue) - Number(/** @type {Date} */ bValue);
+    if (type === String) {
+      return aValue.localeCompare(bValue);
+    }
+
+    if (type === Date) {
+      return Number(aValue) - Number(bValue);
+    }
+
+    return aValue - bValue;
   });
 
   if (order === 'descending') {

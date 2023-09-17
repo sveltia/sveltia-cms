@@ -120,6 +120,12 @@ const sortAssets = (assets, { key, order } = {}) => {
       return commitDate;
     }
 
+    // Exclude the file extension when sorting by name to sort numbered files properly, e.g.
+    // `hero.png`, `hero-1.png`, `hero-2.png` instead of `hero-1.png`, `hero-2.png`, `hero.png`
+    if (key === 'name') {
+      return asset.name.split('.')[0];
+    }
+
     return asset[key] || '';
   };
 
@@ -127,7 +133,15 @@ const sortAssets = (assets, { key, order } = {}) => {
     const aValue = getValue(a);
     const bValue = getValue(b);
 
-    return type === String ? aValue.localeCompare(bValue) : aValue - bValue;
+    if (type === String) {
+      return aValue.localeCompare(bValue);
+    }
+
+    if (type === Date) {
+      return Number(aValue) - Number(bValue);
+    }
+
+    return aValue - bValue;
   });
 
   if (order === 'descending') {
