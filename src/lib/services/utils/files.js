@@ -182,13 +182,15 @@ export const renameIfNeeded = (name, otherNames) => {
     return name;
   }
 
-  const [, slug, extension] = name.match(/(.+)(?:\.([a-zA-Z0-9]+?))?$/);
+  const [, slug, extension] = name.match(/(.+?)(?:\.([a-zA-Z0-9]+?))?$/);
 
   const regex = new RegExp(
     `^${escapeRegExp(slug)}(?:-(\\d+?))?${extension ? `\\.${extension}` : ''}$`,
   );
 
-  const dupName = otherNames.sort().findLast((p) => p.match(regex));
+  const dupName = otherNames
+    .sort((a, b) => a.split('.')[0].localeCompare(b.split('.')[0]))
+    .findLast((p) => p.match(regex));
 
   if (!dupName) {
     return name;

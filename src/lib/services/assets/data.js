@@ -1,7 +1,8 @@
 import { get } from 'svelte/store';
 import { allAssetPaths, allAssets, getAssetKind } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
-import { getHash } from '$lib/services/utils/files';
+import { getHash, renameIfNeeded } from '$lib/services/utils/files';
+import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
  * Upload/save the given assets to the backend.
@@ -9,11 +10,22 @@ import { getHash } from '$lib/services/utils/files';
  * @param {object} [options] Options for the backend handler.
  */
 export const saveAssets = async ({ files, folder }, options) => {
+  const assetNamesInSameFolder = get(allAssets)
+    .map((a) => a.path)
+    .filter((p) => p.match(new RegExp(`^${escapeRegExp(folder)}\\/[^\\/]+$`)))
+    .map((p) => p.split('/').pop());
+
+  const savingFileList = files.map((file) => {
+    const name = renameIfNeeded(file.name, assetNamesInSameFolder);
+    const path = [folder, name].join('/');
+
+    assetNamesInSameFolder.push(name);
+
+    return { name, path, file };
+  });
+
   await get(backend).saveFiles(
-    files.map((file) => ({
-      path: [folder, file.name].join('/'),
-      data: file,
-    })),
+    savingFileList.map(({ path, file }) => ({ path, data: file })),
     options,
   );
 
@@ -24,13 +36,13 @@ export const saveAssets = async ({ files, folder }, options) => {
    * @type {Asset[]}
    */
   const newAssets = await Promise.all(
-    files.map(async (file) => ({
+    savingFileList.map(async ({ name, path, file }) => ({
       url: URL.createObjectURL(file),
-      name: file.name,
-      path: [folder, file.name].join('/'),
+      name,
+      path,
       sha: await getHash(file),
       size: file.size,
-      kind: getAssetKind(file.name),
+      kind: getAssetKind(name),
       text: null,
       collectionName,
       folder,
