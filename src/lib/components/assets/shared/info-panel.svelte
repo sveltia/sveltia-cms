@@ -58,7 +58,7 @@
         <Image {asset} checkerboard={true} />
       {/if}
       {#if kind === 'video'}
-        <Video {asset} />
+        <Video {asset} controls />
       {/if}
     </div>
   {/if}

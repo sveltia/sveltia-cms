@@ -10,7 +10,7 @@
 {#if $currentView?.showInfo}
   <Group class="secondary-sidebar">
     {#if $selectedAsset}
-      <InfoPanel asset={$selectedAsset} showPreview={$currentView.type === 'list'} />
+      <InfoPanel asset={$selectedAsset} showPreview={true} />
     {:else}
       <EmptyState>
         <span>{$_('select_asset_show_info')}</span>
