@@ -207,14 +207,12 @@
           aria-label={$_('prefs.media.stock_photos.field_label', {
             values: { service: serviceLabel },
           })}
-          on:input={(/** @type {CustomEvent} */ event) => {
-            /**
-             * @type {string}
-             */
-            const _value = event.detail.value.trim();
+          on:input={(event) => {
+            const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
 
             if (apiKeyPattern && _value.match(apiKeyPattern)) {
               apiKey = _value;
+              hasAuthInfo = true;
               $prefs.apiKeys ||= {};
               $prefs.apiKeys[serviceId] = apiKey;
               searchAssets();
