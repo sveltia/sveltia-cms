@@ -113,10 +113,17 @@
   .drop-target {
     display: flex;
     flex-direction: column;
-    height: 100%;
     position: relative;
-    overflow: auto;
+    overflow: hidden;
+    height: 100%;
     pointer-events: auto;
+
+    & > :global(.group) {
+      overflow-y: auto;
+      padding: 16px;
+      width: 100%;
+      height: 100%;
+    }
 
     & * {
       pointer-events: none;

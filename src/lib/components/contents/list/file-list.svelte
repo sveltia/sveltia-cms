@@ -28,3 +28,9 @@
     </EmptyState>
   {/if}
 </div>
+
+<style lang="scss">
+  .list-container {
+    padding: 16px;
+  }
+</style>

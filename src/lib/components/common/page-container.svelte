@@ -150,9 +150,9 @@
 
       :global(.list-container) {
         flex: auto;
+        position: relative;
         overflow-y: auto;
         overscroll-behavior-y: contain;
-        padding: 16px;
         border-radius: var(--sui-control-medium-border-radius);
       }
     }

@@ -59,6 +59,10 @@
 </div>
 
 <style lang="scss">
+  .list-container {
+    padding: 16px;
+  }
+
   h3 {
     padding: 8px;
     color: var(--sui-secondary-foreground-color);
