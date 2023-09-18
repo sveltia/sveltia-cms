@@ -80,9 +80,10 @@
         }
 
         :global([role='listbox']) {
+          gap: 4px;
           margin: 0 8px;
           border-width: 0;
-          gap: 4px;
+          background-color: transparent;
 
           :global(button) {
             display: flex;
