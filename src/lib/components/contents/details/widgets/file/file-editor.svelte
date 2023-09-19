@@ -57,12 +57,8 @@
   $: ({
     widget,
     // Widget-specific options
-    media_library: {
-      // allow_multiple: allowMultiple = true,
-      config: { max_file_size: maxFileSize = undefined } = {},
-      // media_folder: mediaFolder,
-      choose_url: canEnterURL = true,
-    } = {},
+    choose_url: canEnterURL = true,
+    media_library: { config: { max_file_size: maxFileSize = undefined } = {} } = {},
   } = fieldConfig);
   $: isImageWidget = widget === 'image';
 

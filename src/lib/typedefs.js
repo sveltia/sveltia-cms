@@ -118,6 +118,23 @@
  */
 
 /**
+ * Default or external media library configuration.
+ * @typedef {object} MediaLibraryConfig
+ * @property {string} [name] External library name.
+ * @property {object} [config] Config to be passed to the media library.
+ * @property {number} [config.max_file_size] Maximum file size in bytes. The default media library
+ * only.
+ * @property {boolean} [config.multiple] Whether to allow selecting multiple files.
+ * @property {boolean} [allow_multiple] Whether to force disabling multiple inputs in the external
+ * media library.
+ * @see https://decapcms.org/docs/widgets/#file
+ * @see https://decapcms.org/docs/widgets/#image
+ * @see https://decapcms.org/docs/cloudinary/
+ * @see https://decapcms.org/docs/uploadcare/
+ * @see https://decapcms.org/docs/beta-features/#image-widget-file-size-limit
+ */
+
+/**
  * Global site configuration.
  * @typedef {object} SiteConfig
  * @property {object} [backend] Backend config.
@@ -126,7 +143,7 @@
  * @property {string} [logo_url] Site logo URL.
  * @property {string} [media_folder] Global internal media folder path.
  * @property {string} [public_folder] Global public media folder path.
- * @property {object} [media_library] External media library configuration.
+ * @property {MediaLibraryConfig} [media_library] media library configuration.
  * @property {object} [slug] Slug options.
  * @property {Collection[]} [collections] Collections.
  * @property {object} [i18n] Global i18n configuration.
@@ -257,13 +274,10 @@
  * File field properties.
  * @typedef {object} FileFieldProps
  * @property {string} [default] Default value.
- * @property {object} [media_library] Media library options.
- * @property {number} [media_library.max_file_size] Maximum file size in bytes.
- * @property {string} [media_library.media_folder] Folder to save the selected media.
- * @property {boolean} [media_library.choose_url] Whether to hide the Insert from URL button.
- * @property {object} [media_library.config] Config to be passed to the external media library.
- * @property {boolean} [media_library.allow_multiple] Whether to disable multiple inputs in the
- * external media library.
+ * @property {boolean} [choose_url] Whether to hide the Insert from URL button.
+ * @property {string} [media_folder] Internal media folder path for the field.
+ * @property {string} [public_folder] Public media folder path for the field.
+ * @property {MediaLibraryConfig} [media_library] media library configuration.
  * @see https://decapcms.org/docs/widgets/#file
  */
 

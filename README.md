@@ -94,7 +94,7 @@ While recreating all the features found in Netlify/Decap CMS is not our goal, we
 | Code | Not yet supported. |
 | Color | It’s a native `<input>` element at this time. The `enableAlpha` option is not yet supported. |
 | Date/DateTime | These are also native `<input>` elements. The `date_format` and `time_format` options with Moment.js tokens are not yet supported. We may deprecate the Moment.js format support anyway. |
-| File/Image | The `media_library` options are not yet supported other than `max_file_size` and `choose_url`. |
+| File/Image | The `media_folder`, `public_folder` and `media_library` options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not yet supported. |
 | Markdown | It’s a plain text editor at this time. We’ll soon implement a rich text editor with i18n issues addressed. |
 | Relation | The `search_fields` options is not yet supported. |
