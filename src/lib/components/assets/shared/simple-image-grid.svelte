@@ -18,6 +18,7 @@
       gap: 4px;
       overflow-y: auto;
       border-width: 0;
+      height: 100%;
 
       :global(.option) {
         :global(button) {

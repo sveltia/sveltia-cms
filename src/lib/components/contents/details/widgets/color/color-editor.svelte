@@ -66,4 +66,8 @@
       flex: auto;
     }
   }
+
+  input {
+    font-family: var(--sui-textbox-font-family);
+  }
 </style>

@@ -237,6 +237,7 @@
 
     :global(.listbox) {
       flex: none;
+      background-color: transparent;
     }
 
     :global(.content-pane) {

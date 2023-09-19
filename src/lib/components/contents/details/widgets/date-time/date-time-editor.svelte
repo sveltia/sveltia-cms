@@ -90,6 +90,7 @@
 
     input {
       margin-right: auto;
+      font-family: var(--sui-textbox-font-family);
 
       &:disabled {
         opacity: 0.4;

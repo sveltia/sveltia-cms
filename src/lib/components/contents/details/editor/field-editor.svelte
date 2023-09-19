@@ -247,7 +247,7 @@
 
       :global(input[type='color']),
       :global(input[type='number']) {
-        background-color: var(--sui-input-background-color);
+        background-color: var(--sui-textbox-background-color);
         border-width: 1px;
         border-color: var(--sui-primary-border-color);
         border-radius: var(--sui-control-medium-border-radius);
