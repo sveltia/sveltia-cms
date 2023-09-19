@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta, with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.webp)<br>
 
@@ -10,14 +10,14 @@ Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-
 
 ![Screenshot: Stock Photo Integrations; Quick Translation](docs/screenshot-4.webp)<br>
 
-![Screenshot: Single-Line Migration from Netlify/Decap CMS; Sveltia CMS](docs/screenshot-5.webp)<br>
+![Screenshot: Single-Line Migration from Netlify/Decap CMS](docs/screenshot-5.webp)<br>
 
 ## Features
 
 Sveltia CMS is a Git-based lightweight headless CMS, which means:
 
-- Git-based: The content is saved as static JSON, YAML or TOML files on your Git repository. No 3rd party database or API is involved. Your data is yours.
-- Lightweight: The app is compiled as a single small JavaScript file served via a CDN. You don’t have to sign up for a service or install additional software.
+- Git-based: The content is stored as static JSON, YAML or TOML files on your Git repository. No 3rd party database or API is involved. Your data is yours.
+- Lightweight: The app is compiled as a single small JavaScript file served over a CDN. There’s no need to sign up for a service or install additional software.
 - Headless: The CMS only takes care of raw data. You can read it and render the final content with your favourite framework.
 
 Here are some highlights mainly compared to Netlify/Decap CMS:
@@ -43,10 +43,9 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Better productivity
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
-- Integrating Pexels, Pixabay and Unsplash to allow inserting free stock photos into image fields with no hassle[^8].
+- Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
 - You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server.
 - Delete multiple entries and assets at once.
-- String values in YAML files can be quoted with the new `yaml_quote:true` option for a collection, mainly for framework compatibility[^9].
 - Solving various outstanding Netlify/Decap CMS bugs[^11].
 
 ### Better i18n support
@@ -61,6 +60,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
 - A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will now appear aside of entries.
+- String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
 
 ### Media library enhancements
 
@@ -72,57 +72,57 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ## Compatibility
 
-While recreating all the features found in Netlify/Decap CMS is not our goal, we plan to maximize the compatibility before reaching the 1.0 release so that more users can migrate to our modern alternative.
+While it’s not our goal to recreate all the features found in Netlify/Decap CMS, we plan to maximize compatibility before the 1.0 release so that more users can migrate to our modern alternative.
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
-| Installation | Installing with npm is not yet supported. |
+| Installation | Installing with npm is not supported yet. |
 | UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Preferences. (Click on the Account button at the top right corner of the CMS.) |
 | Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. The GitLab backend is coming soon. We plan to add the Test backend as well for our demo site, but Azure and Bitbucket are unlikely to be supported, mainly due to the lack of an API method to fetch content in bulk. Later we may implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
-| Media | External media storage services are not yet supported. |
-| Editorial Workflow | Coming soon. |
+| Media | External media storage services are not supported yet. |
+| Editorial Workflow | Not supported yet. |
 | Collections | Supported. |
 | Widgets | [See below](#widget-limitations) for the current limitations. |
-| Custom widgets | Not yet supported. |
-| Custom previews | Not yet supported. |
+| Custom widgets | Not supported yet. |
+| Custom previews | Not supported yet. |
 
 ### Widget limitations
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
-| Code | Not yet supported. |
-| Color | It’s a native `<input>` element at this time. The `enableAlpha` option is not yet supported. |
-| Date/DateTime | These are also native `<input>` elements. The `date_format` and `time_format` options with Moment.js tokens are not yet supported. We may deprecate the Moment.js format support anyway. |
-| File/Image | The `media_folder`, `public_folder` and `media_library` options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
-| Map | Not yet supported. |
-| Markdown | It’s a plain text editor at this time. We’ll soon implement a rich text editor with i18n issues addressed. |
-| Relation | The `search_fields` options is not yet supported. |
+| Code | Not supported yet. |
+| Color | It’s a native `<input>` element at this time. The `enableAlpha` option is not supported yet. |
+| Date/DateTime | These are also native `<input>` elements. The `date_format` and `time_format` options with Moment.js tokens are not supported yet. We may deprecate the Moment.js format support anyway. |
+| File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
+| Map | Not supported yet. |
+| Markdown | It’s a plain text editor at this time. A rich text editor is coming soon. |
+| Relation | The `search_fields` options is not supported yet. |
 
 ### Beta features in Netlify/Decap CMS
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Working with a Local Git Repository | Supported. [See below](#work-with-a-local-git-repository) for details. |
-| GitLab and BitBucket Editorial Workflow Support | The GitLab backend is not yet supported. No plan to support BitBucket. |
+| GitLab and BitBucket Editorial Workflow Support | The GitLab backend is not supported yet. No plan to support BitBucket. |
 | i18n Support | Supported. In fact, i18n is at the core of Sveltia CMS! |
 | GitHub GraphQL API | Supported. Sveltia CMS uses GraphQL by default for a better performance. It cannot be disabled. |
-| GitLab GraphQL API | The GitLab backend is not yet supported. |
-| Open Authoring | Not yet supported. |
+| GitLab GraphQL API | The GitLab backend is not supported yet. |
+| Open Authoring | Not supported yet. |
 | Folder Collections Path | Supported. |
 | Folder Collections Media and Public Folder | Supported. We recommend using [absolute path per-collection folders](#use-a-custom-media-folder-for-a-collection) for easier asset management rather than relative path per-entry folders. |
 | List Widget: Variable Types | Supported. |
 | Custom Mount Element | Supported. |
-| Manual Initialization | Not yet supported. |
-| Raw CSS in registerPreviewStyle | Not yet supported. |
-| Squash merge GitHub pull requests | Editorial workflow is not yet supported. |
+| Manual Initialization | Not supported yet. |
+| Raw CSS in registerPreviewStyle | Not supported yet. |
+| Squash merge GitHub pull requests | Editorial workflow is not supported yet. |
 | Commit Message Templates | Supported. |
 | Image widget file size limit | Supported. |
 | Summary string template transformations | Supported. |
-| Registering to CMS Events | Not yet supported. |
+| Registering to CMS Events | Not supported yet. |
 | Dynamic Default Values | Supported. |
-| Nested Collections | Not yet supported. |
-| Remark plugins | Not yet supported. |
+| Nested Collections | Not supported yet. |
+| Remark plugins | Not supported yet. |
 
 ### Other features
 
@@ -172,7 +172,7 @@ If you’re already using Netlify/Decap CMS with the GitHub backend and don’t 
 
 That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
-That said, we highly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#work-with-a-local-git-repository) for how.
+That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#work-with-a-local-git-repository) for how.
 
 ## Tips & tricks
 
@@ -182,7 +182,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Work with a local Git repository
 
-You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the necessity of the additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
+You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 1. Launch the local development server for your frontend framework, typically with `npm run dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number depends on your framework.
@@ -312,7 +312,7 @@ Sveltia CMS is open source for sure! You can host it on your server rather than 
 1. Run `pnpm install && pnpm build` at the project root.
 1. `sveltia-cms.js` will be generated under the `dist` directory.
 
-Importing the CMS as an npm package is not yet supported.
+Importing the CMS as an npm package is not supported yet.
 
 ## Support & feedback
 
@@ -324,7 +324,7 @@ Want to build a website with Sveltia CMS? [@kyoshino](https://github.com/kyoshin
 
 Sveltia CMS is still in early beta, so we do expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new). Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources.
 
-## Links
+## Related Links
 
 - Introducing Sveltia CMS: a short technical presentation by [@kyoshino](https://github.com/kyoshino) during the _This Week in Svelte_ online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
 
