@@ -332,9 +332,9 @@ export const updateListField = (locale, keyPath, manipulate) => {
  * Copy or translate field value(s) from another locale.
  * @param {string} sourceLocale Source locale, e.g. `en`.
  * @param {string} targetLocale Target locale, e.g. `ja`.
- * @param {string} [keyPath] Flatten (dot-connected) object keys that will be used for searching the
- * source values. Omit this if copying all the fields. If the triggered widget is List or Object,
- * this will likely match multiple fields.
+ * @param {string} [keyPath] Flattened (dot-connected) object keys that will be used for searching
+ * the source values. Omit this if copying all the fields. If the triggered widget is List or
+ * Object, this will likely match multiple fields.
  * @param {boolean} [translate] Whether to translate the copied text fields.
  */
 export const copyFromLocale = async (
@@ -403,28 +403,43 @@ export const copyFromLocale = async (
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
  * @param {string} [locale] Target locale, e.g. `ja`. Can be empty if reverting everything.
- * @param {string} [keyPath] Flatten (dot-connected) object keys that will be used for searching the
- * source values. Omit this if copying all the fields. If the triggered widget is List or Object,
- * this will likely match multiple fields.
+ * @param {string} [keyPath] Flattened (dot-connected) object keys that will be used for searching
+ * the source values. Omit this if copying all the fields. If the triggered widget is List or
+ * Object, this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
-  const { collection, currentValues, originalValues } = get(entryDraft);
-  const { hasLocales, locales: collectionLocales } = collection._i18n;
+  const { collection, fileName, currentValues, originalValues } = get(entryDraft);
+  const { hasLocales, locales: collectionLocales, defaultLocale = 'default' } = collection._i18n;
   // eslint-disable-next-line no-nested-ternary
   const locales = locale ? [locale] : hasLocales ? collectionLocales : ['default'];
 
-  locales.forEach((_locale) => {
-    Object.keys(currentValues[_locale]).forEach((_keyPath) => {
+  /**
+   * Revert changes.
+   * @param {LocaleCode} _locale Iterating locale.
+   * @param {FlattenedEntryContent} valueMap Flattened entry content.
+   * @param {boolean} reset Whether ro remove the current value.
+   */
+  const revert = (_locale, valueMap, reset = false) => {
+    Object.entries(valueMap).forEach(([_keyPath, value]) => {
       if (!keyPath || _keyPath.startsWith(keyPath)) {
-        currentValues[_locale][_keyPath] = undefined;
-      }
-    });
+        const fieldConfig = getFieldByKeyPath(collection.name, fileName, _keyPath, valueMap);
 
-    Object.entries(originalValues[_locale]).forEach(([_keyPath, value]) => {
-      if (!keyPath || _keyPath.startsWith(keyPath)) {
-        currentValues[_locale][_keyPath] = value;
+        if (_locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n)) {
+          if (reset) {
+            delete currentValues[_locale][_keyPath];
+          } else {
+            currentValues[_locale][_keyPath] = value;
+          }
+        }
       }
     });
+  };
+
+  locales.forEach((_locale) => {
+    // Remove all the current values except for i18n-duplicate ones
+    revert(_locale, currentValues[_locale], true);
+    // Restore the original values
+    revert(_locale, originalValues[_locale], false);
   });
 
   entryDraft.update((_entryDraft) => ({ ..._entryDraft, currentValues }));
