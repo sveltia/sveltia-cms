@@ -18,14 +18,21 @@
   export let cover = false;
 
   let element;
+  let updatingSrc = false;
 
-  $: {
-    if (element && asset) {
-      (async () => {
-        src = await getAssetPreviewURL(asset, loading, element);
-      })();
+  /**
+   * Update the {@link src} property.
+   */
+  const updateSrc = async () => {
+    if (asset && element && !updatingSrc) {
+      updatingSrc = true;
+      src = await getAssetPreviewURL(asset, loading, element);
+      updatingSrc = false;
     }
-  }
+  };
+
+  // @ts-ignore Arguments are triggers
+  $: updateSrc(element, asset);
 </script>
 
 <img class:checkerboard class:cover {loading} {src} {alt} {...$$restProps} bind:this={element} />

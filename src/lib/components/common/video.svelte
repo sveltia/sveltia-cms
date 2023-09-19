@@ -16,14 +16,21 @@
   export let cover = false;
 
   let element;
+  let updatingSrc = false;
 
-  $: {
-    if (element && asset) {
-      (async () => {
-        src = await getAssetPreviewURL(asset, loading, element);
-      })();
+  /**
+   * Update the {@link src} property.
+   */
+  const updateSrc = async () => {
+    if (asset && element && !updatingSrc) {
+      updatingSrc = true;
+      src = await getAssetPreviewURL(asset, loading, element);
+      updatingSrc = false;
     }
-  }
+  };
+
+  // @ts-ignore Arguments are triggers
+  $: updateSrc(element, asset);
 </script>
 
 <!-- svelte-ignore a11y-media-has-caption -->
