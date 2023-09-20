@@ -3,6 +3,7 @@ import { flatten } from 'flat';
 import moment from 'moment';
 import { _ } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
+import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
 import { user } from '$lib/services/auth';
 import {
   allEntries,
@@ -37,13 +38,28 @@ export const currentView = writable({});
 export const parseSummary = (collection, content) => {
   const valueMap = flatten(content);
 
-  return collection.summary.replace(/{{(.+?)}}/g, (_match, tag) => {
+  const {
+    summary,
+    name: collectionName,
+    _i18n: { defaultLocale = 'default' },
+  } = collection;
+
+  return summary.replace(/{{(.+?)}}/g, (_match, tag) => {
     const [fieldName, ...transformations] = tag.split(/\s*\|\s*/);
-    const fieldConfig = getFieldByKeyPath(collection.name, undefined, fieldName, valueMap) || {};
+    const fieldConfig = getFieldByKeyPath(collectionName, undefined, fieldName, valueMap);
     /**
      * @type {string}
      */
     let result = valueMap[fieldName];
+
+    // Resolve the displayed value for a relation field
+    if (fieldConfig?.widget === 'relation') {
+      const relFieldConfig = /** @type {RelationField} */ (fieldConfig);
+      const refEntries = getEntriesByCollection(relFieldConfig.collection);
+      const refOptions = getOptions(defaultLocale, relFieldConfig, refEntries);
+
+      result = refOptions.find((option) => option.value === result)?.label || result;
+    }
 
     if (!result) {
       return '';
@@ -62,7 +78,7 @@ export const parseSummary = (collection, content) => {
         result = String(result).toLowerCase();
       }
 
-      if (tf.startsWith('date')) {
+      if (tf.startsWith('date') && fieldConfig) {
         const [, format] = tf.match(/^date\('(.*?)'\)$/);
 
         const { time_format: timeFormat, picker_utc: pickerUTC = false } =
