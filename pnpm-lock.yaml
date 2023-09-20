@@ -9,8 +9,8 @@ dependencies:
     specifier: ^1.38.0
     version: 1.38.0
   '@sveltia/ui':
-    specifier: ^0.6.1
-    version: 0.6.1
+    specifier: ^0.6.2
+    version: 0.6.2
   fast-deep-equal:
     specifier: ^3.1.3
     version: 3.1.3
@@ -1057,8 +1057,8 @@ packages:
       - supports-color
     dev: true
 
-  /@sveltia/ui@0.6.1:
-    resolution: {integrity: sha512-0QwqwnQSfoweywaHRugRFnhiWABWb60EcV9BtzP9IgX+fcHQQAThbynYblweraUbAZU7tD/z6xmTQHqGYRPSCQ==}
+  /@sveltia/ui@0.6.2:
+    resolution: {integrity: sha512-xREJZvPPfJZh+q4+7tXso1XVIKtegtBF2YVDRC/bboXWADJ1aSMaZP/2yvybjRSnAz1ENJGw5R9l88W8nHYoHw==}
     dependencies:
       svelte: 4.2.0
     dev: false
