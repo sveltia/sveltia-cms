@@ -1,4 +1,5 @@
 import { flatten, unflatten } from 'flat';
+import { getEntriesByCollection, getFieldByKeyPath } from '$lib/services/contents';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
@@ -98,7 +99,23 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             return [fieldName, refEntry.slug];
           }
 
-          return [fieldName, flattenContent[fieldName.replace(/^fields\./, '')]];
+          const relFieldConfig = /** @type {RelationField} */ (
+            getFieldByKeyPath(fieldConfig.collection, undefined, fieldName, {})
+          );
+
+          const value = flattenContent[fieldName.replace(/^fields\./, '')];
+
+          // Resolve the displayed value for a nested relation field
+          // @todo Add test for this
+          if (relFieldConfig?.widget === 'relation') {
+            const nestedRefEntries = getEntriesByCollection(relFieldConfig.collection);
+            const nestedRefOptions = getOptions(locale, relFieldConfig, nestedRefEntries);
+            const nestedRefValue = nestedRefOptions.find((option) => option.value === value)?.label;
+
+            return [fieldName, nestedRefValue || value];
+          }
+
+          return [fieldName, value];
         }),
       );
 

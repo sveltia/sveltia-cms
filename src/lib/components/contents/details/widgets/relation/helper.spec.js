@@ -1,8 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
+import { siteConfig } from '$lib/services/config';
 
 describe('Test getOptions()', () => {
   const locale = 'default';
+
+  /** @type {I18nConfig} */
+  const _i18n = {
+    structure: 'single_file',
+    hasLocales: false,
+    defaultLocale: 'default',
+    locales: ['default'],
+  };
+
+  siteConfig.set({
+    media_folder: 'static/assets/uploads',
+    public_folder: '/assets/uploads',
+    collections: [
+      { name: 'authors', fields: [], _i18n },
+      { name: 'pages', fields: [], _i18n },
+      { name: 'relation_files', fields: [], _i18n },
+    ],
+  });
 
   // https://decapcms.org/docs/widgets/#relation
   // Referencing a folder collection example
