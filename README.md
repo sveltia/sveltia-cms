@@ -139,6 +139,8 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 ## Roadmap
 
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
+- Further performance optimization, including data caching and [Svelte 5](https://svelte.dev/blog/runes) migration
+- Further UX enhancements
 - Config editor[^10]
 - Documentation
 - Demo site
