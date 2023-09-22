@@ -92,7 +92,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
               ),
             );
 
-            return [fieldName, valueMap[Object.keys(valueMap)[0]]];
+            return [fieldName, valueMap[Object.keys(valueMap)[0]] || ''];
           }
 
           if (fieldName === 'slug') {
@@ -112,10 +112,10 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             const nestedRefOptions = getOptions(locale, relFieldConfig, nestedRefEntries);
             const nestedRefValue = nestedRefOptions.find((option) => option.value === value)?.label;
 
-            return [fieldName, nestedRefValue || value];
+            return [fieldName, nestedRefValue || value || ''];
           }
 
-          return [fieldName, value];
+          return [fieldName, value || ''];
         }),
       );
 
