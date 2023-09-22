@@ -4,7 +4,6 @@ import moment from 'moment';
 import { _ } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
-import { user } from '$lib/services/auth';
 import {
   allEntries,
   getEntriesByCollection,
@@ -277,25 +276,27 @@ const entryListSettings = writable({}, (set) => {
  * List of sort fields for the selected folder collection.
  * @type {import('svelte/store').Readable<string[]>}
  */
-export const sortFields = derived([user, selectedCollection], ([_user, _collection], set) => {
-  const { sortable_fields: customSortableFields, fields = [] } = _collection || {};
+export const sortFields = derived(
+  [selectedCollection, allEntries],
+  ([_collection, _allEntries], set) => {
+    const { sortable_fields: customSortableFields, fields = [] } = _collection || {};
+    const { commitAuthor, commitDate } = _allEntries?.[0] || {};
 
-  const _sortFields = (
-    Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
-  ).filter((fieldName) => fields.find((f) => f.name === fieldName));
+    const _sortFields = (
+      Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
+    ).filter((fieldName) => fields.find((f) => f.name === fieldName));
 
-  if (_user?.backendName !== 'local') {
-    if (!_sortFields.includes('author')) {
+    if (commitAuthor && !_sortFields.includes('author')) {
       _sortFields.push('commit_author');
     }
 
-    if (!_sortFields.includes('date')) {
+    if (commitDate && !_sortFields.includes('date')) {
       _sortFields.push('commit_date');
     }
-  }
 
-  set(_sortFields);
-});
+    set(_sortFields);
+  },
+);
 
 /**
  * List of all the entries for the selected folder collection.

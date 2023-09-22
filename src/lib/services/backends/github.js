@@ -147,6 +147,8 @@ const fetchFiles = async () => {
   // Then filter what’s managed in CMS
   const { entryFiles, assetFiles } = createFileList(files.filter(({ type }) => type === 'blob'));
   const allFiles = [...entryFiles, ...assetFiles];
+  // Temporally exclude commit authors/dates for performance
+  const includeCommits = false;
 
   // Skip fetching files if no files found
   if (!allFiles.length) {
@@ -154,39 +156,40 @@ const fetchFiles = async () => {
   }
 
   // Fetch all the text contents with the GraphQL API
-  const { repository: result } = await fetchGraphQL(`query {
-    repository(owner: "${owner}", name: "${repo}") {
-      ${allFiles
-        .map(
-          ({ type, path }, index) => `
-            ${
-              type === 'entry'
-                ? `
-                  content_${index}: object(expression: "${branch}:${path}") {
-                    ... on Blob {
-                      text
-                    }
-                  }
-                `
-                : ''
+  const { repository: result } = await fetchGraphQL(
+    `query {
+      repository(owner: "${owner}", name: "${repo}") {
+        ${allFiles
+          .map(({ type, path }, index) => {
+            const str = [];
+
+            if (type === 'entry') {
+              str.push(`content_${index}: object(expression: "${branch}:${path}") {
+                ... on Blob { text }
+              }`);
             }
-            commit_${index}: ref(qualifiedName: "${branch}") {
-              target {
-                ... on Commit {
-                  history(first: 1, path: "${path}") {
-                    nodes {
-                      author { name email }
-                      committedDate
+
+            if (includeCommits) {
+              str.push(`commit_${index}: ref(qualifiedName: "${branch}") {
+                target {
+                  ... on Commit {
+                    history(first: 1, path: "${path}") {
+                      nodes {
+                        author { name email }
+                        committedDate
+                      }
                     }
                   }
                 }
-              }
+              }`);
             }
-          `,
-        )
-        .join('')}
-    }
-  }`);
+
+            return str.join('');
+          })
+          .join('')}
+      }
+    }`.replace(/\s{2,}/g, ' '),
+  );
 
   /**
    * Get the file metadata.
@@ -195,11 +198,11 @@ const fetchFiles = async () => {
    * including the commit author and date.
    */
   const getMeta = (index) => {
-    const { author, committedDate } = result[`commit_${index}`].target.history.nodes[0];
+    const { author, committedDate } = result[`commit_${index}`]?.target.history.nodes[0] || {};
 
     return {
-      commitAuthor: author,
-      commitDate: new Date(committedDate),
+      commitAuthor: author || undefined,
+      commitDate: author ? new Date(committedDate) : undefined,
     };
   };
 

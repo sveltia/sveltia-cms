@@ -9,7 +9,6 @@ import {
   selectedAssetFolderPath,
   selectedAssets,
 } from '$lib/services/assets';
-import { user } from '$lib/services/auth';
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/prefs';
 import LocalStorage from '$lib/services/utils/local-storage';
@@ -261,11 +260,16 @@ export const currentView = writable({});
  * List of sort fields for the selected asset collection.
  * @type {import('svelte/store').Readable<string[]>}
  */
-export const sortFields = derived([user], ([_user], set) => {
+export const sortFields = derived([allAssets], ([_allAssets], set) => {
+  const { commitAuthor, commitDate } = _allAssets?.[0] || {};
   const _sortFields = ['name'];
 
-  if (_user?.backendName !== 'local') {
-    _sortFields.push('commit_author', 'commit_date');
+  if (commitAuthor) {
+    _sortFields.push('commit_author');
+  }
+
+  if (commitDate) {
+    _sortFields.push('commit_date');
   }
 
   set(_sortFields);

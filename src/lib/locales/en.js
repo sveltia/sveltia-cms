@@ -82,8 +82,8 @@ export const strings = {
   sort_keys: {
     none: 'None',
     name: 'Name',
-    commit_author: 'Author',
-    commit_date: 'Last Modified',
+    commit_author: 'Updated by',
+    commit_date: 'Updated on',
   },
   sort_order: 'Sort Order',
   ascending: 'Ascending',

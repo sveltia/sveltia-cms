@@ -82,8 +82,8 @@ export const strings = {
   sort_keys: {
     none: 'なし',
     name: '名前',
-    commit_author: '作成者',
-    commit_date: '最終更新日時',
+    commit_author: '更新者',
+    commit_date: '更新日時',
   },
   sort_order: '並べ替え順',
   ascending: '昇順',
