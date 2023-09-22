@@ -79,7 +79,7 @@
       if (isImageWidget && Number.isInteger(maxFileSize) && file.size > maxFileSize) {
         showSizeLimitDialog = true;
       } else {
-        // Use the `data:` URL temporally, and replace it later; avoid `blob:` here because it will
+        // Use the `data:` URL temporarily, and replace it later; avoid `blob:` here because it will
         // be unavailable event after Vite HMR
         currentValue = await getDataURL(file);
         // Cache the file itself for later upload

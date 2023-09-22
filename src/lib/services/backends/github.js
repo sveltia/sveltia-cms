@@ -147,7 +147,7 @@ const fetchFiles = async () => {
   // Then filter what’s managed in CMS
   const { entryFiles, assetFiles } = createFileList(files.filter(({ type }) => type === 'blob'));
   const allFiles = [...entryFiles, ...assetFiles];
-  // Temporally exclude commit authors/dates for performance
+  // Temporarily exclude commit authors/dates for performance
   const includeCommits = false;
 
   // Skip fetching files if no files found
