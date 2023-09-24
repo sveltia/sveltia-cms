@@ -3,7 +3,7 @@ export const strings = {
   collections: 'コレクション',
   contents: 'コンテンツ',
   entries: 'エントリー',
-  assets: 'ファイル',
+  assets: 'アセット',
   media: 'メディア',
   workflow: 'ワークフロー',
   editorial_workflow: '編集ワークフロー',
@@ -70,8 +70,8 @@ export const strings = {
   unexpected_error: '予期せぬエラー',
 
   // Global toolbar
-  search_placeholder: 'エントリーとファイルを検索…',
-  asset: 'ファイル',
+  search_placeholder: 'エントリーとアセットを検索…',
+  asset: 'アセット',
 
   // Library
   collection_not_found: 'コレクションが見つかりませんでした',
@@ -99,7 +99,7 @@ export const strings = {
   audio: '音声',
   document: '書類',
   other: 'その他',
-  show_assets: 'ファイルを表示',
+  show_assets: 'アセットを表示',
   show_info: '情報を表示',
   default: 'デフォルト',
   all_files: 'すべてのファイル',
@@ -189,9 +189,9 @@ export const strings = {
     },
     error: {
       invalid_key: 'あなたの API キーは正しくないか期限切れです。確認の上、再度お試しください。',
-      search_fetch_failed: 'ファイルを検索中に問題が発生しました。後で再度お試しください。',
+      search_fetch_failed: 'アセットを検索中に問題が発生しました。後で再度お試しください。',
       image_fetch_failed:
-        '選択されたファイルをダウンロード中に問題が発生しました。後で再度お試しください。',
+        '選択されたアセットをダウンロード中に問題が発生しました。後で再度お試しください。',
     },
     enter_url: 'URL を入力',
     enter_file_url: 'ファイルの URL を入力:',
@@ -305,7 +305,7 @@ export const strings = {
 
   // Keyboard shortcuts
   keyboard_shortcuts: {
-    search: 'エントリーとファイルを検索',
+    search: 'エントリーとアセットを検索',
     create_entry: '新しいエントリーを作成',
     save_entry: 'エントリーを保存',
   },
