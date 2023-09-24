@@ -62,6 +62,13 @@
       }}
     />
     <MenuItem
+      label={$_('help.release_notes')}
+      on:click={() => {
+        window.open('https://github.com/sveltia/sveltia-cms/releases', '_blank');
+      }}
+    />
+    <Divider />
+    <MenuItem
       label={$_('help.issue')}
       on:click={() => {
         window.open('https://github.com/sveltia/sveltia-cms/issues', '_blank');

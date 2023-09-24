@@ -15,6 +15,7 @@ export const strings = {
   git_repository: 'Git Repository',
   help: {
     documentation: 'Documentation',
+    release_notes: 'Release Notes',
     issue: 'Report Issue',
     feedback: 'Share Feedback',
   },

@@ -15,6 +15,7 @@ export const strings = {
   git_repository: 'Git レポジトリ',
   help: {
     documentation: 'ドキュメンテーション',
+    release_notes: 'リリースノート',
     issue: '問題を報告',
     feedback: 'フィードバックを共有',
   },
