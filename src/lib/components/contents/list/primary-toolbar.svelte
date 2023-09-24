@@ -43,6 +43,7 @@
         class="primary"
         disabled={!create}
         label={$_('create')}
+        keyShortcuts="Accel+E"
         on:click={() => {
           goto(`/collections/${name}/new`);
         }}

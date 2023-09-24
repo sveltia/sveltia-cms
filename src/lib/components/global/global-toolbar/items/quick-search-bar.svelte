@@ -1,11 +1,9 @@
 <script>
   import { SearchBar } from '@sveltia/ui';
-  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { selectedCollection } from '$lib/services/contents';
   import { goBack, goto, parseLocation } from '$lib/services/navigation';
   import { searchTerms } from '$lib/services/search';
-  import { isMac, matchShortcut } from '$lib/services/utils/events';
 
   /**
    * Navigate to the search results page if search terms are given, or go back the previous page.
@@ -33,11 +31,6 @@
    * @type {import('svelte').SvelteComponent}
    */
   let searchBar = undefined;
-  /**
-   * Keyboard shortcut to focus on the search bar. This has to be redefined within `onMount` because
-   * {@link isMac} requires `navigator` that doesn’t exist during SSR.
-   */
-  let focusShortcut = 'Ctrl+F';
 
   $: {
     // Restore search terms when the page is reloaded
@@ -45,30 +38,13 @@
       searchBar.value = $searchTerms;
     }
   }
-
-  onMount(() => {
-    focusShortcut = isMac() ? 'Meta+F' : 'Ctrl+F';
-  });
 </script>
-
-<svelte:window
-  on:keydown={(event) => {
-    if (
-      !(/** @type {HTMLElement} */ (event.target).matches('input, textarea')) &&
-      !!(/** @type {HTMLElement} */ (wrapper.querySelector('.search-bar')).offsetParent) &&
-      matchShortcut(event, focusShortcut)
-    ) {
-      event.preventDefault();
-      searchBar.focus();
-    }
-  }}
-/>
 
 <div class="wrapper" bind:this={wrapper}>
   <SearchBar
     bind:this={searchBar}
+    keyShortcuts="Accel+F"
     aria-label={$_('search_placeholder')}
-    aria-keyshortcuts={focusShortcut}
     --sui-textbox-label-align="center"
     on:input={({ target }) => {
       // @todo Implement quick search dropdown.

@@ -123,6 +123,7 @@
     class="primary"
     label={saving ? $_('saving') : $_($user?.backendName === 'local' ? 'save' : 'save_and_publish')}
     disabled={!modified || saving}
+    keyShortcuts="Accel+S"
     on:click={async () => {
       try {
         saving = true;
