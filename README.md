@@ -46,6 +46,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
 - You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server.
 - Delete multiple entries and assets at once.
+- Providing some keyboard shortcuts: `Ctrl/Command+F` to search entries and assets; `Ctrl/Command+E` to create a new entry; `Ctrl/Command+S` to save an entry.
 - Solving various outstanding Netlify/Decap CMS bugs[^11].
 
 ### Better i18n support
