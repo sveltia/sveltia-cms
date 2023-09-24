@@ -12,7 +12,7 @@
   export let open = false;
 </script>
 
-<Dialog title={$_('preferences')} bind:open showOk={false} showCancel={false} showClose={true}>
+<Dialog title={$_('settings')} bind:open showOk={false} showCancel={false} showClose={true}>
   <div class="wrapper">
     <TabList orientation="vertical">
       <Tab

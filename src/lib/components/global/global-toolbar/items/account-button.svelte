@@ -51,7 +51,7 @@
     />
     <Divider />
     <MenuItem
-      label={$_('preferences')}
+      label={$_('settings')}
       on:click={() => {
         showPrefsDialog = true;
       }}

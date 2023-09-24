@@ -9,7 +9,7 @@ export const strings = {
   editorial_workflow: 'Editorial Workflow',
   notifications: 'Notifications',
   site_config: 'Site Configuration',
-  preferences: 'Preferences',
+  settings: 'Settings',
   account: 'Account',
   live_site: 'Live Site',
   git_repository: 'Git Repository',
@@ -255,7 +255,7 @@ export const strings = {
     ready: 'Ready',
   },
 
-  // Preferences
+  // Settings
   prefs: {
     error: {
       permission_denied:

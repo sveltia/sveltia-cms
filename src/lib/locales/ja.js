@@ -9,7 +9,7 @@ export const strings = {
   editorial_workflow: '編集ワークフロー',
   notifications: '通知',
   site_config: 'サイト設定',
-  preferences: '個人設定',
+  settings: '設定',
   account: 'アカウント',
   live_site: '本番サイト',
   git_repository: 'Git レポジトリ',
@@ -255,7 +255,7 @@ export const strings = {
     ready: '公開可',
   },
 
-  // Preferences
+  // Settings
   prefs: {
     error: {
       permission_denied:

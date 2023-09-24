@@ -81,7 +81,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Installation | Installing with npm is not supported yet. |
-| UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Preferences. (Click on the Account button at the top right corner of the CMS.) |
+| UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Settings. (Click on the Account button at the top right corner of the CMS.) |
 | Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. The GitLab backend is coming soon. We plan to add the Test backend as well for our demo site, but Azure and Bitbucket are unlikely to be supported, mainly due to the lack of an API method to fetch content in bulk. Later we may implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
 | Media | External media storage services are not supported yet. |
@@ -242,8 +242,8 @@ In Sveltia CMS, those per-collection media folders are displayed prominently for
 Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the content editor. To enable the high-quality, quick translation feature:
 
 1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
-1. Go back to Sveltia CMS, click on the Account button at the top right corner, then click Preferences.
-1. Paste your key to the DeepL API Authentication Key field, and close the Preferences dialog.
+1. Go back to Sveltia CMS, click on the Account button at the top right corner, then click Settings.
+1. Paste your key to the DeepL API Authentication Key field, and close the Settings dialog.
 1. Open any entry, and you can now translate all fields or individual fields by selecting the Translate menu item.
 1. If you have upgraded to DeepL API Pro, provide your new Authentication Key in the same way.
 
