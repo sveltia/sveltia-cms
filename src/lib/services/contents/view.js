@@ -273,7 +273,7 @@ const entryListSettings = writable({}, (set) => {
  * @param {Collection} collection Collection.
  * @param {string} key Field name, which can be dot notation like `name.en` for a nested field,
  * or one of other entry metadata property keys: `slug`, `commit_author` and `commit_date` .
- * @returns {string} Label. For a nested field, it would be something like `Name » English`.
+ * @returns {string} Label. For a nested field, it would be something like `Name – English`.
  */
 const getSortFieldLabel = (collection, key) => {
   if (['name', 'commit_author', 'commit_date'].includes(key)) {
@@ -293,7 +293,7 @@ const getSortFieldLabel = (collection, key) => {
         return getFieldByKeyPath(collection.name, undefined, __key, {})?.label || _key;
       })
       .filter(Boolean)
-      .join(' » ');
+      .join(' – ');
   }
 
   return collection.fields?.find(({ name }) => name === key)?.label || key;
