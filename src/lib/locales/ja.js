@@ -14,6 +14,7 @@ export const strings = {
   live_site: '本番サイト',
   git_repository: 'Git レポジトリ',
   help: {
+    keyboard_shortcuts: 'キーボードショートカット',
     documentation: 'ドキュメンテーション',
     release_notes: 'リリースノート',
     issue: '問題を報告',
@@ -300,6 +301,13 @@ export const strings = {
         switch_label: '開発者モードを有効にする',
       },
     },
+  },
+
+  // Keyboard shortcuts
+  keyboard_shortcuts: {
+    search: 'エントリーとファイルを検索',
+    create_entry: '新しいエントリーを作成',
+    save_entry: 'エントリーを保存',
   },
 
   // File types

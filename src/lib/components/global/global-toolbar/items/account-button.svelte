@@ -1,6 +1,7 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import ShortcutsDialog from '$lib/components/keyboard-shortcuts/shortcuts-dialog.svelte';
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
   import { user } from '$lib/services/auth';
   import { backend } from '$lib/services/backends';
@@ -8,6 +9,7 @@
   import LocalStorage from '$lib/services/utils/local-storage';
 
   let showPrefsDialog = false;
+  let showShortcutsDialog = false;
 </script>
 
 <MenuButton class="ghost iconic" popupPosition="bottom-right">
@@ -56,6 +58,12 @@
     />
     <Divider />
     <MenuItem
+      label={$_('help.keyboard_shortcuts')}
+      on:click={() => {
+        showShortcutsDialog = true;
+      }}
+    />
+    <MenuItem
       label={$_('help.documentation')}
       on:click={() => {
         window.open('https://github.com/sveltia/sveltia-cms/blob/main/README.md', '_blank');
@@ -101,6 +109,7 @@
 </MenuButton>
 
 <PrefsDialog bind:open={showPrefsDialog} />
+<ShortcutsDialog bind:open={showShortcutsDialog} />
 
 <style lang="scss">
   .avatar {

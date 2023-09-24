@@ -14,6 +14,7 @@ export const strings = {
   live_site: 'Live Site',
   git_repository: 'Git Repository',
   help: {
+    keyboard_shortcuts: 'Keyboard Shortcuts',
     documentation: 'Documentation',
     release_notes: 'Release Notes',
     issue: 'Report Issue',
@@ -300,6 +301,13 @@ export const strings = {
         switch_label: 'Enable Developer Mode',
       },
     },
+  },
+
+  // Keyboard shortcuts
+  keyboard_shortcuts: {
+    search: 'Search for entries and assets',
+    create_entry: 'Create a new entry',
+    save_entry: 'Save an entry',
   },
 
   // File types
