@@ -9,6 +9,7 @@
   import { selectedCollection } from '$lib/services/contents';
 
   $: hasListedAssets = !!$listedAssets.length;
+  $: hasMultipleAssets = $listedAssets.length > 1;
 </script>
 
 {#if !$selectedCollection.files}
@@ -30,14 +31,10 @@
       }}
     />
     <Spacer flex={true} />
-    <SortMenu
-      disabled={!hasListedAssets}
-      {currentView}
-      fields={$sortFields.map((key) => ({ key, label: $_(`sort_keys.${key}`) }))}
-    />
+    <SortMenu disabled={!hasMultipleAssets} {currentView} fields={$sortFields} />
     <FilterMenu
       label={$_('file_type')}
-      disabled={!hasListedAssets}
+      disabled={!hasMultipleAssets}
       {currentView}
       noneLabel={$_('all')}
       filters={assetKinds.map((type) => ({ label: $_(type), field: 'fileType', pattern: type }))}

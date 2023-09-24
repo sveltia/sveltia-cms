@@ -2,6 +2,7 @@ import { flatten } from 'flat';
 import { get, writable } from 'svelte/store';
 import { getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
+import { getPropertyValue } from '$lib/services/contents/entry';
 import { isObject } from '$lib/services/utils/misc';
 
 /**
@@ -176,7 +177,7 @@ export const getEntriesByCollection = (collectionName) => {
   return get(allEntries).filter(
     (entry) =>
       entry.collectionName === collectionName &&
-      (!filter || entry.locales[defaultLocale]?.content[filter.field] === filter.value),
+      (!filter || getPropertyValue(entry, defaultLocale, filter.field) === filter.value),
   );
 };
 

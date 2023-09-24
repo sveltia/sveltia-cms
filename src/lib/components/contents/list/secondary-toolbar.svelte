@@ -11,6 +11,7 @@
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
   $: hasListedEntries = !!$listedEntries.length;
+  $: hasMultipleEntries = $listedEntries.length > 1;
 </script>
 
 {#if $selectedCollection.folder}
@@ -33,25 +34,20 @@
     />
     <Spacer flex={true} />
     <SortMenu
-      disabled={!hasListedEntries || !$sortFields.length}
+      disabled={!hasMultipleEntries || !$sortFields.length}
       {currentView}
-      fields={$sortFields.map((key) => ({
-        key,
-        label:
-          $selectedCollection.fields?.find(({ name }) => name === key)?.label ||
-          $_(`sort_keys.${key}`),
-      }))}
+      fields={$sortFields}
     />
     {#if $selectedCollection.view_filters?.length}
       <FilterMenu
-        disabled={!hasListedEntries}
+        disabled={!hasMultipleEntries}
         {currentView}
         filters={$selectedCollection.view_filters}
       />
     {/if}
     {#if $selectedCollection.view_groups?.length}
       <GroupMenu
-        disabled={!hasListedEntries}
+        disabled={!hasMultipleEntries}
         {currentView}
         groups={$selectedCollection.view_groups}
       />

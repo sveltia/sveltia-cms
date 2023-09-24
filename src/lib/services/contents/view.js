@@ -12,6 +12,7 @@ import {
   selectedEntries,
 } from '$lib/services/contents';
 import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
+import { getPropertyValue } from '$lib/services/contents/entry';
 import { prefs } from '$lib/services/prefs';
 import LocalStorage from '$lib/services/utils/local-storage';
 
@@ -135,32 +136,21 @@ const sortEntries = (entries, { key, order } = {}) => {
   const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
 
   const type =
-    { commit_author: String, commit_date: Date }[key] ||
-    _entries[0]?.locales[defaultLocale]?.content[key]?.constructor ||
+    { slug: String, commit_author: String, commit_date: Date }[key] ||
+    (_entries.length ? getPropertyValue(_entries[0], defaultLocale, key)?.constructor : String) ||
     String;
 
-  /**
-   * Get a property value by key.
-   * @param {Entry} entry Entry.
-   * @returns {*} Value.
-   */
-  const getValue = (entry) => {
-    const { locales, commitAuthor: { name, email } = {}, commitDate } = entry;
-
-    if (key === 'commit_author') {
-      return name || email;
-    }
-
-    if (key === 'commit_date') {
-      return commitDate;
-    }
-
-    return locales[defaultLocale]?.content[key] || entry[key] || '';
-  };
+  const valueMap = Object.fromEntries(
+    _entries.map((entry) => [entry.slug, getPropertyValue(entry, defaultLocale, key)]),
+  );
 
   _entries.sort((a, b) => {
-    const aValue = getValue(a);
-    const bValue = getValue(b);
+    const aValue = valueMap[a.slug];
+    const bValue = valueMap[b.slug];
+
+    if (aValue === undefined || bValue === undefined) {
+      return 0;
+    }
 
     if (type === String) {
       return aValue.localeCompare(bValue);
@@ -196,10 +186,14 @@ const filterEntries = (entries, { field, pattern } = { field: undefined, pattern
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
 
   return entries.filter((entry) => {
-    const value = entry.locales[defaultLocale]?.content[field] || entry[field];
+    const value = getPropertyValue(entry, defaultLocale, field);
+
+    if (value === undefined) {
+      return false;
+    }
 
     if (regex) {
-      return String(value || '').match(regex);
+      return !!String(value).match(regex);
     }
 
     return value === pattern;
@@ -226,16 +220,18 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
   const otherKey = get(_)('other');
 
   entries.forEach((entry) => {
-    const value = entry.locales[defaultLocale]?.content[field] || entry[field];
+    const value = getPropertyValue(entry, defaultLocale, field);
     /**
      * @type {string}
      */
     let key = undefined;
 
-    if (regex) {
-      [key = otherKey] = String(value || '').match(regex) || [];
-    } else {
-      key = value;
+    if (value !== undefined) {
+      if (regex) {
+        [key = otherKey] = String(value).match(regex) || [];
+      } else {
+        key = value;
+      }
     }
 
     if (!(key in groups)) {
@@ -273,18 +269,57 @@ const entryListSettings = writable({}, (set) => {
 });
 
 /**
+ * Get a field’s label by key
+ * @param {Collection} collection Collection.
+ * @param {string} key Field name, which can be dot notation like `name.en` for a nested field,
+ * or one of other entry metadata property keys: `slug`, `commit_author` and `commit_date` .
+ * @returns {string} Label. For a nested field, it would be something like `Name » English`.
+ */
+const getSortFieldLabel = (collection, key) => {
+  if (['name', 'commit_author', 'commit_date'].includes(key)) {
+    return get(_)(`sort_keys.${key}`);
+  }
+
+  if (key.includes('.')) {
+    return key
+      .split('.')
+      .map((_key, index, arr) => {
+        if (_key.match(/^\d+$/)) {
+          return undefined;
+        }
+
+        const __key = arr.slice(0, index + 1).join('.');
+
+        return getFieldByKeyPath(collection.name, undefined, __key, {})?.label || _key;
+      })
+      .filter(Boolean)
+      .join(' » ');
+  }
+
+  return collection.fields?.find(({ name }) => name === key)?.label || key;
+};
+
+/**
  * List of sort fields for the selected folder collection.
- * @type {import('svelte/store').Readable<string[]>}
+ * @type {import('svelte/store').Readable<{ key: string, label: string }[]>}
  */
 export const sortFields = derived(
   [selectedCollection, allEntries],
   ([_collection, _allEntries], set) => {
-    const { sortable_fields: customSortableFields, fields = [] } = _collection || {};
+    const { files, sortable_fields: customSortableFields } = _collection || {};
+
+    // Disable sorting for file collections
+    if (files) {
+      set([]);
+
+      return;
+    }
+
     const { commitAuthor, commitDate } = _allEntries?.[0] || {};
 
     const _sortFields = (
       Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
-    ).filter((fieldName) => fields.find((f) => f.name === fieldName));
+    ).filter((fieldName) => !!getFieldByKeyPath(_collection.name, undefined, fieldName, {}));
 
     if (commitAuthor && !_sortFields.includes('author')) {
       _sortFields.push('commit_author');
@@ -294,7 +329,7 @@ export const sortFields = derived(
       _sortFields.push('commit_date');
     }
 
-    set(_sortFields);
+    set(_sortFields.map((key) => ({ key, label: getSortFieldLabel(_collection, key) })));
   },
 );
 

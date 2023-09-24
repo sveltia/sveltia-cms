@@ -258,7 +258,7 @@ export const currentView = writable({});
 
 /**
  * List of sort fields for the selected asset collection.
- * @type {import('svelte/store').Readable<string[]>}
+ * @type {import('svelte/store').Readable<{ key: string, label: string }[]>}
  */
 export const sortFields = derived([allAssets], ([_allAssets], set) => {
   const { commitAuthor, commitDate } = _allAssets?.[0] || {};
@@ -272,7 +272,7 @@ export const sortFields = derived([allAssets], ([_allAssets], set) => {
     _sortFields.push('commit_date');
   }
 
-  set(_sortFields);
+  set(_sortFields.map((key) => ({ key, label: get(_)(`sort_keys.${key}`) })));
 });
 
 /**
