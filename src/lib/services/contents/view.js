@@ -360,10 +360,14 @@ export const entryGroups = derived(
      */
     let entries = [..._listedEntries];
 
-    entries = sortEntries(entries, _currentView?.sort);
-    entries = filterEntries(entries, _currentView?.filter);
-
-    set(groupEntries(entries, _currentView?.group));
+    // Reset the groups if the current collection is empty or a file collection
+    if (!entries.length || !!entries[0].fileName) {
+      set([]);
+    } else {
+      entries = sortEntries(entries, _currentView?.sort);
+      entries = filterEntries(entries, _currentView?.filter);
+      set(groupEntries(entries, _currentView?.group));
+    }
   },
 );
 
