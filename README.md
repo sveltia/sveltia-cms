@@ -38,7 +38,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript; you can use it with any framework.
 - Using the GraphQL API for GitHub by default to fetch contents quickly at once, so showing and searching entries and media are now instant. Saving entries and media is also much faster.
-- Small footprint: less than 250 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS.
+- Small footprint: less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS.
 
 ### Better productivity
 
@@ -46,7 +46,10 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
 - You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server.
 - Delete multiple entries and assets at once.
-- Providing some keyboard shortcuts: `Ctrl/Command+F` to search entries and assets; `Ctrl/Command+E` to create a new entry; `Ctrl/Command+S` to save an entry.
+- Providing some keyboard shortcuts for faster editing. More to come!
+  - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
+  - Save an entry: `Ctrl+S` (Windows/Linux) / `Command+S` (macOS)
+  - Search for entries and assets: `Ctrl+F` (Windows/Linux) / `Command+F` (macOS)
 - Solving various outstanding Netlify/Decap CMS bugs[^11].
 
 ### Better i18n support
