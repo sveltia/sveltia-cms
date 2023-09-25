@@ -647,7 +647,7 @@ export const saveEntry = async () => {
     text: null,
     collectionName,
     folder: internalAssetFolder,
-    commitAuthor: _user.email ? { name: _user.name, email: _user.email } : null,
+    commitAuthor: _user.email ? { name: _user.name, email: _user.email } : undefined,
     commitDate: new Date(), // Use the current datetime
   };
 
