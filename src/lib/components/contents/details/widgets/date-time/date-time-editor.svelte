@@ -90,6 +90,8 @@
 
     input {
       margin-right: auto;
+      color: inherit;
+      background-color: transparent;
       font-family: var(--sui-textbox-font-family);
 
       &:disabled {

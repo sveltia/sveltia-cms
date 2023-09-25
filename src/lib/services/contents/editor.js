@@ -13,6 +13,7 @@ import { fillSlugTemplate } from '$lib/services/contents/slug';
 import { translator } from '$lib/services/integrations/translators';
 import { formatEntryFile, getFileExtension } from '$lib/services/parser';
 import { prefs } from '$lib/services/prefs';
+import { getDateTimeParts } from '$lib/services/utils/datetime';
 import { getHash, renameIfNeeded } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
 import { escapeRegExp } from '$lib/services/utils/strings';
@@ -143,6 +144,33 @@ const createNewContent = (fields, defaultValues = {}) => {
 
         return;
       }
+    }
+
+    if (widget === 'date' || widget === 'datetime') {
+      if (typeof defaultValue === 'string') {
+        newContent[keyPath] = defaultValue;
+      } else {
+        const {
+          date_format: dateFormat,
+          time_format: timeFormat,
+          picker_utc: pickerUTC = false,
+        } = /** @type {DateTimeField} */ (fieldConfig);
+
+        // Default to current date/time
+        const { year, month, day, hour, minute } = getDateTimeParts({
+          timeZone: pickerUTC ? 'UTC' : undefined,
+        });
+
+        if (timeFormat === false) {
+          newContent[keyPath] = `${year}-${month}-${day}`;
+        } else if (dateFormat === false) {
+          newContent[keyPath] = `${hour}:${minute}`;
+        } else {
+          newContent[keyPath] = `${year}-${month}-${day}T${hour}:${minute}${pickerUTC ? 'Z' : ''}`;
+        }
+      }
+
+      return;
     }
 
     newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
