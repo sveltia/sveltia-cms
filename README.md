@@ -127,6 +127,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Dynamic Default Values | Supported. |
 | Nested Collections | Not supported yet. |
 | Remark plugins | Not supported yet. |
+| Custom formatters | Not supported yet. |
 
 ### Other features
 

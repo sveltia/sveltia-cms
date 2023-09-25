@@ -36,6 +36,7 @@ window.CMS = new Proxy(
         'invokeEvent',
         'moment',
         'registerBackend',
+        'registerCustomFormat',
         'registerEditorComponent',
         'registerEventListener',
         'registerLocale',
