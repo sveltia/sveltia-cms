@@ -32,7 +32,8 @@ export const createFileList = (files) => {
       path.startsWith(internalPath),
     );
 
-    if (contentPathConfig && name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i)) {
+    // eslint-disable-next-line no-use-before-define
+    if (contentPathConfig && name.split('.').pop() === getFileExtension(contentPathConfig)) {
       entryFiles.push({
         ...fileInfo,
         type: 'entry',
@@ -57,7 +58,7 @@ export const createFileList = (files) => {
 
 /**
  * Get the file extension for the given collection.
- * @param {Collection} collection File’s collection configuration.
+ * @param {Collection | object} collection File’s collection or path configuration.
  * @returns {string} Determined extension.
  */
 export const getFileExtension = ({ format, extension }) => {
