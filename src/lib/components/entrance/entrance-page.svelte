@@ -27,6 +27,8 @@
           $entriesLoaded = true;
         } catch (ex) {
           loadingError = ex.cause || $_('unexpected_error');
+          // eslint-disable-next-line no-console
+          console.error(ex);
         }
       })();
     }
