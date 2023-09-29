@@ -320,6 +320,7 @@ export const strings = {
     jpg: 'JPEG 画像',
     png: 'PNG 画像',
     svg: 'SVG 画像',
+    tif: 'TIFF 画像',
     tiff: 'TIFF 画像',
     webp: 'WebP 画像',
     avi: 'AVI 動画',
