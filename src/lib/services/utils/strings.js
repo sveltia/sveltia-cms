@@ -11,7 +11,7 @@ export const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\
  * @param {string} string Original string, e.g. `/foo/bar/`.
  * @returns {string} Trimmed string, e.g. `foo/bar`.
  */
-export const stripSlashes = (string) => string.replace(/^\//, '').replace(/\/$/, '');
+export const stripSlashes = (string) => string.replace(/^\/+/, '').replace(/\/+$/, '');
 
 /**
  * Generate a v4 UUID.

@@ -14,7 +14,9 @@ import {
 import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
 import { getPropertyValue } from '$lib/services/contents/entry';
 import { prefs } from '$lib/services/prefs';
+import { getDateTimeParts } from '$lib/services/utils/datetime';
 import LocalStorage from '$lib/services/utils/local-storage';
+import { stripSlashes } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.contents-view';
 /**
@@ -29,95 +31,159 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
 export const currentView = writable({});
 
 /**
- * Parse the summary template to generate the summary to be displayed on the entry list, etc.
- * @param {Collection} collection Entry’s collection.
- * @param {EntryContent} content Entry content.
- * @returns {string} Formatted summary.
+ * Transform summary template.
+ * @param {string} summary Original summary.
+ * @param {string} tf Transformation.
+ * @param {Field} fieldConfig Field configuration.
+ * @returns {string} Transformed summary.
  * @see https://decapcms.org/docs/beta-features/#summary-string-template-transformations
  */
-export const parseSummary = (collection, content) => {
-  const valueMap = flatten(content);
+const transformSummary = (summary, tf, fieldConfig) => {
+  if (tf === 'upper') {
+    return String(summary).toUpperCase();
+  }
 
+  if (tf === 'lower') {
+    return String(summary).toLowerCase();
+  }
+
+  if (tf.startsWith('date') && fieldConfig) {
+    const [, format] = tf.match(/^date\('(.*?)'\)$/);
+
+    const { time_format: timeFormat, picker_utc: pickerUTC = false } =
+      /** @type {DateTimeField} */ (fieldConfig);
+
+    const dateOnly = timeFormat === false;
+
+    return (
+      pickerUTC ||
+      (dateOnly && !!summary?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
+      (dateOnly && !!summary.match(/T00:00(?::00)?(?:\.000)?Z$/))
+        ? moment.utc(summary)
+        : moment(summary)
+    ).format(format);
+  }
+
+  if (tf.startsWith('default')) {
+    const [, defaultValue] = tf.match(/^default\('?(.*?)'?\)$/);
+
+    return summary ?? defaultValue;
+  }
+
+  if (tf.startsWith('ternary')) {
+    const [, truthyValue, falsyValue] = tf.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
+
+    return summary ? truthyValue : falsyValue;
+  }
+
+  if (tf.startsWith('truncate')) {
+    const [, number, string = ''] = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
+    const max = Number(number);
+    const truncated = String(summary).substring(0, max);
+
+    return String(summary).length > max ? `${truncated}${string}` : truncated;
+  }
+
+  return summary;
+};
+
+/**
+ * Parse the collection summary template to generate the summary to be displayed on the entry list.
+ * @param {Collection} collection Entry’s collection.
+ * @param {Entry} entry Entry.
+ * @param {EntryContent} content Entry content.
+ * @returns {string} Formatted summary.
+ * @see https://decapcms.org/docs/configuration-options/#summary
+ */
+export const formatSummary = (collection, entry, content) => {
   const {
-    summary,
     name: collectionName,
+    folder: collectionFolder,
+    identifier_field: identifierField,
+    summary: summaryTemplate,
     _i18n: { defaultLocale = 'default' },
   } = collection;
 
-  return summary.replace(/{{(.+?)}}/g, (_match, tag) => {
+  // Fields other than `title` should be defined with `identifier_field` as per the Netlify/Decap
+  // CMS document, but actually `name` also works as a fallback. We also use the label` property and
+  // the entry slug.
+  if (!summaryTemplate) {
+    return content[identifierField] || content.title || content.name || content.label || entry.slug;
+  }
+
+  const valueMap = flatten(content);
+  const entryPath = entry.locales[defaultLocale].path;
+
+  /**
+   * @param {string} tag Field name or one of special tags.
+   * @returns {string} Replaced string.
+   */
+  const replace = (tag) => {
     const [fieldName, ...transformations] = tag.split(/\s*\|\s*/);
     const fieldConfig = getFieldByKeyPath(collectionName, undefined, fieldName, valueMap);
-    /**
-     * @type {string}
-     */
-    let result = valueMap[fieldName];
 
-    // Resolve the displayed value for a relation field
-    if (fieldConfig?.widget === 'relation') {
-      const relFieldConfig = /** @type {RelationField} */ (fieldConfig);
-      const refEntries = getEntriesByCollection(relFieldConfig.collection);
-      const refOptions = getOptions(defaultLocale, relFieldConfig, refEntries);
+    let summary = (() => {
+      if (tag === 'slug') {
+        return entry.slug;
+      }
 
-      result = refOptions.find((option) => option.value === result)?.label || result;
-    }
+      if (tag === 'dirname') {
+        return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(collectionFolder, ''));
+      }
 
-    if (!result) {
+      if (tag === 'filename') {
+        return entryPath.split('/').pop().split('.').shift();
+      }
+
+      if (tag === 'extension') {
+        return entryPath.split('/').pop().split('.').pop();
+      }
+
+      if (tag === 'commit_date') {
+        return entry.commitDate || '';
+      }
+
+      if (tag === 'commit_author') {
+        return entry.commitAuthor?.name || entry.commitAuthor?.login || entry.commitAuthor?.email;
+      }
+
+      const fieldValue = valueMap[fieldName];
+
+      // Resolve the displayed value for a relation field
+      if (fieldConfig?.widget === 'relation') {
+        const relFieldConfig = /** @type {RelationField} */ (fieldConfig);
+        const refEntries = getEntriesByCollection(relFieldConfig.collection);
+        const refOptions = getOptions(defaultLocale, relFieldConfig, refEntries);
+        const label = refOptions.find((option) => option.value === fieldValue)?.label;
+
+        return label || fieldValue;
+      }
+
+      return fieldValue;
+    })();
+
+    if (!summary) {
       return '';
     }
 
-    if (!transformations) {
-      return result;
+    if (!transformations.length) {
+      if (summary instanceof Date) {
+        const { year, month, day } = getDateTimeParts({ date: summary });
+
+        return `${year}-${month}-${day}`;
+      }
+
+      return String(summary);
     }
 
     transformations.forEach((tf) => {
-      if (tf === 'upper') {
-        result = String(result).toUpperCase();
-      }
-
-      if (tf === 'lower') {
-        result = String(result).toLowerCase();
-      }
-
-      if (tf.startsWith('date') && fieldConfig) {
-        const [, format] = tf.match(/^date\('(.*?)'\)$/);
-
-        const { time_format: timeFormat, picker_utc: pickerUTC = false } =
-          /** @type {DateTimeField} */ (fieldConfig);
-
-        const dateOnly = timeFormat === false;
-
-        result = (
-          pickerUTC ||
-          (dateOnly && !!result?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
-          (dateOnly && !!result.match(/T00:00(?::00)?(?:\.000)?Z$/))
-            ? moment.utc(result)
-            : moment(result)
-        ).format(format);
-      }
-
-      if (tf.startsWith('default')) {
-        const [, defaultValue] = tf.match(/^default\('?(.*?)'?\)$/);
-
-        result ||= defaultValue;
-      }
-
-      if (tf.startsWith('ternary')) {
-        const [, truthyValue, falsyValue] = tf.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
-
-        result = result ? truthyValue : falsyValue;
-      }
-
-      if (tf.startsWith('truncate')) {
-        const [, number, string = ''] = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
-        const max = Number(number);
-        const truncated = String(result).substring(0, max);
-
-        result = String(result).length > max ? `${truncated}${string}` : truncated;
-      }
+      summary = transformSummary(summary, tf, fieldConfig);
     });
 
-    return result;
-  });
+    return String(summary);
+  };
+
+  return summaryTemplate.replace(/{{(.+?)}}/g, (_match, tag) => replace(tag)).trim();
 };
 
 /**

@@ -3,7 +3,7 @@
   import Image from '$lib/components/common/image.svelte';
   import { getMediaFieldURL } from '$lib/services/assets';
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
-  import { parseSummary } from '$lib/services/contents/view';
+  import { formatSummary } from '$lib/services/contents/view';
   import { goto } from '$lib/services/navigation';
 
   /**
@@ -54,18 +54,7 @@
   {/if}
   <TableCell class="title">
     <span>
-      {#if $selectedCollection.summary}
-        {parseSummary($selectedCollection, content)}
-      {:else}
-        <!--
-        Fields other than `title` should be defined with `identifier_field` as per the
-        Netlify document, but actually, `name` also works as a fallback.
-      -->
-        {content[$selectedCollection.identifier_field] ||
-          content.title ||
-          content.name ||
-          content.label}
-      {/if}
+      {formatSummary($selectedCollection, entry, content)}
     </span>
   </TableCell>
 </TableRow>
