@@ -608,7 +608,11 @@ const createEntryPath = (draft, locale, slug) => {
       })
     : slug;
 
-  const extension = getFileExtension(collection);
+  const extension = getFileExtension({
+    format: collection.format,
+    extension: collection.extension,
+  });
+
   const defaultOption = `${collectionFolder}/${path}.${extension}`;
 
   const pathOptions = {

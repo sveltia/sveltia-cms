@@ -10,6 +10,38 @@ import { isObject } from '$lib/services/utils/misc';
 import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
 /**
+ * Get the file extension for the given collection.
+ * @param {object} pathConfig File’s path configuration.
+ * @param {string} [pathConfig.format] File format, e.g. `json`.
+ * @param {string} [pathConfig.extension] File extension, e.g. `json`
+ * @param {string} [pathConfig.file] File name, e.g. `about.json`.
+ * @returns {string} Determined extension.
+ */
+export const getFileExtension = ({ file, format, extension }) => {
+  if (extension) {
+    return extension;
+  }
+
+  if (file) {
+    return (file.match(/[^.]+$/) || [])[0] || 'md';
+  }
+
+  if (format === 'yml' || format === 'yaml') {
+    return 'yml';
+  }
+
+  if (format === 'toml') {
+    return 'toml';
+  }
+
+  if (format === 'json') {
+    return 'json';
+  }
+
+  return 'md';
+};
+
+/**
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
  * @param {object[]} files Unfiltered file list.
@@ -32,7 +64,6 @@ export const createFileList = (files) => {
       path.startsWith(internalPath),
     );
 
-    // eslint-disable-next-line no-use-before-define
     if (contentPathConfig && name.split('.').pop() === getFileExtension(contentPathConfig)) {
       entryFiles.push({
         ...fileInfo,
@@ -54,31 +85,6 @@ export const createFileList = (files) => {
   });
 
   return { entryFiles, assetFiles };
-};
-
-/**
- * Get the file extension for the given collection.
- * @param {Collection | object} collection File’s collection or path configuration.
- * @returns {string} Determined extension.
- */
-export const getFileExtension = ({ format, extension }) => {
-  if (extension) {
-    return extension;
-  }
-
-  if (format === 'yml' || format === 'yaml') {
-    return 'yml';
-  }
-
-  if (format === 'toml') {
-    return 'toml';
-  }
-
-  if (format === 'json') {
-    return 'json';
-  }
-
-  return 'md';
 };
 
 /**
@@ -326,7 +332,13 @@ export const parseEntryFiles = (entryFiles) => {
     } = file;
 
     const collection = getCollection(collectionName);
-    const extension = getFileExtension(collection);
+
+    const extension = getFileExtension({
+      format: collection.format,
+      extension: collection.extension,
+      file: fileName,
+    });
+
     const { structure, hasLocales, locales, defaultLocale } = collection._i18n;
 
     const [, filePath] = fileName
