@@ -92,9 +92,12 @@
     padding: 4px;
 
     .summary {
+      overflow: hidden;
+      color: var(--sui-secondary-foreground-color);
       font-size: var(--sui-font-size-small);
       font-weight: 600;
-      color: var(--sui-secondary-foreground-color);
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 

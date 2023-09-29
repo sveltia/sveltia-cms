@@ -403,7 +403,10 @@
     }
 
     .summary {
+      overflow: hidden;
       padding: 8px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 </style>
