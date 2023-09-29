@@ -478,6 +478,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
  * results as a boolean. Mimic the native `ValidityState` API.
  * @returns {boolean} Whether the draft is valid.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
+ * @todo Rewrite this to better support list and object fields.
  */
 const validateEntry = () => {
   const { collection, fileName, currentValues, validities } = get(entryDraft);

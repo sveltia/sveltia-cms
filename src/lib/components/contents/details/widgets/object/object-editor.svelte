@@ -67,6 +67,7 @@
     <div class="summary" id="oblect-{widgetId}-summary">
       {#if summary}
         {summary.replaceAll(
+          // @todo Resolve relation fields
           /{{fields\.(.+?)}}/g,
           (_match, _keyPath) => `${keyValueMap[`${keyPath}.${_keyPath}`] || ''}`,
         )}

@@ -309,6 +309,7 @@
               <div class="summary">
                 {#if summary}
                   {summary.replaceAll(
+                    // @todo Resolve relation fields
                     /{{fields\.(.+?)}}/g,
                     (_match, _keyPath) =>
                       `${
