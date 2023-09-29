@@ -108,7 +108,7 @@ export default class IndexedDB {
    * @param {[string, any][]} entries Key/value pairs.
    * @returns {Promise<string>} Key.
    */
-  async setAll(entries) {
+  async saveEntries(entries) {
     return this.#query((store) => {
       entries.forEach(([key, value]) => {
         store.put(value, key);

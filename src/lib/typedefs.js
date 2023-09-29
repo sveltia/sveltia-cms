@@ -86,6 +86,13 @@
  */
 
 /**
+ * Git commit author.
+ * @typedef {object} CommitAuthor
+ * @property {string} name Displayed name.
+ * @property {string} email Email.
+ */
+
+/**
  * Git commit type.
  * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia' |
  * 'openAuthoring'} CommitType
@@ -450,8 +457,7 @@
  * property named `default`.
  * @property {string} collectionName Collection name.
  * @property {string} [fileName] File name for a file collection.
- * @property {{ name: string, email: string }} [commitAuthor] Git committer’s name or email for a
- * Git backend.
+ * @property {CommitAuthor} [commitAuthor] Git committer info for a Git backend.
  * @property {Date} [commitDate] Commit date for a Git backend.
  */
 
@@ -570,8 +576,7 @@
  * @property {string} [collectionName] Collection name if it belongs to a collection asset folder.
  * @property {string} folder Path of a collection-specific folder that contains the file or global
  * media folder.
- * @property {{ name: string, email: string }} [commitAuthor] Git committer’s name or email for a
- * Git backend.
+ * @property {CommitAuthor} [commitAuthor] Git committer info for a Git backend.
  * @property {Date} [commitDate] Commit date for a Git backend.
  * @property {string} [fetchURL] URL to fetch the file content. Git backend only.
  * @property {string} [repoFileURL] Web-accessible URL on the Git repository. Git backend only.

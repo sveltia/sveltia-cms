@@ -7,6 +7,7 @@ import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
 import { getBase64 } from '$lib/services/utils/files';
+import IndexedDB from '$lib/services/utils/indexeddb';
 import LocalStorage from '$lib/services/utils/local-storage';
 
 const label = 'GitHub';
@@ -147,89 +148,116 @@ const fetchFiles = async () => {
   // Then filter what’s managed in CMS
   const { entryFiles, assetFiles } = createFileList(files.filter(({ type }) => type === 'blob'));
   const allFiles = [...entryFiles, ...assetFiles];
-  // Temporarily exclude commit authors/dates for performance
-  const includeCommits = false;
 
   // Skip fetching files if no files found
   if (!allFiles.length) {
     return;
   }
 
-  // Fetch all the text contents with the GraphQL API
-  const { repository: result } = await fetchGraphQL(
-    `query {
-      repository(owner: "${owner}", name: "${repo}") {
-        ${allFiles
-          .map(({ type, path }, index) => {
-            const str = [];
+  const cacheDB = new IndexedDB(`github:${owner}/${repo}`, 'file-cache');
+  const cachedFiles = Object.fromEntries(await cacheDB.entries());
 
-            if (type === 'entry') {
-              str.push(`content_${index}: object(expression: "${branch}:${path}") {
-                ... on Blob { text }
-              }`);
-            }
+  // Restore cached text and commit info
+  allFiles.forEach(({ sha, path }, index) => {
+    if (cachedFiles[path]?.sha === sha) {
+      Object.assign(allFiles[index], cachedFiles[path]);
+    }
+  });
 
-            if (includeCommits) {
-              str.push(`commit_${index}: ref(qualifiedName: "${branch}") {
-                target {
-                  ... on Commit {
-                    history(first: 1, path: "${path}") {
-                      nodes {
-                        author { name email }
-                        committedDate
-                      }
-                    }
-                  }
-                }
-              }`);
-            }
+  const query = allFiles
+    .filter(({ meta }) => !meta)
+    .map(({ type, sha, path }, index) => {
+      const str = [];
 
-            return str.join('');
-          })
-          .join('')}
+      if (type === 'entry') {
+        str.push(`content_${index}: object(oid: "${sha}") {
+          ... on Blob { text }
+        }`);
       }
-    }`.replace(/\s{2,}/g, ' '),
-  );
 
-  /**
-   * Get the file metadata.
-   * @param {number} index Array index to be searched in the GraphQL response.
-   * @returns {{ commitAuthor: { name: string, email: string }, commitDate: Date }} Metadata
-   * including the commit author and date.
-   */
-  const getMeta = (index) => {
-    const { author, committedDate } = result[`commit_${index}`]?.target.history.nodes[0] || {};
+      str.push(`commit_${index}: ref(qualifiedName: "${branch}") {
+        target {
+          ... on Commit {
+            history(first: 1, path: "${path}") {
+              nodes {
+                author { name, email }
+                committedDate
+              }
+            }
+          }
+        }
+      }`);
 
-    return {
-      commitAuthor: author || undefined,
-      commitDate: author ? new Date(committedDate) : undefined,
-    };
-  };
+      return str.join('');
+    })
+    .join('')
+    .replace(/\s{2,}/g, ' ');
+
+  // Fetch all the text contents with the GraphQL API
+  const { repository: result } = query
+    ? await fetchGraphQL(`query { repository(owner: "${owner}", name: "${repo}") { ${query} } }`)
+    : { repository: {} };
+
+  /** @type {[string, { sha: string, text: string, meta: object }][]} */
+  const downloadedFileList = allFiles
+    .filter(({ meta }) => !meta)
+    .map(({ sha, path }, index) => {
+      const {
+        author: { name, email },
+        committedDate,
+      } = result[`commit_${index}`].target.history.nodes[0];
+
+      const data = {
+        sha,
+        text: result[`content_${index}`]?.text,
+        meta: {
+          commitAuthor: { name, email },
+          commitDate: new Date(committedDate),
+        },
+      };
+
+      return [path, data];
+    });
+
+  const downloadedFileMap = Object.fromEntries(downloadedFileList);
 
   allEntries.set(
     parseEntryFiles(
-      entryFiles.map((/** @type {object} */ entry, index) => ({
-        ...entry,
-        text: result[`content_${index}`].text,
-        meta: { ...(entry.meta || {}), ...getMeta(index) },
+      entryFiles.map((file) => ({
+        ...file,
+        text: file.text ?? downloadedFileMap[file.path].text,
+        meta: file.meta ?? downloadedFileMap[file.path].meta,
       })),
     ),
   );
 
   allAssets.set(
     parseAssetFiles(
-      assetFiles.map((/** @type {object} */ asset, index) => ({
-        ...asset,
+      assetFiles.map((file) => ({
+        ...file,
         /** Blob URL to be set later via {@link fetchBlob} */
         url: null,
         /** starting with `https://api.github.com`, to be used by {@link fetchBlob} */
-        fetchURL: asset.url,
-        repoFileURL: `https://github.com/${owner}/${repo}/blob/${branch}/${asset.path}`,
-        name: asset.path.split('/').pop(),
-        meta: { ...(asset.meta || {}), ...getMeta(entryFiles.length + index) },
+        fetchURL: file.url,
+        repoFileURL: `https://github.com/${owner}/${repo}/blob/${branch}/${file.path}`,
+        name: file.path.split('/').pop(),
+        meta: file.meta ?? downloadedFileMap[file.path].meta,
       })),
     ),
   );
+
+  const usedPaths = allFiles.map(({ path }) => path);
+  const unusedPaths = Object.keys(cachedFiles).filter((path) => !usedPaths.includes(path));
+
+  // Save new entry caches
+  if (downloadedFileList.length) {
+    await cacheDB.saveEntries(downloadedFileList);
+  }
+
+  // Delete old entry caches
+  if (unusedPaths.length) {
+    await cacheDB.deleteEntries(unusedPaths);
+  }
 };
 
 /**
