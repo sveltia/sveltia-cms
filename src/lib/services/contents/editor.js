@@ -92,7 +92,7 @@ const createNewContent = (fields, defaultValues = {}) => {
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widget === 'list') {
-      const { fields: subFields, field: subField } = /** @type {ListField} */ (fieldConfig);
+      const { fields: subFields } = /** @type {ListField} */ (fieldConfig);
 
       if (!isArray) {
         newContent[keyPath] = [];
@@ -100,7 +100,7 @@ const createNewContent = (fields, defaultValues = {}) => {
         return;
       }
 
-      if (subFields || subField) {
+      if (subFields) {
         defaultValue.forEach((items, index) => {
           Object.entries(items).forEach(([key, val]) => {
             newContent[[keyPath, index, key].join('.')] = val;

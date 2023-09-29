@@ -141,7 +141,7 @@
    */
   const addItem = (subFieldName) => {
     updateComplexList(({ valueList, viewList }) => {
-      const newItem = {};
+      let newItem = field ? undefined : {};
 
       const subFields = subFieldName
         ? types.find(({ name }) => name === subFieldName)?.fields || []
@@ -152,7 +152,11 @@
           isObject(defaultValues) && name in defaultValues ? defaultValues[name] : defaultValue;
 
         if (_defaultValue) {
-          newItem[name] = _defaultValue;
+          if (field) {
+            newItem = _defaultValue;
+          } else {
+            newItem[name] = _defaultValue;
+          }
         }
       });
 
@@ -300,7 +304,7 @@
                 : fields || [field]}
               {#each subFields as subField (subField.name)}
                 <FieldEditor
-                  keyPath={[keyPath, index, subField.name].join('.')}
+                  keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
                   {locale}
                   fieldConfig={subField}
                 />
@@ -312,9 +316,9 @@
                     // @todo Resolve relation fields
                     /{{fields\.(.+?)}}/g,
                     (_match, _keyPath) =>
-                      `${
-                        $entryDraft.currentValues[locale][`${keyPath}.${index}.${_keyPath}`] || ''
-                      }`,
+                      $entryDraft.currentValues[locale][`${keyPath}.${index}.${_keyPath}`] ||
+                      $entryDraft.currentValues[locale][`${keyPath}.${index}`] ||
+                      '',
                   )}
                 {:else}
                   {item.title || item.name || Object.values(item)[0] || ''}

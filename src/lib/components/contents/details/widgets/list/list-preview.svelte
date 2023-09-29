@@ -57,7 +57,7 @@
     <section class="subsection">
       {#each subFields as subField (subField.name)}
         <FieldPreview
-          keyPath={[keyPath, index, subField.name].join('.')}
+          keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
           {locale}
           fieldConfig={subField}
         />
