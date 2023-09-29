@@ -109,10 +109,10 @@ const sortAssets = (assets, { key, order } = {}) => {
    * @returns {*} Value.
    */
   const getValue = (asset) => {
-    const { commitAuthor: { name, email } = {}, commitDate } = asset;
+    const { commitAuthor: { name, login, email } = {}, commitDate } = asset;
 
     if (key === 'commit_author') {
-      return name || email;
+      return name || login || email;
     }
 
     if (key === 'commit_date') {

@@ -90,6 +90,8 @@
  * @typedef {object} CommitAuthor
  * @property {string} name Displayed name.
  * @property {string} email Email.
+ * @property {number} [id] User account ID for the Git backend.
+ * @property {string} [login] User account name for the Git backend.
  */
 
 /**

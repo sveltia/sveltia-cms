@@ -180,7 +180,7 @@ const fetchFiles = async () => {
           ... on Commit {
             history(first: 1, path: "${path}") {
               nodes {
-                author { name, email }
+                author { name, email, user { id: databaseId, login } }
                 committedDate
               }
             }
@@ -203,7 +203,7 @@ const fetchFiles = async () => {
     .filter(({ meta }) => !meta)
     .map(({ sha, path }, index) => {
       const {
-        author: { name, email },
+        author: { name, email, user: _user },
         committedDate,
       } = result[`commit_${index}`].target.history.nodes[0];
 
@@ -211,7 +211,12 @@ const fetchFiles = async () => {
         sha,
         text: result[`content_${index}`]?.text,
         meta: {
-          commitAuthor: { name, email },
+          commitAuthor: {
+            name,
+            email,
+            id: _user?.id,
+            login: _user?.login,
+          },
           commitDate: new Date(committedDate),
         },
       };

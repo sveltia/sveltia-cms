@@ -105,7 +105,7 @@
   {#if commitAuthor}
     <section>
       <h4>{$_('sort_keys.commit_author')}</h4>
-      <p>{commitAuthor.name || commitAuthor.email}</p>
+      <p>{commitAuthor.name || commitAuthor.login || commitAuthor.email}</p>
     </section>
   {/if}
   {#if commitDate}

@@ -11,14 +11,14 @@ import { getEntriesByCollection, getFieldByKeyPath } from '$lib/services/content
  * @returns {*} Value.
  */
 export const getPropertyValue = (entry, locale, key) => {
-  const { slug, locales, commitAuthor: { name, email } = {}, commitDate } = entry;
+  const { slug, locales, commitAuthor: { name, login, email } = {}, commitDate } = entry;
 
   if (key === 'slug') {
     return slug;
   }
 
   if (key === 'commit_author') {
-    return name || email;
+    return name || login || email;
   }
 
   if (key === 'commit_date') {
