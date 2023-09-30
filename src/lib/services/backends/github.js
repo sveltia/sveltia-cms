@@ -138,24 +138,52 @@ const signIn = async (savedToken) => {
 const signOut = async () => {};
 
 /**
+ * Get the latest commit’s SHA-1 hash.
+ * @returns {Promise<string>} Hash.
+ */
+const getLastCommitHash = async () => {
+  const { owner, repo, branch } = repository;
+
+  const { repository: result } = await fetchGraphQL(`query {
+    repository(owner: "${owner}", name: "${repo}") {
+      ref(qualifiedName: "${branch}") { target { oid } }
+    }
+  }`);
+
+  return result.ref.target.oid;
+};
+
+/**
  * Fetch file list and all the entry files, then cache them in the {@link allEntries} and
  * {@link allAssets} stores.
  */
 const fetchFiles = async () => {
   const { owner, repo, branch } = repository;
-  // Get a complete file list first with the REST API
-  const { tree: files } = await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
-  // Then filter what’s managed in CMS
-  const { entryFiles, assetFiles } = createFileList(files.filter(({ type }) => type === 'blob'));
-  const allFiles = [...entryFiles, ...assetFiles];
+  const metaDB = new IndexedDB(`github:${owner}/${repo}`, 'meta');
+  const cacheDB = new IndexedDB(`github:${owner}/${repo}`, 'file-cache');
+  const cachedHash = await metaDB.get('last_commit_hash');
+  const cachedFileEntries = await cacheDB.entries();
+  let fileList;
+
+  if (cachedHash && cachedHash === (await getLastCommitHash())) {
+    // Skip fetching file list
+    fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
+  } else {
+    // Get a complete file list first with the REST API
+    const { sha, tree } = await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
+
+    // Then filter what’s managed in CMS
+    fileList = createFileList(tree.filter(({ type }) => type === 'blob'));
+    metaDB.set('last_commit_hash', sha);
+  }
 
   // Skip fetching files if no files found
-  if (!allFiles.length) {
+  if (!fileList.count) {
     return;
   }
 
-  const cacheDB = new IndexedDB(`github:${owner}/${repo}`, 'file-cache');
-  const cachedFiles = Object.fromEntries(await cacheDB.entries());
+  const { entryFiles, assetFiles, allFiles } = fileList;
+  const cachedFiles = Object.fromEntries(cachedFileEntries);
 
   // Restore cached text and commit info
   allFiles.forEach(({ sha, path }, index) => {
@@ -201,7 +229,7 @@ const fetchFiles = async () => {
   /** @type {[string, { sha: string, text: string, meta: object }][]} */
   const downloadedFileList = allFiles
     .filter(({ meta }) => !meta)
-    .map(({ sha, path }, index) => {
+    .map(({ sha, size, path }, index) => {
       const {
         author: { name, email, user: _user },
         committedDate,
@@ -209,6 +237,7 @@ const fetchFiles = async () => {
 
       const data = {
         sha,
+        size,
         text: result[`content_${index}`]?.text,
         meta: {
           commitAuthor: {
@@ -261,7 +290,7 @@ const fetchFiles = async () => {
 
   // Delete old entry caches
   if (unusedPaths.length) {
-    await cacheDB.deleteEntries(unusedPaths);
+    cacheDB.deleteEntries(unusedPaths);
   }
 };
 
@@ -284,40 +313,6 @@ const fetchBlob = async (asset) => {
   }
 
   return response.blob();
-};
-
-/**
- * Get the latest commit’s SHA-1 hash.
- * @returns {Promise<string>} Hash.
- */
-const getLastCommitHash = async () => {
-  const { owner, repo, branch } = repository;
-
-  const {
-    repository: {
-      ref: {
-        target: {
-          history: {
-            nodes: [{ oid }],
-          },
-        },
-      },
-    },
-  } = await fetchGraphQL(`query {
-    repository(owner: "${owner}", name: "${repo}") {
-      ref(qualifiedName: "${branch}") {
-        target {
-          ... on Commit {
-            history(first: 1) {
-              nodes { oid }
-            }
-          }
-        }
-      }
-    }
-  }`);
-
-  return oid;
 };
 
 /**

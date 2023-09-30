@@ -45,8 +45,8 @@ export const getFileExtension = ({ file, format, extension }) => {
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
  * @param {object[]} files Unfiltered file list.
- * @returns {{ entryFiles: object[], assetFiles: object[] }} File list, including both entries and
- * assets.
+ * @returns {{ entryFiles: object[], assetFiles: object[], allFiles: object[], count: number }} File
+ * list, including both entries and assets.
  */
 export const createFileList = (files) => {
   const entryFiles = [];
@@ -84,7 +84,9 @@ export const createFileList = (files) => {
     }
   });
 
-  return { entryFiles, assetFiles };
+  const allFiles = [...entryFiles, ...assetFiles];
+
+  return { entryFiles, assetFiles, allFiles, count: allFiles.length };
 };
 
 /**
