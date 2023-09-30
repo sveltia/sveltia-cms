@@ -65,6 +65,12 @@ export default class IndexedDB {
       database = await this.#openDatabase(version + 1);
     }
 
+    // Avoid upgrade conflict
+    database.onversionchange = () => {
+      database.close();
+      this.#database = undefined;
+    };
+
     return database;
   }
 
