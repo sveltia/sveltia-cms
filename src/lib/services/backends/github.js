@@ -9,6 +9,7 @@ import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/
 import { user } from '$lib/services/user';
 import { getBase64 } from '$lib/services/utils/files';
 import IndexedDB from '$lib/services/utils/indexeddb';
+import { isObject } from '$lib/services/utils/misc';
 
 const label = 'GitHub';
 /**
@@ -53,7 +54,13 @@ const fetchAPI = async (
     let message;
 
     try {
-      ({ message } = (await response.json()) || {});
+      const result = await response.json();
+
+      if (isObject(result)) {
+        message =
+          result.message ?? // REST
+          result.errors?.[0]?.message; // GraphQL
+      }
     } catch {
       //
     }
