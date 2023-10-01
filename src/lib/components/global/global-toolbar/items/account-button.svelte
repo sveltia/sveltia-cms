@@ -3,13 +3,14 @@
   import { _ } from 'svelte-i18n';
   import ShortcutsDialog from '$lib/components/keyboard-shortcuts/shortcuts-dialog.svelte';
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
-  import { user } from '$lib/services/auth';
-  import { backend } from '$lib/services/backends';
+  import { backend, backendName } from '$lib/services/backends';
   import { openProductionSite } from '$lib/services/navigation';
-  import LocalStorage from '$lib/services/utils/local-storage';
+  import { user } from '$lib/services/user';
 
   let showPrefsDialog = false;
   let showShortcutsDialog = false;
+
+  $: isLocal = $backendName === 'local';
 </script>
 
 <MenuButton class="ghost iconic" popupPosition="bottom-right">
@@ -27,10 +28,10 @@
   />
   <Menu slot="popup">
     <MenuItem
-      label={$user?.backendName === 'local'
+      label={isLocal
         ? $_('working_with_local_repo')
         : $_('signed_in_as_x', { values: { name: $user?.login } })}
-      disabled={$user?.backendName === 'local'}
+      disabled={isLocal}
       on:click={() => {
         window.open($user?.html_url, '_blank');
       }}
@@ -44,7 +45,7 @@
     />
     <MenuItem
       label={$_('git_repository')}
-      disabled={$user?.backendName === 'local'}
+      disabled={isLocal}
       on:click={() => {
         window.open($backend.repository.url);
       }}
@@ -92,12 +93,6 @@
     <MenuItem
       label={$_('sign_out')}
       on:click={async () => {
-        try {
-          await LocalStorage.delete('sveltia-cms.user');
-        } catch {
-          //
-        }
-
         // Wait a bit before the menu is closed
         window.requestAnimationFrame(() => {
           $user = null;

@@ -16,7 +16,7 @@ export const prefs = writable({}, (set) => {
       _prefs.apiKeys ||= {};
       set(_prefs);
     } catch {
-      //
+      set({ error: 'permission_denied' });
     }
   })();
 });

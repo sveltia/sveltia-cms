@@ -8,7 +8,7 @@ import { isObject } from '$lib/services/utils/misc';
 /**
  * @type {import('svelte/store').Writable<boolean>}
  */
-export const entriesLoaded = writable(false);
+export const dataLoaded = writable(false);
 
 /**
  * @type {import('svelte/store').Writable<{ collectionName: string, fileName?: string,

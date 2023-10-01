@@ -5,9 +5,9 @@
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
-  import { user } from '$lib/services/auth';
-  import { entriesLoaded } from '$lib/services/contents';
+  import { dataLoaded } from '$lib/services/contents';
   import { initAppLocale } from '$lib/services/i18n';
+  import { user } from '$lib/services/user';
 
   initAppLocale();
 </script>
@@ -32,7 +32,7 @@
 
 <AppShell>
   {#if !$isLoading}
-    {#if $user && $entriesLoaded}
+    {#if $user && $dataLoaded}
       <MainRouter />
     {:else}
       <EntrancePage />

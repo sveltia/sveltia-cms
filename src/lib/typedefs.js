@@ -40,6 +40,7 @@
  * @typedef {object} BackendService
  * @property {string} label Service label.
  * @property {RepositoryInfo} [repository] Basic repository info. Git backend only.
+ * @property {() => void} init Function to initialize the backend.
  * @property {(token: string) => Promise<User>} signIn Function to sign in.
  * @property {() => Promise<void>} signOut Function to sign out.
  * @property {() => Promise<void>} fetchFiles Function to fetch files.

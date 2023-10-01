@@ -1,14 +1,14 @@
 import { getType } from 'mime';
 import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
-import { authorize, user } from '$lib/services/auth';
+import { authorize } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { siteConfig } from '$lib/services/config';
-import { allEntries } from '$lib/services/contents';
+import { allEntries, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
+import { user } from '$lib/services/user';
 import { getBase64 } from '$lib/services/utils/files';
 import IndexedDB from '$lib/services/utils/indexeddb';
-import LocalStorage from '$lib/services/utils/local-storage';
 
 const label = 'GitHub';
 /**
@@ -47,7 +47,9 @@ const fetchAPI = async (
     body,
   });
 
-  if (!response.ok) {
+  const { ok, status } = response;
+
+  if (!ok) {
     let message;
 
     try {
@@ -56,7 +58,7 @@ const fetchAPI = async (
       //
     }
 
-    throw new Error('Invalid API request', { cause: message });
+    throw new Error('Invalid API request', { cause: { status, message } });
   }
 
   if (responseType === 'raw') {
@@ -90,13 +92,10 @@ const fetchGraphQL = async (query, variables = {}) => {
 };
 
 /**
- * Retrieve the repository configuration and sign in with GitHub REST API.
- * @param {string} [savedToken] OAuth token. Can be empty when a token is not saved in the local
- * storage. Then, open the sign-in dialog.
- * @returns {Promise<User>} User info.
- * @throws {Error} When the backend is not configured properly or there was an authentication error.
+ * Initialize the backend.
+ * @throws {Error} When the backend is not configured properly.
  */
-const signIn = async (savedToken) => {
+const init = () => {
   const { backend: { repo: repoPath = '', branch = 'master' } = {} } = get(siteConfig) || {};
   const [owner, repo] = typeof repoPath === 'string' ? repoPath.split('/') : [];
 
@@ -110,38 +109,36 @@ const signIn = async (savedToken) => {
     branch,
     url: `https://github.com/${owner}/${repo}/tree/${branch}`,
   });
+};
 
+/**
+ * Retrieve the repository configuration and sign in with GitHub REST API.
+ * @param {string} [savedToken] OAuth token. Can be empty when a token is not saved in the local
+ * storage. Then, open the sign-in dialog.
+ * @returns {Promise<User>} User info.
+ * @throws {Error} When there was an authentication error.
+ */
+const signIn = async (savedToken) => {
   const token = savedToken || (await authorize('github'));
 
   if (!token) {
     throw new Error('Authentication failed');
   }
 
-  try {
-    return { ...(await fetchAPI('/user', { token })), backendName: 'github', token };
-  } catch {
-    user.set(null);
-
-    try {
-      await LocalStorage.delete('sveltia-cms.user');
-    } catch {
-      //
-    }
-
-    throw new Error('Token is not valid');
-  }
+  return { ...(await fetchAPI('/user', { token })), backendName: 'github', token };
 };
 
 /**
  * Sign out from GitHub. Nothing to do here.
+ * @returns {Promise<void>}
  */
-const signOut = async () => {};
+const signOut = async () => undefined;
 
 /**
- * Get the latest commit’s SHA-1 hash.
+ * Fetch the latest commit’s SHA-1 hash.
  * @returns {Promise<string>} Hash.
  */
-const getLastCommitHash = async () => {
+const fetchLastCommitHash = async () => {
   const { owner, repo, branch } = repository;
 
   const { repository: result } = await fetchGraphQL(`query {
@@ -165,7 +162,7 @@ const fetchFiles = async () => {
   const cachedFileEntries = await cacheDB.entries();
   let fileList;
 
-  if (cachedHash && cachedHash === (await getLastCommitHash())) {
+  if (cachedHash && cachedHash === (await fetchLastCommitHash())) {
     // Skip fetching file list
     fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
   } else {
@@ -280,6 +277,8 @@ const fetchFiles = async () => {
     ),
   );
 
+  dataLoaded.set(true);
+
   const usedPaths = allFiles.map(({ path }) => path);
   const unusedPaths = Object.keys(cachedFiles).filter((path) => !usedPaths.includes(path));
 
@@ -326,7 +325,7 @@ const fetchBlob = async (asset) => {
  */
 const createCommit = async (message, { additions = [], deletions = [] }) => {
   const { owner, repo, branch } = repository;
-  const expectedHeadOid = await getLastCommitHash();
+  const expectedHeadOid = await fetchLastCommitHash();
 
   const {
     createCommitOnBranch: {
@@ -389,6 +388,7 @@ const deleteFiles = async (items, { commitType = 'delete', collection } = {}) =>
 export default {
   label,
   repository,
+  init,
   signIn,
   signOut,
   fetchFiles,

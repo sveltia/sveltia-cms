@@ -4,7 +4,7 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { showUploadAssetsDialog, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
-  import { user } from '$lib/services/auth';
+  import { backendName } from '$lib/services/backends';
 </script>
 
 <!-- @todo Confirm to replace an old image if a file with the same same exists. -->
@@ -12,7 +12,7 @@
 <Dialog
   open={$showUploadAssetsDialog}
   title={$_('upload_files')}
-  okLabel={$_($user?.backendName === 'local' ? 'save' : 'upload_and_publish')}
+  okLabel={$_($backendName === 'local' ? 'save' : 'upload_and_publish')}
   on:ok={async () => {
     await saveAssets($uploadingAssets, { commitType: 'uploadMedia' });
     $uploadingAssets = { folder: null, files: [] };

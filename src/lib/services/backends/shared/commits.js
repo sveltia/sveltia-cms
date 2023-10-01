@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
-import { user } from '$lib/services/auth';
 import { siteConfig } from '$lib/services/config';
+import { user } from '$lib/services/user';
 
 /**
  * Default commit message templates.

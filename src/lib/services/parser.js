@@ -55,6 +55,7 @@ export const createFileList = (files) => {
   files.forEach((fileInfo) => {
     const { path } = fileInfo;
     const name = path.split('/').pop();
+    const extension = name.split('.').pop();
 
     const contentPathConfig = get(allContentPaths).find(
       ({ folder, file }) => path.startsWith(folder) || path === file,
@@ -64,7 +65,10 @@ export const createFileList = (files) => {
       path.startsWith(internalPath),
     );
 
-    if (contentPathConfig && name.split('.').pop() === getFileExtension(contentPathConfig)) {
+    if (
+      contentPathConfig &&
+      (path === contentPathConfig.file || extension === getFileExtension(contentPathConfig))
+    ) {
       entryFiles.push({
         ...fileInfo,
         type: 'entry',

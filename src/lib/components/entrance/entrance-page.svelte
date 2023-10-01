@@ -3,36 +3,17 @@
   import { marked } from 'marked';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { get } from 'svelte/store';
   // @ts-ignore
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
-  import { user } from '$lib/services/auth';
-  import { backend } from '$lib/services/backends';
   import { fetchSiteConfig, siteConfig } from '$lib/services/config';
-  import { entriesLoaded } from '$lib/services/contents';
+  import { dataLoaded } from '$lib/services/contents';
   import { prefs } from '$lib/services/prefs';
-
-  let loadingError;
+  import { authError, unauthenticated, user } from '$lib/services/user';
 
   onMount(() => {
     fetchSiteConfig();
   });
-
-  $: {
-    if ($siteConfig && !$siteConfig.error && $prefs && !$prefs.error && $user) {
-      (async () => {
-        try {
-          await get(backend).fetchFiles();
-          $entriesLoaded = true;
-        } catch (ex) {
-          loadingError = ex.cause || $_('unexpected_error');
-          // eslint-disable-next-line no-console
-          console.error(ex);
-        }
-      })();
-    }
-  }
 </script>
 
 <div class="container">
@@ -44,30 +25,30 @@
       class="logo"
     />
     <h1>Sveltia CMS</h1>
-    {#if !$siteConfig}
+    {#if !$siteConfig || !$prefs}
       <h2>{$_('loading_site_config')}</h2>
     {:else if $siteConfig.error}
       <h2>
         {$siteConfig.error}
         {$_('config.error.try_again')}
       </h2>
-    {:else if $prefs?.error}
+    {:else if $prefs.error}
       <h2>
         {$_(`prefs.error.${$prefs.error}`)}
       </h2>
-    {:else if !$user}
-      <SignIn />
-    {:else if loadingError}
+    {:else if $authError}
       <div>
         <h2>{$_('loading_site_data_error')}</h2>
         <div class="error" role="alert">
-          {@html DOMPurify.sanitize(/** @type {string } */ (marked.parseInline(loadingError)), {
+          {@html DOMPurify.sanitize(/** @type {string } */ (marked.parseInline($authError)), {
             ALLOWED_TAGS: ['a', 'code'],
             ALLOWED_ATTR: ['href'],
           })}
         </div>
       </div>
-    {:else if !$entriesLoaded}
+    {:else if !$user || $unauthenticated}
+      <SignIn />
+    {:else if !$dataLoaded}
       <h2>{$_('loading_site_data')}</h2>
     {/if}
   </div>

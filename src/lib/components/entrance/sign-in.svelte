@@ -1,98 +1,18 @@
 <script>
-  import { Button, Dialog } from '@sveltia/ui';
-  import { onMount, tick } from 'svelte';
+  import { Button } from '@sveltia/ui';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { user } from '$lib/services/auth';
-  import { allBackendServices, backend } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
-  import LocalStorage from '$lib/services/utils/local-storage';
-
-  /**
-   * @type {string}
-   */
-  let backendName = $siteConfig.backend?.name;
-  let isLocal = false;
-  let isFileAccessUnsupported = false;
-  let isLocalStorageDisabled = false;
-  let showErrorDialog = false;
-  /**
-   * @type {string}
-   */
-  let errorReason = undefined;
-
-  $: $backend = allBackendServices[backendName];
-
-  /**
-   * Sign in with the given backend.
-   * @param {string} [savedToken] User’s auth token. Can be empty for the local backend or when a
-   * token is not saved in the local storage.
-   */
-  const signIn = async (savedToken = '') => {
-    try {
-      const _user = await $backend.signIn(savedToken);
-
-      $user = _user;
-      await LocalStorage.set('sveltia-cms.user', _user);
-    } catch (error) {
-      showErrorDialog = true;
-      errorReason = 'unexpected';
-
-      // eslint-disable-next-line no-console
-      console.error(error);
-    }
-  };
+  import { signInAutomatically, signInManually, unauthenticated } from '$lib/services/user';
+  import { backend, backendName } from '$lib/services/backends';
 
   onMount(() => {
-    // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
-    // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
-    isLocal = !!window.location.hostname.match(/^(?:.+\.)?localhost$/);
-
-    // Check if the browser supports the File System Access API
-    isFileAccessUnsupported = isLocal && !('showDirectoryPicker' in window);
-
-    if (isLocal) {
-      backendName = 'local';
-    }
-
-    // Automatically sign into a Git-based backend if the user info is cached. Check the compatible
-    // Netlify CMS cache as well.
-    (async () => {
-      try {
-        const { backendName: name, token } =
-          (await LocalStorage.get('sveltia-cms.user')) ||
-          (await LocalStorage.get('decap-cms-user')) ||
-          (await LocalStorage.get('netlify-cms-user')) ||
-          {};
-
-        if (name) {
-          // Don’t try to sign in automatically if the local backend is being used, because it
-          // requires user interaction to acquire file/directory handles. Also, ignore the `proxy`
-          // backend that was set when using the Netlify CMS local proxy server.
-          if (['local', 'proxy'].includes(name)) {
-            return;
-          }
-
-          backendName = name;
-          await tick();
-
-          if ($backend && token) {
-            await signIn(token);
-          }
-        }
-      } catch {
-        isLocalStorageDisabled = true;
-      }
-    })();
+    signInAutomatically();
   });
 </script>
 
 <div class="buttons">
-  {#if isLocalStorageDisabled}
-    <div role="alert">
-      {$_('unsupported.storage')}
-    </div>
-  {:else if isLocal}
-    {#if isFileAccessUnsupported}
+  {#if $backendName === 'local'}
+    {#if !('showDirectoryPicker' in window)}
       <div role="alert">
         {$_(`unsupported.browser`)}
       </div>
@@ -101,30 +21,24 @@
         class="primary"
         label={$_('work_with_local_repo')}
         on:click={async () => {
-          await signIn();
+          await signInManually();
         }}
       />
     {/if}
-  {:else if $backend}
+  {:else if $backend || $unauthenticated}
     <Button
       class="primary"
       label={$_('sign_in_with_x', { values: { name: $backend.label } })}
       on:click={async () => {
-        await signIn();
+        await signInManually();
       }}
     />
   {:else}
     <div role="alert">
-      {$_('config.error.unsupported_backend', { values: { name: backendName } })}
+      {$_('config.error.unsupported_backend', { values: { name: $backendName } })}
     </div>
   {/if}
 </div>
-
-<Dialog bind:open={showErrorDialog} showCancel={false}>
-  <div role="alert">
-    {$_(`unsupported.${errorReason}`)}
-  </div>
-</Dialog>
 
 <style lang="scss">
   .buttons {

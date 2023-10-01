@@ -5,11 +5,11 @@
 import { get, writable } from 'svelte/store';
 import { allAssetPaths, allAssets } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
-import { allContentPaths, allEntries } from '$lib/services/contents';
+import { allContentPaths, allEntries, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
 import { getHash, readAsText } from '$lib/services/utils/files';
 import IndexedDB from '$lib/services/utils/indexeddb';
-import { stripSlashes } from '$lib/services/utils/strings';
+import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
 const label = 'Local Repository';
 /**
@@ -36,10 +36,6 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
   if (!('showDirectoryPicker' in window)) {
     throw new Error('unsupported');
   }
-
-  const { backend } = get(siteConfig);
-
-  rootDirHandleDB = new IndexedDB(`${backend.name}:${backend.repo}`, 'file-system-handles');
 
   /**
    * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function }}
@@ -72,6 +68,15 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
  */
 const discardDirHandle = async () => {
   await rootDirHandleDB.delete(rootDirHandleKey);
+};
+
+/**
+ * Initialize the backend.
+ */
+const init = () => {
+  const { backend } = get(siteConfig);
+
+  rootDirHandleDB = new IndexedDB(`${backend.name}:${backend.repo}`, 'file-system-handles');
 };
 
 /**
@@ -126,7 +131,11 @@ const getAllFiles = async () => {
   const scanningPaths = [
     ...get(allContentPaths).map(({ file, folder }) => file || folder),
     ...get(allAssetPaths).map(({ internalPath }) => internalPath),
-  ];
+  ].map((path) => stripSlashes(path));
+
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  const getRegEx = (path) => new RegExp(`^${escapeRegExp(path)}\\b`);
+  const scanningPathsRegEx = scanningPaths.map(getRegEx);
 
   /**
    * Retrieve all the files under the given directory recursively.
@@ -138,14 +147,15 @@ const getAllFiles = async () => {
         continue;
       }
 
+      const path = (await _rootDirHandle.resolve(handle)).join('/');
+      const hasMatchingPath = scanningPathsRegEx.some((re) => path.match(re));
+
       if (handle.kind === 'file') {
+        if (!hasMatchingPath) {
+          continue;
+        }
+
         try {
-          const path = (await _rootDirHandle.resolve(handle)).join('/');
-
-          if (!scanningPaths.some((scanningPath) => path.startsWith(scanningPath))) {
-            continue;
-          }
-
           const file = await handle.getFile();
 
           allFiles.push({
@@ -163,6 +173,12 @@ const getAllFiles = async () => {
       }
 
       if (handle.kind === 'directory') {
+        const regex = getRegEx(path);
+
+        if (!hasMatchingPath && !scanningPaths.some((p) => p.match(regex))) {
+          continue;
+        }
+
         await iterate(handle);
       }
     }
@@ -182,6 +198,7 @@ const fetchFiles = async () => {
 
   allEntries.set(parseEntryFiles(entryFiles));
   allAssets.set(parseAssetFiles(assetFiles));
+  dataLoaded.set(true);
 };
 
 /**
@@ -224,6 +241,7 @@ const deleteFiles = async (items) => {
  */
 export default {
   label,
+  init,
   signIn,
   signOut,
   fetchFiles,
