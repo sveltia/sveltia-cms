@@ -209,8 +209,7 @@ const fetchFiles = async () => {
 const saveFiles = async (items) => {
   await Promise.all(
     items.map(async ({ path, data }) => {
-      const handle = await getHandleByPath(path);
-      // @ts-ignore
+      const handle = /** @type {FileSystemFileHandle} */ (await getHandleByPath(path));
       const writer = await handle.createWritable();
 
       await writer.write(data);
@@ -228,9 +227,11 @@ const deleteFiles = async (items) => {
     items.map(async ({ path }) => {
       const pathArray = stripSlashes(path).split('/');
       const entryName = pathArray.pop();
-      const handle = await getHandleByPath(pathArray.join('/'));
 
-      // @ts-ignore
+      const handle = /** @type {FileSystemDirectoryHandle} */ (
+        await getHandleByPath(pathArray.join('/'))
+      );
+
       await handle.removeEntry(entryName);
     }),
   );

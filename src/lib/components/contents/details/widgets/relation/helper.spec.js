@@ -27,7 +27,6 @@ describe('Test getOptions()', () => {
   // Referencing a folder collection example
   // String templates example
   it('nested fields', () => {
-    // @ts-ignore
     const config = {
       name: 'author',
       label: 'Author',
@@ -38,7 +37,6 @@ describe('Test getOptions()', () => {
       search_fields: ['name.first', 'twitterHandle'],
     };
 
-    // @ts-ignore
     const entries = [
       {
         slug: 'melvin-lucas',

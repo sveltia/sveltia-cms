@@ -131,8 +131,9 @@
             <Icon name="error" label={$_('error')} />
             {$_('validation.range_underflow', {
               values: {
-                // @ts-ignore
-                min: fieldConfig.min,
+                min: /** @type {ListField | NumberField | RelationField | SelectField} */ (
+                  fieldConfig
+                ).min,
               },
             })}
           </div>
@@ -142,8 +143,9 @@
             <Icon name="error" label={$_('error')} />
             {$_('validation.range_overflow', {
               values: {
-                // @ts-ignore
-                max: fieldConfig.max,
+                max: /** @type {ListField | NumberField | RelationField | SelectField} */ (
+                  fieldConfig
+                ).max,
               },
             })}
           </div>

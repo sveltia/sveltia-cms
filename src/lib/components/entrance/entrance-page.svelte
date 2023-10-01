@@ -3,7 +3,6 @@
   import { marked } from 'marked';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  // @ts-ignore
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { fetchSiteConfig, siteConfig } from '$lib/services/config';

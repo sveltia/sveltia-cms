@@ -11,7 +11,6 @@
   let accel = 'Ctrl';
 
   onMount(() => {
-    // @ts-ignore
     if (navigator.userAgentData?.platform === 'macOS' || navigator.platform.startsWith('Mac')) {
       accel = '⌘'; // Command
     }

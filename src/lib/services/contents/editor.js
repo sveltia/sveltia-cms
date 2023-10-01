@@ -496,8 +496,12 @@ const validateEntry = () => {
       }
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
-      // @ts-ignore
-      const { widget, required = true, i18n = false, pattern, min, max } = fieldConfig;
+      const { widget, required = true, i18n = false, pattern } = fieldConfig;
+
+      const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
+        fieldConfig
+      );
+
       const canTranslate = hasLocales && (i18n === true || i18n === 'translate');
       const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;

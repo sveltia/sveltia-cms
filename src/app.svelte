@@ -1,7 +1,6 @@
 <script>
   import { AppShell } from '@sveltia/ui';
   import { isLoading } from 'svelte-i18n';
-  // @ts-ignore
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
