@@ -27,11 +27,9 @@
    * @returns {string} Label.
    */
   const getLabel = (value) =>
-    /** @type {object} */ (
-      options.find((option) =>
-        isObject(option) ? /** @type {object} */ (option).value === value : false,
-      )
-    )?.label || value;
+    Array.isArray(options) && isObject(options[0])
+      ? /** @type {object[]} */ (options).find((o) => o.value === value)?.label || value
+      : value;
 </script>
 
 {#if multiple && Array.isArray(currentValue) && currentValue.length}
