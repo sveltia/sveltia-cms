@@ -1,5 +1,5 @@
 <script>
-  import { Divider, Icon, Menu, MenuButton, MenuItemGroup, MenuItemRadio } from '@sveltia/ui';
+  import { Icon, Menu, MenuButton, MenuItemGroup, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
 
@@ -13,6 +13,10 @@
    * @type {{ label: string, key: string }[]}
    */
   export let fields = [];
+
+  /** @type {SortOrder[]} */
+  const sortOrders = ['ascending', 'descending'];
+  const dateFields = ['date', 'commit_date'];
 </script>
 
 <MenuButton class="ghost" label={label || $_('sort_by')} {disabled}>
@@ -20,36 +24,17 @@
   <Menu slot="popup">
     <MenuItemGroup ariaLabel={$_('sort_field')}>
       {#each fields as { key, label: _label } (key)}
-        <MenuItemRadio
-          label={_label}
-          checked={$currentView.sort?.key === key}
-          on:click={() => {
-            // Sort dates from new to old by default
-            const order = ['date', 'commit_date'].includes(key) ? 'descending' : 'ascending';
-
-            currentView.update((view) => ({
-              ...view,
-              sort: { key, order },
-            }));
-          }}
-        />
-      {/each}
-    </MenuItemGroup>
-    <Divider />
-    <MenuItemGroup ariaLabel={$_('sort_order')}>
-      {#each ['ascending', 'descending'] as order}
-        <MenuItemRadio
-          label={$_(order)}
-          disabled={!$currentView.sort}
-          checked={$currentView.sort?.order === order}
-          on:click={() => {
-            currentView.update((view) => ({
-              ...view,
-              // eslint-disable-next-line object-shorthand
-              sort: { key: $currentView.sort?.key, order: /** @type {SortOrder} */ (order) },
-            }));
-          }}
-        />
+        {#each sortOrders as order (order)}
+          <MenuItemRadio
+            label={$_(dateFields.includes(key) ? `${order}_date` : order, {
+              values: { label: _label },
+            })}
+            checked={$currentView.sort?.key === key && $currentView.sort?.order === order}
+            on:click={() => {
+              currentView.update((view) => ({ ...view, sort: { key, order } }));
+            }}
+          />
+        {/each}
       {/each}
     </MenuItemGroup>
   </Menu>
