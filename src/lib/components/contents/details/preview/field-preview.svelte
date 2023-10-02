@@ -91,6 +91,8 @@
 
     :global(p) {
       margin-top: 8px;
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     :global(img) {
