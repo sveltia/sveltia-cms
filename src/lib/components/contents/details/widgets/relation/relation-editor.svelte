@@ -47,4 +47,5 @@
   fieldConfig={{ ...fieldConfig, options }}
   bind:currentValue
   {disabled}
+  sortOptions={true}
 />

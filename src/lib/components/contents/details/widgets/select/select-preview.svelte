@@ -19,21 +19,22 @@
   export let currentValue = undefined;
 
   $: ({ options, multiple } = fieldConfig);
+  $: isObjectArray = Array.isArray(options) && isObject(options[0]);
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
   /**
    * Get the display label by value.
-   * @param {string} value Value.
+   * @param {any} value Value.
    * @returns {string} Label.
    */
   const getLabel = (value) =>
-    Array.isArray(options) && isObject(options[0])
-      ? /** @type {object[]} */ (options).find((o) => o.value === value)?.label || value
+    isObjectArray
+      ? /** @type {object[]} */ (options).find((o) => o.value === value)?.label || 'value'
       : value;
 </script>
 
 {#if multiple && Array.isArray(currentValue) && currentValue.length}
   <p>{listFormatter.format(currentValue.map(getLabel))}</p>
-{:else if typeof currentValue === 'string' && currentValue.trim()}
+{:else if currentValue !== undefined}
   <p>{getLabel(currentValue)}</p>
 {/if}

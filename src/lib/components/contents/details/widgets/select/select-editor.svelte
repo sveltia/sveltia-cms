@@ -28,6 +28,11 @@
    */
   export let disabled = false;
 
+  /**
+   * @type {boolean}
+   */
+  export let sortOptions = false;
+
   $: ({
     i18n,
     // Widget-specific options
@@ -40,12 +45,18 @@
   /**
    * @type {{ label: string, value: string }[]}
    */
-  $: sortedOptions = fieldOptions
-    .map((option) => ({
+  $: options = (() => {
+    const _options = fieldOptions.map((option) => ({
       label: isObject(option) ? option.label : option,
       value: isObject(option) ? option.value : option,
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    }));
+
+    if (sortOptions) {
+      _options.sort((a, b) => a.label.localeCompare(b.label));
+    }
+
+    return _options;
+  })();
 
   /**
    * Update the value for the list.
@@ -83,7 +94,7 @@
 {#if multiple}
   <div class="multi-selector" class:disabled>
     {#each currentValue as value, index}
-      {@const option = sortedOptions.find((o) => o.value === value)}
+      {@const option = options.find((o) => o.value === value)}
       {#if option}
         <span>
           {option.label}
@@ -98,7 +109,7 @@
         </span>
       {/if}
     {/each}
-    {#if (!max || currentValue.length < max) && currentValue.length < sortedOptions.length}
+    {#if (!max || currentValue.length < max) && currentValue.length < options.length}
       <Combobox
         {disabled}
         on:change={({ detail: { target, value } }) => {
@@ -115,7 +126,7 @@
           });
         }}
       >
-        {#each sortedOptions as { label, value } (value)}
+        {#each options as { label, value } (value)}
           {#if !currentValue.includes(value)}
             <Option {label} {value} />
           {/if}
@@ -127,9 +138,9 @@
   <Select
     {disabled}
     bind:value={currentValue}
-    label={sortedOptions.find(({ value }) => value === currentValue)?.label || undefined}
+    label={options.find(({ value }) => value === currentValue)?.label || undefined}
   >
-    {#each sortedOptions as { label, value } (value)}
+    {#each options as { label, value } (value)}
       <Option {label} {value} selected={value === currentValue} />
     {/each}
   </Select>
