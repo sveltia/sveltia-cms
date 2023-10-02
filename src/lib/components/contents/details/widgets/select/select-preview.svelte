@@ -29,7 +29,7 @@
    */
   const getLabel = (value) =>
     isObjectArray
-      ? /** @type {object[]} */ (options).find((o) => o.value === value)?.label || 'value'
+      ? /** @type {object[]} */ (options).find((o) => o.value === value)?.label || value
       : value;
 </script>
 
