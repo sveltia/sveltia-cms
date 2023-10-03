@@ -183,6 +183,10 @@ const fetchFiles = async () => {
 
   // Skip fetching files if no files found
   if (!fileList.count) {
+    allEntries.set([]);
+    allAssets.set([]);
+    dataLoaded.set(true);
+
     return;
   }
 
