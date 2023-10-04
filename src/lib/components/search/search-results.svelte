@@ -1,6 +1,6 @@
 <script>
   import { Group, TableCell, TableRow } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
@@ -84,7 +84,7 @@
                 {/if}
               </TableCell>
               <TableCell class="collection">
-                {getFolderLabelByPath(folder)}
+                {$locale ? getFolderLabelByPath(folder) : ''}
               </TableCell>
               <TableCell class="title">
                 {name}

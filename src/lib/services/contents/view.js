@@ -1,7 +1,7 @@
 import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
 import moment from 'moment';
-import { _ } from 'svelte-i18n';
+import { _, locale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
 import {
@@ -370,7 +370,7 @@ const getSortFieldLabel = (collection, key) => {
  * @type {import('svelte/store').Readable<{ key: string, label: string }[]>}
  */
 export const sortFields = derived(
-  [selectedCollection, allEntries],
+  [selectedCollection, allEntries, locale],
   ([_collection, _allEntries], set) => {
     const { files, sortable_fields: customSortableFields } = _collection || {};
 

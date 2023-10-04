@@ -1,6 +1,6 @@
 <script>
   import { Group, Icon, Listbox, Option } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import { allAssetPaths, selectedAssetFolderPath } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { goto } from '$lib/services/navigation';
@@ -16,7 +16,7 @@
         {@const selected = internalPath === $selectedAssetFolderPath}
         <Option
           {selected}
-          label={getFolderLabelByCollection(collectionName)}
+          label={$locale ? getFolderLabelByCollection(collectionName) : ''}
           on:click={() => {
             goto(internalPath ? `/assets/${internalPath}` : `/assets`);
           }}

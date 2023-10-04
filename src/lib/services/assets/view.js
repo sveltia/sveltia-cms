@@ -1,5 +1,5 @@
 import equal from 'fast-deep-equal';
-import { _ } from 'svelte-i18n';
+import { _, locale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import {
   allAssetPaths,
@@ -260,7 +260,7 @@ export const currentView = writable({});
  * List of sort fields for the selected asset collection.
  * @type {import('svelte/store').Readable<{ key: string, label: string }[]>}
  */
-export const sortFields = derived([allAssets], ([_allAssets], set) => {
+export const sortFields = derived([allAssets, locale], ([_allAssets], set) => {
   const { commitAuthor, commitDate } = _allAssets?.[0] || {};
   const _sortFields = ['name'];
 
