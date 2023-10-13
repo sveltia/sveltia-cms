@@ -21,8 +21,10 @@
     revertChanges,
     saveEntry,
   } from '$lib/services/contents/editor';
-  import { goBack } from '$lib/services/navigation';
+  import { goBack, goto } from '$lib/services/navigation';
+  import { sleep } from '$lib/services/utils/misc';
 
+  let showDuplicateDialog = false;
   let showDeleteDialog = false;
   let showErrorDialog = false;
   let saving = false;
@@ -42,6 +44,18 @@
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: modified = isNew || !equal(currentValues, originalValues);
+
+  /**
+   * Duplicate the current entry.
+   * @todo Replace the dialog with a toast notification.
+   */
+  const duplicateDraft = async () => {
+    showDuplicateDialog = true;
+    goto(`/collections/${collection.name}/new`, { replaceState: true, notifyChange: false });
+    $entryDraft = { ...$entryDraft, isNew: true, originalEntry: undefined };
+    await sleep(1000);
+    showDuplicateDialog = false;
+  };
 </script>
 
 <Toolbar class="primary">
@@ -100,23 +114,23 @@
           revertChanges();
         }}
       />
-      <Divider />
-      <!-- @todo Implement this!
-      <MenuItem
-        label={$_('duplicate')}
-        disabled={!$entryDraft}
-        on:click={() => {
-          goto(`/collections/${collection.name}/new`);
-        }}
-      />
-      -->
-      <MenuItem
-        disabled={collection.delete === false || isNew || !!collectionFile}
-        label={$_('delete')}
-        on:click={() => {
-          showDeleteDialog = true;
-        }}
-      />
+      {#if !collectionFile}
+        <Divider />
+        <MenuItem
+          label={$_('duplicate')}
+          disabled={collection.create === false || isNew}
+          on:click={() => {
+            duplicateDraft();
+          }}
+        />
+        <MenuItem
+          disabled={collection.delete === false || isNew}
+          label={$_('delete')}
+          on:click={() => {
+            showDeleteDialog = true;
+          }}
+        />
+      {/if}
     </Menu>
   </MenuButton>
   <Button
@@ -142,6 +156,17 @@
     }}
   />
 </Toolbar>
+
+<Dialog
+  bind:open={showDuplicateDialog}
+  showOk={false}
+  showCancel={false}
+  showClose={false}
+  closeOnBackdropClick={true}
+  style="text-align:center"
+>
+  {$_('entry_duplicated')}
+</Dialog>
 
 <Dialog
   bind:open={showDeleteDialog}

@@ -134,6 +134,7 @@ export const strings = {
   no_files_created: 'このコレクションにはファイルがありません。',
   multi_files_selected: '複数のファイルが選択されています。',
   select_asset_show_info: 'ファイルを選択すると情報が表示されます。',
+  entry_duplicated: 'エントリーが複製され、新しい下書きとなりました。',
 
   // Content editor
   creating_x: '{name} を作成',

@@ -134,6 +134,7 @@ export const strings = {
   no_files_created: 'This collection has no files.',
   multi_files_selected: 'Multiple files are selected.',
   select_asset_show_info: 'Select a file to show the info.',
+  entry_duplicated: 'The entry has been duplicated. It’s now a new draft.',
 
   // Content editor
   creating_x: 'Creating {name}',

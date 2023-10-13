@@ -27,8 +27,9 @@ export const parseLocation = (loc = window.location) => {
  * @param {object} [options] Options.
  * @param {object} [options.state] History state to be included.
  * @param {boolean} [options.replaceState] Whether to replace the history state.
+ * @param {boolean} [options.notifyChange] Whether to dispatch a `hashchange` event.
  */
-export const goto = (path, { state = {}, replaceState = false } = {}) => {
+export const goto = (path, { state = {}, replaceState = false, notifyChange = true } = {}) => {
   const oldURL = window.location.hash;
   const newURL = `#${path}`;
   const args = [{ ...state, from: oldURL }, '', newURL];
@@ -41,7 +42,9 @@ export const goto = (path, { state = {}, replaceState = false } = {}) => {
     window.history.pushState(...args);
   }
 
-  window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL }));
+  if (notifyChange) {
+    window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL }));
+  }
 };
 
 /**
