@@ -19,7 +19,7 @@
   export let currentValue = undefined;
 
   $: ({ options, multiple } = fieldConfig);
-  $: isObjectArray = Array.isArray(options) && isObject(options[0]);
+  $: isObjectArray = Array.isArray(options) && options.every((o) => isObject(o));
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
   /**
