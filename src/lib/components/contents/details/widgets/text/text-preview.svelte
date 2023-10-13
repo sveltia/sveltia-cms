@@ -22,3 +22,9 @@
 {#if typeof currentValue === 'string' && currentValue.trim()}
   <p>{currentValue}</p>
 {/if}
+
+<style lang="scss">
+  p {
+    white-space: pre-wrap;
+  }
+</style>

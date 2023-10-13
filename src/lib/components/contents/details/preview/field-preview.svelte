@@ -72,6 +72,7 @@
 <style lang="scss">
   section {
     overflow: hidden;
+    margin: 8px 0;
     padding: 8px 0;
 
     & > :global(*) {
@@ -90,7 +91,7 @@
     }
 
     :global(p) {
-      margin-top: 8px;
+      margin: 8px auto 0;
       -webkit-user-select: text;
       user-select: text;
     }
