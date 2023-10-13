@@ -4,7 +4,7 @@
   @see https://decapcms.org/docs/widgets/#select
 -->
 <script>
-  import { isObject } from '$lib/services/utils/misc';
+  import { isObjectArray } from '$lib/services/utils/misc';
 
   export let locale = '';
   // svelte-ignore unused-export-let
@@ -19,7 +19,7 @@
   export let currentValue = undefined;
 
   $: ({ options, multiple } = fieldConfig);
-  $: isObjectArray = Array.isArray(options) && options.every((o) => isObject(o));
+  $: _isObjectArray = isObjectArray(options);
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
   /**
@@ -28,7 +28,7 @@
    * @returns {string} Label.
    */
   const getLabel = (value) =>
-    isObjectArray
+    _isObjectArray
       ? /** @type {object[]} */ (options).find((o) => o.value === value)?.label || value
       : value;
 </script>

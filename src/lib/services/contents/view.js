@@ -16,7 +16,7 @@ import { getPropertyValue } from '$lib/services/contents/entry';
 import { prefs } from '$lib/services/prefs';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { isObject } from '$lib/services/utils/misc';
+import { isObjectArray } from '$lib/services/utils/misc';
 import { stripSlashes } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.contents-view';
@@ -162,9 +162,8 @@ export const formatSummary = (collection, entry, content) => {
       // Use the label for a select field with value/label options
       if (fieldConfig?.widget === 'select') {
         const { options } = /** @type {SelectField} */ (fieldConfig);
-        const isObjectArray = Array.isArray(options) && options.every((o) => isObject(o));
 
-        if (isObjectArray) {
+        if (isObjectArray(options)) {
           const _options = /** @type {{ label: string, value: string }[]} */ (options);
 
           return _options.find((o) => o.value === fieldValue)?.label || fieldValue;
