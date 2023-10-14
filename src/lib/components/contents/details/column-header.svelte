@@ -18,13 +18,13 @@
   import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
 
   /**
-   * @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>}
+   * @type {import('svelte/store').Writable<?EntryEditorPane>}
    */
-  export let thisPane = writable({});
+  export let thisPane = writable(null);
   /**
-   * @type {import('svelte/store').Writable<{ locale?: string, mode?: string}>}
+   * @type {import('svelte/store').Writable<?EntryEditorPane>}
    */
-  export let thatPane = writable({});
+  export let thatPane = writable(null);
 
   $: ({ collection, collectionFile, currentValues, originalValues, validities } = $entryDraft || {
     collection: undefined,
@@ -35,11 +35,11 @@
   });
 
   $: ({ hasLocales, locales } = collection._i18n);
-  $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane.locale) : [];
+  $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane?.locale) : [];
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: canCopy = !!otherLocales.length;
-  $: canRevert = !equal(currentValues[$thisPane.locale], originalValues[$thisPane.locale]);
+  $: canRevert = !equal(currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]);
 </script>
 
 <div class="header">
@@ -50,15 +50,15 @@
         {#each locales as locale}
           {@const localeLabel = getLocaleLabel(locale)}
           {@const invalid = Object.values(validities[locale]).some(({ valid }) => !valid)}
-          {#if !($thatPane.mode === 'edit' && $thatPane.locale === locale)}
+          {#if !($thatPane?.mode === 'edit' && $thatPane?.locale === locale)}
             <SelectButton
-              selected={$thisPane.mode === 'edit' && $thisPane.locale === locale}
+              selected={$thisPane?.mode === 'edit' && $thisPane?.locale === locale}
               class="tertiary small {invalid ? 'error' : ''}"
               label={localeLabel}
               on:click={() => {
                 $thisPane = { mode: 'edit', locale };
 
-                if ($thatPane.mode === 'preview') {
+                if ($thatPane?.mode === 'preview') {
                   $thatPane = { mode: 'preview', locale };
                 }
               }}
@@ -69,38 +69,38 @@
             </SelectButton>
           {/if}
         {/each}
-        {#if $thatPane.mode === 'edit' && canPreview && $entryEditorSettings.showPreview}
+        {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings.showPreview}
           <SelectButton
-            selected={$thisPane.mode === 'preview'}
+            selected={$thisPane?.mode === 'preview'}
             class="tertiary small"
             label={$_('preview')}
             on:click={() => {
-              $thisPane = { mode: 'preview', locale: $thatPane.locale };
+              $thisPane = { mode: 'preview', locale: $thatPane?.locale };
             }}
           />
         {/if}
       </SelectButtonGroup>
     {:else}
-      <h3>{$thisPane.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
+      <h3>{$thisPane?.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
     {/if}
     <Spacer flex={true} />
-    {#if $thisPane.mode === 'edit'}
+    {#if $thisPane?.mode === 'edit'}
       <MenuButton class="ghost iconic" popupPosition="bottom-right">
         <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
         <Menu slot="popup">
           {#if canCopy}
-            <CopyMenuItem locale={$thisPane.locale} translate={true} />
+            <CopyMenuItem locale={$thisPane?.locale} translate={true} />
             {#if otherLocales.length > 1}
               <Divider />
             {/if}
-            <CopyMenuItem locale={$thisPane.locale} />
+            <CopyMenuItem locale={$thisPane?.locale} />
             <Divider />
           {/if}
           <MenuItem
             label={$_('revert_changes')}
             disabled={!canRevert}
             on:click={() => {
-              revertChanges($thisPane.locale);
+              revertChanges($thisPane?.locale);
             }}
           />
         </Menu>

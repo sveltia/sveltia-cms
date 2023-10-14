@@ -21,34 +21,85 @@
    */
   let rightColumnContent = undefined;
 
-  $: ({ showPreview, syncScrolling } = $entryEditorSettings);
+  let panesRestored = false;
 
-  $: ({ collection, collectionFile } = $entryDraft || {
-    collection: undefined,
-    collectionFile: undefined,
-  });
-
+  // @ts-ignore
+  $: ({ collection, collectionFile } = $entryDraft || {});
+  $: ({ showPreview, syncScrolling, paneStates } = $entryEditorSettings);
   $: ({ hasLocales, locales } = collection._i18n);
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
 
   /**
+   * Restore the pane state from local storage.
+   * @throws {Error} If the saved state is no longer relevant to the current view.
+   */
+  const restorePanes = () => {
+    const savedPanes = paneStates?.[collection.name];
+
+    if (!Array.isArray(savedPanes)) {
+      return;
+    }
+
+    const [_editorLeftPane, _editorRightPane] = savedPanes;
+
+    if (
+      (!!_editorLeftPane?.locale && !locales.includes(_editorLeftPane.locale)) ||
+      (!!_editorRightPane?.locale && !locales.includes(_editorRightPane.locale)) ||
+      ((!showPreview || !canPreview) &&
+        (_editorLeftPane?.mode === 'preview' || _editorRightPane?.mode === 'preview'))
+    ) {
+      throw new Error('Saved panes are invalid');
+    }
+
+    $editorLeftPane = _editorLeftPane;
+    $editorRightPane = _editorRightPane;
+  };
+
+  /**
    * Hide the preview pane if it’s disabled by the user or the collection/file.
    */
   const switchPanes = () => {
+    if (!panesRestored) {
+      try {
+        restorePanes();
+        return;
+      } catch {
+        //
+      } finally {
+        panesRestored = true;
+      }
+    }
+
     if (!showPreview || !canPreview) {
-      const otherLocales = hasLocales ? locales.filter((l) => l !== $editorLeftPane.locale) : [];
+      const otherLocales = hasLocales ? locales.filter((l) => l !== $editorLeftPane?.locale) : [];
 
       $editorLeftPane.mode = 'edit';
       $editorRightPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;
     } else {
       $editorLeftPane.mode = 'edit';
-      $editorRightPane = { mode: 'preview', locale: $editorLeftPane.locale };
+      $editorRightPane = { mode: 'preview', locale: $editorLeftPane?.locale };
     }
   };
 
   // @ts-ignore Arguments are triggers
   $: switchPanes(showPreview, canPreview);
+
+  /**
+   * Save the pane state to local storage.
+   */
+  const savePanes = () => {
+    entryEditorSettings.update((view) => ({
+      ...view,
+      paneStates: {
+        ...(view.paneStates || {}),
+        [collection.name]: [$editorLeftPane, $editorRightPane],
+      },
+    }));
+  };
+
+  // @ts-ignore Arguments are triggers
+  $: savePanes($editorLeftPane, $editorRightPane);
 
   /**
    * Sync the scroll position with the other edit/preview pane.

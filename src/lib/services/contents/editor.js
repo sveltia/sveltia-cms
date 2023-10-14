@@ -21,14 +21,14 @@ import { escapeRegExp } from '$lib/services/utils/strings';
 const storageKey = 'sveltia-cms.entry-view';
 
 /**
- * @type {import('svelte/store').Writable<{ locale?: string, mode?: string }>}
+ * @type {import('svelte/store').Writable<?EntryEditorPane>}
  */
-export const editorLeftPane = writable({});
+export const editorLeftPane = writable(null);
 
 /**
- * @type {import('svelte/store').Writable<{ locale?: string, mode?: string }>}
+ * @type {import('svelte/store').Writable<?EntryEditorPane>}
  */
-export const editorRightPane = writable({});
+export const editorRightPane = writable(null);
 
 /**
  * View settings for the Select Assets dialog.
