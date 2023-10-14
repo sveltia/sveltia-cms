@@ -173,7 +173,7 @@
   title={$_('delete_entry')}
   okLabel={$_('delete')}
   on:ok={async () => {
-    await deleteEntries([originalEntry?.slug]);
+    await deleteEntries([originalEntry?.id]);
     goBack(`/collections/${collection.name}`);
   }}
 >

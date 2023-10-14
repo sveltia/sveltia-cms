@@ -13,7 +13,7 @@
   title={$selectedEntries.length === 1 ? $_('delete_entry') : $_('delete_entries')}
   okLabel={$_('delete')}
   on:ok={() => {
-    deleteEntries([...$selectedEntries.map(({ slug }) => slug)]);
+    deleteEntries($selectedEntries.map(({ id }) => id));
   }}
 >
   {#if $selectedEntries.length === 1}

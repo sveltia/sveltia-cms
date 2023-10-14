@@ -774,7 +774,7 @@ export const saveEntry = async () => {
    * @type {Entry}
    */
   const savingEntry = {
-    id: `${collectionName}/${fileName}/${slug}`,
+    id: `${collectionName}/${slug}`,
     collectionName,
     fileName,
     slug,
@@ -834,10 +834,7 @@ export const saveEntry = async () => {
 
   const savingAssetsPaths = savingAssets.map((a) => a.path);
 
-  allEntries.update((entries) => [
-    ...entries.filter((e) => !(e.collectionName === collectionName && e.slug === slug)),
-    savingEntry,
-  ]);
+  allEntries.update((entries) => [...entries.filter((e) => e.id !== savingEntry.id), savingEntry]);
 
   allAssets.update((assets) => [
     ...assets.filter((a) => !savingAssetsPaths.includes(a.path)),
