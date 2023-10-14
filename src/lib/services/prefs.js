@@ -1,5 +1,5 @@
 import equal from 'fast-deep-equal';
-import { locale as appLocale, locales } from 'svelte-i18n';
+import { locale as appLocale, locales as appLocales } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import LocalStorage from '$lib/services/utils/local-storage';
 
@@ -36,7 +36,7 @@ prefs.subscribe(async (newPrefs) => {
 
   const { locale, theme, devModeEnabled = false } = newPrefs;
 
-  if (locale && get(locales).includes(locale)) {
+  if (locale && get(appLocales).includes(locale)) {
     appLocale.set(locale);
   }
 

@@ -1,6 +1,6 @@
 <script>
   import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
-  import { _, locale } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import DeleteAssetsDialog from '$lib/components/assets/shared/delete-assets-dialog.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
   import { selectedAssetFolderPath, selectedAssets, uploadingAssets } from '$lib/services/assets';
@@ -16,7 +16,7 @@
 
 <Toolbar class="primary">
   <h2>
-    {$locale ? getFolderLabelByPath($selectedAssetFolderPath) : ''}
+    {$appLocale ? getFolderLabelByPath($selectedAssetFolderPath) : ''}
     {#if $selectedAssetFolderPath}
       <span>/{$selectedAssetFolderPath}</span>
     {/if}

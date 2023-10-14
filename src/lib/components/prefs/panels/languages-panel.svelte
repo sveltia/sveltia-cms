@@ -1,7 +1,7 @@
 <script>
   import { Option, Select, TabPanel, TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
-  import { _, locale as appLocale, locales } from 'svelte-i18n';
+  import { _, locale as appLocale, locales as appLocales } from 'svelte-i18n';
   import { siteConfig } from '$lib/services/config';
   import { getLocaleLabel } from '$lib/services/i18n';
   import { allTranslationServices } from '$lib/services/integrations/translators';
@@ -20,7 +20,7 @@
             $prefs = { ...$prefs, locale: event.detail.value };
           }}
         >
-          {#each $locales as locale}
+          {#each $appLocales as locale}
             <Option
               label={getLocaleLabel(locale)}
               value={locale}
