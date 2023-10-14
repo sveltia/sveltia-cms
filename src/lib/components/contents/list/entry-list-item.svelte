@@ -16,6 +16,11 @@
    */
   export let content = undefined;
 
+  /**
+   * @type {string}
+   */
+  export let locale = '';
+
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
 </script>
 
@@ -54,7 +59,7 @@
   {/if}
   <TableCell class="title">
     <span>
-      {formatSummary($selectedCollection, entry, content)}
+      {formatSummary($selectedCollection, entry, content, locale)}
     </span>
   </TableCell>
 </TableRow>

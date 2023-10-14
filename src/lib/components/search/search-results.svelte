@@ -24,7 +24,8 @@
               ? collection.files.find(({ name }) => name === fileName)
               : undefined}
             {@const { defaultLocale = 'default' } = collection._i18n}
-            {@const { content } = locales[defaultLocale] || {}}
+            {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
+            {@const { content } = locales[locale] || {}}
             {#if content}
               <TableRow
                 on:click={() => {

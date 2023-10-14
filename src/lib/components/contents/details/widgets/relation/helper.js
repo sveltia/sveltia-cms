@@ -50,7 +50,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
   return refEntries
     .map((refEntry) => {
-      const { content } = refEntry.locales[locale] || {};
+      const { content } = refEntry?.locales[locale] || {};
 
       if (!content) {
         return undefined;
@@ -150,5 +150,6 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       return labels.map((label, index) => ({ label, value: values[index] }));
     })
     .flat(1)
+    .filter(Boolean)
     .sort((a, b) => a.label.localeCompare(b.label));
 };

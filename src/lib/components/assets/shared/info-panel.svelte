@@ -119,7 +119,8 @@
     {#each usedEntries as { sha, slug, locales, collectionName, fileName } (sha)}
       {@const collection = getCollection(collectionName)}
       {@const { defaultLocale = 'default' } = collection._i18n}
-      {@const { content } = locales[defaultLocale] || {}}
+      {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
+      {@const { content } = locales[locale]}
       <p>
         <Button
           class="link"

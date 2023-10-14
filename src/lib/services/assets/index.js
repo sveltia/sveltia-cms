@@ -112,14 +112,21 @@ export const getAssetByPath = (savedPath, entry) => {
       return undefined;
     }
 
-    const collection = getCollection(entry.collectionName);
+    const { collectionName, locales } = entry;
+    const collection = getCollection(collectionName);
 
     const {
       _i18n: { defaultLocale = 'default' },
       public_folder: publicFolder,
     } = collection;
 
-    const { path: entryFilePath, content: entryContent } = entry.locales[defaultLocale];
+    const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
+    const { path: entryFilePath, content: entryContent } = locales[locale];
+
+    if (!entryFilePath || !entryContent) {
+      return undefined;
+    }
+
     const entryFolder = entryFilePath.split('/').slice(0, -1).join('/');
 
     const slug = publicFolder

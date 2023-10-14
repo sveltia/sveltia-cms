@@ -93,10 +93,11 @@ const transformSummary = (summary, tf, fieldConfig) => {
  * @param {Collection} collection Entry’s collection.
  * @param {Entry} entry Entry.
  * @param {EntryContent} content Entry content.
+ * @param {LocaleCode} locale Locale.
  * @returns {string} Formatted summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
-export const formatSummary = (collection, entry, content) => {
+export const formatSummary = (collection, entry, content, locale) => {
   const {
     name: collectionName,
     folder: collectionFolder,
@@ -112,8 +113,9 @@ export const formatSummary = (collection, entry, content) => {
     return content[identifierField] || content.title || content.name || content.label || entry.slug;
   }
 
+  const { locales, slug, commitDate, commitAuthor } = entry;
+  const { path: entryPath } = locales[locale];
   const valueMap = flatten(content);
-  const entryPath = entry.locales[defaultLocale].path;
 
   /**
    * @param {string} tag Field name or one of special tags.
@@ -125,7 +127,7 @@ export const formatSummary = (collection, entry, content) => {
 
     let summary = (() => {
       if (tag === 'slug') {
-        return entry.slug;
+        return slug;
       }
 
       if (tag === 'dirname') {
@@ -141,11 +143,11 @@ export const formatSummary = (collection, entry, content) => {
       }
 
       if (tag === 'commit_date') {
-        return entry.commitDate || '';
+        return commitDate || '';
       }
 
       if (tag === 'commit_author') {
-        return entry.commitAuthor?.name || entry.commitAuthor?.login || entry.commitAuthor?.email;
+        return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
       }
 
       const fieldValue = valueMap[fieldName];

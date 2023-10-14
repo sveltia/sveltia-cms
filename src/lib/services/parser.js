@@ -321,6 +321,7 @@ const getSlug = (collectionName, filePath, content) => {
  * @returns {Entry[]} Entry list.
  */
 export const parseEntryFiles = (entryFiles) => {
+  /** @type {Entry[]} */
   const entries = [];
 
   entryFiles.forEach((file) => {
@@ -357,15 +358,18 @@ export const parseEntryFiles = (entryFiles) => {
       return;
     }
 
-    const entry = { sha, collectionName, fileName, ...meta };
+    /** @type {Entry} */
+    const entry = { sha, collectionName, fileName, locales: {}, ...meta };
 
     if (!hasLocales) {
       entry.slug = fileName || getSlug(collectionName, filePath, parsedFile);
-      entry.locales = { default: { content: parsedFile, path, sha } };
+      entry.locales.default = { content: parsedFile, path, sha };
     }
 
     if (hasLocales && (structure === 'single_file' || fileName)) {
-      entry.slug = fileName || getSlug(collectionName, filePath, parsedFile[defaultLocale]);
+      const content = parsedFile[defaultLocale] || Object.values(parsedFile)[0];
+
+      entry.slug = fileName || getSlug(collectionName, filePath, content);
       entry.locales = Object.fromEntries(
         locales
           .filter((locale) => locale in parsedFile)
@@ -389,20 +393,27 @@ export const parseEntryFiles = (entryFiles) => {
         [, _filePath, locale] = filePath.match(new RegExp(`^(.+)\\.(${locales.join('|')})$`)) || [];
       }
 
-      if (_filePath && locale) {
-        const slug = fileName || getSlug(collectionName, _filePath, parsedFile);
-        const index = entries.findIndex((_entry) => _entry.slug === slug);
-
-        if (index > -1) {
-          entries[index].locales[locale] = { content: parsedFile, path, sha };
-
-          // Don’t add another `entry`
-          return;
-        }
-
-        entry.slug = slug;
-        entry.locales = { [locale]: { content: parsedFile, path, sha } };
+      if (!_filePath || !locale) {
+        return;
       }
+
+      const slug = fileName || getSlug(collectionName, _filePath, parsedFile);
+      // Check if the entry has already been added for another locale
+      const index = entries.findIndex((e) => e.id === `${collectionName}/${slug}`);
+
+      // If found, add a new locale to an existing entry; don’t add another entry
+      if (index > -1) {
+        entries[index].locales[locale] = { content: parsedFile, path, sha };
+
+        return;
+      }
+
+      entry.slug = slug;
+      entry.locales[locale] = { content: parsedFile, path, sha };
+    }
+
+    if (!entry.slug || !Object.keys(entry.locales).length) {
+      return;
     }
 
     entry.id = `${collectionName}/${entry.slug}`;
