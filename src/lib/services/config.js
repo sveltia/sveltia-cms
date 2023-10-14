@@ -137,7 +137,8 @@ siteConfig.subscribe((config) => {
           frontmatterDelimiter,
           yamlQuote,
         }),
-      ),
+      )
+      .sort((a, b) => a.folder.localeCompare(b.folder)),
     ...collections
       .filter(({ files }) => !!files)
       .map(
@@ -159,7 +160,8 @@ siteConfig.subscribe((config) => {
             yamlQuote,
           })),
       )
-      .flat(1),
+      .flat(1)
+      .sort((a, b) => a.file.localeCompare(b.file)),
   ];
 
   const globalMediaFolder = stripSlashes(_globalMediaFolder);

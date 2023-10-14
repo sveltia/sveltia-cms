@@ -57,7 +57,7 @@ export const createFileList = (files) => {
     const name = path.split('/').pop();
     const extension = name.split('.').pop();
 
-    const contentPathConfig = get(allContentPaths).find(
+    const contentPathConfig = get(allContentPaths).findLast(
       ({ folder, file }) => path.startsWith(folder) || path === file,
     );
 
