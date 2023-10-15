@@ -134,7 +134,6 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 - Comprehensive config validation is not implemented yet.
 - Auto-saving a draft entry is not implemented yet.
-- Duplicating an entry is not implemented yet.
 - Downloading an asset in the media library is not implemented yet.
 - [Backend health check](https://www.githubstatus.com/api) is not implemented yet.
 
