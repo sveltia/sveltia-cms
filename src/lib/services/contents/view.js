@@ -3,20 +3,17 @@ import { flatten } from 'flat';
 import moment from 'moment';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
-import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
 import {
   allEntries,
   getEntriesByCollection,
-  getFieldByKeyPath,
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
 import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
-import { getPropertyValue } from '$lib/services/contents/entry';
+import { getFieldConfig, getFieldValue, getPropertyValue } from '$lib/services/contents/entry';
 import { prefs } from '$lib/services/prefs';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { isObjectArray } from '$lib/services/utils/misc';
 import { stripSlashes } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.contents-view';
@@ -122,8 +119,7 @@ export const formatSummary = (collection, entry, content, locale) => {
    * @returns {string} Replaced string.
    */
   const replace = (tag) => {
-    const [fieldName, ...transformations] = tag.split(/\s*\|\s*/);
-    const fieldConfig = getFieldByKeyPath(collectionName, undefined, fieldName, valueMap);
+    const [keyPath, ...transformations] = tag.split(/\s*\|\s*/);
 
     let summary = (() => {
       if (tag === 'slug') {
@@ -150,29 +146,12 @@ export const formatSummary = (collection, entry, content, locale) => {
         return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
       }
 
-      const fieldValue = valueMap[fieldName];
-
-      // Resolve the displayed value for a relation field
-      if (fieldConfig?.widget === 'relation') {
-        const relFieldConfig = /** @type {RelationField} */ (fieldConfig);
-        const refEntries = getEntriesByCollection(relFieldConfig.collection);
-        const refOptions = getOptions(defaultLocale, relFieldConfig, refEntries);
-
-        return refOptions.find((o) => o.value === fieldValue)?.label || fieldValue;
-      }
-
-      // Use the label for a select field with value/label options
-      if (fieldConfig?.widget === 'select') {
-        const { options } = /** @type {SelectField} */ (fieldConfig);
-
-        if (isObjectArray(options)) {
-          const _options = /** @type {{ label: string, value: string }[]} */ (options);
-
-          return _options.find((o) => o.value === fieldValue)?.label || fieldValue;
-        }
-      }
-
-      return fieldValue;
+      return getFieldValue({
+        collectionName,
+        valueMap,
+        keyPath,
+        locale: defaultLocale,
+      });
     })();
 
     if (!summary) {
@@ -188,6 +167,8 @@ export const formatSummary = (collection, entry, content, locale) => {
 
       return String(summary);
     }
+
+    const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath });
 
     transformations.forEach((tf) => {
       summary = transformSummary(summary, tf, fieldConfig);
@@ -367,9 +348,9 @@ const getSortFieldLabel = (collection, key) => {
           return undefined;
         }
 
-        const __key = arr.slice(0, index + 1).join('.');
+        const keyPath = arr.slice(0, index + 1).join('.');
 
-        return getFieldByKeyPath(collection.name, undefined, __key, {})?.label || _key;
+        return getFieldConfig({ collectionName: collection.name, keyPath })?.label || _key;
       })
       .filter(Boolean)
       .join(' – ');
@@ -398,7 +379,7 @@ export const sortFields = derived(
 
     const _sortFields = (
       Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
-    ).filter((fieldName) => !!getFieldByKeyPath(_collection.name, undefined, fieldName, {}));
+    ).filter((keyPath) => !!getFieldConfig({ collectionName: _collection.name, keyPath }));
 
     if (commitAuthor && !_sortFields.includes('author')) {
       _sortFields.push('commit_author');

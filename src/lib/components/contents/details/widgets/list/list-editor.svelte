@@ -11,6 +11,7 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/list/add-item-button.svelte';
   import { entryDraft, updateListField } from '$lib/services/contents/editor';
+  import { getFieldValue } from '$lib/services/contents/entry';
   import { isObject } from '$lib/services/utils/misc';
   import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
@@ -52,13 +53,19 @@
     types,
     typeKey = 'type',
   } = fieldConfig);
-  $: hasSubFields = !!(field || fields || types);
+  $: hasSingleSubField = !!field;
+  $: hasMultiSubFields = Array.isArray(fields);
+  $: hasVariableTypes = Array.isArray(types);
+  $: hasSubFields = hasSingleSubField || hasMultiSubFields || hasVariableTypes;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
+  $: ({ collectionName, fileName } = $entryDraft);
+  $: valueMap = $entryDraft.currentValues[locale];
+  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
   $: items =
     unflatten(
       Object.fromEntries(
-        Object.entries($entryDraft.currentValues[locale])
+        Object.entries(valueMap)
           .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
           .map(([_keyPath, value]) => [
             _keyPath.replace(new RegExp(`^${escapeRegExp(keyPath)}`), fieldName),
@@ -141,7 +148,7 @@
    */
   const addItem = (subFieldName) => {
     updateComplexList(({ valueList, viewList }) => {
-      let newItem = field ? undefined : {};
+      let newItem = hasSingleSubField ? undefined : {};
 
       const subFields = subFieldName
         ? types.find(({ name }) => name === subFieldName)?.fields || []
@@ -152,7 +159,7 @@
           isObject(defaultValues) && name in defaultValues ? defaultValues[name] : defaultValue;
 
         if (_defaultValue) {
-          if (field) {
+          if (hasSingleSubField) {
             newItem = _defaultValue;
           } else {
             newItem[name] = _defaultValue;
@@ -210,6 +217,31 @@
       updateInputValue(currentValue);
     }
   }
+
+  /**
+   * Format the summary template.
+   * @param {object} item List item.
+   * @param {number} index List index.
+   * @param {string} [summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
+   * @returns {string} Formatted summary.
+   */
+  const formatSummary = (item, index, summaryTemplate) => {
+    if (!summaryTemplate) {
+      return item.title || item.name || '';
+    }
+
+    return summaryTemplate.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {
+      const value = getFieldValue({
+        collectionName,
+        fileName,
+        valueMap,
+        keyPath: hasSingleSubField ? `${keyPath}.${index}` : `${keyPath}.${index}.${_fieldName}`,
+        locale,
+      });
+
+      return Array.isArray(value) ? listFormatter.format(value) : value || '';
+    });
+  };
 </script>
 
 <Group aria-labelledby="list-{widgetId}-summary">
@@ -240,6 +272,11 @@
     <div class="item-list" id="list-{widgetId}-item-list" class:collapsed={!parentExpanded}>
       {#each items as item, index}
         {@const expanded = !!$entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`]}
+        {@const typeConfig = hasVariableTypes
+          ? types.find(({ name }) => name === item[typeKey])
+          : undefined}
+        {@const subFields = hasVariableTypes ? typeConfig?.fields || [] : fields || [field]}
+        {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <!-- @todo Support drag sorting. -->
         <div class="item">
           <div class="header">
@@ -258,9 +295,9 @@
                   name={expanded ? 'expand_more' : 'chevron_right'}
                   label={expanded ? $_('collapse') : $_('expand')}
                 />
-                {#if types}
+                {#if hasVariableTypes}
                   <span class="type">
-                    {types.find(({ name }) => name === item[typeKey])?.label || ''}
+                    {typeConfig?.label || typeConfig?.name || ''}
                   </span>
                 {/if}
               </Button>
@@ -296,33 +333,18 @@
           </div>
           <div class="item-body" id="list-{widgetId}-item-{index}-body">
             {#if expanded}
-              {@const subFieldName = Array.isArray(types)
-                ? $entryDraft.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
-                : undefined}
-              {@const subFields = subFieldName
-                ? types.find(({ name }) => name === subFieldName)?.fields || []
-                : fields || [field]}
               {#each subFields as subField (subField.name)}
                 <FieldEditor
-                  keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
+                  keyPath={hasSingleSubField
+                    ? `${keyPath}.${index}`
+                    : `${keyPath}.${index}.${subField.name}`}
                   {locale}
                   fieldConfig={subField}
                 />
               {/each}
             {:else}
               <div class="summary">
-                {#if summary}
-                  {summary.replaceAll(
-                    // @todo Resolve relation fields
-                    /{{fields\.(.+?)}}/g,
-                    (_match, _keyPath) =>
-                      $entryDraft.currentValues[locale][`${keyPath}.${index}.${_keyPath}`] ||
-                      $entryDraft.currentValues[locale][`${keyPath}.${index}`] ||
-                      '',
-                  )}
-                {:else}
-                  {item.title || item.name || Object.values(item)[0] || ''}
-                {/if}
+                {formatSummary(item, index, summaryTemplate)}
               </div>
             {/if}
           </div>

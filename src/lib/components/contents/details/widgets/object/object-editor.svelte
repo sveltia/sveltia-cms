@@ -9,6 +9,7 @@
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
+  import { getFieldValue } from '$lib/services/contents/entry';
   import { generateUUID } from '$lib/services/utils/strings';
 
   export let locale = '';
@@ -39,7 +40,9 @@
     fields,
   } = fieldConfig);
 
-  $: keyValueMap = $entryDraft.currentValues[locale];
+  $: ({ collectionName, fileName } = $entryDraft);
+  $: valueMap = $entryDraft.currentValues[locale];
+  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
   $: parentExpanded = !collapsed;
 
   let widgetId = '';
@@ -47,6 +50,28 @@
   onMount(() => {
     widgetId = generateUUID().split('-').pop();
   });
+
+  /**
+   * Format the summary template.
+   * @returns {string} Formatted summary.
+   */
+  const formatSummary = () => {
+    if (!summary) {
+      return valueMap[`${keyPath}.title`] || valueMap[`${keyPath}.name`] || '';
+    }
+
+    return summary.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {
+      const value = getFieldValue({
+        collectionName,
+        fileName,
+        valueMap,
+        keyPath: `${keyPath}.${_fieldName}`,
+        locale,
+      });
+
+      return Array.isArray(value) ? listFormatter.format(value) : value || '';
+    });
+  };
 </script>
 
 <Group aria-labelledby="oblect-{widgetId}-summary">
@@ -64,17 +89,11 @@
         label={parentExpanded ? $_('collapse') : $_('expand')}
       />
     </Button>
-    <div class="summary" id="oblect-{widgetId}-summary">
-      {#if summary}
-        {summary.replaceAll(
-          // @todo Resolve relation fields
-          /{{fields\.(.+?)}}/g,
-          (_match, _keyPath) => `${keyValueMap[`${keyPath}.${_keyPath}`] || ''}`,
-        )}
-      {:else}
-        {keyValueMap[`${keyPath}.title`] || keyValueMap[`${keyPath}.name`] || ''}
-      {/if}
-    </div>
+    {#if !parentExpanded}
+      <div class="summary" id="oblect-{widgetId}-summary">
+        {formatSummary()}
+      </div>
+    {/if}
     <Spacer flex />
   </div>
   <div class="item-list" id="oblect-{widgetId}-item-list" class:collapsed={!parentExpanded}>

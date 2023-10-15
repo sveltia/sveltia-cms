@@ -1,5 +1,6 @@
 import { flatten, unflatten } from 'flat';
-import { getEntriesByCollection, getFieldByKeyPath } from '$lib/services/contents';
+import { getEntriesByCollection } from '$lib/services/contents';
+import { getFieldConfig } from '$lib/services/contents/entry';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
@@ -99,20 +100,26 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             return [fieldName, refEntry.slug];
           }
 
-          const relFieldConfig = /** @type {RelationField} */ (
-            getFieldByKeyPath(fieldConfig.collection, undefined, fieldName, {})
-          );
+          const _fieldConfig = getFieldConfig({
+            collectionName: fieldConfig.collection,
+            keyPath: fieldName,
+          });
 
-          const value = flattenContent[fieldName.replace(/^fields\./, '')];
+          const keyPath = fieldName.replace(/^fields\./, '');
+          const value = flattenContent[keyPath];
 
           // Resolve the displayed value for a nested relation field
-          // @todo Add test for this
-          if (relFieldConfig?.widget === 'relation') {
-            const nestedRefEntries = getEntriesByCollection(relFieldConfig.collection);
-            const nestedRefOptions = getOptions(locale, relFieldConfig, nestedRefEntries);
-            const nestedRefValue = nestedRefOptions.find((option) => option.value === value)?.label;
-
-            return [fieldName, nestedRefValue || value || ''];
+          if (_fieldConfig?.widget === 'relation') {
+            return [
+              fieldName,
+              // eslint-disable-next-line no-use-before-define
+              getReferencedOptionLabel({
+                fieldConfig: /** @type {RelationField} */ (_fieldConfig),
+                valueMap: flattenContent,
+                keyPath,
+                locale,
+              }) || '',
+            ];
           }
 
           return [fieldName, value || ''];
@@ -152,4 +159,36 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     .flat(1)
     .filter(Boolean)
     .sort((a, b) => a.label.localeCompare(b.label));
+};
+
+/**
+ * Resolve the display value(s) for a relation field.
+ * @param {object} args Arguments.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @param {FlattenedEntryContent} args.valueMap Object holding current entry values
+ * @param {string} args.keyPath Field key path, e.g. `author.name`.
+ * @param {LocaleCode} args.locale Locale.
+ * @returns {any | any[]} Resolved field value(s).
+ * @todo Write tests for this.
+ */
+export const getReferencedOptionLabel = ({ fieldConfig, valueMap, keyPath, locale }) => {
+  const { multiple, collection } = fieldConfig;
+  const refEntries = getEntriesByCollection(collection);
+  const refOptions = getOptions(locale, fieldConfig, refEntries);
+  /**
+   * Get the label by value.
+   * @param {any} _value Stored value.
+   * @returns {string} Label.
+   */
+  const getLabel = (_value) => refOptions.find((o) => o.value === _value)?.label || _value;
+
+  if (multiple) {
+    const values = Object.entries(valueMap)
+      .filter(([key]) => key.match(`^${escapeRegExp(keyPath)}\\.\\d+$`))
+      .map(([, _value]) => _value);
+
+    return values.map(getLabel);
+  }
+
+  return getLabel(valueMap[keyPath]);
 };

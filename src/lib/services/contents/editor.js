@@ -7,7 +7,8 @@ import { flatten, unflatten } from 'flat';
 import { get, writable } from 'svelte/store';
 import { allAssets, getAssetFolder, getAssetKind } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
-import { allEntries, getCollection, getFieldByKeyPath } from '$lib/services/contents';
+import { allEntries, getCollection } from '$lib/services/contents';
+import { getFieldConfig } from '$lib/services/contents/entry';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
 import { translator } from '$lib/services/integrations/translators';
 import { formatEntryFile, getFileExtension } from '$lib/services/parser';
@@ -197,7 +198,7 @@ const createNewContent = (fields, defaultValues = {}) => {
  * @param {object} [args.target] Target object.
  * @param {() => FlattenedEntryContent} [args.getValueMap] Optional function to get an object
  * holding the current entry values. It will be used for the `valueMap` argument of
- * {@link getFieldByKeyPath}. If omitted, the proxy target will be used instead.
+ * {@link getFieldConfig}. If omitted, the proxy target will be used instead.
  * @returns {Proxy<object>} Created proxy.
  */
 const createProxy = ({
@@ -214,7 +215,7 @@ const createProxy = ({
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {string} */ keyPath, value) => {
       const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
-      const fieldConfig = getFieldByKeyPath(collectionName, fileName, keyPath, valueMap);
+      const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
 
       if (!fieldConfig) {
         return true;
@@ -376,7 +377,7 @@ export const copyFromLocale = async (
 
   const copingFields = Object.fromEntries(
     Object.entries(valueMap).filter(([_keyPath, value]) => {
-      const field = getFieldByKeyPath(collectionName, fileName, _keyPath, valueMap);
+      const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath });
 
       // prettier-ignore
       if (
@@ -450,7 +451,12 @@ export const revertChanges = (locale = '', keyPath = '') => {
   const revert = (_locale, valueMap, reset = false) => {
     Object.entries(valueMap).forEach(([_keyPath, value]) => {
       if (!keyPath || _keyPath.startsWith(keyPath)) {
-        const fieldConfig = getFieldByKeyPath(collection.name, fileName, _keyPath, valueMap);
+        const fieldConfig = getFieldConfig({
+          collectionName: collection.name,
+          fileName,
+          valueMap,
+          keyPath: _keyPath,
+        });
 
         if (_locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n)) {
           if (reset) {
@@ -489,7 +495,12 @@ const validateEntry = () => {
     const valueEntries = Object.entries(valueMap);
 
     valueEntries.forEach(([keyPath, value]) => {
-      const fieldConfig = getFieldByKeyPath(collection.name, fileName, keyPath, valueMap);
+      const fieldConfig = getFieldConfig({
+        collectionName: collection.name,
+        fileName,
+        valueMap,
+        keyPath,
+      });
 
       if (!fieldConfig) {
         return;

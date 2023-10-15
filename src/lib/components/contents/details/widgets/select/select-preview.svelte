@@ -19,7 +19,7 @@
   export let currentValue = undefined;
 
   $: ({ options, multiple } = fieldConfig);
-  $: _isObjectArray = isObjectArray(options);
+  $: hasLabels = isObjectArray(options);
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
   /**
@@ -28,7 +28,7 @@
    * @returns {string} Label.
    */
   const getLabel = (value) =>
-    _isObjectArray
+    hasLabels
       ? /** @type {object[]} */ (options).find((o) => o.value === value)?.label || value
       : value;
 </script>

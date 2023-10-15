@@ -2,7 +2,7 @@ import { flatten } from 'flat';
 import { get, writable } from 'svelte/store';
 import { getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
-import { getPropertyValue } from '$lib/services/contents/entry';
+import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { isObject } from '$lib/services/utils/misc';
 
 /**
@@ -111,52 +111,6 @@ export const getFile = (collectionName, fileName) =>
   );
 
 /**
- * Get a field that matches the given key path: dot-connected object field name.
- * @param {string} collectionName Collection name.
- * @param {string} fileName File name if the collection is a file collection.
- * @param {string} keyPath Key path, e.g. `author.name`.
- * @param {FlattenedEntryContent} valueMap Object holding current entry values keyed with `keyPath`.
- * @returns {Field} Field configuration.
- */
-export const getFieldByKeyPath = (collectionName, fileName, keyPath, valueMap) => {
-  const collection = getCollection(collectionName);
-  const { fields } = fileName ? collection.files.find(({ name }) => name === fileName) : collection;
-  const keyPathArray = keyPath.split('.');
-  /**
-   * @type {Field}
-   */
-  let field = undefined;
-
-  keyPathArray.forEach((key, index) => {
-    if (index === 0) {
-      field = fields.find(({ name }) => name === key);
-    } else if (field) {
-      const isNumericKey = key.match(/^\d+$/);
-
-      const {
-        field: subField,
-        fields: subFields,
-        types,
-        typeKey = 'type',
-      } = /** @type {ListField} */ (field);
-
-      if (subField) {
-        field = subField;
-      } else if (subFields && !isNumericKey) {
-        field = subFields.find(({ name }) => name === key);
-      } else if (types && isNumericKey) {
-        field = types.find(
-          ({ name }) =>
-            name === valueMap[`${keyPathArray.slice(0, index).join('.')}.${key}.${typeKey}`],
-        );
-      }
-    }
-  });
-
-  return field;
-};
-
-/**
  * Get entries by the given collection name, while applying a filer if needed.
  * @param {string} collectionName Collection name.
  * @returns {Entry[]} Entries.
@@ -200,7 +154,7 @@ export const getEntriesByAssetURL = async (url) => {
 
           const __results = await Promise.all(
             Object.entries(valueMap).map(async ([keyPath, value]) => {
-              const field = getFieldByKeyPath(collectionName, fileName, keyPath, valueMap);
+              const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
 
               if (!field || !['image', 'file'].includes(field.widget)) {
                 return false;
