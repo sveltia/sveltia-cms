@@ -9,7 +9,7 @@
   /**
    * @type {Asset}
    */
-  export let asset = undefined;
+  export let asset;
 
   $: ({ name, kind } = asset);
 </script>

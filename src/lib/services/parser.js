@@ -44,21 +44,23 @@ export const getFileExtension = ({ file, format, extension }) => {
 /**
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
- * @param {object[]} files Unfiltered file list.
+ * @param {{ path: string }[]} files Unfiltered file list.
  * @returns {{ entryFiles: object[], assetFiles: object[], allFiles: object[], count: number }} File
  * list, including both entries and assets.
  */
 export const createFileList = (files) => {
+  /** @type {{ [key: string]: any }[]} */
   const entryFiles = [];
+  /** @type {{ [key: string]: any }[]} */
   const assetFiles = [];
 
   files.forEach((fileInfo) => {
     const { path } = fileInfo;
-    const name = path.split('/').pop();
+    const name = /** @type {string} */ (path.split('/').pop());
     const extension = name.split('.').pop();
 
-    const contentPathConfig = get(allContentPaths).findLast(
-      ({ folder, file }) => path.startsWith(folder) || path === file,
+    const contentPathConfig = get(allContentPaths).findLast(({ folder, file }) =>
+      folder ? path.startsWith(folder) : path === file,
     );
 
     const mediaPathConfig = get(allAssetPaths).findLast(({ internalPath }) =>
@@ -381,16 +383,16 @@ export const parseEntryFiles = (entryFiles) => {
       /**
        * @type {string}
        */
-      let _filePath = undefined;
+      let _filePath;
       /**
        * @type {string}
        */
-      let locale = undefined;
+      let locale;
 
       if (structure === 'multiple_folders') {
-        [, locale, _filePath] = filePath.match(new RegExp(`^(${locales.join('|')})\\/(.+)$`)) || [];
+        [, locale, _filePath] = filePath.match(`^(${locales.join('|')})\\/(.+)$`) || [];
       } else {
-        [, _filePath, locale] = filePath.match(new RegExp(`^(.+)\\.(${locales.join('|')})$`)) || [];
+        [, _filePath, locale] = filePath.match(`^(.+)\\.(${locales.join('|')})$`) || [];
       }
 
       if (!_filePath || !locale) {

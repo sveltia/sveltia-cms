@@ -16,12 +16,12 @@
    * @type {BooleanField}
    */
   // svelte-ignore unused-export-let
-  export let fieldConfig = undefined;
+  export let fieldConfig;
 
   /**
    * @type {boolean}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   /**
    * @type {boolean}

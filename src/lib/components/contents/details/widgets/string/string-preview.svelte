@@ -11,11 +11,11 @@
   /**
    * @type {StringField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
   /**
    * @type {string}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   $: ({ name: fieldName } = fieldConfig);
 

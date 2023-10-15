@@ -12,11 +12,11 @@
   /**
    * @type {SelectField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
   /**
    * @type {string | string[]}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   $: ({ options, multiple } = fieldConfig);
   $: hasLabels = isObjectArray(options);

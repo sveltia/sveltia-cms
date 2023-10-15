@@ -22,7 +22,7 @@ const storageKey = 'sveltia-cms.assets-view';
  * @param {('lazy' | 'eager')} loading How to load the media.
  * @param {(HTMLImageElement | HTMLVideoElement)} element Element to observe the visibility using
  * the Intersection Observer API.
- * @returns {Promise<string>} Blob URL.
+ * @returns {Promise<string | undefined>} Blob URL.
  */
 export const getAssetPreviewURL = (asset, loading, element) => {
   if (loading === 'eager') {
@@ -101,12 +101,14 @@ const sortAssets = (assets, { key, order } = {}) => {
   const _assets = [...assets];
 
   const type =
-    { commit_author: String, commit_date: Date }[key] || _assets[0]?.[key]?.constructor || String;
+    { commit_author: String, commit_date: Date }[key] ||
+    /** @type {{ [key: string]: any }} */ (_assets[0])?.[key]?.constructor ||
+    String;
 
   /**
    * Get an asset’s property value.
    * @param {Asset} asset Asset.
-   * @returns {*} Value.
+   * @returns {any} Value.
    */
   const getValue = (asset) => {
     const { commitAuthor: { name, login, email } = {}, commitDate } = asset;
@@ -125,7 +127,7 @@ const sortAssets = (assets, { key, order } = {}) => {
       return asset.name.split('.')[0];
     }
 
-    return asset[key] || '';
+    return /** @type {{ [key: string]: any }} */ (asset)[key] || '';
   };
 
   _assets.sort((a, b) => {
@@ -165,14 +167,14 @@ const filterAssets = (assets, { field, pattern } = { field: undefined, pattern: 
     return assets.filter(({ path }) =>
       pattern === 'other'
         ? !Object.values(assetExtensions).some((regex) => path.match(regex))
-        : path.match(assetExtensions[pattern]),
+        : path.match(assetExtensions[/** @type {string} */ (pattern)]),
     );
   }
 
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
 
   return assets.filter((asset) => {
-    const value = asset[field];
+    const value = /** @type {{ [key: string]: any }} */ (asset)[field];
 
     if (regex) {
       return String(value || '').match(regex);
@@ -195,15 +197,16 @@ const groupAssets = (assets, { field, pattern } = { field: undefined, pattern: u
   }
 
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
+  /** @type {{ [key: string]: Asset[] }} */
   const groups = {};
   const otherKey = get(_)('other');
 
   assets.forEach((asset) => {
-    const value = asset[field];
+    const value = /** @type {{ [key: string]: any }} */ (asset)[field];
     /**
      * @type {string}
      */
-    let key = undefined;
+    let key;
 
     if (regex) {
       [key = otherKey] = String(value || '').match(regex) || [];

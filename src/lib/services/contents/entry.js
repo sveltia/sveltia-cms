@@ -4,7 +4,7 @@ import { getOptionLabel } from '$lib/components/contents/details/widgets/select/
 import { getCollection } from '$lib/services/contents';
 
 /**
- * Get a field config that matches the given field name (key path).
+ * Get a field’s config object that matches the given field name (key path).
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name if the collection is a file collection.
@@ -25,7 +25,7 @@ export const getFieldConfig = ({
   /**
    * @type {Field}
    */
-  let field = undefined;
+  let field;
 
   keyPathArray.forEach((key, index) => {
     if (index === 0) {
@@ -57,7 +57,7 @@ export const getFieldConfig = ({
 };
 
 /**
- * Get the field value that matches the given field name (key path).
+ * Get a field’s display value that matches the given field name (key path).
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
@@ -66,7 +66,7 @@ export const getFieldConfig = ({
  * @param {LocaleCode} args.locale Locale.
  * @returns {any | any[]} Resolved field value(s).
  */
-export const getFieldValue = ({ collectionName, fileName, keyPath, valueMap, locale }) => {
+export const getFieldDisplayValue = ({ collectionName, fileName, keyPath, valueMap, locale }) => {
   const fieldConfig = getFieldConfig({
     collectionName,
     fileName,

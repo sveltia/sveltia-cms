@@ -10,7 +10,11 @@ import {
   selectedEntries,
 } from '$lib/services/contents';
 import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
-import { getFieldConfig, getFieldValue, getPropertyValue } from '$lib/services/contents/entry';
+import {
+  getFieldConfig,
+  getFieldDisplayValue,
+  getPropertyValue,
+} from '$lib/services/contents/entry';
 import { prefs } from '$lib/services/prefs';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import LocalStorage from '$lib/services/utils/local-storage';
@@ -146,7 +150,7 @@ export const formatSummary = (collection, entry, content, locale) => {
         return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
       }
 
-      return getFieldValue({
+      return getFieldDisplayValue({
         collectionName,
         valueMap,
         keyPath,
@@ -276,6 +280,7 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
   const sortCondition = get(currentView).sort;
   const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
+  /** @type {{ [key: string]: Entry[] }} */
   const groups = {};
   const otherKey = get(_)('other');
 
@@ -284,7 +289,7 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
     /**
      * @type {string}
      */
-    let key = undefined;
+    let key;
 
     if (value !== undefined) {
       if (regex) {

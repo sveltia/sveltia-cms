@@ -10,11 +10,11 @@
   /**
    * @type {NumberField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
   /**
    * @type {string | number}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   $: ({
     // Widget-specific options

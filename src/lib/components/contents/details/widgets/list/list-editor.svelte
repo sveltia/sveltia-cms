@@ -11,7 +11,7 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/list/add-item-button.svelte';
   import { entryDraft, updateListField } from '$lib/services/contents/editor';
-  import { getFieldValue } from '$lib/services/contents/entry';
+  import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { isObject } from '$lib/services/utils/misc';
   import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
@@ -22,12 +22,12 @@
   /**
    * @type {ListField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
 
   /**
    * @type {string[]}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   /**
    * @type {boolean}
@@ -62,6 +62,7 @@
   $: valueMap = $entryDraft.currentValues[locale];
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
+  /** @type {{ [key: string]: any }[]} */
   $: items =
     unflatten(
       Object.fromEntries(
@@ -82,7 +83,7 @@
 
   onMount(() => {
     mounted = true;
-    widgetId = generateUUID().split('-').pop();
+    widgetId = /** @type {string} */ (generateUUID().split('-').pop());
 
     items.forEach((__, index) => {
       $entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`] = !collapsed;
@@ -118,7 +119,7 @@
       }
 
       Object.keys($entryDraft.currentValues[_locale]).forEach((_keyPath) => {
-        if (_keyPath.match(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`))) {
+        if (_keyPath.match(`^${escapeRegExp(keyPath)}\\.\\d+$`)) {
           delete $entryDraft.currentValues[_locale][_keyPath];
         }
       });
@@ -131,7 +132,8 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   * @param {({ valueList, viewList }) => void} manipulate See {@link updateListField}.
+   * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate See
+   * {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
@@ -162,13 +164,13 @@
           if (hasSingleSubField) {
             newItem = _defaultValue;
           } else {
-            newItem[name] = _defaultValue;
+            /** @type {{ [key: string]: any }} */ (newItem)[name] = _defaultValue;
           }
         }
       });
 
       if (subFieldName) {
-        newItem[typeKey] = subFieldName;
+        /** @type {{ [key: string]: any }} */ (newItem)[typeKey] = subFieldName;
       }
 
       const index = addToTop ? 0 : valueList.length;
@@ -231,7 +233,7 @@
     }
 
     return summaryTemplate.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {
-      const value = getFieldValue({
+      const value = getFieldDisplayValue({
         collectionName,
         fileName,
         valueMap,

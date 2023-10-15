@@ -16,11 +16,11 @@
   /**
    * @type {FileField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
   /**
    * @type {string}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   $: ({ widget } = fieldConfig);
 </script>

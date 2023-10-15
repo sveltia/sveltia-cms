@@ -6,17 +6,20 @@
    */
   export let loading = 'lazy';
   /**
-   * @type {Asset}
+   * @type {Asset | undefined}
    */
   export let asset = undefined;
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   export let src = undefined;
   export let alt = '';
   export let checkerboard = false;
   export let cover = false;
 
+  /**
+   * @type {HTMLImageElement}
+   */
   let element;
   let updatingSrc = false;
 

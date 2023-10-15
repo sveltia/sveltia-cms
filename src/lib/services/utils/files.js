@@ -16,9 +16,9 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
 
   /**
    * Read files recursively from the filesystem.
-   * @param {FileSystemFileEntry | FileSystemDirectoryEntry | any} entry Either a file or
+   * @param {FileSystemEntry} entry Either a file or
    * directory entry.
-   * @returns {Promise<File>} File.
+   * @returns {Promise<File | null>} File.
    */
   const readEntry = (entry) =>
     new Promise((resolve) => {
@@ -26,7 +26,7 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
       if (entry.name.startsWith('.')) {
         resolve(null);
       } else if (entry.isFile) {
-        entry.file(
+        /** @type {FileSystemFileEntry} */ (entry).file(
           (file) => {
             const isValidType =
               !fileTypes.length ||
@@ -44,17 +44,18 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
           },
         );
       } else {
-        entry.createReader().readEntries((entries) => {
+        /** @type {FileSystemDirectoryEntry} */ (entry).createReader().readEntries((entries) => {
           // @ts-ignore
           resolve(Promise.all(entries.map(readEntry)));
         });
       }
     });
 
-  return (await Promise.all([...items].map((item) => readEntry(item.webkitGetAsEntry()))))
-    .flat(100000)
-    .filter(Boolean)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return /** @type {File[]} */ (
+    (await Promise.all([...items].map((item) => readEntry(item.webkitGetAsEntry()))))
+      .flat(100000)
+      .filter(Boolean)
+  ).sort((a, b) => a.name.localeCompare(b.name));
 };
 
 /**

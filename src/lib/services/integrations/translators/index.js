@@ -20,6 +20,6 @@ export const translator = writable(deepl);
 export const showTranslatorApiKeyDialog = writable(false);
 
 /**
- * @type {import('svelte/store').Writable<[string, string, string, boolean]>}
+ * @type {import('svelte/store').Writable<[string, string, string, boolean] | undefined>}
  */
 export const pendingTranslatorRequest = writable();

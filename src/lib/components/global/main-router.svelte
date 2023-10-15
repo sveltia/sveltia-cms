@@ -12,6 +12,9 @@
   import { selectedCollection } from '$lib/services/contents';
   import { parseLocation, selectedPageName } from '$lib/services/navigation';
 
+  /**
+   * @type {{ [key: string]: any }}
+   */
   export const pages = {
     collections: ContentsPage,
     assets: AssetsPage,
@@ -26,7 +29,7 @@
    */
   export const selectPage = () => {
     const { path } = parseLocation();
-    const [, _pageName] = path.match(new RegExp(`^\\/(${Object.keys(pages).join('|')})\\b`)) || [];
+    const [, _pageName] = path.match(`^\\/(${Object.keys(pages).join('|')})\\b`) || [];
 
     if (!_pageName) {
       // Redirect any invalid page to the contents page

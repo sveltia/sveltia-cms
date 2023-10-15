@@ -19,8 +19,11 @@
   /**
    * @type {Field}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
 
+  /**
+   * @type {{ [key: string]: any }}
+   */
   const widgets = {
     boolean: BooleanPreview,
     color: ColorPreview,

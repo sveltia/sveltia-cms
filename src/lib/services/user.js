@@ -6,7 +6,7 @@ import LocalStorage from '$lib/services/utils/local-storage';
 import { isObject } from '$lib/services/utils/misc';
 
 /**
- * @type {import('svelte/store').Writable<User?>}
+ * @type {import('svelte/store').Writable<User | null | undefined>}
  */
 export const user = writable();
 

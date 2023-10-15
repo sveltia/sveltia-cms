@@ -19,8 +19,8 @@
 
   $: ({
     serviceId,
-    sourceLanguages = [],
-    targetLanguages = [],
+    sourceLanguages = /** @type {string[]} */ ([]),
+    targetLanguages = /** @type {string[]} */ ([]),
   } = $translator || {
     serviceId: undefined,
     sourceLanguages: undefined,

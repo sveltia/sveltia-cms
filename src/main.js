@@ -9,7 +9,7 @@ window.CMS = new Proxy(
   {
     /**
      * Define the getter.
-     * @param {object} obj Object itself.
+     * @param {{ [key: string]: Function }} obj Object itself.
      * @param {string} key Property name.
      * @returns {any} Property value.
      */

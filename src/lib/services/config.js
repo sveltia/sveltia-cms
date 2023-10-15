@@ -9,7 +9,7 @@ import { isObject } from '$lib/services/utils/misc';
 import { stripSlashes } from '$lib/services/utils/strings';
 
 /**
- * @type {import('svelte/store').Writable<SiteConfig?>}
+ * @type {import('svelte/store').Writable<SiteConfig | undefined>}
  */
 export const siteConfig = writable();
 
@@ -59,11 +59,11 @@ export const fetchSiteConfig = async () => {
   /**
    * @type {Response}
    */
-  let response = undefined;
+  let response;
   /**
    * @type {SiteConfig}
    */
-  let config = undefined;
+  let config;
 
   try {
     try {

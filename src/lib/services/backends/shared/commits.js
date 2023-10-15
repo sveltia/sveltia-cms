@@ -23,9 +23,9 @@ const defaultCommitMessages = {
  * @param {string} [options.collection] Collection name. Required for entries.
  * @returns {string} Formatted message.
  */
-export const createCommitMessage = (items, { commitType = 'update', collection } = {}) => {
-  const { detail: { login = '', name = '' } = {} } = get(user);
-  const [firstSlug] = items.map((item) => item.slug).filter(Boolean);
+export const createCommitMessage = (items, { commitType = 'update', collection = '' } = {}) => {
+  const { login = '', name = '' } = get(user);
+  const [firstSlug = ''] = items.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = items.map(({ path }) => path);
   const { backend: { commit_messages: customCommitMessages = {} } = {} } = get(siteConfig);
   /**

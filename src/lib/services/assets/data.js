@@ -12,7 +12,7 @@ import { escapeRegExp } from '$lib/services/utils/strings';
 export const saveAssets = async ({ files, folder }, options) => {
   const assetNamesInSameFolder = get(allAssets)
     .map((a) => a.path)
-    .filter((p) => p.match(new RegExp(`^${escapeRegExp(folder)}\\/[^\\/]+$`)))
+    .filter((p) => p.match(`^${escapeRegExp(folder)}\\/[^\\/]+$`))
     .map((p) => p.split('/').pop());
 
   const savingFileList = files.map((file) => {

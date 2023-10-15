@@ -24,8 +24,11 @@
   /**
    * @type {Field}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
 
+  /**
+   * @type {{ [key: string]: any }}
+   */
   const widgets = {
     boolean: BooleanEditor,
     color: ColorEditor,
@@ -153,7 +156,7 @@
         {#if validity.patternMismatch}
           <div>
             <Icon name="error" label={$_('error')} />
-            {pattern[1]}
+            {pattern?.[1] || ''}
           </div>
         {/if}
       </div>

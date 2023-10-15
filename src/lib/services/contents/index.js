@@ -23,7 +23,7 @@ export const allContentPaths = writable([]);
 export const allEntries = writable([]);
 
 /**
- * @type {import('svelte/store').Writable<Collection>}
+ * @type {import('svelte/store').Writable<Collection | undefined>}
  */
 export const selectedCollection = writable();
 
@@ -51,7 +51,7 @@ const getCollectionI18n = (collection) => {
   /**
    * @type {string}
    */
-  let defaultLocale = undefined;
+  let defaultLocale;
 
   if (collection?.i18n === true && isObject(_siteConfig?.i18n)) {
     ({

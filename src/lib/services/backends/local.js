@@ -126,6 +126,7 @@ const getHandleByPath = async (path) => {
  */
 const getAllFiles = async () => {
   const _rootDirHandle = get(rootDirHandle);
+  /** @type {object[]} */
   const allFiles = [];
 
   const scanningPaths = [
@@ -133,7 +134,10 @@ const getAllFiles = async () => {
     ...get(allAssetPaths).map(({ internalPath }) => internalPath),
   ].map((path) => stripSlashes(path));
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
+  /**
+   * @param {string} path Path.
+   * @returns {RegExp} RegEx.
+   */
   const getRegEx = (path) => new RegExp(`^${escapeRegExp(path)}\\b`);
   const scanningPathsRegEx = scanningPaths.map(getRegEx);
 

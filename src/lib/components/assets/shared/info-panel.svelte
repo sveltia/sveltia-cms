@@ -12,7 +12,7 @@
   /**
    * @type {Asset}
    */
-  export let asset = undefined;
+  export let asset;
 
   /**
    * Whether to show the image/video preview.
@@ -26,15 +26,15 @@
   /**
    * @type {string}
    */
-  let displayURL = undefined;
+  let displayURL;
   /**
    * @type {{ width: number, height: number }}
    */
-  let dimensions = undefined;
+  let dimensions;
   /**
    * @type {number}
    */
-  let duration = undefined;
+  let duration;
   /**
    * @type {Entry[]}
    */

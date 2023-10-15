@@ -6,15 +6,18 @@
    */
   export let loading = 'lazy';
   /**
-   * @type {Asset}
+   * @type {Asset | undefined}
    */
   export let asset = undefined;
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   export let src = undefined;
   export let cover = false;
 
+  /**
+   * @type {HTMLVideoElement}
+   */
   let element;
   let updatingSrc = false;
 

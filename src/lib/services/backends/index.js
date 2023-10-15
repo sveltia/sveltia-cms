@@ -13,7 +13,7 @@ export const allBackendServices = {
 };
 
 /**
- * @type {import('svelte/store').Writable<string>}
+ * @type {import('svelte/store').Writable<string | undefined>}
  */
 export const backendName = writable();
 

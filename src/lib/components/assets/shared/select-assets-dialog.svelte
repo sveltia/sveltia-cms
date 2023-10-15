@@ -38,11 +38,11 @@
   /**
    * @type {import('svelte').SvelteComponent}
    */
-  let collectionAssetsDropZone = undefined;
+  let collectionAssetsDropZone;
   /**
    * @type {import('svelte').SvelteComponent}
    */
-  let allAssetsDropZone = undefined;
+  let allAssetsDropZone;
   let elementIdPrefix = '';
   /**
    * @type {?SelectedAsset}
@@ -114,8 +114,8 @@
     <Listbox
       aria-controls="{elementIdPrefix}-content-pane"
       class="tabs"
-      on:select={(/** @type {CustomEvent} */ event) => {
-        libraryName = event.detail.name;
+      on:select={(event) => {
+        libraryName = /** @type {CustomEvent} */ (event).detail.name;
         selectedAsset = null;
       }}
     >

@@ -2,10 +2,10 @@
   /**
    * @type {HTMLInputElement}
    */
-  let filePicker = undefined;
+  let filePicker;
 
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   export let accept = undefined;
   export let multiple = false;

@@ -28,7 +28,7 @@
   /**
    * @type {MediaLibraryService}
    */
-  export let serviceProps = undefined;
+  export let serviceProps;
 
   $: ({
     serviceType = 'stock_photos',
@@ -63,7 +63,7 @@
   /**
    * @type {string}
    */
-  let error = undefined;
+  let error;
 
   /**
    * Search assets.
@@ -157,8 +157,10 @@
   {:else}
     <SimpleImageGrid
       viewType={$selectAssetsView?.type}
-      on:select={(/** @type {CustomEvent} */ event) => {
-        selectAsset(searchResults.find(({ id }) => id === event.detail.value));
+      on:select={(event) => {
+        selectAsset(
+          searchResults.find(({ id }) => id === /** @type {CustomEvent} */ (event).detail.value),
+        );
       }}
     >
       {#each searchResults as { id, previewURL, description, kind: _kind } (id)}

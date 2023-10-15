@@ -10,7 +10,7 @@
   /**
    * @type {import('svelte').SvelteComponent}
    */
-  let filePicker = undefined;
+  let filePicker;
   let showDeleteDialog = false;
 </script>
 

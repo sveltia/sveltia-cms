@@ -15,11 +15,11 @@
   /**
    * @type {HTMLElement}
    */
-  let leftColumnContent = undefined;
+  let leftColumnContent;
   /**
    * @type {HTMLElement}
    */
-  let rightColumnContent = undefined;
+  let rightColumnContent;
 
   let panesRestored = false;
 

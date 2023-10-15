@@ -26,11 +26,11 @@
   /**
    * @type {HTMLElement}
    */
-  let wrapper = undefined;
+  let wrapper;
   /**
    * @type {import('svelte').SvelteComponent}
    */
-  let searchBar = undefined;
+  let searchBar;
 
   $: {
     // Restore search terms when the page is reloaded

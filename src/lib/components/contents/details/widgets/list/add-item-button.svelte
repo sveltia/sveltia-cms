@@ -5,12 +5,16 @@
   /**
    * @type {ListField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
   /**
    * @type {object[]}
    */
   export let items = [];
-  // eslint-disable-next-line jsdoc/require-jsdoc, no-unused-vars
+  /**
+   * @param {string} [name] Item name.
+   * @returns {void}
+   */
+  // eslint-disable-next-line no-unused-vars
   export let addItem = (name) => undefined;
 
   $: ({
@@ -22,7 +26,7 @@
   } = fieldConfig);
 
   $: label = $_('add_x', { values: { name: labelSingular || labelPlural } });
-  $: disabled = max && items.length === max;
+  $: disabled = typeof max === 'number' && items.length === max;
 </script>
 
 {#if Array.isArray(types)}

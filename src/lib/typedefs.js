@@ -17,8 +17,9 @@
 /**
  * User preferences.
  * @typedef {object} Preferences
- * @property {object} [apiKeys] API keys for integrations.
- * @property {object} [logins] Log-in credentials (user name and password) for integrations.
+ * @property {{ [key: string]: string }} [apiKeys] API keys for integrations.
+ * @property {{ [key: string]: string }} [logins] Log-in credentials (user name and password) for
+ * integrations.
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
  * @property {string} [locale] Selected UI locale, e.g. `en`.
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
@@ -68,8 +69,8 @@
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.
- * @property {(query: string, options: object) => Promise<ExternalAsset[]>} search Function to
- * search files.
+ * @property {(query: string, options: { kind: string, apiKey: string, userName: string,
+ * password: string }) => Promise<ExternalAsset[]>} search Function to search files.
  */
 
 /**
@@ -82,8 +83,8 @@
  * @property {RegExp} apiKeyPattern API key pattern.
  * @property {string[]} sourceLanguages Supported source languages.
  * @property {string[]} targetLanguages Supported target languages.
- * @property {(texts: string[], options: object) => Promise<string[]>} translate Function to
- * translate strings.
+ * @property {(texts: string[], options: { sourceLocale: string | undefined, targetLocale: string,
+ * apiKey: string }) => Promise<string[]>} translate Function to translate strings.
  */
 
 /**
@@ -148,6 +149,14 @@
  * Global site configuration.
  * @typedef {object} SiteConfig
  * @property {object} [backend] Backend config.
+ * @property {string} backend.name Backend name, e.g. `github`.
+ * @property {string} [backend.repo] Git organization and repository name joined with `/`.
+ * @property {string} [backend.branch] Git branch name.
+ * @property {string} [backend.api_root] Git API endpoint.
+ * @property {string} [backend.site_domain] Site domain used for OAuth.
+ * @property {string} [backend.base_url] OAuth base URL origin.
+ * @property {string} [backend.auth_endpoint] OAuth URL path.
+ * @property {{ [key: string]: string }} [backend.commit_messages] Commit message map.
  * @property {string} [site_url] Site URL.
  * @property {string} [display_url] Site URL linked from the UI.
  * @property {string} [logo_url] Site logo URL.
@@ -545,7 +554,7 @@
 /**
  * Asset to be uploaded.
  * @typedef {object} UploadingAssets
- * @property {?string} folder Target folder path.
+ * @property {string | undefined} folder Target folder path.
  * @property {File[]} files File list.
  */
 

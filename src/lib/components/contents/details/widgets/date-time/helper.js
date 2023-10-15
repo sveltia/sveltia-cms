@@ -72,7 +72,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
       timeZone:
         pickerUTC ||
         (dateOnly && !!currentValue?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
-        (dateOnly && !!currentValue.match(/T00:00(?::00)?(?:\.000)?Z$/))
+        (dateOnly && !!currentValue?.match(/T00:00(?::00)?(?:\.000)?Z$/))
           ? 'UTC'
           : undefined,
     });

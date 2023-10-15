@@ -29,7 +29,11 @@ export const authorize = async (provider) => {
   );
 
   return new Promise((resolve) => {
-    // eslint-disable-next-line jsdoc/require-jsdoc
+    /**
+     * @param {object} args Arguments.
+     * @param {string} args.origin Origin URL.
+     * @param {string} args.data Passed data.
+     */
     const handler = ({ origin, data }) => {
       if (origin !== baseURL || typeof data !== 'string') {
         return;
@@ -44,12 +48,12 @@ export const authorize = async (provider) => {
 
       // Second message
       const [, state, _result] =
-        data.match(new RegExp(`^authorization:${provider}:(success|error):(.+)`)) || [];
+        data.match(`^authorization:${provider}:(success|error):(.+)`) || [];
 
       /**
        * @type {{ token: string }}
        */
-      let result = undefined;
+      let result;
 
       try {
         result = _result ? JSON.parse(_result) : undefined;

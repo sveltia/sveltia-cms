@@ -59,7 +59,7 @@ export const entryEditorSettings = writable({}, (set) => {
 });
 
 /**
- * @type {import('svelte/store').Writable<EntryDraft?>}
+ * @type {import('svelte/store').Writable<EntryDraft | null | undefined>}
  */
 export const entryDraft = writable();
 
@@ -72,6 +72,7 @@ export const entryDraft = writable();
  * @todo Make this more diligent.
  */
 const createNewContent = (fields, defaultValues = {}) => {
+  /** @type {{ [key: string]: any }} */
   const newContent = {};
 
   /**
@@ -325,9 +326,9 @@ const getItemList = (obj, keyPath) =>
  * Update the value in a list field.
  * @param {LocaleCode} locale Target locale.
  * @param {string} keyPath Dot-connected field name.
- * @param {({ valueList, viewList }) => void} manipulate A function to manipulate the list, which
- * takes one object argument containing the value list and view state list. The typical usage is
- * `list.splice()`.
+ * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate A function to
+ * manipulate the list, which takes one object argument containing the value list and view state
+ * list. The typical usage is `list.splice()`.
  */
 export const updateListField = (locale, keyPath, manipulate) => {
   const currentValues = unflattenObj(get(entryDraft).currentValues[locale]);
@@ -543,11 +544,11 @@ const validateEntry = () => {
           valueMissing = true;
         }
 
-        if (min && Array.isArray(value) && value.length < min) {
+        if (typeof min === 'number' && Array.isArray(value) && value.length < min) {
           rangeUnderflow = true;
         }
 
-        if (max && Array.isArray(value) && value.length > max) {
+        if (typeof max === 'number' && Array.isArray(value) && value.length > max) {
           rangeOverflow = true;
         }
       }
@@ -560,7 +561,7 @@ const validateEntry = () => {
         if (
           Array.isArray(pattern) &&
           pattern.length === 2 &&
-          !String(value).match(new RegExp(escapeRegExp(pattern[0])))
+          !String(value).match(escapeRegExp(pattern[0]))
         ) {
           patternMismatch = true;
         }
@@ -680,7 +681,7 @@ export const saveEntry = async () => {
 
   const assetsInSameFolder = get(allAssets)
     .map((a) => a.path)
-    .filter((p) => p.match(new RegExp(`^\\/${escapeRegExp(internalAssetFolder)}\\/[^\\/]+$`)));
+    .filter((p) => p.match(`^\\/${escapeRegExp(internalAssetFolder)}\\/[^\\/]+$`));
 
   /**
    * @type {SavingFile[]}

@@ -14,11 +14,11 @@
   /**
    * @type {BooleanField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
   /**
    * @type {boolean}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 </script>
 
 {#if typeof currentValue === 'boolean'}

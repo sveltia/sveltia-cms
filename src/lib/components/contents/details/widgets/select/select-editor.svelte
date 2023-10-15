@@ -16,12 +16,12 @@
   /**
    * @type {SelectField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
 
   /**
    * @type {any} // string | string[]
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   /**
    * @type {boolean}
@@ -60,7 +60,8 @@
 
   /**
    * Update the value for the list.
-   * @param {({ valueList, viewList }) => void} manipulate See {@link updateListField}.
+   * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate
+   * See {@link updateListField}.
    */
   const updateList = (manipulate) => {
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
@@ -109,7 +110,7 @@
         </span>
       {/if}
     {/each}
-    {#if (!max || currentValue.length < max) && currentValue.length < options.length}
+    {#if (typeof max !== 'number' || currentValue.length < max) && currentValue.length < options.length}
       <Combobox
         {disabled}
         on:change={({ detail: { target, value } }) => {

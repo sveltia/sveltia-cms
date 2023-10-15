@@ -11,12 +11,12 @@
   /**
    * @type {ObjectField}
    */
-  export let fieldConfig = undefined;
-  // svelte-ignore unused-export-let
+  export let fieldConfig;
   /**
    * @type {object}
    */
-  export let currentValue = undefined;
+  // svelte-ignore unused-export-let
+  export let currentValue;
 
   $: ({ fields } = fieldConfig);
 </script>

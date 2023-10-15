@@ -23,7 +23,7 @@
   bind:open={$showTranslatorApiKeyDialog}
   showOk={false}
   on:cancel={() => {
-    $pendingTranslatorRequest = null;
+    $pendingTranslatorRequest = undefined;
   }}
 >
   <p>
@@ -54,7 +54,7 @@
 
           if ($pendingTranslatorRequest) {
             copyFromLocale(...$pendingTranslatorRequest);
-            $pendingTranslatorRequest = null;
+            $pendingTranslatorRequest = undefined;
           }
         }
       }}

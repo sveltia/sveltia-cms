@@ -9,7 +9,7 @@
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
-  import { getFieldValue } from '$lib/services/contents/entry';
+  import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { generateUUID } from '$lib/services/utils/strings';
 
   export let locale = '';
@@ -19,13 +19,13 @@
   /**
    * @type {ObjectField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
 
   /**
    * @type {object}
    */
   // svelte-ignore unused-export-let
-  export let currentValue = undefined;
+  export let currentValue;
 
   /**
    * @type {boolean}
@@ -61,7 +61,7 @@
     }
 
     return summary.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {
-      const value = getFieldValue({
+      const value = getFieldDisplayValue({
         collectionName,
         fileName,
         valueMap,

@@ -5,7 +5,7 @@
   /**
    * @type {Asset}
    */
-  export let asset = undefined;
+  export let asset;
 </script>
 
 <Checkbox

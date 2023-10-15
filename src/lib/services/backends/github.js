@@ -174,7 +174,9 @@ const fetchFiles = async () => {
     fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
   } else {
     // Get a complete file list first with the REST API
-    const { sha, tree } = await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
+    const { sha, tree } = /** @type {{ sha: string, tree: { type: string, path: string }[] }} */ (
+      await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`)
+    );
 
     // Then filter what’s managed in CMS
     fileList = createFileList(tree.filter(({ type }) => type === 'blob'));

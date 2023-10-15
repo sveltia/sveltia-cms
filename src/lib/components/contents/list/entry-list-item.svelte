@@ -9,12 +9,12 @@
   /**
    * @type {Entry}
    */
-  export let entry = undefined;
+  export let entry;
 
   /**
    * @type {EntryContent}
    */
-  export let content = undefined;
+  export let content;
 
   /**
    * @type {string}

@@ -20,12 +20,12 @@
   /**
    * @type {DateTimeField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
 
   /**
    * @type {string}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   /**
    * @type {boolean}
@@ -43,7 +43,7 @@
   /**
    * @type {string}
    */
-  let inputValue = undefined;
+  let inputValue;
 
   /**
    * Set the current value. Make sure to prevent a cycle dependency.

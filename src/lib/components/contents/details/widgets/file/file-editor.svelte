@@ -21,12 +21,12 @@
   /**
    * @type {FileField}
    */
-  export let fieldConfig = undefined;
+  export let fieldConfig;
 
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
-  export let currentValue = undefined;
+  export let currentValue;
 
   /**
    * @type {boolean}
@@ -36,19 +36,19 @@
   /**
    * @type {Asset}
    */
-  let asset = undefined;
+  let asset;
   /**
    * @type {File}
    */
-  let file = undefined;
+  let file;
   /**
    * @type {string}
    */
-  let url = undefined;
+  let url;
   /**
    * @type {string}
    */
-  let credit = undefined;
+  let credit;
   let showSelectAssetsDialog = false;
   let showSizeLimitDialog = false;
   let showPhotoCreditDialog = false;

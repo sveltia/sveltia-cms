@@ -7,7 +7,7 @@
   import { scanFiles } from '$lib/services/utils/files';
 
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   export let accept = undefined;
   export let multiple = false;
@@ -19,7 +19,7 @@
   /**
    * @type {import('svelte').SvelteComponent}
    */
-  let filePicker = undefined;
+  let filePicker;
   /**
    * @type {File[]}
    */

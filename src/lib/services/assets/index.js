@@ -11,6 +11,7 @@ export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
 
 /**
  * Common file extension regex list that can be used for filtering.
+ * @type {{ [key: string]: RegExp }}
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
  */
 export const assetExtensions = {
@@ -31,7 +32,7 @@ export const allAssets = writable([]);
 export const allAssetPaths = writable([]);
 
 /**
- * @type {import('svelte/store').Writable<string?>}
+ * @type {import('svelte/store').Writable<string | undefined>}
  */
 export const selectedAssetFolderPath = writable();
 
@@ -41,14 +42,14 @@ export const selectedAssetFolderPath = writable();
 export const selectedAssets = writable([]);
 
 /**
- * @type {import('svelte/store').Writable<Asset?>}
+ * @type {import('svelte/store').Writable<Asset | undefined>}
  */
 export const selectedAsset = writable();
 
 /**
  * @type {import('svelte/store').Writable<UploadingAssets>}
  */
-export const uploadingAssets = writable({ folder: null, files: [] });
+export const uploadingAssets = writable({ folder: undefined, files: [] });
 
 /**
  * @type {import('svelte/store').Readable<boolean>}

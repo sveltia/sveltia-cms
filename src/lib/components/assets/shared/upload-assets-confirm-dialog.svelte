@@ -15,10 +15,10 @@
   okLabel={$_($backendName === 'local' ? 'save' : 'upload_and_publish')}
   on:ok={async () => {
     await saveAssets($uploadingAssets, { commitType: 'uploadMedia' });
-    $uploadingAssets = { folder: null, files: [] };
+    $uploadingAssets = { folder: undefined, files: [] };
   }}
   on:cancel={() => {
-    $uploadingAssets = { folder: null, files: [] };
+    $uploadingAssets = { folder: undefined, files: [] };
   }}
 >
   <div>
