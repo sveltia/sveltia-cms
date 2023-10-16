@@ -11,9 +11,7 @@ import { isObject } from '$lib/services/utils/misc';
 export const dataLoaded = writable(false);
 
 /**
- * @type {import('svelte/store').Writable<{ collectionName: string, fileName?: string,
- * file?: string, folder?: string, extension: string, format: string,
- * frontmatterDelimiter: string | string[], yamlQuote: boolean }[]>}
+ * @type {import('svelte/store').Writable<PathConfig[]>}
  */
 export const allContentPaths = writable([]);
 
@@ -66,7 +64,7 @@ const getCollectionI18n = (collection) => {
       structure = 'single_file',
       locales = [],
       default_locale: defaultLocale = undefined,
-    } = collection.i18n);
+    } = /** @type {RawI18nConfig} */ (collection.i18n));
   }
 
   const hasLocales = !!locales.length;

@@ -61,7 +61,7 @@ export const showUploadAssetsDialog = derived([uploadingAssets], ([_uploadingAss
 /**
  * Get the internal/public asset path configuration by collection.
  * @param {Collection} collection Collection.
- * @param {object} fillSlugOptions Options to be passed to {@link fillSlugTemplate}.
+ * @param {any} fillSlugOptions Options to be passed to {@link fillSlugTemplate}.
  * @returns {{ internalAssetFolder: string, publicAssetFolder: string }} Determined paths.
  */
 export const getAssetFolder = (collection, fillSlugOptions) => {

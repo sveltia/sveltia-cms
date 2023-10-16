@@ -47,8 +47,12 @@
    */
   $: options = (() => {
     const _options = fieldOptions.map((option) => ({
-      label: isObject(option) ? option.label : option,
-      value: isObject(option) ? option.value : option,
+      label: isObject(option)
+        ? /** @type {{ label: string, value: string }} */ (option).label
+        : /** @type {string} */ (option),
+      value: isObject(option)
+        ? /** @type {{ label: string, value: string }} */ (option).value
+        : /** @type {string} */ (option),
     }));
 
     if (sortOptions) {
@@ -60,7 +64,7 @@
 
   /**
    * Update the value for the list.
-   * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate
+   * @param {(arg: { valueList: any[], viewList: any[] }) => void} manipulate
    * See {@link updateListField}.
    */
   const updateList = (manipulate) => {

@@ -47,8 +47,10 @@
     ({ displayURL, dimensions, duration, usedEntries } = await getAssetDetails(asset));
   };
 
-  // @ts-ignore Arguments are triggers
-  $: updateProps(asset);
+  $: {
+    void asset;
+    updateProps();
+  }
 </script>
 
 <div class="detail">
@@ -120,7 +122,8 @@
       {@const collection = getCollection(collectionName)}
       {@const { defaultLocale = 'default' } = collection._i18n}
       {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
-      {@const { content } = locales[locale]}
+      {@const { content: _content } = locales[locale]}
+      {@const content = /** @type {{ [key: string]: any }} */ (_content)}
       <p>
         <Button
           class="link"

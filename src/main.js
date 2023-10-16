@@ -55,6 +55,7 @@ window.CMS = new Proxy(
             `See https://github.com/sveltia/sveltia-cms#readme for compatibility information.`,
         );
 
+        /** @returns {void} */
         return () => undefined;
       }
 

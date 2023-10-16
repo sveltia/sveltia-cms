@@ -10,13 +10,8 @@
   } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/prefs';
 
-  $: ({ serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } = $translator || {
-    serviceId: undefined,
-    serviceLabel: undefined,
-    developerURL: undefined,
-    apiKeyURL: undefined,
-    apiKeyPattern: undefined,
-  });
+  $: ({ serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } =
+    $translator ?? /** @type {TranslationService} */ ({}));
 </script>
 
 <Dialog

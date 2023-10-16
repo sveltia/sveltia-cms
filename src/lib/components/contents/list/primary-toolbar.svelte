@@ -14,14 +14,7 @@
     files,
     create = false,
     delete: canDelete = true,
-  } = $selectedCollection || {
-    name: undefined,
-    label: undefined,
-    description: undefined,
-    files: undefined,
-    create: false,
-    delete: true,
-  });
+  } = $selectedCollection ?? /** @type {Collection} */ ({}));
 </script>
 
 {#if $selectedCollection}

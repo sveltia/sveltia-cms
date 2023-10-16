@@ -41,18 +41,17 @@
     text: TextPreview,
   };
 
-  $: ({
-    label = '',
-    widget = 'string',
-    i18n = false,
-    // @ts-ignore
-    multiple = false,
-  } = fieldConfig);
-  $: ({ hasLocales, defaultLocale = 'default' } = $entryDraft.collection._i18n);
+  $: ({ label = '', widget = 'string', i18n = false } = fieldConfig);
+  $: hasMultiple = ['relation', 'select'].includes(widget);
+  $: multiple = hasMultiple
+    ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
+    : undefined;
+  $: isList = widget === 'list' || (hasMultiple && multiple);
+  $: ({ hasLocales = false, defaultLocale = 'default' } =
+    $entryDraft.collection._i18n ?? /** @type {I18nConfig} */ ({}));
   $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
   $: canDuplicate = hasLocales && i18n === 'duplicate';
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
-  $: isList = widget === 'list' || ((widget === 'relation' || widget === 'select') && multiple);
 
   // Multiple values are flattened in the value map object
   $: currentValue = isList

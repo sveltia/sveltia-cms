@@ -171,6 +171,7 @@ siteConfig.subscribe((config) => {
     : `/${globalMediaFolder}`;
 
   const globalAssetPath = {
+    /** @type {?string} */
     collectionName: null,
     internalPath: globalMediaFolder,
     publicPath: globalPublicFolder,

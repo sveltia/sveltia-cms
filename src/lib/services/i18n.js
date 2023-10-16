@@ -16,7 +16,7 @@ export const initAppLocale = () => {
   Object.entries(modules).forEach(([path, { strings }]) => {
     const [, locale] = path.match(/([a-zA-Z-]+)\.js/);
 
-    addMessages(locale, strings);
+    addMessages(locale, /** @type {any} */ (strings));
   });
 
   initLocales({

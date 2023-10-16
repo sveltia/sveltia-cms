@@ -32,8 +32,11 @@
     }
   };
 
-  // @ts-ignore Arguments are triggers
-  $: updateSrc(element, asset);
+  $: {
+    void element;
+    void asset;
+    updateSrc();
+  }
 </script>
 
 <!-- svelte-ignore a11y-media-has-caption -->

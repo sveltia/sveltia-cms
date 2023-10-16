@@ -4,10 +4,7 @@
 
   export let locale = '';
 
-  $: ({ collection, collectionFile } = $entryDraft || {
-    collection: undefined,
-    collectionFile: undefined,
-  });
+  $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
   $: fields = collectionFile?.fields || collection?.fields;
 </script>

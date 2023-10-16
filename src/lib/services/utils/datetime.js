@@ -8,6 +8,7 @@
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/formatToParts
  */
 export const getDateTimeParts = ({ date = new Date(), timeZone = undefined } = {}) => {
+  /** @type {Intl.DateTimeFormatOptions} */
   const options = {
     year: 'numeric',
     month: '2-digit',
@@ -19,7 +20,7 @@ export const getDateTimeParts = ({ date = new Date(), timeZone = undefined } = {
   };
 
   return Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', /** @type {any} */ ({ ...options, hour12: false, timeZone }))
+    new Intl.DateTimeFormat('en-US', { ...options, hour12: false, timeZone })
       .formatToParts(date)
       .filter(({ type }) => type in options)
       .map(({ type, value }) => [type, type === 'hour' && value === '24' ? '00' : value]),

@@ -11,7 +11,7 @@ import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
 /**
  * Get the file extension for the given collection.
- * @param {object} pathConfig File’s path configuration.
+ * @param {object} pathConfig File’s path configuration. (part of `PathConfig`)
  * @param {string} [pathConfig.format] File format, e.g. `json`.
  * @param {string} [pathConfig.extension] File extension, e.g. `json`
  * @param {string} [pathConfig.file] File name, e.g. `about.json`.
@@ -44,14 +44,19 @@ export const getFileExtension = ({ file, format, extension }) => {
 /**
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
- * @param {{ path: string }[]} files Unfiltered file list.
- * @returns {{ entryFiles: object[], assetFiles: object[], allFiles: object[], count: number }} File
+ * @param {BaseFileListItem[]} files Unfiltered file list.
+ * @returns {{
+ *   entryFiles: BaseFileListItem[],
+ *   assetFiles: BaseFileListItem[],
+ *   allFiles: BaseFileListItem[],
+ *   count: number,
+ * }} File
  * list, including both entries and assets.
  */
 export const createFileList = (files) => {
-  /** @type {{ [key: string]: any }[]} */
+  /** @type {BaseFileListItem[]} */
   const entryFiles = [];
-  /** @type {{ [key: string]: any }[]} */
+  /** @type {BaseFileListItem[]} */
   const assetFiles = [];
 
   files.forEach((fileInfo) => {
@@ -123,15 +128,8 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 
 /**
  * Parse raw content with given file details.
- * @param {object} entry File entry.
- * @param {string} entry.text Raw content.
- * @param {string} entry.path File path.
- * @param {object} entry.config File’s collection configuration.
- * @param {string} [entry.config.file] File path for a file collection item.
- * @param {string} [entry.config.extension] Configured file extension.
- * @param {string} [entry.config.format] Configured file format.
- * @param {string | string[]} [entry.config.frontmatterDelimiter] Configured Frontmatter delimiter.
- * @returns {object} Parsed content.
+ * @param {BaseFileListItem} entry File entry.
+ * @returns {{ [key: string]: any }} Parsed content.
  */
 const parseEntryFile = ({
   text,
@@ -207,7 +205,7 @@ const parseEntryFile = ({
 /**
  * Parse raw content with given file details.
  * @param {object} entry File entry.
- * @param {object} entry.content Content object.
+ * @param {any} entry.content Content object.
  * @param {string} entry.path File path.
  * @param {object} entry.config File’s collection configuration.
  * @param {string} [entry.config.extension] Configured file extension.
@@ -235,7 +233,7 @@ export const formatEntryFile = ({
       defaultStringType: yamlQuote ? 'QUOTE_DOUBLE' : 'PLAIN',
     }).trim();
 
-  const formatTOML = () => TOML.stringify(content, { newline: '\n' }).trim();
+  const formatTOML = () => TOML.stringify(/** @type {any} */ (content), { newline: '\n' }).trim();
   const formatJSON = () => JSON.stringify(content, null, 2).trim();
 
   try {
@@ -311,15 +309,17 @@ const getSlug = (collectionName, filePath, content) => {
     }
   }
 
+  const _content = /** @type {any} */ (content);
+
   // We can’t determine the slug from the file path. Let’s fallback using the content
   return normalizeSlug(
-    content[identifierField] || content.title || content.name || content.label || '',
+    _content[identifierField] || _content.title || _content.name || _content.label || '',
   );
 };
 
 /**
  * Parse the given entry files to create a complete, serialized entry list.
- * @param {object[]} entryFiles Entry file list.
+ * @param {BaseFileListItem[]} entryFiles Entry file list.
  * @returns {Entry[]} Entry list.
  */
 export const parseEntryFiles = (entryFiles) => {
@@ -427,7 +427,7 @@ export const parseEntryFiles = (entryFiles) => {
 
 /**
  * Parse the given asset files to create a complete, serialized asset list.
- * @param {object[]} assetFiles Asset file list.
+ * @param {BaseFileListItem[]} assetFiles Asset file list.
  * @returns {Asset[]} Asset list.
  */
 export const parseAssetFiles = (assetFiles) =>
@@ -441,7 +441,7 @@ export const parseAssetFiles = (assetFiles) =>
       name,
       sha,
       size,
-      text = null,
+      text = undefined,
       meta = {},
       config: { collectionName, internalPath },
     } = assetInfo;

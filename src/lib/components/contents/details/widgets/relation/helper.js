@@ -165,7 +165,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
  * Resolve the display value(s) for a relation field.
  * @param {object} args Arguments.
  * @param {RelationField} args.fieldConfig Field configuration.
- * @param {FlattenedEntryContent} args.valueMap Object holding current entry values
+ * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
  * @param {string} args.keyPath Field key path, e.g. `author.name`.
  * @param {LocaleCode} args.locale Locale.
  * @returns {any | any[]} Resolved field value(s).

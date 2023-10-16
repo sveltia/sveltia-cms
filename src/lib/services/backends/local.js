@@ -56,7 +56,7 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
   }
 
   if (!handle) {
-    handle = await /** @type {any} */ (window).showDirectoryPicker();
+    handle = await window.showDirectoryPicker();
     await rootDirHandleDB.set(rootDirHandleKey, handle);
   }
 
@@ -122,11 +122,11 @@ const getHandleByPath = async (path) => {
 
 /**
  * Retrieve all files under the static directory.
- * @returns {Promise<object[]>} File list.
+ * @returns {Promise<BaseFileListItem[]>} File list.
  */
 const getAllFiles = async () => {
   const _rootDirHandle = get(rootDirHandle);
-  /** @type {object[]} */
+  /** @type {BaseFileListItem[]} */
   const allFiles = [];
 
   const scanningPaths = [

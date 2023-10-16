@@ -8,10 +8,10 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  // svelte-ignore unused-export-let
   /**
    * @type {TextField}
    */
+  // svelte-ignore unused-export-let
   export let fieldConfig;
   /**
    * @type {string}

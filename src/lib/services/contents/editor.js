@@ -212,7 +212,7 @@ const createProxy = ({
   const collection = getCollection(collectionName);
   const { defaultLocale = 'default' } = collection._i18n;
 
-  return new Proxy(target, {
+  return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {string} */ keyPath, value) => {
       const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
@@ -224,7 +224,9 @@ const createProxy = ({
 
       // Copy value to other locales
       if (fieldConfig.i18n === 'duplicate' && sourceLocale === defaultLocale) {
-        Object.entries(get(entryDraft)[entryDraftProp]).forEach(([targetLocale, content]) => {
+        Object.entries(
+          /** @type {{ [key: string]: any }} */ (get(entryDraft))[entryDraftProp],
+        ).forEach(([targetLocale, content]) => {
           if (targetLocale !== sourceLocale && content[keyPath] !== value) {
             content[keyPath] = value;
           }
@@ -238,8 +240,8 @@ const createProxy = ({
 
 /**
  * Create an entry draft.
- * @param {Entry | object} entry Entry to be edited, or a partial `Entry` object containing at least
- * the collection name for a new entry.
+ * @param {Entry} entry Entry to be edited, or a partial `Entry` object containing at least the
+ * collection name for a new entry.
  * @param {{ [key: string]: string }} [defaultValues] Dynamic default values for a new entry passed
  * through URL parameters.
  */
@@ -308,7 +310,7 @@ const unflattenObj = (obj) => unflatten(JSON.parse(JSON.stringify(obj)));
 
 /**
  * Traverse the given object by decoding dot-connected `keyPath`.
- * @param {object} obj Unflatten object.
+ * @param {{ [key: string]: any }} obj Unflatten object.
  * @param {string} keyPath Dot-connected field name.
  * @returns {object[]} Values.
  */
@@ -693,7 +695,8 @@ export const saveEntry = async () => {
   const savingAssets = [];
 
   const savingAssetProps = {
-    text: null,
+    /** @type {string | undefined} */
+    text: undefined,
     collectionName,
     folder: internalAssetFolder,
     commitAuthor: _user.email ? { name: _user.name, email: _user.email } : undefined,
@@ -701,7 +704,7 @@ export const saveEntry = async () => {
   };
 
   /**
-   * @type {{ [key: LocaleCode]: LocalizedEntry }}
+   * @type {{ [locale: LocaleCode]: LocalizedEntry }}
    */
   const savingEntryLocales = Object.fromEntries(
     await Promise.all(

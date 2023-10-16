@@ -24,6 +24,9 @@
      * Disable this if you'd like to use dynamic types.
      */
     "checkJs": true,
+    // Strict checks
+    "noImplicitAny": true,
+    "noImplicitThis": true,
     // https://github.com/vitejs/vite/issues/9539
     "types": ["vite/client"],
     /**

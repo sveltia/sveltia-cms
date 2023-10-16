@@ -42,7 +42,7 @@ export const normalizeSlug = (string) => {
  * Fill the given slug template.
  * @param {string} template Template string literal containing tags like `{{title}}`.
  * @param {object} options Options.
- * @param {object} options.collection Entry collection.
+ * @param {Collection} options.collection Entry collection.
  * @param {FlattenedEntryContent} options.content Entry content for the default locale.
  * @param {string} [options.currentSlug] Entry slug already created for the path.
  * @param {boolean} [options.isMediaFolder] Whether to support additional template tags, for a

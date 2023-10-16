@@ -29,7 +29,8 @@
    */
   const getLabel = (value) =>
     hasLabels
-      ? /** @type {object[]} */ (options).find((o) => o.value === value)?.label || value
+      ? /** @type {{ label: string, value: string }[]} */ (options).find((o) => o.value === value)
+          ?.label || value
       : value;
 </script>
 

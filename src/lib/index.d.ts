@@ -1,5 +1,6 @@
 interface Window {
   CMS: Proxy;
+  showDirectoryPicker: Function;
 }
 
 interface Navigator {

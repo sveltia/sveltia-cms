@@ -62,7 +62,7 @@ export default class LocalStorage {
 
   /**
    * Get a list of storage entries.
-   * @returns {Promise<Array<Array>>} Entries.
+   * @returns {Promise<[string, any][]>} Entries.
    * @throws {DOMException} When storage access is denied.
    */
   static async entries() {

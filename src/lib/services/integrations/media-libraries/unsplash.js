@@ -28,12 +28,20 @@ const creditLinkParams = 'utm_source=sveltia-cms&utm_medium=referral';
 const search = async (query, { apiKey }) => {
   const headers = { Authorization: `Client-ID ${apiKey}` };
   const [locale] = get(appLocale).toLowerCase().split('-');
+  /**
+   * @type {{
+   *   id: string,
+   *   description: string,
+   *   urls: { regular: string, thumb: string },
+   *   user: { username: string, name: string }
+   * }[]}}
+   */
   let results = [];
 
   if (query) {
     for (let page = 1; page <= 5; page += 1) {
       const params = new URLSearchParams(
-        /** @type {any} */ ({
+        /** @type {Record<string, any>} */ ({
           query,
           lang: supportedLocales.includes(locale) ? locale : 'en',
           page,
@@ -60,7 +68,7 @@ const search = async (query, { apiKey }) => {
     }
   } else {
     const params = new URLSearchParams(
-      /** @type {any} */ ({
+      /** @type {Record<string, any>} */ ({
         per_page: 30,
       }),
     );

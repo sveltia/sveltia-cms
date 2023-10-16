@@ -40,7 +40,7 @@
     fields,
   } = fieldConfig);
 
-  $: ({ collectionName, fileName } = $entryDraft);
+  $: ({ collectionName, fileName } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: valueMap = $entryDraft.currentValues[locale];
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
   $: parentExpanded = !collapsed;

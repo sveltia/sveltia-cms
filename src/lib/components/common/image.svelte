@@ -34,8 +34,11 @@
     }
   };
 
-  // @ts-ignore Arguments are triggers
-  $: updateSrc(element, asset);
+  $: {
+    void element;
+    void asset;
+    updateSrc();
+  }
 </script>
 
 <img class:checkerboard class:cover {loading} {src} {alt} {...$$restProps} bind:this={element} />

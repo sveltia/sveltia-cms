@@ -14,18 +14,15 @@
   export let keyPath = '';
   export let translate = false;
 
-  $: ({ hasLocales, locales } = $entryDraft.collection._i18n);
+  $: ({ hasLocales = false, locales = ['default'] } =
+    $entryDraft.collection._i18n ?? /** @type {I18nConfig} */ ({}));
   $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
 
   $: ({
     serviceId,
     sourceLanguages = /** @type {string[]} */ ([]),
     targetLanguages = /** @type {string[]} */ ([]),
-  } = $translator || {
-    serviceId: undefined,
-    sourceLanguages: undefined,
-    targetLanguages: undefined,
-  });
+  } = $translator ?? /** @type {TranslationService} */ ({}));
 
   $: apiKey = $prefs.apiKeys[serviceId] || '';
 

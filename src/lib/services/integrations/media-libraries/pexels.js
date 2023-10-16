@@ -25,12 +25,21 @@ const endpoint = 'https://api.pexels.com/v1';
 const search = async (query, { apiKey }) => {
   const headers = { Authorization: apiKey };
   const [locale] = get(appLocale).toLowerCase().split('-');
+  /**
+   * @type {{
+   *   id: number,
+   *   url: string,
+   *   alt: string,
+   *   src: { large2x: string, tiny: string },
+   *   photographer: string
+   * }[]}
+   */
   let results = [];
 
   if (query) {
     for (let page = 1; page <= 2; page += 1) {
       const params = new URLSearchParams(
-        /** @type {any} */ ({
+        /** @type {Record<string, any>} */ ({
           query,
           locale: supportedLocales.find((code) => code.split('-')[0] === locale) || 'en-US',
           page,
@@ -57,7 +66,7 @@ const search = async (query, { apiKey }) => {
     }
   } else {
     const params = new URLSearchParams(
-      /** @type {any} */ ({
+      /** @type {Record<string, any>} */ ({
         per_page: 80,
       }),
     );

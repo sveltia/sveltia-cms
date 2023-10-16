@@ -68,10 +68,15 @@
     }
   };
 
-  // @ts-ignore Arguments are triggers
-  $: onCurrentValueChange(currentValue);
-  // @ts-ignore Arguments are triggers
-  $: onInputValueChange(inputValue);
+  $: {
+    void currentValue;
+    onCurrentValueChange();
+  }
+
+  $: {
+    void inputValue;
+    onInputValueChange();
+  }
 </script>
 
 <NumberInput {min} {max} {step} {disabled} bind:value={inputValue} />

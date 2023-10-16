@@ -58,7 +58,9 @@
     widget,
     // Widget-specific options
     choose_url: canEnterURL = true,
-    media_library: { config: { max_file_size: maxFileSize = undefined } = {} } = {},
+    media_library: {
+      config: { max_file_size: maxFileSize = /** @type {number | undefined} */ (undefined) } = {},
+    } = {},
   } = fieldConfig);
   $: isImageWidget = widget === 'image';
 

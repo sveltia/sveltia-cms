@@ -18,7 +18,7 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
    * Read files recursively from the filesystem.
    * @param {FileSystemEntry} entry Either a file or
    * directory entry.
-   * @returns {Promise<File | null>} File.
+   * @returns {Promise<File | File[] | null>} File.
    */
   const readEntry = (entry) =>
     new Promise((resolve) => {
@@ -45,8 +45,7 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
         );
       } else {
         /** @type {FileSystemDirectoryEntry} */ (entry).createReader().readEntries((entries) => {
-          // @ts-ignore
-          resolve(Promise.all(entries.map(readEntry)));
+          resolve(/** @type {Promise<File[]>} */ (Promise.all(entries.map(readEntry))));
         });
       }
     });

@@ -23,10 +23,10 @@
 
   let panesRestored = false;
 
-  // @ts-ignore
-  $: ({ collection, collectionFile } = $entryDraft || {});
+  $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ showPreview, syncScrolling, paneStates } = $entryEditorSettings);
-  $: ({ hasLocales, locales } = collection._i18n);
+  $: ({ hasLocales = false, locales = ['default'] } =
+    collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
 
@@ -82,13 +82,20 @@
     }
   };
 
-  // @ts-ignore Arguments are triggers
-  $: switchPanes(showPreview, canPreview);
+  $: {
+    void showPreview;
+    void canPreview;
+    switchPanes();
+  }
 
   /**
    * Save the pane state to local storage.
    */
   const savePanes = () => {
+    if (!collection) {
+      return;
+    }
+
     entryEditorSettings.update((view) => ({
       ...view,
       paneStates: {
@@ -98,8 +105,11 @@
     }));
   };
 
-  // @ts-ignore Arguments are triggers
-  $: savePanes($editorLeftPane, $editorRightPane);
+  $: {
+    void $editorLeftPane;
+    void $editorRightPane;
+    savePanes();
+  }
 
   /**
    * Sync the scroll position with the other edit/preview pane.

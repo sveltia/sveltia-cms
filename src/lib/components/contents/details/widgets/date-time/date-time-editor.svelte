@@ -67,10 +67,15 @@
     }
   };
 
-  // @ts-ignore Arguments are triggers
-  $: setCurrentValue(inputValue);
-  // @ts-ignore Arguments are triggers
-  $: setInputValue(currentValue);
+  $: {
+    void inputValue;
+    setCurrentValue();
+  }
+
+  $: {
+    void currentValue;
+    setInputValue();
+  }
 </script>
 
 <div>

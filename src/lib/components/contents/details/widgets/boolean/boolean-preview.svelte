@@ -10,10 +10,10 @@
   export let locale = '';
   // svelte-ignore unused-export-let
   export let keyPath = '';
-  // svelte-ignore unused-export-let
   /**
    * @type {BooleanField}
    */
+  // svelte-ignore unused-export-let
   export let fieldConfig;
   /**
    * @type {boolean}

@@ -39,7 +39,9 @@ export const unauthenticated = writable(false);
  * @param {Error} ex Exception.
  */
 const logError = (ex) => {
-  authError.set(/** @type {object} */ (ex.cause)?.message || get(_)('unexpected_error'));
+  authError.set(
+    /** @type {{ message: string }} */ (ex.cause)?.message || get(_)('unexpected_error'),
+  );
   // eslint-disable-next-line no-console
   console.error(ex.message, ex.cause);
 };

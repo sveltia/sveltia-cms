@@ -118,14 +118,55 @@
  */
 
 /**
- * Collection’s i18n configuration.
+ * Entry/asset path configuration.
+ * @typedef {object} PathConfig
+ * @property {string} collectionName Collection name.
+ * @property {string} [internalPath] Root-relative path in the repository.
+ * @property {string} [publicPath] Root-relative path in the live site.
+ * @property {string} [fileName] File name. (File collection only)
+ * @property {string} [file] File path. (File collection only)
+ * @property {string} [folder] Folder path. (Folder/entry collection only)
+ * @property {string} [extension] File extension.
+ * @property {string} [format] File format.
+ * @property {string | string[]} [frontmatterDelimiter] Frontmatter delimiter.
+ * @property {boolean} [yamlQuote] YAML quote configuration.
+ */
+
+/**
+ * File info being processed as {@link Entry} or {@link Asset}.
+ * @typedef {object} BaseFileListItem
+ * @property {string} [type] File type.
+ * @property {File} [file] File object. Local backend only.
+ * @property {?string} [url] Blob URL for the asset or temporary Blob URL for a local file being
+ * uploaded. It can be `null` if the Blob URL is not generated yet.
+ * @property {string} [name] File name.
+ * @property {string} path File path.
+ * @property {string} sha SHA-1 hash for the file.
+ * @property {number} size File size in bytes.
+ * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
+ * @property {object} [meta] Metadata.
+ * @property {string} [fetchURL] URL to fetch the file content. Git backend only.
+ * @property {string} [repoFileURL] Web-accessible URL on the Git repository. Git backend only.
+ * @property {PathConfig} [config] Path configuration.
+ */
+
+/**
+ * Global or Collection’s unparsed i18n configuration.
+ * @typedef {object} RawI18nConfig
+ * @property {I18nFileStructure} [structure] File structure.
+ * @property {LocaleCode[]} locales List of locales.
+ * @property {LocaleCode} [default_locale] Default locale.
+ * @see https://decapcms.org/docs/beta-features/#i18n-support
+ */
+
+/**
+ * Collection’s canonical i18n configuration.
  * @typedef {object} I18nConfig
  * @property {I18nFileStructure} structure File structure.
  * @property {boolean} hasLocales Whether i18n is enabled for the collection.
  * @property {LocaleCode[]} locales List of locales. Can be an empty array if i18n is not enabled.
- * @property {string} [defaultLocale] Default locale. Can be `undefined` if i18n is not
+ * @property {LocaleCode} [defaultLocale] Default locale. Can be `undefined` if i18n is not
  * enabled.
- * @see https://decapcms.org/docs/beta-features/#i18n-support
  */
 
 /**
@@ -164,8 +205,11 @@
  * @property {string} [public_folder] Global public media folder path.
  * @property {MediaLibraryConfig} [media_library] media library configuration.
  * @property {object} [slug] Slug options.
+ * @property {'unicode' | 'ascii'} [slug.encoding] Encoding option.
+ * @property {boolean} [slug.clean_accents] Whether to remove accents.
+ * @property {string} [slug.sanitize_replacement] String to replace sanitized characters.
  * @property {Collection[]} [collections] Collections.
- * @property {object} [i18n] Global i18n configuration.
+ * @property {RawI18nConfig} [i18n] Global i18n configuration.
  * @property {string} [publish_mode] Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] Whether to show preview links in Editorial Workflow.
  * @property {string} [error] Custom error message.
@@ -197,6 +241,8 @@
  * @property {string} [media_folder] Internal media folder path for a folder/entry collection.
  * @property {string} [public_folder] Public media folder path for a folder/entry collection.
  * @property {object} [filter] Filter for a folder/entry collection.
+ * @property {string} filter.field Field name.
+ * @property {any} filter.value Field value.
  * @property {object} [nested] Nested collection config for a folder/entry collection.
  * @property {boolean} [hide] Whether to hide the collection in the UI.
  * @property {boolean} [create] Whether to allow creating items in a folder/entry collection.
@@ -212,11 +258,12 @@
  * @property {string[]} [sortable_fields] Custom sorting fields.
  * @property {ViewFilter[]} [view_filters] Predefined view filters.
  * @property {ViewFilter[]} [view_groups] Predefined view groups.
- * @property {boolean | object} [i18n] I18n configuration.
+ * @property {RawI18nConfig | boolean} [i18n] I18n configuration.
  * @property {I18nConfig} _i18n Normalized i18n configuration with the global i18n config combined.
  * @property {string} [preview_path] Preview URL template.
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
- * @property {object} [editor] Editor view config with the optional `preview` property.
+ * @property {object} [editor] Editor view configuration.
+ * @property {boolean} editor.preview Whether to hide the preview.
  * @see https://decapcms.org/docs/configuration-options/#collections
  */
 
@@ -227,6 +274,8 @@
  * @property {string} name File name.
  * @property {string} file File path.
  * @property {Field[]} fields Fields.
+ * @property {object} [editor] Editor view configuration.
+ * @property {boolean} editor.preview Whether to hide the preview.
  * @see https://decapcms.org/docs/collection-types/#file-collections
  */
 
@@ -308,7 +357,7 @@
 /**
  * List field properties.
  * @typedef {object} ListFieldProps
- * @property {string[] | object[]} [default] Default value.
+ * @property {string[] | { [key: string]: any }[] | { [key: string]: any }} [default] Default value.
  * @property {boolean} [allow_add] Whether to allow adding new values.
  * @property {boolean} [add_to_top] Whether show the Add button at the top of items.
  * @property {string} [label_singular] Label to be displayed on the Add button.
@@ -458,13 +507,13 @@
 /**
  * Entry item.
  * @typedef {object} Entry
- * @property {string} id Unique entry ID mainly used on the cross-collection search page, where the
- * `sha`, `slug` or `fileName` property may duplicate.
- * @property {string} sha SHA-1 hash from one of the locales. It serves as the ID of an entry, so it
- * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
+ * @property {string} [id] Unique entry ID mainly used on the cross-collection search page, where
+ * the `sha`, `slug` or `fileName` property may duplicate.
+ * @property {string} [sha] SHA-1 hash from one of the locales. It serves as the ID of an entry, so
+ * it can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
- * @property {string} slug Entry slug.
- * @property {{ [key: LocaleCode]: LocalizedEntry }} locales Localized content map keyed with a
+ * @property {string} [slug] Entry slug.
+ * @property {{ [locale: LocaleCode]: LocalizedEntry }} [locales] Localized content map keyed with a
  * locale code. When i18n is not enabled with the site configuration, there will be one single
  * property named `default`.
  * @property {string} collectionName Collection name.
@@ -475,7 +524,7 @@
 
 /**
  * Parsed, localized entry content.
- * @typedef {object} EntryContent
+ * @typedef {{ [key: string]: any }} EntryContent
  */
 
 /**
@@ -488,7 +537,7 @@
 
 /**
  * Flattened {@link EntryContent} object,
- * @typedef {{ [key: string]: any }} FlattenedEntryContent
+ * @typedef {{ [keyPath: string]: any }} FlattenedEntryContent
  * where key is a key path: dot-connected field name like `author.name` and value is the
  * corresponding field value.
  * @see https://www.npmjs.com/package/flatten
@@ -497,20 +546,20 @@
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be a file to be
  * uploaded.
- * @typedef {{ [key: string]: File }} FlattenedEntryContentFileList
+ * @typedef {{ [keyPath: string]: File }} FlattenedEntryContentFileList
  */
 
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
  * validity, using the same properties as the native HTML5 constraint validation.
- * @typedef {{ [key: string]: { [key: string]: boolean } }} FlattenedEntryContentValidityState
+ * @typedef {{ [keyPath: string]: { [key: string]: boolean } }} FlattenedEntryContentValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
  * UI state.
- * @typedef {{ [key: string]: any }} FlattenedEntryContentViewState
+ * @typedef {{ [keyPath: string]: any }} FlattenedEntryContentViewState
  */
 
 /**
@@ -523,15 +572,15 @@
  * @property {string} [fileName] File name. (File collection only)
  * @property {CollectionFile} [collectionFile] File details. (File collection only)
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
- * @property {{ [key: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,
+ * @property {{ [locale: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,
  * value is a flattened object containing all the original field values.
- * @property {{ [key: LocaleCode]: FlattenedEntryContent }} currentValues Key is a locale code,
+ * @property {{ [locale: LocaleCode]: FlattenedEntryContent }} currentValues Key is a locale code,
  * value is a flattened object containing all the current field values while editing.
- * @property {{ [key: LocaleCode]: FlattenedEntryContentFileList }} files Files to be uploaded.
- * @property {{ [key: LocaleCode]: FlattenedEntryContentValidityState }} validities Key is a locale
- * code, value is a flattened object containing validation results of all the current field values
- * while editing.
- * @property {{ [key: LocaleCode]: FlattenedEntryContentViewState }} viewStates Key is a locale
+ * @property {{ [locale: LocaleCode]: FlattenedEntryContentFileList }} files Files to be uploaded.
+ * @property {{ [locale: LocaleCode]: FlattenedEntryContentValidityState }} validities Key is a
+ * locale code, value is a flattened object containing validation results of all the current field
+ * values while editing.
+ * @property {{ [locale: LocaleCode]: FlattenedEntryContentViewState }} viewStates Key is a locale
  * code, value is a flattened object containing the UI state.
  */
 
@@ -584,7 +633,7 @@
  * @property {string} sha SHA-1 hash for the file.
  * @property {number} size File size in bytes.
  * @property {AssetKind} kind Basic file type.
- * @property {?number} text Raw text for a plaintext file, like HTML or Markdown.
+ * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {string} [collectionName] Collection name if it belongs to a collection asset folder.
  * @property {string} folder Path of a collection-specific folder that contains the file or global
  * media folder.

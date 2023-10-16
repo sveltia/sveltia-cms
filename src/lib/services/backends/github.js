@@ -90,10 +90,12 @@ const fetchAPI = async (
  * @returns {Promise<object>} Response data.
  */
 const fetchGraphQL = async (query, variables = {}) => {
-  const { data } = await fetchAPI('/graphql', {
-    method: 'POST',
-    body: JSON.stringify({ query, variables }),
-  });
+  const { data } = /** @type {{ data: object }} */ (
+    await fetchAPI('/graphql', {
+      method: 'POST',
+      body: JSON.stringify({ query, variables }),
+    })
+  );
 
   return data;
 };
@@ -132,7 +134,11 @@ const signIn = async (savedToken) => {
     throw new Error('Authentication failed');
   }
 
-  return { ...(await fetchAPI('/user', { token })), backendName: 'github', token };
+  return {
+    .../** @type {object} */ (await fetchAPI('/user', { token })),
+    backendName: 'github',
+    token,
+  };
 };
 
 /**
@@ -148,11 +154,14 @@ const signOut = async () => undefined;
 const fetchLastCommitHash = async () => {
   const { owner, repo, branch } = repository;
 
-  const { repository: result } = await fetchGraphQL(`query {
-    repository(owner: "${owner}", name: "${repo}") {
-      ref(qualifiedName: "${branch}") { target { oid } }
-    }
-  }`);
+  const { repository: result } =
+    /** @type {{ repository: { ref: { target: { oid: string } } } }} */ (
+      await fetchGraphQL(`query {
+        repository(owner: "${owner}", name: "${repo}") {
+          ref(qualifiedName: "${branch}") { target { oid } }
+        }
+      }`)
+    );
 
   return result.ref.target.oid;
 };
@@ -174,9 +183,16 @@ const fetchFiles = async () => {
     fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
   } else {
     // Get a complete file list first with the REST API
-    const { sha, tree } = /** @type {{ sha: string, tree: { type: string, path: string }[] }} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`)
-    );
+    const {
+      sha,
+      tree,
+    } = //
+      /**
+       * @type {{
+       *   sha: string,
+       *   tree: { type: string, path: string, sha: string, size: number }[]
+       * }}
+       */ (await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`));
 
     // Then filter what’s managed in CMS
     fileList = createFileList(tree.filter(({ type }) => type === 'blob'));
@@ -233,7 +249,9 @@ const fetchFiles = async () => {
 
   // Fetch all the text contents with the GraphQL API
   const { repository: result } = query
-    ? await fetchGraphQL(`query { repository(owner: "${owner}", name: "${repo}") { ${query} } }`)
+    ? /** @type {{ repository: { [key: string]: any } }} */ (
+        await fetchGraphQL(`query { repository(owner: "${owner}", name: "${repo}") { ${query} } }`)
+      )
     : { repository: {} };
 
   /** @type {[string, { sha: string, text: string, meta: object }][]} */
@@ -313,11 +331,12 @@ const fetchFiles = async () => {
  * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
  */
 const fetchBlob = async (asset) => {
-  /** @type {Response} */
-  const response = await fetchAPI(asset.fetchURL.replace('https://api.github.com', ''), {
-    headers: { Accept: 'application/vnd.github.raw' },
-    responseType: 'raw',
-  });
+  const response = /** @type {Response} */ (
+    await fetchAPI(asset.fetchURL.replace('https://api.github.com', ''), {
+      headers: { Accept: 'application/vnd.github.raw' },
+      responseType: 'raw',
+    })
+  );
 
   // Handle SVG and other non-binary files
   if (response.headers.get('Content-Type') !== 'application/octet-stream') {
@@ -344,21 +363,23 @@ const createCommit = async (message, { additions = [], deletions = [] }) => {
     createCommitOnBranch: {
       commit: { url: commitURL },
     },
-  } = await fetchGraphQL(
-    `mutation ($input: CreateCommitOnBranchInput!) {
-      createCommitOnBranch(input: $input) { commit { url } }
-    }`,
-    {
-      input: {
-        branch: {
-          repositoryNameWithOwner: `${owner}/${repo}`,
-          branchName: branch,
+  } = /** @type {{ createCommitOnBranch: { commit: { url: string }} }} */ (
+    await fetchGraphQL(
+      `mutation ($input: CreateCommitOnBranchInput!) {
+        createCommitOnBranch(input: $input) { commit { url } }
+      }`,
+      {
+        input: {
+          branch: {
+            repositoryNameWithOwner: `${owner}/${repo}`,
+            branchName: branch,
+          },
+          message: { headline: message },
+          fileChanges: { additions, deletions },
+          expectedHeadOid,
         },
-        message: { headline: message },
-        fileChanges: { additions, deletions },
-        expectedHeadOid,
       },
-    },
+    )
   );
 
   return commitURL;

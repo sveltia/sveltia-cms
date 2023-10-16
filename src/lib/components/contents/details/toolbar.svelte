@@ -30,17 +30,10 @@
   let saving = false;
 
   $: ({ collection, collectionFile, isNew, originalEntry, currentValues, originalValues } =
-    $entryDraft || {
-      collection: undefined,
-      collectionFile: undefined,
-      isNew: undefined,
-      originalEntry: undefined,
-      currentValues: undefined,
-      originalValues: undefined,
-    });
+    $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
-  $: collectionLabel = collection.label || collection.name;
-  $: collectionLabelSingular = collection.label_singular || collectionLabel;
+  $: collectionLabel = collection?.label || collection?.name;
+  $: collectionLabelSingular = collection?.label_singular || collectionLabel;
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: modified = isNew || !equal(currentValues, originalValues);
@@ -51,7 +44,7 @@
    */
   const duplicateDraft = async () => {
     showDuplicateDialog = true;
-    goto(`/collections/${collection.name}/new`, { replaceState: true, notifyChange: false });
+    goto(`/collections/${collection?.name}/new`, { replaceState: true, notifyChange: false });
     $entryDraft = { ...$entryDraft, isNew: true, originalEntry: undefined };
     await sleep(1000);
     showDuplicateDialog = false;
@@ -62,7 +55,7 @@
   <Button
     class="ghost iconic"
     on:click={() => {
-      goBack(`/collections/${collection.name}`);
+      goBack(`/collections/${collection?.name}`);
     }}
   >
     <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel')} />
@@ -118,13 +111,13 @@
         <Divider />
         <MenuItem
           label={$_('duplicate')}
-          disabled={collection.create === false || isNew}
+          disabled={collection?.create === false || isNew}
           on:click={() => {
             duplicateDraft();
           }}
         />
         <MenuItem
-          disabled={collection.delete === false || isNew}
+          disabled={collection?.delete === false || isNew}
           label={$_('delete')}
           on:click={() => {
             showDeleteDialog = true;
@@ -142,7 +135,7 @@
       try {
         saving = true;
         await saveEntry();
-        goBack(`/collections/${collection.name}`);
+        goBack(`/collections/${collection?.name}`);
       } catch (error) {
         if (error.message !== 'validation_failed') {
           showErrorDialog = true;
@@ -174,7 +167,7 @@
   okLabel={$_('delete')}
   on:ok={async () => {
     await deleteEntries([originalEntry?.id]);
-    goBack(`/collections/${collection.name}`);
+    goBack(`/collections/${collection?.name}`);
   }}
 >
   {$_('confirm_deleting_this_entry')}

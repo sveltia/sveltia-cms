@@ -58,7 +58,7 @@
   $: hasVariableTypes = Array.isArray(types);
   $: hasSubFields = hasSingleSubField || hasMultiSubFields || hasVariableTypes;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
-  $: ({ collectionName, fileName } = $entryDraft);
+  $: ({ collectionName, fileName } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: valueMap = $entryDraft.currentValues[locale];
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
@@ -158,7 +158,9 @@
 
       subFields.forEach(({ name, default: defaultValue }) => {
         const _defaultValue =
-          isObject(defaultValues) && name in defaultValues ? defaultValues[name] : defaultValue;
+          isObject(defaultValues) && name in defaultValues
+            ? /** @type {{ [key: string]: any }} */ (defaultValues)[name]
+            : defaultValue;
 
         if (_defaultValue) {
           if (hasSingleSubField) {
@@ -215,14 +217,14 @@
 
   $: {
     if (mounted && !hasSubFields) {
-      // @ts-ignore Arguments are triggers
-      updateInputValue(currentValue);
+      void currentValue;
+      updateInputValue();
     }
   }
 
   /**
    * Format the summary template.
-   * @param {object} item List item.
+   * @param {{ [key: string]: any }} item List item.
    * @param {number} index List index.
    * @param {string} [summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
    * @returns {string} Formatted summary.

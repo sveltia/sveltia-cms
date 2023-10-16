@@ -37,8 +37,10 @@ describe('Test getOptions()', () => {
       search_fields: ['name.first', 'twitterHandle'],
     };
 
+    /** @type {Entry[]} */
     const entries = [
       {
+        collectionName: 'members',
         slug: 'melvin-lucas',
         locales: {
           default: {
@@ -55,6 +57,7 @@ describe('Test getOptions()', () => {
         },
       },
       {
+        collectionName: 'members',
         slug: 'elsie-mcbride',
         locales: {
           default: {
@@ -71,6 +74,7 @@ describe('Test getOptions()', () => {
         },
       },
       {
+        collectionName: 'members',
         slug: 'maxine-field',
         locales: {
           default: {
@@ -88,14 +92,7 @@ describe('Test getOptions()', () => {
       },
     ];
 
-    expect(
-      getOptions(
-        locale,
-        config,
-        // @ts-ignore
-        entries,
-      ),
-    ).toEqual([
+    expect(getOptions(locale, config, entries)).toEqual([
       { label: 'ElsieMcbride 234', value: 'Elsie' },
       { label: 'MaxineField 345', value: 'Maxine' },
       { label: 'MelvinLucas 123', value: 'Melvin' },
@@ -109,7 +106,6 @@ describe('Test getOptions()', () => {
           value_field: '{{slug}}',
           display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
         },
-        // @ts-ignore
         entries,
       ),
     ).toEqual([
@@ -127,7 +123,6 @@ describe('Test getOptions()', () => {
           value_field: '{{fields.slug}}',
           display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
         },
-        // @ts-ignore
         entries,
       ),
     ).toEqual([
@@ -151,6 +146,7 @@ describe('Test getOptions()', () => {
       value_field: 'cities.*.id',
     };
 
+    /** @type {Entry[]} */
     const entries = [
       {
         sha: 'e5498c0c3d4592aaa18905e58bdf1cafa5b659c6',
@@ -172,14 +168,7 @@ describe('Test getOptions()', () => {
       },
     ];
 
-    expect(
-      getOptions(
-        locale,
-        config,
-        // @ts-ignore
-        entries,
-      ),
-    ).toEqual([
+    expect(getOptions(locale, config, entries)).toEqual([
       { value: 'YYC', label: 'Calgary' },
       { value: 'YYZ', label: 'Toronto' },
       { value: 'YVR', label: 'Vancouver' },
@@ -189,7 +178,6 @@ describe('Test getOptions()', () => {
       getOptions(
         locale,
         { ...config, display_fields: ['{{cities.*.name}} ({{cities.*.id}})'] },
-        // @ts-ignore
         entries,
       ),
     ).toEqual([
@@ -211,8 +199,10 @@ describe('Test getOptions()', () => {
       search_fields: ['sections.*.name'],
     };
 
+    /** @type {Entry[]} */
     const entries = [
       {
+        collectionName: 'pages',
         locales: {
           default: {
             content: {
@@ -226,6 +216,7 @@ describe('Test getOptions()', () => {
         },
       },
       {
+        collectionName: 'pages',
         locales: {
           default: {
             content: {
@@ -240,14 +231,7 @@ describe('Test getOptions()', () => {
       },
     ];
 
-    expect(
-      getOptions(
-        locale,
-        config,
-        // @ts-ignore
-        entries,
-      ),
-    ).toEqual([
+    expect(getOptions(locale, config, entries)).toEqual([
       { label: 'Contact', value: 'contact' },
       { label: 'Members', value: 'members' },
       { label: 'Overview', value: 'overview' },
@@ -255,12 +239,7 @@ describe('Test getOptions()', () => {
     ]);
 
     expect(
-      getOptions(
-        locale,
-        { ...config, display_fields: ['route', 'sections.*.name'] },
-        // @ts-ignore
-        entries,
-      ),
+      getOptions(locale, { ...config, display_fields: ['route', 'sections.*.name'] }, entries),
     ).toEqual([
       { label: '/about Contact', value: 'contact' },
       { label: '/about Team', value: 'team' },
@@ -272,7 +251,6 @@ describe('Test getOptions()', () => {
       getOptions(
         locale,
         { ...config, display_fields: ['{{route}}: {{sections.*.name}} ({{sections.*.id}})'] },
-        // @ts-ignore
         entries,
       ),
     ).toEqual([
@@ -291,7 +269,6 @@ describe('Test getOptions()', () => {
           display_fields: ['{{route}} {{sections.*.id}}'],
           value_field: '{{route}}#{{sections.*.id}}',
         },
-        // @ts-ignore
         entries,
       ),
     ).toEqual([
@@ -303,12 +280,7 @@ describe('Test getOptions()', () => {
 
     // Invalid
     expect(
-      getOptions(
-        locale,
-        { ...config, display_fields: ['sections.*.label'] },
-        // @ts-ignore
-        entries,
-      ),
+      getOptions(locale, { ...config, display_fields: ['sections.*.label'] }, entries),
     ).toEqual([
       {
         label: '{{sections.*.label}}',

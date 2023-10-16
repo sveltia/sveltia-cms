@@ -2,7 +2,10 @@
  * Get the metadata of an image, video or audio asset.
  * @param {string} src Source URL.
  * @param {string} kind Media type: `image`, `video` or `audio`.
- * @returns {Promise<object>} Dimensions (width/height) and/or duration.
+ * @returns {Promise<{
+ *   dimensions: { width: number, height: number } | undefined,
+ *   duration: number | undefined
+ * }>} Dimensions (width/height) and/or duration.
  */
 export const getMediaMetadata = (src, kind) => {
   const isImage = kind === 'image';

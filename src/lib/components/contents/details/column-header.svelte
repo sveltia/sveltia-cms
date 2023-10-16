@@ -26,15 +26,10 @@
    */
   export let thatPane = writable(null);
 
-  $: ({ collection, collectionFile, currentValues, originalValues, validities } = $entryDraft || {
-    collection: undefined,
-    collectionFile: undefined,
-    currentValues: undefined,
-    originalValues: undefined,
-    validities: undefined,
-  });
-
-  $: ({ hasLocales, locales } = collection._i18n);
+  $: ({ collection, collectionFile, currentValues, originalValues, validities } =
+    $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({ hasLocales = false, locales = ['default'] } =
+    collection._i18n ?? /** @type {I18nConfig} */ ({}));
   $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane?.locale) : [];
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;

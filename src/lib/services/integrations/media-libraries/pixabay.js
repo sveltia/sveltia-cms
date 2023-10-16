@@ -19,7 +19,7 @@ const search = async (query, { apiKey }) => {
   const [locale] = get(appLocale).toLowerCase().split('-');
 
   const params = new URLSearchParams(
-    /** @type {any} */ ({
+    /** @type {Record<string, any>} */ ({
       key: apiKey,
       q: query,
       lang: supportedLocales.includes(locale) ? locale : 'en',
@@ -37,7 +37,22 @@ const search = async (query, { apiKey }) => {
     return Promise.reject();
   }
 
-  return (await response.json()).hits.map(
+  /**
+   * @type {{
+   *   id: number,
+   *   webformatURL: string,
+   *   previewURL: string,
+   *   largeImageURL: string,
+   *   imageWidth: number,
+   *   imageHeight: number,
+   *   pageURL: string,
+   *   tags: string,
+   *   user: string
+   * }[]}
+   */
+  const results = (await response.json()).hits;
+
+  return results.map(
     ({
       id,
       webformatURL,
