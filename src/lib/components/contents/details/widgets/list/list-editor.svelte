@@ -241,7 +241,7 @@
         locale,
       });
 
-      return Array.isArray(value) ? listFormatter.format(value) : value || '';
+      return Array.isArray(value) ? listFormatter.format(value) : String(value);
     });
   };
 </script>

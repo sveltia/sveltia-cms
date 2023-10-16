@@ -95,7 +95,7 @@ export const getFieldDisplayValue = ({ collectionName, fileName, keyPath, valueM
     });
   }
 
-  return value || '';
+  return value ?? '';
 };
 
 /**
