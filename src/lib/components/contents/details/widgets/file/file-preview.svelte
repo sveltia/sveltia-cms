@@ -9,10 +9,16 @@
   import { getMediaFieldURL } from '$lib/services/assets';
   import { entryDraft } from '$lib/services/contents/editor';
 
+  /**
+   * @type {LocaleCode}
+   */
   // svelte-ignore unused-export-let
-  export let locale = '';
+  export let locale;
+  /**
+   * @type {string}
+   */
   // svelte-ignore unused-export-let
-  export let keyPath = '';
+  export let keyPath;
   /**
    * @type {FileField}
    */

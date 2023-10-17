@@ -7,9 +7,15 @@
 <script>
   import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
 
-  export let locale = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
   // svelte-ignore unused-export-let
-  export let keyPath = '';
+  export let keyPath;
   /**
    * @type {DateTimeField}
    */

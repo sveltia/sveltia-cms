@@ -9,8 +9,14 @@
   import { entryDraft } from '$lib/services/contents/editor';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
-  export let locale = '';
-  export let keyPath = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {ListField}
    */

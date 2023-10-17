@@ -7,23 +7,25 @@
 <script>
   import { TextArea } from '@sveltia/ui';
 
+  /**
+   * @type {LocaleCode}
+   */
   // svelte-ignore unused-export-let
-  export let locale = '';
-
+  export let locale;
+  /**
+   * @type {string}
+   */
   // svelte-ignore unused-export-let
-  export let keyPath = '';
-
+  export let keyPath;
   /**
    * @type {MarkdownField}
    */
   // svelte-ignore unused-export-let
   export let fieldConfig;
-
   /**
    * @type {string}
    */
   export let currentValue;
-
   /**
    * @type {boolean}
    */

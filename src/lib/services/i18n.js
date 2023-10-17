@@ -27,7 +27,7 @@ export const initAppLocale = () => {
 
 /**
  * Translate the given locale code in the application UI locale.
- * @param {string} locale Locale code like `en`.
+ * @param {LocaleCode} locale Locale code like `en`.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
  * locale code as is.
  */

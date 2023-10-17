@@ -4,10 +4,16 @@
   @see https://decapcms.org/docs/widgets/#color
 -->
 <script>
+  /**
+   * @type {LocaleCode}
+   */
   // svelte-ignore unused-export-let
-  export let locale = '';
+  export let locale;
+  /**
+   * @type {string}
+   */
   // svelte-ignore unused-export-let
-  export let keyPath = '';
+  export let keyPath;
   /**
    * @type {ColorField}
    */

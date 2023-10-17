@@ -8,22 +8,24 @@
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
+  /**
+   * @type {LocaleCode}
+   */
   // svelte-ignore unused-export-let
-  export let locale = '';
-
+  export let locale;
+  /**
+   * @type {string}
+   */
   // svelte-ignore unused-export-let
-  export let keyPath = '';
-
+  export let keyPath;
   /**
    * @type {ColorField}
    */
   export let fieldConfig;
-
   /**
    * @type {string}
    */
   export let currentValue;
-
   /**
    * @type {boolean}
    */

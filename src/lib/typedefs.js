@@ -21,7 +21,7 @@
  * @property {{ [key: string]: string }} [logins] Log-in credentials (user name and password) for
  * integrations.
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
- * @property {string} [locale] Selected UI locale, e.g. `en`.
+ * @property {LocaleCode} [locale] Selected UI locale, e.g. `en`.
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
  * @property {string} [error] Error message.
  */
@@ -108,7 +108,7 @@
  */
 
 /**
- * ISO 639-1 locale code like `en`.
+ * ISO 639-1 locale code like `en`, or `default` for the unspecified default content locale.
  * @typedef {string} LocaleCode
  */
 

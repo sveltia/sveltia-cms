@@ -4,47 +4,22 @@
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
   import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
-  import BooleanEditor from '$lib/components/contents/details/widgets/boolean/boolean-editor.svelte';
-  import ColorEditor from '$lib/components/contents/details/widgets/color/color-editor.svelte';
-  import DateTimeEditor from '$lib/components/contents/details/widgets/date-time/date-time-editor.svelte';
-  import FileEditor from '$lib/components/contents/details/widgets/file/file-editor.svelte';
-  import ListEditor from '$lib/components/contents/details/widgets/list/list-editor.svelte';
-  import MarkdownEditor from '$lib/components/contents/details/widgets/markdown/markdown-editor.svelte';
-  import NumberEditor from '$lib/components/contents/details/widgets/number/number-editor.svelte';
-  import ObjectEditor from '$lib/components/contents/details/widgets/object/object-editor.svelte';
-  import RelationEditor from '$lib/components/contents/details/widgets/relation/relation-editor.svelte';
-  import SelectEditor from '$lib/components/contents/details/widgets/select/select-editor.svelte';
-  import StringEditor from '$lib/components/contents/details/widgets/string/string-editor.svelte';
-  import TextEditor from '$lib/components/contents/details/widgets/text/text-editor.svelte';
+  import { editors } from '$lib/components/contents/details/widgets';
   import { entryDraft, revertChanges } from '$lib/services/contents/editor';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
-  export let locale = '';
-  export let keyPath = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {Field}
    */
   export let fieldConfig;
-
-  /**
-   * @type {{ [key: string]: any }}
-   */
-  const widgets = {
-    boolean: BooleanEditor,
-    color: ColorEditor,
-    date: DateTimeEditor, // alias
-    datetime: DateTimeEditor,
-    file: FileEditor,
-    image: FileEditor, // alias
-    list: ListEditor,
-    markdown: MarkdownEditor,
-    number: NumberEditor,
-    object: ObjectEditor,
-    relation: RelationEditor,
-    select: SelectEditor,
-    string: StringEditor,
-    text: TextEditor,
-  };
 
   // @todo Save & restore draft from local storage.
 
@@ -52,15 +27,15 @@
     required = true,
     label = '',
     hint = '',
-    widget = 'string',
+    widget: widgetName = 'string',
     i18n = false,
     pattern = /** @type {string[]} */ ([]),
   } = fieldConfig);
-  $: hasMultiple = ['relation', 'select'].includes(widget);
+  $: hasMultiple = ['relation', 'select'].includes(widgetName);
   $: multiple = hasMultiple
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
     : undefined;
-  $: isList = widget === 'list' || (hasMultiple && multiple);
+  $: isList = widgetName === 'list' || (hasMultiple && multiple);
   $: ({
     hasLocales = false,
     locales = ['default'],
@@ -88,10 +63,10 @@
   $: validity = $entryDraft.validities[locale][keyPath];
 </script>
 
-{#if widget !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
+{#if widgetName !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
   {@const canCopy = canTranslate && otherLocales.length}
   {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
-  <section data-widget={widget} data-key-path={keyPath}>
+  <section data-widget={widgetName} data-key-path={keyPath}>
     <header>
       <h4>{label}</h4>
       {#if required}
@@ -103,7 +78,7 @@
           <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
           <Menu slot="popup">
             {#if canCopy}
-              {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widget)}
+              {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
                 <CopyMenuItem {keyPath} {locale} translate={true} />
                 {#if otherLocales.length > 1}
                   <Divider />
@@ -168,11 +143,11 @@
       </div>
     {/if}
     <div>
-      {#if !(widget in widgets)}
-        <div>{$_('unsupported_widget_x', { values: { name: widget } })}</div>
+      {#if !(widgetName in editors)}
+        <div>{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
       {:else if isList}
         <svelte:component
-          this={widgets[widget]}
+          this={editors[widgetName]}
           {keyPath}
           {locale}
           {fieldConfig}
@@ -181,7 +156,7 @@
         />
       {:else}
         <svelte:component
-          this={widgets[widget]}
+          this={editors[widgetName]}
           {keyPath}
           {locale}
           {fieldConfig}

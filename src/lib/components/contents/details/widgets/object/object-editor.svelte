@@ -12,21 +12,23 @@
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { generateUUID } from '$lib/services/utils/strings';
 
-  export let locale = '';
-
-  export let keyPath = '';
-
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {ObjectField}
    */
   export let fieldConfig;
-
   /**
    * @type {object}
    */
   // svelte-ignore unused-export-let
   export let currentValue;
-
   /**
    * @type {boolean}
    */

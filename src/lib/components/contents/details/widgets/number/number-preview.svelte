@@ -4,9 +4,15 @@
   @see https://decapcms.org/docs/widgets/#number
 -->
 <script>
-  export let locale = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
   // svelte-ignore unused-export-let
-  export let keyPath = '';
+  export let keyPath;
   /**
    * @type {NumberField}
    */

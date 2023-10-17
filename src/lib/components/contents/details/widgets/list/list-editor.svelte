@@ -15,20 +15,22 @@
   import { isObject } from '$lib/services/utils/misc';
   import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
-  export let locale = '';
-
-  export let keyPath = '';
-
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {ListField}
    */
   export let fieldConfig;
-
   /**
    * @type {string[]}
    */
   export let currentValue;
-
   /**
    * @type {boolean}
    */

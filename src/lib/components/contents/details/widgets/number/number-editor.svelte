@@ -6,22 +6,24 @@
 <script>
   import { NumberInput } from '@sveltia/ui';
 
+  /**
+   * @type {LocaleCode}
+   */
   // svelte-ignore unused-export-let
-  export let locale = '';
-
+  export let locale;
+  /**
+   * @type {string}
+   */
   // svelte-ignore unused-export-let
-  export let keyPath = '';
-
+  export let keyPath;
   /**
    * @type {NumberField}
    */
   export let fieldConfig;
-
   /**
    * @type {string | number}
    */
   export let currentValue;
-
   /**
    * @type {boolean}
    */

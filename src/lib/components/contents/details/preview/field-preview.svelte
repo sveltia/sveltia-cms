@@ -1,52 +1,27 @@
 <script>
-  import BooleanPreview from '$lib/components/contents/details/widgets/boolean/boolean-preview.svelte';
-  import ColorPreview from '$lib/components/contents/details/widgets/color/color-preview.svelte';
-  import DateTimePreview from '$lib/components/contents/details/widgets/date-time/date-time-preview.svelte';
-  import FilePreview from '$lib/components/contents/details/widgets/file/file-preview.svelte';
-  import ListPreview from '$lib/components/contents/details/widgets/list/list-preview.svelte';
-  import MarkdownPreview from '$lib/components/contents/details/widgets/markdown/markdown-preview.svelte';
-  import NumberPreview from '$lib/components/contents/details/widgets/number/number-preview.svelte';
-  import ObjectPreview from '$lib/components/contents/details/widgets/object/object-preview.svelte';
-  import RelationPreview from '$lib/components/contents/details/widgets/relation/relation-preview.svelte';
-  import SelectPreview from '$lib/components/contents/details/widgets/select/select-preview.svelte';
-  import StringPreview from '$lib/components/contents/details/widgets/string/string-preview.svelte';
-  import TextPreview from '$lib/components/contents/details/widgets/text/text-preview.svelte';
+  import { previews } from '$lib/components/contents/details/widgets';
   import { entryDraft } from '$lib/services/contents/editor';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
-  export let locale = '';
-  export let keyPath = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {Field}
    */
   export let fieldConfig;
 
-  /**
-   * @type {{ [key: string]: any }}
-   */
-  const widgets = {
-    boolean: BooleanPreview,
-    color: ColorPreview,
-    date: DateTimePreview, // alias
-    datetime: DateTimePreview,
-    file: FilePreview,
-    image: FilePreview, // alias
-    list: ListPreview,
-    markdown: MarkdownPreview,
-    number: NumberPreview,
-    object: ObjectPreview,
-    relation: RelationPreview,
-    select: SelectPreview,
-    string: StringPreview,
-    text: TextPreview,
-  };
-
-  $: ({ label = '', widget = 'string', i18n = false } = fieldConfig);
-  $: hasMultiple = ['relation', 'select'].includes(widget);
+  $: ({ label = '', widget: widgetName = 'string', i18n = false } = fieldConfig);
+  $: hasMultiple = ['relation', 'select'].includes(widgetName);
   $: multiple = hasMultiple
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
     : undefined;
-  $: isList = widget === 'list' || (hasMultiple && multiple);
+  $: isList = widgetName === 'list' || (hasMultiple && multiple);
   $: ({ hasLocales = false, defaultLocale = 'default' } =
     $entryDraft.collection._i18n ?? /** @type {I18nConfig} */ ({}));
   $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
@@ -62,11 +37,17 @@
     : $entryDraft.currentValues[locale][keyPath];
 </script>
 
-{#if widget !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
-  <section data-widget={widget} data-key-path={keyPath}>
+{#if widgetName !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
+  <section data-widget={widgetName} data-key-path={keyPath}>
     <h4>{label}</h4>
-    {#if widget in widgets}
-      <svelte:component this={widgets[widget]} {keyPath} {locale} {fieldConfig} {currentValue} />
+    {#if widgetName in previews}
+      <svelte:component
+        this={previews[widgetName]}
+        {keyPath}
+        {locale}
+        {fieldConfig}
+        {currentValue}
+      />
     {/if}
   </section>
 {/if}

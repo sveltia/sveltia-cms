@@ -9,20 +9,22 @@
   import SelectEditor from '$lib/components/contents/details/widgets/select/select-editor.svelte';
   import { getEntriesByCollection, getFile } from '$lib/services/contents';
 
-  export let locale = '';
-
-  export let keyPath = '';
-
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {RelationField}
    */
   export let fieldConfig;
-
   /**
    * @type {string}
    */
   export let currentValue;
-
   /**
    * @type {boolean}
    */

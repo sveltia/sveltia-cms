@@ -10,7 +10,13 @@
   } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/prefs';
 
-  export let locale = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
   export let keyPath = '';
   export let translate = false;
 

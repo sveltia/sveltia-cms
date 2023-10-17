@@ -6,8 +6,14 @@
 <script>
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
 
-  export let locale = '';
-  export let keyPath = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {ObjectField}
    */

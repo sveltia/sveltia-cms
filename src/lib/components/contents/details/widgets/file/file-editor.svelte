@@ -14,20 +14,22 @@
   import { entryDraft } from '$lib/services/contents/editor';
   import { formatSize, getDataURL } from '$lib/services/utils/files';
 
-  export let locale = '';
-
-  export let keyPath = '';
-
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {FileField}
    */
   export let fieldConfig;
-
   /**
    * @type {string | undefined}
    */
   export let currentValue;
-
   /**
    * @type {boolean}
    */
@@ -55,14 +57,14 @@
   let photoCredit = '';
 
   $: ({
-    widget,
+    widget: widgetName,
     // Widget-specific options
     choose_url: canEnterURL = true,
     media_library: {
       config: { max_file_size: maxFileSize = /** @type {number | undefined} */ (undefined) } = {},
     } = {},
   } = fieldConfig);
-  $: isImageWidget = widget === 'image';
+  $: isImageWidget = widgetName === 'image';
 
   /**
    * Handle selected asset.

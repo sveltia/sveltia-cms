@@ -2,7 +2,10 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
 
-  export let locale = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
 
   $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 

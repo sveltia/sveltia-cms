@@ -90,10 +90,10 @@ const createNewContent = (fields, defaultValues = {}) => {
       return;
     }
 
-    const { widget, default: defaultValue } = fieldConfig;
+    const { widget: widgetName, default: defaultValue } = fieldConfig;
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
-    if (widget === 'list') {
+    if (widgetName === 'list') {
       const { fields: subFields } = /** @type {ListField} */ (fieldConfig);
 
       if (!isArray) {
@@ -119,7 +119,7 @@ const createNewContent = (fields, defaultValues = {}) => {
       return;
     }
 
-    if (widget === 'object') {
+    if (widgetName === 'object') {
       const { fields: subFields } = /** @type {ObjectField} */ (fieldConfig);
 
       subFields.forEach((_subField) => {
@@ -132,13 +132,13 @@ const createNewContent = (fields, defaultValues = {}) => {
       return;
     }
 
-    if (widget === 'boolean') {
+    if (widgetName === 'boolean') {
       newContent[keyPath] = typeof defaultValue === 'boolean' ? defaultValue : false;
 
       return;
     }
 
-    if (widget === 'relation' || widget === 'select') {
+    if (widgetName === 'relation' || widgetName === 'select') {
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
       if (multiple) {
@@ -148,7 +148,7 @@ const createNewContent = (fields, defaultValues = {}) => {
       }
     }
 
-    if (widget === 'date' || widget === 'datetime') {
+    if (widgetName === 'date' || widgetName === 'datetime') {
       if (typeof defaultValue === 'string') {
         newContent[keyPath] = defaultValue;
       } else {
@@ -434,7 +434,7 @@ export const copyFromLocale = async (
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
- * @param {string} [locale] Target locale, e.g. `ja`. Can be empty if reverting everything.
+ * @param {LocaleCode} [locale] Target locale, e.g. `ja`. Can be empty if reverting everything.
  * @param {string} [keyPath] Flattened (dot-connected) object keys that will be used for searching
  * the source values. Omit this if copying all the fields. If the triggered widget is List or
  * Object, this will likely match multiple fields.
@@ -510,7 +510,7 @@ const validateEntry = () => {
       }
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
-      const { widget, required = true, i18n = false, pattern } = fieldConfig;
+      const { widget: widgetName, required = true, i18n = false, pattern } = fieldConfig;
 
       const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
         fieldConfig
@@ -555,7 +555,7 @@ const validateEntry = () => {
         }
       }
 
-      if (!['object', 'list'].includes(widget)) {
+      if (!['object', 'list'].includes(widgetName)) {
         if (_required && (value === undefined || value === '')) {
           valueMissing = true;
         }

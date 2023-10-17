@@ -9,25 +9,26 @@
   import { entryDraft, updateListField } from '$lib/services/contents/editor';
   import { isObject } from '$lib/services/utils/misc';
 
-  export let locale = '';
-
-  export let keyPath = '';
-
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
+  export let keyPath;
   /**
    * @type {SelectField}
    */
   export let fieldConfig;
-
   /**
    * @type {any} // string | string[]
    */
   export let currentValue;
-
   /**
    * @type {boolean}
    */
   export let disabled = false;
-
   /**
    * @type {boolean}
    */

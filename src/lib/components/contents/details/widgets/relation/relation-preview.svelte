@@ -7,9 +7,15 @@
   import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
   import { getEntriesByCollection, getFile } from '$lib/services/contents';
 
-  export let locale = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
+  /**
+   * @type {string}
+   */
   // svelte-ignore unused-export-let
-  export let keyPath = '';
+  export let keyPath;
   /**
    * @type {RelationField}
    */

@@ -10,16 +10,17 @@
    * @type {Entry}
    */
   export let entry;
-
   /**
    * @type {EntryContent}
    */
   export let content;
-
   /**
    * @type {string}
    */
-  export let locale = '';
+  /**
+   * @type {LocaleCode}
+   */
+  export let locale;
 
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
 </script>
