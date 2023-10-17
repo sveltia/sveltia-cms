@@ -30,7 +30,7 @@ export const saveAssets = async ({ files, folder }, options) => {
   );
 
   const { collectionName = null } =
-    get(allAssetPaths).findLast(({ internalPath }) => folder === internalPath) || {};
+    get(allAssetPaths).findLast(({ internalPath }) => folder === internalPath) ?? {};
 
   /**
    * @type {Asset[]}

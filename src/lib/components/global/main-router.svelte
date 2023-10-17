@@ -29,7 +29,7 @@
    */
   export const selectPage = () => {
     const { path } = parseLocation();
-    const [, _pageName] = path.match(`^\\/(${Object.keys(pages).join('|')})\\b`) || [];
+    const [, _pageName] = path.match(`^\\/(${Object.keys(pages).join('|')})\\b`) ?? [];
 
     if (!_pageName) {
       // Redirect any invalid page to the contents page

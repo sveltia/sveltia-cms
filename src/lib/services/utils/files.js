@@ -196,7 +196,7 @@ export const renameIfNeeded = (name, otherNames) => {
     return name;
   }
 
-  return `${slug}-${Number(dupName.match(regex)[1] || 0) + 1}${extension ? `.${extension}` : ''}`;
+  return `${slug}-${Number(dupName.match(regex)[1] ?? 0) + 1}${extension ? `.${extension}` : ''}`;
 };
 
 /**

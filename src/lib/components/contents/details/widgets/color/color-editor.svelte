@@ -42,7 +42,7 @@
     {#if allowInput}
       <TextInput bind:value={currentValue} />
     {:else}
-      {currentValue || ''}
+      {currentValue ?? ''}
     {/if}
   </span>
   <Button

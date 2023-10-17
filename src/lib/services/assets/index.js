@@ -97,7 +97,7 @@ export const getAssetFolder = (collection, fillSlugOptions) => {
  */
 export const getAssetKind = (name) =>
   /** @type {AssetKind} */ (
-    Object.entries(assetExtensions).find(([, regex]) => name.match(regex))?.[0] || 'other'
+    Object.entries(assetExtensions).find(([, regex]) => name.match(regex))?.[0] ?? 'other'
   );
 
 /**
@@ -145,14 +145,14 @@ export const getAssetByPath = (savedPath, entry) => {
     return get(allAssets).find((asset) => asset.path === resolvedPath);
   }
 
-  const [, publicPath, fileName] = savedPath.match(/(.+?)\/([^/]+)$/) || [];
+  const [, publicPath, fileName] = savedPath.match(/(.+?)\/([^/]+)$/) ?? [];
 
   if (!publicPath) {
     return undefined;
   }
 
   const { internalPath } =
-    get(allAssetPaths).findLast((config) => config.publicPath === publicPath) || {};
+    get(allAssetPaths).findLast((config) => config.publicPath === publicPath) ?? {};
 
   if (!internalPath) {
     return undefined;
@@ -200,7 +200,7 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
     return isBlobURL ? asset.url : undefined;
   }
 
-  const baseURL = pathOnly ? '' : get(siteConfig).site_url || '';
+  const baseURL = pathOnly ? '' : get(siteConfig).site_url ?? '';
   const path = asset.path.replace(asset.folder, publicPath);
 
   return `${baseURL}${path}`;

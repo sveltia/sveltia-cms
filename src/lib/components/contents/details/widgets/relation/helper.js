@@ -47,11 +47,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example '{{sections.*.name}}'
    * @example '{{route}}: {{sections.*.name}} ({{sections.*.id}})'
    */
-  const _displayField = (displayFields || [valueField]).map(normalizeFieldName).join(' ');
+  const _displayField = (displayFields ?? [valueField]).map(normalizeFieldName).join(' ');
 
   return refEntries
     .map((refEntry) => {
-      const { content } = refEntry?.locales[locale] || {};
+      const { content } = refEntry?.locales[locale] ?? {};
 
       if (!content) {
         return undefined;
@@ -93,7 +93,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
               ),
             );
 
-            return [fieldName, valueMap[Object.keys(valueMap)[0]] || ''];
+            return [fieldName, valueMap[Object.keys(valueMap)[0]] ?? ''];
           }
 
           if (fieldName === 'slug') {
@@ -118,11 +118,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
                 valueMap: flattenContent,
                 keyPath,
                 locale,
-              }) || '',
+              }) ?? '',
             ];
           }
 
-          return [fieldName, value || ''];
+          return [fieldName, value ?? ''];
         }),
       );
 

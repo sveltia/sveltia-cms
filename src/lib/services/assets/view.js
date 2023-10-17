@@ -57,7 +57,7 @@ export const getFolderLabelByCollection = (collectionName) => {
     return get(_)('uncategorized');
   }
 
-  return get(siteConfig).collections.find(({ name }) => name === collectionName)?.label || '';
+  return get(siteConfig).collections.find(({ name }) => name === collectionName)?.label ?? '';
 };
 
 /**
@@ -127,7 +127,7 @@ const sortAssets = (assets, { key, order } = {}) => {
       return asset.name.split('.')[0];
     }
 
-    return /** @type {{ [key: string]: any }} */ (asset)[key] || '';
+    return /** @type {{ [key: string]: any }} */ (asset)[key] ?? '';
   };
 
   _assets.sort((a, b) => {
@@ -177,7 +177,7 @@ const filterAssets = (assets, { field, pattern } = { field: undefined, pattern: 
     const value = /** @type {{ [key: string]: any }} */ (asset)[field];
 
     if (regex) {
-      return String(value || '').match(regex);
+      return String(value ?? '').match(regex);
     }
 
     return value === pattern;
@@ -209,7 +209,7 @@ const groupAssets = (assets, { field, pattern } = { field: undefined, pattern: u
     let key;
 
     if (regex) {
-      [key = otherKey] = String(value || '').match(regex) || [];
+      [key = otherKey] = String(value ?? '').match(regex) ?? [];
     } else {
       key = value;
     }
@@ -246,7 +246,7 @@ const defaultView = {
 const assetListSettings = writable({}, (set) => {
   (async () => {
     try {
-      set((await LocalStorage.get(storageKey)) || {});
+      set((await LocalStorage.get(storageKey)) ?? {});
     } catch {
       //
     }
@@ -264,7 +264,7 @@ export const currentView = writable({});
  * @type {import('svelte/store').Readable<{ key: string, label: string }[]>}
  */
 export const sortFields = derived([allAssets, appLocale], ([_allAssets], set) => {
-  const { commitAuthor, commitDate } = _allAssets?.[0] || {};
+  const { commitAuthor, commitDate } = _allAssets?.[0] ?? {};
   const _sortFields = ['name'];
 
   if (commitAuthor) {
@@ -322,7 +322,7 @@ listedAssets.subscribe((assets) => {
 });
 
 selectedAssetFolderPath.subscribe((path) => {
-  const view = get(assetListSettings)[path || '*'] || JSON.parse(JSON.stringify(defaultView));
+  const view = get(assetListSettings)[path || '*'] ?? JSON.parse(JSON.stringify(defaultView));
 
   if (!equal(view, currentView)) {
     currentView.set(view);
@@ -331,7 +331,7 @@ selectedAssetFolderPath.subscribe((path) => {
 
 currentView.subscribe((view) => {
   const path = get(selectedAssetFolderPath) || '*';
-  const savedView = get(assetListSettings)[path] || {};
+  const savedView = get(assetListSettings)[path] ?? {};
 
   if (!equal(view, savedView)) {
     assetListSettings.update((settings) => ({ ...settings, [path]: view }));

@@ -20,7 +20,7 @@
   export let showPreview = false;
 
   $: ({ path, size, kind, commitAuthor, commitDate, repoFileURL } = asset);
-  $: [, extension = ''] = path.match(/\.([^.]+)$/) || [];
+  $: [, extension = ''] = path.match(/\.([^.]+)$/) ?? [];
   $: canPreview = ['image', 'video'].includes(kind);
 
   /**
@@ -122,8 +122,7 @@
       {@const collection = getCollection(collectionName)}
       {@const { defaultLocale = 'default' } = collection._i18n}
       {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
-      {@const { content: _content } = locales[locale]}
-      {@const content = /** @type {{ [key: string]: any }} */ (_content)}
+      {@const { content } = locales[locale]}
       <p>
         <Button
           class="link"

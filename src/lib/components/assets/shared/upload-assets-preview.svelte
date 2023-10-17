@@ -13,7 +13,7 @@
 <div class="files">
   {#each files as file, index}
     {@const { name, type, size } = file}
-    {@const [, extension = ''] = name.match(/\.([^.]+)$/) || []}
+    {@const [, extension = ''] = name.match(/\.([^.]+)$/) ?? []}
     <div class="file">
       {#if type.startsWith('image/')}
         <Image src={URL.createObjectURL(file)} />

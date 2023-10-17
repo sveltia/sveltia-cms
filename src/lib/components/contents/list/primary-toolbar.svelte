@@ -19,8 +19,8 @@
 
 {#if $selectedCollection}
   <Toolbar class="primary">
-    <h2>{label || ''}</h2>
-    <div class="description">{description || ''}</div>
+    <h2>{label ?? ''}</h2>
+    <div class="description">{description ?? ''}</div>
     {#if !files}
       <Button
         class="secondary"

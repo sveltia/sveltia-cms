@@ -11,7 +11,7 @@ const storageKey = 'sveltia-cms.prefs';
 export const prefs = writable({}, (set) => {
   (async () => {
     try {
-      const _prefs = (await LocalStorage.get(storageKey)) || {};
+      const _prefs = (await LocalStorage.get(storageKey)) ?? {};
 
       _prefs.apiKeys ||= {};
       set(_prefs);

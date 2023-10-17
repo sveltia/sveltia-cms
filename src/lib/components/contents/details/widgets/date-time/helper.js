@@ -63,7 +63,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
   }
 
   if (timeOnly) {
-    return currentValue || '';
+    return currentValue ?? '';
   }
 
   try {

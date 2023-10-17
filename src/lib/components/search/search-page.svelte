@@ -12,7 +12,7 @@
    */
   const navigate = () => {
     const { path } = parseLocation();
-    const [, terms] = path.match(/^\/search\/(.+)$/) || [];
+    const [, terms] = path.match(/^\/search\/(.+)$/) ?? [];
 
     if (terms && terms !== $searchTerms) {
       $searchTerms = terms;

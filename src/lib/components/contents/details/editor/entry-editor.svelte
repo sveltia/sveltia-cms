@@ -6,7 +6,7 @@
 
   $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
-  $: fields = collectionFile?.fields || collection?.fields;
+  $: fields = collectionFile?.fields ?? collection?.fields;
 </script>
 
 <div lang={locale}>

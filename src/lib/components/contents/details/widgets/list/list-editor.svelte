@@ -73,7 +73,7 @@
             value,
           ]),
       ),
-    )[fieldName] || [];
+    )[fieldName] ?? [];
 
   $: parentExpanded = !minimizeCollapsed;
 
@@ -153,8 +153,8 @@
       let newItem = hasSingleSubField ? undefined : {};
 
       const subFields = subFieldName
-        ? types.find(({ name }) => name === subFieldName)?.fields || []
-        : fields || [field];
+        ? types.find(({ name }) => name === subFieldName)?.fields ?? []
+        : fields ?? [field];
 
       subFields.forEach(({ name, default: defaultValue }) => {
         const _defaultValue =
@@ -279,7 +279,7 @@
         {@const typeConfig = hasVariableTypes
           ? types.find(({ name }) => name === item[typeKey])
           : undefined}
-        {@const subFields = hasVariableTypes ? typeConfig?.fields || [] : fields || [field]}
+        {@const subFields = hasVariableTypes ? typeConfig?.fields ?? [] : fields ?? [field]}
         {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <!-- @todo Support drag sorting. -->
         <div class="item">

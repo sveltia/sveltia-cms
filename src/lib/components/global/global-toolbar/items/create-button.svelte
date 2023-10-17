@@ -15,7 +15,7 @@
 <MenuButton class="ghost iconic" popupPosition="bottom-right">
   <Icon slot="start-icon" name="add" label={$_('create')} />
   <Menu slot="popup">
-    {#each $siteConfig.collections || [] as collection (collection.name)}
+    {#each $siteConfig.collections ?? [] as collection (collection.name)}
       {@const {
         name,
         label,

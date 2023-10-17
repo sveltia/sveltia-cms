@@ -28,7 +28,7 @@
     types,
     typeKey = 'type',
   } = fieldConfig);
-  $: hasSubFields = !!(field || fields || types);
+  $: hasSubFields = !!(field ?? fields ?? types);
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
@@ -42,7 +42,7 @@
             value,
           ]),
       ),
-    )[fieldName] || [];
+    )[fieldName] ?? [];
 </script>
 
 {#if hasSubFields}
@@ -52,8 +52,8 @@
       ? $entryDraft.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
       : undefined}
     {@const subFields = subFieldName
-      ? types.find(({ name }) => name === subFieldName)?.fields || []
-      : fields || [field]}
+      ? types.find(({ name }) => name === subFieldName)?.fields ?? []
+      : fields ?? [field]}
     <section class="subsection">
       {#each subFields as subField (subField.name)}
         <FieldPreview

@@ -48,7 +48,7 @@ export const authorize = async (provider) => {
 
       // Second message
       const [, state, _result] =
-        data.match(`^authorization:${provider}:(success|error):(.+)`) || [];
+        data.match(`^authorization:${provider}:(success|error):(.+)`) ?? [];
 
       /**
        * @type {{ token: string }}

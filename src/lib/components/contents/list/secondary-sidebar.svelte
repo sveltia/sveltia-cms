@@ -8,7 +8,7 @@
   import { goto } from '$lib/services/navigation';
   import { stripSlashes } from '$lib/services/utils/strings';
 
-  $: mediaFolder = $selectedCollection.media_folder || '';
+  $: mediaFolder = $selectedCollection.media_folder ?? '';
   $: canonicalMediaFolder = stripSlashes(mediaFolder);
 </script>
 

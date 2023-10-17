@@ -130,7 +130,7 @@ const getAllFiles = async () => {
   const allFiles = [];
 
   const scanningPaths = [
-    ...get(allContentPaths).map(({ file, folder }) => file || folder),
+    ...get(allContentPaths).map(({ file, folder }) => file ?? folder),
     ...get(allAssetPaths).map(({ internalPath }) => internalPath),
   ].map((path) => stripSlashes(path));
 

@@ -129,8 +129,8 @@
         return;
       }
 
-      apiKey = $prefs.apiKeys?.[serviceId] || '';
-      [userName, password] = ($prefs.logins?.[serviceId] || '').split(' ');
+      apiKey = $prefs.apiKeys?.[serviceId] ?? '';
+      [userName, password] = ($prefs.logins?.[serviceId] ?? '').split(' ');
       hasAuthInfo = !!apiKey || !!password;
       searchResults = null;
 

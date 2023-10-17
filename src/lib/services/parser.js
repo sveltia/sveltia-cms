@@ -23,7 +23,7 @@ export const getFileExtension = ({ file, format, extension }) => {
   }
 
   if (file) {
-    return (file.match(/[^.]+$/) || [])[0] || 'md';
+    return (file.match(/[^.]+$/) ?? [])[0] ?? 'md';
   }
 
   if (format === 'yml' || format === 'yaml') {
@@ -171,7 +171,7 @@ const parseEntryFile = ({
           `^${escapeRegExp(startDelimiter)}\\n(.+?)\\n${escapeRegExp(endDelimiter)}(?:\\n(.+))?`,
           'ms',
         ),
-      ) || [];
+      ) ?? [];
 
     // If the format is `frontmatter`, try to parse in different formats, starting with YAML
     if (head && (format === 'frontmatter' || format === 'yaml-frontmatter')) {
@@ -302,18 +302,16 @@ const getSlug = (collectionName, filePath, content) => {
     const [, slug] =
       filePath.match(
         new RegExp(`^${escapeRegExp(pathTemplate).replace('\\{\\{slug\\}\\}', '(.+)')}$`),
-      ) || [];
+      ) ?? [];
 
     if (slug) {
       return slug;
     }
   }
 
-  const _content = /** @type {any} */ (content);
-
   // We can’t determine the slug from the file path. Let’s fallback using the content
   return normalizeSlug(
-    _content[identifierField] || _content.title || _content.name || _content.label || '',
+    content[identifierField] || content.title || content.name || content.label || '',
   );
 };
 
@@ -354,7 +352,7 @@ export const parseEntryFiles = (entryFiles) => {
       ? []
       : path.match(
           new RegExp(`^${escapeRegExp(stripSlashes(configFolder))}\\/(.+)\\.${extension}$`),
-        ) || [];
+        ) ?? [];
 
     if (!fileName && !filePath) {
       return;
@@ -369,7 +367,7 @@ export const parseEntryFiles = (entryFiles) => {
     }
 
     if (hasLocales && (structure === 'single_file' || fileName)) {
-      const content = parsedFile[defaultLocale] || Object.values(parsedFile)[0];
+      const content = parsedFile[defaultLocale] ?? Object.values(parsedFile)[0];
 
       entry.slug = fileName || getSlug(collectionName, filePath, content);
       entry.locales = Object.fromEntries(
@@ -390,9 +388,9 @@ export const parseEntryFiles = (entryFiles) => {
       let locale;
 
       if (structure === 'multiple_folders') {
-        [, locale, _filePath] = filePath.match(`^(${locales.join('|')})\\/(.+)$`) || [];
+        [, locale, _filePath] = filePath.match(`^(${locales.join('|')})\\/(.+)$`) ?? [];
       } else {
-        [, _filePath, locale] = filePath.match(`^(.+)\\.(${locales.join('|')})$`) || [];
+        [, _filePath, locale] = filePath.match(`^(.+)\\.(${locales.join('|')})$`) ?? [];
       }
 
       if (!_filePath || !locale) {

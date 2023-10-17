@@ -25,7 +25,7 @@
     ({ path } = parseLocation());
 
     const [match, folderPath, fileName] =
-      path.match(/^\/assets(?:\/([/\-\w]+))?(?:\/([^/]+.\w{3,4}))?$/) || [];
+      path.match(/^\/assets(?:\/([/\-\w]+))?(?:\/([^/]+.\w{3,4}))?$/) ?? [];
 
     if (!match) {
       return;
@@ -41,7 +41,7 @@
     }
 
     $selectedAsset = fileName
-      ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`) || null
+      ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`) ?? null
       : null;
   };
 

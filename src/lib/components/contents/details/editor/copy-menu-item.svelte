@@ -24,7 +24,7 @@
     targetLanguages = /** @type {string[]} */ ([]),
   } = $translator ?? /** @type {TranslationService} */ ({}));
 
-  $: apiKey = $prefs.apiKeys[serviceId] || '';
+  $: apiKey = $prefs.apiKeys[serviceId] ?? '';
 
   /**
    * Copy or translate field value(s) from another locale.

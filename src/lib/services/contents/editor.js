@@ -47,7 +47,7 @@ export const entryEditorSettings = writable({}, (set) => {
         showPreview: true,
         syncScrolling: true,
         selectAssetsView: { type: 'grid' },
-        ...((await LocalStorage.get(storageKey)) || {}),
+        ...((await LocalStorage.get(storageKey)) ?? {}),
       };
 
       set(settings);
@@ -72,7 +72,7 @@ export const entryDraft = writable();
  * @todo Make this more diligent.
  */
 const createNewContent = (fields, defaultValues = {}) => {
-  /** @type {{ [key: string]: any }} */
+  /** @type {FlattenedEntryContent} */
   const newContent = {};
 
   /**
@@ -255,7 +255,7 @@ export const createDraft = (entry, defaultValues) => {
     ? collection.files?.find(({ name }) => name === fileName)
     : undefined;
 
-  const { fields } = collectionFile || collection;
+  const { fields } = collectionFile ?? collection;
   const newContent = createNewContent(fields, defaultValues);
   const allLocales = hasLocales ? collectionLocales : ['default'];
 
@@ -267,7 +267,7 @@ export const createDraft = (entry, defaultValues) => {
     collectionFile,
     originalEntry: isNew ? undefined : entry,
     originalValues: Object.fromEntries(
-      allLocales.map((locale) => [locale, flatten(locales?.[locale]?.content || newContent)]),
+      allLocales.map((locale) => [locale, flatten(locales?.[locale]?.content ?? newContent)]),
     ),
     currentValues: Object.fromEntries(
       allLocales.map((locale) => [
@@ -277,9 +277,9 @@ export const createDraft = (entry, defaultValues) => {
               draft: { collectionName, fileName },
               prop: 'currentValues',
               locale,
-              target: flatten(locales?.[locale]?.content || newContent),
+              target: flatten(locales?.[locale]?.content ?? newContent),
             })
-          : flatten(locales?.[locale]?.content || newContent),
+          : flatten(locales?.[locale]?.content ?? newContent),
       ]),
     ),
     files: Object.fromEntries(
@@ -388,7 +388,7 @@ export const copyFromLocale = async (
         typeof value !== 'string' ||
         !['markdown', 'text', 'string', 'list'].includes(field?.widget) ||
         (field?.widget === 'list' &&
-          (/** @type {ListField} */ (field).field || /** @type {ListField} */ (field).fields)) ||
+          (/** @type {ListField} */ (field).field ?? /** @type {ListField} */ (field).fields)) ||
         (!translate && value === currentValues[targetLocale][_keyPath])
       ) {
         return false;
@@ -540,7 +540,7 @@ const validateEntry = () => {
           valueEntries
             .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
             .map(([, savedValue]) => savedValue)
-            .filter((val) => val !== undefined) || [];
+            .filter((val) => val !== undefined) ?? [];
 
         if (_required && !values.length) {
           valueMissing = true;
@@ -723,7 +723,7 @@ export const saveEntry = async () => {
           // Remove leading & trailing whitespace
           valueMap[keyPath] = value.trim();
 
-          const [, mimeType, base64] = value.match(/^data:(.+?\/.+?);base64,(.+)/) || [];
+          const [, mimeType, base64] = value.match(/^data:(.+?\/.+?);base64,(.+)/) ?? [];
 
           // Replace asset `data:` URLs with the final paths
           if (mimeType) {
@@ -867,7 +867,7 @@ entryDraft.subscribe((draft) => {
 });
 
 selectAssetsView.subscribe((view) => {
-  const savedView = get(entryEditorSettings).selectAssetsView || {};
+  const savedView = get(entryEditorSettings).selectAssetsView ?? {};
 
   if (!equal(view, savedView)) {
     entryEditorSettings.update((settings) => ({ ...settings, selectAssetsView: view }));

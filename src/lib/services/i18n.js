@@ -21,7 +21,7 @@ export const initAppLocale = () => {
 
   initLocales({
     fallbackLocale: 'en',
-    initialLocale: (getLocaleFromNavigator() || '').split('-')[0] || 'en',
+    initialLocale: (getLocaleFromNavigator() ?? '').split('-')[0] || 'en',
   });
 };
 

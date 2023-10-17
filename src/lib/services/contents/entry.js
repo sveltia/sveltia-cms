@@ -61,19 +61,13 @@ export const getFieldConfig = ({
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
- * @param {string} args.keyPath Key path, e.g. `author.name`.
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
+ * @param {string} args.keyPath Key path, e.g. `author.name`.
  * @param {LocaleCode} args.locale Locale.
  * @returns {any | any[]} Resolved field value(s).
  */
-export const getFieldDisplayValue = ({ collectionName, fileName, keyPath, valueMap, locale }) => {
-  const fieldConfig = getFieldConfig({
-    collectionName,
-    fileName,
-    valueMap,
-    keyPath,
-  });
-
+export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPath, locale }) => {
+  const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
   let value = valueMap[keyPath];
 
   if (fieldConfig?.widget === 'relation') {

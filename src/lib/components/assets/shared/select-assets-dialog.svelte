@@ -51,7 +51,7 @@
   let enteredURL = '';
   let searchTerms = '';
 
-  $: collectionMediaFolder = stripSlashes($selectedCollection.media_folder || '');
+  $: collectionMediaFolder = stripSlashes($selectedCollection.media_folder ?? '');
   $: libraryName = collectionMediaFolder ? 'collection-files' : 'all-files';
   $: isLocalLibrary = ['collection-files', 'all-files'].includes(libraryName);
   $: isEnabledMediaService =
@@ -102,7 +102,7 @@
   <svelte:fragment slot="footer-extra">
     {#if isEnabledMediaService}
       {@const { showServiceLink, serviceLabel, serviceURL } =
-        allStockPhotoServices[libraryName] || {}}
+        allStockPhotoServices[libraryName] ?? {}}
       {#if showServiceLink}
         <a href={serviceURL}>
           {$_('prefs.media.stock_photo.credit', { values: { service: serviceLabel } })}

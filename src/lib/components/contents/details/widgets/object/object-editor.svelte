@@ -57,7 +57,7 @@
    */
   const formatSummary = () => {
     if (!summary) {
-      return valueMap[`${keyPath}.title`] || valueMap[`${keyPath}.name`] || '';
+      return valueMap[`${keyPath}.title`] ?? valueMap[`${keyPath}.name`] ?? '';
     }
 
     return summary.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {

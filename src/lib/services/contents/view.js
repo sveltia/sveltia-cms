@@ -143,7 +143,7 @@ export const formatSummary = (collection, entry, content, locale) => {
       }
 
       if (tag === 'commit_date') {
-        return commitDate || '';
+        return commitDate ?? '';
       }
 
       if (tag === 'commit_author') {
@@ -293,7 +293,7 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
 
     if (value !== undefined) {
       if (regex) {
-        [key = otherKey] = String(value).match(regex) || [];
+        [key = otherKey] = String(value).match(regex) ?? [];
       } else {
         key = value;
       }
@@ -326,7 +326,7 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
 const entryListSettings = writable({}, (set) => {
   (async () => {
     try {
-      set((await LocalStorage.get(storageKey)) || {});
+      set((await LocalStorage.get(storageKey)) ?? {});
     } catch {
       //
     }
@@ -371,7 +371,7 @@ const getSortFieldLabel = (collection, key) => {
 export const sortFields = derived(
   [selectedCollection, allEntries, appLocale],
   ([_collection, _allEntries], set) => {
-    const { files, sortable_fields: customSortableFields } = _collection || {};
+    const { files, sortable_fields: customSortableFields } = _collection ?? {};
 
     // Disable sorting for file collections
     if (files) {
@@ -380,7 +380,7 @@ export const sortFields = derived(
       return;
     }
 
-    const { commitAuthor, commitDate } = _allEntries?.[0] || {};
+    const { commitAuthor, commitDate } = _allEntries?.[0] ?? {};
 
     const _sortFields = (
       Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
@@ -485,7 +485,7 @@ selectedCollection.subscribe((collection) => {
     },
   };
 
-  const view = get(entryListSettings)[collectionName] || defaultView;
+  const view = get(entryListSettings)[collectionName] ?? defaultView;
 
   if (!equal(view, get(currentView))) {
     currentView.set(view);
@@ -493,8 +493,8 @@ selectedCollection.subscribe((collection) => {
 });
 
 currentView.subscribe((view) => {
-  const { name } = get(selectedCollection) || {};
-  const savedView = get(entryListSettings)[name] || {};
+  const { name } = get(selectedCollection) ?? {};
+  const savedView = get(entryListSettings)[name] ?? {};
 
   if (!equal(view, savedView)) {
     entryListSettings.update((settings) => ({ ...settings, [name]: view }));

@@ -162,7 +162,7 @@
         {#if validity.patternMismatch}
           <div>
             <Icon name="error" label={$_('error')} />
-            {pattern?.[1] || ''}
+            {pattern?.[1] ?? ''}
           </div>
         {/if}
       </div>

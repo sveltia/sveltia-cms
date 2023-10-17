@@ -105,7 +105,7 @@ const fetchGraphQL = async (query, variables = {}) => {
  * @throws {Error} When the backend is not configured properly.
  */
 const init = () => {
-  const { backend: { repo: repoPath = '', branch = 'master' } = {} } = get(siteConfig) || {};
+  const { backend: { repo: repoPath = '', branch = 'master' } = {} } = get(siteConfig) ?? {};
   const [owner, repo] = typeof repoPath === 'string' ? repoPath.split('/') : [];
 
   if (!owner || !repo || !branch) {

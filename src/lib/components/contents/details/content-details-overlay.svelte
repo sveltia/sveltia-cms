@@ -99,7 +99,7 @@
     entryEditorSettings.update((view) => ({
       ...view,
       paneStates: {
-        ...(view.paneStates || {}),
+        ...(view.paneStates ?? {}),
         [collection.name]: [$editorLeftPane, $editorRightPane],
       },
     }));
