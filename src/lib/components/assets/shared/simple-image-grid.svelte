@@ -16,6 +16,7 @@
 
     :global(.listbox) {
       gap: 4px;
+      overflow-x: hidden;
       overflow-y: auto;
       border-width: 0;
       height: 100%;
@@ -82,6 +83,12 @@
 
           :global(.name) {
             flex: auto;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            white-space: normal;
+            line-height: var(--sui-line-height-compact);
           }
         }
       }

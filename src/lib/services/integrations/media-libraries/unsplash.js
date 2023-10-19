@@ -32,6 +32,7 @@ const search = async (query, { apiKey }) => {
    * @type {{
    *   id: string,
    *   description: string,
+   *   alt_description: string,
    *   urls: { regular: string, thumb: string },
    *   user: { username: string, name: string }
    * }[]}}
@@ -82,17 +83,25 @@ const search = async (query, { apiKey }) => {
     results = await response.json();
   }
 
-  return results.map(({ id, description, urls: { regular, thumb }, user: { username, name } }) => ({
-    id: String(id),
-    description,
-    previewURL: thumb,
-    downloadURL: regular,
-    fileName: `${name.split(/\s+/).join('-').toLowerCase()}-${id}-unsplash.jpg`,
-    kind: 'image',
-    credit:
-      `Photo by <a href="https://unsplash.com/@${username}?${creditLinkParams}">${name}</a> on ` +
-      `<a href="https://unsplash.com/?${creditLinkParams}">Unsplash</a>`,
-  }));
+  return results.map(
+    ({
+      id,
+      description,
+      alt_description: alt,
+      urls: { regular, thumb },
+      user: { username, name },
+    }) => ({
+      id: String(id),
+      description: [description, alt].filter(Boolean).join(' — '),
+      previewURL: thumb,
+      downloadURL: regular,
+      fileName: `${name.split(/\s+/).join('-').toLowerCase()}-${id}-unsplash.jpg`,
+      kind: 'image',
+      credit:
+        `Photo by <a href="https://unsplash.com/@${username}?${creditLinkParams}">${name}</a> on ` +
+        `<a href="https://unsplash.com/?${creditLinkParams}">Unsplash</a>`,
+    }),
+  );
 };
 
 /**
