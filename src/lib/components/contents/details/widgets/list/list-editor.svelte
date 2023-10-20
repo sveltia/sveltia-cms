@@ -161,7 +161,7 @@
         newItem[typeKey] = subFieldName;
       }
 
-      valueList.splice(index, 0, newItem);
+      valueList.splice(index, 0, hasSingleSubField ? newItem[field.name] : newItem);
       viewList.splice(index, 0, { expanded: true });
     });
   };
