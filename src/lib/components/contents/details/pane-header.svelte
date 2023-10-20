@@ -15,7 +15,7 @@
   import { writable } from 'svelte/store';
   import { getLocaleLabel } from '$lib/services/i18n';
   import { entryDraft, entryEditorSettings, revertChanges } from '$lib/services/contents/editor';
-  import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
+  import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
 
   /**
    * @type {import('svelte/store').Writable<?EntryEditorPane>}
@@ -84,11 +84,11 @@
         <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
         <Menu slot="popup">
           {#if canCopy}
-            <CopyMenuItem locale={$thisPane?.locale} translate={true} />
+            <CopyMenuItems locale={$thisPane?.locale} translate={true} />
             {#if otherLocales.length > 1}
               <Divider />
             {/if}
-            <CopyMenuItem locale={$thisPane?.locale} />
+            <CopyMenuItems locale={$thisPane?.locale} />
             <Divider />
           {/if}
           <MenuItem

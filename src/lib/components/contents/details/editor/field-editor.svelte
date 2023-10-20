@@ -3,7 +3,7 @@
   import equal from 'fast-deep-equal';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
-  import CopyMenuItem from '$lib/components/contents/details/editor/copy-menu-item.svelte';
+  import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import { editors } from '$lib/components/contents/details/widgets';
   import { entryDraft, revertChanges } from '$lib/services/contents/editor';
   import { escapeRegExp } from '$lib/services/utils/strings';
@@ -79,12 +79,12 @@
           <Menu slot="popup">
             {#if canCopy}
               {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
-                <CopyMenuItem {keyPath} {locale} translate={true} />
+                <CopyMenuItems {keyPath} {locale} translate={true} />
                 {#if otherLocales.length > 1}
                   <Divider />
                 {/if}
               {/if}
-              <CopyMenuItem {keyPath} {locale} />
+              <CopyMenuItems {keyPath} {locale} />
             {/if}
             {#if canCopy && canRevert}
               <Divider />

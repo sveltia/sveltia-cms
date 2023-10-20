@@ -1,8 +1,8 @@
 <script>
   import { Group } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import ColumnHeader from '$lib/components/contents/details/column-header.svelte';
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
+  import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import {
@@ -15,11 +15,11 @@
   /**
    * @type {HTMLElement}
    */
-  let leftColumnContent;
+  let leftPaneContent;
   /**
    * @type {HTMLElement}
    */
-  let rightColumnContent;
+  let rightPaneContent;
 
   let panesRestored = false;
 
@@ -150,14 +150,14 @@
   };
 
   $: {
-    if (leftColumnContent) {
-      leftColumnContent.scrollTop = 0;
+    if (leftPaneContent) {
+      leftPaneContent.scrollTop = 0;
     }
   }
 
   $: {
-    if (rightColumnContent) {
-      rightColumnContent.scrollTop = 0;
+    if (rightPaneContent) {
+      rightPaneContent.scrollTop = 0;
     }
   }
 
@@ -176,12 +176,12 @@
     {#if collection}
       {#if $editorLeftPane}
         <Group data-mode={$editorLeftPane.mode} data-locale={$editorLeftPane.locale}>
-          <ColumnHeader thisPane={editorLeftPane} thatPane={editorRightPane} />
+          <PaneHeader thisPane={editorLeftPane} thatPane={editorRightPane} />
           <div
             class="content"
-            bind:this={leftColumnContent}
+            bind:this={leftPaneContent}
             on:wheel|capture={() => {
-              syncScrollPosition(leftColumnContent, rightColumnContent);
+              syncScrollPosition(leftPaneContent, rightPaneContent);
             }}
           >
             <svelte:component
@@ -193,12 +193,12 @@
       {/if}
       {#if $editorRightPane}
         <Group data-mode={$editorRightPane.mode} data-locale={$editorRightPane.locale}>
-          <ColumnHeader thisPane={editorRightPane} thatPane={editorLeftPane} />
+          <PaneHeader thisPane={editorRightPane} thatPane={editorLeftPane} />
           <div
             class="content"
-            bind:this={rightColumnContent}
+            bind:this={rightPaneContent}
             on:wheel|capture={() => {
-              syncScrollPosition(rightColumnContent, leftColumnContent);
+              syncScrollPosition(rightPaneContent, leftPaneContent);
             }}
           >
             <svelte:component
