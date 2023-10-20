@@ -64,14 +64,14 @@ export const entryEditorSettings = writable({}, (set) => {
 export const entryDraft = writable();
 
 /**
- * Create a new entry content with default values populated.
+ * Get the default values for the given fields. If dynamic default values are given, these values
+ * take precedence over static default values defined with the site configuration.
  * @param {Field[]} fields Field list of a collection.
- * @param {{ [key: string]: string }} [defaultValues] Dynamic default values for a new entry passed
- * through URL parameters.
- * @returns {EntryContent} Entry content.
+ * @param {{ [key: string]: string }} [defaultValues] Dynamic default values.
+ * @returns {EntryContent} Entry content for creating a new draft content or adding a new list item.
  * @todo Make this more diligent.
  */
-const createNewContent = (fields, defaultValues = {}) => {
+export const getDefaultValues = (fields, defaultValues = {}) => {
   /** @type {FlattenedEntryContent} */
   const newContent = {};
 
@@ -256,7 +256,7 @@ export const createDraft = (entry, defaultValues) => {
     : undefined;
 
   const { fields } = collectionFile ?? collection;
-  const newContent = createNewContent(fields, defaultValues);
+  const newContent = getDefaultValues(fields, defaultValues);
   const allLocales = hasLocales ? collectionLocales : ['default'];
 
   entryDraft.set({

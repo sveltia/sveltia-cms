@@ -10,9 +10,8 @@
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/list/add-item-button.svelte';
-  import { entryDraft, updateListField } from '$lib/services/contents/editor';
+  import { entryDraft, getDefaultValues, updateListField } from '$lib/services/contents/editor';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
-  import { isObject } from '$lib/services/utils/misc';
   import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
   /**
@@ -41,7 +40,6 @@
     label,
     i18n,
     // Widget-specific options
-    default: defaultValues,
     allow_add: allowAdd = true,
     collapsed = false,
     summary,
@@ -152,32 +150,16 @@
    */
   const addItem = (subFieldName) => {
     updateComplexList(({ valueList, viewList }) => {
-      let newItem = hasSingleSubField ? undefined : {};
-
       const subFields = subFieldName
         ? types.find(({ name }) => name === subFieldName)?.fields ?? []
         : fields ?? [field];
 
-      subFields.forEach(({ name, default: defaultValue }) => {
-        const _defaultValue =
-          isObject(defaultValues) && name in defaultValues
-            ? /** @type {{ [key: string]: any }} */ (defaultValues)[name]
-            : defaultValue;
-
-        if (_defaultValue) {
-          if (hasSingleSubField) {
-            newItem = _defaultValue;
-          } else {
-            /** @type {{ [key: string]: any }} */ (newItem)[name] = _defaultValue;
-          }
-        }
-      });
+      const index = addToTop ? 0 : valueList.length;
+      const newItem = getDefaultValues(subFields);
 
       if (subFieldName) {
-        /** @type {{ [key: string]: any }} */ (newItem)[typeKey] = subFieldName;
+        newItem[typeKey] = subFieldName;
       }
-
-      const index = addToTop ? 0 : valueList.length;
 
       valueList.splice(index, 0, newItem);
       viewList.splice(index, 0, { expanded: true });
