@@ -76,11 +76,11 @@
   };
 </script>
 
-<Group aria-labelledby="oblect-{widgetId}-summary">
+<Group aria-labelledby="object-{widgetId}-summary">
   <div class="toolbar top">
     <Button
       aria-expanded={parentExpanded}
-      aria-controls="oblect-{widgetId}-item-list"
+      aria-controls="object-{widgetId}-item-list"
       on:click={() => {
         parentExpanded = !parentExpanded;
       }}
@@ -92,13 +92,13 @@
       />
     </Button>
     {#if !parentExpanded}
-      <div class="summary" id="oblect-{widgetId}-summary">
+      <div class="summary" id="object-{widgetId}-summary">
         {formatSummary()}
       </div>
     {/if}
     <Spacer flex />
   </div>
-  <div class="item-list" id="oblect-{widgetId}-item-list" class:collapsed={!parentExpanded}>
+  <div class="item-list" id="object-{widgetId}-item-list" class:collapsed={!parentExpanded}>
     {#each fields as subField (subField.name)}
       <FieldEditor keyPath={[keyPath, subField.name].join('.')} {locale} fieldConfig={subField} />
     {/each}

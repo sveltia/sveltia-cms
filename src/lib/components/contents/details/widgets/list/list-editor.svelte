@@ -249,7 +249,7 @@
           label={parentExpanded ? $_('collapse') : $_('expand')}
         />
       </Button>
-      <div class="summary" id="oblect-{widgetId}-summary">
+      <div class="summary" id="object-{widgetId}-summary">
         {`${items.length} ${items.length === 1 ? labelSingular || label : label}`}
       </div>
       <Spacer flex />
