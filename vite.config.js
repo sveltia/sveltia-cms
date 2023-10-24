@@ -1,5 +1,5 @@
-import path from 'path';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import path from 'path';
 import sveltePreprocess from 'svelte-preprocess';
 import { defineConfig } from 'vite';
 
@@ -12,6 +12,7 @@ export default defineConfig({
     extensions: ['.js', '.svelte'],
   },
   build: {
+    target: 'es2022',
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       // Output JavaScript only
