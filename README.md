@@ -12,6 +12,10 @@ Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-
 
 ![Screenshot: Single-Line Migration from Netlify/Decap CMS](docs/screenshot-5.webp)<br>
 
+## Motivation
+
+Sveltia CMS was born in November 2022, when the development of Netlify CMS had been at a standstill for more than half a year. [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances mainly to get better internationalization support. Sveltia CMS was built from the ground up to take i18n into account in every corner of the product, while also striving for better UX, performance and productivity. Another goal of the project is to showcase the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
+
 ## Features
 
 Sveltia CMS is a Git-based lightweight headless CMS, which means:
@@ -36,17 +40,15 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better performance
 
-- Built completely from scratch with [Svelte](https://svelte.dev/) rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript; you can use it with any framework.
-- Using the GraphQL API for GitHub by default to fetch contents quickly at once, so showing and searching entries and media are now instant. Saving entries and media is also much faster.
+- Built completely from scratch with Svelte rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript; you can use it with any framework.
+- Using the GraphQL API for GitHub by default to fetch contents quickly at once, so showing and searching entries and media are instant. Saving entries and media is also much faster.
 - Caching Git files locally to speed up startup and reduce bandwidth.
 - Small footprint: less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 
 ### Better productivity
 
-- Required fields, not optional fields, are clearly marked for efficient data entry.
-- Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
 - You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server.
-- Delete multiple entries and assets at once.
+- You can delete multiple entries and assets at once.
 - Providing some keyboard shortcuts for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
   - Save an entry: `Ctrl+S` (Windows/Linux) / `Command+S` (macOS)
@@ -56,24 +58,29 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Better i18n support
 
 - Making it easier to switch between locales while editing with just a click on a button.
+- Fields in non-default locales will be validated as expected[^13]
 - [Integrating DeepL](#use-deepl-to-translate-entry-fields) to allow translating text fields from another locale with one click.
-- You can now [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales writing in non-Latin characters[^12].
+- You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales writing in non-Latin characters[^12].
 - Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
-- Users can now choose their preferred UI locale.
 
 ### Collection enhancements
 
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
-- A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will now appear aside of entries.
+- A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear aside of entries.
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
+
+### Field enhancements
+
+- Required fields, not optional fields, are clearly marked for efficient data entry.
+- Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
+- You can revert changes for all fields or a specific field/object/list.
 
 ### Media library enhancements
 
 - An all-new media library makes it easy to manage all your assets.
-- Sort or filter assets by name or file type.
-- View asset details, including size, dimensions, and a list of entries that use the selected asset.
-- Upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
-- You can now navigate between the global media folder and a per-collection media folder[^6].
+- You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
+- You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
+- You can navigate between the global media folder and a per-collection media folder[^6].
 
 ## Compatibility
 
@@ -351,3 +358,4 @@ This software is provided “as is” without any express or implied warranty. T
 [^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341)
 [^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382) and many more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
+[^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112)
