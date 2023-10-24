@@ -16,7 +16,7 @@
    */
   export let fieldConfig;
 
-  $: ({ label = '', widget: widgetName = 'string', i18n = false } = fieldConfig);
+  $: ({ name: fieldName, label = '', widget: widgetName = 'string', i18n = false } = fieldConfig);
   $: hasMultiple = ['relation', 'select'].includes(widgetName);
   $: multiple = hasMultiple
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
@@ -39,7 +39,7 @@
 
 {#if widgetName !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
   <section data-widget={widgetName} data-key-path={keyPath}>
-    <h4>{label}</h4>
+    <h4>{label || fieldName}</h4>
     {#if widgetName in previews}
       <svelte:component
         this={previews[widgetName]}

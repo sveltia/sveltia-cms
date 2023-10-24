@@ -250,7 +250,8 @@
         />
       </Button>
       <div class="summary" id="object-{widgetId}-summary">
-        {`${items.length} ${items.length === 1 ? labelSingular || label : label}`}
+        {items.length}
+        {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
       </div>
       <Spacer flex />
       {#if allowAdd && (addToTop || !items.length)}

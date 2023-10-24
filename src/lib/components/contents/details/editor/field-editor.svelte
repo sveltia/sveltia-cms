@@ -24,10 +24,11 @@
   // @todo Save & restore draft from local storage.
 
   $: ({
-    required = true,
+    name: fieldName,
     label = '',
     hint = '',
     widget: widgetName = 'string',
+    required = true,
     i18n = false,
     pattern = /** @type {string[]} */ ([]),
   } = fieldConfig);
@@ -68,7 +69,7 @@
   {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
   <section data-widget={widgetName} data-key-path={keyPath}>
     <header>
-      <h4>{label}</h4>
+      <h4>{label || fieldName}</h4>
       {#if required}
         <div class="required">{$_('required')}</div>
       {/if}
