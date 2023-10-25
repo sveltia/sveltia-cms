@@ -22,6 +22,7 @@
     }
 
     :global([role='row']) {
+      display: block;
       position: relative;
       overflow: hidden;
       border-width: 1px;

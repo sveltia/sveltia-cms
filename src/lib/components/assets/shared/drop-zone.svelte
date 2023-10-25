@@ -135,6 +135,7 @@
     inset: 0;
     z-index: 10;
     background-color: hsl(var(--sui-background-color-4-hsl) / 80%);
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     pointer-events: none;
 
