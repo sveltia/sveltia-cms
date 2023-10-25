@@ -31,7 +31,7 @@
       {/key}
     </p>
   </section>
-  {#if $siteConfig.i18n?.locales?.length}
+  {#if $siteConfig.i18n?.locales?.length > 1}
     {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
       {@const { serviceLabel, developerURL, apiKeyURL } = service}
       <section>
