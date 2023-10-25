@@ -26,11 +26,7 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
 
   try {
     if (format) {
-      if (pickerUTC) {
-        return moment.utc(inputValue).format(format);
-      }
-
-      return moment(inputValue).format(format);
+      return (pickerUTC ? moment.utc(inputValue) : moment(inputValue)).format(format);
     }
 
     return new Date(inputValue).toISOString();
@@ -62,26 +58,34 @@ export const getInputValue = (currentValue, fieldConfig) => {
     return undefined;
   }
 
-  if (timeOnly) {
-    return currentValue ?? '';
+  if (dateOnly && currentValue?.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return currentValue;
+  }
+
+  if (timeOnly && currentValue?.match(/^\d{2}:\d{2}$/)) {
+    return currentValue;
   }
 
   try {
     const { year, month, day, hour, minute } = getDateTimeParts({
-      date: currentValue ? moment(currentValue, format).toDate() : new Date(),
-      timeZone:
-        pickerUTC ||
-        (dateOnly && !!currentValue?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
-        (dateOnly && !!currentValue?.match(/T00:00(?::00)?(?:\.000)?Z$/))
-          ? 'UTC'
-          : undefined,
+      date: currentValue
+        ? (pickerUTC ? moment.utc(currentValue, format) : moment(currentValue, format)).toDate()
+        : new Date(),
+      timeZone: pickerUTC ? 'UTC' : undefined,
     });
 
+    const dateStr = `${year}-${month}-${day}`;
+    const timeStr = `${hour}:${minute}`;
+
     if (dateOnly) {
-      return `${year}-${month}-${day}`;
+      return dateStr;
     }
 
-    return `${year}-${month}-${day}T${hour}:${minute}`;
+    if (timeOnly) {
+      return timeStr;
+    }
+
+    return `${dateStr}T${timeStr}`;
   } catch (ex) {
     return undefined;
   }
