@@ -14,7 +14,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-
 
 ## Motivation
 
-Sveltia CMS was born in November 2022, when the development of Netlify CMS had stalled for more than half a year and [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances mainly for better internationalization/multilingual support. Sveltia CMS was built from the ground up to incorporate i18n into every corner of the product, while striving to improve UX, performance and productivity. It aims to expand the market for Git-based headless CMS for small businesses and individuals. Another goal of the project is to showcase the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
+Sveltia CMS was born in November 2022, when the development of Netlify CMS had stalled for more than half a year and [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances mainly for better internationalization/multilingual support. Sveltia CMS was built from the ground up to incorporate i18n into every corner of the product, while striving to radically improve UX, performance and productivity. It aims to expand the market for Git-based headless CMS for small businesses and individuals. Another goal of the project is to showcase the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
 
 ## Features
 
@@ -58,7 +58,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Better i18n support
 
 - Making it easier to switch between locales while editing with just a click on a button.
-- Fields in non-default locales will be validated as expected[^13]
+- Fields in non-default locales will be validated as expected[^13].
 - [Integrating DeepL](#use-deepl-to-translate-entry-fields) to allow translating text fields from another locale with one click.
 - You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales writing in non-Latin characters[^12].
 - Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
@@ -73,7 +73,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
-- You can revert changes for all fields or a specific field/object/list.
+- You can revert changes to all fields or a specific field.
 
 ### Media library enhancements
 
