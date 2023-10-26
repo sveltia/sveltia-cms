@@ -34,6 +34,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better UX
 
+- Created by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design.
 - Offering a modern, intuitive UI, with some inspiration from the Netlify CMS v3 prototype[^1].
 - Immersive dark mode[^2].
 - The screenshots above are worth a thousand words!
