@@ -34,15 +34,16 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better UX
 
-- Offering a modern, intuitive UI, with some inspiration from the Netlify/Decap CMS v3 prototype[^1].
+- Offering a modern, intuitive UI, with some inspiration from the Netlify CMS v3 prototype[^1].
 - Immersive dark mode[^2].
 - The screenshots above are worth a thousand words!
 
 ### Better performance
 
 - Built completely from scratch with Svelte rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript; you can use it with any framework.
-- Using the GraphQL API for GitHub by default to fetch contents quickly at once, so showing and searching entries and media are instant. Saving entries and media is also much faster.
-- Caching Git files locally to speed up startup and reduce bandwidth.
+- Using the GraphQL API for GitHub by default to quickly fetch contents at once, so that entries and media can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
+- Saving entries and media is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
+- Caching Git files locally to further speed up startup and reduce bandwidth.
 - Small footprint: less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 
 ### Better productivity
@@ -359,3 +360,4 @@ This software is provided “as is” without any express or implied warranty. T
 [^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382) and many more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112)
+[^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [Netlify/Decap CMS #5920](https://github.com/decaporg/decap-cms/issues/5920), [Netlify/Decap CMS #6410](https://github.com/decaporg/decap-cms/issues/6410)
