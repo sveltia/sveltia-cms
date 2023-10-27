@@ -24,8 +24,8 @@ export const saveAssets = async ({ files, folder }, options) => {
     return { name, path, file };
   });
 
-  await get(backend).saveFiles(
-    savingFileList.map(({ path, file }) => ({ path, data: file })),
+  await get(backend).commitChanges(
+    savingFileList.map(({ path, file }) => ({ action: 'create', path, data: file })),
     options,
   );
 
@@ -62,12 +62,11 @@ export const saveAssets = async ({ files, folder }, options) => {
  * an error message and abort the operation.
  */
 export const deleteAssets = async (assets) => {
-  /**
-   * @type {DeletingFile[]}
-   */
-  const items = assets.map(({ path }) => ({ path }));
+  await get(backend).commitChanges(
+    assets.map(({ path }) => ({ action: 'delete', path })),
+    { commitType: 'deleteMedia' },
+  );
 
-  await get(backend).deleteFiles(items, { commitType: 'deleteMedia' });
   allAssets.update((_allAssets) => _allAssets.filter((asset) => !assets.includes(asset)));
 };
 

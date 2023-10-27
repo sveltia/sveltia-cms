@@ -387,33 +387,28 @@ const createCommit = async (message, { additions = [], deletions = [] }) => {
 
 /**
  * Save entries or assets remotely.
- * @param {SavingFile[]} items Entries or files.
+ * @param {FileChange[]} changes File changes to be saved.
  * @param {object} [options] Options.
  * @param {CommitType} [options.commitType] Commit type.
  * @param {string} [options.collection] Collection name. Required for entries.
  */
-const saveFiles = async (items, { commitType = 'update', collection } = {}) => {
-  await createCommit(createCommitMessage(items, { commitType, collection }), {
-    additions: await Promise.all(
-      items.map(async ({ path, data, base64 }) => ({
-        path,
-        contents: base64 || (await getBase64(data)),
-      })),
-    ),
-  });
-};
+const commitChanges = async (changes, { commitType = 'update', collection } = {}) => {
+  const message = createCommitMessage(changes, { commitType, collection });
 
-/**
- * Delete files at the given paths.
- * @param {DeletingFile[]} items Entries or files.
- * @param {object} [options] Options.
- * @param {CommitType} [options.commitType] Commit type.
- * @param {string} [options.collection] Collection name. Required for entries.
- */
-const deleteFiles = async (items, { commitType = 'delete', collection } = {}) => {
-  await createCommit(createCommitMessage(items, { commitType, collection }), {
-    deletions: items.map(({ path }) => ({ path })),
-  });
+  const additions = await Promise.all(
+    changes
+      .filter(({ action }) => ['create', 'update'].includes(action))
+      .map(async ({ path, data, base64 }) => ({
+        path,
+        contents: base64 ?? (await getBase64(data)),
+      })),
+  );
+
+  const deletions = changes
+    .filter(({ action }) => action === 'delete')
+    .map(({ path }) => ({ path }));
+
+  await createCommit(message, { additions, deletions });
 };
 
 /**
@@ -427,6 +422,5 @@ export default {
   signOut,
   fetchFiles,
   fetchBlob,
-  saveFiles,
-  deleteFiles,
+  commitChanges,
 };

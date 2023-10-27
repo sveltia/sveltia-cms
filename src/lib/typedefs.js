@@ -47,10 +47,8 @@
  * @property {() => Promise<void>} fetchFiles Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backend only.
- * @property {(items: SavingFile[], options: object) => Promise<void>} saveFiles Function to save
- * files.
- * @property {(items: DeletingFile[], options: object) => Promise<void>} deleteFiles Function to
- * delete files.
+ * @property {(changes: FileChange[], options?: object) => Promise<void>} commitChanges Function to
+ * save file changes, including additions and deletions.
  */
 
 /**
@@ -585,19 +583,13 @@
  */
 
 /**
- * File to be saved.
- * @typedef {object} SavingFile
+ * File entry to be created, updated or deleted.
+ * @typedef {object} FileChange
+ * @property {'create' | 'update' | 'delete'} action Commit action.
  * @property {string} path File path.
  * @property {string} [slug] Entry slug or `undefined` for an asset.
- * @property {string | File} data File data.
+ * @property {string | File} [data] File data.
  * @property {string} [base64] Base64 of the data.
- */
-
-/**
- * File to be deleted.
- * @typedef {object} DeletingFile
- * @property {string} path File path.
- * @property {string} [slug] Entry slug or `undefined` for an asset.
  */
 
 /**

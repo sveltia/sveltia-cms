@@ -10,20 +10,28 @@ export const deleteEntries = async (ids) => {
   const _allEntries = get(allEntries);
 
   /**
-   * @type {DeletingFile[]}
+   * @type {FileChange[]}
    */
-  const items = ids
+  const changes = ids
     .map((id) => {
-      const entry = _allEntries.find((e) => e.id === id);
+      const { locales, slug } = _allEntries.find((e) => e.id === id) || {};
 
-      return entry
-        ? Object.values(entry.locales).map(({ path }) => ({ slug: entry.slug, path }))
-        : undefined;
+      if (locales) {
+        return Object.values(locales).map(
+          ({ path }) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
+        );
+      }
+
+      return undefined;
     })
     .flat(1)
     // Remove duplicate paths for single file i18n
     .filter((item, index, arr) => item && arr.findIndex((i) => i.path === item.path) === index);
 
-  await get(backend).deleteFiles(items, { collection: get(selectedCollection).name });
+  await get(backend).commitChanges(changes, {
+    commitType: 'delete',
+    collection: get(selectedCollection).name,
+  });
+
   allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));
 };

@@ -207,36 +207,32 @@ const fetchFiles = async () => {
 
 /**
  * Save entries or assets locally.
- * @param {SavingFile[]} items Entries or files.
+ * @param {FileChange[]} changes File changes to be saved.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry
  */
-const saveFiles = async (items) => {
+const commitChanges = async (changes) => {
   await Promise.all(
-    items.map(async ({ path, data }) => {
-      const handle = /** @type {FileSystemFileHandle} */ (await getHandleByPath(path));
-      const writer = await handle.createWritable();
+    changes.map(async ({ action, path, data }) => {
+      try {
+        if (['create', 'update'].includes(action)) {
+          const handle = /** @type {FileSystemFileHandle} */ (await getHandleByPath(path));
+          const writer = await handle.createWritable();
 
-      await writer.write(data);
-      await writer.close();
-    }),
-  );
-};
+          await writer.write(data);
+          await writer.close();
+        }
 
-/**
- * Delete files at the given paths.
- * @param {DeletingFile[]} items Entries or files.
- */
-const deleteFiles = async (items) => {
-  await Promise.all(
-    items.map(async ({ path }) => {
-      const pathArray = stripSlashes(path).split('/');
-      const entryName = pathArray.pop();
+        if (action === 'delete') {
+          const [, dirPath, fileName] = stripSlashes(path).match(/(.+)\/([^/]+)$/);
+          const handle = /** @type {FileSystemDirectoryHandle} */ (await getHandleByPath(dirPath));
 
-      const handle = /** @type {FileSystemDirectoryHandle} */ (
-        await getHandleByPath(pathArray.join('/'))
-      );
-
-      await handle.removeEntry(entryName);
+          await handle.removeEntry(fileName);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error);
+      }
     }),
   );
 };
@@ -250,6 +246,5 @@ export default {
   signIn,
   signOut,
   fetchFiles,
-  saveFiles,
-  deleteFiles,
+  commitChanges,
 };

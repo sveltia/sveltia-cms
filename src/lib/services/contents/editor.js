@@ -702,9 +702,9 @@ export const saveEntry = async () => {
     .filter((p) => p.match(`^\\/${escapeRegExp(internalAssetFolder)}\\/[^\\/]+$`));
 
   /**
-   * @type {SavingFile[]}
+   * @type {FileChange[]}
    */
-  const savingFiles = [];
+  const changes = [];
   /**
    * @type {Asset[]}
    */
@@ -776,7 +776,7 @@ export const saveEntry = async () => {
 
             const path = `${internalAssetFolder}/${_fileName}`;
 
-            savingFiles.push({ path, data: file, base64 });
+            changes.push({ action: 'create', path, data: file, base64 });
 
             savingAssets.push({
               ...savingAssetProps,
@@ -825,7 +825,8 @@ export const saveEntry = async () => {
   if (collectionFile || !hasLocales || structure === 'single_file') {
     const { path, content } = savingEntryLocales[defaultLocale];
 
-    savingFiles.push({
+    changes.push({
+      action: isNew ? 'create' : 'update',
       slug,
       path,
       data: formatEntryFile({
@@ -839,10 +840,11 @@ export const saveEntry = async () => {
       }),
     });
   } else {
-    locales.map(async (locale) => {
+    locales.forEach((locale) => {
       const { path, content } = savingEntryLocales[locale];
 
-      savingFiles.push({
+      changes.push({
+        action: isNew ? 'create' : 'update',
         slug,
         path,
         data: formatEntryFile({
@@ -855,7 +857,7 @@ export const saveEntry = async () => {
   }
 
   try {
-    await get(backend).saveFiles(savingFiles, {
+    await get(backend).commitChanges(changes, {
       commitType: isNew ? 'create' : 'update',
       collection: collectionName,
     });

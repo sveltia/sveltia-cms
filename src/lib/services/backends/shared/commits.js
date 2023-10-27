@@ -17,16 +17,16 @@ const defaultCommitMessages = {
 
 /**
  * Create a Git commit message.
- * @param {SavingFile[] | DeletingFile[]} items Entries or files.
+ * @param {FileChange[]} changes File changes to be saved.
  * @param {object} [options] Options.
  * @param {CommitType} [options.commitType] Git commit type.
  * @param {string} [options.collection] Collection name. Required for entries.
  * @returns {string} Formatted message.
  */
-export const createCommitMessage = (items, { commitType = 'update', collection = '' } = {}) => {
+export const createCommitMessage = (changes, { commitType = 'update', collection = '' } = {}) => {
   const { login = '', name = '' } = get(user);
-  const [firstSlug = ''] = items.map((item) => item.slug).filter(Boolean);
-  const [firstPath, ...remainingPaths] = items.map(({ path }) => path);
+  const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
+  const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const { backend: { commit_messages: customCommitMessages = {} } = {} } = get(siteConfig);
   /**
    * @type {string}
