@@ -14,7 +14,7 @@ export const deleteEntries = async (ids) => {
    */
   const changes = ids
     .map((id) => {
-      const { locales, slug } = _allEntries.find((e) => e.id === id) || {};
+      const { locales, slug } = _allEntries.find((e) => e.id === id) ?? {};
 
       if (locales) {
         return Object.values(locales).map(

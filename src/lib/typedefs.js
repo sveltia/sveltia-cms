@@ -47,8 +47,9 @@
  * @property {() => Promise<void>} fetchFiles Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backend only.
- * @property {(changes: FileChange[], options?: object) => Promise<void>} commitChanges Function to
- * save file changes, including additions and deletions.
+ * @property {(changes: FileChange[], options?: object) => Promise<string | void>} commitChanges
+ * Function to save file changes, including additions and deletions, and return the commit URL (Git
+ * backend only).
  */
 
 /**

@@ -347,17 +347,29 @@ const fetchBlob = async (asset) => {
 };
 
 /**
- * Author a commit on the repository.
- * @param {string} message Commit message.
- * @param {object} changes File changes.
- * @param {object[]} [changes.additions] Files to add.
- * @param {object[]} [changes.deletions] Files to remove.
+ * Save entries or assets remotely.
+ * @param {FileChange[]} changes File changes to be saved.
+ * @param {object} [options] Options.
+ * @param {CommitType} [options.commitType] Commit type.
+ * @param {string} [options.collection] Collection name. Required for entries.
  * @returns {Promise<string>} Commit URL.
  * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
  */
-const createCommit = async (message, { additions = [], deletions = [] }) => {
+const commitChanges = async (changes, { commitType = 'update', collection } = {}) => {
   const { owner, repo, branch } = repository;
-  const expectedHeadOid = await fetchLastCommitHash();
+
+  const additions = await Promise.all(
+    changes
+      .filter(({ action }) => ['create', 'update'].includes(action))
+      .map(async ({ path, data, base64 }) => ({
+        path,
+        contents: base64 ?? (await getBase64(data)),
+      })),
+  );
+
+  const deletions = changes
+    .filter(({ action }) => action === 'delete')
+    .map(({ path }) => ({ path }));
 
   const {
     createCommitOnBranch: {
@@ -374,41 +386,15 @@ const createCommit = async (message, { additions = [], deletions = [] }) => {
             repositoryNameWithOwner: `${owner}/${repo}`,
             branchName: branch,
           },
-          message: { headline: message },
+          message: { headline: createCommitMessage(changes, { commitType, collection }) },
           fileChanges: { additions, deletions },
-          expectedHeadOid,
+          expectedHeadOid: await fetchLastCommitHash(),
         },
       },
     )
   );
 
   return commitURL;
-};
-
-/**
- * Save entries or assets remotely.
- * @param {FileChange[]} changes File changes to be saved.
- * @param {object} [options] Options.
- * @param {CommitType} [options.commitType] Commit type.
- * @param {string} [options.collection] Collection name. Required for entries.
- */
-const commitChanges = async (changes, { commitType = 'update', collection } = {}) => {
-  const message = createCommitMessage(changes, { commitType, collection });
-
-  const additions = await Promise.all(
-    changes
-      .filter(({ action }) => ['create', 'update'].includes(action))
-      .map(async ({ path, data, base64 }) => ({
-        path,
-        contents: base64 ?? (await getBase64(data)),
-      })),
-  );
-
-  const deletions = changes
-    .filter(({ action }) => action === 'delete')
-    .map(({ path }) => ({ path }));
-
-  await createCommit(message, { additions, deletions });
 };
 
 /**
