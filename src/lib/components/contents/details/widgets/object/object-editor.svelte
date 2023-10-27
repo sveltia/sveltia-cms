@@ -5,11 +5,12 @@
 -->
 <script>
   import { Button, Group, Icon, Spacer } from '@sveltia/ui';
+  import { flatten } from 'flat';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
-  import { entryDraft } from '$lib/services/contents/editor';
-  import { getFieldDisplayValue } from '$lib/services/contents/entry';
+  import { createProxy, entryDraft, getDefaultValues } from '$lib/services/contents/editor';
+  import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry';
   import { generateUUID } from '$lib/services/utils/strings';
 
   /**
@@ -36,14 +37,25 @@
   export let disabled = false;
 
   $: ({
+    name,
+    label,
+    required = true,
+    i18n = false,
     // Widget-specific options
     collapsed = false,
     summary,
     fields,
   } = fieldConfig);
 
-  $: ({ collectionName, fileName } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({
+    collectionName,
+    fileName,
+    collection: {
+      _i18n: { defaultLocale = 'default' },
+    },
+  } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: valueMap = $entryDraft.currentValues[locale];
+  $: hasValues = Object.keys(valueMap).some((_keyPath) => _keyPath.startsWith(`${keyPath}.`));
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
   $: parentExpanded = !collapsed;
 
@@ -52,6 +64,53 @@
   onMount(() => {
     widgetId = generateUUID().split('-').pop();
   });
+
+  /**
+   * Add the object’s subfields to the entry draft with the default values populated.
+   */
+  const addFields = () => {
+    const newValueMap = Object.fromEntries(
+      Object.entries(flatten(getDefaultValues(fields))).map(([_keyPath, value]) => {
+        const __keyPath = `${keyPath}.${_keyPath}`;
+
+        return [
+          __keyPath,
+          getFieldConfig({ collectionName, fileName, keyPath: __keyPath })?.i18n === 'duplicate'
+            ? $entryDraft.currentValues[defaultLocale]?.[__keyPath] ?? value
+            : value,
+        ];
+      }),
+    );
+
+    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+      if (_locale === locale || i18n === 'duplicate') {
+        // Since we don’t want to trigger the Proxy’s i18n duplication strategy for descendant
+        // fields, manually update the locale’s content and proxify the object again
+        $entryDraft.currentValues[_locale] = createProxy({
+          draft: $entryDraft,
+          prop: 'currentValues',
+          locale: _locale,
+          target: { ...$entryDraft.currentValues[_locale], ...newValueMap },
+        });
+      }
+    });
+  };
+
+  /**
+   * Remove the object’s subfields from the entry draft.
+   */
+  const removeFields = () => {
+    Object.entries($entryDraft.currentValues).forEach(([_locale, _valueMap]) => {
+      if (_locale === locale || i18n === 'duplicate') {
+        Object.keys(_valueMap).forEach((_keyPath) => {
+          if (_keyPath.startsWith(`${keyPath}.`)) {
+            $entryDraft.currentValues[_locale][_keyPath] = null;
+            delete $entryDraft.currentValues[_locale][_keyPath];
+          }
+        });
+      }
+    });
+  };
 
   /**
    * Format the summary template.
@@ -76,55 +135,92 @@
   };
 </script>
 
-<Group aria-labelledby="object-{widgetId}-summary">
-  <div class="toolbar top">
-    <Button
-      aria-expanded={parentExpanded}
-      aria-controls="object-{widgetId}-item-list"
-      on:click={() => {
-        parentExpanded = !parentExpanded;
-      }}
-    >
-      <Icon
-        slot="start-icon"
-        name={parentExpanded ? 'expand_more' : 'chevron_right'}
-        label={parentExpanded ? $_('collapse') : $_('expand')}
-      />
-    </Button>
-    {#if !parentExpanded}
-      <div class="summary" id="object-{widgetId}-summary">
-        {formatSummary()}
+{#if hasValues}
+  <div class="wrapper">
+    <Group aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}>
+      <div class="header">
+        <Button
+          aria-expanded={parentExpanded}
+          aria-controls="object-{widgetId}-item-list"
+          on:click={() => {
+            parentExpanded = !parentExpanded;
+          }}
+        >
+          <Icon
+            slot="start-icon"
+            name={parentExpanded ? 'expand_more' : 'chevron_right'}
+            label={parentExpanded ? $_('collapse') : $_('expand')}
+          />
+        </Button>
+        <Spacer flex />
+        {#if !required}
+          <Button
+            disabled={locale !== defaultLocale && i18n === 'duplicate'}
+            on:click={() => {
+              removeFields();
+            }}
+          >
+            <Icon slot="start-icon" name="close" label={$_('remove')} />
+          </Button>
+        {/if}
       </div>
-    {/if}
-    <Spacer flex />
+      <div class="item-list" id="object-{widgetId}-item-list">
+        {#if parentExpanded}
+          {#each fields as subField (subField.name)}
+            <FieldEditor
+              keyPath={[keyPath, subField.name].join('.')}
+              {locale}
+              fieldConfig={subField}
+            />
+          {/each}
+        {:else}
+          <div class="summary" id="object-{widgetId}-summary">
+            {formatSummary()}
+          </div>
+        {/if}
+      </div>
+    </Group>
   </div>
-  <div class="item-list" id="object-{widgetId}-item-list" class:collapsed={!parentExpanded}>
-    {#each fields as subField (subField.name)}
-      <FieldEditor keyPath={[keyPath, subField.name].join('.')} {locale} fieldConfig={subField} />
-    {/each}
-  </div>
-</Group>
+{:else if !required && (locale === defaultLocale || i18n !== false)}
+  <Button
+    class="tertiary"
+    label={$_('add_x', { values: { name: label || name } })}
+    disabled={locale !== defaultLocale && i18n === 'duplicate'}
+    on:click={() => {
+      addFields();
+    }}
+  >
+    <Icon slot="start-icon" name="add" />
+  </Button>
+{/if}
 
 <style lang="scss">
-  .toolbar {
+  .wrapper {
+    display: contents;
+
+    & > :global(.group) {
+      border-width: 2px;
+      border-color: var(--sui-secondary-border-color);
+      border-radius: var(--sui-control-medium-border-radius);
+    }
+  }
+
+  .header {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 4px;
+    background-color: var(--sui-secondary-border-color);
 
-    .summary {
-      overflow: hidden;
-      color: var(--sui-secondary-foreground-color);
-      font-size: var(--sui-font-size-small);
-      font-weight: 600;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+    :global(.icon) {
+      font-size: var(--sui-font-size-large);
     }
   }
 
-  .item-list {
-    &.collapsed {
-      display: none;
-    }
+  .summary {
+    overflow: hidden;
+    padding: 8px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 </style>

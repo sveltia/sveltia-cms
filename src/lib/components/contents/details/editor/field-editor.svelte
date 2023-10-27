@@ -176,14 +176,6 @@
   section {
     padding: 16px;
 
-    &[data-widget='object'] {
-      & > header + div {
-        border-width: 2px;
-        border-color: var(--sui-secondary-border-color);
-        border-radius: var(--sui-control-medium-border-radius);
-      }
-    }
-
     &:not(:last-child) {
       border-width: 0 0 1px;
       border-color: var(--sui-secondary-border-color);

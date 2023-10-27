@@ -90,7 +90,7 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
       return;
     }
 
-    const { widget: widgetName, default: defaultValue } = fieldConfig;
+    const { widget: widgetName, default: defaultValue, required = true } = fieldConfig;
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widgetName === 'list') {
@@ -120,6 +120,11 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
     }
 
     if (widgetName === 'object') {
+      // Skip optional objects
+      if (!required) {
+        return;
+      }
+
       const { fields: subFields } = /** @type {ObjectField} */ (fieldConfig);
 
       subFields.forEach((_subField) => {
@@ -202,7 +207,7 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
  * {@link getFieldConfig}. If omitted, the proxy target will be used instead.
  * @returns {Proxy<object>} Created proxy.
  */
-const createProxy = ({
+export const createProxy = ({
   draft: { collectionName, fileName },
   prop: entryDraftProp,
   locale: sourceLocale,
@@ -227,6 +232,17 @@ const createProxy = ({
         Object.entries(
           /** @type {{ [key: string]: any }} */ (get(entryDraft))[entryDraftProp],
         ).forEach(([targetLocale, content]) => {
+          // Don’t duplicate the value if the parent object doesn’t exist
+          if (keyPath.includes('.')) {
+            const [, parentKeyPath] = keyPath.match(/(.+)\.[^.]+$/);
+
+            if (
+              !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`))
+            ) {
+              return;
+            }
+          }
+
           if (targetLocale !== sourceLocale && content[keyPath] !== value) {
             content[keyPath] = value;
           }

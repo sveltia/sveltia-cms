@@ -5,6 +5,7 @@
 -->
 <script>
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+  import { entryDraft } from '$lib/services/contents/editor';
 
   /**
    * @type {LocaleCode}
@@ -25,10 +26,14 @@
   export let currentValue;
 
   $: ({ fields } = fieldConfig);
+  $: valueMap = $entryDraft.currentValues[locale];
+  $: hasValues = Object.keys(valueMap).some((_keyPath) => _keyPath.startsWith(`${keyPath}.`));
 </script>
 
-<section class="subsection">
-  {#each fields as subField (subField.name)}
-    <FieldPreview keyPath={[keyPath, subField.name].join('.')} {locale} fieldConfig={subField} />
-  {/each}
-</section>
+{#if hasValues}
+  <section class="subsection">
+    {#each fields as subField (subField.name)}
+      <FieldPreview keyPath={[keyPath, subField.name].join('.')} {locale} fieldConfig={subField} />
+    {/each}
+  </section>
+{/if}

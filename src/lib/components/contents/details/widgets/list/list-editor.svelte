@@ -167,10 +167,10 @@
   };
 
   /**
-   * Delete a subfield.
+   * Remove a subfield.
    * @param {number} index Target index.
    */
-  const deleteItem = (index) => {
+  const removeItem = (index) => {
     updateComplexList(({ valueList, viewList }) => {
       valueList.splice(index, 1);
       viewList.splice(index, 1);
@@ -313,10 +313,10 @@
             <div>
               <Button
                 on:click={() => {
-                  deleteItem(index);
+                  removeItem(index);
                 }}
               >
-                <Icon slot="start-icon" name="close" label={$_('delete')} />
+                <Icon slot="start-icon" name="close" label={$_('remove')} />
               </Button>
             </div>
           </div>
@@ -380,7 +380,7 @@
       display: flex;
       align-items: center;
       padding: 4px;
-      background-color: var(--sui-primary-border-color);
+      background-color: var(--sui-secondary-border-color);
 
       & > div {
         display: flex;
