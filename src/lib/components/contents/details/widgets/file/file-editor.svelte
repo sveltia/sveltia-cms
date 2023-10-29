@@ -122,7 +122,7 @@
       <Button
         {disabled}
         class="tertiary small"
-        label={currentValue ? $_('replace') : $_('add')}
+        label={currentValue ? $_('replace') : $_('select')}
         on:click={() => {
           showSelectAssetsDialog = true;
         }}

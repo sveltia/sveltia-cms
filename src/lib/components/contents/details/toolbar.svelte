@@ -13,7 +13,6 @@
   } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
-  import { backendName } from '$lib/services/backends';
   import { deleteEntries } from '$lib/services/contents/data';
   import {
     entryDraft,
@@ -128,7 +127,7 @@
   </MenuButton>
   <Button
     class="primary"
-    label={saving ? $_('saving') : $_($backendName === 'local' ? 'save' : 'save_and_publish')}
+    label={$_(saving ? 'saving' : 'save')}
     disabled={!modified || saving}
     keyShortcuts="Accel+S"
     on:click={async () => {

@@ -50,7 +50,7 @@ export const getAssetPreviewURL = (asset, loading, element) => {
  */
 export const getFolderLabelByCollection = (collectionName) => {
   if (collectionName === '*') {
-    return get(_)('all_files');
+    return get(_)('all_assets');
   }
 
   if (!collectionName) {

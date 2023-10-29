@@ -129,7 +129,7 @@
         {/if}
         <Option
           name="all-files"
-          label={$_('all_files')}
+          label={$_('all_assets')}
           aria-selected={libraryName === 'all-files'}
         />
       </OptionGroup>
