@@ -20,23 +20,21 @@ const defaultCommitMessages = {
  * @param {FileChange[]} changes File changes to be saved.
  * @param {object} [options] Options.
  * @param {CommitType} [options.commitType] Git commit type.
- * @param {string} [options.collection] Collection name. Required for entries.
+ * @param {Collection} [options.collection] Collection of an entry to be changed.
  * @returns {string} Formatted message.
  */
-export const createCommitMessage = (changes, { commitType = 'update', collection = '' } = {}) => {
+export const createCommitMessage = (changes, { commitType = 'update', collection } = {}) => {
   const { login = '', name = '' } = get(user);
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const { backend: { commit_messages: customCommitMessages = {} } = {} } = get(siteConfig);
-  /**
-   * @type {string}
-   */
+  const collectionLabel = collection.label_singular || collection.label || collection.name;
   let message = customCommitMessages[commitType] || defaultCommitMessages[commitType] || '';
 
   if (['create', 'update', 'delete'].includes(commitType)) {
     message = message
       .replaceAll('{{slug}}', firstSlug)
-      .replaceAll('{{collection}}', collection)
+      .replaceAll('{{collection}}', collectionLabel)
       .replaceAll('{{path}}', firstPath)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
@@ -47,6 +45,10 @@ export const createCommitMessage = (changes, { commitType = 'update', collection
       .replaceAll('{{path}}', firstPath)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
+
+    if (remainingPaths.length) {
+      message += ` +${remainingPaths.length}`;
+    }
   }
 
   if (['openAuthoring'].includes(commitType)) {
@@ -54,10 +56,6 @@ export const createCommitMessage = (changes, { commitType = 'update', collection
       .replaceAll('{{message}}', commitType)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
-  }
-
-  if (remainingPaths.length) {
-    message += ` +${remainingPaths.length}`;
   }
 
   return message;

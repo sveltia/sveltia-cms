@@ -30,7 +30,7 @@ export const deleteEntries = async (ids) => {
 
   await get(backend).commitChanges(changes, {
     commitType: 'delete',
-    collection: get(selectedCollection).name,
+    collection: get(selectedCollection),
   });
 
   allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));

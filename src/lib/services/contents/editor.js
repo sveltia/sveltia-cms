@@ -859,7 +859,7 @@ export const saveEntry = async () => {
   try {
     await get(backend).commitChanges(changes, {
       commitType: isNew ? 'create' : 'update',
-      collection: collectionName,
+      collection,
     });
   } catch {
     throw new Error('saving_failed');

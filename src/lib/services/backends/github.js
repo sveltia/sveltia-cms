@@ -351,7 +351,7 @@ const fetchBlob = async (asset) => {
  * @param {FileChange[]} changes File changes to be saved.
  * @param {object} [options] Options.
  * @param {CommitType} [options.commitType] Commit type.
- * @param {string} [options.collection] Collection name. Required for entries.
+ * @param {Collection} [options.collection] Collection of an entry to be changed.
  * @returns {Promise<string>} Commit URL.
  * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
  */
