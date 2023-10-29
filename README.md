@@ -14,9 +14,9 @@ Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-
 
 ## Motivation
 
-Sveltia CMS was born in November 2022, when the development of Netlify CMS had stalled for over six months. [@kyoshino](https://github.com/kyoshino)’s clients were looking to replace their Netlify CMS instances, mainly to get better internationalization (i18n) and multilingual support. Built from the ground up, Sveltia CMS incorporates i18n into every corner of the product, while striving to radically improve UX, performance and productivity.
+Sveltia CMS was born in November 2022, when the development of Netlify CMS had been stalled for over six months. [@kyoshino](https://github.com/kyoshino)’s clients were looking to replace their Netlify CMS instances, mainly to get better internationalization (i18n) and multilingual support. Built from the ground up, Sveltia CMS successfully incorporates i18n into every single corner of the product, while striving to radically improve UX, performance and productivity.
 
-Our goal is to expand the market for Git-based headless CMS to empower small businesses and individuals who don’t need or can’t afford a (No)SQL database to manage their content. The project also showcases the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
+Our goal is to expand the Git-based headless CMS market to empower small businesses and individuals who don’t need or can’t afford a (No)SQL database to manage their content. The project also showcases the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
 
 ## Features
 
@@ -32,7 +32,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating one single line of code.
 - Existing [configuration files](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Various features are still missing though; [see the compatibility chart below](#compatibility) for details.
+- Various features are still missing though — [see the compatibility chart below](#compatibility) for details.
 
 ### Better UX
 
@@ -43,7 +43,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better performance
 
-- Built completely from scratch with Svelte rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript; you can use it with any framework.
+- Built completely from scratch with Svelte rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework.
 - Using the GraphQL API for GitHub by default to quickly fetch contents at once, so that entries and media can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
 - Saving entries and media is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Caching Git files locally to further speed up startup and reduce bandwidth.
@@ -202,10 +202,10 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
-1. Launch the local development server for your frontend framework, typically with `npm run dev`.
-1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number depends on your framework.
+1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
+1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
-1. Make some changes on Sveltia CMS.
+1. Make some changes to your content on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
@@ -256,7 +256,7 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
 1. Go back to Sveltia CMS, click on the Account button at the top right corner, then click Settings.
 1. Paste your key to the DeepL API Authentication Key field, and close the Settings dialog.
-1. Open any entry, and you can now translate all fields or individual fields by selecting the Translate menu item.
+1. Open any entry, and you can now translate all fields or individual fields by selecting Translate from the three-dot menu.
 1. If you have upgraded to DeepL API Pro, provide your new Authentication Key in the same way.
 
 ### Use a random ID for an entry slug
@@ -340,7 +340,7 @@ Want to build a website with Sveltia CMS? [@kyoshino](https://github.com/kyoshin
 
 ## Contributions
 
-Sveltia CMS is still in early beta, so we do expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new). Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources.
+Sveltia CMS is still in early beta, so we do expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new). Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources. As we get closer to the 1.0 release, we’ll be welcoming l10n contributors.
 
 ## Related Links
 
