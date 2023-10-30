@@ -68,7 +68,8 @@ export const entryDraft = writable();
  * take precedence over static default values defined with the site configuration.
  * @param {Field[]} fields Field list of a collection.
  * @param {{ [key: string]: string }} [defaultValues] Dynamic default values.
- * @returns {EntryContent} Entry content for creating a new draft content or adding a new list item.
+ * @returns {FlattenedEntryContent} Flattened entry content for creating a new draft content or
+ * adding a new list item.
  * @todo Make this more diligent.
  */
 export const getDefaultValues = (fields, defaultValues = {}) => {
@@ -190,7 +191,7 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
     });
   });
 
-  return unflatten(newContent);
+  return newContent;
 };
 
 /**
@@ -198,18 +199,18 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
  * strategy is “duplicate.”
  * @param {object} args Arguments.
  * @param {EntryDraft | any} args.draft Entry draft.
- * @param {string} args.prop Property name in the {@link entryDraft} store that contains a
- * locale/Proxy map.
+ * @param {'currentValues' | 'files'} [args.prop] Property name in the {@link entryDraft} store that
+ * contains a locale/Proxy map.
  * @param {string} args.locale Source locale.
  * @param {object} [args.target] Target object.
  * @param {() => FlattenedEntryContent} [args.getValueMap] Optional function to get an object
  * holding the current entry values. It will be used for the `valueMap` argument of
  * {@link getFieldConfig}. If omitted, the proxy target will be used instead.
- * @returns {Proxy<object>} Created proxy.
+ * @returns {any} Created proxy.
  */
 export const createProxy = ({
   draft: { collectionName, fileName },
-  prop: entryDraftProp,
+  prop: entryDraftProp = 'currentValues',
   locale: sourceLocale,
   target = {},
   getValueMap = undefined,
@@ -275,6 +276,22 @@ export const createDraft = (entry, defaultValues) => {
   const newContent = getDefaultValues(fields, defaultValues);
   const allLocales = hasLocales ? collectionLocales : ['default'];
 
+  const enabledLocales = isNew
+    ? allLocales
+    : allLocales.filter((locale) => !!locales?.[locale]?.content);
+
+  const originalLocales = Object.fromEntries(
+    allLocales.map((locale) => [locale, isNew || enabledLocales.includes(locale)]),
+  );
+
+  /** @type {{ [locale: LocaleCode]: FlattenedEntryContent }} */
+  const originalValues = Object.fromEntries(
+    enabledLocales.map((locale) => [
+      locale,
+      isNew ? newContent : flatten(locales?.[locale].content),
+    ]),
+  );
+
   entryDraft.set({
     isNew: isNew && !fileName,
     collectionName,
@@ -282,26 +299,25 @@ export const createDraft = (entry, defaultValues) => {
     fileName,
     collectionFile,
     originalEntry: isNew ? undefined : entry,
-    originalValues: Object.fromEntries(
-      allLocales.map((locale) => [locale, flatten(locales?.[locale]?.content ?? newContent)]),
-    ),
+    originalLocales,
+    currentLocales: structuredClone(originalLocales),
+    originalValues,
     currentValues: Object.fromEntries(
-      allLocales.map((locale) => [
+      enabledLocales.map((locale) => [
         locale,
-        allLocales.length
+        hasLocales
           ? createProxy({
               draft: { collectionName, fileName },
-              prop: 'currentValues',
               locale,
-              target: flatten(locales?.[locale]?.content ?? newContent),
+              target: structuredClone(originalValues[locale]),
             })
-          : flatten(locales?.[locale]?.content ?? newContent),
+          : structuredClone(originalValues[locale]),
       ]),
     ),
     files: Object.fromEntries(
-      allLocales.map((locale) => [
+      enabledLocales.map((locale) => [
         locale,
-        allLocales.length
+        hasLocales
           ? createProxy({
               draft: { collectionName, fileName },
               prop: 'files',
@@ -362,18 +378,103 @@ export const updateListField = (locale, keyPath, manipulate) => {
     currentValues: {
       ...draft.currentValues,
       // Flatten & proxify the object again
-      [locale]: createProxy({
-        draft,
-        prop: 'currentValues',
-        locale,
-        target: flatten(currentValues),
-      }),
+      [locale]: createProxy({ draft, locale, target: flatten(currentValues) }),
     },
     viewStates: {
       ...draft.viewStates,
       [locale]: flatten(viewStates),
     },
   }));
+};
+
+/**
+ * Populate the given localized content with values from the default locale if the corresponding
+ * field’s i18n configuration is `duplicate`.
+ * @param {FlattenedEntryContent} content Original content.
+ * @param {object} [options] Options.
+ * @param {'currentValues' | 'files'} [options.prop] Property name in the {@link entryDraft} store
+ * that contains a locale/Proxy map.
+ * @returns {FlattenedEntryContent} Updated content.
+ */
+export const copyDefaultLocaleValues = (content, { prop = 'currentValues' } = {}) => {
+  const draft = get(entryDraft);
+
+  const {
+    collectionName,
+    fileName,
+    collection: {
+      _i18n: { defaultLocale = 'default' },
+    },
+  } = draft;
+
+  const defaultLocaleValues = draft[prop][defaultLocale];
+  const keys = [...new Set([...Object.keys(content), ...Object.keys(defaultLocaleValues)])];
+  const newContent = /** @type {FlattenedEntryContent} */ ({});
+
+  keys.forEach((keyPath) => {
+    const canDuplicate =
+      getFieldConfig({ collectionName, fileName, keyPath })?.i18n === 'duplicate';
+
+    newContent[keyPath] =
+      (canDuplicate ? defaultLocaleValues[keyPath] : undefined) ?? content[keyPath];
+  });
+
+  return newContent;
+};
+
+/**
+ * Enable or disable the given locale’s content output for the current entry draft.
+ * @param {LocaleCode} locale Locale.
+ */
+export const toggleLocale = (locale) => {
+  entryDraft.update((draft) => {
+    const { currentLocales, currentValues } = draft;
+    const enabled = !currentLocales[locale];
+
+    // Initialize the content for the locale
+    if (enabled && !currentValues[locale]) {
+      const { collection, collectionName, collectionFile, fileName, originalValues, files } = draft;
+      const { fields } = collectionFile ?? collection;
+      const newContent = getDefaultValues(fields);
+
+      const {
+        _i18n: { defaultLocale = 'default' },
+      } = collection;
+
+      return {
+        ...draft,
+        currentLocales: { ...currentLocales, [locale]: enabled },
+        originalValues: { ...originalValues, [locale]: newContent },
+        currentValues: {
+          ...currentValues,
+          [locale]: createProxy({
+            draft: { collectionName, fileName },
+            locale,
+            target: copyDefaultLocaleValues(newContent),
+          }),
+        },
+        files: {
+          ...files,
+          [locale]: createProxy({
+            draft: { collectionName, fileName },
+            prop: 'files',
+            locale,
+            target: copyDefaultLocaleValues(
+              Object.fromEntries(Object.keys(files[defaultLocale]).map((key) => [key, undefined])),
+              { prop: 'files' },
+            ),
+            // eslint-disable-next-line jsdoc/require-jsdoc
+            getValueMap: () => get(entryDraft).currentValues[locale],
+          }),
+        },
+      };
+    }
+
+    return {
+      ...draft,
+      currentLocales: { ...currentLocales, [locale]: enabled },
+    };
+  });
 };
 
 /**
@@ -506,12 +607,21 @@ export const revertChanges = (locale = '', keyPath = '') => {
  * @todo Rewrite this to better support list and object fields.
  */
 const validateEntry = () => {
-  const { collection, fileName, currentValues, validities } = get(entryDraft);
+  const { collection, fileName, currentLocales, currentValues, validities } = get(entryDraft);
   const { hasLocales, defaultLocale = 'default' } = collection._i18n;
   let validated = true;
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     const valueEntries = Object.entries(valueMap);
+
+    // If the locale is disabled, skip the validation and mark all fields valid
+    if (!currentLocales[locale]) {
+      validities[locale] = Object.fromEntries(
+        valueEntries.map(([keyPath]) => [keyPath, { valid: true }]),
+      );
+
+      return;
+    }
 
     valueEntries.forEach(([keyPath, value]) => {
       const fieldConfig = getFieldConfig({
@@ -673,6 +783,8 @@ export const saveEntry = async () => {
   const {
     collection,
     isNew,
+    originalLocales,
+    currentLocales,
     originalEntry,
     collectionName,
     collectionFile,
@@ -725,6 +837,12 @@ export const saveEntry = async () => {
   const savingEntryLocales = Object.fromEntries(
     await Promise.all(
       Object.entries(currentValues).map(async ([locale, valueMap]) => {
+        const path = createEntryPath(draft, locale, slug);
+
+        if (!currentLocales[locale]) {
+          return [locale, { path }];
+        }
+
         // Normalize data
         for (const [keyPath, value] of Object.entries(valueMap)) {
           if (value === undefined) {
@@ -774,15 +892,15 @@ export const saveEntry = async () => {
               ...savingAssets.map((a) => a.name),
             ]);
 
-            const path = `${internalAssetFolder}/${_fileName}`;
+            const assetPath = `${internalAssetFolder}/${_fileName}`;
 
-            changes.push({ action: 'create', path, data: file, base64 });
+            changes.push({ action: 'create', path: assetPath, data: file, base64 });
 
             savingAssets.push({
               ...savingAssetProps,
               url: URL.createObjectURL(file),
               name: _fileName,
-              path,
+              path: assetPath,
               sha,
               size: file.size,
               kind: getAssetKind(_fileName),
@@ -794,7 +912,6 @@ export const saveEntry = async () => {
 
         const content = unflatten(valueMap);
         const sha = await getHash(new Blob([content], { type: 'text/plain' }));
-        const path = createEntryPath(draft, locale, slug);
 
         return [locale, { content, sha, path }];
       }),
@@ -810,7 +927,9 @@ export const saveEntry = async () => {
     fileName,
     slug,
     sha: savingEntryLocales[defaultLocale].sha,
-    locales: savingEntryLocales,
+    locales: Object.fromEntries(
+      Object.entries(savingEntryLocales).filter(([, { content }]) => !!content),
+    ),
   };
 
   const {
@@ -843,16 +962,16 @@ export const saveEntry = async () => {
     locales.forEach((locale) => {
       const { path, content } = savingEntryLocales[locale];
 
-      changes.push({
-        action: isNew ? 'create' : 'update',
-        slug,
-        path,
-        data: formatEntryFile({
-          content,
+      if (currentLocales[locale]) {
+        changes.push({
+          action: isNew || !originalLocales[locale] ? 'create' : 'update',
+          slug,
           path,
-          config,
-        }),
-      });
+          data: formatEntryFile({ content, path, config }),
+        });
+      } else if (originalLocales[locale]) {
+        changes.push({ action: 'delete', slug, path });
+      }
     });
   }
 

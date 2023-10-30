@@ -9,6 +9,8 @@
     align-items: center;
     justify-content: center;
     gap: 16px;
+    padding: 16px;
     height: 100%;
+    text-align: center;
   }
 </style>

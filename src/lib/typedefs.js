@@ -155,6 +155,8 @@
  * @property {I18nFileStructure} [structure] File structure.
  * @property {LocaleCode[]} locales List of locales.
  * @property {LocaleCode} [default_locale] Default locale.
+ * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales. If
+ * `false`, editors will be able to disable the output of non-default locales through the UI.
  * @see https://decapcms.org/docs/beta-features/#i18n-support
  */
 
@@ -166,6 +168,8 @@
  * @property {LocaleCode[]} locales List of locales. Can be an empty array if i18n is not enabled.
  * @property {LocaleCode} [defaultLocale] Default locale. Can be `undefined` if i18n is not
  * enabled.
+ * @property {boolean} [saveAllLocales] Whether to save collection entries in all the locales. If
+ * `false`, editors will be able to disable the output of non-default locales through the UI.
  */
 
 /**
@@ -571,6 +575,10 @@
  * @property {string} [fileName] File name. (File collection only)
  * @property {CollectionFile} [collectionFile] File details. (File collection only)
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
+ * @property {{ [locale: LocaleCode]: boolean }} originalLocales Key is a locale code, value is
+ * whether to disable the locale’s content output. The original state of `currentLocales`.
+ * @property {{ [locale: LocaleCode]: boolean }} currentLocales Key is a locale code, value is
+ * whether to disable the locale’s content output.
  * @property {{ [locale: LocaleCode]: FlattenedEntryContent }} originalValues Key is a locale code,
  * value is a flattened object containing all the original field values.
  * @property {{ [locale: LocaleCode]: FlattenedEntryContent }} currentValues Key is a locale code,

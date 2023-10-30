@@ -142,6 +142,12 @@ export const strings = {
   edit: 'Edit',
   preview: 'Preview',
   unsupported_widget_x: 'Unsupported widget: {name}',
+  enable_x_locale: 'Enable {locale}',
+  reenable_x_locale: 'Reenable {locale}',
+  disable_x_locale: 'Disable {locale}',
+  locale_x_has_been_disabled: 'The {locale} content has been disabled.',
+  locale_x_now_disabled:
+    'The {locale} content is now disabled. It will be deleted when you save the entry.',
   copy_from: 'Copy from…',
   copy_from_x: 'Copy from {locale}',
   translate_from: 'Translate from…',

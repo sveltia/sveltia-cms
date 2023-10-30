@@ -14,27 +14,38 @@
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
   import { getLocaleLabel } from '$lib/services/i18n';
-  import { entryDraft, entryEditorSettings, revertChanges } from '$lib/services/contents/editor';
+  import {
+    entryDraft,
+    entryEditorSettings,
+    revertChanges,
+    toggleLocale,
+  } from '$lib/services/contents/editor';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
 
   /**
-   * @type {import('svelte/store').Writable<?EntryEditorPane>}
+   * @type {import('svelte/store').Writable<EntryEditorPane>}
    */
-  export let thisPane = writable(null);
+  export let thisPane;
   /**
    * @type {import('svelte/store').Writable<?EntryEditorPane>}
    */
   export let thatPane = writable(null);
 
-  $: ({ collection, collectionFile, currentValues, originalValues, validities } =
+  $: ({ collection, collectionFile, currentLocales, currentValues, originalValues, validities } =
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ hasLocales = false, locales = ['default'] } =
-    collection._i18n ?? /** @type {I18nConfig} */ ({}));
-  $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane?.locale) : [];
+  $: ({
+    hasLocales = false,
+    locales = ['default'],
+    defaultLocale,
+    saveAllLocales = true,
+  } = collection._i18n ?? /** @type {I18nConfig} */ ({}));
+  $: isLocaleEnabled = currentLocales[$thisPane.locale];
+  $: isOnlyLocale = Object.values(currentLocales).filter((enabled) => enabled).length === 1;
+  $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane.locale) : [];
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: canCopy = !!otherLocales.length;
-  $: canRevert = !equal(currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]);
+  $: canRevert = !equal(currentValues[$thisPane.locale], originalValues[$thisPane.locale]);
 </script>
 
 <div class="header">
@@ -47,7 +58,7 @@
           {@const invalid = Object.values(validities[locale]).some(({ valid }) => !valid)}
           {#if !($thatPane?.mode === 'edit' && $thatPane?.locale === locale)}
             <SelectButton
-              selected={$thisPane?.mode === 'edit' && $thisPane?.locale === locale}
+              selected={$thisPane.mode === 'edit' && $thisPane.locale === locale}
               class="tertiary small {invalid ? 'error' : ''}"
               label={localeLabel}
               on:click={() => {
@@ -66,7 +77,7 @@
         {/each}
         {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings.showPreview}
           <SelectButton
-            selected={$thisPane?.mode === 'preview'}
+            selected={$thisPane.mode === 'preview'}
             class="tertiary small"
             label={$_('preview')}
             on:click={() => {
@@ -76,28 +87,46 @@
         {/if}
       </SelectButtonGroup>
     {:else}
-      <h3>{$thisPane?.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
+      <h3>{$thisPane.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
     {/if}
     <Spacer flex={true} />
-    {#if $thisPane?.mode === 'edit'}
+    {#if $thisPane.mode === 'edit'}
       <MenuButton class="ghost iconic" popupPosition="bottom-right">
         <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
         <Menu slot="popup">
           {#if canCopy}
-            <CopyMenuItems locale={$thisPane?.locale} translate={true} />
+            <CopyMenuItems locale={$thisPane.locale} translate={true} />
             {#if otherLocales.length > 1}
               <Divider />
             {/if}
-            <CopyMenuItems locale={$thisPane?.locale} />
+            <CopyMenuItems locale={$thisPane.locale} />
             <Divider />
           {/if}
           <MenuItem
             label={$_('revert_changes')}
             disabled={!canRevert}
             on:click={() => {
-              revertChanges($thisPane?.locale);
+              revertChanges($thisPane.locale);
             }}
           />
+          {#if !saveAllLocales && $thisPane.locale !== defaultLocale}
+            <Divider />
+            <MenuItem
+              label={$_(
+                // eslint-disable-next-line no-nested-ternary
+                isLocaleEnabled
+                  ? 'disable_x_locale'
+                  : currentValues[$thisPane.locale]
+                  ? 'reenable_x_locale'
+                  : 'enable_x_locale',
+                { values: { locale: getLocaleLabel($thisPane.locale) } },
+              )}
+              disabled={isLocaleEnabled && isOnlyLocale}
+              on:click={() => {
+                toggleLocale($thisPane.locale);
+              }}
+            />
+          {/if}
         </Menu>
       </MenuButton>
     {/if}

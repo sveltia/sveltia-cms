@@ -5,13 +5,17 @@
 -->
 <script>
   import { Button, Group, Icon, Spacer } from '@sveltia/ui';
-  import { flatten } from 'flat';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
-  import { createProxy, entryDraft, getDefaultValues } from '$lib/services/contents/editor';
-  import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry';
-  import { generateUUID } from '$lib/services/utils/strings';
+  import {
+    copyDefaultLocaleValues,
+    createProxy,
+    entryDraft,
+    getDefaultValues,
+  } from '$lib/services/contents/editor';
+  import { getFieldDisplayValue } from '$lib/services/contents/entry';
+  import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
   /**
    * @type {LocaleCode}
@@ -55,7 +59,8 @@
     },
   } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: valueMap = $entryDraft.currentValues[locale];
-  $: hasValues = Object.keys(valueMap).some((_keyPath) => _keyPath.startsWith(`${keyPath}.`));
+  $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\b`);
+  $: hasValues = Object.keys(valueMap).some((_keyPath) => _keyPath.match(keyPathRegex));
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
   $: parentExpanded = !collapsed;
 
@@ -69,17 +74,11 @@
    * Add the object’s subfields to the entry draft with the default values populated.
    */
   const addFields = () => {
-    const newValueMap = Object.fromEntries(
-      Object.entries(flatten(getDefaultValues(fields))).map(([_keyPath, value]) => {
-        const __keyPath = `${keyPath}.${_keyPath}`;
-
-        return [
-          __keyPath,
-          getFieldConfig({ collectionName, fileName, keyPath: __keyPath })?.i18n === 'duplicate'
-            ? $entryDraft.currentValues[defaultLocale]?.[__keyPath] ?? value
-            : value,
-        ];
-      }),
+    const newValueMap = copyDefaultLocaleValues(
+      Object.fromEntries(
+        Object.entries(getDefaultValues(fields)) //
+          .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
+      ),
     );
 
     Object.keys($entryDraft.currentValues).forEach((_locale) => {
@@ -88,7 +87,6 @@
         // fields, manually update the locale’s content and proxify the object again
         $entryDraft.currentValues[_locale] = createProxy({
           draft: $entryDraft,
-          prop: 'currentValues',
           locale: _locale,
           target: { ...$entryDraft.currentValues[_locale], ...newValueMap },
         });
@@ -103,7 +101,7 @@
     Object.entries($entryDraft.currentValues).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
         Object.keys(_valueMap).forEach((_keyPath) => {
-          if (_keyPath.startsWith(`${keyPath}.`)) {
+          if (_keyPath.match(keyPathRegex)) {
             $entryDraft.currentValues[_locale][_keyPath] = null;
             delete $entryDraft.currentValues[_locale][_keyPath];
           }

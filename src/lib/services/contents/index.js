@@ -50,12 +50,17 @@ const getCollectionI18n = (collection) => {
    * @type {string}
    */
   let defaultLocale;
+  /**
+   * @type {boolean}
+   */
+  let saveAllLocales = true;
 
   if (collection?.i18n === true && isObject(_siteConfig?.i18n)) {
     ({
       structure = 'single_file',
       locales = [],
       default_locale: defaultLocale = undefined,
+      save_all_locales: saveAllLocales = true,
     } = _siteConfig.i18n);
   }
 
@@ -64,6 +69,7 @@ const getCollectionI18n = (collection) => {
       structure = 'single_file',
       locales = [],
       default_locale: defaultLocale = undefined,
+      save_all_locales: saveAllLocales = true,
     } = /** @type {RawI18nConfig} */ (collection.i18n));
   }
 
@@ -79,6 +85,7 @@ const getCollectionI18n = (collection) => {
       : defaultLocale && locales.includes(defaultLocale)
       ? defaultLocale
       : locales[0],
+    saveAllLocales,
   };
 };
 

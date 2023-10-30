@@ -20,8 +20,9 @@
   export let keyPath = '';
   export let translate = false;
 
+  $: ({ collection, currentLocales } = $entryDraft);
   $: ({ hasLocales = false, locales = ['default'] } =
-    $entryDraft.collection._i18n ?? /** @type {I18nConfig} */ ({}));
+    collection._i18n ?? /** @type {I18nConfig} */ ({}));
   $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
 
   $: ({
@@ -51,9 +52,11 @@
     label={$_(translate ? 'translate_from_x' : 'copy_from_x', {
       values: { locale: getLocaleLabel(otherLocale) },
     })}
-    disabled={translate &&
-      (!sourceLanguages.includes(locale.toUpperCase()) ||
-        !targetLanguages.includes(otherLocale.toUpperCase()))}
+    disabled={!currentLocales[locale] ||
+      !currentLocales[otherLocale] ||
+      (translate &&
+        (!sourceLanguages.includes(locale.toUpperCase()) ||
+          !targetLanguages.includes(otherLocale.toUpperCase())))}
     on:click={() => {
       _copyFromLocale(otherLocale);
     }}

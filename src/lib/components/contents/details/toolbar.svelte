@@ -28,14 +28,23 @@
   let showErrorDialog = false;
   let saving = false;
 
-  $: ({ collection, collectionFile, isNew, originalEntry, currentValues, originalValues } =
-    $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({
+    isNew,
+    collection,
+    collectionFile,
+    originalEntry,
+    originalLocales,
+    currentLocales,
+    originalValues,
+    currentValues,
+  } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
   $: collectionLabel = collection?.label || collection?.name;
   $: collectionLabelSingular = collection?.label_singular || collectionLabel;
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
-  $: modified = isNew || !equal(currentValues, originalValues);
+  $: modified =
+    isNew || !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
 
   /**
    * Duplicate the current entry.

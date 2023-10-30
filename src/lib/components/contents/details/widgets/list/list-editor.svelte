@@ -155,7 +155,7 @@
         : fields ?? [field];
 
       const index = addToTop ? 0 : valueList.length;
-      const newItem = getDefaultValues(subFields);
+      const newItem = unflatten(getDefaultValues(subFields));
 
       if (subFieldName) {
         newItem[typeKey] = subFieldName;

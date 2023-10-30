@@ -1,9 +1,8 @@
 <script>
   import { Group } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
+  import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
-  import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import {
     editorLeftPane,
@@ -13,18 +12,18 @@
   } from '$lib/services/contents/editor';
 
   /**
-   * @type {HTMLElement}
+   * @type {HTMLElement | undefined}
    */
-  let leftPaneContent;
+  let leftPaneContentArea;
   /**
-   * @type {HTMLElement}
+   * @type {HTMLElement | undefined}
    */
-  let rightPaneContent;
+  let rightPaneContentArea;
 
   let panesRestored = false;
 
   $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ showPreview, syncScrolling, paneStates } = $entryEditorSettings);
+  $: ({ showPreview, paneStates } = $entryEditorSettings);
   $: ({ hasLocales = false, locales = ['default'] } =
     collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: canPreview =
@@ -111,56 +110,6 @@
     savePanes();
   }
 
-  /**
-   * Sync the scroll position with the other edit/preview pane.
-   * @param {HTMLElement} thisContentArea Element that the user is scrolling.
-   * @param {HTMLElement} [thatContentArea] The other pane’s content area. Can be empty if there is
-   * one locale and preview for the collection is disabled.
-   */
-  const syncScrollPosition = (thisContentArea, thatContentArea) => {
-    if (!syncScrolling || !thatContentArea) {
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      const { x, y } = thisContentArea.getBoundingClientRect();
-
-      const thisElement = /** @type {HTMLElement?} */ (
-        document.elementsFromPoint(x + 80, y).find((e) => e.matches('[data-key-path]'))
-      );
-
-      if (!thisElement) {
-        return;
-      }
-
-      const { keyPath } = thisElement.dataset;
-      const { top, height } = thisElement.getBoundingClientRect();
-      const ratio = (y - top) / height;
-
-      const thatElement = /** @type {HTMLElement?} */ (
-        thatContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath)}"]`)
-      );
-
-      if (ratio < 0 || ratio > 1 || !thatElement) {
-        return;
-      }
-
-      thatContentArea.scrollTop = thatElement.offsetTop - y + thatElement.clientHeight * ratio;
-    });
-  };
-
-  $: {
-    if (leftPaneContent) {
-      leftPaneContent.scrollTop = 0;
-    }
-  }
-
-  $: {
-    if (rightPaneContent) {
-      rightPaneContent.scrollTop = 0;
-    }
-  }
-
   onMount(() =>
     // onUnmount
     () => {
@@ -175,37 +124,25 @@
   <div class="cols">
     {#if collection}
       {#if $editorLeftPane}
-        <Group data-mode={$editorLeftPane.mode} data-locale={$editorLeftPane.locale}>
+        {@const { locale, mode } = $editorLeftPane}
+        <Group data-locale={locale} data-mode={mode}>
           <PaneHeader thisPane={editorLeftPane} thatPane={editorRightPane} />
-          <div
-            class="content"
-            bind:this={leftPaneContent}
-            on:wheel|capture={() => {
-              syncScrollPosition(leftPaneContent, rightPaneContent);
-            }}
-          >
-            <svelte:component
-              this={$editorLeftPane.mode === 'preview' ? EntryPreview : EntryEditor}
-              locale={$editorLeftPane.locale}
-            />
-          </div>
+          <PaneBody
+            thisPane={editorLeftPane}
+            bind:thisPaneContentArea={leftPaneContentArea}
+            thatPaneContentArea={rightPaneContentArea}
+          />
         </Group>
       {/if}
       {#if $editorRightPane}
-        <Group data-mode={$editorRightPane.mode} data-locale={$editorRightPane.locale}>
+        {@const { locale, mode } = $editorRightPane}
+        <Group data-locale={locale} data-mode={mode}>
           <PaneHeader thisPane={editorRightPane} thatPane={editorLeftPane} />
-          <div
-            class="content"
-            bind:this={rightPaneContent}
-            on:wheel|capture={() => {
-              syncScrollPosition(rightPaneContent, leftPaneContent);
-            }}
-          >
-            <svelte:component
-              this={$editorRightPane.mode === 'preview' ? EntryPreview : EntryEditor}
-              locale={$editorRightPane.locale}
-            />
-          </div>
+          <PaneBody
+            thisPane={editorRightPane}
+            bind:thisPaneContentArea={rightPaneContentArea}
+            thatPaneContentArea={leftPaneContentArea}
+          />
         </Group>
       {/if}
     {/if}
@@ -235,13 +172,6 @@
         &:first-child:not(:last-child) {
           border-width: 0 1px 0 0;
           border-color: var(--sui-primary-border-color);
-        }
-
-        & > :global(.content) {
-          flex: auto;
-          overflow-y: auto;
-          scroll-behavior: auto; /* Don’t use smooth scroll for syncing */
-          overscroll-behavior-y: contain;
         }
       }
 
