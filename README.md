@@ -16,7 +16,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-
 
 Sveltia CMS was born in November 2022, when the development of Netlify CMS had been stalled for over six months. [@kyoshino](https://github.com/kyoshino)’s clients were looking to replace their Netlify CMS instances, mainly to get better internationalization (i18n) and multilingual support. Built from the ground up, Sveltia CMS successfully incorporates i18n into every single corner of the product, while striving to radically improve UX, performance and productivity.
 
-Our goal is to expand the Git-based headless CMS market to empower small businesses and individuals who don’t need or can’t afford a (No)SQL database to manage their content. The project also showcases the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
+Our goal is to become a promising successor to Netlify CMS, expand the Git-based headless CMS market, and empower small businesses and individuals who need a simple yet effective CMS solution. The project also showcases the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
 
 ## Features
 
