@@ -58,7 +58,14 @@
   $: hasVariableTypes = Array.isArray(types);
   $: hasSubFields = hasSingleSubField || hasMultiSubFields || hasVariableTypes;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
-  $: ({ collectionName, fileName } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({
+    collectionName,
+    fileName,
+    collection: {
+      _i18n: { defaultLocale = 'default' },
+    },
+  } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: isDuplicateField = locale !== defaultLocale && i18n === 'duplicate';
   $: valueMap = $entryDraft.currentValues[locale];
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
 
@@ -255,7 +262,7 @@
       </div>
       <Spacer flex />
       {#if allowAdd && (addToTop || !items.length)}
-        <AddItemButton {fieldConfig} {items} {addItem} />
+        <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
       {/if}
     </div>
     <div class="item-list" id="list-{widgetId}-item-list" class:collapsed={!parentExpanded}>
@@ -293,7 +300,7 @@
             </div>
             <div>
               <Button
-                disabled={index === 0}
+                disabled={isDuplicateField || index === 0}
                 on:click={() => {
                   moveUpItem(index);
                 }}
@@ -302,7 +309,7 @@
               </Button>
               <Spacer />
               <Button
-                disabled={index === items.length - 1}
+                disabled={isDuplicateField || index === items.length - 1}
                 on:click={() => {
                   moveDownItem(index);
                 }}
@@ -312,6 +319,7 @@
             </div>
             <div>
               <Button
+                disabled={isDuplicateField}
                 on:click={() => {
                   removeItem(index);
                 }}
@@ -342,8 +350,8 @@
     </div>
     {#if allowAdd && !addToTop && items.length}
       <div class="toolbar bottom">
+        <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
         <Spacer flex />
-        <AddItemButton {fieldConfig} {items} {addItem} />
       </div>
     {/if}
   {:else}
@@ -371,7 +379,7 @@
   }
 
   .item {
-    margin: 4px 0;
+    margin: 8px 0;
     border-width: 2px;
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);

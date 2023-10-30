@@ -3,6 +3,10 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @type {boolean}
+   */
+  export let disabled = false;
+  /**
    * @type {ListField}
    */
   export let fieldConfig;
@@ -26,11 +30,11 @@
   } = fieldConfig);
 
   $: label = $_('add_x', { values: { name: labelSingular || labelPlural } });
-  $: disabled = typeof max === 'number' && items.length === max;
+  $: _disabled = disabled || (typeof max === 'number' && items.length === max);
 </script>
 
 {#if Array.isArray(types)}
-  <MenuButton class="tertiary" {label} {disabled}>
+  <MenuButton class="tertiary" {label} disabled={_disabled}>
     <Icon slot="start-icon" name="add" />
     <Menu slot="popup">
       {#each types as { name, label: itemLabel } (name)}
@@ -39,7 +43,7 @@
     </Menu>
   </MenuButton>
 {:else}
-  <Button class="tertiary" {label} {disabled} on:click={() => addItem()}>
+  <Button class="tertiary" {label} disabled={_disabled} on:click={() => addItem()}>
     <Icon slot="start-icon" name="add" />
   </Button>
 {/if}
