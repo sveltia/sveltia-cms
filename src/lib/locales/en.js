@@ -157,8 +157,18 @@ export const strings = {
   required: 'Required',
   validation: {
     value_missing: 'This field is required.',
-    range_underflow: 'You have to select at least {min} items.',
-    range_overflow: 'You cannot select more than {max} items.',
+    range_underflow: {
+      select_singular: 'You have to select at least {min} item.',
+      select_plural: 'You have to select at least {min} items.',
+      add_singular: 'You have to add at least {min} item.',
+      add_plural: 'You have to add at least {min} items.',
+    },
+    range_overflow: {
+      select_singular: 'You cannot select more than {max} item.',
+      select_plural: 'You cannot select more than {max} items.',
+      add_singular: 'You cannot add more than {max} item.',
+      add_plural: 'You cannot add more than {max} items.',
+    },
   },
   saving_entry: {
     error: {

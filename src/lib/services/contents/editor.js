@@ -623,6 +623,9 @@ const validateEntry = () => {
       return;
     }
 
+    // Reset the state first
+    validities[locale] = {};
+
     valueEntries.forEach(([keyPath, value]) => {
       const fieldConfig = getFieldConfig({
         collectionName: collection.name,
@@ -637,12 +640,13 @@ const validateEntry = () => {
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
       const { widget: widgetName, required = true, i18n = false, pattern } = fieldConfig;
+      const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
       const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
         fieldConfig
       );
 
-      const canTranslate = hasLocales && (i18n === true || i18n === 'translate');
+      const canTranslate = hasLocales && i18n !== false;
       const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;
       let rangeUnderflow = false;
@@ -681,8 +685,16 @@ const validateEntry = () => {
         }
       }
 
+      if (widgetName === 'list' && Array.isArray(value)) {
+        if (typeof min === 'number' && value.length < min) {
+          rangeUnderflow = true;
+        } else if (_required && !value.length) {
+          valueMissing = true;
+        }
+      }
+
       if (!['object', 'list'].includes(widgetName)) {
-        if (_required && (value === undefined || value === '')) {
+        if (_required && (value === undefined || value === '' || (multiple && !value.length))) {
           valueMissing = true;
         }
 

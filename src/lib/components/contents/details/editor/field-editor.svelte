@@ -32,6 +32,13 @@
     i18n = false,
     pattern = /** @type {string[]} */ ([]),
   } = fieldConfig);
+  // @ts-ignore
+  $: ({ field: subField, fields: subFields, types } = /** @type {ListField} */ (fieldConfig));
+  $: hasSubFields = !!subField || !!subFields || !!types;
+  // @ts-ignore
+  $: ({ min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
+    fieldConfig
+  ));
   $: hasMultiple = ['relation', 'select'].includes(widgetName);
   $: multiple = hasMultiple
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
@@ -114,25 +121,29 @@
         {#if validity.rangeUnderflow}
           <div>
             <Icon name="error" label={$_('error')} />
-            {$_('validation.range_underflow', {
-              values: {
-                min: /** @type {ListField | NumberField | RelationField | SelectField} */ (
-                  fieldConfig
-                ).min,
-              },
-            })}
+            {#if (widgetName === 'list' && hasSubFields) || multiple}
+              {$_(`validation.range_underflow.add_${min === 1 ? 'singular' : 'plural'}`, {
+                values: { min },
+              })}
+            {:else}
+              {$_(`validation.range_underflow.select_${min === 1 ? 'singular' : 'plural'}`, {
+                values: { min },
+              })}
+            {/if}
           </div>
         {/if}
         {#if validity.rangeOverflow}
           <div>
             <Icon name="error" label={$_('error')} />
-            {$_('validation.range_overflow', {
-              values: {
-                max: /** @type {ListField | NumberField | RelationField | SelectField} */ (
-                  fieldConfig
-                ).max,
-              },
-            })}
+            {#if (widgetName === 'list' && hasSubFields) || multiple}
+              {$_(`validation.range_overflow.add_${max === 1 ? 'singular' : 'plural'}`, {
+                values: { max },
+              })}
+            {:else}
+              {$_(`validation.range_overflow.select_${max === 1 ? 'singular' : 'plural'}`, {
+                values: { max },
+              })}
+            {/if}
           </div>
         {/if}
         {#if validity.patternMismatch}

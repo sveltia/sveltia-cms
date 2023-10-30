@@ -157,8 +157,18 @@ export const strings = {
   required: '必須',
   validation: {
     value_missing: 'この項目は必須です。',
-    range_underflow: '少なくとも {min} 個の項目を選択してください。',
-    range_overflow: '選択できるのは最大で {max} 項目です。',
+    range_underflow: {
+      select_singular: '少なくとも {min} 個の項目を選択してください。',
+      select_plural: '少なくとも {min} 個の項目を選択してください。',
+      add_singular: '少なくとも {min} 個の項目を追加してください。',
+      add_plural: '少なくとも {min} 個の項目を追加してください。',
+    },
+    range_overflow: {
+      select_singular: '選択できるのは最大で {max} 項目です。',
+      select_plural: '選択できるのは最大で {max} 項目です。',
+      add_singular: '追加できるのは最大で {max} 項目です。',
+      add_plural: '追加できるのは最大で {max} 項目です。',
+    },
   },
   saving_entry: {
     error: {
