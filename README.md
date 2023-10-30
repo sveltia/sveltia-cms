@@ -64,6 +64,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Making it easier to switch between locales while editing with just a click on a button.
 - Fields in non-default locales will be validated as expected[^13].
 - [Integrating DeepL](#use-deepl-to-translate-entry-fields) to allow translating text fields from another locale with one click.
+- You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
 - You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales writing in non-Latin characters[^12].
 - Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 
@@ -77,6 +78,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
+- Optional object fields (`widget:object` with `required:false`) can be manually added or removed. If removed, the required subfields will no longer trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
 ### Media library enhancements
@@ -259,6 +261,18 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 1. Open any entry, and you can now translate all fields or individual fields by selecting Translate from the three-dot menu.
 1. If you have upgraded to DeepL API Pro, provide your new Authentication Key in the same way.
 
+### Disable non-default locale content
+
+You can now disable the output of non-default locale content by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu at the top-right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
+
+```diff
+ i18n:
+   structure: multiple_files
+   locales: [en, fr]
+   default_locale: en
++  save_all_locales: false
+```
+
 ### Use a random ID for an entry slug
 
 By default, the [slug for a new entry file](https://decapcms.org/docs/configuration-options/#slug) will be generated based on the entry’s `title` field. Or, you can specify the collection’s `slug` option to use the file creation date or other fields. While the behaviour is generally acceptable and SEO-friendly, it’s not useful if the title might change later or if it contains non-Latin characters like Chinese. In Sveltia CMS, you can easily generate a random [UUID](https://developer.mozilla.org/en-US/docs/Glossary/UUID) for a slug without a custom widget!
@@ -364,3 +378,5 @@ This software is provided “as is” without any express or implied warranty. T
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112)
 [^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [Netlify/Decap CMS #5920](https://github.com/decaporg/decap-cms/issues/5920), [Netlify/Decap CMS #6410](https://github.com/decaporg/decap-cms/issues/6410)
+[^15]: [Netlify/Decap CMS #6932](https://github.com/decaporg/decap-cms/issues/6932)
+[^16]: [Netlify/Decap CMS #2103](https://github.com/decaporg/decap-cms/issues/2103)
