@@ -1,8 +1,13 @@
-import { get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { allAssetPaths, allAssets, getAssetKind } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { getHash, renameIfNeeded } from '$lib/services/utils/files';
 import { escapeRegExp } from '$lib/services/utils/strings';
+
+/**
+ * @type {import('svelte/store').Writable<{ saved?: boolean, deleted?: boolean, count: number }>}
+ */
+export const assetUpdatesToast = writable({ saved: false, deleted: false, count: 1 });
 
 /**
  * Upload/save the given assets to the backend.
@@ -53,6 +58,8 @@ export const saveAssets = async ({ files, folder }, options) => {
     ...assets.filter((a) => !newAssets.some((na) => na.path === a.path)),
     ...newAssets,
   ]);
+
+  assetUpdatesToast.set({ saved: true, count: files.length });
 };
 
 /**
@@ -68,6 +75,7 @@ export const deleteAssets = async (assets) => {
   );
 
   allAssets.update((_allAssets) => _allAssets.filter((asset) => !assets.includes(asset)));
+  assetUpdatesToast.set({ deleted: true, count: assets.length });
 };
 
 /**

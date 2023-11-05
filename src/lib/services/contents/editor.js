@@ -1006,6 +1006,7 @@ export const saveEntry = async () => {
   ]);
 
   entryDraft.set(null);
+  contentUpdatesToast.set({ saved: true, count: 1 });
 };
 
 entryDraft.subscribe((draft) => {

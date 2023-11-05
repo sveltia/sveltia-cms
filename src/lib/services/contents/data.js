@@ -1,6 +1,11 @@
-import { get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { allEntries, selectedCollection } from '$lib/services/contents';
+
+/**
+ * @type {import('svelte/store').Writable<{ saved?: boolean, deleted?: boolean, count: number }>}
+ */
+export const contentUpdatesToast = writable({ saved: false, deleted: false, count: 1 });
 
 /**
  * Delete entries by slugs.
@@ -34,4 +39,5 @@ export const deleteEntries = async (ids) => {
   });
 
   allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));
+  contentUpdatesToast.set({ deleted: true, count: ids.length });
 };

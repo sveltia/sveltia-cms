@@ -1,5 +1,7 @@
 <script>
+  import { Toast } from '@sveltia/ui';
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import ContentDetailsOverlay from '$lib/components/contents/details/content-details-overlay.svelte';
   import EntryList from '$lib/components/contents/list/entry-list.svelte';
@@ -9,6 +11,7 @@
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
   import { getCollection, getFile, selectedCollection } from '$lib/services/contents';
+  import { contentUpdatesToast } from '$lib/services/contents/data';
   import { createDraft, entryDraft } from '$lib/services/contents/editor';
   import { listedEntries } from '$lib/services/contents/view';
   import { parseLocation } from '$lib/services/navigation';
@@ -105,3 +108,13 @@
 {#if $entryDraft}
   <ContentDetailsOverlay />
 {/if}
+
+<Toast bind:show={$contentUpdatesToast.saved} type="success">
+  {$_('entry_saved')}
+</Toast>
+
+<Toast bind:show={$contentUpdatesToast.deleted} type="success">
+  {$_($contentUpdatesToast.count === 1 ? 'entry_deleted' : 'entries_deleted', {
+    values: { count: $contentUpdatesToast.count },
+  })}
+</Toast>

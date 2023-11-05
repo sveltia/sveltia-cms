@@ -9,6 +9,7 @@
     MenuItem,
     MenuItemCheckbox,
     Spacer,
+    Toast,
     Toolbar,
   } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
@@ -21,9 +22,9 @@
     saveEntry,
   } from '$lib/services/contents/editor';
   import { goBack, goto } from '$lib/services/navigation';
-  import { sleep } from '$lib/services/utils/misc';
 
-  let showDuplicateDialog = false;
+  let showDuplicateToast = false;
+  let showValidationToast = false;
   let showDeleteDialog = false;
   let showErrorDialog = false;
   let saving = false;
@@ -45,17 +46,18 @@
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: modified =
     isNew || !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
+  $: errorCount = Object.values($entryDraft?.validities ?? [])
+    .map((validities) => Object.values(validities).map(({ valid }) => !valid))
+    .flat(1)
+    .filter(Boolean).length;
 
   /**
    * Duplicate the current entry.
-   * @todo Replace the dialog with a toast notification.
    */
   const duplicateDraft = async () => {
-    showDuplicateDialog = true;
+    showDuplicateToast = true;
     goto(`/collections/${collection?.name}/new`, { replaceState: true, notifyChange: false });
     $entryDraft = { ...$entryDraft, isNew: true, originalEntry: undefined };
-    await sleep(1000);
-    showDuplicateDialog = false;
   };
 </script>
 
@@ -146,12 +148,14 @@
         await saveEntry();
         goBack(`/collections/${collection?.name}`);
       } catch (error) {
-        if (error.message !== 'validation_failed') {
+        if (error.message === 'validation_failed') {
+          showValidationToast = true;
+        } else {
           showErrorDialog = true;
-
-          // eslint-disable-next-line no-console
-          console.error(error);
         }
+
+        // eslint-disable-next-line no-console
+        console.error(error);
       } finally {
         saving = false;
       }
@@ -159,16 +163,15 @@
   />
 </Toolbar>
 
-<Dialog
-  bind:open={showDuplicateDialog}
-  showOk={false}
-  showCancel={false}
-  showClose={false}
-  closeOnBackdropClick={true}
-  style="text-align:center"
->
+<Toast bind:show={showDuplicateToast} type="success">
   {$_('entry_duplicated')}
-</Dialog>
+</Toast>
+
+<Toast bind:show={showValidationToast} type="error">
+  {$_(errorCount === 1 ? 'entry_validation_error' : 'entry_validation_errors', {
+    values: { count: errorCount },
+  })}
+</Toast>
 
 <Dialog
   bind:open={showDeleteDialog}

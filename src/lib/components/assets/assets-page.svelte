@@ -1,5 +1,7 @@
 <script>
+  import { Toast } from '@sveltia/ui';
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
   import AssetList from '$lib/components/assets/list/asset-list.svelte';
   import PrimarySidebar from '$lib/components/assets/list/primary-sidebar.svelte';
@@ -13,6 +15,7 @@
     selectedAsset,
     selectedAssetFolderPath,
   } from '$lib/services/assets';
+  import { assetUpdatesToast } from '$lib/services/assets/data';
   import { parseLocation } from '$lib/services/navigation';
 
   let path = '';
@@ -67,3 +70,13 @@
 {#if $selectedAsset && path.match(/^\/assets\/(.+?)\.[a-zA-Z0-9]+$/)}
   <AssetDetailsOverlay />
 {/if}
+
+<Toast bind:show={$assetUpdatesToast.saved} type="success">
+  {$_('asset_saved')}
+</Toast>
+
+<Toast bind:show={$assetUpdatesToast.deleted} type="success">
+  {$_($assetUpdatesToast.count === 1 ? 'asset_deleted' : 'assets_deleted', {
+    values: { count: $assetUpdatesToast.count },
+  })}
+</Toast>

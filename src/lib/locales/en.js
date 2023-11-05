@@ -132,7 +132,15 @@ export const strings = {
   no_files_created: 'This collection has no files.',
   multi_files_selected: 'Multiple files are selected.',
   select_asset_show_info: 'Select a file to show the info.',
-  entry_duplicated: 'The entry has been duplicated. It’s now a new draft.',
+  entry_duplicated: 'Entry has been duplicated. It’s now a new draft.',
+  entry_validation_error: 'One field has an error. Please correct it to save the entry.',
+  entry_validation_errors: '{count} fields have an error. Please correct them to save the entry.',
+  entry_saved: 'Entry has been saved.',
+  entry_deleted: 'Entry has been deleted.',
+  entries_deleted: '{count} entries have been deleted.',
+  asset_saved: 'Asset has been saved.',
+  asset_deleted: 'Asset has been deleted.',
+  assets_deleted: '{count} assets have been deleted.',
 
   // Content editor
   creating_x: 'Creating {name}',
