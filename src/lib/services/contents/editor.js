@@ -8,6 +8,7 @@ import { get, writable } from 'svelte/store';
 import { allAssets, getAssetFolder, getAssetKind } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries, getCollection } from '$lib/services/contents';
+import { contentUpdatesToast } from '$lib/services/contents/data';
 import { getFieldConfig } from '$lib/services/contents/entry';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
 import { translator } from '$lib/services/integrations/translators';
