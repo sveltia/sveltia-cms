@@ -72,7 +72,9 @@
 {/if}
 
 <Toast bind:show={$assetUpdatesToast.saved} type="success">
-  {$_('asset_saved')}
+  {$_($assetUpdatesToast.count === 1 ? 'asset_saved' : 'assets_saved', {
+    values: { count: $assetUpdatesToast.count },
+  })}
 </Toast>
 
 <Toast bind:show={$assetUpdatesToast.deleted} type="success">

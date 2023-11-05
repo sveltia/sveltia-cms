@@ -139,6 +139,7 @@ export const strings = {
   entry_deleted: 'Entry has been deleted.',
   entries_deleted: '{count} entries have been deleted.',
   asset_saved: 'Asset has been saved.',
+  assets_saved: '{count} assets have been saved.',
   asset_deleted: 'Asset has been deleted.',
   assets_deleted: '{count} assets have been deleted.',
 

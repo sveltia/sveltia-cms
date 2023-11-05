@@ -142,6 +142,7 @@ export const strings = {
   entry_deleted: 'エントリーが削除されました。',
   entries_deleted: '{count} 個のエントリーが削除されました。',
   asset_saved: 'アセットが保存されました。',
+  assets_saved: '{count} 個のアセットが保存されました。',
   asset_deleted: 'アセットが削除されました。',
   assets_deleted: '{count} 個のアセットが削除されました。',
 
