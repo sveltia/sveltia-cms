@@ -18,12 +18,12 @@
 </script>
 
 {#if $selectedCollection}
-  <Toolbar class="primary">
-    <h2>{label ?? ''}</h2>
-    <div class="description">{description ?? ''}</div>
+  <Toolbar variant="primary">
+    <h2>{label || ''}</h2>
+    <div class="description">{description || ''}</div>
     {#if !files}
       <Button
-        class="secondary"
+        variant="secondary"
         label={$_('delete')}
         disabled={!$selectedEntries.length || !canDelete}
         on:click={() => {
@@ -33,7 +33,7 @@
         <Icon slot="start-icon" name="delete" />
       </Button>
       <Button
-        class="primary"
+        variant="primary"
         disabled={!create}
         label={$_('create')}
         keyShortcuts="Accel+E"

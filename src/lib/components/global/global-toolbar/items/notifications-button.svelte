@@ -4,8 +4,9 @@
 </script>
 
 <Button
-  class="ghost iconic"
-  hidden={true}
+  variant="ghost"
+  iconic
+  hidden
   on:click={() => {
     // @todo Implement this!
   }}

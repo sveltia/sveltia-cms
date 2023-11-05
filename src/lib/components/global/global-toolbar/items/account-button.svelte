@@ -10,103 +10,116 @@
   let showPrefsDialog = false;
   let showShortcutsDialog = false;
 
+  $: hasAvatar = !!$user?.avatar_url;
   $: isLocal = $backendName === 'local';
 </script>
 
-<MenuButton class="ghost iconic" popupPosition="bottom-right">
-  <Icon
-    slot="start-icon"
-    name={$user?.avatar_url ? undefined : 'account_circle'}
-    label={$_('account')}
-  />
-  <svelte:element
-    this={$user?.avatar_url ? 'img' : undefined}
-    class="avatar"
-    loading="lazy"
-    src={$user?.avatar_url}
-    alt={$_('account')}
-  />
-  <Menu slot="popup">
-    <MenuItem
-      label={isLocal
-        ? $_('working_with_local_repo')
-        : $_('signed_in_as_x', { values: { name: $user?.login } })}
-      disabled={isLocal}
-      on:click={() => {
-        window.open($user?.html_url, '_blank');
-      }}
+<div class="wrapper">
+  <MenuButton variant="ghost" iconic class={hasAvatar ? 'avatar' : ''} popupPosition="bottom-right">
+    <svelte:component
+      this={hasAvatar ? undefined : Icon}
+      slot="start-icon"
+      name={'account_circle'}
+      label={$_('account')}
     />
-    <Divider />
-    <MenuItem
-      label={$_('live_site')}
-      on:click={() => {
-        openProductionSite();
-      }}
+    <svelte:element
+      this={hasAvatar ? 'img' : undefined}
+      class="avatar"
+      loading="lazy"
+      src={$user?.avatar_url}
+      alt={$_('account')}
     />
-    <MenuItem
-      label={$_('git_repository')}
-      disabled={isLocal}
-      on:click={() => {
-        window.open($backend.repository.url);
-      }}
-    />
-    <Divider />
-    <MenuItem
-      label={$_('settings')}
-      on:click={() => {
-        showPrefsDialog = true;
-      }}
-    />
-    <Divider />
-    <MenuItem
-      label={$_('help.keyboard_shortcuts')}
-      on:click={() => {
-        showShortcutsDialog = true;
-      }}
-    />
-    <MenuItem
-      label={$_('help.documentation')}
-      on:click={() => {
-        window.open('https://github.com/sveltia/sveltia-cms/blob/main/README.md', '_blank');
-      }}
-    />
-    <MenuItem
-      label={$_('help.release_notes')}
-      on:click={() => {
-        window.open('https://github.com/sveltia/sveltia-cms/releases', '_blank');
-      }}
-    />
-    <Divider />
-    <MenuItem
-      label={$_('help.issue')}
-      on:click={() => {
-        window.open('https://github.com/sveltia/sveltia-cms/issues', '_blank');
-      }}
-    />
-    <MenuItem
-      label={$_('help.feedback')}
-      on:click={() => {
-        window.open('https://github.com/sveltia/sveltia-cms/discussions', '_blank');
-      }}
-    />
-    <Divider />
-    <MenuItem
-      label={$_('sign_out')}
-      on:click={async () => {
-        // Wait a bit before the menu is closed
-        window.requestAnimationFrame(() => {
-          $user = null;
-          $backend.signOut();
-        });
-      }}
-    />
-  </Menu>
-</MenuButton>
+    <Menu slot="popup">
+      <MenuItem
+        label={isLocal
+          ? $_('working_with_local_repo')
+          : $_('signed_in_as_x', { values: { name: $user?.login } })}
+        disabled={isLocal}
+        on:click={() => {
+          window.open($user?.html_url, '_blank');
+        }}
+      />
+      <Divider />
+      <MenuItem
+        label={$_('live_site')}
+        on:click={() => {
+          openProductionSite();
+        }}
+      />
+      <MenuItem
+        label={$_('git_repository')}
+        disabled={isLocal}
+        on:click={() => {
+          window.open($backend.repository.url);
+        }}
+      />
+      <Divider />
+      <MenuItem
+        label={$_('settings')}
+        on:click={() => {
+          showPrefsDialog = true;
+        }}
+      />
+      <Divider />
+      <MenuItem
+        label={$_('help.keyboard_shortcuts')}
+        on:click={() => {
+          showShortcutsDialog = true;
+        }}
+      />
+      <MenuItem
+        label={$_('help.documentation')}
+        on:click={() => {
+          window.open('https://github.com/sveltia/sveltia-cms/blob/main/README.md', '_blank');
+        }}
+      />
+      <MenuItem
+        label={$_('help.release_notes')}
+        on:click={() => {
+          window.open('https://github.com/sveltia/sveltia-cms/releases', '_blank');
+        }}
+      />
+      <Divider />
+      <MenuItem
+        label={$_('help.issue')}
+        on:click={() => {
+          window.open('https://github.com/sveltia/sveltia-cms/issues', '_blank');
+        }}
+      />
+      <MenuItem
+        label={$_('help.feedback')}
+        on:click={() => {
+          window.open('https://github.com/sveltia/sveltia-cms/discussions', '_blank');
+        }}
+      />
+      <Divider />
+      <MenuItem
+        label={$_('sign_out')}
+        on:click={async () => {
+          // Wait a bit before the menu is closed
+          window.requestAnimationFrame(() => {
+            $user = null;
+            $backend.signOut();
+          });
+        }}
+      />
+    </Menu>
+  </MenuButton>
+</div>
 
 <PrefsDialog bind:open={showPrefsDialog} />
 <ShortcutsDialog bind:open={showShortcutsDialog} />
 
 <style lang="scss">
+  .wrapper {
+    display: contents;
+
+    :global(button.avatar) {
+      border-width: 0;
+      background-color: transparent;
+    }
+  }
+
   .avatar {
     width: 32px;
     height: 32px;

@@ -80,9 +80,9 @@
       {#if required}
         <div class="required">{$_('required')}</div>
       {/if}
-      <Spacer flex={true} />
+      <Spacer flex />
       {#if canCopy || canRevert}
-        <MenuButton class="ghost iconic small" popupPosition="bottom-right">
+        <MenuButton variant="ghost" size="small" iconic popupPosition="bottom-right">
           <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
           <Menu slot="popup">
             {#if canCopy}
@@ -263,10 +263,6 @@
         :global(input[type='time']::-webkit-calendar-picker-indicator) {
           filter: invert(1);
         }
-      }
-
-      :global(span) {
-        display: block;
       }
     }
   }

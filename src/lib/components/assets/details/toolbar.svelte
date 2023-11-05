@@ -8,9 +8,10 @@
   let showDeleteDialog = false;
 </script>
 
-<Toolbar class="primary">
+<Toolbar variant="primary">
   <Button
-    class="ghost iconic"
+    variant="ghost"
+    iconic
     on:click={() => {
       goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
     }}
@@ -18,13 +19,13 @@
     <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel')} />
   </Button>
   <h2>{$selectedAsset.name}</h2>
-  <Spacer flex={true} />
+  <Spacer flex />
   <!-- @todo Implement these actions.
-  <Button class="secondary" label={$_('edit')} />
-  <Button class="secondary" label={$_('replace')} />
+  <Button variant="secondary" label={$_('edit')} />
+  <Button variant="secondary" label={$_('replace')} />
   -->
   <Button
-    class="secondary"
+    variant="secondary"
     label={$_('delete')}
     on:click={() => {
       showDeleteDialog = true;

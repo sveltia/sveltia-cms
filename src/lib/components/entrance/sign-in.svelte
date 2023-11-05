@@ -18,7 +18,7 @@
       </div>
     {:else}
       <Button
-        class="primary"
+        variant="primary"
         label={$_('work_with_local_repo')}
         on:click={async () => {
           await signInManually();
@@ -27,7 +27,7 @@
     {/if}
   {:else if $backend || $unauthenticated}
     <Button
-      class="primary"
+      variant="primary"
       label={$_('sign_in_with_x', { values: { name: $backend.label } })}
       on:click={async () => {
         await signInManually();

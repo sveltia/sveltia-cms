@@ -25,7 +25,7 @@
   <div class="grid-wrapper">
     <SimpleImageGrid
       viewType={$selectAssetsView?.type}
-      on:select={(event) => {
+      on:change={(event) => {
         dispatch('select', {
           asset: assets.find(({ sha }) => sha === /** @type {CustomEvent} */ (event).detail.value),
         });

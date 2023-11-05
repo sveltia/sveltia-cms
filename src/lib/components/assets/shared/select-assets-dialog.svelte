@@ -83,7 +83,7 @@
   <svelte:fragment slot="header-extra">
     {#if isLocalLibrary}
       <Button
-        class="secondary"
+        variant="secondary"
         label={$_('upload')}
         on:click={() => {
           if (libraryName === 'collection-files') {
@@ -114,7 +114,7 @@
     <Listbox
       aria-controls="{elementIdPrefix}-content-pane"
       class="tabs"
-      on:select={(event) => {
+      on:change={(event) => {
         libraryName = /** @type {CustomEvent} */ (event).detail.name;
         selectedAsset = null;
       }}
@@ -124,14 +124,10 @@
           <Option
             name="collection-files"
             label={$_('collection_files')}
-            aria-selected={libraryName === 'collection-files'}
+            selected={libraryName === 'collection-files'}
           />
         {/if}
-        <Option
-          name="all-files"
-          label={$_('all_assets')}
-          aria-selected={libraryName === 'all-files'}
-        />
+        <Option name="all-files" label={$_('all_assets')} selected={libraryName === 'all-files'} />
       </OptionGroup>
       <OptionGroup label={$_('assets_dialog.location.external_locations')}>
         {#if canEnterURL}

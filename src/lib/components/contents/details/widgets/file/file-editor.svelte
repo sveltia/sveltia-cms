@@ -121,7 +121,8 @@
     <div>
       <Button
         {disabled}
-        class="tertiary small"
+        variant="tertiary"
+        size="small"
         label={currentValue ? $_('replace') : $_('select')}
         on:click={() => {
           showSelectAssetsDialog = true;
@@ -130,7 +131,8 @@
       {#if currentValue}
         <Button
           {disabled}
-          class="tertiary small"
+          variant="tertiary"
+          size="small"
           label={$_('remove')}
           on:click={() => {
             currentValue = '';
@@ -173,7 +175,7 @@
   <div>{$_('assets_dialog.photo_credit.description')}</div>
   <div>
     <TextArea
-      readonly="readonly"
+      readonly
       value={photoCredit}
       on:click={(event) => {
         /** @type {HTMLTextAreaElement} */ (event.target).focus();

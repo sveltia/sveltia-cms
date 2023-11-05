@@ -17,7 +17,7 @@
           <Option
             label={label || name}
             selected={$selectedCollection.name === name}
-            on:click={() => {
+            on:select={() => {
               goto(`/collections/${name}`);
             }}
           >

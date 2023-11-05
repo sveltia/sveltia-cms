@@ -44,6 +44,7 @@
   <SearchBar
     bind:this={searchBar}
     keyShortcuts="Accel+F"
+    showInlineLabel={true}
     aria-label={$_('search_placeholder')}
     --sui-textbox-label-align="center"
     on:input={({ target }) => {

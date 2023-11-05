@@ -13,9 +13,9 @@
 </script>
 
 {#if !$selectedCollection.files}
-  <Toolbar class="secondary">
+  <Toolbar variant="secondary">
     <Button
-      class="ghost"
+      variant="ghost"
       disabled={$selectedAssets.length === Object.values($assetGroups).flat(1).length}
       label={$_('select_all')}
       on:click={() => {
@@ -23,14 +23,14 @@
       }}
     />
     <Button
-      class="ghost"
+      variant="ghost"
       disabled={!$selectedAssets.length}
       label={$_('clear_selection')}
       on:click={() => {
         $selectedAssets = [];
       }}
     />
-    <Spacer flex={true} />
+    <Spacer flex />
     <SortMenu disabled={!hasMultipleAssets} {currentView} fields={$sortFields} />
     <FilterMenu
       label={$_('file_type')}
@@ -42,7 +42,8 @@
     <ViewSwitcher disabled={!hasListedAssets} {currentView} />
     <Divider />
     <Button
-      class="ghost iconic"
+      variant="ghost"
+      iconic
       disabled={!hasListedAssets}
       pressed={!!$currentView?.showInfo}
       on:click={() => {

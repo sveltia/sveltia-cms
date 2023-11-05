@@ -17,7 +17,7 @@
         <Option
           {selected}
           label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}
-          on:click={() => {
+          on:select={() => {
             goto(internalPath ? `/assets/${internalPath}` : `/assets`);
           }}
           on:dragover={(event) => {

@@ -49,7 +49,7 @@
 </script>
 
 <div class="header">
-  <Toolbar class="secondary">
+  <Toolbar variant="secondary">
     {#if hasLocales}
       <!-- @todo Use a dropdown list when there are 5+ locales. -->
       <SelectButtonGroup>
@@ -59,9 +59,11 @@
           {#if !($thatPane?.mode === 'edit' && $thatPane?.locale === locale)}
             <SelectButton
               selected={$thisPane.mode === 'edit' && $thisPane.locale === locale}
-              class="tertiary small {invalid ? 'error' : ''}"
+              variant="tertiary"
+              size="small"
+              class={invalid ? 'error' : ''}
               label={localeLabel}
-              on:click={() => {
+              on:select={() => {
                 $thisPane = { mode: 'edit', locale };
 
                 if ($thatPane?.mode === 'preview') {
@@ -78,9 +80,10 @@
         {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings.showPreview}
           <SelectButton
             selected={$thisPane.mode === 'preview'}
-            class="tertiary small"
+            variant="tertiary"
+            size="small"
             label={$_('preview')}
-            on:click={() => {
+            on:select={() => {
               $thisPane = { mode: 'preview', locale: $thatPane?.locale };
             }}
           />
@@ -89,9 +92,9 @@
     {:else}
       <h3>{$thisPane.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
     {/if}
-    <Spacer flex={true} />
+    <Spacer flex />
     {#if $thisPane.mode === 'edit'}
-      <MenuButton class="ghost iconic" popupPosition="bottom-right">
+      <MenuButton variant="ghost" iconic popupPosition="bottom-right">
         <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
         <Menu slot="popup">
           {#if canCopy}

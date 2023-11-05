@@ -19,10 +19,10 @@
   const dateFields = ['date', 'commit_date'];
 </script>
 
-<MenuButton class="ghost" label={label || $_('sort_by')} {disabled}>
+<MenuButton variant="ghost" label={label || $_('sort_by')} {disabled}>
   <Icon slot="end-icon" name="arrow_drop_down" />
   <Menu slot="popup">
-    <MenuItemGroup ariaLabel={$_('sort_field')}>
+    <MenuItemGroup aria-label={$_('sort_field')}>
       {#each fields as { key, label: _label } (key)}
         {#each sortOrders as order (order)}
           <MenuItemRadio

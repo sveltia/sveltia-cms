@@ -10,12 +10,12 @@
 </script>
 
 <div class="toolbar-wrapper" hidden={$entryDraft ? true : undefined}>
-  <Toolbar>
+  <Toolbar variant="primary">
     <SiteLogo />
     <PageSwitcher />
-    <Spacer flex={true} />
+    <Spacer flex />
     <QuickSearchBar />
-    <Spacer flex={true} />
+    <Spacer flex />
     <CreateButton />
     <NotificationsButton />
     <AccountButton />
@@ -31,10 +31,7 @@
     }
 
     & > :global(.toolbar) {
-      --toolbar-size: 48px;
       border-width: 0 0 1px 0 !important;
-      border-color: var(--sui-primary-border-color) !important;
-      background-color: var(--sui-tertiary-background-color);
 
       :global(.search-bar) {
         width: 640px;

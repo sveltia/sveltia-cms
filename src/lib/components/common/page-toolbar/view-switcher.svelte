@@ -10,12 +10,13 @@
   export let currentView = writable({});
 </script>
 
-<SelectButtonGroup {disabled} ariaLabel={$_('switch_view')}>
+<SelectButtonGroup {disabled} aria-label={$_('switch_view')}>
   <SelectButton
     {disabled}
     selected={$currentView.type !== 'grid'}
-    class="ghost iconic"
-    on:click={() => {
+    variant="ghost"
+    iconic
+    on:select={() => {
       currentView.update((view) => ({
         ...view,
         type: 'list',
@@ -27,8 +28,9 @@
   <SelectButton
     {disabled}
     selected={$currentView.type === 'grid'}
-    class="ghost iconic"
-    on:click={() => {
+    variant="ghost"
+    iconic
+    on:select={() => {
       currentView.update((view) => ({
         ...view,
         type: 'grid',

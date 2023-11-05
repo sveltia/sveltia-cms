@@ -84,7 +84,7 @@
       {$_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
     </span>
     <Button
-      class="tertiary"
+      variant="tertiary"
       on:click={() => {
         toggleLocale(locale);
       }}

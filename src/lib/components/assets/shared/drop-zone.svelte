@@ -78,7 +78,7 @@
         <div>{$_('drop_files_or_browse')}</div>
         <div>
           <Button
-            class="primary"
+            variant="primary"
             label={$_('upload')}
             on:click={() => {
               openFilePicker();
@@ -148,7 +148,7 @@
       font-size: var(--sui-font-size-xxx-large);
       border-width: 8px;
       border-style: dashed;
-      border-color: var(--sui-primary-accent-color-foreground);
+      border-color: var(--sui-primary-accent-color-inverted);
       border-radius: 8px;
     }
   }

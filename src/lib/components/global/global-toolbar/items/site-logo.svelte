@@ -7,7 +7,8 @@
 
 {#if $siteConfig?.logo_url}
   <Button
-    class="ghost iconic"
+    variant="ghost"
+    iconic
     aria-label={$_('live_site')}
     on:click={() => {
       openProductionSite();

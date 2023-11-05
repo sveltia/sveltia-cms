@@ -16,13 +16,12 @@
 
     :global([role='grid']) {
       :global([role='row']) {
-        width: 100%;
-        height: 48px;
         cursor: pointer;
+        transition: all 200ms;
       }
 
       :global([role='row']:hover) {
-        background-color: var(--sui-highlight-background-color);
+        background-color: var(--sui-hover-background-color);
       }
 
       :global([role='gridcell']) {
@@ -51,7 +50,7 @@
 
       :global([role='row'] [role='gridcell']) {
         border-width: 1px 0 0;
-        border-color: var(--sui-control-border-color);
+        border-color: var(--sui-secondary-border-color);
       }
 
       :global([role='row']:last-child [role='gridcell']) {
@@ -71,7 +70,7 @@
         width: 32px;
 
         :global(img) {
-          background-color: var(--sui-primary-accent-color-foreground);
+          background-color: var(--sui-primary-accent-color-inverted);
         }
 
         :global(img),

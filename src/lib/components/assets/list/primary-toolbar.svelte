@@ -14,16 +14,16 @@
   let showDeleteDialog = false;
 </script>
 
-<Toolbar class="primary">
+<Toolbar variant="primary">
   <h2>
     {$appLocale ? getFolderLabelByPath($selectedAssetFolderPath) : ''}
     {#if $selectedAssetFolderPath}
       <span>/{$selectedAssetFolderPath}</span>
     {/if}
   </h2>
-  <Spacer flex={true} />
+  <Spacer flex />
   <Button
-    class="secondary"
+    variant="secondary"
     disabled={!$selectedAssets.length}
     label={$_('delete')}
     on:click={() => {
@@ -35,7 +35,7 @@
   <!-- @todo Implement these actions. -->
   <!--
   <Button
-    class="secondary"
+    variant="secondary"
     disabled={$selectedAssets.length !== 1}
     label={$_('copy')}
     on:click={() => {
@@ -45,7 +45,7 @@
     <Icon slot="start-icon" name="file_copy" />
   </Button>
   <Button
-    class="secondary"
+    variant="secondary"
     disabled={!$selectedAssets.length}
     label={$_('download')}
     on:click={() => {
@@ -56,7 +56,7 @@
   </Button>
   -->
   <Button
-    class="primary"
+    variant="primary"
     label={$_('upload')}
     on:click={() => {
       filePicker.open();

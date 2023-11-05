@@ -125,7 +125,7 @@
       {@const { content } = locales[locale]}
       <p>
         <Button
-          class="link"
+          variant="link"
           on:click={() => {
             goto(`/collections/${collectionName}/entries/${fileName || slug}`);
           }}

@@ -26,7 +26,7 @@
 </script>
 
 <TableRow
-  aria-selected={$selectedEntries.includes(entry)}
+  selected={$selectedEntries.includes(entry)}
   on:click={() => {
     goto(`/collections/${$selectedCollection.name}/entries/${entry.slug}`);
   }}

@@ -31,7 +31,8 @@
         </div>
       </div>
       <Button
-        class="ghost iconic"
+        variant="ghost"
+        iconic
         on:click={(event) => {
           event.stopPropagation();
           files.splice(index, 1);

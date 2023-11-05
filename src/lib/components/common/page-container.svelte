@@ -89,8 +89,6 @@
             display: flex;
             justify-content: flex-start;
             border-radius: var(--sui-control-medium-border-radius);
-            padding: 0 12px;
-            height: 32px;
             width: 100%;
             text-align: left;
 
@@ -119,11 +117,11 @@
 
           :global([role='option'][aria-selected='true']) {
             color: var(--sui-highlight-foreground-color);
-            background-color: var(--sui-highlight-background-color);
+            background-color: var(--sui-selected-background-color);
           }
 
           :global([role='option'].dragover) {
-            color: var(--sui-primary-accent-color-foreground) !important;
+            color: var(--sui-primary-accent-color-inverted) !important;
             background-color: var(--sui-primary-accent-color) !important;
           }
         }

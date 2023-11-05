@@ -17,7 +17,7 @@
 <!-- @todo Add support for drag to move. -->
 
 <TableRow
-  aria-selected={$selectedAssets.includes(asset)}
+  selected={$selectedAssets.includes(asset)}
   on:click={() => {
     $selectedAsset = asset;
 

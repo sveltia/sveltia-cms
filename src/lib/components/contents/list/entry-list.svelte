@@ -42,7 +42,7 @@
       <EmptyState>
         <span>{$_('no_entries_created')}</span>
         <Button
-          class="primary"
+          variant="primary"
           disabled={!$selectedCollection.create}
           label={$_('create_new_entry')}
           on:click={() => {

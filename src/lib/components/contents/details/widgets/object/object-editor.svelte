@@ -138,6 +138,7 @@
     <Group aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}>
       <div class="header">
         <Button
+          size="small"
           aria-expanded={parentExpanded}
           aria-controls="object-{widgetId}-item-list"
           on:click={() => {
@@ -153,6 +154,7 @@
         <Spacer flex />
         {#if !required}
           <Button
+            size="small"
             disabled={locale !== defaultLocale && i18n === 'duplicate'}
             on:click={() => {
               removeFields();
@@ -181,7 +183,7 @@
   </div>
 {:else if !required && (locale === defaultLocale || i18n !== false)}
   <Button
-    class="tertiary"
+    variant="tertiary"
     label={$_('add_x', { values: { name: label || name } })}
     disabled={locale !== defaultLocale && i18n === 'duplicate'}
     on:click={() => {
@@ -207,7 +209,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 4px;
     background-color: var(--sui-secondary-border-color);
 
     :global(.icon) {

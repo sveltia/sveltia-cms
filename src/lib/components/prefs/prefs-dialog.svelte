@@ -15,11 +15,7 @@
 <Dialog title={$_('settings')} bind:open showOk={false} showCancel={false} showClose={true}>
   <div class="wrapper">
     <TabList orientation="vertical">
-      <Tab
-        label={$_('prefs.appearance.title')}
-        aria-selected={true}
-        aria-controls="prefs-tab-appearance"
-      >
+      <Tab label={$_('prefs.appearance.title')} selected aria-controls="prefs-tab-appearance">
         <Icon slot="start-icon" name="palette" />
       </Tab>
       <Tab label={$_('prefs.languages.title')} aria-controls="prefs-tab-languages">

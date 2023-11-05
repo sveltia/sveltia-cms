@@ -5,7 +5,7 @@
 </script>
 
 <div class="wrapper">
-  <Listbox class={viewType} on:select>
+  <Listbox class={viewType} on:change>
     <slot />
   </Listbox>
 </div>

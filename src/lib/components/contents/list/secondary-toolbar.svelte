@@ -15,9 +15,9 @@
 </script>
 
 {#if $selectedCollection.folder}
-  <Toolbar class="secondary">
+  <Toolbar variant="secondary">
     <Button
-      class="ghost"
+      variant="ghost"
       disabled={$selectedEntries.length === allEntries.length}
       label={$_('select_all')}
       on:click={() => {
@@ -25,14 +25,14 @@
       }}
     />
     <Button
-      class="ghost"
+      variant="ghost"
       disabled={!$selectedEntries.length}
       label={$_('clear_selection')}
       on:click={() => {
         $selectedEntries = [];
       }}
     />
-    <Spacer flex={true} />
+    <Spacer flex />
     <SortMenu
       disabled={!hasMultipleEntries || !$sortFields.length}
       {currentView}
@@ -55,7 +55,8 @@
     <ViewSwitcher disabled={!hasListedEntries || !firstImageField} {currentView} />
     <Divider />
     <Button
-      class="ghost iconic"
+      variant="ghost"
+      iconic
       disabled={!hasListedEntries || !$selectedCollection.media_folder}
       pressed={!!$currentView?.showMedia}
       on:click={() => {

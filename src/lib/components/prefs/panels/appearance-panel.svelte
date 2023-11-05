@@ -9,13 +9,13 @@
     <h4>{$_('prefs.appearance.theme')}</h4>
     <p>
       <SelectButtonGroup
-        on:change={({ detail: { value } }) => {
+        on:change={(/** @type {CustomEvent} */ { detail: { value } }) => {
           $prefs = { ...$prefs, theme: value };
         }}
       >
         {#each ['auto', 'dark', 'light'] as value}
           <SelectButton
-            class="tertiary"
+            variant="tertiary"
             label={$_(`prefs.theme.${value}`)}
             {value}
             selected={(!$prefs.theme && value === 'auto') || $prefs.theme === value}

@@ -34,7 +34,7 @@
 </script>
 
 {#if Array.isArray(types)}
-  <MenuButton class="tertiary" {label} disabled={_disabled}>
+  <MenuButton variant="tertiary" {label} disabled={_disabled}>
     <Icon slot="start-icon" name="add" />
     <Menu slot="popup">
       {#each types as { name, label: itemLabel } (name)}
@@ -43,7 +43,7 @@
     </Menu>
   </MenuButton>
 {:else}
-  <Button class="tertiary" {label} disabled={_disabled} on:click={() => addItem()}>
+  <Button variant="tertiary" {label} disabled={_disabled} on:click={() => addItem()}>
     <Icon slot="start-icon" name="add" />
   </Button>
 {/if}

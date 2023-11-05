@@ -59,9 +59,10 @@
   };
 </script>
 
-<Toolbar class="primary">
+<Toolbar variant="primary">
   <Button
-    class="ghost iconic"
+    variant="ghost"
+    iconic
     on:click={() => {
       goBack(`/collections/${collection?.name}`);
     }}
@@ -81,8 +82,8 @@
       })}
     {/if}
   </h2>
-  <Spacer flex={true} />
-  <MenuButton class="ghost iconic" popupPosition="bottom-right">
+  <Spacer flex />
+  <MenuButton variant="ghost" iconic popupPosition="bottom-right">
     <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
     <Menu slot="popup">
       <MenuItemCheckbox
@@ -135,7 +136,7 @@
     </Menu>
   </MenuButton>
   <Button
-    class="primary"
+    variant="primary"
     label={$_(saving ? 'saving' : 'save')}
     disabled={!modified || saving}
     keyShortcuts="Accel+S"

@@ -278,6 +278,7 @@
           <div class="header">
             <div>
               <Button
+                size="small"
                 aria-expanded={expanded}
                 aria-controls="list-{widgetId}-item-{index}-body"
                 on:click={() => {
@@ -300,6 +301,7 @@
             </div>
             <div>
               <Button
+                size="small"
                 disabled={isDuplicateField || index === 0}
                 on:click={() => {
                   moveUpItem(index);
@@ -309,6 +311,7 @@
               </Button>
               <Spacer />
               <Button
+                size="small"
                 disabled={isDuplicateField || index === items.length - 1}
                 on:click={() => {
                   moveDownItem(index);
@@ -319,6 +322,7 @@
             </div>
             <div>
               <Button
+                size="small"
                 disabled={isDuplicateField}
                 on:click={() => {
                   removeItem(index);
@@ -387,7 +391,6 @@
     .header {
       display: flex;
       align-items: center;
-      padding: 4px;
       background-color: var(--sui-secondary-border-color);
 
       & > div {

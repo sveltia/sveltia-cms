@@ -16,7 +16,7 @@
   export let groups = [];
 </script>
 
-<MenuButton class="ghost" label={label || $_('group_by')} {disabled}>
+<MenuButton variant="ghost" label={label || $_('group_by')} {disabled}>
   <Icon slot="end-icon" name="arrow_drop_down" />
   <Menu slot="popup">
     <MenuItemRadio

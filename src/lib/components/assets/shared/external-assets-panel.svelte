@@ -157,7 +157,7 @@
   {:else}
     <SimpleImageGrid
       viewType={$selectAssetsView?.type}
-      on:select={(event) => {
+      on:change={(event) => {
         selectAsset(
           searchResults.find(({ id }) => id === /** @type {CustomEvent} */ (event).detail.value),
         );
@@ -242,7 +242,7 @@
       </div>
       <div class="input-outer">
         <Button
-          class="secondary"
+          variant="secondary"
           label={$_('sign_in')}
           disabled={!input.userName || !input.password || authState === 'requested'}
           on:click={async () => {
