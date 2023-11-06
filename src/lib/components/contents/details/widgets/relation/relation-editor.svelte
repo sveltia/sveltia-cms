@@ -18,6 +18,14 @@
    */
   export let keyPath;
   /**
+   * @type {string}
+   */
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  export let fieldLabel;
+  /**
    * @type {RelationField}
    */
   export let fieldConfig;
@@ -28,7 +36,15 @@
   /**
    * @type {boolean}
    */
-  export let disabled = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  export let invalid = false;
 
   $: ({
     // Widget-specific options
@@ -46,8 +62,12 @@
 <SelectEditor
   {locale}
   {keyPath}
+  {fieldId}
+  {fieldLabel}
   fieldConfig={{ ...fieldConfig, options }}
   bind:currentValue
-  {disabled}
+  {readonly}
+  {required}
+  {invalid}
   sortOptions={true}
 />

@@ -7,6 +7,8 @@
   import { openProductionSite } from '$lib/services/navigation';
   import { user } from '$lib/services/user';
 
+  /** @type {MenuButton} */
+  let menuButtonComponent;
   let showPrefsDialog = false;
   let showShortcutsDialog = false;
 
@@ -15,7 +17,13 @@
 </script>
 
 <div class="wrapper">
-  <MenuButton variant="ghost" iconic class={hasAvatar ? 'avatar' : ''} popupPosition="bottom-right">
+  <MenuButton
+    variant="ghost"
+    iconic
+    class={hasAvatar ? 'avatar' : ''}
+    popupPosition="bottom-right"
+    bind:this={menuButtonComponent}
+  >
     <svelte:component
       this={hasAvatar ? undefined : Icon}
       slot="start-icon"
@@ -107,8 +115,8 @@
   </MenuButton>
 </div>
 
-<PrefsDialog bind:open={showPrefsDialog} />
-<ShortcutsDialog bind:open={showShortcutsDialog} />
+<PrefsDialog bind:open={showPrefsDialog} on:close={() => menuButtonComponent.focus()} />
+<ShortcutsDialog bind:open={showShortcutsDialog} on:close={() => menuButtonComponent.focus()} />
 
 <style lang="scss">
   .wrapper {

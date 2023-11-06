@@ -31,7 +31,7 @@
 />
 
 <PageContainer class="content">
-  <Toolbar variant="primary" slot="primary_toolbar">
+  <Toolbar variant="primary" aria-label={$_('search_results_toolbar')} slot="primary_toolbar">
     <h2>{$_('search_results_for_x', { values: { terms: $searchTerms } })}</h2>
   </Toolbar>
   <SearchResults slot="main" />

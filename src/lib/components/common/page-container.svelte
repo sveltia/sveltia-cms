@@ -10,7 +10,7 @@
   export { className as class };
 </script>
 
-<div class="outer" hidden={$entryDraft ? true : undefined}>
+<div class="outer" inert={$entryDraft ? true : undefined}>
   <Group class="browser {className}" {...$$restProps}>
     <slot name="primary_sidebar" />
     <Group class="main">
@@ -33,7 +33,7 @@
     flex-direction: column;
     overflow: hidden;
 
-    &[hidden] {
+    &[inert] {
       display: none;
     }
 
@@ -69,11 +69,6 @@
 
       :global(section) {
         padding: 8px 0;
-
-        :global(h2) {
-          position: absolute;
-          left: -9999px;
-        }
 
         :global([role='search']) {
           margin: 0 16px 16px;

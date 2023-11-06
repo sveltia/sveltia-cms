@@ -26,6 +26,16 @@
    */
   export let keyPath;
   /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldLabel;
+  /**
    * @type {ObjectField}
    */
   export let fieldConfig;
@@ -38,12 +48,20 @@
    * @type {boolean}
    */
   // svelte-ignore unused-export-let
-  export let disabled = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  // svelte-ignore unused-export-let
+  export let invalid = false;
 
   $: ({
     name,
     label,
-    required = true,
     i18n = false,
     // Widget-specific options
     collapsed = false,

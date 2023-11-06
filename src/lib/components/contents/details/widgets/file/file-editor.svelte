@@ -23,6 +23,15 @@
    */
   export let keyPath;
   /**
+   * @type {string}
+   */
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldLabel;
+  /**
    * @type {FileField}
    */
   export let fieldConfig;
@@ -33,7 +42,15 @@
   /**
    * @type {boolean}
    */
-  export let disabled = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  export let invalid = false;
 
   /**
    * @type {Asset}
@@ -110,7 +127,17 @@
   {/if}
   <div>
     {#if typeof currentValue === 'string'}
-      <div class="filename">
+      <div
+        id="{fieldId}-value"
+        tabindex="0"
+        class="filename"
+        role="textbox"
+        aria-readonly={readonly}
+        aria-invalid={invalid}
+        aria-required={required}
+        aria-labelledby="{fieldId}-label"
+        aria-errormessage="{fieldId}-error"
+      >
         {#if file}
           {file.name}
         {:else if !currentValue.startsWith('data:')}
@@ -120,7 +147,8 @@
     {/if}
     <div>
       <Button
-        {disabled}
+        disabled={readonly}
+        aria-controls="{fieldId}-value"
         variant="tertiary"
         size="small"
         label={currentValue ? $_('replace') : $_('select')}
@@ -130,7 +158,8 @@
       />
       {#if currentValue}
         <Button
-          {disabled}
+          disabled={readonly}
+          aria-controls="{fieldId}-value"
           variant="tertiary"
           size="small"
           label={$_('remove')}

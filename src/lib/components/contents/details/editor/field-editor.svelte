@@ -1,5 +1,5 @@
 <script>
-  import { Divider, Icon, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
+  import { Divider, Icon, Menu, MenuButton, MenuItem, Spacer, getRandomId } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
@@ -20,6 +20,8 @@
    * @type {Field}
    */
   export let fieldConfig;
+
+  const fieldId = getRandomId('field');
 
   // @todo Save & restore draft from local storage.
 
@@ -52,7 +54,6 @@
   $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
   $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
   $: canDuplicate = hasLocales && i18n === 'duplicate';
-  $: disabled = i18n === 'duplicate' && locale !== defaultLocale;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
 
   // Multiple values are flattened in the value map object
@@ -69,21 +70,36 @@
         .filter((val) => val !== undefined)
     : $entryDraft.originalValues[locale][keyPath];
   $: validity = $entryDraft.validities[locale][keyPath];
+
+  $: fieldLabel = label || fieldName;
+  $: readonly = i18n === 'duplicate' && locale !== defaultLocale;
+  $: invalid = validity?.valid === false;
 </script>
 
 {#if widgetName !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
   {@const canCopy = canTranslate && otherLocales.length}
   {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
-  <section data-widget={widgetName} data-key-path={keyPath}>
+  <section
+    role="group"
+    aria-labelledby="{fieldId}-label"
+    data-widget={widgetName}
+    data-key-path={keyPath}
+  >
     <header>
-      <h4>{label || fieldName}</h4>
+      <h4 id="{fieldId}-label">{fieldLabel}</h4>
       {#if required}
         <div class="required">{$_('required')}</div>
       {/if}
       <Spacer flex />
       {#if canCopy || canRevert}
-        <MenuButton variant="ghost" size="small" iconic popupPosition="bottom-right">
-          <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
+        <MenuButton
+          variant="ghost"
+          size="small"
+          iconic
+          popupPosition="bottom-right"
+          aria-label={$_('show_menu_x_field', { values: { field: fieldLabel } })}
+        >
+          <Icon slot="start-icon" name="more_vert" />
           <Menu slot="popup">
             {#if canCopy}
               {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
@@ -110,11 +126,11 @@
         </MenuButton>
       {/if}
     </header>
-    {#if validity?.valid === false}
-      <div class="validation">
+    <div id="{fieldId}-error" class="validation" aria-live="assertive">
+      {#if validity?.valid === false}
         {#if validity.valueMissing}
           <div>
-            <Icon name="error" label={$_('error')} />
+            <Icon name="error" />
             {$_('validation.value_missing')}
           </div>
         {/if}
@@ -152,28 +168,36 @@
             {pattern?.[1] ?? ''}
           </div>
         {/if}
-      </div>
-    {/if}
+      {/if}
+    </div>
     <div>
       {#if !(widgetName in editors)}
         <div>{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
       {:else if isList}
         <svelte:component
           this={editors[widgetName]}
-          {keyPath}
           {locale}
+          {keyPath}
+          {fieldId}
+          {fieldLabel}
           {fieldConfig}
           {currentValue}
-          {disabled}
+          {readonly}
+          {required}
+          {invalid}
         />
       {:else}
         <svelte:component
           this={editors[widgetName]}
-          {keyPath}
           {locale}
+          {keyPath}
+          {fieldId}
+          {fieldLabel}
           {fieldConfig}
           bind:currentValue={$entryDraft.currentValues[locale][keyPath]}
-          {disabled}
+          {readonly}
+          {required}
+          {invalid}
         />
       {/if}
     </div>

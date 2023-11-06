@@ -1,50 +1,65 @@
 <script>
-  import { Button, Icon } from '@sveltia/ui';
+  import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { selectedAssetFolderPath } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
   import { goto, selectedPageName } from '$lib/services/navigation';
+
+  $: pages = [
+    {
+      key: 'collections',
+      label: $_('entries'),
+      icon: 'library_books',
+      link: `/collections/${$selectedCollection.name}`,
+    },
+    {
+      key: 'assets',
+      label: $_('assets'),
+      icon: 'photo_library',
+      link: $selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets',
+    },
+    // {
+    //   key: 'workflow',
+    //   label: $_('editorial_workflow'),
+    //   icon: 'rebase_edit',
+    //   link: '/workflow',
+    // },
+    // {
+    //   key: 'config',
+    //   label: $_('site_config'),
+    //   icon: 'settings',
+    //   link: '/config',
+    // },
+  ];
 </script>
 
-<Button
-  variant="ghost"
-  iconic
-  pressed={$selectedPageName === 'collections'}
-  on:click={() => {
-    goto(`/collections/${$selectedCollection.name}`);
-  }}
->
-  <Icon slot="start-icon" name="library_books" label={$_('entries')} />
-</Button>
-<Button
-  variant="ghost"
-  iconic
-  pressed={$selectedPageName === 'assets'}
-  on:click={() => {
-    goto($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
-  }}
->
-  <Icon slot="start-icon" name="photo_library" label={$_('assets')} />
-</Button>
-<Button
-  variant="ghost"
-  iconic
-  hidden
-  pressed={$selectedPageName === 'workflow'}
-  on:click={() => {
-    goto('/workflow');
-  }}
->
-  <Icon slot="start-icon" name="rebase_edit" label={$_('editorial_workflow')} />
-</Button>
-<Button
-  variant="ghost"
-  iconic
-  hidden
-  pressed={$selectedPageName === 'config'}
-  on:click={() => {
-    goto('/config');
-  }}
->
-  <Icon slot="start-icon" name="settings" label={$_('site_config')} />
-</Button>
+<div class="wrapper">
+  <SelectButtonGroup aria-label={$_('page_switcher')}>
+    {#each pages as { key, label, icon, link } (key)}
+      <SelectButton
+        variant="ghost"
+        iconic
+        selected={$selectedPageName === key}
+        on:select={() => {
+          goto(link);
+        }}
+      >
+        <Icon slot="start-icon" name={icon} {label} />
+      </SelectButton>
+    {/each}
+  </SelectButtonGroup>
+</div>
+
+<style lang="scss">
+  .wrapper {
+    display: contents;
+
+    :global(.sui.select-button-group) {
+      gap: 4px;
+    }
+
+    :global(.sui.button) {
+      border-radius: var(--sui-button-medium-border-radius) !important;
+    }
+  }
+</style>

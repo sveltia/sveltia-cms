@@ -68,10 +68,17 @@ export const strings = {
   unexpected_error: 'Unexpected Error',
 
   // Global toolbar
+  global_toolbar: 'Global Toolbar',
+  page_switcher: 'Page Switcher',
   search_placeholder: 'Search for entries and assets…',
+  create_or_upload: 'Create Entry or Upload Asset',
   asset: 'Asset',
 
   // Library
+  primary_toolbar_x_collection: 'Primary Toolbar for the {collection} Collection',
+  secondary_toolbar_x_collection: 'Secondary Toolbar for the {collection} Collection',
+  primary_toolbar_x_asset: 'Primary Toolbar for the {folder} Folder',
+  secondary_toolbar_x_asset: 'Secondary Toolbar for the {folder} Folder',
   collection_not_found: 'Collection not found.',
   actions: 'Actions',
   switch_view: 'Switch View',
@@ -102,13 +109,17 @@ export const strings = {
   show_assets: 'Show Assets',
   show_info: 'Show Info',
   default: 'Default',
+  asset_folders: 'Asset Folders',
   all_assets: 'All Assets',
   collection_files: 'Collection Files',
   uncategorized: 'Uncategorized',
   x_collection_media_folder: '{collection} Collection Media Folder',
+  search_results_toolbar: 'Search Results Toolbar',
   search_results_for_x: 'Search Results for “{terms}”',
   no_files_found: 'No files found.',
   no_entries_found: 'No entries found.',
+  select_this_entry: 'Select This Entry',
+  select_this_asset: 'Select This Asset',
   drop_files_or_browse: 'Drop a file here or click to browse:',
   drop_files_here: 'Drop files here',
   delete_file: 'Delete File',
@@ -144,12 +155,23 @@ export const strings = {
   assets_deleted: '{count} assets have been deleted.',
 
   // Content editor
+  content_editor: 'Content Editor',
+  content_editor_primary_toolbar: 'Content Editor Primary Toolbar',
+  content_editor_secondary_toolbar: 'Content Editor Secondary Toolbar',
+  cancel_editing: 'Cancel Editing',
   creating_x: 'Creating {name}',
   editing_x: 'Editing {name}',
+  show_editor_menu: 'Show Editor Menu',
   show_preview: 'Show Preview',
   sync_scrolling: 'Sync Scrolling',
+  locale_switcher: 'Locale Switcher',
+  locale_content_errors: 'One more more fields in this locale content have an error.',
   edit: 'Edit',
   preview: 'Preview',
+  edit_x_locale: 'Edit {locale} Content',
+  preview_x_locale: 'Preview {locale} Content',
+  show_menu_x_locale: 'Show Menu for the {locale} Content',
+  show_menu_x_field: 'Show Menu for the {field} Field',
   unsupported_widget_x: 'Unsupported widget: {name}',
   enable_x_locale: 'Enable {locale}',
   reenable_x_locale: 'Reenable {locale}',
@@ -187,6 +209,7 @@ export const strings = {
   },
 
   // Media details
+  asset_editor_toolbar: 'Asset Editor Toolbar',
   no_preview_available: 'No Preview Available.',
   public_url: 'Public URL',
   file_path: 'File Path',
@@ -290,6 +313,7 @@ export const strings = {
     appearance: {
       title: 'Appearance',
       theme: 'Theme',
+      select_theme: 'Select Theme',
     },
     theme: {
       auto: 'Auto',
@@ -300,6 +324,7 @@ export const strings = {
       title: 'Languages',
       ui_language: {
         title: 'User Interface Language',
+        select_language: 'Select Language',
       },
       translator: {
         title: '{service} Translator',

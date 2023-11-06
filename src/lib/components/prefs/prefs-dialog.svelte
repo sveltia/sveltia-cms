@@ -12,7 +12,14 @@
   export let open = false;
 </script>
 
-<Dialog title={$_('settings')} bind:open showOk={false} showCancel={false} showClose={true}>
+<Dialog
+  title={$_('settings')}
+  bind:open
+  showOk={false}
+  showCancel={false}
+  showClose={true}
+  on:close
+>
   <div class="wrapper">
     <TabList orientation="vertical">
       <Tab label={$_('prefs.appearance.title')} selected aria-controls="prefs-tab-appearance">

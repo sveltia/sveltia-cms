@@ -12,11 +12,16 @@
    */
   let filePicker;
   let showDeleteDialog = false;
+
+  $: folderLabel = $appLocale ? getFolderLabelByPath($selectedAssetFolderPath) : '';
 </script>
 
-<Toolbar variant="primary">
+<Toolbar
+  variant="primary"
+  aria-label={$_('primary_toolbar_x_asset', { values: { folder: folderLabel } })}
+>
   <h2>
-    {$appLocale ? getFolderLabelByPath($selectedAssetFolderPath) : ''}
+    {folderLabel}
     {#if $selectedAssetFolderPath}
       <span>/{$selectedAssetFolderPath}</span>
     {/if}

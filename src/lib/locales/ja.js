@@ -68,10 +68,17 @@ export const strings = {
   unexpected_error: '予期せぬエラー',
 
   // Global toolbar
+  global_toolbar: 'グローバルツールバー',
+  page_switcher: 'ページ切り替え',
   search_placeholder: 'エントリーとアセットを検索…',
+  create_or_upload: 'エントリーを作成するかアセットをアップロード',
   asset: 'アセット',
 
   // Library
+  primary_toolbar_x_collection: '{collection} コレクションのプライマリーツールバー',
+  secondary_toolbar_x_collection: '{collection} コレクションのセカンダリーツールバー',
+  primary_toolbar_x_folder: '{folder} フォルダーのプライマリーツールバー',
+  secondary_toolbar_x_folder: '{folder} フォルダーのセカンダリーツールバー',
   collection_not_found: 'コレクションが見つかりませんでした',
   actions: 'アクション',
   switch_view: 'ビューを切り替え',
@@ -102,13 +109,17 @@ export const strings = {
   show_assets: 'アセットを表示',
   show_info: '情報を表示',
   default: 'デフォルト',
+  asset_folders: 'アセットフォルダー',
   all_assets: 'すべてのアセット',
   collection_files: 'コレクションファイル',
   uncategorized: '未分類',
   x_collection_media_folder: '{collection} コレクションメディアフォルダー',
+  search_results_toolbar: '検索結果ツールバー',
   search_results_for_x: '「{terms}」の検索結果',
   no_files_found: 'ファイルは見つかりませんでした。',
   no_entries_found: 'エントリーは見つかりませんでした。',
+  select_this_entry: 'このエントリーを選択',
+  select_this_asset: 'このアセットを選択',
   drop_files_or_browse: 'ここにファイルをドロップするか下のボタンをクリックして参照:',
   drop_files_here: 'ここにファイルをドロップ',
   delete_file: 'ファイルを削除',
@@ -147,12 +158,23 @@ export const strings = {
   assets_deleted: '{count} 個のアセットが削除されました。',
 
   // Content editor
+  content_editor: 'コンテンツエディター',
+  content_editor_primary_toolbar: 'コンテンツエディター プライマリーツールバー',
+  content_editor_secondary_toolbar: 'コンテンツエディター セカンダリーツールバー',
+  cancel_editing: '編集をキャンセル',
   creating_x: '{name} を作成',
   editing_x: '{name} を編集',
+  show_editor_menu: 'エディターメニューを表示',
   show_preview: 'プレビューを表示',
   sync_scrolling: 'スクロールを同期',
+  locale_switcher: 'ロケールの切り替え',
+  locale_content_errors: 'このロケールコンテンツのひとつか複数のフィールドにエラーがあります。',
   edit: '編集',
   preview: 'プレビュー',
+  edit_x_locale: '{locale} コンテンツを編集',
+  preview_x_locale: '{locale} コンテンツをプレビュー',
+  show_menu_x_locale: '{locale} コンテンツのメニューを表示',
+  show_menu_x_field: '{field} フィールドのメニューを表示',
   unsupported_widget_x: '非対応ウィジェット: {name}',
   enable_x_locale: '{locale} を有効化',
   reenable_x_locale: '{locale} を再度有効化',
@@ -190,6 +212,7 @@ export const strings = {
   },
 
   // Media details
+  asset_editor_toolbar: 'アセットエディターツールバー',
   no_preview_available: 'プレビューは表示できません',
   public_url: '公開 URL',
   file_path: 'ファイルパス',
@@ -293,6 +316,7 @@ export const strings = {
     appearance: {
       title: 'アピアランス',
       theme: 'テーマ',
+      select_theme: 'テーマを選択',
     },
     theme: {
       auto: '自動',
@@ -303,6 +327,7 @@ export const strings = {
       title: '言語',
       ui_language: {
         title: 'ユーザーインターフェース言語',
+        select_language: '言語を選択',
       },
       translator: {
         title: '{service} 翻訳',

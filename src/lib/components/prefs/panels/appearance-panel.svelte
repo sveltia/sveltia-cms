@@ -9,6 +9,7 @@
     <h4>{$_('prefs.appearance.theme')}</h4>
     <p>
       <SelectButtonGroup
+        aria-label={$_('prefs.appearance.select_theme')}
         on:change={(/** @type {CustomEvent} */ { detail: { value } }) => {
           $prefs = { ...$prefs, theme: value };
         }}

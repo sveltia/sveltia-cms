@@ -49,10 +49,10 @@
 </script>
 
 <div class="header">
-  <Toolbar variant="secondary">
+  <Toolbar variant="secondary" aria-label={$_('content_editor_secondary_toolbar')}>
     {#if hasLocales}
       <!-- @todo Use a dropdown list when there are 5+ locales. -->
-      <SelectButtonGroup>
+      <SelectButtonGroup aria-label={$_('locale_switcher')}>
         {#each locales as locale}
           {@const localeLabel = getLocaleLabel(locale)}
           {@const invalid = Object.values(validities[locale]).some(({ valid }) => !valid)}
@@ -72,7 +72,7 @@
               }}
             >
               {#if invalid}
-                <Icon slot="end-icon" name="error" label={$_('error')} />
+                <Icon slot="end-icon" name="error" label={$_('locale_content_errors')} />
               {/if}
             </SelectButton>
           {/if}
@@ -94,8 +94,15 @@
     {/if}
     <Spacer flex />
     {#if $thisPane.mode === 'edit'}
-      <MenuButton variant="ghost" iconic popupPosition="bottom-right">
-        <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
+      <MenuButton
+        variant="ghost"
+        iconic
+        popupPosition="bottom-right"
+        aria-label={$_('show_menu_x_locale', {
+          values: { locale: getLocaleLabel($thisPane.locale) },
+        })}
+      >
+        <Icon slot="start-icon" name="more_vert" />
         <Menu slot="popup">
           {#if canCopy}
             <CopyMenuItems locale={$thisPane.locale} translate={true} />

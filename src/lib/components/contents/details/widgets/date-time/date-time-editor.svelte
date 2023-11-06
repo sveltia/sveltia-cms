@@ -22,6 +22,15 @@
   // svelte-ignore unused-export-let
   export let keyPath;
   /**
+   * @type {string}
+   */
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldLabel;
+  /**
    * @type {DateTimeField}
    */
   export let fieldConfig;
@@ -32,7 +41,15 @@
   /**
    * @type {boolean}
    */
-  export let disabled = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  export let invalid = false;
 
   $: ({
     // Widget-specific options
@@ -81,13 +98,20 @@
 </script>
 
 <div>
-  {#if dateOnly}
-    <input type="date" {disabled} bind:value={inputValue} />
-  {:else if timeOnly}
-    <input type="time" {disabled} bind:value={inputValue} />
-  {:else}
-    <input type="datetime-local" {disabled} bind:value={inputValue} />
-  {/if}
+  <input
+    {...{
+      // @see https://github.com/sveltejs/svelte/issues/3921
+      // eslint-disable-next-line no-nested-ternary
+      type: dateOnly ? 'date' : timeOnly ? 'time' : 'datetime-local',
+    }}
+    bind:value={inputValue}
+    {readonly}
+    aria-readonly={readonly}
+    aria-required={required}
+    aria-invalid={invalid}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
+  />
 </div>
 
 <style lang="scss">

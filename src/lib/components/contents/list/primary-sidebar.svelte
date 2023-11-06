@@ -10,8 +10,7 @@
 
 <Group class="primary-sidebar">
   <section>
-    <h2>{$_('collections')}</h2>
-    <Listbox>
+    <Listbox aria-label={$_('collections')}>
       {#each collections as { name, label, icon, hide = false } (name)}
         {#if !hide}
           <Option

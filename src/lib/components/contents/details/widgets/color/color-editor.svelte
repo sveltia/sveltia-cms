@@ -19,6 +19,15 @@
   // svelte-ignore unused-export-let
   export let keyPath;
   /**
+   * @type {string}
+   */
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldLabel;
+  /**
    * @type {ColorField}
    */
   export let fieldConfig;
@@ -29,7 +38,15 @@
   /**
    * @type {boolean}
    */
-  export let disabled = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  export let invalid = false;
 
   $: ({
     // Widget-specific options
@@ -39,10 +56,26 @@
 </script>
 
 <div>
-  <input type="color" {disabled} bind:value={currentValue} />
+  <input
+    type="color"
+    bind:value={currentValue}
+    {readonly}
+    aria-invalid={invalid}
+    aria-readonly={readonly}
+    aria-required={required}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
+  />
   <span class="value">
     {#if allowInput}
-      <TextInput bind:value={currentValue} />
+      <TextInput
+        bind:value={currentValue}
+        {invalid}
+        {readonly}
+        {required}
+        aria-labelledby="{fieldId}-label"
+        aria-errormessage="{fieldId}-error"
+      />
     {:else}
       {currentValue ?? ''}
     {/if}

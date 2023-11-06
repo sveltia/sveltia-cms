@@ -1,5 +1,5 @@
 <script>
-  import { Button } from '@sveltia/ui';
+  import { Button, Group } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
@@ -68,31 +68,37 @@
   }
 </script>
 
-{#if currentLocales[locale]}
-  <div
-    class="content"
-    bind:this={thisPaneContentArea}
-    on:wheel|capture={() => {
-      syncScrollPosition();
-    }}
-  >
-    <svelte:component this={mode === 'preview' ? EntryPreview : EntryEditor} {locale} />
-  </div>
-{:else if mode === 'edit'}
-  <EmptyState>
-    <span>
-      {$_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
-    </span>
-    <Button
-      variant="tertiary"
-      on:click={() => {
-        toggleLocale(locale);
+<Group
+  aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+    values: { locale: getLocaleLabel(locale) },
+  })}
+>
+  {#if currentLocales[locale]}
+    <div
+      class="content"
+      bind:this={thisPaneContentArea}
+      on:wheel|capture={() => {
+        syncScrollPosition();
       }}
     >
-      {$_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
-    </Button>
-  </EmptyState>
-{/if}
+      <svelte:component this={mode === 'preview' ? EntryPreview : EntryEditor} {locale} />
+    </div>
+  {:else if mode === 'edit'}
+    <EmptyState>
+      <span>
+        {$_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
+      </span>
+      <Button
+        variant="tertiary"
+        on:click={() => {
+          toggleLocale(locale);
+        }}
+      >
+        {$_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
+      </Button>
+    </EmptyState>
+  {/if}
+</Group>
 
 <style lang="scss">
   .content {

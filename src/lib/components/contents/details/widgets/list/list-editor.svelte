@@ -23,6 +23,15 @@
    */
   export let keyPath;
   /**
+   * @type {string}
+   */
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldLabel;
+  /**
    * @type {ListField}
    */
   export let fieldConfig;
@@ -33,7 +42,15 @@
   /**
    * @type {boolean}
    */
-  export let disabled = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  export let invalid = false;
 
   $: ({
     name: fieldName,
@@ -360,8 +377,11 @@
     {/if}
   {:else}
     <TextInput
-      {disabled}
       bind:value={inputValue}
+      {readonly}
+      {required}
+      {invalid}
+      aria-errormessage="{fieldId}-error"
       on:input={() => {
         updateSimpleList();
       }}

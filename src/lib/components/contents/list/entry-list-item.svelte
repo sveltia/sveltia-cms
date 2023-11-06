@@ -1,5 +1,6 @@
 <script>
   import { Checkbox, TableCell, TableRow } from '@sveltia/ui';
+  import { _ } from 'svelte-i18n';
   import Image from '$lib/components/common/image.svelte';
   import { getMediaFieldURL } from '$lib/services/assets';
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
@@ -33,6 +34,7 @@
 >
   <TableCell class="checkbox">
     <Checkbox
+      aria-label={$_('select_this_entry')}
       checked={$selectedEntries.includes(entry)}
       on:change={({ detail: { checked } }) => {
         selectedEntries.update((_entries) => {

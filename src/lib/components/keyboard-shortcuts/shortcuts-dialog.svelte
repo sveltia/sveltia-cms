@@ -23,6 +23,7 @@
   showOk={false}
   showCancel={false}
   showClose={true}
+  on:close
 >
   <div class="row">
     <div class="feature">{$_('keyboard_shortcuts.search')}</div>

@@ -8,14 +8,18 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
+  $: ({ name, label, fields } = $selectedCollection ?? /** @type {Collection} */ ({}));
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
-  $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
+  $: firstImageField = fields?.find(({ widget }) => widget === 'image');
   $: hasListedEntries = !!$listedEntries.length;
   $: hasMultipleEntries = $listedEntries.length > 1;
 </script>
 
 {#if $selectedCollection.folder}
-  <Toolbar variant="secondary">
+  <Toolbar
+    variant="secondary"
+    aria-label={$_('secondary_toolbar_x_collection', { values: { collection: label || name } })}
+  >
     <Button
       variant="ghost"
       disabled={$selectedEntries.length === allEntries.length}

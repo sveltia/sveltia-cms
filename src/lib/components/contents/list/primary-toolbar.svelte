@@ -18,8 +18,11 @@
 </script>
 
 {#if $selectedCollection}
-  <Toolbar variant="primary">
-    <h2>{label || ''}</h2>
+  <Toolbar
+    variant="primary"
+    aria-label={$_('primary_toolbar_x_collection', { values: { collection: label || name } })}
+  >
+    <h2>{label || name}</h2>
     <div class="description">{description || ''}</div>
     {#if !files}
       <Button

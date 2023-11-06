@@ -18,6 +18,15 @@
    */
   export let keyPath;
   /**
+   * @type {string}
+   */
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldLabel;
+  /**
    * @type {SelectField}
    */
   export let fieldConfig;
@@ -28,11 +37,19 @@
   /**
    * @type {boolean}
    */
-  export let disabled = false;
+  export let sortOptions = false;
   /**
    * @type {boolean}
    */
-  export let sortOptions = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  export let invalid = false;
 
   $: ({
     i18n,
@@ -98,14 +115,14 @@
 </script>
 
 {#if multiple}
-  <div class="multi-selector" class:disabled>
+  <div class="multi-selector" class:disabled={readonly}>
     {#each currentValue as value, index}
       {@const option = options.find((o) => o.value === value)}
       {#if option}
         <span>
           {option.label}
           <Button
-            {disabled}
+            disabled={readonly}
             on:click={() => {
               removeValue(index);
             }}
@@ -117,7 +134,7 @@
     {/each}
     {#if (typeof max !== 'number' || currentValue.length < max) && currentValue.length < options.length}
       <Combobox
-        {disabled}
+        disabled={readonly}
         on:change={({ detail: { target, value } }) => {
           // Avoid an error while navigating pages
           if (!$entryDraft) {
@@ -142,8 +159,12 @@
   </div>
 {:else}
   <Select
-    {disabled}
     bind:value={currentValue}
+    {readonly}
+    {required}
+    {invalid}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
     label={options.find(({ value }) => value === currentValue)?.label || undefined}
   >
     {#each options as { label, value } (value)}

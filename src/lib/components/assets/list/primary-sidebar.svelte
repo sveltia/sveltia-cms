@@ -10,8 +10,7 @@
 
 <Group class="primary-sidebar">
   <section>
-    <h2>{$_('collections')}</h2>
-    <Listbox>
+    <Listbox aria-label={$_('asset_folders')}>
       {#each folders as { collectionName, internalPath } (collectionName)}
         {@const selected = internalPath === $selectedAssetFolderPath}
         <Option

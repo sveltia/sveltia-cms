@@ -61,7 +61,7 @@
   };
 </script>
 
-<Toolbar variant="primary">
+<Toolbar variant="primary" aria-label={$_('content_editor_primary_toolbar')}>
   <Button
     variant="ghost"
     iconic
@@ -69,7 +69,7 @@
       goBack(`/collections/${collection?.name}`);
     }}
   >
-    <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel')} />
+    <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel_editing')} />
   </Button>
   <h2>
     {#if isNew}
@@ -85,8 +85,13 @@
     {/if}
   </h2>
   <Spacer flex />
-  <MenuButton variant="ghost" iconic popupPosition="bottom-right">
-    <Icon slot="start-icon" name="more_vert" label={$_('show_menu')} />
+  <MenuButton
+    variant="ghost"
+    iconic
+    popupPosition="bottom-right"
+    aria-label={$_('show_editor_menu')}
+  >
+    <Icon slot="start-icon" name="more_vert" />
     <Menu slot="popup">
       <MenuItemCheckbox
         label={$_('show_preview')}

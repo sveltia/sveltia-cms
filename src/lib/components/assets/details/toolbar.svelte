@@ -8,7 +8,7 @@
   let showDeleteDialog = false;
 </script>
 
-<Toolbar variant="primary">
+<Toolbar variant="primary" aria-label={$_('asset_editor_toolbar')}>
   <Button
     variant="ghost"
     iconic
@@ -16,7 +16,7 @@
       goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
     }}
   >
-    <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel')} />
+    <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel_editing')} />
   </Button>
   <h2>{$selectedAsset.name}</h2>
   <Spacer flex />

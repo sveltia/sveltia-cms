@@ -14,6 +14,7 @@
     <p>
       {#key $appLocale}
         <Select
+          aria-label={$_('prefs.languages.ui_language.select_language')}
           label={getLocaleLabel($appLocale)}
           value={$appLocale}
           on:change={(/** @type {CustomEvent} */ event) => {

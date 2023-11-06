@@ -18,6 +18,15 @@
   // svelte-ignore unused-export-let
   export let keyPath;
   /**
+   * @type {string}
+   */
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldLabel;
+  /**
    * @type {MarkdownField}
    */
   // svelte-ignore unused-export-let
@@ -29,7 +38,23 @@
   /**
    * @type {boolean}
    */
-  export let disabled = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  export let invalid = false;
 </script>
 
-<TextArea autoResize={true} {disabled} bind:value={currentValue} />
+<TextArea
+  bind:value={currentValue}
+  {readonly}
+  {required}
+  {invalid}
+  aria-labelledby="{fieldId}-label"
+  aria-errormessage="{fieldId}-error"
+  autoResize={true}
+/>

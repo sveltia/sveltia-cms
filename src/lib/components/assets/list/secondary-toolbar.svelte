@@ -1,19 +1,30 @@
 <script>
   import { Button, Divider, Icon, Spacer, Toolbar } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { assetKinds, selectedAssets } from '$lib/services/assets';
-  import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
+  import { assetKinds, selectedAssetFolderPath, selectedAssets } from '$lib/services/assets';
+  import {
+    assetGroups,
+    currentView,
+    getFolderLabelByPath,
+    listedAssets,
+    sortFields,
+  } from '$lib/services/assets/view';
   import { selectedCollection } from '$lib/services/contents';
 
   $: hasListedAssets = !!$listedAssets.length;
   $: hasMultipleAssets = $listedAssets.length > 1;
+
+  $: folderLabel = $appLocale ? getFolderLabelByPath($selectedAssetFolderPath) : '';
 </script>
 
 {#if !$selectedCollection.files}
-  <Toolbar variant="secondary">
+  <Toolbar
+    variant="secondary"
+    aria-label={$_('primary_toolbar_x_asset', { values: { folder: folderLabel } })}
+  >
     <Button
       variant="ghost"
       disabled={$selectedAssets.length === Object.values($assetGroups).flat(1).length}

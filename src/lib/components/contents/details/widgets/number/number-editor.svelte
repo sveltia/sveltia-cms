@@ -17,6 +17,15 @@
   // svelte-ignore unused-export-let
   export let keyPath;
   /**
+   * @type {string}
+   */
+  export let fieldId;
+  /**
+   * @type {string}
+   */
+  // svelte-ignore unused-export-let
+  export let fieldLabel;
+  /**
    * @type {NumberField}
    */
   export let fieldConfig;
@@ -27,7 +36,15 @@
   /**
    * @type {boolean}
    */
-  export let disabled = false;
+  export let readonly = false;
+  /**
+   * @type {boolean}
+   */
+  export let required = false;
+  /**
+   * @type {boolean}
+   */
+  export let invalid = false;
 
   $: ({
     // Widget-specific options
@@ -81,4 +98,14 @@
   }
 </script>
 
-<NumberInput {min} {max} {step} {disabled} bind:value={inputValue} />
+<NumberInput
+  bind:value={inputValue}
+  {min}
+  {max}
+  {step}
+  {readonly}
+  {required}
+  {invalid}
+  aria-labelledby="{fieldId}-label"
+  aria-errormessage="{fieldId}-error"
+/>
