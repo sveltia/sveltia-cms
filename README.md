@@ -14,9 +14,11 @@ Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-
 
 ## Motivation
 
-Sveltia CMS was born in November 2022, when the development of Netlify CMS had been stalled for over six months. [@kyoshino](https://github.com/kyoshino)’s clients were looking to replace their Netlify CMS instances, mainly to get better internationalization (i18n) and multilingual support. Built from the ground up, Sveltia CMS successfully incorporates i18n into every single corner of the product, while striving to radically improve UX, performance and productivity.
+Sveltia CMS was born in November 2022, when the development of Netlify CMS had been stalled for over six months. [@kyoshino](https://github.com/kyoshino)’s clients were looking to replace their Netlify CMS instances without much effort, mainly to get better internationalization (i18n) and multilingual support.
 
-Our goal is to become a promising successor to Netlify CMS, expand the Git-based headless CMS market, and empower small businesses and individuals who need a simple yet effective CMS solution. The project also showcases the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
+Built from the ground up, Sveltia CMS successfully incorporates i18n into every single corner of the product, while striving to radically improve UX, performance and productivity. The new offering has since been released as open source software to encourage wider adoption.
+
+Our goal is to become a viable successor to Netlify CMS, expand the Git-based headless CMS market, and empower small businesses and individuals who need a simple yet effective CMS solution. The project also showcases the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
 
 ## Features
 
@@ -36,7 +38,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better UX
 
-- Created by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design.
+- Created by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements.
 - Offering a modern, intuitive UI, with some inspiration from the Netlify CMS v3 prototype[^1].
 - Immersive dark mode[^2].
 - The screenshots above are worth a thousand words!
@@ -44,7 +46,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Better performance
 
 - Built completely from scratch with Svelte rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework.
-- Using the GraphQL API for GitHub by default to quickly fetch contents at once, so that entries and media can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
+- Using the GraphQL API for GitHub to quickly fetch contents at once, so that entries and media can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
 - Saving entries and media is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Caching Git files locally to further speed up startup and reduce bandwidth.
 - Small footprint: less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
@@ -61,7 +63,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better i18n support
 
-- Making it easier to switch between locales while editing with just a click on a button.
+- Making it easier to switch between locales while editing with just a click on a button instead of a dropdown list.
 - Fields in non-default locales will be validated as expected[^13].
 - [Integrating DeepL](#use-deepl-to-translate-entry-fields) to allow translating text fields from another locale with one click.
 - You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
@@ -263,7 +265,7 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 
 ### Disable non-default locale content
 
-You can now disable the output of non-default locale content by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu at the top-right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
+You can now disable the content output of selected non-default locale by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu at the top-right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
 
 ```diff
  i18n:
