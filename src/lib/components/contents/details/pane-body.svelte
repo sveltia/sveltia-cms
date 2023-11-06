@@ -68,39 +68,49 @@
   }
 </script>
 
-<Group
-  aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-    values: { locale: getLocaleLabel(locale) },
-  })}
->
-  {#if currentLocales[locale]}
-    <div
-      class="content"
-      bind:this={thisPaneContentArea}
-      on:wheel|capture={() => {
-        syncScrollPosition();
-      }}
-    >
-      <svelte:component this={mode === 'preview' ? EntryPreview : EntryEditor} {locale} />
-    </div>
-  {:else if mode === 'edit'}
-    <EmptyState>
-      <span>
-        {$_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
-      </span>
-      <Button
-        variant="tertiary"
-        on:click={() => {
-          toggleLocale(locale);
+<div class="wrapper">
+  <Group
+    aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+      values: { locale: getLocaleLabel(locale) },
+    })}
+  >
+    {#if currentLocales[locale]}
+      <div
+        class="content"
+        bind:this={thisPaneContentArea}
+        on:wheel|capture={() => {
+          syncScrollPosition();
         }}
       >
-        {$_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
-      </Button>
-    </EmptyState>
-  {/if}
-</Group>
+        <svelte:component this={mode === 'preview' ? EntryPreview : EntryEditor} {locale} />
+      </div>
+    {:else if mode === 'edit'}
+      <EmptyState>
+        <span>
+          {$_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
+        </span>
+        <Button
+          variant="tertiary"
+          on:click={() => {
+            toggleLocale(locale);
+          }}
+        >
+          {$_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
+        </Button>
+      </EmptyState>
+    {/if}
+  </Group>
+</div>
 
 <style lang="scss">
+  .wrapper {
+    display: contents;
+
+    & > :global(.group) {
+      display: contents;
+    }
+  }
+
   .content {
     flex: auto;
     overflow-y: auto;
