@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with any static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with almost any static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.webp)<br>
 
@@ -14,11 +14,11 @@ Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-
 
 ## Motivation
 
-Sveltia CMS was born in November 2022, when the development of Netlify CMS had been stalled for over six months. [@kyoshino](https://github.com/kyoshino)’s clients were looking to replace their Netlify CMS instances without much effort, mainly to get better internationalization (i18n) and multilingual support.
+Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stalled for more than six months. [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances without much effort, mainly to get better internationalization support.
 
-Built from the ground up, Sveltia CMS successfully incorporates i18n into every single corner of the product, while striving to radically improve UX, performance and productivity. The new offering has since been released as open source software to encourage wider adoption.
+To achieve radical improvements in UX, performance and i18n, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid prototype with [Svelte](https://svelte.dev/), development was accelerated to address their primary use cases. The new offering has since been released as open source software to encourage wider adoption.
 
-Our goal is to become a viable successor to Netlify CMS, expand the Git-based headless CMS market, and empower small businesses and individuals who need a simple yet effective CMS solution. The project also showcases the power of [Svelte](https://svelte.dev/), a modern UI library for creating web applications with less code.
+Our goal is to make it a viable successor to Netlify CMS, expand the Git-based headless CMS market, empower small businesses and individuals who need a simple yet powerful CMS solution, and showcase the lightweight nature of the Svelte framework.
 
 ## Features
 
@@ -40,12 +40,12 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Created by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements.
 - Offering a modern, intuitive UI, with some inspiration from the Netlify CMS v3 prototype[^1].
-- Immersive dark mode[^2].
+- Featuring immersive dark mode[^2].
 - The screenshots above are worth a thousand words!
 
 ### Better performance
 
-- Built completely from scratch with Svelte rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework.
+- Built completely from scratch with Svelte rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
 - Using the GraphQL API for GitHub to quickly fetch contents at once, so that entries and media can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
 - Saving entries and media is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Caching Git files locally to further speed up startup and reduce bandwidth.
@@ -53,7 +53,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better productivity
 
-- You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server.
+- You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server on your machine.
 - You can delete multiple entries and assets at once.
 - Providing some keyboard shortcuts for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
@@ -97,7 +97,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Installation | Installing with npm is not supported yet. |
-| UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Settings. (Click on the Account button at the top right corner of the CMS.) |
+| UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Settings. (Click on the Account button in the top right corner of the CMS.) |
 | Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. The GitLab backend is coming soon. We plan to add the Test backend as well for our demo site, but Azure and Bitbucket are unlikely to be supported, mainly due to the lack of an API method to fetch content in bulk. Later we may implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
 | Media | External media storage services are not supported yet. |
@@ -152,10 +152,6 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 - Downloading an asset in the media library is not implemented yet.
 - [Backend health check](https://www.githubstatus.com/api) is not implemented yet.
 
-## Known issues
-
-- Accessibility support is limited.
-
 ## Roadmap
 
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
@@ -175,9 +171,9 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 ### New users
 
-Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/add-to-your-site/) to add it to your site first. Then migrate to Sveltia CMS as described below.
+Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/add-to-your-site/) to add it to your site and create a configuration file first. Then migrate to Sveltia CMS as described below.
 
-As the product evolves, we’ll implement the configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
+As the product evolves, we’ll implement a built-in configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
 
 Here are some starter templates for popular frameworks created by our contributors. More to follow!
 
@@ -204,7 +200,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Work with a local Git repository
 
-You can use Sveltia CMS with a local Git repository, just like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
+You can use Sveltia CMS with a local Git repository, like the [beta feature](https://decapcms.org/docs/beta-features/#working-with-a-local-git-repository) in Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
@@ -258,19 +254,21 @@ In Sveltia CMS, those per-collection media folders are displayed prominently for
 Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the content editor. To enable the high-quality, quick translation feature:
 
 1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
-1. Go back to Sveltia CMS, click on the Account button at the top right corner, then click Settings.
+1. Go back to Sveltia CMS, click on the Account button in the top right corner, then click Settings.
 1. Paste your key to the DeepL API Authentication Key field, and close the Settings dialog.
 1. Open any entry, and you can now translate all fields or individual fields by selecting Translate from the three-dot menu.
 1. If you have upgraded to DeepL API Pro, provide your new Authentication Key in the same way.
 
 ### Disable non-default locale content
 
-You can now disable the content output of selected non-default locale by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu at the top-right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
+You can now disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
+
+With the following configuration, you can disable the French and/or German content while writing in English.
 
 ```diff
  i18n:
    structure: multiple_files
-   locales: [en, fr]
+   locales: [en, fr, de]
    default_locale: en
 +  save_all_locales: false
 ```
@@ -356,7 +354,7 @@ Want to build a website with Sveltia CMS? [@kyoshino](https://github.com/kyoshin
 
 ## Contributions
 
-Sveltia CMS is still in early beta, so we do expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new). Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources. As we get closer to the 1.0 release, we’ll be welcoming l10n contributors.
+Sveltia CMS is still in early beta, so we do expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new). Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources. As we get closer to the 1.0 release, we’ll be welcoming localizers.
 
 ## Related Links
 
