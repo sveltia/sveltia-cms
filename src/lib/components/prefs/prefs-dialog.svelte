@@ -10,6 +10,15 @@
    * Whether to open the dialog.
    */
   export let open = false;
+
+  let selectedPanel = 'appearance';
+
+  $: panels = [
+    { key: 'appearance', icon: 'palette', component: AppearancePanel },
+    { key: 'languages', icon: 'language', component: LanguagesPanel },
+    { key: 'media', icon: 'photo_library', component: MediaPanel },
+    { key: 'advanced', icon: 'build', component: AdvancedPanel },
+  ];
 </script>
 
 <Dialog
@@ -22,23 +31,22 @@
 >
   <div class="wrapper">
     <TabList orientation="vertical">
-      <Tab label={$_('prefs.appearance.title')} selected aria-controls="prefs-tab-appearance">
-        <Icon slot="start-icon" name="palette" />
-      </Tab>
-      <Tab label={$_('prefs.languages.title')} aria-controls="prefs-tab-languages">
-        <Icon slot="start-icon" name="language" />
-      </Tab>
-      <Tab label={$_('prefs.media.title')} aria-controls="prefs-tab-media">
-        <Icon slot="start-icon" name="photo_library" />
-      </Tab>
-      <Tab label={$_('prefs.advanced.title')} aria-controls="prefs-tab-advanced">
-        <Icon slot="start-icon" name="build" />
-      </Tab>
+      {#each panels as { key, icon } (key)}
+        <Tab
+          label={$_(`prefs.${key}.title`)}
+          selected={key === selectedPanel}
+          aria-controls="prefs-tab-{key}"
+          on:select={() => {
+            selectedPanel = key;
+          }}
+        >
+          <Icon slot="start-icon" name={icon} />
+        </Tab>
+      {/each}
     </TabList>
-    <AppearancePanel />
-    <LanguagesPanel />
-    <MediaPanel />
-    <AdvancedPanel />
+    {#each panels as { key, component } (key)}
+      <svelte:component this={component} />
+    {/each}
   </div>
 </Dialog>
 
