@@ -16,17 +16,11 @@ Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-
 
 Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stalled for more than six months. [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances without much effort, mainly to get better internationalization support.
 
-To achieve radical improvements in UX, performance and i18n, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid prototype with [Svelte](https://svelte.dev/), development was accelerated to address their primary use cases. The new offering has since been released as open source software to encourage wider adoption.
+To achieve radical improvements in UX, performance and i18n, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new offering has since been released as open source software to encourage wider adoption.
 
 Our goal is to make it a viable successor to Netlify CMS, expand the Git-based headless CMS market, empower small businesses and individuals who need a simple yet powerful CMS solution, and showcase the lightweight nature of the Svelte framework.
 
 ## Features
-
-Sveltia CMS is a Git-based lightweight headless CMS, which means:
-
-- Git-based: The content is stored as static JSON, YAML or TOML files on your Git repository. No 3rd party database or API is involved. Your data is yours.
-- Lightweight: The app is compiled as a single small JavaScript file served over a CDN. There’s no need to sign up for a service or install additional software.
-- Headless: The CMS only takes care of raw data. You can read it and render the final content with your favourite framework.
 
 Here are some highlights mainly compared to Netlify/Decap CMS:
 
