@@ -1,4 +1,21 @@
 /**
+ * Truncate the given string.
+ * @param {string} string Original string.
+ * @param {number} max Maximum number of characters.
+ * @param {object} [options] Options.
+ * @param {string} [options.ellipsis] Character(s) to be appended if the the truncated string is
+ * longer than `max`.
+ * @returns {string} Truncated string.
+ */
+export const truncate = (string, max, { ellipsis = '…' } = {}) => {
+  // Don’t use `split()` because it breaks Unicode characters like emoji
+  const chars = [...string];
+  const truncated = chars.slice(0, max).join('').trim();
+
+  return `${truncated}${chars.length > max ? ellipsis : ''}`;
+};
+
+/**
  * Escape the given string so it can be used safely for `new RegExp()`.
  * @param {string} string Original string.
  * @returns {string} Escaped string.

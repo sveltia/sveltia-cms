@@ -18,7 +18,7 @@ import {
 import { prefs } from '$lib/services/prefs';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { stripSlashes } from '$lib/services/utils/strings';
+import { stripSlashes, truncate } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.contents-view';
 /**
@@ -79,11 +79,9 @@ const transformSummary = (summary, tf, fieldConfig) => {
   }
 
   if (tf.startsWith('truncate')) {
-    const [, number, string = ''] = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
-    const max = Number(number);
-    const truncated = String(summary).substring(0, max);
+    const [, max, ellipsis = ''] = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
 
-    return String(summary).length > max ? `${truncated}${string}` : truncated;
+    return truncate(String(summary), Number(max), { ellipsis });
   }
 
   return summary;
@@ -93,12 +91,15 @@ const transformSummary = (summary, tf, fieldConfig) => {
  * Parse the collection summary template to generate the summary to be displayed on the entry list.
  * @param {Collection} collection Entry’s collection.
  * @param {Entry} entry Entry.
- * @param {EntryContent} content Entry content.
  * @param {LocaleCode} locale Locale.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.useTemplate] Whether to use the collection’s template if available.
  * @returns {string} Formatted summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
-export const formatSummary = (collection, entry, content, locale) => {
+export const formatSummary = (collection, entry, locale, { useTemplate = true } = {}) => {
+  const { content } = entry.locales[locale];
+
   const {
     name: collectionName,
     folder: collectionFolder,
@@ -110,7 +111,7 @@ export const formatSummary = (collection, entry, content, locale) => {
   // Fields other than `title` should be defined with `identifier_field` as per the Netlify/Decap
   // CMS document, but actually `name` also works as a fallback. We also use the label` property and
   // the entry slug.
-  if (!summaryTemplate) {
+  if (!useTemplate || !summaryTemplate) {
     return content[identifierField] || content.title || content.name || content.label || entry.slug;
   }
 

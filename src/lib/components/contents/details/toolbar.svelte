@@ -21,7 +21,9 @@
     revertChanges,
     saveEntry,
   } from '$lib/services/contents/editor';
+  import { formatSummary } from '$lib/services/contents/view';
   import { goBack, goto } from '$lib/services/navigation';
+  import { truncate } from '$lib/services/utils/strings';
 
   let showDuplicateToast = false;
   let showValidationToast = false;
@@ -40,6 +42,7 @@
     currentValues,
   } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
+  $: ({ defaultLocale = 'default' } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: collectionLabel = collection?.label || collection?.name;
   $: collectionLabelSingular = collection?.label_singular || collectionLabel;
   $: canPreview =
@@ -79,7 +82,10 @@
         values: {
           name: collectionFile
             ? `${collectionLabel} » ${collectionFile.label}`
-            : collectionLabelSingular,
+            : `${collectionLabel} » ${truncate(
+                formatSummary(collection, originalEntry, defaultLocale, { useTemplate: false }),
+                25,
+              )}`,
         },
       })}
     {/if}

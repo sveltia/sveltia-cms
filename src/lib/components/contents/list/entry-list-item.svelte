@@ -62,7 +62,7 @@
   {/if}
   <TableCell class="title">
     <span>
-      {formatSummary($selectedCollection, entry, content, locale)}
+      {formatSummary($selectedCollection, entry, locale)}
     </span>
   </TableCell>
 </TableRow>
