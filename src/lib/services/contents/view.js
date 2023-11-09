@@ -49,8 +49,10 @@ const transformSummary = (summary, tf, fieldConfig) => {
     return String(summary).toLowerCase();
   }
 
-  if (tf.startsWith('date') && fieldConfig) {
-    const [, format] = tf.match(/^date\('(.*?)'\)$/);
+  const dateTransformer = tf.match(/^date\('(.*?)'\)$/);
+
+  if (dateTransformer && fieldConfig) {
+    const [, format] = dateTransformer;
 
     const { time_format: timeFormat, picker_utc: pickerUTC = false } =
       /** @type {DateTimeField} */ (fieldConfig);
@@ -66,20 +68,26 @@ const transformSummary = (summary, tf, fieldConfig) => {
     ).format(format);
   }
 
-  if (tf.startsWith('default')) {
-    const [, defaultValue] = tf.match(/^default\('?(.*?)'?\)$/);
+  const defaultTransformer = tf.match(/^default\('?(.*?)'?\)$/);
+
+  if (defaultTransformer) {
+    const [, defaultValue] = defaultTransformer;
 
     return summary ?? defaultValue;
   }
 
-  if (tf.startsWith('ternary')) {
-    const [, truthyValue, falsyValue] = tf.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
+  const ternaryTransformer = tf.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
+
+  if (ternaryTransformer) {
+    const [, truthyValue, falsyValue] = ternaryTransformer;
 
     return summary ? truthyValue : falsyValue;
   }
 
-  if (tf.startsWith('truncate')) {
-    const [, max, ellipsis = ''] = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
+  const truncateTransformer = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
+
+  if (truncateTransformer) {
+    const [, max, ellipsis = ''] = truncateTransformer;
 
     return truncate(String(summary), Number(max), { ellipsis });
   }
