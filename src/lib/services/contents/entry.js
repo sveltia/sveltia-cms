@@ -98,9 +98,12 @@ export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPa
  * @param {LocaleCode} locale Locale code.
  * @param {string} key Field name, which can be dot notation like `name.en` for a nested field, or
  * one of other entry metadata property keys: `slug`, `commit_author` and `commit_date` .
+ * @param {object} [options] Options.
+ * @param {boolean} [options.resolveRef] Whether to resolve the referenced value if the target field
+ * is a relation field.
  * @returns {any} Value.
  */
-export const getPropertyValue = (entry, locale, key) => {
+export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {}) => {
   const { slug, locales, commitAuthor: { name, login, email } = {}, commitDate } = entry;
 
   if (key === 'slug') {
@@ -122,18 +125,21 @@ export const getPropertyValue = (entry, locale, key) => {
     return undefined;
   }
 
-  const fieldConfig = getFieldConfig({ collectionName: entry.collectionName, keyPath: key });
   const valueMap = key.includes('.') ? flatten(content) : content;
 
-  // Resolve the displayed value for a relation field
-  if (fieldConfig?.widget === 'relation') {
-    return getReferencedOptionLabel({
-      // eslint-disable-next-line object-shorthand
-      fieldConfig: /** @type {RelationField} */ (fieldConfig),
-      valueMap,
-      keyPath: key,
-      locale,
-    });
+  if (resolveRef) {
+    const fieldConfig = getFieldConfig({ collectionName: entry.collectionName, keyPath: key });
+
+    // Resolve the displayed value for a relation field
+    if (fieldConfig?.widget === 'relation') {
+      return getReferencedOptionLabel({
+        // eslint-disable-next-line object-shorthand
+        fieldConfig: /** @type {RelationField} */ (fieldConfig),
+        valueMap,
+        keyPath: key,
+        locale,
+      });
+    }
   }
 
   return valueMap[key];

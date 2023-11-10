@@ -196,12 +196,12 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
 /**
  * Sort the given entries.
  * @param {Entry[]} entries Entry list.
- * @param {SortingConditions} [conditions] Sorting conditions.
+ * @param {SortingConditions} conditions Sorting conditions.
  * @returns {Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
-const sortEntries = (entries, { key, order } = {}) => {
-  if (!key || !order) {
+const sortEntries = (entries, { key, order }) => {
+  if (key === undefined || order === undefined) {
     return entries;
   }
 
@@ -246,31 +246,42 @@ const sortEntries = (entries, { key, order } = {}) => {
 /**
  * Filter the given entries.
  * @param {Entry[]} entries Entry list.
- * @param {FilteringConditions} [conditions] Filtering conditions.
+ * @param {FilteringConditions[]} filters One or more filtering conditions.
  * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
-const filterEntries = (entries, { field, pattern } = { field: undefined, pattern: undefined }) => {
-  if (!field) {
-    return entries;
-  }
+const filterEntries = (entries, filters) => {
+  const {
+    view_filters: configuredFilters,
+    _i18n: { defaultLocale = 'default' },
+  } = get(selectedCollection);
 
-  const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
-  const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
+  // Ignore invalid filters
+  const validFilters = filters.filter(
+    ({ field, pattern }) =>
+      field !== undefined &&
+      pattern !== undefined &&
+      configuredFilters.some((f) => f.field === field && f.pattern === pattern),
+  );
 
-  return entries.filter((entry) => {
-    const value = getPropertyValue(entry, defaultLocale, field);
+  return entries.filter((entry) =>
+    validFilters.every(({ field, pattern }) => {
+      // Check both the raw value and referenced value
+      const rawValue = getPropertyValue(entry, defaultLocale, field, { resolveRef: false });
+      const refValue = getPropertyValue(entry, defaultLocale, field);
+      const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
 
-    if (value === undefined) {
-      return false;
-    }
+      if (rawValue === undefined || refValue === undefined) {
+        return false;
+      }
 
-    if (regex) {
-      return !!String(value).match(regex);
-    }
+      if (regex) {
+        return regex.test(String(rawValue)) || regex.test(String(refValue));
+      }
 
-    return value === pattern;
-  });
+      return rawValue === pattern || refValue === pattern;
+    }),
+  );
 };
 
 /**
@@ -335,7 +346,29 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
 const entryListSettings = writable({}, (set) => {
   (async () => {
     try {
-      set((await LocalStorage.get(storageKey)) ?? {});
+      /** @type {{ [key: string]: EntryListView }} */
+      const cache = (await LocalStorage.get(storageKey)) ?? {};
+      let foundLegacySetting = false;
+
+      const settings = Object.fromEntries(
+        Object.entries(cache).map(([key, view]) => {
+          // Migrate legacy single filter setting
+          if (view.filter) {
+            foundLegacySetting = true;
+            view.filters ??= [];
+            view.filters.push(view.filter);
+            delete view.filter;
+          }
+
+          return [key, view];
+        }),
+      );
+
+      set(settings);
+
+      if (foundLegacySetting) {
+        await LocalStorage.set(storageKey, settings);
+      }
     } catch {
       //
     }
@@ -438,8 +471,14 @@ export const entryGroups = derived(
     if (!entries.length || !!entries[0].fileName) {
       set([]);
     } else {
-      entries = sortEntries(entries, _currentView?.sort);
-      entries = filterEntries(entries, _currentView?.filter);
+      if (_currentView?.sort) {
+        entries = sortEntries(entries, _currentView.sort);
+      }
+
+      if (_currentView?.filters) {
+        entries = filterEntries(entries, _currentView.filters);
+      }
+
       set(groupEntries(entries, _currentView?.group));
     }
   },

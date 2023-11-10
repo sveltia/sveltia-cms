@@ -720,7 +720,8 @@
  * @typedef {object} EntryListView
  * @property {ViewType} [type] View type.
  * @property {SortingConditions} [sort] Sorting conditions.
- * @property {FilteringConditions} [filter] Filtering conditions.
+ * @property {FilteringConditions} [filter] Filtering conditions. Deprecated in favour of `filters`.
+ * @property {FilteringConditions[]} [filters] One or more filtering conditions.
  * @property {GroupingConditions} [group] Grouping conditions.
  * @property {boolean} [showMedia] Whether to show the Media pane.
  */
@@ -756,6 +757,7 @@
  * @property {ViewType} [type] View type.
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions.
+ * @property {FilteringConditions[]} [filters] Unused.
  * @property {GroupingConditions} [group] Grouping conditions.
  * @property {boolean} [showInfo] Whether to show the Info pane.
  */

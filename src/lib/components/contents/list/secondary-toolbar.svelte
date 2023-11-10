@@ -47,6 +47,7 @@
         disabled={!hasMultipleEntries}
         {currentView}
         filters={$selectedCollection.view_filters}
+        multiple={true}
       />
     {/if}
     {#if $selectedCollection.view_groups?.length}
