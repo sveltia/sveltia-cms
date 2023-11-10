@@ -169,9 +169,10 @@ Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you donâ
 
 As the product evolves, weâ€™ll implement a built-in configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
 
-Here are some starter templates for popular frameworks created by our contributors. More to follow!
+Here are some starter kits for popular frameworks created by community members. More to follow!
 
-- [Eleventy](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
+- [Eleventy starter template](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
+- [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
 
 ### Migration
 
