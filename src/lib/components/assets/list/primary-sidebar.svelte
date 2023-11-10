@@ -5,7 +5,7 @@
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { goto } from '$lib/services/navigation';
 
-  $: folders = [{ collectionName: '*', internalPath: undefined }, ...$allAssetPaths];
+  $: folders = [{ collectionName: '*', internalPath: '' }, ...$allAssetPaths];
 </script>
 
 <Group class="primary-sidebar">
