@@ -10,6 +10,10 @@
    * @type {Asset}
    */
   export let asset;
+  /**
+   * @type {ViewType}
+   */
+  export let viewType;
 
   $: ({ name, kind } = asset);
 </script>
@@ -34,10 +38,10 @@
   </TableCell>
   <TableCell class="image">
     {#if kind === 'image'}
-      <Image {asset} checkerboard={true} />
+      <Image {asset} variant={viewType === 'list' ? 'icon' : 'tile'} />
     {/if}
     {#if kind === 'video'}
-      <Video {asset} />
+      <Video {asset} variant={viewType === 'list' ? 'icon' : 'tile'} />
     {/if}
   </TableCell>
   <TableCell class="title">

@@ -57,10 +57,10 @@
   {#if showPreview && canPreview}
     <div class="preview">
       {#if kind === 'image'}
-        <Image {asset} checkerboard={true} />
+        <Image {asset} variant="tile" />
       {/if}
       {#if kind === 'video'}
-        <Video {asset} controls />
+        <Video {asset} variant="tile" controls />
       {/if}
     </div>
   {/if}
@@ -166,6 +166,10 @@
 
     section {
       margin: 0 0 16px;
+    }
+
+    h4 {
+      color: var(--sui-secondary-foreground-color);
     }
 
     h4,

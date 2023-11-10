@@ -29,8 +29,7 @@
           height: auto;
           transition: none;
 
-          :global(img),
-          :global(video) {
+          :global(.preview) {
             flex: none;
             border-radius: var(--sui-control-medium-border-radius);
             aspect-ratio: 1 / 1;
@@ -58,8 +57,7 @@
 
       :global(.option) {
         :global(button) {
-          :global(img),
-          :global(video) {
+          :global(.preview) {
             width: 100%;
           }
 
@@ -76,9 +74,8 @@
         :global(button) {
           gap: 16px;
 
-          :global(img),
-          :global(video) {
-            width: 48px;
+          :global(.preview) {
+            width: 64px;
           }
 
           :global(.name) {

@@ -28,7 +28,7 @@
               {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
               {@const { content } = locales[locale]}
               {#if content}
-                <EntryListItem {entry} {content} {locale} />
+                <EntryListItem {entry} {content} {locale} viewType={$currentView.type} />
               {/if}
             {/each}
           </svelte:component>

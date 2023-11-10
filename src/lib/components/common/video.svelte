@@ -1,59 +1,45 @@
 <script>
-  import { getAssetPreviewURL } from '$lib/services/assets/view';
+  import MediaPreview from '$lib/components/common/media-preview.svelte';
 
   /**
+   * Loading method.
    * @type {'lazy' | 'eager'}
    */
   export let loading = 'lazy';
   /**
+   * Asset.
    * @type {Asset | undefined}
    */
   export let asset = undefined;
   /**
+   * Source URL.
    * @type {string | undefined}
    */
   export let src = undefined;
+  /**
+   * Style variant.
+   * @type {'tile' | 'icon' | undefined}
+   */
+  export let variant = undefined;
+  /**
+   * Whether to show a blurred background (like Slack’s media overlay).
+   * @type {boolean}
+   */
+  export let blurBackground = false;
+  /**
+   * Whether to use `object-fit: cover`.
+   * @type {boolean}
+   */
   export let cover = false;
-
-  /**
-   * @type {HTMLVideoElement}
-   */
-  let element;
-  let updatingSrc = false;
-
-  /**
-   * Update the {@link src} property.
-   */
-  const updateSrc = async () => {
-    if (asset && element && !updatingSrc) {
-      updatingSrc = true;
-      src = await getAssetPreviewURL(asset, loading, element);
-      updatingSrc = false;
-    }
-  };
-
-  $: {
-    void element;
-    void asset;
-    updateSrc();
-  }
 </script>
 
-<!-- svelte-ignore a11y-media-has-caption -->
-<video class:cover playsinline {src} {...$$restProps} bind:this={element} />
-
-<style lang="scss">
-  video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-
-    &:not([src]) {
-      visibility: hidden;
-    }
-
-    &.cover {
-      object-fit: cover;
-    }
-  }
-</style>
+<MediaPreview
+  type="video"
+  {loading}
+  {asset}
+  {src}
+  {variant}
+  {blurBackground}
+  {cover}
+  {...$$restProps}
+/>

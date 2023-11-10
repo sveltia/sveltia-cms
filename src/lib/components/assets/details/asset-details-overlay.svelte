@@ -13,9 +13,9 @@
   <div class="row">
     <div class="preview">
       {#if $selectedAsset.kind === 'image'}
-        <Image asset={$selectedAsset} alt={$selectedAsset.name} checkerboard={true} />
+        <Image asset={$selectedAsset} blurBackground={true} alt={$selectedAsset.name} />
       {:else if $selectedAsset.kind === 'video'}
-        <Video asset={$selectedAsset} controls />
+        <Video asset={$selectedAsset} blurBackground={true} controls />
       {:else}
         <EmptyState>
           <span>{$_('no_preview_available')}</span>

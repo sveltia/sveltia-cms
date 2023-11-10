@@ -1,70 +1,57 @@
 <script>
-  import { getAssetPreviewURL } from '$lib/services/assets/view';
+  import MediaPreview from '$lib/components/common/media-preview.svelte';
 
   /**
+   * Loading method.
    * @type {'lazy' | 'eager'}
    */
   export let loading = 'lazy';
   /**
+   * Asset.
    * @type {Asset | undefined}
    */
   export let asset = undefined;
   /**
+   * Source URL.
    * @type {string | undefined}
    */
   export let src = undefined;
-  export let alt = '';
-  export let checkerboard = false;
+  /**
+   * Style variant.
+   * @type {'tile' | 'icon' | undefined}
+   */
+  export let variant = undefined;
+  /**
+   * Whether to show a blurred background (like Slack’s media overlay).
+   * @type {boolean}
+   */
+  export let blurBackground = false;
+  /**
+   * Whether to use `object-fit: cover`.
+   * @type {boolean}
+   */
   export let cover = false;
-
   /**
-   * @type {HTMLImageElement}
+   * Whether to show a checkerboard background below a transparent image.
+   * @type {boolean}
    */
-  let element;
-  let updatingSrc = false;
-
+  export let checkerboard = true;
   /**
-   * Update the {@link src} property.
+   * Alt text for the image.
+   * @type {string}
    */
-  const updateSrc = async () => {
-    if (asset && element && !updatingSrc) {
-      updatingSrc = true;
-      src = await getAssetPreviewURL(asset, loading, element);
-      updatingSrc = false;
-    }
-  };
-
-  $: {
-    void element;
-    void asset;
-    updateSrc();
-  }
+  export let alt = '';
 </script>
 
-<img class:checkerboard class:cover {loading} {src} {alt} {...$$restProps} bind:this={element} />
-
-<style lang="scss">
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background-color: var(--sui-tertiary-background-color);
-
-    &:not([src]) {
-      visibility: hidden;
-    }
-
-    &.cover {
-      object-fit: cover;
-    }
-
-    /* prettier-ignore */
-    &.checkerboard {
-      background-image:
-        linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%),
-        linear-gradient(45deg, #eee 25%, #fff 25%, #fff 75%, #eee 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 8px 8px;
-    }
-  }
-</style>
+<MediaPreview
+  type="image"
+  {loading}
+  {asset}
+  {src}
+  {variant}
+  {blurBackground}
+  {cover}
+  {checkerboard}
+  {alt}
+  {...$$restProps}
+/>

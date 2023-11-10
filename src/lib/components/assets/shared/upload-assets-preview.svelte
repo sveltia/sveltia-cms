@@ -16,7 +16,7 @@
     {@const [, extension = ''] = name.match(/\.([^.]+)$/) ?? []}
     <div class="file">
       {#if type.startsWith('image/')}
-        <Image src={URL.createObjectURL(file)} />
+        <Image src={URL.createObjectURL(file)} variant="icon" />
       {:else}
         <span class="image">
           <Icon name="draft" />
@@ -58,19 +58,15 @@
     align-items: center;
     gap: 16px;
 
-    :global(img),
     .image {
+      display: flex;
+      justify-content: center;
+      align-items: center;
       width: 48px;
       height: 48px;
       aspect-ratio: 1 / 1;
       object-fit: cover;
       border-radius: var(--sui-control-medium-border-radius);
-    }
-
-    .image {
-      display: flex;
-      justify-content: center;
-      align-items: center;
       background-color: var(--sui-tertiary-background-color);
     }
 

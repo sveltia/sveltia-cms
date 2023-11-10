@@ -122,7 +122,7 @@
 <div class="image-widget">
   {#if isImageWidget && currentValue}
     {#await getMediaFieldURL(currentValue, $entryDraft.originalEntry) then src}
-      <Image {src} checkerboard={true} />
+      <Image {src} variant="tile" />
     {/await}
   {/if}
   <div>
@@ -220,7 +220,7 @@
     align-items: center;
     gap: 16px;
 
-    :global(.checkerboard) {
+    :global(.preview) {
       flex: none;
       width: 160px !important;
       height: 160px !important;

@@ -67,18 +67,7 @@
       }
 
       :global([role='gridcell'].image) {
-        width: 32px;
-
-        :global(img) {
-          background-color: var(--sui-primary-accent-color-inverted);
-        }
-
-        :global(img),
-        :global(video) {
-          width: 32px;
-          height: 32px;
-          border-radius: var(--sui-control-medium-border-radius);
-        }
+        padding: 8px;
       }
     }
   }

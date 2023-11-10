@@ -22,6 +22,10 @@
    * @type {LocaleCode}
    */
   export let locale;
+  /**
+   * @type {ViewType}
+   */
+  export let viewType;
 
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
 </script>
@@ -56,7 +60,7 @@
   {#if firstImageField}
     <TableCell class="image">
       {#await getMediaFieldURL(content[firstImageField?.name], entry) then src}
-        <Image {src} cover={true} />
+        <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} />
       {/await}
     </TableCell>
   {/if}

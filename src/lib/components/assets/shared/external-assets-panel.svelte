@@ -166,10 +166,10 @@
       {#each searchResults as { id, previewURL, description, kind: _kind } (id)}
         <Option value={id}>
           {#if _kind === 'image'}
-            <Image src={previewURL} crossorigin="anonymous" />
+            <Image src={previewURL} variant="tile" crossorigin="anonymous" />
           {/if}
           {#if _kind === 'video'}
-            <Video src={previewURL} crossorigin="anonymous" />
+            <Video src={previewURL} variant="tile" crossorigin="anonymous" />
           {/if}
           <span class="name">{description}</span>
         </Option>
