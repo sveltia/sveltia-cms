@@ -240,6 +240,12 @@ const defaultView = {
 };
 
 /**
+ * View settings for the selected asset collection.
+ * @type {import('svelte/store').Writable<AssetListView>}
+ */
+export const currentView = writable({});
+
+/**
  * View settings for all the asset collection.
  * @type {import('svelte/store').Writable<{ [key: string]: AssetListView }>}
  */
@@ -247,17 +253,19 @@ const assetListSettings = writable({}, (set) => {
   (async () => {
     try {
       set((await LocalStorage.get(storageKey)) ?? {});
+
+      selectedAssetFolderPath.subscribe((path) => {
+        const view = get(assetListSettings)[path || '*'] ?? structuredClone(defaultView);
+
+        if (!equal(view, get(currentView))) {
+          currentView.set(view);
+        }
+      });
     } catch {
       //
     }
   })();
 });
-
-/**
- * View settings for the selected asset collection.
- * @type {import('svelte/store').Writable<AssetListView>}
- */
-export const currentView = writable({});
 
 /**
  * List of sort fields for the selected asset collection.
@@ -318,14 +326,6 @@ listedAssets.subscribe((assets) => {
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('listedAssets', assets);
-  }
-});
-
-selectedAssetFolderPath.subscribe((path) => {
-  const view = get(assetListSettings)[path || '*'] ?? JSON.parse(JSON.stringify(defaultView));
-
-  if (!equal(view, currentView)) {
-    currentView.set(view);
   }
 });
 
