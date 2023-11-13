@@ -87,7 +87,7 @@
   >
     <header>
       <h4 id="{fieldId}-label">{fieldLabel}</h4>
-      {#if required}
+      {#if !readonly && required}
         <div class="required">{$_('required')}</div>
       {/if}
       <Spacer flex />
@@ -201,7 +201,7 @@
         />
       {/if}
     </div>
-    {#if hint}
+    {#if !readonly && hint}
       <div class="hint">{@html marked.parse(hint)}</div>
     {/if}
   </section>
