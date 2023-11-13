@@ -280,14 +280,14 @@
         text-transform: uppercase;
         background-color: transparent;
       }
+    }
+  }
 
-      :global(:root[data-theme='dark']) & {
-        :global(input[type='date']::-webkit-calendar-picker-indicator),
-        :global(input[type='datetime-local']::-webkit-calendar-picker-indicator),
-        :global(input[type='time']::-webkit-calendar-picker-indicator) {
-          filter: invert(1);
-        }
-      }
+  :global(:root[data-theme='dark']) {
+    :global(input[type='date']),
+    :global(input[type='datetime-local']),
+    :global(input[type='time']) {
+      color-scheme: dark;
     }
   }
 

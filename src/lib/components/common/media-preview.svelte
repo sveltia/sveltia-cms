@@ -117,8 +117,8 @@
     }
 
     &.icon {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
     }
 
     &.tile,
@@ -182,6 +182,7 @@
 
     &:global(.cover) {
       object-fit: cover;
+      aspect-ratio: 1 / 1;
     }
   }
 </style>

@@ -260,6 +260,7 @@
   {#if hasSubFields}
     <div class="toolbar top">
       <Button
+        iconic
         disabled={!items.length}
         aria-expanded={parentExpanded}
         aria-controls="list-{widgetId}-item-list"
@@ -319,6 +320,7 @@
             <div>
               <Button
                 size="small"
+                iconic
                 disabled={isDuplicateField || index === 0}
                 on:click={() => {
                   moveUpItem(index);
@@ -328,6 +330,7 @@
               </Button>
               <Spacer />
               <Button
+                iconic
                 size="small"
                 disabled={isDuplicateField || index === items.length - 1}
                 on:click={() => {
@@ -339,6 +342,7 @@
             </div>
             <div>
               <Button
+                iconic
                 size="small"
                 disabled={isDuplicateField}
                 on:click={() => {

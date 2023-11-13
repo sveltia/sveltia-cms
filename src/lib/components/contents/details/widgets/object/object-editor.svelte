@@ -157,6 +157,7 @@
       <div class="header">
         <Button
           size="small"
+          iconic
           aria-expanded={parentExpanded}
           aria-controls="object-{widgetId}-item-list"
           on:click={() => {
@@ -173,6 +174,7 @@
         {#if !required}
           <Button
             size="small"
+            iconic
             disabled={locale !== defaultLocale && i18n === 'duplicate'}
             on:click={() => {
               removeFields();

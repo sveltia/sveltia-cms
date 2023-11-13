@@ -150,7 +150,6 @@
         disabled={readonly}
         aria-controls="{fieldId}-value"
         variant="tertiary"
-        size="small"
         label={currentValue ? $_('replace') : $_('select')}
         on:click={() => {
           showSelectAssetsDialog = true;
@@ -161,7 +160,6 @@
           disabled={readonly}
           aria-controls="{fieldId}-value"
           variant="tertiary"
-          size="small"
           label={$_('remove')}
           on:click={() => {
             currentValue = '';

@@ -62,8 +62,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       aspect-ratio: 1 / 1;
       object-fit: cover;
       border-radius: var(--sui-control-medium-border-radius);

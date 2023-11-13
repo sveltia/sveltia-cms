@@ -122,6 +122,7 @@
         <span>
           {option.label}
           <Button
+            iconic
             disabled={readonly}
             on:click={() => {
               removeValue(index);
@@ -192,7 +193,7 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 4px 12px;
+      padding: 0 0 0 8px;
       border-radius: var(--sui-control-medium-border-radius);
       background-color: var(--sui-secondary-background-color);
 
