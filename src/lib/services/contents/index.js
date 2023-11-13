@@ -83,8 +83,8 @@ const getCollectionI18n = (collection) => {
     defaultLocale: !hasLocales
       ? undefined
       : defaultLocale && locales.includes(defaultLocale)
-      ? defaultLocale
-      : locales[0],
+        ? defaultLocale
+        : locales[0],
     saveAllLocales,
   };
 };

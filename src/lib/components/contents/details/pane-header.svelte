@@ -127,8 +127,8 @@
                 isLocaleEnabled
                   ? 'disable_x_locale'
                   : currentValues[$thisPane.locale]
-                  ? 'reenable_x_locale'
-                  : 'enable_x_locale',
+                    ? 'reenable_x_locale'
+                    : 'enable_x_locale',
                 { values: { locale: getLocaleLabel($thisPane.locale) } },
               )}
               disabled={isLocaleEnabled && isOnlyLocale}
