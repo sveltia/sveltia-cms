@@ -22,6 +22,7 @@
     >
       <AssetsPanel
         assets={$allAssets.filter(({ folder }) => canonicalMediaFolder === folder)}
+        viewType="grid"
         on:select={({ detail: { asset } }) => {
           goto(`/assets/${asset.path}`);
         }}

@@ -6,7 +6,6 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { selectAssetsView } from '$lib/services/contents/editor';
 
   const dispatch = createEventDispatcher();
 
@@ -14,6 +13,13 @@
    * @type {Asset[]}
    */
   export let assets = [];
+  /**
+   * @type {ViewType}
+   */
+  export let viewType;
+  /**
+   * @type {string}
+   */
   export let searchTerms = '';
 
   $: filteredAssets = searchTerms
@@ -24,7 +30,7 @@
 {#if filteredAssets.length}
   <div class="grid-wrapper">
     <SimpleImageGrid
-      viewType={$selectAssetsView?.type}
+      {viewType}
       on:change={(event) => {
         dispatch('select', {
           asset: assets.find(({ sha }) => sha === /** @type {CustomEvent} */ (event).detail.value),

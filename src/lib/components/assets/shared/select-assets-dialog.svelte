@@ -157,6 +157,7 @@
             assets={$allAssets.filter(
               (asset) => (!kind || kind === asset.kind) && collectionMediaFolder === asset.folder,
             )}
+            viewType={$selectAssetsView?.type}
             {searchTerms}
             on:select={({ detail }) => {
               selectedAsset = detail;
@@ -175,6 +176,7 @@
         >
           <AssetsPanel
             assets={$allAssets.filter((asset) => !kind || kind === asset.kind)}
+            viewType={$selectAssetsView?.type}
             {searchTerms}
             on:select={({ detail }) => {
               selectedAsset = detail;
