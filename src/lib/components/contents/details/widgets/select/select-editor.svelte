@@ -124,11 +124,12 @@
           <Button
             iconic
             disabled={readonly}
+            aria-label={$_('remove_x', { values: { name: option.label } })}
             on:click={() => {
               removeValue(index);
             }}
           >
-            <Icon slot="start-icon" name="close" label={$_('delete')} />
+            <Icon slot="start-icon" name="close" />
           </Button>
         </span>
       {/if}

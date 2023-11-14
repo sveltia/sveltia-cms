@@ -148,9 +148,10 @@
     <div>
       <Button
         disabled={readonly}
-        aria-controls="{fieldId}-value"
         variant="tertiary"
         label={currentValue ? $_('replace') : $_('select')}
+        aria-label={currentValue ? $_(`replace_${widgetName}`) : $_(`select_${widgetName}`)}
+        aria-controls="{fieldId}-value"
         on:click={() => {
           showSelectAssetsDialog = true;
         }}
@@ -158,9 +159,10 @@
       {#if currentValue}
         <Button
           disabled={readonly}
-          aria-controls="{fieldId}-value"
           variant="tertiary"
           label={$_('remove')}
+          aria-label={$_(`remove_${widgetName}`)}
+          aria-controls="{fieldId}-value"
           on:click={() => {
             currentValue = '';
             asset = undefined;

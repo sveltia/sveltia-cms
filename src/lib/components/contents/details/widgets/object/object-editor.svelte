@@ -158,17 +158,14 @@
         <Button
           size="small"
           iconic
+          aria-label={parentExpanded ? $_('collapse') : $_('expand')}
           aria-expanded={parentExpanded}
           aria-controls="object-{widgetId}-item-list"
           on:click={() => {
             parentExpanded = !parentExpanded;
           }}
         >
-          <Icon
-            slot="start-icon"
-            name={parentExpanded ? 'expand_more' : 'chevron_right'}
-            label={parentExpanded ? $_('collapse') : $_('expand')}
-          />
+          <Icon slot="start-icon" name={parentExpanded ? 'expand_more' : 'chevron_right'} />
         </Button>
         <Spacer flex />
         {#if !required}
@@ -176,11 +173,12 @@
             size="small"
             iconic
             disabled={locale !== defaultLocale && i18n === 'duplicate'}
+            aria-label={$_('remove_this_item')}
             on:click={() => {
               removeFields();
             }}
           >
-            <Icon slot="start-icon" name="close" label={$_('remove')} />
+            <Icon slot="start-icon" name="close" />
           </Button>
         {/if}
       </div>

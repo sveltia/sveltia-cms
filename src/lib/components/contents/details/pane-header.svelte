@@ -31,6 +31,9 @@
    */
   export let thatPane = writable(null);
 
+  /** @type {MenuButton} */
+  let menuButton;
+
   $: ({ collection, collectionFile, currentLocales, currentValues, originalValues, validities } =
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({
@@ -101,15 +104,16 @@
         aria-label={$_('show_menu_x_locale', {
           values: { locale: getLocaleLabel($thisPane.locale) },
         })}
+        bind:this={menuButton}
       >
         <Icon slot="start-icon" name="more_vert" />
         <Menu slot="popup">
           {#if canCopy}
-            <CopyMenuItems locale={$thisPane.locale} translate={true} />
+            <CopyMenuItems anchor={menuButton} locale={$thisPane.locale} translate={true} />
             {#if otherLocales.length > 1}
               <Divider />
             {/if}
-            <CopyMenuItems locale={$thisPane.locale} />
+            <CopyMenuItems anchor={menuButton} locale={$thisPane.locale} />
             <Divider />
           {/if}
           <MenuItem

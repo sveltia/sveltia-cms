@@ -7,9 +7,10 @@
   variant="ghost"
   iconic
   hidden
+  aria-label={$_('notifications')}
   on:click={() => {
     // @todo Implement this!
   }}
 >
-  <Icon slot="start-icon" name="notifications" label={$_('notifications')} />
+  <Icon slot="start-icon" name="notifications" />
 </Button>

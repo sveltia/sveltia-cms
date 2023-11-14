@@ -84,11 +84,12 @@
     variant="tertiary"
     iconic
     disabled={!currentValue}
+    aria-label={$_('clear')}
     on:click={() => {
       currentValue = '';
     }}
   >
-    <Icon slot="start-icon" name="delete" label={$_('clear')} />
+    <Icon slot="start-icon" name="delete" />
   </Button>
 </div>
 

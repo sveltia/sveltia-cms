@@ -16,7 +16,8 @@
     selectedAssetFolderPath,
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
-  import { parseLocation } from '$lib/services/navigation';
+  import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
+  import { announcedPageTitle, parseLocation } from '$lib/services/navigation';
 
   let path = '';
 
@@ -43,9 +44,27 @@
       $selectedAssetFolderPath = folderPath;
     }
 
-    $selectedAsset = fileName
-      ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`) ?? null
-      : null;
+    if (!fileName) {
+      const count = $listedAssets.length;
+
+      $selectedAsset = null;
+      $announcedPageTitle = $_(
+        // eslint-disable-next-line no-nested-ternary
+        count > 1
+          ? 'viewing_x_asset_folder_many_assets'
+          : count === 1
+            ? 'viewing_x_asset_folder_one_asset'
+            : 'viewing_x_asset_folder_no_asset',
+        { values: { folder: getFolderLabelByPath($selectedAssetFolderPath), count } },
+      );
+
+      return;
+    }
+
+    $selectedAsset = $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`) ?? null;
+    $announcedPageTitle = $selectedAsset
+      ? $_('viewing_x_asset_details', { values: { name: $selectedAsset.name } })
+      : $_('file_not_found');
   };
 
   onMount(() => {

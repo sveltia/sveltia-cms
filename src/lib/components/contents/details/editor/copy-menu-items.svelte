@@ -19,6 +19,11 @@
    */
   export let keyPath = '';
   export let translate = false;
+  /**
+   * Reference to the anchor component that will be focused once the API Key dialog is closed.
+   * @type {import('@sveltia/ui').MenuButton}
+   */
+  export let anchor;
 
   $: ({ collection, currentLocales } = $entryDraft);
   $: ({ hasLocales = false, locales = ['default'] } =
@@ -41,6 +46,15 @@
     if (translate && !apiKey) {
       $showTranslatorApiKeyDialog = true;
       $pendingTranslatorRequest = [otherLocale, locale, keyPath, translate];
+
+      const unsubscribe = showTranslatorApiKeyDialog.subscribe((show) => {
+        if (!show) {
+          unsubscribe();
+          window.setTimeout(() => {
+            anchor.focus();
+          }, 250);
+        }
+      });
     } else {
       copyFromLocale(otherLocale, locale, keyPath, translate);
     }

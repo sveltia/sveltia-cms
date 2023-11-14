@@ -18,7 +18,7 @@
 
 <Toolbar
   variant="primary"
-  aria-label={$_('primary_toolbar_x_asset', { values: { folder: folderLabel } })}
+  aria-label={$_('x_folder_primary_toolbar', { values: { folder: folderLabel } })}
 >
   <h2>
     {folderLabel}
@@ -31,6 +31,9 @@
     variant="secondary"
     disabled={!$selectedAssets.length}
     label={$_('delete')}
+    aria-label={$selectedAssets.length === 1
+      ? $_('delete_selected_asset')
+      : $_('delete_selected_assets')}
     on:click={() => {
       showDeleteDialog = true;
     }}
@@ -63,6 +66,7 @@
   <Button
     variant="primary"
     label={$_('upload')}
+    aria-label={$_('upload_files')}
     on:click={() => {
       filePicker.open();
     }}

@@ -33,13 +33,14 @@
       <Button
         variant="ghost"
         iconic
+        aria-label={$_('remove')}
         on:click={(event) => {
           event.stopPropagation();
           files.splice(index, 1);
           files = files;
         }}
       >
-        <Icon name="close" label={$_('remove')} />
+        <Icon name="close" />
       </Button>
     </div>
   {/each}

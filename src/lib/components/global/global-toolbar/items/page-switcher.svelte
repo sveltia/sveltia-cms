@@ -40,11 +40,12 @@
         variant="ghost"
         iconic
         selected={$selectedPageName === key}
+        aria-label={label}
         on:select={() => {
           goto(link);
         }}
       >
-        <Icon slot="start-icon" name={icon} {label} />
+        <Icon slot="start-icon" name={icon} />
       </SelectButton>
     {/each}
   </SelectButtonGroup>

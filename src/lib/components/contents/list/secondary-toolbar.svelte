@@ -9,6 +9,7 @@
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
   $: ({ name, label, fields } = $selectedCollection ?? /** @type {Collection} */ ({}));
+  $: collectionLabel = label || name;
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
   $: firstImageField = fields?.find(({ widget }) => widget === 'image');
   $: hasListedEntries = !!$listedEntries.length;
@@ -18,7 +19,7 @@
 {#if $selectedCollection.folder}
   <Toolbar
     variant="secondary"
-    aria-label={$_('secondary_toolbar_x_collection', { values: { collection: label || name } })}
+    aria-label={$_('x_collection_secondary_toolbar', { values: { collection: collectionLabel } })}
   >
     <Button
       variant="ghost"
@@ -64,6 +65,7 @@
       iconic
       disabled={!hasListedEntries || !$selectedCollection.media_folder}
       pressed={!!$currentView?.showMedia}
+      aria-label={$_('show_assets')}
       on:click={() => {
         currentView.update((view) => ({
           ...view,
@@ -71,7 +73,7 @@
         }));
       }}
     >
-      <Icon slot="start-icon" name="photo_library" label={$_('show_assets')} />
+      <Icon slot="start-icon" name="photo_library" />
     </Button>
   </Toolbar>
 {/if}

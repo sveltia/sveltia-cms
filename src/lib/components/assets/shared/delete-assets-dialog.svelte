@@ -7,6 +7,10 @@
 
   export let open = false;
   /**
+   * @type {string}
+   */
+  export let description = '';
+  /**
    * @type {Asset[]}
    */
   export let assets = [];
@@ -23,7 +27,9 @@
     dispatch('delete');
   }}
 >
-  {#if assets.length === 1}
+  {#if description}
+    {description}
+  {:else if assets.length === 1}
     {$_('confirm_deleting_selected_file')}
   {:else if assets.length === $listedAssets.length}
     {$_('confirm_deleting_all_files')}

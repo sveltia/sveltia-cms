@@ -6,6 +6,7 @@
   import MainRouter from '$lib/components/global/main-router.svelte';
   import { dataLoaded } from '$lib/services/contents';
   import { initAppLocale } from '$lib/services/i18n';
+  import { announcedPageTitle } from '$lib/services/navigation';
   import { user } from '$lib/services/user';
 
   initAppLocale();
@@ -38,3 +39,16 @@
     {/if}
   {/if}
 </AppShell>
+
+<div role="alert">{$announcedPageTitle}</div>
+
+<style lang="scss">
+  [role='alert'] {
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+</style>

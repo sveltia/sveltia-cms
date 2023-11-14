@@ -23,6 +23,9 @@
 
   const fieldId = getRandomId('field');
 
+  /** @type {MenuButton} */
+  let menuButton;
+
   // @todo Save & restore draft from local storage.
 
   $: ({
@@ -98,17 +101,18 @@
           iconic
           popupPosition="bottom-right"
           aria-label={$_('show_menu_x_field', { values: { field: fieldLabel } })}
+          bind:this={menuButton}
         >
           <Icon slot="start-icon" name="more_vert" />
           <Menu slot="popup">
             {#if canCopy}
               {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
-                <CopyMenuItems {keyPath} {locale} translate={true} />
+                <CopyMenuItems anchor={menuButton} {keyPath} {locale} translate={true} />
                 {#if otherLocales.length > 1}
                   <Divider />
                 {/if}
               {/if}
-              <CopyMenuItems {keyPath} {locale} />
+              <CopyMenuItems anchor={menuButton} {keyPath} {locale} />
             {/if}
             {#if canCopy && canRevert}
               <Divider />
@@ -136,7 +140,7 @@
         {/if}
         {#if validity.rangeUnderflow}
           <div>
-            <Icon name="error" label={$_('error')} />
+            <Icon name="error" />
             {#if (widgetName === 'list' && hasSubFields) || multiple}
               {$_(`validation.range_underflow.add_${min === 1 ? 'singular' : 'plural'}`, {
                 values: { min },
@@ -150,7 +154,7 @@
         {/if}
         {#if validity.rangeOverflow}
           <div>
-            <Icon name="error" label={$_('error')} />
+            <Icon name="error" />
             {#if (widgetName === 'list' && hasSubFields) || multiple}
               {$_(`validation.range_overflow.add_${max === 1 ? 'singular' : 'plural'}`, {
                 values: { max },
@@ -164,7 +168,7 @@
         {/if}
         {#if validity.patternMismatch}
           <div>
-            <Icon name="error" label={$_('error')} />
+            <Icon name="error" />
             {pattern?.[1] ?? ''}
           </div>
         {/if}

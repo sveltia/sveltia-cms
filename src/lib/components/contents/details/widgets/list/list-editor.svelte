@@ -262,17 +262,14 @@
       <Button
         iconic
         disabled={!items.length}
+        aria-label={parentExpanded ? $_('collapse') : $_('expand')}
         aria-expanded={parentExpanded}
         aria-controls="list-{widgetId}-item-list"
         on:click={() => {
           parentExpanded = !parentExpanded;
         }}
       >
-        <Icon
-          slot="start-icon"
-          name={parentExpanded ? 'expand_more' : 'chevron_right'}
-          label={parentExpanded ? $_('collapse') : $_('expand')}
-        />
+        <Icon slot="start-icon" name={parentExpanded ? 'expand_more' : 'chevron_right'} />
       </Button>
       <div class="summary" id="object-{widgetId}-summary">
         {items.length}
@@ -322,22 +319,24 @@
                 size="small"
                 iconic
                 disabled={isDuplicateField || index === 0}
+                aria-label={$_('move_up')}
                 on:click={() => {
                   moveUpItem(index);
                 }}
               >
-                <Icon slot="start-icon" name="arrow_upward" label={$_('move_up')} />
+                <Icon slot="start-icon" name="arrow_upward" />
               </Button>
               <Spacer />
               <Button
                 iconic
                 size="small"
                 disabled={isDuplicateField || index === items.length - 1}
+                aria-label={$_('move_down')}
                 on:click={() => {
                   moveDownItem(index);
                 }}
               >
-                <Icon slot="start-icon" name="arrow_downward" label={$_('move_down')} />
+                <Icon slot="start-icon" name="arrow_downward" />
               </Button>
             </div>
             <div>
@@ -345,11 +344,12 @@
                 iconic
                 size="small"
                 disabled={isDuplicateField}
+                aria-label={$_('remove_this_item')}
                 on:click={() => {
                   removeItem(index);
                 }}
               >
-                <Icon slot="start-icon" name="close" label={$_('remove')} />
+                <Icon slot="start-icon" name="close" />
               </Button>
             </div>
           </div>

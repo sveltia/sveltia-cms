@@ -12,21 +12,23 @@
   <Button
     variant="ghost"
     iconic
+    aria-label={$_('cancel_editing')}
     on:click={() => {
       goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
     }}
   >
-    <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel_editing')} />
+    <Icon slot="start-icon" name="arrow_back_ios_new" />
   </Button>
   <h2>{$selectedAsset.name}</h2>
   <Spacer flex />
   <!-- @todo Implement these actions.
-  <Button variant="secondary" label={$_('edit')} />
-  <Button variant="secondary" label={$_('replace')} />
+  <Button variant="secondary" label={$_('edit')} aria-label={$_('edit_file')} />
+  <Button variant="secondary" label={$_('replace')} aria-label={$_('replace_file')} />
   -->
   <Button
     variant="secondary"
     label={$_('delete')}
+    aria-label={$_('delete_file')}
     on:click={() => {
       showDeleteDialog = true;
     }}
@@ -37,6 +39,7 @@
 
 <DeleteAssetsDialog
   bind:open={showDeleteDialog}
+  description={$_('confirm_deleting_this_file')}
   assets={[$selectedAsset]}
   on:delete={() => {
     goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');

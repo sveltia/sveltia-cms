@@ -23,7 +23,7 @@
 {#if !$selectedCollection.files}
   <Toolbar
     variant="secondary"
-    aria-label={$_('primary_toolbar_x_asset', { values: { folder: folderLabel } })}
+    aria-label={$_('x_folder_secondary_toolbar', { values: { folder: folderLabel } })}
   >
     <Button
       variant="ghost"
@@ -57,6 +57,7 @@
       iconic
       disabled={!hasListedAssets}
       pressed={!!$currentView?.showInfo}
+      aria-label={$_('show_info')}
       on:click={() => {
         currentView.update((view) => ({
           ...view,
@@ -64,7 +65,7 @@
         }));
       }}
     >
-      <Icon slot="start-icon" name="info" label={$_('show_info')} />
+      <Icon slot="start-icon" name="info" />
     </Button>
   </Toolbar>
 {/if}

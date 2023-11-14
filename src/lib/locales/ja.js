@@ -49,6 +49,7 @@ export const strings = {
   cancel: 'キャンセル',
   replace: '置き換え',
   remove: '削除',
+  remove_x: '{name} を削除',
   clear: 'クリア',
   expand: '広げる',
   collapse: '折り畳む',
@@ -62,6 +63,7 @@ export const strings = {
   error: 'エラー',
 
   // Entrance
+  welcome_to_sveltia_cms: 'Sveltia CMS へようこそ',
   loading_site_config: 'サイト設定を読み込んでいます…',
   loading_site_data: 'サイトデータを読み込んでいます…',
   loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',
@@ -69,19 +71,32 @@ export const strings = {
 
   // Global toolbar
   global_toolbar: 'グローバルツールバー',
-  page_switcher: 'ページ切り替え',
+  page_switcher: 'ページの切り替え',
   search_placeholder: 'エントリーとアセットを検索…',
   create_or_upload: 'エントリーを作成するかアセットをアップロード',
   asset: 'アセット',
 
   // Library
-  primary_toolbar_x_collection: '{collection} コレクションのプライマリーツールバー',
-  secondary_toolbar_x_collection: '{collection} コレクションのセカンダリーツールバー',
-  primary_toolbar_x_folder: '{folder} フォルダーのプライマリーツールバー',
-  secondary_toolbar_x_folder: '{folder} フォルダーのセカンダリーツールバー',
+  viewing_x_collection_many_entries:
+    '「{collection}」コレクションを表示しています。ここには {count} 個のエントリーがあります。',
+  viewing_x_collection_one_entry:
+    '「{collection}」コレクションを表示しています。ここにはひとつのエントリーがあります。',
+  viewing_x_collection_no_entry:
+    '「{collection}」コレクションを表示しています。ここにはまだエントリーがありません。',
+  x_collection_primary_toolbar: '「{collection}」コレクションのプライマリーツールバー',
+  x_collection_secondary_toolbar: '「{collection}」コレクションのセカンダリーツールバー',
+  viewing_x_asset_folder_many_assets:
+    '「{folder}」アセットフォルダーを表示しています。ここには {count} 個のアセットがあります。',
+  viewing_x_asset_folder_one_asset:
+    '「{folder}」アセットフォルダーを表示しています。ここにはひとつのアセットがあります。',
+  viewing_x_asset_folder_no_assets:
+    '「{folder}」アセットフォルダーを表示しています。ここにはまだアセットがありません。',
+  x_folder_primary_toolbar: '「{folder}」フォルダーのプライマリーツールバー',
+  x_folder_secondary_toolbar: '「{folder}」フォルダーのセカンダリーツールバー',
   collection_not_found: 'コレクションが見つかりませんでした',
+  file_not_found: 'ファイルが見つかりませんでした',
   actions: 'アクション',
-  switch_view: 'ビューを切り替え',
+  switch_view: 'ビューの切り替え',
   list_view: 'リストビュー',
   grid_view: 'グリッドビュー',
   sort_by: '並び替え',
@@ -113,9 +128,17 @@ export const strings = {
   all_assets: 'すべてのアセット',
   collection_files: 'コレクションファイル',
   uncategorized: '未分類',
-  x_collection_media_folder: '{collection} コレクションメディアフォルダー',
+  x_collection_media_folder: '「{collection}」コレクションメディアフォルダー',
   search_results_toolbar: '検索結果ツールバー',
   search_results_for_x: '「{terms}」の検索結果',
+  viewing_search_results:
+    '「{terms}」の検索結果を表示しています。{entries} と {assets} が見つかりました。',
+  many_entries: '{count} 個のエントリー',
+  one_entry: '1 個のエントリー',
+  no_entry: '0 個のエントリー',
+  many_assets: '{count} 個のアセット',
+  one_asset: '1 個のアセット',
+  no_asset: '0 個のアセット',
   no_files_found: 'ファイルは見つかりませんでした。',
   no_entries_found: 'エントリーは見つかりませんでした。',
   select_this_entry: 'このエントリーを選択',
@@ -124,26 +147,31 @@ export const strings = {
   drop_files_here: 'ここにファイルをドロップ',
   delete_file: 'ファイルを削除',
   delete_files: 'ファイルを削除',
+  delete_selected_file: '選択されたファイルを削除',
+  delete_selected_files: '選択されたファイルを削除',
+  confirm_deleting_this_file: 'このファイルを削除してもよろしいですか？',
   confirm_deleting_selected_file: '選択されたファイルを削除してもよろしいですか？',
   confirm_deleting_selected_files: '選択された {number} 個のファイルを削除してもよろしいですか？',
   confirm_deleting_all_files: 'すべてのファイルを削除してもよろしいですか？',
   delete_entry: 'エントリーを削除',
   delete_entries: 'エントリーを削除',
+  delete_selected_entry: '選択されたエントリーを削除',
+  delete_selected_entries: '選択されたエントリーを削除',
   confirm_deleting_this_entry: 'このエントリーを削除してもよろしいですか？',
   confirm_deleting_selected_entry: '選択されたエントリーを削除してもよろしいですか？',
   confirm_deleting_selected_entries:
     '選択された {number} 個のエントリーを削除してもよろしいですか？',
   confirm_deleting_all_entries: 'すべてのエントリーを削除してもよろしいですか？',
-  upload_files: 'ファイルをアップロード',
-  uploading_files: 'ファイルをアップロードしています',
-  confirm_uploading_file: '以下のファイルを {folder} フォルダーに保存してもよろしいですか？',
+  upload_files: '新しいファイルをアップロード',
+  confirm_uploading_file: '以下のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
   confirm_uploading_files:
-    '以下の {number} 個のファイルを {folder} フォルダーに保存してもよろしいですか？',
+    '以下の {number} 個のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
   no_entries_created: 'このコレクションにはまだエントリーがありません。',
   create_new_entry: '新しいエントリーを作成',
   no_files_created: 'このコレクションにはファイルがありません。',
   multi_files_selected: '複数のファイルが選択されています。',
   select_asset_show_info: 'ファイルを選択すると情報が表示されます。',
+  duplicate_entry: 'エントリーを複製',
   entry_duplicated: 'エントリーが複製され、新しい下書きとなりました。',
   entry_validation_error:
     'ひとつのフィールドにエラーがあります。エントリーを保存するには問題を修正してください。',
@@ -159,11 +187,15 @@ export const strings = {
 
   // Content editor
   content_editor: 'コンテンツエディター',
-  content_editor_primary_toolbar: 'コンテンツエディター プライマリーツールバー',
-  content_editor_secondary_toolbar: 'コンテンツエディター セカンダリーツールバー',
+  content_editor_primary_toolbar: 'コンテンツエディターのプライマリーツールバー',
+  content_editor_secondary_toolbar: 'コンテンツエディターのセカンダリーツールバー',
   cancel_editing: '編集をキャンセル',
   creating_x: '{name} を作成',
-  editing_x: '{name} を編集',
+  creating_x_collection_entry: '「{collection}」コレクションの新しいエントリーを作成しています。',
+  editing_x_in_x: '{collection} / {entry} を編集',
+  editing_x_collection_entry:
+    '「{collection}」コレクションの「{entry}」エントリーを編集しています。',
+  editing_x_collection_file: '「{collection}」コレクションの「{file}」ファイルを編集しています。',
   show_editor_menu: 'エディターメニューを表示',
   show_preview: 'プレビューを表示',
   sync_scrolling: 'スクロールを同期',
@@ -174,7 +206,7 @@ export const strings = {
   edit_x_locale: '{locale} コンテンツを編集',
   preview_x_locale: '{locale} コンテンツをプレビュー',
   show_menu_x_locale: '{locale} コンテンツのメニューを表示',
-  show_menu_x_field: '{field} フィールドのメニューを表示',
+  show_menu_x_field: '「{field}」フィールドのメニューを表示',
   unsupported_widget_x: '非対応ウィジェット: {name}',
   enable_x_locale: '{locale} を有効化',
   reenable_x_locale: '{locale} を再度有効化',
@@ -212,6 +244,7 @@ export const strings = {
   },
 
   // Media details
+  viewing_x_asset_details: '「{name}」アセットの詳細を表示しています。',
   asset_editor_toolbar: 'アセットエディターツールバー',
   no_preview_available: 'プレビューは表示できません',
   public_url: '公開 URL',
@@ -223,6 +256,15 @@ export const strings = {
   used_in: '使われているエントリー',
 
   // Widgets
+  select_file: 'ファイルを選択',
+  select_image: '画像を選択',
+  edit_file: 'ファイルを編集',
+  edit_image: '画像を編集',
+  replace_file: 'ファイルを差し替え',
+  replace_image: '画像を差し替え',
+  remove_file: 'ファイルを削除',
+  remove_image: '画像を削除',
+  remove_this_item: 'このアイテムを削除',
   move_up: '上へ移動',
   move_down: '下へ移動',
   today: '今日',

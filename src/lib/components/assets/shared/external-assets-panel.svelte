@@ -144,15 +144,15 @@
 {#if hasAuthInfo}
   {#if error}
     <EmptyState>
-      <span>{$_(`assets_dialog.error.${error}`)}</span>
+      <span role="alert">{$_(`assets_dialog.error.${error}`)}</span>
     </EmptyState>
   {:else if !searchResults}
     <EmptyState>
-      <span>{$_('searching')}</span>
+      <span role="alert">{$_('searching')}</span>
     </EmptyState>
   {:else if !searchResults.length}
     <EmptyState>
-      <span>{$_('no_files_found')}</span>
+      <span role="alert">{$_('no_files_found')}</span>
     </EmptyState>
   {:else}
     <SimpleImageGrid
@@ -268,9 +268,7 @@
   </EmptyState>
 {:else}
   <EmptyState>
-    <p>
-      {$_('cloud_storage.invalid')}
-    </p>
+    <span role="alert">{$_('cloud_storage.invalid')}</span>
   </EmptyState>
 {/if}
 

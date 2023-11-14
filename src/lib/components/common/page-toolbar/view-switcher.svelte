@@ -16,6 +16,7 @@
     selected={$currentView.type !== 'grid'}
     variant="ghost"
     iconic
+    aria-label={$_('list_view')}
     on:select={() => {
       currentView.update((view) => ({
         ...view,
@@ -23,13 +24,14 @@
       }));
     }}
   >
-    <Icon slot="start-icon" name="format_list_bulleted" label={$_('list_view')} />
+    <Icon slot="start-icon" name="format_list_bulleted" />
   </SelectButton>
   <SelectButton
     {disabled}
     selected={$currentView.type === 'grid'}
     variant="ghost"
     iconic
+    aria-label={$_('grid_view')}
     on:select={() => {
       currentView.update((view) => ({
         ...view,
@@ -37,6 +39,6 @@
       }));
     }}
   >
-    <Icon slot="start-icon" name="grid_view" label={$_('grid_view')} />
+    <Icon slot="start-icon" name="grid_view" />
   </SelectButton>
 </SelectButtonGroup>

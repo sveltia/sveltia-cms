@@ -7,8 +7,11 @@
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { fetchSiteConfig, siteConfig } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
+  import { announcedPageTitle } from '$lib/services/navigation';
   import { prefs } from '$lib/services/prefs';
   import { authError, unauthenticated, user } from '$lib/services/user';
+
+  $: $announcedPageTitle = $_('welcome_to_sveltia_cms');
 
   onMount(() => {
     fetchSiteConfig();
@@ -25,20 +28,20 @@
     />
     <h1>Sveltia CMS</h1>
     {#if !$siteConfig || !$prefs}
-      <h2>{$_('loading_site_config')}</h2>
+      <h2 role="alert">{$_('loading_site_config')}</h2>
     {:else if $siteConfig.error}
-      <h2>
+      <h2 role="alert">
         {$siteConfig.error}
         {$_('config.error.try_again')}
       </h2>
     {:else if $prefs.error}
-      <h2>
+      <h2 role="alert">
         {$_(`prefs.error.${$prefs.error}`)}
       </h2>
     {:else if $authError}
-      <div>
+      <div role="alert">
         <h2>{$_('loading_site_data_error')}</h2>
-        <div class="error" role="alert">
+        <div class="error">
           {@html DOMPurify.sanitize(/** @type {string } */ (marked.parseInline($authError)), {
             ALLOWED_TAGS: ['a', 'code'],
             ALLOWED_ATTR: ['href'],
@@ -48,7 +51,7 @@
     {:else if !$user || $unauthenticated}
       <SignIn />
     {:else if !$dataLoaded}
-      <h2>{$_('loading_site_data')}</h2>
+      <h2 role="alert">{$_('loading_site_data')}</h2>
     {/if}
   </div>
 </div>

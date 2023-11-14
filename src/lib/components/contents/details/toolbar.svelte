@@ -30,6 +30,8 @@
   let showDeleteDialog = false;
   let showErrorDialog = false;
   let saving = false;
+  /** @type {MenuButton} */
+  let menuButton;
 
   $: ({
     isNew,
@@ -68,24 +70,26 @@
   <Button
     variant="ghost"
     iconic
+    aria-label={$_('cancel_editing')}
     on:click={() => {
       goBack(`/collections/${collection?.name}`);
     }}
   >
-    <Icon slot="start-icon" name="arrow_back_ios_new" label={$_('cancel_editing')} />
+    <Icon slot="start-icon" name="arrow_back_ios_new" />
   </Button>
   <h2>
     {#if isNew}
       {$_('creating_x', { values: { name: collectionLabelSingular } })}
     {:else}
-      {$_('editing_x', {
+      {$_('editing_x_in_x', {
         values: {
-          name: collectionFile
-            ? `${collectionLabel} » ${collectionFile.label}`
-            : `${collectionLabel} » ${truncate(
+          collection: collectionLabel,
+          entry: collectionFile
+            ? collectionFile.label || collectionFile.name
+            : truncate(
                 formatSummary(collection, originalEntry, defaultLocale, { useTemplate: false }),
                 25,
-              )}`,
+              ),
         },
       })}
     {/if}
@@ -96,6 +100,7 @@
     iconic
     popupPosition="bottom-right"
     aria-label={$_('show_editor_menu')}
+    bind:this={menuButton}
   >
     <Icon slot="start-icon" name="more_vert" />
     <Menu slot="popup">
@@ -132,7 +137,8 @@
       {#if !collectionFile}
         <Divider />
         <MenuItem
-          label={$_('duplicate')}
+          label={$_('duplicate_entry')}
+          aria-label={$_('duplicate_entry')}
           disabled={collection?.create === false || isNew}
           on:click={() => {
             duplicateDraft();
@@ -140,7 +146,8 @@
         />
         <MenuItem
           disabled={collection?.delete === false || isNew}
-          label={$_('delete')}
+          label={$_('delete_entry')}
+          aria-label={$_('delete_entry')}
           on:click={() => {
             showDeleteDialog = true;
           }}
@@ -192,11 +199,21 @@
     await deleteEntries([originalEntry?.id]);
     goBack(`/collections/${collection?.name}`);
   }}
+  on:close={() => {
+    menuButton.focus();
+  }}
 >
   {$_('confirm_deleting_this_entry')}
 </Dialog>
 
 <!-- @todo make the error message more informative -->
-<Dialog bind:open={showErrorDialog} title={$_('saving_entry.error.title')} showCancel={false}>
+<Dialog
+  bind:open={showErrorDialog}
+  title={$_('saving_entry.error.title')}
+  showCancel={false}
+  on:close={() => {
+    menuButton.focus();
+  }}
+>
   {$_('saving_entry.error.description')}
 </Dialog>

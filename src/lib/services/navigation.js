@@ -7,6 +7,12 @@ import { siteConfig } from '$lib/services/config';
 export const selectedPageName = writable('');
 
 /**
+ * Page title to be announced by screen readers.
+ * @type {import('svelte/store').Writable<string>}
+ */
+export const announcedPageTitle = writable('');
+
+/**
  * Parse the URL and return the decoded result.
  * @param {Location} [loc] URL. Omit this to use the current URL.
  * @returns {{ path: string, params: { [key: string]: string } }} Path and search params.

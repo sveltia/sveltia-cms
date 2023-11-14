@@ -13,8 +13,8 @@
   import { getCollection, getFile, selectedCollection } from '$lib/services/contents';
   import { contentUpdatesToast } from '$lib/services/contents/data';
   import { createDraft, entryDraft } from '$lib/services/contents/editor';
-  import { listedEntries } from '$lib/services/contents/view';
-  import { parseLocation } from '$lib/services/navigation';
+  import { formatSummary, listedEntries } from '$lib/services/contents/view';
+  import { announcedPageTitle, parseLocation } from '$lib/services/navigation';
 
   /**
    * Navigate to the content list or content details page given the URL hash.
@@ -40,15 +40,36 @@
 
     $entryDraft = null;
 
-    if (!_state) {
+    if (!$selectedCollection) {
+      $announcedPageTitle = $_('collection_not_found');
+
       return; // Not Found
     }
 
     const {
       name: collectionName,
+      label,
       files,
-      _i18n: { hasLocales, locales },
+      _i18n: { hasLocales, locales, defaultLocale = 'default' },
     } = $selectedCollection;
+
+    const collectionLabel = label || collectionName;
+
+    if (!_state) {
+      const count = $listedEntries.length;
+
+      $announcedPageTitle =
+        // eslint-disable-next-line no-nested-ternary
+        count > 1
+          ? $_('viewing_x_collection_many_entries', {
+              values: { collection: collectionLabel, count },
+            })
+          : count === 1
+            ? $_('viewing_x_collection_one_entry')
+            : $_('viewing_x_collection_no_entry');
+
+      return;
+    }
 
     if (files) {
       // File collection
@@ -69,11 +90,24 @@
             ),
           });
         }
+
+        $announcedPageTitle = $_('editing_x_collection_file', {
+          values: {
+            collection: collectionLabel,
+            file: collectionFile.label || collectionFile.name,
+          },
+        });
       }
     } else {
       // Folder collection
       if (_state === 'new' && !_id && $selectedCollection.create) {
         createDraft({ collectionName }, params);
+
+        $announcedPageTitle = $_('creating_x_collection_entry', {
+          values: {
+            collection: collectionLabel,
+          },
+        });
       }
 
       if (_state === 'entries' && _id) {
@@ -81,6 +115,15 @@
 
         if (selectedEntry) {
           createDraft(selectedEntry);
+
+          $announcedPageTitle = $_('editing_x_collection_entry', {
+            values: {
+              collection: collectionLabel,
+              entry: formatSummary(collection, selectedEntry, defaultLocale, {
+                useTemplate: false,
+              }),
+            },
+          });
         }
       }
     }

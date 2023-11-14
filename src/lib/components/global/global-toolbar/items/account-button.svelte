@@ -8,7 +8,7 @@
   import { user } from '$lib/services/user';
 
   /** @type {MenuButton} */
-  let menuButtonComponent;
+  let menuButton;
   let showPrefsDialog = false;
   let showShortcutsDialog = false;
 
@@ -22,7 +22,7 @@
     iconic
     class={hasAvatar ? 'avatar' : ''}
     popupPosition="bottom-right"
-    bind:this={menuButtonComponent}
+    bind:this={menuButton}
   >
     <svelte:component
       this={hasAvatar ? undefined : Icon}
@@ -115,8 +115,8 @@
   </MenuButton>
 </div>
 
-<PrefsDialog bind:open={showPrefsDialog} on:close={() => menuButtonComponent.focus()} />
-<ShortcutsDialog bind:open={showShortcutsDialog} on:close={() => menuButtonComponent.focus()} />
+<PrefsDialog bind:open={showPrefsDialog} on:close={() => menuButton.focus()} />
+<ShortcutsDialog bind:open={showShortcutsDialog} on:close={() => menuButton.focus()} />
 
 <style lang="scss">
   .wrapper {
