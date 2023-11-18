@@ -154,9 +154,7 @@
 
     & > video,
     & > img {
-      width: fit-content;
       max-width: 100%;
-      height: fit-content;
       max-height: 100%;
     }
   }
