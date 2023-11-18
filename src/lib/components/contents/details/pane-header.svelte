@@ -28,6 +28,7 @@
    */
   export let id;
   /**
+   * This pane’s locale and mode.
    * @type {import('svelte/store').Writable<EntryEditorPane>}
    */
   export let thisPane;
@@ -47,13 +48,13 @@
     defaultLocale,
     saveAllLocales = true,
   } = collection._i18n ?? /** @type {I18nConfig} */ ({}));
-  $: isLocaleEnabled = currentLocales[$thisPane.locale];
+  $: isLocaleEnabled = currentLocales[$thisPane?.locale];
   $: isOnlyLocale = Object.values(currentLocales).filter((enabled) => enabled).length === 1;
-  $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane.locale) : [];
+  $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane?.locale) : [];
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: canCopy = !!otherLocales.length;
-  $: canRevert = !equal(currentValues[$thisPane.locale], originalValues[$thisPane.locale]);
+  $: canRevert = !equal(currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]);
 </script>
 
 <div role="none" {id} class="header">
@@ -69,7 +70,7 @@
           {@const invalid = Object.values(validities[locale]).some(({ valid }) => !valid)}
           {#if !($thatPane?.mode === 'edit' && $thatPane?.locale === locale)}
             <SelectButton
-              selected={$thisPane.mode === 'edit' && $thisPane.locale === locale}
+              selected={$thisPane?.mode === 'edit' && $thisPane?.locale === locale}
               variant="tertiary"
               size="small"
               class={invalid ? 'error' : ''}
@@ -90,7 +91,7 @@
         {/each}
         {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings.showPreview}
           <SelectButton
-            selected={$thisPane.mode === 'preview'}
+            selected={$thisPane?.mode === 'preview'}
             variant="tertiary"
             size="small"
             label={$_('preview')}
@@ -101,11 +102,11 @@
         {/if}
       </SelectButtonGroup>
     {:else}
-      <h3 role="none">{$thisPane.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
+      <h3 role="none">{$thisPane?.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
     {/if}
     <Spacer flex />
-    {#if $thisPane.mode === 'edit'}
-      {@const localeLabel = getLocaleLabel($thisPane.locale)}
+    {#if $thisPane?.mode === 'edit'}
+      {@const localeLabel = getLocaleLabel($thisPane?.locale)}
       <MenuButton
         variant="ghost"
         iconic
@@ -119,35 +120,35 @@
           aria-label={$_('content_options_x_locale', { values: { locale: localeLabel } })}
         >
           {#if canCopy}
-            <CopyMenuItems anchor={menuButton} locale={$thisPane.locale} translate={true} />
+            <CopyMenuItems anchor={menuButton} locale={$thisPane?.locale} translate={true} />
             {#if otherLocales.length > 1}
               <Divider />
             {/if}
-            <CopyMenuItems anchor={menuButton} locale={$thisPane.locale} />
+            <CopyMenuItems anchor={menuButton} locale={$thisPane?.locale} />
             <Divider />
           {/if}
           <MenuItem
             label={$_('revert_changes')}
             disabled={!canRevert}
             on:click={() => {
-              revertChanges($thisPane.locale);
+              revertChanges($thisPane?.locale);
             }}
           />
-          {#if !saveAllLocales && $thisPane.locale !== defaultLocale}
+          {#if !saveAllLocales && $thisPane?.locale !== defaultLocale}
             <Divider />
             <MenuItem
               label={$_(
                 // eslint-disable-next-line no-nested-ternary
                 isLocaleEnabled
                   ? 'disable_x_locale'
-                  : currentValues[$thisPane.locale]
+                  : currentValues[$thisPane?.locale]
                     ? 'reenable_x_locale'
                     : 'enable_x_locale',
                 { values: { locale: localeLabel } },
               )}
               disabled={isLocaleEnabled && isOnlyLocale}
               on:click={() => {
-                toggleLocale($thisPane.locale);
+                toggleLocale($thisPane?.locale);
               }}
             />
           {/if}
