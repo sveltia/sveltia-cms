@@ -13,7 +13,7 @@ import { stripSlashes } from '$lib/services/utils/strings';
  */
 export const siteConfig = writable();
 
-const { DEV, VITE_CONFIG_PORT } = import.meta.env;
+const { DEV, VITE_SITE_URL } = import.meta.env;
 
 /**
  * Validate the site configuration file.
@@ -86,7 +86,7 @@ export const fetchSiteConfig = async () => {
 
     // Set the site URL for development. See also `/src/app.svelte`
     if (DEV && !config.site_url) {
-      config.site_url = `http://localhost:${VITE_CONFIG_PORT || 5174}`;
+      config.site_url = VITE_SITE_URL || 'http://localhost:5174';
     }
 
     siteConfig.set(config);
