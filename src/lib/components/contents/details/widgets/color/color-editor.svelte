@@ -5,7 +5,7 @@
   @todo Replace the native `<input>` with a custom component and support the `enableAlpha` option.
 -->
 <script>
-  import { Button, Icon, TextInput } from '@sveltia/ui';
+  import { Button, Icon, TextInput, getRandomId } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   /**
@@ -53,10 +53,13 @@
     allowInput = false,
     // enableAlpha = false,
   } = fieldConfig);
+
+  const id = getRandomId('color');
 </script>
 
-<div>
+<div role="none">
   <input
+    id="{id}-picker"
     type="color"
     bind:value={currentValue}
     {readonly}
@@ -66,9 +69,10 @@
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
   />
-  <span class="value">
+  <span role="none" class="value">
     {#if allowInput}
       <TextInput
+        id="{id}-input"
         bind:value={currentValue}
         {invalid}
         {readonly}
@@ -85,6 +89,7 @@
     iconic
     disabled={!currentValue}
     aria-label={$_('clear')}
+    aria-controls={`${id}-picker ${allowInput ? `${id}-input` : ''}`}
     on:click={() => {
       currentValue = '';
     }}

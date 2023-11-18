@@ -53,9 +53,9 @@
   }
 </script>
 
-<div class="detail">
+<div role="none" class="detail">
   {#if showPreview && canPreview}
-    <div class="preview">
+    <div role="none" class="preview">
       {#if kind === 'image'}
         <Image {asset} variant="tile" />
       {/if}
@@ -125,12 +125,13 @@
       {@const { content } = locales[locale]}
       <p>
         <Button
+          role="link"
           variant="link"
           on:click={() => {
             goto(`/collections/${collectionName}/entries/${fileName || slug}`);
           }}
         >
-          <span>
+          <span role="none">
             {collection.label || collection.name} »
             {#if collection.files}
               {collection.files.find(({ name }) => name === fileName).label}

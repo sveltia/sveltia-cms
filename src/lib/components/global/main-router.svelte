@@ -50,7 +50,7 @@
   }}
 />
 
-<div class="outer">
+<div role="none" class="outer">
   <GlobalToolbar />
   <svelte:component this={pages[$selectedPageName]} />
 </div>

@@ -1,10 +1,9 @@
 <script>
-  import { Checkbox, TableCell, TableRow } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
+  import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
   import { getMediaFieldURL } from '$lib/services/assets';
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
-  import { formatSummary } from '$lib/services/contents/view';
+  import { formatSummary, listedEntries } from '$lib/services/contents/view';
   import { goto } from '$lib/services/navigation';
 
   /**
@@ -28,45 +27,57 @@
   export let viewType;
 
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
+
+  /**
+   * Update the entry selection.
+   * @param {boolean} selected Whether the current entry item is selected.
+   */
+  const updateSelection = (selected) => {
+    selectedEntries.update((entries) => {
+      const index = entries.indexOf(entry);
+
+      if (selected && index === -1) {
+        entries.push(entry);
+      }
+
+      if (!selected && index > -1) {
+        entries.splice(index, 1);
+      }
+
+      return entries;
+    });
+  };
 </script>
 
-<TableRow
-  selected={$selectedEntries.includes(entry)}
+<GridRow
+  aria-rowindex={$listedEntries.indexOf(entry)}
+  on:change={(/** @type {CustomEvent} */ { detail: { selected } }) => {
+    updateSelection(selected);
+  }}
   on:click={() => {
     goto(`/collections/${$selectedCollection.name}/entries/${entry.slug}`);
   }}
 >
-  <TableCell class="checkbox">
+  <GridCell class="checkbox">
     <Checkbox
-      aria-label={$_('select_this_entry')}
+      role="none"
+      tabindex="-1"
       checked={$selectedEntries.includes(entry)}
       on:change={({ detail: { checked } }) => {
-        selectedEntries.update((_entries) => {
-          const index = _entries.indexOf(entry);
-
-          if (_entries && index === -1) {
-            _entries.push(entry);
-          }
-
-          if (!checked && index > -1) {
-            _entries.splice(index, 1);
-          }
-
-          return _entries;
-        });
+        updateSelection(checked);
       }}
     />
-  </TableCell>
+  </GridCell>
   {#if firstImageField}
-    <TableCell class="image">
+    <GridCell class="image">
       {#await getMediaFieldURL(content[firstImageField?.name], entry) then src}
         <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} />
       {/await}
-    </TableCell>
+    </GridCell>
   {/if}
-  <TableCell class="title">
-    <span>
+  <GridCell class="title">
+    <span role="none">
       {formatSummary($selectedCollection, entry, locale)}
     </span>
-  </TableCell>
-</TableRow>
+  </GridCell>
+</GridRow>

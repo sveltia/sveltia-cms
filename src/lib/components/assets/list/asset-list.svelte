@@ -1,40 +1,45 @@
 <script>
-  import { Group } from '@sveltia/ui';
+  import { GridBody } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import BasicGridView from '$lib/components/common/basic-grid-view.svelte';
-  import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
+  import ListContainer from '$lib/components/common/list-container.svelte';
+  import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import { selectedAssetFolderPath, uploadingAssets } from '$lib/services/assets';
-  import { assetGroups, currentView } from '$lib/services/assets/view';
+  import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
 </script>
 
-<div class="list-container">
+<ListContainer aria-label={$_('asset_list')}>
   {#if Object.values($assetGroups).flat(1).length}
     <DropZone
       multiple={true}
       on:select={({ detail: { files } }) => {
-        $uploadingAssets = { folder: $selectedAssetFolderPath || $siteConfig.media_folder, files };
+        $uploadingAssets = {
+          folder: $selectedAssetFolderPath || $siteConfig.media_folder,
+          files,
+        };
       }}
     >
-      {#each Object.entries($assetGroups) as [groupName, assets] (groupName)}
-        <Group>
-          {#if groupName !== '*'}
-            <h3>{groupName}</h3>
-          {/if}
-          <svelte:component this={$currentView.type === 'list' ? BasicListView : BasicGridView}>
+      <ListingGrid
+        id="asset-list"
+        viewType={$currentView.type}
+        aria-label={$_('assets')}
+        aria-rowcount={$listedAssets.length}
+      >
+        {#each Object.entries($assetGroups) as [name, assets] (name)}
+          <GridBody label={name !== '*' ? name : undefined}>
             {#each assets as asset (asset.path)}
               <AssetListItem {asset} viewType={$currentView.type} />
             {/each}
-          </svelte:component>
-        </Group>
-      {/each}
+          </GridBody>
+        {/each}
+      </ListingGrid>
     </DropZone>
   {:else}
     <EmptyState>
-      <span>{$_('no_files_found')}</span>
+      <span role="none">{$_('no_files_found')}</span>
     </EmptyState>
   {/if}
-</div>
+</ListContainer>

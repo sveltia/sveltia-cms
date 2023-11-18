@@ -1,11 +1,17 @@
 <script>
   import { Listbox } from '@sveltia/ui';
+  import { _ } from 'svelte-i18n';
 
   export let viewType = 'grid';
+  /**
+   * The `id` attribute of the inner listbox.
+   * @type {string}
+   */
+  export let gridId = undefined;
 </script>
 
-<div class="wrapper">
-  <Listbox class={viewType} on:change>
+<div role="none" class="wrapper">
+  <Listbox id={gridId} class={viewType} aria-label={$_('assets_dialog.available_images')} on:change>
     <slot />
   </Listbox>
 </div>
@@ -19,7 +25,7 @@
       overflow-x: hidden;
       overflow-y: auto;
       border-width: 0;
-      height: 100%;
+      max-height: calc(100% - var(--sui-focus-ring-width) * 2);
 
       :global(.option) {
         :global(button) {
@@ -53,7 +59,6 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       height: auto;
-      max-height: 100%;
 
       :global(.option) {
         :global(button) {

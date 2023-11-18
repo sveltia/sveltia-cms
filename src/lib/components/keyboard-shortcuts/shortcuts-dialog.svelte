@@ -1,5 +1,5 @@
 <script>
-  import { Dialog } from '@sveltia/ui';
+  import { Dialog, Table, TableCell, TableRow } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -25,39 +25,47 @@
   showClose={true}
   on:close
 >
-  <div class="row">
-    <div class="feature">{$_('keyboard_shortcuts.search')}</div>
-    <div class="key"><kbd>{accel}</kbd> <kbd>F</kbd></div>
-  </div>
-  <div class="row">
-    <div class="feature">{$_('keyboard_shortcuts.create_entry')}</div>
-    <div class="key"><kbd>{accel}</kbd> <kbd>E</kbd></div>
-  </div>
-  <div class="row">
-    <div class="feature">{$_('keyboard_shortcuts.save_entry')}</div>
-    <div class="key"><kbd>{accel}</kbd> <kbd>S</kbd></div>
+  <div role="none" class="wrapper">
+    <Table aria-label={$_('help.keyboard_shortcuts')}>
+      <TableRow>
+        <TableCell class="feature">{$_('keyboard_shortcuts.search')}</TableCell>
+        <TableCell class="key"><kbd>{accel}</kbd> <kbd>F</kbd></TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell class="feature">{$_('keyboard_shortcuts.create_entry')}</TableCell>
+        <TableCell class="key"><kbd>{accel}</kbd> <kbd>E</kbd></TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell class="feature">{$_('keyboard_shortcuts.save_entry')}</TableCell>
+        <TableCell class="key"><kbd>{accel}</kbd> <kbd>S</kbd></TableCell>
+      </TableRow>
+    </Table>
   </div>
 </Dialog>
 
 <style lang="scss">
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 8px 0;
-    border-top: 1px solid var(--sui-secondary-border-color);
+  .wrapper {
+    display: contents;
 
-    &:last-child {
-      border-bottom: 1px solid var(--sui-secondary-border-color);
-    }
-
-    .feature {
-      flex: auto;
-    }
-
-    .key {
+    :global(.table-row) {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 0;
+      border-top: 1px solid var(--sui-secondary-border-color);
+
+      &:last-child {
+        border-bottom: 1px solid var(--sui-secondary-border-color);
+      }
+
+      :global(.feature) {
+        flex: auto;
+      }
+
+      :global(.key) {
+        display: flex;
+        gap: 8px;
+      }
     }
   }
 

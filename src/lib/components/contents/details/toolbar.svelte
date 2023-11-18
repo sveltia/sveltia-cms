@@ -1,7 +1,9 @@
 <script>
   import {
+    Alert,
+    AlertDialog,
     Button,
-    Dialog,
+    ConfirmationDialog,
     Divider,
     Icon,
     Menu,
@@ -66,7 +68,7 @@
   };
 </script>
 
-<Toolbar variant="primary" aria-label={$_('content_editor_primary_toolbar')}>
+<Toolbar variant="primary" aria-label={$_('primary')}>
   <Button
     variant="ghost"
     iconic
@@ -77,7 +79,7 @@
   >
     <Icon slot="start-icon" name="arrow_back_ios_new" />
   </Button>
-  <h2>
+  <h2 role="none">
     {#if isNew}
       {$_('creating_x', { values: { name: collectionLabelSingular } })}
     {:else}
@@ -99,16 +101,16 @@
     variant="ghost"
     iconic
     popupPosition="bottom-right"
-    aria-label={$_('show_editor_menu')}
+    aria-label={$_('show_editor_options')}
     bind:this={menuButton}
   >
     <Icon slot="start-icon" name="more_vert" />
-    <Menu slot="popup">
+    <Menu slot="popup" aria-label={$_('editor_options')}>
       <MenuItemCheckbox
         label={$_('show_preview')}
         checked={$entryEditorSettings.showPreview}
         disabled={!canPreview}
-        on:click={() => {
+        on:change={() => {
           entryEditorSettings.update((view) => ({
             ...view,
             showPreview: !view.showPreview,
@@ -119,7 +121,7 @@
         label={$_('sync_scrolling')}
         checked={$entryEditorSettings.syncScrolling}
         disabled={!canPreview && Object.keys(currentValues).length === 1}
-        on:click={() => {
+        on:change={() => {
           entryEditorSettings.update((view) => ({
             ...view,
             syncScrolling: !view.syncScrolling,
@@ -138,7 +140,6 @@
         <Divider />
         <MenuItem
           label={$_('duplicate_entry')}
-          aria-label={$_('duplicate_entry')}
           disabled={collection?.create === false || isNew}
           on:click={() => {
             duplicateDraft();
@@ -147,7 +148,6 @@
         <MenuItem
           disabled={collection?.delete === false || isNew}
           label={$_('delete_entry')}
-          aria-label={$_('delete_entry')}
           on:click={() => {
             showDeleteDialog = true;
           }}
@@ -181,17 +181,21 @@
   />
 </Toolbar>
 
-<Toast bind:show={showDuplicateToast} type="success">
-  {$_('entry_duplicated')}
+<Toast bind:show={showDuplicateToast}>
+  <Alert status="success">
+    {$_('entry_duplicated')}
+  </Alert>
 </Toast>
 
-<Toast bind:show={showValidationToast} type="error">
-  {$_(errorCount === 1 ? 'entry_validation_error' : 'entry_validation_errors', {
-    values: { count: errorCount },
-  })}
+<Toast bind:show={showValidationToast}>
+  <Alert status="error">
+    {$_(errorCount === 1 ? 'entry_validation_error' : 'entry_validation_errors', {
+      values: { count: errorCount },
+    })}
+  </Alert>
 </Toast>
 
-<Dialog
+<ConfirmationDialog
   bind:open={showDeleteDialog}
   title={$_('delete_entry')}
   okLabel={$_('delete')}
@@ -204,16 +208,15 @@
   }}
 >
   {$_('confirm_deleting_this_entry')}
-</Dialog>
+</ConfirmationDialog>
 
 <!-- @todo make the error message more informative -->
-<Dialog
+<AlertDialog
   bind:open={showErrorDialog}
   title={$_('saving_entry.error.title')}
-  showCancel={false}
   on:close={() => {
     menuButton.focus();
   }}
 >
   {$_('saving_entry.error.description')}
-</Dialog>
+</AlertDialog>

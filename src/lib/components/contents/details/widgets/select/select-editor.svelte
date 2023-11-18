@@ -115,14 +115,15 @@
 </script>
 
 {#if multiple}
-  <div class="multi-selector" class:disabled={readonly}>
+  <div role="none" class="multi-selector" class:disabled={readonly}>
     {#each currentValue as value, index}
       {@const option = options.find((o) => o.value === value)}
       {#if option}
-        <span>
+        <span role="none">
           {option.label}
           <Button
             iconic
+            size="small"
             disabled={readonly}
             aria-label={$_('remove_x', { values: { name: option.label } })}
             on:click={() => {
@@ -167,7 +168,6 @@
     {invalid}
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
-    label={options.find(({ value }) => value === currentValue)?.label || undefined}
   >
     {#each options as { label, value } (value)}
       <Option {label} {value} selected={value === currentValue} />

@@ -19,12 +19,9 @@
 </script>
 
 {#if $selectedCollection}
-  <Toolbar
-    variant="primary"
-    aria-label={$_('x_collection_primary_toolbar', { values: { collection: collectionLabel } })}
-  >
-    <h2>{collectionLabel}</h2>
-    <div class="description">{description || ''}</div>
+  <Toolbar variant="primary" aria-label={$_('collection')}>
+    <h2 role="none">{collectionLabel}</h2>
+    <div role="none" class="description">{description || ''}</div>
     {#if !files}
       <Button
         variant="secondary"

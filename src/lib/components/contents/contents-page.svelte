@@ -1,7 +1,8 @@
 <script>
-  import { Toast } from '@sveltia/ui';
+  import { Alert, Group, Toast } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import ContentDetailsOverlay from '$lib/components/contents/details/content-details-overlay.svelte';
   import EntryList from '$lib/components/contents/list/entry-list.svelte';
@@ -58,15 +59,15 @@
     if (!_state) {
       const count = $listedEntries.length;
 
-      $announcedPageTitle =
+      $announcedPageTitle = $_(
         // eslint-disable-next-line no-nested-ternary
         count > 1
-          ? $_('viewing_x_collection_many_entries', {
-              values: { collection: collectionLabel, count },
-            })
+          ? 'viewing_x_collection_many_entries'
           : count === 1
-            ? $_('viewing_x_collection_one_entry')
-            : $_('viewing_x_collection_no_entry');
+            ? 'viewing_x_collection_one_entry'
+            : 'viewing_x_collection_no_entry',
+        { values: { collection: collectionLabel, count } },
+      );
 
       return;
     }
@@ -140,24 +141,43 @@
   }}
 />
 
-<PageContainer class="content">
+<PageContainer class="content" aria-label={$_('content_library')}>
   <PrimarySidebar slot="primary_sidebar" />
-  <PrimaryToolbar slot="primary_toolbar" />
-  <SecondaryToolbar slot="secondary_toolbar" />
-  <svelte:component this={$selectedCollection.files ? FileList : EntryList} slot="main" />
-  <SecondarySidebar slot="secondary_sidebar" />
+  <Group
+    slot="main"
+    id="collection-container"
+    class="main"
+    aria-label={$_('x_collection', {
+      values: { collection: $selectedCollection.label || $selectedCollection.name },
+    })}
+    aria-description={$selectedCollection.description}
+  >
+    <PageContainerMainArea>
+      <PrimaryToolbar slot="primary_toolbar" />
+      <SecondaryToolbar slot="secondary_toolbar" />
+      <svelte:component
+        this={$selectedCollection.files ? FileList : EntryList}
+        slot="main_content"
+      />
+      <SecondarySidebar slot="secondary_sidebar" />
+    </PageContainerMainArea>
+  </Group>
 </PageContainer>
 
 {#if $entryDraft}
   <ContentDetailsOverlay />
 {/if}
 
-<Toast bind:show={$contentUpdatesToast.saved} type="success">
-  {$_('entry_saved')}
+<Toast bind:show={$contentUpdatesToast.saved}>
+  <Alert status="success">
+    {$_('entry_saved')}
+  </Alert>
 </Toast>
 
-<Toast bind:show={$contentUpdatesToast.deleted} type="success">
-  {$_($contentUpdatesToast.count === 1 ? 'entry_deleted' : 'entries_deleted', {
-    values: { count: $contentUpdatesToast.count },
-  })}
+<Toast bind:show={$contentUpdatesToast.deleted}>
+  <Alert status="success">
+    {$_($contentUpdatesToast.count === 1 ? 'entry_deleted' : 'entries_deleted', {
+      values: { count: $contentUpdatesToast.count },
+    })}
+  </Alert>
 </Toast>

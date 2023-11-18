@@ -12,8 +12,6 @@
   $: fields = collectionFile?.fields ?? collection?.fields;
 </script>
 
-<div>
-  {#each fields as fieldConfig (fieldConfig.name)}
-    <FieldEditor keyPath={fieldConfig.name} {locale} {fieldConfig} />
-  {/each}
-</div>
+{#each fields as fieldConfig (fieldConfig.name)}
+  <FieldEditor keyPath={fieldConfig.name} {locale} {fieldConfig} />
+{/each}

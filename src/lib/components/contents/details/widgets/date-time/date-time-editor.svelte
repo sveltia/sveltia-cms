@@ -97,7 +97,7 @@
   }
 </script>
 
-<div>
+<div role="none">
   <input
     {...{
       // @see https://github.com/sveltejs/svelte/issues/3921

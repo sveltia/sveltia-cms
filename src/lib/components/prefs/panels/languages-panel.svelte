@@ -11,11 +11,10 @@
 <TabPanel id="prefs-tab-languages">
   <section>
     <h4>{$_('prefs.languages.ui_language.title')}</h4>
-    <p>
+    <div role="none">
       {#key $appLocale}
         <Select
           aria-label={$_('prefs.languages.ui_language.select_language')}
-          label={getLocaleLabel($appLocale)}
           value={$appLocale}
           on:change={(/** @type {CustomEvent} */ event) => {
             $prefs = { ...$prefs, locale: event.detail.value };
@@ -30,7 +29,7 @@
           {/each}
         </Select>
       {/key}
-    </p>
+    </div>
   </section>
   {#if $siteConfig.i18n?.locales?.length > 1}
     {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
@@ -49,9 +48,10 @@
             { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
           )}
         </p>
-        <div>
+        <div role="none">
           <TextInput
             bind:value={$prefs.apiKeys[serviceId]}
+            flex
             spellcheck="false"
             aria-label={$_('prefs.languages.translator.field_label', {
               values: { service: serviceLabel },

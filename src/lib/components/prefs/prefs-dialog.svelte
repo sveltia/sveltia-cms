@@ -29,8 +29,8 @@
   showClose={true}
   on:close
 >
-  <div class="wrapper">
-    <TabList orientation="vertical">
+  <div role="none" class="wrapper">
+    <TabList orientation="vertical" aria-label={$_('categories')}>
       {#each panels as { key, icon } (key)}
         <Tab
           label={$_(`prefs.${key}.title`)}

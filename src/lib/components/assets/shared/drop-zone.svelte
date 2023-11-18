@@ -67,16 +67,16 @@
     default slot content.
   -->
   {#if !showUploadButton && showFilePreview && files.length}
-    <div class="content">
+    <div role="none" class="content">
       <UploadAssetsPreview bind:files />
     </div>
   {:else if $$slots.default}
     <slot />
   {:else}
-    <div class="content">
+    <div role="none" class="content">
       {#if showUploadButton}
-        <div>{$_('drop_files_or_browse')}</div>
-        <div>
+        <div role="none">{$_('drop_files_or_browse')}</div>
+        <div role="none">
           <Button
             variant="primary"
             label={$_('upload')}
@@ -94,8 +94,8 @@
     </div>
   {/if}
   {#if dragging}
-    <div class="drop-indicator">
-      <div>{$_('drop_files_here')}</div>
+    <div role="none" class="drop-indicator">
+      <div role="none">{$_('drop_files_here')}</div>
     </div>
   {/if}
 </div>

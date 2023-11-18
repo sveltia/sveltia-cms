@@ -1,14 +1,5 @@
 <script>
-  import {
-    Button,
-    Dialog,
-    Group,
-    Listbox,
-    Option,
-    OptionGroup,
-    SearchBar,
-    TextInput,
-  } from '@sveltia/ui';
+  import { Button, Dialog, Listbox, Option, OptionGroup, SearchBar, TextInput } from '@sveltia/ui';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
@@ -95,8 +86,12 @@
       />
     {/if}
     {#if isLocalLibrary || isEnabledMediaService}
-      <ViewSwitcher currentView={selectAssetsView} />
-      <SearchBar bind:value={searchTerms} disabled={!!selectedAsset?.file} />
+      <ViewSwitcher currentView={selectAssetsView} aria-controls="select-assets-grid" />
+      <SearchBar
+        bind:value={searchTerms}
+        disabled={!!selectedAsset?.file}
+        aria-label={$_(`assets_dialog.search_for_${kind}`)}
+      />
     {/if}
   </svelte:fragment>
   <svelte:fragment slot="footer-extra">
@@ -110,10 +105,11 @@
       {/if}
     {/if}
   </svelte:fragment>
-  <div class="wrapper">
+  <div role="none" class="wrapper">
     <Listbox
-      aria-controls="{elementIdPrefix}-content-pane"
       class="tabs"
+      aria-label={$_('assets_dialog.locations')}
+      aria-controls="{elementIdPrefix}-content-pane"
       on:change={(event) => {
         libraryName = /** @type {CustomEvent} */ (event).detail.name;
         selectedAsset = null;
@@ -123,7 +119,7 @@
         {#if collectionMediaFolder}
           <Option
             name="collection-files"
-            label={$_('collection_files')}
+            label={$_('collection_assets')}
             selected={libraryName === 'collection-files'}
           />
         {/if}
@@ -143,7 +139,7 @@
         {/each}
       </OptionGroup>
     </Listbox>
-    <Group id="{elementIdPrefix}-content-pane" class="content-pane">
+    <div id="{elementIdPrefix}-content-pane" class="content-pane">
       {#if collectionMediaFolder && libraryName === 'collection-files'}
         <DropZone
           bind:this={collectionAssetsDropZone}
@@ -159,6 +155,7 @@
             )}
             viewType={$selectAssetsView?.type}
             {searchTerms}
+            gridId="select-assets-grid"
             on:select={({ detail }) => {
               selectedAsset = detail;
             }}
@@ -178,6 +175,7 @@
             assets={$allAssets.filter((asset) => !kind || kind === asset.kind)}
             viewType={$selectAssetsView?.type}
             {searchTerms}
+            gridId="select-assets-grid"
             on:select={({ detail }) => {
               selectedAsset = detail;
             }}
@@ -186,13 +184,14 @@
       {/if}
       {#if canEnterURL && libraryName === 'enter-url'}
         <EmptyState>
-          <div>
+          <div role="none">
             {kind === 'image'
               ? $_('assets_dialog.enter_image_url')
               : $_('assets_dialog.enter_file_url')}
           </div>
           <TextInput
             bind:value={enteredURL}
+            flex
             on:input={() => {
               selectedAsset = enteredURL.trim() ? { url: enteredURL.trim() } : null;
             }}
@@ -205,6 +204,7 @@
             {kind}
             {searchTerms}
             {serviceProps}
+            gridId="select-assets-grid"
             on:select={({ detail }) => {
               selectedAsset = detail;
             }}
@@ -217,13 +217,14 @@
             {kind}
             {searchTerms}
             {serviceProps}
+            gridId="select-assets-grid"
             on:select={({ detail }) => {
               selectedAsset = detail;
             }}
           />
         {/if}
       {/each}
-    </Group>
+    </div>
   </div>
 </Dialog>
 
@@ -238,7 +239,7 @@
       background-color: transparent;
     }
 
-    :global(.content-pane) {
+    .content-pane {
       overflow: auto;
       flex: auto;
     }

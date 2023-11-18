@@ -1,5 +1,4 @@
 <script>
-  import { Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import PageContainer from '$lib/components/common/page-container.svelte';
@@ -54,9 +53,9 @@
   }}
 />
 
-<PageContainer class="content">
-  <Toolbar variant="primary" aria-label={$_('search_results_toolbar')} slot="primary_toolbar">
-    <h2>{$_('search_results_for_x', { values: { terms: $searchTerms } })}</h2>
-  </Toolbar>
+<PageContainer
+  class="content"
+  aria-label={$_('search_results_for_x', { values: { terms: $searchTerms } })}
+>
   <SearchResults slot="main" />
 </PageContainer>

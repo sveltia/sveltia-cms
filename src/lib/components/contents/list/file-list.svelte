@@ -1,36 +1,35 @@
 <script>
-  import { TableCell, TableRow } from '@sveltia/ui';
+  import { GridCell, GridRow } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
+  import ListContainer from '$lib/components/common/list-container.svelte';
+  import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import { selectedCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
 </script>
 
-<div class="list-container">
+<ListContainer aria-label={$_('file_list')}>
   {#if $selectedCollection.files?.length}
-    <BasicListView>
+    <ListingGrid
+      viewType="list"
+      aria-label={$_('files')}
+      aria-rowcount={$selectedCollection.files.length}
+    >
       {#each $selectedCollection.files as { name, label } (name)}
-        <TableRow
+        <GridRow
           on:click={() => {
             goto(`/collections/${$selectedCollection.name}/entries/${name}`);
           }}
         >
-          <TableCell class="title">
+          <GridCell class="title">
             {label}
-          </TableCell>
-        </TableRow>
+          </GridCell>
+        </GridRow>
       {/each}
-    </BasicListView>
+    </ListingGrid>
   {:else}
     <EmptyState>
-      <span>{$_('no_files_found')}</span>
+      <span role="none">{$_('no_files_in_collection')}</span>
     </EmptyState>
   {/if}
-</div>
-
-<style lang="scss">
-  .list-container {
-    padding: 16px;
-  }
-</style>
+</ListContainer>

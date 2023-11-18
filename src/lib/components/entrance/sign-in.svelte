@@ -10,7 +10,7 @@
   });
 </script>
 
-<div class="buttons">
+<div role="none" class="buttons">
   {#if $backendName === 'local'}
     {#if !('showDirectoryPicker' in window)}
       <div role="alert">
@@ -28,7 +28,7 @@
   {:else if $backend || $unauthenticated}
     <Button
       variant="primary"
-      label={$_('sign_in_with_x', { values: { name: $backend.label } })}
+      label={$_('sign_in_with_x', { values: { service: $backend.label } })}
       on:click={async () => {
         await signInManually();
       }}

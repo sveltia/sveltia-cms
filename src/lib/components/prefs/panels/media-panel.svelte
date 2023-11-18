@@ -25,9 +25,10 @@
           { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
         )}
       </p>
-      <div>
+      <div role="none">
         <TextInput
           bind:value={$prefs.apiKeys[serviceId]}
+          flex
           spellcheck="false"
           aria-label={$_('prefs.media.stock_photos.field_label', {
             values: { service: serviceLabel },

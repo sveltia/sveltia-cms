@@ -16,14 +16,11 @@
   $: folderLabel = $appLocale ? getFolderLabelByPath($selectedAssetFolderPath) : '';
 </script>
 
-<Toolbar
-  variant="primary"
-  aria-label={$_('x_folder_primary_toolbar', { values: { folder: folderLabel } })}
->
-  <h2>
+<Toolbar variant="primary" aria-label={$_('folder')}>
+  <h2 role="none">
     {folderLabel}
     {#if $selectedAssetFolderPath}
-      <span>/{$selectedAssetFolderPath}</span>
+      <span role="none">/{$selectedAssetFolderPath}</span>
     {/if}
   </h2>
   <Spacer flex />

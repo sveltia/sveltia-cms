@@ -18,8 +18,8 @@
   });
 </script>
 
-<div class="container">
-  <div class="inner">
+<div role="none" class="container">
+  <div role="none" class="inner">
     <img
       loading="lazy"
       src={$siteConfig?.logo_url || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
@@ -28,20 +28,20 @@
     />
     <h1>Sveltia CMS</h1>
     {#if !$siteConfig || !$prefs}
-      <h2 role="alert">{$_('loading_site_config')}</h2>
+      <div role="alert" class="message">{$_('loading_site_config')}</div>
     {:else if $siteConfig.error}
-      <h2 role="alert">
+      <div role="alert" class="message">
         {$siteConfig.error}
         {$_('config.error.try_again')}
-      </h2>
+      </div>
     {:else if $prefs.error}
-      <h2 role="alert">
+      <div role="alert" class="message">
         {$_(`prefs.error.${$prefs.error}`)}
-      </h2>
+      </div>
     {:else if $authError}
       <div role="alert">
-        <h2>{$_('loading_site_data_error')}</h2>
-        <div class="error">
+        <div role="none" class="message">{$_('loading_site_data_error')}</div>
+        <div role="none" class="error">
           {@html DOMPurify.sanitize(/** @type {string } */ (marked.parseInline($authError)), {
             ALLOWED_TAGS: ['a', 'code'],
             ALLOWED_ATTR: ['href'],
@@ -51,7 +51,7 @@
     {:else if !$user || $unauthenticated}
       <SignIn />
     {:else if !$dataLoaded}
-      <h2 role="alert">{$_('loading_site_data')}</h2>
+      <div role="alert" class="message">{$_('loading_site_data')}</div>
     {/if}
   </div>
 </div>
@@ -88,7 +88,7 @@
       font-size: var(--sui-font-size-xxx-large);
     }
 
-    :global(h2) {
+    .message {
       margin: 0 0 16px;
       font-size: var(--sui-font-size-large);
       font-weight: normal;

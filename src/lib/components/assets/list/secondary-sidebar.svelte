@@ -7,14 +7,17 @@
   import { currentView } from '$lib/services/assets/view';
 </script>
 
-{#if $currentView?.showInfo}
-  <Group class="secondary-sidebar">
-    {#if $selectedAsset}
-      <InfoPanel asset={$selectedAsset} showPreview={true} />
-    {:else}
-      <EmptyState>
-        <span>{$_('select_asset_show_info')}</span>
-      </EmptyState>
-    {/if}
-  </Group>
-{/if}
+<Group
+  id="asset-info"
+  class="secondary-sidebar"
+  hidden={!$currentView?.showInfo}
+  aria-label={$_('asset_info')}
+>
+  {#if $selectedAsset}
+    <InfoPanel asset={$selectedAsset} showPreview={true} />
+  {:else}
+    <EmptyState>
+      <span role="none">{$_('select_asset_show_info')}</span>
+    </EmptyState>
+  {/if}
+</Group>

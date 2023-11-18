@@ -71,7 +71,7 @@
   }
 </script>
 
-<div class="preview {variant ?? ''}">
+<div role="none" class="preview {variant ?? ''}">
   {#if type === 'video'}
     <!-- svelte-ignore a11y-media-has-caption -->
     <video class:cover playsinline {src} {...$$restProps} bind:this={element} />
@@ -87,8 +87,8 @@
     />
   {/if}
   {#if blurBackground}
-    <div class="blur">
-      <div class="overlay" />
+    <div role="none" class="blur">
+      <div role="none" class="overlay" />
       {#if type === 'video'}
         <!-- svelte-ignore a11y-media-has-caption -->
         <video playsinline {src} />

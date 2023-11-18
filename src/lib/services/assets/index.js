@@ -47,6 +47,12 @@ export const selectedAssets = writable([]);
 export const selectedAsset = writable();
 
 /**
+ * Asset to be displayed in `<AssetDetailsOverlay>`.
+ * @type {import('svelte/store').Writable<Asset | undefined>}
+ */
+export const overlaidAsset = writable();
+
+/**
  * @type {import('svelte/store').Writable<UploadingAssets>}
  */
 export const uploadingAssets = writable({ folder: undefined, files: [] });

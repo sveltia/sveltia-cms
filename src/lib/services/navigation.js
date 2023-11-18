@@ -1,5 +1,17 @@
-import { get, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
+import { overlaidAsset } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
+import { entryDraft } from '$lib/services/contents/editor';
+
+/**
+ * Whether the app has an overlay. Some elements have to be `inert` while an overlay is displayed.
+ * We cannot use the `<Modal>` component for these overlays because it will make everything inert,
+ * including the toast notifications and announced page title.
+ * @type {import('svelte/store').Readable<boolean>}
+ */
+export const hasOverlay = derived([entryDraft, overlaidAsset], ([draft, asset], set) => {
+  set(!!(draft || asset));
+});
 
 /**
  * @type {import('svelte/store').Writable<string>}

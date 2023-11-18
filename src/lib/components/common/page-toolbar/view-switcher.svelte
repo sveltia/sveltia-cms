@@ -10,7 +10,7 @@
   export let currentView = writable({});
 </script>
 
-<SelectButtonGroup {disabled} aria-label={$_('switch_view')}>
+<SelectButtonGroup {disabled} aria-label={$_('switch_view')} {...$$restProps}>
   <SelectButton
     {disabled}
     selected={$currentView.type !== 'grid'}

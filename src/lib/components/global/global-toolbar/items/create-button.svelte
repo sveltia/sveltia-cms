@@ -12,9 +12,14 @@
   let filePicker;
 </script>
 
-<MenuButton variant="ghost" iconic popupPosition="bottom-right" aria-label={$_('create_or_upload')}>
+<MenuButton
+  variant="ghost"
+  iconic
+  popupPosition="bottom-right"
+  aria-label={$_('create_entry_or_asset')}
+>
   <Icon slot="start-icon" name="add" />
-  <Menu slot="popup">
+  <Menu slot="popup" aria-label={$_('create_entry_or_asset')}>
     {#each $siteConfig.collections ?? [] as collection (collection.name)}
       {@const {
         name,

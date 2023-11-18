@@ -2,13 +2,13 @@
   import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import DeleteAssetsDialog from '$lib/components/assets/shared/delete-assets-dialog.svelte';
-  import { selectedAsset, selectedAssetFolderPath } from '$lib/services/assets';
+  import { overlaidAsset, selectedAssetFolderPath } from '$lib/services/assets';
   import { goBack } from '$lib/services/navigation';
 
   let showDeleteDialog = false;
 </script>
 
-<Toolbar variant="primary" aria-label={$_('asset_editor_toolbar')}>
+<Toolbar variant="primary" aria-label={$_('primary')}>
   <Button
     variant="ghost"
     iconic
@@ -19,7 +19,7 @@
   >
     <Icon slot="start-icon" name="arrow_back_ios_new" />
   </Button>
-  <h2>{$selectedAsset.name}</h2>
+  <h2 role="none">{$overlaidAsset.name}</h2>
   <Spacer flex />
   <!-- @todo Implement these actions.
   <Button variant="secondary" label={$_('edit')} aria-label={$_('edit_file')} />
@@ -28,7 +28,7 @@
   <Button
     variant="secondary"
     label={$_('delete')}
-    aria-label={$_('delete_file')}
+    aria-label={$_('delete_asset')}
     on:click={() => {
       showDeleteDialog = true;
     }}
@@ -39,8 +39,8 @@
 
 <DeleteAssetsDialog
   bind:open={showDeleteDialog}
-  description={$_('confirm_deleting_this_file')}
-  assets={[$selectedAsset]}
+  description={$_('confirm_deleting_this_asset')}
+  assets={[$overlaidAsset]}
   on:delete={() => {
     goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
   }}

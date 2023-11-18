@@ -1,5 +1,5 @@
 <script>
-  import { Toast } from '@sveltia/ui';
+  import { Alert, Group, Toast } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
@@ -8,11 +8,12 @@
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/assets/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
+  import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import {
     allAssetPaths,
     allAssets,
-    selectedAsset,
+    overlaidAsset,
     selectedAssetFolderPath,
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
@@ -47,7 +48,7 @@
     if (!fileName) {
       const count = $listedAssets.length;
 
-      $selectedAsset = null;
+      $overlaidAsset = null;
       $announcedPageTitle = $_(
         // eslint-disable-next-line no-nested-ternary
         count > 1
@@ -61,9 +62,11 @@
       return;
     }
 
-    $selectedAsset = $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`) ?? null;
-    $announcedPageTitle = $selectedAsset
-      ? $_('viewing_x_asset_details', { values: { name: $selectedAsset.name } })
+    $overlaidAsset = path.match(/^\/assets\/(.+?)\.[a-zA-Z0-9]+$/)
+      ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`) ?? null
+      : null;
+    $announcedPageTitle = $overlaidAsset
+      ? $_('viewing_x_asset_details', { values: { name: $overlaidAsset.name } })
       : $_('file_not_found');
   };
 
@@ -78,26 +81,41 @@
   }}
 />
 
-<PageContainer class="media">
+<PageContainer class="media" aria-label={$_('asset_library')}>
   <PrimarySidebar slot="primary_sidebar" />
-  <PrimaryToolbar slot="primary_toolbar" />
-  <SecondaryToolbar slot="secondary_toolbar" />
-  <AssetList slot="main" />
-  <SecondarySidebar slot="secondary_sidebar" />
+  <Group
+    slot="main"
+    id="assets-container"
+    class="main"
+    aria-label={$_('x_asset_folder', {
+      values: { folder: getFolderLabelByPath($selectedAssetFolderPath) },
+    })}
+  >
+    <PageContainerMainArea>
+      <PrimaryToolbar slot="primary_toolbar" />
+      <SecondaryToolbar slot="secondary_toolbar" />
+      <AssetList slot="main_content" />
+      <SecondarySidebar slot="secondary_sidebar" />
+    </PageContainerMainArea>
+  </Group>
 </PageContainer>
 
-{#if $selectedAsset && path.match(/^\/assets\/(.+?)\.[a-zA-Z0-9]+$/)}
+{#if $overlaidAsset}
   <AssetDetailsOverlay />
 {/if}
 
-<Toast bind:show={$assetUpdatesToast.saved} type="success">
-  {$_($assetUpdatesToast.count === 1 ? 'asset_saved' : 'assets_saved', {
-    values: { count: $assetUpdatesToast.count },
-  })}
+<Toast bind:show={$assetUpdatesToast.saved}>
+  <Alert status="success">
+    {$_($assetUpdatesToast.count === 1 ? 'asset_saved' : 'assets_saved', {
+      values: { count: $assetUpdatesToast.count },
+    })}
+  </Alert>
 </Toast>
 
-<Toast bind:show={$assetUpdatesToast.deleted} type="success">
-  {$_($assetUpdatesToast.count === 1 ? 'asset_deleted' : 'assets_deleted', {
-    values: { count: $assetUpdatesToast.count },
-  })}
+<Toast bind:show={$assetUpdatesToast.deleted}>
+  <Alert status="success">
+    {$_($assetUpdatesToast.count === 1 ? 'asset_deleted' : 'assets_deleted', {
+      values: { count: $assetUpdatesToast.count },
+    })}
+  </Alert>
 </Toast>

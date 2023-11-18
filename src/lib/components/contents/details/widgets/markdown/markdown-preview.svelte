@@ -34,14 +34,14 @@
   $: rawHTML = marked.parse(currentValue ?? '');
 </script>
 
-<div role="document">
+<div role="none">
   {#if typeof currentValue === 'string' && currentValue.trim()}
     {@html sanitize ? DOMPurify.sanitize(rawHTML) : rawHTML}
   {/if}
 </div>
 
 <style lang="scss">
-  [role='document'] {
+  div {
     :global(:is(h1, h2, h3, h4, h5, h6, p, ul, ol)) {
       margin: 1em 0 0;
     }

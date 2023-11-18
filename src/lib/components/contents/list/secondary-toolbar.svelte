@@ -8,8 +8,7 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
-  $: ({ name, label, fields } = $selectedCollection ?? /** @type {Collection} */ ({}));
-  $: collectionLabel = label || name;
+  $: ({ fields } = $selectedCollection ?? /** @type {Collection} */ ({}));
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
   $: firstImageField = fields?.find(({ widget }) => widget === 'image');
   $: hasListedEntries = !!$listedEntries.length;
@@ -17,14 +16,12 @@
 </script>
 
 {#if $selectedCollection.folder}
-  <Toolbar
-    variant="secondary"
-    aria-label={$_('x_collection_secondary_toolbar', { values: { collection: collectionLabel } })}
-  >
+  <Toolbar variant="secondary" aria-label={$_('entry_list')}>
     <Button
       variant="ghost"
       disabled={$selectedEntries.length === allEntries.length}
       label={$_('select_all')}
+      aria-controls="entry-list"
       on:click={() => {
         $selectedEntries = allEntries;
       }}
@@ -33,6 +30,7 @@
       variant="ghost"
       disabled={!$selectedEntries.length}
       label={$_('clear_selection')}
+      aria-controls="entry-list"
       on:click={() => {
         $selectedEntries = [];
       }}
@@ -42,6 +40,7 @@
       disabled={!hasMultipleEntries || !$sortFields.length}
       {currentView}
       fields={$sortFields}
+      aria-controls="entry-list"
     />
     {#if $selectedCollection.view_filters?.length}
       <FilterMenu
@@ -49,6 +48,7 @@
         {currentView}
         filters={$selectedCollection.view_filters}
         multiple={true}
+        aria-controls="entry-list"
       />
     {/if}
     {#if $selectedCollection.view_groups?.length}
@@ -56,16 +56,23 @@
         disabled={!hasMultipleEntries}
         {currentView}
         groups={$selectedCollection.view_groups}
+        aria-controls="entry-list"
       />
     {/if}
-    <ViewSwitcher disabled={!hasListedEntries || !firstImageField} {currentView} />
+    <ViewSwitcher
+      disabled={!hasListedEntries || !firstImageField}
+      {currentView}
+      aria-controls="entry-list"
+    />
     <Divider />
     <Button
       variant="ghost"
       iconic
       disabled={!hasListedEntries || !$selectedCollection.media_folder}
       pressed={!!$currentView?.showMedia}
-      aria-label={$_('show_assets')}
+      aria-controls="collection-assets"
+      aria-expanded={$currentView?.showMedia}
+      aria-label={$_($currentView?.showMedia ? 'hide_assets' : 'show_assets')}
       on:click={() => {
         currentView.update((view) => ({
           ...view,

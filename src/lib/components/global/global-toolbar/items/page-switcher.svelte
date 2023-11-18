@@ -8,7 +8,7 @@
   $: pages = [
     {
       key: 'collections',
-      label: $_('entries'),
+      label: $_('contents'),
       icon: 'library_books',
       link: `/collections/${$selectedCollection.name}`,
     },
@@ -33,8 +33,8 @@
   ];
 </script>
 
-<div class="wrapper">
-  <SelectButtonGroup aria-label={$_('page_switcher')}>
+<div role="none" class="wrapper">
+  <SelectButtonGroup aria-label={$_('switch_page')} aria-controls="page-container">
     {#each pages as { key, label, icon, link } (key)}
       <SelectButton
         variant="ghost"

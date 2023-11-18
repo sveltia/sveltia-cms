@@ -152,9 +152,9 @@
 </script>
 
 {#if hasValues}
-  <div class="wrapper">
+  <div role="none" class="wrapper">
     <Group aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}>
-      <div class="header">
+      <div role="none" class="header">
         <Button
           size="small"
           iconic
@@ -182,7 +182,7 @@
           </Button>
         {/if}
       </div>
-      <div class="item-list" id="object-{widgetId}-item-list">
+      <div role="none" class="item-list" id="object-{widgetId}-item-list">
         {#if parentExpanded}
           {#each fields as subField (subField.name)}
             <FieldEditor
@@ -192,7 +192,7 @@
             />
           {/each}
         {:else}
-          <div class="summary" id="object-{widgetId}-summary">
+          <div role="none" class="summary" id="object-{widgetId}-summary">
             {formatSummary()}
           </div>
         {/if}

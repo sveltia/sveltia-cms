@@ -14,15 +14,18 @@
    * @type {ViewFilter[]}
    */
   export let groups = [];
+
+  $: ariaControls = $$restProps['aria-controls'];
 </script>
 
-<MenuButton variant="ghost" label={label || $_('group_by')} {disabled}>
+<MenuButton variant="ghost" label={label || $_('group')} {disabled}>
   <Icon slot="end-icon" name="arrow_drop_down" />
-  <Menu slot="popup">
+  <Menu slot="popup" aria-label={$_('grouping_options')}>
     <MenuItemRadio
       label={noneLabel || $_('sort_keys.none')}
       checked={!$currentView.group}
-      on:click={() => {
+      aria-controls={ariaControls}
+      on:select={() => {
         currentView.update((view) => ({
           ...view,
           group: undefined,
@@ -33,7 +36,8 @@
       <MenuItemRadio
         label={_label}
         checked={$currentView.group?.field === field && $currentView.group?.pattern === pattern}
-        on:click={() => {
+        aria-controls={ariaControls}
+        on:select={() => {
           currentView.update((view) => ({
             ...view,
             group: { field, pattern },

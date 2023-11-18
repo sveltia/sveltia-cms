@@ -40,7 +40,7 @@
   }
 </script>
 
-<div class="wrapper" bind:this={wrapper}>
+<div role="none" class="wrapper" bind:this={wrapper}>
   <SearchBar
     bind:this={searchBar}
     keyShortcuts="Accel+F"

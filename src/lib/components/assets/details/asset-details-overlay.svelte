@@ -1,36 +1,59 @@
 <script>
+  import { Group } from '@sveltia/ui';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import Image from '$lib/components/common/image.svelte';
   import Video from '$lib/components/common/video.svelte';
-  import { selectedAsset } from '$lib/services/assets';
+  import { overlaidAsset } from '$lib/services/assets';
+
+  /**
+   * A reference to the wrapper element.
+   * @type {HTMLElement}
+   */
+  let wrapper;
+
+  onMount(() => {
+    /** @type {HTMLElement} */
+    const group = wrapper.closest('[role="group"]');
+
+    // Move the focus once the overlay is loaded
+    group.tabIndex = 0;
+    group.focus();
+
+    // onUnmount
+    return () => {
+      $overlaidAsset = null;
+    };
+  });
 </script>
 
-<div class="editor">
-  <Toolbar />
-  <div class="row">
-    <div class="preview">
-      {#if $selectedAsset.kind === 'image'}
-        <Image asset={$selectedAsset} blurBackground={true} alt={$selectedAsset.name} />
-      {:else if $selectedAsset.kind === 'video'}
-        <Video asset={$selectedAsset} blurBackground={true} controls />
-      {:else}
-        <EmptyState>
-          <span>{$_('no_preview_available')}</span>
-        </EmptyState>
-      {/if}
+<Group aria-label={$_('asset_editor')}>
+  <div role="none" class="wrapper" bind:this={wrapper}>
+    <Toolbar />
+    <div role="none" class="row">
+      <div role="none" class="preview">
+        {#if $overlaidAsset.kind === 'image'}
+          <Image asset={$overlaidAsset} blurBackground={true} alt={$overlaidAsset.name} />
+        {:else if $overlaidAsset.kind === 'video'}
+          <Video asset={$overlaidAsset} blurBackground={true} controls />
+        {:else}
+          <EmptyState>
+            <span role="alert">{$_('no_preview_available')}</span>
+          </EmptyState>
+        {/if}
+      </div>
+      <InfoPanel asset={$overlaidAsset} />
     </div>
-    <InfoPanel asset={$selectedAsset} />
   </div>
-</div>
+</Group>
 
 <style lang="scss">
-  .editor {
+  .wrapper {
     position: fixed;
     inset: 0;
-    z-index: 100;
     display: flex;
     flex-direction: column;
     background-color: var(--sui-primary-background-color);

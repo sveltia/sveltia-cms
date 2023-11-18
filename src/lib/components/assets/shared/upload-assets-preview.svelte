@@ -10,21 +10,21 @@
   export let files = [];
 </script>
 
-<div class="files">
+<div role="none" class="files">
   {#each files as file, index}
     {@const { name, type, size } = file}
     {@const [, extension = ''] = name.match(/\.([^.]+)$/) ?? []}
-    <div class="file">
+    <div role="none" class="file">
       {#if type.startsWith('image/')}
         <Image src={URL.createObjectURL(file)} variant="icon" />
       {:else}
-        <span class="image">
+        <span role="none" class="image">
           <Icon name="draft" />
         </span>
       {/if}
-      <div class="meta">
-        <div class="name">{name}</div>
-        <div class="size">
+      <div role="none" class="meta">
+        <div role="none" class="name">{name}</div>
+        <div role="none" class="size">
           {formatSize(size)}
           ·
           {$_(`file_type_labels.${extension}`, { default: extension.toUpperCase() })}

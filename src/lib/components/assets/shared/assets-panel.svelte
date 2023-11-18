@@ -21,6 +21,11 @@
    * @type {string}
    */
   export let searchTerms = '';
+  /**
+   * The `id` attribute of the inner listbox.
+   * @type {string}
+   */
+  export let gridId = undefined;
 
   $: filteredAssets = searchTerms
     ? assets.filter(({ name }) => name.toLowerCase().includes(searchTerms.toLowerCase()))
@@ -28,8 +33,9 @@
 </script>
 
 {#if filteredAssets.length}
-  <div class="grid-wrapper">
+  <div role="none" class="grid-wrapper">
     <SimpleImageGrid
+      {gridId}
       {viewType}
       on:change={(event) => {
         dispatch('select', {
@@ -45,14 +51,14 @@
           {#if asset.kind === 'video'}
             <Video {asset} variant="tile" />
           {/if}
-          <span class="name">{asset.name}</span>
+          <span role="none" class="name">{asset.name}</span>
         </Option>
       {/each}
     </SimpleImageGrid>
   </div>
 {:else}
   <EmptyState>
-    <span>{$_('no_files_found')}</span>
+    <span role="none">{$_('no_files_found')}</span>
   </EmptyState>
 {/if}
 

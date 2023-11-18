@@ -9,7 +9,7 @@
   <Button
     variant="ghost"
     iconic
-    aria-label={$_('live_site')}
+    aria-label={$_('visit_live_site')}
     on:click={() => {
       openProductionSite();
     }}

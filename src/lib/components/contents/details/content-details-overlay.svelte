@@ -1,6 +1,7 @@
 <script>
   import { Group } from '@sveltia/ui';
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
@@ -10,6 +11,7 @@
     entryDraft,
     entryEditorSettings,
   } from '$lib/services/contents/editor';
+  import { getLocaleLabel } from '$lib/services/i18n';
 
   /**
    * @type {HTMLElement | undefined}
@@ -110,47 +112,83 @@
     savePanes();
   }
 
-  onMount(() =>
+  /**
+   * A reference to the wrapper element.
+   * @type {HTMLElement}
+   */
+  let wrapper;
+
+  onMount(() => {
+    /** @type {HTMLElement} */
+    const group = wrapper.closest('[role="group"]');
+
+    // Move the focus once the overlay is loaded
+    group.tabIndex = 0;
+    group.focus();
+
     // onUnmount
-    () => {
-      // Reset the draft to prevent the page from becoming blank when navigating back
+    return () => {
       $entryDraft = null;
-    },
-  );
+    };
+  });
 </script>
 
-<div class="editor">
-  <Toolbar />
-  <div class="cols">
-    {#if collection}
-      {#if $editorLeftPane}
-        {@const { locale, mode } = $editorLeftPane}
-        <Group data-locale={locale} data-mode={mode}>
-          <PaneHeader thisPane={editorLeftPane} thatPane={editorRightPane} />
-          <PaneBody
-            thisPane={editorLeftPane}
-            bind:thisPaneContentArea={leftPaneContentArea}
-            thatPaneContentArea={rightPaneContentArea}
-          />
-        </Group>
+<Group aria-label={$_('content_editor')}>
+  <div role="none" class="wrapper" bind:this={wrapper}>
+    <Toolbar />
+    <div role="none" class="cols">
+      {#if collection}
+        {#if $editorLeftPane}
+          {@const { locale, mode } = $editorLeftPane}
+          <Group
+            aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+              values: { locale: getLocaleLabel(locale) },
+            })}
+            data-locale={locale}
+            data-mode={mode}
+          >
+            <PaneHeader
+              id="left-pane-header"
+              thisPane={editorLeftPane}
+              thatPane={editorRightPane}
+            />
+            <PaneBody
+              id="left-pane-body"
+              thisPane={editorLeftPane}
+              bind:thisPaneContentArea={leftPaneContentArea}
+              thatPaneContentArea={rightPaneContentArea}
+            />
+          </Group>
+        {/if}
+        {#if $editorRightPane}
+          {@const { locale, mode } = $editorRightPane}
+          <Group
+            aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+              values: { locale: getLocaleLabel(locale) },
+            })}
+            data-locale={locale}
+            data-mode={mode}
+          >
+            <PaneHeader
+              id="right-pane-header"
+              thisPane={editorRightPane}
+              thatPane={editorLeftPane}
+            />
+            <PaneBody
+              id="right-pane-body"
+              thisPane={editorRightPane}
+              bind:thisPaneContentArea={rightPaneContentArea}
+              thatPaneContentArea={leftPaneContentArea}
+            />
+          </Group>
+        {/if}
       {/if}
-      {#if $editorRightPane}
-        {@const { locale, mode } = $editorRightPane}
-        <Group data-locale={locale} data-mode={mode}>
-          <PaneHeader thisPane={editorRightPane} thatPane={editorLeftPane} />
-          <PaneBody
-            thisPane={editorRightPane}
-            bind:thisPaneContentArea={rightPaneContentArea}
-            thatPaneContentArea={leftPaneContentArea}
-          />
-        </Group>
-      {/if}
-    {/if}
+    </div>
   </div>
-</div>
+</Group>
 
 <style lang="scss">
-  .editor {
+  .wrapper {
     position: fixed;
     inset: 0;
     z-index: 100;

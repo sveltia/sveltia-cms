@@ -1,9 +1,9 @@
 <script>
-  import { Button, Group, Icon } from '@sveltia/ui';
+  import { Button, GridBody, Icon } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import BasicGridView from '$lib/components/common/basic-grid-view.svelte';
-  import BasicListView from '$lib/components/common/basic-list-view.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
+  import ListContainer from '$lib/components/common/list-container.svelte';
+  import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
   import { selectedCollection } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
@@ -12,17 +12,19 @@
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
 </script>
 
-<div class="list-container">
+<ListContainer aria-label={$selectedCollection?.files ? $_('file_list') : $_('entry_list')}>
   {#if $selectedCollection}
     {#if allEntries.length}
       {@const { defaultLocale = 'default' } = $selectedCollection._i18n}
-      {#each $entryGroups as { name, entries } (name)}
-        <Group>
-          {#if name !== '*'}
-            <h3>{name}</h3>
-          {/if}
+      <ListingGrid
+        viewType={$currentView.type}
+        id="entry-list"
+        aria-label={$_('entries')}
+        aria-rowcount={$listedEntries.length}
+      >
+        {#each $entryGroups as { name, entries } (name)}
           <!-- @todo Implement custom table column option that can replace summary template -->
-          <svelte:component this={$currentView.type === 'grid' ? BasicGridView : BasicListView}>
+          <GridBody label={name !== '*' ? name : undefined}>
             {#each entries as entry (entry.slug)}
               {@const { locales } = entry}
               {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
@@ -31,16 +33,16 @@
                 <EntryListItem {entry} {content} {locale} viewType={$currentView.type} />
               {/if}
             {/each}
-          </svelte:component>
-        </Group>
-      {/each}
+          </GridBody>
+        {/each}
+      </ListingGrid>
     {:else if $listedEntries.length}
       <EmptyState>
-        <span>{$_('no_entries_found')}</span>
+        <span role="none">{$_('no_entries_found')}</span>
       </EmptyState>
     {:else}
       <EmptyState>
-        <span>{$_('no_entries_created')}</span>
+        <span role="none">{$_('no_entries_created')}</span>
         <Button
           variant="primary"
           disabled={!$selectedCollection.create}
@@ -55,23 +57,7 @@
     {/if}
   {:else}
     <EmptyState>
-      <span>{$_('collection_not_found')}</span>
+      <span role="none">{$_('collection_not_found')}</span>
     </EmptyState>
   {/if}
-</div>
-
-<style lang="scss">
-  .list-container {
-    padding: 16px;
-  }
-
-  h3 {
-    padding: 8px;
-    color: var(--sui-secondary-foreground-color);
-    background-color: var(--sui-secondary-background-color);
-
-    & + :global(.basic-grid-view .table) {
-      margin: 16px 0;
-    }
-  }
-</style>
+</ListContainer>

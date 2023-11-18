@@ -38,9 +38,8 @@
       <EntrancePage />
     {/if}
   {/if}
+  <div role="alert">{$announcedPageTitle}</div>
 </AppShell>
-
-<div role="alert">{$announcedPageTitle}</div>
 
 <style lang="scss">
   [role='alert'] {

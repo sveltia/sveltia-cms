@@ -36,7 +36,7 @@
 {#if Array.isArray(types)}
   <MenuButton variant="tertiary" {label} disabled={_disabled}>
     <Icon slot="start-icon" name="add" />
-    <Menu slot="popup">
+    <Menu slot="popup" aria-label={$_('select_list_type')}>
       {#each types as { name, label: itemLabel } (name)}
         <MenuItem label={itemLabel} on:click={() => addItem(name)} />
       {/each}

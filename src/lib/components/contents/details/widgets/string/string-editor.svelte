@@ -50,6 +50,7 @@
 
 <TextInput
   bind:value={currentValue}
+  flex
   {readonly}
   {required}
   {invalid}

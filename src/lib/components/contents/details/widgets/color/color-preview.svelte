@@ -27,9 +27,9 @@
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
   <p>
-    <span class="preview">
-      <span class="color" style:background-color={currentValue} />
-      <span class="value">{currentValue}</span>
+    <span role="none" class="preview">
+      <span role="none" class="color" style:background-color={currentValue} />
+      <span role="none" class="value">{currentValue}</span>
     </span>
   </p>
 {/if}

@@ -258,7 +258,7 @@
 
 <Group aria-labelledby="list-{widgetId}-summary">
   {#if hasSubFields}
-    <div class="toolbar top">
+    <div role="none" class="toolbar top">
       <Button
         iconic
         disabled={!items.length}
@@ -271,7 +271,7 @@
       >
         <Icon slot="start-icon" name={parentExpanded ? 'expand_more' : 'chevron_right'} />
       </Button>
-      <div class="summary" id="object-{widgetId}-summary">
+      <div role="none" class="summary" id="object-{widgetId}-summary">
         {items.length}
         {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
       </div>
@@ -280,7 +280,12 @@
         <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
       {/if}
     </div>
-    <div class="item-list" id="list-{widgetId}-item-list" class:collapsed={!parentExpanded}>
+    <div
+      role="none"
+      id="list-{widgetId}-item-list"
+      class="item-list"
+      class:collapsed={!parentExpanded}
+    >
       {#each items as item, index}
         {@const expanded = !!$entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`]}
         {@const typeConfig = hasVariableTypes
@@ -289,9 +294,9 @@
         {@const subFields = hasVariableTypes ? typeConfig?.fields ?? [] : fields ?? [field]}
         {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <!-- @todo Support drag sorting. -->
-        <div class="item">
-          <div class="header">
-            <div>
+        <div role="none" class="item">
+          <div role="none" class="header">
+            <div role="none">
               <Button
                 size="small"
                 aria-expanded={expanded}
@@ -305,16 +310,16 @@
                 <Icon
                   slot="start-icon"
                   name={expanded ? 'expand_more' : 'chevron_right'}
-                  label={expanded ? $_('collapse') : $_('expand')}
+                  aria-label={expanded ? $_('collapse') : $_('expand')}
                 />
                 {#if hasVariableTypes}
-                  <span class="type">
+                  <span role="none" class="type">
                     {typeConfig?.label || typeConfig?.name || ''}
                   </span>
                 {/if}
               </Button>
             </div>
-            <div>
+            <div role="none">
               <Button
                 size="small"
                 iconic
@@ -339,7 +344,7 @@
                 <Icon slot="start-icon" name="arrow_downward" />
               </Button>
             </div>
-            <div>
+            <div role="none">
               <Button
                 iconic
                 size="small"
@@ -353,7 +358,7 @@
               </Button>
             </div>
           </div>
-          <div class="item-body" id="list-{widgetId}-item-{index}-body">
+          <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
             {#if expanded}
               {#each subFields as subField (subField.name)}
                 <FieldEditor
@@ -365,7 +370,7 @@
                 />
               {/each}
             {:else}
-              <div class="summary">
+              <div role="none" class="summary">
                 {formatSummary(item, index, summaryTemplate)}
               </div>
             {/if}
@@ -374,7 +379,7 @@
       {/each}
     </div>
     {#if allowAdd && !addToTop && items.length}
-      <div class="toolbar bottom">
+      <div role="none" class="toolbar bottom">
         <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
         <Spacer flex />
       </div>
@@ -382,6 +387,7 @@
   {:else}
     <TextInput
       bind:value={inputValue}
+      flex
       {readonly}
       {required}
       {invalid}

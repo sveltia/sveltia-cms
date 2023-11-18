@@ -1,4 +1,4 @@
-<div class="empty">
+<div role="none" class="empty">
   <slot />
 </div>
 

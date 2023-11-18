@@ -7,7 +7,7 @@
 <TabPanel id="prefs-tab-appearance">
   <section>
     <h4>{$_('prefs.appearance.theme')}</h4>
-    <p>
+    <div role="none">
       <SelectButtonGroup
         aria-label={$_('prefs.appearance.select_theme')}
         on:change={(/** @type {CustomEvent} */ { detail: { value } }) => {
@@ -23,6 +23,6 @@
           />
         {/each}
       </SelectButtonGroup>
-    </p>
+    </div>
   </section>
 </TabPanel>

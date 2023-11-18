@@ -23,6 +23,11 @@
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
 
   /**
+   * The wrapper element’s `id` attribute.
+   * @type {string}
+   */
+  export let id;
+  /**
    * @type {import('svelte/store').Writable<EntryEditorPane>}
    */
   export let thisPane;
@@ -51,11 +56,14 @@
   $: canRevert = !equal(currentValues[$thisPane.locale], originalValues[$thisPane.locale]);
 </script>
 
-<div class="header">
-  <Toolbar variant="secondary" aria-label={$_('content_editor_secondary_toolbar')}>
+<div role="none" {id} class="header">
+  <Toolbar variant="secondary" aria-label={$_('secondary')}>
     {#if hasLocales}
       <!-- @todo Use a dropdown list when there are 5+ locales. -->
-      <SelectButtonGroup aria-label={$_('locale_switcher')}>
+      <SelectButtonGroup
+        aria-label={$_('switch_locale')}
+        aria-controls={id.replace('-header', '-body')}
+      >
         {#each locales as locale}
           {@const localeLabel = getLocaleLabel(locale)}
           {@const invalid = Object.values(validities[locale]).some(({ valid }) => !valid)}
@@ -75,7 +83,7 @@
               }}
             >
               {#if invalid}
-                <Icon slot="end-icon" name="error" label={$_('locale_content_errors')} />
+                <Icon slot="end-icon" name="error" aria-label={$_('locale_content_errors')} />
               {/if}
             </SelectButton>
           {/if}
@@ -93,21 +101,23 @@
         {/if}
       </SelectButtonGroup>
     {:else}
-      <h3>{$thisPane.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
+      <h3 role="none">{$thisPane.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
     {/if}
     <Spacer flex />
     {#if $thisPane.mode === 'edit'}
+      {@const localeLabel = getLocaleLabel($thisPane.locale)}
       <MenuButton
         variant="ghost"
         iconic
         popupPosition="bottom-right"
-        aria-label={$_('show_menu_x_locale', {
-          values: { locale: getLocaleLabel($thisPane.locale) },
-        })}
+        aria-label={$_('show_content_options_x_locale', { values: { locale: localeLabel } })}
         bind:this={menuButton}
       >
         <Icon slot="start-icon" name="more_vert" />
-        <Menu slot="popup">
+        <Menu
+          slot="popup"
+          aria-label={$_('content_options_x_locale', { values: { locale: localeLabel } })}
+        >
           {#if canCopy}
             <CopyMenuItems anchor={menuButton} locale={$thisPane.locale} translate={true} />
             {#if otherLocales.length > 1}
@@ -133,7 +143,7 @@
                   : currentValues[$thisPane.locale]
                     ? 'reenable_x_locale'
                     : 'enable_x_locale',
-                { values: { locale: getLocaleLabel($thisPane.locale) } },
+                { values: { locale: localeLabel } },
               )}
               disabled={isLocaleEnabled && isOnlyLocale}
               on:click={() => {

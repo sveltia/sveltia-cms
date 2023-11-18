@@ -5,7 +5,7 @@
   @see https://decapcms.org/docs/widgets/#image
 -->
 <script>
-  import { Button, Dialog, TextArea } from '@sveltia/ui';
+  import { AlertDialog, Button, TextArea } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
@@ -119,13 +119,13 @@
   };
 </script>
 
-<div class="image-widget">
+<div role="none" class="image-widget">
   {#if isImageWidget && currentValue}
     {#await getMediaFieldURL(currentValue, $entryDraft.originalEntry) then src}
       <Image {src} variant="tile" />
     {/await}
   {/if}
-  <div>
+  <div role="none">
     {#if typeof currentValue === 'string'}
       <div
         id="{fieldId}-value"
@@ -145,7 +145,7 @@
         {/if}
       </div>
     {/if}
-    <div>
+    <div role="none">
       <Button
         disabled={readonly}
         variant="tertiary"
@@ -185,15 +185,11 @@
   }}
 />
 
-<Dialog
-  bind:open={showSizeLimitDialog}
-  title={$_('assets_dialog.large_file.title')}
-  showCancel={false}
->
+<AlertDialog bind:open={showSizeLimitDialog} title={$_('assets_dialog.large_file.title')}>
   {$_('assets_dialog.large_file.description', { values: { size: formatSize(maxFileSize) } })}
-</Dialog>
+</AlertDialog>
 
-<Dialog
+<AlertDialog
   bind:open={showPhotoCreditDialog}
   title={$_('assets_dialog.photo_credit.title')}
   okLabel={$_('copy')}
@@ -201,9 +197,10 @@
     navigator.clipboard.writeText(photoCredit);
   }}
 >
-  <div>{$_('assets_dialog.photo_credit.description')}</div>
-  <div>
+  <div role="none">{$_('assets_dialog.photo_credit.description')}</div>
+  <div role="none">
     <TextArea
+      flex
       readonly
       value={photoCredit}
       on:click={(event) => {
@@ -212,7 +209,7 @@
       }}
     />
   </div>
-</Dialog>
+</AlertDialog>
 
 <style lang="scss">
   .image-widget {
@@ -233,11 +230,9 @@
       flex: auto;
       overflow: hidden;
 
-      & > div:not(:last-child) {
-        margin: 0 0 8px;
-      }
-
       .filename {
+        margin: var(--sui-focus-ring-width);
+        padding: 4px;
         word-break: break-all;
       }
     }

@@ -1,5 +1,6 @@
 <script>
   import { Group } from '@sveltia/ui';
+  import { _ } from 'svelte-i18n';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { allAssets, uploadingAssets } from '$lib/services/assets';
@@ -12,8 +13,13 @@
   $: canonicalMediaFolder = stripSlashes(mediaFolder);
 </script>
 
-{#if mediaFolder.startsWith('/') && $currentView?.showMedia}
-  <Group class="secondary-sidebar">
+{#if mediaFolder.startsWith('/')}
+  <Group
+    id="collection-assets"
+    class="secondary-sidebar"
+    hidden={!$currentView?.showMedia}
+    aria-label={$_('collection_assets')}
+  >
     <DropZone
       multiple={true}
       on:select={({ detail: { files } }) => {

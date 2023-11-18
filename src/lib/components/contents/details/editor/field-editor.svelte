@@ -84,14 +84,14 @@
   {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
   <section
     role="group"
-    aria-labelledby="{fieldId}-label"
+    aria-label={$_('x_field', { values: { field: fieldLabel } })}
     data-widget={widgetName}
     data-key-path={keyPath}
   >
-    <header>
-      <h4 id="{fieldId}-label">{fieldLabel}</h4>
+    <header role="none">
+      <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>
       {#if !readonly && required}
-        <div class="required">{$_('required')}</div>
+        <div class="required" aria-hidden="true">{$_('required')}</div>
       {/if}
       <Spacer flex />
       {#if canCopy || canRevert}
@@ -100,11 +100,11 @@
           size="small"
           iconic
           popupPosition="bottom-right"
-          aria-label={$_('show_menu_x_field', { values: { field: fieldLabel } })}
+          aria-label={$_('show_field_options')}
           bind:this={menuButton}
         >
           <Icon slot="start-icon" name="more_vert" />
-          <Menu slot="popup">
+          <Menu slot="popup" aria-label={$_('field_options')}>
             {#if canCopy}
               {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
                 <CopyMenuItems anchor={menuButton} {keyPath} {locale} translate={true} />
@@ -133,50 +133,50 @@
     <div id="{fieldId}-error" class="validation" aria-live="assertive">
       {#if validity?.valid === false}
         {#if validity.valueMissing}
-          <div>
+          <div role="none">
             <Icon name="error" />
             {$_('validation.value_missing')}
           </div>
         {/if}
         {#if validity.rangeUnderflow}
-          <div>
+          <div role="none">
             <Icon name="error" />
             {#if (widgetName === 'list' && hasSubFields) || multiple}
-              {$_(`validation.range_underflow.add_${min === 1 ? 'singular' : 'plural'}`, {
+              {$_(`validation.range_underflow.add_${min === 1 ? 'one' : 'many'}`, {
                 values: { min },
               })}
             {:else}
-              {$_(`validation.range_underflow.select_${min === 1 ? 'singular' : 'plural'}`, {
+              {$_(`validation.range_underflow.select_${min === 1 ? 'one' : 'many'}`, {
                 values: { min },
               })}
             {/if}
           </div>
         {/if}
         {#if validity.rangeOverflow}
-          <div>
+          <div role="none">
             <Icon name="error" />
             {#if (widgetName === 'list' && hasSubFields) || multiple}
-              {$_(`validation.range_overflow.add_${max === 1 ? 'singular' : 'plural'}`, {
+              {$_(`validation.range_overflow.add_${max === 1 ? 'one' : 'many'}`, {
                 values: { max },
               })}
             {:else}
-              {$_(`validation.range_overflow.select_${max === 1 ? 'singular' : 'plural'}`, {
+              {$_(`validation.range_overflow.select_${max === 1 ? 'one' : 'many'}`, {
                 values: { max },
               })}
             {/if}
           </div>
         {/if}
         {#if validity.patternMismatch}
-          <div>
+          <div role="none">
             <Icon name="error" />
             {pattern?.[1] ?? ''}
           </div>
         {/if}
       {/if}
     </div>
-    <div>
+    <div role="none">
       {#if !(widgetName in editors)}
-        <div>{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
+        <div role="none">{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
       {:else if isList}
         <svelte:component
           this={editors[widgetName]}
@@ -206,7 +206,7 @@
       {/if}
     </div>
     {#if !readonly && hint}
-      <div class="hint">{@html marked.parse(hint)}</div>
+      <div role="none" class="hint">{@html marked.parse(hint)}</div>
     {/if}
   </section>
 {/if}

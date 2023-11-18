@@ -1,5 +1,5 @@
 <script>
-  import { Dialog } from '@sveltia/ui';
+  import { ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { showUploadAssetsDialog, uploadingAssets } from '$lib/services/assets';
@@ -9,10 +9,10 @@
 
 <!-- @todo Confirm to replace an old image if a file with the same same exists. -->
 
-<Dialog
+<ConfirmationDialog
   open={$showUploadAssetsDialog}
   title={$_('upload_files')}
-  okLabel={$_($backendName === 'local' ? 'save' : 'upload_and_publish')}
+  okLabel={$_($backendName === 'local' ? 'save' : 'upload')}
   on:ok={async () => {
     await saveAssets($uploadingAssets, { commitType: 'uploadMedia' });
     $uploadingAssets = { folder: undefined, files: [] };
@@ -21,7 +21,7 @@
     $uploadingAssets = { folder: undefined, files: [] };
   }}
 >
-  <div>
+  <div role="none">
     {#if $uploadingAssets.files.length === 1}
       {$_('confirm_uploading_file', {
         values: {
@@ -31,11 +31,11 @@
     {:else}
       {$_('confirm_uploading_files', {
         values: {
-          number: $uploadingAssets.files.length,
+          count: $uploadingAssets.files.length,
           folder: `/${$uploadingAssets.folder}`,
         },
       })}
     {/if}
   </div>
   <UploadAssetsPreview bind:files={$uploadingAssets.files} />
-</Dialog>
+</ConfirmationDialog>

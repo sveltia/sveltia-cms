@@ -16,28 +16,27 @@
   $: isLocal = $backendName === 'local';
 </script>
 
-<div class="wrapper">
+<div role="none" class="wrapper">
   <MenuButton
     variant="ghost"
     iconic
     class={hasAvatar ? 'avatar' : ''}
     popupPosition="bottom-right"
+    aria-label={$_('show_account_menu')}
     bind:this={menuButton}
   >
     <svelte:component
       this={hasAvatar ? undefined : Icon}
       slot="start-icon"
       name={'account_circle'}
-      label={$_('account')}
     />
     <svelte:element
       this={hasAvatar ? 'img' : undefined}
       class="avatar"
       loading="lazy"
       src={$user?.avatar_url}
-      alt={$_('account')}
     />
-    <Menu slot="popup">
+    <Menu slot="popup" aria-label={$_('account')}>
       <MenuItem
         label={isLocal
           ? $_('working_with_local_repo')

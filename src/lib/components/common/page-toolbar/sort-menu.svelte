@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItemGroup, MenuItemRadio } from '@sveltia/ui';
+  import { Icon, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
 
@@ -17,25 +17,26 @@
   /** @type {SortOrder[]} */
   const sortOrders = ['ascending', 'descending'];
   const dateFields = ['date', 'commit_date'];
+
+  $: ariaControls = $$restProps['aria-controls'];
 </script>
 
-<MenuButton variant="ghost" label={label || $_('sort_by')} {disabled}>
+<MenuButton variant="ghost" label={label || $_('sort')} {disabled}>
   <Icon slot="end-icon" name="arrow_drop_down" />
-  <Menu slot="popup">
-    <MenuItemGroup aria-label={$_('sort_field')}>
-      {#each fields as { key, label: _label } (key)}
-        {#each sortOrders as order (order)}
-          <MenuItemRadio
-            label={$_(dateFields.includes(key) ? `${order}_date` : order, {
-              values: { label: _label },
-            })}
-            checked={$currentView.sort?.key === key && $currentView.sort?.order === order}
-            on:click={() => {
-              currentView.update((view) => ({ ...view, sort: { key, order } }));
-            }}
-          />
-        {/each}
+  <Menu slot="popup" aria-label={$_('sorting_options')}>
+    {#each fields as { key, label: _label } (key)}
+      {#each sortOrders as order (order)}
+        <MenuItemRadio
+          label={$_(dateFields.includes(key) ? `${order}_date` : order, {
+            values: { label: _label },
+          })}
+          checked={$currentView.sort?.key === key && $currentView.sort?.order === order}
+          aria-controls={ariaControls}
+          on:select={() => {
+            currentView.update((view) => ({ ...view, sort: { key, order } }));
+          }}
+        />
       {/each}
-    </MenuItemGroup>
+    {/each}
   </Menu>
 </MenuButton>

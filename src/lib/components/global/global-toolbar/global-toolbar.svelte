@@ -7,11 +7,11 @@
   import PageSwitcher from '$lib/components/global/global-toolbar/items/page-switcher.svelte';
   import QuickSearchBar from '$lib/components/global/global-toolbar/items/quick-search-bar.svelte';
   import SiteLogo from '$lib/components/global/global-toolbar/items/site-logo.svelte';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { hasOverlay } from '$lib/services/navigation';
 </script>
 
-<div class="toolbar-wrapper" inert={$entryDraft ? true : undefined}>
-  <Toolbar variant="primary" aria-label={$_('global_toolbar')}>
+<div role="none" class="toolbar-wrapper" inert={$hasOverlay}>
+  <Toolbar variant="primary" aria-label={$_('global')}>
     <SiteLogo />
     <PageSwitcher />
     <Spacer flex />
@@ -26,10 +26,6 @@
 <style lang="scss">
   .toolbar-wrapper {
     display: contents;
-
-    &[inert] {
-      display: none;
-    }
 
     & > :global(.toolbar) {
       border-width: 0 0 1px 0 !important;

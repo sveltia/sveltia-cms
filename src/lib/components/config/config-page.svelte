@@ -5,7 +5,7 @@
   import { siteConfig } from '$lib/services/config';
 </script>
 
-<PageContainer class="content">
+<PageContainer class="content" aria-label={$_('site_configuration_editor')}>
   <svelte:fragment slot="main">
     <div aria-label={$_('site_config')}>
       <pre>{YAML.stringify($siteConfig)}</pre>

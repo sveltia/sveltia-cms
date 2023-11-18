@@ -7,7 +7,7 @@
   variant="ghost"
   iconic
   hidden
-  aria-label={$_('notifications')}
+  aria-label={$_('show_notifications')}
   on:click={() => {
     // @todo Implement this!
   }}

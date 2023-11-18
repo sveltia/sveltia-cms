@@ -1,6 +1,6 @@
 <script>
   import { Group } from '@sveltia/ui';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { hasOverlay } from '$lib/services/navigation';
 
   /**
    * CSS class name on the button.
@@ -10,19 +10,10 @@
   export { className as class };
 </script>
 
-<div class="outer" inert={$entryDraft ? true : undefined}>
+<div role="none" id="page-container" class="outer" inert={$hasOverlay}>
   <Group class="browser {className}" {...$$restProps}>
     <slot name="primary_sidebar" />
-    <Group class="main">
-      <slot name="primary_toolbar" />
-      <div class="main-inner">
-        <div class="main-inner-main">
-          <slot name="secondary_toolbar" />
-          <slot name="main" />
-        </div>
-        <slot name="secondary_sidebar" />
-      </div>
-    </Group>
+    <slot name="main" />
   </Group>
 </div>
 
@@ -32,10 +23,6 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-
-    &[inert] {
-      display: none;
-    }
 
     & > :global([role='toolbar']) {
       flex: none;
@@ -67,58 +54,50 @@
         width: 100%;
       }
 
-      :global(section) {
-        padding: 8px 0;
+      :global([role='listbox']) {
+        gap: 4px;
+        margin: 8px;
+        border-width: 0;
+        background-color: transparent;
 
-        :global([role='search']) {
-          margin: 0 16px 16px;
+        :global(button) {
+          display: flex;
+          justify-content: flex-start;
+          border-radius: var(--sui-control-medium-border-radius);
+          width: 100%;
+          text-align: left;
+
+          :global(span) {
+            flex: none;
+          }
+
+          :global(span.label) {
+            flex: auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          :global(span.icon.check) {
+            display: none;
+          }
+
+          &:not(:first-child) {
+            margin-top: 4px;
+          }
         }
 
-        :global([role='listbox']) {
-          gap: 4px;
-          margin: 0 8px;
-          border-width: 0;
-          background-color: transparent;
+        :global(button:not(:focus)) {
+          border-color: transparent;
+        }
 
-          :global(button) {
-            display: flex;
-            justify-content: flex-start;
-            border-radius: var(--sui-control-medium-border-radius);
-            width: 100%;
-            text-align: left;
+        :global([role='option'][aria-selected='true']) {
+          color: var(--sui-highlight-foreground-color);
+          background-color: var(--sui-selected-background-color);
+        }
 
-            :global(span) {
-              flex: none;
-            }
-
-            :global(span.label) {
-              flex: auto;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            }
-
-            :global(span.icon.check) {
-              display: none;
-            }
-
-            &:not(:first-child) {
-              margin-top: 4px;
-            }
-          }
-
-          :global(button:not(:focus)) {
-            border-color: transparent;
-          }
-
-          :global([role='option'][aria-selected='true']) {
-            color: var(--sui-highlight-foreground-color);
-            background-color: var(--sui-selected-background-color);
-          }
-
-          :global([role='option'].dragover) {
-            color: var(--sui-primary-accent-color-inverted) !important;
-            background-color: var(--sui-primary-accent-color) !important;
-          }
+        :global([role='option'].dragover) {
+          color: var(--sui-primary-accent-color-inverted) !important;
+          background-color: var(--sui-primary-accent-color) !important;
         }
       }
     }
@@ -140,34 +119,6 @@
       :global(.secondary[role='toolbar']) {
         border-width: 0 0 1px;
         border-color: var(--sui-primary-border-color);
-      }
-
-      :global(.list-container) {
-        flex: auto;
-        position: relative;
-        overflow-y: auto;
-        overscroll-behavior-y: contain;
-        border-radius: var(--sui-control-medium-border-radius);
-      }
-    }
-
-    .main-inner {
-      flex: auto;
-      display: flex;
-      overflow: hidden;
-
-      .main-inner-main {
-        flex: auto;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-
-      :global(.secondary-sidebar) {
-        flex: none;
-        overflow: auto;
-        width: 320px;
-        border-left: 1px solid var(--sui-primary-border-color);
       }
     }
   }

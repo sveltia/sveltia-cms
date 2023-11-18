@@ -1,5 +1,5 @@
 <script>
-  import { Dialog } from '@sveltia/ui';
+  import { ConfirmationDialog } from '@sveltia/ui';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { listedAssets } from '$lib/services/assets/view';
@@ -18,9 +18,9 @@
   const dispatch = createEventDispatcher();
 </script>
 
-<Dialog
+<ConfirmationDialog
   bind:open
-  title={assets.length === 1 ? $_('delete_file') : $_('delete_files')}
+  title={assets.length === 1 ? $_('delete_asset') : $_('delete_assets')}
   okLabel={$_('delete')}
   on:ok={() => {
     deleteAssets(assets);
@@ -30,10 +30,10 @@
   {#if description}
     {description}
   {:else if assets.length === 1}
-    {$_('confirm_deleting_selected_file')}
+    {$_('confirm_deleting_selected_asset')}
   {:else if assets.length === $listedAssets.length}
-    {$_('confirm_deleting_all_files')}
+    {$_('confirm_deleting_all_assets')}
   {:else}
-    {$_('confirm_deleting_selected_files', { values: { number: assets.length } })}
+    {$_('confirm_deleting_selected_assets', { values: { count: assets.length } })}
   {/if}
-</Dialog>
+</ConfirmationDialog>

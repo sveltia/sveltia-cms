@@ -12,7 +12,7 @@
     <p>
       {$_('prefs.advanced.developer_mode.description')}
     </p>
-    <div>
+    <div role="none">
       <Switch
         bind:checked={$prefs.devModeEnabled}
         label={$_('prefs.advanced.developer_mode.switch_label')}

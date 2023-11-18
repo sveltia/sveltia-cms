@@ -1,5 +1,5 @@
 <script>
-  import { Dialog } from '@sveltia/ui';
+  import { ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { selectedEntries } from '$lib/services/contents';
   import { deleteEntries } from '$lib/services/contents/data';
@@ -8,7 +8,7 @@
   export let open = false;
 </script>
 
-<Dialog
+<ConfirmationDialog
   bind:open
   title={$selectedEntries.length === 1 ? $_('delete_entry') : $_('delete_entries')}
   okLabel={$_('delete')}
@@ -21,6 +21,6 @@
   {:else if $selectedEntries.length === $listedEntries.length}
     {$_('confirm_deleting_all_entries')}
   {:else}
-    {$_('confirm_deleting_selected_entries', { values: { number: $selectedEntries.length } })}
+    {$_('confirm_deleting_selected_entries', { values: { count: $selectedEntries.length } })}
   {/if}
-</Dialog>
+</ConfirmationDialog>

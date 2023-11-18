@@ -19,16 +19,19 @@
    * @type {'image' | 'any'}
    */
   export let kind = 'image';
-
   /**
    * @type {string}
    */
   export let searchTerms = '';
-
   /**
    * @type {MediaLibraryService}
    */
   export let serviceProps;
+  /**
+   * The `id` attribute of the inner listbox.
+   * @type {string}
+   */
+  export let gridId = undefined;
 
   $: ({
     serviceType = 'stock_photos',
@@ -156,6 +159,7 @@
     </EmptyState>
   {:else}
     <SimpleImageGrid
+      {gridId}
       viewType={$selectAssetsView?.type}
       on:change={(event) => {
         selectAsset(
@@ -171,14 +175,14 @@
           {#if _kind === 'video'}
             <Video src={previewURL} variant="tile" crossorigin="anonymous" />
           {/if}
-          <span class="name">{description}</span>
+          <span role="none" class="name">{description}</span>
         </Option>
       {/each}
     </SimpleImageGrid>
   {/if}
 {:else if hasConfig}
   <EmptyState>
-    <p>
+    <p role="alert">
       {#if serviceType === 'stock_photos'}
         {@html DOMPurify.sanitize(
           $_('prefs.media.stock_photos.description', {
@@ -203,8 +207,9 @@
       {/if}
     </p>
     {#if authType === 'api_key'}
-      <div class="input-outer">
+      <div role="none" class="input-outer">
         <TextInput
+          flex
           spellcheck="false"
           aria-label={$_('prefs.media.stock_photos.field_label', {
             values: { service: serviceLabel },
@@ -224,23 +229,23 @@
       </div>
     {/if}
     {#if authType === 'password'}
-      <div class="input-outer">
+      <div role="none" class="input-outer">
         <TextInput
+          flex
           spellcheck="false"
           aria-label={$_('user_name')}
           disabled={authState === 'requested'}
           bind:value={input.userName}
         />
       </div>
-      <div class="input-outer">
+      <div role="none" class="input-outer">
         <PasswordInput
-          spellcheck="false"
           aria-label={$_('password')}
           disabled={authState === 'requested'}
           bind:value={input.password}
         />
       </div>
-      <div class="input-outer">
+      <div role="none" class="input-outer">
         <Button
           variant="secondary"
           label={$_('sign_in')}
