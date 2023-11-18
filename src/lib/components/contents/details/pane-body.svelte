@@ -82,6 +82,9 @@
       on:wheel|capture={() => {
         syncScrollPosition();
       }}
+      on:touchmove={() => {
+        syncScrollPosition();
+      }}
     >
       <svelte:component this={mode === 'preview' ? EntryPreview : EntryEditor} {locale} />
     </div>
