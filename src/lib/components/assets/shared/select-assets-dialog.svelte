@@ -100,7 +100,7 @@
         allStockPhotoServices[libraryName] ?? {}}
       {#if showServiceLink}
         <a href={serviceURL}>
-          {$_('prefs.media.stock_photo.credit', { values: { service: serviceLabel } })}
+          {$_('prefs.media.stock_photos.credit', { values: { service: serviceLabel } })}
         </a>
       {/if}
     {/if}
