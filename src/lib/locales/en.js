@@ -219,6 +219,24 @@ export const strings = {
   revert_changes: 'Revert Changes',
   revert_all_changes: 'Revert All Changes',
   required: 'Required',
+  editor: {
+    translation: {
+      none: 'Nothing has been translated.',
+      started: 'Translating…',
+      error: 'There was an error while translating.',
+      complete: {
+        one: 'Translated the field from {source}.',
+        many: 'Translated {count} fields from {source}.',
+      },
+    },
+    copy: {
+      none: 'Nothing has been copied.',
+      complete: {
+        one: 'Copied the field from {source}.',
+        many: 'Copied {count} fields from {source}.',
+      },
+    },
+  },
   validation: {
     value_missing: 'This field is required.',
     range_underflow: {

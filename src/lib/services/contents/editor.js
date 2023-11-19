@@ -479,6 +479,26 @@ export const toggleLocale = (locale) => {
 };
 
 /**
+ * Copy/translation toast state.
+ * @type {import('svelte/store').Writable<{
+ *   id: number,
+ *   show: boolean,
+ *   status: 'info' | 'success' | 'error',
+ *   message: string,
+ *   count: number,
+ *   sourceLocale: LocaleCode,
+ * }>}
+ */
+export const copyFromLocaleToast = writable({
+  id: undefined,
+  show: false,
+  status: undefined,
+  message: undefined,
+  count: 1,
+  sourceLocale: undefined,
+});
+
+/**
  * Copy or translate field value(s) from another locale.
  * @param {string} sourceLocale Source locale, e.g. `en`.
  * @param {string} targetLocale Target locale, e.g. `ja`.
@@ -516,7 +536,29 @@ export const copyFromLocale = async (
     }),
   );
 
-  if (!Object.keys(copingFields).length) {
+  const count = Object.keys(copingFields).length;
+  const countType = count === 1 ? 'one' : 'many';
+  const operationType = translate ? 'translation' : 'copy';
+
+  /**
+   * Update the toast notification.
+   * @param {'info' | 'success' | 'error'} status Status.
+   * @param {string} message Message key.
+   */
+  const updateToast = (status, message) => {
+    copyFromLocaleToast.set({
+      id: Date.now(),
+      show: true,
+      status,
+      message,
+      count,
+      sourceLocale,
+    });
+  };
+
+  if (!count) {
+    updateToast('info', `${operationType}.none`);
+
     return;
   }
 
@@ -524,8 +566,11 @@ export const copyFromLocale = async (
     const apiKey = get(prefs).apiKeys?.[get(translator)?.serviceId];
 
     if (!apiKey) {
+      // This shouldn’t happen because the API key dialog will show up in advance
       return;
     }
+
+    updateToast('info', 'translation.started');
 
     try {
       const translatedValues = await get(translator).translate(Object.values(copingFields), {
@@ -537,14 +582,19 @@ export const copyFromLocale = async (
       Object.keys(copingFields).forEach((_keyPath, index) => {
         currentValues[targetLocale][_keyPath] = translatedValues[index];
       });
+
+      updateToast('success', `translation.complete.${countType}`);
     } catch {
-      // @todo Show an error message.
+      // @todo Show a detailed error message.
       // @see https://www.deepl.com/docs-api/api-access/error-handling/
+      updateToast('error', 'translation.error');
     }
   } else {
     Object.entries(copingFields).forEach(([_keyPath, value]) => {
       currentValues[targetLocale][_keyPath] = value;
     });
+
+    updateToast('success', `copy.complete.${countType}`);
   }
 
   entryDraft.update((_entryDraft) => ({ ..._entryDraft, currentValues }));

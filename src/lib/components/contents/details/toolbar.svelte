@@ -18,12 +18,14 @@
   import { _ } from 'svelte-i18n';
   import { deleteEntries } from '$lib/services/contents/data';
   import {
+    copyFromLocaleToast,
     entryDraft,
     entryEditorSettings,
     revertChanges,
     saveEntry,
   } from '$lib/services/contents/editor';
   import { formatSummary } from '$lib/services/contents/view';
+  import { getLocaleLabel } from '$lib/services/i18n';
   import { goBack, goto } from '$lib/services/navigation';
   import { truncate } from '$lib/services/utils/strings';
 
@@ -192,6 +194,13 @@
     {$_(errorCount === 1 ? 'entry_validation_error' : 'entry_validation_errors', {
       values: { count: errorCount },
     })}
+  </Alert>
+</Toast>
+
+<Toast id={$copyFromLocaleToast.id} bind:show={$copyFromLocaleToast.show}>
+  {@const { status, message, count, sourceLocale } = $copyFromLocaleToast}
+  <Alert {status}>
+    {$_(`editor.${message}`, { values: { count, source: getLocaleLabel(sourceLocale) } })}
   </Alert>
 </Toast>
 

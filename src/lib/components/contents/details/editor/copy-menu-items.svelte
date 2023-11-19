@@ -25,7 +25,7 @@
    */
   export let anchor;
 
-  $: ({ collection, currentLocales } = $entryDraft);
+  $: ({ collection, currentLocales, currentValues } = $entryDraft);
   $: ({ hasLocales = false, locales = ['default'] } =
     collection._i18n ?? /** @type {I18nConfig} */ ({}));
   $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
@@ -68,6 +68,10 @@
     })}
     disabled={!currentLocales[locale] ||
       !currentLocales[otherLocale] ||
+      (!translate &&
+        keyPath &&
+        (!currentValues[otherLocale][keyPath] ||
+          currentValues[otherLocale][keyPath] === currentValues[locale][keyPath])) ||
       (translate &&
         (!sourceLanguages.includes(locale.toUpperCase()) ||
           !targetLanguages.includes(otherLocale.toUpperCase())))}

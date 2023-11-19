@@ -221,6 +221,24 @@ export const strings = {
   revert_changes: '変更を取り消す',
   revert_all_changes: 'すべての変更を取り消す',
   required: '必須',
+  editor: {
+    translation: {
+      none: '翻訳されたフィールドはありません。',
+      started: '翻訳中…',
+      error: '翻訳中に問題が発生しました。',
+      complete: {
+        one: '{source} からフィールドを翻訳しました。',
+        many: '{source} から {count} 個のフィールドを翻訳しました。',
+      },
+    },
+    copy: {
+      none: 'コピーされたフィールドはありません。',
+      complete: {
+        one: '{source} からフィールドをコピーしました。',
+        many: '{source} から {count} 個のフィールドをコピーしました。',
+      },
+    },
+  },
   validation: {
     value_missing: 'この項目は必須です。',
     range_underflow: {
