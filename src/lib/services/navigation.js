@@ -19,10 +19,10 @@ export const hasOverlay = derived([entryDraft, overlaidAsset], ([draft, asset], 
 export const selectedPageName = writable('');
 
 /**
- * Page title to be announced by screen readers.
+ * Page status to be announced by screen readers.
  * @type {import('svelte/store').Writable<string>}
  */
-export const announcedPageTitle = writable('');
+export const announcedPageStatus = writable('');
 
 /**
  * Parse the URL and return the decoded result.

@@ -15,7 +15,7 @@
   import { contentUpdatesToast } from '$lib/services/contents/data';
   import { createDraft, entryDraft } from '$lib/services/contents/editor';
   import { formatSummary, listedEntries } from '$lib/services/contents/view';
-  import { announcedPageTitle, parseLocation } from '$lib/services/navigation';
+  import { announcedPageStatus, parseLocation } from '$lib/services/navigation';
 
   /**
    * Navigate to the content list or content details page given the URL hash.
@@ -42,7 +42,7 @@
     $entryDraft = null;
 
     if (!$selectedCollection) {
-      $announcedPageTitle = $_('collection_not_found');
+      $announcedPageStatus = $_('collection_not_found');
 
       return; // Not Found
     }
@@ -59,7 +59,7 @@
     if (!_state) {
       const count = $listedEntries.length;
 
-      $announcedPageTitle = $_(
+      $announcedPageStatus = $_(
         // eslint-disable-next-line no-nested-ternary
         count > 1
           ? 'viewing_x_collection_many_entries'
@@ -92,7 +92,7 @@
           });
         }
 
-        $announcedPageTitle = $_('editing_x_collection_file', {
+        $announcedPageStatus = $_('editing_x_collection_file', {
           values: {
             collection: collectionLabel,
             file: collectionFile.label || collectionFile.name,
@@ -104,7 +104,7 @@
       if (_state === 'new' && !_id && $selectedCollection.create) {
         createDraft({ collectionName }, params);
 
-        $announcedPageTitle = $_('creating_x_collection_entry', {
+        $announcedPageStatus = $_('creating_x_collection_entry', {
           values: {
             collection: collectionLabel,
           },
@@ -117,7 +117,7 @@
         if (selectedEntry) {
           createDraft(selectedEntry);
 
-          $announcedPageTitle = $_('editing_x_collection_entry', {
+          $announcedPageStatus = $_('editing_x_collection_entry', {
             values: {
               collection: collectionLabel,
               entry: formatSummary(collection, selectedEntry, defaultLocale, {

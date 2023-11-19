@@ -18,7 +18,7 @@
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
-  import { announcedPageTitle, parseLocation } from '$lib/services/navigation';
+  import { announcedPageStatus, parseLocation } from '$lib/services/navigation';
 
   let path = '';
 
@@ -49,7 +49,7 @@
       const count = $listedAssets.length;
 
       $overlaidAsset = null;
-      $announcedPageTitle = $_(
+      $announcedPageStatus = $_(
         // eslint-disable-next-line no-nested-ternary
         count > 1
           ? 'viewing_x_asset_folder_many_assets'
@@ -65,7 +65,7 @@
     $overlaidAsset = path.match(/^\/assets\/(.+?)\.[a-zA-Z0-9]+$/)
       ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`) ?? null
       : null;
-    $announcedPageTitle = $overlaidAsset
+    $announcedPageStatus = $overlaidAsset
       ? $_('viewing_x_asset_details', { values: { name: $overlaidAsset.name } })
       : $_('file_not_found');
   };

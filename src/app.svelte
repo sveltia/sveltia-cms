@@ -6,7 +6,7 @@
   import MainRouter from '$lib/components/global/main-router.svelte';
   import { dataLoaded } from '$lib/services/contents';
   import { initAppLocale } from '$lib/services/i18n';
-  import { announcedPageTitle } from '$lib/services/navigation';
+  import { announcedPageStatus } from '$lib/services/navigation';
   import { user } from '$lib/services/user';
 
   const { DEV, VITE_SITE_URL } = import.meta.env;
@@ -40,11 +40,11 @@
       <EntrancePage />
     {/if}
   {/if}
-  <div role="alert">{$announcedPageTitle}</div>
+  <div role="status">{$announcedPageStatus}</div>
 </AppShell>
 
 <style lang="scss">
-  [role='alert'] {
+  [role='status'] {
     position: absolute;
     z-index: -1;
     opacity: 0;

@@ -7,11 +7,11 @@
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { fetchSiteConfig, siteConfig } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
-  import { announcedPageTitle } from '$lib/services/navigation';
+  import { announcedPageStatus } from '$lib/services/navigation';
   import { prefs } from '$lib/services/prefs';
   import { authError, unauthenticated, user } from '$lib/services/user';
 
-  $: $announcedPageTitle = $_('welcome_to_sveltia_cms');
+  $: $announcedPageStatus = $_('welcome_to_sveltia_cms');
 
   onMount(() => {
     fetchSiteConfig();

@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import SearchResults from '$lib/components/search/search-results.svelte';
-  import { announcedPageTitle, parseLocation } from '$lib/services/navigation';
+  import { announcedPageStatus, parseLocation } from '$lib/services/navigation';
   import { searchResults, searchTerms } from '$lib/services/search';
 
   /**
@@ -21,7 +21,7 @@
     const entryCount = entries.length;
     const assetCount = assets.length;
 
-    $announcedPageTitle = $_('viewing_search_results', {
+    $announcedPageStatus = $_('viewing_search_results', {
       values: {
         terms: $searchTerms,
         entries:
