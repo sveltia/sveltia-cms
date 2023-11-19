@@ -2,15 +2,15 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with almost any static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
-![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1.webp)<br>
+![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-202311-1.webp)<br>
 
-![Screenshot: Instant Entry Listing, Searching and Saving](docs/screenshot-2.webp)<br>
+![Screenshot: Instant Entry Listing, Searching and Saving](docs/screenshot-202311-2.webp)<br>
 
-![Screenshot: All-New Media Library](docs/screenshot-3.webp)<br>
+![Screenshot: Stock Photo Integration](docs/screenshot-202311-3.webp)<br>
 
-![Screenshot: Stock Photo Integrations; Quick Translation](docs/screenshot-4.webp)<br>
+![Screenshot: All-New Asset Library; Full Internationalization Support](docs/screenshot-202311-4.webp)<br>
 
-![Screenshot: Single-Line Migration from Netlify/Decap CMS](docs/screenshot-5.webp)<br>
+![Screenshot: Single-Line Migration from Netlify/Decap CMS](docs/screenshot-202311-5.webp)<br>
 
 ## Motivation
 
@@ -26,48 +26,56 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Compatible with Netlify/Decap CMS
 
-- Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating one single line of code.
+- Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating a single line of code.
 - Existing [configuration files](https://decapcms.org/docs/configuration-options/) can be reused as is.
 - Various features are still missing though — [see the compatibility chart below](#compatibility) for details.
 
 ### Better UX
 
-- Created by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements.
-- Offering a modern, intuitive UI, with some inspiration from the Netlify CMS v3 prototype[^1].
-- Featuring immersive dark mode[^2].
+- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements.
+- Offers a modern, intuitive UI, with some inspiration from the Netlify CMS v3 prototype[^1].
+- Features an immersive dark mode[^2].
 - The screenshots above are worth a thousand words!
 
 ### Better performance
 
-- Built completely from scratch with Svelte rather than forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
-- Using the GraphQL API for GitHub to quickly fetch contents at once, so that entries and media can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
-- Saving entries and media is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
-- Caching Git files locally to further speed up startup and reduce bandwidth.
+- Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
+- Uses the GraphQL API for GitHub to quickly fetch content at once, so that entries and assets can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
+- Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
+- Caches Git files locally to further speed up startup and reduce bandwidth.
 - Small footprint: less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 
 ### Better productivity
 
 - You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server on your machine.
 - You can delete multiple entries and assets at once.
-- Providing some keyboard shortcuts for faster editing. More to come!
+- Provides some keyboard shortcuts for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
   - Save an entry: `Ctrl+S` (Windows/Linux) / `Command+S` (macOS)
   - Search for entries and assets: `Ctrl+F` (Windows/Linux) / `Command+F` (macOS)
-- Solving various outstanding Netlify/Decap CMS bugs[^11].
+- Offers a UI optimized for tablet devices. Note that the UI is not yet optimized for smaller screens.
+- Solves various outstanding Netlify/Decap CMS bugs[^11].
+
+### Better accessibility
+
+- Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys[^17].
+- Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support empowers users who rely on screen readers such as NVDA or VoiceOver.
+- Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
+- We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
 ### Better i18n support
 
-- Making it easier to switch between locales while editing with just a click on a button instead of a dropdown list.
-- Fields in non-default locales will be validated as expected[^13].
-- [Integrating DeepL](#use-deepl-to-translate-entry-fields) to allow translating text fields from another locale with one click.
+- It’s now easier to switch between locales while editing with just a click on a button instead of a dropdown list.
+- Fields in non-default locales are validated as expected[^13].
+- [Integrates DeepL](#use-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
 - You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
-- You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales writing in non-Latin characters[^12].
-- Solving limitations in Netlify/Decap CMS’s [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
+- You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters[^12].
+- Resolves limitations in the Netlify/Decap CMS [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 
 ### Collection enhancements
 
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
-- A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear aside of entries.
+- A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear next to the entries.
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
 
 ### Field enhancements
@@ -155,11 +163,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 - Documentation
 - Demo site
 - Starter templates
-
-### Non goals (for now)
-
 - Mobile support
-- WYSIWYG editing
 
 ## Getting started
 
@@ -258,7 +262,7 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 
 You can now disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
 
-With the following configuration, you can disable the French and/or German content while writing in English.
+With the following configuration, you can disable the French and/or German translation while writing in English.
 
 ```diff
  i18n:
@@ -375,3 +379,4 @@ This software is provided “as is” without any express or implied warranty. T
 [^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [Netlify/Decap CMS #5920](https://github.com/decaporg/decap-cms/issues/5920), [Netlify/Decap CMS #6410](https://github.com/decaporg/decap-cms/issues/6410)
 [^15]: [Netlify/Decap CMS #6932](https://github.com/decaporg/decap-cms/issues/6932)
 [^16]: [Netlify/Decap CMS #2103](https://github.com/decaporg/decap-cms/issues/2103)
+[^17]: [Netlify/Decap CMS #1333](https://github.com/decaporg/decap-cms/issues/1333)
