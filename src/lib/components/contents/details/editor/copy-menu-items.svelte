@@ -68,10 +68,10 @@
     })}
     disabled={!currentLocales[locale] ||
       !currentLocales[otherLocale] ||
+      (keyPath && !currentValues[otherLocale][keyPath]) ||
       (!translate &&
         keyPath &&
-        (!currentValues[otherLocale][keyPath] ||
-          currentValues[otherLocale][keyPath] === currentValues[locale][keyPath])) ||
+        currentValues[otherLocale][keyPath] === currentValues[locale][keyPath]) ||
       (translate &&
         (!sourceLanguages.includes(locale.toUpperCase()) ||
           !targetLanguages.includes(otherLocale.toUpperCase())))}
