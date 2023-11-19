@@ -16,7 +16,7 @@
   /**
    * @type {ViewType}
    */
-  export let viewType;
+  export let viewType = 'grid';
   /**
    * @type {string}
    */
