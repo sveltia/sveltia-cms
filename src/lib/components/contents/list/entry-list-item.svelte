@@ -71,7 +71,7 @@
   {#if firstImageField}
     <GridCell class="image">
       {#await getMediaFieldURL(content[firstImageField?.name], entry) then src}
-        <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} />
+        <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
       {/await}
     </GridCell>
   {/if}

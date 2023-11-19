@@ -443,8 +443,9 @@
         }
       }
 
-      :global(.icon) {
-        font-size: var(--sui-font-size-large);
+      :global(button) {
+        padding: 0;
+        height: 16px;
       }
 
       .type {

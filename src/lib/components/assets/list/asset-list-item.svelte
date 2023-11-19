@@ -67,7 +67,7 @@
   </GridCell>
   <GridCell class="image">
     {#if kind === 'image'}
-      <Image {asset} variant={viewType === 'list' ? 'icon' : 'tile'} />
+      <Image {asset} variant={viewType === 'list' ? 'icon' : 'tile'} checkerboard={true} />
     {/if}
     {#if kind === 'video'}
       <Video {asset} variant={viewType === 'list' ? 'icon' : 'tile'} />

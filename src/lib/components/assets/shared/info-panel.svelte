@@ -57,7 +57,7 @@
   {#if showPreview && canPreview}
     <div role="none" class="preview">
       {#if kind === 'image'}
-        <Image {asset} variant="tile" />
+        <Image {asset} variant="tile" checkerboard={true} />
       {/if}
       {#if kind === 'video'}
         <Video {asset} variant="tile" controls />

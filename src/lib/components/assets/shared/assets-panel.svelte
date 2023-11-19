@@ -46,7 +46,7 @@
       {#each filteredAssets as asset (asset.path)}
         <Option value={asset.sha}>
           {#if asset.kind === 'image'}
-            <Image {asset} variant="tile" />
+            <Image {asset} variant="tile" checkerboard={true} />
           {/if}
           {#if asset.kind === 'video'}
             <Video {asset} variant="tile" />

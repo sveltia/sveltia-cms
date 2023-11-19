@@ -122,7 +122,7 @@
 <div role="none" class="image-widget">
   {#if isImageWidget && currentValue}
     {#await getMediaFieldURL(currentValue, $entryDraft.originalEntry) then src}
-      <Image {src} variant="tile" />
+      <Image {src} variant="tile" checkerboard={true} />
     {/await}
   {/if}
   <div role="none">

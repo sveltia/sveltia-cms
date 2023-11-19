@@ -40,7 +40,7 @@
    * Whether to show a checkerboard background below a transparent image.
    * @type {boolean}
    */
-  export let checkerboard = true;
+  export let checkerboard = false;
   /**
    * Alt text for the image.
    * @type {string}
@@ -71,20 +71,12 @@
   }
 </script>
 
-<div role="none" class="preview {variant ?? ''}">
+<div role="none" class="preview {variant ?? ''}" class:cover class:checkerboard>
   {#if type === 'video'}
     <!-- svelte-ignore a11y-media-has-caption -->
-    <video class:cover playsinline {src} {...$$restProps} bind:this={element} />
+    <video playsinline {src} {...$$restProps} bind:this={element} />
   {:else}
-    <img
-      class:checkerboard
-      class:cover
-      {loading}
-      {src}
-      {alt}
-      {...$$restProps}
-      bind:this={element}
-    />
+    <img {loading} {src} {alt} {...$$restProps} bind:this={element} />
   {/if}
   {#if blurBackground}
     <div role="none" class="blur">
@@ -152,6 +144,10 @@
       }
     }
 
+    &.cover {
+      padding: 0;
+    }
+
     & > video,
     & > img {
       max-width: 100%;
@@ -161,12 +157,16 @@
 
   img {
     /* prettier-ignore */
-    &.checkerboard {
+    .checkerboard & {
       background-image:
         linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%),
         linear-gradient(45deg, #eee 25%, #fff 25%, #fff 75%, #eee 75%);
       background-size: 16px 16px;
       background-position: 0 0, 8px 8px;
+    }
+
+    :not(.checkerboard) & {
+      background-color: #fff; // hardcoded
     }
   }
 
@@ -178,7 +178,7 @@
       visibility: hidden;
     }
 
-    &:global(.cover) {
+    .cover & {
       object-fit: cover;
       aspect-ratio: 1 / 1;
     }

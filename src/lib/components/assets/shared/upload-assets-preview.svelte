@@ -16,7 +16,7 @@
     {@const [, extension = ''] = name.match(/\.([^.]+)$/) ?? []}
     <div role="none" class="file">
       {#if type.startsWith('image/')}
-        <Image src={URL.createObjectURL(file)} variant="icon" />
+        <Image src={URL.createObjectURL(file)} variant="icon" checkerboard={true} />
       {:else}
         <span role="none" class="image">
           <Icon name="draft" />

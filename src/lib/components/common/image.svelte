@@ -35,7 +35,7 @@
    * Whether to show a checkerboard background below a transparent image.
    * @type {boolean}
    */
-  export let checkerboard = true;
+  export let checkerboard = false;
   /**
    * Alt text for the image.
    * @type {string}

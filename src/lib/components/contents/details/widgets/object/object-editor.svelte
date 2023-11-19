@@ -229,8 +229,8 @@
     gap: 8px;
     background-color: var(--sui-secondary-border-color);
 
-    :global(.icon) {
-      font-size: var(--sui-font-size-large);
+    :global(button) {
+      height: 16px;
     }
   }
 

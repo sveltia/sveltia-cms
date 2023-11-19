@@ -36,7 +36,12 @@
     <div role="none" class="row">
       <div role="none" class="preview">
         {#if $overlaidAsset.kind === 'image'}
-          <Image asset={$overlaidAsset} blurBackground={true} alt={$overlaidAsset.name} />
+          <Image
+            asset={$overlaidAsset}
+            blurBackground={true}
+            checkerboard={true}
+            alt={$overlaidAsset.name}
+          />
         {:else if $overlaidAsset.kind === 'video'}
           <Video asset={$overlaidAsset} blurBackground={true} controls />
         {:else}
