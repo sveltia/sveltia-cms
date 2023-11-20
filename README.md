@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with almost any static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with your favourite static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-202311-1.webp)<br>
 
@@ -18,7 +18,7 @@ Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stal
 
 To achieve radical improvements in UX, performance and i18n, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new offering has since been released as open source software to encourage wider adoption.
 
-Our goal is to make it a viable successor to Netlify CMS, expand the Git-based headless CMS market, empower small businesses and individuals who need a simple yet powerful CMS solution, and showcase the lightweight nature of the Svelte framework.
+Our goal is to make it a viable successor to Netlify CMS, expand the Git-based headless CMS market, empower small businesses and individuals who need a simple yet powerful CMS solution, and showcase the huge potential of the Svelte framework.
 
 ## Features
 
@@ -33,8 +33,8 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements.
-- Offers a modern, intuitive UI, with some inspiration from the Netlify CMS v3 prototype[^1].
-- Features an immersive dark mode[^2].
+- Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
+- Comes with touch device support. While the UI is not yet optimized for smaller screens, larger tablets like iPad Pro or Pixel Tablet should work well.
 - The screenshots above are worth a thousand words!
 
 ### Better performance
@@ -49,11 +49,10 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server on your machine.
 - You can delete multiple entries and assets at once.
-- Provides some keyboard shortcuts for faster editing. More to come!
+- Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
   - Save an entry: `Ctrl+S` (Windows/Linux) / `Command+S` (macOS)
   - Search for entries and assets: `Ctrl+F` (Windows/Linux) / `Command+F` (macOS)
-- Offers a UI optimized for tablet devices. Note that the UI is not yet optimized for smaller screens.
 - Solves various outstanding Netlify/Decap CMS bugs[^11].
 
 ### Better accessibility
@@ -85,9 +84,9 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Optional object fields (`widget:object` with `required:false`) can be manually added or removed. If removed, the required subfields will no longer trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
-### Media library enhancements
+### Asset Library enhancements
 
-- An all-new media library makes it easy to manage all your assets.
+- An all-new Asset Library makes it easy to manage all your files, including images and documents.
 - You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
 - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
 - You can navigate between the global media folder and a per-collection media folder[^6].
@@ -156,14 +155,14 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 ## Roadmap
 
+- [Svelte 5](https://svelte.dev/blog/runes) migration
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
-- Further performance optimization, including data caching and [Svelte 5](https://svelte.dev/blog/runes) migration
-- Further UX enhancements
 - Config editor[^10]
+- Mobile support[^18]
 - Documentation
+- Marketing site
 - Demo site
 - Starter templates
-- Mobile support
 
 ## Getting started
 
@@ -380,3 +379,4 @@ This software is provided “as is” without any express or implied warranty. T
 [^15]: [Netlify/Decap CMS #6932](https://github.com/decaporg/decap-cms/issues/6932)
 [^16]: [Netlify/Decap CMS #2103](https://github.com/decaporg/decap-cms/issues/2103)
 [^17]: [Netlify/Decap CMS #1333](https://github.com/decaporg/decap-cms/issues/1333)
+[^18]: [Netlify/Decap CMS #441](https://github.com/decaporg/decap-cms/issues/441)
