@@ -172,10 +172,9 @@
           showValidationToast = true;
         } else {
           showErrorDialog = true;
+          // eslint-disable-next-line no-console
+          console.error(error);
         }
-
-        // eslint-disable-next-line no-console
-        console.error(error);
       } finally {
         saving = false;
       }
