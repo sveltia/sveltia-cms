@@ -116,7 +116,9 @@
     void searchTerms;
     window.clearTimeout(debounceTimer);
     debounceTimer = window.setTimeout(() => {
-      searchAssets(searchTerms);
+      if (hasAuthInfo) {
+        searchAssets(searchTerms);
+      }
     }, 1000);
   }
 
