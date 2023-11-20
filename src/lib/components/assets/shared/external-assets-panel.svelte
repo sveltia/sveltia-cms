@@ -113,12 +113,11 @@
   };
 
   $: {
-    if (searchTerms) {
-      window.clearTimeout(debounceTimer);
-      debounceTimer = window.setTimeout(() => {
-        searchAssets(searchTerms);
-      }, 1000);
-    }
+    void searchTerms;
+    window.clearTimeout(debounceTimer);
+    debounceTimer = window.setTimeout(() => {
+      searchAssets(searchTerms);
+    }, 1000);
   }
 
   onMount(() => {
