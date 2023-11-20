@@ -92,7 +92,7 @@
             ? collectionFile.label || collectionFile.name
             : truncate(
                 formatSummary(collection, originalEntry, defaultLocale, { useTemplate: false }),
-                25,
+                40,
               ),
         },
       })}
