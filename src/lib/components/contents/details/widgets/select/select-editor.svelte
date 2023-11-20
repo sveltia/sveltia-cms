@@ -138,6 +138,9 @@
     {#if (typeof max !== 'number' || currentValue.length < max) && currentValue.length < options.length}
       <Combobox
         disabled={readonly}
+        {readonly}
+        {required}
+        {invalid}
         on:change={({ detail: { target, value } }) => {
           // Avoid an error while navigating pages
           if (!$entryDraft) {
