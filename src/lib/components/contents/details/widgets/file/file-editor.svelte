@@ -5,7 +5,7 @@
   @see https://decapcms.org/docs/widgets/#image
 -->
 <script>
-  import { AlertDialog, Button, TextArea } from '@sveltia/ui';
+  import { AlertDialog, Button, ConfirmationDialog, TextArea } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
@@ -189,7 +189,7 @@
   {$_('assets_dialog.large_file.description', { values: { size: formatSize(maxFileSize) } })}
 </AlertDialog>
 
-<AlertDialog
+<ConfirmationDialog
   bind:open={showPhotoCreditDialog}
   title={$_('assets_dialog.photo_credit.title')}
   okLabel={$_('copy')}
@@ -209,7 +209,7 @@
       }}
     />
   </div>
-</AlertDialog>
+</ConfirmationDialog>
 
 <style lang="scss">
   .image-widget {
