@@ -170,13 +170,14 @@
     }
 
     h4 {
+      font-size: var(--sui-font-size-small);
+      font-weight: 600;
       color: var(--sui-secondary-foreground-color);
     }
 
     h4,
     p {
       margin: 0 0 4px;
-      font-size: inherit;
       word-break: break-all;
     }
   }

@@ -46,7 +46,7 @@
                         ({ widget }) => widget === 'image',
                       )}
                       {#await getMediaFieldURL(content[firstImageField?.name], entry) then src}
-                        <Image {src} variant="icon" />
+                        <Image {src} variant="icon" cover />
                       {/await}
                     {/if}
                   </GridCell>
@@ -90,10 +90,10 @@
               >
                 <GridCell class="image">
                   {#if kind === 'image'}
-                    <Image {asset} variant="icon" />
+                    <Image {asset} variant="icon" cover />
                   {/if}
                   {#if kind === 'video'}
-                    <Video {asset} variant="icon" />
+                    <Video {asset} variant="icon" cover />
                   {/if}
                 </GridCell>
                 <GridCell class="collection">
