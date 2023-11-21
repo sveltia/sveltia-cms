@@ -28,22 +28,22 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating a single line of code.
 - Existing [configuration files](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Various features are still missing though — see the [compatibility chart](#compatibility) below to see if you can migrate.
+- Various features are still missing though — look at the [compatibility chart](#compatibility) below to see if you can migrate.
 
 ### Better UX
 
-- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements.
+- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
-- Comes with touch device support. While the UI is not yet optimized for smaller screens, larger tablets like iPad Pro or Pixel Tablet should work well.
+- Comes with touch device support. While the UI is not yet optimized for small screens, larger tablets like iPad Pro or Pixel Tablet should work well.
 - The screenshots above are worth a thousand words!
 
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
+- Small footprint: less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub to quickly fetch content at once, so that entries and assets can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
 - Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Caches Git files locally to further speed up startup and reduce bandwidth.
-- Small footprint: less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 
 ### Better productivity
 
@@ -81,7 +81,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
-- Optional object fields (`widget:object` with `required:false`) can be manually added or removed. If removed, the required subfields will no longer trigger validation errors[^16].
+- Optional object fields (`widget: object` with `required: false`) can be manually added or removed. If removed, the required subfields will no longer trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
 ### Asset Library enhancements
@@ -101,7 +101,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Settings. (Click on the Account button in the top right corner of the CMS.) |
 | Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. The GitLab backend is coming soon. We plan to add the Test backend as well for our demo site, but Azure, Bitbucket and Git Gateway will probably not be supported, mainly due to the lack of a method to fetch content in bulk. We have not looked into the relatively new Gitea backend yet. Later we may implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
-| Media | External media storage services are not supported yet. |
+| Media | External media storage services are not supported yet. Deprecated Netlify Large Media won’t be added. |
 | Editorial Workflow | Not supported yet. |
 | Collections | Supported. |
 | Widgets | [See below](#widget-limitations) for the current limitations. |
