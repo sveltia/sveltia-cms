@@ -82,7 +82,7 @@ const search = async (query, { apiKey }) => {
 
   return results.map(({ id, url, alt, src: { large2x, tiny }, photographer }) => ({
     id: String(id),
-    description: url.match(/\/photo\/(.+?)-\d+/)?.[1].replace(/-/g, ' ') ?? alt,
+    description: url.match(/\/photo\/(.+?)-\d+\/$/)?.[1].replace(/-/g, ' ') ?? alt,
     previewURL: tiny,
     downloadURL: large2x,
     fileName: `pexels-${photographer.split(/\s+/).join('-').toLowerCase()}-${id}.jpg`,
