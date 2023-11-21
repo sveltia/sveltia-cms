@@ -136,7 +136,7 @@ export const getEntriesByCollection = (collectionName) => {
   return get(allEntries).filter(
     (entry) =>
       entry.collectionName === collectionName &&
-      (!filter ?? getPropertyValue(entry, defaultLocale, filter.field) === filter.value),
+      (!filter || getPropertyValue(entry, defaultLocale, filter.field) === filter.value),
   );
 };
 
