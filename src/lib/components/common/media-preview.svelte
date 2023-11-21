@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import { getAssetPreviewURL } from '$lib/services/assets/view';
 
   /**
@@ -42,6 +43,12 @@
    */
   export let checkerboard = false;
   /**
+   * Whether to add a short dissolve transition (fade-in effect) to the image/video when it’s first
+   * loaded to avoid a sudden appearance.
+   * @type {boolean}
+   */
+  export let dissolve = true;
+  /**
    * Alt text for the image.
    * @type {string}
    */
@@ -52,6 +59,7 @@
    */
   let element;
   let updatingSrc = false;
+  let loaded = false;
 
   /**
    * Update the {@link src} property.
@@ -69,9 +77,36 @@
     void asset;
     updateSrc();
   }
+
+  onMount(() => {
+    const isVideo = element.matches('video');
+
+    if (
+      isVideo
+        ? /** @type {HTMLVideoElement} */ (element).readyState > 0
+        : /** @type {HTMLImageElement} */ (element).complete
+    ) {
+      loaded = true;
+    } else {
+      element.addEventListener(
+        isVideo ? 'loadedmetadata' : 'load',
+        () => {
+          loaded = true;
+        },
+        { once: true },
+      );
+    }
+  });
 </script>
 
-<div role="none" class="preview {variant ?? ''}" class:cover class:checkerboard>
+<div
+  role="none"
+  class="preview {variant ?? ''}"
+  class:cover
+  class:checkerboard
+  class:dissolve
+  class:loaded
+>
   {#if type === 'video'}
     <!-- svelte-ignore a11y-media-has-caption -->
     <video playsinline {src} {...$$restProps} bind:this={element} />
@@ -152,6 +187,21 @@
     & > img {
       max-width: 100%;
       max-height: 100%;
+    }
+
+    &.dissolve {
+      img,
+      video {
+        opacity: 0;
+        transition: opacity 250ms;
+      }
+
+      &.loaded {
+        img,
+        video {
+          opacity: 1;
+        }
+      }
     }
   }
 
