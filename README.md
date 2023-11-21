@@ -6,9 +6,9 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 ![Screenshot: Instant Entry Listing, Searching and Saving](docs/screenshot-20231120-2.webp)<br>
 
-![Screenshot: Stock Photo Integration](docs/screenshot-20231120-3.webp)<br>
+![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](docs/screenshot-20231120-3.webp)<br>
 
-![Screenshot: All-New Asset Library; Full Internationalization Support](docs/screenshot-20231120-4.webp)<br>
+![Screenshot: All-New Asset Library; Full Internationalization Support with DeepL](docs/screenshot-20231120-4.webp)<br>
 
 ![Screenshot: Single-Line Migration from Netlify/Decap CMS (depending on your current setup)](docs/screenshot-20231120-5.webp)<br>
 
@@ -27,14 +27,14 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Compatible with Netlify/Decap CMS
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating a single line of code.
-- Existing [configuration files](https://decapcms.org/docs/configuration-options/) can be reused as is.
+- Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
 - Various features are still missing though — look at the [compatibility chart](#compatibility) below to see if you can migrate.
 
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
-- Comes with touch device support. While the UI is not yet optimized for small screens, larger tablets like iPad Pro or Pixel Tablet should work well.
+- Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well.
 - The screenshots above are worth a thousand words!
 
 ### Better performance
@@ -86,7 +86,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Asset Library enhancements
 
-- An all-new Asset Library makes it easy to manage all your files, including images and documents.
+- A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images and documents.
 - You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
 - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
 - You can navigate between the global media folder and a per-collection media folder[^6].
@@ -113,19 +113,19 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | Code | Not supported yet. |
-| Color | It’s a native `<input>` element at this time. The `enableAlpha` option is not supported yet. |
-| Date/DateTime | These are also native `<input>` elements. The `date_format` and `time_format` options with Moment.js tokens are not supported yet. We may deprecate the Moment.js format support anyway. |
+| Color | The `enableAlpha` option is not supported yet. |
+| Date/DateTime | The `date_format` and `time_format` options with Moment.js tokens are not supported yet. We may deprecate the Moment.js format support anyway. |
 | File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not supported yet. |
 | Markdown | It’s a plain text editor at this time. A rich text editor is coming soon. |
-| Relation | The `search_fields` options is not supported yet. |
+| Relation | The `search_fields` option is not supported yet. |
 
 ### Beta features in Netlify/Decap CMS
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Working with a Local Git Repository | Supported. [See below](#work-with-a-local-git-repository) for details. |
-| GitLab and BitBucket Editorial Workflow Support | The GitLab backend is not supported yet. No plan to support BitBucket. |
+| GitLab and BitBucket Editorial Workflow Support | Editorial workflow is not supported yet. |
 | i18n Support | Supported. In fact, i18n is at the core of Sveltia CMS! |
 | GitHub GraphQL API | Supported. Sveltia CMS uses GraphQL by default for a better performance. It cannot be disabled. |
 | GitLab GraphQL API | The GitLab backend is not supported yet. |
@@ -168,7 +168,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 ### New users
 
-Currently, Sveltia CMS is aimed at existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/add-to-your-site/) to add it to your site and create a configuration file first. Then migrate to Sveltia CMS as described below.
+Currently, Sveltia CMS is only intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/add-to-your-site/) to add it to your site and create a configuration file first. Then migrate to Sveltia CMS as described below.
 
 As the product evolves, we’ll implement a built-in configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
 
@@ -205,11 +205,12 @@ You can use Sveltia CMS with a local Git repository, like the [beta feature](htt
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
 1. Make some changes to your content on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
+1. Open the dev site at `http://localhost:[port]/` to check the rendered results.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
 ### Use a custom icon for a collection
 
-As shown in the screenshot above, you can use different icons for collections in Sveltia CMS.
+You can have an icon for each collection for easy identification in the collection list.
 
 1. Visit the [Material Symbols](https://fonts.google.com/icons?icon.set=Material+Symbols&icon.platform=android) page on Google Fonts.
 1. Search and select an icon, and copy the icon name displayed on the right panel.
