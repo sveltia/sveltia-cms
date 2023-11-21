@@ -20,6 +20,9 @@ window.CMS = new Proxy(
 
       const knownFuncNames = [
         'getBackend',
+        'getCustomFormats',
+        'getCustomFormatsExtensions',
+        'getCustomFormatsFormatters',
         'getEditorComponents',
         'getEventListeners',
         'getLocale',
@@ -52,7 +55,7 @@ window.CMS = new Proxy(
         // eslint-disable-next-line no-console
         console.error(
           `CMS.${key}() is not yet supported in Sveltia CMS. ` +
-            `See https://github.com/sveltia/sveltia-cms#readme for compatibility information.`,
+            `See https://github.com/sveltia/sveltia-cms#compatibility for compatibility information.`,
         );
 
         /** @returns {void} */
