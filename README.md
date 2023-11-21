@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a drop-in replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with your favourite static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a quick replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with your favourite static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-20231120-1.webp)<br>
 
@@ -10,7 +10,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 ![Screenshot: All-New Asset Library; Full Internationalization Support](docs/screenshot-20231120-4.webp)<br>
 
-![Screenshot: Single-Line Migration from Netlify/Decap CMS](docs/screenshot-20231120-5.webp)<br>
+![Screenshot: Single-Line Migration from Netlify/Decap CMS (depending on your current setup)](docs/screenshot-20231120-5.webp)<br>
 
 ## Motivation
 
@@ -28,7 +28,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating a single line of code.
 - Existing [configuration files](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Various features are still missing though — [see the compatibility chart below](#compatibility) for details.
+- Various features are still missing though — see the [compatibility chart](#compatibility) below to see if you can migrate.
 
 ### Better UX
 
@@ -99,7 +99,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | --- | --- |
 | Installation | Installing with npm is not supported yet. |
 | UI locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Settings. (Click on the Account button in the top right corner of the CMS.) |
-| Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. The GitLab backend is coming soon. We plan to add the Test backend as well for our demo site, but Azure and Bitbucket are unlikely to be supported, mainly due to the lack of an API method to fetch content in bulk. Later we may implement a performant Git Gateway alternative using GraphQL. |
+| Account | Only the [GitHub backend](https://decapcms.org/docs/github-backend/) is available at this time. You can keep using Netlify or a [3rd party OAuth client](https://decapcms.org/docs/external-oauth-clients/) (or [our own](https://github.com/sveltia/sveltia-cms-auth)) to sign in with GitHub, just like Netlify/Decap CMS. The GitLab backend is coming soon. We plan to add the Test backend as well for our demo site, but Azure, Bitbucket and Git Gateway will probably not be supported, mainly due to the lack of a method to fetch content in bulk. We have not looked into the relatively new Gitea backend yet. Later we may implement a performant Git Gateway alternative using GraphQL. |
 | Configuration | Supported. |
 | Media | External media storage services are not supported yet. |
 | Editorial Workflow | Not supported yet. |
@@ -179,7 +179,7 @@ Here are some starter kits for popular frameworks created by community members. 
 
 ### Migration
 
-If you’re already using Netlify/Decap CMS with the GitHub backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository:
+Have a look at the [compatibility chart](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository:
 
 ```diff
 -<script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
