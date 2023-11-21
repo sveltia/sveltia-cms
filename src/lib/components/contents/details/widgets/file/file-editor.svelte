@@ -234,6 +234,11 @@
         margin: var(--sui-focus-ring-width);
         padding: 4px;
         word-break: break-all;
+
+        &:empty {
+          margin: 0;
+          padding: 0;
+        }
       }
     }
   }
