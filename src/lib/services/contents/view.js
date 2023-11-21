@@ -503,16 +503,11 @@ selectedCollection.subscribe((collection) => {
     console.info('selectedCollection', collection);
   }
 
-  const {
-    name: collectionName,
-    identifier_field: customIdField,
-    fields = [],
-    _i18n: { defaultLocale = 'default' },
-  } = collection;
+  const { name: collectionName, identifier_field: customIdField, fields = [] } = collection;
 
   // Reset the editor panes
-  editorLeftPane.set({ mode: 'edit', locale: defaultLocale });
-  editorRightPane.set({ mode: 'preview', locale: defaultLocale });
+  editorLeftPane.set(null);
+  editorRightPane.set(null);
 
   // This only works for folder/entry collections
   if (!fields.length) {

@@ -26,8 +26,11 @@
 
   $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ showPreview, paneStates } = $entryEditorSettings);
-  $: ({ hasLocales = false, locales = ['default'] } =
-    collection?._i18n ?? /** @type {I18nConfig} */ ({}));
+  $: ({
+    hasLocales = false,
+    locales = ['default'],
+    defaultLocale = 'default',
+  } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
 
@@ -72,13 +75,13 @@
       }
     }
 
+    $editorLeftPane = { mode: 'edit', locale: $editorLeftPane?.locale ?? defaultLocale };
+
     if (!showPreview || !canPreview) {
       const otherLocales = hasLocales ? locales.filter((l) => l !== $editorLeftPane?.locale) : [];
 
-      $editorLeftPane.mode = 'edit';
       $editorRightPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;
     } else {
-      $editorLeftPane.mode = 'edit';
       $editorRightPane = { mode: 'preview', locale: $editorLeftPane?.locale };
     }
   };
@@ -119,6 +122,8 @@
   let wrapper;
 
   onMount(() => {
+    switchPanes();
+
     /** @type {HTMLElement} */
     const group = wrapper.closest('[role="group"]');
 
