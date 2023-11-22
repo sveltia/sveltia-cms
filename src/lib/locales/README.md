@@ -1,6 +1,6 @@
 # Note to localizers
 
-Thank you for your interest in translating Sveltia CMS into your language! While we’re happy to have you on board, these strings are not quite ready for localization.
+Thank you for your interest in translating Sveltia CMS into your language! While we’re happy to have you on board, these strings are not quite ready for localization at this time.
 
 - Most of the strings are unorganized/unpolished.
 - Some strings are difficult to translate without context.
