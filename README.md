@@ -80,7 +80,11 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Field enhancements
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
-- Integration with Pexels, Pixabay and Unsplash makes it easy to insert free stock photos into image fields[^8].
+- Provides an all-in-one asset selection dialog for file and image fields.
+  - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
+  - New assets can be uploaded by dragging & dropping them into the dialog[^20].
+  - A file/image URL can also be entered in the dialog.
+  - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
 - Optional object fields (`widget: object` with `required: false`) can be manually added or removed. If removed, the required subfields will no longer trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
@@ -157,12 +161,13 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 - [Svelte 5](https://svelte.dev/blog/runes) migration
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
-- Config editor[^10]
-- Mobile support[^18]
+- [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
 - Documentation
 - Marketing site
 - Demo site
 - Starter templates
+- Config editor[^10]
+- Mobile support[^18]
 
 ## Getting started
 
@@ -373,7 +378,7 @@ This software is provided “as is” without any express or implied warranty. T
 [^8]: [Netlify/Decap CMS #2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^9]: [Netlify/Decap CMS #3505](https://github.com/decaporg/decap-cms/issues/3505)
 [^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341)
-[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382) and many more. We’ll be updating this list after reviewing their issue list.
+[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [Netlify/Decap CMS #5596](https://github.com/decaporg/decap-cms/issues/5596) and many more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112)
 [^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [Netlify/Decap CMS #5920](https://github.com/decaporg/decap-cms/issues/5920), [Netlify/Decap CMS #6410](https://github.com/decaporg/decap-cms/issues/6410)
@@ -381,3 +386,5 @@ This software is provided “as is” without any express or implied warranty. T
 [^16]: [Netlify/Decap CMS #2103](https://github.com/decaporg/decap-cms/issues/2103)
 [^17]: [Netlify/Decap CMS #1333](https://github.com/decaporg/decap-cms/issues/1333)
 [^18]: [Netlify/Decap CMS #441](https://github.com/decaporg/decap-cms/issues/441)
+[^19]: [Netlify/Decap CMS #5910](https://github.com/decaporg/decap-cms/issues/5910)
+[^20]: [Netlify/Decap CMS #4563](https://github.com/decaporg/decap-cms/issues/4563)
