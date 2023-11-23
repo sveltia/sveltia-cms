@@ -69,7 +69,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - [Integrates DeepL](#use-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
 - You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
 - You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters[^12].
-- Resolves limitations in the Netlify/Decap CMS [list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
+- Resolves the [limitations in the list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 
 ### Collection enhancements
 
@@ -80,7 +80,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Field enhancements
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
-- Provides an all-in-one asset selection dialog for file and image fields.
+- Provides a reimagined all-in-one asset selection dialog for file and image fields.
   - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
   - New assets can be uploaded by dragging & dropping them into the dialog[^20].
   - A file/image URL can also be entered in the dialog.
@@ -88,12 +88,12 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Optional object fields (`widget: object` with `required: false`) can be manually added or removed. If removed, the required subfields will no longer trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
-### Asset Library enhancements
+### Asset management enhancements
 
-- A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images and documents.
+- A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
 - You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
 - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
-- You can navigate between the global media folder and a per-collection media folder[^6].
+- You can navigate between the global media folder and per-collection media folders[^6].
 
 ## Compatibility
 
@@ -210,8 +210,10 @@ You can use Sveltia CMS with a local Git repository, like the [beta feature](htt
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
 1. Make some changes to your content on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
-1. Open the dev site at `http://localhost:[port]/` to check the rendered results.
+1. Open the dev site at `http://localhost:[port]/` to check the rendered pages.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
+
+Remember that the local repository support doesn’t do any Git operation. You have to pull, commit and push all changes manually with a Git client. Also, at this point, you have to reload the CMS to see the latest content after fetching remote updates (this will be unnecessary once browsers support the proposed `FileSystemObserver` API).
 
 ### Use a custom icon for a collection
 
@@ -354,7 +356,7 @@ Importing the CMS as an npm package is not supported yet.
 
 Visit the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page on this GitHub repository and start a new discussion. Tell us about your use cases!
 
-Want to build a website with Sveltia CMS? [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements.
+Want to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements.
 
 ## Contributions
 
