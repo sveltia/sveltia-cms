@@ -166,8 +166,10 @@ siteConfig.subscribe((config) => {
 
   const globalMediaFolder = stripSlashes(_globalMediaFolder);
 
+  // Some frameworks expect asset paths starting with `@`, like `@assets/images`. Remove an extra
+  // leading slash in that case. A trailing slash should always be removed internally.
   const globalPublicFolder = _globalPublicFolder
-    ? `/${stripSlashes(_globalPublicFolder)}`
+    ? `/${stripSlashes(_globalPublicFolder)}`.replace(/^\/@/, '@')
     : `/${globalMediaFolder}`;
 
   const globalAssetPath = {

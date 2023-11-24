@@ -113,8 +113,9 @@ export const getAssetKind = (name) =>
  * @returns {(Asset | undefined)} Corresponding asset.
  */
 export const getAssetByPath = (savedPath, entry) => {
-  // Handle relative path
-  if (!savedPath.startsWith('/')) {
+  // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
+  // considered as an absolute path.
+  if (!savedPath.match(/^[/@]/)) {
     if (!entry) {
       return undefined;
     }
