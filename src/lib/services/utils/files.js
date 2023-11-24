@@ -67,10 +67,11 @@ export const readAsText = async (file) => {
 
   return new Promise((resolve) => {
     /**
-     * Return the result once the content is read.
+     * Return the result once the content is read. On Windows, the result may include CRLF line
+     * breaks. Convert any CRLF to LF to parse entries properly.
      */
     reader.onload = () => {
-      resolve(/** @type {string} */ (reader.result));
+      resolve(/** @type {string} */ (reader.result).replace(/\r\n/g, '\n'));
     };
 
     reader.readAsText(file);
