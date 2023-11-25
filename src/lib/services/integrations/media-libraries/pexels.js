@@ -30,7 +30,7 @@ const search = async (query, { apiKey }) => {
    *   id: number,
    *   url: string,
    *   alt: string,
-   *   src: { large2x: string, tiny: string },
+   *   src: { large2x: string, medium: string },
    *   photographer: string
    * }[]}
    */
@@ -80,10 +80,10 @@ const search = async (query, { apiKey }) => {
     results = (await response.json()).photos;
   }
 
-  return results.map(({ id, url, alt, src: { large2x, tiny }, photographer }) => ({
+  return results.map(({ id, url, alt, src: { large2x, medium }, photographer }) => ({
     id: String(id),
     description: url.match(/\/photo\/(.+?)-\d+\/$/)?.[1].replace(/-/g, ' ') ?? alt,
-    previewURL: tiny,
+    previewURL: medium,
     downloadURL: large2x,
     fileName: `pexels-${photographer.split(/\s+/).join('-').toLowerCase()}-${id}.jpg`,
     kind: 'image',
