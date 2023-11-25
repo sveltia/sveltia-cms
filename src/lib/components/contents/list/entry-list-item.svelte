@@ -26,7 +26,19 @@
    */
   export let viewType;
 
+  /**
+   * @type {string}
+   */
+  let src;
+
   $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
+
+  $: (async () => {
+    src =
+      content && firstImageField
+        ? await getMediaFieldURL(content[firstImageField.name], entry)
+        : undefined;
+  })();
 
   /**
    * Update the entry selection.
@@ -70,9 +82,9 @@
   </GridCell>
   {#if firstImageField}
     <GridCell class="image">
-      {#await getMediaFieldURL(content[firstImageField?.name], entry) then src}
+      {#if src}
         <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
-      {/await}
+      {/if}
     </GridCell>
   {/if}
   <GridCell class="title">

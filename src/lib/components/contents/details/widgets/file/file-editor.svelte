@@ -67,6 +67,10 @@
   /**
    * @type {string}
    */
+  let src;
+  /**
+   * @type {string}
+   */
   let credit;
   let showSelectAssetsDialog = false;
   let showSizeLimitDialog = false;
@@ -117,13 +121,18 @@
       showPhotoCreditDialog = true;
     }
   };
+
+  $: (async () => {
+    src =
+      isImageWidget && currentValue
+        ? await getMediaFieldURL(currentValue, $entryDraft.originalEntry)
+        : undefined;
+  })();
 </script>
 
 <div role="none" class="image-widget">
-  {#if isImageWidget && currentValue}
-    {#await getMediaFieldURL(currentValue, $entryDraft.originalEntry) then src}
-      <Image {src} variant="tile" checkerboard={true} />
-    {/await}
+  {#if src}
+    <Image {src} variant="tile" checkerboard={true} />
   {/if}
   <div role="none">
     {#if typeof currentValue === 'string'}

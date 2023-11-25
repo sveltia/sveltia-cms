@@ -28,15 +28,26 @@
    */
   export let currentValue;
 
-  $: ({ widget } = fieldConfig);
+  /**
+   * @type {string}
+   */
+  let src;
+
+  $: ({ widget: widgetName } = fieldConfig);
+  $: isImageWidget = widgetName === 'image';
+
+  $: (async () => {
+    src =
+      isImageWidget && currentValue
+        ? await getMediaFieldURL(currentValue, $entryDraft.originalEntry)
+        : undefined;
+  })();
 </script>
 
-{#if widget === 'image' && currentValue}
-  {#await getMediaFieldURL(currentValue, $entryDraft.originalEntry) then src}
-    <p>
-      <Image {src} />
-    </p>
-  {/await}
+{#if src}
+  <p>
+    <Image {src} />
+  </p>
 {:else if typeof currentValue === 'string' && currentValue.trim()}
   <p>{currentValue}</p>
 {/if}

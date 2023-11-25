@@ -1,13 +1,9 @@
 <script>
-  import { GridCell, GridRow, Group } from '@sveltia/ui';
-  import { _, locale as appLocale } from 'svelte-i18n';
-  import Image from '$lib/components/common/image.svelte';
+  import { Group } from '@sveltia/ui';
+  import { _ } from 'svelte-i18n';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
-  import Video from '$lib/components/common/video.svelte';
-  import { getMediaFieldURL } from '$lib/services/assets';
-  import { getFolderLabelByPath } from '$lib/services/assets/view';
-  import { getCollection } from '$lib/services/contents';
-  import { goto } from '$lib/services/navigation';
+  import AssetResultItem from '$lib/components/search/asset-result-item.svelte';
+  import EntryResultItem from '$lib/components/search/entry-result-item.svelte';
   import { searchResults, searchTerms } from '$lib/services/search';
 </script>
 
@@ -26,45 +22,7 @@
             aria-rowcount={$searchResults.entries.length}
           >
             {#each $searchResults.entries as entry (entry.id)}
-              {@const { slug, locales, fileName, collectionName } = entry}
-              {@const collection = getCollection(collectionName)}
-              {@const file = fileName
-                ? collection.files.find(({ name }) => name === fileName)
-                : undefined}
-              {@const { defaultLocale = 'default' } = collection._i18n}
-              {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
-              {@const { content } = locales[locale] ?? {}}
-              {#if content}
-                <GridRow
-                  on:click={() => {
-                    goto(`/collections/${collectionName}/entries/${fileName || slug}`);
-                  }}
-                >
-                  <GridCell class="image">
-                    {#if !file}
-                      {@const firstImageField = collection.fields?.find(
-                        ({ widget }) => widget === 'image',
-                      )}
-                      {#await getMediaFieldURL(content[firstImageField?.name], entry) then src}
-                        <Image {src} variant="icon" cover />
-                      {/await}
-                    {/if}
-                  </GridCell>
-                  <GridCell class="collection">
-                    {collection.label || collection.name}
-                  </GridCell>
-                  <GridCell class="title">
-                    {#if file}
-                      {file.label}
-                    {:else}
-                      {content[collection.identifier_field] ||
-                        content.title ||
-                        content.name ||
-                        content.label}
-                    {/if}
-                  </GridCell>
-                </GridRow>
-              {/if}
+              <EntryResultItem {entry} />
             {/each}
           </ListingGrid>
         {:else}
@@ -82,27 +40,7 @@
             aria-rowcount={$searchResults.assets.length}
           >
             {#each $searchResults.assets as asset (asset.path)}
-              {@const { path, name, folder, kind } = asset}
-              <GridRow
-                on:click={() => {
-                  goto(`/assets/${path}`);
-                }}
-              >
-                <GridCell class="image">
-                  {#if kind === 'image'}
-                    <Image {asset} variant="icon" cover />
-                  {/if}
-                  {#if kind === 'video'}
-                    <Video {asset} variant="icon" cover />
-                  {/if}
-                </GridCell>
-                <GridCell class="collection">
-                  {$appLocale ? getFolderLabelByPath(folder) : ''}
-                </GridCell>
-                <GridCell class="title">
-                  {name}
-                </GridCell>
-              </GridRow>
+              <AssetResultItem {asset} />
             {/each}
           </ListingGrid>
         {:else}

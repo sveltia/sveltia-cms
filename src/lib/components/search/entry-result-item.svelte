@@ -1,0 +1,58 @@
+<script>
+  import { GridCell, GridRow } from '@sveltia/ui';
+  import Image from '$lib/components/common/image.svelte';
+  import { getMediaFieldURL } from '$lib/services/assets';
+  import { getCollection } from '$lib/services/contents';
+  import { goto } from '$lib/services/navigation';
+
+  /**
+   * @type {Entry}
+   */
+  export let entry;
+
+  /**
+   * @type {string}
+   */
+  let src;
+
+  $: ({ slug, locales, fileName, collectionName } = entry);
+  $: collection = getCollection(collectionName);
+  $: file = fileName ? collection.files.find(({ name }) => name === fileName) : undefined;
+  $: ({ defaultLocale = 'default' } = collection._i18n);
+  $: locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
+  $: ({ content } = locales[locale] ?? {});
+  $: firstImageField = !file
+    ? collection.fields?.find(({ widget }) => widget === 'image')
+    : undefined;
+
+  $: (async () => {
+    src =
+      content && firstImageField
+        ? await getMediaFieldURL(content[firstImageField.name], entry)
+        : undefined;
+  })();
+</script>
+
+{#if content}
+  <GridRow
+    on:click={() => {
+      goto(`/collections/${collectionName}/entries/${fileName || slug}`);
+    }}
+  >
+    <GridCell class="image">
+      {#if src}
+        <Image {src} variant="icon" cover />
+      {/if}
+    </GridCell>
+    <GridCell class="collection">
+      {collection.label || collection.name}
+    </GridCell>
+    <GridCell class="title">
+      {#if file}
+        {file.label}
+      {:else}
+        {content[collection.identifier_field] || content.title || content.name || content.label}
+      {/if}
+    </GridCell>
+  </GridRow>
+{/if}
