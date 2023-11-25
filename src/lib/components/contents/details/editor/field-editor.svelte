@@ -89,10 +89,10 @@
     data-key-path={keyPath}
   >
     <header role="none">
-      <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>
       {#if !readonly && required}
         <div class="required" aria-hidden="true">{$_('required')}</div>
       {/if}
+      <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>
       <Spacer flex />
       {#if canCopy || canRevert}
         <MenuButton
@@ -240,10 +240,11 @@
     }
 
     .required {
-      border: 1px solid var(--sui-control-border-color);
+      border: 1px solid var(--sui-error-border-color);
       border-radius: 4px;
       padding: 2px 4px;
-      color: var(--sui-info-foreground-color);
+      color: var(--sui-error-foreground-color);
+      background-color: var(--sui-error-background-color);
       font-size: var(--sui-font-size-x-small);
     }
 
