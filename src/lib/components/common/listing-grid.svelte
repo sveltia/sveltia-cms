@@ -66,6 +66,12 @@
         display: block;
       }
 
+      :global(.grid-cell.image:empty) {
+        border-radius: var(--sui-control-medium-border-radius);
+        background-color: var(--sui-secondary-background-color);
+        aspect-ratio: 1 / 1;
+      }
+
       :global(.checkbox) {
         position: absolute;
         inset: 8px auto auto 8px;
