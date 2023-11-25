@@ -80,7 +80,7 @@
     }
 
     :global(img) {
-      max-width: 100%;
+      max-height: 800px !important;
     }
 
     :global(.subsection) {
