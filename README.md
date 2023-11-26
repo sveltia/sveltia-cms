@@ -70,7 +70,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
 - You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters[^12].
 - Resolves the [limitations in the list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
-- [Entry-relative media folders](https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder) can be used in conjunction with the `multiple_folder` i18n structure[^21].
+- [Entry-relative media folders](https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 
 ### Collection enhancements
 
@@ -382,10 +382,10 @@ This software is provided “as is” without any express or implied warranty. T
 [^8]: [Netlify/Decap CMS #2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^9]: [Netlify/Decap CMS #3505](https://github.com/decaporg/decap-cms/issues/3505)
 [^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341)
-[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [Netlify/Decap CMS #5596](https://github.com/decaporg/decap-cms/issues/5596) and many more. We’ll be updating this list after reviewing their issue list.
+[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and many more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112)
-[^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [Netlify/Decap CMS #5920](https://github.com/decaporg/decap-cms/issues/5920), [Netlify/Decap CMS #6410](https://github.com/decaporg/decap-cms/issues/6410)
+[^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [\#5920](https://github.com/decaporg/decap-cms/issues/5920), [\#6410](https://github.com/decaporg/decap-cms/issues/6410)
 [^15]: [Netlify/Decap CMS #6932](https://github.com/decaporg/decap-cms/issues/6932)
 [^16]: [Netlify/Decap CMS #2103](https://github.com/decaporg/decap-cms/issues/2103)
 [^17]: [Netlify/Decap CMS #1333](https://github.com/decaporg/decap-cms/issues/1333)
