@@ -7,7 +7,7 @@
   import ExternalAssetsPanel from '$lib/components/assets/shared/external-assets-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { allAssets } from '$lib/services/assets';
+  import { allAssetFolders, allAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import {
@@ -174,7 +174,14 @@
           }}
         >
           <AssetsPanel
-            assets={$allAssets.filter((asset) => !kind || kind === asset.kind)}
+            assets={$allAssets.filter(
+              (asset) =>
+                (!kind || kind === asset.kind) &&
+                // Hide assets stored in an entry-relative path, since these files are only used for
+                // the associated entry
+                !$allAssetFolders.find((folder) => folder.collectionName === asset.collectionName)
+                  ?.entryRelative,
+            )}
             viewType={$selectAssetsView?.type}
             {searchTerms}
             gridId="select-assets-grid"
