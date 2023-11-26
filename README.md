@@ -70,12 +70,14 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
 - You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters[^12].
 - Resolves the [limitations in the list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
+- [Entry-relative media folders](https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder) can be used in conjunction with the `multiple_folder` i18n structure[^21].
 
 ### Collection enhancements
 
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
 - A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear next to the entries.
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
+- Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted[^22].
 
 ### Field enhancements
 
@@ -390,3 +392,5 @@ This software is provided “as is” without any express or implied warranty. T
 [^18]: [Netlify/Decap CMS #441](https://github.com/decaporg/decap-cms/issues/441)
 [^19]: [Netlify/Decap CMS #5910](https://github.com/decaporg/decap-cms/issues/5910)
 [^20]: [Netlify/Decap CMS #4563](https://github.com/decaporg/decap-cms/issues/4563)
+[^21]: [Netlify/Decap CMS #4781](https://github.com/decaporg/decap-cms/issues/4781)
+[^22]: [Netlify/Decap CMS #6642](https://github.com/decaporg/decap-cms/issues/6642)
