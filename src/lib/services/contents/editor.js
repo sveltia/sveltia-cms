@@ -5,7 +5,7 @@
 import equal from 'fast-deep-equal';
 import { flatten, unflatten } from 'flat';
 import { get, writable } from 'svelte/store';
-import { allAssets, getAssetFolder, getAssetKind } from '$lib/services/assets';
+import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries, getCollection } from '$lib/services/contents';
 import { contentUpdatesToast } from '$lib/services/contents/data';
@@ -16,7 +16,7 @@ import { formatEntryFile, getFileExtension } from '$lib/services/parser';
 import { prefs } from '$lib/services/prefs';
 import { user } from '$lib/services/user';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
-import { getHash, renameIfNeeded } from '$lib/services/utils/files';
+import { createPath, getHash, renameIfNeeded, resolvePath } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
@@ -781,6 +781,61 @@ const validateEntry = () => {
 };
 
 /**
+ * Get the internal/public asset path configuration for the entry assets.
+ * @param {any} fillSlugOptions Options to be passed to {@link fillSlugTemplate}.
+ * @returns {{ internalAssetFolder: string, publicAssetFolder: string }} Determined paths.
+ */
+export const getEntryAssetFolderPaths = (fillSlugOptions) => {
+  const {
+    collection: {
+      path: entryPath,
+      _i18n: { structure },
+      _assetFolder,
+    },
+  } = fillSlugOptions;
+
+  const subPath = entryPath?.match(/(.+?)(?:\/[^/]+)?$/)[1];
+  const isMultiFolders = structure === 'multiple_folders';
+  const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];
+
+  if (!entryRelative) {
+    return {
+      internalAssetFolder: internalPath,
+      publicAssetFolder: publicPath,
+    };
+  }
+
+  return {
+    internalAssetFolder: resolvePath(
+      fillSlugTemplate(
+        createPath([internalPath, isMultiFolders || entryPath.includes('/') ? subPath : undefined]),
+        fillSlugOptions,
+      ),
+    ),
+    publicAssetFolder:
+      !isMultiFolders && publicPath.match(/^\.?$/)
+        ? // Dot-only public path is a special case; the final path stored as the field value will
+          // be `./image.png` rather than `image.png`
+          publicPath
+        : resolvePath(
+            fillSlugTemplate(
+              isMultiFolders
+                ? // When multiple folders are used for i18n, the file structure would look like
+                  // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md`
+                  // and the asset path would be `{collection}/{slug}/{file}.jpg`
+                  createPath([
+                    ...Array((entryPath?.match(/\//g) ?? []).length + 1).fill('..'),
+                    publicPath,
+                    subPath,
+                  ])
+                : publicPath,
+              fillSlugOptions,
+            ),
+          ),
+  };
+};
+
+/**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and folder collections path.
  * @param {EntryDraft} draft Entry draft.
@@ -865,7 +920,7 @@ export const saveEntry = async () => {
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
   const slug = fileName || originalEntry?.slug || fillSlugTemplate(slugTemplate, fillSlugOptions);
 
-  const { internalAssetFolder, publicAssetFolder } = getAssetFolder(collection, {
+  const { internalAssetFolder, publicAssetFolder } = getEntryAssetFolderPaths({
     ...fillSlugOptions,
     currentSlug: slug,
     isMediaFolder: true,

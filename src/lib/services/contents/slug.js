@@ -95,7 +95,7 @@ export const fillSlugTemplate = (
       }
 
       if (tag === 'dirname') {
-        return entryFilePath.replace(collectionFolderPath, '').split('/').slice(0, -1).join('/');
+        return entryFilePath.replace(collectionFolderPath, '').match(/(.+?)(?:\/[^/]+)?$/)[1];
       }
 
       if (tag === 'filename') {

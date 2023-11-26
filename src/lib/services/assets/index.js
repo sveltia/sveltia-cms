@@ -1,9 +1,7 @@
-import { flatten } from 'flat';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
-import { fillSlugTemplate } from '$lib/services/contents/slug';
 import { resolvePath } from '$lib/services/utils/files';
 import { getMediaMetadata } from '$lib/services/utils/media';
 
@@ -65,38 +63,6 @@ export const showUploadAssetsDialog = derived([uploadingAssets], ([_uploadingAss
 });
 
 /**
- * Get the internal/public asset path configuration by collection.
- * @param {Collection} collection Collection.
- * @param {any} fillSlugOptions Options to be passed to {@link fillSlugTemplate}.
- * @returns {{ internalAssetFolder: string, publicAssetFolder: string }} Determined paths.
- */
-export const getAssetFolder = (collection, fillSlugOptions) => {
-  const { entryRelative, internalPath, publicPath } = get(allAssetFolders).findLast((f) =>
-    [null, collection.name].includes(f.collectionName),
-  );
-
-  if (entryRelative) {
-    const entryFolder = collection.path ? collection.path.split('/').slice(0, -1).join('/') : '.';
-
-    return {
-      internalAssetFolder: resolvePath(
-        fillSlugTemplate(`${internalPath}/${entryFolder}`, fillSlugOptions),
-      ),
-      // Dot-only public path is a special case; the final path stored as the field value will be
-      // `./image.png` rather than `image.png`
-      publicAssetFolder: publicPath.match(/^\.?$/)
-        ? publicPath
-        : resolvePath(fillSlugTemplate(publicPath, fillSlugOptions)),
-    };
-  }
-
-  return {
-    internalAssetFolder: internalPath,
-    publicAssetFolder: publicPath,
-  };
-};
-
-/**
  * Determine the asset’s kind from the file extension.
  * @param {string} name File name or path.
  * @returns {AssetKind} One of {@link assetKinds}.
@@ -125,7 +91,6 @@ export const getAssetByPath = (savedPath, entry) => {
 
     const {
       _i18n: { defaultLocale = 'default' },
-      public_folder: publicFolder,
     } = collection;
 
     const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
@@ -135,19 +100,8 @@ export const getAssetByPath = (savedPath, entry) => {
       return undefined;
     }
 
-    const entryFolder = entryFilePath.split('/').slice(0, -1).join('/');
-
-    const slug = publicFolder
-      ? fillSlugTemplate(publicFolder, {
-          collection,
-          content: flatten(entryContent),
-          currentSlug: entry.slug,
-          isMediaFolder: true,
-          entryFilePath,
-        })
-      : '.';
-
-    const resolvedPath = resolvePath(`${entryFolder}/${slug}/${savedPath}`);
+    const [, entryFolder] = entryFilePath.match(/(.+?)(?:\/[^/]+)?$/);
+    const resolvedPath = resolvePath(`${entryFolder}/${savedPath}`);
 
     return get(allAssets).find((asset) => asset.path === resolvedPath);
   }

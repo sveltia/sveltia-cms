@@ -201,26 +201,39 @@ export const renameIfNeeded = (name, otherNames) => {
 };
 
 /**
- * Resolve the given file path.
+ * Join the given path segments while ignoring any falsy value.
+ * @param {(string | null | undefined)[]} segments List of path segments.
+ * @returns {string} Path.
+ */
+export const createPath = (segments) => segments.filter(Boolean).join('/');
+
+/**
+ * Resolve the given file path. This processes only dot(s) in the middle of the path; leading dots
+ * like `../../foo/image.jpg` will be untouched.
  * @param {string} path Unresolved path, e.g. `foo/bar/baz/../../image.jpg`.
  * @returns {string} Resolved path, e.g. `foo/image.jpg`.
  */
 export const resolvePath = (path) => {
   const segments = path.split('/');
+  let nameFound = false;
 
   segments.forEach((segment, index) => {
-    if (segment === '..') {
-      const _index = segments.findLastIndex((s, i) => !!s && i < index);
+    if (segment === '.' || segment === '..') {
+      if (nameFound) {
+        segments[index] = null;
 
-      if (_index > -1) {
-        segments[_index] = null;
+        if (segment === '..') {
+          const lastIndex = segments.findLastIndex((s, i) => !!s && i < index);
+
+          if (lastIndex > -1) {
+            segments[lastIndex] = null;
+          }
+        }
       }
-    }
-
-    if (segment === '..' || segment === '.') {
-      segments[index] = null;
+    } else {
+      nameFound = true;
     }
   });
 
-  return segments.filter(Boolean).join('/');
+  return createPath(segments);
 };
