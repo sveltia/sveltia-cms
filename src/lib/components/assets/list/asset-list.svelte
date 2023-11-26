@@ -9,11 +9,15 @@
   import { selectedAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
+
+  // Can’t upload assets if collection assets are saved at entry-relative paths
+  $: uploadDisabled = !!$selectedAssetFolder?.entryRelative;
 </script>
 
 <ListContainer aria-label={$_('asset_list')}>
   {#if Object.values($assetGroups).flat(1).length}
     <DropZone
+      disabled={uploadDisabled}
       multiple={true}
       on:select={({ detail: { files } }) => {
         $uploadingAssets = {

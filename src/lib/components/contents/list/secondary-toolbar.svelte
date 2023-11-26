@@ -68,7 +68,7 @@
     <Button
       variant="ghost"
       iconic
-      disabled={!hasListedEntries || !$selectedCollection.media_folder}
+      disabled={!hasListedEntries || !$selectedCollection._assetFolder}
       pressed={!!$currentView?.showMedia}
       aria-controls="collection-assets"
       aria-expanded={$currentView?.showMedia}

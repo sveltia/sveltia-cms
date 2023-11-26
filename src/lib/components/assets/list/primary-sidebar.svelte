@@ -5,12 +5,22 @@
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { goto } from '$lib/services/navigation';
 
-  $: folders = [{ collectionName: '*', internalPath: '' }, ...$allAssetFolders];
+  $: folders = [
+    {
+      collectionName: '*',
+      internalPath: undefined,
+      publicPath: undefined,
+      entryRelative: undefined,
+    },
+    ...$allAssetFolders,
+  ];
 </script>
 
 <div role="none" class="primary-sidebar">
   <Listbox aria-label={$_('asset_folders')} aria-controls="assets-container">
-    {#each folders as { collectionName, internalPath } (collectionName)}
+    {#each folders as { collectionName, internalPath, entryRelative } (collectionName)}
+      <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
+      {@const uploadDisabled = entryRelative}
       {@const selected =
         (!internalPath && !$selectedAssetFolder) ||
         internalPath === $selectedAssetFolder?.internalPath}
@@ -23,6 +33,10 @@
         on:dragover={(event) => {
           event.preventDefault();
 
+          if (uploadDisabled) {
+            return;
+          }
+
           if (!internalPath || selected) {
             event.dataTransfer.dropEffect = 'none';
           } else {
@@ -32,14 +46,29 @@
         }}
         on:dragleave={(event) => {
           event.preventDefault();
+
+          if (uploadDisabled) {
+            return;
+          }
+
           /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
         }}
         on:dragend={(event) => {
           event.preventDefault();
+
+          if (uploadDisabled) {
+            return;
+          }
+
           /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
         }}
         on:drop={(event) => {
           event.preventDefault();
+
+          if (uploadDisabled) {
+            return;
+          }
+
           /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
           // @todo Move the assets while updating entries using the files, after showing a
           // confirmation dialog.

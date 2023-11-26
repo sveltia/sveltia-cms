@@ -289,6 +289,7 @@
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
  * @property {object} [editor] Editor view configuration.
  * @property {boolean} editor.preview Whether to hide the preview.
+ * @property {CollectionAssetFolder} [_assetFolder] Asset folder configuration.
  * @see https://decapcms.org/docs/configuration-options/#collections
  */
 

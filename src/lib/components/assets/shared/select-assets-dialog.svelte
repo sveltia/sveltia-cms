@@ -15,7 +15,7 @@
     allStockPhotoServices,
   } from '$lib/services/integrations/media-libraries';
   import { prefs } from '$lib/services/prefs';
-  import { generateUUID, stripSlashes } from '$lib/services/utils/strings';
+  import { generateUUID } from '$lib/services/utils/strings';
 
   export let open = false;
   /**
@@ -42,8 +42,10 @@
   let enteredURL = '';
   let searchTerms = '';
 
-  $: collectionMediaFolder = stripSlashes($selectedCollection.media_folder ?? '');
-  $: libraryName = collectionMediaFolder ? 'collection-files' : 'all-files';
+  $: ({ internalPath, entryRelative } =
+    $selectedCollection._assetFolder ?? /** @type {CollectionAssetFolder} */ ({}));
+  $: showCollectionAssets = !!internalPath && !entryRelative;
+  $: libraryName = showCollectionAssets ? 'collection-files' : 'all-files';
   $: isLocalLibrary = ['collection-files', 'all-files'].includes(libraryName);
   $: isEnabledMediaService =
     (Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName]) ||
@@ -116,7 +118,7 @@
       }}
     >
       <OptionGroup label={$_('assets_dialog.location.this_repository')}>
-        {#if collectionMediaFolder}
+        {#if showCollectionAssets}
           <Option
             name="collection-files"
             label={$_('collection_assets')}
@@ -140,7 +142,7 @@
       </OptionGroup>
     </Listbox>
     <div id="{elementIdPrefix}-content-pane" class="content-pane">
-      {#if collectionMediaFolder && libraryName === 'collection-files'}
+      {#if showCollectionAssets && libraryName === 'collection-files'}
         <DropZone
           bind:this={collectionAssetsDropZone}
           accept={kind === 'image' ? 'image/*' : undefined}
@@ -151,7 +153,7 @@
         >
           <AssetsPanel
             assets={$allAssets.filter(
-              (asset) => (!kind || kind === asset.kind) && collectionMediaFolder === asset.folder,
+              (asset) => (!kind || kind === asset.kind) && internalPath === asset.folder,
             )}
             viewType={$selectAssetsView?.type}
             {searchTerms}

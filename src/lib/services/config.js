@@ -193,32 +193,33 @@ siteConfig.subscribe((config) => {
       folder: collectionFolder,
       // e.g. `{{slug}}/index`
       path: entryPath,
+      // e.g. `` (an empty string), `{{public_folder}}`, etc. or absolute path
+      public_folder: publicFolder,
     } = collection;
 
     let {
       // relative path, e.g. `` (an empty string), `./` (same as an empty string),
       // `{{media_folder}}/posts`, etc. or absolute path, e.g. `/static/images/posts`, etc.
-      media_folder: mediaFolder = '',
-      // same as `media_folder`
-      public_folder: publicFolder = '',
+      media_folder: mediaFolder,
     } = collection;
 
-    if (!entryPath && !mediaFolder) {
-      return null;
+    if (mediaFolder === undefined) {
+      if (entryPath === undefined) {
+        return null;
+      }
+
+      // When specifying a `path` on a folder collection, `media_folder` defaults to an empty string
+      mediaFolder = '';
     }
 
-    const entryRelative = !(
-      mediaFolder &&
-      (mediaFolder.startsWith('/') || mediaFolder.includes('{{media_folder}}'))
-    );
-
     mediaFolder = mediaFolder.replace('{{media_folder}}', globalMediaFolder);
-    publicFolder = publicFolder.replace('{{public_folder}}', globalPublicFolder);
+
+    const entryRelative = !mediaFolder.startsWith('/');
 
     return {
       collectionName,
       internalPath: stripSlashes(entryRelative ? collectionFolder : mediaFolder),
-      publicPath: publicFolder,
+      publicPath: (publicFolder ?? mediaFolder).replace('{{public_folder}}', globalPublicFolder),
       entryRelative,
     };
   });

@@ -14,6 +14,8 @@
   let showDeleteDialog = false;
 
   $: folderLabel = $appLocale ? getFolderLabelByPath($selectedAssetFolder?.internalPath) : '';
+  // Can’t upload assets if collection assets are saved at entry-relative paths
+  $: uploadDisabled = !!$selectedAssetFolder?.entryRelative;
 </script>
 
 <Toolbar variant="primary" aria-label={$_('folder')}>
@@ -63,6 +65,7 @@
   <Button
     variant="primary"
     label={$_('upload')}
+    disabled={uploadDisabled}
     aria-label={$_('upload_files')}
     on:click={() => {
       filePicker.open();

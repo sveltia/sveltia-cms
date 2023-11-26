@@ -1,6 +1,6 @@
 import { flatten } from 'flat';
 import { get, writable } from 'svelte/store';
-import { getMediaFieldURL } from '$lib/services/assets';
+import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { isObject } from '$lib/services/utils/misc';
@@ -100,6 +100,7 @@ export const getCollection = (name) => {
   return {
     ...collection,
     _i18n: getCollectionI18n(collection),
+    _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
   };
 };
 

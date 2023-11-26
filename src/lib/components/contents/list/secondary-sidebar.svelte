@@ -7,13 +7,14 @@
   import { selectedCollection } from '$lib/services/contents';
   import { currentView } from '$lib/services/contents/view';
   import { goto } from '$lib/services/navigation';
-  import { stripSlashes } from '$lib/services/utils/strings';
 
-  $: mediaFolder = $selectedCollection.media_folder ?? '';
-  $: canonicalMediaFolder = stripSlashes(mediaFolder);
+  $: ({ internalPath, entryRelative } =
+    $selectedCollection._assetFolder ?? /** @type {CollectionAssetFolder} */ ({}));
+  // Can’t upload assets if collection assets are saved at entry-relative paths
+  $: uploadDisabled = !!entryRelative;
 </script>
 
-{#if mediaFolder.startsWith('/')}
+{#if internalPath}
   <Group
     id="collection-assets"
     class="secondary-sidebar"
@@ -21,13 +22,14 @@
     aria-label={$_('collection_assets')}
   >
     <DropZone
+      disabled={uploadDisabled}
       multiple={true}
       on:select={({ detail: { files } }) => {
-        $uploadingAssets = { folder: canonicalMediaFolder, files };
+        $uploadingAssets = { folder: internalPath, files };
       }}
     >
       <AssetsPanel
-        assets={$allAssets.filter(({ folder }) => canonicalMediaFolder === folder)}
+        assets={$allAssets.filter(({ folder }) => internalPath === folder)}
         on:select={({ detail: { asset } }) => {
           goto(`/assets/${asset.path}`);
         }}

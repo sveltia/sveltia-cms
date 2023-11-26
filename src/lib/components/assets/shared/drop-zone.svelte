@@ -10,6 +10,7 @@
    * @type {string | undefined}
    */
   export let accept = undefined;
+  export let disabled = false;
   export let multiple = false;
   export let showUploadButton = false;
   export let showFilePreview = false;
@@ -47,16 +48,32 @@
   class="drop-target"
   role="none"
   on:dragover|preventDefault={({ dataTransfer }) => {
+    if (disabled) {
+      return;
+    }
+
     dataTransfer.dropEffect = 'copy';
     dragging = true;
   }}
   on:dragleave|preventDefault={() => {
+    if (disabled) {
+      return;
+    }
+
     dragging = false;
   }}
   on:dragend|preventDefault={() => {
+    if (disabled) {
+      return;
+    }
+
     dragging = false;
   }}
   on:drop|preventDefault={async ({ dataTransfer }) => {
+    if (disabled) {
+      return;
+    }
+
     dragging = false;
     onSelect(await scanFiles(dataTransfer, { accept }));
   }}
@@ -80,6 +97,7 @@
           <Button
             variant="primary"
             label={$_('upload')}
+            {disabled}
             on:click={() => {
               openFilePicker();
             }}
