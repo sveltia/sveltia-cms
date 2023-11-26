@@ -10,7 +10,7 @@
       collectionName: '*',
       internalPath: undefined,
       publicPath: undefined,
-      entryRelative: undefined,
+      entryRelative: false,
     },
     ...$allAssetFolders,
   ];
