@@ -254,3 +254,8 @@ export const getAssetDetails = async (asset) => {
     usedEntries: await getEntriesByAssetURL(url),
   };
 };
+
+// Reset the asset selection when a different folder is selected
+selectedAssetFolder.subscribe(() => {
+  selectedAsset.set(undefined);
+});
