@@ -1,6 +1,7 @@
 import { flatten } from 'flat';
 import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
 import { getOptionLabel } from '$lib/components/contents/details/widgets/select/helper';
+import { getAssetByPath } from '$lib/services/assets';
 import { getCollection } from '$lib/services/contents';
 
 /**
@@ -143,4 +144,35 @@ export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {})
   }
 
   return valueMap[key];
+};
+
+/**
+ * Get a list of assets associated with the given entry.
+ * @param {Entry} entry Entry.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.relative] Whether to only collect assets stored at a relative path.
+ * @returns {Asset[]} Assets.
+ */
+export const getAssociatedAssets = (entry, { relative = false } = {}) => {
+  const { collectionName, locales } = entry;
+
+  return Object.values(locales)
+    .map(({ content }) =>
+      Object.entries(content).map(([keyPath, value]) => {
+        if (
+          (relative ? !value.match(/^[/@]/) : true) &&
+          ['image', 'file'].includes(getFieldConfig({ collectionName, keyPath })?.widget)
+        ) {
+          const asset = getAssetByPath(value, entry);
+
+          if (asset?.collectionName === collectionName) {
+            return asset;
+          }
+        }
+
+        return undefined;
+      }),
+    )
+    .flat(1)
+    .filter((value, index, array) => !!value && array.indexOf(value) === index);
 };

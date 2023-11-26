@@ -155,9 +155,17 @@ export const strings = {
   delete_selected_entry: 'Delete Selected Entry',
   delete_selected_entries: 'Delete Selected Entries',
   confirm_deleting_this_entry: 'Are you sure to delete this entry?',
+  confirm_deleting_this_entry_with_assets:
+    'Are you sure to delete this entry and associated assets?',
   confirm_deleting_selected_entry: 'Are you sure to delete the selected entry?',
+  confirm_deleting_selected_entry_with_assets:
+    'Are you sure to delete the selected entry and associated assets?',
   confirm_deleting_selected_entries: 'Are you sure to delete the selected {count} entries?',
+  confirm_deleting_selected_entries_with_assets:
+    'Are you sure to delete the selected {count} entries and associated assets?',
   confirm_deleting_all_entries: 'Are you sure to delete all the entries?',
+  confirm_deleting_all_entries_with_assets:
+    'Are you sure to delete all the entries and associated assets?',
   upload_files: 'Upload New Files',
   confirm_uploading_file: 'Are you sure to save the following file to the “{folder}” folder?',
   confirm_uploading_files:

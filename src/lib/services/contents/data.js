@@ -10,8 +10,9 @@ export const contentUpdatesToast = writable({ saved: false, deleted: false, coun
 /**
  * Delete entries by slugs.
  * @param {string[]} ids List of entry IDs.
+ * @param {string[]} [assetPaths] List of associated asset paths.
  */
-export const deleteEntries = async (ids) => {
+export const deleteEntries = async (ids, assetPaths = []) => {
   const _allEntries = get(allEntries);
 
   /**
@@ -32,6 +33,12 @@ export const deleteEntries = async (ids) => {
     .flat(1)
     // Remove duplicate paths for single file i18n
     .filter((item, index, arr) => item && arr.findIndex((i) => i.path === item.path) === index);
+
+  if (assetPaths.length) {
+    changes.push(
+      ...assetPaths.map((path) => /** @type {FileChange} */ ({ action: 'delete', path })),
+    );
+  }
 
   await get(backend).commitChanges(changes, {
     commitType: 'delete',

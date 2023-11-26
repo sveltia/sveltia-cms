@@ -24,6 +24,7 @@
     revertChanges,
     saveEntry,
   } from '$lib/services/contents/editor';
+  import { getAssociatedAssets } from '$lib/services/contents/entry';
   import { formatSummary } from '$lib/services/contents/view';
   import { getLocaleLabel } from '$lib/services/i18n';
   import { goBack, goto } from '$lib/services/navigation';
@@ -59,6 +60,10 @@
     .map((validities) => Object.values(validities).map(({ valid }) => !valid))
     .flat(1)
     .filter(Boolean).length;
+  $: associatedAssets =
+    !!originalEntry && !!collection._assetFolder?.entryRelative
+      ? getAssociatedAssets(originalEntry, { relative: true })
+      : [];
 
   /**
    * Duplicate the current entry.
@@ -208,14 +213,21 @@
   title={$_('delete_entry')}
   okLabel={$_('delete')}
   on:ok={async () => {
-    await deleteEntries([originalEntry?.id]);
+    await deleteEntries(
+      [originalEntry?.id],
+      associatedAssets.map(({ path }) => path),
+    );
     goBack(`/collections/${collection?.name}`);
   }}
   on:close={() => {
     menuButton.focus();
   }}
 >
-  {$_('confirm_deleting_this_entry')}
+  {$_(
+    associatedAssets.length
+      ? 'confirm_deleting_this_entry_with_assets'
+      : 'confirm_deleting_this_entry',
+  )}
 </ConfirmationDialog>
 
 <!-- @todo make the error message more informative -->

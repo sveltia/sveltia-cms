@@ -155,10 +155,18 @@ export const strings = {
   delete_selected_entry: '選択されたエントリーを削除',
   delete_selected_entries: '選択されたエントリーを削除',
   confirm_deleting_this_entry: 'このエントリーを削除してもよろしいですか？',
+  confirm_deleting_this_entry_with_assets:
+    'このエントリーと関連アセットを削除してもよろしいですか？',
   confirm_deleting_selected_entry: '選択されたエントリーを削除してもよろしいですか？',
+  confirm_deleting_selected_entry_with_assets:
+    '選択されたエントリーと関連アセットを削除してもよろしいですか？',
   confirm_deleting_selected_entries:
     '選択された {count} 個のエントリーを削除してもよろしいですか？',
+  confirm_deleting_selected_entries_with_assets:
+    '選択された {count} 個のエントリーと関連アセットを削除してもよろしいですか？',
   confirm_deleting_all_entries: 'すべてのエントリーを削除してもよろしいですか？',
+  confirm_deleting_all_entries_with_assets:
+    'すべてのエントリーと関連アセットを削除してもよろしいですか？',
   upload_files: '新しいファイルをアップロード',
   confirm_uploading_file: '以下のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
   confirm_uploading_files:
