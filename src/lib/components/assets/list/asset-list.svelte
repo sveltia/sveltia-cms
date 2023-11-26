@@ -6,7 +6,7 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
-  import { selectedAssetFolderPath, uploadingAssets } from '$lib/services/assets';
+  import { selectedAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
 </script>
@@ -17,7 +17,7 @@
       multiple={true}
       on:select={({ detail: { files } }) => {
         $uploadingAssets = {
-          folder: $selectedAssetFolderPath || $siteConfig.media_folder,
+          folder: $selectedAssetFolder?.internalPath || $siteConfig.media_folder,
           files,
         };
       }}

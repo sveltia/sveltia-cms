@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import { allAssetPaths, allAssets, getAssetKind } from '$lib/services/assets';
+import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { getHash, renameIfNeeded } from '$lib/services/utils/files';
 import { escapeRegExp } from '$lib/services/utils/strings';
@@ -35,7 +35,7 @@ export const saveAssets = async ({ files, folder }, options) => {
   );
 
   const { collectionName = null } =
-    get(allAssetPaths).findLast(({ internalPath }) => folder === internalPath) ?? {};
+    get(allAssetFolders).findLast(({ internalPath }) => folder === internalPath) ?? {};
 
   /**
    * @type {Asset[]}

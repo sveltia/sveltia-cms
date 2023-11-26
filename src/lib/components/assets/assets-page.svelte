@@ -11,10 +11,10 @@
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import {
-    allAssetPaths,
+    allAssetFolders,
     allAssets,
     overlaidAsset,
-    selectedAssetFolderPath,
+    selectedAssetFolder,
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
@@ -37,12 +37,15 @@
     }
 
     if (!folderPath) {
-      $selectedAssetFolderPath = '';
-    } else if (
-      $allAssetPaths.some(({ internalPath }) => folderPath === internalPath) &&
-      $selectedAssetFolderPath !== folderPath
-    ) {
-      $selectedAssetFolderPath = folderPath;
+      $selectedAssetFolder = undefined;
+    } else if ($selectedAssetFolder?.internalPath !== folderPath) {
+      const folder = $allAssetFolders.find(({ internalPath }) => folderPath === internalPath);
+
+      if (folder) {
+        $selectedAssetFolder = folder;
+      } else {
+        // Not Found
+      }
     }
 
     if (!fileName) {
@@ -56,7 +59,7 @@
           : count === 1
             ? 'viewing_x_asset_folder_one_asset'
             : 'viewing_x_asset_folder_no_asset',
-        { values: { folder: getFolderLabelByPath($selectedAssetFolderPath), count } },
+        { values: { folder: getFolderLabelByPath($selectedAssetFolder?.internalPath), count } },
       );
 
       return;
@@ -88,7 +91,7 @@
     id="assets-container"
     class="main"
     aria-label={$_('x_asset_folder', {
-      values: { folder: getFolderLabelByPath($selectedAssetFolderPath) },
+      values: { folder: getFolderLabelByPath($selectedAssetFolder?.internalPath) },
     })}
   >
     <PageContainerMainArea>

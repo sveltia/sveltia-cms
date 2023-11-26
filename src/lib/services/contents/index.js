@@ -11,9 +11,9 @@ import { isObject } from '$lib/services/utils/misc';
 export const dataLoaded = writable(false);
 
 /**
- * @type {import('svelte/store').Writable<PathConfig[]>}
+ * @type {import('svelte/store').Writable<CollectionEntryFolder[]>}
  */
-export const allContentPaths = writable([]);
+export const allEntryFolders = writable([]);
 
 /**
  * @type {import('svelte/store').Writable<Entry[]>}

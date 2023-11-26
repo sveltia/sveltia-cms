@@ -3,15 +3,15 @@
 import TOML from '@ltd/j-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
-import { allAssetPaths, getAssetKind } from '$lib/services/assets';
-import { allContentPaths, getCollection } from '$lib/services/contents';
+import { allAssetFolders, getAssetKind } from '$lib/services/assets';
+import { allEntryFolders, getCollection } from '$lib/services/contents';
 import { normalizeSlug } from '$lib/services/contents/slug';
 import { isObject } from '$lib/services/utils/misc';
 import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
 /**
  * Get the file extension for the given collection.
- * @param {object} pathConfig File’s path configuration. (part of `PathConfig`)
+ * @param {object} pathConfig File’s path configuration. (part of `CollectionEntryFolder`)
  * @param {string} [pathConfig.format] File format, e.g. `json`.
  * @param {string} [pathConfig.extension] File extension, e.g. `json`
  * @param {string} [pathConfig.file] File name, e.g. `about.json`.
@@ -46,17 +46,17 @@ export const getFileExtension = ({ file, format, extension }) => {
  * relevant collection/file configuration added.
  * @param {BaseFileListItem[]} files Unfiltered file list.
  * @returns {{
- *   entryFiles: BaseFileListItem[],
- *   assetFiles: BaseFileListItem[],
- *   allFiles: BaseFileListItem[],
+ *   entryFiles: BaseEntryListItem[],
+ *   assetFiles: BaseAssetListItem[],
+ *   allFiles: (BaseEntryListItem | BaseAssetListItem)[],
  *   count: number,
  * }} File
  * list, including both entries and assets.
  */
 export const createFileList = (files) => {
-  /** @type {BaseFileListItem[]} */
+  /** @type {BaseEntryListItem[]} */
   const entryFiles = [];
-  /** @type {BaseFileListItem[]} */
+  /** @type {BaseAssetListItem[]} */
   const assetFiles = [];
 
   files.forEach((fileInfo) => {
@@ -64,33 +64,33 @@ export const createFileList = (files) => {
     const name = /** @type {string} */ (path.split('/').pop());
     const extension = name.split('.').pop();
 
-    const contentPathConfig = get(allContentPaths).findLast(({ folder, file }) =>
-      folder ? path.startsWith(folder) : path === file,
+    const entryFolderConfig = get(allEntryFolders).findLast(({ filePath, folderPath }) =>
+      folderPath ? path.startsWith(folderPath) : path === filePath,
     );
 
-    const mediaPathConfig = get(allAssetPaths).findLast(({ internalPath }) =>
+    const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath }) =>
       path.startsWith(internalPath),
     );
 
     if (
-      contentPathConfig &&
-      (path === contentPathConfig.file || extension === getFileExtension(contentPathConfig))
+      entryFolderConfig &&
+      (path === entryFolderConfig.filePath || extension === getFileExtension(entryFolderConfig))
     ) {
       entryFiles.push({
         ...fileInfo,
         type: 'entry',
-        config: contentPathConfig,
+        config: entryFolderConfig,
       });
     }
 
     // Exclude files with a leading `+` sign, which are Svelte page/layout files. Also exclude files
     // already listed as entries. These files can appear in the file list when a relative media path
     // is configured for a collection
-    if (mediaPathConfig && !name.startsWith('+') && !entryFiles.find((e) => e.path === path)) {
+    if (mediaFolderConfig && !name.startsWith('+') && !entryFiles.find((e) => e.path === path)) {
       assetFiles.push({
         ...fileInfo,
         type: 'asset',
-        config: mediaPathConfig,
+        config: mediaFolderConfig,
       });
     }
   });
@@ -128,18 +128,18 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 
 /**
  * Parse raw content with given file details.
- * @param {BaseFileListItem} entry File entry.
+ * @param {BaseEntryListItem} entry File entry.
  * @returns {{ [key: string]: any }} Parsed content.
  */
 const parseEntryFile = ({
   text,
   path,
-  config: { file, extension, format, frontmatterDelimiter },
+  config: { filePath, extension, format, frontmatterDelimiter },
 }) => {
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || file?.match(/\.([^.]+)$/)[1];
+      : extension || filePath?.match(/\.([^.]+)$/)[1];
 
   // Ignore files with unknown format
   if (!format) {
@@ -317,7 +317,7 @@ const getSlug = (collectionName, filePath, content) => {
 
 /**
  * Parse the given entry files to create a complete, serialized entry list.
- * @param {BaseFileListItem[]} entryFiles Entry file list.
+ * @param {BaseEntryListItem[]} entryFiles Entry file list.
  * @returns {Entry[]} Entry list.
  */
 export const parseEntryFiles = (entryFiles) => {
@@ -335,7 +335,7 @@ export const parseEntryFiles = (entryFiles) => {
       path,
       sha,
       meta = {},
-      config: { folder: configFolder, collectionName, fileName },
+      config: { folderPath: configFolderPath, collectionName, fileName },
     } = file;
 
     const collection = getCollection(collectionName);
@@ -351,7 +351,7 @@ export const parseEntryFiles = (entryFiles) => {
     const [, filePath] = fileName
       ? []
       : path.match(
-          new RegExp(`^${escapeRegExp(stripSlashes(configFolder))}\\/(.+)\\.${extension}$`),
+          new RegExp(`^${escapeRegExp(stripSlashes(configFolderPath))}\\/(.+)\\.${extension}$`),
         ) ?? [];
 
     if (!fileName && !filePath) {
@@ -425,7 +425,7 @@ export const parseEntryFiles = (entryFiles) => {
 
 /**
  * Parse the given asset files to create a complete, serialized asset list.
- * @param {BaseFileListItem[]} assetFiles Asset file list.
+ * @param {BaseAssetListItem[]} assetFiles Asset file list.
  * @returns {Asset[]} Asset list.
  */
 export const parseAssetFiles = (assetFiles) =>

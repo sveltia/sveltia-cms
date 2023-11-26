@@ -2,11 +2,11 @@ import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import {
-  allAssetPaths,
+  allAssetFolders,
   allAssets,
   assetExtensions,
   getAssetURL,
-  selectedAssetFolderPath,
+  selectedAssetFolder,
   selectedAssets,
 } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
@@ -78,7 +78,7 @@ export const getFolderLabelByPath = (folderPath) => {
     return getFolderLabelByCollection(undefined);
   }
 
-  const folder = get(allAssetPaths).find(({ internalPath }) => internalPath === folderPath);
+  const folder = get(allAssetFolders).find(({ internalPath }) => internalPath === folderPath);
 
   if (folder) {
     return getFolderLabelByCollection(folder.collectionName);
@@ -254,8 +254,9 @@ const assetListSettings = writable({}, (set) => {
     try {
       set((await LocalStorage.get(storageKey)) ?? {});
 
-      selectedAssetFolderPath.subscribe((path) => {
-        const view = get(assetListSettings)[path || '*'] ?? structuredClone(defaultView);
+      selectedAssetFolder.subscribe((folder) => {
+        const view =
+          get(assetListSettings)[folder?.internalPath || '*'] ?? structuredClone(defaultView);
 
         if (!equal(view, get(currentView))) {
           currentView.set(view);
@@ -291,10 +292,10 @@ export const sortFields = derived([allAssets, appLocale], ([_allAssets], set) =>
  * @type {import('svelte/store').Readable<Asset[]>}
  */
 export const listedAssets = derived(
-  [allAssets, selectedAssetFolderPath],
-  ([_allAssets, _selectedAssetFolderPath], set) => {
-    if (_allAssets && _selectedAssetFolderPath) {
-      set(_allAssets.filter(({ folder }) => _selectedAssetFolderPath === folder));
+  [allAssets, selectedAssetFolder],
+  ([_allAssets, _selectedAssetFolder], set) => {
+    if (_allAssets && _selectedAssetFolder) {
+      set(_allAssets.filter(({ folder }) => _selectedAssetFolder.internalPath === folder));
     } else {
       set(_allAssets ? [..._allAssets] : []);
     }
@@ -330,7 +331,7 @@ listedAssets.subscribe((assets) => {
 });
 
 currentView.subscribe((view) => {
-  const path = get(selectedAssetFolderPath) || '*';
+  const path = get(selectedAssetFolder)?.internalPath || '*';
   const savedView = get(assetListSettings)[path] ?? {};
 
   if (!equal(view, savedView)) {

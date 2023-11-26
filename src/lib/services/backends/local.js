@@ -3,9 +3,9 @@
 /* eslint-disable no-restricted-syntax */
 
 import { get, writable } from 'svelte/store';
-import { allAssetPaths, allAssets } from '$lib/services/assets';
+import { allAssetFolders, allAssets } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
-import { allContentPaths, allEntries, dataLoaded } from '$lib/services/contents';
+import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
 import { getHash, readAsText } from '$lib/services/utils/files';
 import IndexedDB from '$lib/services/utils/indexeddb';
@@ -130,8 +130,8 @@ const getAllFiles = async () => {
   const allFiles = [];
 
   const scanningPaths = [
-    ...get(allContentPaths).map(({ file, folder }) => file ?? folder),
-    ...get(allAssetPaths).map(({ internalPath }) => internalPath),
+    ...get(allEntryFolders).map(({ filePath, folderPath }) => filePath || folderPath),
+    ...get(allAssetFolders).map(({ internalPath }) => internalPath),
   ].map((path) => stripSlashes(path));
 
   /**

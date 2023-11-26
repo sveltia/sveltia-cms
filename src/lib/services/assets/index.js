@@ -27,14 +27,14 @@ export const assetExtensions = {
 export const allAssets = writable([]);
 
 /**
- * @type {import('svelte/store').Writable<CollectionAssetPaths[]>}
+ * @type {import('svelte/store').Writable<CollectionAssetFolder[]>}
  */
-export const allAssetPaths = writable([]);
+export const allAssetFolders = writable([]);
 
 /**
- * @type {import('svelte/store').Writable<string | undefined>}
+ * @type {import('svelte/store').Writable<CollectionAssetFolder | undefined>}
  */
-export const selectedAssetFolderPath = writable();
+export const selectedAssetFolder = writable();
 
 /**
  * @type {import('svelte/store').Writable<Asset[]>}
@@ -71,8 +71,8 @@ export const showUploadAssetsDialog = derived([uploadingAssets], ([_uploadingAss
  * @returns {{ internalAssetFolder: string, publicAssetFolder: string }} Determined paths.
  */
 export const getAssetFolder = (collection, fillSlugOptions) => {
-  const { entryRelative, internalPath, publicPath } = get(allAssetPaths).findLast((p) =>
-    [null, collection.name].includes(p.collectionName),
+  const { entryRelative, internalPath, publicPath } = get(allAssetFolders).findLast((f) =>
+    [null, collection.name].includes(f.collectionName),
   );
 
   if (entryRelative) {
@@ -159,7 +159,7 @@ export const getAssetByPath = (savedPath, entry) => {
   }
 
   const { internalPath } =
-    get(allAssetPaths).findLast((config) => config.publicPath === publicPath) ?? {};
+    get(allAssetFolders).findLast((config) => config.publicPath === publicPath) ?? {};
 
   if (!internalPath) {
     return undefined;
@@ -200,8 +200,8 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
   }
 
   const { publicPath, entryRelative } =
-    get(allAssetPaths).find(({ collectionName }) => collectionName === asset.collectionName) ||
-    get(allAssetPaths).find(({ collectionName }) => collectionName === null);
+    get(allAssetFolders).find(({ collectionName }) => collectionName === asset.collectionName) ||
+    get(allAssetFolders).find(({ collectionName }) => collectionName === null);
 
   if (entryRelative) {
     return isBlobURL ? asset.url : undefined;

@@ -1,7 +1,7 @@
 <script>
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { selectedAssetFolderPath } from '$lib/services/assets';
+  import { selectedAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
   import { goto, selectedPageName } from '$lib/services/navigation';
 
@@ -16,7 +16,7 @@
       key: 'assets',
       label: $_('assets'),
       icon: 'photo_library',
-      link: $selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets',
+      link: $selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets',
     },
     // {
     //   key: 'workflow',

@@ -2,7 +2,7 @@
   import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import DeleteAssetsDialog from '$lib/components/assets/shared/delete-assets-dialog.svelte';
-  import { overlaidAsset, selectedAssetFolderPath } from '$lib/services/assets';
+  import { overlaidAsset, selectedAssetFolder } from '$lib/services/assets';
   import { goBack } from '$lib/services/navigation';
 
   let showDeleteDialog = false;
@@ -14,7 +14,7 @@
     iconic
     aria-label={$_('cancel_editing')}
     on:click={() => {
-      goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
+      goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
     }}
   >
     <Icon slot="start-icon" name="arrow_back_ios_new" />
@@ -42,6 +42,6 @@
   description={$_('confirm_deleting_this_asset')}
   assets={[$overlaidAsset]}
   on:delete={() => {
-    goBack($selectedAssetFolderPath ? `/assets/${$selectedAssetFolderPath}` : '/assets');
+    goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
   }}
 />

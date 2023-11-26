@@ -1,17 +1,19 @@
 <script>
   import { Icon, Listbox, Option } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
-  import { allAssetPaths, selectedAssetFolderPath } from '$lib/services/assets';
+  import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { goto } from '$lib/services/navigation';
 
-  $: folders = [{ collectionName: '*', internalPath: '' }, ...$allAssetPaths];
+  $: folders = [{ collectionName: '*', internalPath: '' }, ...$allAssetFolders];
 </script>
 
 <div role="none" class="primary-sidebar">
   <Listbox aria-label={$_('asset_folders')} aria-controls="assets-container">
     {#each folders as { collectionName, internalPath } (collectionName)}
-      {@const selected = internalPath === $selectedAssetFolderPath}
+      {@const selected =
+        (!internalPath && !$selectedAssetFolder) ||
+        internalPath === $selectedAssetFolder?.internalPath}
       <Option
         {selected}
         label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}

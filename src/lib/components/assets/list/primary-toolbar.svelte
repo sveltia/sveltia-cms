@@ -3,7 +3,7 @@
   import { _, locale as appLocale } from 'svelte-i18n';
   import DeleteAssetsDialog from '$lib/components/assets/shared/delete-assets-dialog.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
-  import { selectedAssetFolderPath, selectedAssets, uploadingAssets } from '$lib/services/assets';
+  import { selectedAssetFolder, selectedAssets, uploadingAssets } from '$lib/services/assets';
   import { getFolderLabelByPath } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
 
@@ -13,14 +13,14 @@
   let filePicker;
   let showDeleteDialog = false;
 
-  $: folderLabel = $appLocale ? getFolderLabelByPath($selectedAssetFolderPath) : '';
+  $: folderLabel = $appLocale ? getFolderLabelByPath($selectedAssetFolder?.internalPath) : '';
 </script>
 
 <Toolbar variant="primary" aria-label={$_('folder')}>
   <h2 role="none">
     {folderLabel}
-    {#if $selectedAssetFolderPath}
-      <span role="none">/{$selectedAssetFolderPath}</span>
+    {#if $selectedAssetFolder}
+      <span role="none">/{$selectedAssetFolder.internalPath}</span>
     {/if}
   </h2>
   <Spacer flex />
@@ -77,7 +77,7 @@
   multiple={true}
   on:change={({ target }) => {
     $uploadingAssets = {
-      folder: $selectedAssetFolderPath || $siteConfig.media_folder,
+      folder: $selectedAssetFolder?.internalPath || $siteConfig.media_folder,
       files: [.../** @type {HTMLInputElement} */ (target).files],
     };
   }}

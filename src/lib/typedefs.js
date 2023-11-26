@@ -117,21 +117,6 @@
  */
 
 /**
- * Entry/asset path configuration.
- * @typedef {object} PathConfig
- * @property {string} collectionName Collection name.
- * @property {string} [internalPath] Root-relative path in the repository.
- * @property {string} [publicPath] Root-relative path in the live site.
- * @property {string} [fileName] File name. (File collection only)
- * @property {string} [file] File path. (File collection only)
- * @property {string} [folder] Folder path. (Folder/entry collection only)
- * @property {string} [extension] File extension.
- * @property {string} [format] File format.
- * @property {string | string[]} [frontmatterDelimiter] Frontmatter delimiter.
- * @property {boolean} [yamlQuote] YAML quote configuration.
- */
-
-/**
  * File info being processed as {@link Entry} or {@link Asset}.
  * @typedef {object} BaseFileListItem
  * @property {string} [type] File type.
@@ -146,7 +131,44 @@
  * @property {object} [meta] Metadata.
  * @property {string} [fetchURL] URL to fetch the file content. Git backend only.
  * @property {string} [repoFileURL] Web-accessible URL on the Git repository. Git backend only.
- * @property {PathConfig} [config] Path configuration.
+ */
+
+/**
+ * Entry folder configuration by collection.
+ * @typedef {object} CollectionEntryFolder
+ * @property {string} collectionName Collection name.
+ * @property {string} [fileName] File name. (File collection only)
+ * @property {string} [filePath] File path. (File collection only)
+ * @property {string} [folderPath] Folder path. (Folder/entry collection only)
+ * @property {string} [extension] File extension.
+ * @property {string} [format] File format.
+ * @property {string | string[]} [frontmatterDelimiter] Frontmatter delimiter.
+ * @property {boolean} [yamlQuote] YAML quote configuration.
+ */
+
+/**
+ * Asset folder configuration by collection.
+ * @typedef {object} CollectionAssetFolder
+ * @property {?string} collectionName Collection name or `null` for the global folder.
+ * @property {string} internalPath Folder path on the repository/filesystem, relative to the project
+ * root directory. It can be a partial path if the collection’s `media_folder` property is a
+ * relative path, because the complete path is entry-specific in that case.
+ * @property {string} publicPath Absolute folder path that will appear in the public URL, starting
+ * with `/`. It can be empty if the collection’s `public_folder` property is a relative path,
+ * because the complete path cannot be easily determined.
+ * @property {boolean} entryRelative Whether the `internalPath` is a relative path from the assets’s
+ * associated entry.
+ * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+ */
+
+/**
+ * File info being processed as {@link Entry}.
+ * @typedef {BaseFileListItem & { config: CollectionEntryFolder }} BaseEntryListItem
+ */
+
+/**
+ * File info being processed as {@link Asset}.
+ * @typedef {BaseFileListItem & { config: CollectionAssetFolder }} BaseAssetListItem
  */
 
 /**
@@ -606,21 +628,6 @@
  * @typedef {object} UploadingAssets
  * @property {string | undefined} folder Target folder path.
  * @property {File[]} files File list.
- */
-
-/**
- * Asset path configuration by collection.
- * @typedef {object} CollectionAssetPaths
- * @property {?string} collectionName Collection name or `null` for the global folder.
- * @property {string} internalPath Folder path on the repository/filesystem, relative to the project
- * root directory. It can be a partial path if the collection’s `media_folder` property is a
- * relative path, because the complete path is entry-specific in that case.
- * @property {string} publicPath Absolute folder path that will appear in the public URL, starting
- * with `/`. It can be empty if the collection’s `public_folder` property is a relative path,
- * because the complete path cannot be easily determined.
- * @property {boolean} entryRelative Whether the `internalPath` is a relative path from the assets’s
- * associated entry.
- * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
  */
 
 /**

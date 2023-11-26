@@ -1,9 +1,9 @@
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
-import { allAssetPaths } from '$lib/services/assets';
+import { allAssetFolders } from '$lib/services/assets';
 import { allBackendServices } from '$lib/services/backends';
-import { allContentPaths, getCollection, selectedCollection } from '$lib/services/contents';
+import { allEntryFolders, getCollection, selectedCollection } from '$lib/services/contents';
 import { prefs } from '$lib/services/prefs';
 import { isObject } from '$lib/services/utils/misc';
 import { stripSlashes } from '$lib/services/utils/strings';
@@ -118,27 +118,28 @@ siteConfig.subscribe((config) => {
 
   selectedCollection.set(getCollection(collections[0].name));
 
-  const _allContentPaths = [
+  /** @type {CollectionEntryFolder[]} */
+  const _allEntryFolders = [
     ...collections
       .filter(({ folder }) => !!folder)
       .map(
         ({
           name: collectionName,
-          folder,
+          folder: folderPath,
           extension,
           format,
           frontmatter_delimiter: frontmatterDelimiter,
           yaml_quote: yamlQuote,
         }) => ({
           collectionName,
-          folder,
+          folderPath,
           extension,
           format,
           frontmatterDelimiter,
           yamlQuote,
         }),
       )
-      .sort((a, b) => a.folder.localeCompare(b.folder)),
+      .sort((a, b) => a.folderPath.localeCompare(b.folderPath)),
     ...collections
       .filter(({ files }) => !!files)
       .map(
@@ -150,10 +151,10 @@ siteConfig.subscribe((config) => {
           frontmatter_delimiter: frontmatterDelimiter,
           yaml_quote: yamlQuote,
         }) =>
-          files.map(({ name: fileName, file }) => ({
+          files.map(({ name: fileName, file: filePath }) => ({
             collectionName,
             fileName,
-            file,
+            filePath,
             extension,
             format,
             frontmatterDelimiter,
@@ -161,7 +162,7 @@ siteConfig.subscribe((config) => {
           })),
       )
       .flat(1)
-      .sort((a, b) => a.file.localeCompare(b.file)),
+      .sort((a, b) => a.filePath.localeCompare(b.filePath)),
   ];
 
   const globalMediaFolder = stripSlashes(_globalMediaFolder);
@@ -172,8 +173,8 @@ siteConfig.subscribe((config) => {
     ? `/${stripSlashes(_globalPublicFolder)}`.replace(/^\/@/, '@')
     : `/${globalMediaFolder}`;
 
+  /** @type {CollectionAssetFolder} */
   const globalAssetPath = {
-    /** @type {?string} */
     collectionName: null,
     internalPath: globalMediaFolder,
     publicPath: globalPublicFolder,
@@ -182,9 +183,10 @@ siteConfig.subscribe((config) => {
 
   /**
    * Folder Collections Media and Public Folder.
+   * @type {CollectionAssetFolder[]}
    * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
    */
-  const collectionAssetPaths = collections.map((collection) => {
+  const collectionAssetFolders = collections.map((collection) => {
     const {
       name: collectionName,
       // e.g. `content/posts`
@@ -221,20 +223,20 @@ siteConfig.subscribe((config) => {
     };
   });
 
-  const _allAssetPaths = [
+  const _allAssetFolders = [
     globalAssetPath,
-    ...collectionAssetPaths
+    ...collectionAssetFolders
       .filter(Boolean)
       .sort((a, b) => a.internalPath.localeCompare(b.internalPath)),
   ];
 
-  allContentPaths.set(_allContentPaths);
-  allAssetPaths.set(_allAssetPaths);
+  allEntryFolders.set(_allEntryFolders);
+  allAssetFolders.set(_allAssetFolders);
 
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
-    console.info('allContentPaths', _allContentPaths);
+    console.info('allEntryFolders', _allEntryFolders);
     // eslint-disable-next-line no-console
-    console.info('allAssetPaths', _allAssetPaths);
+    console.info('allAssetFolders', _allAssetFolders);
   }
 });
