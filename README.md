@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for [Netlify/Decap CMS](https://decapcms.org/). You can use it with your favourite static site generator like SvelteKit, Eleventy, Next.js and Hugo to manage content as static files in a Git repository. The free open source alternative to Netlify/Decap CMS is now in public beta — with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for [Netlify/Decap CMS](https://decapcms.org/). In some cases, migration is as easy as a single line of code change, although we’re still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1-20231124.webp)<br>
 
@@ -10,13 +10,13 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 ![Screenshot: All-New Asset Library; Full Internationalization Support with DeepL](docs/screenshot-4-20231124.webp)<br>
 
-![Screenshot: Easy Local Workflow; Single-Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](docs/screenshot-5-20231124.webp)<br>
+![Screenshot: Easy Local Workflow; Single-Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](docs/screenshot-5-20231127.webp)<br>
 
 ## Motivation
 
 Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stalled for more than six months. [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances without much effort, mainly to get better internationalization (i18n) support.
 
-To achieve radical improvements in UX, performance and i18n, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new offering has since been released as open source software to encourage wider adoption.
+To achieve radical improvements in UX, performance and i18n, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new offering has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
 Our goal is to make it a viable successor to Netlify CMS, expand the Git-based headless CMS market, empower small businesses and individuals who need a simple yet powerful CMS solution, and showcase the huge potential of the Svelte framework.
 
@@ -163,7 +163,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 - [Svelte 5](https://svelte.dev/blog/runes) migration
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
-- [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
+- Localization
 - Documentation
 - Marketing site
 - Demo site
@@ -183,6 +183,8 @@ Here are some starter kits for popular frameworks created by community members. 
 
 - [Eleventy starter template](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
 - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
+- [Astro starter template](https://github.com/majesticostudio/astro-sveltia-cms) by [@zanhk](https://github.com/zanhk)
+- You can also use one of the [Netlify/Decap CMS templates](https://decapcms.org/docs/start-with-a-template/) and make a quick migration to Sveltia CMS.
 
 ### Migration
 
@@ -364,13 +366,13 @@ Want to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.
 
 Sveltia CMS is still in early beta, so we do expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new). Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
-## Related Links
+## Related links
 
 - Introducing Sveltia CMS: a short technical presentation by [@kyoshino](https://github.com/kyoshino) during the _This Week in Svelte_ online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
 
 ## Disclaimer
 
-This software is provided “as is” without any express or implied warranty. This product is not affiliated with or endorsed by Netlify, Decap CMS or any other integrated services. All product names, logos, and brands are the property of their respective owners.
+This software is provided “as is” without any express or implied warranty. We are not obligated to provide any support for the application. This product is not affiliated with or endorsed by Netlify, Decap CMS or any other integrated services. All product names, logos, and brands are the property of their respective owners.
 
 [^1]: [Netlify/Decap CMS #2557](https://github.com/decaporg/decap-cms/issues/2557)
 [^2]: [Netlify/Decap CMS #3267](https://github.com/decaporg/decap-cms/issues/3267)
