@@ -43,7 +43,7 @@ const fetchAPI = async (
   let { api_root: apiRoot } = get(siteConfig).backend;
 
   if (apiRoot) {
-    // Enterprise Sever
+    // Enterprise Server
     apiRoot = apiRoot.replace(/\/$/, '');
 
     if (path === '/graphql') {
