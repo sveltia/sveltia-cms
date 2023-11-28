@@ -84,8 +84,9 @@ export const signInAutomatically = async () => {
       await get(backend).fetchFiles();
     } catch (ex) {
       // The API request may fail if the cached token has been expired or revoked. Then let the user
-      // sign in again
-      if ([401, 403].includes(ex.cause?.status)) {
+      // sign in again. 404 Not Found is also considered an authentication error.
+      // https://docs.github.com/en/rest/overview/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource
+      if ([401, 403, 404].includes(ex.cause?.status)) {
         unauthenticated.set(true);
       } else {
         logError(ex);
