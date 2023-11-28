@@ -40,7 +40,23 @@ const fetchAPI = async (
     responseType = 'json',
   } = {},
 ) => {
-  const { api_root: apiRoot = 'https://api.github.com' } = get(siteConfig).backend;
+  let { api_root: apiRoot } = get(siteConfig).backend;
+
+  if (apiRoot) {
+    // Enterprise Sever
+    apiRoot = apiRoot.replace(/\/$/, '');
+
+    if (path === '/graphql') {
+      // Modify the root URL for GraphQL: the REST API root is `https://HOSTNAME/api/v3` while the
+      // GraphQL endpoint is `https://HOSTNAME/api/graphql`, meaning `/v3` should be stripped.
+      // https://docs.github.com/en/enterprise-server@3.10/rest/overview/resources-in-the-rest-api
+      // https://docs.github.com/en/enterprise-server@3.10/graphql/guides/forming-calls-with-graphql
+      apiRoot = apiRoot.replace(/\/v\d+$/, '');
+    }
+  } else {
+    // Enterprise Cloud or regular GitHub
+    apiRoot = 'https://api.github.com';
+  }
 
   const response = await fetch(`${apiRoot}${path}`, {
     method,
