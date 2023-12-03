@@ -288,14 +288,6 @@
     }
   }
 
-  :global(:root[data-theme='dark']) {
-    :global(input[type='date']),
-    :global(input[type='datetime-local']),
-    :global(input[type='time']) {
-      color-scheme: dark;
-    }
-  }
-
   .validation {
     color: var(--sui-error-foreground-color);
 
