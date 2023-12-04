@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for [Netlify/Decap CMS](https://decapcms.org/). In some cases, migration is as easy as a single line of code change, although we’re still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for [Netlify/Decap CMS](https://decapcms.org/). In some simple cases, migration is as easy as a single line of code change, although we’re still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1-20231124.webp)<br>
 
@@ -72,15 +72,15 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Resolves the [limitations in the list and object widgets](https://decapcms.org/docs/beta-features/#i18n-support) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 - [Entry-relative media folders](https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 
-### Collection enhancements
+### Better collections
 
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
 - A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear next to the entries.
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
-- Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted[^22].
 
-### Field enhancements
+### Better fields/widgets
 
+- Relation field options are displayed with no performance overhead[^14]. The `options_length` property is therefore ignored.
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Provides a reimagined all-in-one asset selection dialog for file and image fields.
   - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
@@ -90,12 +90,13 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Optional object fields (`widget: object` with `required: false`) can be manually added or removed. If removed, the required subfields will no longer trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
-### Asset management enhancements
+### Better asset management
 
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
 - You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
 - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
 - You can navigate between the global media folder and per-collection media folders[^6].
+- Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
 
 ## Compatibility
 
@@ -168,6 +169,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 - Marketing site
 - Demo site
 - Starter templates
+- Roles[^23]
 - Config editor[^10]
 - Mobile support[^18]
 
@@ -185,7 +187,7 @@ Here are some starter kits for popular frameworks created by community members. 
 - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
 - [Astro starter template](https://github.com/majesticostudio/astro-sveltia-cms) by [@zanhk](https://github.com/zanhk)
 
-Alternatively, you can also use one of the [Netlify/Decap CMS templates](https://decapcms.org/docs/start-with-a-template/) and make a quick migration to Sveltia CMS.
+Alternatively, you can probably use one of the [Netlify/Decap CMS templates](https://decapcms.org/docs/start-with-a-template/) and make a quick migration to Sveltia CMS.
 
 ### Migration
 
@@ -218,7 +220,7 @@ You can use Sveltia CMS with a local Git repository, like the [beta feature](htt
 1. Open the dev site at `http://localhost:[port]/` to check the rendered pages.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
-Remember that the local repository support doesn’t do any Git operation. You have to pull, commit and push all changes manually with a Git client. Also, at this point, you have to reload the CMS to see the latest content after fetching remote updates (this will be unnecessary once browsers support the proposed `FileSystemObserver` API).
+Remember that the local repository support doesn’t do any Git operation. You have to fetch, pull, commit and push all changes manually with a Git client. Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates (this will be unnecessary once browsers support the proposed `FileSystemObserver` API).
 
 ### Use a custom icon for a collection
 
@@ -385,10 +387,10 @@ This software is provided “as is” without any express or implied warranty. W
 [^8]: [Netlify/Decap CMS #2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^9]: [Netlify/Decap CMS #3505](https://github.com/decaporg/decap-cms/issues/3505)
 [^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341)
-[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and many more. We’ll be updating this list after reviewing their issue list.
+[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6325](https://github.com/decaporg/decap-cms/issues/6325), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
-[^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112)
-[^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [\#5920](https://github.com/decaporg/decap-cms/issues/5920), [\#6410](https://github.com/decaporg/decap-cms/issues/6410)
+[^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
+[^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [#4738](https://github.com/decaporg/decap-cms/issues/4738), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
 [^15]: [Netlify/Decap CMS #6932](https://github.com/decaporg/decap-cms/issues/6932)
 [^16]: [Netlify/Decap CMS #2103](https://github.com/decaporg/decap-cms/issues/2103)
 [^17]: [Netlify/Decap CMS #1333](https://github.com/decaporg/decap-cms/issues/1333)
@@ -397,3 +399,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^20]: [Netlify/Decap CMS #4563](https://github.com/decaporg/decap-cms/issues/4563)
 [^21]: [Netlify/Decap CMS #4781](https://github.com/decaporg/decap-cms/issues/4781)
 [^22]: [Netlify/Decap CMS #6642](https://github.com/decaporg/decap-cms/issues/6642)
+[^23]: [Netlify/Decap CMS #2](https://github.com/decaporg/decap-cms/issues/2)
