@@ -1,4 +1,4 @@
-import { getType } from 'mime';
+import mime from 'mime';
 import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { authorize } from '$lib/services/backends/shared/auth';
@@ -356,7 +356,7 @@ const fetchBlob = async (asset) => {
 
   // Handle SVG and other non-binary files
   if (response.headers.get('Content-Type') !== 'application/octet-stream') {
-    return new Blob([await response.text()], { type: getType(asset.path) });
+    return new Blob([await response.text()], { type: mime.getType(asset.path) });
   }
 
   return response.blob();

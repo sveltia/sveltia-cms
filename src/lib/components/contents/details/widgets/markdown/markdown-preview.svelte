@@ -36,7 +36,7 @@
 
 <div role="none">
   {#if typeof currentValue === 'string' && currentValue.trim()}
-    {@html sanitize ? DOMPurify.sanitize(rawHTML) : rawHTML}
+    {@html sanitize ? DOMPurify.sanitize(/** @type {string} */ (rawHTML)) : rawHTML}
   {/if}
 </div>
 
