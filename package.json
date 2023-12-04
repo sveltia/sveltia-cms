@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
-    "cspell": "^8.1.0",
+    "cspell": "^8.1.2",
     "eslint": "^8.55.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^9.1.0",
@@ -43,8 +43,8 @@
     "svelte-check": "^3.6.2",
     "svelte-i18n": "^4.0.0",
     "svelte-preprocess": "^5.1.1",
-    "vite": "^5.0.4",
-    "vitest": "^0.34.6"
+    "vite": "^5.0.5",
+    "vitest": "^1.0.0"
   },
   "dependencies": {
     "@ltd/j-toml": "^1.38.0",
