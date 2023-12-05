@@ -80,7 +80,7 @@ export default class IndexedDB {
    * @returns {Promise<any>} Result.
    */
   async #query(getRequest) {
-    this.#database ||= await this.#getDatabase();
+    this.#database ??= await this.#getDatabase();
 
     return new Promise((resolve) => {
       const transaction = this.#database.transaction([this.#storeName], 'readwrite');

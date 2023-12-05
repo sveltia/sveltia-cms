@@ -21,13 +21,14 @@ const repository = { owner: '', repo: '', branch: '', url: '' };
  * Send a request to GitHub REST/GraphQL API.
  * @param {string} path Endpoint.
  * @param {object} [options] Options.
- * @param {string} [options.method] Request method.
+ * @param {'GET' | 'POST' | 'PUT' | 'DELETE'} [options.method] Request method.
  * @param {object} [options.headers] Request headers.
  * @param {string} [options.body] Request body for POST.
  * @param {string} [options.token] OAuth token.
  * @param {('json' | 'text' | 'blob' | 'raw')} [options.responseType] Response type. The default is
  * `json`, while `raw` returns a `Response` object as is.
- * @returns {Promise<(object | string | Blob)>} Response data.
+ * @returns {Promise<(object | string | Blob | Response)>} Response data or `Response` itself,
+ * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
  */
 const fetchAPI = async (
@@ -365,13 +366,11 @@ const fetchBlob = async (asset) => {
 /**
  * Save entries or assets remotely.
  * @param {FileChange[]} changes File changes to be saved.
- * @param {object} [options] Options.
- * @param {CommitType} [options.commitType] Commit type.
- * @param {Collection} [options.collection] Collection of an entry to be changed.
+ * @param {CommitChangesOptions} options Commit options.
  * @returns {Promise<string>} Commit URL.
  * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
  */
-const commitChanges = async (changes, { commitType = 'update', collection } = {}) => {
+const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
 
   const additions = await Promise.all(
@@ -402,7 +401,7 @@ const commitChanges = async (changes, { commitType = 'update', collection } = {}
             repositoryNameWithOwner: `${owner}/${repo}`,
             branchName: branch,
           },
-          message: { headline: createCommitMessage(changes, { commitType, collection }) },
+          message: { headline: createCommitMessage(changes, options) },
           fileChanges: { additions, deletions },
           expectedHeadOid: await fetchLastCommitHash(),
         },

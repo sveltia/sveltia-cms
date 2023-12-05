@@ -13,7 +13,7 @@ export const prefs = writable({}, (set) => {
     try {
       const _prefs = (await LocalStorage.get(storageKey)) ?? {};
 
-      _prefs.apiKeys ||= {};
+      _prefs.apiKeys ??= {};
       set(_prefs);
     } catch {
       set({ error: 'permission_denied' });

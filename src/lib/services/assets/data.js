@@ -5,14 +5,14 @@ import { getHash, renameIfNeeded } from '$lib/services/utils/files';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
- * @type {import('svelte/store').Writable<{ saved?: boolean, deleted?: boolean, count: number }>}
+ * @type {import('svelte/store').Writable<UpdatesToastState>}
  */
 export const assetUpdatesToast = writable({ saved: false, deleted: false, count: 1 });
 
 /**
  * Upload/save the given assets to the backend.
  * @param {UploadingAssets} uploadingAssets Assets to be uploaded.
- * @param {object} [options] Options for the backend handler.
+ * @param {CommitChangesOptions} options Options for the backend handler.
  */
 export const saveAssets = async ({ files, folder }, options) => {
   const assetNamesInSameFolder = get(allAssets)

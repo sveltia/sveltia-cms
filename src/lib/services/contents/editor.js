@@ -352,7 +352,7 @@ const getItemList = (obj, keyPath) =>
     const _key = key.match(/^\d+$/) ? Number(key) : key;
 
     // Create a new array when adding a new item
-    _obj[_key] ||= [];
+    _obj[_key] ??= [];
 
     return _obj[_key];
   }, obj);

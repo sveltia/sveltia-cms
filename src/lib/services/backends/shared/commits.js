@@ -18,12 +18,10 @@ const defaultCommitMessages = {
 /**
  * Create a Git commit message.
  * @param {FileChange[]} changes File changes to be saved.
- * @param {object} [options] Options.
- * @param {CommitType} [options.commitType] Git commit type.
- * @param {Collection} [options.collection] Collection of an entry to be changed.
+ * @param {CommitChangesOptions} options Commit options.
  * @returns {string} Formatted message.
  */
-export const createCommitMessage = (changes, { commitType = 'update', collection } = {}) => {
+export const createCommitMessage = (changes, { commitType = 'update', collection }) => {
   const { login = '', name = '' } = get(user);
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);

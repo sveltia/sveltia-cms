@@ -221,7 +221,7 @@
             if (apiKeyPattern && _value.match(apiKeyPattern)) {
               apiKey = _value;
               hasAuthInfo = true;
-              $prefs.apiKeys ||= {};
+              $prefs.apiKeys ??= {};
               $prefs.apiKeys[serviceId] = apiKey;
               searchAssets();
             }
@@ -261,7 +261,7 @@
               userName = input.userName;
               password = input.password;
               hasAuthInfo = true;
-              $prefs.logins ||= {};
+              $prefs.logins ??= {};
               $prefs.logins[serviceId] = [userName, password].join(' ');
               searchAssets();
             } else {

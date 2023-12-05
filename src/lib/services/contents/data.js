@@ -3,7 +3,7 @@ import { backend } from '$lib/services/backends';
 import { allEntries, selectedCollection } from '$lib/services/contents';
 
 /**
- * @type {import('svelte/store').Writable<{ saved?: boolean, deleted?: boolean, count: number }>}
+ * @type {import('svelte/store').Writable<UpdatesToastState>}
  */
 export const contentUpdatesToast = writable({ saved: false, deleted: false, count: 1 });
 

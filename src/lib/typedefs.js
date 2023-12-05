@@ -37,6 +37,13 @@
  */
 
 /**
+ * Options for the commit changes operation.
+ * @typedef {object} CommitChangesOptions
+ * @property {CommitType} commitType Commit type. Used only for Git backends.
+ * @property {Collection} [collection] Collection of the corresponding entry or asset.
+ */
+
+/**
  * Backend service.
  * @typedef {object} BackendService
  * @property {string} label Service label.
@@ -47,9 +54,9 @@
  * @property {() => Promise<void>} fetchFiles Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backend only.
- * @property {(changes: FileChange[], options?: object) => Promise<string | void>} commitChanges
- * Function to save file changes, including additions and deletions, and return the commit URL (Git
- * backend only).
+ * @property {(changes: FileChange[], options: CommitChangesOptions) =>
+ * Promise<string | void>} commitChanges Function to save file changes, including additions and
+ * deletions, and return the commit URL (Git backend only).
  */
 
 /**
@@ -622,6 +629,14 @@
  * @property {string} [slug] Entry slug or `undefined` for an asset.
  * @property {string | File} [data] File data.
  * @property {string} [base64] Base64 of the data.
+ */
+
+/**
+ * Toast notification state for content/asset updates.
+ * @typedef {object} UpdatesToastState
+ * @property {number} count The number of items.
+ * @property {boolean} [saved] Whether the items have been created or updated.
+ * @property {boolean} [deleted] Whether the items have been deleted.
  */
 
 /**

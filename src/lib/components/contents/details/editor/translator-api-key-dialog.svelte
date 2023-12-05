@@ -28,7 +28,7 @@
     const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
 
     if (apiKeyPattern && _value.match(apiKeyPattern)) {
-      $prefs.apiKeys ||= {};
+      $prefs.apiKeys ??= {};
       $prefs.apiKeys[serviceId] = _value;
       $showTranslatorApiKeyDialog = false;
 
