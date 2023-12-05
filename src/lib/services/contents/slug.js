@@ -3,7 +3,7 @@ import { siteConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import { renameIfNeeded } from '$lib/services/utils/files';
-import { generateUUID } from '$lib/services/utils/strings';
+import { generateUUID, truncate } from '$lib/services/utils/strings';
 
 /**
  * Normalize the given string as a slug for a filename.
@@ -62,11 +62,12 @@ export const fillSlugTemplate = (
     name: collectionName,
     identifier_field: identifierField = 'title',
     folder: collectionFolderPath,
+    slug_length: slugMaxLength = undefined,
   } = collection;
 
   const dateTimeParts = getDateTimeParts();
 
-  const slug = template.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
+  let slug = template.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
     if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
       return dateTimeParts[tag];
     }
@@ -128,6 +129,11 @@ export const fillSlugTemplate = (
     // Use a random ID as a fallback
     return generateUUID().split('-').pop();
   });
+
+  // Truncate a long slug if needed
+  if (typeof slugMaxLength === 'number') {
+    slug = truncate(slug, slugMaxLength, { ellipsis: '' }).replace(/-$/, '');
+  }
 
   // We don’t have to rename it when creating a path with a slug given
   if (currentSlug) {

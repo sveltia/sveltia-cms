@@ -286,6 +286,8 @@
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`.
  * @property {string} [slug] Item slug template for a folder/entry collection.
+ * @property {number} [slug_length] The maximum number of characters allowed for an entry slug. An
+ * option suggested in https://github.com/decaporg/decap-cms/issues/6987.
  * @property {string} [summary] Item summary template for a folder/entry collection.
  * @property {string[]} [sortable_fields] Custom sorting fields.
  * @property {ViewFilter[]} [view_filters] Predefined view filters.
