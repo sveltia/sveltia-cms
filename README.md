@@ -44,6 +44,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Uses the GraphQL API for GitHub to quickly fetch content at once, so that entries and assets can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
 - Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Caches Git files locally to further speed up startup and reduce bandwidth.
+- You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 
 ### Better productivity
 
@@ -77,6 +78,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
 - A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear next to the entries.
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
+- You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 
 ### Better fields/widgets
 
@@ -301,6 +303,43 @@ It’s simple — just specify `{{uuid}}` (full UUID v4), `{{uuid_short}}` (last
 +    slug: '{{uuid_short}}'
 ```
 
+### Disable automatic deployments
+
+You may already have a CI/CD tool set up on your Git repository to automatically deploy changes to production. Occasionally, you make a lot of changes to your content to quickly reach the CI/CD provider’s (free) build limits, or you just don’t want to see builds triggered for every single small change.
+
+With Sveltia CMS, you can disable automatic deployments by default and manually trigger deployments at your convenience. This is done by adding the `[skip ci]` prefix to commit messages, the convention supported by [GitHub](https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs), [GitLab](https://docs.gitlab.com/ee/ci/pipelines/#skip-a-pipeline), [CircleCI](https://circleci.com/docs/skip-build/#skip-jobs), [Travis CI](https://docs.travis-ci.com/user/customizing-the-build/#skipping-a-build), [Netlify](https://docs.netlify.com/site-deploys/manage-deploys/#skip-a-deploy), [Cloudflare Pages](https://developers.cloudflare.com/pages/platform/branch-build-controls/#skip-builds) and others. Here are the steps to use it:
+
+1. Add the new `automatic_deployments` property to your `backend` configuration with a value of `false`:
+   ```diff
+    backend:
+      name: github
+      repo: owner/repo
+      branch: main
+   +  automatic_deployments: false
+   ```
+1. Commit and deploy the change to the config file and reload the CMS.
+1. Now, whenever you save an entry or asset, `[skip ci]` is automatically added to each commit message. However, deletions are always committed without the prefix to avoid unexpected data retention on your site.
+1. If you want to deploy a new/updated entry, as well as any other unpublished entries and assets, click the arrow next to the Save button in the content editor, then select **Save and Publish**. This will trigger CI/CD by omitting `[skip ci]`.
+
+If you set `automatic_deployments` to `true`, the behaviour is reversed. CI/CD will be triggered by default, while you have an option to **Save without Publishing** that adds `[skip ci]` only to the associated commit.
+
+Either way, you can manually trigger a deployment by selecting **Publish Changes** under the Account button in the top right corner of the CMS. To use this feature:
+
+- GitHub Actions:
+  - Publish Changes will [trigger a `repository_dispatch` event](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) with the `sveltia-cms-publish` event type. Update your build workflow to receive this event:
+    ```diff
+     on:
+       push:
+         branches: [$default-branch]
+    +  repository_dispatch:
+    +    types: [sveltia-cms-publish]
+    ```
+- Other CI/CD providers:
+  1. Select Settings under the Account button in the top right corner of the CMS.
+  1. Select the Advanced tab.
+  1. Enter the deploy hook URL for your provider, e.g. [Netlify](https://docs.netlify.com/configure-builds/build-hooks/) or [Cloudflare Pages](https://developers.cloudflare.com/pages/platform/deploy-hooks/).
+  1. Configure the CSP if necessary. See below.
+
 ### Set up Content Security Policy
 
 If your site adopts Content Security Policy (CSP), use the following policy for Sveltia CMS, or some features may not work.
@@ -342,6 +381,17 @@ And combine the following policies depending on your Git backend and enabled int
 - DeepL API Pro:
   ```csp
   connect-src https://api.deepl.com;
+  ```
+
+If you choose to [disable automatic deployments](#disable-automatic-deployments) and have configured a webhook URL, you may need to add the origin to the `connect-src` directive. For example,
+
+- Netlify:
+  ```csp
+  connect-src https://api.netlify.com;
+  ```
+- Cloudflare Pages
+  ```csp
+  connect-src https://api.cloudflare.com;
   ```
 
 If you have image field(s) and expect that images will be inserted as URLs, you may want to allow any source using a wildcard instead of specifying individual origins:
@@ -401,3 +451,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^21]: [Netlify/Decap CMS #4781](https://github.com/decaporg/decap-cms/issues/4781)
 [^22]: [Netlify/Decap CMS #6642](https://github.com/decaporg/decap-cms/issues/6642)
 [^23]: [Netlify/Decap CMS #2](https://github.com/decaporg/decap-cms/issues/2)
+[^24]: [Netlify/Decap CMS #6831](https://github.com/decaporg/decap-cms/issues/6831)
+[^25]: [Netlify/Decap CMS #6987](https://github.com/decaporg/decap-cms/issues/6987)
