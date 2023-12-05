@@ -26,6 +26,11 @@
    * @type {string}
    */
   export let gridId = undefined;
+  /**
+   * Whether to show a checkerboard background below a transparent image.
+   * @type {boolean}
+   */
+  export let checkerboard = false;
 
   $: filteredAssets = searchTerms
     ? assets.filter(({ name }) => name.toLowerCase().includes(searchTerms.toLowerCase()))
@@ -46,7 +51,7 @@
       {#each filteredAssets as asset (asset.path)}
         <Option value={asset.sha}>
           {#if asset.kind === 'image'}
-            <Image {asset} variant="tile" checkerboard={true} />
+            <Image {asset} variant="tile" {checkerboard} />
           {/if}
           {#if asset.kind === 'video'}
             <Video {asset} variant="tile" />

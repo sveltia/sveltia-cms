@@ -158,6 +158,7 @@
             viewType={$selectAssetsView?.type}
             {searchTerms}
             gridId="select-assets-grid"
+            checkerboard={true}
             on:select={({ detail }) => {
               selectedAsset = detail;
             }}
@@ -185,6 +186,7 @@
             viewType={$selectAssetsView?.type}
             {searchTerms}
             gridId="select-assets-grid"
+            checkerboard={true}
             on:select={({ detail }) => {
               selectedAsset = detail;
             }}

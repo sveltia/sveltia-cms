@@ -208,15 +208,17 @@
   img {
     /* prettier-ignore */
     .checkerboard & {
+      // hardcoded, the same color as the checkerboard in Photoshop
       background-image:
-        linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%),
-        linear-gradient(45deg, #eee 25%, #fff 25%, #fff 75%, #eee 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 8px 8px;
+        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+        linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%);
+      background-size: 8px 8px;
+      background-position: 0 0, 4px 4px;
     }
 
     :not(.checkerboard) & {
-      background-color: #fff; // hardcoded
+      // hardcoded, the same color as the transparent image preview in Chrome and Firefox
+      background-color: #e5e5e5;
     }
   }
 
