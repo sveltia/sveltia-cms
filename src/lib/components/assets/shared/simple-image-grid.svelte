@@ -8,9 +8,13 @@
    * @type {string}
    */
   export let gridId = undefined;
+  /**
+   * Whether to show the file name or title under the image while in grid view.
+   */
+  export let showTitle = false;
 </script>
 
-<div role="none" class="wrapper">
+<div role="none" class="wrapper" class:show-title={showTitle}>
   <Listbox id={gridId} class={viewType} aria-label={$_('assets_dialog.available_images')} on:change>
     <slot />
   </Listbox>
@@ -53,6 +57,16 @@
           }
         }
       }
+
+      :global(.name) {
+        display: -webkit-box;
+        min-height: calc(var(--sui-font-size-default) * 2);
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        white-space: normal;
+        line-height: var(--sui-line-height-compact);
+      }
     }
 
     :global(.listbox.grid) {
@@ -62,16 +76,28 @@
 
       :global(.option) {
         :global(button) {
+          flex-direction: column;
+          justify-content: flex-start;
+
           :global(.preview) {
             width: 100%;
+            height: auto;
           }
 
-          :global(.name:not(:only-child)) {
-            position: absolute;
-            left: -99999px;
+          :global(.name) {
+            flex: none;
+            padding: 4px;
+            width: 100%;
+            min-height: calc(var(--sui-font-size-default) * 3);
+            color: var(--sui-secondary-foreground-color);
           }
         }
       }
+    }
+
+    &:not(.wrapper.show-title) :global(.listbox.grid .option .name) {
+      position: absolute;
+      left: -99999px;
     }
 
     :global(.listbox.list) {
@@ -85,12 +111,6 @@
 
           :global(.name) {
             flex: auto;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            overflow: hidden;
-            white-space: normal;
-            line-height: var(--sui-line-height-compact);
           }
         }
       }
