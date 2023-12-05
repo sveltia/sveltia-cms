@@ -87,15 +87,15 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
   - New assets can be uploaded by dragging & dropping them into the dialog[^20].
   - A file/image URL can also be entered in the dialog.
   - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
-- Optional object fields (`widget: object` with `required: false`) can be manually added or removed. If removed, the required subfields will no longer trigger validation errors[^16].
+- Optional object fields (`widget: object` with `required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
 ### Better asset management
 
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
-- You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
-- You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
-- You can navigate between the global media folder and per-collection media folders[^6].
+  - You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
+  - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
+  - You can navigate between the global media folder and per-collection media folders[^6].
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
 
 ## Compatibility
@@ -155,6 +155,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 ### Other features
 
+- Netlify Identity Widget is not supported yet.
 - Comprehensive config validation is not implemented yet.
 - Auto-saving a draft entry is not implemented yet.
 - Downloading an asset in the media library is not implemented yet.
