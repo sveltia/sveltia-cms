@@ -1,13 +1,19 @@
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
-import { backend } from '$lib/services/backends';
+import { backend, backendName } from '$lib/services/backends';
+import { siteConfig } from '$lib/services/config';
 import { getHash, renameIfNeeded } from '$lib/services/utils/files';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
  * @type {import('svelte/store').Writable<UpdatesToastState>}
  */
-export const assetUpdatesToast = writable({ saved: false, deleted: false, count: 1 });
+export const assetUpdatesToast = writable({
+  count: 1,
+  saved: false,
+  deleted: false,
+  published: false,
+});
 
 /**
  * Upload/save the given assets to the backend.
@@ -59,7 +65,14 @@ export const saveAssets = async ({ files, folder }, options) => {
     ...newAssets,
   ]);
 
-  assetUpdatesToast.set({ saved: true, count: files.length });
+  const isLocal = get(backendName) === 'local';
+  const { automatic_deployments: autoDeployEnabled } = get(siteConfig).backend;
+
+  assetUpdatesToast.set({
+    count: files.length,
+    saved: true,
+    published: !isLocal && autoDeployEnabled === true,
+  });
 };
 
 /**

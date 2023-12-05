@@ -23,6 +23,8 @@
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
  * @property {LocaleCode} [locale] Selected UI locale, e.g. `en`.
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
+ * @property {string} [deployHookURL] Webhook URL to manually trigger a new deployment on any
+ * connected CI/CD provider.
  * @property {string} [error] Error message.
  */
 
@@ -41,6 +43,8 @@
  * @typedef {object} CommitChangesOptions
  * @property {CommitType} commitType Commit type. Used only for Git backends.
  * @property {Collection} [collection] Collection of the corresponding entry or asset.
+ * @property {boolean} [skipCI] Whether to disable automatic deployments for the commit. Used only
+ * for Git backends.
  */
 
 /**
@@ -57,6 +61,8 @@
  * @property {(changes: FileChange[], options: CommitChangesOptions) =>
  * Promise<string | void>} commitChanges Function to save file changes, including additions and
  * deletions, and return the commit URL (Git backend only).
+ * @property {() => Promise<Response>} [triggerDeployment] Function to manually trigger a new
+ * deployment on any connected CI/CD provider. Git backend only.
  */
 
 /**
@@ -230,6 +236,9 @@
  * @property {string} [backend.base_url] OAuth base URL origin.
  * @property {string} [backend.auth_endpoint] OAuth URL path.
  * @property {{ [key: string]: string }} [backend.commit_messages] Commit message map.
+ * @property {boolean} [backend.automatic_deployments] Whether to enable or disable automatic
+ * deployments with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If
+ * `false`, the `[skip ci]` prefix will be added to commit messages. Git backend only.
  * @property {string} [site_url] Site URL.
  * @property {string} [display_url] Site URL linked from the UI.
  * @property {string} [logo_url] Site logo URL.
@@ -639,6 +648,8 @@
  * @property {number} count The number of items.
  * @property {boolean} [saved] Whether the items have been created or updated.
  * @property {boolean} [deleted] Whether the items have been deleted.
+ * @property {boolean} [published] Whether the items have been published. This is `true` only when
+ * automatic deployments are enabled and triggered.
  */
 
 /**

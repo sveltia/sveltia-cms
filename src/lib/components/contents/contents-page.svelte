@@ -170,7 +170,7 @@
 
 <Toast bind:show={$contentUpdatesToast.saved}>
   <Alert status="success">
-    {$_('entry_saved')}
+    {$_($contentUpdatesToast.published ? 'entry_saved_and_published' : 'entry_saved')}
   </Alert>
 </Toast>
 

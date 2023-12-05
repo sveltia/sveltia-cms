@@ -109,9 +109,19 @@
 
 <Toast bind:show={$assetUpdatesToast.saved}>
   <Alert status="success">
-    {$_($assetUpdatesToast.count === 1 ? 'asset_saved' : 'assets_saved', {
-      values: { count: $assetUpdatesToast.count },
-    })}
+    {$_(
+      // eslint-disable-next-line no-nested-ternary
+      $assetUpdatesToast.published
+        ? $assetUpdatesToast.count === 1
+          ? 'asset_saved_and_published'
+          : 'assets_saved_and_published'
+        : $assetUpdatesToast.count === 1
+          ? 'asset_saved'
+          : 'assets_saved',
+      {
+        values: { count: $assetUpdatesToast.count },
+      },
+    )}
   </Alert>
 </Toast>
 

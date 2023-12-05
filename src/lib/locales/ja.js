@@ -70,6 +70,9 @@ export const strings = {
   search_placeholder: 'エントリーとアセットを検索…',
   create_entry_or_asset: 'エントリーまたはアセットを作成',
   asset: 'アセット',
+  publish_changes: '変更を公開',
+  publishing_changes: '変更を公開しています…',
+  publishing_changes_failed: '変更を公開できませんでした。後で再度お試しください。',
   show_notifications: '通知を表示',
   show_account_menu: 'アカウントメニューを表示',
 
@@ -183,10 +186,13 @@ export const strings = {
   entry_validation_errors:
     '{count} 個のフィールドにエラーがあります。エントリーを保存するには問題を修正してください。',
   entry_saved: 'エントリーが保存されました。',
+  entry_saved_and_published: 'エントリーが保存、公開されました。',
   entry_deleted: 'エントリーが削除されました。',
   entries_deleted: '{count} 個のエントリーが削除されました。',
   asset_saved: 'アセットが保存されました。',
+  asset_saved_and_published: 'アセットが保存、公開されました。',
   assets_saved: '{count} 個のアセットが保存されました。',
+  assets_saved_and_published: '{count} 個のアセットが保存、公開されました。',
   asset_deleted: 'アセットが削除されました。',
   assets_deleted: '{count} 個のアセットが削除されました。',
 
@@ -199,6 +205,8 @@ export const strings = {
   editing_x_collection_entry:
     '「{collection}」コレクションの「{entry}」エントリーを編集しています。',
   editing_x_collection_file: '「{collection}」コレクションの「{file}」ファイルを編集しています。',
+  save_and_publish: '保存して公開',
+  save_without_publishing: '公開せずに保存',
   show_editor_options: 'エディターオプションを表示',
   editor_options: 'エディターオプション',
   show_preview: 'プレビューを表示',
@@ -411,6 +419,12 @@ export const strings = {
     },
     advanced: {
       title: '詳細',
+      deploy_hook: {
+        title: 'デプロイフック',
+        description:
+          '「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。',
+        field_label: 'デプロイフック URL',
+      },
       developer_mode: {
         title: '開発者モード',
         description:

@@ -70,6 +70,9 @@ export const strings = {
   search_placeholder: 'Search for entries and assets…',
   create_entry_or_asset: 'Create Entry or Asset',
   asset: 'Asset',
+  publish_changes: 'Publish Changes',
+  publishing_changes: 'Publishing Changes…',
+  publishing_changes_failed: 'Changes could not be published. Please try again later.',
   show_notifications: 'Show Notifications',
   show_account_menu: 'Show Account Menu',
 
@@ -180,10 +183,13 @@ export const strings = {
   entry_validation_error: 'One field has an error. Please correct it to save the entry.',
   entry_validation_errors: '{count} fields have an error. Please correct them to save the entry.',
   entry_saved: 'Entry has been saved.',
+  entry_saved_and_published: 'Entry has been saved and published.',
   entry_deleted: 'Entry has been deleted.',
   entries_deleted: '{count} entries have been deleted.',
   asset_saved: 'Asset has been saved.',
+  asset_saved_and_published: 'Asset has been saved and published.',
   assets_saved: '{count} assets have been saved.',
+  assets_saved_and_published: '{count} assets have been saved and published.',
   asset_deleted: 'Asset has been deleted.',
   assets_deleted: '{count} assets have been deleted.',
 
@@ -197,6 +203,8 @@ export const strings = {
     'You’re now editing the “{entry}” entry in the “{collection}” collection.',
   editing_x_collection_file:
     'You’re now editing the “{file}” file in the “{collection}” collection.',
+  save_and_publish: 'Save and Publish',
+  save_without_publishing: 'Save without Publishing',
   show_editor_options: 'Show Editor Options',
   editor_options: 'Editor Options',
   show_preview: 'Show Preview',
@@ -409,6 +417,12 @@ export const strings = {
     },
     advanced: {
       title: 'Advanced',
+      deploy_hook: {
+        title: 'Deploy Hook',
+        description:
+          'Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.',
+        field_label: 'Deploy Hook URL',
+      },
       developer_mode: {
         title: 'Developer Mode',
         description:

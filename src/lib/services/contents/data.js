@@ -5,7 +5,12 @@ import { allEntries, selectedCollection } from '$lib/services/contents';
 /**
  * @type {import('svelte/store').Writable<UpdatesToastState>}
  */
-export const contentUpdatesToast = writable({ saved: false, deleted: false, count: 1 });
+export const contentUpdatesToast = writable({
+  count: 1,
+  saved: false,
+  deleted: false,
+  published: false,
+});
 
 /**
  * Delete entries by slugs.

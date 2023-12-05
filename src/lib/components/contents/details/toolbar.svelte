@@ -11,11 +11,14 @@
     MenuItem,
     MenuItemCheckbox,
     Spacer,
+    SplitButton,
     Toast,
     Toolbar,
   } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
+  import { backendName } from '$lib/services/backends';
+  import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/data';
   import {
     copyFromLocaleToast,
@@ -49,6 +52,10 @@
     currentValues,
   } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
+  $: ({
+    backend: { automatic_deployments: autoDeployEnabled },
+  } = $siteConfig);
+  $: showSaveOptions = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
   $: ({ defaultLocale = 'default' } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: collectionLabel = collection?.label || collection?.name;
   $: collectionLabelSingular = collection?.label_singular || collectionLabel;
@@ -72,6 +79,29 @@
     showDuplicateToast = true;
     goto(`/collections/${collection?.name}/new`, { replaceState: true, notifyChange: false });
     $entryDraft = { ...$entryDraft, isNew: true, originalEntry: undefined };
+  };
+
+  /**
+   * Save the entry draft.
+   * @param {object} [options] Options.
+   * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
+   */
+  const save = async ({ skipCI = undefined } = {}) => {
+    try {
+      saving = true;
+      await saveEntry({ skipCI });
+      goBack(`/collections/${collection?.name}`);
+    } catch (error) {
+      if (error.message === 'validation_failed') {
+        showValidationToast = true;
+      } else {
+        showErrorDialog = true;
+        // eslint-disable-next-line no-console
+        console.error(error);
+      }
+    } finally {
+      saving = false;
+    }
   };
 </script>
 
@@ -162,29 +192,22 @@
       {/if}
     </Menu>
   </MenuButton>
-  <Button
+  <svelte:component
+    this={showSaveOptions ? SplitButton : Button}
     variant="primary"
     label={$_(saving ? 'saving' : 'save')}
     disabled={!modified || saving}
     keyShortcuts="Accel+S"
-    on:click={async () => {
-      try {
-        saving = true;
-        await saveEntry();
-        goBack(`/collections/${collection?.name}`);
-      } catch (error) {
-        if (error.message === 'validation_failed') {
-          showValidationToast = true;
-        } else {
-          showErrorDialog = true;
-          // eslint-disable-next-line no-console
-          console.error(error);
-        }
-      } finally {
-        saving = false;
-      }
-    }}
-  />
+    on:click={() => save()}
+  >
+    <svelte:component this={showSaveOptions ? Menu : undefined} slot="popup">
+      <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
+      <MenuItem
+        label={$_(autoDeployEnabled ? 'save_without_publishing' : 'save_and_publish')}
+        on:click={() => save({ skipCI: autoDeployEnabled })}
+      />
+    </svelte:component>
+  </svelte:component>
 </Toolbar>
 
 <Toast bind:show={showDuplicateToast}>

@@ -413,6 +413,23 @@ const commitChanges = async (changes, options) => {
 };
 
 /**
+ * Manually trigger a deployment with GitHub Actions by dispatching the `repository_dispatch` event.
+ * @returns {Promise<Response>} Response.
+ * @see https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event
+ */
+const triggerDeployment = async () => {
+  const { owner, repo } = repository;
+
+  return /** @type {Promise<Response>} */ (
+    fetchAPI(`/repos/${owner}/${repo}/dispatches`, {
+      method: 'POST',
+      body: JSON.stringify({ event_type: 'sveltia-cms-publish' }),
+      responseType: 'raw',
+    })
+  );
+};
+
+/**
  * @type {BackendService}
  */
 export default {
@@ -424,4 +441,5 @@ export default {
   fetchFiles,
   fetchBlob,
   commitChanges,
+  triggerDeployment,
 };

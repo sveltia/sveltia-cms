@@ -6,7 +6,8 @@ import equal from 'fast-deep-equal';
 import { flatten, unflatten } from 'flat';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
-import { backend } from '$lib/services/backends';
+import { backend, backendName } from '$lib/services/backends';
+import { siteConfig } from '$lib/services/config';
 import { allEntries, getCollection } from '$lib/services/contents';
 import { contentUpdatesToast } from '$lib/services/contents/data';
 import { getFieldConfig } from '$lib/services/contents/entry';
@@ -888,9 +889,11 @@ const createEntryPath = (draft, locale, slug) => {
 
 /**
  * Save the entry draft.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
  * @throws {Error} When the entry could not be validated or saved.
  */
-export const saveEntry = async () => {
+export const saveEntry = async ({ skipCI = undefined } = {}) => {
   if (!validateEntry()) {
     throw new Error('validation_failed');
   }
@@ -1097,6 +1100,7 @@ export const saveEntry = async () => {
     await get(backend).commitChanges(changes, {
       commitType: isNew ? 'create' : 'update',
       collection,
+      skipCI,
     });
   } catch {
     throw new Error('saving_failed');
@@ -1112,7 +1116,15 @@ export const saveEntry = async () => {
   ]);
 
   entryDraft.set(null);
-  contentUpdatesToast.set({ saved: true, count: 1 });
+
+  const isLocal = get(backendName) === 'local';
+  const { automatic_deployments: autoDeployEnabled } = get(siteConfig).backend;
+
+  contentUpdatesToast.set({
+    count: 1,
+    saved: true,
+    published: !isLocal && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false),
+  });
 };
 
 entryDraft.subscribe((draft) => {
