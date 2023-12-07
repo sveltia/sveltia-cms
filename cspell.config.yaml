@@ -18,6 +18,7 @@ ignorePaths:
   - data/**/*.json
   - dist/**
 words:
+  - astros
   - camelcase
   - danurbanowicz
   - Decap

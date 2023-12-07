@@ -82,7 +82,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better fields/widgets
 
-- Relation field options are displayed with no performance overhead[^14]. The `options_length` property is therefore ignored.
+- Relation field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Provides a reimagined all-in-one asset selection dialog for file and image fields.
   - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
@@ -96,7 +96,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
   - You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
-  - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the media library[^5].
+  - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the library[^5].
   - You can navigate between the global media folder and per-collection media folders[^6].
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
 
@@ -167,7 +167,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 - [Svelte 5](https://svelte.dev/blog/runes) migration
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
-- Localization
+- Localization other than Japanese
 - Documentation
 - Marketing site
 - Demo site
@@ -188,7 +188,7 @@ Here are some starter kits for popular frameworks created by community members. 
 
 - [Eleventy starter template](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
 - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
-- [Astro starter template](https://github.com/majesticostudio/astro-sveltia-cms) by [@zanhk](https://github.com/zanhk)
+- Astro: [astro-sveltia-cms](https://github.com/majesticostudio/astro-sveltia-cms), [astro-starter](https://github.com/zankhq/astro-starter) and [astros](https://github.com/zankhq/astros) by [@zanhk](https://github.com/zanhk)
 
 Alternatively, you can probably use one of the [Netlify/Decap CMS templates](https://decapcms.org/docs/start-with-a-template/) and make a quick migration to Sveltia CMS.
 
@@ -319,21 +319,23 @@ With Sveltia CMS, you can disable automatic deployments by default and manually 
    ```
 1. Commit and deploy the change to the config file and reload the CMS.
 1. Now, whenever you save an entry or asset, `[skip ci]` is automatically added to each commit message. However, deletions are always committed without the prefix to avoid unexpected data retention on your site.
-1. If you want to deploy a new/updated entry, as well as any other unpublished entries and assets, click the arrow next to the Save button in the content editor, then select **Save and Publish**. This will trigger CI/CD by omitting `[skip ci]`.
+1. If you want to deploy a new or updated entry, as well as any other unpublished entries and assets, click an arrow next to the Save button in the content editor, then select **Save and Publish**. This will trigger CI/CD by omitting `[skip ci]`.
 
 If you set `automatic_deployments` to `true`, the behaviour is reversed. CI/CD will be triggered by default, while you have an option to **Save without Publishing** that adds `[skip ci]` only to the associated commit.
 
-Either way, you can manually trigger a deployment by selecting **Publish Changes** under the Account button in the top right corner of the CMS. To use this feature:
+_Gotcha:_ Unpublished entries and assets are not drafts. Once committed to your repository, those changes can be deployed any time another commit is pushed without `[skip ci]`, or when a manual deployment is triggered.
+
+If the `automatic_deployments` property is defined, you can manually trigger a deployment by selecting **Publish Changes** under the Account button in the top right corner of the CMS. To use this feature:
 
 - GitHub Actions:
-  - Publish Changes will [trigger a `repository_dispatch` event](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) with the `sveltia-cms-publish` event type. Update your build workflow to receive this event:
-    ```diff
-     on:
-       push:
-         branches: [$default-branch]
-    +  repository_dispatch:
-    +    types: [sveltia-cms-publish]
-    ```
+  1. Without any configuration, Publish Changes will [trigger a `repository_dispatch` event](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) with the `sveltia-cms-publish` event type. Update your build workflow to receive this event:
+     ```diff
+      on:
+        push:
+          branches: [$default-branch]
+     +  repository_dispatch:
+     +    types: [sveltia-cms-publish]
+     ```
 - Other CI/CD providers:
   1. Select Settings under the Account button in the top right corner of the CMS.
   1. Select the Advanced tab.
