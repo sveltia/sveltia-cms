@@ -197,7 +197,13 @@ const fetchFiles = async () => {
 
   if (cachedHash && cachedHash === (await fetchLastCommitHash())) {
     // Skip fetching file list
-    fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
+    fileList = createFileList(
+      cachedFileEntries.map(([path, data]) => ({
+        ...data,
+        path,
+        url: `https://api.github.com/repos/${owner}/${repo}/git/blobs/${data.sha}`,
+      })),
+    );
   } else {
     // Get a complete file list first with the REST API
     const {
