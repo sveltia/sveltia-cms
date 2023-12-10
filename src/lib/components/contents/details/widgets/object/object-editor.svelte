@@ -106,7 +106,7 @@
         $entryDraft.currentValues[_locale] = createProxy({
           draft: $entryDraft,
           locale: _locale,
-          target: { ...$entryDraft.currentValues[_locale], ...newValueMap },
+          target: { ...newValueMap, ...$entryDraft.currentValues[_locale] },
         });
       }
     });
