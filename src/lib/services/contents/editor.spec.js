@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { getEntryAssetFolderPaths } from '$lib/services/contents/editor';
 
 describe('Test getEntryAssetFolderPaths()', () => {
   const currentSlug = 'foo';
 
-  it('simple path, multiple folders, entry relative', () => {
+  test('simple path, multiple folders, entry relative', () => {
     const collection = {
       path: '{{slug}}',
       _i18n: { structure: 'multiple_folders' },
@@ -21,7 +21,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('nested path, multiple folders, entry relative', () => {
+  test('nested path, multiple folders, entry relative', () => {
     const collection = {
       path: '{{slug}}/index',
       _i18n: { structure: 'multiple_folders' },
@@ -38,7 +38,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('simple path, multiple files, entry relative', () => {
+  test('simple path, multiple files, entry relative', () => {
     const collection = {
       path: '{{slug}}',
       _i18n: { structure: 'multiple_files' },
@@ -55,7 +55,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('nested path, multiple files, entry relative', () => {
+  test('nested path, multiple files, entry relative', () => {
     const collection = {
       path: '{{slug}}/index',
       _i18n: { structure: 'multiple_files' },
@@ -72,7 +72,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('simple path, single file, entry relative', () => {
+  test('simple path, single file, entry relative', () => {
     const collection = {
       path: '{{slug}}',
       _i18n: { structure: 'single_file' },
@@ -89,7 +89,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('nested path, single file, entry relative', () => {
+  test('nested path, single file, entry relative', () => {
     const collection = {
       path: '{{slug}}/index',
       _i18n: { structure: 'single_file' },
@@ -106,7 +106,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('simple path, multiple folders, entry absolute', () => {
+  test('simple path, multiple folders, entry absolute', () => {
     const collection = {
       path: '{{slug}}',
       _i18n: { structure: 'multiple_folders' },
@@ -123,7 +123,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('nested path, multiple folders, entry absolute', () => {
+  test('nested path, multiple folders, entry absolute', () => {
     const collection = {
       path: '{{slug}}/index',
       _i18n: { structure: 'multiple_folders' },
@@ -140,7 +140,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('simple path, multiple files, entry absolute', () => {
+  test('simple path, multiple files, entry absolute', () => {
     const collection = {
       path: '{{slug}}',
       _i18n: { structure: 'multiple_files' },
@@ -157,7 +157,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('nested path, multiple files, entry absolute', () => {
+  test('nested path, multiple files, entry absolute', () => {
     const collection = {
       path: '{{slug}}/index',
       _i18n: { structure: 'multiple_files' },
@@ -174,7 +174,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('simple path, single file, entry absolute', () => {
+  test('simple path, single file, entry absolute', () => {
     const collection = {
       path: '{{slug}}',
       _i18n: { structure: 'single_file' },
@@ -191,7 +191,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  it('nested path, single file, entry absolute', () => {
+  test('nested path, single file, entry absolute', () => {
     const collection = {
       path: '{{slug}}/index',
       _i18n: { structure: 'single_file' },

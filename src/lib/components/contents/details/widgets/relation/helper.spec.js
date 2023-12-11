@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
 import { siteConfig } from '$lib/services/config';
 
@@ -26,7 +26,7 @@ describe('Test getOptions()', () => {
   // https://decapcms.org/docs/widgets/#relation
   // Referencing a folder collection example
   // String templates example
-  it('nested fields', () => {
+  test('nested fields', () => {
     const config = {
       name: 'author',
       label: 'Author',
@@ -134,7 +134,7 @@ describe('Test getOptions()', () => {
 
   // Referencing a file collection list field example
   // https://decapcms.org/docs/widgets/#relation
-  it('nested fields with wildcard matching, file collection', () => {
+  test('nested fields with wildcard matching, file collection', () => {
     const config = {
       label: 'City',
       name: 'city',
@@ -188,7 +188,7 @@ describe('Test getOptions()', () => {
   });
 
   // https://github.com/sveltia/sveltia-cms/issues/13
-  it('nested fields with wildcard matching, folder collection', () => {
+  test('nested fields with wildcard matching, folder collection', () => {
     const config = {
       name: 'section',
       label: 'Section',

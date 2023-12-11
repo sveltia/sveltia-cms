@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { siteConfig } from '$lib/services/config';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
 
@@ -15,7 +15,7 @@ describe('Test fillSlugTemplate()', () => {
     collections: [collection],
   });
 
-  it('short slug', () => {
+  test('short slug', () => {
     const title =
       // cspell:disable-next-line
       'Lorem ipsum dolor sit amet, consectetur';
@@ -26,7 +26,7 @@ describe('Test fillSlugTemplate()', () => {
     );
   });
 
-  it('long slug', () => {
+  test('long slug', () => {
     const title =
       // cspell:disable-next-line
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam pulvinar scelerisque';
