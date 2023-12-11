@@ -79,6 +79,7 @@
   $: valueMap = $entryDraft.currentValues[locale];
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\b`);
   $: hasValues = Object.keys(valueMap).some((_keyPath) => _keyPath.match(keyPathRegex));
+  $: canEdit = locale === defaultLocale || i18n !== false;
   $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
   $: parentExpanded = !collapsed;
 
@@ -151,7 +152,7 @@
   };
 </script>
 
-{#if hasValues}
+{#if (required || hasValues) && canEdit}
   <div role="none" class="wrapper">
     <Group aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}>
       <div role="none" class="header">
@@ -199,7 +200,9 @@
       </div>
     </Group>
   </div>
-{:else if !required && (locale === defaultLocale || i18n !== false)}
+{/if}
+
+{#if !required && !hasValues && canEdit}
   <Button
     variant="tertiary"
     label={$_('add_x', { values: { name: label || name } })}
