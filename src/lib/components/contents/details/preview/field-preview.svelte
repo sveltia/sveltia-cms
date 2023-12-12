@@ -1,6 +1,7 @@
 <script>
   import { previews } from '$lib/components/contents/details/widgets';
   import { entryDraft } from '$lib/services/contents/editor';
+  import { defaultI18nConfig } from '$lib/services/contents/i18n';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
@@ -22,19 +23,19 @@
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
     : undefined;
   $: isList = widgetName === 'list' || (hasMultiple && multiple);
-  $: ({ hasLocales = false, defaultLocale = 'default' } =
-    $entryDraft.collection._i18n ?? /** @type {I18nConfig} */ ({}));
-  $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
-  $: canDuplicate = hasLocales && i18n === 'duplicate';
+  $: ({ collection, collectionFile, currentValues } = $entryDraft);
+  $: ({ i18nEnabled, defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  $: canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
+  $: canDuplicate = i18nEnabled && i18n === 'duplicate';
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
 
   // Multiple values are flattened in the value map object
   $: currentValue = isList
-    ? Object.entries($entryDraft.currentValues[locale])
+    ? Object.entries(currentValues[locale])
         .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
         .map(([, val]) => val)
         .filter((val) => val !== undefined)
-    : $entryDraft.currentValues[locale][keyPath];
+    : currentValues[locale][keyPath];
 </script>
 
 {#if widgetName !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}

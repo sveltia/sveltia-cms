@@ -4,6 +4,7 @@
   @see https://decapcms.org/docs/widgets/#select
 -->
 <script>
+  import { getCanonicalLocale } from '$lib/services/contents/i18n';
   import { isObjectArray } from '$lib/services/utils/misc';
 
   /**
@@ -26,7 +27,8 @@
 
   $: ({ options, multiple } = fieldConfig);
   $: hasLabels = isObjectArray(options);
-  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
+  $: canonicalLocale = getCanonicalLocale(locale);
+  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
 
   /**
    * Get the display label by value.

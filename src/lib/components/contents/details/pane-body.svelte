@@ -5,7 +5,7 @@
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
   import { entryDraft, entryEditorSettings, toggleLocale } from '$lib/services/contents/editor';
-  import { getLocaleLabel } from '$lib/services/i18n';
+  import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
    * The wrapper element’s `id` attribute.

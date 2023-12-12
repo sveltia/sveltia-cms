@@ -339,14 +339,14 @@ export const parseEntryFiles = (entryFiles) => {
     } = file;
 
     const collection = getCollection(collectionName);
+    const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+    const { i18nEnabled, locales, defaultLocale, structure } = (collectionFile ?? collection)._i18n;
 
     const extension = getFileExtension({
       format: collection.format,
       extension: collection.extension,
       file: fileName,
     });
-
-    const { structure, hasLocales, locales, defaultLocale } = collection._i18n;
 
     const [, filePath] = fileName
       ? []
@@ -361,12 +361,12 @@ export const parseEntryFiles = (entryFiles) => {
     /** @type {Entry} */
     const entry = { sha, collectionName, fileName, locales: {}, ...meta };
 
-    if (!hasLocales) {
+    if (!i18nEnabled) {
       entry.slug = fileName || getSlug(collectionName, filePath, parsedFile);
-      entry.locales.default = { content: parsedFile, path, sha };
+      entry.locales._default = { content: parsedFile, path, sha };
     }
 
-    if (hasLocales && (structure === 'single_file' || fileName)) {
+    if (i18nEnabled && (structure === 'single_file' || fileName)) {
       const content = parsedFile[defaultLocale] ?? Object.values(parsedFile)[0];
 
       entry.slug = fileName || getSlug(collectionName, filePath, content);
@@ -377,7 +377,7 @@ export const parseEntryFiles = (entryFiles) => {
       );
     }
 
-    if (hasLocales && (structure === 'multiple_folders' || structure === 'multiple_files')) {
+    if (i18nEnabled && (structure === 'multiple_folders' || structure === 'multiple_files')) {
       /**
        * @type {string}
        */

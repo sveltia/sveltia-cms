@@ -6,6 +6,7 @@
 -->
 <script>
   import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
+  import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
@@ -34,8 +35,8 @@
   } = fieldConfig);
   $: dateOnly = timeFormat === false;
   $: timeOnly = dateFormat === false;
-
   $: date = getDate(currentValue, fieldConfig);
+  $: canonicalLocale = getCanonicalLocale(locale);
 
   /** @type {Intl.DateTimeFormatOptions} */
   const dateFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -46,11 +47,11 @@
 {#if date}
   <p>
     {#if timeOnly}
-      {date.toLocaleTimeString(locale, timeFormatOptions)}
+      {date.toLocaleTimeString(canonicalLocale, timeFormatOptions)}
     {:else}
       <time datetime={date.toJSON()}>
         {#if dateOnly}
-          {date.toLocaleDateString(locale, {
+          {date.toLocaleDateString(canonicalLocale, {
             ...dateFormatOptions,
             timeZone:
               pickerUTC ||
@@ -60,7 +61,7 @@
                 : undefined,
           })}
         {:else}
-          {date.toLocaleString(locale, {
+          {date.toLocaleString(canonicalLocale, {
             ...dateFormatOptions,
             ...timeFormatOptions,
             timeZone: pickerUTC ? 'UTC' : undefined,

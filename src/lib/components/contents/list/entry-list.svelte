@@ -15,7 +15,7 @@
 <ListContainer aria-label={$selectedCollection?.files ? $_('file_list') : $_('entry_list')}>
   {#if $selectedCollection}
     {#if allEntries.length}
-      {@const { defaultLocale = 'default' } = $selectedCollection._i18n}
+      {@const { defaultLocale } = $selectedCollection._i18n}
       <ListingGrid
         viewType={$currentView.type}
         id="entry-list"

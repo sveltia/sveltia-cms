@@ -1,12 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import { siteConfig } from '$lib/services/config';
+import { defaultI18nConfig } from '$lib/services/contents/i18n';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
 
 describe('Test fillSlugTemplate()', () => {
   /** @type {Collection} */
   const collection = {
     name: 'posts',
-    _i18n: undefined,
+    _i18n: defaultI18nConfig,
     slug_length: 50,
   };
 

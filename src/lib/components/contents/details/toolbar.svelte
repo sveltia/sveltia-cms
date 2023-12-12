@@ -28,8 +28,8 @@
     saveEntry,
   } from '$lib/services/contents/editor';
   import { getAssociatedAssets } from '$lib/services/contents/entry';
+  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/view';
-  import { getLocaleLabel } from '$lib/services/i18n';
   import { goBack, goto } from '$lib/services/navigation';
   import { truncate } from '$lib/services/utils/strings';
 
@@ -50,21 +50,22 @@
     currentLocales,
     originalValues,
     currentValues,
+    validities,
   } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
   $: ({
     backend: { automatic_deployments: autoDeployEnabled },
   } = $siteConfig);
   $: showSaveOptions = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
-  $: ({ defaultLocale = 'default' } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
+  $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: collectionLabel = collection?.label || collection?.name;
   $: collectionLabelSingular = collection?.label_singular || collectionLabel;
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: modified =
     isNew || !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
-  $: errorCount = Object.values($entryDraft?.validities ?? [])
-    .map((validities) => Object.values(validities).map(({ valid }) => !valid))
+  $: errorCount = Object.values(validities ?? [])
+    .map((validity) => Object.values(validity).map(({ valid }) => !valid))
     .flat(1)
     .filter(Boolean).length;
   $: associatedAssets =

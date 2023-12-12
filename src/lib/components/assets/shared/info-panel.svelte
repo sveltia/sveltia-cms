@@ -120,7 +120,8 @@
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as { sha, slug, locales, collectionName, fileName } (sha)}
       {@const collection = getCollection(collectionName)}
-      {@const { defaultLocale = 'default' } = collection._i18n}
+      {@const collectionFile = fileName ? collection._fileMap[fileName] : undefined}
+      {@const { defaultLocale } = (collectionFile ?? collection)._i18n}
       {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
       {@const { content } = locales[locale]}
       <p>
@@ -133,8 +134,8 @@
         >
           <span role="none">
             {collection.label || collection.name} »
-            {#if collection.files}
-              {collection.files.find(({ name }) => name === fileName).label}
+            {#if collectionFile}
+              {collectionFile.label || collectionFile.name}
             {:else if content}
               {content[collection.identifier_field] ||
                 content.title ||

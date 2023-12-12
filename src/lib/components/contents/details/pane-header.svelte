@@ -13,7 +13,7 @@
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
-  import { getLocaleLabel } from '$lib/services/i18n';
+  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import {
     entryDraft,
     entryEditorSettings,
@@ -42,15 +42,11 @@
 
   $: ({ collection, collectionFile, currentLocales, currentValues, originalValues, validities } =
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({
-    hasLocales = false,
-    locales = ['default'],
-    defaultLocale,
-    saveAllLocales = true,
-  } = collection._i18n ?? /** @type {I18nConfig} */ ({}));
+  $: ({ i18nEnabled, saveAllLocales, locales, defaultLocale } =
+    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: isLocaleEnabled = currentLocales[$thisPane?.locale];
   $: isOnlyLocale = Object.values(currentLocales).filter((enabled) => enabled).length === 1;
-  $: otherLocales = hasLocales ? locales.filter((l) => l !== $thisPane?.locale) : [];
+  $: otherLocales = i18nEnabled ? locales.filter((l) => l !== $thisPane?.locale) : [];
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: canCopy = !!otherLocales.length;
@@ -59,7 +55,7 @@
 
 <div role="none" {id} class="header">
   <Toolbar variant="secondary" aria-label={$_('secondary')}>
-    {#if hasLocales}
+    {#if i18nEnabled}
       <!-- @todo Use a dropdown list when there are 5+ locales. -->
       <SelectButtonGroup
         aria-label={$_('switch_locale')}

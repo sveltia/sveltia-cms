@@ -12,6 +12,7 @@
   import AddItemButton from '$lib/components/contents/details/widgets/list/add-item-button.svelte';
   import { entryDraft, getDefaultValues, updateListField } from '$lib/services/contents/editor';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
+  import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
   import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
   /**
@@ -75,16 +76,13 @@
   $: hasVariableTypes = Array.isArray(types);
   $: hasSubFields = hasSingleSubField || hasMultiSubFields || hasVariableTypes;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
-  $: ({
-    collectionName,
-    fileName,
-    collection: {
-      _i18n: { defaultLocale = 'default' },
-    },
-  } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({ collectionName, fileName, collection, collectionFile, currentValues } =
+    $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: isDuplicateField = locale !== defaultLocale && i18n === 'duplicate';
-  $: valueMap = $entryDraft.currentValues[locale];
-  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
+  $: valueMap = currentValues[locale];
+  $: canonicalLocale = getCanonicalLocale(locale);
+  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
 
   /** @type {{ [key: string]: any }[]} */
   $: items =

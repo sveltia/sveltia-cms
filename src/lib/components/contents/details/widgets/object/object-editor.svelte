@@ -15,6 +15,7 @@
     getDefaultValues,
   } from '$lib/services/contents/editor';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
+  import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
   import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
 
   /**
@@ -69,18 +70,15 @@
     fields,
   } = fieldConfig);
 
-  $: ({
-    collectionName,
-    fileName,
-    collection: {
-      _i18n: { defaultLocale = 'default' },
-    },
-  } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: valueMap = $entryDraft.currentValues[locale];
+  $: ({ collectionName, fileName, collection, collectionFile, currentValues } =
+    $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  $: valueMap = currentValues[locale];
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\b`);
   $: hasValues = Object.keys(valueMap).some((_keyPath) => _keyPath.match(keyPathRegex));
   $: canEdit = locale === defaultLocale || i18n !== false;
-  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
+  $: canonicalLocale = getCanonicalLocale(locale);
+  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
   $: parentExpanded = !collapsed;
 
   let widgetId = '';

@@ -86,13 +86,10 @@ export const getAssetByPath = (savedPath, entry) => {
       return undefined;
     }
 
-    const { collectionName, locales } = entry;
+    const { collectionName, fileName, locales } = entry;
     const collection = getCollection(collectionName);
-
-    const {
-      _i18n: { defaultLocale = 'default' },
-    } = collection;
-
+    const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+    const { defaultLocale } = (collectionFile ?? collection)._i18n;
     const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
     const { path: entryFilePath, content: entryContent } = locales[locale];
 

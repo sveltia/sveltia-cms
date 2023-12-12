@@ -113,7 +113,7 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
     folder: collectionFolder,
     identifier_field: identifierField,
     summary: summaryTemplate,
-    _i18n: { defaultLocale = 'default' },
+    _i18n: { defaultLocale },
   } = collection;
 
   // Fields other than `title` should be defined with `identifier_field` as per the Netlify/Decap
@@ -206,7 +206,7 @@ const sortEntries = (entries, { key, order }) => {
   }
 
   const _entries = [...entries];
-  const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
+  const { defaultLocale } = get(selectedCollection)._i18n;
 
   const type =
     { slug: String, commit_author: String, commit_date: Date }[key] ||
@@ -253,7 +253,7 @@ const sortEntries = (entries, { key, order }) => {
 const filterEntries = (entries, filters) => {
   const {
     view_filters: configuredFilters,
-    _i18n: { defaultLocale = 'default' },
+    _i18n: { defaultLocale },
   } = get(selectedCollection);
 
   // Ignore invalid filters
@@ -298,7 +298,7 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
   }
 
   const sortCondition = get(currentView).sort;
-  const { defaultLocale = 'default' } = get(selectedCollection)._i18n;
+  const { defaultLocale } = get(selectedCollection)._i18n;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
   /** @type {{ [key: string]: Entry[] }} */
   const groups = {};

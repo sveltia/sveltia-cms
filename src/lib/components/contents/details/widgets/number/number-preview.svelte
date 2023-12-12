@@ -4,6 +4,8 @@
   @see https://decapcms.org/docs/widgets/#number
 -->
 <script>
+  import { getCanonicalLocale } from '$lib/services/contents/i18n';
+
   /**
    * @type {LocaleCode}
    */
@@ -26,12 +28,15 @@
     // Widget-specific options
     value_type: valueType = 'int',
   } = fieldConfig);
+
+  $: canonicalLocale = getCanonicalLocale(locale);
+  $: numberFormatter = Intl.NumberFormat(canonicalLocale);
 </script>
 
 {#if currentValue === undefined || currentValue === ''}
   <!--  -->
 {:else if valueType === 'int' || valueType === 'float'}
-  <p>{Intl.NumberFormat(locale).format(Number(currentValue))}</p>
+  <p>{numberFormatter.format(Number(currentValue))}</p>
 {:else}
   <p>{currentValue}</p>
 {/if}

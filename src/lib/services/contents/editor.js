@@ -218,7 +218,8 @@ export const createProxy = ({
   getValueMap = undefined,
 }) => {
   const collection = getCollection(collectionName);
-  const { defaultLocale = 'default' } = collection._i18n;
+  const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+  const { defaultLocale } = (collectionFile ?? collection)._i18n;
 
   return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
@@ -268,15 +269,10 @@ export const createDraft = (entry, defaultValues) => {
   const { id, collectionName, fileName, locales } = entry;
   const isNew = id === undefined;
   const collection = getCollection(collectionName);
-  const { hasLocales, locales: collectionLocales } = collection._i18n;
-
-  const collectionFile = fileName
-    ? collection.files?.find(({ name }) => name === fileName)
-    : undefined;
-
-  const { fields } = collectionFile ?? collection;
+  const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+  const { fields, _i18n } = collectionFile ?? collection;
+  const { i18nEnabled, locales: allLocales } = _i18n;
   const newContent = getDefaultValues(fields, defaultValues);
-  const allLocales = hasLocales ? collectionLocales : ['default'];
 
   const enabledLocales = isNew
     ? allLocales
@@ -307,7 +303,7 @@ export const createDraft = (entry, defaultValues) => {
     currentValues: Object.fromEntries(
       enabledLocales.map((locale) => [
         locale,
-        hasLocales
+        i18nEnabled
           ? createProxy({
               draft: { collectionName, fileName },
               locale,
@@ -319,7 +315,7 @@ export const createDraft = (entry, defaultValues) => {
     files: Object.fromEntries(
       enabledLocales.map((locale) => [
         locale,
-        hasLocales
+        i18nEnabled
           ? createProxy({
               draft: { collectionName, fileName },
               prop: 'files',
@@ -400,15 +396,8 @@ export const updateListField = (locale, keyPath, manipulate) => {
  */
 export const copyDefaultLocaleValues = (content, { prop = 'currentValues' } = {}) => {
   const draft = get(entryDraft);
-
-  const {
-    collectionName,
-    fileName,
-    collection: {
-      _i18n: { defaultLocale = 'default' },
-    },
-  } = draft;
-
+  const { collectionName, fileName, collection, collectionFile } = draft;
+  const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const defaultLocaleValues = draft[prop][defaultLocale];
   const keys = [...new Set([...Object.keys(content), ...Object.keys(defaultLocaleValues)])];
   const newContent = /** @type {FlattenedEntryContent} */ ({});
@@ -436,12 +425,9 @@ export const toggleLocale = (locale) => {
     // Initialize the content for the locale
     if (enabled && !currentValues[locale]) {
       const { collection, collectionName, collectionFile, fileName, originalValues, files } = draft;
-      const { fields } = collectionFile ?? collection;
+      const { fields, _i18n } = collectionFile ?? collection;
+      const { defaultLocale } = _i18n;
       const newContent = getDefaultValues(fields);
-
-      const {
-        _i18n: { defaultLocale = 'default' },
-      } = collection;
 
       return {
         ...draft,
@@ -609,10 +595,9 @@ export const copyFromLocale = async (
  * Object, this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
-  const { collection, fileName, currentValues, originalValues } = get(entryDraft);
-  const { hasLocales, locales: collectionLocales, defaultLocale = 'default' } = collection._i18n;
-  // eslint-disable-next-line no-nested-ternary
-  const locales = locale ? [locale] : hasLocales ? collectionLocales : ['default'];
+  const { collection, collectionFile, fileName, currentValues, originalValues } = get(entryDraft);
+  const { locales: allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
+  const locales = locale ? [locale] : allLocales;
 
   /**
    * Revert changes.
@@ -659,8 +644,10 @@ export const revertChanges = (locale = '', keyPath = '') => {
  * @todo Rewrite this to better support list and object fields.
  */
 const validateEntry = () => {
-  const { collection, fileName, currentLocales, currentValues, validities } = get(entryDraft);
-  const { hasLocales, defaultLocale = 'default' } = collection._i18n;
+  const { collection, collectionFile, fileName, currentLocales, currentValues, validities } =
+    get(entryDraft);
+
+  const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
   let validated = true;
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
@@ -698,7 +685,7 @@ const validateEntry = () => {
         fieldConfig
       );
 
-      const canTranslate = hasLocales && i18n !== false;
+      const canTranslate = i18nEnabled && i18n !== false;
       const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;
       let rangeUnderflow = false;
@@ -856,7 +843,7 @@ const createEntryPath = (draft, locale, slug) => {
     return originalEntry?.locales[locale].path;
   }
 
-  const { structure, defaultLocale } = collection._i18n;
+  const { defaultLocale, structure } = collection._i18n;
   const collectionFolder = collection.folder?.replace(/\/$/, '');
 
   /**
@@ -917,9 +904,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const {
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
-    _i18n: { structure, hasLocales, locales, defaultLocale = 'default' },
   } = collection;
 
+  const { i18nEnabled, locales, defaultLocale, structure } = (collectionFile ?? collection)._i18n;
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
   const slug = fileName || originalEntry?.slug || fillSlugTemplate(slugTemplate, fillSlugOptions);
 
@@ -1062,7 +1049,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   const config = { extension, format, frontmatterDelimiter, yamlQuote };
 
-  if (collectionFile || !hasLocales || structure === 'single_file') {
+  if (collectionFile || !i18nEnabled || structure === 'single_file') {
     const { path, content } = savingEntryLocales[defaultLocale];
 
     changes.push({
@@ -1070,7 +1057,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       slug,
       path,
       data: formatEntryFile({
-        content: hasLocales
+        content: i18nEnabled
           ? Object.fromEntries(
               Object.entries(savingEntryLocales).map(([locale, le]) => [locale, le.content]),
             )

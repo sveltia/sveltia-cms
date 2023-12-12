@@ -7,6 +7,7 @@
   import { unflatten } from 'flat';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
+  import { getCanonicalLocale } from '$lib/services/contents/i18n';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
@@ -36,7 +37,8 @@
   } = fieldConfig);
   $: hasSubFields = !!(field ?? fields ?? types);
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
-  $: listFormatter = new Intl.ListFormat(locale, { style: 'narrow', type: 'conjunction' });
+  $: canonicalLocale = getCanonicalLocale(locale);
+  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
 
   $: items =
     unflatten(

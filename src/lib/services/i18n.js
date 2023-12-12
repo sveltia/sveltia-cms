@@ -1,6 +1,5 @@
 import { initLocales } from '@sveltia/ui';
-import { addMessages, locale as appLocale, getLocaleFromNavigator } from 'svelte-i18n';
-import { get } from 'svelte/store';
+import { addMessages, getLocaleFromNavigator } from 'svelte-i18n';
 
 /**
  * Load strings and initialize the locales.
@@ -23,18 +22,4 @@ export const initAppLocale = () => {
     fallbackLocale: 'en',
     initialLocale: (getLocaleFromNavigator() ?? '').split('-')[0] || 'en',
   });
-};
-
-/**
- * Translate the given locale code in the application UI locale.
- * @param {LocaleCode} locale Locale code like `en`.
- * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
- * locale code as is.
- */
-export const getLocaleLabel = (locale) => {
-  try {
-    return new Intl.DisplayNames(get(appLocale), { type: 'language' }).of(locale);
-  } catch {
-    return locale;
-  }
 };

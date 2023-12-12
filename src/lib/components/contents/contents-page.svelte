@@ -29,7 +29,7 @@
       return; // Not Found
     }
 
-    const [, _collectionName, _state, _id] = match;
+    const [, _collectionName, _state, _slug] = match;
     /**
      * @type {Collection | undefined}
      */
@@ -47,13 +47,7 @@
       return; // Not Found
     }
 
-    const {
-      name: collectionName,
-      label,
-      files,
-      _i18n: { hasLocales, locales, defaultLocale = 'default' },
-    } = $selectedCollection;
-
+    const { name: collectionName, label, create, _fileMap, _i18n } = $selectedCollection;
     const collectionLabel = label || collectionName;
 
     if (!_state) {
@@ -72,23 +66,23 @@
       return;
     }
 
-    if (files) {
+    if (_fileMap) {
       // File collection
-      if (_state === 'entries' && _id) {
-        const selectedEntry = getFile(collectionName, _id);
-        const collectionFile = files.find((f) => f.name === _id);
+      if (_state === 'entries' && _slug) {
+        const selectedEntry = getFile(collectionName, _slug);
+        const collectionFile = _fileMap[_slug];
 
         if (selectedEntry) {
           createDraft(selectedEntry);
         } else if (collectionFile) {
+          const { locales } = collectionFile._i18n;
+
           // File is not yet created
           createDraft({
             collectionName,
             fileName: collectionFile.name,
             slug: collectionFile.name,
-            locales: Object.fromEntries(
-              (hasLocales ? locales : ['default']).map((_locale) => [_locale, {}]),
-            ),
+            locales: Object.fromEntries(locales.map((_locale) => [_locale, {}])),
           });
         }
 
@@ -101,7 +95,7 @@
       }
     } else {
       // Folder collection
-      if (_state === 'new' && !_id && $selectedCollection.create) {
+      if (_state === 'new' && !_slug && create) {
         createDraft({ collectionName }, params);
 
         $announcedPageStatus = $_('creating_x_collection_entry', {
@@ -111,10 +105,12 @@
         });
       }
 
-      if (_state === 'entries' && _id) {
-        const selectedEntry = $listedEntries.find(({ slug }) => slug === _id);
+      if (_state === 'entries' && _slug) {
+        const selectedEntry = $listedEntries.find(({ slug }) => slug === _slug);
 
         if (selectedEntry) {
+          const { defaultLocale } = _i18n;
+
           createDraft(selectedEntry);
 
           $announcedPageStatus = $_('editing_x_collection_entry', {

@@ -3,7 +3,7 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { _, locale as appLocale, locales as appLocales } from 'svelte-i18n';
   import { siteConfig } from '$lib/services/config';
-  import { getLocaleLabel } from '$lib/services/i18n';
+  import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { allTranslationServices } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/prefs';
 </script>

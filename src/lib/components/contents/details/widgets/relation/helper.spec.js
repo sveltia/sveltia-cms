@@ -3,23 +3,15 @@ import { getOptions } from '$lib/components/contents/details/widgets/relation/he
 import { siteConfig } from '$lib/services/config';
 
 describe('Test getOptions()', () => {
-  const locale = 'default';
-
-  /** @type {I18nConfig} */
-  const _i18n = {
-    structure: 'single_file',
-    hasLocales: false,
-    defaultLocale: 'default',
-    locales: ['default'],
-  };
+  const locale = '_default';
 
   siteConfig.set({
     media_folder: 'static/assets/uploads',
     public_folder: '/assets/uploads',
     collections: [
-      { name: 'authors', fields: [], _i18n },
-      { name: 'pages', fields: [], _i18n },
-      { name: 'relation_files', fields: [], _i18n },
+      { name: 'authors', fields: [] },
+      { name: 'pages', fields: [] },
+      { name: 'relation_files', fields: [] },
     ],
   });
 
@@ -43,7 +35,7 @@ describe('Test getOptions()', () => {
         collectionName: 'members',
         slug: 'melvin-lucas',
         locales: {
-          default: {
+          _default: {
             content: {
               slug: 'member-melvin-lucas',
               name: {
@@ -60,7 +52,7 @@ describe('Test getOptions()', () => {
         collectionName: 'members',
         slug: 'elsie-mcbride',
         locales: {
-          default: {
+          _default: {
             content: {
               slug: 'member-elsie-mcbride',
               name: {
@@ -77,7 +69,7 @@ describe('Test getOptions()', () => {
         collectionName: 'members',
         slug: 'maxine-field',
         locales: {
-          default: {
+          _default: {
             content: {
               slug: 'member-maxine-field',
               name: {
@@ -153,7 +145,7 @@ describe('Test getOptions()', () => {
         collectionName: 'relation_files',
         fileName: 'cities',
         locales: {
-          default: {
+          _default: {
             content: {
               cities: [
                 { id: 'YYZ', name: 'Toronto' },
@@ -204,7 +196,7 @@ describe('Test getOptions()', () => {
       {
         collectionName: 'pages',
         locales: {
-          default: {
+          _default: {
             content: {
               route: '/about',
               sections: [
@@ -218,7 +210,7 @@ describe('Test getOptions()', () => {
       {
         collectionName: 'pages',
         locales: {
-          default: {
+          _default: {
             content: {
               route: '/projects',
               sections: [

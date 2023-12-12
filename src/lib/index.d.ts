@@ -12,6 +12,13 @@ interface FileSystemFileHandle {
 }
 
 /**
+ * @see https://github.com/microsoft/TypeScript/issues/29129
+ */
+namespace Intl {
+  const getCanonicalLocales: (string) => string[];
+}
+
+/**
  * Silence some import errors.
  * @see https://stackoverflow.com/q/70682803
  */

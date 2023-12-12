@@ -2,7 +2,7 @@
   import { MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { copyFromLocale, entryDraft } from '$lib/services/contents/editor';
-  import { getLocaleLabel } from '$lib/services/i18n';
+  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import {
     pendingTranslatorRequest,
     showTranslatorApiKeyDialog,
@@ -25,10 +25,9 @@
    */
   export let anchor;
 
-  $: ({ collection, currentLocales, currentValues } = $entryDraft);
-  $: ({ hasLocales = false, locales = ['default'] } =
-    collection._i18n ?? /** @type {I18nConfig} */ ({}));
-  $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
+  $: ({ collection, collectionFile, currentLocales, currentValues } = $entryDraft);
+  $: ({ i18nEnabled, locales } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  $: otherLocales = i18nEnabled ? locales.filter((l) => l !== locale) : [];
 
   $: ({
     serviceId,

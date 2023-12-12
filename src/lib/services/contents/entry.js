@@ -21,7 +21,8 @@ export const getFieldConfig = ({
   keyPath,
 }) => {
   const collection = getCollection(collectionName);
-  const { fields } = fileName ? collection.files.find(({ name }) => name === fileName) : collection;
+  const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+  const { fields } = collectionFile ?? collection;
   const keyPathArray = keyPath.split('.');
   /**
    * @type {Field}

@@ -3,7 +3,7 @@ import { get, writable } from 'svelte/store';
 import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
-import { isObject } from '$lib/services/utils/misc';
+import { getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
  * @type {import('svelte/store').Writable<boolean>}
@@ -31,75 +31,28 @@ export const selectedCollection = writable();
 export const selectedEntries = writable([]);
 
 /**
- * Get the i18n config for the given collection.
- * @param {Collection} collection Collection.
- * @returns {I18nConfig} Config.
- * @see https://decapcms.org/docs/beta-features/#i18n-support
- */
-const getCollectionI18n = (collection) => {
-  const _siteConfig = get(siteConfig);
-  /**
-   * @type {I18nFileStructure}
-   */
-  let structure = 'single_file';
-  /**
-   * @type {string[]}
-   */
-  let locales = [];
-  /**
-   * @type {string}
-   */
-  let defaultLocale;
-  /**
-   * @type {boolean}
-   */
-  let saveAllLocales = true;
-
-  if (collection?.i18n === true && isObject(_siteConfig?.i18n)) {
-    ({
-      structure = 'single_file',
-      locales = [],
-      default_locale: defaultLocale = undefined,
-      save_all_locales: saveAllLocales = true,
-    } = _siteConfig.i18n);
-  }
-
-  if (isObject(collection?.i18n)) {
-    ({
-      structure = 'single_file',
-      locales = [],
-      default_locale: defaultLocale = undefined,
-      save_all_locales: saveAllLocales = true,
-    } = /** @type {RawI18nConfig} */ (collection.i18n));
-  }
-
-  const hasLocales = !!locales.length;
-
-  return {
-    structure,
-    hasLocales,
-    locales: hasLocales ? locales : [],
-    // eslint-disable-next-line no-nested-ternary
-    defaultLocale: !hasLocales
-      ? undefined
-      : defaultLocale && locales.includes(defaultLocale)
-        ? defaultLocale
-        : locales[0],
-    saveAllLocales,
-  };
-};
-
-/**
  * Get a collection by name.
  * @param {string} name Collection name.
- * @returns {Collection} Collection.
+ * @returns {Collection | undefined} Collection, including some extra, normalized properties.
  */
 export const getCollection = (name) => {
   const collection = get(siteConfig).collections.find((c) => c.name === name);
 
+  if (!collection) {
+    return undefined;
+  }
+
   return {
     ...collection,
-    _i18n: getCollectionI18n(collection),
+    _fileMap: collection.files?.length
+      ? Object.fromEntries(
+          collection.files.map((file) => [
+            file.name,
+            { ...file, _i18n: getI18nConfig(collection, file) },
+          ]),
+        )
+      : undefined,
+    _i18n: getI18nConfig(collection),
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
   };
 };
@@ -131,7 +84,7 @@ export const getEntriesByCollection = (collectionName) => {
 
   const {
     filter,
-    _i18n: { defaultLocale = 'default' },
+    _i18n: { defaultLocale },
   } = collection;
 
   return get(allEntries).filter(

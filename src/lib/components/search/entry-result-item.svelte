@@ -17,11 +17,11 @@
 
   $: ({ slug, locales, fileName, collectionName } = entry);
   $: collection = getCollection(collectionName);
-  $: file = fileName ? collection.files.find(({ name }) => name === fileName) : undefined;
-  $: ({ defaultLocale = 'default' } = collection._i18n);
+  $: collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+  $: ({ defaultLocale } = collection._i18n);
   $: locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
   $: ({ content } = locales[locale] ?? {});
-  $: firstImageField = !file
+  $: firstImageField = !collectionFile
     ? collection.fields?.find(({ widget }) => widget === 'image')
     : undefined;
 
@@ -48,9 +48,9 @@
       {collection.label || collection.name}
     </GridCell>
     <GridCell class="title">
-      {#if file}
-        {file.label}
-      {:else}
+      {#if collectionFile}
+        {collectionFile.label || collectionFile.name}
+      {:else if content}
         {content[collection.identifier_field] || content.title || content.name || content.label}
       {/if}
     </GridCell>

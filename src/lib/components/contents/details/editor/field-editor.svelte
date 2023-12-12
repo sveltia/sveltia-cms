@@ -6,6 +6,7 @@
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import { editors } from '$lib/components/contents/details/widgets';
   import { entryDraft, revertChanges } from '$lib/services/contents/editor';
+  import { defaultI18nConfig } from '$lib/services/contents/i18n';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
@@ -49,30 +50,28 @@
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
     : undefined;
   $: isList = widgetName === 'list' || (hasMultiple && multiple);
-  $: ({
-    hasLocales = false,
-    locales = ['default'],
-    defaultLocale = 'default',
-  } = $entryDraft.collection._i18n ?? /** @type {I18nConfig} */ ({}));
-  $: otherLocales = hasLocales ? locales.filter((l) => l !== locale) : [];
-  $: canTranslate = hasLocales && (i18n === true || i18n === 'translate');
-  $: canDuplicate = hasLocales && i18n === 'duplicate';
+  $: ({ collection, collectionFile, originalValues, currentValues, validities } = $entryDraft);
+  $: ({ i18nEnabled, locales, defaultLocale } =
+    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  $: otherLocales = i18nEnabled ? locales.filter((l) => l !== locale) : [];
+  $: canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
+  $: canDuplicate = i18nEnabled && i18n === 'duplicate';
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
 
   // Multiple values are flattened in the value map object
   $: currentValue = isList
-    ? Object.entries($entryDraft.currentValues[locale])
+    ? Object.entries(currentValues[locale])
         .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
         .map(([, val]) => val)
         .filter((val) => val !== undefined)
-    : $entryDraft.currentValues[locale][keyPath];
+    : currentValues[locale][keyPath];
   $: originalValue = isList
-    ? Object.entries($entryDraft.originalValues[locale])
+    ? Object.entries(originalValues[locale])
         .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
         .map(([, val]) => val)
         .filter((val) => val !== undefined)
-    : $entryDraft.originalValues[locale][keyPath];
-  $: validity = $entryDraft.validities[locale][keyPath];
+    : originalValues[locale][keyPath];
+  $: validity = validities[locale][keyPath];
 
   $: fieldLabel = label || fieldName;
   $: readonly = i18n === 'duplicate' && locale !== defaultLocale;

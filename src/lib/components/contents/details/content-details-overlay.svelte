@@ -11,7 +11,7 @@
     entryDraft,
     entryEditorSettings,
   } from '$lib/services/contents/editor';
-  import { getLocaleLabel } from '$lib/services/i18n';
+  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
    * @type {HTMLElement | undefined}
@@ -26,11 +26,8 @@
 
   $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ showPreview, paneStates } = $entryEditorSettings);
-  $: ({
-    hasLocales = false,
-    locales = ['default'],
-    defaultLocale = 'default',
-  } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
+  $: ({ i18nEnabled, locales, defaultLocale } =
+    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
 
@@ -78,7 +75,7 @@
     $editorLeftPane = { mode: 'edit', locale: $editorLeftPane?.locale ?? defaultLocale };
 
     if (!showPreview || !canPreview) {
-      const otherLocales = hasLocales ? locales.filter((l) => l !== $editorLeftPane?.locale) : [];
+      const otherLocales = i18nEnabled ? locales.filter((l) => l !== $editorLeftPane?.locale) : [];
 
       $editorRightPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;
     } else {

@@ -120,8 +120,13 @@
  */
 
 /**
- * ISO 639-1 locale code like `en`, or `default` for the unspecified default content locale.
- * @typedef {string} LocaleCode
+ * ISO 639-1 locale code like `en`.
+ * @typedef {string} StandardLocaleCode
+ */
+
+/**
+ * ISO 639-1 locale code or `_default` for the unspecified default content locale.
+ * @typedef {StandardLocaleCode | '_default'} LocaleCode
  */
 
 /**
@@ -191,20 +196,20 @@
  * @property {LocaleCode[]} locales List of locales.
  * @property {LocaleCode} [default_locale] Default locale.
  * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales. If
- * `false`, editors will be able to disable the output of non-default locales through the UI.
+ * `false`, editors will be able to disable the output of non-default locales through the UI. An
+ * option suggested in https://github.com/decaporg/decap-cms/issues/6932.
  * @see https://decapcms.org/docs/beta-features/#i18n-support
  */
 
 /**
- * Collection’s canonical i18n configuration.
+ * Normalized i18n configuration of a collection or collection file.
  * @typedef {object} I18nConfig
+ * @property {boolean} i18nEnabled Whether i18n is enabled for the collection or collection file.
+ * @property {boolean} [saveAllLocales] Whether to save the entries in all the locales. If `false`,
+ * editors will be able to disable the output of non-default locales through the UI.
+ * @property {LocaleCode[]} locales List of locales, or `['_default']` if i18n is not enabled.
+ * @property {LocaleCode} defaultLocale Default locale, or `_default` if i18n is not enabled.
  * @property {I18nFileStructure} structure File structure.
- * @property {boolean} hasLocales Whether i18n is enabled for the collection.
- * @property {LocaleCode[]} locales List of locales. Can be an empty array if i18n is not enabled.
- * @property {LocaleCode} [defaultLocale] Default locale. Can be `undefined` if i18n is not
- * enabled.
- * @property {boolean} [saveAllLocales] Whether to save collection entries in all the locales. If
- * `false`, editors will be able to disable the output of non-default locales through the UI.
  */
 
 /**
@@ -249,7 +254,7 @@
  * @property {'unicode' | 'ascii'} [slug.encoding] Encoding option.
  * @property {boolean} [slug.clean_accents] Whether to remove accents.
  * @property {string} [slug.sanitize_replacement] String to replace sanitized characters.
- * @property {Collection[]} [collections] Collections.
+ * @property {RawCollection[]} [collections] Collections.
  * @property {RawI18nConfig} [i18n] Global i18n configuration.
  * @property {string} [publish_mode] Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] Whether to show preview links in Editorial Workflow.
@@ -267,15 +272,15 @@
  */
 
 /**
- * Collection definition.
- * @typedef {object} Collection
+ * A raw collection defined in the configuration file.
+ * @typedef {object} RawCollection
  * @property {string} name Collection name.
  * @property {string} [label] UI label.
  * @property {string} [label_singular] Singular UI label.
  * @property {string} [description] Description.
  * @property {string} [icon] Material Symbols icon name.
  * @property {string} [identifier_field] Field name to be used as the ID of a collection item.
- * @property {CollectionFile[]} [files] File list for a file collection.
+ * @property {RawCollectionFile[]} [files] File list for a file collection.
  * @property {string} [folder] Folder path for a folder/entry collection.
  * @property {Field[]} [fields] Fields for a folder/entry collection.
  * @property {string} [path] Subfolder path for a folder/entry collection.
@@ -302,25 +307,51 @@
  * @property {ViewFilter[]} [view_filters] Predefined view filters.
  * @property {ViewFilter[]} [view_groups] Predefined view groups.
  * @property {RawI18nConfig | boolean} [i18n] I18n configuration.
- * @property {I18nConfig} _i18n Normalized i18n configuration with the global i18n config combined.
  * @property {string} [preview_path] Preview URL template.
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
  * @property {object} [editor] Editor view configuration.
  * @property {boolean} editor.preview Whether to hide the preview.
- * @property {CollectionAssetFolder} [_assetFolder] Asset folder configuration.
  * @see https://decapcms.org/docs/configuration-options/#collections
  */
 
 /**
- * Collection file.
- * @typedef {object} CollectionFile
- * @property {string} label File label.
+ * Extra properties for a collection.
+ * @typedef {object} ExtraCollectionProps
+ * @property {{ [fileName: string]: CollectionFile }} [_fileMap] File map with normalized collection
+ * file definitions. (File collection only)
+ * @property {I18nConfig} _i18n Normalized i18n configuration combined with the top-level
+ * configuration.
+ * @property {CollectionAssetFolder} [_assetFolder] Asset folder configuration.
+ */
+
+/**
+ * A collection definition.
+ * @typedef {RawCollection & ExtraCollectionProps} Collection
+ */
+
+/**
+ * A raw collection file defined in the configuration file.
+ * @typedef {object} RawCollectionFile
  * @property {string} name File name.
+ * @property {string} [label] File label.
  * @property {string} file File path.
  * @property {Field[]} fields Fields.
+ * @property {RawI18nConfig | boolean} [i18n] I18n configuration.
  * @property {object} [editor] Editor view configuration.
  * @property {boolean} editor.preview Whether to hide the preview.
  * @see https://decapcms.org/docs/collection-types/#file-collections
+ */
+
+/**
+ * Extra properties for a collection file.
+ * @typedef {object} ExtraCollectionFileProps
+ * @property {I18nConfig} _i18n Normalized i18n configuration combined with the top-level and
+ * collection-level configuration.
+ */
+
+/**
+ * A collection file definition.
+ * @typedef {RawCollectionFile & ExtraCollectionFileProps} CollectionFile
  */
 
 /**
@@ -559,7 +590,7 @@
  * @property {string} [slug] Entry slug.
  * @property {{ [locale: LocaleCode]: LocalizedEntry }} [locales] Localized content map keyed with a
  * locale code. When i18n is not enabled with the site configuration, there will be one single
- * property named `default`.
+ * property named `_default`.
  * @property {string} collectionName Collection name.
  * @property {string} [fileName] File name for a file collection.
  * @property {CommitAuthor} [commitAuthor] Git committer info for a Git backend.
