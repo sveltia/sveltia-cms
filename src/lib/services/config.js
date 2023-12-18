@@ -90,7 +90,7 @@ export const fetchSiteConfig = async () => {
     }
 
     siteConfig.set(config);
-  } catch (error) {
+  } catch (/** @type {any} */ error) {
     siteConfig.set({
       error: error.name === 'Error' ? error.message : get(_)('config.error.unexpected'),
     });

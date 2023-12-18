@@ -82,14 +82,14 @@ export const signInAutomatically = async () => {
 
     try {
       await get(backend).fetchFiles();
-    } catch (ex) {
+    } catch (/** @type {any} */ error) {
       // The API request may fail if the cached token has been expired or revoked. Then let the user
       // sign in again. 404 Not Found is also considered an authentication error.
       // https://docs.github.com/en/rest/overview/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource
-      if ([401, 403, 404].includes(ex.cause?.status)) {
+      if ([401, 403, 404].includes(error.cause?.status)) {
         unauthenticated.set(true);
       } else {
-        logError(ex);
+        logError(error);
       }
     }
   }
@@ -105,8 +105,8 @@ export const signInManually = async (savedToken = '') => {
 
   try {
     _user = await get(backend).signIn(savedToken);
-  } catch (ex) {
-    logError(ex);
+  } catch (/** @type {any} */ error) {
+    logError(error);
 
     return;
   }
@@ -115,7 +115,7 @@ export const signInManually = async (savedToken = '') => {
 
   try {
     await get(backend).fetchFiles();
-  } catch (ex) {
-    logError(ex);
+  } catch (/** @type {any} */ error) {
+    logError(error);
   }
 };

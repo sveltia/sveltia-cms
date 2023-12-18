@@ -86,7 +86,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
     }
 
     return `${dateStr}T${timeStr}`;
-  } catch (ex) {
+  } catch {
     return undefined;
   }
 };

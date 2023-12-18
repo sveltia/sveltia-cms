@@ -92,7 +92,7 @@
       saving = true;
       await saveEntry({ skipCI });
       goBack(`/collections/${collection?.name}`);
-    } catch (error) {
+    } catch (/** @type {any} */ error) {
       if (error.message === 'validation_failed') {
         showValidationToast = true;
       } else {

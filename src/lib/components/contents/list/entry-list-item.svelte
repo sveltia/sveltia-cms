@@ -63,8 +63,8 @@
 
 <GridRow
   aria-rowindex={$listedEntries.indexOf(entry)}
-  on:change={(/** @type {CustomEvent} */ { detail: { selected } }) => {
-    updateSelection(selected);
+  on:change={(event) => {
+    updateSelection(/** @type {CustomEvent} */ (event).detail.selected);
   }}
   on:click={() => {
     goto(`/collections/${$selectedCollection.name}/entries/${entry.slug}`);

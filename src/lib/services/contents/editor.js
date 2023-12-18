@@ -340,7 +340,7 @@ const unflattenObj = (obj) => unflatten(JSON.parse(JSON.stringify(obj)));
 
 /**
  * Traverse the given object by decoding dot-connected `keyPath`.
- * @param {{ [key: string]: any }} obj Unflatten object.
+ * @param {any} obj Unflatten object.
  * @param {string} keyPath Dot-connected field name.
  * @returns {object[]} Values.
  */

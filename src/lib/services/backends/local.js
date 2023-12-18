@@ -170,7 +170,7 @@ const getAllFiles = async () => {
             size: file.size,
             text: name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? await readAsText(file) : null,
           });
-        } catch (error) {
+        } catch (/** @type {any} */ error) {
           // eslint-disable-next-line no-console
           console.error(error);
         }
@@ -229,7 +229,7 @@ const commitChanges = async (changes) => {
 
           await handle.removeEntry(fileName);
         }
-      } catch (error) {
+      } catch (/** @type {any} */ error) {
         // eslint-disable-next-line no-console
         console.error(error);
       }
