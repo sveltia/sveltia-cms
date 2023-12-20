@@ -380,6 +380,10 @@ export const strings = {
   // Settings
   categories: 'カテゴリ',
   prefs: {
+    changes: {
+      api_key_saved: 'API キーが保存されました。',
+      api_key_removed: 'API キーが削除されました。',
+    },
     error: {
       permission_denied:
         'ブラウザーストレージ (Cookie) アクセスが拒否されました。許可設定を確認の上、再度お試しください。',
@@ -424,6 +428,8 @@ export const strings = {
         description:
           '「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。',
         field_label: 'デプロイフック URL',
+        url_saved: 'ウェブフック URL が保存されました。',
+        url_removed: 'ウェブフック URL が削除されました。',
       },
       developer_mode: {
         title: '開発者モード',

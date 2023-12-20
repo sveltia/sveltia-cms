@@ -1,12 +1,15 @@
 <script>
   import { Switch, TabPanel, TextInput } from '@sveltia/ui';
+  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/prefs';
+  import { siteConfig } from '$lib/services/config';
 
   $: ({
     backend: { automatic_deployments: autoDeployEnabled },
   } = $siteConfig);
+
+  const dispatch = createEventDispatcher();
 </script>
 
 <TabPanel id="prefs-tab-advanced">
@@ -23,6 +26,15 @@
           bind:value={$prefs.deployHookURL}
           flex
           label={$_('prefs.advanced.deploy_hook.field_label')}
+          on:change={() => {
+            dispatch('change', {
+              message: $_(
+                $prefs.deployHookURL
+                  ? 'prefs.advanced.deploy_hook.url_saved'
+                  : 'prefs.advanced.deploy_hook.url_removed',
+              ),
+            });
+          }}
         />
       </div>
     </section>

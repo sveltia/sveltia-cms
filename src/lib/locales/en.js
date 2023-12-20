@@ -378,6 +378,10 @@ export const strings = {
   // Settings
   categories: 'Categories',
   prefs: {
+    changes: {
+      api_key_saved: 'API key has been saved.',
+      api_key_removed: 'API key has been removed.',
+    },
     error: {
       permission_denied:
         'Browser storage (Cookie) access has been denied. Please check the permission and try again.',
@@ -422,6 +426,8 @@ export const strings = {
         description:
           'Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.',
         field_label: 'Deploy Hook URL',
+        url_saved: 'Webhook URL has been saved.',
+        url_removed: 'Webhook URL has been removed.',
       },
       developer_mode: {
         title: 'Developer Mode',

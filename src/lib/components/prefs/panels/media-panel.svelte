@@ -1,9 +1,12 @@
 <script>
   import { TabPanel, TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
+  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { prefs } from '$lib/services/prefs';
   import { allStockPhotoServices } from '$lib/services/integrations/media-libraries';
+
+  const dispatch = createEventDispatcher();
 </script>
 
 <TabPanel id="prefs-tab-media">
@@ -33,6 +36,15 @@
           aria-label={$_('prefs.media.stock_photos.field_label', {
             values: { service: serviceLabel },
           })}
+          on:change={() => {
+            dispatch('change', {
+              message: $_(
+                $prefs.apiKeys[serviceId]
+                  ? 'prefs.changes.api_key_saved'
+                  : 'prefs.changes.api_key_removed',
+              ),
+            });
+          }}
         />
       </div>
     </section>

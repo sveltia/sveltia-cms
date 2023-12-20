@@ -1,5 +1,5 @@
 <script>
-  import { Dialog, Icon, Tab, TabList } from '@sveltia/ui';
+  import { Alert, Dialog, Icon, Tab, TabList, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
   import AppearancePanel from '$lib/components/prefs/panels/appearance-panel.svelte';
@@ -12,6 +12,8 @@
   export let open = false;
 
   let selectedPanel = 'appearance';
+  let toastMessage = '';
+  let showToast = false;
 
   $: panels = [
     { key: 'appearance', icon: 'palette', component: AppearancePanel },
@@ -45,10 +47,20 @@
       {/each}
     </TabList>
     {#each panels as { key, component } (key)}
-      <svelte:component this={component} />
+      <svelte:component
+        this={component}
+        on:change={({ detail: { message } }) => {
+          toastMessage = message;
+          showToast = true;
+        }}
+      />
     {/each}
   </div>
 </Dialog>
+
+<Toast bind:show={showToast}>
+  <Alert status="success">{toastMessage}</Alert>
+</Toast>
 
 <style lang="scss">
   .wrapper {
