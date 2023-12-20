@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for [Netlify/Decap CMS](https://decapcms.org/). In some simple cases, migration is as easy as a single line of code change, although we’re still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and [Decap CMS](https://decapcms.org/). In some simple cases, migration is as easy as a single line of code change, although we’re still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1-20231124.webp)<br>
 
@@ -167,7 +167,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 - [Svelte 5](https://svelte.dev/blog/runes) migration
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
-- Localization other than Japanese
+- Localization
 - Documentation
 - Marketing site
 - Demo site
@@ -269,6 +269,7 @@ In Sveltia CMS, those per-collection media folders are displayed prominently for
 
 Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the content editor. To enable the high-quality, quick translation feature:
 
+1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/beta-features/#i18n-support) with multiple locales.
 1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
 1. Go back to Sveltia CMS, click on the Account button in the top right corner, then click Settings.
 1. Paste your key to the DeepL API Authentication Key field, and close the Settings dialog.
