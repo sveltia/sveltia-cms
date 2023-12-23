@@ -8,9 +8,9 @@ const endpoint = 'https://pixabay.com/api';
 
 /**
  * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query.
- * @param {object} options Options.
- * @param {string} options.apiKey API key.
+ * @param {string} query - Search query.
+ * @param {object} options - Options.
+ * @param {string} options.apiKey - API key.
  * @returns {Promise<ExternalAsset[]>} Assets.
  * @see https://pixabay.com/api/docs/
  * @todo Support video files.
@@ -39,15 +39,15 @@ const search = async (query, { apiKey }) => {
 
   /**
    * @type {{
-   *   id: number,
-   *   webformatURL: string,
-   *   previewURL: string,
-   *   largeImageURL: string,
-   *   imageWidth: number,
-   *   imageHeight: number,
-   *   pageURL: string,
-   *   tags: string,
-   *   user: string
+   * id: number,
+   * webformatURL: string,
+   * previewURL: string,
+   * largeImageURL: string,
+   * imageWidth: number,
+   * imageHeight: number,
+   * pageURL: string,
+   * tags: string,
+   * user: string
    * }[]}
    */
   const results = (await response.json()).hits;

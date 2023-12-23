@@ -34,9 +34,9 @@ export const currentView = writable({});
 
 /**
  * Transform summary template.
- * @param {string} summary Original summary.
- * @param {string} tf Transformation.
- * @param {Field} fieldConfig Field configuration.
+ * @param {string} summary - Original summary.
+ * @param {string} tf - Transformation.
+ * @param {Field} fieldConfig - Field configuration.
  * @returns {string} Transformed summary.
  * @see https://decapcms.org/docs/beta-features/#summary-string-template-transformations
  */
@@ -97,11 +97,11 @@ const transformSummary = (summary, tf, fieldConfig) => {
 
 /**
  * Parse the collection summary template to generate the summary to be displayed on the entry list.
- * @param {Collection} collection Entry’s collection.
- * @param {Entry} entry Entry.
- * @param {LocaleCode} locale Locale.
- * @param {object} [options] Options.
- * @param {boolean} [options.useTemplate] Whether to use the collection’s template if available.
+ * @param {Collection} collection - Entry’s collection.
+ * @param {Entry} entry - Entry.
+ * @param {LocaleCode} locale - Locale.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.useTemplate] - Whether to use the collection’s template if available.
  * @returns {string} Formatted summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
@@ -128,7 +128,8 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
   const valueMap = flatten(content);
 
   /**
-   * @param {string} tag Field name or one of special tags.
+   * Replacer.
+   * @param {string} tag - Field name or one of special tags.
    * @returns {string} Replaced string.
    */
   const replace = (tag) => {
@@ -195,8 +196,8 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
 
 /**
  * Sort the given entries.
- * @param {Entry[]} entries Entry list.
- * @param {SortingConditions} conditions Sorting conditions.
+ * @param {Entry[]} entries - Entry list.
+ * @param {SortingConditions} conditions - Sorting conditions.
  * @returns {Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
@@ -245,8 +246,8 @@ const sortEntries = (entries, { key, order }) => {
 
 /**
  * Filter the given entries.
- * @param {Entry[]} entries Entry list.
- * @param {FilteringConditions[]} filters One or more filtering conditions.
+ * @param {Entry[]} entries - Entry list.
+ * @param {FilteringConditions[]} filters - One or more filtering conditions.
  * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
@@ -286,8 +287,8 @@ const filterEntries = (entries, filters) => {
 
 /**
  * Group the given entries.
- * @param {Entry[]} entries Entry list.
- * @param {GroupingConditions} [conditions] Grouping conditions.
+ * @param {Entry[]} entries - Entry list.
+ * @param {GroupingConditions} [conditions] - Grouping conditions.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
@@ -376,9 +377,9 @@ const entryListSettings = writable({}, (set) => {
 });
 
 /**
- * Get a field’s label by key
- * @param {Collection} collection Collection.
- * @param {string} key Field name, which can be dot notation like `name.en` for a nested field,
+ * Get a field’s label by key.
+ * @param {Collection} collection - Collection.
+ * @param {string} key - Field name, which can be dot notation like `name.en` for a nested field,
  * or one of other entry metadata property keys: `slug`, `commit_author` and `commit_date` .
  * @returns {string} Label. For a nested field, it would be something like `Name – English`.
  */

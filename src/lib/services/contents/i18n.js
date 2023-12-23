@@ -17,8 +17,8 @@ export const defaultI18nConfig = {
 
 /**
  * Get the normalized i18n configuration for the given collection or collection file.
- * @param {RawCollection} collection Collection.
- * @param {RawCollectionFile} [file] Collection file.
+ * @param {RawCollection} collection - Collection.
+ * @param {RawCollectionFile} [file] - Collection file.
  * @returns {I18nConfig} Config.
  * @see https://decapcms.org/docs/beta-features/#i18n-support
  */
@@ -76,7 +76,7 @@ export const getI18nConfig = (collection, file) => {
 
 /**
  * Get the canonical locale of the given locale that can be used for various `Intl` methods.
- * @param {LocaleCode} locale Locale.
+ * @param {LocaleCode} locale - Locale.
  * @returns {StandardLocaleCode | undefined} Locale or `undefined` if not determined.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument
  */
@@ -96,7 +96,7 @@ export const getCanonicalLocale = (locale) => {
 
 /**
  * Translate the given locale code in the application UI locale.
- * @param {LocaleCode} locale Locale code like `en`.
+ * @param {LocaleCode} locale - Locale code like `en`.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
  * locale code as is.
  */

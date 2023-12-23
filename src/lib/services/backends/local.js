@@ -26,8 +26,8 @@ let rootDirHandleDB;
  * Get the project’s root directory handle so the app can read all the files under the directory.
  * The handle will be cached in IndexedDB for later use. Note that we need to request permission
  * each time the app is loaded.
- * @param {object} [options] Options.
- * @param {boolean} [options.forceReload] Whether to force getting the handle.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.forceReload] - Whether to force getting the handle.
  * @returns {Promise<FileSystemDirectoryHandle>} Directory handle.
  * @throws {Error} When the File System Access API is not supported by the user’s browser.
  * @see https://developer.chrome.com/articles/file-system-access/#stored-file-or-directory-handles-and-permissions
@@ -100,7 +100,7 @@ const signOut = async () => {
 
 /**
  * Get a file or directory handle at the given path.
- * @param {string} path Path to the file/directory.
+ * @param {string} path - Path to the file/directory.
  * @returns {Promise<(FileSystemFileHandle|FileSystemDirectoryHandle)>} Handle.
  */
 const getHandleByPath = async (path) => {
@@ -135,7 +135,8 @@ const getAllFiles = async () => {
   ].map((path) => stripSlashes(path));
 
   /**
-   * @param {string} path Path.
+   * Get a regular expression to match the given path.
+   * @param {string} path - Path.
    * @returns {RegExp} RegEx.
    */
   const getRegEx = (path) => new RegExp(`^${escapeRegExp(path)}\\b`);
@@ -143,7 +144,7 @@ const getAllFiles = async () => {
 
   /**
    * Retrieve all the files under the given directory recursively.
-   * @param {FileSystemDirectoryHandle | any} dirHandle Directory handle.
+   * @param {FileSystemDirectoryHandle | any} dirHandle - Directory handle.
    */
   const iterate = async (dirHandle) => {
     for await (const [name, handle] of dirHandle.entries()) {
@@ -207,7 +208,7 @@ const fetchFiles = async () => {
 
 /**
  * Save entries or assets locally.
- * @param {FileChange[]} changes File changes to be saved.
+ * @param {FileChange[]} changes - File changes to be saved.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry
  */

@@ -84,8 +84,8 @@
 
   /**
    * Save the entry draft.
-   * @param {object} [options] Options.
-   * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
+   * @param {object} [options] - Options.
+   * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
    */
   const save = async ({ skipCI = undefined } = {}) => {
     try {

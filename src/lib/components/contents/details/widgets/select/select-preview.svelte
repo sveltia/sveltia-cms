@@ -32,7 +32,7 @@
 
   /**
    * Get the display label by value.
-   * @param {any} value Value.
+   * @param {any} value - Value.
    * @returns {string} Label.
    */
   const getLabel = (value) =>

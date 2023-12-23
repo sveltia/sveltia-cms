@@ -68,8 +68,8 @@ export const entryDraft = writable();
 /**
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
- * @param {Field[]} fields Field list of a collection.
- * @param {{ [key: string]: string }} [defaultValues] Dynamic default values.
+ * @param {Field[]} fields - Field list of a collection.
+ * @param {{ [key: string]: string }} [defaultValues] - Dynamic default values.
  * @returns {FlattenedEntryContent} Flattened entry content for creating a new draft content or
  * adding a new list item.
  * @todo Make this more diligent.
@@ -81,9 +81,9 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
   /**
    * Get the default value for the given field. Check if a dynamic default value is specified, then
    * look for the field configuration’s `default` property.
-   * @param {object} args Arguments.
-   * @param {Field} args.fieldConfig Field configuration.
-   * @param {string} args.keyPath Field key path, e.g. `author.name`.
+   * @param {object} args - Arguments.
+   * @param {Field} args.fieldConfig - Field configuration.
+   * @param {string} args.keyPath - Field key path, e.g. `author.name`.
    * @see https://decapcms.org/docs/beta-features/#dynamic-default-values
    */
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
@@ -198,14 +198,14 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
 
 /**
  * Create a Proxy that automatically copies a field value to other locale if the field’s i18n
- * strategy is “duplicate.”
- * @param {object} args Arguments.
- * @param {EntryDraft | any} args.draft Entry draft.
- * @param {'currentValues' | 'files'} [args.prop] Property name in the {@link entryDraft} store that
- * contains a locale/Proxy map.
- * @param {string} args.locale Source locale.
- * @param {object} [args.target] Target object.
- * @param {() => FlattenedEntryContent} [args.getValueMap] Optional function to get an object
+ * strategy is “duplicate.”.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft | any} args.draft - Entry draft.
+ * @param {'currentValues' | 'files'} [args.prop] - Property name in the {@link entryDraft} store
+ * that contains a locale/Proxy map.
+ * @param {string} args.locale - Source locale.
+ * @param {object} [args.target] - Target object.
+ * @param {() => FlattenedEntryContent} [args.getValueMap] - Optional function to get an object
  * holding the current entry values. It will be used for the `valueMap` argument of
  * {@link getFieldConfig}. If omitted, the proxy target will be used instead.
  * @returns {any} Created proxy.
@@ -260,10 +260,10 @@ export const createProxy = ({
 
 /**
  * Create an entry draft.
- * @param {Entry} entry Entry to be edited, or a partial `Entry` object containing at least the
+ * @param {Entry} entry - Entry to be edited, or a partial `Entry` object containing at least the
  * collection name for a new entry.
- * @param {{ [key: string]: string }} [defaultValues] Dynamic default values for a new entry passed
- * through URL parameters.
+ * @param {{ [key: string]: string }} [defaultValues] - Dynamic default values for a new entry
+ * passed through URL parameters.
  */
 export const createDraft = (entry, defaultValues) => {
   const { id, collectionName, fileName, locales } = entry;
@@ -333,15 +333,15 @@ export const createDraft = (entry, defaultValues) => {
 
 /**
  * Unproxify & unflatten the given object.
- * @param {Proxy | object} obj Original proxy or object.
+ * @param {Proxy | object} obj - Original proxy or object.
  * @returns {object} Processed object.
  */
 const unflattenObj = (obj) => unflatten(JSON.parse(JSON.stringify(obj)));
 
 /**
  * Traverse the given object by decoding dot-connected `keyPath`.
- * @param {any} obj Unflatten object.
- * @param {string} keyPath Dot-connected field name.
+ * @param {any} obj - Unflatten object.
+ * @param {string} keyPath - Dot-connected field name.
  * @returns {object[]} Values.
  */
 const getItemList = (obj, keyPath) =>
@@ -356,9 +356,9 @@ const getItemList = (obj, keyPath) =>
 
 /**
  * Update the value in a list field.
- * @param {LocaleCode} locale Target locale.
- * @param {string} keyPath Dot-connected field name.
- * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate A function to
+ * @param {LocaleCode} locale - Target locale.
+ * @param {string} keyPath - Dot-connected field name.
+ * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate - A function to
  * manipulate the list, which takes one object argument containing the value list and view state
  * list. The typical usage is `list.splice()`.
  */
@@ -388,9 +388,9 @@ export const updateListField = (locale, keyPath, manipulate) => {
 /**
  * Populate the given localized content with values from the default locale if the corresponding
  * field’s i18n configuration is `duplicate`.
- * @param {FlattenedEntryContent} content Original content.
- * @param {object} [options] Options.
- * @param {'currentValues' | 'files'} [options.prop] Property name in the {@link entryDraft} store
+ * @param {FlattenedEntryContent} content - Original content.
+ * @param {object} [options] - Options.
+ * @param {'currentValues' | 'files'} [options.prop] - Property name in the {@link entryDraft} store
  * that contains a locale/Proxy map.
  * @returns {FlattenedEntryContent} Updated content.
  */
@@ -415,7 +415,7 @@ export const copyDefaultLocaleValues = (content, { prop = 'currentValues' } = {}
 
 /**
  * Enable or disable the given locale’s content output for the current entry draft.
- * @param {LocaleCode} locale Locale.
+ * @param {LocaleCode} locale - Locale.
  */
 export const toggleLocale = (locale) => {
   entryDraft.update((draft) => {
@@ -468,12 +468,12 @@ export const toggleLocale = (locale) => {
 /**
  * Copy/translation toast state.
  * @type {import('svelte/store').Writable<{
- *   id: number,
- *   show: boolean,
- *   status: 'info' | 'success' | 'error',
- *   message: string,
- *   count: number,
- *   sourceLocale: LocaleCode,
+ * id: number,
+ * show: boolean,
+ * status: 'info' | 'success' | 'error',
+ * message: string,
+ * count: number,
+ * sourceLocale: LocaleCode,
  * }>}
  */
 export const copyFromLocaleToast = writable({
@@ -487,12 +487,12 @@ export const copyFromLocaleToast = writable({
 
 /**
  * Copy or translate field value(s) from another locale.
- * @param {string} sourceLocale Source locale, e.g. `en`.
- * @param {string} targetLocale Target locale, e.g. `ja`.
- * @param {string} [keyPath] Flattened (dot-connected) object keys that will be used for searching
+ * @param {string} sourceLocale - Source locale, e.g. `en`.
+ * @param {string} targetLocale - Target locale, e.g. `ja`.
+ * @param {string} [keyPath] - Flattened (dot-connected) object keys that will be used for searching
  * the source values. Omit this if copying all the fields. If the triggered widget is List or
  * Object, this will likely match multiple fields.
- * @param {boolean} [translate] Whether to translate the copied text fields.
+ * @param {boolean} [translate] - Whether to translate the copied text fields.
  */
 export const copyFromLocale = async (
   sourceLocale,
@@ -529,8 +529,8 @@ export const copyFromLocale = async (
 
   /**
    * Update the toast notification.
-   * @param {'info' | 'success' | 'error'} status Status.
-   * @param {string} message Message key.
+   * @param {'info' | 'success' | 'error'} status - Status.
+   * @param {string} message - Message key.
    */
   const updateToast = (status, message) => {
     copyFromLocaleToast.set({
@@ -589,8 +589,8 @@ export const copyFromLocale = async (
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
- * @param {LocaleCode} [locale] Target locale, e.g. `ja`. Can be empty if reverting everything.
- * @param {string} [keyPath] Flattened (dot-connected) object keys that will be used for searching
+ * @param {LocaleCode} [locale] - Target locale, e.g. `ja`. Can be empty if reverting everything.
+ * @param {string} [keyPath] - Flattened (dot-connected) object keys that will be used for searching
  * the source values. Omit this if copying all the fields. If the triggered widget is List or
  * Object, this will likely match multiple fields.
  */
@@ -601,9 +601,9 @@ export const revertChanges = (locale = '', keyPath = '') => {
 
   /**
    * Revert changes.
-   * @param {LocaleCode} _locale Iterating locale.
-   * @param {FlattenedEntryContent} valueMap Flattened entry content.
-   * @param {boolean} reset Whether ro remove the current value.
+   * @param {LocaleCode} _locale - Iterating locale.
+   * @param {FlattenedEntryContent} valueMap - Flattened entry content.
+   * @param {boolean} reset - Whether ro remove the current value.
    */
   const revert = (_locale, valueMap, reset = false) => {
     Object.entries(valueMap).forEach(([_keyPath, value]) => {
@@ -770,7 +770,7 @@ const validateEntry = () => {
 
 /**
  * Get the internal/public asset path configuration for the entry assets.
- * @param {any} fillSlugOptions Options to be passed to {@link fillSlugTemplate}.
+ * @param {any} fillSlugOptions - Options to be passed to {@link fillSlugTemplate}.
  * @returns {{ internalAssetFolder: string, publicAssetFolder: string }} Determined paths.
  */
 export const getEntryAssetFolderPaths = (fillSlugOptions) => {
@@ -826,9 +826,9 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
 /**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and folder collections path.
- * @param {EntryDraft} draft Entry draft.
- * @param {LocaleCode} locale Locale code.
- * @param {string} slug Entry slug.
+ * @param {EntryDraft} draft - Entry draft.
+ * @param {LocaleCode} locale - Locale code.
+ * @param {string} slug - Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
  * @see https://decapcms.org/docs/beta-features/#i18n-support
  */
@@ -876,8 +876,8 @@ const createEntryPath = (draft, locale, slug) => {
 
 /**
  * Save the entry draft.
- * @param {object} [options] Options.
- * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
  * @throws {Error} When the entry could not be validated or saved.
  */
 export const saveEntry = async ({ skipCI = undefined } = {}) => {

@@ -36,7 +36,7 @@ export const unauthenticated = writable(false);
 
 /**
  * Log an authentication error on the UI and in the browser console.
- * @param {Error} ex Exception.
+ * @param {Error} ex - Exception.
  */
 const logError = (ex) => {
   authError.set(
@@ -97,7 +97,7 @@ export const signInAutomatically = async () => {
 
 /**
  * Sign in with the given backend.
- * @param {string} [savedToken] User’s auth token. Can be empty for the local backend or when a
+ * @param {string} [savedToken] - User’s auth token. Can be empty for the local backend or when a
  * token is not saved in the local storage.
  */
 export const signInManually = async (savedToken = '') => {

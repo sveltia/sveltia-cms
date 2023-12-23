@@ -15,7 +15,8 @@
    */
   export let items = [];
   /**
-   * @param {string} [name] Item name.
+   * Function to add a new item.
+   * @param {string} [name] - Item name.
    * @returns {void}
    */
   // eslint-disable-next-line no-unused-vars

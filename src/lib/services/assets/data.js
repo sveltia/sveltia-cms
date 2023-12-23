@@ -17,8 +17,8 @@ export const assetUpdatesToast = writable({
 
 /**
  * Upload/save the given assets to the backend.
- * @param {UploadingAssets} uploadingAssets Assets to be uploaded.
- * @param {CommitChangesOptions} options Options for the backend handler.
+ * @param {UploadingAssets} uploadingAssets - Assets to be uploaded.
+ * @param {CommitChangesOptions} options - Options for the backend handler.
  */
 export const saveAssets = async ({ files, folder }, options) => {
   const assetNamesInSameFolder = get(allAssets)
@@ -77,7 +77,7 @@ export const saveAssets = async ({ files, folder }, options) => {
 
 /**
  * Delete the given assets.
- * @param {Asset[]} assets List of assets to be deleted.
+ * @param {Asset[]} assets - List of assets to be deleted.
  * @todo Update entries to remove these asset paths. If an asset is used for a required field, show
  * an error message and abort the operation.
  */
@@ -93,8 +93,8 @@ export const deleteAssets = async (assets) => {
 
 /**
  * Move assets between folders.
- * @param {Asset[]} assets Assets.
- * @param {string} directory Target directory.
+ * @param {Asset[]} assets - Assets.
+ * @param {string} directory - Target directory.
  * @todo Implement this!
  */
 export const moveAssets = async (assets, directory) => {

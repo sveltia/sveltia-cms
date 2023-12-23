@@ -3,10 +3,10 @@ import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
  * Get the display value for an option.
- * @param {object} args Arguments.
- * @param {SelectField} args.fieldConfig Field configuration.
- * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
- * @param {string} args.keyPath Field key path, e.g. `author.name`.
+ * @param {object} args - Arguments.
+ * @param {SelectField} args.fieldConfig - Field configuration.
+ * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
+ * @param {string} args.keyPath - Field key path, e.g. `author.name`.
  * @returns {any | any[]} Resolved field value(s).
  */
 export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
@@ -15,7 +15,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
 
   /**
    * Get the label by value.
-   * @param {any} _value Stored value.
+   * @param {any} _value - Stored value.
    * @returns {string} Label.
    */
   const getLabel = (_value) =>

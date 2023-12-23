@@ -70,7 +70,7 @@
 
   /**
    * Search assets.
-   * @param {string} [query] Search query.
+   * @param {string} [query] - Search query.
    */
   const searchAssets = async (query = '') => {
     searchResults = null;
@@ -85,7 +85,7 @@
   /**
    * Download the selected asset, if needed, and notify the file and credit. If hotlinking is
    * required by the service, just notify the URL instead of downloading the file.
-   * @param {ExternalAsset} asset Selected asset.
+   * @param {ExternalAsset} asset - Selected asset.
    * @todo Support video files.
    */
   const selectAsset = async (asset) => {

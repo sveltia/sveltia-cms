@@ -32,7 +32,7 @@ export const selectedEntries = writable([]);
 
 /**
  * Get a collection by name.
- * @param {string} name Collection name.
+ * @param {string} name - Collection name.
  * @returns {Collection | undefined} Collection, including some extra, normalized properties.
  */
 export const getCollection = (name) => {
@@ -59,8 +59,8 @@ export const getCollection = (name) => {
 
 /**
  * Get a file collection entry.
- * @param {string} collectionName Collection name.
- * @param {string} fileName File name.
+ * @param {string} collectionName - Collection name.
+ * @param {string} fileName - File name.
  * @returns {Entry} File.
  * @see https://decapcms.org/docs/collection-types/#file-collections
  */
@@ -71,7 +71,7 @@ export const getFile = (collectionName, fileName) =>
 
 /**
  * Get entries by the given collection name, while applying a filer if needed.
- * @param {string} collectionName Collection name.
+ * @param {string} collectionName - Collection name.
  * @returns {Entry[]} Entries.
  * @see https://decapcms.org/docs/collection-types#filtered-folder-collections
  */
@@ -96,7 +96,7 @@ export const getEntriesByCollection = (collectionName) => {
 
 /**
  * Get a list of entries using the given asset.
- * @param {string} url Asset URL.
+ * @param {string} url - Asset URL.
  * @returns {Promise<Entry[]>} Entries.
  */
 export const getEntriesByAssetURL = async (url) => {

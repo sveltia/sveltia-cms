@@ -154,7 +154,7 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate See
+   * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate - See
    * {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
@@ -167,7 +167,7 @@
 
   /**
    * Add a new subfield to the list.
-   * @param {string} [subFieldName] Sub field name from one of the variable type options.
+   * @param {string} [subFieldName] - Sub field name from one of the variable type options.
    * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
    */
   const addItem = (subFieldName) => {
@@ -190,7 +190,7 @@
 
   /**
    * Remove a subfield.
-   * @param {number} index Target index.
+   * @param {number} index - Target index.
    */
   const removeItem = (index) => {
     updateComplexList(({ valueList, viewList }) => {
@@ -201,7 +201,7 @@
 
   /**
    * Swap a subfield with the previous one.
-   * @param {number} index Target index.
+   * @param {number} index - Target index.
    */
   const moveUpItem = (index) => {
     updateComplexList(({ valueList, viewList }) => {
@@ -212,7 +212,7 @@
 
   /**
    * Swap a subfield with the next one.
-   * @param {number} index Target index.
+   * @param {number} index - Target index.
    */
   const moveDownItem = (index) => {
     updateComplexList(({ valueList, viewList }) => {
@@ -230,9 +230,9 @@
 
   /**
    * Format the summary template.
-   * @param {{ [key: string]: any }} item List item.
-   * @param {number} index List index.
-   * @param {string} [summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
+   * @param {{ [key: string]: any }} item - List item.
+   * @param {number} index - List index.
+   * @param {string} [summaryTemplate] - Summary template, e.g. `{{fields.slug}}`.
    * @returns {string} Formatted summary.
    */
   const formatSummary = (item, index, summaryTemplate) => {

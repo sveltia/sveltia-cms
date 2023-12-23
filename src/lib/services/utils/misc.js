@@ -1,6 +1,6 @@
 /**
  * Check if the given input is a simple object.
- * @param {any} input Input, probably an object.
+ * @param {any} input - Input, probably an object.
  * @returns {boolean} Result.
  */
 export const isObject = (input) =>
@@ -8,7 +8,7 @@ export const isObject = (input) =>
 
 /**
  * Check if the given input is an array of objects.
- * @param {any} input Input, probably an array.
+ * @param {any} input - Input, probably an array.
  * @returns {boolean} Result.
  */
 export const isObjectArray = (input) =>
@@ -17,7 +17,7 @@ export const isObjectArray = (input) =>
 /**
  * Return a simple `Promise` to resolve in the given time, making it easier to wait for a bit in the
  * code, particularly while making sequential HTTP requests.
- * @param {number} [ms] Milliseconds to wait.
+ * @param {number} [ms] - Milliseconds to wait.
  * @returns {Promise<void>} Nothing.
  */
 export const sleep = (ms = 1000) =>

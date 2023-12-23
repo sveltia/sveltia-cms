@@ -19,14 +19,14 @@ const repository = { owner: '', repo: '', branch: '', url: '' };
 
 /**
  * Send a request to GitHub REST/GraphQL API.
- * @param {string} path Endpoint.
- * @param {object} [options] Options.
- * @param {'GET' | 'POST' | 'PUT' | 'DELETE'} [options.method] Request method.
- * @param {object} [options.headers] Request headers.
- * @param {string} [options.body] Request body for POST.
- * @param {string} [options.token] OAuth token.
- * @param {('json' | 'text' | 'blob' | 'raw')} [options.responseType] Response type. The default is
- * `json`, while `raw` returns a `Response` object as is.
+ * @param {string} path - Endpoint.
+ * @param {object} [options] - Options.
+ * @param {'GET' | 'POST' | 'PUT' | 'DELETE'} [options.method] - Request method.
+ * @param {object} [options.headers] - Request headers.
+ * @param {string} [options.body] - Request body for POST.
+ * @param {string} [options.token] - OAuth token.
+ * @param {('json' | 'text' | 'blob' | 'raw')} [options.responseType] - Response type. The default
+ * is `json`, while `raw` returns a `Response` object as is.
  * @returns {Promise<(object | string | Blob | Response)>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
@@ -102,8 +102,8 @@ const fetchAPI = async (
 
 /**
  * Send a request to GitHub GraphQL API.
- * @param {string} query Query string.
- * @param {object} [variables] Any variable to be applied.
+ * @param {string} query - Query string.
+ * @param {object} [variables] - Any variable to be applied.
  * @returns {Promise<object>} Response data.
  */
 const fetchGraphQL = async (query, variables = {}) => {
@@ -139,7 +139,7 @@ const init = () => {
 
 /**
  * Retrieve the repository configuration and sign in with GitHub REST API.
- * @param {string} [savedToken] OAuth token. Can be empty when a token is not saved in the local
+ * @param {string} [savedToken] - OAuth token. Can be empty when a token is not saved in the local
  * storage. Then, open the sign-in dialog.
  * @returns {Promise<User>} User info.
  * @throws {Error} When there was an authentication error.
@@ -212,8 +212,8 @@ const fetchFiles = async () => {
     } = //
       /**
        * @type {{
-       *   sha: string,
-       *   tree: { type: string, path: string, sha: string, size: number }[]
+       * sha: string,
+       * tree: { type: string, path: string, sha: string, size: number }[]
        * }}
        */ (await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`));
 
@@ -320,9 +320,9 @@ const fetchFiles = async () => {
     parseAssetFiles(
       assetFiles.map((file) => ({
         ...file,
-        /** Blob URL to be set later via {@link fetchBlob} */
+        /** Blob URL to be set later via {@link fetchBlob}. */
         url: null,
-        /** starting with `https://api.github.com`, to be used by {@link fetchBlob} */
+        /** Starting with `https://api.github.com`, to be used by {@link fetchBlob}. */
         fetchURL: file.url,
         repoFileURL: `https://github.com/${owner}/${repo}/blob/${branch}/${file.path}`,
         name: file.path.split('/').pop(),
@@ -349,7 +349,7 @@ const fetchFiles = async () => {
 
 /**
  * Fetch an asset as a Blob via the API.
- * @param {Asset} asset Asset to retrieve the file content.
+ * @param {Asset} asset - Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
  * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
  */
@@ -371,8 +371,8 @@ const fetchBlob = async (asset) => {
 
 /**
  * Save entries or assets remotely.
- * @param {FileChange[]} changes File changes to be saved.
- * @param {CommitChangesOptions} options Commit options.
+ * @param {FileChange[]} changes - File changes to be saved.
+ * @param {CommitChangesOptions} options - Commit options.
  * @returns {Promise<string>} Commit URL.
  * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
  */

@@ -64,7 +64,7 @@ export const showUploadAssetsDialog = derived([uploadingAssets], ([_uploadingAss
 
 /**
  * Determine the asset’s kind from the file extension.
- * @param {string} name File name or path.
+ * @param {string} name - File name or path.
  * @returns {AssetKind} One of {@link assetKinds}.
  */
 export const getAssetKind = (name) =>
@@ -74,8 +74,8 @@ export const getAssetKind = (name) =>
 
 /**
  * Get an asset by a public path typically stored as an image field value.
- * @param {string} savedPath Saved absolute path or relative path.
- * @param {Entry} entry Associated entry to be used to help locale an asset from a relative path.
+ * @param {string} savedPath - Saved absolute path or relative path.
+ * @param {Entry} entry - Associated entry to be used to help locale an asset from a relative path.
  * @returns {(Asset | undefined)} Corresponding asset.
  */
 export const getAssetByPath = (savedPath, entry) => {
@@ -121,9 +121,10 @@ export const getAssetByPath = (savedPath, entry) => {
 
 /**
  * Get the public URL for the given asset.
- * @param {Asset} asset Asset file, such as an image.
- * @param {object} [options] Options.
- * @param {boolean} [options.pathOnly] Whether to use the absolute path instead of the complete URL.
+ * @param {Asset} asset - Asset file, such as an image.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.pathOnly] - Whether to use the absolute path instead of the complete
+ * URL.
  * @returns {Promise<(string | undefined)>} URL that can be used or displayed in the app UI. This is
  * mostly a Blob URL of the asset.
  */
@@ -166,9 +167,9 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
 
 /**
  * Get the public URL from the given image/file entry field value.
- * @param {string} value Saved field value. It can be an absolute path, entry-relative path, or a
+ * @param {string} value - Saved field value. It can be an absolute path, entry-relative path, or a
  * complete/external URL.
- * @param {Entry} entry Associated entry.
+ * @param {Entry} entry - Associated entry.
  * @returns {Promise<(string | undefined)>} URL that can be displayed in the app UI.
  */
 export const getMediaFieldURL = async (value, entry) => {
@@ -185,7 +186,7 @@ export const getMediaFieldURL = async (value, entry) => {
 
 /**
  * Get the given asset’s extra info.
- * @param {Asset} asset Asset.
+ * @param {Asset} asset - Asset.
  * @returns {Promise<AssetDetails>} Details.
  */
 export const getAssetDetails = async (asset) => {

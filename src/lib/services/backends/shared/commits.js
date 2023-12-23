@@ -17,8 +17,8 @@ const defaultCommitMessages = {
 
 /**
  * Create a Git commit message.
- * @param {FileChange[]} changes File changes to be saved.
- * @param {CommitChangesOptions} options Commit options.
+ * @param {FileChange[]} changes - File changes to be saved.
+ * @param {CommitChangesOptions} options - Commit options.
  * @returns {string} Formatted message.
  */
 export const createCommitMessage = (

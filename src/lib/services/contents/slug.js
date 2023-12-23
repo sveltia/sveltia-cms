@@ -7,7 +7,7 @@ import { generateUUID, truncate } from '$lib/services/utils/strings';
 
 /**
  * Normalize the given string as a slug for a filename.
- * @param {string} string String to be normalized.
+ * @param {string} string - String to be normalized.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  */
@@ -40,14 +40,14 @@ export const normalizeSlug = (string) => {
 
 /**
  * Fill the given slug template.
- * @param {string} template Template string literal containing tags like `{{title}}`.
- * @param {object} options Options.
- * @param {Collection} options.collection Entry collection.
- * @param {FlattenedEntryContent} options.content Entry content for the default locale.
- * @param {string} [options.currentSlug] Entry slug already created for the path.
- * @param {boolean} [options.isMediaFolder] Whether to support additional template tags, for a
+ * @param {string} template - Template string literal containing tags like `{{title}}`.
+ * @param {object} options - Options.
+ * @param {Collection} options.collection - Entry collection.
+ * @param {FlattenedEntryContent} options.content - Entry content for the default locale.
+ * @param {string} [options.currentSlug] - Entry slug already created for the path.
+ * @param {boolean} [options.isMediaFolder] - Whether to support additional template tags, for a
  * collection-specific media/public folder: `dirname`, `filename` and `extension`.
- * @param {string} [options.entryFilePath] File path of the entry. Required if the `isMediaFolder`
+ * @param {string} [options.entryFilePath] - File path of the entry. Required if the `isMediaFolder`
  * option is `true`.
  * @returns {string} Filled template that can be used for an entry slug, path, etc.
  * @see https://decapcms.org/docs/configuration-options/#slug-type

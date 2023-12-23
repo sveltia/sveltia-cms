@@ -1,9 +1,9 @@
 /**
  * Truncate the given string.
- * @param {string} string Original string.
- * @param {number} max Maximum number of characters.
- * @param {object} [options] Options.
- * @param {string} [options.ellipsis] Character(s) to be appended if the the truncated string is
+ * @param {string} string - Original string.
+ * @param {number} max - Maximum number of characters.
+ * @param {object} [options] - Options.
+ * @param {string} [options.ellipsis] - Character(s) to be appended if the the truncated string is
  * longer than `max`.
  * @returns {string} Truncated string.
  */
@@ -17,7 +17,7 @@ export const truncate = (string, max, { ellipsis = '…' } = {}) => {
 
 /**
  * Escape the given string so it can be used safely for `new RegExp()`.
- * @param {string} string Original string.
+ * @param {string} string - Original string.
  * @returns {string} Escaped string.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
  */
@@ -25,7 +25,7 @@ export const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\
 
 /**
  * Strip the leading and trailing slashes from the given string.
- * @param {string} string Original string, e.g. `/foo/bar/`.
+ * @param {string} string - Original string, e.g. `/foo/bar/`.
  * @returns {string} Trimmed string, e.g. `foo/bar`.
  */
 export const stripSlashes = (string) => string.replace(/^\/+/, '').replace(/\/+$/, '');

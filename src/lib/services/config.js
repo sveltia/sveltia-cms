@@ -17,7 +17,7 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
 
 /**
  * Validate the site configuration file.
- * @param {SiteConfig} config Config object.
+ * @param {SiteConfig} config - Config object.
  * @throws {Error} If there is an error in the config.
  * @see https://decapcms.org/docs/configuration-options/
  * @todo Add more validations.

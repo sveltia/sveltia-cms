@@ -35,7 +35,7 @@
 
   /**
    * Cache the selected files, and notify the list.
-   * @param {File[]} allFiles Files.
+   * @param {File[]} allFiles - Files.
    */
   const onSelect = (allFiles) => {
     files = multiple ? allFiles : allFiles.slice(0, 1);

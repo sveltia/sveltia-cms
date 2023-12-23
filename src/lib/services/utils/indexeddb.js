@@ -25,8 +25,8 @@ export default class IndexedDB {
 
   /**
    * Initialize a new `IndexedDB` instance.
-   * @param {string} databaseName Database name.
-   * @param {string} storeName Store name.
+   * @param {string} databaseName - Database name.
+   * @param {string} storeName - Store name.
    */
   constructor(databaseName, storeName) {
     this.#databaseName = databaseName;
@@ -35,7 +35,7 @@ export default class IndexedDB {
 
   /**
    * Open the database and create a store if needed.
-   * @param {number} [version] Database version.
+   * @param {number} [version] - Database version.
    * @returns {Promise<IDBDatabase>} Database.
    */
   async #openDatabase(version) {
@@ -76,7 +76,7 @@ export default class IndexedDB {
 
   /**
    * Create a database if not yet initialized, then execute the given function over the store.
-   * @param {(store: IDBObjectStore) => IDBRequest | void} getRequest Function to be executed.
+   * @param {(store: IDBObjectStore) => IDBRequest | void} getRequest - Function to be executed.
    * @returns {Promise<any>} Result.
    */
   async #query(getRequest) {
@@ -101,8 +101,8 @@ export default class IndexedDB {
 
   /**
    * Save a single entry.
-   * @param {string} key Key.
-   * @param {any} value Value.
+   * @param {string} key - Key.
+   * @param {any} value - Value.
    * @returns {Promise<string>} Key.
    */
   async set(key, value) {
@@ -111,7 +111,7 @@ export default class IndexedDB {
 
   /**
    * Save multiple entries.
-   * @param {[string, any][]} entries Key/value pairs.
+   * @param {[string, any][]} entries - Key/value pairs.
    * @returns {Promise<string>} Key.
    */
   async saveEntries(entries) {
@@ -124,7 +124,7 @@ export default class IndexedDB {
 
   /**
    * Retrieve a value by key.
-   * @param {string} key Key.
+   * @param {string} key - Key.
    * @returns {Promise<any>} Value.
    */
   async get(key) {
@@ -159,7 +159,7 @@ export default class IndexedDB {
 
   /**
    * Delete an entry by key.
-   * @param {string} key Key.
+   * @param {string} key - Key.
    * @returns {Promise<void>} Result.
    */
   async delete(key) {
@@ -168,7 +168,7 @@ export default class IndexedDB {
 
   /**
    * Delete multiple entries by keys.
-   * @param {string[]} keys Property keys.
+   * @param {string[]} keys - Property keys.
    * @returns {Promise<void>} Result.
    */
   async deleteEntries(keys) {

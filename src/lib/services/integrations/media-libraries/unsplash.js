@@ -18,9 +18,9 @@ const creditLinkParams = 'utm_source=sveltia-cms&utm_medium=referral';
 
 /**
  * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query.
- * @param {object} options Options.
- * @param {string} options.apiKey API key.
+ * @param {string} query - Search query.
+ * @param {object} options - Options.
+ * @param {string} options.apiKey - API key.
  * @returns {Promise<ExternalAsset[]>} Assets.
  * @see https://unsplash.com/documentation
  * @todo Support video files.
@@ -30,11 +30,11 @@ const search = async (query, { apiKey }) => {
   const [locale] = get(appLocale).toLowerCase().split('-');
   /**
    * @type {{
-   *   id: string,
-   *   description: string,
-   *   alt_description: string,
-   *   urls: { regular: string, thumb: string },
-   *   user: { username: string, name: string }
+   * id: string,
+   * description: string,
+   * alt_description: string,
+   * urls: { regular: string, thumb: string },
+   * user: { username: string, name: string }
    * }[]}}
    */
   let results = [];

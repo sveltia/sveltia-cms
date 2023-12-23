@@ -12,7 +12,7 @@ export const searchTerms = writable('');
  * Hold search results for the current search terms.
  * @type {import('svelte/store').Readable<{ entries: Entry[], assets: Asset[] }>}
  * @todo Make this smarter (prioritize titles; count the number of appearance; split words;
- * search relation fields; add snippets)
+ * search relation fields; add snippets).
  */
 export const searchResults = derived(
   [allEntries, allAssets, searchTerms],

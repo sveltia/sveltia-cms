@@ -15,9 +15,9 @@ const endpoint = 'https://api.pexels.com/v1';
 
 /**
  * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query.
- * @param {object} options Options.
- * @param {string} options.apiKey API key.
+ * @param {string} query - Search query.
+ * @param {object} options - Options.
+ * @param {string} options.apiKey - API key.
  * @returns {Promise<ExternalAsset[]>} Assets.
  * @see https://www.pexels.com/api/documentation/
  * @todo Support video files.
@@ -27,11 +27,11 @@ const search = async (query, { apiKey }) => {
   const [locale] = get(appLocale).toLowerCase().split('-');
   /**
    * @type {{
-   *   id: number,
-   *   url: string,
-   *   alt: string,
-   *   src: { large2x: string, medium: string },
-   *   photographer: string
+   * id: number,
+   * url: string,
+   * alt: string,
+   * src: { large2x: string, medium: string },
+   * photographer: string
    * }[]}
    */
   let results = [];

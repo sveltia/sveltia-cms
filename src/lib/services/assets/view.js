@@ -18,9 +18,9 @@ const storageKey = 'sveltia-cms.assets-view';
 /**
  * Lazily or eagerly generate the asset’s Blob URL on demand to be used for a `<Image>` or `<Video>`
  * component. For a Git backend, this will be done by fetching the Blob via the API.
- * @param {Asset} asset Asset.
- * @param {('lazy' | 'eager')} loading How to load the media.
- * @param {(HTMLImageElement | HTMLVideoElement)} element Element to observe the visibility using
+ * @param {Asset} asset - Asset.
+ * @param {('lazy' | 'eager')} loading - How to load the media.
+ * @param {(HTMLImageElement | HTMLVideoElement)} element - Element to observe the visibility using
  * the Intersection Observer API.
  * @returns {Promise<string | undefined>} Blob URL.
  */
@@ -44,7 +44,7 @@ export const getAssetPreviewURL = (asset, loading, element) => {
 /**
  * Get the label for the given collection. It can be a category name if the folder is a
  * collection-specific asset folder.
- * @param {string} collectionName Collection name.
+ * @param {string} collectionName - Collection name.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
  */
@@ -63,7 +63,7 @@ export const getFolderLabelByCollection = (collectionName) => {
 /**
  * Get the label for the given folder path. It can be a category name if the folder is a
  * collection-specific asset folder.
- * @param {string} folderPath Media folder path.
+ * @param {string} folderPath - Media folder path.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
  */
@@ -89,8 +89,8 @@ export const getFolderLabelByPath = (folderPath) => {
 
 /**
  * Sort the given assets.
- * @param {Asset[]} assets Asset list.
- * @param {SortingConditions} [conditions] Sorting conditions.
+ * @param {Asset[]} assets - Asset list.
+ * @param {SortingConditions} [conditions] - Sorting conditions.
  * @returns {Asset[]} Sorted asset list.
  */
 const sortAssets = (assets, { key, order } = {}) => {
@@ -107,7 +107,7 @@ const sortAssets = (assets, { key, order } = {}) => {
 
   /**
    * Get an asset’s property value.
-   * @param {Asset} asset Asset.
+   * @param {Asset} asset - Asset.
    * @returns {any} Value.
    */
   const getValue = (asset) => {
@@ -154,8 +154,8 @@ const sortAssets = (assets, { key, order } = {}) => {
 
 /**
  * Filter the given assets.
- * @param {Asset[]} assets Asset list.
- * @param {FilteringConditions} [conditions] Filtering conditions.
+ * @param {Asset[]} assets - Asset list.
+ * @param {FilteringConditions} [conditions] - Filtering conditions.
  * @returns {Asset[]} Filtered asset list.
  */
 const filterAssets = (assets, { field, pattern } = { field: undefined, pattern: undefined }) => {
@@ -186,8 +186,8 @@ const filterAssets = (assets, { field, pattern } = { field: undefined, pattern: 
 
 /**
  * Group the given assets.
- * @param {Asset[]} assets Asset list.
- * @param {GroupingConditions} [conditions] Grouping conditions.
+ * @param {Asset[]} assets - Asset list.
+ * @param {GroupingConditions} [conditions] - Grouping conditions.
  * @returns {{ [key: string]: Asset[] }} Grouped assets, where key is a group label and value is an
  * asset list.
  */

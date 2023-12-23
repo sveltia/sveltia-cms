@@ -3,8 +3,8 @@ import { getDateTimeParts } from '$lib/services/utils/datetime';
 
 /**
  * Get the current value given the input value.
- * @param {(string | undefined)} inputValue Value on the date/time input widget.
- * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {(string | undefined)} inputValue - Value on the date/time input widget.
+ * @param {DateTimeField} fieldConfig - Field configuration.
  * @returns {(string | undefined)} New value.
  * @todo Write tests for this.
  */
@@ -37,8 +37,8 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
 
 /**
  * Get the input value given the current value.
- * @param {(string | undefined)} currentValue Value in the entry draft datastore.
- * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {(string | undefined)} currentValue - Value in the entry draft datastore.
+ * @param {DateTimeField} fieldConfig - Field configuration.
  * @returns {(string | undefined)} New value.
  * @todo Write tests for this.
  */
@@ -93,8 +93,8 @@ export const getInputValue = (currentValue, fieldConfig) => {
 
 /**
  * Get a `Date` object given the current value.
- * @param {(string | undefined)} currentValue Value in the entry draft datastore.
- * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {(string | undefined)} currentValue - Value in the entry draft datastore.
+ * @param {DateTimeField} fieldConfig - Field configuration.
  * @returns {(Date | undefined)} Date.
  * @todo Write tests for this.
  */

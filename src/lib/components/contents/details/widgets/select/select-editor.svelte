@@ -82,7 +82,7 @@
 
   /**
    * Update the value for the list.
-   * @param {(arg: { valueList: any[], viewList: any[] }) => void} manipulate
+   * @param {(arg: { valueList: any[], viewList: any[] }) => void} manipulate -
    * See {@link updateListField}.
    */
   const updateList = (manipulate) => {
@@ -95,7 +95,7 @@
 
   /**
    * Add a value to the list.
-   * @param {string} value New value.
+   * @param {string} value - New value.
    */
   const addValue = (value) => {
     updateList(({ valueList }) => {
@@ -105,7 +105,7 @@
 
   /**
    * Remove a value from the list.
-   * @param {number} index Target index.
+   * @param {number} index - Target index.
    */
   const removeValue = (index) => {
     updateList(({ valueList }) => {

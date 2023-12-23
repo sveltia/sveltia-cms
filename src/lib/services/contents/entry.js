@@ -6,12 +6,12 @@ import { getCollection } from '$lib/services/contents';
 
 /**
  * Get a field’s config object that matches the given field name (key path).
- * @param {object} args Arguments.
- * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] File name if the collection is a file collection.
- * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values. This is
+ * @param {object} args - Arguments.
+ * @param {string} args.collectionName - Collection name.
+ * @param {string} [args.fileName] - File name if the collection is a file collection.
+ * @param {FlattenedEntryContent} [args.valueMap] - Object holding current entry values. This is
  * required when working with list widget variable types.
- * @param {string} args.keyPath Key path, e.g. `author.name`.
+ * @param {string} args.keyPath - Key path, e.g. `author.name`.
  * @returns {Field} Field configuration.
  */
 export const getFieldConfig = ({
@@ -60,12 +60,12 @@ export const getFieldConfig = ({
 
 /**
  * Get a field’s display value that matches the given field name (key path).
- * @param {object} args Arguments.
- * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] File name.
- * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
- * @param {string} args.keyPath Key path, e.g. `author.name`.
- * @param {LocaleCode} args.locale Locale.
+ * @param {object} args - Arguments.
+ * @param {string} args.collectionName - Collection name.
+ * @param {string} [args.fileName] - File name.
+ * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
+ * @param {string} args.keyPath - Key path, e.g. `author.name`.
+ * @param {LocaleCode} args.locale - Locale.
  * @returns {any | any[]} Resolved field value(s).
  */
 export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPath, locale }) => {
@@ -96,13 +96,13 @@ export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPa
 
 /**
  * Get an entry’s field value by locale and key.
- * @param {Entry} entry Entry.
- * @param {LocaleCode} locale Locale code.
- * @param {string} key Field name, which can be dot notation like `name.en` for a nested field, or
+ * @param {Entry} entry - Entry.
+ * @param {LocaleCode} locale - Locale code.
+ * @param {string} key - Field name, which can be dot notation like `name.en` for a nested field, or
  * one of other entry metadata property keys: `slug`, `commit_author` and `commit_date` .
- * @param {object} [options] Options.
- * @param {boolean} [options.resolveRef] Whether to resolve the referenced value if the target field
- * is a relation field.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.resolveRef] - Whether to resolve the referenced value if the target
+ * field is a relation field.
  * @returns {any} Value.
  */
 export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {}) => {
@@ -149,9 +149,9 @@ export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {})
 
 /**
  * Get a list of assets associated with the given entry.
- * @param {Entry} entry Entry.
- * @param {object} [options] Options.
- * @param {boolean} [options.relative] Whether to only collect assets stored at a relative path.
+ * @param {Entry} entry - Entry.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.relative] - Whether to only collect assets stored at a relative path.
  * @returns {Asset[]} Assets.
  */
 export const getAssociatedAssets = (entry, { relative = false } = {}) => {

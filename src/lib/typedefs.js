@@ -155,9 +155,9 @@
  * Entry folder configuration by collection.
  * @typedef {object} CollectionEntryFolder
  * @property {string} collectionName Collection name.
- * @property {string} [fileName] File name. (File collection only)
- * @property {string} [filePath] File path. (File collection only)
- * @property {string} [folderPath] Folder path. (Folder/entry collection only)
+ * @property {string} [fileName] File name. File collection only.
+ * @property {string} [filePath] File path. File collection only.
+ * @property {string} [folderPath] Folder path. Folder/entry collection only.
  * @property {string} [extension] File extension.
  * @property {string} [format] File format.
  * @property {string | string[]} [frontmatterDelimiter] Frontmatter delimiter.
@@ -249,7 +249,7 @@
  * @property {string} [logo_url] Site logo URL.
  * @property {string} [media_folder] Global internal media folder path.
  * @property {string} [public_folder] Global public media folder path.
- * @property {MediaLibraryConfig} [media_library] media library configuration.
+ * @property {MediaLibraryConfig} [media_library] Media library configuration.
  * @property {object} [slug] Slug options.
  * @property {'unicode' | 'ascii'} [slug.encoding] Encoding option.
  * @property {boolean} [slug.clean_accents] Whether to remove accents.
@@ -318,7 +318,7 @@
  * Extra properties for a collection.
  * @typedef {object} ExtraCollectionProps
  * @property {{ [fileName: string]: CollectionFile }} [_fileMap] File map with normalized collection
- * file definitions. (File collection only)
+ * file definitions. File collection only.
  * @property {I18nConfig} _i18n Normalized i18n configuration combined with the top-level
  * configuration.
  * @property {CollectionAssetFolder} [_assetFolder] Asset folder configuration.
@@ -420,7 +420,7 @@
  * @property {boolean} [choose_url] Whether to hide the Insert from URL button.
  * @property {string} [media_folder] Internal media folder path for the field.
  * @property {string} [public_folder] Public media folder path for the field.
- * @property {MediaLibraryConfig} [media_library] media library configuration.
+ * @property {MediaLibraryConfig} [media_library] Media library configuration.
  * @see https://decapcms.org/docs/widgets/#file
  */
 
@@ -611,7 +611,7 @@
  */
 
 /**
- * Flattened {@link EntryContent} object,
+ * Flattened {@link EntryContent} object.
  * @typedef {{ [keyPath: string]: any }} FlattenedEntryContent
  * where key is a key path: dot-connected field name like `author.name` and value is the
  * corresponding field value.
@@ -644,8 +644,8 @@
  * @property {string} [slug] Entry slug. Empty if it’s new.
  * @property {string} collectionName Collection name.
  * @property {Collection} collection Collection details.
- * @property {string} [fileName] File name. (File collection only)
- * @property {CollectionFile} [collectionFile] File details. (File collection only)
+ * @property {string} [fileName] File name. File collection only.
+ * @property {CollectionFile} [collectionFile] File details. File collection only.
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
  * @property {{ [locale: LocaleCode]: boolean }} originalLocales Key is a locale code, value is
  * whether to disable the locale’s content output. The original state of `currentLocales`.

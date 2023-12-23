@@ -5,7 +5,7 @@ import { isObject } from '$lib/services/utils/misc';
 /**
  * Authenticate with the Git service through Netlify Identity or 3rd party OAuth client specified
  * with the configuration file.
- * @param {string} provider Provider name, e.g. `github`.
+ * @param {string} provider - Provider name, e.g. `github`.
  * @returns {Promise<?string>} Auth token or `null` if authentication failed.
  * @see https://decapcms.org/docs/backends-overview/
  */
@@ -30,9 +30,10 @@ export const authorize = async (provider) => {
 
   return new Promise((resolve) => {
     /**
-     * @param {object} args Arguments.
-     * @param {string} args.origin Origin URL.
-     * @param {string} args.data Passed data.
+     * Message event handler.
+     * @param {object} args - Arguments.
+     * @param {string} args.origin - Origin URL.
+     * @param {string} args.data - Passed data.
      */
     const handler = ({ origin, data }) => {
       if (origin !== baseURL || typeof data !== 'string') {

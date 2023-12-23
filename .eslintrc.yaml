@@ -34,7 +34,20 @@ rules:
         FunctionDeclaration: true
         FunctionExpression: true
         MethodDefinition: true
-  jsdoc/valid-types: off
+  # Other JSDoc rules not in the recommended list
+  jsdoc/check-indentation: 1
+  jsdoc/check-line-alignment: 1
+  jsdoc/check-syntax: 1
+  jsdoc/match-description: 1
+  jsdoc/no-bad-blocks: 1
+  jsdoc/no-blank-block-descriptions: 1
+  jsdoc/no-defaults: 1
+  jsdoc/require-asterisk-prefix: 1
+  jsdoc/require-description: 1
+  jsdoc/require-description-complete-sentence: 1
+  jsdoc/require-hyphen-before-param-description: 1
+  jsdoc/require-throws: 1
+  jsdoc/sort-tags: 1
   max-len:
     - error
     - code: 100

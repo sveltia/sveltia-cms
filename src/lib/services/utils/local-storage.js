@@ -7,8 +7,8 @@
 export default class LocalStorage {
   /**
    * Save data.
-   * @param {string} key Storage key.
-   * @param {any} value Serializable value.
+   * @param {string} key - Storage key.
+   * @param {any} value - Serializable value.
    * @throws {DOMException} When storage access is denied.
    */
   static async set(key, value) {
@@ -17,7 +17,7 @@ export default class LocalStorage {
 
   /**
    * Retrieve data by key.
-   * @param {string} key Storage key.
+   * @param {string} key - Storage key.
    * @returns {Promise<*>} Data.
    * @throws {DOMException} When storage access is denied.
    */
@@ -27,7 +27,7 @@ export default class LocalStorage {
 
   /**
    * Delete data by key.
-   * @param {string} key Storage key.
+   * @param {string} key - Storage key.
    * @throws {DOMException} When storage access is denied.
    */
   static async delete(key) {

@@ -9,8 +9,8 @@ window.CMS = new Proxy(
   {
     /**
      * Define the getter.
-     * @param {{ [key: string]: Function }} obj Object itself.
-     * @param {string} key Property name.
+     * @param {{ [key: string]: Function }} obj - Object itself.
+     * @param {string} key - Property name.
      * @returns {any} Property value.
      */
     get: (obj, key) => {
@@ -58,6 +58,7 @@ window.CMS = new Proxy(
             `See https://github.com/sveltia/sveltia-cms#compatibility for compatibility information.`,
         );
 
+        // eslint-disable-next-line jsdoc/require-description
         /** @returns {void} */
         return () => undefined;
       }

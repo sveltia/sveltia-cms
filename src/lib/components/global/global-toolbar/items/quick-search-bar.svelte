@@ -7,7 +7,7 @@
 
   /**
    * Navigate to the search results page if search terms are given, or go back the previous page.
-   * @param {string} terms New search terms.
+   * @param {string} terms - New search terms.
    */
   const navigate = (terms) => {
     const hadTerms = !!$searchTerms;

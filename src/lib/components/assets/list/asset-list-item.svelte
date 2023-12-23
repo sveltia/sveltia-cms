@@ -18,7 +18,7 @@
 
   /**
    * Update the asset selection.
-   * @param {boolean} selected Whether the current asset item is selected.
+   * @param {boolean} selected - Whether the current asset item is selected.
    */
   const updateSelection = (selected) => {
     selectedAssets.update((assets) => {

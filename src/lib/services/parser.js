@@ -11,10 +11,10 @@ import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
 /**
  * Get the file extension for the given collection.
- * @param {object} pathConfig File’s path configuration. (part of `CollectionEntryFolder`)
- * @param {string} [pathConfig.format] File format, e.g. `json`.
- * @param {string} [pathConfig.extension] File extension, e.g. `json`
- * @param {string} [pathConfig.file] File name, e.g. `about.json`.
+ * @param {object} pathConfig - File’s path configuration. (part of `CollectionEntryFolder`).
+ * @param {string} [pathConfig.format] - File format, e.g. `json`.
+ * @param {string} [pathConfig.extension] - File extension, e.g. `json`.
+ * @param {string} [pathConfig.file] - File name, e.g. `about.json`.
  * @returns {string} Determined extension.
  */
 export const getFileExtension = ({ file, format, extension }) => {
@@ -44,12 +44,12 @@ export const getFileExtension = ({ file, format, extension }) => {
 /**
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
- * @param {BaseFileListItem[]} files Unfiltered file list.
+ * @param {BaseFileListItem[]} files - Unfiltered file list.
  * @returns {{
- *   entryFiles: BaseEntryListItem[],
- *   assetFiles: BaseAssetListItem[],
- *   allFiles: (BaseEntryListItem | BaseAssetListItem)[],
- *   count: number,
+ * entryFiles: BaseEntryListItem[],
+ * assetFiles: BaseAssetListItem[],
+ * allFiles: (BaseEntryListItem | BaseAssetListItem)[],
+ * count: number,
  * }} File
  * list, including both entries and assets.
  */
@@ -102,8 +102,8 @@ export const createFileList = (files) => {
 
 /**
  * Get the Frontmatter format’s delimiters.
- * @param {string} format File format.
- * @param {string | string[]} [delimiter] Configured delimiter.
+ * @param {string} format - File format.
+ * @param {string | string[]} [delimiter] - Configured delimiter.
  * @returns {string[]} Start and end delimiters.
  */
 const getFrontmatterDelimiters = (format, delimiter) => {
@@ -128,7 +128,7 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 
 /**
  * Parse raw content with given file details.
- * @param {BaseEntryListItem} entry File entry.
+ * @param {BaseEntryListItem} entry - File entry.
  * @returns {{ [key: string]: any }} Parsed content.
  */
 const parseEntryFile = ({
@@ -204,14 +204,15 @@ const parseEntryFile = ({
 
 /**
  * Parse raw content with given file details.
- * @param {object} entry File entry.
- * @param {any} entry.content Content object.
- * @param {string} entry.path File path.
- * @param {object} entry.config File’s collection configuration.
- * @param {string} [entry.config.extension] Configured file extension.
- * @param {string} [entry.config.format] Configured file format.
- * @param {string | string[]} [entry.config.frontmatterDelimiter] Configured Frontmatter delimiter.
- * @param {boolean} [entry.config.yamlQuote] Configured YAML string value quotation.
+ * @param {object} entry - File entry.
+ * @param {any} entry.content - Content object.
+ * @param {string} entry.path - File path.
+ * @param {object} entry.config - File’s collection configuration.
+ * @param {string} [entry.config.extension] - Configured file extension.
+ * @param {string} [entry.config.format] - Configured file format.
+ * @param {string | string[]} [entry.config.frontmatterDelimiter] - Configured Frontmatter
+ * delimiter.
+ * @param {boolean} [entry.config.yamlQuote] - Configured YAML string value quotation.
  * @returns {string} Formatted string.
  */
 export const formatEntryFile = ({
@@ -280,11 +281,11 @@ export const formatEntryFile = ({
 
 /**
  * Determine the slug for the given entry content.
- * @param {string} collectionName Collection name.
- * @param {string} filePath File path without the collection folder and extension. It’s a slug in
+ * @param {string} collectionName - Collection name.
+ * @param {string} filePath - File path without the collection folder and extension. It’s a slug in
  * most cases, but it may be a path containing slash(es) when the Folder Collections Path is
  * configured.
- * @param {EntryContent} content Entry content.
+ * @param {EntryContent} content - Entry content.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/beta-features/#folder-collections-path
@@ -317,7 +318,7 @@ const getSlug = (collectionName, filePath, content) => {
 
 /**
  * Parse the given entry files to create a complete, serialized entry list.
- * @param {BaseEntryListItem[]} entryFiles Entry file list.
+ * @param {BaseEntryListItem[]} entryFiles - Entry file list.
  * @returns {Entry[]} Entry list.
  */
 export const parseEntryFiles = (entryFiles) => {
@@ -425,7 +426,7 @@ export const parseEntryFiles = (entryFiles) => {
 
 /**
  * Parse the given asset files to create a complete, serialized asset list.
- * @param {BaseAssetListItem[]} assetFiles Asset file list.
+ * @param {BaseAssetListItem[]} assetFiles - Asset file list.
  * @returns {Asset[]} Asset list.
  */
 export const parseAssetFiles = (assetFiles) =>
