@@ -119,7 +119,7 @@
   const updateInputValue = () => {
     const currentValueStr = currentValue.join(', ');
 
-    if (!inputValue.match(/,\s*$/) && inputValue !== currentValueStr) {
+    if (!inputValue.match(/,\s*$/) && inputValue.trim() !== currentValueStr) {
       inputValue = currentValueStr;
     }
   };
