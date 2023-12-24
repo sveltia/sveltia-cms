@@ -27,6 +27,11 @@
   .toolbar-wrapper {
     display: contents;
 
+    &[inert] {
+      // Disable the keyboard shortcut for the search bar
+      display: none;
+    }
+
     & > :global(.toolbar) {
       border-width: 0 0 1px 0 !important;
 

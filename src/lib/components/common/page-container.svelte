@@ -24,6 +24,10 @@
     flex-direction: column;
     overflow: hidden;
 
+    &[inert] {
+      display: none;
+    }
+
     & > :global([role='toolbar']) {
       flex: none;
 
