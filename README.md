@@ -35,6 +35,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well.
+- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management.
 - The screenshots above are worth a thousand words!
 
 ### Better performance
@@ -60,6 +61,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys[^17].
 - Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support empowers users who rely on screen readers such as NVDA or VoiceOver.
+- Ensures sufficient contrast between the foreground text and background colours.
 - Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 

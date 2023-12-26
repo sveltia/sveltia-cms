@@ -8,4 +8,4 @@ Thank you for your interest in translating Sveltia CMS into your language! While
 - We’ll probably migrate from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the [Fluent localization system](https://projectfluent.org/) to better handle singular/plural forms and even more complex grammars.
 - Japanese localization is still needed for the [maintainer](https://github.com/kyoshino)’s Japanese clients.
 
-If you’d like to localize the app, please [file an issue](https://github.com/sveltia/sveltia-cms/issues) so we can ping you when it’s ready, hopefully in early/mid 2024!
+If you’d like to localize the app, please [file an issue](https://github.com/sveltia/sveltia-cms/issues) so we can ping you when it’s ready, hopefully by mid-2024!
