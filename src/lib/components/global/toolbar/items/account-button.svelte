@@ -57,6 +57,12 @@
         }}
       />
       <MenuItem
+              label={$_('subscribers')}
+              on:click={() => {
+          window.open('https://api.singtonic.net/subscribers', '_blank');
+        }}
+      />
+      <MenuItem
         label={$_('git_repository')}
         disabled={isLocal}
         on:click={() => {
