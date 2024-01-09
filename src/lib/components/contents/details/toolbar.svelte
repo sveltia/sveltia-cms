@@ -193,22 +193,31 @@
       {/if}
     </Menu>
   </MenuButton>
-  <svelte:component
-    this={showSaveOptions ? SplitButton : Button}
-    variant="primary"
-    label={$_(saving ? 'saving' : 'save')}
-    disabled={!modified || saving}
-    keyShortcuts="Accel+S"
-    on:click={() => save()}
-  >
-    <svelte:component this={showSaveOptions ? Menu : undefined} slot="popup">
-      <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
-      <MenuItem
-        label={$_(autoDeployEnabled ? 'save_without_publishing' : 'save_and_publish')}
-        on:click={() => save({ skipCI: autoDeployEnabled })}
-      />
-    </svelte:component>
-  </svelte:component>
+  {#if showSaveOptions}
+    <SplitButton
+      variant="primary"
+      label={$_(saving ? 'saving' : 'save')}
+      disabled={!modified || saving}
+      keyShortcuts="Accel+S"
+      on:click={() => save()}
+    >
+      <Menu slot="popup">
+        <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
+        <MenuItem
+          label={$_(autoDeployEnabled ? 'save_without_publishing' : 'save_and_publish')}
+          on:click={() => save({ skipCI: autoDeployEnabled })}
+        />
+      </Menu>
+    </SplitButton>
+  {:else}
+    <Button
+      variant="primary"
+      label={$_(saving ? 'saving' : 'save')}
+      disabled={!modified || saving}
+      keyShortcuts="Accel+S"
+      on:click={() => save()}
+    />
+  {/if}
 </Toolbar>
 
 <Toast bind:show={showDuplicateToast}>
