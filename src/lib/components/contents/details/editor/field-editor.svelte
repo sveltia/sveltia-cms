@@ -289,15 +289,16 @@
 
   .validation {
     color: var(--sui-error-foreground-color);
+    font-size: var(--sui-font-size-small);
 
     div {
       display: flex;
       gap: 4px;
-      margin: 8px 0;
+      margin: 4px 0;
 
       :global(.icon) {
         flex: none;
-        font-size: 20px; /* !hardcoded */
+        font-size: 16px; /* !hardcoded */
       }
     }
   }
