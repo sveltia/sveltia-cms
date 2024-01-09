@@ -694,41 +694,31 @@ const validateEntry = () => {
 
       // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.n`,
       // we should validate only once against all these values
-      if (arrayMatch) {
-        const index = Number(arrayMatch[1]);
-
-        if (index > 0) {
-          return;
+      if (widgetName === 'list' || arrayMatch) {
+        if (arrayMatch) {
+          keyPath = keyPath.replace(/\.\d+$/, '');
         }
 
-        keyPath = keyPath.replace(/\.\d+$/, '');
+        if (keyPath in validities[locale]) {
+          return;
+        }
 
         const keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
 
         const values =
-          valueEntries
-            .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
-            .map(([, savedValue]) => savedValue)
-            .filter((val) => val !== undefined) ?? [];
+          Array.isArray(value) && value.length
+            ? value
+            : valueEntries
+                .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
+                .map(([, savedValue]) => savedValue)
+                .filter((val) => val !== undefined) ?? [];
 
         if (_required && !values.length) {
           valueMissing = true;
-        }
-
-        if (typeof min === 'number' && Array.isArray(value) && value.length < min) {
+        } else if (typeof min === 'number' && values.length < min) {
           rangeUnderflow = true;
-        }
-
-        if (typeof max === 'number' && Array.isArray(value) && value.length > max) {
+        } else if (typeof max === 'number' && values.length > max) {
           rangeOverflow = true;
-        }
-      }
-
-      if (widgetName === 'list' && Array.isArray(value)) {
-        if (typeof min === 'number' && value.length < min) {
-          rangeUnderflow = true;
-        } else if (_required && !value.length) {
-          valueMissing = true;
         }
       }
 
