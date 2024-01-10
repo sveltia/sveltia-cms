@@ -161,6 +161,7 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
     .map(({ content }) =>
       Object.entries(content).map(([keyPath, value]) => {
         if (
+          typeof value === 'string' &&
           (relative ? !value.match(/^[/@]/) : true) &&
           ['image', 'file'].includes(getFieldConfig({ collectionName, keyPath })?.widget)
         ) {
