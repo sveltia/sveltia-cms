@@ -162,10 +162,12 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 - Netlify Identity Widget is not supported yet.
 - Comprehensive config validation is not implemented yet.
 - Auto-saving a draft entry is not implemented yet.
-- Downloading an asset in the media library is not implemented yet.
+- Downloading an asset and copying the file path of an asset in the media library is not implemented yet.
 - [Backend health check](https://www.githubstatus.com/api) is not implemented yet.
 
 ## Roadmap
+
+### Before the 1.0 release
 
 - [Svelte 5](https://svelte.dev/blog/runes) migration
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
@@ -174,6 +176,9 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 - Marketing site
 - Demo site
 - Starter templates
+
+### After the 1.0 release
+
 - Roles[^23]
 - Config editor[^10]
 - Mobile support[^18]
@@ -220,6 +225,7 @@ You can use Sveltia CMS with a local Git repository, like the [beta feature](htt
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
+   - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646).
 1. Make some changes to your content on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
 1. Open the dev site at `http://localhost:[port]/` to check the rendered pages.
