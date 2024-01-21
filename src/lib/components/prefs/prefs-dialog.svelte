@@ -71,7 +71,7 @@
       width: 160px !important;
     }
 
-    :global(.tabpanel) {
+    :global(.tab-panel) {
       flex: auto;
       border-width: 0;
 
