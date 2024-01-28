@@ -7,7 +7,7 @@
   import { goto } from '$lib/services/navigation';
 
   /**
-   * @type {import('svelte').SvelteComponent}
+   * @type {FilePicker}
    */
   let filePicker;
 </script>

@@ -28,7 +28,7 @@
    */
   let wrapper;
   /**
-   * @type {import('svelte').SvelteComponent}
+   * @type {SearchBar}
    */
   let searchBar;
 

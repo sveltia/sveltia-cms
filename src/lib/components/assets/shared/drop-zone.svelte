@@ -18,7 +18,7 @@
   const dispatch = createEventDispatcher();
   let dragging = false;
   /**
-   * @type {import('svelte').SvelteComponent}
+   * @type {FilePicker}
    */
   let filePicker;
   /**

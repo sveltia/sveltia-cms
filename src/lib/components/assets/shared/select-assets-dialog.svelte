@@ -27,11 +27,11 @@
   const dispatch = createEventDispatcher();
   const title = kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file');
   /**
-   * @type {import('svelte').SvelteComponent}
+   * @type {DropZone}
    */
   let collectionAssetsDropZone;
   /**
-   * @type {import('svelte').SvelteComponent}
+   * @type {DropZone}
    */
   let allAssetsDropZone;
   let elementIdPrefix = '';
