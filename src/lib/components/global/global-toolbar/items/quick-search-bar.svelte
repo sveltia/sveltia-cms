@@ -46,7 +46,7 @@
     keyShortcuts="Accel+F"
     showInlineLabel={true}
     aria-label={$_('search_placeholder')}
-    --sui-textbox-label-align="center"
+    --sui-textbox-placeholder-text-align="center"
     on:input={({ target }) => {
       // @todo Implement quick search dropdown.
       navigate(/** @type {HTMLInputElement} */ (target).value.trim());
