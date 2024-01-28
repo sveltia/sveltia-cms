@@ -115,6 +115,8 @@
       on:change={(event) => {
         libraryName = /** @type {CustomEvent} */ (event).detail.name;
         selectedAsset = null;
+        collectionAssetsDropZone?.reset();
+        allAssetsDropZone?.reset();
       }}
     >
       <OptionGroup label={$_('assets_dialog.location.this_repository')}>

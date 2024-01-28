@@ -34,6 +34,13 @@
   };
 
   /**
+   * Reset the file list.
+   */
+  export const reset = () => {
+    files = [];
+  };
+
+  /**
    * Cache the selected files, and notify the list.
    * @param {File[]} allFiles - Files.
    */
@@ -143,8 +150,12 @@
       height: 100%;
     }
 
-    & * {
+    & > * {
       pointer-events: none;
+    }
+
+    :global(button) {
+      pointer-events: auto;
     }
   }
 

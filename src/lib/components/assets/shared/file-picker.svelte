@@ -18,4 +18,12 @@
   };
 </script>
 
-<input type="file" hidden {accept} {multiple} bind:this={filePicker} on:change />
+<input
+  type="file"
+  hidden
+  {accept}
+  {multiple}
+  bind:this={filePicker}
+  on:change
+  on:cancel|stopPropagation
+/>
