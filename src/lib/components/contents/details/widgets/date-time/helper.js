@@ -30,7 +30,10 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
     }
 
     return new Date(inputValue).toISOString();
-  } catch {
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
     return undefined;
   }
 };
@@ -86,7 +89,10 @@ export const getInputValue = (currentValue, fieldConfig) => {
     }
 
     return `${dateStr}T${timeStr}`;
-  } catch {
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
     return undefined;
   }
 };
@@ -120,7 +126,10 @@ export const getDate = (currentValue, fieldConfig) => {
     }
 
     return new Date(currentValue);
-  } catch {
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
     return undefined;
   }
 };

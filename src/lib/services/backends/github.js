@@ -78,8 +78,9 @@ const fetchAPI = async (
           result.message ?? // REST
           result.errors?.[0]?.message; // GraphQL
       }
-    } catch {
-      //
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
     }
 
     throw new Error('Invalid API request', { cause: { status, message } });

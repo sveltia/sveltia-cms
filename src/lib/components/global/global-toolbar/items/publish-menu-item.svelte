@@ -34,11 +34,11 @@
       if (!ok && status !== 0) {
         throw new Error(`Webhook returned ${status} error`);
       }
-    } catch (/** @type {any} */ error) {
+    } catch (/** @type {any} */ ex) {
       toastStatus = 'error';
       showToast = true;
       // eslint-disable-next-line no-console
-      console.error(error);
+      console.error(ex);
     }
   };
 </script>

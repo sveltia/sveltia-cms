@@ -86,8 +86,9 @@ export const getCanonicalLocale = (locale) => {
   if (locale !== '_default') {
     try {
       [canonicalLocale] = Intl.getCanonicalLocales(locale);
-    } catch {
-      //
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
     }
   }
 
@@ -105,7 +106,10 @@ export const getLocaleLabel = (locale) => {
 
   try {
     return new Intl.DisplayNames(get(appLocale), { type: 'language' }).of(canonicalLocale);
-  } catch {
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
     return locale;
   }
 };

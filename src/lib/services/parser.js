@@ -158,7 +158,10 @@ const parseEntryFile = ({
     if (format === 'json' && path.match(/\.json$/)) {
       return JSON.parse(text);
     }
-  } catch {
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
     return null;
   }
 
@@ -177,24 +180,27 @@ const parseEntryFile = ({
     if (head && (format === 'frontmatter' || format === 'yaml-frontmatter')) {
       try {
         return { ...YAML.parse(head), body };
-      } catch {
-        //
+      } catch (/** @type {any} */ ex) {
+        // eslint-disable-next-line no-console
+        console.error(ex);
       }
     }
 
     if (head && (format === 'frontmatter' || format === 'toml-frontmatter')) {
       try {
         return { ...TOML.parse(head), body };
-      } catch {
-        //
+      } catch (/** @type {any} */ ex) {
+        // eslint-disable-next-line no-console
+        console.error(ex);
       }
     }
 
     if (head && (format === 'frontmatter' || format === 'json-frontmatter')) {
       try {
         return { ...JSON.parse(head), body };
-      } catch {
-        //
+      } catch (/** @type {any} */ ex) {
+        // eslint-disable-next-line no-console
+        console.error(ex);
       }
     }
   }
@@ -249,7 +255,10 @@ export const formatEntryFile = ({
     if (format === 'json') {
       return `${formatJSON()}\n`;
     }
-  } catch {
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
     return '';
   }
 
@@ -271,8 +280,9 @@ export const formatEntryFile = ({
       if (format === 'json-frontmatter') {
         return `${startDelimiter}\n${formatJSON()}\n${endDelimiter}\n${body}`;
       }
-    } catch {
-      //
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
     }
   }
 

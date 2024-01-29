@@ -58,8 +58,9 @@ export const authorize = async (provider) => {
 
       try {
         result = _result ? JSON.parse(_result) : undefined;
-      } catch {
-        //
+      } catch (/** @type {any} */ ex) {
+        // eslint-disable-next-line no-console
+        console.error(ex);
       }
 
       resolve(

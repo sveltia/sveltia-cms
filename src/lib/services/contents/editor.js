@@ -571,10 +571,12 @@ export const copyFromLocale = async (
       });
 
       updateToast('success', `translation.complete.${countType}`);
-    } catch {
+    } catch (/** @type {any} */ ex) {
       // @todo Show a detailed error message.
       // @see https://www.deepl.com/docs-api/api-access/error-handling/
       updateToast('error', 'translation.error');
+      // eslint-disable-next-line no-console
+      console.error(ex);
     }
   } else {
     Object.entries(copingFields).forEach(([_keyPath, value]) => {
@@ -1079,8 +1081,11 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       collection,
       skipCI,
     });
-  } catch {
-    throw new Error('saving_failed');
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
+    throw new Error('saving_failed', { cause: ex });
   }
 
   const savingAssetsPaths = savingAssets.map((a) => a.path);

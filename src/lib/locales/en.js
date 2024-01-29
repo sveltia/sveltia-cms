@@ -352,7 +352,9 @@ export const strings = {
   config: {
     error: {
       fetch_failed: 'The configuration file could not be retrieved.',
+      fetch_failed_not_ok: 'HTTP response returned with status {status}.',
       parse_failed: 'The configuration file could not be parsed.',
+      parse_failed_invalid_object: 'The configuration file is not a valid JavaScript object.',
       no_collection: 'Collections are not defined in the configuration file.',
       no_backend: 'The backend is not defined in the configuration file.',
       unsupported_backend: 'The configured “{name}” backend is not supported.',

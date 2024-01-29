@@ -65,8 +65,9 @@
       try {
         restorePanes();
         return;
-      } catch {
-        //
+      } catch (/** @type {any} */ ex) {
+        // eslint-disable-next-line no-console
+        console.error(ex);
       } finally {
         panesRestored = true;
       }

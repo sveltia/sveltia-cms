@@ -77,8 +77,10 @@
 
     try {
       searchResults = await search(query, { kind, apiKey, userName, password });
-    } catch {
+    } catch (/** @type {any} */ ex) {
       error = 'search_fetch_failed';
+      // eslint-disable-next-line no-console
+      console.error(ex);
     }
   };
 
@@ -99,16 +101,19 @@
 
     try {
       const response = await fetch(downloadURL);
+      const { ok, status } = response;
 
-      if (!response.ok) {
-        throw new Error();
+      if (!ok) {
+        throw new Error(`The response returned with HTTP status ${status}.`);
       }
 
       const file = new File([await response.blob()], fileName, { type: 'image/jpeg' });
 
       dispatch('select', { file, credit });
-    } catch {
+    } catch (/** @type {any} */ ex) {
       error = 'image_fetch_failed';
+      // eslint-disable-next-line no-console
+      console.error(ex);
     }
   };
 

@@ -92,13 +92,13 @@
       saving = true;
       await saveEntry({ skipCI });
       goBack(`/collections/${collection?.name}`);
-    } catch (/** @type {any} */ error) {
-      if (error.message === 'validation_failed') {
+    } catch (/** @type {any} */ ex) {
+      if (ex.message === 'validation_failed') {
         showValidationToast = true;
       } else {
         showErrorDialog = true;
         // eslint-disable-next-line no-console
-        console.error(error);
+        console.error(ex);
       }
     } finally {
       saving = false;

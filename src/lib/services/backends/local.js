@@ -48,9 +48,11 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
     } else {
       try {
         await handle.entries().next();
-      } catch {
+      } catch (/** @type {any} */ ex) {
         // The directory may have been (re)moved
         handle = undefined;
+        // eslint-disable-next-line no-console
+        console.error(ex);
       }
     }
   }
@@ -171,9 +173,9 @@ const getAllFiles = async () => {
             size: file.size,
             text: name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? await readAsText(file) : null,
           });
-        } catch (/** @type {any} */ error) {
+        } catch (/** @type {any} */ ex) {
           // eslint-disable-next-line no-console
-          console.error(error);
+          console.error(ex);
         }
       }
 
@@ -230,9 +232,9 @@ const commitChanges = async (changes) => {
 
           await handle.removeEntry(fileName);
         }
-      } catch (/** @type {any} */ error) {
+      } catch (/** @type {any} */ ex) {
         // eslint-disable-next-line no-console
-        console.error(error);
+        console.error(ex);
       }
     }),
   );

@@ -24,7 +24,9 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  */
 const validate = (config) => {
   if (!isObject(config)) {
-    throw new Error(get(_)('config.error.parse_failed'));
+    throw new Error(get(_)('config.error.parse_failed'), {
+      cause: new Error(get(_)('config.error.parse_failed_invalid_object')),
+    });
   }
 
   if (!config.collections?.length) {
@@ -68,18 +70,22 @@ export const fetchSiteConfig = async () => {
   try {
     try {
       response = await fetch(href);
-    } catch {
-      throw new Error(get(_)('config.error.fetch_failed'));
+    } catch (/** @type {any} */ ex) {
+      throw new Error(get(_)('config.error.fetch_failed'), { cause: ex });
     }
 
-    if (!response.ok) {
-      throw new Error(get(_)('config.error.fetch_failed'));
+    const { ok, status } = response;
+
+    if (!ok) {
+      throw new Error(get(_)('config.error.fetch_failed'), {
+        cause: new Error(get(_)('config.error.fetch_failed_not_ok', { values: { status } })),
+      });
     }
 
     try {
       config = YAML.parse(await response.text());
-    } catch {
-      throw new Error(get(_)('config.error.parse_failed'));
+    } catch (/** @type {any} */ ex) {
+      throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
     }
 
     validate(config);
@@ -90,13 +96,13 @@ export const fetchSiteConfig = async () => {
     }
 
     siteConfig.set(config);
-  } catch (/** @type {any} */ error) {
+  } catch (/** @type {any} */ ex) {
     siteConfig.set({
-      error: error.name === 'Error' ? error.message : get(_)('config.error.unexpected'),
+      error: ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected'),
     });
 
     // eslint-disable-next-line no-console
-    console.error(error);
+    console.error(ex, ex.cause);
   }
 };
 

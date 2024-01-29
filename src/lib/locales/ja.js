@@ -354,7 +354,9 @@ export const strings = {
   config: {
     error: {
       fetch_failed: '設定ファイルを読み込めませんでした。',
+      fetch_failed_not_ok: 'HTTP レスポンスがステータス {status} で返されました。',
       parse_failed: '設定ファイルを解析できませんでした。',
+      parse_failed_invalid_object: '設定ファイルが有効な JavaScript オブジェクトではありません。',
       no_collection: '設定ファイル内でコレクションが定義されていません。',
       no_backend: '設定ファイル内でバックエンドが定義されていません。',
       unsupported_backend: '設定されている「{name}」バックエンドは非対応です。',
