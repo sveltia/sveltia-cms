@@ -104,6 +104,10 @@ export const getCanonicalLocale = (locale) => {
 export const getLocaleLabel = (locale) => {
   const canonicalLocale = getCanonicalLocale(locale);
 
+  if (!canonicalLocale) {
+    return locale;
+  }
+
   try {
     return new Intl.DisplayNames(get(appLocale), { type: 'language' }).of(canonicalLocale);
   } catch (/** @type {any} */ ex) {
