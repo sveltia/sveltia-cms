@@ -125,7 +125,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | --- | --- |
 | Code | Not supported yet. |
 | Color | The `enableAlpha` option is not supported yet. |
-| Date/DateTime | The `date_format` and `time_format` options with Moment.js tokens are not supported yet. We may deprecate the Moment.js format support anyway. |
+| Date/DateTime | The `date_format` and `time_format` options with Moment.js tokens are not supported yet. We may deprecate the Moment.js format support anyway. Note: Decap CMS 3.1.0 will replace Moment.js with [Day.js](https://day.js.org/); we’ll follow the change once it’s shipped. |
 | File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not supported yet. |
 | Markdown | It’s a plain text editor at this time. A rich text editor is coming soon. |
