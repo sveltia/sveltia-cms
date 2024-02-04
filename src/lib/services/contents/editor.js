@@ -166,17 +166,22 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
           picker_utc: pickerUTC = false,
         } = /** @type {DateTimeField} */ (fieldConfig);
 
+        const completeFormat = !(timeFormat === false || dateFormat === false);
+
         // Default to current date/time
         const { year, month, day, hour, minute } = getDateTimeParts({
-          timeZone: pickerUTC ? 'UTC' : undefined,
+          timeZone: pickerUTC || completeFormat ? 'UTC' : undefined,
         });
 
+        const dateStr = `${year}-${month}-${day}`;
+        const timeStr = `${hour}:${minute}`;
+
         if (timeFormat === false) {
-          newContent[keyPath] = `${year}-${month}-${day}`;
+          newContent[keyPath] = dateStr;
         } else if (dateFormat === false) {
-          newContent[keyPath] = `${hour}:${minute}`;
+          newContent[keyPath] = timeStr;
         } else {
-          newContent[keyPath] = `${year}-${month}-${day}T${hour}:${minute}${pickerUTC ? 'Z' : ''}`;
+          newContent[keyPath] = `${dateStr}T${timeStr}:00.000Z`;
         }
       }
 
