@@ -15,7 +15,7 @@ jobs:
       - name: Checkout the branch
         uses: actions/checkout@v4
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v3
         with:
           version: latest
       - name: Setup Node.js environment
