@@ -20,6 +20,7 @@ ignorePaths:
 words:
   - astros
   - camelcase
+  - Cloudinary
   - danurbanowicz
   - Decap
   - DeepL
@@ -55,6 +56,7 @@ words:
   - uncategorized
   - unflatten
   - unproxify
+  - Uploadcare
   - WCAG
   - weba
   - webformat
