@@ -156,7 +156,7 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
       }
     }
 
-    if (widgetName === 'date' || widgetName === 'datetime') {
+    if (widgetName === 'datetime') {
       if (typeof defaultValue === 'string') {
         newContent[keyPath] = defaultValue;
       } else {

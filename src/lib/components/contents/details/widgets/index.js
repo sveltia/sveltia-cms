@@ -29,7 +29,6 @@ import TextPreview from '$lib/components/contents/details/widgets/text/text-prev
 export const editors = {
   boolean: BooleanEditor,
   color: ColorEditor,
-  date: DateTimeEditor, // alias
   datetime: DateTimeEditor,
   file: FileEditor,
   image: FileEditor, // alias
@@ -49,7 +48,6 @@ export const editors = {
 export const previews = {
   boolean: BooleanPreview,
   color: ColorPreview,
-  date: DateTimePreview, // alias
   datetime: DateTimePreview,
   file: FilePreview,
   image: FilePreview, // alias

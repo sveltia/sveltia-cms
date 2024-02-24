@@ -1,8 +1,7 @@
 <!--
   @component
-  Implement the preview for the DataTime and (deprecated) Date widgets.
+  Implement the preview for the DataTime widget.
   @see https://decapcms.org/docs/widgets/#datetime
-  @see https://decapcms.org/docs/widgets/#date
 -->
 <script>
   import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';

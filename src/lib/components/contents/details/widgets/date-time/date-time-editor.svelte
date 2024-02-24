@@ -1,8 +1,7 @@
 <!--
   @component
-  Implement the editor for the DataTime and (deprecated) Date widgets.
+  Implement the editor for the DataTime widget.
   @see https://decapcms.org/docs/widgets/#datetime
-  @see https://decapcms.org/docs/widgets/#date
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
