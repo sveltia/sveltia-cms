@@ -200,7 +200,7 @@ You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](htt
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
    - Other Chromium-based browsers may also work. In Brave, you need to enable the File System Access API [with a flag](https://github.com/brave/brave-browser/issues/20563#issuecomment-1021567573).
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
-   - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646).
+   - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646) and [this thread](https://github.com/sveltia/sveltia-cms/discussions/101).
 1. Make some changes to your content on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
 1. Open the dev site at `http://localhost:[port]/` to check the rendered pages.
