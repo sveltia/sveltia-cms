@@ -12,10 +12,28 @@ import IndexedDB from '$lib/services/utils/indexeddb';
 import { isObject } from '$lib/services/utils/misc';
 
 const label = 'GitHub';
+
 /**
  * @type {RepositoryInfo}
  */
-const repository = { owner: '', repo: '', branch: '', url: '' };
+const repository = new Proxy(/** @type {any} */ ({ owner: '', repo: '', branch: '' }), {
+  /**
+   * Define the getter.
+   * @param {{ [key: string]: string }} obj - Object itself.
+   * @param {string} key - Property name.
+   * @returns {string} Property value.
+   */
+  get: (obj, key) => {
+    if (key === 'url') {
+      const { owner, repo, branch } = obj;
+      const baseURL = `https://github.com/${owner}/${repo}`;
+
+      return branch ? `${baseURL}/tree/${branch}` : baseURL;
+    }
+
+    return obj[key];
+  },
+});
 
 /**
  * Send a request to GitHub REST/GraphQL API.
@@ -123,19 +141,16 @@ const fetchGraphQL = async (query, variables = {}) => {
  * @throws {Error} When the backend is not configured properly.
  */
 const init = () => {
-  const { backend: { repo: repoPath = '', branch = 'master' } = {} } = get(siteConfig) ?? {};
+  const { backend: { repo: repoPath = '', branch = '' } = {} } = get(siteConfig) ?? {};
   const [owner, repo] = typeof repoPath === 'string' ? repoPath.split('/') : [];
 
-  if (!owner || !repo || !branch) {
+  if (!owner || !repo) {
     throw new Error('Backend is not defined');
   }
 
-  Object.assign(repository, {
-    owner,
-    repo,
-    branch,
-    url: `https://github.com/${owner}/${repo}/tree/${branch}`,
-  });
+  if (!repository.owner) {
+    Object.assign(repository, { owner, repo, branch });
+  }
 };
 
 /**
@@ -166,6 +181,23 @@ const signIn = async (savedToken) => {
 const signOut = async () => undefined;
 
 /**
+ * Fetch the repository’s default branch name, which is typically `master` or `main`.
+ * @returns {Promise<string>} Branch name.
+ */
+const fetchDefaultBranchName = async () => {
+  const { owner, repo } = repository;
+
+  const { repository: result } =
+    /** @type {{ repository: { defaultBranchRef: { name: string } } } } */ (
+      await fetchGraphQL(`query {
+        repository(owner: "${owner}", name: "${repo}") { defaultBranchRef { name } }
+      }`)
+    );
+
+  return result.defaultBranchRef.name;
+};
+
+/**
  * Fetch the latest commit’s SHA-1 hash.
  * @returns {Promise<string>} Hash.
  */
@@ -189,12 +221,18 @@ const fetchLastCommitHash = async () => {
  * {@link allAssets} stores.
  */
 const fetchFiles = async () => {
-  const { owner, repo, branch } = repository;
+  const { owner, repo, branch: branchName } = repository;
   const metaDB = new IndexedDB(`github:${owner}/${repo}`, 'meta');
   const cacheDB = new IndexedDB(`github:${owner}/${repo}`, 'file-cache');
   const cachedHash = await metaDB.get('last_commit_hash');
   const cachedFileEntries = await cacheDB.entries();
+  let branch = branchName;
   let fileList;
+
+  if (!branch) {
+    branch = await fetchDefaultBranchName();
+    repository.branch = branch;
+  }
 
   if (cachedHash && cachedHash === (await fetchLastCommitHash())) {
     // Skip fetching file list
