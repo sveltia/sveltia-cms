@@ -22,6 +22,8 @@ import StringEditor from '$lib/components/contents/details/widgets/string/string
 import StringPreview from '$lib/components/contents/details/widgets/string/string-preview.svelte';
 import TextEditor from '$lib/components/contents/details/widgets/text/text-editor.svelte';
 import TextPreview from '$lib/components/contents/details/widgets/text/text-preview.svelte';
+import UuidEditor from '$lib/components/contents/details/widgets/uuid/uuid-editor.svelte';
+import UuidPreview from '$lib/components/contents/details/widgets/uuid/uuid-preview.svelte';
 
 /**
  * @type {{ [key: string]: any }}
@@ -40,6 +42,7 @@ export const editors = {
   select: SelectEditor,
   string: StringEditor,
   text: TextEditor,
+  uuid: UuidEditor,
 };
 
 /**
@@ -59,4 +62,5 @@ export const previews = {
   select: SelectPreview,
   string: StringPreview,
   text: TextPreview,
+  uuid: UuidPreview,
 };

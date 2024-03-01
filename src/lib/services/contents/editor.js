@@ -19,7 +19,7 @@ import { user } from '$lib/services/user';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import { createPath, getHash, renameIfNeeded, resolvePath } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { escapeRegExp } from '$lib/services/utils/strings';
+import { escapeRegExp, generateRandomId, generateUUID } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.entry-view';
 
@@ -184,6 +184,15 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
           newContent[keyPath] = `${dateStr}T${timeStr}:00.000Z`;
         }
       }
+
+      return;
+    }
+
+    if (widgetName === 'uuid') {
+      const { prefix, use_b32_encoding: useEncoding } = /** @type {UuidField} */ (fieldConfig);
+      const value = useEncoding ? generateRandomId() : generateUUID();
+
+      newContent[keyPath] = prefix ? `${prefix}${value}` : value;
 
       return;
     }

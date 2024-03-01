@@ -1,3 +1,5 @@
+import base32Encode from 'base32-encode';
+
 /**
  * Truncate the given string.
  * @param {string} string - Original string.
@@ -36,3 +38,14 @@ export const stripSlashes = (string) => string.replace(/^\/+/, '').replace(/\/+$
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID
  */
 export const generateUUID = () => window.crypto.randomUUID();
+
+/**
+ * Generate a random ID.
+ * @returns {string} Generated 26-character string.
+ */
+export const generateRandomId = () => {
+  const hex = generateUUID().replaceAll('-', '');
+  const { buffer } = new Uint8Array(hex.match(/../g).map((h) => parseInt(h, 16)));
+
+  return base32Encode(buffer, 'RFC4648', { padding: false }).toLowerCase();
+};
