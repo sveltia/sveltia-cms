@@ -23,7 +23,12 @@
    */
   export let currentValue;
 
-  $: ({ name: fieldName } = fieldConfig);
+  $: ({
+    name: fieldName,
+    // Widget-specific options
+    prefix = '',
+    suffix = '',
+  } = fieldConfig);
 
   $: isURL = (() => {
     try {
@@ -37,13 +42,15 @@
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
-  {#if fieldName === 'title'}
-    <p class="title">{currentValue}</p>
-  {:else if isURL}
-    <p><a href={currentValue}>{currentValue}</a></p>
-  {:else}
-    <p>{currentValue}</p>
-  {/if}
+  <p class:title={fieldName === 'title'}>
+    {prefix}
+    {#if isURL}
+      <a href={currentValue}>{currentValue}</a>
+    {:else}
+      {currentValue}
+    {/if}
+    {suffix}
+  </p>
 {/if}
 
 <style lang="scss">

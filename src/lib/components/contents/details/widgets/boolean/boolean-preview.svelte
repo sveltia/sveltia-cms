@@ -19,14 +19,23 @@
   /**
    * @type {BooleanField}
    */
-  // svelte-ignore unused-export-let
   export let fieldConfig;
   /**
    * @type {boolean}
    */
   export let currentValue;
+
+  $: ({
+    // Widget-specific options
+    prefix = '',
+    suffix = '',
+  } = fieldConfig);
 </script>
 
 {#if typeof currentValue === 'boolean'}
-  <p>{$_(`boolean.${currentValue}`)}</p>
+  <p>
+    {prefix}
+    {$_(`boolean.${currentValue}`)}
+    {suffix}
+  </p>
 {/if}

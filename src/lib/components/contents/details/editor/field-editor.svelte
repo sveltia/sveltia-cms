@@ -45,6 +45,13 @@
   $: ({ min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
     fieldConfig
   ));
+  $: allowPrefix = ['boolean', 'number', 'string'].includes(widgetName);
+  $: prefix = allowPrefix
+    ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).prefix
+    : undefined;
+  $: suffix = allowPrefix
+    ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).suffix
+    : undefined;
   $: hasMultiple = ['relation', 'select'].includes(widgetName);
   $: multiple = hasMultiple
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
@@ -173,7 +180,7 @@
         {/if}
       {/if}
     </div>
-    <div role="none">
+    <div role="none" class="widget-wrapper" class:has-prefix={!!prefix || !!suffix}>
       {#if !(widgetName in editors)}
         <div role="none">{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
       {:else if isList}
@@ -190,6 +197,9 @@
           {invalid}
         />
       {:else}
+        {#if prefix}
+          <div class="prefix">{prefix}</div>
+        {/if}
         <svelte:component
           this={editors[widgetName]}
           {locale}
@@ -202,6 +212,9 @@
           {required}
           {invalid}
         />
+        {#if suffix}
+          <div class="suffix">{suffix}</div>
+        {/if}
       {/if}
     </div>
     {#if !readonly && hint}
@@ -301,6 +314,19 @@
         font-size: 16px; /* !hardcoded */
       }
     }
+  }
+
+  .widget-wrapper.has-prefix {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  .prefix,
+  .suffix {
+    color: var(--sui-secondary-foreground-color);
+    white-space: nowrap;
   }
 
   .hint {

@@ -27,16 +27,22 @@
   $: ({
     // Widget-specific options
     value_type: valueType = 'int',
+    prefix = '',
+    suffix = '',
   } = fieldConfig);
 
   $: canonicalLocale = getCanonicalLocale(locale);
   $: numberFormatter = Intl.NumberFormat(canonicalLocale);
 </script>
 
-{#if currentValue === undefined || currentValue === ''}
-  <!--  -->
-{:else if valueType === 'int' || valueType === 'float'}
-  <p>{numberFormatter.format(Number(currentValue))}</p>
-{:else}
-  <p>{currentValue}</p>
+{#if currentValue !== undefined && currentValue !== ''}
+  <p>
+    {prefix}
+    {#if valueType === 'int' || valueType === 'float'}
+      {numberFormatter.format(Number(currentValue))}
+    {:else}
+      {currentValue}
+    {/if}
+    {suffix}
+  </p>
 {/if}
