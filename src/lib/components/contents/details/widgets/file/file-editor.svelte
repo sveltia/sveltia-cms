@@ -100,7 +100,7 @@
 
     if (file) {
       // Check the max file size
-      // @see https://decapcms.org/docs/beta-features/#image-widget-file-size-limit
+      // @see https://decapcms.org/docs/widgets/#image
       if (isImageWidget && Number.isInteger(maxFileSize) && file.size > maxFileSize) {
         showSizeLimitDialog = true;
       } else {

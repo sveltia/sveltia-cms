@@ -298,7 +298,7 @@ export const formatEntryFile = ({
  * @param {EntryContent} content - Entry content.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug
- * @see https://decapcms.org/docs/beta-features/#folder-collections-path
+ * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
  */
 const getSlug = (collectionName, filePath, content) => {
   const { path: pathTemplate, identifier_field: identifierField = 'title' } =

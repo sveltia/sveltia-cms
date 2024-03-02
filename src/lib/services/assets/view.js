@@ -46,7 +46,7 @@ export const getAssetPreviewURL = (asset, loading, element) => {
  * collection-specific asset folder.
  * @param {string} collectionName - Collection name.
  * @returns {string} Human-readable label.
- * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+ * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 export const getFolderLabelByCollection = (collectionName) => {
   if (collectionName === '*') {
@@ -65,7 +65,7 @@ export const getFolderLabelByCollection = (collectionName) => {
  * collection-specific asset folder.
  * @param {string} folderPath - Media folder path.
  * @returns {string} Human-readable label.
- * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+ * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 export const getFolderLabelByPath = (folderPath) => {
   const { media_folder: defaultMediaFolder } = get(siteConfig);

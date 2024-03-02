@@ -168,7 +168,7 @@
   /**
    * Add a new subfield to the list.
    * @param {string} [subFieldName] - Sub field name from one of the variable type options.
-   * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
+   * @see https://decapcms.org/docs/variable-type-widgets/
    */
   const addItem = (subFieldName) => {
     updateComplexList(({ valueList, viewList }) => {

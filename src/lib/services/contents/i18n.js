@@ -20,7 +20,7 @@ export const defaultI18nConfig = {
  * @param {RawCollection} collection - Collection.
  * @param {RawCollectionFile} [file] - Collection file.
  * @returns {I18nConfig} Config.
- * @see https://decapcms.org/docs/beta-features/#i18n-support
+ * @see https://decapcms.org/docs/i18n/
  */
 export const getI18nConfig = (collection, file) => {
   const _siteConfig = get(siteConfig);

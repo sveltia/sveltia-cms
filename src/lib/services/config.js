@@ -190,7 +190,7 @@ siteConfig.subscribe((config) => {
   /**
    * Folder Collections Media and Public Folder.
    * @type {CollectionAssetFolder[]}
-   * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+   * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
    */
   const collectionAssetFolders = collections.map((collection) => {
     const {

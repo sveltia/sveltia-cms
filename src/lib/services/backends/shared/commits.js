@@ -4,7 +4,7 @@ import { user } from '$lib/services/user';
 
 /**
  * Default commit message templates.
- * @see https://decapcms.org/docs/beta-features/#commit-message-templates
+ * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
  */
 const defaultCommitMessages = {
   create: 'Create {{collection}} “{{slug}}”',

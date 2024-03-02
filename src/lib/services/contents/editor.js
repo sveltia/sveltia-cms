@@ -84,7 +84,7 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
    * @param {object} args - Arguments.
    * @param {Field} args.fieldConfig - Field configuration.
    * @param {string} args.keyPath - Field key path, e.g. `author.name`.
-   * @see https://decapcms.org/docs/beta-features/#dynamic-default-values
+   * @see https://decapcms.org/docs/dynamic-default-values/
    */
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
     if (keyPath in defaultValues) {
@@ -836,7 +836,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
  * @param {LocaleCode} locale - Locale code.
  * @param {string} slug - Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
- * @see https://decapcms.org/docs/beta-features/#i18n-support
+ * @see https://decapcms.org/docs/i18n/
  */
 const createEntryPath = (draft, locale, slug) => {
   const { collection, collectionFile, originalEntry, currentValues } = draft;
@@ -854,7 +854,7 @@ const createEntryPath = (draft, locale, slug) => {
 
   /**
    * Support folder collections path.
-   * @see https://decapcms.org/docs/beta-features/#folder-collections-path
+   * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    */
   const path = collection.path
     ? fillSlugTemplate(collection.path, {

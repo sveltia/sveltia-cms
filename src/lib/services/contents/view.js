@@ -38,7 +38,7 @@ export const currentView = writable({});
  * @param {string} tf - Transformation.
  * @param {Field} fieldConfig - Field configuration.
  * @returns {string} Transformed summary.
- * @see https://decapcms.org/docs/beta-features/#summary-string-template-transformations
+ * @see https://decapcms.org/docs/summary-strings/
  */
 const transformSummary = (summary, tf, fieldConfig) => {
   if (tf === 'upper') {

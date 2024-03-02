@@ -52,7 +52,7 @@ export const normalizeSlug = (string) => {
  * @returns {string} Filled template that can be used for an entry slug, path, etc.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug
- * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+ * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 export const fillSlugTemplate = (
   template,

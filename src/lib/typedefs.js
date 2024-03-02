@@ -176,7 +176,7 @@
  * because the complete path cannot be easily determined.
  * @property {boolean} entryRelative Whether the `internalPath` is a relative path from the assets’s
  * associated entry.
- * @see https://decapcms.org/docs/beta-features/#folder-collections-media-and-public-folder
+ * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 
 /**
@@ -198,7 +198,7 @@
  * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales. If
  * `false`, editors will be able to disable the output of non-default locales through the UI. An
  * option suggested in https://github.com/decaporg/decap-cms/issues/6932.
- * @see https://decapcms.org/docs/beta-features/#i18n-support
+ * @see https://decapcms.org/docs/i18n/
  */
 
 /**
@@ -226,7 +226,7 @@
  * @see https://decapcms.org/docs/widgets/#image
  * @see https://decapcms.org/docs/cloudinary/
  * @see https://decapcms.org/docs/uploadcare/
- * @see https://decapcms.org/docs/beta-features/#image-widget-file-size-limit
+ * @see https://decapcms.org/docs/widgets/#image
  */
 
 /**
@@ -366,7 +366,7 @@
  * @property {string} [hint] Value hint to be displayed below the input.
  * @property {boolean | 'translate' | 'duplicate'} [i18n] I18n configuration.
  * @see https://decapcms.org/docs/configuration-options/#fields
- * @see https://decapcms.org/docs/widgets
+ * @see https://decapcms.org/docs/widgets/#common-widget-options
  */
 
 /**
@@ -448,7 +448,7 @@
  * @property {ListFieldType[]} [types] Multiple Object widgets (variable types) to be selected.
  * @property {string} [typeKey] Property name to store the type.
  * @see https://decapcms.org/docs/widgets/#list
- * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
+ * @see https://decapcms.org/docs/variable-type-widgets/
  */
 
 /**
@@ -459,7 +459,7 @@
  * @property {string} [widget] Widget type. `object` only.
  * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
  * @property {Field[]} fields Nested fields.
- * @see https://decapcms.org/docs/beta-features/#list-widget-variable-types
+ * @see https://decapcms.org/docs/variable-type-widgets/
  */
 
 /**
