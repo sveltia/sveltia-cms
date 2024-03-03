@@ -49,7 +49,8 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better productivity
 
-- You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server on your machine.
+- You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server on your machine[^26].
+- The Git branch name is automatically set to the default branch (`main` for new repositories, `master` for old repositories) if it’s not specified in the configuration file, preventing data loading errors[^27].
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
@@ -71,7 +72,10 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Fields in non-default locales are validated as expected[^13].
 - [Integrates DeepL](#use-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
 - You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
-- You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters[^12].
+- You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters. Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
+  - `prefix`: A string to be prepended to the value. Default: an empty string.
+  - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
+  - `read_only`: Whether to make the field read-only. Default: `true`.
 - Resolves the [limitations in the list and object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 
@@ -84,6 +88,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 ### Better fields/widgets
 
+- The Boolean, Number and String widgets support the `prefix` and `suffix` properties, allowing developers to display custom messages before and/or after the field[^28].
 - Relation field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Provides a reimagined all-in-one asset selection dialog for file and image fields.
@@ -440,3 +445,6 @@ This software is provided “as is” without any express or implied warranty. W
 [^23]: [Netlify/Decap CMS #2](https://github.com/decaporg/decap-cms/issues/2)
 [^24]: [Netlify/Decap CMS #6831](https://github.com/decaporg/decap-cms/issues/6831)
 [^25]: [Netlify/Decap CMS #6987](https://github.com/decaporg/decap-cms/issues/6987)
+[^26]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/3285)
+[^27]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/5617)
+[^28]: [Netlify/Decap CMS #6836](https://github.com/decaporg/decap-cms/pull/6836)
