@@ -44,7 +44,7 @@ export const getAssetPreviewURL = (asset, loading, element) => {
 /**
  * Get the label for the given collection. It can be a category name if the folder is a
  * collection-specific asset folder.
- * @param {string} collectionName - Collection name.
+ * @param {string | undefined} collectionName - Collection name.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
@@ -57,18 +57,18 @@ export const getFolderLabelByCollection = (collectionName) => {
     return get(_)('uncategorized');
   }
 
-  return get(siteConfig).collections.find(({ name }) => name === collectionName)?.label ?? '';
+  return get(siteConfig)?.collections.find(({ name }) => name === collectionName)?.label ?? '';
 };
 
 /**
  * Get the label for the given folder path. It can be a category name if the folder is a
  * collection-specific asset folder.
- * @param {string} folderPath - Media folder path.
+ * @param {string | undefined} folderPath - Media folder path.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 export const getFolderLabelByPath = (folderPath) => {
-  const { media_folder: defaultMediaFolder } = get(siteConfig);
+  const { media_folder: defaultMediaFolder } = /** @type {SiteConfig} */ (get(siteConfig));
 
   if (!folderPath) {
     return getFolderLabelByCollection('*');
@@ -158,7 +158,7 @@ const sortAssets = (assets, { key, order } = {}) => {
  * @param {FilteringConditions} [conditions] - Filtering conditions.
  * @returns {Asset[]} Filtered asset list.
  */
-const filterAssets = (assets, { field, pattern } = { field: undefined, pattern: undefined }) => {
+const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) => {
   if (!field) {
     return assets;
   }
@@ -191,7 +191,7 @@ const filterAssets = (assets, { field, pattern } = { field: undefined, pattern: 
  * @returns {{ [key: string]: Asset[] }} Grouped assets, where key is a group label and value is an
  * asset list.
  */
-const groupAssets = (assets, { field, pattern } = { field: undefined, pattern: undefined }) => {
+const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefined }) => {
   if (!field) {
     return assets.length ? { '*': assets } : {};
   }
@@ -243,7 +243,7 @@ const defaultView = {
  * View settings for the selected asset collection.
  * @type {import('svelte/store').Writable<AssetListView>}
  */
-export const currentView = writable({});
+export const currentView = writable({ type: 'grid' });
 
 /**
  * View settings for all the asset collection.

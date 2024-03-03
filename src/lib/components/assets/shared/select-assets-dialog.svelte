@@ -36,14 +36,14 @@
   let allAssetsDropZone;
   let elementIdPrefix = '';
   /**
-   * @type {?SelectedAsset}
+   * @type {SelectedAsset | null}
    */
   let selectedAsset = null;
   let enteredURL = '';
   let searchTerms = '';
 
-  $: ({ internalPath, entryRelative } =
-    $selectedCollection._assetFolder ?? /** @type {CollectionAssetFolder} */ ({}));
+  $: ({ internalPath = '', entryRelative = false } =
+    $selectedCollection?._assetFolder ?? /** @type {any} */ ({}));
   $: showCollectionAssets = !!internalPath && !entryRelative;
   $: libraryName = showCollectionAssets ? 'collection-files' : 'all-files';
   $: isLocalLibrary = ['collection-files', 'all-files'].includes(libraryName);

@@ -27,7 +27,7 @@ const creditLinkParams = 'utm_source=sveltia-cms&utm_medium=referral';
  */
 const search = async (query, { apiKey }) => {
   const headers = { Authorization: `Client-ID ${apiKey}` };
-  const [locale] = get(appLocale).toLowerCase().split('-');
+  const [locale] = /** @type {string} */ (get(appLocale)).toLowerCase().split('-');
   /**
    * @type {{
    * id: string,

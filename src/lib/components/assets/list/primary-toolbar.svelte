@@ -80,8 +80,8 @@
   multiple={true}
   on:change={({ target }) => {
     $uploadingAssets = {
-      folder: $selectedAssetFolder?.internalPath || $siteConfig.media_folder,
-      files: [.../** @type {HTMLInputElement} */ (target).files],
+      folder: $selectedAssetFolder?.internalPath || $siteConfig?.media_folder,
+      files: [.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)],
     };
   }}
 />

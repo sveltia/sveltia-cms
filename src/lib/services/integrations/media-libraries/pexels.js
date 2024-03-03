@@ -24,7 +24,7 @@ const endpoint = 'https://api.pexels.com/v1';
  */
 const search = async (query, { apiKey }) => {
   const headers = { Authorization: apiKey };
-  const [locale] = get(appLocale).toLowerCase().split('-');
+  const [locale] = /** @type {string} */ (get(appLocale)).toLowerCase().split('-');
   /**
    * @type {{
    * id: number,

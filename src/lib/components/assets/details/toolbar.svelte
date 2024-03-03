@@ -19,7 +19,7 @@
   >
     <Icon slot="start-icon" name="arrow_back_ios_new" />
   </Button>
-  <h2 role="none">{$overlaidAsset.name}</h2>
+  <h2 role="none">{$overlaidAsset?.name}</h2>
   <Spacer flex />
   <!-- @todo Implement these actions.
   <Button variant="secondary" label={$_('edit')} aria-label={$_('edit_file')} />
@@ -40,7 +40,7 @@
 <DeleteAssetsDialog
   bind:open={showDeleteDialog}
   description={$_('confirm_deleting_this_asset')}
-  assets={[$overlaidAsset]}
+  assets={$overlaidAsset ? [$overlaidAsset] : []}
   on:delete={() => {
     goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
   }}

@@ -43,7 +43,7 @@
   $: items =
     unflatten(
       Object.fromEntries(
-        Object.entries($entryDraft.currentValues[locale])
+        Object.entries($entryDraft?.currentValues[locale] ?? {})
           .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
           .map(([_keyPath, value]) => [
             _keyPath.replace(new RegExp(`^${escapeRegExp(keyPath)}`), fieldName),
@@ -57,11 +57,11 @@
   <!-- eslint-disable-next-line no-unused-vars -->
   {#each items as item, index}
     {@const subFieldName = Array.isArray(types)
-      ? $entryDraft.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
+      ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
       : undefined}
     {@const subFields = subFieldName
-      ? types.find(({ name }) => name === subFieldName)?.fields ?? []
-      : fields ?? [field]}
+      ? types?.find(({ name }) => name === subFieldName)?.fields ?? []
+      : fields ?? (field ? [field] : [])}
     <section class="subsection">
       {#each subFields as subField (subField.name)}
         <FieldPreview

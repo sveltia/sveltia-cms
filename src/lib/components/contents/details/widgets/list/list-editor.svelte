@@ -108,7 +108,8 @@
     widgetId = /** @type {string} */ (generateUUID().split('-').pop());
 
     items.forEach((__, index) => {
-      $entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`] = !collapsed;
+      /** @type {EntryDraft} */ ($entryDraft).viewStates[locale][`${keyPath}.${index}.expanded`] =
+        !collapsed;
     });
   });
 
@@ -135,19 +136,19 @@
       .map((val) => val.trim())
       .filter((val) => val !== '');
 
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
       if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
-      Object.keys($entryDraft.currentValues[_locale]).forEach((_keyPath) => {
+      Object.keys($entryDraft?.currentValues[_locale] ?? {}).forEach((_keyPath) => {
         if (_keyPath.match(`^${escapeRegExp(keyPath)}\\.\\d+$`)) {
-          delete $entryDraft.currentValues[_locale][_keyPath];
+          delete $entryDraft?.currentValues[_locale][_keyPath];
         }
       });
 
       normalizedValue.forEach((val, index) => {
-        $entryDraft.currentValues[_locale][`${keyPath}.${index}`] = val;
+        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][`${keyPath}.${index}`] = val;
       });
     });
   };
@@ -158,7 +159,7 @@
    * {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
       if (!(i18n !== 'duplicate' && _locale !== locale)) {
         updateListField(_locale, keyPath, manipulate);
       }
@@ -173,8 +174,8 @@
   const addItem = (subFieldName) => {
     updateComplexList(({ valueList, viewList }) => {
       const subFields = subFieldName
-        ? types.find(({ name }) => name === subFieldName)?.fields ?? []
-        : fields ?? [field];
+        ? types?.find(({ name }) => name === subFieldName)?.fields ?? []
+        : fields ?? (field ? [field] : []);
 
       const index = addToTop ? 0 : valueList.length;
       const newItem = unflatten(getDefaultValues(subFields));
@@ -183,7 +184,7 @@
         newItem[typeKey] = subFieldName;
       }
 
-      valueList.splice(index, 0, hasSingleSubField ? newItem[field.name] : newItem);
+      valueList.splice(index, 0, hasSingleSubField && field ? newItem[field.name] : newItem);
       viewList.splice(index, 0, { expanded: true });
     });
   };
@@ -285,11 +286,13 @@
       class:collapsed={!parentExpanded}
     >
       {#each items as item, index}
-        {@const expanded = !!$entryDraft.viewStates[locale][`${keyPath}.${index}.expanded`]}
+        {@const expanded = !!$entryDraft?.viewStates[locale][`${keyPath}.${index}.expanded`]}
         {@const typeConfig = hasVariableTypes
-          ? types.find(({ name }) => name === item[typeKey])
+          ? types?.find(({ name }) => name === item[typeKey])
           : undefined}
-        {@const subFields = hasVariableTypes ? typeConfig?.fields ?? [] : fields ?? [field]}
+        {@const subFields = hasVariableTypes
+          ? typeConfig?.fields ?? []
+          : fields ?? (field ? [field] : [])}
         {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <!-- @todo Support drag sorting. -->
         <div role="none" class="item">
@@ -300,8 +303,10 @@
                 aria-expanded={expanded}
                 aria-controls="list-{widgetId}-item-{index}-body"
                 on:click={() => {
-                  Object.keys($entryDraft.viewStates).forEach((_locale) => {
-                    $entryDraft.viewStates[_locale][`${keyPath}.${index}.expanded`] = !expanded;
+                  Object.keys($entryDraft?.viewStates ?? {}).forEach((_locale) => {
+                    /** @type {EntryDraft} */ ($entryDraft).viewStates[_locale][
+                      `${keyPath}.${index}.expanded`
+                    ] = !expanded;
                   });
                 }}
               >

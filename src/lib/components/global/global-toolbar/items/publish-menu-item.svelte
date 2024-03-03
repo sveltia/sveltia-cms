@@ -6,9 +6,8 @@
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/prefs';
 
-  $: ({
-    backend: { automatic_deployments: autoDeployEnabled },
-  } = $siteConfig);
+  $: ({ backend: { automatic_deployments: autoDeployEnabled = true } = {} } =
+    $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: showButton = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
 
   /** @type {'info' | 'error'} */
@@ -28,7 +27,7 @@
 
       const { ok, status } = deployHookURL
         ? await fetch(deployHookURL, { method: 'POST', mode: 'no-cors' })
-        : await get(backend).triggerDeployment();
+        : (await get(backend)?.triggerDeployment?.()) ?? {};
 
       // If the `mode` is `no-cors`, the regular response status will be `0`
       if (!ok && status !== 0) {

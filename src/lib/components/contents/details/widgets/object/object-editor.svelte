@@ -84,7 +84,7 @@
   let widgetId = '';
 
   onMount(() => {
-    widgetId = generateUUID().split('-').pop();
+    widgetId = /** @type {string} */ (generateUUID().split('-').pop());
   });
 
   /**
@@ -98,14 +98,14 @@
       ),
     );
 
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
       if (_locale === locale || i18n === 'duplicate') {
         // Since we don’t want to trigger the Proxy’s i18n duplication strategy for descendant
         // fields, manually update the locale’s content and proxify the object again
-        $entryDraft.currentValues[_locale] = createProxy({
+        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale] = createProxy({
           draft: $entryDraft,
           locale: _locale,
-          target: { ...newValueMap, ...$entryDraft.currentValues[_locale] },
+          target: { ...newValueMap, ...$entryDraft?.currentValues[_locale] },
         });
       }
     });
@@ -115,12 +115,12 @@
    * Remove the object’s subfields from the entry draft.
    */
   const removeFields = () => {
-    Object.entries($entryDraft.currentValues).forEach(([_locale, _valueMap]) => {
+    Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
         Object.keys(_valueMap).forEach((_keyPath) => {
           if (_keyPath.match(keyPathRegex)) {
-            $entryDraft.currentValues[_locale][_keyPath] = null;
-            delete $entryDraft.currentValues[_locale][_keyPath];
+            /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][_keyPath] = null;
+            delete $entryDraft?.currentValues[_locale][_keyPath];
           }
         });
       }

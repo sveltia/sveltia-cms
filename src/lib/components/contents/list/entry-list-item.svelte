@@ -27,11 +27,11 @@
   export let viewType;
 
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   let src;
 
-  $: firstImageField = $selectedCollection.fields?.find(({ widget }) => widget === 'image');
+  $: firstImageField = $selectedCollection?.fields?.find(({ widget }) => widget === 'image');
 
   $: (async () => {
     src =
@@ -67,7 +67,7 @@
     updateSelection(/** @type {CustomEvent} */ (event).detail.selected);
   }}
   on:click={() => {
-    goto(`/collections/${$selectedCollection.name}/entries/${entry.slug}`);
+    goto(`/collections/${$selectedCollection?.name}/entries/${entry.slug}`);
   }}
 >
   <GridCell class="checkbox">
@@ -89,7 +89,9 @@
   {/if}
   <GridCell class="title">
     <span role="none">
-      {formatSummary($selectedCollection, entry, locale)}
+      {#if $selectedCollection}
+        {formatSummary($selectedCollection, entry, locale)}
+      {/if}
     </span>
   </GridCell>
 </GridRow>

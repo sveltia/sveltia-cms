@@ -38,7 +38,8 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
   }
 
   /**
-   * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function }}
+   * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function } |
+   * undefined}
    */
   let handle = forceReload ? undefined : await rootDirHandleDB.get(rootDirHandleKey);
 
@@ -62,7 +63,7 @@ const getRootDirHandle = async ({ forceReload = false } = {}) => {
     await rootDirHandleDB.set(rootDirHandleKey, handle);
   }
 
-  return handle;
+  return /** @type {FileSystemDirectoryHandle} */ (handle);
 };
 
 /**
@@ -76,7 +77,7 @@ const discardDirHandle = async () => {
  * Initialize the backend.
  */
 const init = () => {
-  const { backend } = get(siteConfig);
+  const { backend } = /** @type {SiteConfig} */ (get(siteConfig));
 
   rootDirHandleDB = new IndexedDB(`${backend.name}:${backend.repo}`, 'file-system-handles');
 };
@@ -108,10 +109,7 @@ const signOut = async () => {
 const getHandleByPath = async (path) => {
   const pathParts = stripSlashes(path).split('/');
   const create = true;
-  /**
-   * @type {FileSystemFileHandle | FileSystemDirectoryHandle}
-   */
-  let handle = get(rootDirHandle);
+  let handle = /** @type {FileSystemFileHandle | FileSystemDirectoryHandle} */ (get(rootDirHandle));
 
   for (const name of pathParts) {
     handle = await (name.includes('.')
@@ -134,7 +132,7 @@ const getAllFiles = async () => {
   const scanningPaths = [
     ...get(allEntryFolders).map(({ filePath, folderPath }) => filePath || folderPath),
     ...get(allAssetFolders).map(({ internalPath }) => internalPath),
-  ].map((path) => stripSlashes(path));
+  ].map((path) => stripSlashes(path ?? ''));
 
   /**
    * Get a regular expression to match the given path.
@@ -154,7 +152,7 @@ const getAllFiles = async () => {
         continue;
       }
 
-      const path = (await _rootDirHandle.resolve(handle)).join('/');
+      const path = (await _rootDirHandle?.resolve(handle))?.join('/') ?? '';
       const hasMatchingPath = scanningPathsRegEx.some((re) => path.match(re));
 
       if (handle.kind === 'file') {
@@ -171,7 +169,9 @@ const getAllFiles = async () => {
             name,
             sha: await getHash(file),
             size: file.size,
-            text: name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? await readAsText(file) : null,
+            text: name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i)
+              ? await readAsText(file)
+              : undefined,
           });
         } catch (/** @type {any} */ ex) {
           // eslint-disable-next-line no-console
@@ -218,7 +218,7 @@ const commitChanges = async (changes) => {
   await Promise.all(
     changes.map(async ({ action, path, data }) => {
       try {
-        if (['create', 'update'].includes(action)) {
+        if (['create', 'update'].includes(action) && data) {
           const handle = /** @type {FileSystemFileHandle} */ (await getHandleByPath(path));
           const writer = await handle.createWritable();
 
@@ -227,7 +227,7 @@ const commitChanges = async (changes) => {
         }
 
         if (action === 'delete') {
-          const [, dirPath, fileName] = stripSlashes(path).match(/(.+)\/([^/]+)$/);
+          const [, dirPath, fileName] = stripSlashes(path).match(/(.+)\/([^/]+)$/) ?? [];
           const handle = /** @type {FileSystemDirectoryHandle} */ (await getHandleByPath(dirPath));
 
           await handle.removeEntry(fileName);

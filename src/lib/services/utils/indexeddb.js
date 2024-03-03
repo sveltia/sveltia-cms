@@ -7,7 +7,7 @@
 export default class IndexedDB {
   /**
    * Database itself.
-   * @type {IDBDatabase}
+   * @type {IDBDatabase | undefined}
    */
   #database;
 
@@ -15,13 +15,13 @@ export default class IndexedDB {
    * Database name in use.
    * @type {string}
    */
-  #databaseName;
+  #databaseName = '';
 
   /**
    * Store name in use.
    * @type {string}
    */
-  #storeName;
+  #storeName = '';
 
   /**
    * Initialize a new `IndexedDB` instance.
@@ -29,6 +29,7 @@ export default class IndexedDB {
    * @param {string} storeName - Store name.
    */
   constructor(databaseName, storeName) {
+    this.#database = undefined;
     this.#databaseName = databaseName;
     this.#storeName = storeName;
   }
@@ -83,7 +84,11 @@ export default class IndexedDB {
     this.#database ??= await this.#getDatabase();
 
     return new Promise((resolve) => {
-      const transaction = this.#database.transaction([this.#storeName], 'readwrite');
+      const transaction = /** @type {IDBDatabase} */ (this.#database).transaction(
+        [this.#storeName],
+        'readwrite',
+      );
+
       const store = transaction.objectStore(this.#storeName);
       const request = getRequest(store);
 
@@ -93,7 +98,7 @@ export default class IndexedDB {
         };
       } else {
         transaction.oncomplete = () => {
-          resolve();
+          resolve(undefined);
         };
       }
     });

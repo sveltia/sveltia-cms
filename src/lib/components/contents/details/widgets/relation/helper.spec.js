@@ -6,6 +6,7 @@ describe('Test getOptions()', () => {
   const locale = '_default';
 
   siteConfig.set({
+    backend: { name: 'github' },
     media_folder: 'static/assets/uploads',
     public_folder: '/assets/uploads',
     collections: [
@@ -32,8 +33,10 @@ describe('Test getOptions()', () => {
     /** @type {Entry[]} */
     const entries = [
       {
-        collectionName: 'members',
+        id: '',
+        sha: '',
         slug: 'melvin-lucas',
+        collectionName: 'members',
         locales: {
           _default: {
             content: {
@@ -49,8 +52,10 @@ describe('Test getOptions()', () => {
         },
       },
       {
-        collectionName: 'members',
+        id: '',
+        sha: '',
         slug: 'elsie-mcbride',
+        collectionName: 'members',
         locales: {
           _default: {
             content: {
@@ -66,8 +71,10 @@ describe('Test getOptions()', () => {
         },
       },
       {
-        collectionName: 'members',
+        id: '',
+        sha: '',
         slug: 'maxine-field',
+        collectionName: 'members',
         locales: {
           _default: {
             content: {
@@ -141,7 +148,9 @@ describe('Test getOptions()', () => {
     /** @type {Entry[]} */
     const entries = [
       {
+        id: '',
         sha: 'e5498c0c3d4592aaa18905e58bdf1cafa5b659c6',
+        slug: '',
         collectionName: 'relation_files',
         fileName: 'cities',
         locales: {
@@ -194,6 +203,9 @@ describe('Test getOptions()', () => {
     /** @type {Entry[]} */
     const entries = [
       {
+        id: '',
+        sha: '',
+        slug: '',
         collectionName: 'pages',
         locales: {
           _default: {
@@ -208,6 +220,9 @@ describe('Test getOptions()', () => {
         },
       },
       {
+        id: '',
+        sha: '',
+        slug: '',
         collectionName: 'pages',
         locales: {
           _default: {

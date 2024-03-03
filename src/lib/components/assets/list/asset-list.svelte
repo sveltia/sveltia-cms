@@ -21,7 +21,7 @@
       multiple={true}
       on:select={({ detail: { files } }) => {
         $uploadingAssets = {
-          folder: $selectedAssetFolder?.internalPath || $siteConfig.media_folder,
+          folder: $selectedAssetFolder?.internalPath || $siteConfig?.media_folder,
           files,
         };
       }}

@@ -116,7 +116,7 @@
           $announcedPageStatus = $_('editing_x_collection_entry', {
             values: {
               collection: collectionLabel,
-              entry: formatSummary(collection, selectedEntry, defaultLocale, {
+              entry: formatSummary($selectedCollection, selectedEntry, defaultLocale, {
                 useTemplate: false,
               }),
             },
@@ -144,15 +144,15 @@
     id="collection-container"
     class="main"
     aria-label={$_('x_collection', {
-      values: { collection: $selectedCollection.label || $selectedCollection.name },
+      values: { collection: $selectedCollection?.label || $selectedCollection?.name },
     })}
-    aria-description={$selectedCollection.description}
+    aria-description={$selectedCollection?.description}
   >
     <PageContainerMainArea>
       <PrimaryToolbar slot="primary_toolbar" />
       <SecondaryToolbar slot="secondary_toolbar" />
       <svelte:component
-        this={$selectedCollection.files ? FileList : EntryList}
+        this={$selectedCollection?.files ? FileList : EntryList}
         slot="main_content"
       />
       <SecondarySidebar slot="secondary_sidebar" />

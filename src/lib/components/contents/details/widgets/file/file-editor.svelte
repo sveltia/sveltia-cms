@@ -53,23 +53,23 @@
   export let invalid = false;
 
   /**
-   * @type {Asset}
+   * @type {Asset | undefined}
    */
   let asset;
   /**
-   * @type {File}
+   * @type {File | undefined}
    */
   let file;
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   let url;
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   let src;
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   let credit;
   let showSelectAssetsDialog = false;
@@ -101,14 +101,19 @@
     if (file) {
       // Check the max file size
       // @see https://decapcms.org/docs/widgets/#image
-      if (isImageWidget && Number.isInteger(maxFileSize) && file.size > maxFileSize) {
+      if (
+        isImageWidget &&
+        maxFileSize !== undefined &&
+        Number.isInteger(maxFileSize) &&
+        file.size > maxFileSize
+      ) {
         showSizeLimitDialog = true;
       } else {
         // Use the `data:` URL temporarily, and replace it later; avoid `blob:` here because it will
         // be unavailable event after Vite HMR
         currentValue = await getDataURL(file);
         // Cache the file itself for later upload
-        $entryDraft.files[locale][keyPath] = file;
+        /** @type {EntryDraft} */ ($entryDraft).files[locale][keyPath] = file;
       }
     }
 
@@ -124,7 +129,7 @@
 
   $: (async () => {
     src =
-      isImageWidget && currentValue
+      isImageWidget && currentValue && $entryDraft?.originalEntry
         ? await getMediaFieldURL(currentValue, $entryDraft.originalEntry)
         : undefined;
   })();
@@ -195,7 +200,9 @@
 />
 
 <AlertDialog bind:open={showSizeLimitDialog} title={$_('assets_dialog.large_file.title')}>
-  {$_('assets_dialog.large_file.description', { values: { size: formatSize(maxFileSize) } })}
+  {$_('assets_dialog.large_file.description', {
+    values: { size: formatSize(/** @type {number} */ (maxFileSize)) },
+  })}
 </AlertDialog>
 
 <ConfirmationDialog

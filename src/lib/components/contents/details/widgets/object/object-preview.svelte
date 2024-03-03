@@ -26,7 +26,7 @@
   export let currentValue;
 
   $: ({ fields } = fieldConfig);
-  $: valueMap = $entryDraft.currentValues[locale];
+  $: valueMap = $entryDraft?.currentValues[locale] ?? {};
   $: hasValues = Object.keys(valueMap).some((_keyPath) => _keyPath.startsWith(`${keyPath}.`));
 </script>
 

@@ -30,9 +30,9 @@ export const createCommitMessage = (
       commit_messages: customCommitMessages = {},
       automatic_deployments: autoDeployEnabled,
     },
-  } = get(siteConfig);
+  } = /** @type {SiteConfig} */ (get(siteConfig));
 
-  const { login = '', name = '' } = get(user);
+  const { login = '', name = '' } = /** @type {User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection?.label_singular || collection?.label || collection?.name || '';

@@ -29,7 +29,7 @@
   export let serviceProps;
   /**
    * The `id` attribute of the inner listbox.
-   * @type {string}
+   * @type {string | undefined}
    */
   export let gridId = undefined;
 
@@ -60,11 +60,11 @@
    */
   let authState = 'initial';
   /**
-   * @type {?ExternalAsset[]}
+   * @type {ExternalAsset[] | null}
    */
   let searchResults = null;
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   let error;
 
@@ -168,9 +168,12 @@
       {gridId}
       viewType={$selectAssetsView?.type}
       on:change={(event) => {
-        selectAsset(
-          searchResults.find(({ id }) => id === /** @type {CustomEvent} */ (event).detail.value),
-        );
+        const { value } = /** @type {CustomEvent} */ (event).detail;
+        const asset = searchResults?.find(({ id }) => id === value);
+
+        if (asset) {
+          selectAsset(asset);
+        }
       }}
     >
       {#each searchResults as { id, previewURL, description, kind: _kind } (id)}
@@ -261,7 +264,7 @@
             input.userName = input.userName.trim();
             input.password = input.password.trim();
 
-            if (await signIn(input.userName, input.password)) {
+            if (await signIn?.(input.userName, input.password)) {
               authState = 'success';
               userName = input.userName;
               password = input.password;

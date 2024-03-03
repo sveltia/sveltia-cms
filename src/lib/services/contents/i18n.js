@@ -23,12 +23,12 @@ export const defaultI18nConfig = {
  * @see https://decapcms.org/docs/i18n/
  */
 export const getI18nConfig = (collection, file) => {
-  const _siteConfig = get(siteConfig);
+  const _siteConfig = /** @type {SiteConfig} */ (get(siteConfig));
   /** @type {RawI18nConfig | undefined} */
   let config;
 
   if (isObject(_siteConfig?.i18n)) {
-    config = _siteConfig.i18n;
+    config = /** @type {RawI18nConfig} */ (_siteConfig.i18n);
 
     if (collection?.i18n) {
       if (isObject(collection.i18n)) {
@@ -108,8 +108,12 @@ export const getLocaleLabel = (locale) => {
     return locale;
   }
 
+  const formatter = new Intl.DisplayNames(/** @type {string} */ (get(appLocale)), {
+    type: 'language',
+  });
+
   try {
-    return new Intl.DisplayNames(get(appLocale), { type: 'language' }).of(canonicalLocale);
+    return formatter.of(canonicalLocale) ?? locale;
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);

@@ -48,7 +48,7 @@
           disabled={!$selectedCollection.create}
           label={$_('create_new_entry')}
           on:click={() => {
-            goto(`/collections/${$selectedCollection.name}/new`);
+            goto(`/collections/${$selectedCollection?.name}/new`);
           }}
         >
           <Icon slot="start-icon" name="edit" />

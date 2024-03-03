@@ -29,23 +29,25 @@
         )}
       </p>
       <div role="none">
-        <TextInput
-          bind:value={$prefs.apiKeys[serviceId]}
-          flex
-          spellcheck="false"
-          aria-label={$_('prefs.media.stock_photos.field_label', {
-            values: { service: serviceLabel },
-          })}
-          on:change={() => {
-            dispatch('change', {
-              message: $_(
-                $prefs.apiKeys[serviceId]
-                  ? 'prefs.changes.api_key_saved'
-                  : 'prefs.changes.api_key_removed',
-              ),
-            });
-          }}
-        />
+        {#if $prefs.apiKeys}
+          <TextInput
+            bind:value={$prefs.apiKeys[serviceId]}
+            flex
+            spellcheck="false"
+            aria-label={$_('prefs.media.stock_photos.field_label', {
+              values: { service: serviceLabel },
+            })}
+            on:change={() => {
+              dispatch('change', {
+                message: $_(
+                  $prefs.apiKeys?.[serviceId]
+                    ? 'prefs.changes.api_key_saved'
+                    : 'prefs.changes.api_key_removed',
+                ),
+              });
+            }}
+          />
+        {/if}
       </div>
     </section>
   {/each}

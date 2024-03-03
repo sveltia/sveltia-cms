@@ -22,6 +22,8 @@
 
   let path = '';
 
+  $: selectedAssetFolderLabel = getFolderLabelByPath($selectedAssetFolder?.internalPath);
+
   /**
    * Navigate to the asset list or asset details page given the URL hash.
    * @todo Show Not Found page.
@@ -51,7 +53,7 @@
     if (!fileName) {
       const count = $listedAssets.length;
 
-      $overlaidAsset = null;
+      $overlaidAsset = undefined;
       $announcedPageStatus = $_(
         // eslint-disable-next-line no-nested-ternary
         count > 1
@@ -59,15 +61,15 @@
           : count === 1
             ? 'viewing_x_asset_folder_one_asset'
             : 'viewing_x_asset_folder_no_asset',
-        { values: { folder: getFolderLabelByPath($selectedAssetFolder?.internalPath), count } },
+        { values: { folder: selectedAssetFolderLabel, count } },
       );
 
       return;
     }
 
     $overlaidAsset = path.match(/^\/assets\/(.+?)\.[a-zA-Z0-9]+$/)
-      ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`) ?? null
-      : null;
+      ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`)
+      : undefined;
     $announcedPageStatus = $overlaidAsset
       ? $_('viewing_x_asset_details', { values: { name: $overlaidAsset.name } })
       : $_('file_not_found');
@@ -91,7 +93,7 @@
     id="assets-container"
     class="main"
     aria-label={$_('x_asset_folder', {
-      values: { folder: getFolderLabelByPath($selectedAssetFolder?.internalPath) },
+      values: { folder: selectedAssetFolderLabel },
     })}
   >
     <PageContainerMainArea>

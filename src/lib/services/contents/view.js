@@ -30,7 +30,7 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
  * View settings for the selected folder collection.
  * @type {import('svelte/store').Writable<EntryListView>}
  */
-export const currentView = writable({});
+export const currentView = writable({ type: 'list' });
 
 /**
  * Transform summary template.
@@ -106,7 +106,7 @@ const transformSummary = (summary, tf, fieldConfig) => {
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
 export const formatSummary = (collection, entry, locale, { useTemplate = true } = {}) => {
-  const { content } = entry.locales[locale];
+  const { content } = /** @type {{ content: EntryContent }} */ (entry.locales[locale]);
 
   const {
     name: collectionName,
@@ -120,11 +120,13 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
   // CMS document, but actually `name` also works as a fallback. We also use the label` property and
   // the entry slug.
   if (!useTemplate || !summaryTemplate) {
-    return content[identifierField] || content.title || content.name || content.label || entry.slug;
+    return (
+      content[identifierField ?? ''] || content.title || content.name || content.label || entry.slug
+    );
   }
 
   const { locales, slug, commitDate, commitAuthor } = entry;
-  const { path: entryPath } = locales[locale];
+  const { path: entryPath = '' } = locales[locale];
   const valueMap = flatten(content);
 
   /**
@@ -141,15 +143,15 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
       }
 
       if (tag === 'dirname') {
-        return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(collectionFolder, ''));
+        return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(collectionFolder ?? '', ''));
       }
 
       if (tag === 'filename') {
-        return entryPath.split('/').pop().split('.').shift();
+        return /** @type {string} */ (entryPath.split('/').pop()).split('.').shift();
       }
 
       if (tag === 'extension') {
-        return entryPath.split('/').pop().split('.').pop();
+        return /** @type {string} */ (entryPath.split('/').pop()).split('.').pop();
       }
 
       if (tag === 'commit_date') {
@@ -184,9 +186,11 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
 
     const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath });
 
-    transformations.forEach((tf) => {
-      summary = transformSummary(summary, tf, fieldConfig);
-    });
+    if (fieldConfig) {
+      transformations.forEach((tf) => {
+        summary = transformSummary(summary, tf, fieldConfig);
+      });
+    }
 
     return String(summary);
   };
@@ -207,7 +211,7 @@ const sortEntries = (entries, { key, order }) => {
   }
 
   const _entries = [...entries];
-  const { defaultLocale } = get(selectedCollection)._i18n;
+  const { defaultLocale } = /** @type {Collection} */ (get(selectedCollection))._i18n;
 
   const type =
     { slug: String, commit_author: String, commit_date: Date }[key] ||
@@ -253,9 +257,9 @@ const sortEntries = (entries, { key, order }) => {
  */
 const filterEntries = (entries, filters) => {
   const {
-    view_filters: configuredFilters,
+    view_filters: configuredFilters = [],
     _i18n: { defaultLocale },
-  } = get(selectedCollection);
+  } = /** @type {Collection} */ (get(selectedCollection));
 
   // Ignore invalid filters
   const validFilters = filters.filter(
@@ -293,13 +297,13 @@ const filterEntries = (entries, filters) => {
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
-const groupEntries = (entries, { field, pattern } = { field: undefined, pattern: undefined }) => {
+const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefined }) => {
   if (!field) {
     return entries.length ? [{ name: '*', entries }] : [];
   }
 
   const sortCondition = get(currentView).sort;
-  const { defaultLocale } = get(selectedCollection)._i18n;
+  const { defaultLocale } = /** @type {Collection} */ (get(selectedCollection))._i18n;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
   /** @type {{ [key: string]: Entry[] }} */
   const groups = {};
@@ -307,18 +311,12 @@ const groupEntries = (entries, { field, pattern } = { field: undefined, pattern:
 
   entries.forEach((entry) => {
     const value = getPropertyValue(entry, defaultLocale, field);
-    /**
-     * @type {string}
-     */
-    let key;
 
-    if (value !== undefined) {
-      if (regex) {
-        [key = otherKey] = String(value).match(regex) ?? [];
-      } else {
-        key = value;
-      }
+    if (value === undefined) {
+      return;
     }
+
+    const key = regex ? (String(value).match(regex) ?? [])[0] ?? otherKey : String(value);
 
     if (!(key in groups)) {
       groups[key] = [];
@@ -414,7 +412,11 @@ const getSortFieldLabel = (collection, key) => {
 export const sortFields = derived(
   [selectedCollection, allEntries, appLocale],
   ([_collection, _allEntries], set) => {
-    const { files, sortable_fields: customSortableFields } = _collection ?? {};
+    const {
+      name: collectionName = '',
+      files,
+      sortable_fields: customSortableFields,
+    } = _collection ?? {};
 
     // Disable sorting for file collections
     if (files) {
@@ -427,7 +429,7 @@ export const sortFields = derived(
 
     const _sortFields = (
       Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
-    ).filter((keyPath) => !!getFieldConfig({ collectionName: _collection.name, keyPath }));
+    ).filter((keyPath) => !!getFieldConfig({ collectionName, keyPath }));
 
     if (commitAuthor && !_sortFields.includes('author')) {
       _sortFields.push('commit_author');
@@ -437,7 +439,12 @@ export const sortFields = derived(
       _sortFields.push('commit_date');
     }
 
-    set(_sortFields.map((key) => ({ key, label: getSortFieldLabel(_collection, key) })));
+    set(
+      _sortFields.map((key) => ({
+        key,
+        label: _collection ? getSortFieldLabel(_collection, key) : '',
+      })),
+    );
   },
 );
 
@@ -538,9 +545,9 @@ selectedCollection.subscribe((collection) => {
 
 currentView.subscribe((view) => {
   const { name } = get(selectedCollection) ?? {};
-  const savedView = get(entryListSettings)[name] ?? {};
+  const savedView = get(entryListSettings)[name ?? ''] ?? {};
 
-  if (!equal(view, savedView)) {
+  if (name && !equal(view, savedView)) {
     entryListSettings.update((settings) => ({ ...settings, [name]: view }));
   }
 });

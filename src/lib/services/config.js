@@ -13,6 +13,11 @@ import { stripSlashes } from '$lib/services/utils/strings';
  */
 export const siteConfig = writable();
 
+/**
+ * @type {import('svelte/store').Writable<{ message: string } | undefined>}
+ */
+export const siteConfigError = writable();
+
 const { DEV, VITE_SITE_URL } = import.meta.env;
 
 /**
@@ -53,6 +58,9 @@ const validate = (config) => {
  * @todo Normalize configuration object.
  */
 export const fetchSiteConfig = async () => {
+  siteConfig.set(undefined);
+  siteConfigError.set(undefined);
+
   const { href = './config.yml' } =
     /** @type {HTMLAnchorElement?} */ (
       document.querySelector('link[type="text/yaml"][rel="cms-config-url"]')
@@ -97,8 +105,8 @@ export const fetchSiteConfig = async () => {
 
     siteConfig.set(config);
   } catch (/** @type {any} */ ex) {
-    siteConfig.set({
-      error: ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected'),
+    siteConfigError.set({
+      message: ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected'),
     });
 
     // eslint-disable-next-line no-console
@@ -112,7 +120,7 @@ siteConfig.subscribe((config) => {
     console.info('siteConfig', config);
   }
 
-  if (!config || config.error) {
+  if (!config) {
     return;
   }
 
@@ -145,7 +153,7 @@ siteConfig.subscribe((config) => {
           yamlQuote,
         }),
       )
-      .sort((a, b) => a.folderPath.localeCompare(b.folderPath)),
+      .sort((a, b) => (a.folderPath ?? '').localeCompare(b.folderPath ?? '')),
     ...collections
       .filter(({ files }) => !!files)
       .map(
@@ -157,7 +165,7 @@ siteConfig.subscribe((config) => {
           frontmatter_delimiter: frontmatterDelimiter,
           yaml_quote: yamlQuote,
         }) =>
-          files.map(({ name: fileName, file: filePath }) => ({
+          (files ?? []).map(({ name: fileName, file: filePath }) => ({
             collectionName,
             fileName,
             filePath,
@@ -181,7 +189,7 @@ siteConfig.subscribe((config) => {
 
   /** @type {CollectionAssetFolder} */
   const globalAssetFolder = {
-    collectionName: null,
+    collectionName: undefined,
     internalPath: globalMediaFolder,
     publicPath: globalPublicFolder,
     entryRelative: false,
@@ -189,53 +197,55 @@ siteConfig.subscribe((config) => {
 
   /**
    * Folder Collections Media and Public Folder.
-   * @type {CollectionAssetFolder[]}
    * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
    */
-  const collectionAssetFolders = collections.map((collection) => {
-    const {
-      name: collectionName,
-      // e.g. `content/posts`
-      folder: collectionFolder,
-      // e.g. `{{slug}}/index`
-      path: entryPath,
-      // e.g. `` (an empty string), `{{public_folder}}`, etc. or absolute path
-      public_folder: publicFolder,
-    } = collection;
+  const collectionAssetFolders = /** @type {CollectionAssetFolder[]} */ (
+    collections
+      .map((collection) => {
+        const {
+          name: collectionName,
+          // e.g. `content/posts`
+          folder: collectionFolder,
+          // e.g. `{{slug}}/index`
+          path: entryPath,
+          // e.g. `` (an empty string), `{{public_folder}}`, etc. or absolute path
+          public_folder: publicFolder,
+        } = collection;
 
-    let {
-      // relative path, e.g. `` (an empty string), `./` (same as an empty string),
-      // `{{media_folder}}/posts`, etc. or absolute path, e.g. `/static/images/posts`, etc.
-      media_folder: mediaFolder,
-    } = collection;
+        let {
+          // relative path, e.g. `` (an empty string), `./` (same as an empty string),
+          // `{{media_folder}}/posts`, etc. or absolute path, e.g. `/static/images/posts`, etc.
+          media_folder: mediaFolder,
+        } = collection;
 
-    if (mediaFolder === undefined) {
-      if (entryPath === undefined) {
-        return null;
-      }
+        if (mediaFolder === undefined) {
+          if (entryPath === undefined) {
+            return null;
+          }
 
-      // When specifying a `path` on a folder collection, `media_folder` defaults to an empty string
-      mediaFolder = '';
-    }
+          // When specifying a `path` on a folder collection, `media_folder` defaults to an empty
+          // string
+          mediaFolder = '';
+        }
 
-    mediaFolder = mediaFolder.replace('{{media_folder}}', globalMediaFolder);
+        mediaFolder = mediaFolder.replace('{{media_folder}}', globalMediaFolder);
 
-    const entryRelative = !mediaFolder.startsWith('/');
+        const entryRelative = !mediaFolder.startsWith('/');
 
-    return {
-      collectionName,
-      internalPath: stripSlashes(entryRelative ? collectionFolder : mediaFolder),
-      publicPath: (publicFolder ?? mediaFolder).replace('{{public_folder}}', globalPublicFolder),
-      entryRelative,
-    };
-  });
-
-  const _allAssetFolders = [
-    globalAssetFolder,
-    ...collectionAssetFolders
+        return {
+          collectionName,
+          internalPath: stripSlashes(entryRelative ? collectionFolder ?? '' : mediaFolder),
+          publicPath: (publicFolder ?? mediaFolder).replace(
+            '{{public_folder}}',
+            globalPublicFolder,
+          ),
+          entryRelative,
+        };
+      })
       .filter(Boolean)
-      .sort((a, b) => a.internalPath.localeCompare(b.internalPath)),
-  ];
+  ).sort((a, b) => a.internalPath.localeCompare(b.internalPath));
+
+  const _allAssetFolders = [globalAssetFolder, ...collectionAssetFolders];
 
   allEntryFolders.set(_allEntryFolders);
   allAssetFolders.set(_allAssetFolders);

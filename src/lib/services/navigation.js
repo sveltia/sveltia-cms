@@ -82,7 +82,9 @@ export const goBack = (path, options = {}) => {
  * Open the production site in a new browser tab.
  */
 export const openProductionSite = () => {
-  const { display_url: displayURL, site_url: siteURL } = get(siteConfig);
+  const { display_url: displayURL, site_url: siteURL } = /** @type {SiteConfig} */ (
+    get(siteConfig)
+  );
 
   window.open(displayURL || siteURL || '/', '_blank');
 };

@@ -5,10 +5,10 @@
   import { _ } from 'svelte-i18n';
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
-  import { fetchSiteConfig, siteConfig } from '$lib/services/config';
+  import { fetchSiteConfig, siteConfig, siteConfigError } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { announcedPageStatus } from '$lib/services/navigation';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs, prefsError } from '$lib/services/prefs';
   import { authError, unauthenticated, user } from '$lib/services/user';
 
   $: $announcedPageStatus = $_('welcome_to_sveltia_cms');
@@ -27,17 +27,17 @@
       class="logo"
     />
     <h1>Sveltia CMS</h1>
-    {#if !$siteConfig || !$prefs}
-      <div role="alert" class="message">{$_('loading_site_config')}</div>
-    {:else if $siteConfig.error}
+    {#if $siteConfigError}
       <div role="alert" class="message">
-        {$siteConfig.error}
+        {$siteConfigError.message}
         {$_('config.error.try_again')}
       </div>
-    {:else if $prefs.error}
+    {:else if $prefsError}
       <div role="alert" class="message">
-        {$_(`prefs.error.${$prefs.error}`)}
+        {$_(`prefs.error.${$prefsError.type}`)}
       </div>
+    {:else if !$siteConfig || !$prefs}
+      <div role="alert" class="message">{$_('loading_site_config')}</div>
     {:else if $authError}
       <div role="alert">
         <div role="none" class="message">{$_('loading_site_data_error')}</div>

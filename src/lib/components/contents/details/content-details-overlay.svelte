@@ -122,8 +122,7 @@
   onMount(() => {
     switchPanes();
 
-    /** @type {HTMLElement} */
-    const group = wrapper.closest('[role="group"]');
+    const group = /** @type {HTMLElement} */ (wrapper.closest('[role="group"]'));
 
     // Move the focus once the overlay is loaded
     group.tabIndex = 0;

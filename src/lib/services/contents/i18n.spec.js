@@ -68,6 +68,7 @@ describe('Test getI18nConfig()', () => {
 
   test('no i18n defined at top-level or collection-level', () => {
     siteConfig.set({
+      backend: { name: 'github' },
       media_folder: mediaFolder,
       collections: [collectionWithoutI18n],
     });
@@ -83,6 +84,7 @@ describe('Test getI18nConfig()', () => {
 
   test('no i18n defined at collection-level', () => {
     siteConfig.set({
+      backend: { name: 'github' },
       media_folder: mediaFolder,
       i18n: {
         structure: 'multiple_folders',
@@ -103,6 +105,7 @@ describe('Test getI18nConfig()', () => {
 
   test('config with locales, no structure, no default_locale', () => {
     siteConfig.set({
+      backend: { name: 'github' },
       media_folder: mediaFolder,
       i18n: {
         locales: ['en', 'fr'],
@@ -137,6 +140,7 @@ describe('Test getI18nConfig()', () => {
 
   test('config with locales, structure and default_locale', () => {
     siteConfig.set({
+      backend: { name: 'github' },
       media_folder: mediaFolder,
       i18n: {
         structure: 'multiple_folders',
@@ -179,6 +183,7 @@ describe('Test getI18nConfig()', () => {
 
   test('partial config override at collection-level', () => {
     siteConfig.set({
+      backend: { name: 'github' },
       media_folder: mediaFolder,
       i18n: {
         structure: 'multiple_folders',
@@ -199,6 +204,7 @@ describe('Test getI18nConfig()', () => {
 
   test('complete config override at collection-level', () => {
     siteConfig.set({
+      backend: { name: 'github' },
       media_folder: mediaFolder,
       i18n: {
         structure: 'multiple_folders',
@@ -219,6 +225,7 @@ describe('Test getI18nConfig()', () => {
 
   test('partial config override at file-level', () => {
     siteConfig.set({
+      backend: { name: 'github' },
       media_folder: mediaFolder,
       i18n: {
         structure: 'multiple_folders',
@@ -263,6 +270,7 @@ describe('Test getI18nConfig()', () => {
 
   test('complete config override at file-level', () => {
     siteConfig.set({
+      backend: { name: 'github' },
       media_folder: mediaFolder,
       i18n: {
         structure: 'multiple_folders',

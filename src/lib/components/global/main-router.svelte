@@ -33,7 +33,7 @@
 
     if (!_pageName) {
       // Redirect any invalid page to the contents page
-      window.location.replace(`#/collections/${get(selectedCollection).name}`);
+      window.location.replace(`#/collections/${get(selectedCollection)?.name}`);
     } else if (get(selectedPageName) !== _pageName) {
       selectedPageName.set(_pageName);
     }

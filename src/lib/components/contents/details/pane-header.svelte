@@ -29,7 +29,7 @@
   export let id;
   /**
    * This pane’s locale and mode.
-   * @type {import('svelte/store').Writable<EntryEditorPane>}
+   * @type {import('svelte/store').Writable<?EntryEditorPane>}
    */
   export let thisPane;
   /**
@@ -44,13 +44,15 @@
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ i18nEnabled, saveAllLocales, locales, defaultLocale } =
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: isLocaleEnabled = currentLocales[$thisPane?.locale];
+  $: isLocaleEnabled = currentLocales[$thisPane?.locale ?? ''];
   $: isOnlyLocale = Object.values(currentLocales).filter((enabled) => enabled).length === 1;
   $: otherLocales = i18nEnabled ? locales.filter((l) => l !== $thisPane?.locale) : [];
   $: canPreview =
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: canCopy = !!otherLocales.length;
-  $: canRevert = !equal(currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]);
+  $: canRevert =
+    $thisPane?.locale &&
+    !equal(currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]);
 </script>
 
 <div role="none" {id} class="header">
@@ -92,7 +94,7 @@
             size="small"
             label={$_('preview')}
             on:select={() => {
-              $thisPane = { mode: 'preview', locale: $thatPane?.locale };
+              $thisPane = { mode: 'preview', locale: $thatPane?.locale ?? '' };
             }}
           />
         {/if}
@@ -144,7 +146,7 @@
               )}
               disabled={isLocaleEnabled && isOnlyLocale}
               on:click={() => {
-                toggleLocale($thisPane?.locale);
+                toggleLocale($thisPane?.locale ?? '');
               }}
             />
           {/if}

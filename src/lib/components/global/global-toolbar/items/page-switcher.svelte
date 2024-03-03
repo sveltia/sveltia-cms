@@ -10,7 +10,7 @@
       key: 'collections',
       label: $_('contents'),
       icon: 'library_books',
-      link: `/collections/${$selectedCollection.name}`,
+      link: `/collections/${$selectedCollection?.name}`,
     },
     {
       key: 'assets',

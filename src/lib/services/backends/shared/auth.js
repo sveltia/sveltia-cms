@@ -14,7 +14,7 @@ export const authorize = async (provider) => {
     site_domain: siteDomain = document.domain,
     base_url: baseURL = 'https://api.netlify.com',
     auth_endpoint: path = 'auth',
-  } = get(siteConfig).backend;
+  } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
   const width = 600;
   const height = 800;
@@ -42,7 +42,7 @@ export const authorize = async (provider) => {
 
       // First message
       if (data === `authorizing:${provider}`) {
-        popup.postMessage(data, origin);
+        popup?.postMessage(data, origin);
 
         return;
       }
@@ -52,9 +52,9 @@ export const authorize = async (provider) => {
         data.match(`^authorization:${provider}:(success|error):(.+)`) ?? [];
 
       /**
-       * @type {{ token: string }}
+       * @type {{ token: string } | undefined}
        */
-      let result;
+      let result = undefined;
 
       try {
         result = _result ? JSON.parse(_result) : undefined;
@@ -64,13 +64,13 @@ export const authorize = async (provider) => {
       }
 
       resolve(
-        state === 'success' && isObject(result) && typeof result.token === 'string'
+        state === 'success' && isObject(result) && typeof result?.token === 'string'
           ? result.token
           : null,
       );
 
       window.removeEventListener('message', handler);
-      popup.close();
+      popup?.close();
     };
 
     window.addEventListener('message', handler);

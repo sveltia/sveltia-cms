@@ -13,7 +13,7 @@
    */
   export let id;
   /**
-   * @type {import('svelte/store').Writable<EntryEditorPane>}
+   * @type {import('svelte/store').Writable<EntryEditorPane | null>}
    */
   export let thisPane;
   /**
@@ -35,11 +35,11 @@
    * Sync the scroll position with the other edit/preview pane.
    */
   const syncScrollPosition = () => {
-    if (!syncScrolling || !thatPaneContentArea) {
-      return;
-    }
-
     window.requestAnimationFrame(() => {
+      if (!syncScrolling || !thisPaneContentArea || !thatPaneContentArea) {
+        return;
+      }
+
       const { x, y } = thisPaneContentArea.getBoundingClientRect();
 
       const thisElement = /** @type {HTMLElement | undefined} */ (
@@ -55,7 +55,7 @@
       const ratio = (y - top) / height;
 
       const thatElement = /** @type {HTMLElement | undefined} */ (
-        thatPaneContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath)}"]`)
+        thatPaneContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath ?? '')}"]`)
       );
 
       if (ratio < 0 || ratio > 1 || !thatElement) {

@@ -28,7 +28,7 @@
   {:else if $backend || $unauthenticated}
     <Button
       variant="primary"
-      label={$_('sign_in_with_x', { values: { service: $backend.label } })}
+      label={$_('sign_in_with_x', { values: { service: $backend?.label } })}
       on:click={async () => {
         await signInManually();
       }}

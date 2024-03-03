@@ -24,7 +24,7 @@
   export let searchTerms = '';
   /**
    * The `id` attribute of the inner listbox.
-   * @type {string}
+   * @type {string | undefined}
    */
   export let gridId = undefined;
   /**

@@ -1,13 +1,12 @@
 <script>
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { writable } from 'svelte/store';
 
   export let disabled = false;
   /**
    * @type {import('svelte/store').Writable<EntryListView | AssetListView | SelectAssetsView>}
    */
-  export let currentView = writable({});
+  export let currentView;
 </script>
 
 <div role="none" class="wrapper">

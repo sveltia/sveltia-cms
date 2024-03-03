@@ -58,7 +58,7 @@
         label={$_('git_repository')}
         disabled={isLocal}
         on:click={() => {
-          window.open($backend.repository.url);
+          window.open($backend?.repository?.url);
         }}
       />
       <PublishMenuItem />
@@ -108,7 +108,7 @@
           // Wait a bit before the menu is closed
           window.requestAnimationFrame(() => {
             $user = null;
-            $backend.signOut();
+            $backend?.signOut();
           });
         }}
       />

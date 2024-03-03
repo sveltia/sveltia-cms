@@ -5,7 +5,7 @@
   import { selectedCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
 
-  $: collections = $siteConfig.collections.filter(({ hide }) => !hide);
+  $: collections = $siteConfig?.collections.filter(({ hide }) => !hide) ?? [];
 </script>
 
 <div role="none" class="primary-sidebar">
@@ -14,7 +14,7 @@
       {#if !hide}
         <Option
           label={label || name}
-          selected={$selectedCollection.name === name}
+          selected={$selectedCollection?.name === name}
           on:select={() => {
             goto(`/collections/${name}`);
           }}

@@ -41,7 +41,7 @@ const repository = new Proxy(/** @type {any} */ ({ owner: '', repo: '', branch: 
  * @param {object} [options] - Options.
  * @param {'GET' | 'POST' | 'PUT' | 'DELETE'} [options.method] - Request method.
  * @param {object} [options.headers] - Request headers.
- * @param {string} [options.body] - Request body for POST.
+ * @param {string | null} [options.body] - Request body for POST.
  * @param {string} [options.token] - OAuth token.
  * @param {('json' | 'text' | 'blob' | 'raw')} [options.responseType] - Response type. The default
  * is `json`, while `raw` returns a `Response` object as is.
@@ -55,11 +55,11 @@ const fetchAPI = async (
     method = 'GET',
     headers = {},
     body = null,
-    token = get(user).token,
+    token = /** @type {User} */ (get(user)).token,
     responseType = 'json',
   } = {},
 ) => {
-  let { api_root: apiRoot } = get(siteConfig).backend;
+  let { api_root: apiRoot } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
   if (apiRoot) {
     // Enterprise Server
@@ -360,7 +360,7 @@ const fetchFiles = async () => {
       assetFiles.map((file) => ({
         ...file,
         /** Blob URL to be set later via {@link fetchBlob}. */
-        url: null,
+        url: undefined,
         /** Starting with `https://api.github.com`, to be used by {@link fetchBlob}. */
         fetchURL: file.url,
         repoFileURL: `https://github.com/${owner}/${repo}/blob/${branch}/${file.path}`,
@@ -394,7 +394,7 @@ const fetchFiles = async () => {
  */
 const fetchBlob = async (asset) => {
   const response = /** @type {Response} */ (
-    await fetchAPI(asset.fetchURL.replace('https://api.github.com', ''), {
+    await fetchAPI(/** @type {string} */ (asset.fetchURL).replace('https://api.github.com', ''), {
       headers: { Accept: 'application/vnd.github.raw' },
       responseType: 'raw',
     })
@@ -402,7 +402,7 @@ const fetchBlob = async (asset) => {
 
   // Handle SVG and other non-binary files
   if (response.headers.get('Content-Type') !== 'application/octet-stream') {
-    return new Blob([await response.text()], { type: mime.getType(asset.path) });
+    return new Blob([await response.text()], { type: mime.getType(asset.path) ?? 'text/plain' });
   }
 
   return response.blob();
@@ -423,7 +423,7 @@ const commitChanges = async (changes, options) => {
       .filter(({ action }) => ['create', 'update'].includes(action))
       .map(async ({ path, data, base64 }) => ({
         path,
-        contents: base64 ?? (await getBase64(data)),
+        contents: base64 ?? (await getBase64(data ?? '')),
       })),
   );
 

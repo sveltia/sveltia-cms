@@ -9,7 +9,7 @@
 </script>
 
 <ListContainer aria-label={$_('file_list')}>
-  {#if $selectedCollection.files?.length}
+  {#if $selectedCollection?.files?.length}
     <ListingGrid
       viewType="list"
       aria-label={$_('files')}
@@ -18,7 +18,7 @@
       {#each $selectedCollection.files as { name, label } (name)}
         <GridRow
           on:click={() => {
-            goto(`/collections/${$selectedCollection.name}/entries/${name}`);
+            goto(`/collections/${$selectedCollection?.name}/entries/${name}`);
           }}
         >
           <GridCell class="title">

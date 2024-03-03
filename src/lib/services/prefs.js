@@ -6,9 +6,16 @@ import LocalStorage from '$lib/services/utils/local-storage';
 const storageKey = 'sveltia-cms.prefs';
 
 /**
+ * @type {import('svelte/store').Writable<{ type: string } | undefined>}
+ */
+export const prefsError = writable();
+
+/**
  * @type {import('svelte/store').Writable<Preferences>}
  */
 export const prefs = writable({}, (set) => {
+  prefsError.set(undefined);
+
   (async () => {
     try {
       const _prefs = (await LocalStorage.get(storageKey)) ?? {};
@@ -16,13 +23,13 @@ export const prefs = writable({}, (set) => {
       _prefs.apiKeys ??= {};
       set(_prefs);
     } catch {
-      set({ error: 'permission_denied' });
+      prefsError.set({ type: 'permission_denied' });
     }
   })();
 });
 
 prefs.subscribe(async (newPrefs) => {
-  if (!newPrefs || newPrefs.error || !Object.keys(newPrefs).length) {
+  if (!newPrefs || !Object.keys(newPrefs).length) {
     return;
   }
 

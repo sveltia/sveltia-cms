@@ -18,7 +18,7 @@ export const normalizeSlug = (string) => {
       clean_accents: cleanAccents = false,
       sanitize_replacement: sanitizeReplacement = '-',
     } = {},
-  } = get(siteConfig);
+  } = /** @type {SiteConfig} */ (get(siteConfig));
 
   let slug = string;
 
@@ -96,15 +96,18 @@ export const fillSlugTemplate = (
       }
 
       if (tag === 'dirname') {
-        return entryFilePath.replace(collectionFolderPath, '').match(/(.+?)(?:\/[^/]+)?$/)[1];
+        return (
+          (entryFilePath.replace(collectionFolderPath ?? '', '').match(/(.+?)(?:\/[^/]+)?$/) ??
+            [])[1] ?? ''
+        );
       }
 
       if (tag === 'filename') {
-        return entryFilePath.split('/').pop().split('.').shift();
+        return /** @type {string} */ (entryFilePath.split('/').pop()).split('.').shift();
       }
 
       if (tag === 'extension') {
-        return entryFilePath.split('/').pop().split('.').pop();
+        return /** @type {string} */ (entryFilePath.split('/').pop()).split('.').pop();
       }
     }
 

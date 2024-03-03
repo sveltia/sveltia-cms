@@ -25,7 +25,8 @@
    */
   export let anchor;
 
-  $: ({ collection, collectionFile, currentLocales, currentValues } = $entryDraft);
+  $: ({ collection, collectionFile, currentLocales, currentValues } =
+    $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ i18nEnabled, locales } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: otherLocales = i18nEnabled ? locales.filter((l) => l !== locale) : [];
 
@@ -35,7 +36,7 @@
     targetLanguages = /** @type {string[]} */ ([]),
   } = $translator ?? /** @type {TranslationService} */ ({}));
 
-  $: apiKey = $prefs.apiKeys[serviceId] ?? '';
+  $: apiKey = $prefs.apiKeys?.[serviceId] ?? '';
 
   /**
    * Copy or translate field value(s) from another locale.

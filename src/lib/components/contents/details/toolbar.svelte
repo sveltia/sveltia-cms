@@ -53,9 +53,8 @@
     validities,
   } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
-  $: ({
-    backend: { automatic_deployments: autoDeployEnabled },
-  } = $siteConfig);
+  $: ({ backend: { automatic_deployments: autoDeployEnabled = true } = {} } =
+    $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: showSaveOptions = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: collectionLabel = collection?.label || collection?.name;
@@ -64,7 +63,7 @@
     collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
   $: modified =
     isNew || !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
-  $: errorCount = Object.values(validities ?? [])
+  $: errorCount = Object.values(validities)
     .map((validity) => Object.values(validity).map(({ valid }) => !valid))
     .flat(1)
     .filter(Boolean).length;
@@ -79,7 +78,11 @@
   const duplicateDraft = async () => {
     showDuplicateToast = true;
     goto(`/collections/${collection?.name}/new`, { replaceState: true, notifyChange: false });
-    $entryDraft = { ...$entryDraft, isNew: true, originalEntry: undefined };
+    $entryDraft = {
+      .../** @type {EntryDraft} */ ($entryDraft ?? {}),
+      isNew: true,
+      originalEntry: undefined,
+    };
   };
 
   /**
@@ -124,12 +127,15 @@
       {$_('editing_x_in_x', {
         values: {
           collection: collectionLabel,
+          // eslint-disable-next-line no-nested-ternary
           entry: collectionFile
             ? collectionFile.label || collectionFile.name
-            : truncate(
-                formatSummary(collection, originalEntry, defaultLocale, { useTemplate: false }),
-                40,
-              ),
+            : originalEntry
+              ? truncate(
+                  formatSummary(collection, originalEntry, defaultLocale, { useTemplate: false }),
+                  40,
+                )
+              : '',
         },
       })}
     {/if}
@@ -237,7 +243,9 @@
 <Toast id={$copyFromLocaleToast.id} bind:show={$copyFromLocaleToast.show}>
   {@const { status, message, count, sourceLocale } = $copyFromLocaleToast}
   <Alert {status}>
-    {$_(`editor.${message}`, { values: { count, source: getLocaleLabel(sourceLocale) } })}
+    {$_(`editor.${message}`, {
+      values: { count, source: sourceLocale ? getLocaleLabel(sourceLocale) : '' },
+    })}
   </Alert>
 </Toast>
 
@@ -246,10 +254,13 @@
   title={$_('delete_entry')}
   okLabel={$_('delete')}
   on:ok={async () => {
-    await deleteEntries(
-      [originalEntry?.id],
-      associatedAssets.map(({ path }) => path),
-    );
+    if (originalEntry) {
+      await deleteEntries(
+        [originalEntry.id],
+        associatedAssets.map(({ path }) => path),
+      );
+    }
+
     goBack(`/collections/${collection?.name}`);
   }}
   on:close={() => {

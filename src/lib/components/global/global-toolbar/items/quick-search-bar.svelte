@@ -19,7 +19,7 @@
     if (terms) {
       goto(`/search/${terms}`, { replaceState: searching });
     } else if (hadTerms && searching) {
-      goBack(`/collections/${$selectedCollection.name}`);
+      goBack(`/collections/${$selectedCollection?.name}`);
     }
   };
 

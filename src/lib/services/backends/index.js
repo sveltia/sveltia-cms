@@ -18,10 +18,10 @@ export const allBackendServices = {
 export const backendName = writable();
 
 /**
- * @type {import('svelte/store').Readable<BackendService>}
+ * @type {import('svelte/store').Readable<BackendService | undefined>}
  */
 export const backend = derived([backendName], ([name], set) => {
-  const service = allBackendServices[name];
+  const service = name ? allBackendServices[name] : undefined;
 
   service?.init();
   set(service);

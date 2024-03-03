@@ -88,7 +88,12 @@ export const getAssetByPath = (savedPath, entry) => {
 
     const { collectionName, fileName, locales } = entry;
     const collection = getCollection(collectionName);
-    const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+
+    if (!collection) {
+      return undefined;
+    }
+
+    const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
     const { defaultLocale } = (collectionFile ?? collection)._i18n;
     const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
     const { path: entryFilePath, content: entryContent } = locales[locale];
@@ -97,7 +102,7 @@ export const getAssetByPath = (savedPath, entry) => {
       return undefined;
     }
 
-    const [, entryFolder] = entryFilePath.match(/(.+?)(?:\/[^/]+)?$/);
+    const [, entryFolder] = entryFilePath.match(/(.+?)(?:\/[^/]+)?$/) ?? [];
     const resolvedPath = resolvePath(`${entryFolder}/${savedPath}`);
 
     return get(allAssets).find((asset) => asset.path === resolvedPath);
@@ -121,7 +126,7 @@ export const getAssetByPath = (savedPath, entry) => {
 
 /**
  * Get the public URL for the given asset.
- * @param {Asset} asset - Asset file, such as an image.
+ * @param {Asset | undefined} asset - Asset file, such as an image.
  * @param {object} [options] - Options.
  * @param {boolean} [options.pathOnly] - Whether to use the absolute path instead of the complete
  * URL.
@@ -140,7 +145,13 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
   }
 
   if (!asset.url && (asset.file || asset.fetchURL) && !pathOnly) {
-    const url = URL.createObjectURL(asset.file || (await get(backend).fetchBlob(asset)));
+    const blob = asset.file ?? (await get(backend)?.fetchBlob?.(asset));
+
+    if (!blob) {
+      return undefined;
+    }
+
+    const url = URL.createObjectURL(blob);
 
     // Cache the URL
     allAssets.update((assets) => [
@@ -152,15 +163,16 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
   }
 
   const { publicPath, entryRelative } =
-    get(allAssetFolders).find(({ collectionName }) => collectionName === asset.collectionName) ||
-    get(allAssetFolders).find(({ collectionName }) => collectionName === null);
+    get(allAssetFolders).find(({ collectionName }) => collectionName === asset.collectionName) ??
+    get(allAssetFolders).find(({ collectionName }) => collectionName === null) ??
+    {};
 
   if (entryRelative) {
     return isBlobURL ? asset.url : undefined;
   }
 
-  const baseURL = pathOnly ? '' : get(siteConfig).site_url ?? '';
-  const path = asset.path.replace(asset.folder, publicPath);
+  const baseURL = pathOnly ? '' : get(siteConfig)?.site_url ?? '';
+  const path = asset.path.replace(asset.folder, publicPath ?? '');
 
   return `${baseURL}${path}`;
 };
@@ -203,7 +215,7 @@ export const getAssetDetails = async (asset) => {
     displayURL: url,
     dimensions,
     duration,
-    usedEntries: await getEntriesByAssetURL(url),
+    usedEntries: url ? await getEntriesByAssetURL(url) : [],
   };
 };
 

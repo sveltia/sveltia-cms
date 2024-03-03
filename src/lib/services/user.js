@@ -66,7 +66,7 @@ export const signInAutomatically = async () => {
   // leaves it in local storage. Sveltia CMS uses `local` instead.
   const _backendName =
     _user.backendName?.replace('proxy', 'local') ??
-    (isLocal ? 'local' : get(siteConfig).backend?.name);
+    (isLocal ? 'local' : get(siteConfig)?.backend?.name);
 
   backendName.set(_backendName);
 
@@ -81,7 +81,7 @@ export const signInAutomatically = async () => {
     user.set(_user);
 
     try {
-      await get(backend).fetchFiles();
+      await get(backend)?.fetchFiles();
     } catch (/** @type {any} */ ex) {
       // The API request may fail if the cached token has been expired or revoked. Then let the user
       // sign in again. 404 Not Found is also considered an authentication error.
@@ -104,7 +104,7 @@ export const signInManually = async (savedToken = '') => {
   let _user;
 
   try {
-    _user = await get(backend).signIn(savedToken);
+    _user = await get(backend)?.signIn(savedToken);
   } catch (/** @type {any} */ ex) {
     logError(ex);
 
@@ -114,7 +114,7 @@ export const signInManually = async (savedToken = '') => {
   user.set(_user);
 
   try {
-    await get(backend).fetchFiles();
+    await get(backend)?.fetchFiles();
   } catch (/** @type {any} */ ex) {
     logError(ex);
   }

@@ -13,7 +13,7 @@ export const initAppLocale = () => {
   const modules = import.meta.glob('../locales/*.js', { eager: true });
 
   Object.entries(modules).forEach(([path, { strings }]) => {
-    const [, locale] = path.match(/([a-zA-Z-]+)\.js/);
+    const [, locale] = path.match(/([a-zA-Z-]+)\.js/) ?? [];
 
     addMessages(locale, /** @type {any} */ (strings));
   });

@@ -25,14 +25,7 @@
      */
     "checkJs": true,
     // Strict checks
-    "alwaysStrict": true,
-    "strictNullChecks": false,
-    "strictBindCallApply": true,
-    "strictFunctionTypes": true,
-    "strictPropertyInitialization": false,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "useUnknownInCatchVariables": true,
+    "strict": true,
     // https://github.com/vitejs/vite/issues/9539
     "types": ["vite/client"],
     /**

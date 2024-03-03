@@ -86,7 +86,7 @@
    * See {@link updateListField}.
    */
   const updateList = (manipulate) => {
-    Object.keys($entryDraft.currentValues).forEach((_locale) => {
+    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
       if (!(i18n !== 'duplicate' && _locale !== locale)) {
         updateListField(_locale, keyPath, manipulate);
       }

@@ -35,7 +35,7 @@
   } = fieldConfig);
 
   $: refEntries = fileName
-    ? [getFile(collectionName, fileName)]
+    ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
     : getEntriesByCollection(collectionName);
   $: options = getOptions(locale, fieldConfig, refEntries);
 

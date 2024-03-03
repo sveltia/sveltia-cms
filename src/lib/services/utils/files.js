@@ -51,7 +51,15 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
     });
 
   return /** @type {File[]} */ (
-    (await Promise.all([...items].map((item) => readEntry(item.webkitGetAsEntry()))))
+    (
+      await Promise.all(
+        [...items].map((item) => {
+          const entry = item.webkitGetAsEntry();
+
+          return entry ? readEntry(entry) : null;
+        }),
+      )
+    )
       .flat(100000)
       .filter(Boolean)
   ).sort((a, b) => a.name.localeCompare(b.name));
@@ -146,7 +154,7 @@ export const getBase64 = async (input) => (await getDataURL(input)).split(',')[1
  * @returns {string} Formatted size.
  */
 export const formatSize = (size) => {
-  const formatter = new Intl.NumberFormat(get(appLocale));
+  const formatter = new Intl.NumberFormat(/** @type {string} */ (get(appLocale)));
   const kb = 1000;
   const mb = kb * 1000;
   const gb = mb * 1000;
@@ -183,7 +191,7 @@ export const renameIfNeeded = (name, otherNames) => {
     return name;
   }
 
-  const [, slug, extension] = name.match(/(.+?)(?:\.([a-zA-Z0-9]+?))?$/);
+  const [, slug, extension] = name.match(/(.+?)(?:\.([a-zA-Z0-9]+?))?$/) ?? [];
 
   const regex = new RegExp(
     `^${escapeRegExp(slug)}(?:-(\\d+?))?${extension ? `\\.${extension}` : ''}$`,
@@ -197,7 +205,9 @@ export const renameIfNeeded = (name, otherNames) => {
     return name;
   }
 
-  return `${slug}-${Number(dupName.match(regex)[1] ?? 0) + 1}${extension ? `.${extension}` : ''}`;
+  const number = Number((dupName.match(regex) ?? [])[1] ?? 0) + 1;
+
+  return `${slug}-${number}${extension ? `.${extension}` : ''}`;
 };
 
 /**
@@ -214,6 +224,7 @@ export const createPath = (segments) => segments.filter(Boolean).join('/');
  * @returns {string} Resolved path, e.g. `foo/image.jpg`.
  */
 export const resolvePath = (path) => {
+  /** @type {(string | null)[]} */
   const segments = path.split('/');
   let nameFound = false;
 

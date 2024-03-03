@@ -20,11 +20,15 @@ export const assetUpdatesToast = writable({
  * @param {UploadingAssets} uploadingAssets - Assets to be uploaded.
  * @param {CommitChangesOptions} options - Options for the backend handler.
  */
-export const saveAssets = async ({ files, folder }, options) => {
-  const assetNamesInSameFolder = get(allAssets)
-    .map((a) => a.path)
-    .filter((p) => p.match(`^${escapeRegExp(folder)}\\/[^\\/]+$`))
-    .map((p) => p.split('/').pop());
+export const saveAssets = async (uploadingAssets, options) => {
+  const { files, folder } = /** @type {{ files: File[], folder: string }} */ (uploadingAssets);
+
+  const assetNamesInSameFolder = /** @type {string[]} */ (
+    get(allAssets)
+      .map((a) => a.path)
+      .filter((p) => p.match(`^${escapeRegExp(folder)}\\/[^\\/]+$`))
+      .map((p) => p.split('/').pop())
+  );
 
   const savingFileList = files.map((file) => {
     const name = renameIfNeeded(file.name, assetNamesInSameFolder);
@@ -35,12 +39,12 @@ export const saveAssets = async ({ files, folder }, options) => {
     return { name, path, file };
   });
 
-  await get(backend).commitChanges(
+  await get(backend)?.commitChanges(
     savingFileList.map(({ path, file }) => ({ action: 'create', path, data: file })),
     options,
   );
 
-  const { collectionName = null } =
+  const { collectionName } =
     get(allAssetFolders).findLast(({ internalPath }) => folder === internalPath) ?? {};
 
   /**
@@ -54,7 +58,7 @@ export const saveAssets = async ({ files, folder }, options) => {
       sha: await getHash(file),
       size: file.size,
       kind: getAssetKind(name),
-      text: null,
+      text: undefined,
       collectionName,
       folder,
     })),
@@ -66,7 +70,9 @@ export const saveAssets = async ({ files, folder }, options) => {
   ]);
 
   const isLocal = get(backendName) === 'local';
-  const { automatic_deployments: autoDeployEnabled } = get(siteConfig).backend;
+
+  const { backend: { automatic_deployments: autoDeployEnabled = true } = {} } =
+    get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 
   assetUpdatesToast.set({
     count: files.length,
@@ -82,7 +88,7 @@ export const saveAssets = async ({ files, folder }, options) => {
  * an error message and abort the operation.
  */
 export const deleteAssets = async (assets) => {
-  await get(backend).commitChanges(
+  await get(backend)?.commitChanges(
     assets.map(({ path }) => ({ action: 'delete', path })),
     { commitType: 'deleteMedia' },
   );

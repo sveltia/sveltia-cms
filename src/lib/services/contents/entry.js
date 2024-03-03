@@ -12,7 +12,7 @@ import { getCollection } from '$lib/services/contents';
  * @param {FlattenedEntryContent} [args.valueMap] - Object holding current entry values. This is
  * required when working with list widget variable types.
  * @param {string} args.keyPath - Key path, e.g. `author.name`.
- * @returns {Field} Field configuration.
+ * @returns {Field | undefined} Field configuration.
  */
 export const getFieldConfig = ({
   collectionName,
@@ -21,11 +21,16 @@ export const getFieldConfig = ({
   keyPath,
 }) => {
   const collection = getCollection(collectionName);
-  const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
-  const { fields } = collectionFile ?? collection;
+
+  if (!collection) {
+    return undefined;
+  }
+
+  const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
+  const { fields = [] } = collectionFile ?? collection;
   const keyPathArray = keyPath.split('.');
   /**
-   * @type {Field}
+   * @type {Field | undefined}
    */
   let field;
 
@@ -157,24 +162,28 @@ export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {})
 export const getAssociatedAssets = (entry, { relative = false } = {}) => {
   const { collectionName, locales } = entry;
 
-  return Object.values(locales)
-    .map(({ content }) =>
-      Object.entries(content).map(([keyPath, value]) => {
-        if (
-          typeof value === 'string' &&
-          (relative ? !value.match(/^[/@]/) : true) &&
-          ['image', 'file'].includes(getFieldConfig({ collectionName, keyPath })?.widget)
-        ) {
-          const asset = getAssetByPath(value, entry);
+  return /** @type {Asset[]} */ (
+    Object.values(locales)
+      .map(({ content }) =>
+        Object.entries(content).map(([keyPath, value]) => {
+          if (
+            typeof value === 'string' &&
+            (relative ? !value.match(/^[/@]/) : true) &&
+            ['image', 'file'].includes(
+              getFieldConfig({ collectionName, keyPath })?.widget ?? 'string',
+            )
+          ) {
+            const asset = getAssetByPath(value, entry);
 
-          if (asset?.collectionName === collectionName) {
-            return asset;
+            if (asset?.collectionName === collectionName) {
+              return asset;
+            }
           }
-        }
 
-        return undefined;
-      }),
-    )
-    .flat(1)
-    .filter((value, index, array) => !!value && array.indexOf(value) === index);
+          return undefined;
+        }),
+      )
+      .flat(1)
+      .filter((value, index, array) => !!value && array.indexOf(value) === index)
+  );
 };

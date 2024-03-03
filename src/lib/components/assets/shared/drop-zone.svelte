@@ -59,7 +59,7 @@
       return;
     }
 
-    dataTransfer.dropEffect = 'copy';
+    /** @type {DataTransfer} */ (dataTransfer).dropEffect = 'copy';
     dragging = true;
   }}
   on:dragleave|preventDefault={() => {
@@ -82,7 +82,7 @@
     }
 
     dragging = false;
-    onSelect(await scanFiles(dataTransfer, { accept }));
+    onSelect(await scanFiles(/** @type {DataTransfer} */ (dataTransfer), { accept }));
   }}
 >
   <!--
@@ -130,7 +130,7 @@
   {multiple}
   bind:this={filePicker}
   on:change={({ target }) => {
-    onSelect([.../** @type {HTMLInputElement} */ (target).files]);
+    onSelect([.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)]);
   }}
 />
 

@@ -57,12 +57,14 @@
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
     : undefined;
   $: isList = widgetName === 'list' || (hasMultiple && multiple);
-  $: ({ collection, collectionFile, originalValues, currentValues, validities } = $entryDraft);
+  $: ({ collection, collectionFile, originalValues, currentValues, validities } =
+    $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ i18nEnabled, locales, defaultLocale } =
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: otherLocales = i18nEnabled ? locales.filter((l) => l !== locale) : [];
   $: canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
   $: canDuplicate = i18nEnabled && i18n === 'duplicate';
+  $: canEdit = locale === defaultLocale || canTranslate || canDuplicate;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
 
   // Multiple values are flattened in the value map object
@@ -85,7 +87,7 @@
   $: invalid = validity?.valid === false;
 </script>
 
-{#if widgetName !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
+{#if $entryDraft && canEdit && widgetName !== 'hidden'}
   {@const canCopy = canTranslate && otherLocales.length}
   {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
   <section

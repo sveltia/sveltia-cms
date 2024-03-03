@@ -29,7 +29,7 @@
   export let currentValue;
 
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   let src;
 
@@ -38,7 +38,7 @@
 
   $: (async () => {
     src =
-      isImageWidget && currentValue
+      isImageWidget && currentValue && $entryDraft?.originalEntry
         ? await getMediaFieldURL(currentValue, $entryDraft.originalEntry)
         : undefined;
   })();

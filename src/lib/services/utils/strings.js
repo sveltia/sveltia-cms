@@ -45,7 +45,7 @@ export const generateUUID = () => window.crypto.randomUUID();
  */
 export const generateRandomId = () => {
   const hex = generateUUID().replaceAll('-', '');
-  const { buffer } = new Uint8Array(hex.match(/../g).map((h) => parseInt(h, 16)));
+  const { buffer } = new Uint8Array((hex.match(/../g) ?? []).map((h) => parseInt(h, 16)));
 
   return base32Encode(buffer, 'RFC4648', { padding: false }).toLowerCase();
 };

@@ -16,8 +16,7 @@
   let wrapper;
 
   onMount(() => {
-    /** @type {HTMLElement} */
-    const group = wrapper.closest('[role="group"]');
+    const group = /** @type {HTMLElement} */ (wrapper.closest('[role="group"]'));
 
     // Move the focus once the overlay is loaded
     group.tabIndex = 0;
@@ -25,7 +24,7 @@
 
     // onUnmount
     return () => {
-      $overlaidAsset = null;
+      $overlaidAsset = undefined;
     };
   });
 </script>
@@ -35,14 +34,14 @@
     <Toolbar />
     <div role="none" class="row">
       <div role="none" class="preview">
-        {#if $overlaidAsset.kind === 'image'}
+        {#if $overlaidAsset?.kind === 'image'}
           <Image
             asset={$overlaidAsset}
             blurBackground={true}
             checkerboard={true}
             alt={$overlaidAsset.name}
           />
-        {:else if $overlaidAsset.kind === 'video'}
+        {:else if $overlaidAsset?.kind === 'video'}
           <Video asset={$overlaidAsset} blurBackground={true} controls />
         {:else}
           <EmptyState>
@@ -50,7 +49,9 @@
           </EmptyState>
         {/if}
       </div>
-      <InfoPanel asset={$overlaidAsset} />
+      {#if $overlaidAsset}
+        <InfoPanel asset={$overlaidAsset} />
+      {/if}
     </div>
   </div>
 </Group>

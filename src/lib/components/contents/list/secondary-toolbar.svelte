@@ -15,7 +15,7 @@
   $: hasMultipleEntries = $listedEntries.length > 1;
 </script>
 
-{#if $selectedCollection.folder}
+{#if $selectedCollection?.folder}
   <Toolbar variant="secondary" aria-label={$_('entry_list')}>
     <Button
       variant="ghost"
@@ -69,14 +69,14 @@
       variant="ghost"
       iconic
       disabled={!hasListedEntries || !$selectedCollection._assetFolder}
-      pressed={!!$currentView?.showMedia}
+      pressed={!!$currentView.showMedia}
       aria-controls="collection-assets"
-      aria-expanded={$currentView?.showMedia}
-      aria-label={$_($currentView?.showMedia ? 'hide_assets' : 'show_assets')}
+      aria-expanded={$currentView.showMedia}
+      aria-label={$_($currentView.showMedia ? 'hide_assets' : 'show_assets')}
       on:click={() => {
         currentView.update((view) => ({
           ...view,
-          showMedia: !$currentView?.showMedia,
+          showMedia: !$currentView.showMedia,
         }));
       }}
     >

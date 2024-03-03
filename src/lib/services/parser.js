@@ -129,17 +129,17 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 /**
  * Parse raw content with given file details.
  * @param {BaseEntryListItem} entry - File entry.
- * @returns {{ [key: string]: any }} Parsed content.
+ * @returns {EntryContent | null} Parsed content.
  */
 const parseEntryFile = ({
-  text,
+  text = '',
   path,
   config: { filePath, extension, format, frontmatterDelimiter },
 }) => {
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || filePath?.match(/\.([^.]+)$/)[1];
+      : extension || (filePath?.match(/\.([^.]+)$/) ?? [])[1];
 
   // Ignore files with unknown format
   if (!format) {
@@ -231,7 +231,7 @@ export const formatEntryFile = ({
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || path.match(/\.([^.]+)$/)[1];
+      : extension || (path.match(/\.([^.]+)$/) ?? [])[1];
 
   const formatYAML = () =>
     YAML.stringify(content, null, {
@@ -301,8 +301,13 @@ export const formatEntryFile = ({
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
  */
 const getSlug = (collectionName, filePath, content) => {
-  const { path: pathTemplate, identifier_field: identifierField = 'title' } =
-    getCollection(collectionName);
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    return '';
+  }
+
+  const { path: pathTemplate, identifier_field: identifierField = 'title' } = collection;
 
   if (!pathTemplate) {
     // It’s a slug
@@ -338,7 +343,7 @@ export const parseEntryFiles = (entryFiles) => {
   entryFiles.forEach((file) => {
     const parsedFile = parseEntryFile(file);
 
-    if (!isObject(parsedFile)) {
+    if (!parsedFile || !isObject(parsedFile)) {
       return;
     }
 
@@ -346,11 +351,16 @@ export const parseEntryFiles = (entryFiles) => {
       path,
       sha,
       meta = {},
-      config: { folderPath: configFolderPath, collectionName, fileName },
+      config: { folderPath: configFolderPath = '', collectionName, fileName },
     } = file;
 
     const collection = getCollection(collectionName);
-    const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+
+    if (!collection) {
+      return;
+    }
+
+    const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
     const { i18nEnabled, locales, defaultLocale, structure } = (collectionFile ?? collection)._i18n;
 
     const extension = getFileExtension({
@@ -369,7 +379,7 @@ export const parseEntryFiles = (entryFiles) => {
       return;
     }
 
-    /** @type {Entry} */
+    /** @type {any} */
     const entry = { sha, collectionName, fileName, locales: {}, ...meta };
 
     if (!i18nEnabled) {
@@ -447,7 +457,7 @@ export const parseAssetFiles = (assetFiles) =>
       fetchURL,
       repoFileURL,
       path,
-      name,
+      name = /** @type {string} */ (path.split('/').pop()),
       sha,
       size,
       text = undefined,

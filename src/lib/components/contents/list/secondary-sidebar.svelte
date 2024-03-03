@@ -9,7 +9,7 @@
   import { goto } from '$lib/services/navigation';
 
   $: ({ internalPath, entryRelative } =
-    $selectedCollection._assetFolder ?? /** @type {CollectionAssetFolder} */ ({}));
+    $selectedCollection?._assetFolder ?? /** @type {CollectionAssetFolder} */ ({}));
   // Can’t upload assets if collection assets are saved at entry-relative paths
   $: uploadDisabled = !!entryRelative;
 </script>
@@ -18,7 +18,7 @@
   <Group
     id="collection-assets"
     class="secondary-sidebar"
-    hidden={!$currentView?.showMedia}
+    hidden={!$currentView.showMedia}
     aria-label={$_('collection_assets')}
   >
     <DropZone

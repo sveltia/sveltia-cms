@@ -93,7 +93,7 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
       return;
     }
 
-    const { widget: widgetName, default: defaultValue, required = true } = fieldConfig;
+    const { widget: widgetName = 'string', default: defaultValue, required = true } = fieldConfig;
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widgetName === 'list') {
@@ -232,7 +232,12 @@ export const createProxy = ({
   getValueMap = undefined,
 }) => {
   const collection = getCollection(collectionName);
-  const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
+
+  if (!collection) {
+    return undefined;
+  }
+
+  const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
 
   return new Proxy(/** @type {any} */ (target), {
@@ -252,7 +257,7 @@ export const createProxy = ({
         ).forEach(([targetLocale, content]) => {
           // Don’t duplicate the value if the parent object doesn’t exist
           if (keyPath.includes('.')) {
-            const [, parentKeyPath] = keyPath.match(/(.+)\.[^.]+$/);
+            const [, parentKeyPath] = keyPath.match(/(.+)\.[^.]+$/) ?? [];
 
             if (
               !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`))
@@ -274,8 +279,8 @@ export const createProxy = ({
 
 /**
  * Create an entry draft.
- * @param {Entry} entry - Entry to be edited, or a partial `Entry` object containing at least the
- * collection name for a new entry.
+ * @param {any} entry - Entry to be edited, or a partial {@link Entry} object containing at least
+ * the collection name for a new entry.
  * @param {{ [key: string]: string }} [defaultValues] - Dynamic default values for a new entry
  * passed through URL parameters.
  */
@@ -283,8 +288,13 @@ export const createDraft = (entry, defaultValues) => {
   const { id, collectionName, fileName, locales } = entry;
   const isNew = id === undefined;
   const collection = getCollection(collectionName);
-  const collectionFile = fileName ? collection._fileMap[fileName] : undefined;
-  const { fields, _i18n } = collectionFile ?? collection;
+
+  if (!collection) {
+    return;
+  }
+
+  const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
+  const { fields = [], _i18n } = collectionFile ?? collection;
   const { i18nEnabled, locales: allLocales } = _i18n;
   const newContent = getDefaultValues(fields, defaultValues);
 
@@ -335,7 +345,7 @@ export const createDraft = (entry, defaultValues) => {
               prop: 'files',
               locale,
               // eslint-disable-next-line jsdoc/require-jsdoc
-              getValueMap: () => get(entryDraft).currentValues[locale],
+              getValueMap: () => /** @type {EntryDraft} */ (get(entryDraft)).currentValues[locale],
             })
           : {},
       ]),
@@ -377,23 +387,28 @@ const getItemList = (obj, keyPath) =>
  * list. The typical usage is `list.splice()`.
  */
 export const updateListField = (locale, keyPath, manipulate) => {
-  const currentValues = unflattenObj(get(entryDraft).currentValues[locale]);
-  const viewStates = unflattenObj(get(entryDraft).viewStates[locale]);
+  const draft = /** @type {EntryDraft} */ (get(entryDraft));
+  const currentValues = unflattenObj(draft.currentValues[locale]);
+  const viewStates = unflattenObj(draft.viewStates[locale]);
 
   manipulate({
     valueList: getItemList(currentValues, keyPath),
     viewList: getItemList(viewStates, keyPath),
   });
 
-  entryDraft.update((draft) => ({
-    ...draft,
+  /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
+    ..._draft,
     currentValues: {
-      ...draft.currentValues,
+      ..._draft.currentValues,
       // Flatten & proxify the object again
-      [locale]: createProxy({ draft, locale, target: flatten(currentValues) }),
+      [locale]: createProxy({
+        draft: _draft,
+        locale,
+        target: flatten(currentValues),
+      }),
     },
     viewStates: {
-      ...draft.viewStates,
+      ..._draft.viewStates,
       [locale]: flatten(viewStates),
     },
   }));
@@ -409,7 +424,7 @@ export const updateListField = (locale, keyPath, manipulate) => {
  * @returns {FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = (content, { prop = 'currentValues' } = {}) => {
-  const draft = get(entryDraft);
+  const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collectionName, fileName, collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const defaultLocaleValues = draft[prop][defaultLocale];
@@ -432,19 +447,21 @@ export const copyDefaultLocaleValues = (content, { prop = 'currentValues' } = {}
  * @param {LocaleCode} locale - Locale.
  */
 export const toggleLocale = (locale) => {
-  entryDraft.update((draft) => {
-    const { currentLocales, currentValues } = draft;
+  /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
+    const { currentLocales, currentValues } = _draft;
     const enabled = !currentLocales[locale];
 
     // Initialize the content for the locale
     if (enabled && !currentValues[locale]) {
-      const { collection, collectionName, collectionFile, fileName, originalValues, files } = draft;
-      const { fields, _i18n } = collectionFile ?? collection;
+      const { collection, collectionName, collectionFile, fileName, originalValues, files } =
+        _draft;
+
+      const { fields = [], _i18n } = collectionFile ?? collection;
       const { defaultLocale } = _i18n;
       const newContent = getDefaultValues(fields);
 
       return {
-        ...draft,
+        ..._draft,
         currentLocales: { ...currentLocales, [locale]: enabled },
         originalValues: { ...originalValues, [locale]: newContent },
         currentValues: {
@@ -466,14 +483,14 @@ export const toggleLocale = (locale) => {
               { prop: 'files' },
             ),
             // eslint-disable-next-line jsdoc/require-jsdoc
-            getValueMap: () => get(entryDraft).currentValues[locale],
+            getValueMap: () => /** @type {EntryDraft} */ (get(entryDraft)).currentValues[locale],
           }),
         },
       };
     }
 
     return {
-      ...draft,
+      ..._draft,
       currentLocales: { ...currentLocales, [locale]: enabled },
     };
   });
@@ -482,12 +499,12 @@ export const toggleLocale = (locale) => {
 /**
  * Copy/translation toast state.
  * @type {import('svelte/store').Writable<{
- * id: number,
+ * id: number | undefined,
  * show: boolean,
- * status: 'info' | 'success' | 'error',
- * message: string,
+ * status: 'info' | 'success' | 'error' | undefined,
+ * message: string | undefined,
  * count: number,
- * sourceLocale: LocaleCode,
+ * sourceLocale: LocaleCode | undefined,
  * }>}
  */
 export const copyFromLocaleToast = writable({
@@ -514,7 +531,7 @@ export const copyFromLocale = async (
   keyPath = '',
   translate = false,
 ) => {
-  const { collectionName, fileName, currentValues } = get(entryDraft);
+  const { collectionName, fileName, currentValues } = /** @type {EntryDraft} */ (get(entryDraft));
   const valueMap = currentValues[sourceLocale];
 
   const copingFields = Object.fromEntries(
@@ -525,7 +542,7 @@ export const copyFromLocale = async (
       if (
         (keyPath && !_keyPath.startsWith(keyPath)) ||
         typeof value !== 'string' ||
-        !['markdown', 'text', 'string', 'list'].includes(field?.widget) ||
+        !['markdown', 'text', 'string', 'list'].includes(field?.widget ?? 'string') ||
         (field?.widget === 'list' &&
           (/** @type {ListField} */ (field).field ?? /** @type {ListField} */ (field).fields)) ||
         (!translate && value === currentValues[targetLocale][_keyPath])
@@ -600,7 +617,10 @@ export const copyFromLocale = async (
     updateToast('success', `copy.complete.${countType}`);
   }
 
-  entryDraft.update((_entryDraft) => ({ ..._entryDraft, currentValues }));
+  /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
+    ..._draft,
+    currentValues,
+  }));
 };
 
 /**
@@ -611,7 +631,9 @@ export const copyFromLocale = async (
  * Object, this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
-  const { collection, collectionFile, fileName, currentValues, originalValues } = get(entryDraft);
+  const { collection, collectionFile, fileName, currentValues, originalValues } =
+    /** @type {EntryDraft} */ (get(entryDraft));
+
   const { locales: allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
   const locales = locale ? [locale] : allLocales;
 
@@ -631,7 +653,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
           keyPath: _keyPath,
         });
 
-        if (_locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n)) {
+        if (_locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
           if (reset) {
             delete currentValues[_locale][_keyPath];
           } else {
@@ -649,7 +671,10 @@ export const revertChanges = (locale = '', keyPath = '') => {
     revert(_locale, originalValues[_locale], false);
   });
 
-  entryDraft.update((_entryDraft) => ({ ..._entryDraft, currentValues }));
+  /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
+    ..._draft,
+    currentValues,
+  }));
 };
 
 /**
@@ -661,7 +686,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
  */
 const validateEntry = () => {
   const { collection, collectionFile, fileName, currentLocales, currentValues, validities } =
-    get(entryDraft);
+    /** @type {EntryDraft} */ (get(entryDraft));
 
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
   let validated = true;
@@ -694,7 +719,7 @@ const validateEntry = () => {
       }
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
-      const { widget: widgetName, required = true, i18n = false, pattern } = fieldConfig;
+      const { widget: widgetName = 'string', required = true, i18n = false, pattern } = fieldConfig;
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
       const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
@@ -769,7 +794,10 @@ const validateEntry = () => {
     });
   });
 
-  entryDraft.update((draft) => ({ ...draft, validities }));
+  /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
+    ..._draft,
+    validities,
+  }));
 
   return validated;
 };
@@ -846,7 +874,7 @@ const createEntryPath = (draft, locale, slug) => {
   }
 
   if (originalEntry?.locales[locale]) {
-    return originalEntry?.locales[locale].path;
+    return /** @type {string} */ (originalEntry?.locales[locale].path);
   }
 
   const { defaultLocale, structure } = collection._i18n;
@@ -891,8 +919,8 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     throw new Error('validation_failed');
   }
 
-  const _user = get(user);
-  const draft = get(entryDraft);
+  const _user = /** @type {User} */ (get(user));
+  const draft = /** @type {EntryDraft} */ (get(entryDraft));
 
   const {
     collection,
@@ -941,7 +969,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     text: undefined,
     collectionName,
     folder: internalAssetFolder,
-    commitAuthor: _user.email ? { name: _user.name, email: _user.email } : undefined,
+    commitAuthor: _user.email
+      ? /** @type {CommitAuthor} */ ({ name: _user.name, email: _user.email })
+      : undefined,
     commitDate: new Date(), // Use the current datetime
   };
 
@@ -1040,7 +1070,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     collectionName,
     fileName,
     slug,
-    sha: savingEntryLocales[defaultLocale].sha,
+    sha: /** @type {string} */ (savingEntryLocales[defaultLocale].sha),
     locales: Object.fromEntries(
       Object.entries(savingEntryLocales).filter(([, { content }]) => !!content),
     ),
@@ -1056,7 +1086,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const config = { extension, format, frontmatterDelimiter, yamlQuote };
 
   if (collectionFile || !i18nEnabled || structure === 'single_file') {
-    const { path, content } = savingEntryLocales[defaultLocale];
+    const { path, content } = /** @type {{ path: string, content: LocalizedEntry }} */ (
+      savingEntryLocales[defaultLocale]
+    );
 
     changes.push({
       action: isNew ? 'create' : 'update',
@@ -1074,7 +1106,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     });
   } else {
     locales.forEach((locale) => {
-      const { path, content } = savingEntryLocales[locale];
+      const { path, content } = /** @type {{ path: string, content: LocalizedEntry }} */ (
+        savingEntryLocales[locale]
+      );
 
       if (currentLocales[locale]) {
         changes.push({
@@ -1090,7 +1124,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   }
 
   try {
-    await get(backend).commitChanges(changes, {
+    await /** @type {BackendService} */ (get(backend)).commitChanges(changes, {
       commitType: isNew ? 'create' : 'update',
       collection,
       skipCI,
@@ -1114,7 +1148,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   entryDraft.set(null);
 
   const isLocal = get(backendName) === 'local';
-  const { automatic_deployments: autoDeployEnabled } = get(siteConfig).backend;
+
+  const { backend: { automatic_deployments: autoDeployEnabled = true } = {} } =
+    get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 
   contentUpdatesToast.set({
     count: 1,

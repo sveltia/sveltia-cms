@@ -12,6 +12,7 @@ describe('Test fillSlugTemplate()', () => {
   };
 
   siteConfig.set({
+    backend: { name: 'github' },
     media_folder: 'static/images/uploads',
     collections: [collection],
   });

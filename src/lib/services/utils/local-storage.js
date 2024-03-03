@@ -22,7 +22,7 @@ export default class LocalStorage {
    * @throws {DOMException} When storage access is denied.
    */
   static async get(key) {
-    return JSON.parse(window.localStorage.getItem(key));
+    return JSON.parse(window.localStorage.getItem(key) ?? '');
   }
 
   /**

@@ -18,7 +18,7 @@
       {#key $appLocale}
         <Select
           aria-label={$_('prefs.languages.ui_language.select_language')}
-          value={$appLocale}
+          value={$appLocale ?? undefined}
           on:change={(/** @type {CustomEvent} */ event) => {
             $prefs = { ...$prefs, locale: event.detail.value };
           }}
@@ -34,7 +34,7 @@
       {/key}
     </div>
   </section>
-  {#if $siteConfig.i18n?.locales?.length > 1}
+  {#if ($siteConfig?.i18n?.locales?.length ?? 0) > 1}
     {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
       {@const { serviceLabel, developerURL, apiKeyURL } = service}
       <section>
@@ -52,23 +52,25 @@
           )}
         </p>
         <div role="none">
-          <TextInput
-            bind:value={$prefs.apiKeys[serviceId]}
-            flex
-            spellcheck="false"
-            aria-label={$_('prefs.languages.translator.field_label', {
-              values: { service: serviceLabel },
-            })}
-            on:change={() => {
-              dispatch('change', {
-                message: $_(
-                  $prefs.apiKeys[serviceId]
-                    ? 'prefs.changes.api_key_saved'
-                    : 'prefs.changes.api_key_removed',
-                ),
-              });
-            }}
-          />
+          {#if $prefs.apiKeys}
+            <TextInput
+              bind:value={$prefs.apiKeys[serviceId]}
+              flex
+              spellcheck="false"
+              aria-label={$_('prefs.languages.translator.field_label', {
+                values: { service: serviceLabel },
+              })}
+              on:change={() => {
+                dispatch('change', {
+                  message: $_(
+                    $prefs.apiKeys?.[serviceId]
+                      ? 'prefs.changes.api_key_saved'
+                      : 'prefs.changes.api_key_removed',
+                  ),
+                });
+              }}
+            />
+          {/if}
         </div>
       </section>
     {/each}

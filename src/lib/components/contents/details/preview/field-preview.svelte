@@ -23,7 +23,8 @@
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
     : undefined;
   $: isList = widgetName === 'list' || (hasMultiple && multiple);
-  $: ({ collection, collectionFile, currentValues } = $entryDraft);
+  $: ({ collection, collectionFile, currentValues } =
+    $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ i18nEnabled, defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
   $: canDuplicate = i18nEnabled && i18n === 'duplicate';

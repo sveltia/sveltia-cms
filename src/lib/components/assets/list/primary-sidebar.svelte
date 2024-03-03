@@ -38,9 +38,9 @@
           }
 
           if (!internalPath || selected) {
-            event.dataTransfer.dropEffect = 'none';
+            /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
           } else {
-            event.dataTransfer.dropEffect = 'move';
+            /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';
             /** @type {HTMLElement} */ (event.target).classList.add('dragover');
           }
         }}

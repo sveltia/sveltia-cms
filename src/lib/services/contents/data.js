@@ -20,24 +20,23 @@ export const contentUpdatesToast = writable({
 export const deleteEntries = async (ids, assetPaths = []) => {
   const _allEntries = get(allEntries);
 
-  /**
-   * @type {FileChange[]}
-   */
-  const changes = ids
-    .map((id) => {
-      const { locales, slug } = _allEntries.find((e) => e.id === id) ?? {};
+  const changes = /** @type {FileChange[]} */ (
+    ids
+      .map((id) => {
+        const { locales, slug } = _allEntries.find((e) => e.id === id) ?? {};
 
-      if (locales) {
-        return Object.values(locales).map(
-          ({ path }) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
-        );
-      }
+        if (locales) {
+          return Object.values(locales).map(
+            ({ path }) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
+          );
+        }
 
-      return undefined;
-    })
-    .flat(1)
-    // Remove duplicate paths for single file i18n
-    .filter((item, index, arr) => item && arr.findIndex((i) => i.path === item.path) === index);
+        return undefined;
+      })
+      .flat(1)
+      // Remove duplicate paths for single file i18n
+      .filter((item, index, arr) => item && arr.findIndex((i) => i?.path === item.path) === index)
+  );
 
   if (assetPaths.length) {
     changes.push(
@@ -45,7 +44,7 @@ export const deleteEntries = async (ids, assetPaths = []) => {
     );
   }
 
-  await get(backend).commitChanges(changes, {
+  await get(backend)?.commitChanges(changes, {
     commitType: 'delete',
     collection: get(selectedCollection),
   });

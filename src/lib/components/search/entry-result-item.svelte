@@ -11,18 +11,18 @@
   export let entry;
 
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   let src;
 
   $: ({ slug, locales, fileName, collectionName } = entry);
   $: collection = getCollection(collectionName);
-  $: collectionFile = fileName ? collection._fileMap[fileName] : undefined;
-  $: ({ defaultLocale } = collection._i18n);
+  $: collectionFile = fileName ? collection?._fileMap?.[fileName] : undefined;
+  $: ({ defaultLocale } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
   $: ({ content } = locales[locale] ?? {});
   $: firstImageField = !collectionFile
-    ? collection.fields?.find(({ widget }) => widget === 'image')
+    ? collection?.fields?.find(({ widget }) => widget === 'image')
     : undefined;
 
   $: (async () => {
@@ -45,13 +45,16 @@
       {/if}
     </GridCell>
     <GridCell class="collection">
-      {collection.label || collection.name}
+      {collection?.label || collection?.name}
     </GridCell>
     <GridCell class="title">
       {#if collectionFile}
         {collectionFile.label || collectionFile.name}
       {:else if content}
-        {content[collection.identifier_field] || content.title || content.name || content.label}
+        {content[collection?.identifier_field ?? ''] ||
+          content.title ||
+          content.name ||
+          content.label}
       {/if}
     </GridCell>
   </GridRow>

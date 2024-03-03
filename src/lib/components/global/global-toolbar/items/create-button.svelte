@@ -20,7 +20,7 @@
 >
   <Icon slot="start-icon" name="add" />
   <Menu slot="popup" aria-label={$_('create_entry_or_asset')}>
-    {#each $siteConfig.collections ?? [] as collection (collection.name)}
+    {#each $siteConfig?.collections ?? [] as collection (collection.name)}
       {@const {
         name,
         label,
@@ -54,8 +54,8 @@
   bind:this={filePicker}
   on:change={({ target }) => {
     $uploadingAssets = {
-      folder: $siteConfig.media_folder,
-      files: [.../** @type {HTMLInputElement} */ (target).files],
+      folder: $siteConfig?.media_folder,
+      files: [.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)],
     };
   }}
 />

@@ -36,7 +36,7 @@ export const selectedEntries = writable([]);
  * @returns {Collection | undefined} Collection, including some extra, normalized properties.
  */
 export const getCollection = (name) => {
-  const collection = get(siteConfig).collections.find((c) => c.name === name);
+  const collection = get(siteConfig)?.collections.find((c) => c.name === name);
 
   if (!collection) {
     return undefined;
@@ -61,7 +61,7 @@ export const getCollection = (name) => {
  * Get a file collection entry.
  * @param {string} collectionName - Collection name.
  * @param {string} fileName - File name.
- * @returns {Entry} File.
+ * @returns {Entry | undefined} File.
  * @see https://decapcms.org/docs/collection-types/#file-collections
  */
 export const getFile = (collectionName, fileName) =>
@@ -100,7 +100,8 @@ export const getEntriesByCollection = (collectionName) => {
  * @returns {Promise<Entry[]>} Entries.
  */
 export const getEntriesByAssetURL = async (url) => {
-  const path = url.replace(get(siteConfig).site_url, '');
+  const siteURL = get(siteConfig)?.site_url;
+  const path = siteURL ? url.replace(siteURL, '') : url;
   const entries = get(allEntries);
 
   const results = await Promise.all(
@@ -115,7 +116,7 @@ export const getEntriesByAssetURL = async (url) => {
             Object.entries(valueMap).map(async ([keyPath, value]) => {
               const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
 
-              if (!field || !['image', 'file'].includes(field.widget)) {
+              if (!field || !['image', 'file'].includes(field.widget ?? 'string')) {
                 return false;
               }
 

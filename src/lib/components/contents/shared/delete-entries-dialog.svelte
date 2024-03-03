@@ -9,7 +9,7 @@
   export let open = false;
 
   $: associatedAssets =
-    !!$selectedEntries.length && !!$selectedCollection._assetFolder?.entryRelative
+    !!$selectedEntries.length && !!$selectedCollection?._assetFolder?.entryRelative
       ? $selectedEntries.map((entry) => getAssociatedAssets(entry, { relative: true })).flat(1)
       : [];
 </script>

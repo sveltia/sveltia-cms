@@ -24,15 +24,15 @@
   $: canPreview = ['image', 'video'].includes(kind);
 
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   let displayURL;
   /**
-   * @type {{ width: number, height: number }}
+   * @type {{ width: number, height: number } | undefined}
    */
   let dimensions;
   /**
-   * @type {number}
+   * @type {number | undefined}
    */
   let duration;
   /**
@@ -113,14 +113,14 @@
   {#if commitDate}
     <section>
       <h4>{$_('sort_keys.commit_date')}</h4>
-      <p>{commitDate.toLocaleString($appLocale)}</p>
+      <p>{commitDate.toLocaleString($appLocale ?? undefined)}</p>
     </section>
   {/if}
   <section>
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as { sha, slug, locales, collectionName, fileName } (sha)}
-      {@const collection = getCollection(collectionName)}
-      {@const collectionFile = fileName ? collection._fileMap[fileName] : undefined}
+      {@const collection = /** @type {Collection} */ (getCollection(collectionName))}
+      {@const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined}
       {@const { defaultLocale } = (collectionFile ?? collection)._i18n}
       {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
       {@const { content } = locales[locale]}
@@ -137,7 +137,7 @@
             {#if collectionFile}
               {collectionFile.label || collectionFile.name}
             {:else if content}
-              {content[collection.identifier_field] ||
+              {content[collection.identifier_field ?? ''] ||
                 content.title ||
                 content.name ||
                 content.label}

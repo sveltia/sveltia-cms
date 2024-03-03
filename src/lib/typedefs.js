@@ -25,7 +25,6 @@
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
  * @property {string} [deployHookURL] Webhook URL to manually trigger a new deployment on any
  * connected CI/CD provider.
- * @property {string} [error] Error message.
  */
 
 /**
@@ -139,8 +138,8 @@
  * @typedef {object} BaseFileListItem
  * @property {string} [type] File type.
  * @property {File} [file] File object. Local backend only.
- * @property {?string} [url] Blob URL for the asset or temporary Blob URL for a local file being
- * uploaded. It can be `null` if the Blob URL is not generated yet.
+ * @property {string} [url] Blob URL for the asset or temporary Blob URL for a local file being
+ * uploaded. It can be `undefined` if the Blob URL is not generated yet.
  * @property {string} [name] File name.
  * @property {string} path File path.
  * @property {string} sha SHA-1 hash for the file.
@@ -167,7 +166,7 @@
 /**
  * Asset folder configuration by collection.
  * @typedef {object} CollectionAssetFolder
- * @property {?string} collectionName Collection name or `null` for the global folder.
+ * @property {string} [collectionName] Collection name or `undefined` for the global folder.
  * @property {string} internalPath Folder path on the repository/filesystem, relative to the project
  * root directory. It can be a partial path if the collection’s `media_folder` property is a
  * relative path, because the complete path is entry-specific in that case.
@@ -232,7 +231,7 @@
 /**
  * Global site configuration.
  * @typedef {object} SiteConfig
- * @property {object} [backend] Backend config.
+ * @property {object} backend Backend config.
  * @property {string} backend.name Backend name, e.g. `github`.
  * @property {string} [backend.repo] Git organization and repository name joined with `/`.
  * @property {string} [backend.branch] Git branch name.
@@ -247,18 +246,17 @@
  * @property {string} [site_url] Site URL.
  * @property {string} [display_url] Site URL linked from the UI.
  * @property {string} [logo_url] Site logo URL.
- * @property {string} [media_folder] Global internal media folder path.
+ * @property {string} media_folder Global internal media folder path.
  * @property {string} [public_folder] Global public media folder path.
  * @property {MediaLibraryConfig} [media_library] Media library configuration.
  * @property {object} [slug] Slug options.
  * @property {'unicode' | 'ascii'} [slug.encoding] Encoding option.
  * @property {boolean} [slug.clean_accents] Whether to remove accents.
  * @property {string} [slug.sanitize_replacement] String to replace sanitized characters.
- * @property {RawCollection[]} [collections] Collections.
+ * @property {RawCollection[]} collections Collections.
  * @property {RawI18nConfig} [i18n] Global i18n configuration.
  * @property {string} [publish_mode] Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] Whether to show preview links in Editorial Workflow.
- * @property {string} [error] Custom error message.
  * @see https://decapcms.org/docs/configuration-options/
  */
 
@@ -267,7 +265,7 @@
  * @typedef {object} ViewFilter
  * @property {string} label Label.
  * @property {string} field Field name.
- * @property {string | boolean} [pattern] Regex matching pattern or exact value.
+ * @property {string | boolean} pattern Regex matching pattern or exact value.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
 
@@ -602,13 +600,13 @@
 /**
  * Entry item.
  * @typedef {object} Entry
- * @property {string} [id] Unique entry ID mainly used on the cross-collection search page, where
- * the `sha`, `slug` or `fileName` property may duplicate.
- * @property {string} [sha] SHA-1 hash from one of the locales. It serves as the ID of an entry, so
- * it can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
+ * @property {string} id Unique entry ID mainly used on the cross-collection search page, where the
+ * `sha`, `slug` or `fileName` property may duplicate.
+ * @property {string} sha SHA-1 hash from one of the locales. It serves as the ID of an entry, so it
+ * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
- * @property {string} [slug] Entry slug.
- * @property {{ [locale: LocaleCode]: LocalizedEntry }} [locales] Localized content map keyed with a
+ * @property {string} slug Entry slug.
+ * @property {{ [locale: LocaleCode]: LocalizedEntry }} locales Localized content map keyed with a
  * locale code. When i18n is not enabled with the site configuration, there will be one single
  * property named `_default`.
  * @property {string} collectionName Collection name.
@@ -625,7 +623,7 @@
 /**
  * Each locale’s content and metadata.
  * @typedef {object} LocalizedEntry
- * @property {EntryContent} [content] Parsed, localized entry content.
+ * @property {EntryContent} content Parsed, localized entry content.
  * @property {string} [path] File path.
  * @property {string} [sha] SHA-1 hash for the file.
  */
@@ -714,8 +712,8 @@
  * Asset item.
  * @typedef {object} Asset
  * @property {File} [file] File object. Local backend only.
- * @property {?string} url Blob URL for the asset or temporary Blob URL for a local file being
- * uploaded. It can be `null` if the Blob URL is not generated yet.
+ * @property {string} [url] Blob URL for the asset or temporary Blob URL for a local file being
+ * uploaded. It can be `undefined` if the Blob URL is not generated yet.
  * @property {string} name File name.
  * @property {string} path File path.
  * @property {string} sha SHA-1 hash for the file.
@@ -734,7 +732,7 @@
 /**
  * Asset details.
  * @typedef {object} AssetDetails
- * @property {string} displayURL URL that can be linked in the app UI. It can be a temporary,
+ * @property {string} [displayURL] URL that can be linked in the app UI. It can be a temporary,
  * non-public blob URL for a local file.
  * @property {{ width: number, height: number }} [dimensions] Media dimensions available for an
  * image, video or audio file.
@@ -805,7 +803,7 @@
 /**
  * Entry list view settings.
  * @typedef {object} EntryListView
- * @property {ViewType} [type] View type.
+ * @property {ViewType} type View type.
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions. Deprecated in favour of `filters`.
  * @property {FilteringConditions[]} [filters] One or more filtering conditions.
@@ -841,7 +839,7 @@
 /**
  * Asset list view settings.
  * @typedef {object} AssetListView
- * @property {ViewType} [type] View type.
+ * @property {ViewType} type View type.
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions.
  * @property {FilteringConditions[]} [filters] Unused.

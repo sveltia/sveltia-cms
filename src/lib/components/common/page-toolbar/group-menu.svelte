@@ -1,14 +1,13 @@
 <script>
   import { Icon, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { writable } from 'svelte/store';
 
   export let label = '';
   export let disabled = false;
   /**
    * @type {import('svelte/store').Writable<EntryListView | AssetListView>}
    */
-  export let currentView = writable({});
+  export let currentView;
   export let noneLabel = '';
   /**
    * @type {ViewFilter[]}
