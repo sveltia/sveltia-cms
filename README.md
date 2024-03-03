@@ -50,7 +50,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Better productivity
 
 - You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server on your machine[^26].
-- The Git branch name is automatically set to the default branch (`main` for new repositories, `master` for old repositories) if it’s not specified in the configuration file, preventing data loading errors[^27].
+- The Git branch name is automatically set to the default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors[^27].
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
