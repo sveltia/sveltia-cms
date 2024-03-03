@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
-    "cspell": "^8.4.1",
+    "cspell": "^8.5.0",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^9.1.0",
@@ -34,13 +34,13 @@
     "postcss": "^8.4.35",
     "postcss-html": "^1.6.0",
     "prettier": "^3.2.5",
-    "prettier-plugin-svelte": "^3.2.1",
+    "prettier-plugin-svelte": "^3.2.2",
     "sass": "^1.71.1",
     "stylelint": "^16.2.1",
     "stylelint-config-recommended-scss": "^14.0.0",
     "stylelint-scss": "^6.1.0",
     "svelte": "^4.2.12",
-    "svelte-check": "^3.6.4",
+    "svelte-check": "^3.6.6",
     "svelte-i18n": "^4.0.0",
     "svelte-preprocess": "^5.1.3",
     "vite": "^5.1.4",
@@ -56,7 +56,7 @@
     "marked": "^12.0.0",
     "mime": "^4.0.1",
     "moment": "^2.30.1",
-    "yaml": "^2.3.4"
+    "yaml": "^2.4.0"
   },
   "files": [
     "dist"
