@@ -7,7 +7,7 @@
    */
   export let disabled = false;
   /**
-   * @type {ListField}
+   * @type {ListField | ObjectField}
    */
   export let fieldConfig;
   /**
@@ -16,21 +16,23 @@
   export let items = [];
   /**
    * Function to add a new item.
-   * @param {string} [name] - Item name.
-   * @returns {void}
+   * @param {string} [typeName] - Variable type name.
    */
-  // eslint-disable-next-line no-unused-vars
-  export let addItem = (name) => undefined;
+  export let addItem = (typeName) => {
+    void typeName;
+  };
 
   $: ({
+    widget: widgetType,
+    name: fieldName,
     label: labelPlural,
     // Widget-specific options
-    label_singular: labelSingular,
-    max,
     types,
   } = fieldConfig);
 
-  $: label = $_('add_x', { values: { name: labelSingular || labelPlural } });
+  $: ({ label_singular: labelSingular, max } =
+    widgetType === 'list' ? /** @type {ListField} */ (fieldConfig) : /** @type {ListField} */ ({}));
+  $: label = $_('add_x', { values: { name: labelSingular || labelPlural || fieldName } });
   $: _disabled = disabled || (typeof max === 'number' && items.length === max);
 </script>
 

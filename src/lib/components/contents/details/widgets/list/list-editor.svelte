@@ -9,7 +9,8 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
-  import AddItemButton from '$lib/components/contents/details/widgets/list/add-item-button.svelte';
+  import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
+  import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft, getDefaultValues, updateListField } from '$lib/services/contents/editor';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
@@ -168,20 +169,21 @@
 
   /**
    * Add a new subfield to the list.
-   * @param {string} [subFieldName] - Sub field name from one of the variable type options.
+   * @param {string} [typeName] - Variable type name. If the field doesn’t have variable types, it
+   * will be `undefined`.
    * @see https://decapcms.org/docs/variable-type-widgets/
    */
-  const addItem = (subFieldName) => {
+  const addItem = (typeName) => {
     updateComplexList(({ valueList, viewList }) => {
-      const subFields = subFieldName
-        ? types?.find(({ name }) => name === subFieldName)?.fields ?? []
+      const subFields = typeName
+        ? types?.find(({ name }) => name === typeName)?.fields ?? []
         : fields ?? (field ? [field] : []);
 
       const index = addToTop ? 0 : valueList.length;
       const newItem = unflatten(getDefaultValues(subFields));
 
-      if (subFieldName) {
-        newItem[typeKey] = subFieldName;
+      if (typeName) {
+        newItem[typeKey] = typeName;
       }
 
       valueList.splice(index, 0, hasSingleSubField && field ? newItem[field.name] : newItem);
@@ -296,33 +298,24 @@
         {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <!-- @todo Support drag sorting. -->
         <div role="none" class="item">
-          <div role="none" class="header">
-            <div role="none">
-              <Button
-                size="small"
-                aria-expanded={expanded}
-                aria-controls="list-{widgetId}-item-{index}-body"
-                on:click={() => {
-                  Object.keys($entryDraft?.viewStates ?? {}).forEach((_locale) => {
-                    /** @type {EntryDraft} */ ($entryDraft).viewStates[_locale][
-                      `${keyPath}.${index}.expanded`
-                    ] = !expanded;
-                  });
-                }}
-              >
-                <Icon
-                  slot="start-icon"
-                  name={expanded ? 'expand_more' : 'chevron_right'}
-                  aria-label={expanded ? $_('collapse') : $_('expand')}
-                />
-                {#if hasVariableTypes}
-                  <span role="none" class="type">
-                    {typeConfig?.label || typeConfig?.name || ''}
-                  </span>
-                {/if}
-              </Button>
-            </div>
-            <div role="none">
+          <ObjectHeader
+            label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+            controlId="list-{widgetId}-item-{index}-body"
+            {expanded}
+            toggleExpanded={() => {
+              Object.keys($entryDraft?.viewStates ?? {}).forEach((_locale) => {
+                /** @type {EntryDraft} */ ($entryDraft).viewStates[_locale][
+                  `${keyPath}.${index}.expanded`
+                ] = !expanded;
+              });
+            }}
+            removeButtonVisible={true}
+            removeButtonDisabled={isDuplicateField}
+            remove={() => {
+              removeItem(index);
+            }}
+          >
+            <svelte:fragment slot="middle">
               <Button
                 size="small"
                 iconic
@@ -346,21 +339,8 @@
               >
                 <Icon slot="start-icon" name="arrow_downward" />
               </Button>
-            </div>
-            <div role="none">
-              <Button
-                iconic
-                size="small"
-                disabled={isDuplicateField}
-                aria-label={$_('remove_this_item')}
-                on:click={() => {
-                  removeItem(index);
-                }}
-              >
-                <Icon slot="start-icon" name="close" />
-              </Button>
-            </div>
-          </div>
+            </svelte:fragment>
+          </ObjectHeader>
           <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
             {#if expanded}
               {#each subFields as subField (subField.name)}
@@ -420,43 +400,6 @@
     border-width: 2px;
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
-
-    .header {
-      display: flex;
-      align-items: center;
-      background-color: var(--sui-secondary-border-color);
-
-      & > div {
-        display: flex;
-        align-items: center;
-
-        &:first-child {
-          justify-content: flex-start;
-          width: 40%;
-        }
-
-        &:nth-child(2) {
-          width: 20%;
-          justify-content: center;
-        }
-
-        &:last-child {
-          width: 40%;
-          justify-content: flex-end;
-        }
-      }
-
-      :global(button) {
-        padding: 0;
-        height: 16px;
-      }
-
-      .type {
-        font-size: var(--sui-font-size-small);
-        font-weight: 600;
-        color: var(--sui-secondary-foreground-color);
-      }
-    }
 
     .summary {
       overflow: hidden;

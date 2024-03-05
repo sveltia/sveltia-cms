@@ -123,19 +123,19 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
     }
 
     if (widgetName === 'object') {
-      // Skip optional objects
-      if (!required) {
-        return;
-      }
+      const { fields: subFields, types } = /** @type {ObjectField} */ (fieldConfig);
 
-      const { fields: subFields } = /** @type {ObjectField} */ (fieldConfig);
-
-      subFields.forEach((_subField) => {
-        getDefaultValue({
-          keyPath: [keyPath, _subField.name].join('.'),
-          fieldConfig: _subField,
+      if (!required || Array.isArray(types)) {
+        // Enable validation
+        newContent[keyPath] = null;
+      } else {
+        subFields?.forEach((_subField) => {
+          getDefaultValue({
+            keyPath: [keyPath, _subField.name].join('.'),
+            fieldConfig: _subField,
+          });
         });
-      });
+      }
 
       return;
     }
@@ -760,6 +760,12 @@ const validateEntry = () => {
           rangeUnderflow = true;
         } else if (typeof max === 'number' && values.length > max) {
           rangeOverflow = true;
+        }
+      }
+
+      if (widgetName === 'object') {
+        if (_required && !value) {
+          valueMissing = true;
         }
       }
 

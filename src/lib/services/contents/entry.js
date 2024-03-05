@@ -10,7 +10,7 @@ import { getCollection } from '$lib/services/contents';
  * @param {string} args.collectionName - Collection name.
  * @param {string} [args.fileName] - File name if the collection is a file collection.
  * @param {FlattenedEntryContent} [args.valueMap] - Object holding current entry values. This is
- * required when working with list widget variable types.
+ * required when working with list/object widget variable types.
  * @param {string} args.keyPath - Key path, e.g. `author.name`.
  * @returns {Field | undefined} Field configuration.
  */
@@ -39,6 +39,7 @@ export const getFieldConfig = ({
       field = fields.find(({ name }) => name === key);
     } else if (field) {
       const isNumericKey = key.match(/^\d+$/);
+      const keyPathArraySub = keyPathArray.slice(0, index);
 
       const {
         field: subField,
@@ -52,10 +53,15 @@ export const getFieldConfig = ({
       } else if (subFields && !isNumericKey) {
         field = subFields.find(({ name }) => name === key);
       } else if (types && isNumericKey) {
+        // List widget variable types
         field = types.find(
-          ({ name }) =>
-            name === valueMap[`${keyPathArray.slice(0, index).join('.')}.${key}.${typeKey}`],
+          ({ name }) => name === valueMap[[...keyPathArraySub, key, typeKey].join('.')],
         );
+      } else if (types && key !== typeKey) {
+        // Object widget variable types
+        field = types
+          .find(({ name }) => name === valueMap[[...keyPathArraySub, typeKey].join('.')])
+          ?.fields?.find(({ name }) => name === key);
       }
     }
   });

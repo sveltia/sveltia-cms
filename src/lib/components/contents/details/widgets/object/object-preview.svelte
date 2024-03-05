@@ -25,14 +25,27 @@
   // svelte-ignore unused-export-let
   export let currentValue;
 
-  $: ({ fields } = fieldConfig);
+  $: ({
+    // Widget-specific options
+    fields,
+    types,
+    typeKey = 'type',
+  } = fieldConfig);
   $: valueMap = $entryDraft?.currentValues[locale] ?? {};
-  $: hasValues = Object.keys(valueMap).some((_keyPath) => _keyPath.startsWith(`${keyPath}.`));
+  $: hasValues = Object.entries(valueMap).some(
+    ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && !!value,
+  );
+  $: hasVariableTypes = Array.isArray(types);
+  $: typeKeyPath = `${keyPath}.${typeKey}`;
+  $: typeConfig = hasVariableTypes
+    ? types?.find(({ name }) => name === valueMap[typeKeyPath])
+    : undefined;
+  $: subFields = (hasVariableTypes ? typeConfig?.fields : fields) ?? [];
 </script>
 
 {#if hasValues}
   <section class="subsection">
-    {#each fields as subField (subField.name)}
+    {#each subFields as subField (subField.name)}
       <FieldPreview keyPath={[keyPath, subField.name].join('.')} {locale} fieldConfig={subField} />
     {/each}
   </section>

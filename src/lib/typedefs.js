@@ -368,6 +368,17 @@
  */
 
 /**
+ * Variable type for List/Object fields.
+ * @typedef {object} VariableFieldType
+ * @property {string} label Label to distinguish the different types.
+ * @property {string} name Type name.
+ * @property {string} [widget] Widget type. `object` only.
+ * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
+ * @property {Field[]} fields Nested fields.
+ * @see https://decapcms.org/docs/variable-type-widgets/
+ */
+
+/**
  * Boolean field properties.
  * @typedef {object} BooleanFieldProps
  * @property {boolean} [default] Default value.
@@ -443,20 +454,9 @@
  * @property {number} [max] Maximum number of items.
  * @property {Field} [field] Single widget to be repeated.
  * @property {Field[]} [fields] Multiple widgets to be repeated.
- * @property {ListFieldType[]} [types] Multiple Object widgets (variable types) to be selected.
+ * @property {VariableFieldType[]} [types] Multiple Object widgets (variable types) to be selected.
  * @property {string} [typeKey] Property name to store the type.
  * @see https://decapcms.org/docs/widgets/#list
- * @see https://decapcms.org/docs/variable-type-widgets/
- */
-
-/**
- * List field variable type.
- * @typedef {object} ListFieldType
- * @property {string} label Label to distinguish the different types.
- * @property {string} name Type name.
- * @property {string} [widget] Widget type. `object` only.
- * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
- * @property {Field[]} fields Nested fields.
  * @see https://decapcms.org/docs/variable-type-widgets/
  */
 
@@ -506,7 +506,9 @@
  * @property {object} [default] Default values.
  * @property {boolean} [collapsed] Whether to collapse the UI by default.
  * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
- * @property {Field[]} fields Nested fields.
+ * @property {Field[]} [fields] Nested fields.
+ * @property {VariableFieldType[]} [types] Multiple Object widgets (variable types) to be selected.
+ * @property {string} [typeKey] Property name to store the type.
  * @see https://decapcms.org/docs/widgets/#object
  */
 
