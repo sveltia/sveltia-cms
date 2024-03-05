@@ -76,6 +76,10 @@ export const strings = {
   show_notifications: '通知を表示',
   show_account_menu: 'アカウントメニューを表示',
 
+  // Update notification
+  update_available: 'Sveltia CMS の最新版が利用可能です。',
+  update_now: '今すぐ更新',
+
   // Library
   content_library: 'コンテンツライブラリ',
   asset_library: 'アセットライブラリ',

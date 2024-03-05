@@ -76,6 +76,10 @@ export const strings = {
   show_notifications: 'Show Notifications',
   show_account_menu: 'Show Account Menu',
 
+  // Update notification
+  update_available: 'The latest version of Sveltia CMS is available.',
+  update_now: 'Update Now',
+
   // Library
   content_library: 'Content Library',
   asset_library: 'Asset Library',

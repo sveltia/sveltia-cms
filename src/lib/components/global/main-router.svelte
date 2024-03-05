@@ -7,6 +7,7 @@
   import ContentsPage from '$lib/components/contents/contents-page.svelte';
   import TranslatorApiKeyDialog from '$lib/components/contents/details/editor/translator-api-key-dialog.svelte';
   import GlobalToolbar from '$lib/components/global/global-toolbar/global-toolbar.svelte';
+  import UpdateNotification from '$lib/components/global/updater/update-notification.svelte';
   import SearchPage from '$lib/components/search/search-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
   import { selectedCollection } from '$lib/services/contents';
@@ -51,6 +52,7 @@
 />
 
 <div role="none" class="outer">
+  <UpdateNotification />
   <GlobalToolbar />
   <svelte:component this={pages[$selectedPageName]} />
 </div>

@@ -1,0 +1,78 @@
+<script>
+  import { Button } from '@sveltia/ui';
+  import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
+  import { version as userVersion } from '../../../../../package.json';
+
+  const interval = 60 * 60 * 1000; // 1 hour
+  let timer = 0;
+  let updateAvailable = false;
+
+  /**
+   * Check if an update is available.
+   */
+  const checkForUpdates = async () => {
+    if (import.meta.env.DEV) {
+      return;
+    }
+
+    try {
+      const response = await fetch('https://unpkg.com/@sveltia/cms/package.json');
+
+      if (!response.ok) {
+        return;
+      }
+
+      const { version: latestVersion } = await response.json();
+
+      if (latestVersion && latestVersion !== userVersion) {
+        updateAvailable = true;
+      }
+    } catch {
+      //
+    }
+  };
+
+  onMount(() => {
+    checkForUpdates();
+
+    timer = window.setInterval(() => {
+      checkForUpdates();
+    }, interval);
+
+    // onUnmount
+    return () => {
+      window.clearInterval(timer);
+    };
+  });
+</script>
+
+{#if updateAvailable}
+  <div class="wrapper" role="alert">
+    {$_('update_available')}
+    <Button
+      variant="link"
+      label={$_('update_now')}
+      on:click={() => {
+        window.location.reload();
+      }}
+    />
+  </div>
+{/if}
+
+<style lang="scss">
+  .wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 32px;
+    text-align: center;
+    border-bottom: 1px solid var(--sui-secondary-border-color);
+    font-size: var(--sui-font-size-small);
+
+    :global(button) {
+      font-size: inherit;
+    }
+  }
+</style>
