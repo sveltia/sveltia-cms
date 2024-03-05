@@ -92,8 +92,6 @@ export const normalizeSlug = (string) => {
     slug = slug.normalize('NFD').replace(/\p{Diacritic}/gu, '');
   }
 
-  console.info({ slug });
-
   if (encoding === 'ascii') {
     slug = slug.replaceAll(/[^\w-~]/g, ' ');
   } else {
