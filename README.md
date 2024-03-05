@@ -84,6 +84,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
 - A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear next to the entries.
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
+- Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 
 ### Better fields/widgets
@@ -96,6 +97,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
   - New assets can be uploaded by dragging & dropping them into the dialog[^20].
   - A file/image URL can also be entered in the dialog.
   - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
+- The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
 - Optional object fields (`widget: object` with `required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
@@ -448,3 +450,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^26]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/3285)
 [^27]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/5617)
 [^28]: [Netlify/Decap CMS #6836](https://github.com/decaporg/decap-cms/pull/6836)
+[^29]: [Netlify/Decap CMS #4783](https://github.com/decaporg/decap-cms/pull/4783)
+[^30]: [Netlify/Decap CMS #565](https://github.com/decaporg/decap-cms/pull/565)
