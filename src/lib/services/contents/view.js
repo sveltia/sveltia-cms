@@ -1,6 +1,5 @@
 import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
-import moment from 'moment';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import {
@@ -15,10 +14,11 @@ import {
   getFieldDisplayValue,
   getPropertyValue,
 } from '$lib/services/contents/entry';
+import { applyTemplateFilter } from '$lib/services/contents/slug';
 import { prefs } from '$lib/services/prefs';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { stripSlashes, truncate } from '$lib/services/utils/strings';
+import { stripSlashes } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.contents-view';
 /**
@@ -31,69 +31,6 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
  * @type {import('svelte/store').Writable<EntryListView>}
  */
 export const currentView = writable({ type: 'list' });
-
-/**
- * Transform summary template.
- * @param {string} summary - Original summary.
- * @param {string} tf - Transformation.
- * @param {Field} fieldConfig - Field configuration.
- * @returns {string} Transformed summary.
- * @see https://decapcms.org/docs/summary-strings/
- */
-const transformSummary = (summary, tf, fieldConfig) => {
-  if (tf === 'upper') {
-    return String(summary).toUpperCase();
-  }
-
-  if (tf === 'lower') {
-    return String(summary).toLowerCase();
-  }
-
-  const dateTransformer = tf.match(/^date\('(.*?)'\)$/);
-
-  if (dateTransformer && fieldConfig) {
-    const [, format] = dateTransformer;
-
-    const { time_format: timeFormat, picker_utc: pickerUTC = false } =
-      /** @type {DateTimeField} */ (fieldConfig);
-
-    const dateOnly = timeFormat === false;
-
-    return (
-      pickerUTC ||
-      (dateOnly && !!summary?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
-      (dateOnly && !!summary.match(/T00:00(?::00)?(?:\.000)?Z$/))
-        ? moment.utc(summary)
-        : moment(summary)
-    ).format(format);
-  }
-
-  const defaultTransformer = tf.match(/^default\('?(.*?)'?\)$/);
-
-  if (defaultTransformer) {
-    const [, defaultValue] = defaultTransformer;
-
-    return summary ?? defaultValue;
-  }
-
-  const ternaryTransformer = tf.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
-
-  if (ternaryTransformer) {
-    const [, truthyValue, falsyValue] = ternaryTransformer;
-
-    return summary ? truthyValue : falsyValue;
-  }
-
-  const truncateTransformer = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
-
-  if (truncateTransformer) {
-    const [, max, ellipsis = ''] = truncateTransformer;
-
-    return truncate(String(summary), Number(max), { ellipsis });
-  }
-
-  return summary;
-};
 
 /**
  * Parse the collection summary template to generate the summary to be displayed on the entry list.
@@ -130,72 +67,78 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
   const valueMap = flatten(content);
 
   /**
-   * Replacer.
+   * Replacer subroutine.
    * @param {string} tag - Field name or one of special tags.
+   * @returns {string | Date | undefined} Summary.
+   */
+  const replaceSub = (tag) => {
+    if (tag === 'slug') {
+      return slug;
+    }
+
+    if (tag === 'dirname') {
+      return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(collectionFolder ?? '', ''));
+    }
+
+    if (tag === 'filename') {
+      return /** @type {string} */ (entryPath.split('/').pop()).split('.').shift();
+    }
+
+    if (tag === 'extension') {
+      return /** @type {string} */ (entryPath.split('/').pop()).split('.').pop();
+    }
+
+    if (tag === 'commit_date') {
+      return commitDate ?? '';
+    }
+
+    if (tag === 'commit_author') {
+      return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
+    }
+
+    return getFieldDisplayValue({
+      collectionName,
+      valueMap,
+      keyPath: tag,
+      locale: defaultLocale,
+    });
+  };
+
+  /**
+   * Replacer.
+   * @param {string} placeholder - Field name or one of special tags. May contain transformations.
    * @returns {string} Replaced string.
    */
-  const replace = (tag) => {
-    const [keyPath, ...transformations] = tag.split(/\s*\|\s*/);
-
-    let summary = (() => {
-      if (tag === 'slug') {
-        return slug;
-      }
-
-      if (tag === 'dirname') {
-        return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(collectionFolder ?? '', ''));
-      }
-
-      if (tag === 'filename') {
-        return /** @type {string} */ (entryPath.split('/').pop()).split('.').shift();
-      }
-
-      if (tag === 'extension') {
-        return /** @type {string} */ (entryPath.split('/').pop()).split('.').pop();
-      }
-
-      if (tag === 'commit_date') {
-        return commitDate ?? '';
-      }
-
-      if (tag === 'commit_author') {
-        return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
-      }
-
-      return getFieldDisplayValue({
-        collectionName,
-        valueMap,
-        keyPath,
-        locale: defaultLocale,
-      });
-    })();
+  const replace = (placeholder) => {
+    const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
+    const summary = replaceSub(tag);
 
     if (!summary) {
       return '';
     }
 
-    if (!transformations.length) {
-      if (summary instanceof Date) {
-        const { year, month, day } = getDateTimeParts({ date: summary });
+    if (summary instanceof Date && !transformations.length) {
+      const { year, month, day } = getDateTimeParts({ date: summary });
 
-        return `${year}-${month}-${day}`;
-      }
-
-      return String(summary);
+      return `${year}-${month}-${day}`;
     }
 
-    const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath });
+    let partStr = String(summary);
 
-    if (fieldConfig) {
+    if (transformations.length) {
+      const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath: tag });
+
       transformations.forEach((tf) => {
-        summary = transformSummary(summary, tf, fieldConfig);
+        partStr = applyTemplateFilter(partStr, tf, fieldConfig);
       });
     }
 
-    return String(summary);
+    return partStr;
   };
 
-  return summaryTemplate.replace(/{{(.+?)}}/g, (_match, tag) => replace(tag)).trim();
+  return summaryTemplate
+    .replace(/{{(.+?)}}/g, (_match, placeholder) => replace(placeholder))
+    .trim();
 };
 
 /**

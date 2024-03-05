@@ -38,4 +38,33 @@ describe('Test fillSlugTemplate()', () => {
       'lorem-ipsum-dolor-sit-amet-consectetur-adipiscing',
     );
   });
+
+  test('apply filter', () => {
+    expect(
+      fillSlugTemplate(`{{published | date('MMM D, YYYY')}}`, {
+        collection,
+        content: { published: '2024-01-23' },
+      }),
+    ).toEqual('jan-23-2024');
+
+    expect(
+      fillSlugTemplate(`{{draft | ternary('Draft', 'Public')}}`, {
+        collection,
+        content: { draft: true },
+      }),
+    ).toEqual('draft');
+
+    expect(
+      fillSlugTemplate(`{{title | truncate(40)}}`, {
+        collection,
+        content: {
+          // cspell:disable-next-line
+          title: 'lorem-ipsum-dolor-sit-amet-consectetur-adipiscing',
+        },
+      }),
+    ).toEqual(
+      // cspell:disable-next-line
+      'lorem-ipsum-dolor-sit-amet-consectetur-a',
+    );
+  });
 });

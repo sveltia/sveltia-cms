@@ -1,9 +1,74 @@
+import moment from 'moment';
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents';
+import { getFieldConfig } from '$lib/services/contents/entry';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import { renameIfNeeded } from '$lib/services/utils/files';
 import { generateUUID, truncate } from '$lib/services/utils/strings';
+
+/**
+ * Transform slug template.
+ * @param {string} summary - Original summary.
+ * @param {string} tf - Transformation.
+ * @param {Field} [fieldConfig] - Field configuration.
+ * @returns {string} Transformed summary.
+ * @see https://decapcms.org/docs/summary-strings/
+ */
+export const applyTemplateFilter = (summary, tf, fieldConfig) => {
+  if (tf === 'upper') {
+    return String(summary).toUpperCase();
+  }
+
+  if (tf === 'lower') {
+    return String(summary).toLowerCase();
+  }
+
+  const dateTransformer = tf.match(/^date\('(.*?)'\)$/);
+
+  if (dateTransformer) {
+    const [, format] = dateTransformer;
+
+    const { time_format: timeFormat = undefined, picker_utc: pickerUTC = false } =
+      /** @type {DateTimeField} */ (fieldConfig) ?? /** @type {DateTimeField} */ ({});
+
+    const dateOnly = timeFormat === false;
+
+    return (
+      pickerUTC ||
+      (dateOnly && !!summary?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
+      (dateOnly && !!summary.match(/T00:00(?::00)?(?:\.000)?Z$/))
+        ? moment.utc(summary)
+        : moment(summary)
+    ).format(format);
+  }
+
+  const defaultTransformer = tf.match(/^default\('?(.*?)'?\)$/);
+
+  if (defaultTransformer) {
+    const [, defaultValue] = defaultTransformer;
+
+    return summary ?? defaultValue;
+  }
+
+  const ternaryTransformer = tf.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
+
+  if (ternaryTransformer) {
+    const [, truthyValue, falsyValue] = ternaryTransformer;
+
+    return summary ? truthyValue : falsyValue;
+  }
+
+  const truncateTransformer = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
+
+  if (truncateTransformer) {
+    const [, max, ellipsis = ''] = truncateTransformer;
+
+    return truncate(String(summary), Number(max), { ellipsis });
+  }
+
+  return summary;
+};
 
 /**
  * Normalize the given string as a slug for a filename.
@@ -18,7 +83,7 @@ export const normalizeSlug = (string) => {
       clean_accents: cleanAccents = false,
       sanitize_replacement: sanitizeReplacement = '-',
     } = {},
-  } = /** @type {SiteConfig} */ (get(siteConfig));
+  } = /** @type {SiteConfig} */ (get(siteConfig)) ?? {};
 
   let slug = string;
 
@@ -26,6 +91,8 @@ export const normalizeSlug = (string) => {
     // Remove any accent @see https://stackoverflow.com/q/990904
     slug = slug.normalize('NFD').replace(/\p{Diacritic}/gu, '');
   }
+
+  console.info({ slug });
 
   if (encoding === 'ascii') {
     slug = slug.replaceAll(/[^\w-~]/g, ' ');
@@ -56,7 +123,7 @@ export const normalizeSlug = (string) => {
  */
 export const fillSlugTemplate = (
   template,
-  { collection, content, currentSlug = '', isMediaFolder = false, entryFilePath = '' },
+  { collection, content: valueMap, currentSlug = '', isMediaFolder = false, entryFilePath = '' },
 ) => {
   const {
     name: collectionName,
@@ -67,7 +134,12 @@ export const fillSlugTemplate = (
 
   const dateTimeParts = getDateTimeParts();
 
-  let slug = template.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
+  /**
+   * Replacer subroutine.
+   * @param {string} tag - Field name or one of special tags.
+   * @returns {string | undefined} Slug part.
+   */
+  const replaceSub = (tag) => {
     if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
       return dateTimeParts[tag];
     }
@@ -114,24 +186,52 @@ export const fillSlugTemplate = (
     let value;
 
     if (tag.startsWith('fields.')) {
-      value = content[tag.replace(/^fields\./, '')];
+      value = valueMap[tag.replace(/^fields\./, '')];
     } else if (tag === 'slug') {
-      value = content[identifierField] || content.title || content.name || content.label;
+      value = valueMap[identifierField] || valueMap.title || valueMap.name || valueMap.label;
     } else {
-      value = content[tag];
+      value = valueMap[tag];
     }
 
-    if (value) {
-      value = normalizeSlug(value);
+    return value;
+  };
+
+  /**
+   * Replacer.
+   * @param {string} placeholder - Field name or one of special tags. May contain transformations.
+   * @returns {string} Replaced string.
+   */
+  const replace = (placeholder) => {
+    const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
+    const slugPart = replaceSub(tag);
+
+    if (!slugPart) {
+      return '';
     }
 
-    if (value) {
-      return value;
+    let partStr = String(slugPart);
+
+    if (transformations.length) {
+      const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath: tag });
+
+      transformations.forEach((tf) => {
+        partStr = applyTemplateFilter(partStr, tf, fieldConfig);
+      });
+    }
+
+    if (partStr) {
+      partStr = normalizeSlug(partStr);
+    }
+
+    if (partStr) {
+      return partStr;
     }
 
     // Use a random ID as a fallback
-    return generateUUID().split('-').pop();
-  });
+    return /** @type {string} */ (generateUUID().split('-').pop());
+  };
+
+  let slug = template.replace(/{{(.+?)}}/g, (_match, tag) => replace(tag)).trim();
 
   // Truncate a long slug if needed
   if (typeof slugMaxLength === 'number') {
