@@ -6,22 +6,81 @@ const apiKeyPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 /**
  * Supported source languages extracted from the `source_lang` parameter in the DeepL API document.
+ * @see https://www.deepl.com/docs-api/translate-text
  */
 export const sourceLanguages = [
-  'BG,CS,DA,DE,EL,EN,ES,ET,FI,FR,HU,ID,IT,JA,KO,LT,LV,NB,NL,PL,PT,RO,RU,SK,SL,SV,TR,UK,ZH',
-]
-  .join(',')
-  .split(',');
+  'AR',
+  'BG',
+  'CS',
+  'DA',
+  'DE',
+  'EL',
+  'EN',
+  'ES',
+  'ET',
+  'FI',
+  'FR',
+  'HU',
+  'ID',
+  'IT',
+  'JA',
+  'KO',
+  'LT',
+  'LV',
+  'NB',
+  'NL',
+  'PL',
+  'PT',
+  'RO',
+  'RU',
+  'SK',
+  'SL',
+  'SV',
+  'TR',
+  'UK',
+  'ZH',
+];
 
 /**
  * Supported target languages extracted from the `target_lang` parameter in the DeepL API document.
+ * @see https://www.deepl.com/docs-api/translate-text
  */
 export const targetLanguages = [
-  'BG,CS,DA,DE,EL,EN,EN-GB,EN-US,ES,ET,FI,FR,HU,ID,IT,JA,KO,LT,LV,NB,NL,PL,PT,PT-BR,PT-PT,RO,RU,SK',
-  'SL,SV,TR,UK,ZH',
-]
-  .join(',')
-  .split(',');
+  'AR',
+  'BG',
+  'CS',
+  'DA',
+  'DE',
+  'EL',
+  'EN',
+  'EN-GB',
+  'EN-US',
+  'ES',
+  'ET',
+  'FI',
+  'FR',
+  'HU',
+  'ID',
+  'IT',
+  'JA',
+  'KO',
+  'LT',
+  'LV',
+  'NB',
+  'NL',
+  'PL',
+  'PT',
+  'PT-BR',
+  'PT-PT',
+  'RO',
+  'RU',
+  'SK',
+  'SL',
+  'SV',
+  'TR',
+  'UK',
+  'ZH',
+];
 
 /**
  * Translate the given text with DeepL API. Note that the API request uses the GET method, because

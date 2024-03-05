@@ -1,8 +1,37 @@
 import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
-const supportedLocales =
-  'cs,da,de,en,es,fr,id,it,hu,nl,no,pl,pt,ro,sk,fi,sv,tr,vi,th,bg,ru,el,ja,ko,zh'.split(',');
+/**
+ * @see https://pixabay.com/api/docs/#api_search_images
+ */
+const supportedLocales = [
+  'cs',
+  'da',
+  'de',
+  'en',
+  'es',
+  'fr',
+  'id',
+  'it',
+  'hu',
+  'nl',
+  'no',
+  'pl',
+  'pt',
+  'ro',
+  'sk',
+  'fi',
+  'sv',
+  'tr',
+  'vi',
+  'th',
+  'bg',
+  'ru',
+  'el',
+  'ja',
+  'ko',
+  'zh',
+];
 
 const endpoint = 'https://pixabay.com/api';
 
