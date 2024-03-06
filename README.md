@@ -70,7 +70,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 ### Better security
 
 - Avoids high/critical severity vulnerabilities through constant dependency updates[^34].
-- We have documented how to [set up a Content Security Policy](https://github.com/sveltia/sveltia-cms#set-up-content-security-policy) for Sveltia CMS.
+- We have documented how to [set up a Content Security Policy](#set-up-content-security-policy) for Sveltia CMS.
 - The `unsafe-eval` or `unsafe-inline` keywords are not needed in the CSP `script-src` directive[^33].
 
 ### Better i18n support
@@ -85,6 +85,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
   - `read_only`: Whether to make the field read-only. Default: `true`.
 - Resolves the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
+- Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
 
 ### Better collections
 
@@ -98,6 +99,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - The Boolean, Number and String widgets support the `prefix` and `suffix` properties, allowing developers to display custom messages before and/or after the field[^28].
 - Relation field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
+- The `summary` for the List and Object widgets is displayed correctly when it refers to a Relation field[^36].
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
   - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
@@ -435,11 +437,11 @@ This software is provided “as is” without any express or implied warranty. W
 [^4]: [Netlify/Decap CMS #3671](https://github.com/decaporg/decap-cms/issues/3671)
 [^5]: [Netlify/Decap CMS #1032](https://github.com/decaporg/decap-cms/issues/1032)
 [^6]: [Netlify/Decap CMS #3240](https://github.com/decaporg/decap-cms/issues/3240)
-[^7]: [Netlify/Decap CMS #4386](https://github.com/decaporg/decap-cms/issues/4386)
+[^7]: [Netlify/Decap CMS #4386](https://github.com/decaporg/decap-cms/issues/4386), [#6978](https://github.com/decaporg/decap-cms/issues/6978)
 [^8]: [Netlify/Decap CMS #2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^9]: [Netlify/Decap CMS #3505](https://github.com/decaporg/decap-cms/issues/3505)
 [^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
-[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [#1424](https://github.com/decaporg/decap-cms/issues/1424), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6325](https://github.com/decaporg/decap-cms/issues/6325), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
+[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [#1424](https://github.com/decaporg/decap-cms/issues/1424), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
 [^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [#4738](https://github.com/decaporg/decap-cms/issues/4738), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
@@ -457,9 +459,11 @@ This software is provided “as is” without any express or implied warranty. W
 [^26]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/3285), [#6731](https://github.com/decaporg/decap-cms/issues/6731)
 [^27]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/5617)
 [^28]: [Netlify/Decap CMS #6836](https://github.com/decaporg/decap-cms/pull/6836)
-[^29]: [Netlify/Decap CMS #4783](https://github.com/decaporg/decap-cms/pull/4783)
-[^30]: [Netlify/Decap CMS #565](https://github.com/decaporg/decap-cms/pull/565)
-[^31]: [Netlify/Decap CMS #1045](https://github.com/decaporg/decap-cms/pull/1045)
-[^32]: [Netlify/Decap CMS #302](https://github.com/decaporg/decap-cms/pull/302)
-[^33]: [Netlify/Decap CMS #6513](https://github.com/decaporg/decap-cms/pull/6513)
-[^34]: [Netlify/Decap CMS #2138](https://github.com/decaporg/decap-cms/pull/2138)
+[^29]: [Netlify/Decap CMS #4783](https://github.com/decaporg/decap-cms/issues/4783)
+[^30]: [Netlify/Decap CMS #565](https://github.com/decaporg/decap-cms/issues/565)
+[^31]: [Netlify/Decap CMS #1045](https://github.com/decaporg/decap-cms/issues/1045), [#3353](https://github.com/decaporg/decap-cms/issues/3353)
+[^32]: [Netlify/Decap CMS #302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549)
+[^33]: [Netlify/Decap CMS #6513](https://github.com/decaporg/decap-cms/issues/6513)
+[^34]: [Netlify/Decap CMS #2138](https://github.com/decaporg/decap-cms/issues/2138)
+[^35]: [Netlify/Decap CMS #7086](https://github.com/decaporg/decap-cms/issues/7086)
+[^36]: [Netlify/Decap CMS #6325](https://github.com/decaporg/decap-cms/issues/6325)
