@@ -51,6 +51,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server on your machine[^26].
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to fallback to `master`[^27].
+- Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
@@ -452,3 +453,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^28]: [Netlify/Decap CMS #6836](https://github.com/decaporg/decap-cms/pull/6836)
 [^29]: [Netlify/Decap CMS #4783](https://github.com/decaporg/decap-cms/pull/4783)
 [^30]: [Netlify/Decap CMS #565](https://github.com/decaporg/decap-cms/pull/565)
+[^31]: [Netlify/Decap CMS #1045](https://github.com/decaporg/decap-cms/pull/1045)
