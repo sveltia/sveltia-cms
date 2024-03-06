@@ -42,14 +42,14 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
 - Small footprint: less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
-- Uses the GraphQL API for GitHub to quickly fetch content at once, so that entries and assets can be listed and searched instantly. This avoids the slowness and potential API rate limit violations caused by hundreds of requests with relation widgets[^14].
+- Uses the GraphQL API for GitHub to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Caches Git files locally to further speed up startup and reduce bandwidth.
 - You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 
 ### Better productivity
 
-- You can [work on a local Git repository](#work-with-a-local-git-repository) without having to run a proxy server on your machine[^26].
+- You can [work on a local Git repository](#work-with-a-local-git-repository) without running a proxy server on your machine, bypassing the 30 MB file size limit[^26].
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to fallback to `master`[^27].
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 - You can delete multiple entries and assets at once.
@@ -67,6 +67,12 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
+### Better security
+
+- Avoids high/critical severity vulnerabilities through constant dependency updates[^34].
+- We have documented how to [set up a Content Security Policy](https://github.com/sveltia/sveltia-cms#set-up-content-security-policy) for Sveltia CMS.
+- The `unsafe-eval` or `unsafe-inline` keywords are not needed in the CSP `script-src` directive[^33].
+
 ### Better i18n support
 
 - It’s now easier to switch between locales while editing with just a click on a button instead of a dropdown list.
@@ -77,7 +83,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
   - `prefix`: A string to be prepended to the value. Default: an empty string.
   - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
   - `read_only`: Whether to make the field read-only. Default: `true`.
-- Resolves the [limitations in the list and object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
+- Resolves the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 
 ### Better collections
@@ -93,13 +99,13 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - The Boolean, Number and String widgets support the `prefix` and `suffix` properties, allowing developers to display custom messages before and/or after the field[^28].
 - Relation field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
 - Required fields, not optional fields, are clearly marked for efficient data entry.
-- Provides a reimagined all-in-one asset selection dialog for file and image fields.
+- Provides a reimagined all-in-one asset selection dialog for File and Image fields.
   - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
   - New assets can be uploaded by dragging & dropping them into the dialog[^20].
   - A file/image URL can also be entered in the dialog.
   - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
 - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
-- Optional object fields (`widget: object` with `required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
+- Optional Object fields (`widget: object` with `required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - You can revert changes to all fields or a specific field.
 
 ### Better asset management
@@ -432,8 +438,8 @@ This software is provided “as is” without any express or implied warranty. W
 [^7]: [Netlify/Decap CMS #4386](https://github.com/decaporg/decap-cms/issues/4386)
 [^8]: [Netlify/Decap CMS #2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^9]: [Netlify/Decap CMS #3505](https://github.com/decaporg/decap-cms/issues/3505)
-[^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341)
-[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6325](https://github.com/decaporg/decap-cms/issues/6325), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
+[^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
+[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [#1424](https://github.com/decaporg/decap-cms/issues/1424), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6325](https://github.com/decaporg/decap-cms/issues/6325), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
 [^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
 [^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [#4738](https://github.com/decaporg/decap-cms/issues/4738), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
@@ -448,9 +454,12 @@ This software is provided “as is” without any express or implied warranty. W
 [^23]: [Netlify/Decap CMS #2](https://github.com/decaporg/decap-cms/issues/2)
 [^24]: [Netlify/Decap CMS #6831](https://github.com/decaporg/decap-cms/issues/6831)
 [^25]: [Netlify/Decap CMS #526](https://github.com/decaporg/decap-cms/issues/526), [#6987](https://github.com/decaporg/decap-cms/issues/6987)
-[^26]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/3285)
+[^26]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/3285), [#6731](https://github.com/decaporg/decap-cms/issues/6731)
 [^27]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/5617)
 [^28]: [Netlify/Decap CMS #6836](https://github.com/decaporg/decap-cms/pull/6836)
 [^29]: [Netlify/Decap CMS #4783](https://github.com/decaporg/decap-cms/pull/4783)
 [^30]: [Netlify/Decap CMS #565](https://github.com/decaporg/decap-cms/pull/565)
 [^31]: [Netlify/Decap CMS #1045](https://github.com/decaporg/decap-cms/pull/1045)
+[^32]: [Netlify/Decap CMS #302](https://github.com/decaporg/decap-cms/pull/302)
+[^33]: [Netlify/Decap CMS #6513](https://github.com/decaporg/decap-cms/pull/6513)
+[^34]: [Netlify/Decap CMS #2138](https://github.com/decaporg/decap-cms/pull/2138)
