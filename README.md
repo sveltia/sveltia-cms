@@ -16,13 +16,13 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stalled for more than six months. [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances without much effort, mainly to get better internationalization (i18n) support.
 
-To achieve radical improvements in UX, performance and i18n, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new offering has since been named Sveltia CMS and released as open source software to encourage wider adoption.
+To achieve radical improvements in UX, performance i18n and other areas, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new offering has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
 Our goal is to make it a viable successor to Netlify CMS, expand the Git-based headless CMS market, empower small businesses and individuals who need a simple yet powerful CMS solution, and showcase the huge potential of the Svelte framework.
 
 ## Features
 
-Here are some highlights mainly compared to Netlify/Decap CMS:
+We are working hard to create a **much better alternative to Netlify/Decap CMS**. Here are some highlights:
 
 ### Compatible with Netlify/Decap CMS
 
@@ -37,6 +37,7 @@ Here are some highlights mainly compared to Netlify/Decap CMS:
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management.
 - The screenshots above are worth a thousand words!
+- Read on to learn about many other enhancements, including performance, productivity, accessibility, service integrations, an all-new Asset Library, and more.
 
 ### Better performance
 
@@ -431,39 +432,39 @@ Sveltia CMS is still in early beta, so we do expect various problems. Please [re
 
 This software is provided “as is” without any express or implied warranty. We are not obligated to provide any support for the application. This product is not affiliated with or endorsed by Netlify, Decap CMS or any other integrated services. All product names, logos, and brands are the property of their respective owners.
 
-[^1]: [Netlify/Decap CMS #2557](https://github.com/decaporg/decap-cms/issues/2557)
-[^2]: [Netlify/Decap CMS #3267](https://github.com/decaporg/decap-cms/issues/3267)
-[^3]: [Netlify/Decap CMS #1040](https://github.com/decaporg/decap-cms/issues/1040)
-[^4]: [Netlify/Decap CMS #3671](https://github.com/decaporg/decap-cms/issues/3671)
-[^5]: [Netlify/Decap CMS #1032](https://github.com/decaporg/decap-cms/issues/1032)
-[^6]: [Netlify/Decap CMS #3240](https://github.com/decaporg/decap-cms/issues/3240)
-[^7]: [Netlify/Decap CMS #4386](https://github.com/decaporg/decap-cms/issues/4386), [#6978](https://github.com/decaporg/decap-cms/issues/6978)
-[^8]: [Netlify/Decap CMS #2579](https://github.com/decaporg/decap-cms/issues/2579)
-[^9]: [Netlify/Decap CMS #3505](https://github.com/decaporg/decap-cms/issues/3505)
-[^10]: [Netlify/Decap CMS #341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
-[^11]: [Netlify/Decap CMS #1382](https://github.com/decaporg/decap-cms/issues/1382), [#1424](https://github.com/decaporg/decap-cms/issues/1424), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
-[^12]: [Netlify/Decap CMS #1975](https://github.com/decaporg/decap-cms/issues/1975)
-[^13]: [Netlify/Decap CMS #5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
-[^14]: [Netlify/Decap CMS #4635](https://github.com/decaporg/decap-cms/issues/4635), [#4738](https://github.com/decaporg/decap-cms/issues/4738), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
-[^15]: [Netlify/Decap CMS #6932](https://github.com/decaporg/decap-cms/issues/6932)
-[^16]: [Netlify/Decap CMS #2103](https://github.com/decaporg/decap-cms/issues/2103)
-[^17]: [Netlify/Decap CMS #1333](https://github.com/decaporg/decap-cms/issues/1333), [#7077](https://github.com/decaporg/decap-cms/issues/7077)
-[^18]: [Netlify/Decap CMS #441](https://github.com/decaporg/decap-cms/issues/441)
-[^19]: [Netlify/Decap CMS #5910](https://github.com/decaporg/decap-cms/issues/5910)
-[^20]: [Netlify/Decap CMS #4563](https://github.com/decaporg/decap-cms/issues/4563)
-[^21]: [Netlify/Decap CMS #4781](https://github.com/decaporg/decap-cms/issues/4781)
-[^22]: [Netlify/Decap CMS #6642](https://github.com/decaporg/decap-cms/issues/6642)
-[^23]: [Netlify/Decap CMS #2](https://github.com/decaporg/decap-cms/issues/2)
-[^24]: [Netlify/Decap CMS #6831](https://github.com/decaporg/decap-cms/issues/6831)
-[^25]: [Netlify/Decap CMS #526](https://github.com/decaporg/decap-cms/issues/526), [#6987](https://github.com/decaporg/decap-cms/issues/6987)
-[^26]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/3285), [#6731](https://github.com/decaporg/decap-cms/issues/6731)
-[^27]: [Netlify/Decap CMS #3285](https://github.com/decaporg/decap-cms/issues/5617)
-[^28]: [Netlify/Decap CMS #6836](https://github.com/decaporg/decap-cms/pull/6836)
-[^29]: [Netlify/Decap CMS #4783](https://github.com/decaporg/decap-cms/issues/4783)
-[^30]: [Netlify/Decap CMS #565](https://github.com/decaporg/decap-cms/issues/565)
-[^31]: [Netlify/Decap CMS #1045](https://github.com/decaporg/decap-cms/issues/1045), [#3353](https://github.com/decaporg/decap-cms/issues/3353)
-[^32]: [Netlify/Decap CMS #302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549)
-[^33]: [Netlify/Decap CMS #6513](https://github.com/decaporg/decap-cms/issues/6513)
-[^34]: [Netlify/Decap CMS #2138](https://github.com/decaporg/decap-cms/issues/2138)
-[^35]: [Netlify/Decap CMS #7086](https://github.com/decaporg/decap-cms/issues/7086)
-[^36]: [Netlify/Decap CMS #6325](https://github.com/decaporg/decap-cms/issues/6325)
+[^1]: Netlify/Decap CMS [#2557](https://github.com/decaporg/decap-cms/issues/2557)
+[^2]: Netlify/Decap CMS [#3267](https://github.com/decaporg/decap-cms/issues/3267)
+[^3]: Netlify/Decap CMS [#1040](https://github.com/decaporg/decap-cms/issues/1040)
+[^4]: Netlify/Decap CMS [#3671](https://github.com/decaporg/decap-cms/issues/3671)
+[^5]: Netlify/Decap CMS [#1032](https://github.com/decaporg/decap-cms/issues/1032)
+[^6]: Netlify/Decap CMS [#3240](https://github.com/decaporg/decap-cms/issues/3240)
+[^7]: Netlify/Decap CMS [#4386](https://github.com/decaporg/decap-cms/issues/4386), [#6978](https://github.com/decaporg/decap-cms/issues/6978)
+[^8]: Netlify/Decap CMS [#2579](https://github.com/decaporg/decap-cms/issues/2579)
+[^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505)
+[^10]: Netlify/Decap CMS [#341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
+[^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382), [#1424](https://github.com/decaporg/decap-cms/issues/1424), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
+[^12]: Netlify/Decap CMS [#1975](https://github.com/decaporg/decap-cms/issues/1975)
+[^13]: Netlify/Decap CMS [#5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
+[^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#4738](https://github.com/decaporg/decap-cms/issues/4738), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
+[^15]: Netlify/Decap CMS [#6932](https://github.com/decaporg/decap-cms/issues/6932)
+[^16]: Netlify/Decap CMS [#2103](https://github.com/decaporg/decap-cms/issues/2103)
+[^17]: Netlify/Decap CMS [#1333](https://github.com/decaporg/decap-cms/issues/1333), [#7077](https://github.com/decaporg/decap-cms/issues/7077)
+[^18]: Netlify/Decap CMS [#441](https://github.com/decaporg/decap-cms/issues/441)
+[^19]: Netlify/Decap CMS [#5910](https://github.com/decaporg/decap-cms/issues/5910)
+[^20]: Netlify/Decap CMS [#4563](https://github.com/decaporg/decap-cms/issues/4563)
+[^21]: Netlify/Decap CMS [#4781](https://github.com/decaporg/decap-cms/issues/4781)
+[^22]: Netlify/Decap CMS [#6642](https://github.com/decaporg/decap-cms/issues/6642)
+[^23]: Netlify/Decap CMS [#2](https://github.com/decaporg/decap-cms/issues/2)
+[^24]: Netlify/Decap CMS [#6831](https://github.com/decaporg/decap-cms/issues/6831)
+[^25]: Netlify/Decap CMS [#526](https://github.com/decaporg/decap-cms/issues/526), [#6987](https://github.com/decaporg/decap-cms/issues/6987)
+[^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285), [#6731](https://github.com/decaporg/decap-cms/issues/6731)
+[^27]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/5617)
+[^28]: Netlify/Decap CMS [#6836](https://github.com/decaporg/decap-cms/pull/6836)
+[^29]: Netlify/Decap CMS [#4783](https://github.com/decaporg/decap-cms/issues/4783)
+[^30]: Netlify/Decap CMS [#565](https://github.com/decaporg/decap-cms/issues/565)
+[^31]: Netlify/Decap CMS [#1045](https://github.com/decaporg/decap-cms/issues/1045), [#3353](https://github.com/decaporg/decap-cms/issues/3353)
+[^32]: Netlify/Decap CMS [#302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549)
+[^33]: Netlify/Decap CMS [#6513](https://github.com/decaporg/decap-cms/issues/6513)
+[^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138)
+[^35]: Netlify/Decap CMS [#7086](https://github.com/decaporg/decap-cms/issues/7086)
+[^36]: Netlify/Decap CMS [#6325](https://github.com/decaporg/decap-cms/issues/6325)
