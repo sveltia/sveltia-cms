@@ -48,7 +48,7 @@
 </script>
 
 {#if updateAvailable}
-  <div class="wrapper" role="alert">
+  <div role="alert" class="wrapper">
     {$_('update_available')}
     <Button
       variant="link"

@@ -143,7 +143,7 @@
         {/each}
       </OptionGroup>
     </Listbox>
-    <div id="{elementIdPrefix}-content-pane" class="content-pane">
+    <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
       {#if showCollectionAssets && libraryName === 'collection-files'}
         <DropZone
           bind:this={collectionAssetsDropZone}

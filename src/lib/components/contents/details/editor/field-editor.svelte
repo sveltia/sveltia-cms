@@ -138,7 +138,7 @@
         </MenuButton>
       {/if}
     </header>
-    <div id="{fieldId}-error" class="validation" aria-live="assertive">
+    <div role="alert" id="{fieldId}-error" class="validation" aria-live="polite">
       {#if validity?.valid === false}
         {#if validity.valueMissing}
           <div role="none">
@@ -200,7 +200,7 @@
         />
       {:else}
         {#if prefix}
-          <div class="prefix">{prefix}</div>
+          <div role="none" class="prefix">{prefix}</div>
         {/if}
         <svelte:component
           this={editors[widgetName]}
@@ -215,7 +215,7 @@
           {invalid}
         />
         {#if suffix}
-          <div class="suffix">{suffix}</div>
+          <div role="none" class="suffix">{suffix}</div>
         {/if}
       {/if}
     </div>

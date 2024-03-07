@@ -142,10 +142,10 @@
   <div role="none">
     {#if typeof currentValue === 'string'}
       <div
+        role="textbox"
         id="{fieldId}-value"
         tabindex="0"
         class="filename"
-        role="textbox"
         aria-readonly={readonly}
         aria-invalid={invalid}
         aria-required={required}

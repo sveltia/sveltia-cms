@@ -7,7 +7,7 @@
   import { searchResults, searchTerms } from '$lib/services/search';
 </script>
 
-<div class="wrapper">
+<div role="none" class="wrapper">
   <header role="none">
     <h2 role="none">{$_('search_results_for_x', { values: { terms: $searchTerms } })}</h2>
   </header>

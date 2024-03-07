@@ -52,8 +52,8 @@
 </script>
 
 <div
-  class="drop-target"
   role="none"
+  class="drop-target"
   on:dragover|preventDefault={({ dataTransfer }) => {
     if (disabled) {
       return;
