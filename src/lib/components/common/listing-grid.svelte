@@ -51,12 +51,12 @@
       text-align: left;
       cursor: pointer;
 
-      &:focus-visible {
+      &:focus {
         outline-color: transparent;
 
         :global(.preview) {
           outline-offset: -2px;
-          outline-width: 2px;
+          outline-width: 2px !important;
           outline-style: solid;
           outline-color: var(--sui-primary-accent-color-light);
         }
@@ -111,8 +111,17 @@
       }
 
       :global([role='row']) {
+        outline-offset: -2px;
+        outline-width: 2px !important;
+        outline-style: solid;
+        outline-color: transparent;
         cursor: pointer;
-        transition: all 200ms;
+        transition-property: background-color, outline-color;
+        transition-duration: 200ms;
+
+        &:focus {
+          outline-color: var(--sui-primary-accent-color-light);
+        }
       }
 
       :global([role='row']:hover) {
