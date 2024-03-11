@@ -17,7 +17,13 @@
    */
   export let fieldConfig;
 
-  $: ({ name: fieldName, label = '', widget: widgetName = 'string', i18n = false } = fieldConfig);
+  $: ({
+    name: fieldName,
+    label = '',
+    widget: widgetName = 'string',
+    preview = true,
+    i18n = false,
+  } = fieldConfig);
   $: hasMultiple = ['relation', 'select'].includes(widgetName);
   $: multiple = hasMultiple
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
@@ -39,7 +45,7 @@
     : currentValues[locale][keyPath];
 </script>
 
-{#if widgetName !== 'hidden' && (locale === defaultLocale || canTranslate || canDuplicate)}
+{#if widgetName !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
   <section data-widget={widgetName} data-key-path={keyPath}>
     <h4>{label || fieldName}</h4>
     {#if widgetName in previews}
