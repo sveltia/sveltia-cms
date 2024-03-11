@@ -726,7 +726,7 @@ const validateEntry = () => {
         fieldConfig
       );
 
-      const canTranslate = i18nEnabled && i18n !== false;
+      const canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
       const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;
       let rangeUnderflow = false;
@@ -774,7 +774,12 @@ const validateEntry = () => {
           valueMissing = true;
         }
 
-        if (Array.isArray(pattern) && pattern.length === 2 && !String(value).match(pattern[0])) {
+        if (
+          _required &&
+          Array.isArray(pattern) &&
+          pattern.length === 2 &&
+          !String(value).match(pattern[0])
+        ) {
           patternMismatch = true;
         }
       }
