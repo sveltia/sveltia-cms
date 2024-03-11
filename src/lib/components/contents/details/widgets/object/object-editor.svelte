@@ -76,7 +76,7 @@
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: valueMap = currentValues[locale];
   $: hasValues = Object.entries(valueMap).some(
-    ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && !!value,
+    ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && value !== null,
   );
   $: canEdit = locale === defaultLocale || i18n !== false;
   $: canonicalLocale = getCanonicalLocale(locale);
