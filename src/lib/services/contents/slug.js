@@ -9,19 +9,21 @@ import { generateUUID, truncate } from '$lib/services/utils/strings';
 
 /**
  * Transform slug template.
- * @param {string} summary - Original summary.
+ * @param {any} slugPart - Original slug part.
  * @param {string} tf - Transformation.
  * @param {Field} [fieldConfig] - Field configuration.
- * @returns {string} Transformed summary.
+ * @returns {string} Transformed slug part.
  * @see https://decapcms.org/docs/summary-strings/
  */
-export const applyTemplateFilter = (summary, tf, fieldConfig) => {
+export const applyTemplateFilter = (slugPart, tf, fieldConfig) => {
+  const slugPartStr = String(slugPart);
+
   if (tf === 'upper') {
-    return String(summary).toUpperCase();
+    return slugPartStr.toUpperCase();
   }
 
   if (tf === 'lower') {
-    return String(summary).toLowerCase();
+    return slugPartStr.toLowerCase();
   }
 
   const dateTransformer = tf.match(/^date\('(.*?)'\)$/);
@@ -36,10 +38,10 @@ export const applyTemplateFilter = (summary, tf, fieldConfig) => {
 
     return (
       pickerUTC ||
-      (dateOnly && !!summary?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
-      (dateOnly && !!summary.match(/T00:00(?::00)?(?:\.000)?Z$/))
-        ? moment.utc(summary)
-        : moment(summary)
+      (dateOnly && !!slugPartStr?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
+      (dateOnly && !!slugPartStr.match(/T00:00(?::00)?(?:\.000)?Z$/))
+        ? moment.utc(slugPartStr)
+        : moment(slugPartStr)
     ).format(format);
   }
 
@@ -48,7 +50,7 @@ export const applyTemplateFilter = (summary, tf, fieldConfig) => {
   if (defaultTransformer) {
     const [, defaultValue] = defaultTransformer;
 
-    return summary ?? defaultValue;
+    return slugPart ? slugPartStr : defaultValue;
   }
 
   const ternaryTransformer = tf.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
@@ -56,7 +58,7 @@ export const applyTemplateFilter = (summary, tf, fieldConfig) => {
   if (ternaryTransformer) {
     const [, truthyValue, falsyValue] = ternaryTransformer;
 
-    return summary ? truthyValue : falsyValue;
+    return slugPart ? truthyValue : falsyValue;
   }
 
   const truncateTransformer = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
@@ -64,10 +66,10 @@ export const applyTemplateFilter = (summary, tf, fieldConfig) => {
   if (truncateTransformer) {
     const [, max, ellipsis = ''] = truncateTransformer;
 
-    return truncate(String(summary), Number(max), { ellipsis });
+    return truncate(slugPartStr, Number(max), { ellipsis });
   }
 
-  return summary;
+  return slugPartStr;
 };
 
 /**
@@ -135,7 +137,7 @@ export const fillSlugTemplate = (
   /**
    * Replacer subroutine.
    * @param {string} tag - Field name or one of special tags.
-   * @returns {string | undefined} Slug part.
+   * @returns {any} Slug part.
    */
   const replaceSub = (tag) => {
     if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
@@ -199,29 +201,27 @@ export const fillSlugTemplate = (
    */
   const replace = (placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
-    const slugPart = replaceSub(tag);
+    let slugPart = replaceSub(tag);
 
-    if (!slugPart) {
+    if (slugPart === undefined) {
       // Use a random ID as a fallback
       return generateUUID('short');
     }
-
-    let partStr = String(slugPart);
 
     if (transformations.length) {
       const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath: tag });
 
       transformations.forEach((tf) => {
-        partStr = applyTemplateFilter(partStr, tf, fieldConfig);
+        slugPart = applyTemplateFilter(slugPart, tf, fieldConfig);
       });
     }
 
-    if (partStr) {
-      partStr = normalizeSlug(partStr);
+    if (slugPart !== undefined) {
+      slugPart = normalizeSlug(String(slugPart));
     }
 
-    if (partStr) {
-      return partStr;
+    if (slugPart) {
+      return String(slugPart);
     }
 
     // Use a random ID as a fallback

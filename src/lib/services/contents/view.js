@@ -69,7 +69,7 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
   /**
    * Replacer subroutine.
    * @param {string} tag - Field name or one of special tags.
-   * @returns {string | Date | undefined} Summary.
+   * @returns {any} Summary.
    */
   const replaceSub = (tag) => {
     if (tag === 'slug') {
@@ -111,29 +111,27 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
    */
   const replace = (placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
-    const summary = replaceSub(tag);
+    let slugPart = replaceSub(tag);
 
-    if (!summary) {
+    if (slugPart === undefined) {
       return '';
     }
 
-    if (summary instanceof Date && !transformations.length) {
-      const { year, month, day } = getDateTimeParts({ date: summary });
+    if (slugPart instanceof Date && !transformations.length) {
+      const { year, month, day } = getDateTimeParts({ date: slugPart });
 
       return `${year}-${month}-${day}`;
     }
-
-    let partStr = String(summary);
 
     if (transformations.length) {
       const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath: tag });
 
       transformations.forEach((tf) => {
-        partStr = applyTemplateFilter(partStr, tf, fieldConfig);
+        slugPart = applyTemplateFilter(slugPart, tf, fieldConfig);
       });
     }
 
-    return partStr;
+    return String(slugPart);
   };
 
   return summaryTemplate

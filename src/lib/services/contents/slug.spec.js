@@ -53,11 +53,32 @@ describe('Test fillSlugTemplate()', () => {
     ).toEqual('jan-23-2024');
 
     expect(
+      fillSlugTemplate(`{{name | default('world')}}`, {
+        collection,
+        content: { name: 'hello' },
+      }),
+    ).toEqual('hello');
+
+    expect(
+      fillSlugTemplate(`{{name | default('world')}}`, {
+        collection,
+        content: { name: '' },
+      }),
+    ).toEqual('world');
+
+    expect(
       fillSlugTemplate(`{{draft | ternary('Draft', 'Public')}}`, {
         collection,
         content: { draft: true },
       }),
     ).toEqual('draft');
+
+    expect(
+      fillSlugTemplate(`{{draft | ternary('Draft', 'Public')}}`, {
+        collection,
+        content: { draft: false },
+      }),
+    ).toEqual('public');
 
     expect(
       fillSlugTemplate(`{{title | truncate(40)}}`, {
