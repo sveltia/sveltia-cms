@@ -99,7 +99,7 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
     return getFieldDisplayValue({
       collectionName,
       valueMap,
-      keyPath: tag,
+      keyPath: tag.replace(/^fields\./, ''),
       locale: defaultLocale,
     });
   };
