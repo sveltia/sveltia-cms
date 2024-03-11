@@ -774,11 +774,7 @@ const validateEntry = () => {
           valueMissing = true;
         }
 
-        if (
-          Array.isArray(pattern) &&
-          pattern.length === 2 &&
-          !String(value).match(escapeRegExp(pattern[0]))
-        ) {
+        if (Array.isArray(pattern) && pattern.length === 2 && !String(value).match(pattern[0])) {
           patternMismatch = true;
         }
       }
