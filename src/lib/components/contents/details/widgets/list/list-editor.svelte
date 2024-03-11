@@ -106,7 +106,7 @@
 
   onMount(() => {
     mounted = true;
-    widgetId = /** @type {string} */ (generateUUID().split('-').pop());
+    widgetId = generateUUID('short');
 
     items.forEach((__, index) => {
       /** @type {EntryDraft} */ ($entryDraft).viewStates[locale][`${keyPath}.${index}.expanded`] =

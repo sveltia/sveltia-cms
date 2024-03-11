@@ -151,13 +151,11 @@ export const fillSlugTemplate = (
     }
 
     if (tag === 'uuid_short') {
-      // Last 12 characters
-      return generateUUID().split('-').pop();
+      return generateUUID('short');
     }
 
     if (tag === 'uuid_shorter') {
-      // First 8 characters
-      return generateUUID().split('-').shift();
+      return generateUUID('shorter');
     }
 
     if (isMediaFolder) {
@@ -226,7 +224,7 @@ export const fillSlugTemplate = (
     }
 
     // Use a random ID as a fallback
-    return /** @type {string} */ (generateUUID().split('-').pop());
+    return generateUUID('short');
   };
 
   let slug = template.replace(/{{(.+?)}}/g, (_match, tag) => replace(tag)).trim();

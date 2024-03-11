@@ -15,7 +15,7 @@ ignorePatterns:
   - "*.cjs"
 env:
   browser: true
-  es2017: true
+  es2022: true
   node: true
 rules:
   class-methods-use-this: off

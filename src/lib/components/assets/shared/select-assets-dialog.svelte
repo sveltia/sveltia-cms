@@ -59,7 +59,7 @@
   }
 
   onMount(() => {
-    elementIdPrefix = `library-${generateUUID().split('-').pop()}`;
+    elementIdPrefix = `library-${generateUUID('short')}`;
   });
 </script>
 

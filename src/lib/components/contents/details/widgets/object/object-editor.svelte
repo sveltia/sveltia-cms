@@ -95,7 +95,7 @@
   let widgetId = '';
 
   onMount(() => {
-    widgetId = /** @type {string} */ (generateUUID().split('-').pop());
+    widgetId = generateUUID('short');
   });
 
   /**
