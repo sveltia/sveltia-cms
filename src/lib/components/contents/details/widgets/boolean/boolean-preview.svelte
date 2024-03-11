@@ -27,15 +27,15 @@
 
   $: ({
     // Widget-specific options
-    prefix = '',
-    suffix = '',
+    before_input = '',
+    after_input = '',
   } = fieldConfig);
 </script>
 
 {#if typeof currentValue === 'boolean'}
   <p>
-    {prefix}
+    {before_input}
     {$_(`boolean.${currentValue}`)}
-    {suffix}
+    {after_input}
   </p>
 {/if}

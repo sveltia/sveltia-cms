@@ -383,8 +383,10 @@
  * Boolean field properties.
  * @typedef {object} BooleanFieldProps
  * @property {boolean} [default] Default value.
- * @property {string} [prefix] A string to be prepended to the field. Default: an empty string.
- * @property {string} [suffix] A string to be appended to the field. Default: an empty string.
+ * @property {string} [before_input] An extra label to be displayed before the input UI. Default: an
+ * empty string.
+ * @property {string} [after_input] An extra label to be displayed after the input UI. Default: an
+ * empty string.
  * @see https://decapcms.org/docs/widgets/#boolean
  */
 
@@ -491,8 +493,10 @@
  * @property {number} [min] Minimum value.
  * @property {number} [max] Maximum value.
  * @property {number} [step] Number to increase/decrease with the arrow key/button.
- * @property {string} [prefix] A string to be prepended to the field. Default: an empty string.
- * @property {string} [suffix] A string to be appended to the field. Default: an empty string.
+ * @property {string} [before_input] An extra label to be displayed before the input UI. Default: an
+ * empty string.
+ * @property {string} [after_input] An extra label to be displayed after the input UI. Default: an
+ * empty string.
  * @see https://decapcms.org/docs/widgets/#number
  */
 
@@ -558,8 +562,12 @@
  * String field properties.
  * @typedef {object} StringFieldProps
  * @property {string} [default] Default value.
- * @property {string} [prefix] A string to be prepended to the field. Default: an empty string.
- * @property {string} [suffix] A string to be appended to the field. Default: an empty string.
+ * @property {string} [prefix] A string to be prepended to the value. Default: an empty string.
+ * @property {string} [suffix] A string to be appended to the value. Default: an empty string.
+ * @property {string} [before_input] An extra label to be displayed before the input UI. Default: an
+ * empty string.
+ * @property {string} [after_input] An extra label to be displayed after the input UI. Default: an
+ * empty string.
  * @see https://decapcms.org/docs/widgets/#string
  */
 

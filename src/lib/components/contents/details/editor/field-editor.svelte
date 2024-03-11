@@ -45,13 +45,17 @@
   $: ({ min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
     fieldConfig
   ));
-  $: allowPrefix = ['boolean', 'number', 'string'].includes(widgetName);
-  $: prefix = allowPrefix
-    ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).prefix
+  $: allowPrefix = ['string'].includes(widgetName);
+  $: prefix = allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined;
+  $: suffix = allowPrefix ? /** @type {StringField} */ (fieldConfig).suffix : undefined;
+  $: allowExtraLabels = ['boolean', 'number', 'string'].includes(widgetName);
+  $: beforeInputLabel = allowExtraLabels
+    ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).before_input
     : undefined;
-  $: suffix = allowPrefix
-    ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).suffix
+  $: afterInputLabel = allowExtraLabels
+    ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).after_input
     : undefined;
+  $: hasExtraLabels = !!(prefix || suffix || beforeInputLabel || afterInputLabel);
   $: hasMultiple = ['relation', 'select'].includes(widgetName);
   $: multiple = hasMultiple
     ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
@@ -182,7 +186,7 @@
         {/if}
       {/if}
     </div>
-    <div role="none" class="widget-wrapper" class:has-prefix={!!prefix || !!suffix}>
+    <div role="none" class="widget-wrapper" class:has-extra-labels={hasExtraLabels}>
       {#if !(widgetName in editors)}
         <div role="none">{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
       {:else if isList}
@@ -199,6 +203,9 @@
           {invalid}
         />
       {:else}
+        {#if beforeInputLabel}
+          <div role="none" class="before-input">{beforeInputLabel}</div>
+        {/if}
         {#if prefix}
           <div role="none" class="prefix">{prefix}</div>
         {/if}
@@ -216,6 +223,9 @@
         />
         {#if suffix}
           <div role="none" class="suffix">{suffix}</div>
+        {/if}
+        {#if afterInputLabel}
+          <div role="none" class="after-input">{afterInputLabel}</div>
         {/if}
       {/if}
     </div>
@@ -318,13 +328,15 @@
     }
   }
 
-  .widget-wrapper.has-prefix {
+  .widget-wrapper.has-extra-labels {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 4px;
   }
 
+  .before-input,
+  .after-input,
   .prefix,
   .suffix {
     color: var(--sui-secondary-foreground-color);

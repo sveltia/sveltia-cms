@@ -26,8 +26,8 @@
   $: ({
     name: fieldName,
     // Widget-specific options
-    prefix = '',
-    suffix = '',
+    before_input = '',
+    after_input = '',
   } = fieldConfig);
 
   $: isURL = (() => {
@@ -43,13 +43,13 @@
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
   <p class:title={fieldName === 'title'}>
-    {prefix}
+    {before_input}
     {#if isURL}
       <a href={currentValue}>{currentValue}</a>
     {:else}
       {currentValue}
     {/if}
-    {suffix}
+    {after_input}
   </p>
 {/if}
 

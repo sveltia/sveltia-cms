@@ -28,7 +28,6 @@
   /**
    * @type {StringField}
    */
-  // svelte-ignore unused-export-let
   export let fieldConfig;
   /**
    * @type {string}
@@ -46,10 +45,75 @@
    * @type {boolean}
    */
   export let invalid = false;
+
+  $: ({
+    // Widget-specific options
+    prefix = '',
+    suffix = '',
+  } = fieldConfig);
+
+  /**
+   * @type {string}
+   */
+  let inputValue = '';
+
+  /**
+   * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.
+   */
+  const onCurrentValueChange = () => {
+    if (currentValue === undefined) {
+      return;
+    }
+
+    let newValue = currentValue;
+
+    if (prefix && newValue.startsWith(prefix)) {
+      newValue = newValue.slice(prefix.length);
+    }
+
+    if (suffix && newValue.endsWith(suffix)) {
+      newValue = newValue.slice(0, -suffix.length);
+    }
+
+    // Make sure to avoid infinite loops
+    if (inputValue !== newValue) {
+      inputValue = newValue;
+    }
+  };
+
+  /**
+   * Update {@link currentValue} based on {@link inputValue}. Add the suffix/prefix if needed.
+   */
+  const onInputValueChange = () => {
+    let newValue = inputValue;
+
+    if (prefix && !newValue.startsWith(prefix)) {
+      newValue = `${prefix}${newValue}`;
+    }
+
+    if (suffix && !newValue.endsWith(suffix)) {
+      newValue = `${newValue}${suffix}`;
+    }
+
+    // Make sure to avoid infinite loops
+    if (currentValue !== newValue) {
+      currentValue = newValue;
+    }
+  };
+
+  $: {
+    void currentValue;
+    onCurrentValueChange();
+  }
+
+  $: {
+    void inputValue;
+    onInputValueChange();
+  }
 </script>
 
 <TextInput
-  bind:value={currentValue}
+  bind:value={inputValue}
   flex
   {readonly}
   {required}

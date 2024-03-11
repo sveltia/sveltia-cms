@@ -27,8 +27,8 @@
   $: ({
     // Widget-specific options
     value_type: valueType = 'int',
-    prefix = '',
-    suffix = '',
+    before_input = '',
+    after_input = '',
   } = fieldConfig);
 
   $: canonicalLocale = getCanonicalLocale(locale);
@@ -37,12 +37,12 @@
 
 {#if currentValue !== undefined && currentValue !== ''}
   <p>
-    {prefix}
+    {before_input}
     {#if valueType === 'int' || valueType === 'float'}
       {numberFormatter.format(Number(currentValue))}
     {:else}
       {currentValue}
     {/if}
-    {suffix}
+    {after_input}
   </p>
 {/if}
