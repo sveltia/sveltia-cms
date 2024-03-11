@@ -5,6 +5,67 @@ import { siteConfig } from '$lib/services/config';
 describe('Test getOptions()', () => {
   const locale = '_default';
 
+  /** @type {Entry[]} */
+  const memberEntries = [
+    {
+      id: '',
+      sha: '',
+      slug: 'melvin-lucas',
+      collectionName: 'members',
+      locales: {
+        _default: {
+          content: {
+            slug: 'member-melvin-lucas',
+            name: {
+              first: 'Melvin',
+              last: 'Lucas',
+            },
+            twitterHandle: 'MelvinLucas',
+            followerCount: 123,
+          },
+        },
+      },
+    },
+    {
+      id: '',
+      sha: '',
+      slug: 'elsie-mcbride',
+      collectionName: 'members',
+      locales: {
+        _default: {
+          content: {
+            slug: 'member-elsie-mcbride',
+            name: {
+              first: 'Elsie',
+              last: 'Mcbride',
+            },
+            twitterHandle: 'ElsieMcbride',
+            followerCount: 234,
+          },
+        },
+      },
+    },
+    {
+      id: '',
+      sha: '',
+      slug: 'maxine-field',
+      collectionName: 'members',
+      locales: {
+        _default: {
+          content: {
+            slug: 'member-maxine-field',
+            name: {
+              first: 'Maxine',
+              last: 'Field',
+            },
+            twitterHandle: 'MaxineField',
+            followerCount: 345,
+          },
+        },
+      },
+    },
+  ];
+
   siteConfig.set({
     backend: { name: 'github' },
     media_folder: 'static/assets/uploads',
@@ -30,66 +91,7 @@ describe('Test getOptions()', () => {
       search_fields: ['name.first', 'twitterHandle'],
     };
 
-    /** @type {Entry[]} */
-    const entries = [
-      {
-        id: '',
-        sha: '',
-        slug: 'melvin-lucas',
-        collectionName: 'members',
-        locales: {
-          _default: {
-            content: {
-              slug: 'member-melvin-lucas',
-              name: {
-                first: 'Melvin',
-                last: 'Lucas',
-              },
-              twitterHandle: 'MelvinLucas',
-              followerCount: 123,
-            },
-          },
-        },
-      },
-      {
-        id: '',
-        sha: '',
-        slug: 'elsie-mcbride',
-        collectionName: 'members',
-        locales: {
-          _default: {
-            content: {
-              slug: 'member-elsie-mcbride',
-              name: {
-                first: 'Elsie',
-                last: 'Mcbride',
-              },
-              twitterHandle: 'ElsieMcbride',
-              followerCount: 234,
-            },
-          },
-        },
-      },
-      {
-        id: '',
-        sha: '',
-        slug: 'maxine-field',
-        collectionName: 'members',
-        locales: {
-          _default: {
-            content: {
-              slug: 'member-maxine-field',
-              name: {
-                first: 'Maxine',
-                last: 'Field',
-              },
-              twitterHandle: 'MaxineField',
-              followerCount: 345,
-            },
-          },
-        },
-      },
-    ];
+    const entries = memberEntries;
 
     expect(getOptions(locale, config, entries)).toEqual([
       { label: 'ElsieMcbride 234', value: 'Elsie' },
@@ -305,6 +307,27 @@ describe('Test getOptions()', () => {
         label: '{{sections.*.label}}',
         value: 'members',
       },
+    ]);
+  });
+
+  // https://github.com/sveltia/sveltia-cms/issues/106
+  test('default locale fallback', () => {
+    const config = {
+      name: 'author',
+      label: 'Author',
+      widget: 'relation',
+      collection: 'authors',
+      value_field: 'name.first',
+      display_fields: ['twitterHandle', 'followerCount'],
+      search_fields: ['name.first', 'twitterHandle'],
+    };
+
+    const entries = memberEntries;
+
+    expect(getOptions('en', config, entries)).toEqual([
+      { label: 'ElsieMcbride 234', value: 'Elsie' },
+      { label: 'MaxineField 345', value: 'Maxine' },
+      { label: 'MelvinLucas 123', value: 'Melvin' },
     ]);
   });
 });

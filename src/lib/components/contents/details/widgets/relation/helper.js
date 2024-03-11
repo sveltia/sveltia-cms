@@ -50,9 +50,12 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
   const _displayField = (displayFields ?? [valueField]).map(normalizeFieldName).join(' ');
 
   return refEntries
-    .filter((refEntry) => !!refEntry?.locales[locale]?.content)
+    .filter(
+      (refEntry) => !!refEntry?.locales[locale]?.content || !!refEntry?.locales._default?.content,
+    )
     .map((refEntry) => {
-      const { content } = refEntry?.locales[locale] ?? {};
+      // Fall back to the default locale if needed
+      const { content } = refEntry?.locales[locale] ?? refEntry?.locales._default ?? {};
       /**
        * @type {FlattenedEntryContent}
        */
