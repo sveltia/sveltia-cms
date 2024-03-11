@@ -39,6 +39,11 @@ describe('Test fillSlugTemplate()', () => {
     );
   });
 
+  test('random ID fallback', () => {
+    expect(fillSlugTemplate('{{title}}', { collection, content: {} })).toMatch(/[0-9a-f]{12}/);
+    expect(fillSlugTemplate('{{name}}', { collection, content: {} })).toMatch(/[0-9a-f]{12}/);
+  });
+
   test('apply filter', () => {
     expect(
       fillSlugTemplate(`{{published | date('MMM D, YYYY')}}`, {

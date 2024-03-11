@@ -202,7 +202,8 @@ export const fillSlugTemplate = (
     const slugPart = replaceSub(tag);
 
     if (!slugPart) {
-      return '';
+      // Use a random ID as a fallback
+      return generateUUID('short');
     }
 
     let partStr = String(slugPart);
