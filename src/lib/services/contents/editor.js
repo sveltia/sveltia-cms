@@ -770,7 +770,7 @@ const validateEntry = () => {
         }
       }
 
-      if (!['object', 'list', 'hidden'].includes(widgetName)) {
+      if (!['object', 'list', 'hidden', 'compute'].includes(widgetName)) {
         if (_required && (value === undefined || value === '' || (multiple && !value.length))) {
           valueMissing = true;
         }

@@ -89,7 +89,7 @@
   $: validity = validities[locale][keyPath];
 
   $: fieldLabel = label || fieldName;
-  $: readonly = i18n === 'duplicate' && locale !== defaultLocale;
+  $: readonly = (i18n === 'duplicate' && locale !== defaultLocale) || widgetName === 'compute';
   $: invalid = validity?.valid === false;
 </script>
 

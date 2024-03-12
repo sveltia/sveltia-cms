@@ -410,6 +410,17 @@
  */
 
 /**
+ * Compute field properties.
+ * @typedef {object} ComputeFieldProps
+ * @property {string} value Value template, like `posts-{{fields.slug}}`.
+ */
+
+/**
+ * Compute field definition.
+ * @typedef {CommonFieldProps & ComputeFieldProps} ComputeField
+ */
+
+/**
  * DateTime field properties.
  * @typedef {object} DateTimeFieldProps
  * @property {string} [default] Default value.
