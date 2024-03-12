@@ -27,8 +27,6 @@
     name: fieldName,
     // Widget-specific options
     type = 'text',
-    before_input = '',
-    after_input = '',
   } = fieldConfig);
 
   $: isEmail = type === 'email';
@@ -50,7 +48,6 @@
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
   <p class:title={fieldName === 'title'}>
-    {before_input}
     {#if isURL}
       <a href={encodeURI(currentValue)}>{currentValue}</a>
     {:else if isEmail}
@@ -58,7 +55,6 @@
     {:else}
       {currentValue}
     {/if}
-    {after_input}
   </p>
 {/if}
 
