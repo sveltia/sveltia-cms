@@ -45,6 +45,8 @@
   $: ({ min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
     fieldConfig
   ));
+  $: type =
+    widgetName === 'string' ? /** @type {StringField} */ (fieldConfig).type ?? 'text' : undefined;
   $: allowPrefix = ['string'].includes(widgetName);
   $: prefix = allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined;
   $: suffix = allowPrefix ? /** @type {StringField} */ (fieldConfig).suffix : undefined;
@@ -182,6 +184,12 @@
           <div role="none">
             <Icon name="error" />
             {pattern?.[1] ?? ''}
+          </div>
+        {/if}
+        {#if validity.typeMismatch}
+          <div role="none">
+            <Icon name="error" />
+            {$_(`validation.type_mismatch.${type}`)}
           </div>
         {/if}
       {/if}

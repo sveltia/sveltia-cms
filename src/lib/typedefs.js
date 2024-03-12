@@ -562,6 +562,7 @@
  * String field properties.
  * @typedef {object} StringFieldProps
  * @property {string} [default] Default value.
+ * @property {'email' | 'url' | 'text'} [type] Input type.
  * @property {string} [prefix] A string to be prepended to the value. Default: an empty string.
  * @property {string} [suffix] A string to be appended to the value. Default: an empty string.
  * @property {string} [before_input] An extra label to be displayed before the input UI. Default: an

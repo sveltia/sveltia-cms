@@ -732,6 +732,7 @@ const validateEntry = () => {
       let rangeUnderflow = false;
       let rangeOverflow = false;
       let patternMismatch = false;
+      let typeMismatch = false;
 
       // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.n`,
       // we should validate only once against all these values
@@ -782,6 +783,25 @@ const validateEntry = () => {
         ) {
           patternMismatch = true;
         }
+
+        // Check the URL or email with native form validation
+        if (widgetName === 'string' && value) {
+          const { type = 'text' } = /** @type {StringField} */ (fieldConfig);
+
+          if (type !== 'text') {
+            const inputElement = document.createElement('input');
+
+            inputElement.type = type;
+            inputElement.value = value;
+            ({ typeMismatch } = inputElement.validity);
+          }
+
+          // Check if the email’s domain part contains a dot, because native validation marks
+          // `me@example` valid but it’s not valid in the real world
+          if (type === 'email' && !typeMismatch && !value.split('@')[1]?.includes('.')) {
+            typeMismatch = true;
+          }
+        }
       }
 
       const validity = {
@@ -789,6 +809,7 @@ const validateEntry = () => {
         rangeUnderflow,
         rangeOverflow,
         patternMismatch,
+        typeMismatch,
       };
 
       const valid = !Object.values(validity).some(Boolean);

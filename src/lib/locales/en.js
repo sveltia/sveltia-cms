@@ -271,6 +271,10 @@ export const strings = {
       add_many: 'You cannot add more than {max} item.',
       add_one: 'You cannot add more than {max} items.',
     },
+    type_mismatch: {
+      email: 'Please enter a valid email.',
+      url: 'Please enter a valid URL.',
+    },
   },
   saving_entry: {
     error: {

@@ -26,11 +26,18 @@
   $: ({
     name: fieldName,
     // Widget-specific options
+    type = 'text',
     before_input = '',
     after_input = '',
   } = fieldConfig);
 
+  $: isEmail = type === 'email';
+
   $: isURL = (() => {
+    if (type === 'url') {
+      return true;
+    }
+
     try {
       // eslint-disable-next-line no-new
       new URL(currentValue);
@@ -45,7 +52,9 @@
   <p class:title={fieldName === 'title'}>
     {before_input}
     {#if isURL}
-      <a href={currentValue}>{currentValue}</a>
+      <a href={encodeURI(currentValue)}>{currentValue}</a>
+    {:else if isEmail}
+      <a href="mailto:{encodeURI(currentValue)}">{currentValue}</a>
     {:else}
       {currentValue}
     {/if}

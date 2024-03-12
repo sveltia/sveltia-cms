@@ -273,6 +273,10 @@ export const strings = {
       add_many: '追加できるのは最大で {max} 項目です。',
       add_one: '追加できるのは最大で {max} 項目です。',
     },
+    type_mismatch: {
+      email: '正しいメールアドレスを入力してください。',
+      url: '正しい URL を入力してください。',
+    },
   },
   saving_entry: {
     error: {

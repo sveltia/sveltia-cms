@@ -48,6 +48,7 @@
 
   $: ({
     // Widget-specific options
+    type = 'text',
     prefix = '',
     suffix = '',
   } = fieldConfig);
@@ -114,6 +115,8 @@
 
 <TextInput
   bind:value={inputValue}
+  {type}
+  inputmode={type}
   flex
   {readonly}
   {required}
