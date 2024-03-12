@@ -212,7 +212,7 @@
         />
       {:else}
         {#if beforeInputLabel}
-          <div role="none" class="before-input">{beforeInputLabel}</div>
+          <div role="none" class="before-input">{@html marked.parse(beforeInputLabel)}</div>
         {/if}
         {#if prefix}
           <div role="none" class="prefix">{prefix}</div>
@@ -233,7 +233,7 @@
           <div role="none" class="suffix">{suffix}</div>
         {/if}
         {#if afterInputLabel}
-          <div role="none" class="after-input">{afterInputLabel}</div>
+          <div role="none" class="after-input">{@html marked.parse(afterInputLabel)}</div>
         {/if}
       {/if}
     </div>
