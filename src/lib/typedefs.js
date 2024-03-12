@@ -258,7 +258,7 @@
  * @property {object} [editor] Editor view configuration.
  * @property {boolean} editor.preview Whether to show the preview pane for all the collections.
  * Default: `true`.
- * @property {string} [publish_mode] Enable Editorial Workflow.
+ * @property {'simple' | 'editorial_workflow'} [publish_mode] Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] Whether to show preview links in Editorial Workflow.
  * @see https://decapcms.org/docs/configuration-options/
  */
