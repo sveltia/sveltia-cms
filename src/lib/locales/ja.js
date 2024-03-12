@@ -17,6 +17,7 @@ export const strings = {
     keyboard_shortcuts: 'キーボードショートカット',
     documentation: 'ドキュメンテーション',
     release_notes: 'リリースノート',
+    release_notes_version_x: 'リリースノート (v{version})',
     issue: '問題を報告',
     feedback: 'フィードバックを共有',
   },

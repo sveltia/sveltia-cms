@@ -17,6 +17,7 @@ export const strings = {
     keyboard_shortcuts: 'Keyboard Shortcuts',
     documentation: 'Documentation',
     release_notes: 'Release Notes',
+    release_notes_version_x: 'Release Notes (v{version})',
     issue: 'Report Issue',
     feedback: 'Share Feedback',
   },

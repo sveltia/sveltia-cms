@@ -6,7 +6,9 @@
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
   import { backend, backendName } from '$lib/services/backends';
   import { openProductionSite } from '$lib/services/navigation';
+  import { prefs } from '$lib/services/prefs';
   import { user } from '$lib/services/user';
+  import { version } from '../../../../../../package.json';
 
   /** @type {MenuButton} */
   let menuButton;
@@ -83,7 +85,9 @@
         }}
       />
       <MenuItem
-        label={$_('help.release_notes')}
+        label={$prefs.devModeEnabled
+          ? $_('help.release_notes_version_x', { values: { version } })
+          : $_('help.release_notes')}
         on:click={() => {
           window.open('https://github.com/sveltia/sveltia-cms/releases', '_blank');
         }}
