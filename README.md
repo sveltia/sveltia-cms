@@ -96,6 +96,7 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 ### Better fields/widgets
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
+- Leading and trailing spaces in text-type field values are automatically removed when you save the entry[^37].
 - You can revert changes to all fields or a specific field.
 - You can hide the preview of a specific field with `preview: false`.
 - The String widget supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
@@ -473,3 +474,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138)
 [^35]: Netlify/Decap CMS [#7086](https://github.com/decaporg/decap-cms/issues/7086)
 [^36]: Netlify/Decap CMS [#6325](https://github.com/decaporg/decap-cms/issues/6325)
+[^37]: Netlify/Decap CMS [#6325](https://github.com/decaporg/decap-cms/issues/1481)
