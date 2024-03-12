@@ -97,7 +97,10 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - You can revert changes to all fields or a specific field.
-- The Boolean, Number and String widgets support the `prefix` and `suffix` properties, allowing developers to display custom messages before and/or after the field[^28].
+- You can hide the preview of a specific field with `preview: false`.
+- The String widget supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
+- The String widget supports the `prefix` and `suffix` string properties, which will be automatically prepended/appended to the user-input value.
+- The Boolean, Number and String widgets support the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28].
 - Relation field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
 - The `summary` for the List and Object widgets is displayed correctly when it refers to a Relation field[^36].
 - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
@@ -111,6 +114,7 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
   - `prefix`: A string to be prepended to the value. Default: an empty string.
   - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
   - `read_only`: Whether to make the field read-only. Default: `true`.
+- The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
 
 ### Better asset management
 
