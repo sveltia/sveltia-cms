@@ -308,7 +308,7 @@
  * @property {string} [preview_path] Preview URL template.
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
  * @property {object} [editor] Editor view configuration.
- * @property {boolean} editor.preview Whether to hide the preview. Default: `true`.
+ * @property {boolean} editor.preview Whether to show the preview of the fields. Default: `true`.
  * @see https://decapcms.org/docs/configuration-options/#collections
  */
 
@@ -336,7 +336,7 @@
  * @property {Field[]} fields Fields.
  * @property {RawI18nConfig | boolean} [i18n] I18n configuration.
  * @property {object} [editor] Editor view configuration.
- * @property {boolean} editor.preview Whether to hide the preview.
+ * @property {boolean} editor.preview Whether to show the preview of the fields. Default: `true`.
  * @see https://decapcms.org/docs/collection-types/#file-collections
  */
 
@@ -362,7 +362,7 @@
  * @property {boolean} [required] Whether to require input.
  * @property {string[]} [pattern] Validation format.
  * @property {string} [hint] Value hint to be displayed below the input.
- * @property {boolean} [preview] Whether to hide the preview. Default: `true`.
+ * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
  * @property {boolean | 'translate' | 'duplicate'} [i18n] I18n configuration.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets/#common-widget-options
