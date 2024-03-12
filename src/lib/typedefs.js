@@ -255,6 +255,9 @@
  * @property {string} [slug.sanitize_replacement] String to replace sanitized characters.
  * @property {RawCollection[]} collections Collections.
  * @property {RawI18nConfig} [i18n] Global i18n configuration.
+ * @property {object} [editor] Editor view configuration.
+ * @property {boolean} editor.preview Whether to show the preview pane for all the collections.
+ * Default: `true`.
  * @property {string} [publish_mode] Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] Whether to show preview links in Editorial Workflow.
  * @see https://decapcms.org/docs/configuration-options/
@@ -308,7 +311,8 @@
  * @property {string} [preview_path] Preview URL template.
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
  * @property {object} [editor] Editor view configuration.
- * @property {boolean} editor.preview Whether to show the preview of the fields. Default: `true`.
+ * @property {boolean} editor.preview Whether to show the preview pane for the collection. Default:
+ * `true`.
  * @see https://decapcms.org/docs/configuration-options/#collections
  */
 
@@ -336,7 +340,8 @@
  * @property {Field[]} fields Fields.
  * @property {RawI18nConfig | boolean} [i18n] I18n configuration.
  * @property {object} [editor] Editor view configuration.
- * @property {boolean} editor.preview Whether to show the preview of the fields. Default: `true`.
+ * @property {boolean} editor.preview Whether to show the preview pane for the collection. Default:
+ * `true`.
  * @see https://decapcms.org/docs/collection-types/#file-collections
  */
 

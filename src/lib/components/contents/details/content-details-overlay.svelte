@@ -5,6 +5,7 @@
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
+  import { siteConfig } from '$lib/services/config';
   import {
     editorLeftPane,
     editorRightPane,
@@ -24,12 +25,13 @@
 
   let panesRestored = false;
 
+  $: ({ editor: { preview: showPreviewPane = true } = {} } =
+    $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ showPreview, paneStates } = $entryEditorSettings);
   $: ({ i18nEnabled, locales, defaultLocale } =
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: canPreview =
-    collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
+  $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
 
   /**
    * Restore the pane state from local storage.

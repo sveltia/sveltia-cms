@@ -53,14 +53,15 @@
     validities,
   } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
-  $: ({ backend: { automatic_deployments: autoDeployEnabled = true } = {} } =
-    $siteConfig ?? /** @type {SiteConfig} */ ({}));
+  $: ({
+    editor: { preview: showPreviewPane = true } = {},
+    backend: { automatic_deployments: autoDeployEnabled = true } = {},
+  } = $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: showSaveOptions = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: collectionLabel = collection?.label || collection?.name;
   $: collectionLabelSingular = collection?.label_singular || collectionLabel;
-  $: canPreview =
-    collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
+  $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
   $: modified =
     isNew || !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
   $: errorCount = Object.values(validities)

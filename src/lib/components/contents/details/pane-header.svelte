@@ -13,14 +13,15 @@
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
-  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
+  import { siteConfig } from '$lib/services/config';
   import {
     entryDraft,
     entryEditorSettings,
     revertChanges,
     toggleLocale,
   } from '$lib/services/contents/editor';
-  import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
+  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
    * The wrapper element’s `id` attribute.
@@ -40,6 +41,8 @@
   /** @type {MenuButton} */
   let menuButton;
 
+  $: ({ editor: { preview: showPreviewPane = true } = {} } =
+    $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: ({ collection, collectionFile, currentLocales, currentValues, originalValues, validities } =
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ i18nEnabled, saveAllLocales, locales, defaultLocale } =
@@ -47,8 +50,7 @@
   $: isLocaleEnabled = currentLocales[$thisPane?.locale ?? ''];
   $: isOnlyLocale = Object.values(currentLocales).filter((enabled) => enabled).length === 1;
   $: otherLocales = i18nEnabled ? locales.filter((l) => l !== $thisPane?.locale) : [];
-  $: canPreview =
-    collection?.editor?.preview !== false && collectionFile?.editor?.preview !== false;
+  $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
   $: canCopy = !!otherLocales.length;
   $: canRevert =
     $thisPane?.locale &&
