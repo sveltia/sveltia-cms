@@ -100,8 +100,8 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 - You can revert changes to all fields or a specific field.
 - You can hide the preview of a specific field with `preview: false`.
 - The String widget supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
-- The String widget supports the `prefix` and `suffix` string properties, which will be automatically prepended/appended to the user-input value.
-- The Boolean, Number and String widgets support the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28].
+- The String widget supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
+- The Boolean, Number and String widgets support the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
 - Relation field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
 - The `summary` for the List and Object widgets is displayed correctly when it refers to a Relation field[^36].
 - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
