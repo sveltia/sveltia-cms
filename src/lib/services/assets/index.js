@@ -75,7 +75,8 @@ export const getAssetKind = (name) =>
 /**
  * Get an asset by a public path typically stored as an image field value.
  * @param {string} savedPath - Saved absolute path or relative path.
- * @param {Entry} entry - Associated entry to be used to help locale an asset from a relative path.
+ * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
+ * path. Can be `undefined` when editing a draft.
  * @returns {(Asset | undefined)} Corresponding asset.
  */
 export const getAssetByPath = (savedPath, entry) => {
@@ -181,7 +182,8 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
  * Get the public URL from the given image/file entry field value.
  * @param {string} value - Saved field value. It can be an absolute path, entry-relative path, or a
  * complete/external URL.
- * @param {Entry} entry - Associated entry.
+ * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
+ * path. Can be `undefined` when editing a draft.
  * @returns {Promise<(string | undefined)>} URL that can be displayed in the app UI.
  */
 export const getMediaFieldURL = async (value, entry) => {

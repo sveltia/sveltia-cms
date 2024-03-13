@@ -38,8 +38,8 @@
 
   $: (async () => {
     src =
-      isImageWidget && currentValue && $entryDraft?.originalEntry
-        ? await getMediaFieldURL(currentValue, $entryDraft.originalEntry)
+      isImageWidget && currentValue
+        ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry)
         : undefined;
   })();
 </script>
