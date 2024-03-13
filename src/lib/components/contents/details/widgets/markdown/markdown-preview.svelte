@@ -6,6 +6,8 @@
 <script>
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
+  import { getMediaFieldURL } from '$lib/services/assets';
+  import { entryDraft } from '$lib/services/contents/editor';
 
   /**
    * @type {LocaleCode}
@@ -31,7 +33,26 @@
     sanitize_preview: sanitize = false,
   } = fieldConfig);
 
-  $: rawHTML = marked.parse(currentValue ?? '');
+  /** @type {import("marked").MarkedOptions} */
+  const markedOptions = {
+    async: true,
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    walkTokens: async (token) => {
+      if (token.type === 'image') {
+        const url = await getMediaFieldURL(token.href, $entryDraft?.originalEntry);
+
+        if (url) {
+          token.href = url;
+        }
+      }
+    },
+  };
+
+  let rawHTML = '';
+
+  $: (async () => {
+    rawHTML = await marked.parse(currentValue ?? '', markedOptions);
+  })();
 </script>
 
 <div role="none">
