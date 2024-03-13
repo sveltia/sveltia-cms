@@ -68,9 +68,15 @@ export const createFileList = (files) => {
       folderPath ? path.startsWith(folderPath) : path === filePath,
     );
 
-    const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath }) =>
-      path.startsWith(internalPath),
-    );
+    const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
+      if (entryRelative) {
+        return path.startsWith(`${internalPath}/`);
+      }
+
+      // Compare that the enclosing directory is exactly the same as the internal path, and ignore
+      // any subdirectories, as there is no way to upload assets to them.
+      return path.match(/^(.+)\//)?.[1] === internalPath;
+    });
 
     if (
       entryFolderConfig &&
