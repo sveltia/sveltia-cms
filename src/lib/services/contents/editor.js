@@ -150,7 +150,13 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
       if (multiple) {
-        newContent[keyPath] = isArray ? defaultValue : [];
+        if (isArray) {
+          defaultValue.forEach((value, index) => {
+            newContent[[keyPath, index].join('.')] = value;
+          });
+        } else {
+          newContent[keyPath] = [];
+        }
 
         return;
       }
