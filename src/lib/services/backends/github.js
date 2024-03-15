@@ -155,12 +155,11 @@ const init = () => {
 
 /**
  * Retrieve the repository configuration and sign in with GitHub REST API.
- * @param {string} [savedToken] - OAuth token. Can be empty when a token is not saved in the local
- * storage. Then, open the sign-in dialog.
+ * @param {SignInOptions} options - Options.
  * @returns {Promise<User>} User info.
  * @throws {Error} When there was an authentication error.
  */
-const signIn = async (savedToken) => {
+const signIn = async ({ token: savedToken }) => {
   const token = savedToken || (await authorize('github'));
 
   if (!token) {

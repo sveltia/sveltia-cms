@@ -47,12 +47,19 @@
  */
 
 /**
+ * Options for the `signIn` function on {@link BackendService}.
+ * @typedef {object} SignInOptions
+ * @property {boolean} auto Whether the sign-in process is automatic.
+ * @property {string} [token] User’s Locally-cached authentication token. Git backend only.
+ */
+
+/**
  * Backend service.
  * @typedef {object} BackendService
  * @property {string} label Service label.
  * @property {RepositoryInfo} [repository] Basic repository info. Git backend only.
  * @property {() => void} init Function to initialize the backend.
- * @property {(token: string) => Promise<User>} signIn Function to sign in.
+ * @property {(options: SignInOptions) => Promise<User>} signIn Function to sign in.
  * @property {() => Promise<void>} signOut Function to sign out.
  * @property {() => Promise<void>} fetchFiles Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git

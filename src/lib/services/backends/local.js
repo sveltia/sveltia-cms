@@ -28,42 +28,42 @@ let rootDirHandleDB;
  * each time the app is loaded.
  * @param {object} [options] - Options.
  * @param {boolean} [options.forceReload] - Whether to force getting the handle.
- * @returns {Promise<FileSystemDirectoryHandle>} Directory handle.
+ * @param {boolean} [options.showPicker] - Whether to show the directory picker.
+ * @returns {Promise<FileSystemDirectoryHandle | null>} Directory handle.
  * @throws {Error} When the File System Access API is not supported by the user’s browser.
  * @see https://developer.chrome.com/articles/file-system-access/#stored-file-or-directory-handles-and-permissions
  */
-const getRootDirHandle = async ({ forceReload = false } = {}) => {
+const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {}) => {
   if (!('showDirectoryPicker' in window)) {
     throw new Error('unsupported');
   }
 
   /**
-   * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function } |
-   * undefined}
+   * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function } | null}
    */
-  let handle = forceReload ? undefined : await rootDirHandleDB.get(rootDirHandleKey);
+  let handle = forceReload ? null : (await rootDirHandleDB.get(rootDirHandleKey)) ?? null;
 
   if (handle) {
     if ((await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') {
-      handle = undefined;
+      handle = null;
     } else {
       try {
         await handle.entries().next();
       } catch (/** @type {any} */ ex) {
         // The directory may have been (re)moved
-        handle = undefined;
+        handle = null;
         // eslint-disable-next-line no-console
         console.error(ex);
       }
     }
   }
 
-  if (!handle) {
+  if (!handle && showPicker) {
     handle = await window.showDirectoryPicker();
     await rootDirHandleDB.set(rootDirHandleKey, handle);
   }
 
-  return /** @type {FileSystemDirectoryHandle} */ (handle);
+  return /** @type {FileSystemDirectoryHandle | null} */ (handle);
 };
 
 /**
@@ -77,18 +77,28 @@ const discardDirHandle = async () => {
  * Initialize the backend.
  */
 const init = () => {
-  const { backend } = /** @type {SiteConfig} */ (get(siteConfig));
+  const { backend } = /** @type {SiteConfig} */ (get(siteConfig) ?? {});
 
-  rootDirHandleDB = new IndexedDB(`${backend.name}:${backend.repo}`, 'file-system-handles');
+  if (backend) {
+    rootDirHandleDB = new IndexedDB(`${backend.name}:${backend.repo}`, 'file-system-handles');
+  }
 };
 
 /**
  * Sign in with the local Git repository. There is no actual sign-in; just show the directory picker
  * to get the handle, so we can read/write files.
+ * @param {SignInOptions} options - Options.
  * @returns {Promise<User>} User info.
+ * @throws {Error} When the directory handle could not be acquired.
  */
-const signIn = async () => {
-  rootDirHandle.set(await getRootDirHandle());
+const signIn = async ({ auto = false }) => {
+  const handle = await getRootDirHandle({ showPicker: !auto });
+
+  if (handle) {
+    rootDirHandle.set(handle);
+  } else {
+    throw new Error('Directory handle could not be acquired');
+  }
 
   return { backendName: 'local' };
 };

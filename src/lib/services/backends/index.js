@@ -20,9 +20,14 @@ export const backendName = writable();
 /**
  * @type {import('svelte/store').Readable<BackendService | undefined>}
  */
-export const backend = derived([backendName], ([name], set) => {
-  const service = name ? allBackendServices[name] : undefined;
+export const backend = derived([backendName], ([name], _set, update) => {
+  update((currentService) => {
+    const newService = name ? allBackendServices[name] : undefined;
 
-  service?.init();
-  set(service);
+    if (newService && newService !== currentService) {
+      newService?.init();
+    }
+
+    return newService;
+  });
 });
