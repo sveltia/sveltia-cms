@@ -45,7 +45,11 @@ rules:
   jsdoc/require-asterisk-prefix: 1
   jsdoc/require-description: 1
   jsdoc/require-description-complete-sentence: 1
-  jsdoc/require-hyphen-before-param-description: 1
+  jsdoc/require-hyphen-before-param-description:
+    - error
+    - always
+    - tags:
+        property: always
   jsdoc/require-throws: 1
   jsdoc/sort-tags: 1
   max-len:

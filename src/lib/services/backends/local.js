@@ -114,7 +114,7 @@ const signOut = async () => {
 /**
  * Get a file or directory handle at the given path.
  * @param {string} path - Path to the file/directory.
- * @returns {Promise<(FileSystemFileHandle|FileSystemDirectoryHandle)>} Handle.
+ * @returns {Promise<FileSystemFileHandle | FileSystemDirectoryHandle>} Handle.
  */
 const getHandleByPath = async (path) => {
   const pathParts = stripSlashes(path).split('/');

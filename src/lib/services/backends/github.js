@@ -45,7 +45,7 @@ const repository = new Proxy(/** @type {any} */ ({ owner: '', repo: '', branch: 
  * @param {string} [options.token] - OAuth token.
  * @param {('json' | 'text' | 'blob' | 'raw')} [options.responseType] - Response type. The default
  * is `json`, while `raw` returns a `Response` object as is.
- * @returns {Promise<(object | string | Blob | Response)>} Response data or `Response` itself,
+ * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
  */

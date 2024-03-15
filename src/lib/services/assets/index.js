@@ -77,7 +77,7 @@ export const getAssetKind = (name) =>
  * @param {string} savedPath - Saved absolute path or relative path.
  * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
  * path. Can be `undefined` when editing a draft.
- * @returns {(Asset | undefined)} Corresponding asset.
+ * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = (savedPath, entry) => {
   // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
@@ -131,7 +131,7 @@ export const getAssetByPath = (savedPath, entry) => {
  * @param {object} [options] - Options.
  * @param {boolean} [options.pathOnly] - Whether to use the absolute path instead of the complete
  * URL.
- * @returns {Promise<(string | undefined)>} URL that can be used or displayed in the app UI. This is
+ * @returns {Promise<string | undefined>} URL that can be used or displayed in the app UI. This is
  * mostly a Blob URL of the asset.
  */
 export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
@@ -184,7 +184,7 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
  * complete/external URL.
  * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
  * path. Can be `undefined` when editing a draft.
- * @returns {Promise<(string | undefined)>} URL that can be displayed in the app UI.
+ * @returns {Promise<string | undefined>} URL that can be displayed in the app UI.
  */
 export const getMediaFieldURL = async (value, entry) => {
   if (!value) {
