@@ -1,12 +1,12 @@
 <script>
   import { Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import AccountButton from '$lib/components/global/global-toolbar/items/account-button.svelte';
-  import CreateButton from '$lib/components/global/global-toolbar/items/create-button.svelte';
-  import NotificationsButton from '$lib/components/global/global-toolbar/items/notifications-button.svelte';
-  import PageSwitcher from '$lib/components/global/global-toolbar/items/page-switcher.svelte';
-  import QuickSearchBar from '$lib/components/global/global-toolbar/items/quick-search-bar.svelte';
-  import SiteLogo from '$lib/components/global/global-toolbar/items/site-logo.svelte';
+  import AccountButton from '$lib/components/global/toolbar/items/account-button.svelte';
+  import CreateButton from '$lib/components/global/toolbar/items/create-button.svelte';
+  import NotificationsButton from '$lib/components/global/toolbar/items/notifications-button.svelte';
+  import PageSwitcher from '$lib/components/global/toolbar/items/page-switcher.svelte';
+  import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
+  import SiteLogo from '$lib/components/global/toolbar/items/site-logo.svelte';
   import { hasOverlay } from '$lib/services/navigation';
 </script>
 

@@ -1,7 +1,7 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import PublishMenuItem from '$lib/components/global/global-toolbar/items/publish-menu-item.svelte';
+  import PublishMenuItem from '$lib/components/global/toolbar/items/publish-menu-item.svelte';
   import ShortcutsDialog from '$lib/components/keyboard-shortcuts/shortcuts-dialog.svelte';
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
   import { backend, backendName } from '$lib/services/backends';
