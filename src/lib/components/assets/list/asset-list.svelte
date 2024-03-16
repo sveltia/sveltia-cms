@@ -6,9 +6,8 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
-  import { selectedAssetFolder, uploadingAssets } from '$lib/services/assets';
+  import { globalAssetFolder, selectedAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
-  import { siteConfig } from '$lib/services/config';
 
   // Can’t upload assets if collection assets are saved at entry-relative paths
   $: uploadDisabled = !!$selectedAssetFolder?.entryRelative;
@@ -21,7 +20,7 @@
       multiple={true}
       on:select={({ detail: { files } }) => {
         $uploadingAssets = {
-          folder: $selectedAssetFolder?.internalPath || $siteConfig?.media_folder,
+          folder: $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
           files,
         };
       }}

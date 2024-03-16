@@ -2,7 +2,7 @@
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
-  import { uploadingAssets } from '$lib/services/assets';
+  import { globalAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { siteConfig } from '$lib/services/config';
   import { goto } from '$lib/services/navigation';
 
@@ -54,7 +54,7 @@
   bind:this={filePicker}
   on:change={({ target }) => {
     $uploadingAssets = {
-      folder: $siteConfig?.media_folder,
+      folder: $globalAssetFolder?.internalPath,
       files: [.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)],
     };
   }}

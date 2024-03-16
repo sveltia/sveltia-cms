@@ -3,9 +3,13 @@
   import { _, locale as appLocale } from 'svelte-i18n';
   import DeleteAssetsDialog from '$lib/components/assets/shared/delete-assets-dialog.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
-  import { selectedAssetFolder, selectedAssets, uploadingAssets } from '$lib/services/assets';
+  import {
+    globalAssetFolder,
+    selectedAssetFolder,
+    selectedAssets,
+    uploadingAssets,
+  } from '$lib/services/assets';
   import { getFolderLabelByPath } from '$lib/services/assets/view';
-  import { siteConfig } from '$lib/services/config';
 
   /**
    * @type {FilePicker}
@@ -80,7 +84,7 @@
   multiple={true}
   on:change={({ target }) => {
     $uploadingAssets = {
-      folder: $selectedAssetFolder?.internalPath || $siteConfig?.media_folder,
+      folder: $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
       files: [.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)],
     };
   }}

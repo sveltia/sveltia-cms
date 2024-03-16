@@ -30,6 +30,13 @@ export const allAssets = writable([]);
 export const allAssetFolders = writable([]);
 
 /**
+ * @type {import('svelte/store').Readable<CollectionAssetFolder | undefined>}
+ */
+export const globalAssetFolder = derived([allAssetFolders], ([_allAssetFolders], set) => {
+  set(_allAssetFolders.find(({ collectionName }) => !collectionName));
+});
+
+/**
  * @type {import('svelte/store').Writable<CollectionAssetFolder | undefined>}
  */
 export const selectedAssetFolder = writable();
