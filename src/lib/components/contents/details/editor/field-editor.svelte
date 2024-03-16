@@ -101,6 +101,7 @@
     aria-label={$_('x_field', { values: { field: fieldLabel } })}
     data-widget={widgetName}
     data-key-path={keyPath}
+    hidden={widgetName === 'compute'}
   >
     <header role="none">
       {#if !readonly && required}

@@ -1,6 +1,7 @@
 <!--
   @component
-  Implement the editor for the experimental Compute widget.
+  Implement the editor for the experimental Compute widget. Note that this editor is hidden in
+  `FieldEditor` but still needed to compute the value.
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
