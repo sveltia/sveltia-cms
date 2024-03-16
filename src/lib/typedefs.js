@@ -772,8 +772,7 @@
 /**
  * Asset details.
  * @typedef {object} AssetDetails
- * @property {string} [displayURL] - URL that can be linked in the app UI. It can be a temporary,
- * non-public blob URL for a local file.
+ * @property {string} [publicURL] - The asset’s public URL on the live site.
  * @property {{ width: number, height: number }} [dimensions] - Media dimensions available for an
  * image, video or audio file.
  * @property {number} [duration] - Media duration available for a video or audio file, in seconds.

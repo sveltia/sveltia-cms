@@ -133,26 +133,27 @@ export const getAssetByPath = (savedPath, entry) => {
 };
 
 /**
- * Get the public URL for the given asset.
+ * Get the URL for the given asset. It can be a blob URL or public URL depending on the options.
  * @param {Asset | undefined} asset - Asset file, such as an image.
  * @param {object} [options] - Options.
  * @param {boolean} [options.pathOnly] - Whether to use the absolute path instead of the complete
  * URL.
+ * @param {boolean} [options.publicURL] - Whether to return the public URL on the live site.
  * @returns {Promise<string | undefined>} URL that can be used or displayed in the app UI. This is
  * mostly a Blob URL of the asset.
  */
-export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
+export const getAssetURL = async (asset, { pathOnly = false, publicURL = false } = {}) => {
   if (!asset) {
     return undefined;
   }
 
   const isBlobURL = asset.url?.startsWith('blob:');
 
-  if (isBlobURL && !pathOnly) {
+  if (isBlobURL && !pathOnly && !publicURL) {
     return asset.url;
   }
 
-  if (!asset.url && (asset.file || asset.fetchURL) && !pathOnly) {
+  if (!asset.url && (asset.file || asset.fetchURL) && !pathOnly && !publicURL) {
     const blob = asset.file ?? (await get(backend)?.fetchBlob?.(asset));
 
     if (!blob) {
@@ -181,6 +182,11 @@ export const getAssetURL = async (asset, { pathOnly = false } = {}) => {
 
   const baseURL = pathOnly ? '' : get(siteConfig)?.site_url ?? '';
   const path = asset.path.replace(asset.folder, publicPath ?? '');
+
+  // Path starting with `@`, etc. cannot be linked
+  if (!path.startsWith('/')) {
+    return undefined;
+  }
 
   return `${baseURL}${path}`;
 };
@@ -221,7 +227,7 @@ export const getAssetDetails = async (asset) => {
   }
 
   return {
-    displayURL: url,
+    publicURL: await getAssetURL(asset, { publicURL: true }),
     dimensions,
     duration,
     usedEntries: url ? await getEntriesByAssetURL(url) : [],

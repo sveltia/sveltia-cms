@@ -26,7 +26,7 @@
   /**
    * @type {string | undefined}
    */
-  let displayURL;
+  let publicURL;
   /**
    * @type {{ width: number, height: number } | undefined}
    */
@@ -44,7 +44,7 @@
    * Update the properties above.
    */
   const updateProps = async () => {
-    ({ displayURL, dimensions, duration, usedEntries } = await getAssetDetails(asset));
+    ({ publicURL, dimensions, duration, usedEntries } = await getAssetDetails(asset));
   };
 
   $: {
@@ -87,10 +87,10 @@
   <section>
     <h4>{$_('public_url')}</h4>
     <p>
-      {#if !displayURL || displayURL.startsWith('blob:')}
-        –
+      {#if publicURL}
+        <a href={publicURL}>{publicURL}</a>
       {:else}
-        <a href={displayURL}>{displayURL}</a>
+        –
       {/if}
     </p>
   </section>
