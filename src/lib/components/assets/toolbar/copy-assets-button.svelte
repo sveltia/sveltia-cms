@@ -49,7 +49,7 @@
 
     assetBlob = blob;
 
-    if (blob.type.startsWith('text/') || blob.type === 'image/svg+sml') {
+    if (blob.type.startsWith('text/') || blob.type === 'image/svg+xml') {
       return true;
     }
 
@@ -81,7 +81,7 @@
   const copyFileData = async () => {
     let blob = /** @type {Blob} */ (assetBlob);
 
-    if (blob.type.startsWith('text/') || blob.type === 'image/svg+sml') {
+    if (blob.type.startsWith('text/') || blob.type === 'image/svg+xml') {
       await navigator.clipboard.writeText(await blob.text());
 
       return;
