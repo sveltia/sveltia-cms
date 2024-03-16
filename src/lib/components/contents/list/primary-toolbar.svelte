@@ -24,7 +24,7 @@
     <div role="none" class="description">{description || ''}</div>
     {#if !files}
       <Button
-        variant="secondary"
+        variant="ghost"
         label={$_('delete')}
         aria-label={$selectedEntries.length === 1
           ? $_('delete_selected_entry')

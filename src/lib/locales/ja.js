@@ -58,6 +58,9 @@ export const strings = {
   folder: 'フォルダー',
   api_key: 'API キー',
 
+  // Common errors
+  clipboard_error: 'データのコピー中に問題が発生しました。',
+
   // Entrance
   welcome_to_sveltia_cms: 'Sveltia CMS へようこそ',
   loading_site_config: 'サイト設定を読み込んでいます…',
@@ -198,6 +201,13 @@ export const strings = {
   asset_saved_and_published: 'アセットが保存、公開されました。',
   assets_saved: '{count} 個のアセットが保存されました。',
   assets_saved_and_published: '{count} 個のアセットが保存、公開されました。',
+  asset_url_copied: 'アセット URL がクリップボードにコピーされました。',
+  asset_urls_copied: 'アセット URL がクリップボードにコピーされました。',
+  asset_path_copied: 'アセットファイルパスがクリップボードにコピーされました。',
+  asset_paths_copied: 'アセットファイルパスがクリップボードにコピーされました。',
+  asset_data_copied: 'アセットファイルがクリップボードにコピーされました。',
+  asset_downloaded: 'アセットファイルがダウンロードされました。',
+  assets_downloaded: 'アセットファイルがダウンロードされました。',
   asset_deleted: 'アセットが削除されました。',
   assets_deleted: '{count} 個のアセットが削除されました。',
 
@@ -291,7 +301,10 @@ export const strings = {
   asset_editor: 'アセットエディター',
   no_preview_available: 'プレビューは表示できません',
   public_url: '公開 URL',
+  public_urls: '公開 URL',
   file_path: 'ファイルパス',
+  file_paths: 'ファイルパス',
+  file_data: 'ファイルデータ',
   kind: '種類',
   size: 'サイズ',
   dimensions: '大きさ',

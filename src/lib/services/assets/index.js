@@ -1,3 +1,4 @@
+import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
@@ -232,6 +233,19 @@ export const getAssetDetails = async (asset) => {
     duration,
     usedEntries: url ? await getEntriesByAssetURL(url) : [],
   };
+};
+
+/**
+ * Get the blob for the given asset. Override the MIME type as it can be `application/octet-stream`.
+ * @param {Asset} asset - Asset.
+ * @returns {Promise<Blob>} Blob.
+ */
+export const getBlob = async (asset) => {
+  const { file, url, path } = /** @type {{ file: Blob, url: string, path: string }} */ (asset);
+  const blob = file ?? (await fetch(url).then((r) => r.blob()));
+  const type = mime.getType(path) ?? blob.type;
+
+  return new Blob([blob], { type });
 };
 
 // Reset the asset selection when a different folder is selected

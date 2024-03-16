@@ -58,6 +58,9 @@ export const strings = {
   folder: 'Folder',
   api_key: 'API Key',
 
+  // Common errors
+  clipboard_error: 'There was an error while copying data.',
+
   // Entrance
   welcome_to_sveltia_cms: 'Welcome to Sveltia CMS',
   loading_site_config: 'Loading Site Configuration…',
@@ -195,6 +198,13 @@ export const strings = {
   asset_saved_and_published: 'Asset has been saved and published.',
   assets_saved: '{count} assets have been saved.',
   assets_saved_and_published: '{count} assets have been saved and published.',
+  asset_url_copied: 'Asset URL has been copied to clipboard.',
+  asset_urls_copied: 'Asset URLs have been copied to clipboard.',
+  asset_path_copied: 'Asset file path has been copied to clipboard.',
+  asset_paths_copied: 'Asset file paths have been copied to clipboard.',
+  asset_data_copied: 'Asset file has been copied to clipboard.',
+  asset_downloaded: 'Asset file has been downloaded.',
+  assets_downloaded: 'Asset files have been downloaded.',
   asset_deleted: 'Asset has been deleted.',
   assets_deleted: '{count} assets have been deleted.',
 
@@ -289,7 +299,10 @@ export const strings = {
   asset_editor: 'Asset Editor',
   no_preview_available: 'No Preview Available.',
   public_url: 'Public URL',
+  public_urls: 'Public URLs',
   file_path: 'File Path',
+  file_paths: 'File Paths',
+  file_data: 'File Data',
   kind: 'Kind',
   size: 'Size',
   dimensions: 'Dimensions',
