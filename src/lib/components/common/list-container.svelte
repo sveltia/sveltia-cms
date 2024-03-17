@@ -19,13 +19,15 @@
     overflow: hidden;
 
     & > :global(.group) {
-      padding: 16px;
       height: 100%;
       overflow-y: auto;
       overscroll-behavior-y: contain;
 
-      & :global(.drop-target) {
-        height: auto;
+      & :global(.drop-target > *) {
+        display: block;
+        padding: 12px;
+        height: 100%;
+        overflow-y: auto;
       }
     }
   }
