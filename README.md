@@ -120,9 +120,14 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 ### Better asset management
 
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
-  - You can sort or filter assets by name or file type and view asset details, including size, dimensions, and a list of entries that use the selected asset.
-  - You can upload multiple assets at once, including files in nested folders, by browsing or dragging & dropping them into the library[^5].
-  - You can navigate between the global media folder and per-collection media folders[^6].
+  - Navigate between the global media folder and per-collection media folders[^6].
+  - Copy the public URL or file path of one or more selected assets to clipboard.
+  - Copy the text or image data of of a selected asset to clipboard.
+  - Download one or more selected assets.
+  - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
+  - Sort or filter assets by name or file type.
+  - View asset details, including size, dimensions, and a list of entries that use the selected asset.
+  - Preview audio, video, text and PDF files. Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
 
 ## Compatibility
@@ -160,7 +165,6 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 
 - Comprehensive config validation is not implemented yet.
 - Auto-saving a draft entry is not implemented yet.
-- Downloading an asset and copying the file path of an asset in the media library is not implemented yet.
 - [Backend health check](https://www.githubstatus.com/api) is not implemented yet.
 
 ## Roadmap
@@ -358,6 +362,8 @@ If your site adopts Content Security Policy (CSP), use the following policy for 
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 font-src 'self' https://fonts.gstatic.com;
 img-src 'self' blob: data:;
+media-src blob:;
+frame-src blob:;
 script-src 'self' https://unpkg.com;
 connect-src 'self' blob: data:;
 ```
@@ -448,7 +454,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^8]: Netlify/Decap CMS [#2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505)
 [^10]: Netlify/Decap CMS [#341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
-[^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382), [#1424](https://github.com/decaporg/decap-cms/issues/1424), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
+[^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382), [#1424](https://github.com/decaporg/decap-cms/issues/1424), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5569](https://github.com/decaporg/decap-cms/issues/5569), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
 [^12]: Netlify/Decap CMS [#1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: Netlify/Decap CMS [#5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
 [^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#4738](https://github.com/decaporg/decap-cms/issues/4738), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
