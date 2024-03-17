@@ -32,7 +32,7 @@
     ({ path } = parseLocation());
 
     const [match, folderPath, fileName] =
-      path.match(/^\/assets(?:\/([/\-\w]+))?(?:\/([^/]+.\w{3,4}))?$/) ?? [];
+      path.match(/^\/assets(?:\/([/\-\w]+))?(?:\/([^/]+.\w{2,4}))?$/) ?? [];
 
     if (!match) {
       return;

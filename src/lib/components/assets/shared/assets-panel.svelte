@@ -3,10 +3,9 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
-  import Image from '$lib/components/common/image.svelte';
-  import Video from '$lib/components/common/video.svelte';
+  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -51,16 +50,12 @@
       }}
     >
       {#each filteredAssets as asset (asset.path)}
-        <Option value={asset.sha}>
-          {#if asset.kind === 'image'}
-            <Image {asset} variant="tile" {checkerboard} />
-          {/if}
-          {#if asset.kind === 'video'}
-            <Video {asset} variant="tile" />
-          {/if}
+        {@const { sha, kind, name } = asset}
+        <Option value={sha}>
+          <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
           <span role="none" class="name">
             <!-- Allow to line-break after a hyphen, underscore and dot -->
-            {@html DOMPurify.sanitize(asset.name.replace(/([-_.])/g, '$1<wbr>'), {
+            {@html DOMPurify.sanitize(name.replace(/([-_.])/g, '$1<wbr>'), {
               ALLOWED_TAGS: ['wbr'],
             })}
           </span>

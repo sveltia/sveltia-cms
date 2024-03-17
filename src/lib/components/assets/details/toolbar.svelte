@@ -15,13 +15,16 @@
     variant="ghost"
     iconic
     aria-label={$_('cancel_editing')}
+    keyShortcuts="Escape"
     on:click={() => {
       goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
     }}
   >
     <Icon slot="start-icon" name="arrow_back_ios_new" />
   </Button>
-  <h2 role="none">{$overlaidAsset?.name}</h2>
+  <h2 role="none">
+    <strong role="none">{$overlaidAsset?.name}</strong>
+  </h2>
   <Spacer flex />
   <!-- @todo Implement these actions.
   <Button variant="secondary" label={$_('edit')} aria-label={$_('edit_file')} />

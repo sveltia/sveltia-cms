@@ -8,10 +8,9 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
-  import Image from '$lib/components/common/image.svelte';
-  import Video from '$lib/components/common/video.svelte';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { prefs } from '$lib/services/prefs';
 
@@ -178,12 +177,7 @@
     >
       {#each searchResults as { id, previewURL, description, kind: _kind } (id)}
         <Option value={id}>
-          {#if _kind === 'image'}
-            <Image src={previewURL} variant="tile" crossorigin="anonymous" />
-          {/if}
-          {#if _kind === 'video'}
-            <Video src={previewURL} variant="tile" crossorigin="anonymous" />
-          {/if}
+          <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
           <span role="none" class="name">{description}</span>
         </Option>
       {/each}

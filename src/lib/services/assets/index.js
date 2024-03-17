@@ -50,7 +50,7 @@ export const selectedAssets = writable([]);
 /**
  * @type {import('svelte/store').Writable<Asset | undefined>}
  */
-export const selectedAsset = writable();
+export const focusedAsset = writable();
 
 /**
  * Asset to be displayed in `<AssetDetailsOverlay>`.
@@ -250,5 +250,5 @@ export const getBlob = async (asset) => {
 
 // Reset the asset selection when a different folder is selected
 selectedAssetFolder.subscribe(() => {
-  selectedAsset.set(undefined);
+  focusedAsset.set(undefined);
 });

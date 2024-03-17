@@ -1,5 +1,5 @@
 <script>
-  import MediaPreview from '$lib/components/common/media-preview.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
 
   /**
    * Loading method.
@@ -43,8 +43,8 @@
   export let alt = '';
 </script>
 
-<MediaPreview
-  type="image"
+<AssetPreview
+  kind="image"
   {loading}
   {asset}
   {src}

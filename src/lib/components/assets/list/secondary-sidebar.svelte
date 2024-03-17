@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
-  import { selectedAsset } from '$lib/services/assets';
+  import { focusedAsset } from '$lib/services/assets';
   import { currentView } from '$lib/services/assets/view';
 </script>
 
@@ -13,8 +13,8 @@
   hidden={!$currentView?.showInfo}
   aria-label={$_('asset_info')}
 >
-  {#if $selectedAsset}
-    <InfoPanel asset={$selectedAsset} showPreview={true} />
+  {#if $focusedAsset}
+    <InfoPanel asset={$focusedAsset} showPreview={true} />
   {:else}
     <EmptyState>
       <span role="none">{$_('select_asset_show_info')}</span>

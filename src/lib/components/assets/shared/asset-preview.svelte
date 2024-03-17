@@ -1,12 +1,12 @@
 <script>
-  import { onMount } from 'svelte';
+  import { Icon } from '@sveltia/ui';
   import { getAssetPreviewURL } from '$lib/services/assets/view';
 
   /**
    * Media type.
-   * @type {'image' | 'video'}
+   * @type {AssetKind}
    */
-  export let type;
+  export let kind;
   /**
    * Loading method.
    * @type {'lazy' | 'eager'}
@@ -53,11 +53,16 @@
    * @type {string}
    */
   export let alt = '';
+  /**
+   * Show controls for audio/video. If this is `false` and {@link kind} is `audio`, an icon will be
+   * displayed instead.
+   */
+  export let controls = false;
 
   /**
-   * @type {HTMLImageElement | HTMLVideoElement}
+   * @type {HTMLImageElement | HTMLMediaElement}
    */
-  let element;
+  let mediaElement;
   let updatingSrc = false;
   let loaded = false;
 
@@ -65,38 +70,48 @@
    * Update the {@link src} property.
    */
   const updateSrc = async () => {
-    if (asset && element && !updatingSrc) {
+    if (asset && mediaElement && !updatingSrc) {
       updatingSrc = true;
-      src = await getAssetPreviewURL(asset, loading, element);
+      src = await getAssetPreviewURL(asset, loading, mediaElement);
       updatingSrc = false;
     }
   };
 
   $: {
-    void element;
+    void mediaElement;
     void asset;
     updateSrc();
   }
 
-  onMount(() => {
-    const isVideo = element.matches('video');
+  /**
+   * Update the {@link loaded} state.
+   */
+  const checkLoaded = () => {
+    if (!mediaElement) {
+      return;
+    }
 
     if (
-      isVideo
-        ? /** @type {HTMLVideoElement} */ (element).readyState > 0
-        : /** @type {HTMLImageElement} */ (element).complete
+      kind === 'image'
+        ? /** @type {HTMLImageElement} */ (mediaElement).complete
+        : /** @type {HTMLMediaElement} */ (mediaElement).readyState > 0
     ) {
       loaded = true;
     } else {
-      element.addEventListener(
-        isVideo ? 'loadedmetadata' : 'load',
+      mediaElement.addEventListener(
+        kind === 'image' ? 'load' : 'loadedmetadata',
         () => {
           loaded = true;
         },
         { once: true },
       );
     }
-  });
+  };
+
+  $: {
+    void mediaElement;
+    checkLoaded();
+  }
 </script>
 
 <div
@@ -107,18 +122,32 @@
   class:dissolve
   class:loaded
 >
-  {#if type === 'video'}
+  {#if kind === 'image'}
+    <img {loading} {src} {alt} {...$$restProps} bind:this={mediaElement} />
+  {:else if kind === 'video'}
     <!-- svelte-ignore a11y-media-has-caption -->
-    <video playsinline {src} {...$$restProps} bind:this={element} />
+    <video
+      {src}
+      controls={controls || undefined}
+      playsinline
+      {...$$restProps}
+      bind:this={mediaElement}
+    />
+  {:else if kind === 'audio'}
+    {#if controls}
+      <audio {src} controls playsinline {...$$restProps} bind:this={mediaElement} />
+    {:else}
+      <Icon name="audio_file" />
+    {/if}
   {:else}
-    <img {loading} {src} {alt} {...$$restProps} bind:this={element} />
+    <Icon name="draft" />
   {/if}
   {#if blurBackground}
     <div role="none" class="blur">
       <div role="none" class="overlay" />
-      {#if type === 'video'}
+      {#if kind === 'video'}
         <!-- svelte-ignore a11y-media-has-caption -->
-        <video playsinline {src} />
+        <video {src} playsinline />
       {:else}
         <img {loading} {src} alt="" />
       {/if}
@@ -141,6 +170,10 @@
       border-color: transparent;
       padding: var(--tile-padding, 8px);
       background-color: var(--sui-secondary-background-color);
+
+      :global(.sui.icon) {
+        font-size: 48px;
+      }
     }
 
     &.icon {
@@ -169,8 +202,7 @@
         backdrop-filter: blur(32px) brightness(0.8);
       }
 
-      img,
-      video {
+      :is(img, video) {
         width: 100%;
         height: 100%;
         z-index: -2;
@@ -183,22 +215,19 @@
       padding: 0;
     }
 
-    & > video,
-    & > img {
+    & > :is(img, video) {
       max-width: 100%;
       max-height: 100%;
     }
 
     &.dissolve {
-      img,
-      video {
+      :is(img, video) {
         opacity: 0;
         transition: opacity 250ms;
       }
 
       &.loaded {
-        img,
-        video {
+        :is(img, video) {
           opacity: 1;
         }
       }
@@ -222,8 +251,7 @@
     }
   }
 
-  video,
-  img {
+  :is(img, video) {
     object-fit: contain;
 
     &:not([src]) {

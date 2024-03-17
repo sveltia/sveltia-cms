@@ -1,8 +1,7 @@
 <script>
   import { Button } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
-  import Image from '$lib/components/common/image.svelte';
-  import Video from '$lib/components/common/video.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { getAssetDetails } from '$lib/services/assets';
   import { getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
@@ -15,13 +14,13 @@
   export let asset;
 
   /**
-   * Whether to show the image/video preview.
+   * Whether to show the media preview.
    */
   export let showPreview = false;
 
   $: ({ path, size, kind, commitAuthor, commitDate, repoFileURL } = asset);
   $: [, extension = ''] = path.match(/\.([^.]+)$/) ?? [];
-  $: canPreview = ['image', 'video'].includes(kind);
+  $: canPreview = ['image', 'audio', 'video'].includes(kind);
 
   /**
    * @type {string | undefined}
@@ -56,12 +55,13 @@
 <div role="none" class="detail">
   {#if showPreview && canPreview}
     <div role="none" class="preview">
-      {#if kind === 'image'}
-        <Image {asset} variant="tile" checkerboard={true} />
-      {/if}
-      {#if kind === 'video'}
-        <Video {asset} variant="tile" controls />
-      {/if}
+      <AssetPreview
+        {kind}
+        {asset}
+        variant="tile"
+        checkerboard={kind === 'image'}
+        controls={kind === 'audio' || kind === 'video'}
+      />
     </div>
   {/if}
   <section>

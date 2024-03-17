@@ -1,5 +1,5 @@
 <script>
-  import MediaPreview from '$lib/components/common/media-preview.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
 
   /**
    * Loading method.
@@ -31,15 +31,20 @@
    * @type {boolean}
    */
   export let cover = false;
+  /**
+   * Show controls for the video.
+   */
+  export let controls = false;
 </script>
 
-<MediaPreview
-  type="video"
+<AssetPreview
+  kind="video"
   {loading}
   {asset}
   {src}
   {variant}
   {blurBackground}
   {cover}
+  {controls}
   {...$$restProps}
 />
