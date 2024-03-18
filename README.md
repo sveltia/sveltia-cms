@@ -123,7 +123,8 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
   - Navigate between the global media folder and per-collection media folders[^6].
   - Copy the public URL or file path of one or more selected assets to clipboard.
   - Copy the text or image data of of a selected asset to clipboard.
-  - Download one or more selected assets.
+  - Download one or more selected assets at once.
+  - Delete one or more selected assets at once.
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, and a list of entries that use the selected asset.
@@ -439,6 +440,11 @@ Sveltia CMS is still in early beta, so we do expect various problems. Please [re
 ## Related links
 
 - Introducing Sveltia CMS: a short technical presentation by [@kyoshino](https://github.com/kyoshino) during the _This Week in Svelte_ online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
+
+### As seen on
+
+- [Made with Svelte](https://madewithsvelte.com/sveltia-cms)
+- [LogRocket Blog](https://blog.logrocket.com/9-best-git-based-cms-platforms/)
 
 ## Disclaimer
 
