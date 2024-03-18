@@ -1,7 +1,7 @@
 /**
  * Get the metadata of an image, video or audio asset.
  * @param {string} src - Source URL.
- * @param {string} kind - Media type: `image`, `video` or `audio`.
+ * @param {AssetKind} kind - Media type: `image`, `video` or `audio`.
  * @returns {Promise<{
  * dimensions: { width: number, height: number } | undefined,
  * duration: number | undefined

@@ -3,7 +3,7 @@
   import { getAssetPreviewURL } from '$lib/services/assets/view';
 
   /**
-   * Media type.
+   * Asset type.
    * @type {AssetKind}
    */
   export let kind;
@@ -54,8 +54,9 @@
    */
   export let alt = '';
   /**
-   * Show controls for audio/video. If this is `false` and {@link kind} is `audio`, an icon will be
-   * displayed instead.
+   * Whether to show controls for audio/video. If this is `false` and {@link kind} is `audio`, an
+   * icon will be displayed instead.
+   * @type {boolean}
    */
   export let controls = false;
 

@@ -42,7 +42,7 @@
       <div role="alert">
         <div role="none" class="message">{$_('loading_site_data_error')}</div>
         <div role="none" class="error">
-          {@html DOMPurify.sanitize(/** @type {string } */ (marked.parseInline($authError)), {
+          {@html DOMPurify.sanitize(/** @type {string} */ (marked.parseInline($authError)), {
             ALLOWED_TAGS: ['a', 'code'],
             ALLOWED_ATTR: ['href'],
           })}

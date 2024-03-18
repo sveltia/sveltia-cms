@@ -43,8 +43,8 @@ const repository = new Proxy(/** @type {any} */ ({ owner: '', repo: '', branch: 
  * @param {object} [options.headers] - Request headers.
  * @param {string | null} [options.body] - Request body for POST.
  * @param {string} [options.token] - OAuth token.
- * @param {('json' | 'text' | 'blob' | 'raw')} [options.responseType] - Response type. The default
- * is `json`, while `raw` returns a `Response` object as is.
+ * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] - Response type. The default is
+ *`json`, while `raw` returns a `Response` object as is.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
@@ -187,7 +187,7 @@ const fetchDefaultBranchName = async () => {
   const { owner, repo } = repository;
 
   const { repository: result } =
-    /** @type {{ repository: { defaultBranchRef: { name: string } } } } */ (
+    /** @type {{ repository: { defaultBranchRef: { name: string } } }} */ (
       await fetchGraphQL(`query {
         repository(owner: "${owner}", name: "${repo}") { defaultBranchRef { name } }
       }`)

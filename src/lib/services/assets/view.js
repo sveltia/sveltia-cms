@@ -19,8 +19,8 @@ const storageKey = 'sveltia-cms.assets-view';
  * Lazily or eagerly generate the asset’s Blob URL on demand to be used for a `<Image>` or `<Video>`
  * component. For a Git backend, this will be done by fetching the Blob via the API.
  * @param {Asset} asset - Asset.
- * @param {('lazy' | 'eager')} loading - How to load the media.
- * @param {(HTMLImageElement | HTMLMediaElement)} element - Element to observe the visibility using
+ * @param {'lazy' | 'eager'} loading - How to load the media.
+ * @param {HTMLImageElement | HTMLMediaElement} element - Element to observe the visibility using
  * the Intersection Observer API.
  * @returns {Promise<string | undefined>} Blob URL.
  */
