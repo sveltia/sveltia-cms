@@ -233,6 +233,7 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
  */
 const defaultView = {
   type: 'grid',
+  showInfo: true,
   sort: {
     key: 'name',
     order: 'ascending',
@@ -243,7 +244,7 @@ const defaultView = {
  * View settings for the selected asset collection.
  * @type {import('svelte/store').Writable<AssetListView>}
  */
-export const currentView = writable({ type: 'grid' });
+export const currentView = writable({ type: 'grid', showInfo: true });
 
 /**
  * View settings for all the asset collection.

@@ -2,7 +2,7 @@
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { focusedAsset, selectedAssets } from '$lib/services/assets';
-  import { currentView, listedAssets } from '$lib/services/assets/view';
+  import { listedAssets } from '$lib/services/assets/view';
   import { goto } from '$lib/services/navigation';
 
   /**
@@ -46,13 +46,6 @@
   }}
   on:focus={() => {
     $focusedAsset = asset;
-
-    if (!$currentView?.showInfo) {
-      currentView.update((view) => ({
-        ...view,
-        showInfo: !$currentView?.showInfo,
-      }));
-    }
   }}
   on:dblclick={() => {
     goto(`/assets/${$focusedAsset?.path}`);
