@@ -66,6 +66,10 @@ export const strings = {
   loading_site_config: 'Loading Site Configuration…',
   loading_site_data: 'Loading Site Data…',
   loading_site_data_error: 'There was an error while loading site data.',
+  sign_in_error_not_project_root:
+    'The selected folder is not a Git repository’s root directory. Please try again.',
+  sign_in_error_picker_dismissed:
+    'A Git repository’s root directory could not be selected. Please try again.',
   unexpected_error: 'Unexpected Error',
 
   // Global toolbar

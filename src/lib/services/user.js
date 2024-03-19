@@ -25,9 +25,9 @@ user.subscribe((_user) => {
 });
 
 /**
- * @type {import('svelte/store').Writable<string>}
+ * @type {import('svelte/store').Writable<{ message: string, canRetry: boolean }>}
  */
-export const authError = writable('');
+export const signInError = writable({ message: '', canRetry: false });
 
 /**
  * @type {import('svelte/store').Writable<boolean>}
@@ -39,9 +39,22 @@ export const unauthenticated = writable(false);
  * @param {Error} ex - Exception.
  */
 const logError = (ex) => {
-  authError.set(
-    /** @type {{ message: string }} */ (ex.cause)?.message || get(_)('unexpected_error'),
-  );
+  let message =
+    /** @type {{ message: string }} */ (ex.cause)?.message || get(_)('unexpected_error');
+
+  let canRetry = false;
+
+  if (ex.name === 'NotFoundError') {
+    message = get(_)('sign_in_error_not_project_root');
+    canRetry = true;
+  }
+
+  if (ex.name === 'AbortError') {
+    message = get(_)('sign_in_error_picker_dismissed');
+    canRetry = true;
+  }
+
+  signInError.set({ message, canRetry });
   // eslint-disable-next-line no-console
   console.error(ex.message, ex.cause);
 };

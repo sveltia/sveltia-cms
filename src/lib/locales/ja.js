@@ -66,6 +66,10 @@ export const strings = {
   loading_site_config: 'サイト設定を読み込んでいます…',
   loading_site_data: 'サイトデータを読み込んでいます…',
   loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',
+  sign_in_error_not_project_root:
+    '選択されたフォルダーは Git レポジトリのルートディレクトリではありません。再度お試しください。',
+  sign_in_error_picker_dismissed:
+    'Git レポジトリのルートディレクトリを選択できませんでした。再度お試しください。',
   unexpected_error: '予期せぬエラー',
 
   // Global toolbar

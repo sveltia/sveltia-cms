@@ -30,7 +30,9 @@ let rootDirHandleDB;
  * @param {boolean} [options.forceReload] - Whether to force getting the handle.
  * @param {boolean} [options.showPicker] - Whether to show the directory picker.
  * @returns {Promise<FileSystemDirectoryHandle | null>} Directory handle.
- * @throws {Error} When the File System Access API is not supported by the user’s browser.
+ * @throws {Error | AbortError | NotFoundError} When the File System Access API is not supported by
+ * the user’s browser, when the directory picker was dismissed, or when the selected directory is
+ * not a project root directory. There might be other reasons to throw.
  * @see https://developer.chrome.com/articles/file-system-access/#stored-file-or-directory-handles-and-permissions
  */
 const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {}) => {
@@ -50,7 +52,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
       try {
         await handle.entries().next();
       } catch (/** @type {any} */ ex) {
-        // The directory may have been (re)moved
+        // The directory may have been (re)moved. Let the user pick the directory again
         handle = null;
         // eslint-disable-next-line no-console
         console.error(ex);
@@ -59,8 +61,15 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
   }
 
   if (!handle && showPicker) {
+    // This wil throw `AbortError` when the user dismissed the picker
     handle = await window.showDirectoryPicker();
-    await rootDirHandleDB.set(rootDirHandleKey, handle);
+
+    if (handle) {
+      // This will throw `NotFoundError` when it’s not a project root directory
+      await handle.getDirectoryHandle('.git');
+      // If it looks fine, cache the directory handle
+      await rootDirHandleDB.set(rootDirHandleKey, handle);
+    }
   }
 
   return /** @type {FileSystemDirectoryHandle | null} */ (handle);

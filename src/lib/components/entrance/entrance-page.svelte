@@ -9,7 +9,7 @@
   import { dataLoaded } from '$lib/services/contents';
   import { announcedPageStatus } from '$lib/services/navigation';
   import { prefs, prefsError } from '$lib/services/prefs';
-  import { authError, unauthenticated, user } from '$lib/services/user';
+  import { signInError, unauthenticated, user } from '$lib/services/user';
 
   $: $announcedPageStatus = $_('welcome_to_sveltia_cms');
 
@@ -38,14 +38,14 @@
       </div>
     {:else if !$siteConfig || !$prefs}
       <div role="alert" class="message">{$_('loading_site_config')}</div>
-    {:else if $authError}
+    {:else if $signInError.message && !$signInError.canRetry}
       <div role="alert">
         <div role="none" class="message">{$_('loading_site_data_error')}</div>
         <div role="none" class="error">
-          {@html DOMPurify.sanitize(/** @type {string} */ (marked.parseInline($authError)), {
-            ALLOWED_TAGS: ['a', 'code'],
-            ALLOWED_ATTR: ['href'],
-          })}
+          {@html DOMPurify.sanitize(
+            /** @type {string} */ (marked.parseInline($signInError.message)),
+            { ALLOWED_TAGS: ['a', 'code'], ALLOWED_ATTR: ['href'] },
+          )}
         </div>
       </div>
     {:else if !$user || $unauthenticated}

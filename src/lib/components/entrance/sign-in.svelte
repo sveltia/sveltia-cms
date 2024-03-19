@@ -2,7 +2,12 @@
   import { Button } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { signInAutomatically, signInManually, unauthenticated } from '$lib/services/user';
+  import {
+    signInAutomatically,
+    signInError,
+    signInManually,
+    unauthenticated,
+  } from '$lib/services/user';
   import { backend, backendName } from '$lib/services/backends';
 
   onMount(() => {
@@ -36,6 +41,11 @@
   {:else}
     <div role="alert">
       {$_('config.error.unsupported_backend', { values: { name: $backendName } })}
+    </div>
+  {/if}
+  {#if $signInError.message && $signInError.canRetry}
+    <div role="alert">
+      {$signInError.message}
     </div>
   {/if}
 </div>
