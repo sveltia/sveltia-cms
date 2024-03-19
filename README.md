@@ -70,7 +70,7 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 
 ### Better security
 
-- Avoids high/critical severity vulnerabilities through constant dependency updates[^34].
+- Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^34].
 - We have documented how to [set up a Content Security Policy](#set-up-content-security-policy) for the CMS.
 - The `unsafe-eval` or `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^33].
 
@@ -121,6 +121,7 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
   - Navigate between the global media folder and per-collection media folders[^6].
+  - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
   - Copy the public URL or file path of one or more selected assets to clipboard.
   - Copy the text or image data of of a selected asset to clipboard.
   - Download one or more selected assets at once.
@@ -128,7 +129,6 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, and a list of entries that use the selected asset.
-  - Preview audio, video, text and PDF files. Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
 
 ## Compatibility
@@ -185,6 +185,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 - Roles[^23]
 - Config editor[^10]
 - Mobile support[^18]
+- and more!
 
 ## Getting started
 
