@@ -101,6 +101,8 @@ export const signInAutomatically = async () => {
 
     try {
       await _backend.fetchFiles();
+      // Reset error
+      signInError.set({ message: '', canRetry: false });
     } catch (/** @type {any} */ ex) {
       // The API request may fail if the cached token has been expired or revoked. Then let the user
       // sign in again. 404 Not Found is also considered an authentication error.
@@ -134,6 +136,8 @@ export const signInManually = async (token = '') => {
 
   try {
     await get(backend)?.fetchFiles();
+    // Reset error
+    signInError.set({ message: '', canRetry: false });
   } catch (/** @type {any} */ ex) {
     logError(ex);
   }
