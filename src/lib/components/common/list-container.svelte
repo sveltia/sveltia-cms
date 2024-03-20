@@ -23,7 +23,7 @@
       overflow-y: auto;
       overscroll-behavior-y: contain;
 
-      & :global(.drop-target > *) {
+      :global(:is(.grid-view, .list-view)) {
         display: block;
         padding: 12px;
         height: 100%;
