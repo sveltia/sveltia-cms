@@ -50,7 +50,7 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 
 ### Better productivity
 
-- You can [work on a local Git repository](#work-with-a-local-git-repository) without running a proxy server on your machine, bypassing the 30 MB file size limit[^26].
+- You can [work with a local Git repository](#work-with-a-local-git-repository) without running a proxy server on your machine, bypassing the 30 MB file size limit[^26].
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 - You can delete multiple entries and assets at once.
