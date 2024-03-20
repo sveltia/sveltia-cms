@@ -26,9 +26,7 @@ export const strings = {
   user_name: 'User Name',
   password: 'Password',
   sign_in: 'Sign In',
-  sign_in_with_x: 'Sign In with {service}',
   signed_in_as_x: 'Signed In as {name}',
-  work_with_local_repo: 'Work with Local Repository',
   working_with_local_repo: 'Working with Local Repository',
   sign_out: 'Sign Out',
 
@@ -66,10 +64,16 @@ export const strings = {
   loading_site_config: 'Loading Site Configuration…',
   loading_site_data: 'Loading Site Data…',
   loading_site_data_error: 'There was an error while loading site data.',
+  sign_in_with_x: 'Sign In with {service}',
+  work_with_local_repo: 'Work with Local Repository',
+  work_with_local_repo_description:
+    'Click the button to select the root directory of the “{repo}” repository.',
+  work_with_local_repo_description_no_repo:
+    'Click the button to select the root directory of your Git repository.',
   sign_in_error_not_project_root:
-    'The selected folder is not a Git repository’s root directory. Please try again.',
+    'The folder you have selected is not a repository root directory. Please try again.',
   sign_in_error_picker_dismissed:
-    'A Git repository’s root directory could not be selected. Please try again.',
+    'A repository root directory could not be selected. Please try again.',
   unexpected_error: 'Unexpected Error',
 
   // Global toolbar

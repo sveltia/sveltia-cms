@@ -2,13 +2,16 @@
   import { Button } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import { backend, backendName } from '$lib/services/backends';
+  import { siteConfig } from '$lib/services/config';
   import {
     signInAutomatically,
     signInError,
     signInManually,
     unauthenticated,
   } from '$lib/services/user';
-  import { backend, backendName } from '$lib/services/backends';
+
+  $: repositoryName = $siteConfig?.backend?.repo?.split('/')?.[1];
 
   onMount(() => {
     signInAutomatically();
@@ -29,6 +32,15 @@
           await signInManually();
         }}
       />
+      {#if !$signInError.message}
+        <div role="none">
+          {#if repositoryName}
+            {$_('work_with_local_repo_description', { values: { repo: repositoryName } })}
+          {:else}
+            {$_('work_with_local_repo_description_no_repo')}
+          {/if}
+        </div>
+      {/if}
     {/if}
   {:else if $backend || $unauthenticated}
     <Button

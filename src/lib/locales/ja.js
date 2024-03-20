@@ -26,9 +26,7 @@ export const strings = {
   user_name: 'ユーザー名',
   password: 'パスワード',
   sign_in: 'ログイン',
-  sign_in_with_x: '{service} でログイン',
   signed_in_as_x: '{name} としてログイン中',
-  work_with_local_repo: 'ローカルレポジトリで作業',
   working_with_local_repo: 'ローカルレポジトリで作業中',
   sign_out: 'ログアウト',
 
@@ -66,10 +64,16 @@ export const strings = {
   loading_site_config: 'サイト設定を読み込んでいます…',
   loading_site_data: 'サイトデータを読み込んでいます…',
   loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',
+  sign_in_with_x: '{service} でログイン',
+  work_with_local_repo: 'ローカルレポジトリで作業',
+  work_with_local_repo_description:
+    'ボタンをクリックして「{repo}」レポジトリのルートディレクトリを選択してください。',
+  work_with_local_repo_description_no_repo:
+    'ボタンをクリックして Git レポジトリのルートディレクトリを選択してください。',
   sign_in_error_not_project_root:
-    '選択されたフォルダーは Git レポジトリのルートディレクトリではありません。再度お試しください。',
+    '選択されたフォルダーはレポジトリのルートディレクトリではありません。再度お試しください。',
   sign_in_error_picker_dismissed:
-    'Git レポジトリのルートディレクトリを選択できませんでした。再度お試しください。',
+    'レポジトリのルートディレクトリを選択できませんでした。再度お試しください。',
   unexpected_error: '予期せぬエラー',
 
   // Global toolbar
