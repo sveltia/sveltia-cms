@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
+    "@types/node": "^20.11.30",
     "cspell": "^8.6.0",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",

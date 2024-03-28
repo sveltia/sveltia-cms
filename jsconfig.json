@@ -26,8 +26,9 @@
     "checkJs": true,
     // Strict checks
     "strict": true,
+    // https://stackoverflow.com/q/54659978
     // https://github.com/vitejs/vite/issues/9539
-    "types": ["vite/client"],
+    "types": ["node", "vite/client"],
     /**
      * Resolve `$lib` in source. The same path has to be defined in `vite.config.js`
      */
