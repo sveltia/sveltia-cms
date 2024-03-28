@@ -61,15 +61,15 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       return {
         refEntry,
         hasContent: !!content,
-        flattenContent: /** @type {FlattenedEntryContent} */ (content ? flatten(content) : {}),
+        flattenedContent: /** @type {FlattenedEntryContent} */ (content ? flatten(content) : {}),
       };
     })
     .filter(
-      ({ hasContent, flattenContent }) =>
+      ({ hasContent, flattenedContent }) =>
         hasContent &&
-        entryFilters.every(({ field, values }) => values.includes(flattenContent[field])),
+        entryFilters.every(({ field, values }) => values.includes(flattenedContent[field])),
     )
-    .map(({ refEntry, flattenContent }) => {
+    .map(({ refEntry, flattenedContent }) => {
       /**
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
@@ -97,7 +97,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
             const valueMap = unflatten(
               Object.fromEntries(
-                Object.entries(flattenContent).filter(([keyPath]) => !!keyPath.match(regex)),
+                Object.entries(flattenedContent).filter(([keyPath]) => !!keyPath.match(regex)),
               ),
             );
 
@@ -114,7 +114,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           });
 
           const keyPath = fieldName.replace(/^fields\./, '');
-          const value = flattenContent[keyPath];
+          const value = flattenedContent[keyPath];
 
           // Resolve the displayed value for a nested relation field
           if (_fieldConfig?.widget === 'relation') {
@@ -123,7 +123,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
               // eslint-disable-next-line no-use-before-define
               getReferencedOptionLabel({
                 fieldConfig: /** @type {RelationField} */ (_fieldConfig),
-                valueMap: flattenContent,
+                valueMap: flattenedContent,
                 keyPath,
                 locale,
               }) ?? '',
