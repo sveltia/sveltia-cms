@@ -330,4 +330,115 @@ describe('Test getOptions()', () => {
       { label: 'MelvinLucas 123', value: 'Melvin' },
     ]);
   });
+
+  test('entry filters', () => {
+    const config = {
+      name: 'posts',
+      label: 'Posts',
+      widget: 'relation',
+      collection: 'posts',
+      value_field: '{{slug}}',
+      display_fields: ['title'],
+      search_fields: ['title'],
+    };
+
+    const entries = [
+      {
+        id: '',
+        sha: '',
+        slug: 'ragdoll',
+        collectionName: 'posts',
+        locales: {
+          en: {
+            content: { category: 'cats', draft: true, title: 'Ragdoll' },
+          },
+        },
+      },
+      {
+        id: '',
+        sha: '',
+        slug: 'persian',
+        collectionName: 'posts',
+        locales: {
+          en: {
+            content: { category: 'cats', draft: false, title: 'Persian' },
+          },
+        },
+      },
+      {
+        id: '',
+        sha: '',
+        slug: 'bulldog',
+        collectionName: 'posts',
+        locales: {
+          en: {
+            content: { category: 'dogs', draft: true, title: 'Bulldog' },
+          },
+        },
+      },
+      {
+        id: '',
+        sha: '',
+        slug: 'poodle',
+        collectionName: 'posts',
+        locales: {
+          en: {
+            content: { category: 'dogs', draft: false, title: 'Poodle' },
+          },
+        },
+      },
+    ];
+
+    expect(getOptions('en', config, entries)).toEqual([
+      { label: 'Bulldog', value: 'bulldog' },
+      { label: 'Persian', value: 'persian' },
+      { label: 'Poodle', value: 'poodle' },
+      { label: 'Ragdoll', value: 'ragdoll' },
+    ]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [{ field: 'draft', values: [true] }],
+        },
+        entries,
+      ),
+    ).toEqual([
+      { label: 'Bulldog', value: 'bulldog' },
+      { label: 'Ragdoll', value: 'ragdoll' },
+    ]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [
+            { field: 'draft', values: [true] },
+            { field: 'category', values: ['cats'] },
+          ],
+        },
+        entries,
+      ),
+    ).toEqual([{ label: 'Ragdoll', value: 'ragdoll' }]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [
+            { field: 'draft', values: [false] },
+            { field: 'category', values: ['cats', 'dogs'] },
+          ],
+        },
+        entries,
+      ),
+    ).toEqual([
+      { label: 'Persian', value: 'persian' },
+      { label: 'Poodle', value: 'poodle' },
+    ]);
+  });
 });

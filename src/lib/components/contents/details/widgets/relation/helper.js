@@ -48,19 +48,28 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example '{{route}}: {{sections.*.name}} ({{sections.*.id}})'
    */
   const _displayField = (displayFields ?? [valueField]).map(normalizeFieldName).join(' ');
+  /**
+   * Entry filters.
+   */
+  const entryFilters = fieldConfig.filters ?? [];
 
   return refEntries
-    .filter(
-      (refEntry) => !!refEntry?.locales[locale]?.content || !!refEntry?.locales._default?.content,
-    )
     .map((refEntry) => {
       // Fall back to the default locale if needed
       const { content } = refEntry?.locales[locale] ?? refEntry?.locales._default ?? {};
-      /**
-       * @type {FlattenedEntryContent}
-       */
-      const flattenContent = flatten(content);
 
+      return {
+        refEntry,
+        hasContent: !!content,
+        flattenContent: /** @type {FlattenedEntryContent} */ (content ? flatten(content) : {}),
+      };
+    })
+    .filter(
+      ({ hasContent, flattenContent }) =>
+        hasContent &&
+        entryFilters.every(({ field, values }) => values.includes(flattenContent[field])),
+    )
+    .map(({ refEntry, flattenContent }) => {
       /**
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
@@ -156,7 +165,6 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       return labels.map((label, index) => ({ label, value: values[index] }));
     })
     .flat(1)
-    .filter(Boolean)
     .sort((a, b) => a.label.localeCompare(b.label));
 };
 

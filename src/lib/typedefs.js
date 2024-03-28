@@ -562,6 +562,7 @@
  * @property {boolean} [multiple] - Whether to accept multiple values.
  * @property {number} [min] - Minimum number of items.
  * @property {number} [max] - Maximum number of items.
+ * @property {{ field: string, values: any[] }[]} [filters] - Entry filters.
  * @see https://decapcms.org/docs/widgets/#relation
  */
 
