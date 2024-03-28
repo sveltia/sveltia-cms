@@ -1,3 +1,4 @@
+import { subtle } from 'crypto';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { generateUUID, getHash } from '$lib/services/utils/crypto';
 
@@ -18,6 +19,14 @@ describe('Test generateUUID()', () => {
 });
 
 describe('Test getHash()', () => {
+  // The Web Crypto API is only available in secure contexts; we need to use the `node:crypto`
+  // module to pass these tests
+  beforeAll(() => {
+    Object.defineProperty(globalThis, 'crypto', {
+      value: { subtle },
+    });
+  });
+
   const string = 'Hello, World!';
   const blob = new Blob([string], { type: 'text/plain' });
 
