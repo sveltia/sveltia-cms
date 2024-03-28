@@ -2,7 +2,8 @@ import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
-import { getHash, renameIfNeeded } from '$lib/services/utils/files';
+import { getHash } from '$lib/services/utils/crypto';
+import { renameIfNeeded } from '$lib/services/utils/files';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**

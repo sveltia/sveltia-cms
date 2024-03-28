@@ -1,5 +1,3 @@
-import base32Encode from 'base32-encode';
-
 /**
  * Truncate the given string.
  * @param {string} string - Original string.
@@ -31,41 +29,3 @@ export const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\
  * @returns {string} Trimmed string, e.g. `foo/bar`.
  */
 export const stripSlashes = (string) => string.replace(/^\/+/, '').replace(/\/+$/, '');
-
-/**
- * Generate a v4 UUID or its shortened version.
- * @param {'short' | 'shorter' | number} [length] - Length.
- * @returns {string} UUID like `10f95178-c983-4cfe-91d6-4e62c8c7e582`.
- * @see https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID
- */
-export const generateUUID = (length) => {
-  const uuid = /** @type {string} */ globalThis.crypto.randomUUID();
-
-  // Last 12 characters
-  if (length === 'short') {
-    return /** @type {string} */ (uuid.split('-').pop());
-  }
-
-  // First 8 characters
-  if (length === 'shorter') {
-    return /** @type {string} */ (uuid.split('-').shift());
-  }
-
-  // First X characters but without hyphens
-  if (typeof length === 'number') {
-    return uuid.split('-').join('').slice(0, length);
-  }
-
-  return uuid;
-};
-
-/**
- * Generate a random ID.
- * @returns {string} Generated 26-character string.
- */
-export const generateRandomId = () => {
-  const hex = generateUUID().replaceAll('-', '');
-  const { buffer } = new Uint8Array((hex.match(/../g) ?? []).map((h) => parseInt(h, 16)));
-
-  return base32Encode(buffer, 'RFC4648', { padding: false }).toLowerCase();
-};

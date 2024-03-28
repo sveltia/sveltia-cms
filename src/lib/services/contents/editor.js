@@ -16,10 +16,11 @@ import { translator } from '$lib/services/integrations/translators';
 import { formatEntryFile, getFileExtension } from '$lib/services/parser';
 import { prefs } from '$lib/services/prefs';
 import { user } from '$lib/services/user';
+import { generateRandomId, generateUUID, getHash } from '$lib/services/utils/crypto';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
-import { createPath, getHash, renameIfNeeded, resolvePath } from '$lib/services/utils/files';
+import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { escapeRegExp, generateRandomId, generateUUID } from '$lib/services/utils/strings';
+import { escapeRegExp } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.entry-view';
 

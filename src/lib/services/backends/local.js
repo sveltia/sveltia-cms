@@ -7,7 +7,8 @@ import { allAssetFolders, allAssets } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
-import { getHash, readAsText } from '$lib/services/utils/files';
+import { getHash } from '$lib/services/utils/crypto';
+import { readAsText } from '$lib/services/utils/files';
 import IndexedDB from '$lib/services/utils/indexeddb';
 import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 

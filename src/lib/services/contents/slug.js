@@ -3,9 +3,10 @@ import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents';
 import { getFieldConfig } from '$lib/services/contents/entry';
+import { generateUUID } from '$lib/services/utils/crypto';
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import { renameIfNeeded } from '$lib/services/utils/files';
-import { generateUUID, truncate } from '$lib/services/utils/strings';
+import { truncate } from '$lib/services/utils/strings';
 
 /**
  * Transform slug template.

@@ -87,40 +87,6 @@ export const readAsText = async (file) => {
 };
 
 /**
- * Read the file as array buffer.
- * @param {File | Blob} file - File.
- * @returns {Promise<ArrayBuffer>} Content.
- */
-export const readAsArrayBuffer = async (file) => {
-  const reader = new FileReader();
-
-  return new Promise((resolve) => {
-    /**
-     * Return the result once the content is read.
-     */
-    reader.onload = () => {
-      resolve(/** @type {ArrayBuffer} */ (reader.result));
-    };
-
-    reader.readAsArrayBuffer(file);
-  });
-};
-
-/**
- * Get the SHA-1 hash of the given file.
- * @param {File | Blob} file - File.
- * @returns {Promise<string>} Hash.
- * @see https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
- */
-export const getHash = async (file) => {
-  const digest = await window.crypto.subtle.digest('SHA-1', await readAsArrayBuffer(file));
-
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-};
-
-/**
  * Get the Base64 encoding of the given input.
  * @param {File | Blob | string} input - Input file or string.
  * @returns {Promise<string>} Data URL like `data:text/plain;base64,...`.

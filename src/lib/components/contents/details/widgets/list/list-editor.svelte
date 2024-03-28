@@ -14,7 +14,8 @@
   import { entryDraft, getDefaultValues, updateListField } from '$lib/services/contents/editor';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
-  import { escapeRegExp, generateUUID } from '$lib/services/utils/strings';
+  import { generateUUID } from '$lib/services/utils/crypto';
+  import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
    * @type {LocaleCode}

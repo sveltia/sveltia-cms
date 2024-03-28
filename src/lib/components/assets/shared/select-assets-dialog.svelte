@@ -15,7 +15,7 @@
     allStockPhotoServices,
   } from '$lib/services/integrations/media-libraries';
   import { prefs } from '$lib/services/prefs';
-  import { generateUUID } from '$lib/services/utils/strings';
+  import { generateUUID } from '$lib/services/utils/crypto';
 
   export let open = false;
   /**
