@@ -66,25 +66,12 @@ export const scanFiles = async ({ items }, { accept } = {}) => {
 };
 
 /**
- * Read the file as plaintext.
- * @param {File} file - File.
+ * Read the given file as plaintext. On Windows, the result may include CRLF line breaks. Convert
+ * any CRLF to LF to parse entries properly.
+ * @param {File | Blob} file - File.
  * @returns {Promise<string>} Content.
  */
-export const readAsText = async (file) => {
-  const reader = new FileReader();
-
-  return new Promise((resolve) => {
-    /**
-     * Return the result once the content is read. On Windows, the result may include CRLF line
-     * breaks. Convert any CRLF to LF to parse entries properly.
-     */
-    reader.onload = () => {
-      resolve(/** @type {string} */ (reader.result).replace(/\r\n/g, '\n'));
-    };
-
-    reader.readAsText(file);
-  });
-};
+export const readAsText = async (file) => (await file.text()).replace(/\r\n/g, '\n');
 
 /**
  * Get the Base64 encoding of the given input.
