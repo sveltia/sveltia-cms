@@ -34,7 +34,7 @@ export const parseLocation = (loc = window.location) => {
 
   return {
     path: decodeURIComponent(pathname),
-    params: Object.fromEntries([...searchParams.entries()]),
+    params: Object.fromEntries(searchParams),
   };
 };
 
