@@ -138,7 +138,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Installation | Installing with `npm` is not supported yet. |
-| Backends | Only the GitHub backend is available at this time. Sveltia CMS uses the GraphQL by default for a better performance; it cannot be disabled. The GitLab backend will be available soon. We plan to add the Test backend as well for our demo site as well, but Azure and Bitbucket will probably not be supported, mainly due to the lack of a method to fetch content in bulk. We have not looked into the relatively new Gitea backend yet. |
+| Backends | Only the GitHub backend is available at this time. Sveltia CMS uses the GraphQL API by default for better performance; it cannot be disabled. The GitLab backend will be available soon. We’ll also add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported, mainly due to the lack of a method to fetch content in bulk. |
 | Netlify Integration | Identity Widget is not supported yet. We will not support Git Gateway due to the poor performance; we may implement an alternative using GraphQL later. |
 | Local Git Repository | Supported using a different approach. [See below](#work-with-a-local-git-repository) for details. |
 | UI Locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Settings. (Click on the Account button in the top right corner of the CMS.) |
@@ -230,6 +230,7 @@ You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](htt
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
    - Other Chromium-based browsers may also work. In Brave, you need to enable the File System Access API [with a flag](https://github.com/brave/brave-browser/issues/20563#issuecomment-1021567573).
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
+   - If you get an error saying “not a repository root directory”, make sure you’ve turned the folder into a repository with either CUI ([`git init`](https://github.com/git-guides/git-init)) or GUI, and the hidden `.git` folder exists.
    - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646) and [this thread](https://github.com/sveltia/sveltia-cms/discussions/101).
 1. Make some changes to your content on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
