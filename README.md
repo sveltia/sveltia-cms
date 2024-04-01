@@ -43,7 +43,7 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
 - Small footprint: The bundle size is less than 300 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
-- Uses the GraphQL API for GitHub to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
+- Uses the GraphQL API for GitHub/GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Caches Git files locally to further speed up startup and reduce bandwidth.
 - You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
@@ -138,7 +138,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Installation | Installing with `npm` is not supported yet. |
-| Backends | Only the GitHub backend is available at this time. Sveltia CMS uses the GraphQL API by default for better performance; it cannot be disabled. The GitLab backend will be available soon. We’ll also add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported, mainly due to the lack of a method to fetch content in bulk. |
+| Backends | Currently only the GitHub and GitLab backends are available. Sveltia CMS uses the GraphQL API by default for better performance; it cannot be disabled. We’ll also add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported, mainly due to the lack of a method to fetch content in bulk. |
 | Netlify Integration | Identity Widget is not supported yet. We will not support Git Gateway due to the poor performance; we may implement an alternative using GraphQL later. |
 | Local Git Repository | Supported using a different approach. [See below](#work-with-a-local-git-repository) for details. |
 | UI Locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Settings. (Click on the Account button in the top right corner of the CMS.) |
@@ -205,14 +205,14 @@ Alternatively, you can probably use one of the [Netlify/Decap CMS templates](htt
 
 ### Migration
 
-Have a look at the [compatibility chart](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository:
+Have a look at the [compatibility chart](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub/GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository:
 
 ```diff
 -<script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
 +<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js" type="module"></script>
 ```
 
-That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
+That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub/GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
 That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#work-with-a-local-git-repository) for how.
 
@@ -220,7 +220,7 @@ That said, we strongly recommend testing your new Sveltia CMS instance first on 
 
 ### Move your site from Netlify to another hosting service
 
-You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
+You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub/GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
 
 ### Work with a local Git repository
 
@@ -373,10 +373,15 @@ connect-src 'self' blob: data:;
 
 And combine the following policies depending on your Git backend and enabled integrations.
 
-- GitHub:
+- GitHub: (If you’re running GitHub Enterprise Server, you’ll also need to add the origin to these directives.)
   ```csp
-  img-src https://avatars.githubusercontent.com https://raw.githubusercontent.com;
+  img-src https://*.githubusercontent.com
   connect-src https://api.github.com https://www.githubstatus.com;
+  ```
+- GitLab: (If you’re running a self-hosted instance, you’ll also need to add the origin to these directives.)
+  ```csp
+  img-src https://gitlab.com https://secure.gravatar.com;
+  connect-src https://gitlab.com;
   ```
 - Pexels:
   ```csp
