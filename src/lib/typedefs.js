@@ -9,9 +9,8 @@
  * @property {string} [name] - User display name.
  * @property {string} [login] - User account name.
  * @property {string} [email] - User email.
- * @property {string} [avatar_url] - Avatar URL.
- * @property {string} [html_url] - Profile URL.
- * @property {object} [detail] - Account detail.
+ * @property {string} [avatarURL] - Avatar URL.
+ * @property {string} [profileURL] - Profile URL.
  */
 
 /**
@@ -34,8 +33,10 @@
  * @property {string} repo - Repository name.
  * @property {string} branch - Branch name. It’s `master` by default for historical reasons, though
  * the current default branch name on GitHub is `main`.
- * @property {string} url - Repository URL that can be linked from the CMS UI to the backend
- * service.
+ * @property {string} baseURL - The repository’s web-accessible URL that can be linked from the CMS
+ * UI to the backend service.
+ * @property {string} branchURL - Repository URL with a branch name. It’s the same as `baseURL` when
+ * the default branch is used.
  */
 
 /**
@@ -57,10 +58,11 @@
 /**
  * Backend service.
  * @typedef {object} BackendService
+ * @property {string} name - Service name, e.g. `github`.
  * @property {string} label - Service label.
  * @property {RepositoryInfo} [repository] - Basic repository info. Git backend only.
  * @property {() => void} init - Function to initialize the backend.
- * @property {(options: SignInOptions) => Promise<User>} signIn - Function to sign in.
+ * @property {(options: SignInOptions) => Promise<User | void>} signIn - Function to sign in.
  * @property {() => Promise<void>} signOut - Function to sign out.
  * @property {() => Promise<void>} fetchFiles - Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] - Function to fetch an asset as a Blob.
@@ -69,7 +71,7 @@
  * Promise<string | void>} commitChanges - Function to save file changes, including additions and
  * deletions, and return the commit URL (Git backend only).
  * @property {() => Promise<Response>} [triggerDeployment] - Function to manually trigger a new
- * deployment on any connected CI/CD provider. Git backend only.
+ * deployment on any connected CI/CD provider. GitHub only.
  */
 
 /**
@@ -142,20 +144,41 @@
  */
 
 /**
+ * Metadata of a file retrieved from a Git repository.
+ * @typedef {object} RepositoryFileMetadata
+ * @property {string} repoFileURL - Web-accessible URL of the file.
+ * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
+ * @property {Date} [commitDate] - Commit date for a Git backend.
+ */
+
+/**
+ * Base file info retrieved from a Git repository.
+ * @typedef {object} RepositoryFileInfo
+ * @property {string} sha - SHA-1 hash for the file.
+ * @property {number} size - File size in bytes.
+ * @property {string} [text] - Raw text for a plaintext file, like HTML or Markdown.
+ * @property {RepositoryFileMetadata} meta - Metadata from the repository.
+ */
+
+/**
+ * Canonical metadata of entry/asset files as well as text file contents retrieved from a Git
+ * repository, keyed with a file path.
+ * @typedef {{ [path: string]: RepositoryFileInfo }} RepositoryContentsMap
+ */
+
+/**
  * File info being processed as {@link Entry} or {@link Asset}.
  * @typedef {object} BaseFileListItem
- * @property {string} [type] - File type.
+ * @property {'entry' | 'asset'} [type] - File type handled in the CMS.
  * @property {File} [file] - File object. Local backend only.
  * @property {string} [url] - Blob URL for the asset or temporary Blob URL for a local file being
  * uploaded. It can be `undefined` if the Blob URL is not generated yet.
  * @property {string} [name] - File name.
  * @property {string} path - File path.
  * @property {string} sha - SHA-1 hash for the file.
- * @property {number} size - File size in bytes.
+ * @property {number} [size] - File size in bytes.
  * @property {string} [text] - Raw text for a plaintext file, like HTML or Markdown.
- * @property {object} [meta] - Metadata.
- * @property {string} [fetchURL] - URL to fetch the file content. Git backend only.
- * @property {string} [repoFileURL] - Web-accessible URL on the Git repository. Git backend only.
+ * @property {RepositoryFileMetadata} [meta] - Metadata from the repository. Git backend only.
  */
 
 /**
@@ -247,6 +270,8 @@
  * @property {string} [backend.site_domain] - Site domain used for OAuth.
  * @property {string} [backend.base_url] - OAuth base URL origin.
  * @property {string} [backend.auth_endpoint] - OAuth URL path.
+ * @property {'pkce' | 'implicit'} [backend.auth_type] - OAuth authentication method. GitLab only.
+ * @property {string} [backend.app_id] - OAuth application ID. GitLab only.
  * @property {{ [key: string]: string }} [backend.commit_messages] - Commit message map.
  * @property {boolean} [backend.automatic_deployments] - Whether to enable or disable automatic
  * deployments with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If
@@ -766,7 +791,6 @@
  * media folder.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.
- * @property {string} [fetchURL] - URL to fetch the file content. Git backend only.
  * @property {string} [repoFileURL] - Web-accessible URL on the Git repository. Git backend only.
  */
 

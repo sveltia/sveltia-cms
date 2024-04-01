@@ -5,6 +5,7 @@
   import { _ } from 'svelte-i18n';
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
+  import { inAuthPopup } from '$lib/services/backends/shared/auth';
   import { fetchSiteConfig, siteConfig, siteConfigError } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { announcedPageStatus } from '$lib/services/navigation';
@@ -48,6 +49,8 @@
           )}
         </div>
       </div>
+    {:else if $inAuthPopup}
+      <div role="alert" class="message">{$_('authorizing')}</div>
     {:else if !$user || $unauthenticated}
       <SignIn />
     {:else if !$dataLoaded}

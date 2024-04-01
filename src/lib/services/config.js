@@ -48,6 +48,18 @@ const validate = (config) => {
     );
   }
 
+  if (typeof config.backend.repo !== 'string' || config.backend.repo.split('/').length !== 2) {
+    throw new Error(get(_)('config.error.no_repository'));
+  }
+
+  if (config.backend.auth_type === 'implicit') {
+    throw new Error(get(_)('config.error.oauth_implicit_flow'));
+  }
+
+  if (config.backend.auth_type === 'pkce' && !config.backend.app_id) {
+    throw new Error(get(_)('config.error.oauth_no_app_id'));
+  }
+
   if (!config.media_folder) {
     throw new Error(get(_)('config.error.no_media_folder'));
   }

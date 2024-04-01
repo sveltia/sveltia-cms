@@ -65,15 +65,31 @@ export const strings = {
   loading_site_data: 'サイトデータを読み込んでいます…',
   loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',
   sign_in_with_x: '{service} でログイン',
+  authorizing: '認証中…',
   work_with_local_repo: 'ローカルレポジトリで作業',
   work_with_local_repo_description:
     'ボタンをクリックして「{repo}」レポジトリのルートディレクトリを選択してください。',
   work_with_local_repo_description_no_repo:
     'ボタンをクリックして Git レポジトリのルートディレクトリを選択してください。',
-  sign_in_error_not_project_root:
-    '選択されたフォルダーはレポジトリのルートディレクトリではありません。再度お試しください。',
-  sign_in_error_picker_dismissed:
-    'レポジトリのルートディレクトリを選択できませんでした。再度お試しください。',
+  sign_in_error: {
+    not_project_root:
+      '選択されたフォルダーはレポジトリのルートディレクトリではありません。再度お試しください。',
+    picker_dismissed: 'レポジトリのルートディレクトリを選択できませんでした。再度お試しください。',
+    authentication_aborted: '認証が中断されました。再度お試しください。',
+    // Errors defined in Sveltia CMS Authenticator
+    // https://github.com/sveltia/sveltia-cms-auth/blob/main/src/index.js
+    UNSUPPORTED_BACKEND: 'この認証アプリはお使いの Git バックエンドに対応していません。',
+    UNSUPPORTED_DOMAIN: 'この認証アプリではお使いのドメインの使用は許可されていません。',
+    MISCONFIGURED_CLIENT: 'OAuth アプリのクライアント ID またはシークレットが設定されていません。',
+    AUTH_CODE_REQUEST_FAILED: '認証コードを取得できませんでした。後で再度お試しください。',
+    CSRF_DETECTED:
+      'CSRF 攻撃の可能性が検出されました。お使いのインターネット接続が安全であることを確かめてください。',
+    TOKEN_REQUEST_FAILED: 'アクセストークンを要求できませんでした。後で再度お試しください。',
+    MALFORMED_RESPONSE: 'サーバーから不正なデータが返されました。後で再度お試しください。',
+  },
+  repository_not_found: '「{repo}」レポジトリは存在しません。',
+  repository_empty: '「{repo}」レポジトリにはブランチがありません。',
+  branch_not_found: '「{repo}」レポジトリに「{branch}」ブランチは存在しません。',
   unexpected_error: '予期せぬエラー',
 
   // Global toolbar
@@ -390,6 +406,9 @@ export const strings = {
       no_collection: '設定ファイル内でコレクションが定義されていません。',
       no_backend: '設定ファイル内でバックエンドが定義されていません。',
       unsupported_backend: '設定されている「{name}」バックエンドは非対応です。',
+      no_repository: '設定ファイル内でレポジトリが定義されていません。',
+      oauth_implicit_flow: '設定されている認証方式 (暗黙的フロー) は非対応です。',
+      oauth_no_app_id: '設定ファイル内で OAuth アプリケーション ID が定義されていません。',
       no_media_folder: '設定ファイル内でメディアフォルダーが定義されていません。',
       unexpected: '設定ファイルを検証中に予期せぬ問題が発生しました。',
       try_again: '問題を解決してから再度お試しください。',

@@ -40,7 +40,7 @@ describe('Test getHash()', () => {
   test('SHA-256', async () => {
     const hash = 'dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f';
 
-    expect(await getHash(string, 'SHA-256')).toEqual(hash);
-    expect(await getHash(blob, 'SHA-256')).toEqual(hash);
+    expect(await getHash(string, { algorithm: 'SHA-256' })).toEqual(hash);
+    expect(await getHash(blob, { algorithm: 'SHA-256' })).toEqual(hash);
   });
 });

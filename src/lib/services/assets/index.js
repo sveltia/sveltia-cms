@@ -154,7 +154,7 @@ export const getAssetURL = async (asset, { pathOnly = false, publicURL = false }
     return asset.url;
   }
 
-  if (!asset.url && (asset.file || asset.fetchURL) && !pathOnly && !publicURL) {
+  if (!asset.url && !pathOnly && !publicURL) {
     const blob = asset.file ?? (await get(backend)?.fetchBlob?.(asset));
 
     if (!blob) {

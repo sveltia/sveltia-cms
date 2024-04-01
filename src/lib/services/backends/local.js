@@ -12,6 +12,7 @@ import { readAsText } from '$lib/services/utils/files';
 import IndexedDB from '$lib/services/utils/indexeddb';
 import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
+const backendName = 'local';
 const label = 'Local Repository';
 /**
  * @type {import('svelte/store').Writable<?FileSystemDirectoryHandle>}
@@ -110,7 +111,7 @@ const signIn = async ({ auto = false }) => {
     throw new Error('Directory handle could not be acquired');
   }
 
-  return { backendName: 'local' };
+  return { backendName };
 };
 
 /**
@@ -264,6 +265,7 @@ const commitChanges = async (changes) => {
  * @type {BackendService}
  */
 export default {
+  name: backendName,
   label,
   init,
   signIn,

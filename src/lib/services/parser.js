@@ -460,8 +460,6 @@ export const parseAssetFiles = (assetFiles) =>
     const {
       file,
       url,
-      fetchURL,
-      repoFileURL,
       path,
       name = /** @type {string} */ (path.split('/').pop()),
       sha,
@@ -474,8 +472,6 @@ export const parseAssetFiles = (assetFiles) =>
     return {
       file,
       url,
-      fetchURL,
-      repoFileURL,
       path,
       name,
       sha,

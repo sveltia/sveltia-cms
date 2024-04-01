@@ -15,7 +15,7 @@
   let showPrefsDialog = false;
   let showShortcutsDialog = false;
 
-  $: hasAvatar = !!$user?.avatar_url;
+  $: hasAvatar = !!$user?.avatarURL;
   $: isLocal = $backendName === 'local';
 </script>
 
@@ -37,7 +37,7 @@
       this={hasAvatar ? 'img' : undefined}
       class="avatar"
       loading="lazy"
-      src={$user?.avatar_url}
+      src={$user?.avatarURL}
     />
     <Menu slot="popup" aria-label={$_('account')}>
       <MenuItem
@@ -46,7 +46,7 @@
           : $_('signed_in_as_x', { values: { name: $user?.login } })}
         disabled={isLocal}
         on:click={() => {
-          window.open($user?.html_url, '_blank');
+          window.open($user?.profileURL, '_blank');
         }}
       />
       <Divider />
@@ -60,7 +60,7 @@
         label={$_('git_repository')}
         disabled={isLocal}
         on:click={() => {
-          window.open($backend?.repository?.url);
+          window.open($backend?.repository?.branchURL);
         }}
       />
       <PublishMenuItem />

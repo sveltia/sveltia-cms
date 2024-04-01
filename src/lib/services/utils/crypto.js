@@ -41,15 +41,19 @@ export const generateRandomId = () => {
 /**
  * Get the SHA hash of the given file or text.
  * @param {File | Blob | string} input - File or text.
- * @param {'SHA-1' | 'SHA-256' | 'SHA-512'} [algorithm] - Digest algorithm. Default: SHA-1.
- * @returns {Promise<string>} Hash as hex string.
+ * @param {object} [options] - Options.
+ * @param {'SHA-1' | 'SHA-256' | 'SHA-512'} [options.algorithm] - Digest algorithm. Default: SHA-1.
+ * @param {'hex' | 'binary'} [options.format] - Hash format. Default: hex.
+ * @returns {Promise<string>} Hash.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
  */
-export const getHash = async (input, algorithm = 'SHA-1') => {
+export const getHash = async (input, { algorithm = 'SHA-1', format = 'hex' } = {}) => {
   const data =
     typeof input === 'string' ? new TextEncoder().encode(input) : await input.arrayBuffer();
 
   const digest = await globalThis.crypto.subtle.digest(algorithm, data);
 
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(digest), (b) =>
+    format === 'binary' ? String.fromCharCode(b) : b.toString(16).padStart(2, '0'),
+  ).join('');
 };

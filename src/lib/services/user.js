@@ -45,12 +45,16 @@ const logError = (ex) => {
   let canRetry = false;
 
   if (ex.name === 'NotFoundError') {
-    message = get(_)('sign_in_error_not_project_root');
+    message = get(_)('sign_in_error.not_project_root');
     canRetry = true;
   }
 
   if (ex.name === 'AbortError') {
-    message = get(_)('sign_in_error_picker_dismissed');
+    message = get(_)(
+      get(backendName) === 'local'
+        ? 'sign_in_error.picker_dismissed'
+        : 'sign_in_error.authentication_aborted',
+    );
     canRetry = true;
   }
 
@@ -95,23 +99,25 @@ export const signInAutomatically = async () => {
     unauthenticated.set(true);
   }
 
-  // Use the cached user to start fetching files
-  if (_user && !get(unauthenticated)) {
-    user.set(_user);
+  if (!_user || get(unauthenticated)) {
+    return;
+  }
 
-    try {
-      await _backend.fetchFiles();
-      // Reset error
-      signInError.set({ message: '', canRetry: false });
-    } catch (/** @type {any} */ ex) {
-      // The API request may fail if the cached token has been expired or revoked. Then let the user
-      // sign in again. 404 Not Found is also considered an authentication error.
-      // https://docs.github.com/en/rest/overview/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource
-      if ([401, 403, 404].includes(ex.cause?.status)) {
-        unauthenticated.set(true);
-      } else {
-        logError(ex);
-      }
+  // Use the cached user to start fetching files
+  user.set(_user);
+
+  try {
+    await _backend.fetchFiles();
+    // Reset error
+    signInError.set({ message: '', canRetry: false });
+  } catch (/** @type {any} */ ex) {
+    // The API request may fail if the cached token has been expired or revoked. Then let the user
+    // sign in again. 404 Not Found is also considered an authentication error.
+    // https://docs.github.com/en/rest/overview/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource
+    if ([401, 403, 404].includes(ex.cause?.status)) {
+      unauthenticated.set(true);
+    } else {
+      logError(ex);
     }
   }
 };
@@ -129,6 +135,10 @@ export const signInManually = async (token = '') => {
   } catch (/** @type {any} */ ex) {
     logError(ex);
 
+    return;
+  }
+
+  if (!_user) {
     return;
   }
 

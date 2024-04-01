@@ -65,15 +65,31 @@ export const strings = {
   loading_site_data: 'Loading Site Data…',
   loading_site_data_error: 'There was an error while loading site data.',
   sign_in_with_x: 'Sign In with {service}',
+  authorizing: 'Authorizing…',
   work_with_local_repo: 'Work with Local Repository',
   work_with_local_repo_description:
     'Click the button to select the root directory of the “{repo}” repository.',
   work_with_local_repo_description_no_repo:
     'Click the button to select the root directory of your Git repository.',
-  sign_in_error_not_project_root:
-    'The folder you have selected is not a repository root directory. Please try again.',
-  sign_in_error_picker_dismissed:
-    'A repository root directory could not be selected. Please try again.',
+  sign_in_error: {
+    not_project_root:
+      'The folder you have selected is not a repository root directory. Please try again.',
+    picker_dismissed: 'A repository root directory could not be selected. Please try again.',
+    authentication_aborted: 'Authentication aborted. Please try again.',
+    // Errors defined in Sveltia CMS Authenticator
+    // https://github.com/sveltia/sveltia-cms-auth/blob/main/src/index.js
+    UNSUPPORTED_BACKEND: 'Your Git backend is not supported by the authenticator.',
+    UNSUPPORTED_DOMAIN: 'Your domain is not allowed to use the authenticator.',
+    MISCONFIGURED_CLIENT: 'OAuth app client ID or secret is not configured.',
+    AUTH_CODE_REQUEST_FAILED: 'Failed to receive an authorization code. Please try again later.',
+    CSRF_DETECTED:
+      'Possible CSRF attack was detected. Make sure your internet connection is secure.',
+    TOKEN_REQUEST_FAILED: 'Failed to request an access token. Please try again later.',
+    MALFORMED_RESPONSE: 'Server responded with malformed data. Please try again later.',
+  },
+  repository_not_found: 'The “{repo}” repository doesn’t exist.',
+  repository_empty: 'The “{repo}” repository has no branches.',
+  branch_not_found: 'The “{repo}” repository doesn’t have the “{branch}” branch.',
   unexpected_error: 'Unexpected Error',
 
   // Global toolbar
@@ -388,6 +404,9 @@ export const strings = {
       no_collection: 'Collections are not defined in the configuration file.',
       no_backend: 'The backend is not defined in the configuration file.',
       unsupported_backend: 'The configured “{name}” backend is not supported.',
+      no_repository: 'The repository is not defined in the configuration file.',
+      oauth_implicit_flow: 'The configured authentication method (implicit flow) is not supported.',
+      oauth_no_app_id: 'OAuth application ID is not defined in the configuration file.',
       no_media_folder: 'The media folder is not defined in the configuration file.',
       unexpected: 'There was an unexpected error while validating the configuration file.',
       try_again: 'Please solve the issue and try again.',
