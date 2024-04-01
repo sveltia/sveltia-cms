@@ -9,7 +9,8 @@ export const minifyGraphQLQuery = (query) =>
   query
     .replace(/\s+/g, ' ')
     .replace(/(\w)\s(\w)/g, '$1,$2')
-    .replace(/\s/g, '');
+    .replace(/\s/g, '')
+    .replace(/\.\.\.on,/g, '...on ');
 
 /**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other
