@@ -269,9 +269,10 @@ const fetchFileList = async () => {
     }`)
   );
 
+  // The `size` is not available here; it will be retrieved in `fetchFileContents` below.
   return result.project.repository.tree.blobs.nodes
     .filter(({ type }) => type === 'blob')
-    .map(({ path, sha }) => ({ path, sha }));
+    .map(({ path, sha }) => ({ path, sha, size: 0 }));
 };
 
 /**

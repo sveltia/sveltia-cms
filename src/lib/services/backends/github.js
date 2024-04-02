@@ -288,8 +288,7 @@ const fetchFileContents = async (fetchingFiles) => {
 
       const data = {
         sha,
-        // eslint-disable-next-line object-shorthand
-        size: /** @type {number} */ (size),
+        size,
         text: result.repository[`content_${index}`]?.text,
         meta: {
           repoFileURL: `${baseURL}/blob/${branch}/${path}`,

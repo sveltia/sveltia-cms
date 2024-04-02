@@ -474,8 +474,7 @@ export const parseAssetFiles = (assetFiles) =>
       path,
       name,
       sha,
-      // eslint-disable-next-line object-shorthand
-      size: /** @type {number} */ (size),
+      size,
       kind: getAssetKind(name),
       text,
       collectionName,

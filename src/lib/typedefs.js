@@ -174,7 +174,7 @@
  * @property {string} [name] - File name.
  * @property {string} path - File path.
  * @property {string} sha - SHA-1 hash for the file.
- * @property {number} [size] - File size in bytes.
+ * @property {number} size - File size in bytes.
  * @property {string} [text] - Raw text for a plaintext file, like HTML or Markdown.
  * @property {RepositoryFileMetadata} [meta] - Metadata from the repository. Git backend only.
  */
