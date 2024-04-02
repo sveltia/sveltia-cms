@@ -82,8 +82,7 @@ export const strings = {
     UNSUPPORTED_DOMAIN: 'この認証アプリではお使いのドメインの使用は許可されていません。',
     MISCONFIGURED_CLIENT: 'OAuth アプリのクライアント ID またはシークレットが設定されていません。',
     AUTH_CODE_REQUEST_FAILED: '認証コードを取得できませんでした。後で再度お試しください。',
-    CSRF_DETECTED:
-      'CSRF 攻撃の可能性が検出されました。お使いのインターネット接続が安全であることを確かめてください。',
+    CSRF_DETECTED: 'CSRF 攻撃の可能性が検出されたため、認証フローは中断されました。',
     TOKEN_REQUEST_FAILED: 'アクセストークンを要求できませんでした。後で再度お試しください。',
     MALFORMED_RESPONSE: 'サーバーから不正なデータが返されました。後で再度お試しください。',
   },
