@@ -235,7 +235,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
   if (!csrfToken || !codeVerifier || state !== csrfToken) {
     return sendMessage({
       provider,
-      error: 'Possible CSRF attack was detected. Make sure your internet connection is secure.',
+      error: 'Potential CSRF attack detected. Authentication flow aborted.',
       errorCode: 'CSRF_DETECTED',
     });
   }

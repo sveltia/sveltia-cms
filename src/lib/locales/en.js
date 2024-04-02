@@ -82,7 +82,7 @@ export const strings = {
     UNSUPPORTED_DOMAIN: 'Your domain is not allowed to use the authenticator.',
     MISCONFIGURED_CLIENT: 'OAuth app client ID or secret is not configured.',
     AUTH_CODE_REQUEST_FAILED: 'Failed to receive an authorization code. Please try again later.',
-    CSRF_DETECTED: 'Potential CSRF attack detected. Authentication flow blocked.',
+    CSRF_DETECTED: 'Potential CSRF attack detected. Authentication flow aborted.',
     TOKEN_REQUEST_FAILED: 'Failed to request an access token. Please try again later.',
     MALFORMED_RESPONSE: 'Server responded with malformed data. Please try again later.',
   },
