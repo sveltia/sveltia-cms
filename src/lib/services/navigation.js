@@ -39,8 +39,8 @@ export const parseLocation = (loc = window.location) => {
 };
 
 /**
- * Navigate to a different URL. This is similar to SvelteKit’s `goto` method but assumes hash-based
- * SPA routing.
+ * Navigate to a different URL or replace the current URL. This is similar to SvelteKit’s `goto`
+ * method but assumes hash-based SPA routing.
  * @param {string} path - URL path. It will appear in th URL hash but omit the leading `#` sign
  * here.
  * @param {object} [options] - Options.

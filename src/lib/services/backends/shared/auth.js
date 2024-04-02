@@ -285,8 +285,8 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
 };
 
 /**
- * Redirect to the authorization site or finish the PKCE auth flow. This code is to be called within
- * the auth popup window.
+ * Handle the client-side Authorization Code Flow with PKCE within the auth popup window. Redirect
+ * to the authorization site or finish the flow after being redirected from the auth site.
  * @param {object} args - Arguments.
  * @param {string} args.backendName - Backend name, e.g. `gitlab`.
  * @param {string} args.clientId - OAuth application ID.

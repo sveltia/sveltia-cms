@@ -99,7 +99,8 @@ const init = () => {
 /**
  * Retrieve the repository configuration and sign in with GitLab REST API.
  * @param {SignInOptions} options - Options.
- * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup.
+ * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
+ * the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
  * @see https://docs.gitlab.com/ee/api/users.html#list-current-user
  */
@@ -174,6 +175,7 @@ const signOut = async () => undefined;
 /**
  * Fetch the repository’s default branch name, which is typically `master` or `main`.
  * @returns {Promise<string>} Branch name.
+ * @throws {Error} When the repository could not be found, or when the repository is empty.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repository
  */
 const fetchDefaultBranchName = async () => {
@@ -209,6 +211,7 @@ const fetchDefaultBranchName = async () => {
 /**
  * Fetch the latest commit’s SHA-1 hash.
  * @returns {Promise<string>} Hash.
+ * @throws {Error} When the branch could not be found.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#tree
  */
 const fetchLastCommitHash = async () => {
@@ -277,7 +280,7 @@ const fetchFileList = async () => {
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repositoryblob
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
- * @todo Retrieve commit author and date.
+ * @todo Retrieve the latest commit for each file, including the author and date.
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch, baseURL } = repository;
@@ -362,6 +365,7 @@ const fetchBlob = async (asset) => {
  * @param {FileChange[]} changes - File changes to be saved.
  * @param {CommitChangesOptions} options - Commit options.
  * @returns {Promise<string>} Commit URL.
+ * @see https://docs.gitlab.com/ee/api/commits.html#create-a-commit-with-multiple-files-and-actions
  * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/31102
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#mutationcommitcreate
  * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4

@@ -47,7 +47,7 @@ export const fetchAndParseFiles = async ({
     // Skip fetching file list
     fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
   } else {
-    // Get a complete file list first with the REST API, and filter what’s managed in CMS
+    // Get a complete file list first, and filter what’s managed in CMS
     fileList = createFileList(await fetchFileList());
     metaDB.set('last_commit_hash', lastHash);
   }

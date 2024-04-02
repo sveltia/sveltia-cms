@@ -26,8 +26,7 @@ let rootDirHandleDB;
 
 /**
  * Get the project’s root directory handle so the app can read all the files under the directory.
- * The handle will be cached in IndexedDB for later use. Note that we need to request permission
- * each time the app is loaded.
+ * The handle will be cached in IndexedDB for later use.
  * @param {object} [options] - Options.
  * @param {boolean} [options.forceReload] - Whether to force getting the handle.
  * @param {boolean} [options.showPicker] - Whether to show the directory picker.
@@ -99,7 +98,8 @@ const init = () => {
  * Sign in with the local Git repository. There is no actual sign-in; just show the directory picker
  * to get the handle, so we can read/write files.
  * @param {SignInOptions} options - Options.
- * @returns {Promise<User>} User info.
+ * @returns {Promise<User>} User info. Since we don’t have any details for the local user, just
+ * return the backend name.
  * @throws {Error} When the directory handle could not be acquired.
  */
 const signIn = async ({ auto = false }) => {
