@@ -235,7 +235,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
   if (!csrfToken || !codeVerifier || state !== csrfToken) {
     return sendMessage({
       provider,
-      error: 'Potential CSRF attack detected. Authentication flow aborted.',
+      error: get(_)('sign_in_error.CSRF_DETECTED'),
       errorCode: 'CSRF_DETECTED',
     });
   }
@@ -266,7 +266,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
   if (!response) {
     return sendMessage({
       provider,
-      error: 'Failed to request an access token. Please try again later.',
+      error: get(_)('sign_in_error.TOKEN_REQUEST_FAILED'),
       errorCode: 'TOKEN_REQUEST_FAILED',
     });
   }
@@ -276,7 +276,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
   } catch {
     return sendMessage({
       provider,
-      error: 'Server responded with malformed data. Please try again later.',
+      error: get(_)('sign_in_error.MALFORMED_RESPONSE'),
       errorCode: 'MALFORMED_RESPONSE',
     });
   }
