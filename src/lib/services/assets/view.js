@@ -5,7 +5,7 @@ import {
   allAssetFolders,
   allAssets,
   assetExtensions,
-  getAssetURL,
+  getAssetBlobURL,
   selectedAssetFolder,
   selectedAssets,
 } from '$lib/services/assets';
@@ -26,14 +26,14 @@ const storageKey = 'sveltia-cms.assets-view';
  */
 export const getAssetPreviewURL = (asset, loading, element) => {
   if (loading === 'eager') {
-    return getAssetURL(asset);
+    return getAssetBlobURL(asset);
   }
 
   return new Promise((resolve) => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         observer.disconnect();
-        resolve(getAssetURL(asset));
+        resolve(getAssetBlobURL(asset));
       }
     });
 

@@ -96,12 +96,12 @@ export const getEntriesByCollection = (collectionName) => {
 
 /**
  * Get a list of entries using the given asset.
- * @param {string} url - Asset URL.
+ * @param {string} url - Asset’s public or blob URL.
  * @returns {Promise<Entry[]>} Entries.
  */
 export const getEntriesByAssetURL = async (url) => {
   const siteURL = get(siteConfig)?.site_url;
-  const path = siteURL ? url.replace(siteURL, '') : url;
+  const assetURL = siteURL && !url.startsWith('blob:') ? url.replace(siteURL, '') : url;
   const entries = get(allEntries);
 
   const results = await Promise.all(
@@ -120,7 +120,7 @@ export const getEntriesByAssetURL = async (url) => {
                 return false;
               }
 
-              return (await getMediaFieldURL(value, entry)) === path;
+              return (await getMediaFieldURL(value, entry)) === assetURL;
             }),
           );
 

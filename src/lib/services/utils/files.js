@@ -217,7 +217,7 @@ export const convertToPNG = async (file) => {
   const image = new Image();
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
-  const url = URL.createObjectURL(file);
+  const blobURL = URL.createObjectURL(file);
 
   return new Promise((resolve) => {
     image.addEventListener('load', () => {
@@ -229,10 +229,10 @@ export const convertToPNG = async (file) => {
         resolve(/** @type {Blob} */ (blob));
       }, 'image/png');
 
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(blobURL);
     });
 
-    image.src = /** @type {string} */ (url);
+    image.src = blobURL;
   });
 };
 
@@ -243,12 +243,12 @@ export const convertToPNG = async (file) => {
  */
 export const saveFile = (file, name) => {
   const link = document.createElement('a');
-  const url = URL.createObjectURL(file);
+  const blobURL = URL.createObjectURL(file);
 
   link.download =
     name ?? /** @type {File} */ (file).name ?? `${Date.now()}.${file.type.split('/')[1]}`;
-  link.href = url;
+  link.href = blobURL;
   link.click();
 
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(blobURL);
 };

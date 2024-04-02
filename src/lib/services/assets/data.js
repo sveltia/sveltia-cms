@@ -52,17 +52,20 @@ export const saveAssets = async (uploadingAssets, options) => {
    * @type {Asset[]}
    */
   const newAssets = await Promise.all(
-    savingFileList.map(async ({ name, path, file }) => ({
-      url: URL.createObjectURL(file),
-      name,
-      path,
-      sha: await getHash(file),
-      size: file.size,
-      kind: getAssetKind(name),
-      text: undefined,
-      collectionName,
-      folder,
-    })),
+    savingFileList.map(
+      async ({ name, path, file }) =>
+        /** @type {Asset} */ ({
+          blobURL: URL.createObjectURL(file),
+          name,
+          path,
+          sha: await getHash(file),
+          size: file.size,
+          kind: getAssetKind(name),
+          text: undefined,
+          collectionName,
+          folder,
+        }),
+    ),
   );
 
   allAssets.update((assets) => [

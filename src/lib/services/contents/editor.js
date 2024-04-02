@@ -1077,7 +1077,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
             savingAssets.push({
               ...savingAssetProps,
-              url: URL.createObjectURL(file),
+              blobURL: URL.createObjectURL(file),
               name: _fileName,
               path: assetPath,
               sha,

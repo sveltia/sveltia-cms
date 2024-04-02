@@ -134,54 +134,54 @@ export const getAssetByPath = (savedPath, entry) => {
 };
 
 /**
- * Get the URL for the given asset. It can be a blob URL or public URL depending on the options.
- * @param {Asset | undefined} asset - Asset file, such as an image.
- * @param {object} [options] - Options.
- * @param {boolean} [options.pathOnly] - Whether to use the absolute path instead of the complete
- * URL.
- * @param {boolean} [options.publicURL] - Whether to return the public URL on the live site.
- * @returns {Promise<string | undefined>} URL that can be used or displayed in the app UI. This is
- * mostly a Blob URL of the asset.
+ * Get the blob URL for the given asset.
+ * @param {Asset} asset - Asset file, such as an image.
+ * @returns {Promise<string | undefined>} URL or `undefined` if the blob is not available.
  */
-export const getAssetURL = async (asset, { pathOnly = false, publicURL = false } = {}) => {
-  if (!asset) {
+export const getAssetBlobURL = async (asset) => {
+  // Return immediately if cached
+  if (asset.blobURL) {
+    return asset.blobURL;
+  }
+
+  const blob = asset.file ?? (await get(backend)?.fetchBlob?.(asset));
+
+  if (!blob) {
     return undefined;
   }
 
-  const isBlobURL = asset.url?.startsWith('blob:');
+  const blobURL = URL.createObjectURL(blob);
 
-  if (isBlobURL && !pathOnly && !publicURL) {
-    return asset.url;
-  }
+  // Cache the URL
+  allAssets.update((assets) => [
+    ...assets.filter(({ sha, path }) => !(sha === asset.sha && path === asset.path)),
+    { ...asset, blobURL },
+  ]);
 
-  if (!asset.url && !pathOnly && !publicURL) {
-    const blob = asset.file ?? (await get(backend)?.fetchBlob?.(asset));
+  return blobURL;
+};
 
-    if (!blob) {
-      return undefined;
-    }
-
-    const url = URL.createObjectURL(blob);
-
-    // Cache the URL
-    allAssets.update((assets) => [
-      ...assets.filter(({ sha, path }) => !(sha === asset.sha && path === asset.path)),
-      { ...asset, url },
-    ]);
-
-    return url;
-  }
+/**
+ * Get the public URL for the given asset.
+ * @param {Asset} asset - Asset file, such as an image.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.pathOnly] - Whether to use the absolute path starting with `/` instead
+ * of the complete URL starting with `https`.
+ * @returns {string | undefined} URL or `undefined` if it cannot be determined.
+ */
+export const getAssetPublicURL = (asset, { pathOnly = false } = {}) => {
+  const _allAssetFolders = get(allAssetFolders);
 
   const { publicPath, entryRelative } =
-    get(allAssetFolders).find(({ collectionName }) => collectionName === asset.collectionName) ??
-    get(allAssetFolders).find(({ collectionName }) => collectionName === null) ??
+    _allAssetFolders.find(({ collectionName }) => collectionName === asset.collectionName) ??
+    _allAssetFolders.find(({ collectionName }) => collectionName === null) ??
     {};
 
+  // Cannot determine the URL if it’s relative to an entry
   if (entryRelative) {
-    return isBlobURL ? asset.url : undefined;
+    return undefined;
   }
 
-  const baseURL = pathOnly ? '' : get(siteConfig)?.site_url ?? '';
   const path = asset.path.replace(asset.folder, publicPath ?? '');
 
   // Path starting with `@`, etc. cannot be linked
@@ -189,16 +189,22 @@ export const getAssetURL = async (asset, { pathOnly = false, publicURL = false }
     return undefined;
   }
 
+  if (pathOnly) {
+    return path;
+  }
+
+  const baseURL = get(siteConfig)?.site_url ?? '';
+
   return `${baseURL}${path}`;
 };
 
 /**
- * Get the public URL from the given image/file entry field value.
+ * Get the blob or public URL from the given image/file entry field value.
  * @param {string} value - Saved field value. It can be an absolute path, entry-relative path, or a
  * complete/external URL.
  * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
  * path. Can be `undefined` when editing a draft.
- * @returns {Promise<string | undefined>} URL that can be displayed in the app UI.
+ * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */
 export const getMediaFieldURL = async (value, entry) => {
   if (!value) {
@@ -209,7 +215,13 @@ export const getMediaFieldURL = async (value, entry) => {
     return value;
   }
 
-  return getAssetURL(getAssetByPath(value, entry));
+  const asset = getAssetByPath(value, entry);
+
+  if (!asset) {
+    return undefined;
+  }
+
+  return (await getAssetBlobURL(asset)) ?? getAssetPublicURL(asset);
 };
 
 /**
@@ -219,16 +231,18 @@ export const getMediaFieldURL = async (value, entry) => {
  */
 export const getAssetDetails = async (asset) => {
   const { kind } = asset;
-  const url = await getAssetURL(asset);
+  const blobURL = await getAssetBlobURL(asset);
+  const publicURL = getAssetPublicURL(asset);
+  const url = blobURL ?? publicURL;
   let dimensions;
   let duration;
 
-  if (['image', 'video', 'audio'].includes(kind) && url) {
-    ({ dimensions, duration } = await getMediaMetadata(url, kind));
+  if (['image', 'video', 'audio'].includes(kind) && blobURL) {
+    ({ dimensions, duration } = await getMediaMetadata(blobURL, kind));
   }
 
   return {
-    publicURL: await getAssetURL(asset, { publicURL: true }),
+    publicURL,
     dimensions,
     duration,
     usedEntries: url ? await getEntriesByAssetURL(url) : [],
@@ -241,8 +255,12 @@ export const getAssetDetails = async (asset) => {
  * @returns {Promise<Blob>} Blob.
  */
 export const getBlob = async (asset) => {
-  const { file, url, path } = /** @type {{ file: Blob, url: string, path: string }} */ (asset);
-  const blob = file ?? (await fetch(url).then((r) => r.blob()));
+  const { file, blobURL, path } = asset;
+
+  const blob =
+    /** @type {Blob} */ (file) ??
+    (await fetch(/** @type {string} */ (blobURL)).then((r) => r.blob()));
+
   const type = mime.getType(path) ?? blob.type;
 
   return new Blob([blob], { type });

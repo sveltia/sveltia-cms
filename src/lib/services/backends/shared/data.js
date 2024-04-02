@@ -88,8 +88,6 @@ export const fetchAndParseFiles = async ({
     parseAssetFiles(
       assetFiles.map((file) => ({
         ...file,
-        /** Blob URL to be set later via {@link fetchBlob}. */
-        url: undefined,
         name: file.path.split('/').pop(),
         meta: file.meta ?? fetchedFileMap[file.path].meta,
       })),

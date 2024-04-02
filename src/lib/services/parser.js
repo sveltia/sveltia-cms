@@ -459,7 +459,6 @@ export const parseAssetFiles = (assetFiles) =>
   assetFiles.map((assetInfo) => {
     const {
       file,
-      url,
       path,
       name = /** @type {string} */ (path.split('/').pop()),
       sha,
@@ -469,9 +468,9 @@ export const parseAssetFiles = (assetFiles) =>
       config: { collectionName, internalPath },
     } = assetInfo;
 
-    return {
+    return /** @type {Asset} */ ({
       file,
-      url,
+      blobURL: undefined,
       path,
       name,
       sha,
@@ -482,5 +481,5 @@ export const parseAssetFiles = (assetFiles) =>
       collectionName,
       folder: internalPath,
       ...meta,
-    };
+    });
   });

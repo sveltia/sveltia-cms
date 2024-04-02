@@ -171,8 +171,6 @@
  * @typedef {object} BaseFileListItem
  * @property {'entry' | 'asset'} [type] - File type handled in the CMS.
  * @property {File} [file] - File object. Local backend only.
- * @property {string} [url] - Blob URL for the asset or temporary Blob URL for a local file being
- * uploaded. It can be `undefined` if the Blob URL is not generated yet.
  * @property {string} [name] - File name.
  * @property {string} path - File path.
  * @property {string} sha - SHA-1 hash for the file.
@@ -778,8 +776,8 @@
  * Asset item.
  * @typedef {object} Asset
  * @property {File} [file] - File object. Local backend only.
- * @property {string} [url] - Blob URL for the asset or temporary Blob URL for a local file being
- * uploaded. It can be `undefined` if the Blob URL is not generated yet.
+ * @property {string} [blobURL] - Blob URL for the asset. It’s a temporary URL for a remote file
+ * being fetched or a local file being uploaded. Or `undefined` if the URL is not generated yet.
  * @property {string} name - File name.
  * @property {string} path - File path.
  * @property {string} sha - SHA-1 hash for the file.

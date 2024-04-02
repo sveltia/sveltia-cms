@@ -10,7 +10,7 @@
   import { _ } from 'svelte-i18n';
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
   import Image from '$lib/components/common/image.svelte';
-  import { getAssetURL, getMediaFieldURL } from '$lib/services/assets';
+  import { getAssetPublicURL, getMediaFieldURL } from '$lib/services/assets';
   import { entryDraft } from '$lib/services/contents/editor';
   import { formatSize, getDataURL } from '$lib/services/utils/files';
 
@@ -95,7 +95,7 @@
     ({ asset, file, url, credit } = selectedAsset);
 
     if (asset) {
-      currentValue = await getAssetURL(asset, { pathOnly: true });
+      currentValue = getAssetPublicURL(asset, { pathOnly: true });
     }
 
     if (file) {

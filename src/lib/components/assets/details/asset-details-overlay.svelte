@@ -18,7 +18,7 @@
    */
   let blob;
 
-  $: ({ kind, url, name } = $overlaidAsset || /** @type {Asset} */ ({}));
+  $: ({ kind, blobURL, name } = $overlaidAsset || /** @type {Asset} */ ({}));
 
   $: (async () => {
     if ($overlaidAsset) {
@@ -55,7 +55,7 @@
             controls={kind === 'audio' || kind === 'video'}
           />
         {:else if blob?.type === 'application/pdf'}
-          <iframe src={url} title={name} />
+          <iframe src={blobURL} title={name} />
         {:else if blob?.type.startsWith('text/')}
           {#await blob.text() then text}
             <pre role="figure">{text}</pre>
