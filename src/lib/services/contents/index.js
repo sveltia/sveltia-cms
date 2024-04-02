@@ -6,6 +6,11 @@ import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
+ * Regular expression to match `![alt](src "title")`.
+ */
+const markdownImageRegEx = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
+
+/**
  * @type {import('svelte/store').Writable<boolean>}
  */
 export const dataLoaded = writable(false);
@@ -114,13 +119,34 @@ export const getEntriesByAssetURL = async (url) => {
 
           const __results = await Promise.all(
             Object.entries(valueMap).map(async ([keyPath, value]) => {
-              const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
-
-              if (!field || !['image', 'file'].includes(field.widget ?? 'string')) {
+              if (typeof value !== 'string' || !value) {
                 return false;
               }
 
-              return (await getMediaFieldURL(value, entry)) === assetURL;
+              const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
+
+              if (!field) {
+                return false;
+              }
+
+              const { widget: widgetName = 'string' } = field;
+
+              if (['image', 'file'].includes(widgetName)) {
+                return (await getMediaFieldURL(value, entry)) === assetURL;
+              }
+
+              // Search images in markdown body
+              if (widgetName === 'markdown') {
+                const matches = [...value.matchAll(markdownImageRegEx)];
+
+                if (matches.length) {
+                  return (
+                    await Promise.all(matches.map(([, src]) => getMediaFieldURL(src, entry)))
+                  ).includes(assetURL);
+                }
+              }
+
+              return false;
             }),
           );
 
