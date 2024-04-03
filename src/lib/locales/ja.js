@@ -175,6 +175,10 @@ export const strings = {
   no_files_found: 'ファイルは見つかりませんでした。',
   no_entries_found: 'エントリーは見つかりませんでした。',
   upload_assets: '新しいアセットをアップロード',
+  edit_options: '編集オプション',
+  show_edit_options: '編集オプションを表示',
+  edit_asset: 'アセットを編集',
+  edit_x: '{name} を編集',
   replace_asset: 'アセットを差し替え',
   replace_x: '{name} を差し替え',
   drop_file_or_browse: 'ここにファイルをドロップするか下のボタンをクリックして参照:',
@@ -326,9 +330,6 @@ export const strings = {
       description: 'エントリーを保存中に問題が発生しました。後で再度お試しください。',
     },
   },
-
-  // Asset Editor
-  editing_x: '{name} を編集',
 
   // Media details
   viewing_x_asset_details: '「{name}」アセットの詳細を表示しています。',

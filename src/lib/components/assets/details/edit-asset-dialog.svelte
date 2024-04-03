@@ -59,7 +59,7 @@
 {#if asset}
   <Dialog
     size="x-large"
-    title={$_('editing_x', { values: { name: asset.name } })}
+    title={$_('edit_x', { values: { name: asset.name } })}
     open={true}
     okLabel={$_('save')}
     okDisabled={currentValue === originalValue}

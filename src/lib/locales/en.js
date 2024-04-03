@@ -175,6 +175,10 @@ export const strings = {
   no_files_found: 'No files found.',
   no_entries_found: 'No entries found.',
   upload_assets: 'Upload New Assets',
+  edit_options: 'Edit Options',
+  show_edit_options: 'Show Edit Options',
+  edit_asset: 'Edit Asset',
+  edit_x: 'Edit {name}',
   replace_asset: 'Replace Asset',
   replace_x: 'Replace {name}',
   drop_file_or_browse: 'Drop a file here or click to browse:',
@@ -323,9 +327,6 @@ export const strings = {
       description: 'There was an error while saving the entry. Please try again later.',
     },
   },
-
-  // Asset Editor
-  editing_x: 'Editing {name}',
 
   // Media details
   viewing_x_asset_details: 'You’re viewing the details of the “{name}” asset.',

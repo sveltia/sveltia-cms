@@ -4,8 +4,7 @@
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/toolbar/download-assets-button.svelte';
-  import EditAssetButton from '$lib/components/assets/toolbar/edit-asset-button.svelte';
-  import ReplaceAssetButton from '$lib/components/assets/toolbar/replace-asset-button.svelte';
+  import EditOptionsButton from '$lib/components/assets/toolbar/edit-options-button.svelte';
   import { overlaidAsset, selectedAssetFolder } from '$lib/services/assets';
   import { goBack } from '$lib/services/navigation';
 
@@ -28,8 +27,6 @@
     <strong role="none">{$overlaidAsset?.name}</strong>
   </h2>
   <Spacer flex />
-  <EditAssetButton asset={$overlaidAsset} />
-  <ReplaceAssetButton asset={$overlaidAsset} />
   <CopyAssetsButton {assets} />
   <DownloadAssetsButton {assets} />
   <DeleteAssetsButton
@@ -40,4 +37,5 @@
       goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
     }}
   />
+  <EditOptionsButton asset={$overlaidAsset} />
 </Toolbar>
