@@ -124,7 +124,6 @@
 </script>
 
 <MenuButton variant="ghost" disabled={!assets.length} label={$_('copy')}>
-  <Icon slot="start-icon" name="file_copy" />
   <Menu slot="popup" aria-label={$_('copy_options')}>
     <MenuItem
       label={singleAsset ? $_('public_url') : $_('public_urls')}

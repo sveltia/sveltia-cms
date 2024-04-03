@@ -1,5 +1,5 @@
 <script>
-  import { Alert, Button, Icon, Toast, sleep } from '@sveltia/ui';
+  import { Alert, Button, Toast, sleep } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { getBlob } from '$lib/services/assets';
   import { saveFile } from '$lib/services/utils/files';
@@ -37,9 +37,7 @@
   on:click={() => {
     downloadFiles();
   }}
->
-  <Icon slot="start-icon" name="download" />
-</Button>
+/>
 
 <Toast bind:show={showToast}>
   <Alert status="success">

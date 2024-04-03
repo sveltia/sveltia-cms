@@ -34,9 +34,7 @@
         on:click={() => {
           showDeleteDialog = true;
         }}
-      >
-        <Icon slot="start-icon" name="delete" />
-      </Button>
+      />
       <Button
         variant="primary"
         disabled={!create}

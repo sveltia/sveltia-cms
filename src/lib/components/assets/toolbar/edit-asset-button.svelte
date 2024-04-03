@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon } from '@sveltia/ui';
+  import { Button } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { canEditAsset, editingAsset } from '$lib/services/assets';
 
@@ -16,6 +16,4 @@
   on:click={() => {
     $editingAsset = asset;
   }}
->
-  <Icon slot="start-icon" name="edit" />
-</Button>
+/>

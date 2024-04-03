@@ -1,5 +1,5 @@
 <script>
-  import { Button, ConfirmationDialog, Icon } from '@sveltia/ui';
+  import { Button, ConfirmationDialog } from '@sveltia/ui';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { deleteAssets } from '$lib/services/assets/data';
@@ -29,9 +29,7 @@
   on:click={() => {
     showDialog = true;
   }}
->
-  <Icon slot="start-icon" name="delete" />
-</Button>
+/>
 
 <ConfirmationDialog
   bind:open={showDialog}
