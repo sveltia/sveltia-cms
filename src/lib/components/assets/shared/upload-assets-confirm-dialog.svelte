@@ -5,15 +5,16 @@
   import { uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
   import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
-  import { backendName } from '$lib/services/backends';
+
+  $: ({ files, folder, originalAsset } = $uploadingAssets);
 </script>
 
 <!-- @todo Confirm to replace an old image if a file with the same same exists. -->
 
 <ConfirmationDialog
   open={$showUploadAssetsConfirmDialog}
-  title={$_('upload_assets')}
-  okLabel={$_($backendName === 'local' ? 'save' : 'upload')}
+  title={$_(originalAsset ? 'replace_asset' : 'upload_assets')}
+  okLabel={$_(originalAsset ? 'replace' : 'upload')}
   on:ok={async () => {
     await saveAssets($uploadingAssets, { commitType: 'uploadMedia' });
     $uploadingAssets = { folder: undefined, files: [] };
@@ -23,20 +24,20 @@
   }}
 >
   <div role="none">
-    {#if $uploadingAssets.files.length === 1}
-      {$_('confirm_uploading_file', {
+    {#if originalAsset}
+      {$_('confirm_replacing_file', {
         values: {
-          folder: `/${$uploadingAssets.folder}`,
+          name: originalAsset.name,
         },
       })}
     {:else}
-      {$_('confirm_uploading_files', {
+      {$_(files.length === 1 ? 'confirm_uploading_file' : 'confirm_uploading_files', {
         values: {
-          count: $uploadingAssets.files.length,
-          folder: `/${$uploadingAssets.folder}`,
+          count: files.length,
+          folder: `/${folder}`,
         },
       })}
     {/if}
   </div>
-  <UploadAssetsPreview bind:files={$uploadingAssets.files} />
+  <UploadAssetsPreview bind:files />
 </ConfirmationDialog>

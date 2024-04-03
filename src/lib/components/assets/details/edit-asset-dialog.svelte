@@ -1,13 +1,7 @@
 <script>
   import { Dialog, TextArea } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import {
-    allAssets,
-    editingAsset,
-    focusedAsset,
-    getBlob,
-    overlaidAsset,
-  } from '$lib/services/assets';
+  import { editingAsset, getBlob } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
 
   /** @type {Asset | undefined} */
@@ -48,18 +42,10 @@
         {
           folder: asset.folder,
           files: [new File([currentValue], asset.name, { type: blob.type })],
-          override: true,
+          originalAsset: asset,
         },
         { commitType: 'uploadMedia' },
       );
-
-      if ($focusedAsset) {
-        $focusedAsset = $allAssets.find((a) => a.path === $focusedAsset?.path);
-      }
-
-      if ($overlaidAsset) {
-        $overlaidAsset = $allAssets.find((a) => a.path === $overlaidAsset?.path);
-      }
     }
   };
 

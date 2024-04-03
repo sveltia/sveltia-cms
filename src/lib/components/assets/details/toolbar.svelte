@@ -5,6 +5,7 @@
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/toolbar/download-assets-button.svelte';
   import EditAssetButton from '$lib/components/assets/toolbar/edit-asset-button.svelte';
+  import ReplaceAssetButton from '$lib/components/assets/toolbar/replace-asset-button.svelte';
   import { overlaidAsset, selectedAssetFolder } from '$lib/services/assets';
   import { goBack } from '$lib/services/navigation';
 
@@ -28,9 +29,7 @@
   </h2>
   <Spacer flex />
   <EditAssetButton asset={$overlaidAsset} />
-  <!-- @todo Implement this.
-  <Button variant="secondary" label={$_('replace')} aria-label={$_('replace_file')} />
-  -->
+  <ReplaceAssetButton asset={$overlaidAsset} />
   <CopyAssetsButton {assets} />
   <DownloadAssetsButton {assets} />
   <DeleteAssetsButton

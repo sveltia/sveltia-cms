@@ -776,7 +776,7 @@
  * @typedef {object} UploadingAssets
  * @property {string | undefined} folder - Target folder path.
  * @property {File[]} files - File list.
- * @property {boolean} [override] - Whether to override existing files. Default: `false`.
+ * @property {Asset} [originalAsset] - Asset to be replaced.
  */
 
 /**

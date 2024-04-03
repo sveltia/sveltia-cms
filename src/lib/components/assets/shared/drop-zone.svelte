@@ -17,6 +17,7 @@
 
   const dispatch = createEventDispatcher();
   let dragging = false;
+  let typeMismatch = false;
   /**
    * @type {FilePicker}
    */
@@ -61,6 +62,7 @@
 
     /** @type {DataTransfer} */ (dataTransfer).dropEffect = 'copy';
     dragging = true;
+    typeMismatch = false;
   }}
   on:dragleave|preventDefault={() => {
     if (disabled) {
@@ -77,12 +79,19 @@
     dragging = false;
   }}
   on:drop|preventDefault={async ({ dataTransfer }) => {
-    if (disabled) {
+    if (disabled || !dataTransfer) {
       return;
     }
 
     dragging = false;
-    onSelect(await scanFiles(/** @type {DataTransfer} */ (dataTransfer), { accept }));
+
+    const filteredFileList = await scanFiles(dataTransfer, { accept });
+
+    if (filteredFileList.length) {
+      onSelect(filteredFileList);
+    } else {
+      typeMismatch = true;
+    }
   }}
 >
   <!--
@@ -106,6 +115,9 @@
             <Icon slot="start-icon" name="cloud_upload" />
           </Button>
         </div>
+        {#if typeMismatch}
+          <div role="alert">{$_('drop_files_type_mismatch', { values: { type: accept } })}</div>
+        {/if}
       {/if}
       {#if showFilePreview && files.length}
         <UploadAssetsPreview bind:files />
@@ -138,6 +150,7 @@
     overflow: hidden;
     height: 100%;
     pointer-events: auto;
+    text-align: center;
 
     & > :global(.group) {
       overflow-y: auto;

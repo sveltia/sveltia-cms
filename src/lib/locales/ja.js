@@ -41,7 +41,7 @@ export const strings = {
   delete: '削除',
   save: '保存',
   saving: '保存中…',
-  replace: '置き換え',
+  replace: '差し替え',
   remove: '削除',
   remove_x: '{name} を削除',
   clear: 'クリア',
@@ -175,9 +175,13 @@ export const strings = {
   no_files_found: 'ファイルは見つかりませんでした。',
   no_entries_found: 'エントリーは見つかりませんでした。',
   upload_assets: '新しいアセットをアップロード',
+  replace_asset: 'アセットを差し替え',
+  replace_x: '{name} を差し替え',
   drop_file_or_browse: 'ここにファイルをドロップするか下のボタンをクリックして参照:',
   drop_files_or_browse: 'ここにファイルをドロップするか下のボタンをクリックして参照:',
   drop_files_here: 'ここにファイルをドロップ',
+  drop_files_type_mismatch:
+    'ドロップされたファイルは「{type}」形式ではありません。再度お試しください。',
   choose_file: 'ファイルを選択',
   choose_files: 'ファイルを選択',
   delete_asset: 'アセットを削除',
@@ -205,6 +209,7 @@ export const strings = {
   confirm_deleting_all_entries: 'すべてのエントリーを削除してもよろしいですか？',
   confirm_deleting_all_entries_with_assets:
     'すべてのエントリーと関連アセットを削除してもよろしいですか？',
+  confirm_replacing_file: '「{name}」を以下のファイルと差し替えてもよろしいですか？',
   confirm_uploading_file: '以下のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
   confirm_uploading_files:
     '以下の {count} 個のファイルを「{folder}」フォルダーに保存してもよろしいですか？',

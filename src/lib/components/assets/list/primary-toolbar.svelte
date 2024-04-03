@@ -6,6 +6,7 @@
   import DownloadAssetsButton from '$lib/components/assets/toolbar/download-assets-button.svelte';
   import EditAssetButton from '$lib/components/assets/toolbar/edit-asset-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/toolbar/preview-asset-button.svelte';
+  import ReplaceAssetButton from '$lib/components/assets/toolbar/replace-asset-button.svelte';
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
   import { focusedAsset, selectedAssetFolder, selectedAssets } from '$lib/services/assets';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
@@ -23,6 +24,7 @@
   <Spacer flex />
   <PreviewAssetButton asset={$focusedAsset} />
   <EditAssetButton asset={$focusedAsset} />
+  <ReplaceAssetButton asset={$focusedAsset} />
   <CopyAssetsButton {assets} />
   <DownloadAssetsButton {assets} />
   <DeleteAssetsButton

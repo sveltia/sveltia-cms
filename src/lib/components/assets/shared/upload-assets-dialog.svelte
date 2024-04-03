@@ -1,5 +1,6 @@
 <script>
   import { Dialog } from '@sveltia/ui';
+  import mime from 'mime';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
@@ -11,14 +12,21 @@
   /** @type {FilePicker} */
   let filePicker;
 
+  $: ({ originalAsset } = $uploadingAssets);
+  $: multiple = !originalAsset;
+  $: accept = originalAsset ? mime.getType(originalAsset.name) ?? undefined : undefined;
+
   /**
    * Update the asset list, which will show the confirmation dialog.
    * @param {File[]} files - Selected files.
    */
   const onSelect = (files) => {
     $uploadingAssets = {
-      folder: $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
+      folder: originalAsset
+        ? originalAsset.folder
+        : $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
       files,
+      originalAsset,
     };
     $showUploadAssetsDialog = false;
   };
@@ -37,10 +45,17 @@
 </script>
 
 {#if canDragDrop}
-  <Dialog title={$_('upload_assets')} bind:open={$showUploadAssetsDialog} showOk={false}>
+  <Dialog
+    title={originalAsset
+      ? $_('replace_x', { values: { name: originalAsset.name } })
+      : $_('upload_assets')}
+    bind:open={$showUploadAssetsDialog}
+    showOk={false}
+  >
     <DropZone
       showUploadButton={true}
-      multiple={true}
+      {accept}
+      {multiple}
       on:select={({ detail: { files } }) => {
         onSelect(files);
       }}
@@ -49,7 +64,8 @@
 {:else}
   <FilePicker
     bind:this={filePicker}
-    multiple={true}
+    {accept}
+    {multiple}
     on:select={({ detail: { files } }) => {
       onSelect(files);
     }}

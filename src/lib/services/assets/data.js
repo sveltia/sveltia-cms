@@ -1,5 +1,11 @@
 import { get, writable } from 'svelte/store';
-import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
+import {
+  allAssetFolders,
+  allAssets,
+  focusedAsset,
+  getAssetKind,
+  overlaidAsset,
+} from '$lib/services/assets';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getHash } from '$lib/services/utils/crypto';
@@ -22,7 +28,7 @@ export const assetUpdatesToast = writable({
  * @param {CommitChangesOptions} options - Options for the backend handler.
  */
 export const saveAssets = async (uploadingAssets, options) => {
-  const { files, folder, override = false } = uploadingAssets;
+  const { files, folder, originalAsset } = uploadingAssets;
 
   const assetNamesInSameFolder = /** @type {string[]} */ (
     get(allAssets)
@@ -32,16 +38,14 @@ export const saveAssets = async (uploadingAssets, options) => {
   );
 
   const savingFileList = files.map((file) => {
-    const originalName = file.name;
-    const suggestedName = renameIfNeeded(originalName, assetNamesInSameFolder);
-    const name = override ? originalName : suggestedName;
+    const name = originalAsset?.name ?? renameIfNeeded(file.name, assetNamesInSameFolder);
 
-    assetNamesInSameFolder.push(name);
+    if (!assetNamesInSameFolder.includes(name)) {
+      assetNamesInSameFolder.push(name);
+    }
 
     return {
-      action: /** @type {CommitAction} */ (
-        override && originalName !== suggestedName ? 'update' : 'create'
-      ),
+      action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
       name,
       path: [folder, name].join('/'),
       file,
@@ -80,6 +84,19 @@ export const saveAssets = async (uploadingAssets, options) => {
     ...assets.filter((a) => !newAssets.some((na) => na.path === a.path)),
     ...newAssets,
   ]);
+
+  const _focusedAsset = get(focusedAsset);
+  const _overlaidAsset = get(overlaidAsset);
+
+  // Replace the existing asset
+  if (_focusedAsset) {
+    focusedAsset.set(get(allAssets).find((a) => a.path === _focusedAsset.path));
+  }
+
+  // Replace the existing asset
+  if (_overlaidAsset) {
+    overlaidAsset.set(get(allAssets).find((a) => a.path === _overlaidAsset.path));
+  }
 
   const isLocal = get(backendName) === 'local';
 

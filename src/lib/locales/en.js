@@ -175,9 +175,12 @@ export const strings = {
   no_files_found: 'No files found.',
   no_entries_found: 'No entries found.',
   upload_assets: 'Upload New Assets',
+  replace_asset: 'Replace Asset',
+  replace_x: 'Replace {name}',
   drop_file_or_browse: 'Drop a file here or click to browse:',
   drop_files_or_browse: 'Drop files here or click to browse:',
   drop_files_here: 'Drop files here',
+  drop_files_type_mismatch: 'The dropped file is not the “{type}” type. Please try again.',
   choose_file: 'Choose File',
   choose_files: 'Choose Files',
   delete_asset: 'Delete Asset',
@@ -204,6 +207,7 @@ export const strings = {
   confirm_deleting_all_entries: 'Are you sure to delete all the entries?',
   confirm_deleting_all_entries_with_assets:
     'Are you sure to delete all the entries and associated assets?',
+  confirm_replacing_file: 'Are you sure to replace “{name}” with the following file?',
   confirm_uploading_file: 'Are you sure to save the following file to the “{folder}” folder?',
   confirm_uploading_files:
     'Are you sure to save the following {count} files to the “{folder}” folder?',
