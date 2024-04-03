@@ -7,6 +7,7 @@
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import { getBlob, overlaidAsset } from '$lib/services/assets';
+  import { isTextFileType } from '$lib/services/utils/files';
 
   /**
    * A reference to the wrapper element.
@@ -56,8 +57,8 @@
           />
         {:else if blob?.type === 'application/pdf'}
           <iframe src={blobURL} title={name} />
-        {:else if blob?.type.startsWith('text/')}
-          {#await blob.text() then text}
+        {:else if blob?.type && isTextFileType(blob?.type)}
+          {#await $overlaidAsset?.text ?? blob?.text() then text}
             <pre role="figure">{text}</pre>
           {/await}
         {:else}

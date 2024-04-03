@@ -2,7 +2,7 @@
   import { Alert, Icon, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { getAssetDetails, getBlob } from '$lib/services/assets';
-  import { convertToPNG } from '$lib/services/utils/files';
+  import { convertToPNG, isTextFileType } from '$lib/services/utils/files';
 
   /**
    * @type {Asset[]}
@@ -49,7 +49,7 @@
 
     assetBlob = blob;
 
-    if (blob.type.startsWith('text/') || blob.type === 'image/svg+xml') {
+    if (isTextFileType(blob.type)) {
       return true;
     }
 
@@ -81,7 +81,7 @@
   const copyFileData = async () => {
     let blob = /** @type {Blob} */ (assetBlob);
 
-    if (blob.type.startsWith('text/') || blob.type === 'image/svg+xml') {
+    if (isTextFileType(blob.type)) {
       await navigator.clipboard.writeText(await blob.text());
 
       return;

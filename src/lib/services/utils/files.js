@@ -3,6 +3,27 @@ import { get } from 'svelte/store';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
+ * List of MIME types that can be considered as plaintext.
+ */
+const textFileTypes = [
+  'application/atom+xml',
+  'application/javascript',
+  'application/json',
+  'application/ld+json',
+  'application/rss+xml',
+  'application/xhtml+xml',
+  'application/xml',
+  'image/svg+xml',
+];
+
+/**
+ * Whether the given MIME type is plaintext.
+ * @param {string} type - MIME type.
+ * @returns {boolean} Result.
+ */
+export const isTextFileType = (type) => type.startsWith('text/') || textFileTypes.includes(type);
+
+/**
  * Scan local files in nested folders and return them in a flat array, sorted by name.
  * @param {DataTransfer} dataTransfer - From `drop` event.
  * @param {object} [options] - Options.

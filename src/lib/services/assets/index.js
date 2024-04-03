@@ -3,7 +3,7 @@ import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
-import { resolvePath } from '$lib/services/utils/files';
+import { isTextFileType, resolvePath } from '$lib/services/utils/files';
 import { getMediaMetadata } from '$lib/services/utils/media';
 
 export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
@@ -62,6 +62,21 @@ export const overlaidAsset = writable();
  * @type {import('svelte/store').Writable<UploadingAssets>}
  */
 export const uploadingAssets = writable({ folder: undefined, files: [] });
+
+/**
+ * Whether the given asset is previewable.
+ * @param {Asset} asset - Asset.
+ * @returns {boolean} Result.
+ */
+export const canPreviewAsset = (asset) => {
+  const type = mime.getType(asset.path);
+
+  return (
+    ['image', 'audio', 'video'].includes(asset.kind) ||
+    type === 'application/pdf' ||
+    (!!type && isTextFileType(type))
+  );
+};
 
 /**
  * Determine the asset’s kind from the file extension.
