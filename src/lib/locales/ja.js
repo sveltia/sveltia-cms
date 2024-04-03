@@ -322,6 +322,9 @@ export const strings = {
     },
   },
 
+  // Asset Editor
+  editing_x: '{name} を編集',
+
   // Media details
   viewing_x_asset_details: '「{name}」アセットの詳細を表示しています。',
   asset_editor: 'アセットエディター',

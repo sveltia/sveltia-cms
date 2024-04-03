@@ -4,6 +4,7 @@
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/toolbar/download-assets-button.svelte';
+  import EditAssetButton from '$lib/components/assets/toolbar/edit-asset-button.svelte';
   import { overlaidAsset, selectedAssetFolder } from '$lib/services/assets';
   import { goBack } from '$lib/services/navigation';
 
@@ -26,8 +27,8 @@
     <strong role="none">{$overlaidAsset?.name}</strong>
   </h2>
   <Spacer flex />
-  <!-- @todo Implement these actions.
-  <Button variant="secondary" label={$_('edit')} aria-label={$_('edit_file')} />
+  <EditAssetButton asset={$overlaidAsset} />
+  <!-- @todo Implement this.
   <Button variant="secondary" label={$_('replace')} aria-label={$_('replace_file')} />
   -->
   <CopyAssetsButton {assets} />

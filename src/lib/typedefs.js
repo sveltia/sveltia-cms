@@ -746,9 +746,15 @@
  */
 
 /**
+ * Commit action to perform. It should match GitLab’s commit action types.
+ * @typedef {'create' | 'update' | 'delete'} CommitAction
+ * @see https://docs.gitlab.com/ee/api/commits.html#create-a-commit-with-multiple-files-and-actions
+ */
+
+/**
  * File entry to be created, updated or deleted.
  * @typedef {object} FileChange
- * @property {'create' | 'update' | 'delete'} action - Commit action.
+ * @property {CommitAction} action - Commit action.
  * @property {string} path - File path.
  * @property {string} [slug] - Entry slug or `undefined` for an asset.
  * @property {string | File} [data] - File data.
@@ -770,6 +776,7 @@
  * @typedef {object} UploadingAssets
  * @property {string | undefined} folder - Target folder path.
  * @property {File[]} files - File list.
+ * @property {boolean} [override] - Whether to override existing files. Default: `false`.
  */
 
 /**

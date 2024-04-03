@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
+  import EditAssetDialog from '$lib/components/assets/details/edit-asset-dialog.svelte';
   import AssetList from '$lib/components/assets/list/asset-list.svelte';
   import PrimarySidebar from '$lib/components/assets/list/primary-sidebar.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
@@ -108,6 +109,8 @@
 {#if $overlaidAsset}
   <AssetDetailsOverlay />
 {/if}
+
+<EditAssetDialog />
 
 <Toast bind:show={$assetUpdatesToast.saved}>
   <Alert status="success">

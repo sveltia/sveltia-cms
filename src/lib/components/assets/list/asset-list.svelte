@@ -34,7 +34,9 @@
         {#each Object.entries($assetGroups) as [name, assets] (name)}
           <GridBody label={name !== '*' ? name : undefined}>
             {#each assets as asset (asset.path)}
-              <AssetListItem {asset} viewType={$currentView.type} />
+              {#key asset.sha}
+                <AssetListItem {asset} viewType={$currentView.type} />
+              {/key}
             {/each}
           </GridBody>
         {/each}

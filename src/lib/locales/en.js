@@ -320,6 +320,9 @@ export const strings = {
     },
   },
 
+  // Asset Editor
+  editing_x: 'Editing {name}',
+
   // Media details
   viewing_x_asset_details: 'You’re viewing the details of the “{name}” asset.',
   asset_editor: 'Asset Editor',

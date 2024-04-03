@@ -64,6 +64,11 @@ export const overlaidAsset = writable();
 export const uploadingAssets = writable({ folder: undefined, files: [] });
 
 /**
+ * @type {import('svelte/store').Writable<Asset | undefined>}
+ */
+export const editingAsset = writable();
+
+/**
  * Whether the given asset is previewable.
  * @param {Asset} asset - Asset.
  * @returns {boolean} Result.
@@ -76,6 +81,18 @@ export const canPreviewAsset = (asset) => {
     type === 'application/pdf' ||
     (!!type && isTextFileType(type))
   );
+};
+
+/**
+ * Whether the given asset is editable.
+ * @param {Asset} asset - Asset.
+ * @returns {boolean} Result.
+ * @todo Support image editing.
+ */
+export const canEditAsset = (asset) => {
+  const type = mime.getType(asset.path);
+
+  return !!type && isTextFileType(type);
 };
 
 /**

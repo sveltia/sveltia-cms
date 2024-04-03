@@ -22,26 +22,34 @@ export const assetUpdatesToast = writable({
  * @param {CommitChangesOptions} options - Options for the backend handler.
  */
 export const saveAssets = async (uploadingAssets, options) => {
-  const { files, folder } = /** @type {{ files: File[], folder: string }} */ (uploadingAssets);
+  const { files, folder, override = false } = uploadingAssets;
 
   const assetNamesInSameFolder = /** @type {string[]} */ (
     get(allAssets)
       .map((a) => a.path)
-      .filter((p) => p.match(`^${escapeRegExp(folder)}\\/[^\\/]+$`))
+      .filter((p) => p.match(`^${escapeRegExp(/** @type {string} */ (folder))}\\/[^\\/]+$`))
       .map((p) => p.split('/').pop())
   );
 
   const savingFileList = files.map((file) => {
-    const name = renameIfNeeded(file.name, assetNamesInSameFolder);
-    const path = [folder, name].join('/');
+    const originalName = file.name;
+    const suggestedName = renameIfNeeded(originalName, assetNamesInSameFolder);
+    const name = override ? originalName : suggestedName;
 
     assetNamesInSameFolder.push(name);
 
-    return { name, path, file };
+    return {
+      action: /** @type {CommitAction} */ (
+        override && originalName !== suggestedName ? 'update' : 'create'
+      ),
+      name,
+      path: [folder, name].join('/'),
+      file,
+    };
   });
 
   await get(backend)?.commitChanges(
-    savingFileList.map(({ path, file }) => ({ action: 'create', path, data: file })),
+    savingFileList.map(({ action, path, file }) => ({ action, path, data: file })),
     options,
   );
 
