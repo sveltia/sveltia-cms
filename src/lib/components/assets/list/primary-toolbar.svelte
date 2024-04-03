@@ -22,7 +22,7 @@
   </h2>
   <Spacer flex />
   <PreviewAssetButton asset={$focusedAsset} />
-  <CopyAssetsButton {assets} />
+  <CopyAssetsButton assets={$focusedAsset ? [$focusedAsset] : []} />
   <DownloadAssetsButton {assets} />
   <DeleteAssetsButton
     {assets}
