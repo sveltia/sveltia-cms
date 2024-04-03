@@ -122,8 +122,9 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
   - Navigate between the global media folder and per-collection media folders[^6].
   - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
-  - Copy the public URL or file path of one or more selected assets to clipboard.
-  - Copy the text or image data of of a selected asset to clipboard.
+  - Copy the public URL, file path or text/image data of a selected asset to clipboard.
+  - Edit plaintext assets, including SVG images.
+  - Replace existing assets.
   - Download one or more selected assets at once.
   - Delete one or more selected assets at once.
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
@@ -138,10 +139,10 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Installation | Installing with `npm` is not supported yet. |
-| Backends | Currently only the GitHub and GitLab backends are available. Sveltia CMS uses the GraphQL API by default for better performance; it cannot be disabled. We’ll also add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported, mainly due to the lack of a method to fetch content in bulk. |
+| Backends | Currently only the GitHub and GitLab backends are available, with GraphQL enabled by default. We’ll also add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported, mainly due to performance limitations. |
 | Netlify Integration | Identity Widget is not supported yet. We will not support Git Gateway due to the poor performance; we may implement an alternative using GraphQL later. |
 | Local Git Repository | Supported using a different approach. [See below](#work-with-a-local-git-repository) for details. |
-| UI Locales | Only English and Japanese are available at this time. No registration is needed. While the UI locale is automatically selected depending on the browser’s language settings, it can be changed in Settings. (Click on the Account button in the top right corner of the CMS.) |
+| UI Locales | Only English and Japanese are available at this time. No registration is required. The locale is selected automatically and can be changed in the Settings. |
 | Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare in a better way, but will not support deprecated Netlify Large Media. |
 | Editorial Workflow | Not supported yet. |
 | Open Authoring | Not supported yet. |
@@ -230,7 +231,7 @@ You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](htt
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
    - Other Chromium-based browsers may also work. In Brave, you need to enable the File System Access API [with a flag](https://github.com/brave/brave-browser/issues/20563#issuecomment-1021567573).
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
-   - If you get an error saying “not a repository root directory”, make sure you’ve turned the folder into a repository with either CUI ([`git init`](https://github.com/git-guides/git-init)) or GUI, and the hidden `.git` folder exists.
+   - If you get an error saying “not a repository root directory”, make sure you’ve turned the folder into a repository with either a CUI ([`git init`](https://github.com/git-guides/git-init)) or GUI, and the hidden `.git` folder exists.
    - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646) and [this thread](https://github.com/sveltia/sveltia-cms/discussions/101).
 1. Make some changes to your content on Sveltia CMS.
 1. See if the produced changes look good using `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/).
