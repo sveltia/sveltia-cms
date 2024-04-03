@@ -1,4 +1,8 @@
 <script>
+  import { createEventDispatcher } from 'svelte';
+
+  const dispatch = createEventDispatcher();
+
   /**
    * @type {HTMLInputElement}
    */
@@ -24,6 +28,10 @@
   {accept}
   {multiple}
   bind:this={filePicker}
-  on:change
+  on:change={({ target }) => {
+    const files = [.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)];
+
+    dispatch('select', { files, file: files[0] });
+  }}
   on:cancel|stopPropagation
 />

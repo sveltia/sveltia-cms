@@ -174,8 +174,12 @@ export const strings = {
   no_asset: 'no asset',
   no_files_found: 'No files found.',
   no_entries_found: 'No entries found.',
-  drop_files_or_browse: 'Drop a file here or click to browse:',
+  upload_assets: 'Upload New Assets',
+  drop_file_or_browse: 'Drop a file here or click to browse:',
+  drop_files_or_browse: 'Drop files here or click to browse:',
   drop_files_here: 'Drop files here',
+  choose_file: 'Choose File',
+  choose_files: 'Choose Files',
   delete_asset: 'Delete Asset',
   delete_assets: 'Delete Assets',
   delete_selected_asset: 'Delete Selected Asset',
@@ -200,7 +204,6 @@ export const strings = {
   confirm_deleting_all_entries: 'Are you sure to delete all the entries?',
   confirm_deleting_all_entries_with_assets:
     'Are you sure to delete all the entries and associated assets?',
-  upload_files: 'Upload New Files',
   confirm_uploading_file: 'Are you sure to save the following file to the “{folder}” folder?',
   confirm_uploading_files:
     'Are you sure to save the following {count} files to the “{folder}” folder?',
@@ -353,7 +356,8 @@ export const strings = {
     search_for_image: 'Search for Images',
     locations: 'Locations',
     location: {
-      this_repository: 'This Repository',
+      local: 'Your Computer',
+      repository: 'This Repository',
       external_locations: 'External Locations',
       stock_photos: 'Stock Photos',
     },

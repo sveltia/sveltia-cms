@@ -34,6 +34,7 @@
         variant="ghost"
         iconic
         aria-label={$_('remove')}
+        hidden={files.length === 1}
         on:click={(event) => {
           event.stopPropagation();
           files.splice(index, 1);

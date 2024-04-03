@@ -1,15 +1,10 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
-  import { globalAssetFolder, uploadingAssets } from '$lib/services/assets';
+  import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
   import { goto } from '$lib/services/navigation';
-
-  /**
-   * @type {FilePicker}
-   */
-  let filePicker;
+  import { sleep } from '$lib/services/utils/misc';
 </script>
 
 <MenuButton
@@ -42,20 +37,11 @@
     <Divider />
     <MenuItem
       label={$_('asset')}
-      on:click={() => {
+      on:click={async () => {
         goto(`/assets`);
-        filePicker.open();
+        await sleep(100);
+        $showUploadAssetsDialog = true;
       }}
     />
   </Menu>
 </MenuButton>
-
-<FilePicker
-  bind:this={filePicker}
-  on:change={({ target }) => {
-    $uploadingAssets = {
-      folder: $globalAssetFolder?.internalPath,
-      files: [.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)],
-    };
-  }}
-/>

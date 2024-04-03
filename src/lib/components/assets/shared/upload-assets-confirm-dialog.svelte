@@ -2,16 +2,17 @@
   import { ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import { showUploadAssetsDialog, uploadingAssets } from '$lib/services/assets';
+  import { uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
+  import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { backendName } from '$lib/services/backends';
 </script>
 
 <!-- @todo Confirm to replace an old image if a file with the same same exists. -->
 
 <ConfirmationDialog
-  open={$showUploadAssetsDialog}
-  title={$_('upload_files')}
+  open={$showUploadAssetsConfirmDialog}
+  title={$_('upload_assets')}
   okLabel={$_($backendName === 'local' ? 'save' : 'upload')}
   on:ok={async () => {
     await saveAssets($uploadingAssets, { commitType: 'uploadMedia' });

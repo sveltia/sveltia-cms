@@ -3,6 +3,7 @@
   import { get } from 'svelte/store';
   import AssetsPage from '$lib/components/assets/assets-page.svelte';
   import UploadAssetsConfirmDialog from '$lib/components/assets/shared/upload-assets-confirm-dialog.svelte';
+  import UploadAssetsDialog from '$lib/components/assets/shared/upload-assets-dialog.svelte';
   import ConfigPage from '$lib/components/config/config-page.svelte';
   import ContentsPage from '$lib/components/contents/contents-page.svelte';
   import TranslatorApiKeyDialog from '$lib/components/contents/details/editor/translator-api-key-dialog.svelte';
@@ -57,6 +58,7 @@
   <svelte:component this={pages[$selectedPageName]} />
 </div>
 
+<UploadAssetsDialog />
 <UploadAssetsConfirmDialog />
 <TranslatorApiKeyDialog />
 

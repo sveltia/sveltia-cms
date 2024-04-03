@@ -90,20 +90,14 @@
     with an external upload button. In that case, the file preview, if enabled, should replace the
     default slot content.
   -->
-  {#if !showUploadButton && showFilePreview && files.length}
-    <div role="none" class="content">
-      <UploadAssetsPreview bind:files />
-    </div>
-  {:else if $$slots.default}
-    <slot />
-  {:else}
+  {#if showUploadButton || (showFilePreview && files.length)}
     <div role="none" class="content">
       {#if showUploadButton}
-        <div role="none">{$_('drop_files_or_browse')}</div>
+        <div role="none">{$_(multiple ? 'drop_files_or_browse' : 'drop_file_or_browse')}</div>
         <div role="none">
           <Button
             variant="primary"
-            label={$_('upload')}
+            label={$_(multiple ? 'choose_files' : 'choose_file')}
             {disabled}
             on:click={() => {
               openFilePicker();
@@ -117,6 +111,8 @@
         <UploadAssetsPreview bind:files />
       {/if}
     </div>
+  {:else}
+    <slot />
   {/if}
   {#if dragging}
     <div role="none" class="drop-indicator">
@@ -129,8 +125,8 @@
   {accept}
   {multiple}
   bind:this={filePicker}
-  on:change={({ target }) => {
-    onSelect([.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)]);
+  on:select={({ detail }) => {
+    onSelect(detail.files);
   }}
 />
 

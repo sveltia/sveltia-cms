@@ -8,12 +8,28 @@ import {
   getAssetBlobURL,
   selectedAssetFolder,
   selectedAssets,
+  uploadingAssets,
 } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/prefs';
 import LocalStorage from '$lib/services/utils/local-storage';
 
 const storageKey = 'sveltia-cms.assets-view';
+
+/**
+ * Whether to show the Upload Assets dialog.
+ */
+export const showUploadAssetsDialog = writable(false);
+
+/**
+ * @type {import('svelte/store').Readable<boolean>}
+ */
+export const showUploadAssetsConfirmDialog = derived(
+  [uploadingAssets],
+  ([_uploadingAssets], set) => {
+    set(!!_uploadingAssets.files?.length);
+  },
+);
 
 /**
  * Lazily or eagerly generate the asset’s Blob URL on demand to be used for a `<Image>` or `<Video>`

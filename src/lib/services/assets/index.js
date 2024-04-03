@@ -64,13 +64,6 @@ export const overlaidAsset = writable();
 export const uploadingAssets = writable({ folder: undefined, files: [] });
 
 /**
- * @type {import('svelte/store').Readable<boolean>}
- */
-export const showUploadAssetsDialog = derived([uploadingAssets], ([_uploadingAssets], set) => {
-  set(!!_uploadingAssets.files?.length);
-});
-
-/**
  * Determine the asset’s kind from the file extension.
  * @param {string} name - File name or path.
  * @returns {AssetKind} One of {@link assetKinds}.

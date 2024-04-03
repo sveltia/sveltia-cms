@@ -174,8 +174,12 @@ export const strings = {
   no_asset: '0 個のアセット',
   no_files_found: 'ファイルは見つかりませんでした。',
   no_entries_found: 'エントリーは見つかりませんでした。',
+  upload_assets: '新しいアセットをアップロード',
+  drop_file_or_browse: 'ここにファイルをドロップするか下のボタンをクリックして参照:',
   drop_files_or_browse: 'ここにファイルをドロップするか下のボタンをクリックして参照:',
   drop_files_here: 'ここにファイルをドロップ',
+  choose_file: 'ファイルを選択',
+  choose_files: 'ファイルを選択',
   delete_asset: 'アセットを削除',
   delete_assets: 'アセットを削除',
   delete_selected_asset: '選択されたアセットを削除',
@@ -201,7 +205,6 @@ export const strings = {
   confirm_deleting_all_entries: 'すべてのエントリーを削除してもよろしいですか？',
   confirm_deleting_all_entries_with_assets:
     'すべてのエントリーと関連アセットを削除してもよろしいですか？',
-  upload_files: '新しいファイルをアップロード',
   confirm_uploading_file: '以下のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
   confirm_uploading_files:
     '以下の {count} 個のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
@@ -355,7 +358,8 @@ export const strings = {
     search_for_image: '画像を検索',
     locations: '場所',
     location: {
-      this_repository: 'このレポジトリ',
+      local: 'お使いのコンピューター',
+      repository: 'このレポジトリ',
       external_locations: '外部の場所',
       stock_photos: 'ストックフォト',
     },
