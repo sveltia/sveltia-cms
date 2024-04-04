@@ -1,5 +1,5 @@
 <script>
-  import { Dialog, TextArea } from '@sveltia/ui';
+  import { Dialog, Switch, TextArea } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { editingAsset, getBlob } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
@@ -13,6 +13,8 @@
   let originalValue = undefined;
   /** @type {string | undefined} */
   let currentValue = undefined;
+  /** @type {boolean} */
+  let wrap = false;
 
   /**
    * Initialize the state.
@@ -70,7 +72,8 @@
       resetState();
     }}
   >
-    <div class="wrapper">
+    <div class="wrapper" class:wrap>
+      <Switch label={$_('wrap_long_lines')} bind:checked={wrap} />
       <TextArea bind:value={currentValue} flex />
     </div>
   </Dialog>
@@ -87,6 +90,10 @@
       font-size: var(--sui-font-size-monospace);
       text-wrap: nowrap;
       resize: vertical;
+    }
+
+    &.wrap :global(textarea) {
+      text-wrap: wrap;
     }
   }
 </style>

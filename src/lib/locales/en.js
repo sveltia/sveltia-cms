@@ -179,6 +179,7 @@ export const strings = {
   show_edit_options: 'Show Edit Options',
   edit_asset: 'Edit Asset',
   edit_x: 'Edit {name}',
+  wrap_long_lines: 'Wrap Long Lines',
   replace_asset: 'Replace Asset',
   replace_x: 'Replace {name}',
   drop_file_or_browse: 'Drop a file here or click to browse:',

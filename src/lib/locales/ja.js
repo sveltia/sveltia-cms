@@ -179,6 +179,7 @@ export const strings = {
   show_edit_options: '編集オプションを表示',
   edit_asset: 'アセットを編集',
   edit_x: '{name} を編集',
+  wrap_long_lines: '長い行を折り返す',
   replace_asset: 'アセットを差し替え',
   replace_x: '{name} を差し替え',
   drop_file_or_browse: 'ここにファイルをドロップするか下のボタンをクリックして参照:',
