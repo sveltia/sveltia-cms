@@ -51,7 +51,7 @@ export const formatDuration = (duration) => new Date(duration * 1000).toISOStrin
  * @param {File | Blob} file - File to be converted, typically a JPEG file.
  * @param {'jpeg' | 'png' | 'webp'} format - New image format. Default: PNG.
  * @param {number} quality - Image quality between 0 and 1.
- * @returns {Promise<Blob>} PNG file.
+ * @returns {Promise<Blob>} New image file.
  * @throws {Error} If the file is not an image.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
  * @see https://stackoverflow.com/q/62909538
