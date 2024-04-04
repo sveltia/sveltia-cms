@@ -45,3 +45,44 @@ export const getMediaMetadata = (src, kind) => {
  * @returns {string} Formatted duration.
  */
 export const formatDuration = (duration) => new Date(duration * 1000).toISOString().substr(11, 8);
+
+/**
+ * Convert the given image file to another format.
+ * @param {File | Blob} file - File to be converted, typically a JPEG file.
+ * @param {'jpeg' | 'png' | 'webp'} format - New image format. Default: PNG.
+ * @param {number} quality - Image quality between 0 and 1.
+ * @returns {Promise<Blob>} PNG file.
+ * @throws {Error} If the file is not an image.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
+ * @see https://stackoverflow.com/q/62909538
+ */
+export const convertImage = async (file, format = 'png', quality = 1) => {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Unsupported type');
+  }
+
+  const image = new Image();
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  const blobURL = URL.createObjectURL(file);
+
+  return new Promise((resolve) => {
+    image.addEventListener('load', () => {
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      context?.drawImage(image, 0, 0);
+
+      canvas.toBlob(
+        (blob) => {
+          resolve(/** @type {Blob} */ (blob));
+        },
+        `image/${format}`,
+        quality,
+      );
+
+      URL.revokeObjectURL(blobURL);
+    });
+
+    image.src = blobURL;
+  });
+};

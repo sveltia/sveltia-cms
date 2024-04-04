@@ -224,40 +224,6 @@ export const resolvePath = (path) => {
 };
 
 /**
- * Convert the given image file to PNG format.
- * @param {File | Blob} file - File to be converted, typically a JPEG file.
- * @returns {Promise<Blob>} PNG file.
- * @throws {Error} If the file is not an image.
- * @see https://stackoverflow.com/q/62909538
- */
-export const convertToPNG = async (file) => {
-  if (!file.type.startsWith('image/')) {
-    throw new Error('Unsupported type');
-  }
-
-  const image = new Image();
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  const blobURL = URL.createObjectURL(file);
-
-  return new Promise((resolve) => {
-    image.addEventListener('load', () => {
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      context?.drawImage(image, 0, 0);
-
-      canvas.toBlob((blob) => {
-        resolve(/** @type {Blob} */ (blob));
-      }, 'image/png');
-
-      URL.revokeObjectURL(blobURL);
-    });
-
-    image.src = blobURL;
-  });
-};
-
-/**
  * Save the given file locally.
  * @param {File | Blob} file - File to be saved.
  * @param {string} [name] - File name. Required if the `file` param is a `Blob`.
