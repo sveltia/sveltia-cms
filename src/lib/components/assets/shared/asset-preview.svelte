@@ -1,6 +1,6 @@
 <script>
   import { Icon } from '@sveltia/ui';
-  import { getAssetPreviewURL } from '$lib/services/assets/view';
+  import { getAssetPreviewURL, renderPDF } from '$lib/services/assets/view';
 
   /**
    * Asset type.
@@ -64,7 +64,12 @@
    * @type {HTMLImageElement | HTMLMediaElement}
    */
   let mediaElement;
+  /**
+   * @type {HTMLCanvasElement}
+   */
+  let canvasElement;
   let updatingSrc = false;
+  let renderingPDF = false;
   let loaded = false;
 
   /**
@@ -113,6 +118,24 @@
     void mediaElement;
     checkLoaded();
   }
+
+  /**
+   * Render a PDF thumbnail.
+   */
+  const startRenderingPDF = async () => {
+    if (asset && canvasElement && !renderingPDF) {
+      renderingPDF = true;
+      await renderPDF(asset, loading, canvasElement);
+      renderingPDF = false;
+      loaded = true;
+    }
+  };
+
+  $: {
+    if (asset?.name.endsWith('.pdf') && canvasElement) {
+      startRenderingPDF();
+    }
+  }
 </script>
 
 <div
@@ -140,6 +163,8 @@
     {:else}
       <Icon name="audio_file" />
     {/if}
+  {:else if asset?.name.endsWith('.pdf')}
+    <canvas bind:this={canvasElement} />
   {:else}
     <Icon name="draft" />
   {/if}
@@ -203,7 +228,7 @@
         backdrop-filter: blur(32px) brightness(0.8);
       }
 
-      :is(img, video) {
+      :is(img, video, canvas) {
         width: 100%;
         height: 100%;
         z-index: -2;
@@ -216,19 +241,19 @@
       padding: 0;
     }
 
-    & > :is(img, video) {
+    & > :is(img, video, canvas) {
       max-width: 100%;
       max-height: 100%;
     }
 
     &.dissolve {
-      :is(img, video) {
+      :is(img, video, canvas) {
         opacity: 0;
         transition: opacity 250ms;
       }
 
       &.loaded {
-        :is(img, video) {
+        :is(img, video, canvas) {
           opacity: 1;
         }
       }
@@ -253,11 +278,13 @@
   }
 
   :is(img, video) {
-    object-fit: contain;
-
     &:not([src]) {
       visibility: hidden;
     }
+  }
+
+  :is(img, video, canvas) {
+    object-fit: contain;
 
     .cover & {
       object-fit: cover;

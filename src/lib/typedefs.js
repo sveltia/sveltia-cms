@@ -785,6 +785,8 @@
  * @property {File} [file] - File object. Local backend only.
  * @property {string} [blobURL] - Blob URL for the asset. It’s a temporary URL for a remote file
  * being fetched or a local file being uploaded. Or `undefined` if the URL is not generated yet.
+ * @property {string} [thumbnailURL] - Thumbnail Blob URL for the asset. Used to cache a rendered
+ * thumbnail of a PDF document.
  * @property {string} name - File name.
  * @property {string} path - File path.
  * @property {string} sha - SHA-1 hash for the file.

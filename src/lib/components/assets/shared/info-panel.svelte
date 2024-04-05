@@ -20,7 +20,7 @@
 
   $: ({ path, size, kind, commitAuthor, commitDate, repoFileURL } = asset);
   $: [, extension = ''] = path.match(/\.([^.]+)$/) ?? [];
-  $: canPreview = ['image', 'audio', 'video'].includes(kind);
+  $: canPreview = ['image', 'audio', 'video'].includes(kind) || path.endsWith('.pdf');
 
   /**
    * @type {string | undefined}

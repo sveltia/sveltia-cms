@@ -13,8 +13,19 @@ import {
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/prefs';
 import LocalStorage from '$lib/services/utils/local-storage';
+import { waitVisibility } from '$lib/services/utils/misc';
 
 const storageKey = 'sveltia-cms.assets-view';
+/**
+ * PDF.js distribution URL. We don’t bundle this because most users probably don’t have PDF files.
+ * @see https://github.com/mozilla/pdf.js
+ */
+const pdfjsDistURL = 'https://unpkg.com/pdfjs-dist/build';
+/**
+ * Placeholder for the PDF.js module.
+ * @type {{ getDocument: Function, GlobalWorkerOptions: { workerSrc: string } }}
+ */
+let pdfjs;
 
 /**
  * Whether to show the Upload Assets dialog.
@@ -40,20 +51,71 @@ export const showUploadAssetsConfirmDialog = derived(
  * the Intersection Observer API.
  * @returns {Promise<string | undefined>} Blob URL.
  */
-export const getAssetPreviewURL = (asset, loading, element) => {
-  if (loading === 'eager') {
-    return getAssetBlobURL(asset);
+export const getAssetPreviewURL = async (asset, loading, element) => {
+  if (loading === 'lazy') {
+    await waitVisibility(element);
   }
 
-  return new Promise((resolve) => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        observer.disconnect();
-        resolve(getAssetBlobURL(asset));
-      }
+  return getAssetBlobURL(asset);
+};
+
+/**
+ * Render a thumbnail of a PDF document using PDF.js.
+ * @param {Asset} asset - Asset.
+ * @param {'lazy' | 'eager'} loading - How to load the media.
+ * @param {HTMLCanvasElement} canvas - Canvas element.
+ * @see https://github.com/mozilla/pdf.js/blob/master/examples/webpack/main.mjs
+ * @see https://github.com/mozilla/pdf.js/issues/10478
+ */
+export const renderPDF = async (asset, loading, canvas) => {
+  if (loading === 'lazy') {
+    await waitVisibility(canvas);
+  }
+
+  const context = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
+
+  // Use a cached image if available
+  if (asset.thumbnailURL) {
+    const image = new Image();
+
+    image.addEventListener('load', () => {
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      context.drawImage(image, 0, 0);
     });
 
-    observer.observe(element);
+    image.src = asset.thumbnailURL;
+
+    return;
+  }
+
+  const blobURL = await getAssetBlobURL(asset);
+
+  if (!blobURL) {
+    return;
+  }
+
+  // Lazily load the PDF.js library
+  if (!pdfjs) {
+    pdfjs = await import(`${pdfjsDistURL}/pdf.min.mjs`);
+    // Use a blob URL to prevent the remote worker script from being loaded repeatedly
+    pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+      await fetch(`${pdfjsDistURL}/pdf.worker.min.mjs`).then((r) => r.blob()),
+    );
+  }
+
+  const pdfDocument = await pdfjs.getDocument(blobURL).promise;
+  const pdfPage = await pdfDocument.getPage(1);
+  const viewport = pdfPage.getViewport({ scale: 1.0 });
+
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  await pdfPage.render({ canvasContext: context, viewport }).promise;
+
+  // Cache the image as blob URL for later use
+  canvas.toBlob((blob) => {
+    asset.thumbnailURL = URL.createObjectURL(/** @type {Blob} */ (blob));
   });
 };
 

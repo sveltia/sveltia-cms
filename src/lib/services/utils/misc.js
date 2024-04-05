@@ -26,3 +26,20 @@ export const sleep = (ms = 1000) =>
       resolve();
     }, ms);
   });
+
+/**
+ * Wait until the given element enters the viewport.
+ * @param {HTMLElement} element - Element to observe.
+ * @returns {Promise<void>} Nothing.
+ */
+export const waitVisibility = (element) =>
+  new Promise((resolve) => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        observer.disconnect();
+        resolve(undefined);
+      }
+    });
+
+    observer.observe(element);
+  });
