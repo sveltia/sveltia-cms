@@ -9,8 +9,8 @@ dependencies:
     specifier: ^1.38.0
     version: 1.38.0
   '@sveltia/ui':
-    specifier: ^0.10.7
-    version: 0.10.7
+    specifier: ^0.10.8
+    version: 0.10.8
   base32-encode:
     specifier: ^2.0.0
     version: 2.0.0
@@ -1214,8 +1214,8 @@ packages:
       - supports-color
     dev: true
 
-  /@sveltia/ui@0.10.7:
-    resolution: {integrity: sha512-4K2+8JQ4N7tAmfuW5tW22JCOER3UK17z5HkloZx+3s5Vf3nNu18qJ/wkLvKhWUFdMI9u3vJjnCY6V/DqVontYg==}
+  /@sveltia/ui@0.10.8:
+    resolution: {integrity: sha512-hwWBzhltOSplr50KdpPR//mn+nzFdhO0EhjZknYztmfhw62xUpDopyniZzc+v94iOfx4hq0DEQaAStBe+/O2tQ==}
     dependencies:
       svelte: 4.2.12
     dev: false
