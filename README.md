@@ -93,12 +93,15 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 
-### Better fields/widgets
+### Better data entry
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Leading and trailing spaces in text-type field values are automatically removed when you save the entry[^37].
 - You can revert changes to all fields or a specific field.
 - You can hide the preview of a specific field with `preview: false`.
+
+### Better fields/widgets
+
 - The String widget supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
 - The String widget supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
 - The Boolean, Number and String widgets support the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
