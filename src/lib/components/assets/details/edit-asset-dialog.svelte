@@ -73,9 +73,11 @@
     }}
   >
     <div class="wrapper" class:wrap>
-      <Switch label={$_('wrap_long_lines')} bind:checked={wrap} />
       <TextArea bind:value={currentValue} flex />
     </div>
+    <svelte:fragment slot="footer-extra">
+      <Switch label={$_('wrap_long_lines')} bind:checked={wrap} />
+    </svelte:fragment>
   </Dialog>
 {/if}
 
