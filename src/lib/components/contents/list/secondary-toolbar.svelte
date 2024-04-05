@@ -64,7 +64,7 @@
       {currentView}
       aria-controls="entry-list"
     />
-    <Divider />
+    <Divider orientation="vertical" />
     <Button
       variant="ghost"
       iconic

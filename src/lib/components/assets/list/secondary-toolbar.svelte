@@ -48,7 +48,7 @@
       aria-controls="asset-list"
     />
     <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
-    <Divider />
+    <Divider orientation="vertical" />
     <Button
       variant="ghost"
       iconic
