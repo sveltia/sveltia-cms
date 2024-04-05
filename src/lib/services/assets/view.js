@@ -64,6 +64,7 @@ export const getAssetPreviewURL = async (asset, loading, element) => {
  * @param {Asset} asset - Asset.
  * @param {'lazy' | 'eager'} loading - How to load the media.
  * @param {HTMLCanvasElement} canvas - Canvas element.
+ * @throws {Error} When the rendering failed.
  * @see https://github.com/mozilla/pdf.js/blob/master/examples/webpack/main.mjs
  * @see https://github.com/mozilla/pdf.js/issues/10478
  */
@@ -92,26 +93,31 @@ export const renderPDF = async (asset, loading, canvas) => {
   const blobURL = await getAssetBlobURL(asset);
 
   if (!blobURL) {
-    return;
+    throw new Error('Failed to retrieve PDF');
   }
 
   // Lazily load the PDF.js library
   if (!pdfjs) {
-    pdfjs = await import(`${pdfjsDistURL}/pdf.min.mjs`);
-    // Use a blob URL to prevent the remote worker script from being loaded repeatedly
-    pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-      await fetch(`${pdfjsDistURL}/pdf.worker.min.mjs`).then((r) => r.blob()),
-    );
+    try {
+      pdfjs = await import(`${pdfjsDistURL}/pdf.min.mjs`);
+      pdfjs.GlobalWorkerOptions.workerSrc = `${pdfjsDistURL}/pdf.worker.min.mjs`;
+    } catch {
+      throw new Error('Failed to load PDF.js library');
+    }
   }
 
-  const pdfDocument = await pdfjs.getDocument(blobURL).promise;
-  const pdfPage = await pdfDocument.getPage(1);
-  const viewport = pdfPage.getViewport({ scale: 1.0 });
+  try {
+    const pdfDocument = await pdfjs.getDocument(blobURL).promise;
+    const pdfPage = await pdfDocument.getPage(1);
+    const viewport = pdfPage.getViewport({ scale: 1.0 });
 
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
 
-  await pdfPage.render({ canvasContext: context, viewport }).promise;
+    await pdfPage.render({ canvasContext: context, viewport }).promise;
+  } catch {
+    throw new Error('Failed to render PDF');
+  }
 
   // Cache the image as blob URL for later use
   canvas.toBlob((blob) => {

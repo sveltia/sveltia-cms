@@ -70,6 +70,7 @@
   let canvasElement;
   let updatingSrc = false;
   let renderingPDF = false;
+  let renderingPDFError = false;
   let loaded = false;
 
   /**
@@ -125,7 +126,13 @@
   const startRenderingPDF = async () => {
     if (asset && canvasElement && !renderingPDF) {
       renderingPDF = true;
-      await renderPDF(asset, loading, canvasElement);
+
+      try {
+        await renderPDF(asset, loading, canvasElement);
+      } catch {
+        renderingPDFError = true;
+      }
+
       renderingPDF = false;
       loaded = true;
     }
@@ -163,7 +170,7 @@
     {:else}
       <Icon name="audio_file" />
     {/if}
-  {:else if asset?.name.endsWith('.pdf')}
+  {:else if asset?.name.endsWith('.pdf') && !renderingPDFError}
     <canvas bind:this={canvasElement} />
   {:else}
     <Icon name="draft" />
