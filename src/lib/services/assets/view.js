@@ -99,7 +99,8 @@ export const renderPDF = async (asset, loading, canvas) => {
   // Lazily load the PDF.js library
   if (!pdfjs) {
     try {
-      pdfjs = await import(`${pdfjsDistURL}/pdf.min.mjs`);
+      // eslint-disable-next-line jsdoc/no-bad-blocks
+      pdfjs = await import(/* @vite-ignore */ `${pdfjsDistURL}/pdf.min.mjs`);
       pdfjs.GlobalWorkerOptions.workerSrc = `${pdfjsDistURL}/pdf.worker.min.mjs`;
     } catch {
       throw new Error('Failed to load PDF.js library');
