@@ -90,7 +90,7 @@
  * @property {() => Promise<boolean>} [init] - Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] - Function to sign
  * in to the service.
- * @property {(query: string, options: { kind?: string, apiKey?: string, userName?: string,
+ * @property {(query: string, options: { kind?: string, apiKey: string, userName?: string,
  * password?: string }) => Promise<ExternalAsset[]>} search - Function to search files.
  */
 
