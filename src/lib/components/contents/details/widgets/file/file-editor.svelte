@@ -8,6 +8,7 @@
   import { AlertDialog, Button, ConfirmationDialog, TextArea } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
   import Image from '$lib/components/common/image.svelte';
   import { getAssetPublicURL, getMediaFieldURL } from '$lib/services/assets';
@@ -88,14 +89,27 @@
   $: isImageWidget = widgetName === 'image';
 
   /**
+   * Reset the current selection.
+   */
+  const resetSelection = () => {
+    currentValue = '';
+    asset = undefined;
+    file = undefined;
+    url = undefined;
+    credit = undefined;
+  };
+
+  /**
    * Handle selected asset.
    * @param {SelectedAsset} selectedAsset - Selected asset details.
    */
   const onAssetSelect = async (selectedAsset) => {
+    resetSelection();
+
     ({ asset, file, url, credit } = selectedAsset);
 
     if (asset) {
-      currentValue = getAssetPublicURL(asset, { pathOnly: true });
+      currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true });
     }
 
     if (file) {
@@ -136,7 +150,9 @@
 </script>
 
 <div role="none" class="image-widget">
-  {#if src}
+  {#if asset}
+    <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
+  {:else if src}
     <Image {src} variant="tile" checkerboard={true} />
   {/if}
   <div role="none">
@@ -178,11 +194,7 @@
           aria-label={$_(`remove_${widgetName}`)}
           aria-controls="{fieldId}-value"
           on:click={() => {
-            currentValue = '';
-            asset = undefined;
-            file = undefined;
-            url = undefined;
-            credit = undefined;
+            resetSelection();
           }}
         />
       {/if}
@@ -191,7 +203,7 @@
 </div>
 
 <SelectAssetsDialog
-  kind={isImageWidget ? 'image' : 'any'}
+  kind={isImageWidget ? 'image' : undefined}
   {canEnterURL}
   bind:open={showSelectAssetsDialog}
   on:select={({ detail }) => {

@@ -19,9 +19,9 @@
 
   export let open = false;
   /**
-   * @type {'image' | 'any'}
+   * @type {AssetKind | undefined}
    */
-  export let kind = 'image';
+  export let kind;
   export let canEnterURL = true;
 
   const dispatch = createEventDispatcher();
@@ -80,7 +80,7 @@
       <SearchBar
         bind:value={searchTerms}
         disabled={!!selectedAsset?.file}
-        aria-label={$_(`assets_dialog.search_for_${kind}`)}
+        aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
       />
     {/if}
   </svelte:fragment>

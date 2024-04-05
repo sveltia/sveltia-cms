@@ -15,7 +15,7 @@
   import { prefs } from '$lib/services/prefs';
 
   /**
-   * @type {'image' | 'any'}
+   * @type {AssetKind | undefined}
    */
   export let kind = 'image';
   /**

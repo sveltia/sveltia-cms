@@ -192,9 +192,11 @@ export const getAssetBlobURL = async (asset) => {
  * @param {object} [options] - Options.
  * @param {boolean} [options.pathOnly] - Whether to use the absolute path starting with `/` instead
  * of the complete URL starting with `https`.
+ * @param {boolean} [options.allowSpecial] - Whether to allow returning a special, unlinkable path
+ * starting with `@`, etc.
  * @returns {string | undefined} URL or `undefined` if it cannot be determined.
  */
-export const getAssetPublicURL = (asset, { pathOnly = false } = {}) => {
+export const getAssetPublicURL = (asset, { pathOnly = false, allowSpecial = false } = {}) => {
   const _allAssetFolders = get(allAssetFolders);
 
   const { publicPath, entryRelative } =
@@ -210,7 +212,7 @@ export const getAssetPublicURL = (asset, { pathOnly = false } = {}) => {
   const path = asset.path.replace(asset.folder, publicPath ?? '');
 
   // Path starting with `@`, etc. cannot be linked
-  if (!path.startsWith('/')) {
+  if (!path.startsWith('/') && !allowSpecial) {
     return undefined;
   }
 

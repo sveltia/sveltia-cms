@@ -48,6 +48,6 @@
   <p>
     <Image {src} />
   </p>
-{:else if typeof currentValue === 'string' && currentValue.trim()}
+{:else if typeof currentValue === 'string' && currentValue.trim() && !currentValue.startsWith('data:')}
   <p>{currentValue}</p>
 {/if}
