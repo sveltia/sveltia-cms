@@ -10,7 +10,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 ![Screenshot: All-New Asset Library; Full Internationalization Support with DeepL](docs/screenshot-4-20231124.webp)<br>
 
-![Screenshot: Works both Local & Remote; Single-Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](docs/screenshot-5-20240405.webp)<br>
+![Screenshot: Works with Remote (GitHub, GitLab) and Local Repositories; Single-Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](docs/screenshot-5-20240405.webp)<br>
 
 ## Motivation
 
