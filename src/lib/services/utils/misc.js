@@ -41,5 +41,7 @@ export const waitVisibility = (element) =>
       }
     });
 
-    observer.observe(element);
+    window.requestAnimationFrame(() => {
+      observer.observe(element);
+    });
   });
