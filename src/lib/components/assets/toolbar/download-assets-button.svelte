@@ -1,7 +1,7 @@
 <script>
   import { Alert, Button, Toast, sleep } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { getBlob } from '$lib/services/assets';
+  import { getAssetBlob } from '$lib/services/assets';
   import { saveFile } from '$lib/services/utils/files';
 
   /**
@@ -21,7 +21,7 @@
     // eslint-disable-next-line no-restricted-syntax
     for (const asset of assets) {
       // eslint-disable-next-line no-await-in-loop
-      saveFile(await getBlob(asset), asset.name);
+      saveFile(await getAssetBlob(asset), asset.name);
       // eslint-disable-next-line no-await-in-loop
       await sleep(300);
     }

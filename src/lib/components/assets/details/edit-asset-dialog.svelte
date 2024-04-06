@@ -1,7 +1,7 @@
 <script>
   import { Dialog, Switch, TextArea } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { editingAsset, getBlob } from '$lib/services/assets';
+  import { editingAsset, getAssetBlob } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
 
   /** @type {Asset | undefined} */
@@ -20,7 +20,7 @@
    * Initialize the state.
    */
   const initState = async () => {
-    blob = await getBlob(/** @type {Asset} */ (asset));
+    blob = await getAssetBlob(/** @type {Asset} */ (asset));
     originalValue = await blob.text();
     currentValue = originalValue;
   };

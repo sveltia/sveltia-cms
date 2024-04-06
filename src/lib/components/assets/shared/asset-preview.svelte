@@ -1,6 +1,7 @@
 <script>
   import { Icon } from '@sveltia/ui';
-  import { getAssetPreviewURL, renderPDF } from '$lib/services/assets/view';
+  import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets';
+  import { waitVisibility } from '$lib/services/utils/misc';
 
   /**
    * Asset type.
@@ -64,24 +65,34 @@
    * @type {HTMLImageElement | HTMLMediaElement}
    */
   let mediaElement;
-  /**
-   * @type {HTMLCanvasElement}
-   */
-  let canvasElement;
   let updatingSrc = false;
-  let renderingPDF = false;
-  let renderingPDFError = false;
+  let hasError = false;
   let loaded = false;
+
+  $: isImage = kind === 'image' || asset?.name.endsWith('.pdf');
 
   /**
    * Update the {@link src} property.
    */
   const updateSrc = async () => {
-    if (asset && mediaElement && !updatingSrc) {
-      updatingSrc = true;
-      src = await getAssetPreviewURL(asset, loading, mediaElement);
-      updatingSrc = false;
+    if (!asset || !mediaElement || updatingSrc) {
+      return;
     }
+
+    updatingSrc = true;
+    hasError = false;
+
+    if (loading === 'lazy') {
+      await waitVisibility(mediaElement);
+    }
+
+    try {
+      src = variant ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
+    } catch {
+      hasError = true;
+    }
+
+    updatingSrc = false;
   };
 
   $: {
@@ -99,14 +110,14 @@
     }
 
     if (
-      kind === 'image'
+      isImage
         ? /** @type {HTMLImageElement} */ (mediaElement).complete
         : /** @type {HTMLMediaElement} */ (mediaElement).readyState > 0
     ) {
       loaded = true;
     } else {
       mediaElement.addEventListener(
-        kind === 'image' ? 'load' : 'loadedmetadata',
+        isImage ? 'load' : 'loadedmetadata',
         () => {
           loaded = true;
         },
@@ -119,30 +130,6 @@
     void mediaElement;
     checkLoaded();
   }
-
-  /**
-   * Render a PDF thumbnail.
-   */
-  const startRenderingPDF = async () => {
-    if (asset && canvasElement && !renderingPDF) {
-      renderingPDF = true;
-
-      try {
-        await renderPDF(asset, loading, canvasElement);
-      } catch {
-        renderingPDFError = true;
-      }
-
-      renderingPDF = false;
-      loaded = true;
-    }
-  };
-
-  $: {
-    if (asset?.name.endsWith('.pdf') && canvasElement) {
-      startRenderingPDF();
-    }
-  }
 </script>
 
 <div
@@ -153,7 +140,9 @@
   class:dissolve
   class:loaded
 >
-  {#if kind === 'image'}
+  {#if hasError}
+    <Icon name="draft" />
+  {:else if isImage}
     <img {loading} {src} {alt} {...$$restProps} bind:this={mediaElement} />
   {:else if kind === 'video'}
     <!-- svelte-ignore a11y-media-has-caption -->
@@ -170,8 +159,6 @@
     {:else}
       <Icon name="audio_file" />
     {/if}
-  {:else if asset?.name.endsWith('.pdf') && !renderingPDFError}
-    <canvas bind:this={canvasElement} />
   {:else}
     <Icon name="draft" />
   {/if}
@@ -235,7 +222,7 @@
         backdrop-filter: blur(32px) brightness(0.8);
       }
 
-      :is(img, video, canvas) {
+      :is(img, video) {
         width: 100%;
         height: 100%;
         z-index: -2;
@@ -248,19 +235,19 @@
       padding: 0;
     }
 
-    & > :is(img, video, canvas) {
+    & > :is(img, video) {
       max-width: 100%;
       max-height: 100%;
     }
 
     &.dissolve {
-      :is(img, video, canvas) {
+      :is(img, video) {
         opacity: 0;
         transition: opacity 250ms;
       }
 
       &.loaded {
-        :is(img, video, canvas) {
+        :is(img, video) {
           opacity: 1;
         }
       }
@@ -285,13 +272,11 @@
   }
 
   :is(img, video) {
+    object-fit: contain;
+
     &:not([src]) {
       visibility: hidden;
     }
-  }
-
-  :is(img, video, canvas) {
-    object-fit: contain;
 
     .cover & {
       object-fit: cover;

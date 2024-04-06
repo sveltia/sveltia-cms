@@ -5,7 +5,6 @@ import {
   allAssetFolders,
   allAssets,
   assetExtensions,
-  getAssetBlobURL,
   selectedAssetFolder,
   selectedAssets,
   uploadingAssets,
@@ -13,19 +12,8 @@ import {
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/prefs';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { waitVisibility } from '$lib/services/utils/misc';
 
 const storageKey = 'sveltia-cms.assets-view';
-/**
- * PDF.js distribution URL. We don’t bundle this because most users probably don’t have PDF files.
- * @see https://github.com/mozilla/pdf.js
- */
-const pdfjsDistURL = 'https://unpkg.com/pdfjs-dist/build';
-/**
- * Placeholder for the PDF.js module.
- * @type {{ getDocument: Function, GlobalWorkerOptions: { workerSrc: string } }}
- */
-let pdfjs;
 
 /**
  * Whether to show the Upload Assets dialog.
@@ -41,90 +29,6 @@ export const showUploadAssetsConfirmDialog = derived(
     set(!!_uploadingAssets.files?.length);
   },
 );
-
-/**
- * Lazily or eagerly generate the asset’s Blob URL on demand to be used for a `<Image>` or `<Video>`
- * component. For a Git backend, this will be done by fetching the Blob via the API.
- * @param {Asset} asset - Asset.
- * @param {'lazy' | 'eager'} loading - How to load the media.
- * @param {HTMLImageElement | HTMLMediaElement} element - Element to observe the visibility using
- * the Intersection Observer API.
- * @returns {Promise<string | undefined>} Blob URL.
- */
-export const getAssetPreviewURL = async (asset, loading, element) => {
-  if (loading === 'lazy') {
-    await waitVisibility(element);
-  }
-
-  return getAssetBlobURL(asset);
-};
-
-/**
- * Render a thumbnail of a PDF document using PDF.js.
- * @param {Asset} asset - Asset.
- * @param {'lazy' | 'eager'} loading - How to load the media.
- * @param {HTMLCanvasElement} canvas - Canvas element.
- * @throws {Error} When the rendering failed.
- * @see https://github.com/mozilla/pdf.js/blob/master/examples/webpack/main.mjs
- * @see https://github.com/mozilla/pdf.js/issues/10478
- */
-export const renderPDF = async (asset, loading, canvas) => {
-  if (loading === 'lazy') {
-    await waitVisibility(canvas);
-  }
-
-  const context = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
-
-  // Use a cached image if available
-  if (asset.thumbnailURL) {
-    const image = new Image();
-
-    image.addEventListener('load', () => {
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      context.drawImage(image, 0, 0);
-    });
-
-    image.src = asset.thumbnailURL;
-
-    return;
-  }
-
-  const blobURL = await getAssetBlobURL(asset);
-
-  if (!blobURL) {
-    throw new Error('Failed to retrieve PDF');
-  }
-
-  // Lazily load the PDF.js library
-  if (!pdfjs) {
-    try {
-      // eslint-disable-next-line jsdoc/no-bad-blocks
-      pdfjs = await import(/* @vite-ignore */ `${pdfjsDistURL}/pdf.min.mjs`);
-      pdfjs.GlobalWorkerOptions.workerSrc = `${pdfjsDistURL}/pdf.worker.min.mjs`;
-    } catch {
-      throw new Error('Failed to load PDF.js library');
-    }
-  }
-
-  try {
-    const pdfDocument = await pdfjs.getDocument(blobURL).promise;
-    const pdfPage = await pdfDocument.getPage(1);
-    const viewport = pdfPage.getViewport({ scale: 1.0 });
-
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    await pdfPage.render({ canvasContext: context, viewport }).promise;
-  } catch {
-    throw new Error('Failed to render PDF');
-  }
-
-  // Cache the image as blob URL for later use
-  canvas.toBlob((blob) => {
-    asset.thumbnailURL = URL.createObjectURL(/** @type {Blob} */ (blob));
-  });
-};
 
 /**
  * Get the label for the given collection. It can be a category name if the folder is a

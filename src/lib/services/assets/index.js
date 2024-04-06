@@ -4,7 +4,7 @@ import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
 import { isTextFileType, resolvePath } from '$lib/services/utils/files';
-import { getMediaMetadata } from '$lib/services/utils/media';
+import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
 export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
 
@@ -106,6 +106,80 @@ export const getAssetKind = (name) =>
   );
 
 /**
+ * Get the blob for the given asset.
+ * @param {Asset} asset - Asset.
+ * @returns {Promise<Blob>} Blob.
+ */
+export const getAssetBlob = async (asset) => {
+  const { file, blobURL, name } = asset;
+
+  if (blobURL) {
+    return fetch(blobURL).then((r) => r.blob());
+  }
+
+  /** @type {Blob} */
+  let blob;
+
+  if (file) {
+    blob = file;
+  } else {
+    const _blob = await get(backend)?.fetchBlob?.(asset);
+
+    if (!_blob) {
+      throw new Error('Failed to retrieve blob');
+    }
+
+    // Override the MIME type as it can be `application/octet-stream`
+    blob = new Blob([_blob], { type: mime.getType(name) ?? _blob.type });
+  }
+
+  // Cache the URL
+  asset.blobURL = URL.createObjectURL(blob);
+
+  return blob;
+};
+
+/**
+ * Get the blob URL for the given asset.
+ * @param {Asset} asset - Asset.
+ * @returns {Promise<string | undefined>} URL or `undefined` if the blob is not available.
+ */
+export const getAssetBlobURL = async (asset) => {
+  if (!asset.blobURL) {
+    await getAssetBlob(asset);
+  }
+
+  return asset.blobURL;
+};
+
+/**
+ * Get a thumbnail image for the given asset.
+ * @param {Asset} asset - Asset.
+ * @returns {Promise<string>} Thumbnail blob URL.
+ */
+export const getAssetThumbnailURL = async (asset) => {
+  // Use a cached image if available
+  if (asset.thumbnailURL) {
+    return asset.thumbnailURL;
+  }
+
+  const blob = await getAssetBlob(asset);
+  const format = 'webp';
+  const dimension = 512;
+
+  const thumbnailBlob = asset.name.endsWith('.pdf')
+    ? await renderPDF(blob, { format, dimension })
+    : await convertImage(blob, { format, dimension });
+
+  const thumbnailURL = URL.createObjectURL(thumbnailBlob);
+
+  // Cache the image as blob URL for later use
+  asset.thumbnailURL = thumbnailURL;
+
+  return thumbnailURL;
+};
+
+/**
  * Get an asset by a public path typically stored as an image field value.
  * @param {string} savedPath - Saved absolute path or relative path.
  * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
@@ -156,34 +230,6 @@ export const getAssetByPath = (savedPath, entry) => {
   }
 
   return get(allAssets).find((asset) => asset.path === `${internalPath}/${fileName}`);
-};
-
-/**
- * Get the blob URL for the given asset.
- * @param {Asset} asset - Asset file, such as an image.
- * @returns {Promise<string | undefined>} URL or `undefined` if the blob is not available.
- */
-export const getAssetBlobURL = async (asset) => {
-  // Return immediately if cached
-  if (asset.blobURL) {
-    return asset.blobURL;
-  }
-
-  const blob = asset.file ?? (await get(backend)?.fetchBlob?.(asset));
-
-  if (!blob) {
-    return undefined;
-  }
-
-  const blobURL = URL.createObjectURL(blob);
-
-  // Cache the URL
-  allAssets.update((assets) => [
-    ...assets.filter(({ sha, path }) => !(sha === asset.sha && path === asset.path)),
-    { ...asset, blobURL },
-  ]);
-
-  return blobURL;
 };
 
 /**
@@ -274,23 +320,6 @@ export const getAssetDetails = async (asset) => {
     duration,
     usedEntries: url ? await getEntriesByAssetURL(url) : [],
   };
-};
-
-/**
- * Get the blob for the given asset. Override the MIME type as it can be `application/octet-stream`.
- * @param {Asset} asset - Asset.
- * @returns {Promise<Blob>} Blob.
- */
-export const getBlob = async (asset) => {
-  const { file, blobURL, path } = asset;
-
-  const blob =
-    /** @type {Blob} */ (file) ??
-    (await fetch(/** @type {string} */ (blobURL)).then((r) => r.blob()));
-
-  const type = mime.getType(path) ?? blob.type;
-
-  return new Blob([blob], { type });
 };
 
 // Reset the asset selection when a different folder is selected

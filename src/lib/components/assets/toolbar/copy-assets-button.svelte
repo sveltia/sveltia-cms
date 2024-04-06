@@ -1,7 +1,7 @@
 <script>
   import { Alert, Icon, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { getAssetDetails, getBlob } from '$lib/services/assets';
+  import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
   import { isTextFileType } from '$lib/services/utils/files';
   import { convertImage } from '$lib/services/utils/media';
 
@@ -46,7 +46,7 @@
       return false;
     }
 
-    const blob = await getBlob(assets[0]);
+    const blob = await getAssetBlob(assets[0]);
 
     assetBlob = blob;
 

@@ -6,7 +6,7 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
-  import { getBlob, overlaidAsset } from '$lib/services/assets';
+  import { getAssetBlob, overlaidAsset } from '$lib/services/assets';
   import { isTextFileType } from '$lib/services/utils/files';
 
   /**
@@ -23,7 +23,7 @@
 
   $: (async () => {
     if ($overlaidAsset) {
-      blob = await getBlob($overlaidAsset);
+      blob = await getAssetBlob($overlaidAsset);
     }
   })();
 
