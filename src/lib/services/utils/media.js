@@ -168,7 +168,12 @@ export const renderPDF = async (
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
 
   try {
-    const pdfDocument = await pdfjs.getDocument(URL.createObjectURL(blob)).promise;
+    const pdfDocument = await pdfjs.getDocument({
+      url: URL.createObjectURL(blob),
+      isEvalSupported: false,
+      disableAutoFetch: true,
+    }).promise;
+
     const pdfPage = await pdfDocument.getPage(1);
     const viewport = pdfPage.getViewport({ scale: 1 });
     const { width, height } = viewport;
