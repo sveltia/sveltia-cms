@@ -135,8 +135,9 @@
  */
 
 /**
- * ISO 639-1 locale code or `_default` for the unspecified default content locale.
- * @typedef {StandardLocaleCode | '_default'} LocaleCode
+ * ISO 639-1 locale code or `_default` for the unspecified default content locale. And `_` is a
+ * special one that can be used to hold locale-agnostic data.
+ * @typedef {StandardLocaleCode | '_default' | '_'} LocaleCode
  */
 
 /**

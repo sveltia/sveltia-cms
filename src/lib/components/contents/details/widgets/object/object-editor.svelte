@@ -14,6 +14,7 @@
     createProxy,
     entryDraft,
     getDefaultValues,
+    syncExpanderStates,
   } from '$lib/services/contents/editor';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
@@ -71,7 +72,7 @@
     typeKey = 'type',
   } = fieldConfig);
 
-  $: ({ collectionName, fileName, collection, collectionFile, currentValues } =
+  $: ({ collectionName, fileName, collection, collectionFile, currentValues, viewStates } =
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: valueMap = currentValues[locale];
@@ -81,7 +82,7 @@
   $: canEdit = locale === defaultLocale || i18n !== false;
   $: canonicalLocale = getCanonicalLocale(locale);
   $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
-  $: parentExpanded = !collapsed;
+  $: parentExpanded = !!viewStates?._[keyPath]?.expanded;
   $: hasVariableTypes = Array.isArray(types);
   $: typeKeyPath = `${keyPath}.${typeKey}`;
   $: typeConfig = hasVariableTypes
@@ -96,6 +97,9 @@
 
   onMount(() => {
     widgetId = generateUUID('short');
+
+    // Initialize the expander state
+    syncExpanderStates({ [keyPath]: !collapsed });
   });
 
   /**
@@ -190,7 +194,7 @@
         controlId="object-{widgetId}-item-list"
         expanded={parentExpanded}
         toggleExpanded={() => {
-          parentExpanded = !parentExpanded;
+          syncExpanderStates({ [keyPath]: !parentExpanded });
         }}
         removeButtonVisible={addButtonVisible}
         removeButtonDisabled={addButtonDisabled}

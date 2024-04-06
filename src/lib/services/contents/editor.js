@@ -358,7 +358,8 @@ export const createDraft = (entry, defaultValues) => {
       ]),
     ),
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
-    viewStates: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
+    // Any locale-agnostic view states will be put under the `_` key
+    viewStates: Object.fromEntries([...allLocales, '_'].map((locale) => [locale, {}])),
   });
 };
 
@@ -944,6 +945,46 @@ const createEntryPath = (draft, locale, slug) => {
 };
 
 /**
+ * Sync the field object/list expander states between locales.
+ * @param {{ [keyPath: string]: boolean }} stateMap - Map of keypath and state.
+ */
+export const syncExpanderStates = (stateMap) => {
+  entryDraft.update((_draft) => {
+    if (_draft) {
+      Object.entries(stateMap).forEach(([keyPath, expanded]) => {
+        const viewState = _draft.viewStates._[keyPath] ?? {};
+
+        if (viewState.expanded !== expanded) {
+          _draft.viewStates._[keyPath] = { ...viewState, expanded };
+        }
+      });
+    }
+
+    return _draft;
+  });
+};
+
+/**
+ * Expand any invalid fields, including the parent list/object(s).
+ */
+const expandInvalidFields = () => {
+  /** @type {{ [keyPath: string]: boolean }} */
+  const stateMap = {};
+
+  Object.values(get(entryDraft)?.validities ?? {}).forEach((validities) => {
+    Object.entries(validities).forEach(([keyPath, { valid }]) => {
+      if (!valid) {
+        keyPath.split('.').forEach((_key, index, arr) => {
+          stateMap[arr.slice(0, index + 1).join('.')] = true;
+        });
+      }
+    });
+  });
+
+  syncExpanderStates(stateMap);
+};
+
+/**
  * Save the entry draft.
  * @param {object} [options] - Options.
  * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
@@ -951,6 +992,8 @@ const createEntryPath = (draft, locale, slug) => {
  */
 export const saveEntry = async ({ skipCI = undefined } = {}) => {
   if (!validateEntry()) {
+    expandInvalidFields();
+
     throw new Error('validation_failed');
   }
 

@@ -11,7 +11,12 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
-  import { entryDraft, getDefaultValues, updateListField } from '$lib/services/contents/editor';
+  import {
+    entryDraft,
+    getDefaultValues,
+    syncExpanderStates,
+    updateListField,
+  } from '$lib/services/contents/editor';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
   import { generateUUID } from '$lib/services/utils/crypto';
@@ -78,13 +83,14 @@
   $: hasVariableTypes = Array.isArray(types);
   $: hasSubFields = hasSingleSubField || hasMultiSubFields || hasVariableTypes;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
-  $: ({ collectionName, fileName, collection, collectionFile, currentValues } =
+  $: ({ collectionName, fileName, collection, collectionFile, currentValues, viewStates } =
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: isDuplicateField = locale !== defaultLocale && i18n === 'duplicate';
   $: valueMap = currentValues[locale];
   $: canonicalLocale = getCanonicalLocale(locale);
   $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
+  $: parentExpanded = !!viewStates?._[keyPath]?.expanded;
 
   /** @type {{ [key: string]: any }[]} */
   $: items =
@@ -99,8 +105,6 @@
       ),
     )[fieldName] ?? [];
 
-  $: parentExpanded = !minimizeCollapsed;
-
   let mounted = false;
   let widgetId = '';
   let inputValue = '';
@@ -109,9 +113,10 @@
     mounted = true;
     widgetId = generateUUID('short');
 
-    items.forEach((__, index) => {
-      /** @type {EntryDraft} */ ($entryDraft).viewStates[locale][`${keyPath}.${index}.expanded`] =
-        !collapsed;
+    // Initialize the expander state
+    syncExpanderStates({
+      [keyPath]: !minimizeCollapsed,
+      ...Object.fromEntries(items.map((__, index) => [`${keyPath}.${index}`, !collapsed])),
     });
   });
 
@@ -268,7 +273,7 @@
         aria-expanded={parentExpanded}
         aria-controls="list-{widgetId}-item-list"
         on:click={() => {
-          parentExpanded = !parentExpanded;
+          syncExpanderStates({ [keyPath]: !parentExpanded });
         }}
       >
         <Icon slot="start-icon" name={parentExpanded ? 'expand_more' : 'chevron_right'} />
@@ -289,7 +294,7 @@
       class:collapsed={!parentExpanded}
     >
       {#each items as item, index}
-        {@const expanded = !!$entryDraft?.viewStates[locale][`${keyPath}.${index}.expanded`]}
+        {@const expanded = !!viewStates?._[`${keyPath}.${index}`]?.expanded}
         {@const typeConfig = hasVariableTypes
           ? types?.find(({ name }) => name === item[typeKey])
           : undefined}
@@ -304,11 +309,7 @@
             controlId="list-{widgetId}-item-{index}-body"
             {expanded}
             toggleExpanded={() => {
-              Object.keys($entryDraft?.viewStates ?? {}).forEach((_locale) => {
-                /** @type {EntryDraft} */ ($entryDraft).viewStates[_locale][
-                  `${keyPath}.${index}.expanded`
-                ] = !expanded;
-              });
+              syncExpanderStates({ [`${keyPath}.${index}`]: !expanded });
             }}
             removeButtonVisible={true}
             removeButtonDisabled={isDuplicateField}
