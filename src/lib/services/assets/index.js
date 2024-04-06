@@ -295,9 +295,11 @@ export const getAssetPublicURL = (asset, { pathOnly = false, allowSpecial = fals
  * complete/external URL.
  * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
  * path. Can be `undefined` when editing a draft.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.thumbnail] - Whether to use a thumbnail of the image.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */
-export const getMediaFieldURL = async (value, entry) => {
+export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {}) => {
   if (!value) {
     return undefined;
   }
@@ -312,7 +314,10 @@ export const getMediaFieldURL = async (value, entry) => {
     return undefined;
   }
 
-  return (await getAssetBlobURL(asset)) ?? getAssetPublicURL(asset);
+  return (
+    (thumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset)) ??
+    getAssetPublicURL(asset)
+  );
 };
 
 /**

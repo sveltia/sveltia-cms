@@ -36,7 +36,7 @@
   $: (async () => {
     src =
       content && firstImageField
-        ? await getMediaFieldURL(content[firstImageField.name], entry)
+        ? await getMediaFieldURL(content[firstImageField.name], entry, { thumbnail: true })
         : undefined;
   })();
 

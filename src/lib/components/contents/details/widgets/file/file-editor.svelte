@@ -144,7 +144,7 @@
   $: (async () => {
     src =
       isImageWidget && currentValue
-        ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry)
+        ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry, { thumbnail: true })
         : undefined;
   })();
 </script>
