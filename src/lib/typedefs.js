@@ -29,14 +29,15 @@
 /**
  * Basic Git repository information retrieved from the config file.
  * @typedef {object} RepositoryInfo
+ * @property {string} service - Repository hosting service name, e.g. `github`.
  * @property {string} owner - Owner name, which could be either an organization or individual user.
  * @property {string} repo - Repository name.
  * @property {string} branch - Branch name. It’s `master` by default for historical reasons, though
  * the current default branch name on GitHub is `main`.
- * @property {string} baseURL - The repository’s web-accessible URL that can be linked from the CMS
- * UI to the backend service.
- * @property {string} branchURL - Repository URL with a branch name. It’s the same as `baseURL` when
- * the default branch is used.
+ * @property {string} [baseURL] - The repository’s web-accessible URL that can be linked from the
+ * CMS UI to the backend service. Git backend only.
+ * @property {string} [branchURL] - Repository URL with a branch name. It’s the same as `baseURL`
+ * when the default branch is used. Git backend only.
  */
 
 /**
@@ -60,7 +61,7 @@
  * @typedef {object} BackendService
  * @property {string} name - Service name, e.g. `github`.
  * @property {string} label - Service label.
- * @property {RepositoryInfo} [repository] - Basic repository info. Git backend only.
+ * @property {RepositoryInfo} [repository] - Basic repository info. Git and local backends only.
  * @property {() => void} init - Function to initialize the backend.
  * @property {(options: SignInOptions) => Promise<User | void>} signIn - Function to sign in.
  * @property {() => Promise<void>} signOut - Function to sign out.

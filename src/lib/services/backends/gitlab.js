@@ -6,7 +6,7 @@ import {
   initServerSideAuth,
 } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
-import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
+import { fetchAndParseFiles, repositoryProps } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { user } from '$lib/services/user';
 import { getBase64 } from '$lib/services/utils/files';
@@ -16,7 +16,7 @@ import { stripSlashes } from '$lib/services/utils/strings';
 const backendName = 'gitlab';
 const label = 'GitLab';
 /** @type {RepositoryInfo} */
-const repository = { owner: '', repo: '', branch: '', baseURL: '', branchURL: '' };
+const repository = { ...repositoryProps };
 
 /**
  * Send a request to GitLab REST/GraphQL API.
@@ -92,7 +92,7 @@ const init = () => {
     const baseURL = `${origin}/${owner}/${repo}`;
     const branchURL = branch ? `${baseURL}/-/tree/${branch}` : baseURL;
 
-    Object.assign(repository, { owner, repo, branch, baseURL, branchURL });
+    Object.assign(repository, { service: backendName, owner, repo, branch, baseURL, branchURL });
   }
 };
 
@@ -331,7 +331,6 @@ const fetchFileContents = async (fetchingFiles) => {
  */
 const fetchFiles = async () => {
   await fetchAndParseFiles({
-    backendName,
     repository,
     fetchDefaultBranchName,
     fetchLastCommitHash,

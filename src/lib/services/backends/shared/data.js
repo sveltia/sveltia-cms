@@ -3,11 +3,18 @@ import { allEntries, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
 import IndexedDB from '$lib/services/utils/indexeddb';
 
+/** @type {RepositoryInfo} */
+export const repositoryProps = {
+  service: '',
+  owner: '',
+  repo: '',
+  branch: '',
+};
+
 /**
  * Fetch file list from a backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
  * @param {object} args - Arguments.
- * @param {string} args.backendName - Backend name, e.g. `github`.
  * @param {RepositoryInfo} args.repository - Repository info.
  * @param {() => Promise<string>} args.fetchDefaultBranchName - Function to fetch the repository’s
  * default branch name.
@@ -20,16 +27,15 @@ import IndexedDB from '$lib/services/utils/indexeddb';
  * entry/asset files as well as text file contents.
  */
 export const fetchAndParseFiles = async ({
-  backendName,
   repository,
   fetchDefaultBranchName,
   fetchLastCommitHash,
   fetchFileList,
   fetchFileContents,
 }) => {
-  const { owner, repo, branch: branchName } = repository;
-  const metaDB = new IndexedDB(`${backendName}:${owner}/${repo}`, 'meta');
-  const cacheDB = new IndexedDB(`${backendName}:${owner}/${repo}`, 'file-cache');
+  const { service, owner, repo, branch: branchName } = repository;
+  const metaDB = new IndexedDB(`${service}:${owner}/${repo}`, 'meta');
+  const cacheDB = new IndexedDB(`${service}:${owner}/${repo}`, 'file-cache');
   const cachedHash = await metaDB.get('last_commit_hash');
   const cachedFileEntries = await cacheDB.entries();
   let branch = branchName;

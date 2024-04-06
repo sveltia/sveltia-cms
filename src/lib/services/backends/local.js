@@ -4,6 +4,7 @@
 
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
+import { repositoryProps } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
@@ -14,6 +15,8 @@ import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
 const backendName = 'local';
 const label = 'Local Repository';
+/** @type {RepositoryInfo} */
+const repository = { ...repositoryProps };
 /**
  * @type {import('svelte/store').Writable<?FileSystemDirectoryHandle>}
  */
@@ -87,11 +90,19 @@ const discardDirHandle = async () => {
  * Initialize the backend.
  */
 const init = () => {
-  const { backend } = /** @type {SiteConfig} */ (get(siteConfig) ?? {});
+  const {
+    name: service,
+    repo: projectPath,
+    branch,
+  } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
-  if (backend) {
-    rootDirHandleDB = new IndexedDB(`${backend.name}:${backend.repo}`, 'file-system-handles');
+  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
+
+  if (!repository.owner) {
+    Object.assign(repository, { service, owner, repo, branch });
   }
+
+  rootDirHandleDB = new IndexedDB(`${service}:${projectPath}`, 'file-system-handles');
 };
 
 /**
@@ -267,6 +278,7 @@ const commitChanges = async (changes) => {
 export default {
   name: backendName,
   label,
+  repository,
   init,
   signIn,
   signOut,

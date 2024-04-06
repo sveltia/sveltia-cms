@@ -4,6 +4,7 @@ import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
 import { isTextFileType, resolvePath } from '$lib/services/utils/files';
+import IndexedDB from '$lib/services/utils/indexeddb';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
 export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
@@ -152,6 +153,9 @@ export const getAssetBlobURL = async (asset) => {
   return asset.blobURL;
 };
 
+/** @type {IndexedDB | null | undefined} */
+let thumbnailDB = undefined;
+
 /**
  * Get a thumbnail image for the given asset.
  * @param {Asset} asset - Asset.
@@ -163,13 +167,27 @@ export const getAssetThumbnailURL = async (asset) => {
     return asset.thumbnailURL;
   }
 
-  const blob = await getAssetBlob(asset);
-  const format = 'webp';
-  const dimension = 512;
+  // Initialize the thumbnail DB
+  if (thumbnailDB === undefined) {
+    const { repository: { service, owner, repo } = /** @type {RepositoryInfo} */ ({}) } =
+      get(backend) ?? /** @type {BackendService} */ ({});
 
-  const thumbnailBlob = asset.name.endsWith('.pdf')
-    ? await renderPDF(blob, { format, dimension })
-    : await convertImage(blob, { format, dimension });
+    thumbnailDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'asset-thumbnails') : null;
+  }
+
+  /** @type {Blob | undefined} */
+  let thumbnailBlob = await thumbnailDB?.get(asset.sha);
+
+  if (!thumbnailBlob) {
+    const blob = await getAssetBlob(asset);
+    const options = { format: /** @type {'webp'} */ ('webp'), quality: 0.85, dimension: 512 };
+
+    thumbnailBlob = asset.name.endsWith('.pdf')
+      ? await renderPDF(blob, options)
+      : await convertImage(blob, options);
+
+    await thumbnailDB?.set(asset.sha, thumbnailBlob);
+  }
 
   const thumbnailURL = URL.createObjectURL(thumbnailBlob);
 
