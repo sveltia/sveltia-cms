@@ -98,6 +98,7 @@
   {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
   <section
     role="group"
+    class="field"
     aria-label={$_('x_field', { values: { field: fieldLabel } })}
     data-widget={widgetName}
     data-key-path={keyPath}
@@ -245,6 +246,12 @@
 {/if}
 
 <style lang="scss">
+  @keyframes highlight {
+    50% {
+      opacity: 0.2;
+    }
+  }
+
   section {
     padding: 16px;
 
@@ -257,6 +264,10 @@
       margin-right: auto;
       margin-left: auto;
       max-width: 768px;
+    }
+
+    &:global(.highlight) {
+      animation: highlight 750ms 2;
     }
   }
 

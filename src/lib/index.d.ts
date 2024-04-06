@@ -7,6 +7,10 @@ interface Navigator {
   userAgentData: { platform: string };
 }
 
+interface Element {
+  scrollIntoViewIfNeeded?: Function;
+}
+
 interface FileSystemFileHandle {
   createWritable: Function;
 }

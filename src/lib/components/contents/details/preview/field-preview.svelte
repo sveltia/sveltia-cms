@@ -1,6 +1,6 @@
 <script>
   import { previews } from '$lib/components/contents/details/widgets';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft, syncExpanderStates } from '$lib/services/contents/editor';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
@@ -43,10 +43,62 @@
         .map(([, val]) => val)
         .filter((val) => val !== undefined)
     : currentValues[locale][keyPath];
+
+  /**
+   * Called whenever the preview field is clicked. Highlight the corresponding editor field by
+   * expanding the parent list/object(s), moving the element into the viewport, and blinking it.
+   */
+  const highlightEditorField = () => {
+    syncExpanderStates(
+      Object.fromEntries(
+        keyPath.split('.').map((_key, index, arr) => [arr.slice(0, index + 1).join('.'), true]),
+      ),
+    );
+
+    window.requestAnimationFrame(() => {
+      const targetField = document.querySelector(
+        `.content-editor .pane[data-mode="edit"] .field[data-key-path="${CSS.escape(keyPath)}"]`,
+      );
+
+      if (targetField) {
+        if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
+          targetField.scrollIntoViewIfNeeded();
+        } else {
+          targetField.scrollIntoView();
+        }
+
+        targetField.classList.add('highlight');
+        targetField.addEventListener(
+          'animationend',
+          () => {
+            targetField.classList.remove('highlight');
+          },
+          { once: true },
+        );
+      }
+    });
+  };
 </script>
 
 {#if widgetName !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
-  <section data-widget={widgetName} data-key-path={keyPath}>
+  <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+  <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+  <section
+    role="group"
+    data-widget={widgetName}
+    data-key-path={keyPath}
+    tabindex="0"
+    on:keydown={(event) => {
+      if (event.key === 'Enter') {
+        event.stopPropagation();
+        highlightEditorField();
+      }
+    }}
+    on:click={(event) => {
+      event.stopPropagation();
+      highlightEditorField();
+    }}
+  >
     <h4>{label || fieldName}</h4>
     {#if widgetName in previews}
       <svelte:component

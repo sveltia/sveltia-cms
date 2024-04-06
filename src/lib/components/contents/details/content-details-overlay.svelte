@@ -137,7 +137,7 @@
   });
 </script>
 
-<Group aria-label={$_('content_editor')}>
+<Group class="content-editor" aria-label={$_('content_editor')}>
   <div role="none" class="wrapper" bind:this={wrapper}>
     <Toolbar />
     <div role="none" class="cols">
@@ -145,6 +145,7 @@
         {#if $editorLeftPane}
           {@const { locale, mode } = $editorLeftPane}
           <Group
+            class="pane"
             aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
               values: { locale: getLocaleLabel(locale) },
             })}
