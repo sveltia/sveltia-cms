@@ -72,7 +72,7 @@
       resetState();
     }}
   >
-    <div class="wrapper" class:wrap>
+    <div role="none" class="wrapper" class:wrap>
       <TextArea bind:value={currentValue} flex />
     </div>
     <svelte:fragment slot="footer-extra">
