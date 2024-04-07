@@ -83,14 +83,15 @@
   $: hasVariableTypes = Array.isArray(types);
   $: hasSubFields = hasSingleSubField || hasMultiSubFields || hasVariableTypes;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
-  $: ({ collectionName, fileName, collection, collectionFile, currentValues, viewStates } =
+  $: ({ collectionName, fileName, collection, collectionFile, currentValues, expanderStates } =
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: isDuplicateField = locale !== defaultLocale && i18n === 'duplicate';
   $: valueMap = currentValues[locale];
   $: canonicalLocale = getCanonicalLocale(locale);
   $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
-  $: parentExpanded = !!viewStates?._[keyPath]?.expanded;
+  $: parentExpandedKeyPath = `${keyPath}#`;
+  $: parentExpanded = !!expanderStates?._[parentExpandedKeyPath];
 
   /** @type {{ [key: string]: any }[]} */
   $: items =
@@ -115,7 +116,7 @@
 
     // Initialize the expander state
     syncExpanderStates({
-      [keyPath]: !minimizeCollapsed,
+      [parentExpandedKeyPath]: !minimizeCollapsed,
       ...Object.fromEntries(items.map((__, index) => [`${keyPath}.${index}`, !collapsed])),
     });
   });
@@ -162,7 +163,7 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate - See
+   * @param {(arg: { valueList: object[], expanderStateList: boolean[] }) => void} manipulate - See
    * {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
@@ -180,7 +181,7 @@
    * @see https://decapcms.org/docs/variable-type-widgets/
    */
   const addItem = (typeName) => {
-    updateComplexList(({ valueList, viewList }) => {
+    updateComplexList(({ valueList, expanderStateList }) => {
       const subFields = typeName
         ? types?.find(({ name }) => name === typeName)?.fields ?? []
         : fields ?? (field ? [field] : []);
@@ -193,7 +194,7 @@
       }
 
       valueList.splice(index, 0, hasSingleSubField && field ? newItem[field.name] : newItem);
-      viewList.splice(index, 0, { expanded: true });
+      expanderStateList.splice(index, 0, true);
     });
   };
 
@@ -202,9 +203,9 @@
    * @param {number} index - Target index.
    */
   const removeItem = (index) => {
-    updateComplexList(({ valueList, viewList }) => {
+    updateComplexList(({ valueList, expanderStateList }) => {
       valueList.splice(index, 1);
-      viewList.splice(index, 1);
+      expanderStateList.splice(index, 1);
     });
   };
 
@@ -213,9 +214,12 @@
    * @param {number} index - Target index.
    */
   const moveUpItem = (index) => {
-    updateComplexList(({ valueList, viewList }) => {
+    updateComplexList(({ valueList, expanderStateList }) => {
       [valueList[index], valueList[index - 1]] = [valueList[index - 1], valueList[index]];
-      [viewList[index], viewList[index - 1]] = [viewList[index - 1], viewList[index]];
+      [expanderStateList[index], expanderStateList[index - 1]] = [
+        expanderStateList[index - 1],
+        expanderStateList[index],
+      ];
     });
   };
 
@@ -224,9 +228,12 @@
    * @param {number} index - Target index.
    */
   const moveDownItem = (index) => {
-    updateComplexList(({ valueList, viewList }) => {
+    updateComplexList(({ valueList, expanderStateList }) => {
       [valueList[index], valueList[index + 1]] = [valueList[index + 1], valueList[index]];
-      [viewList[index], viewList[index + 1]] = [viewList[index + 1], viewList[index]];
+      [expanderStateList[index], expanderStateList[index + 1]] = [
+        expanderStateList[index + 1],
+        expanderStateList[index],
+      ];
     });
   };
 
@@ -273,7 +280,7 @@
         aria-expanded={parentExpanded}
         aria-controls="list-{widgetId}-item-list"
         on:click={() => {
-          syncExpanderStates({ [keyPath]: !parentExpanded });
+          syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
         }}
       >
         <Icon slot="start-icon" name={parentExpanded ? 'expand_more' : 'chevron_right'} />
@@ -294,7 +301,8 @@
       class:collapsed={!parentExpanded}
     >
       {#each items as item, index}
-        {@const expanded = !!viewStates?._[`${keyPath}.${index}`]?.expanded}
+        {@const expandedKeyPath = `${keyPath}.${index}`}
+        {@const expanded = !!expanderStates?._[expandedKeyPath]}
         {@const typeConfig = hasVariableTypes
           ? types?.find(({ name }) => name === item[typeKey])
           : undefined}
@@ -309,7 +317,7 @@
             controlId="list-{widgetId}-item-{index}-body"
             {expanded}
             toggleExpanded={() => {
-              syncExpanderStates({ [`${keyPath}.${index}`]: !expanded });
+              syncExpanderStates({ [expandedKeyPath]: !expanded });
             }}
             removeButtonVisible={true}
             removeButtonDisabled={isDuplicateField}

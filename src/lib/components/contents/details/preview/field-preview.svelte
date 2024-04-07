@@ -1,6 +1,10 @@
 <script>
   import { previews } from '$lib/components/contents/details/widgets';
-  import { entryDraft, syncExpanderStates } from '$lib/services/contents/editor';
+  import {
+    entryDraft,
+    joinExpanderKeyPathSegments,
+    syncExpanderStates,
+  } from '$lib/services/contents/editor';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
@@ -51,7 +55,9 @@
   const highlightEditorField = () => {
     syncExpanderStates(
       Object.fromEntries(
-        keyPath.split('.').map((_key, index, arr) => [arr.slice(0, index + 1).join('.'), true]),
+        keyPath
+          .split('.')
+          .map((_key, index, arr) => [joinExpanderKeyPathSegments(arr, index + 1), true]),
       ),
     );
 

@@ -359,7 +359,7 @@ export const createDraft = (entry, defaultValues) => {
     ),
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     // Any locale-agnostic view states will be put under the `_` key
-    viewStates: Object.fromEntries([...allLocales, '_'].map((locale) => [locale, {}])),
+    expanderStates: { _: {} },
   });
 };
 
@@ -374,7 +374,7 @@ const unflattenObj = (obj) => unflatten(JSON.parse(JSON.stringify(obj)));
  * Traverse the given object by decoding dot-connected `keyPath`.
  * @param {any} obj - Unflatten object.
  * @param {string} keyPath - Dot-connected field name.
- * @returns {object[]} Values.
+ * @returns {any[]} Values.
  */
 const getItemList = (obj, keyPath) =>
   keyPath.split('.').reduce((_obj, key) => {
@@ -390,18 +390,21 @@ const getItemList = (obj, keyPath) =>
  * Update the value in a list field.
  * @param {LocaleCode} locale - Target locale.
  * @param {string} keyPath - Dot-connected field name.
- * @param {(arg: { valueList: object[], viewList: object[] }) => void} manipulate - A function to
- * manipulate the list, which takes one object argument containing the value list and view state
- * list. The typical usage is `list.splice()`.
+ * @param {(arg: { valueList: object[], expanderStateList: boolean[] }) => void} manipulate - A
+ * function to manipulate the list, which takes one object argument containing the value list and
+ * view state list. The typical usage is `list.splice()`.
  */
 export const updateListField = (locale, keyPath, manipulate) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
+  const { collection, collectionFile } = draft;
+  const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const currentValues = unflattenObj(draft.currentValues[locale]);
-  const viewStates = unflattenObj(draft.viewStates[locale]);
+  const expanderStates = unflattenObj(draft.expanderStates._);
 
   manipulate({
     valueList: getItemList(currentValues, keyPath),
-    viewList: getItemList(viewStates, keyPath),
+    // Manipulation should only happen once with the default locale
+    expanderStateList: locale === defaultLocale ? getItemList(expanderStates, keyPath) : [],
   });
 
   /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
@@ -415,9 +418,9 @@ export const updateListField = (locale, keyPath, manipulate) => {
         target: flatten(currentValues),
       }),
     },
-    viewStates: {
-      ..._draft.viewStates,
-      [locale]: flatten(viewStates),
+    expanderStates: {
+      ..._draft.expanderStates,
+      _: flatten(expanderStates),
     },
   }));
 };
@@ -952,10 +955,8 @@ export const syncExpanderStates = (stateMap) => {
   entryDraft.update((_draft) => {
     if (_draft) {
       Object.entries(stateMap).forEach(([keyPath, expanded]) => {
-        const viewState = _draft.viewStates._[keyPath] ?? {};
-
-        if (viewState.expanded !== expanded) {
-          _draft.viewStates._[keyPath] = { ...viewState, expanded };
+        if (_draft.expanderStates._[keyPath] !== expanded) {
+          _draft.expanderStates._[keyPath] = expanded;
         }
       });
     }
@@ -963,6 +964,19 @@ export const syncExpanderStates = (stateMap) => {
     return _draft;
   });
 };
+
+/**
+ * Join key path segments for the expander UI state.
+ * @param {string[]} arr - Key path array, e.g. `testimonials.0.authors.2.foo.bar`.
+ * @param {number} end - End index for `Array.slice()`.
+ * @returns {string} Joined string, e.g. `testimonials.0.authors.10.foo#.bar#`.
+ */
+export const joinExpanderKeyPathSegments = (arr, end) =>
+  arr
+    .slice(0, end)
+    .map((k) => `${k}#`)
+    .join('.')
+    .replaceAll(/#\.(\d+)#/g, '.$1');
 
 /**
  * Expand any invalid fields, including the parent list/object(s).
@@ -975,7 +989,7 @@ const expandInvalidFields = () => {
     Object.entries(validities).forEach(([keyPath, { valid }]) => {
       if (!valid) {
         keyPath.split('.').forEach((_key, index, arr) => {
-          stateMap[arr.slice(0, index + 1).join('.')] = true;
+          stateMap[joinExpanderKeyPathSegments(arr, index + 1)] = true;
         });
       }
     });

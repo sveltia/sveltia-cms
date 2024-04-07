@@ -82,7 +82,7 @@
 
   /**
    * Update the value for the list.
-   * @param {(arg: { valueList: any[], viewList: any[] }) => void} manipulate -
+   * @param {(arg: { valueList: any[], expanderStateList: any[] }) => void} manipulate -
    * See {@link updateListField}.
    */
   const updateList = (manipulate) => {

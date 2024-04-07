@@ -72,7 +72,7 @@
     typeKey = 'type',
   } = fieldConfig);
 
-  $: ({ collectionName, fileName, collection, collectionFile, currentValues, viewStates } =
+  $: ({ collectionName, fileName, collection, collectionFile, currentValues, expanderStates } =
     $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: valueMap = currentValues[locale];
@@ -82,7 +82,8 @@
   $: canEdit = locale === defaultLocale || i18n !== false;
   $: canonicalLocale = getCanonicalLocale(locale);
   $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
-  $: parentExpanded = !!viewStates?._[keyPath]?.expanded;
+  $: parentExpandedKeyPath = `${keyPath}#`;
+  $: parentExpanded = !!expanderStates?._[parentExpandedKeyPath];
   $: hasVariableTypes = Array.isArray(types);
   $: typeKeyPath = `${keyPath}.${typeKey}`;
   $: typeConfig = hasVariableTypes
@@ -99,7 +100,7 @@
     widgetId = generateUUID('short');
 
     // Initialize the expander state
-    syncExpanderStates({ [keyPath]: !collapsed });
+    syncExpanderStates({ [parentExpandedKeyPath]: !collapsed });
   });
 
   /**
@@ -194,7 +195,7 @@
         controlId="object-{widgetId}-item-list"
         expanded={parentExpanded}
         toggleExpanded={() => {
-          syncExpanderStates({ [keyPath]: !parentExpanded });
+          syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
         }}
         removeButtonVisible={addButtonVisible}
         removeButtonDisabled={addButtonDisabled}

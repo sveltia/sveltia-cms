@@ -716,9 +716,9 @@
  */
 
 /**
- * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
- * UI state.
- * @typedef {{ [keyPath: string]: any }} FlattenedEntryContentViewState
+ * Flattened {@link EntryContent} object, where key is a key path, but value will be the field’s
+ * expander UI state.
+ * @typedef {{ [keyPath: string]: boolean }} FlattenedEntryContentExpanderState
  */
 
 /**
@@ -743,8 +743,8 @@
  * @property {{ [locale: LocaleCode]: FlattenedEntryContentValidityState }} validities - Key is a
  * locale code, value is a flattened object containing validation results of all the current field
  * values while editing.
- * @property {{ [locale: LocaleCode]: FlattenedEntryContentViewState }} viewStates - Key is a locale
- * code, value is a flattened object containing the UI state.
+ * @property {{ [locale: LocaleCode]: FlattenedEntryContentExpanderState }} expanderStates - Key is
+ * a locale code, value is a flattened object containing the expander UI state.
  */
 
 /**
