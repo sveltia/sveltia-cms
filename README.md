@@ -45,7 +45,8 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 - Small footprint: The bundle size is less than 350 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub/GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
-- Caches Git files locally to further speed up startup and reduce bandwidth.
+- A list of repository files is cached locally for faster startup and bandwidth savings.
+- Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
 - You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 
 ### Better productivity
@@ -53,6 +54,7 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 - You can [work with a local Git repository](#work-with-a-local-git-repository) without running a proxy server on your machine, bypassing the 30 MB file size limit[^26].
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
+- The Entry Editor closes automatically when an entry is saved.
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
@@ -99,6 +101,8 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 - Leading and trailing spaces in text-type field values are automatically removed when you save the entry[^37].
 - You can revert changes to all fields or a specific field.
 - You can hide the preview of a specific field with `preview: false`.
+- Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
+- When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
 
 ### Better fields/widgets
 
@@ -500,3 +504,6 @@ This software is provided “as is” without any express or implied warranty. W
 [^36]: Netlify/Decap CMS [#6325](https://github.com/decaporg/decap-cms/issues/6325)
 [^37]: Netlify/Decap CMS [#1481](https://github.com/decaporg/decap-cms/issues/1481)
 [^38]: Netlify/Decap CMS [#1984](https://github.com/decaporg/decap-cms/issues/1984)
+[^39]: Netlify/Decap CMS [#946](https://github.com/decaporg/decap-cms/issues/946)
+[^40]: Netlify/Decap CMS [#5630](https://github.com/decaporg/decap-cms/issues/5630)
+[^41]: Netlify/Decap CMS [#7011](https://github.com/decaporg/decap-cms/issues/7011)
