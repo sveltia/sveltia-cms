@@ -142,6 +142,26 @@
     {/if}
   </h2>
   <Spacer flex />
+  {#if !collectionFile && !isNew}
+    <Button
+      variant="ghost"
+      label={$_('duplicate')}
+      aria-label={$_('duplicate_entry')}
+      disabled={collection?.create === false}
+      on:click={() => {
+        duplicateDraft();
+      }}
+    />
+    <Button
+      variant="ghost"
+      label={$_('delete')}
+      aria-label={$_('delete_entry')}
+      disabled={collection?.delete === false}
+      on:click={() => {
+        showDeleteDialog = true;
+      }}
+    />
+  {/if}
   <MenuButton
     variant="ghost"
     iconic
@@ -181,23 +201,6 @@
           revertChanges();
         }}
       />
-      {#if !collectionFile}
-        <Divider />
-        <MenuItem
-          label={$_('duplicate_entry')}
-          disabled={collection?.create === false || isNew}
-          on:click={() => {
-            duplicateDraft();
-          }}
-        />
-        <MenuItem
-          disabled={collection?.delete === false || isNew}
-          label={$_('delete_entry')}
-          on:click={() => {
-            showDeleteDialog = true;
-          }}
-        />
-      {/if}
     </Menu>
   </MenuButton>
   {#if showSaveOptions}

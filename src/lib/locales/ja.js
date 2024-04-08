@@ -38,6 +38,7 @@ export const strings = {
   upload: 'アップロード',
   copy: 'コピー',
   download: 'ダウンロード',
+  duplicate: '複製',
   delete: '削除',
   save: '保存',
   saving: '保存中…',

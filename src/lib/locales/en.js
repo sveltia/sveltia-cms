@@ -38,6 +38,7 @@ export const strings = {
   upload: 'Upload',
   copy: 'Copy',
   download: 'Download',
+  duplicate: 'Duplicate',
   delete: 'Delete',
   save: 'Save',
   saving: 'Saving…',
