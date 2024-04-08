@@ -22,7 +22,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 ## Features
 
-We are working hard to create a **much better alternative to Netlify/Decap CMS**. Here’s what makes Sveltia CMS different. (Whoa, there are so many!)
+We are working hard to create a **much better alternative to Netlify CMS** and Decap CMS. Here’s what makes Sveltia CMS different. (Whoa, there are so many!)
 
 ### Compatible with Netlify/Decap CMS
 
@@ -95,7 +95,7 @@ We are working hard to create a **much better alternative to Netlify/Decap CMS**
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 
-### Better data entry
+### Better content editing
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - Leading and trailing spaces in text-type field values are automatically removed when you save the entry[^37].
@@ -182,6 +182,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 ### Before the 1.0 release
 
 - [Svelte 5](https://svelte.dev/blog/runes) migration
+- Automation test coverage
 - Further Netlify/Decap CMS compatibility, including Editorial Workflow
 - Localization
 - Documentation
