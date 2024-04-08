@@ -266,7 +266,7 @@
       max-width: 768px;
     }
 
-    &:global(.highlight) {
+    &:global(.highlight > *) {
       animation: highlight 750ms 2;
     }
   }
