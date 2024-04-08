@@ -1,4 +1,4 @@
-import { locale as appLocale } from 'svelte-i18n';
+import { _, locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
@@ -128,29 +128,32 @@ export const getBase64 = async (input) => (await getDataURL(input)).split(',')[1
  * @returns {string} Formatted size.
  */
 export const formatSize = (size) => {
-  const formatter = new Intl.NumberFormat(/** @type {string} */ (get(appLocale)));
+  const formatter = new Intl.NumberFormat(/** @type {string} */ (get(appLocale)), {
+    maximumFractionDigits: 1,
+  });
+
   const kb = 1000;
   const mb = kb * 1000;
   const gb = mb * 1000;
   const tb = gb * 1000;
 
   if (size < kb) {
-    return `${formatter.format(size)} bytes`;
+    return get(_)('file_size_units.b', { values: { size: formatter.format(size) } });
   }
 
   if (size < mb) {
-    return `${formatter.format(Number((size / kb).toFixed(1)))} KB`;
+    return get(_)('file_size_units.kb', { values: { size: formatter.format(size / kb) } });
   }
 
   if (size < gb) {
-    return `${formatter.format(Number((size / mb).toFixed(1)))} MB`;
+    return get(_)('file_size_units.mb', { values: { size: formatter.format(size / mb) } });
   }
 
   if (size < tb) {
-    return `${formatter.format(Number((size / gb).toFixed(1)))} GB`;
+    return get(_)('file_size_units.gb', { values: { size: formatter.format(size / gb) } });
   }
 
-  return `${formatter.format(Number((size / tb).toFixed(1)))} TB`;
+  return get(_)('file_size_units.tb', { values: { size: formatter.format(size / tb) } });
 };
 
 /**

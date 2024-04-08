@@ -550,4 +550,13 @@ export const strings = {
     xls: 'Excel spreadsheet',
     xlsx: 'Excel spreadsheet',
   },
+
+  // file size units
+  file_size_units: {
+    b: '{size} bytes',
+    kb: '{size} KB',
+    mb: '{size} MB',
+    gb: '{size} GB',
+    tb: '{size} TB',
+  },
 };

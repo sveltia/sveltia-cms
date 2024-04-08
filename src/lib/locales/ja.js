@@ -553,4 +553,13 @@ export const strings = {
     xls: 'Excel スプレッドシート',
     xlsx: 'Excel スプレッドシート',
   },
+
+  // file size units
+  file_size_units: {
+    b: '{size} バイト',
+    kb: '{size} KB',
+    mb: '{size} MB',
+    gb: '{size} GB',
+    tb: '{size} TB',
+  },
 };
