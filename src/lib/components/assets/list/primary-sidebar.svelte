@@ -3,6 +3,7 @@
   import { _, locale as appLocale } from 'svelte-i18n';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
+  import { getCollection } from '$lib/services/contents';
   import { goto } from '$lib/services/navigation';
 
   $: folders = [
@@ -19,6 +20,7 @@
 <div role="none" class="primary-sidebar">
   <Listbox aria-label={$_('asset_folders')} aria-controls="assets-container">
     {#each folders as { collectionName, internalPath, entryRelative } (collectionName)}
+      {@const collection = collectionName ? getCollection(collectionName) : undefined}
       <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
       {@const uploadDisabled = entryRelative}
       {@const selected =
@@ -74,7 +76,7 @@
           // confirmation dialog.
         }}
       >
-        <Icon slot="start-icon" name="folder" />
+        <Icon slot="start-icon" name={collection?.icon || 'folder'} />
       </Option>
     {/each}
   </Listbox>
