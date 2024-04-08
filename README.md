@@ -43,7 +43,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
 - Small footprint: The bundle size is less than 350 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
-- Uses the GraphQL API for GitHub/GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
+- Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - A list of repository files is cached locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
@@ -104,7 +104,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
 
-### Better fields/widgets
+### Better widgets
 
 - The String widget supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
 - The String widget supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
@@ -155,8 +155,8 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Editorial Workflow | Not supported yet. |
 | Open Authoring | Not supported yet. |
 | Collections | Nested collections are not supported yet. |
-| Widgets | [See below](#widget-limitations) for the current limitations. |
-| Customizations | Custom widgets, custom previews, custom formatters, manual initialization and CMS event subscriptions are not supported yet. |
+| Widgets | Custom widgets are not supported yet. [See below](#widget-limitations) for other limitations. |
+| Customizations | Custom previews, custom formatters, manual initialization and event subscriptions are not supported yet. |
 
 ### Widget limitations
 
@@ -215,14 +215,14 @@ Alternatively, you can probably use one of the [Netlify/Decap CMS templates](htt
 
 ### Migration
 
-Have a look at the [compatibility chart](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub/GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository:
+Have a look at the [compatibility chart](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository:
 
 ```diff
 -<script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
 +<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js" type="module"></script>
 ```
 
-That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub/GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
+That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub or GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
 That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#work-with-a-local-git-repository) for how.
 
@@ -230,7 +230,7 @@ That said, we strongly recommend testing your new Sveltia CMS instance first on 
 
 ### Move your site from Netlify to another hosting service
 
-You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub/GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
+You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
 
 ### Work with a local Git repository
 
@@ -452,7 +452,7 @@ Want to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.
 
 ## Contributions
 
-Sveltia CMS is still in early beta, so we do expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new). Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
+Since Sveltia CMS is still in early beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new) so we can make it better for everyone. Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources and the upcoming Svelte 5 migration. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
 ## Related links
 
