@@ -150,7 +150,6 @@
     overflow: hidden;
     height: 100%;
     pointer-events: auto;
-    text-align: center;
 
     & > :global(.group) {
       overflow-y: auto;
@@ -175,6 +174,7 @@
     background-color: hsl(var(--sui-background-color-4-hsl) / 80%);
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
+    text-align: center;
     pointer-events: none;
 
     div {
@@ -200,5 +200,6 @@
     overflow: auto;
     height: 100%;
     min-height: 320px;
+    text-align: center;
   }
 </style>
