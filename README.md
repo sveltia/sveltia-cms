@@ -22,7 +22,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 ## Features
 
-We are working hard to create a **much better alternative to Netlify CMS** and Decap CMS. Here’s what makes Sveltia CMS different. (Whoa, there are so many!)
+We are working hard to create a **much better alternative to Netlify CMS** and Decap CMS. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Compatible with Netlify/Decap CMS
 
@@ -106,30 +106,39 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better widgets
 
-- The String widget supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
-- The String widget supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
-- The Boolean, Number and String widgets support the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
-- Relation field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
-- The `summary` for the List and Object widgets is displayed correctly when it refers to a Relation field[^36].
-- Provides a reimagined all-in-one asset selection dialog for File and Image fields.
-  - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
-  - New assets can be uploaded by dragging & dropping them into the dialog[^20].
-  - A file/image URL can also be entered in the dialog.
-  - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
-- The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
-- Optional Object fields (`widget: object` with `required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
-- In addition to [generating UUIDs for entry slugs](#use-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
-  - `prefix`: A string to be prepended to the value. Default: an empty string.
-  - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
-  - `read_only`: Whether to make the field read-only. Default: `true`.
-- The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
+- List
+  - Supports previewing variable types without having to register a preview template[^42].
+- Object
+  - Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
+  - Optional Object fields (`required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
+- Relation
+  - Field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
+- String
+  - Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
+  - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
+- Boolean, Number and String
+  - Supports the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
+- List and Object
+  - The `summary` is displayed correctly when it refers to a Relation field[^36].
+- File and Image
+  - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
+    - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
+    - New assets can be uploaded by dragging & dropping them into the dialog[^20].
+    - A URL can also be entered in the dialog.
+    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
+- New widgets
+  - In addition to [generating UUIDs for entry slugs](#use-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
+    - `prefix`: A string to be prepended to the value. Default: an empty string.
+    - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
+    - `read_only`: Whether to make the field read-only. Default: `true`.
+  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
 
 ### Better asset management
 
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
   - Navigate between the global media folder and per-collection media folders[^6].
   - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
-  - Copy the public URL, file path or text/image data of a selected asset to clipboard.
+  - Copy the public URL, file path, text data or image data of a selected asset to clipboard.
   - Edit plaintext assets, including SVG images.
   - Replace existing assets.
   - Download one or more selected assets at once.
@@ -215,10 +224,19 @@ Alternatively, you can probably use one of the [Netlify/Decap CMS templates](htt
 
 ### Migration
 
-Have a look at the [compatibility chart](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository:
+Have a look at the [compatibility chart](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository.
+
+From Netlify CMS:
 
 ```diff
 -<script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
++<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js" type="module"></script>
+```
+
+From Decap CMS:
+
+```diff
+-<script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
 +<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js" type="module"></script>
 ```
 
@@ -452,7 +470,7 @@ Want to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.
 
 ## Contributions
 
-Since Sveltia CMS is still in early beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new) so we can make it better for everyone. Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources and the upcoming Svelte 5 migration. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
+Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new) so we can make it better for everyone. Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources and the upcoming Svelte 5 migration. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
 ## Related links
 
@@ -508,3 +526,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^39]: Netlify/Decap CMS [#946](https://github.com/decaporg/decap-cms/issues/946)
 [^40]: Netlify/Decap CMS [#5630](https://github.com/decaporg/decap-cms/issues/5630)
 [^41]: Netlify/Decap CMS [#7011](https://github.com/decaporg/decap-cms/issues/7011)
+[^42]: Netlify/Decap CMS [#2307](https://github.com/decaporg/decap-cms/issues/2307)
