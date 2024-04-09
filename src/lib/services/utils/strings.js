@@ -29,3 +29,11 @@ export const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\
  * @returns {string} Trimmed string, e.g. `foo/bar`.
  */
 export const stripSlashes = (string) => string.replace(/^\/+/, '').replace(/\/+$/, '');
+
+/**
+ * Remove all HTML tags from the given string so it’s safe to use in the app.
+ * @param {string} string - Original string that may include tags, e.g. `<div>Hello</div>`.
+ * @returns {string} Sanitized string, e.g. `Hello`.
+ */
+export const stripTags = (string) =>
+  new DOMParser().parseFromString(string, 'text/html').body.textContent ?? '';

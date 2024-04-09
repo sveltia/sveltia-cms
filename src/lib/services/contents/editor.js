@@ -20,7 +20,7 @@ import { generateRandomId, generateUUID, getHash } from '$lib/services/utils/cry
 import { getDateTimeParts } from '$lib/services/utils/datetime';
 import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/files';
 import LocalStorage from '$lib/services/utils/local-storage';
-import { escapeRegExp } from '$lib/services/utils/strings';
+import { escapeRegExp, stripTags } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.entry-view';
 
@@ -67,6 +67,83 @@ export const entryEditorSettings = writable({}, (set) => {
 export const entryDraft = writable();
 
 /**
+ * Parse the given dynamic default value.
+ * @param {object} args - Arguments.
+ * @param {Field} args.fieldConfig - Field configuration.
+ * @param {string} args.keyPath - Field key path, e.g. `author.name`.
+ * @param {FlattenedEntryContent} args.newContent - An object holding a content key-value map.
+ * @param {string} args.value - Dynamic default value.
+ * @see https://decapcms.org/docs/dynamic-default-values/
+ * @todo Validate the value carefully before adding it to the content map.
+ */
+const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) => {
+  const { widget: widgetName = 'string' } = fieldConfig;
+
+  /**
+   * Parse the value as a list and add the items to the key-value map.
+   */
+  const fillList = () => {
+    newContent[keyPath] = [];
+
+    value.split(/,\s*/).forEach((val, index) => {
+      newContent[`${keyPath}.${index}`] = val;
+    });
+  };
+
+  if (widgetName === 'boolean') {
+    newContent[keyPath] = value === 'true';
+
+    return;
+  }
+
+  if (widgetName === 'list') {
+    const { field: subField, fields: subFields, types } = /** @type {ListField} */ (fieldConfig);
+    const hasSubFields = !!subField || !!subFields || !!types;
+
+    // Handle simple list
+    if (!hasSubFields) {
+      fillList();
+
+      return;
+    }
+  }
+
+  if (widgetName === 'markdown') {
+    // Sanitize the given value to prevent XSS attacks as the preview may not be sanitized
+    newContent[keyPath] = stripTags(value);
+
+    return;
+  }
+
+  if (widgetName === 'number') {
+    const { value_type: valueType } = /** @type {NumberField} */ (fieldConfig);
+
+    newContent[keyPath] =
+      // eslint-disable-next-line no-nested-ternary
+      valueType === 'float'
+        ? Number.parseFloat(value)
+        : valueType === 'int'
+          ? Number.parseInt(value, 10)
+          : value;
+
+    return;
+  }
+
+  if (widgetName === 'relation' || widgetName === 'select') {
+    const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
+
+    if (multiple) {
+      fillList();
+
+      return;
+    }
+  }
+
+  // Just use the string as is
+  newContent[keyPath] = value;
+};
+
+/**
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
  * @param {Field[]} fields - Field list of a collection.
@@ -85,16 +162,16 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
    * @param {object} args - Arguments.
    * @param {Field} args.fieldConfig - Field configuration.
    * @param {string} args.keyPath - Field key path, e.g. `author.name`.
-   * @see https://decapcms.org/docs/dynamic-default-values/
    */
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
+    const { widget: widgetName = 'string', default: defaultValue, required = true } = fieldConfig;
+
     if (keyPath in defaultValues) {
-      newContent[keyPath] = defaultValues[keyPath];
+      parseDynamicDefaultValue({ fieldConfig, keyPath, newContent, value: defaultValues[keyPath] });
 
       return;
     }
 
-    const { widget: widgetName = 'string', default: defaultValue, required = true } = fieldConfig;
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widgetName === 'list') {
