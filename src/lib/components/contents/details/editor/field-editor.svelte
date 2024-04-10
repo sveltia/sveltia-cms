@@ -1,6 +1,7 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem, Spacer, getRandomId } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
+  import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
@@ -24,6 +25,17 @@
 
   const fieldId = getRandomId('field');
 
+  /**
+   * Parse the given string as Markdown and sanitize the result to only allow certain tags.
+   * @param {string} str - Original string.
+   * @returns {string} Sanitized string.
+   */
+  const sanitize = (str) =>
+    DOMPurify.sanitize(/** @type {string} */ (marked.parseInline(str.replaceAll('\\n', '<br>'))), {
+      ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a', 'br'],
+      ALLOWED_ATTR: ['href'],
+    });
+
   /** @type {MenuButton} */
   let menuButton;
 
@@ -32,6 +44,7 @@
   $: ({
     name: fieldName,
     label = '',
+    comment = '',
     hint = '',
     widget: widgetName = 'string',
     required = true,
@@ -146,6 +159,9 @@
         </MenuButton>
       {/if}
     </header>
+    {#if !readonly && comment}
+      <p class="comment">{@html sanitize(comment)}</p>
+    {/if}
     <div role="alert" id="{fieldId}-error" class="validation" aria-live="polite">
       {#if validity?.valid === false}
         {#if validity.valueMissing}
@@ -214,7 +230,7 @@
         />
       {:else}
         {#if beforeInputLabel}
-          <div role="none" class="before-input">{@html marked.parse(beforeInputLabel)}</div>
+          <div role="none" class="before-input">{@html sanitize(beforeInputLabel)}</div>
         {/if}
         {#if prefix}
           <div role="none" class="prefix">{prefix}</div>
@@ -235,12 +251,12 @@
           <div role="none" class="suffix">{suffix}</div>
         {/if}
         {#if afterInputLabel}
-          <div role="none" class="after-input">{@html marked.parse(afterInputLabel)}</div>
+          <div role="none" class="after-input">{@html sanitize(afterInputLabel)}</div>
         {/if}
       {/if}
     </div>
     {#if !readonly && hint}
-      <div role="none" class="hint">{@html marked.parse(hint)}</div>
+      <p class="hint">{@html sanitize(hint)}</p>
     {/if}
   </section>
 {/if}
@@ -363,13 +379,22 @@
     white-space: nowrap;
   }
 
-  .hint {
-    margin-top: 8px;
-    font-size: var(--sui-font-size-small);
-    opacity: 0.75;
+  .comment {
+    margin: 4px;
+    line-height: var(--sui-line-height-compact);
+  }
 
-    :global(p) {
-      margin: 0;
+  .hint {
+    margin: 4px 4px 0;
+    font-size: var(--sui-font-size-small);
+    line-height: var(--sui-line-height-compact);
+    opacity: 0.75;
+  }
+
+  .comment,
+  .hint {
+    :global(code) {
+      font-size: inherit;
     }
   }
 </style>
