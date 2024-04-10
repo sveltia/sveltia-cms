@@ -106,7 +106,8 @@
         throw new Error(`The response returned with HTTP status ${status}.`);
       }
 
-      const file = new File([await response.blob()], fileName, { type: 'image/jpeg' });
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: blob.type });
 
       dispatch('select', { file, credit });
     } catch (/** @type {any} */ ex) {
