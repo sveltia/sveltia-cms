@@ -147,12 +147,12 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
  * @param {Field[]} fields - Field list of a collection.
- * @param {{ [key: string]: string }} [defaultValues] - Dynamic default values.
+ * @param {{ [key: string]: string }} [dynamicValues] - Dynamic default values.
  * @returns {FlattenedEntryContent} Flattened entry content for creating a new draft content or
  * adding a new list item.
  * @todo Make this more diligent.
  */
-export const getDefaultValues = (fields, defaultValues = {}) => {
+export const getDefaultValues = (fields, dynamicValues = {}) => {
   /** @type {FlattenedEntryContent} */
   const newContent = {};
 
@@ -164,14 +164,13 @@ export const getDefaultValues = (fields, defaultValues = {}) => {
    * @param {string} args.keyPath - Field key path, e.g. `author.name`.
    */
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
-    const { widget: widgetName = 'string', default: defaultValue, required = true } = fieldConfig;
-
-    if (keyPath in defaultValues) {
-      parseDynamicDefaultValue({ fieldConfig, keyPath, newContent, value: defaultValues[keyPath] });
+    if (keyPath in dynamicValues) {
+      parseDynamicDefaultValue({ fieldConfig, keyPath, newContent, value: dynamicValues[keyPath] });
 
       return;
     }
 
+    const { widget: widgetName = 'string', default: defaultValue, required = true } = fieldConfig;
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widgetName === 'list') {
@@ -365,10 +364,10 @@ export const createProxy = ({
  * Create an entry draft.
  * @param {any} entry - Entry to be edited, or a partial {@link Entry} object containing at least
  * the collection name for a new entry.
- * @param {{ [key: string]: string }} [defaultValues] - Dynamic default values for a new entry
+ * @param {{ [key: string]: string }} [dynamicValues] - Dynamic default values for a new entry
  * passed through URL parameters.
  */
-export const createDraft = (entry, defaultValues) => {
+export const createDraft = (entry, dynamicValues) => {
   const { id, collectionName, fileName, locales } = entry;
   const isNew = id === undefined;
   const collection = getCollection(collectionName);
@@ -380,7 +379,7 @@ export const createDraft = (entry, defaultValues) => {
   const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
   const { fields = [], _i18n } = collectionFile ?? collection;
   const { i18nEnabled, locales: allLocales } = _i18n;
-  const newContent = getDefaultValues(fields, defaultValues);
+  const newContent = getDefaultValues(fields, dynamicValues);
 
   const enabledLocales = isNew
     ? allLocales
