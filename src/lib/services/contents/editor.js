@@ -116,14 +116,14 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
   }
 
   if (widgetName === 'number') {
-    const { value_type: valueType } = /** @type {NumberField} */ (fieldConfig);
+    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
     newContent[keyPath] =
       // eslint-disable-next-line no-nested-ternary
-      valueType === 'float'
-        ? Number.parseFloat(value)
-        : valueType === 'int'
-          ? Number.parseInt(value, 10)
+      valueType === 'int'
+        ? Number.parseInt(value, 10)
+        : valueType === 'float'
+          ? Number.parseFloat(value)
           : value;
 
     return;
