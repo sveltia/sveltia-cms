@@ -51,7 +51,7 @@
     >
       {#each filteredAssets as asset (asset.path)}
         {@const { sha, kind, name } = asset}
-        <Option value={sha}>
+        <Option label="" value={sha}>
           <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
           <span role="none" class="name">
             <!-- Allow to line-break after a hyphen, underscore and dot -->

@@ -2,7 +2,6 @@
   @component
   Implement the editor for the Relation widget.
   @see https://decapcms.org/docs/widgets/#relation
-  @todo Support search fields.
 -->
 <script>
   import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
@@ -50,7 +49,6 @@
     // Widget-specific options
     collection: collectionName,
     file: fileName,
-    // search_fields: searchFields,
   } = fieldConfig);
 
   $: refEntries = fileName

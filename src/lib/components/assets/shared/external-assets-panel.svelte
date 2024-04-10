@@ -176,7 +176,7 @@
       }}
     >
       {#each searchResults as { id, previewURL, description, kind: _kind } (id)}
-        <Option value={id}>
+        <Option label="" value={id}>
           <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
           <span role="none" class="name">{description}</span>
         </Option>

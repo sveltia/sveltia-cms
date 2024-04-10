@@ -34,7 +34,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example ['cities.*.id', 'cities.*.name'] (with wildcard, multiple)
    * @example ['{{twitterHandle}} - {{followerCount}}'] (template)
    */
-  const displayFields = fieldConfig.display_fields;
+  const displayFields = fieldConfig.display_fields ?? [valueField];
+  /**
+   * The format is the same as {@link displayFields}.
+   */
+  const searchFields = fieldConfig.search_fields ?? displayFields;
   /**
    * Canonical, templatized value field.
    * @example '{{name.first}}'
@@ -47,7 +51,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example '{{sections.*.name}}'
    * @example '{{route}}: {{sections.*.name}} ({{sections.*.id}})'
    */
-  const _displayField = (displayFields ?? [valueField]).map(normalizeFieldName).join(' ');
+  const _displayField = displayFields.map(normalizeFieldName).join(' ');
+  /**
+   * Canonical, templatized search field.
+   */
+  const _searchField = searchFields.map(normalizeFieldName).join(' ');
   /**
    * Entry filters.
    */
@@ -83,6 +91,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             [
               ...[..._displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
               ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+              ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
             ].map((fieldName) =>
               fieldName.includes('.')
                 ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
@@ -143,15 +152,17 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
       let labels = new Array(count).fill(_displayField);
       let values = new Array(count).fill(_valueField);
+      let searchValues = new Array(count).fill(_searchField);
 
       Object.entries(replacers).forEach(([key, value]) => {
         if (Array.isArray(value)) {
-          value.forEach((valueMap, valueIndex) => {
+          value.forEach((valueMap, index) => {
             Object.entries(valueMap).forEach(([k, v]) => {
               labels.forEach((_label, labelIndex) => {
-                if (valueIndex % labelIndex === 0) {
-                  labels[valueIndex] = labels[valueIndex].replaceAll(`{{${key}.${k}}}`, v);
-                  values[valueIndex] = values[valueIndex].replaceAll(`{{${key}.${k}}}`, v);
+                if (index % labelIndex === 0) {
+                  labels[index] = labels[index].replaceAll(`{{${key}.${k}}}`, v);
+                  values[index] = values[index].replaceAll(`{{${key}.${k}}}`, v);
+                  searchValues[index] = searchValues[index].replaceAll(`{{${key}.${k}}}`, v);
                 }
               });
             });
@@ -159,10 +170,15 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
         } else {
           labels = labels.map((l) => l.replaceAll(`{{${key}}}`, value));
           values = values.map((v) => v.replaceAll(`{{${key}}}`, value));
+          searchValues = searchValues.map((v) => v.replaceAll(`{{${key}}}`, value));
         }
       });
 
-      return labels.map((label, index) => ({ label, value: values[index] }));
+      return labels.map((label, index) => ({
+        label,
+        value: values[index],
+        searchValue: searchValues[index],
+      }));
     })
     .flat(1)
     .sort((a, b) => a.label.localeCompare(b.label));

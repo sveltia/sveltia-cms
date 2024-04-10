@@ -581,7 +581,8 @@
  * @property {string} collection - Referenced collection name.
  * @property {string} [file] - Referenced file name for a file collection.
  * @property {string} value_field - Name of field to be stored as the value.
- * @property {string[]} search_fields - Name of fields to be searched.
+ * @property {string[]} [search_fields] - Name of fields to be searched. It’s a required field as
+ * per the Decap CMS document, but we can fall back if the value is missing.
  * @property {string[]} [display_fields] - Name of fields to be displayed.
  * @property {any} [default] - Default value.
  * @property {boolean} [multiple] - Whether to accept multiple values.

@@ -94,9 +94,21 @@ describe('Test getOptions()', () => {
     const entries = memberEntries;
 
     expect(getOptions(locale, config, entries)).toEqual([
-      { label: 'ElsieMcbride 234', value: 'Elsie' },
-      { label: 'MaxineField 345', value: 'Maxine' },
-      { label: 'MelvinLucas 123', value: 'Melvin' },
+      {
+        label: 'ElsieMcbride 234',
+        value: 'Elsie',
+        searchValue: 'Elsie ElsieMcbride',
+      },
+      {
+        label: 'MaxineField 345',
+        value: 'Maxine',
+        searchValue: 'Maxine MaxineField',
+      },
+      {
+        label: 'MelvinLucas 123',
+        value: 'Melvin',
+        searchValue: 'Melvin MelvinLucas',
+      },
     ]);
 
     expect(
@@ -110,9 +122,21 @@ describe('Test getOptions()', () => {
         entries,
       ),
     ).toEqual([
-      { label: 'Elsie Mcbride (@ElsieMcbride)', value: 'elsie-mcbride' },
-      { label: 'Maxine Field (@MaxineField)', value: 'maxine-field' },
-      { label: 'Melvin Lucas (@MelvinLucas)', value: 'melvin-lucas' },
+      {
+        label: 'Elsie Mcbride (@ElsieMcbride)',
+        value: 'elsie-mcbride',
+        searchValue: 'Elsie ElsieMcbride',
+      },
+      {
+        label: 'Maxine Field (@MaxineField)',
+        value: 'maxine-field',
+        searchValue: 'Maxine MaxineField',
+      },
+      {
+        label: 'Melvin Lucas (@MelvinLucas)',
+        value: 'melvin-lucas',
+        searchValue: 'Melvin MelvinLucas',
+      },
     ]);
 
     // In-field slug
@@ -127,9 +151,21 @@ describe('Test getOptions()', () => {
         entries,
       ),
     ).toEqual([
-      { label: 'Elsie Mcbride (@ElsieMcbride)', value: 'member-elsie-mcbride' },
-      { label: 'Maxine Field (@MaxineField)', value: 'member-maxine-field' },
-      { label: 'Melvin Lucas (@MelvinLucas)', value: 'member-melvin-lucas' },
+      {
+        label: 'Elsie Mcbride (@ElsieMcbride)',
+        value: 'member-elsie-mcbride',
+        searchValue: 'Elsie ElsieMcbride',
+      },
+      {
+        label: 'Maxine Field (@MaxineField)',
+        value: 'member-maxine-field',
+        searchValue: 'Maxine MaxineField',
+      },
+      {
+        label: 'Melvin Lucas (@MelvinLucas)',
+        value: 'member-melvin-lucas',
+        searchValue: 'Melvin MelvinLucas',
+      },
     ]);
   });
 
@@ -172,21 +208,25 @@ describe('Test getOptions()', () => {
     ];
 
     expect(getOptions(locale, config, entries)).toEqual([
-      { value: 'YYC', label: 'Calgary' },
-      { value: 'YYZ', label: 'Toronto' },
-      { value: 'YVR', label: 'Vancouver' },
+      { value: 'YYC', label: 'Calgary', searchValue: 'Calgary' },
+      { value: 'YYZ', label: 'Toronto', searchValue: 'Toronto' },
+      { value: 'YVR', label: 'Vancouver', searchValue: 'Vancouver' },
     ]);
 
     expect(
       getOptions(
         locale,
-        { ...config, display_fields: ['{{cities.*.name}} ({{cities.*.id}})'] },
+        {
+          ...config,
+          search_fields: ['cities.*.name', 'cities.*.id'],
+          display_fields: ['{{cities.*.name}} ({{cities.*.id}})'],
+        },
         entries,
       ),
     ).toEqual([
-      { value: 'YYC', label: 'Calgary (YYC)' },
-      { value: 'YYZ', label: 'Toronto (YYZ)' },
-      { value: 'YVR', label: 'Vancouver (YVR)' },
+      { value: 'YYC', label: 'Calgary (YYC)', searchValue: 'Calgary YYC' },
+      { value: 'YYZ', label: 'Toronto (YYZ)', searchValue: 'Toronto YYZ' },
+      { value: 'YVR', label: 'Vancouver (YVR)', searchValue: 'Vancouver YVR' },
     ]);
   });
 
@@ -241,19 +281,19 @@ describe('Test getOptions()', () => {
     ];
 
     expect(getOptions(locale, config, entries)).toEqual([
-      { label: 'Contact', value: 'contact' },
-      { label: 'Members', value: 'members' },
-      { label: 'Overview', value: 'overview' },
-      { label: 'Team', value: 'team' },
+      { label: 'Contact', value: 'contact', searchValue: 'Contact' },
+      { label: 'Members', value: 'members', searchValue: 'Members' },
+      { label: 'Overview', value: 'overview', searchValue: 'Overview' },
+      { label: 'Team', value: 'team', searchValue: 'Team' },
     ]);
 
     expect(
       getOptions(locale, { ...config, display_fields: ['route', 'sections.*.name'] }, entries),
     ).toEqual([
-      { label: '/about Contact', value: 'contact' },
-      { label: '/about Team', value: 'team' },
-      { label: '/projects Members', value: 'members' },
-      { label: '/projects Overview', value: 'overview' },
+      { label: '/about Contact', value: 'contact', searchValue: 'Contact' },
+      { label: '/about Team', value: 'team', searchValue: 'Team' },
+      { label: '/projects Members', value: 'members', searchValue: 'Members' },
+      { label: '/projects Overview', value: 'overview', searchValue: 'Overview' },
     ]);
 
     expect(
@@ -263,10 +303,10 @@ describe('Test getOptions()', () => {
         entries,
       ),
     ).toEqual([
-      { label: '/about: Contact (contact)', value: 'contact' },
-      { label: '/about: Team (team)', value: 'team' },
-      { label: '/projects: Members (members)', value: 'members' },
-      { label: '/projects: Overview (overview)', value: 'overview' },
+      { label: '/about: Contact (contact)', value: 'contact', searchValue: 'Contact' },
+      { label: '/about: Team (team)', value: 'team', searchValue: 'Team' },
+      { label: '/projects: Members (members)', value: 'members', searchValue: 'Members' },
+      { label: '/projects: Overview (overview)', value: 'overview', searchValue: 'Overview' },
     ]);
 
     // Value field variant
@@ -281,32 +321,20 @@ describe('Test getOptions()', () => {
         entries,
       ),
     ).toEqual([
-      { label: '/about contact', value: '/about#contact' },
-      { label: '/about team', value: '/about#team' },
-      { label: '/projects members', value: '/projects#members' },
-      { label: '/projects overview', value: '/projects#overview' },
+      { label: '/about contact', value: '/about#contact', searchValue: 'Contact' },
+      { label: '/about team', value: '/about#team', searchValue: 'Team' },
+      { label: '/projects members', value: '/projects#members', searchValue: 'Members' },
+      { label: '/projects overview', value: '/projects#overview', searchValue: 'Overview' },
     ]);
 
     // Invalid
     expect(
       getOptions(locale, { ...config, display_fields: ['sections.*.label'] }, entries),
     ).toEqual([
-      {
-        label: '{{sections.*.label}}',
-        value: 'team',
-      },
-      {
-        label: '{{sections.*.label}}',
-        value: 'contact',
-      },
-      {
-        label: '{{sections.*.label}}',
-        value: 'overview',
-      },
-      {
-        label: '{{sections.*.label}}',
-        value: 'members',
-      },
+      { label: '{{sections.*.label}}', value: 'team', searchValue: 'Team' },
+      { label: '{{sections.*.label}}', value: 'contact', searchValue: 'Contact' },
+      { label: '{{sections.*.label}}', value: 'overview', searchValue: 'Overview' },
+      { label: '{{sections.*.label}}', value: 'members', searchValue: 'Members' },
     ]);
   });
 
@@ -325,9 +353,9 @@ describe('Test getOptions()', () => {
     const entries = memberEntries;
 
     expect(getOptions('en', config, entries)).toEqual([
-      { label: 'ElsieMcbride 234', value: 'Elsie' },
-      { label: 'MaxineField 345', value: 'Maxine' },
-      { label: 'MelvinLucas 123', value: 'Melvin' },
+      { label: 'ElsieMcbride 234', value: 'Elsie', searchValue: 'Elsie ElsieMcbride' },
+      { label: 'MaxineField 345', value: 'Maxine', searchValue: 'Maxine MaxineField' },
+      { label: 'MelvinLucas 123', value: 'Melvin', searchValue: 'Melvin MelvinLucas' },
     ]);
   });
 
@@ -339,7 +367,7 @@ describe('Test getOptions()', () => {
       collection: 'posts',
       value_field: '{{slug}}',
       display_fields: ['title'],
-      search_fields: ['title'],
+      search_fields: ['title', 'category'],
     };
 
     const entries = [
@@ -390,10 +418,10 @@ describe('Test getOptions()', () => {
     ];
 
     expect(getOptions('en', config, entries)).toEqual([
-      { label: 'Bulldog', value: 'bulldog' },
-      { label: 'Persian', value: 'persian' },
-      { label: 'Poodle', value: 'poodle' },
-      { label: 'Ragdoll', value: 'ragdoll' },
+      { label: 'Bulldog', value: 'bulldog', searchValue: 'Bulldog dogs' },
+      { label: 'Persian', value: 'persian', searchValue: 'Persian cats' },
+      { label: 'Poodle', value: 'poodle', searchValue: 'Poodle dogs' },
+      { label: 'Ragdoll', value: 'ragdoll', searchValue: 'Ragdoll cats' },
     ]);
 
     expect(
@@ -406,8 +434,8 @@ describe('Test getOptions()', () => {
         entries,
       ),
     ).toEqual([
-      { label: 'Bulldog', value: 'bulldog' },
-      { label: 'Ragdoll', value: 'ragdoll' },
+      { label: 'Bulldog', value: 'bulldog', searchValue: 'Bulldog dogs' },
+      { label: 'Ragdoll', value: 'ragdoll', searchValue: 'Ragdoll cats' },
     ]);
 
     expect(
@@ -422,7 +450,7 @@ describe('Test getOptions()', () => {
         },
         entries,
       ),
-    ).toEqual([{ label: 'Ragdoll', value: 'ragdoll' }]);
+    ).toEqual([{ label: 'Ragdoll', value: 'ragdoll', searchValue: 'Ragdoll cats' }]);
 
     expect(
       getOptions(
@@ -437,8 +465,8 @@ describe('Test getOptions()', () => {
         entries,
       ),
     ).toEqual([
-      { label: 'Persian', value: 'persian' },
-      { label: 'Poodle', value: 'poodle' },
+      { label: 'Persian', value: 'persian', searchValue: 'Persian cats' },
+      { label: 'Poodle', value: 'poodle', searchValue: 'Poodle dogs' },
     ]);
   });
 });
