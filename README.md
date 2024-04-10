@@ -178,7 +178,6 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not supported yet. |
 | Markdown | It’s a plain text editor at this time. A rich text editor is coming soon. We will not support Remark plugins. |
-| Relation | The `search_fields` option is not supported yet. |
 
 ### Other features
 
