@@ -26,10 +26,10 @@ export const getFieldConfig = ({
   keyPath,
 }) => {
   const cacheKey = JSON.stringify({ collectionName, fileName, valueMap, keyPath });
-  const cached = fieldConfigCache.get(cacheKey);
+  const cache = fieldConfigCache.get(cacheKey);
 
-  if (cached) {
-    return cached;
+  if (cache) {
+    return cache;
   }
 
   const collection = getCollection(collectionName);

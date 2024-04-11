@@ -16,10 +16,10 @@ const labelCache = new Map();
  */
 export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
   const cacheKey = JSON.stringify({ fieldConfig, valueMap, keyPath });
-  const cached = labelCache.get(cacheKey);
+  const cache = labelCache.get(cacheKey);
 
-  if (cached) {
-    return cached;
+  if (cache) {
+    return cache;
   }
 
   const { multiple, options } = fieldConfig;

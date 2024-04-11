@@ -25,10 +25,10 @@ const optionCache = new Map();
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
   const cacheKey = JSON.stringify({ locale, fieldConfig, refEntries });
-  const cached = optionCache.get(cacheKey);
+  const cache = optionCache.get(cacheKey);
 
-  if (cached) {
-    return cached;
+  if (cache) {
+    return cache;
   }
 
   /**
