@@ -8,6 +8,7 @@
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { waitVisibility } from '$lib/services/utils/misc';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
@@ -26,6 +27,9 @@
    * @type {string[]}
    */
   export let currentValue;
+
+  /** @type {HTMLElement[]} */
+  const wrappers = [];
 
   $: ({
     name: fieldName,
@@ -62,14 +66,16 @@
     {@const subFields = subFieldName
       ? types?.find(({ name }) => name === subFieldName)?.fields ?? []
       : fields ?? (field ? [field] : [])}
-    <section class="subsection">
-      {#each subFields as subField (subField.name)}
-        <FieldPreview
-          keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
-          {locale}
-          fieldConfig={subField}
-        />
-      {/each}
+    <section class="subsection" bind:this={wrappers[index]}>
+      {#await !!wrappers[index] && waitVisibility(wrappers[index]) then}
+        {#each subFields as subField (subField.name)}
+          <FieldPreview
+            keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
+            {locale}
+            fieldConfig={subField}
+          />
+        {/each}
+      {/await}
     </section>
   {/each}
 {:else if Array.isArray(currentValue) && currentValue.length}

@@ -19,6 +19,7 @@
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
   import { generateUUID } from '$lib/services/utils/crypto';
+  import { waitVisibility } from '$lib/services/utils/misc';
 
   /**
    * @type {LocaleCode}
@@ -95,6 +96,8 @@
   $: addButtonDisabled = locale !== defaultLocale && i18n === 'duplicate';
 
   let widgetId = '';
+  /** @type {HTMLElement | undefined} */
+  let wrapper;
 
   onMount(() => {
     widgetId = generateUUID('short');
@@ -203,20 +206,22 @@
           removeFields();
         }}
       />
-      <div role="none" class="item-list" id="object-{widgetId}-item-list">
-        {#if parentExpanded}
-          {#each subFields as subField (subField.name)}
-            <FieldEditor
-              keyPath={[keyPath, subField.name].join('.')}
-              {locale}
-              fieldConfig={subField}
-            />
-          {/each}
-        {:else}
-          <div role="none" class="summary" id="object-{widgetId}-summary">
-            {formatSummary()}
-          </div>
-        {/if}
+      <div role="none" class="item-list" id="object-{widgetId}-item-list" bind:this={wrapper}>
+        {#await !!wrapper && waitVisibility(wrapper) then}
+          {#if parentExpanded}
+            {#each subFields as subField (subField.name)}
+              <FieldEditor
+                keyPath={[keyPath, subField.name].join('.')}
+                {locale}
+                fieldConfig={subField}
+              />
+            {/each}
+          {:else}
+            <div role="none" class="summary" id="object-{widgetId}-summary">
+              {formatSummary()}
+            </div>
+          {/if}
+        {/await}
       </div>
     </Group>
   </div>

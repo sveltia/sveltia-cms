@@ -6,6 +6,7 @@
 <script>
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
+  import { waitVisibility } from '$lib/services/utils/misc';
 
   /**
    * @type {LocaleCode}
@@ -24,6 +25,9 @@
    */
   // svelte-ignore unused-export-let
   export let currentValue;
+
+  /** @type {HTMLElement | undefined} */
+  let wrapper;
 
   $: ({
     // Widget-specific options
@@ -44,9 +48,15 @@
 </script>
 
 {#if hasValues}
-  <section class="subsection">
-    {#each subFields as subField (subField.name)}
-      <FieldPreview keyPath={[keyPath, subField.name].join('.')} {locale} fieldConfig={subField} />
-    {/each}
+  <section class="subsection" bind:this={wrapper}>
+    {#await !!wrapper && waitVisibility(wrapper) then}
+      {#each subFields as subField (subField.name)}
+        <FieldPreview
+          keyPath={[keyPath, subField.name].join('.')}
+          {locale}
+          fieldConfig={subField}
+        />
+      {/each}
+    {/await}
   </section>
 {/if}

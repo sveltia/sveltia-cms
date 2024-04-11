@@ -20,6 +20,7 @@
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
   import { generateUUID } from '$lib/services/utils/crypto';
+  import { waitVisibility } from '$lib/services/utils/misc';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
@@ -109,6 +110,8 @@
   let mounted = false;
   let widgetId = '';
   let inputValue = '';
+  /** @type {HTMLElement[]} */
+  const wrappers = [];
 
   onMount(() => {
     mounted = true;
@@ -351,22 +354,29 @@
               </Button>
             </svelte:fragment>
           </ObjectHeader>
-          <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
-            {#if expanded}
-              {#each subFields as subField (subField.name)}
-                <FieldEditor
-                  keyPath={hasSingleSubField
-                    ? `${keyPath}.${index}`
-                    : `${keyPath}.${index}.${subField.name}`}
-                  {locale}
-                  fieldConfig={subField}
-                />
-              {/each}
-            {:else}
-              <div role="none" class="summary">
-                {formatSummary(item, index, summaryTemplate)}
-              </div>
-            {/if}
+          <div
+            role="none"
+            class="item-body"
+            id="list-{widgetId}-item-{index}-body"
+            bind:this={wrappers[index]}
+          >
+            {#await !!wrappers[index] && waitVisibility(wrappers[index]) then}
+              {#if expanded}
+                {#each subFields as subField (subField.name)}
+                  <FieldEditor
+                    keyPath={hasSingleSubField
+                      ? `${keyPath}.${index}`
+                      : `${keyPath}.${index}.${subField.name}`}
+                    {locale}
+                    fieldConfig={subField}
+                  />
+                {/each}
+              {:else}
+                <div role="none" class="summary">
+                  {formatSummary(item, index, summaryTemplate)}
+                </div>
+              {/if}
+            {/await}
           </div>
         </div>
       {/each}
