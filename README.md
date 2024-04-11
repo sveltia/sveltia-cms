@@ -47,6 +47,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - A list of repository files is cached locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
+- Using caching and lazy loading techniques to improve performance.
 - You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 
 ### Better productivity
