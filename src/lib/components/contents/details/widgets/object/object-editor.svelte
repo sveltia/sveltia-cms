@@ -19,7 +19,7 @@
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
   import { generateUUID } from '$lib/services/utils/crypto';
-  import { waitVisibility } from '$lib/services/utils/misc';
+  import { waitForVisibility } from '$lib/services/utils/misc';
 
   /**
    * @type {LocaleCode}
@@ -207,7 +207,7 @@
         }}
       />
       <div role="none" class="item-list" id="object-{widgetId}-item-list" bind:this={wrapper}>
-        {#await !!wrapper && waitVisibility(wrapper) then}
+        {#await !!wrapper && waitForVisibility(wrapper) then}
           {#if parentExpanded}
             {#each subFields as subField (subField.name)}
               <FieldEditor

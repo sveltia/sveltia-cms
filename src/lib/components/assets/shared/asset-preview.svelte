@@ -1,7 +1,7 @@
 <script>
   import { Icon } from '@sveltia/ui';
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets';
-  import { waitVisibility } from '$lib/services/utils/misc';
+  import { waitForVisibility } from '$lib/services/utils/misc';
 
   /**
    * Asset type.
@@ -83,7 +83,7 @@
     hasError = false;
 
     if (loading === 'lazy') {
-      await waitVisibility(mediaElement);
+      await waitForVisibility(mediaElement);
     }
 
     try {

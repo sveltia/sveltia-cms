@@ -32,7 +32,7 @@ export const sleep = (ms = 1000) =>
  * @param {HTMLElement} element - Element to observe.
  * @returns {Promise<void>} Nothing.
  */
-export const waitVisibility = (element) =>
+export const waitForVisibility = (element) =>
   new Promise((resolve) => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {

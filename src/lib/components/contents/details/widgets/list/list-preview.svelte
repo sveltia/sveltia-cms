@@ -8,7 +8,7 @@
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
-  import { waitVisibility } from '$lib/services/utils/misc';
+  import { waitForVisibility } from '$lib/services/utils/misc';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
@@ -67,7 +67,7 @@
       ? types?.find(({ name }) => name === subFieldName)?.fields ?? []
       : fields ?? (field ? [field] : [])}
     <section class="subsection" bind:this={wrappers[index]}>
-      {#await !!wrappers[index] && waitVisibility(wrappers[index]) then}
+      {#await !!wrappers[index] && waitForVisibility(wrappers[index]) then}
         {#each subFields as subField (subField.name)}
           <FieldPreview
             keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}

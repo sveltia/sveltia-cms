@@ -20,7 +20,7 @@
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
   import { generateUUID } from '$lib/services/utils/crypto';
-  import { waitVisibility } from '$lib/services/utils/misc';
+  import { waitForVisibility } from '$lib/services/utils/misc';
   import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
@@ -360,7 +360,7 @@
             id="list-{widgetId}-item-{index}-body"
             bind:this={wrappers[index]}
           >
-            {#await !!wrappers[index] && waitVisibility(wrappers[index]) then}
+            {#await !!wrappers[index] && waitForVisibility(wrappers[index]) then}
               {#if expanded}
                 {#each subFields as subField (subField.name)}
                   <FieldEditor

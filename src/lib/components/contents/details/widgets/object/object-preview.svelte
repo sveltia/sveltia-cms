@@ -6,7 +6,7 @@
 <script>
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
-  import { waitVisibility } from '$lib/services/utils/misc';
+  import { waitForVisibility } from '$lib/services/utils/misc';
 
   /**
    * @type {LocaleCode}
@@ -49,7 +49,7 @@
 
 {#if hasValues}
   <section class="subsection" bind:this={wrapper}>
-    {#await !!wrapper && waitVisibility(wrapper) then}
+    {#await !!wrapper && waitForVisibility(wrapper) then}
       {#each subFields as subField (subField.name)}
         <FieldPreview
           keyPath={[keyPath, subField.name].join('.')}
