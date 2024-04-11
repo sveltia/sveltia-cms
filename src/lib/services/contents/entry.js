@@ -5,6 +5,11 @@ import { getAssetByPath } from '$lib/services/assets';
 import { getCollection } from '$lib/services/contents';
 
 /**
+ * @type {Map<string, Field | undefined>}
+ */
+const fieldConfigCache = new Map();
+
+/**
  * Get a field’s config object that matches the given field name (key path).
  * @param {object} args - Arguments.
  * @param {string} args.collectionName - Collection name.
@@ -20,9 +25,18 @@ export const getFieldConfig = ({
   valueMap = {},
   keyPath,
 }) => {
+  const cacheKey = JSON.stringify({ collectionName, fileName, valueMap, keyPath });
+  const cached = fieldConfigCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
   const collection = getCollection(collectionName);
 
   if (!collection) {
+    fieldConfigCache.set(cacheKey, undefined);
+
     return undefined;
   }
 
@@ -65,6 +79,8 @@ export const getFieldConfig = ({
       }
     }
   });
+
+  fieldConfigCache.set(cacheKey, field);
 
   return field;
 };

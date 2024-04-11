@@ -36,18 +36,31 @@ export const selectedCollection = writable();
 export const selectedEntries = writable([]);
 
 /**
+ * @type {Map<string, Collection | undefined>}
+ */
+const collectionCache = new Map();
+
+/**
  * Get a collection by name.
  * @param {string} name - Collection name.
  * @returns {Collection | undefined} Collection, including some extra, normalized properties.
  */
 export const getCollection = (name) => {
+  const cache = collectionCache.get(name);
+
+  if (cache) {
+    return cache;
+  }
+
   const collection = get(siteConfig)?.collections.find((c) => c.name === name);
 
   if (!collection) {
+    collectionCache.set(name, undefined);
+
     return undefined;
   }
 
-  return {
+  const _collection = {
     ...collection,
     _fileMap: collection.files?.length
       ? Object.fromEntries(
@@ -60,6 +73,10 @@ export const getCollection = (name) => {
     _i18n: getI18nConfig(collection),
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
   };
+
+  collectionCache.set(name, _collection);
+
+  return _collection;
 };
 
 /**

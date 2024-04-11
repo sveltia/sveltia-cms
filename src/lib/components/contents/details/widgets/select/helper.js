@@ -2,6 +2,11 @@ import { isObjectArray } from '$lib/services/utils/misc';
 import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
+ * @type {Map<string, any | any[]>}
+ */
+const labelCache = new Map();
+
+/**
  * Get the display value for an option.
  * @param {object} args - Arguments.
  * @param {SelectField} args.fieldConfig - Field configuration.
@@ -10,6 +15,13 @@ import { escapeRegExp } from '$lib/services/utils/strings';
  * @returns {any | any[]} Resolved field value(s).
  */
 export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
+  const cacheKey = JSON.stringify({ fieldConfig, valueMap, keyPath });
+  const cached = labelCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
   const { multiple, options } = fieldConfig;
   const hasLabels = isObjectArray(options);
 
@@ -27,10 +39,17 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
       .filter(([key]) => key.match(`^${escapeRegExp(keyPath)}\\.\\d+$`))
       .map(([, _value]) => _value);
 
-    return hasLabels ? values.map(getLabel) : values;
+    const labels = hasLabels ? values.map(getLabel) : values;
+
+    labelCache.set(cacheKey, labels);
+
+    return labels;
   }
 
   const value = valueMap[keyPath];
+  const label = hasLabels ? getLabel(value) : value;
 
-  return hasLabels ? getLabel(value) : value;
+  labelCache.set(cacheKey, label);
+
+  return label;
 };

@@ -12,6 +12,11 @@ const normalizeFieldName = (fieldName) =>
   fieldName.match(/{{.+?}}/) ? fieldName : `{{${fieldName}}}`;
 
 /**
+ * @type {Map<string, { label: string, value: any }[]>}
+ */
+const optionCache = new Map();
+
+/**
  * Get options for a Relation field.
  * @param {LocaleCode} locale - Current locale.
  * @param {RelationField} fieldConfig - Field configuration.
@@ -19,6 +24,13 @@ const normalizeFieldName = (fieldName) =>
  * @returns {{ label: string, value: any }[]} Options.
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
+  const cacheKey = JSON.stringify({ locale, fieldConfig, refEntries });
+  const cached = optionCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
   /**
    * @example 'userId'
    * @example 'name.first'
@@ -61,7 +73,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    */
   const entryFilters = fieldConfig.filters ?? [];
 
-  return refEntries
+  const options = refEntries
     .map((refEntry) => {
       // Fall back to the default locale if needed
       const { content } = refEntry?.locales[locale] ?? refEntry?.locales._default ?? {};
@@ -182,6 +194,10 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     })
     .flat(1)
     .sort((a, b) => a.label.localeCompare(b.label));
+
+  optionCache.set(cacheKey, options);
+
+  return options;
 };
 
 /**
