@@ -157,11 +157,10 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Installation | Installing with `npm` is not supported yet. |
-| Backends | Currently only the GitHub and GitLab backends are available, with GraphQL enabled by default. We’ll also add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported, mainly due to performance limitations. |
-| Netlify Integration | Identity Widget is not supported yet. We will not support Git Gateway due to the poor performance; we may implement an alternative using GraphQL later. |
+| Backends | Only the GitHub and GitLab backends are available, with GraphQL enabled by default. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
 | Local Git Repository | Supported using a different approach. [See below](#work-with-a-local-git-repository) for details. |
 | UI Locales | Only English and Japanese are available at this time. No registration is required. The locale is selected automatically and can be changed in the Settings. |
-| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare in a better way, but will not support deprecated Netlify Large Media. |
+| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare using the APIs instead of pre-built widgets. No support for deprecated Netlify Large Media. |
 | Editorial Workflow | Not supported yet. |
 | Open Authoring | Not supported yet. |
 | Collections | Nested collections are not supported yet. |
