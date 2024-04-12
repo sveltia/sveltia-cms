@@ -125,12 +125,13 @@
   });
 
   /**
-   * Update the input field value when the {@link currentValue} is reverted. This also cleans up the
-   * input field value by removing extra spaces or commas.
+   * Update {@link inputValue} when {@link currentValue} is reverted. This also cleans up the input
+   * field value by removing extra spaces or commas.
    */
-  const updateInputValue = () => {
+  const setInputValue = () => {
     const currentValueStr = currentValue.join(', ');
 
+    // Avoid a cycle dependency & infinite loop
     if (!inputValue.match(/,\s*$/) && inputValue.trim() !== currentValueStr) {
       inputValue = currentValueStr;
     }
@@ -139,7 +140,7 @@
   /**
    * Update the value for the List widget w/o subfield(s). This has to be called from the `input`
    * event handler on `<TextInput>`, not a `inputValue` reaction, because it causes an infinite loop
-   * due to {@link updateInputValue}.
+   * due to {@link setInputValue}.
    */
   const updateSimpleList = () => {
     const normalizedValue = inputValue
@@ -243,7 +244,7 @@
   $: {
     if (mounted && !hasSubFields) {
       void currentValue;
-      updateInputValue();
+      setInputValue();
     }
   }
 

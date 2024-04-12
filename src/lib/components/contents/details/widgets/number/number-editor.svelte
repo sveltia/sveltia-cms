@@ -59,15 +59,21 @@
    */
   let inputValue = '';
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  const onCurrentValueChange = () => {
+  /**
+   * Update {@link inputValue} based on {@link currentValue}.
+   */
+  const setInputValue = () => {
+    // Avoid a cycle dependency & infinite loop
     if (currentValue !== undefined && inputValue !== String(currentValue)) {
       inputValue = String(currentValue);
     }
   };
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  const onInputValueChange = () => {
+  /**
+   * Update {@link currentValue} based on {@link inputValue}. Cast the value according to the
+   * `value_type` configuration.
+   */
+  const setCurrentValue = () => {
     let newValue;
 
     if (valueType === 'int') {
@@ -82,6 +88,7 @@
       newValue = '';
     }
 
+    // Avoid a cycle dependency & infinite loop
     if (currentValue !== newValue) {
       currentValue = newValue;
     }
@@ -89,12 +96,12 @@
 
   $: {
     void currentValue;
-    onCurrentValueChange();
+    setInputValue();
   }
 
   $: {
     void inputValue;
-    onInputValueChange();
+    setCurrentValue();
   }
 </script>
 

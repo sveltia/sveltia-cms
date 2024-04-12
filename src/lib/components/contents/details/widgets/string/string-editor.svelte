@@ -61,7 +61,7 @@
   /**
    * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.
    */
-  const onCurrentValueChange = () => {
+  const setInputValue = () => {
     if (currentValue === undefined) {
       return;
     }
@@ -76,7 +76,7 @@
       newValue = newValue.slice(0, -suffix.length);
     }
 
-    // Make sure to avoid infinite loops
+    // Avoid a cycle dependency & infinite loop
     if (inputValue !== newValue) {
       inputValue = newValue;
     }
@@ -85,7 +85,7 @@
   /**
    * Update {@link currentValue} based on {@link inputValue}. Add the suffix/prefix if needed.
    */
-  const onInputValueChange = () => {
+  const setCurrentValue = () => {
     let newValue = inputValue;
 
     if (prefix && !newValue.startsWith(prefix)) {
@@ -96,7 +96,7 @@
       newValue = `${newValue}${suffix}`;
     }
 
-    // Make sure to avoid infinite loops
+    // Avoid a cycle dependency & infinite loop
     if (currentValue !== newValue) {
       currentValue = newValue;
     }
@@ -104,12 +104,12 @@
 
   $: {
     void currentValue;
-    onCurrentValueChange();
+    setInputValue();
   }
 
   $: {
     void inputValue;
-    onInputValueChange();
+    setCurrentValue();
   }
 </script>
 
