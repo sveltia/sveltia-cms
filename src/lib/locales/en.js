@@ -357,6 +357,7 @@ export const strings = {
   move_down: 'Move Down',
   add_x: 'Add {name}',
   select_list_type: 'Select List Type',
+  opacity: 'Opacity',
   assets_dialog: {
     title: {
       file: 'Select File',

@@ -360,6 +360,7 @@ export const strings = {
   move_down: '下へ移動',
   add_x: '{name} を追加',
   select_list_type: 'リストタイプを選択',
+  opacity: '透明度',
   assets_dialog: {
     title: {
       file: 'ファイルを選択',
