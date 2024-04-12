@@ -48,12 +48,10 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - A list of repository files is cached locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
 - Using caching and lazy loading techniques to improve performance.
-- You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 
 ### Better productivity
 
 - You can [work with a local Git repository](#work-with-a-local-git-repository) without running a proxy server on your machine, bypassing the 30 MB file size limit[^26].
-- The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 - The Entry Editor closes automatically when an entry is saved.
 - You can delete multiple entries and assets at once.
@@ -76,6 +74,12 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^34].
 - We have documented how to [set up a Content Security Policy](#set-up-content-security-policy) for the CMS.
 - The `unsafe-eval` or `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^33].
+
+### Better backend support
+
+- Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option.
+- The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
+- You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 
 ### Better i18n support
 
