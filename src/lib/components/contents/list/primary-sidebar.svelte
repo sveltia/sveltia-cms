@@ -1,9 +1,9 @@
 <script>
   import { Icon, Listbox, Option } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
   import { selectedCollection } from '$lib/services/contents';
-  import { goto } from '$lib/services/navigation';
 
   $: collections = $siteConfig?.collections.filter(({ hide }) => !hide) ?? [];
 </script>

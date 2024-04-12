@@ -3,10 +3,10 @@
   import { _ } from 'svelte-i18n';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { allAssets, uploadingAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
   import { currentView } from '$lib/services/contents/view';
-  import { goto } from '$lib/services/navigation';
 
   $: ({ internalPath, entryRelative } =
     $selectedCollection?._assetFolder ?? /** @type {CollectionAssetFolder} */ ({}));

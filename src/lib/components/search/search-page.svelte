@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import SearchResults from '$lib/components/search/search-results.svelte';
-  import { announcedPageStatus, parseLocation } from '$lib/services/navigation';
+  import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
   import { searchResults, searchTerms } from '$lib/services/search';
 
   /**

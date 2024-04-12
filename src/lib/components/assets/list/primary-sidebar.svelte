@@ -1,10 +1,10 @@
 <script>
   import { Icon, Listbox, Option } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
+  import { goto } from '$lib/services/app/navigation';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection } from '$lib/services/contents';
-  import { goto } from '$lib/services/navigation';
 
   $: folders = [
     {

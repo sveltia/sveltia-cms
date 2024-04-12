@@ -1,9 +1,9 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import { goto } from '$lib/services/app/navigation';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
-  import { goto } from '$lib/services/navigation';
   import { sleep } from '$lib/services/utils/misc';
 </script>
 

@@ -4,11 +4,11 @@
   import PublishMenuItem from '$lib/components/global/toolbar/items/publish-menu-item.svelte';
   import ShortcutsDialog from '$lib/components/keyboard-shortcuts/shortcuts-dialog.svelte';
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
+  import { version } from '$lib/services/app';
+  import { openProductionSite } from '$lib/services/app/navigation';
   import { backend, backendName } from '$lib/services/backends';
-  import { openProductionSite } from '$lib/services/navigation';
   import { prefs } from '$lib/services/prefs';
   import { user } from '$lib/services/user';
-  import { version } from '../../../../../../package.json';
 
   /** @type {MenuButton} */
   let menuButton;

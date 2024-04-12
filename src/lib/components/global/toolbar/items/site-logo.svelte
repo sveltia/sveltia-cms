@@ -1,8 +1,8 @@
 <script>
   import { Button } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import { openProductionSite } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
-  import { openProductionSite } from '$lib/services/navigation';
 </script>
 
 {#if $siteConfig?.logo_url}

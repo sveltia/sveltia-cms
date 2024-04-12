@@ -2,8 +2,8 @@
   import { GridCell, GridRow } from '@sveltia/ui';
   import { locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { getFolderLabelByPath } from '$lib/services/assets/view';
-  import { goto } from '$lib/services/navigation';
 
   /**
    * @type {Asset}

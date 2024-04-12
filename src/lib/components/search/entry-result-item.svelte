@@ -1,9 +1,9 @@
 <script>
   import { GridCell, GridRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { getMediaFieldURL } from '$lib/services/assets';
   import { getCollection } from '$lib/services/contents';
-  import { goto } from '$lib/services/navigation';
 
   /**
    * @type {Entry}

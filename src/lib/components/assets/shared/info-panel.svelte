@@ -2,9 +2,9 @@
   import { Button } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { getAssetDetails } from '$lib/services/assets';
   import { getCollection } from '$lib/services/contents';
-  import { goto } from '$lib/services/navigation';
   import { formatSize } from '$lib/services/utils/files';
   import { formatDuration } from '$lib/services/utils/media';
 

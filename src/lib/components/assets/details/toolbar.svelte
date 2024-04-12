@@ -5,8 +5,8 @@
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/toolbar/download-assets-button.svelte';
   import EditOptionsButton from '$lib/components/assets/toolbar/edit-options-button.svelte';
+  import { goBack } from '$lib/services/app/navigation';
   import { overlaidAsset, selectedAssetFolder } from '$lib/services/assets';
-  import { goBack } from '$lib/services/navigation';
 
   $: assets = $overlaidAsset ? [$overlaidAsset] : [];
 </script>

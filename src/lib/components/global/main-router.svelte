@@ -11,8 +11,8 @@
   import UpdateNotification from '$lib/components/global/updater/update-notification.svelte';
   import SearchPage from '$lib/components/search/search-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
+  import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents';
-  import { parseLocation, selectedPageName } from '$lib/services/navigation';
 
   /**
    * @type {{ [key: string]: any }}

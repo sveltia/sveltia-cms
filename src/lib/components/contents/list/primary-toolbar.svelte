@@ -2,8 +2,8 @@
   import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
-  import { goto } from '$lib/services/navigation';
 
   let showDeleteDialog = false;
 

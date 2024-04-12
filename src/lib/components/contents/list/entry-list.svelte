@@ -5,9 +5,9 @@
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
-  import { goto } from '$lib/services/navigation';
 
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
 </script>

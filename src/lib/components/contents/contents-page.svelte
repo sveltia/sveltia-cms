@@ -11,11 +11,11 @@
   import PrimaryToolbar from '$lib/components/contents/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
+  import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
   import { getCollection, getFile, selectedCollection } from '$lib/services/contents';
   import { contentUpdatesToast } from '$lib/services/contents/data';
   import { createDraft, entryDraft } from '$lib/services/contents/editor';
   import { formatSummary, listedEntries } from '$lib/services/contents/view';
-  import { announcedPageStatus, parseLocation } from '$lib/services/navigation';
 
   /**
    * Navigate to the content list or content details page given the URL hash.

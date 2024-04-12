@@ -1,9 +1,9 @@
 <script>
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { canPreviewAsset, focusedAsset, selectedAssets } from '$lib/services/assets';
   import { listedAssets } from '$lib/services/assets/view';
-  import { goto } from '$lib/services/navigation';
 
   /**
    * @type {Asset}

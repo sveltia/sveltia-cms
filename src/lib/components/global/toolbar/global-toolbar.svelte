@@ -7,7 +7,7 @@
   import PageSwitcher from '$lib/components/global/toolbar/items/page-switcher.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import SiteLogo from '$lib/components/global/toolbar/items/site-logo.svelte';
-  import { hasOverlay } from '$lib/services/navigation';
+  import { hasOverlay } from '$lib/services/app/navigation';
 </script>
 
 <div role="none" class="toolbar-wrapper" inert={$hasOverlay}>

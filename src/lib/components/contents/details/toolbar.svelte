@@ -17,6 +17,7 @@
   } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
+  import { goBack, goto } from '$lib/services/app/navigation';
   import { backendName } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/data';
@@ -30,7 +31,6 @@
   import { getAssociatedAssets } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/view';
-  import { goBack, goto } from '$lib/services/navigation';
   import { truncate } from '$lib/services/utils/strings';
 
   let showDuplicateToast = false;

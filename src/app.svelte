@@ -4,9 +4,9 @@
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
+  import { initAppLocale } from '$lib/services/app/i18n';
+  import { announcedPageStatus } from '$lib/services/app/navigation';
   import { dataLoaded } from '$lib/services/contents';
-  import { initAppLocale } from '$lib/services/i18n';
-  import { announcedPageStatus } from '$lib/services/navigation';
   import { user } from '$lib/services/user';
 
   const { DEV, VITE_SITE_URL } = import.meta.env;

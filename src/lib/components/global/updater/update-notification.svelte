@@ -2,7 +2,7 @@
   import { Button } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { version as userVersion } from '../../../../../package.json';
+  import { version as userVersion } from '$lib/services/app';
 
   const interval = 60 * 60 * 1000; // 1 hour
   let timer = 0;

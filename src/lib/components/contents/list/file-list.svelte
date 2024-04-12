@@ -4,8 +4,8 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents';
-  import { goto } from '$lib/services/navigation';
 </script>
 
 <ListContainer aria-label={$_('file_list')}>

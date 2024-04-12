@@ -11,6 +11,7 @@
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
+  import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
   import {
     allAssetFolders,
     allAssets,
@@ -19,7 +20,6 @@
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
-  import { announcedPageStatus, parseLocation } from '$lib/services/navigation';
 
   let path = '';
 

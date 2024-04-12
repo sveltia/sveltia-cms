@@ -1,6 +1,6 @@
 <script>
   import { Group } from '@sveltia/ui';
-  import { hasOverlay } from '$lib/services/navigation';
+  import { hasOverlay } from '$lib/services/app/navigation';
 
   /**
    * CSS class name on the button.
