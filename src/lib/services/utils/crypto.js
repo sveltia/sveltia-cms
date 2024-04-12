@@ -53,7 +53,9 @@ export const getHash = async (input, { algorithm = 'SHA-1', format = 'hex' } = {
 
   const digest = await globalThis.crypto.subtle.digest(algorithm, data);
 
-  return Array.from(new Uint8Array(digest), (b) =>
-    format === 'binary' ? String.fromCharCode(b) : b.toString(16).padStart(2, '0'),
-  ).join('');
+  if (format === 'binary') {
+    return Array.from(new Uint8Array(digest), (b) => String.fromCharCode(b)).join('');
+  }
+
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 };

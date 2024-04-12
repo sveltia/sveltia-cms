@@ -158,8 +158,8 @@ const getHandleByPath = async (path) => {
  */
 const getAllFiles = async () => {
   const _rootDirHandle = get(rootDirHandle);
-  /** @type {BaseFileListItem[]} */
-  const allFiles = [];
+  /** @type {{ file: File, path: string }[]} */
+  const availableFileList = [];
 
   const scanningPaths = [
     ...get(allEntryFolders).map(({ filePath, folderPath }) => filePath || folderPath),
@@ -193,18 +193,7 @@ const getAllFiles = async () => {
         }
 
         try {
-          const file = await handle.getFile();
-
-          allFiles.push({
-            file,
-            path,
-            name,
-            sha: await getHash(file),
-            size: file.size,
-            text: name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i)
-              ? await readAsText(file)
-              : undefined,
-          });
+          availableFileList.push({ file: await handle.getFile(), path });
         } catch (/** @type {any} */ ex) {
           // eslint-disable-next-line no-console
           console.error(ex);
@@ -225,7 +214,18 @@ const getAllFiles = async () => {
 
   await iterate(_rootDirHandle);
 
-  return allFiles;
+  return Promise.all(
+    availableFileList.map(async ({ file, path }) => {
+      const { name, size } = file;
+
+      const [sha, text] = await Promise.all([
+        getHash(file),
+        name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? readAsText(file) : undefined,
+      ]);
+
+      return { file, path, name, sha, size, text };
+    }),
+  );
 };
 
 /**

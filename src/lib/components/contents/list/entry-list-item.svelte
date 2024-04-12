@@ -25,13 +25,15 @@
    * @type {ViewType}
    */
   export let viewType;
+  /**
+   * @type {Field | undefined}
+   */
+  export let firstImageField;
 
   /**
    * @type {string | undefined}
    */
   let src;
-
-  $: firstImageField = $selectedCollection?.fields?.find(({ widget }) => widget === 'image');
 
   $: (async () => {
     src =

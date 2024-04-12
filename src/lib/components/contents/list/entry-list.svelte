@@ -10,6 +10,7 @@
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
 
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
+  $: firstImageField = $selectedCollection?.fields?.find(({ widget }) => widget === 'image');
 </script>
 
 <ListContainer aria-label={$selectedCollection?.files ? $_('file_list') : $_('entry_list')}>
@@ -30,7 +31,13 @@
               {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
               {@const { content } = locales[locale]}
               {#if content}
-                <EntryListItem {entry} {content} {locale} viewType={$currentView.type} />
+                <EntryListItem
+                  {entry}
+                  {content}
+                  {locale}
+                  viewType={$currentView.type}
+                  {firstImageField}
+                />
               {/if}
             {/each}
           </GridBody>
