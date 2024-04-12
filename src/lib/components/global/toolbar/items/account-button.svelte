@@ -72,12 +72,15 @@
         }}
       />
       <Divider />
-      <MenuItem
-        label={$_('help.keyboard_shortcuts')}
-        on:click={() => {
-          showShortcutsDialog = true;
-        }}
-      />
+      <!-- Assume the user has a physical keyboard if the pointer is mouse (on desktop) -->
+      {#if window.matchMedia('(pointer: fine)').matches}
+        <MenuItem
+          label={$_('help.keyboard_shortcuts')}
+          on:click={() => {
+            showShortcutsDialog = true;
+          }}
+        />
+      {/if}
       <MenuItem
         label={$_('help.documentation')}
         on:click={() => {
