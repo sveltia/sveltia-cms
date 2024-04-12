@@ -67,7 +67,7 @@
       ? types?.find(({ name }) => name === subFieldName)?.fields ?? []
       : fields ?? (field ? [field] : [])}
     <section class="subsection" bind:this={wrappers[index]}>
-      {#await !!wrappers[index] && waitForVisibility(wrappers[index]) then}
+      {#await waitForVisibility(wrappers[index]) then}
         {#each subFields as subField (subField.name)}
           <FieldPreview
             keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}

@@ -29,11 +29,16 @@ export const sleep = (ms = 1000) =>
 
 /**
  * Wait until the given element enters the viewport.
- * @param {HTMLElement} element - Element to observe.
- * @returns {Promise<void>} Nothing.
+ * @param {HTMLElement | undefined} element - Element to observe.
+ * @returns {void | Promise<void>} Promise to be resolved when the element becomes visible. If the
+ * `element` is not available yet, `undefined` will be returned instead.
  */
-export const waitForVisibility = (element) =>
-  new Promise((resolve) => {
+export const waitForVisibility = (element) => {
+  if (!element) {
+    return undefined;
+  }
+
+  return new Promise((resolve) => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         observer.disconnect();
@@ -45,3 +50,4 @@ export const waitForVisibility = (element) =>
       observer.observe(element);
     });
   });
+};

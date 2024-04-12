@@ -17,7 +17,7 @@
 </script>
 
 <div role="none" class="{viewType}-view" bind:this={wrapper}>
-  {#await !!wrapper && waitForVisibility(wrapper) then}
+  {#await waitForVisibility(wrapper) then}
     <Grid multiple {...$$restProps}>
       <slot />
     </Grid>

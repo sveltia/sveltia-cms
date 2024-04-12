@@ -49,7 +49,7 @@
 
 {#if hasValues}
   <section class="subsection" bind:this={wrapper}>
-    {#await !!wrapper && waitForVisibility(wrapper) then}
+    {#await waitForVisibility(wrapper) then}
       {#each subFields as subField (subField.name)}
         <FieldPreview
           keyPath={[keyPath, subField.name].join('.')}

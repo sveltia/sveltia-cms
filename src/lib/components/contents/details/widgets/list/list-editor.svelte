@@ -361,7 +361,7 @@
             id="list-{widgetId}-item-{index}-body"
             bind:this={wrappers[index]}
           >
-            {#await !!wrappers[index] && waitForVisibility(wrappers[index]) then}
+            {#await waitForVisibility(wrappers[index]) then}
               {#if expanded}
                 {#each subFields as subField (subField.name)}
                   <FieldEditor

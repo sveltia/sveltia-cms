@@ -207,7 +207,7 @@
         }}
       />
       <div role="none" class="item-list" id="object-{widgetId}-item-list" bind:this={wrapper}>
-        {#await !!wrapper && waitForVisibility(wrapper) then}
+        {#await waitForVisibility(wrapper) then}
           {#if parentExpanded}
             {#each subFields as subField (subField.name)}
               <FieldEditor
