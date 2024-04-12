@@ -172,7 +172,6 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | Code | Not supported yet. |
-| Color | The `enableAlpha` option is not supported yet. |
 | Date | Sveltia CMS has dropped the support for it following Decap CMS 3.0. Use the DateTime widget instead. |
 | DateTime | The `date_format` and `time_format` options with Moment.js tokens are not supported yet. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
 | File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
