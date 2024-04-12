@@ -30,7 +30,7 @@
         {selected}
         label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}
         on:select={() => {
-          goto(internalPath ? `/assets/${internalPath}` : `/assets`);
+          goto(internalPath ? `/assets/${internalPath}` : '/assets');
         }}
         on:dragover={(event) => {
           event.preventDefault();

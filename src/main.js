@@ -55,7 +55,7 @@ window.CMS = new Proxy(
         // eslint-disable-next-line no-console
         console.error(
           `CMS.${key}() is not yet supported in Sveltia CMS. ` +
-            `See https://github.com/sveltia/sveltia-cms#compatibility for compatibility information.`,
+            'See https://github.com/sveltia/sveltia-cms#compatibility for compatibility information.',
         );
 
         // eslint-disable-next-line jsdoc/require-description

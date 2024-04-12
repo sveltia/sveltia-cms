@@ -108,3 +108,7 @@ rules:
       next:
         - export
         - import
+  quotes:
+    - error
+    - single
+    - avoidEscape: true

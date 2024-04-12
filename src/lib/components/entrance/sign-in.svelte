@@ -22,7 +22,7 @@
   {#if $backendName === 'local'}
     {#if !('showDirectoryPicker' in window)}
       <div role="alert">
-        {$_(`unsupported.browser`)}
+        {$_('unsupported.browser')}
       </div>
     {:else}
       <Button

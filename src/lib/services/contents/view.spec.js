@@ -57,7 +57,7 @@ describe('Test formatSummary()', () => {
   });
 
   test('transformations', () => {
-    expect(_formatSummary(`{{date | date('MMM D, YYYY')}}`)).toEqual('Jan 23, 2024');
-    expect(_formatSummary(`{{draft | ternary('Draft', 'Public')}}`)).toEqual('Public');
+    expect(_formatSummary("{{date | date('MMM D, YYYY')}}")).toEqual('Jan 23, 2024');
+    expect(_formatSummary("{{draft | ternary('Draft', 'Public')}}")).toEqual('Public');
   });
 });

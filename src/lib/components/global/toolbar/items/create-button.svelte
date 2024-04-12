@@ -38,7 +38,7 @@
     <MenuItem
       label={$_('assets')}
       on:click={async () => {
-        goto(`/assets`);
+        goto('/assets');
         await sleep(100);
         $showUploadAssetsDialog = true;
       }}

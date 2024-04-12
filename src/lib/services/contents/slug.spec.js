@@ -46,42 +46,42 @@ describe('Test fillSlugTemplate()', () => {
 
   test('apply filter', () => {
     expect(
-      fillSlugTemplate(`{{published | date('MMM D, YYYY')}}`, {
+      fillSlugTemplate("{{published | date('MMM D, YYYY')}}", {
         collection,
         content: { published: '2024-01-23' },
       }),
     ).toEqual('jan-23-2024');
 
     expect(
-      fillSlugTemplate(`{{name | default('world')}}`, {
+      fillSlugTemplate("{{name | default('world')}}", {
         collection,
         content: { name: 'hello' },
       }),
     ).toEqual('hello');
 
     expect(
-      fillSlugTemplate(`{{name | default('world')}}`, {
+      fillSlugTemplate("{{name | default('world')}}", {
         collection,
         content: { name: '' },
       }),
     ).toEqual('world');
 
     expect(
-      fillSlugTemplate(`{{draft | ternary('Draft', 'Public')}}`, {
+      fillSlugTemplate("{{draft | ternary('Draft', 'Public')}}", {
         collection,
         content: { draft: true },
       }),
     ).toEqual('draft');
 
     expect(
-      fillSlugTemplate(`{{draft | ternary('Draft', 'Public')}}`, {
+      fillSlugTemplate("{{draft | ternary('Draft', 'Public')}}", {
         collection,
         content: { draft: false },
       }),
     ).toEqual('public');
 
     expect(
-      fillSlugTemplate(`{{title | truncate(40)}}`, {
+      fillSlugTemplate('{{title | truncate(40)}}', {
         collection,
         content: {
           // cspell:disable-next-line
