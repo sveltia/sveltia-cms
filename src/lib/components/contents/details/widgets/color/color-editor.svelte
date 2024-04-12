@@ -56,7 +56,7 @@
 
   const id = getRandomId('color');
   let inputValue = '';
-  let inputAlphaValue = 0;
+  let inputAlphaValue = 255;
 
   /**
    * Update {@link inputValue} and {@link inputAlphaValue} based on {@link currentValue}.
@@ -74,8 +74,8 @@
       inputValue = newValue;
     }
 
-    if (enableAlpha && newAlphaHexValue) {
-      const newAlphaIntValue = Number.parseInt(`0x${newAlphaHexValue}`, 16);
+    if (newValue && enableAlpha) {
+      const newAlphaIntValue = Number.parseInt(`0x${newAlphaHexValue ?? 'ff'}`, 16);
 
       // Avoid a cycle dependency & infinite loop
       if (inputAlphaValue !== newAlphaIntValue) {
@@ -155,7 +155,7 @@
     aria-controls={`${id}-picker ${allowInput ? `${id}-input` : ''}`}
     on:click={() => {
       inputValue = '';
-      inputAlphaValue = 0;
+      inputAlphaValue = 255;
     }}
   >
     <Icon slot="start-icon" name="delete" />
