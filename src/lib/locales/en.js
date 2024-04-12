@@ -96,7 +96,7 @@ export const strings = {
   visit_live_site: 'Visit Live Site',
   switch_page: 'Switch Page',
   search_placeholder: 'Search for entries and assets…',
-  create_entry_or_asset: 'Create Entry or Asset',
+  create_entry_or_assets: 'Create Entry or Assets',
   asset: 'Asset',
   publish_changes: 'Publish Changes',
   publishing_changes: 'Publishing Changes…',

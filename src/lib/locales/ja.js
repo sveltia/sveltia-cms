@@ -96,7 +96,7 @@ export const strings = {
   visit_live_site: '管理対象サイトを開く',
   switch_page: 'ページを切り替え',
   search_placeholder: 'エントリーとアセットを検索…',
-  create_entry_or_asset: 'エントリーまたはアセットを作成',
+  create_entry_or_assets: 'エントリーまたはアセットを作成',
   asset: 'アセット',
   publish_changes: '変更を公開',
   publishing_changes: '変更を公開しています…',

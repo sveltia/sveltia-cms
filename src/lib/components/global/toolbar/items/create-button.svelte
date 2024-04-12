@@ -11,10 +11,10 @@
   variant="ghost"
   iconic
   popupPosition="bottom-right"
-  aria-label={$_('create_entry_or_asset')}
+  aria-label={$_('create_entry_or_assets')}
 >
   <Icon slot="start-icon" name="add" />
-  <Menu slot="popup" aria-label={$_('create_entry_or_asset')}>
+  <Menu slot="popup" aria-label={$_('create_entry_or_assets')}>
     {#each $siteConfig?.collections ?? [] as collection (collection.name)}
       {@const {
         name,
@@ -36,7 +36,7 @@
     {/each}
     <Divider />
     <MenuItem
-      label={$_('asset')}
+      label={$_('assets')}
       on:click={async () => {
         goto(`/assets`);
         await sleep(100);
