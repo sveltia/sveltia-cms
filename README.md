@@ -111,47 +111,32 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better widgets
 
-#### List
-
-- Supports previewing variable types without having to register a preview template[^42].
-
-#### Object
-
-- Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
-- Optional Object fields (`required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
-
-#### Relation
-
-- Field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
-
-#### String
-
-- Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
-- Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
-
-#### Boolean, Number and String
-
-- Supports the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
-
-#### List and Object
-
-- The `summary` is displayed correctly when it refers to a Relation field[^36].
-
-#### File and Image
-
-- Provides a reimagined all-in-one asset selection dialog for File and Image fields.
-  - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
-  - New assets can be uploaded by dragging & dropping them into the dialog[^20].
-  - A URL can also be entered in the dialog.
-  - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
-
-#### New widgets
-
-- In addition to [generating UUIDs for entry slugs](#use-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
-  - `prefix`: A string to be prepended to the value. Default: an empty string.
-  - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
-  - `read_only`: Whether to make the field read-only. Default: `true`.
-- The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
+- List
+  - Supports previewing variable types without having to register a preview template[^42].
+- Object
+  - Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
+  - Optional Object fields (`required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
+- Relation
+  - Field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
+- String
+  - Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
+  - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
+- Boolean, Number and String
+  - Supports the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
+- List and Object
+  - The `summary` is displayed correctly when it refers to a Relation field[^36].
+- File and Image
+  - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
+    - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
+    - New assets can be uploaded by dragging & dropping them into the dialog[^20].
+    - A URL can also be entered in the dialog.
+    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
+- New widgets
+  - In addition to [generating UUIDs for entry slugs](#use-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
+    - `prefix`: A string to be prepended to the value. Default: an empty string.
+    - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
+    - `read_only`: Whether to make the field read-only. Default: `true`.
+  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
 
 ### Better asset management
 
