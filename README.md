@@ -398,7 +398,7 @@ img-src 'self' blob: data:;
 media-src blob:;
 frame-src blob:;
 script-src 'self' https://unpkg.com;
-connect-src 'self' blob: data:;
+connect-src 'self' blob: data: https://unpkg.com;
 ```
 
 And combine the following policies depending on your Git backend and enabled integrations.
