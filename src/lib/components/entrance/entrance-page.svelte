@@ -1,22 +1,17 @@
 <script>
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
-  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { inAuthPopup } from '$lib/services/backends/shared/auth';
-  import { fetchSiteConfig, siteConfig, siteConfigError } from '$lib/services/config';
+  import { siteConfig, siteConfigError } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { prefs, prefsError } from '$lib/services/prefs';
   import { signInError, unauthenticated, user } from '$lib/services/user';
 
   $: $announcedPageStatus = $_('welcome_to_sveltia_cms');
-
-  onMount(() => {
-    fetchSiteConfig();
-  });
 </script>
 
 <div role="none" class="container">

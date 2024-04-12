@@ -1,26 +1,20 @@
 <script>
   import { AppShell } from '@sveltia/ui';
+  import { onMount } from 'svelte';
   import { isLoading } from 'svelte-i18n';
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
+  import { fetchSiteConfig, siteURL } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user';
 
-  const { DEV, VITE_SITE_URL } = import.meta.env;
-  /**
-   * The local live site URL. Local development can be done by loading a CMS config file from a
-   * separate dev server. By default, this assumes a local SvelteKit site is running on port 5174
-   * along with Sveltia CMS on port 5173. The site URL can be specified with the `VITE_SITE_URL`
-   * environment variable. For example, run `VITE_SITE_URL=http://localhost:3000 pnpm dev` for
-   * Next.js. You probably need to define the `Access-Control-Allow-Origin: *` HTTP response header
-   * with the dev server’s middleware, or loading the CMS config file may fail due to a CORS error.
-   */
-  const siteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
-
-  initAppLocale();
+  onMount(() => {
+    initAppLocale();
+    fetchSiteConfig();
+  });
 </script>
 
 <svelte:head>
