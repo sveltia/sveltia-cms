@@ -110,7 +110,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
 
-### Better data format
+### Better data output
 
 - For data consistency, Boolean, List (see below) and other fields are always saved as a proper value, such as an empty string or an empty array, rather than nothing, even if it’s optional or empty.
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
@@ -133,7 +133,6 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Relation
   - Field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
 - String
-  - A required String field containing only spaces results in a validation error, as if no characters were entered.
   - Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
 - Boolean, Number and String
@@ -146,6 +145,8 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8].
+- String, Text and Markdown
+  - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - New widgets
   - In addition to [generating UUIDs for entry slugs](#use-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
