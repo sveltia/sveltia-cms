@@ -170,10 +170,9 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Installation | Installing with `npm` is not supported yet. |
-| Backends | Only the GitHub and GitLab backends are available, with GraphQL enabled by default. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
-| Local Git Repository | Supported using a different approach. [See below](#work-with-a-local-git-repository) for details. |
+| Backends | Only the GitHub and GitLab backends are available. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
 | UI Locales | Only English and Japanese are available at this time. No registration is required. The locale is selected automatically and can be changed in the Settings. |
-| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare using the APIs instead of pre-built widgets. No support for deprecated Netlify Large Media. |
+| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare using the APIs instead of pre-built widgets. We will not support deprecated Netlify Large Media. |
 | Editorial Workflow | Not supported yet. |
 | Open Authoring | Not supported yet. |
 | Collections | Nested collections are not supported yet. |
@@ -185,7 +184,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | Code | Not supported yet. |
-| Date | Sveltia CMS has dropped the support for it following Decap CMS 3.0. Use the DateTime widget instead. |
+| Date | Sveltia CMS has dropped the support for the deprecated widget following Decap CMS 3.0. Use the DateTime widget instead. |
 | DateTime | The `date_format` and `time_format` options with Moment.js tokens are not supported yet. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
 | File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not supported yet. |
