@@ -51,15 +51,16 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better productivity
 
-- You can [work with a local Git repository](#work-with-a-local-git-repository) without running a proxy server on your machine, bypassing the 30 MB file size limit[^26].
+- You can [work with a local Git repository](#work-with-a-local-git-repository) without configuration or a proxy server, bypassing the 30 MB file size limit[^26].
+  - The `logo_url` defined in the configuration will be used[^49].
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 - The Entry Editor closes automatically when an entry is saved.
 - You can delete multiple entries and assets at once.
+- JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
 - Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
   - Save an entry: `Ctrl+S` (Windows/Linux) / `Command+S` (macOS)
   - Search for entries and assets: `Ctrl+F` (Windows/Linux) / `Command+F` (macOS)
-- Solves various outstanding Netlify/Decap CMS bugs[^11].
 
 ### Better accessibility
 
@@ -116,7 +117,8 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - An optional field with no default value is saved as `false` by default, rather than nothing[^46].
 - List
   - A required field with no subfield or value is marked as invalid[^43].
-  - An optional field with no subfield or value is saved as an empty array[^44].
+  - An optional field with no subfield or value is saved as an empty array, rather than nothing[^44].
+  - You can enter spaces in a simple text-based list field[^50].
   - You can preview variable types without having to register a preview template[^42].
 - Object
   - Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
@@ -133,9 +135,9 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - File and Image
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
     - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
-    - New assets can be uploaded by dragging & dropping them into the dialog[^20].
+    - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
-    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert free stock photos[^8].
+    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8].
 - New widgets
   - In addition to [generating UUIDs for entry slugs](#use-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
@@ -149,6 +151,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - Navigate between the global media folder and per-collection media folders[^6].
   - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
   - Copy the public URL, file path, text data or image data of a selected asset to clipboard.
+    - The file path starts with `/` as expected[^48].
   - Edit plaintext assets, including SVG images.
   - Replace existing assets.
   - Download one or more selected assets at once.
@@ -158,6 +161,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - View asset details, including size, dimensions, and a list of entries that use the selected asset.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
+- Hidden files (dot files) don’t appear in the Asset Library.[^47]
 
 ## Compatibility
 
@@ -502,7 +506,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^8]: Netlify/Decap CMS [#2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505)
 [^10]: Netlify/Decap CMS [#341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
-[^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5569](https://github.com/decaporg/decap-cms/issues/5569), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
+[^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382), [#6994](https://github.com/decaporg/decap-cms/issues/6994)
 [^12]: Netlify/Decap CMS [#1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: Netlify/Decap CMS [#5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
 [^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#4738](https://github.com/decaporg/decap-cms/issues/4738), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
@@ -538,3 +542,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^44]: Netlify/Decap CMS [#2613](https://github.com/decaporg/decap-cms/issues/2613)
 [^45]: Netlify/Decap CMS [#1424](https://github.com/decaporg/decap-cms/issues/1424)
 [^46]: Netlify/Decap CMS [#4726](https://github.com/decaporg/decap-cms/issues/4726)
+[^47]: Netlify/Decap CMS [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596)
+[^48]: Netlify/Decap CMS [#5569](https://github.com/decaporg/decap-cms/issues/5569)
+[^49]: Netlify/Decap CMS [#5752](https://github.com/decaporg/decap-cms/issues/5752)
+[^50]: Netlify/Decap CMS [#4646](https://github.com/decaporg/decap-cms/issues/4646)
