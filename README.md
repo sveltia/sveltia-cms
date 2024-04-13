@@ -32,7 +32,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better UX
 
-- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code and design. You can expect constant UX improvements across the platform.
+- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management.
@@ -112,7 +112,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better data format
 
-- Boolean, List (see below) and other fields are saved as a proper value rather than nothing, even if it’s optional or empty.
+- For data consistency, Boolean, List (see below) and other fields are always saved as a proper value, such as an empty string or an empty array, rather than nothing, even if it’s optional or empty.
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
