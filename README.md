@@ -171,8 +171,8 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | --- | --- |
 | Installation | Installing with `npm` is not supported yet. |
 | Backends | Only the GitHub and GitLab backends are available. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
-| UI Locales | Only English and Japanese are available at this time. No registration is required. The locale is selected automatically and can be changed in the Settings. |
-| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare using the APIs instead of pre-built widgets. We will not support deprecated Netlify Large Media. |
+| UI Locales | Only English and Japanese are available at this time. |
+| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare soon. We will not support deprecated Netlify Large Media. |
 | Editorial Workflow | Not supported yet. |
 | Open Authoring | Not supported yet. |
 | Collections | Nested collections are not supported yet. |
