@@ -98,7 +98,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better collections
 
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
-- A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear next to the entries.
+- Assets stored in a [per-collection media folder](#use-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 
@@ -133,6 +133,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Relation
   - Field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
 - String
+  - A required String field containing only spaces results in a validation error, as if no characters were entered.
   - Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
 - Boolean, Number and String
@@ -141,7 +142,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - The `summary` is displayed correctly when it refers to a Relation field[^36].
 - File and Image
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
-    - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) will be listed first for easy selection, while all assets can also be displayed in a separate tab[^19].
+    - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8].
