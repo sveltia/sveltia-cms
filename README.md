@@ -111,8 +111,13 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better widgets
 
+- Boolean
+  - A required field with no default value is saved as `false` by default, without raising a validation error[^45].
+  - An optional field with no default value is saved as `false` by default, rather than nothing[^46].
 - List
-  - Supports previewing variable types without having to register a preview template[^42].
+  - A required field with no subfield or value is marked as invalid[^43].
+  - An optional field with no subfield or value is saved as an empty array[^44].
+  - You can preview variable types without having to register a preview template[^42].
 - Object
   - Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
   - Optional Object fields (`required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
@@ -497,7 +502,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^8]: Netlify/Decap CMS [#2579](https://github.com/decaporg/decap-cms/issues/2579)
 [^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505)
 [^10]: Netlify/Decap CMS [#341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
-[^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382), [#1424](https://github.com/decaporg/decap-cms/issues/1424), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5569](https://github.com/decaporg/decap-cms/issues/5569), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
+[^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382), [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5569](https://github.com/decaporg/decap-cms/issues/5569), [#5596](https://github.com/decaporg/decap-cms/issues/5596), [#5752](https://github.com/decaporg/decap-cms/issues/5752), [#6994](https://github.com/decaporg/decap-cms/issues/6994) and more. We’ll be updating this list after reviewing their issue list.
 [^12]: Netlify/Decap CMS [#1975](https://github.com/decaporg/decap-cms/issues/1975)
 [^13]: Netlify/Decap CMS [#5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
 [^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#4738](https://github.com/decaporg/decap-cms/issues/4738), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
@@ -529,3 +534,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^40]: Netlify/Decap CMS [#5630](https://github.com/decaporg/decap-cms/issues/5630)
 [^41]: Netlify/Decap CMS [#7011](https://github.com/decaporg/decap-cms/issues/7011)
 [^42]: Netlify/Decap CMS [#2307](https://github.com/decaporg/decap-cms/issues/2307)
+[^43]: Netlify/Decap CMS [#5381](https://github.com/decaporg/decap-cms/issues/5381)
+[^44]: Netlify/Decap CMS [#2613](https://github.com/decaporg/decap-cms/issues/2613)
+[^45]: Netlify/Decap CMS [#1424](https://github.com/decaporg/decap-cms/issues/1424)
+[^46]: Netlify/Decap CMS [#4726](https://github.com/decaporg/decap-cms/issues/4726)
