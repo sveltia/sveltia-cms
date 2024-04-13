@@ -113,7 +113,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better widgets
 
 - Boolean
-  - A required field with no default value is saved as `false` by default, without raising a validation error[^45].
+  - A required field with no default value is saved as `false` by default, without raising a confusing validation error[^45].
   - An optional field with no default value is saved as `false` by default, rather than nothing[^46].
 - List
   - A required field with no subfield or value is marked as invalid[^43].
@@ -161,7 +161,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - View asset details, including size, dimensions, and a list of entries that use the selected asset.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
-- Hidden files (dot files) don’t appear in the Asset Library.[^47]
+- Hidden files (dot files) don’t appear in the Asset Library[^47].
 
 ## Compatibility
 
@@ -173,8 +173,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | Backends | Only the GitHub and GitLab backends are available. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
 | UI Locales | Only English and Japanese are available at this time. |
 | Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare soon. We will not support deprecated Netlify Large Media. |
-| Editorial Workflow | Not supported yet. |
-| Open Authoring | Not supported yet. |
+| Workflow | Editorial Workflow and Open Authoring are not supported yet. |
 | Collections | Nested collections are not supported yet. |
 | Widgets | Custom widgets are not supported yet. [See below](#widget-limitations) for other limitations. |
 | Customizations | Custom previews, custom formatters, manual initialization and event subscriptions are not supported yet. |
