@@ -54,8 +54,9 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - You can [work with a local Git repository](#work-with-a-local-git-repository) without any configuration or proxy server[^26].
   - This allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
-- Click once (the Save button) instead of twice (Publish > Publish Now) to save an entry.
+- Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
 - The Entry Editor closes automatically when an entry is saved.
+- You can upload multiple assets at once. (See below)
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
@@ -76,7 +77,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^34].
 - We have documented how to [set up a Content Security Policy](#set-up-content-security-policy) for the CMS.
 - The `unsafe-eval` or `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^33].
-- The `same-origin` referer policy is automatically set with a `<meta>` tag.
+- The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 
 ### Better backend support
 
