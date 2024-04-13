@@ -22,7 +22,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 ## Features
 
-We are working hard to create a **much better alternative to Netlify CMS** and Decap CMS. Here’s what makes Sveltia CMS different. Look how serious we are!
+We are working hard to create a **much better alternative to Netlify CMS** and Decap CMS by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Compatible with Netlify/Decap CMS
 
@@ -54,13 +54,14 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - You can [work with a local Git repository](#work-with-a-local-git-repository) without any configuration or proxy server[^26].
   - This allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
-- Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
+- Click once (the Save button) instead of twice (Publish > Publish Now) to save an entry.
 - The Entry Editor closes automatically when an entry is saved.
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
   - Save an entry: `Ctrl+S` (Windows/Linux) / `Command+S` (macOS)
   - Search for entries and assets: `Ctrl+F` (Windows/Linux) / `Command+F` (macOS)
+- Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 
 ### Better accessibility
 
@@ -111,7 +112,8 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better data format
 
-- Leading and trailing spaces in text-type field values are automatically removed when you save the entry[^37].
+- Boolean, List (see below) and other fields are saved as a proper value rather than nothing, even if it’s optional or empty.
+- Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
 
@@ -154,7 +156,8 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
   - Navigate between the global media folder and per-collection media folders[^6].
-  - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
+  - Preview image, audio, video, text and PDF files.
+    - Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
   - Copy the public URL, file path, text data or image data of a selected asset to clipboard.
     - The file path starts with `/` as expected[^48].
   - Edit plaintext assets, including SVG images.
