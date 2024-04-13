@@ -867,6 +867,10 @@ const validateEntry = () => {
       }
 
       if (!['object', 'list', 'hidden', 'compute'].includes(widgetName)) {
+        if (typeof value === 'string') {
+          value = value.trim();
+        }
+
         if (_required && (value === undefined || value === '' || (multiple && !value.length))) {
           valueMissing = true;
         }
