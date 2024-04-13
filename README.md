@@ -44,19 +44,19 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
 - Small footprint: The bundle size is less than 350 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
-- Saving entries and assets is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
+- Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - A list of repository files is cached locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
 - Using caching and lazy loading techniques to improve performance.
 
 ### Better productivity
 
-- You can [work with a local Git repository](#work-with-a-local-git-repository) without configuration or a proxy server, bypassing the 30 MB file size limit[^26].
+- You can [work with a local Git repository](#work-with-a-local-git-repository) without any configuration or proxy server[^26].
+  - This allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 - The Entry Editor closes automatically when an entry is saved.
 - You can delete multiple entries and assets at once.
-- JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
 - Some keyboard shortcuts are available for faster editing. More to come!
   - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
   - Save an entry: `Ctrl+S` (Windows/Linux) / `Command+S` (macOS)
@@ -65,7 +65,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better accessibility
 
 - Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys[^17].
-- Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support empowers users who rely on screen readers such as NVDA or VoiceOver.
+- Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver.
 - Ensures sufficient contrast between the foreground text and background colours.
 - Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
@@ -75,16 +75,17 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^34].
 - We have documented how to [set up a Content Security Policy](#set-up-content-security-policy) for the CMS.
 - The `unsafe-eval` or `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^33].
+- The `same-origin` referer policy is automatically set with a `<meta>` tag.
 
 ### Better backend support
 
-- Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option.
+- Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
 - You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 
 ### Better i18n support
 
-- It’s now easier to switch between locales while editing with just a click on a button instead of a dropdown list.
+- You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
 - Fields in non-default locales are validated as expected[^13].
 - [Integrates DeepL](#use-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
 - You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
@@ -97,32 +98,36 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 - You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
 - A [per-collection media folder](#use-a-custom-media-folder-for-a-collection) will appear next to the entries.
-- String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 
 ### Better content editing
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
-- Leading and trailing spaces in text-type field values are automatically removed when you save the entry[^37].
 - You can revert changes to all fields or a specific field.
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
 
+### Better data format
+
+- Leading and trailing spaces in text-type field values are automatically removed when you save the entry[^37].
+- JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
+- String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
+
 ### Better widgets
 
 - Boolean
-  - A required field with no default value is saved as `false` by default, without raising a confusing validation error[^45].
-  - An optional field with no default value is saved as `false` by default, rather than nothing[^46].
+  - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error[^45].
+  - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing[^46].
 - List
-  - A required field with no subfield or value is marked as invalid[^43].
-  - An optional field with no subfield or value is saved as an empty array, rather than nothing[^44].
-  - You can enter spaces in a simple text-based list field[^50].
+  - A required List field with no subfield or value is marked as invalid[^43].
+  - An optional List field with no subfield or value is saved as an empty array, rather than nothing[^44].
+  - You can enter spaces in a simple text-based List field[^50].
   - You can preview variable types without having to register a preview template[^42].
 - Object
   - Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
-  - Optional Object fields (`required: false`) can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
+  - An optional Object field can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - Relation
   - Field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
 - String
@@ -158,7 +163,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - Delete one or more selected assets at once.
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
   - Sort or filter assets by name or file type.
-  - View asset details, including size, dimensions, and a list of entries that use the selected asset.
+  - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
 - Hidden files (dot files) don’t appear in the Asset Library[^47].
@@ -519,7 +524,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^23]: Netlify/Decap CMS [#2](https://github.com/decaporg/decap-cms/issues/2)
 [^24]: Netlify/Decap CMS [#6831](https://github.com/decaporg/decap-cms/issues/6831)
 [^25]: Netlify/Decap CMS [#526](https://github.com/decaporg/decap-cms/issues/526), [#6987](https://github.com/decaporg/decap-cms/issues/6987)
-[^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285), [#6731](https://github.com/decaporg/decap-cms/issues/6731)
+[^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285)
 [^27]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/5617)
 [^28]: Netlify/Decap CMS [#6836](https://github.com/decaporg/decap-cms/pull/6836)
 [^29]: Netlify/Decap CMS [#4783](https://github.com/decaporg/decap-cms/issues/4783)
@@ -544,3 +549,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^48]: Netlify/Decap CMS [#5569](https://github.com/decaporg/decap-cms/issues/5569)
 [^49]: Netlify/Decap CMS [#5752](https://github.com/decaporg/decap-cms/issues/5752)
 [^50]: Netlify/Decap CMS [#4646](https://github.com/decaporg/decap-cms/issues/4646)
+[^51]: Netlify/Decap CMS [#6731](https://github.com/decaporg/decap-cms/issues/6731)
