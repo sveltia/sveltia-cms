@@ -1,16 +1,12 @@
 import { isObject } from '$lib/services/utils/misc';
 
 /**
- * Remove spaces from a GraphQL query while adding commas where needed.
+ * Remove sequential whitespaces and line breaks from a GraphQL query. But don’t remove all the
+ * spaces as file names could contain spaces.
  * @param {string} query - Query string.
  * @returns {string} Minified query.
  */
-export const minifyGraphQLQuery = (query) =>
-  query
-    .replace(/\s+/g, ' ')
-    .replace(/(\w)\s(\w)/g, '$1,$2')
-    .replace(/\s/g, '')
-    .replace(/\.\.\.on,/g, '...on ');
+export const minifyGraphQLQuery = (query) => query.replace(/\s+/g, ' ');
 
 /**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other
