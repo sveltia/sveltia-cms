@@ -59,9 +59,11 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - You can upload multiple assets at once. (See below)
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
-  - Create a new entry: `Ctrl+E` (Windows/Linux) / `Command+E` (macOS)
-  - Save an entry: `Ctrl+S` (Windows/Linux) / `Command+S` (macOS)
-  - Search for entries and assets: `Ctrl+F` (Windows/Linux) / `Command+F` (macOS)
+  - View the Content Library: `Alt+1`
+  - View the Asset Library: `Alt+2`
+  - Create a new entry: `Ctrl+E` (Windows/Linux) or `Command+E` (macOS)
+  - Save an entry: `Ctrl+S` (Windows/Linux) or `Command+S` (macOS)
+  - Search for entries and assets: `Ctrl+F` (Windows/Linux) or `Command+F` (macOS)
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 
 ### Better accessibility
