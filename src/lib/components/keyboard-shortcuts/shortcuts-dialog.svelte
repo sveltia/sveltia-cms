@@ -28,6 +28,14 @@
   <div role="none" class="wrapper">
     <Table aria-label={$_('help.keyboard_shortcuts')}>
       <TableRow>
+        <TableCell class="feature">{$_('keyboard_shortcuts.view_content_library')}</TableCell>
+        <TableCell class="key"><kbd>Alt</kbd> <kbd>1</kbd></TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell class="feature">{$_('keyboard_shortcuts.view_asset_library')}</TableCell>
+        <TableCell class="key"><kbd>Alt</kbd> <kbd>2</kbd></TableCell>
+      </TableRow>
+      <TableRow>
         <TableCell class="feature">{$_('keyboard_shortcuts.search')}</TableCell>
         <TableCell class="key"><kbd>{accel}</kbd> <kbd>F</kbd></TableCell>
       </TableRow>

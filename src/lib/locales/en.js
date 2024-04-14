@@ -505,6 +505,8 @@ export const strings = {
 
   // Keyboard shortcuts
   keyboard_shortcuts: {
+    view_content_library: 'View Content Library',
+    view_asset_library: 'View Asset Library',
     search: 'Search for entries and assets',
     create_entry: 'Create a new entry',
     save_entry: 'Save an entry',

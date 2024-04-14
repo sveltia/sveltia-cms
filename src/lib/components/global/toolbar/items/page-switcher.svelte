@@ -35,12 +35,13 @@
 
 <div role="none" class="wrapper">
   <SelectButtonGroup aria-label={$_('switch_page')} aria-controls="page-container">
-    {#each pages as { key, label, icon, link } (key)}
+    {#each pages as { key, label, icon, link }, index (key)}
       <SelectButton
         variant="ghost"
         iconic
         selected={$selectedPageName === key}
         aria-label={label}
+        keyShortcuts="Alt+{index + 1}"
         on:select={() => {
           goto(link);
         }}

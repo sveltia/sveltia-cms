@@ -508,6 +508,8 @@ export const strings = {
 
   // Keyboard shortcuts
   keyboard_shortcuts: {
+    view_content_library: 'コンテンツライブラリを表示',
+    view_asset_library: 'アセットライブラリを表示',
     search: 'エントリーとアセットを検索',
     create_entry: '新しいエントリーを作成',
     save_entry: 'エントリーを保存',
