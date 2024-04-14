@@ -7,7 +7,7 @@ import { fetchAndParseFiles, repositoryProps } from '$lib/services/backends/shar
 import { siteConfig } from '$lib/services/config';
 import { user } from '$lib/services/user';
 import { getBase64 } from '$lib/services/utils/files';
-import { minifyGraphQLQuery, sendRequest } from '$lib/services/utils/networking';
+import { sendRequest } from '$lib/services/utils/networking';
 import { stripSlashes } from '$lib/services/utils/strings';
 
 const backendName = 'github';
@@ -65,7 +65,11 @@ const fetchGraphQL = async (query, variables = {}) => {
   const { data } = /** @type {{ data: object }} */ (
     await fetchAPI('/graphql', {
       method: 'POST',
-      body: { query: minifyGraphQLQuery(query), variables },
+      body: {
+        // Remove sequential whitespaces and line breaks
+        query: query.replace(/\s+/g, ' '),
+        variables,
+      },
     })
   );
 
