@@ -5,7 +5,7 @@
   import ShortcutsDialog from '$lib/components/keyboard-shortcuts/shortcuts-dialog.svelte';
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
   import { version } from '$lib/services/app';
-  import { openProductionSite } from '$lib/services/app/navigation';
+  import { goto, openProductionSite } from '$lib/services/app/navigation';
   import { backend, backendName } from '$lib/services/backends';
   import { prefs } from '$lib/services/prefs';
   import { user } from '$lib/services/user';
@@ -71,6 +71,14 @@
           showPrefsDialog = true;
         }}
       />
+      {#if $prefs.devModeEnabled}
+        <MenuItem
+          label={$_('site_config')}
+          on:click={() => {
+            goto('/config');
+          }}
+        />
+      {/if}
       <Divider />
       <!-- Assume the user has a physical keyboard if the pointer is mouse (on desktop) -->
       {#if window.matchMedia('(pointer: fine)').matches}
