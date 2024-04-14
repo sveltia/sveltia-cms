@@ -49,8 +49,9 @@ export const fetchAndParseFiles = async ({
   // This has to be done after the branch is determined
   const lastHash = await fetchLastCommitHash();
 
-  if (cachedHash && cachedHash === lastHash) {
-    // Skip fetching file list
+  if (cachedHash && cachedHash === lastHash && cachedFileEntries.length) {
+    // Skip fetching the file list if the cached hash matches the latest. But don’t skip if the file
+    // cache is empty; something probably went wrong the last time the files were fetched.
     fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
   } else {
     // Get a complete file list first, and filter what’s managed in CMS
