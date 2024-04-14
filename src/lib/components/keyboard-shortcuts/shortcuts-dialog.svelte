@@ -8,6 +8,14 @@
    */
   export let open = false;
 
+  const shortcuts = [
+    { feature: 'view_content_library', keys: 'Alt+1' },
+    { feature: 'view_asset_library', keys: 'Alt+2' },
+    { feature: 'search', keys: 'Accel+F' },
+    { feature: 'create_entry', keys: 'Accel+E' },
+    { feature: 'save_entry', keys: 'Accel+S' },
+  ];
+
   let accel = 'Ctrl';
 
   onMount(() => {
@@ -27,26 +35,16 @@
 >
   <div role="none" class="wrapper">
     <Table aria-label={$_('help.keyboard_shortcuts')}>
-      <TableRow>
-        <TableCell class="feature">{$_('keyboard_shortcuts.view_content_library')}</TableCell>
-        <TableCell class="key"><kbd>Alt</kbd> <kbd>1</kbd></TableCell>
-      </TableRow>
-      <TableRow>
-        <TableCell class="feature">{$_('keyboard_shortcuts.view_asset_library')}</TableCell>
-        <TableCell class="key"><kbd>Alt</kbd> <kbd>2</kbd></TableCell>
-      </TableRow>
-      <TableRow>
-        <TableCell class="feature">{$_('keyboard_shortcuts.search')}</TableCell>
-        <TableCell class="key"><kbd>{accel}</kbd> <kbd>F</kbd></TableCell>
-      </TableRow>
-      <TableRow>
-        <TableCell class="feature">{$_('keyboard_shortcuts.create_entry')}</TableCell>
-        <TableCell class="key"><kbd>{accel}</kbd> <kbd>E</kbd></TableCell>
-      </TableRow>
-      <TableRow>
-        <TableCell class="feature">{$_('keyboard_shortcuts.save_entry')}</TableCell>
-        <TableCell class="key"><kbd>{accel}</kbd> <kbd>S</kbd></TableCell>
-      </TableRow>
+      {#each shortcuts as { feature, keys } (keys)}
+        <TableRow>
+          <TableCell class="feature">{$_(`keyboard_shortcuts.${feature}`)}</TableCell>
+          <TableCell class="keys">
+            {#each keys.split('+') as key}
+              <kbd>{key.replace('Accel', accel)}</kbd>
+            {/each}
+          </TableCell>
+        </TableRow>
+      {/each}
     </Table>
   </div>
 </Dialog>
@@ -70,7 +68,7 @@
         flex: auto;
       }
 
-      :global(.key) {
+      :global(.keys) {
         display: flex;
         gap: 8px;
       }
