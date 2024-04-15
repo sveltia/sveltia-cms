@@ -249,11 +249,9 @@ export const getDefaultValues = (fields, dynamicValues = {}) => {
           picker_utc: pickerUTC = false,
         } = /** @type {DateTimeField} */ (fieldConfig);
 
-        const completeFormat = !(timeFormat === false || dateFormat === false);
-
         // Default to current date/time
         const { year, month, day, hour, minute } = getDateTimeParts({
-          timeZone: pickerUTC || completeFormat ? 'UTC' : undefined,
+          timeZone: pickerUTC ? 'UTC' : undefined,
         });
 
         const dateStr = `${year}-${month}-${day}`;
