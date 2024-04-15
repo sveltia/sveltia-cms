@@ -307,45 +307,6 @@
       background-color: var(--sui-error-background-color);
       font-size: var(--sui-font-size-x-small);
     }
-
-    & + div {
-      :global(input[type='color']),
-      :global(input[type='date']),
-      :global(input[type='datetime-local']),
-      :global(input[type='time']),
-      :global(input[type='number']) {
-        outline: 0;
-        border: 0;
-        color: inherit;
-      }
-
-      :global(input[type='text']),
-      :global(textarea) {
-        width: 100%;
-      }
-
-      :global(input[type='color']),
-      :global(input[type='number']) {
-        background-color: var(--sui-textbox-background-color);
-        border-width: 1px;
-        border-color: var(--sui-primary-border-color);
-        border-radius: var(--sui-control-medium-border-radius);
-      }
-
-      :global(input[type='file']),
-      :global(input[type='checkbox']),
-      & > :global(div) {
-        color: inherit;
-      }
-
-      :global(input[type='date']),
-      :global(input[type='datetime-local']),
-      :global(input[type='time']) {
-        width: auto;
-        text-transform: uppercase;
-        background-color: transparent;
-      }
-    }
   }
 
   .validation {
@@ -364,11 +325,50 @@
     }
   }
 
-  .widget-wrapper.has-extra-labels {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 4px;
+  .widget-wrapper {
+    &.has-extra-labels {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 4px;
+    }
+
+    :global(input[type='color']),
+    :global(input[type='date']),
+    :global(input[type='datetime-local']),
+    :global(input[type='time']),
+    :global(input[type='number']) {
+      outline: 0;
+      border: 0;
+      color: inherit;
+    }
+
+    :global(input[type='text']),
+    :global(textarea) {
+      width: 100%;
+    }
+
+    :global(input[type='color']),
+    :global(input[type='number']) {
+      background-color: var(--sui-textbox-background-color);
+      border-width: 1px;
+      border-color: var(--sui-primary-border-color);
+      border-radius: var(--sui-control-medium-border-radius);
+    }
+
+    :global(input[type='file']),
+    :global(input[type='checkbox']),
+    & > :global(div) {
+      color: inherit;
+    }
+
+    :global(input[type='date']),
+    :global(input[type='datetime-local']),
+    :global(input[type='time']) {
+      width: auto;
+      text-transform: uppercase;
+      background-color: transparent;
+    }
   }
 
   .before-input,
