@@ -5,7 +5,7 @@
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/prefs';
 
-  $: ({ backend: { automatic_deployments: autoDeployEnabled = true } = {} } =
+  $: ({ backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: ({ deployHookURL } = $prefs);
   $: ({ triggerDeployment } = $backend ?? /** @type {BackendService} */ ({}));

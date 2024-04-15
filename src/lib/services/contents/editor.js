@@ -1332,7 +1332,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   const isLocal = get(backendName) === 'local';
 
-  const { backend: { automatic_deployments: autoDeployEnabled = true } = {} } =
+  const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 
   contentUpdatesToast.set({

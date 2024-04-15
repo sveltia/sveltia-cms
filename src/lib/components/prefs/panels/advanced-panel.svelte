@@ -5,7 +5,7 @@
   import { prefs } from '$lib/services/prefs';
   import { siteConfig } from '$lib/services/config';
 
-  $: ({ backend: { automatic_deployments: autoDeployEnabled = true } = {} } =
+  $: ({ backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
 
   const dispatch = createEventDispatcher();

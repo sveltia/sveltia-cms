@@ -55,7 +55,7 @@
 
   $: ({
     editor: { preview: showPreviewPane = true } = {},
-    backend: { automatic_deployments: autoDeployEnabled = true } = {},
+    backend: { automatic_deployments: autoDeployEnabled = undefined } = {},
   } = $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: showSaveOptions = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
