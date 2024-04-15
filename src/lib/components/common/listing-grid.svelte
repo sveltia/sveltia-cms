@@ -26,8 +26,6 @@
 
 <style lang="scss">
   .grid-view {
-    display: contents;
-
     :global(.row-group-caption) {
       display: block;
       grid-column: 1 / -1; // span the entire row
@@ -99,8 +97,6 @@
   }
 
   .list-view {
-    display: contents;
-
     :global([role='grid']) {
       :global(.row-group) {
         :global(.row-group-caption ~ .grid-row:first-of-type) {

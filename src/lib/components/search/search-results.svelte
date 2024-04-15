@@ -53,6 +53,8 @@
 
 <style lang="scss">
   .wrapper {
+    display: flex;
+    flex-direction: column;
     width: 100%;
   }
 
