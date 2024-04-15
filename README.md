@@ -52,7 +52,8 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better productivity
 
 - You can [work with a local Git repository](#work-with-a-local-git-repository) without any configuration or proxy server[^26].
-  - This allows you to bypass the 30 MB file size limit[^51].
+  - The performance is great because files are loaded natively through the browser rather than using an ad hoc API.
+  - This also allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
 - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
 - The Entry Editor closes automatically when an entry is saved.
@@ -61,9 +62,9 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Some keyboard shortcuts are available for faster editing. More to come!
   - View the Content Library: `Alt+1`
   - View the Asset Library: `Alt+2`
+  - Search for entries and assets: `Ctrl+F` (Windows/Linux) or `Command+F` (macOS)
   - Create a new entry: `Ctrl+E` (Windows/Linux) or `Command+E` (macOS)
   - Save an entry: `Ctrl+S` (Windows/Linux) or `Command+S` (macOS)
-  - Search for entries and assets: `Ctrl+F` (Windows/Linux) or `Command+F` (macOS)
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31].
 
 ### Better accessibility
@@ -91,6 +92,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 - You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
 - Fields in non-default locales are validated as expected[^13].
+- Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
 - [Integrates DeepL](#use-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
 - You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
 - You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
