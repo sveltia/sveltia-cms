@@ -62,6 +62,7 @@
 
 <style lang="scss">
   .wrapper {
+    flex: none;
     display: flex;
     align-items: center;
     justify-content: center;
