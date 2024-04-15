@@ -51,7 +51,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better productivity
 
-- You can [work with a local Git repository](#work-with-a-local-git-repository) without any configuration or proxy server[^26].
+- You can [work with a local Git repository](#working-with-a-local-git-repository) without any configuration or proxy server[^26].
   - In addition to a streamlined workflow, it offers great performance because files are loaded natively through the browser rather than using an ad hoc API.
   - It also allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
@@ -78,7 +78,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better security
 
 - Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^34].
-- We have documented how to [set up a Content Security Policy](#set-up-content-security-policy) for the CMS.
+- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS.
 - The `unsafe-eval` or `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^33].
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 
@@ -86,24 +86,24 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
-- You can [disable automatic deployments](#disable-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
+- You can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 
 ### Better i18n support
 
 - You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
 - Fields in non-default locales are validated as expected[^13].
 - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
-- [Integrates DeepL](#use-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
-- You can [disable non-default locale content](#disable-non-default-locale-content)[^15].
-- You can [use a random UUID for an entry slug](#use-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
+- [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
+- You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
+- You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
 - Resolves the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
 
 ### Better collections
 
-- You can choose a [custom icon for each collection](#use-a-custom-icon-for-a-collection)[^3].
-- Assets stored in a [per-collection media folder](#use-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
+- You can choose a [custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
+- Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 
@@ -146,14 +146,14 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - The `summary` is displayed correctly when it refers to a Relation field[^36].
 - File and Image
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
-    - [Collection-specific assets](#use-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
+    - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8].
 - String, Text and Markdown
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - New widgets
-  - In addition to [generating UUIDs for entry slugs](#use-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
+  - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
     - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
     - `read_only`: Whether to make the field read-only. Default: `true`.
@@ -164,7 +164,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
   - Navigate between the global media folder and per-collection media folders[^6].
   - Preview image, audio, video, text and PDF files.
-    - Check your site’s [CSP](#set-up-content-security-policy) if the preview doesn’t work.
+    - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - Copy the public URL, file path, text data or image data of a selected asset to clipboard.
     - The file path starts with `/` as expected[^48].
   - Edit plaintext assets, including SVG images.
@@ -266,15 +266,19 @@ From Decap CMS:
 
 That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub or GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
-That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#work-with-a-local-git-repository) for how.
+That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#working-with-a-local-git-repository) for how.
+
+### Updates
+
+Updating Sveltia CMS is transparent, unless you include a specific version in the `<script>` source URL. Whenever you (re)load the CMS, the latest version will be served via [UNPKG](https://unpkg.com/). The CMS also periodically checks for updates and notifies you when a new version is available. After the product reaches GA, you could use a semantic version range (`^1.0.0`) like Netlify/Decap CMS.
 
 ## Tips & tricks
 
-### Move your site from Netlify to another hosting service
+### Moving your site from Netlify to another hosting service
 
 You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
 
-### Work with a local Git repository
+### Working with a local Git repository
 
 You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](https://decapcms.org/docs/working-with-a-local-git-repository/), but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
@@ -291,7 +295,7 @@ You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](htt
 
 Remember that the local repository support doesn’t do any Git operation. You have to fetch, pull, commit and push all changes manually with a Git client. Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates (this will be unnecessary once browsers support the proposed `FileSystemObserver` API).
 
-### Use a custom icon for a collection
+### Using a custom icon for a collection
 
 You can have an icon for each collection for easy identification in the collection list.
 
@@ -310,7 +314,7 @@ You can have an icon for each collection for easy identification in the collecti
      folder: data/tags/
 ```
 
-### Use a custom media folder for a collection
+### Using a custom media folder for a collection
 
 This is actually not new in Sveltia CMS but rather an _undocumented_ feature in Netlify/Decap CMS[^4]. You can specify media and public folders for each collection that override the [global media folder](https://decapcms.org/docs/configuration-options/#media-and-public-folders). Well, it’s [documented](https://decapcms.org/docs/collection-folder/#media-and-public-folder), but that’s probably not what you want.
 
@@ -331,7 +335,7 @@ Rather, if you’d like to add all the media files for a collection in one singl
 
 In Sveltia CMS, those per-collection media folders are displayed prominently for easier asset management.
 
-### Use DeepL to translate entry fields
+### Using DeepL to translate entry fields
 
 Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the content editor. To enable the high-quality, quick translation feature:
 
@@ -342,7 +346,7 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 1. Open any entry, and you can now translate all fields or individual fields by selecting Translate from the three-dot menu.
 1. If you have upgraded to DeepL API Pro, provide your new Authentication Key in the same way.
 
-### Disable non-default locale content
+### Disabling non-default locale content
 
 You can now disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
 
@@ -356,7 +360,7 @@ With the following configuration, you can disable the French and/or German trans
 +  save_all_locales: false
 ```
 
-### Use a random ID for an entry slug
+### Using a random ID for an entry slug
 
 By default, the [slug for a new entry file](https://decapcms.org/docs/configuration-options/#slug) will be generated based on the entry’s `title` field. Or, you can specify the collection’s `slug` option to use the file creation date or other fields. While the behaviour is generally acceptable and SEO-friendly, it’s not useful if the title might change later or if it contains non-Latin characters like Chinese. In Sveltia CMS, you can easily generate a random [UUID](https://developer.mozilla.org/en-US/docs/Glossary/UUID) for a slug without a custom widget!
 
@@ -370,7 +374,7 @@ It’s simple — just specify `{{uuid}}` (full UUID v4), `{{uuid_short}}` (last
 +    slug: '{{uuid_short}}'
 ```
 
-### Disable automatic deployments
+### Disabling automatic deployments
 
 You may already have a CI/CD tool set up on your Git repository to automatically deploy changes to production. Occasionally, you make a lot of changes to your content to quickly reach the CI/CD provider’s (free) build limits, or you just don’t want to see builds triggered for every single small change.
 
@@ -409,7 +413,7 @@ If the `automatic_deployments` property is defined, you can manually trigger a d
   1. Enter the deploy hook URL for your provider, e.g. [Netlify](https://docs.netlify.com/configure-builds/build-hooks/) or [Cloudflare Pages](https://developers.cloudflare.com/pages/platform/deploy-hooks/).
   1. Configure the CSP if necessary. See below.
 
-### Set up Content Security Policy
+### Setting up Content Security Policy
 
 If your site adopts Content Security Policy (CSP), use the following policy for Sveltia CMS, or some features may not work.
 
@@ -459,7 +463,7 @@ And combine the following policies depending on your Git backend and enabled int
   connect-src https://api.deepl.com;
   ```
 
-If you choose to [disable automatic deployments](#disable-automatic-deployments) and have configured a webhook URL, you may need to add the origin to the `connect-src` directive. For example,
+If you choose to [disable automatic deployments](#disabling-automatic-deployments) and have configured a webhook URL, you may need to add the origin to the `connect-src` directive. For example,
 
 - Netlify:
   ```csp
@@ -476,7 +480,7 @@ If you have image field(s) and expect that images will be inserted as URLs, you 
 img-src 'self' blob: data: https://*;
 ```
 
-### Self-host the CMS
+### Self-hosting the CMS
 
 Sveltia CMS is open source for sure! You can host it on your server rather than loading it from UNPKG, though it’s not recommended due to missing bug fixes. Simply copy the latest [`sveltia-cms.js`](https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js) file from the CDN, or build it yourself:
 
