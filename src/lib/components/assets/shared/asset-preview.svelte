@@ -102,28 +102,36 @@
   }
 
   /**
-   * Update the {@link loaded} state.
+   * Update the {@link loaded} state when the media is loaded.
    */
-  const checkLoaded = () => {
+  const checkLoaded = async () => {
     if (!mediaElement) {
       return;
     }
 
     if (
       isImage
-        ? /** @type {HTMLImageElement} */ (mediaElement).complete
-        : /** @type {HTMLMediaElement} */ (mediaElement).readyState > 0
+        ? !(/** @type {HTMLImageElement} */ (mediaElement).complete)
+        : !(/** @type {HTMLMediaElement} */ (mediaElement).readyState)
     ) {
-      loaded = true;
-    } else {
-      mediaElement.addEventListener(
-        isImage ? 'load' : 'loadedmetadata',
-        () => {
-          loaded = true;
-        },
-        { once: true },
-      );
+      // Not loaded yet; wait until it’s ready
+      await new Promise((resolve) => {
+        mediaElement.addEventListener(
+          isImage ? 'load' : 'loadedmetadata',
+          () => {
+            resolve(undefined);
+          },
+          { once: true },
+        );
+      });
     }
+
+    // Enable a dissolve transition
+    if (dissolve) {
+      await waitForVisibility(mediaElement);
+    }
+
+    loaded = true;
   };
 
   $: {
