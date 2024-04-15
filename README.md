@@ -52,7 +52,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better productivity
 
 - You can [work with a local Git repository](#work-with-a-local-git-repository) without any configuration or proxy server[^26].
-  - The performance is great because files are loaded natively through the browser rather than using an ad hoc API.
+  - In addition to a streamlined workflow, it also offers great performance because files are loaded natively through the browser rather than using an ad hoc API.
   - This also allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
 - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
