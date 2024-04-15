@@ -97,7 +97,6 @@ export const strings = {
   switch_page: 'Switch Page',
   search_placeholder: 'Search for entries and assets…',
   create_entry_or_assets: 'Create Entry or Assets',
-  asset: 'Asset',
   publish_changes: 'Publish Changes',
   publishing_changes: 'Publishing Changes…',
   publishing_changes_failed: 'Changes could not be published. Please try again later.',
@@ -121,14 +120,14 @@ export const strings = {
     'You’re now viewing the “{collection}” collection, which has {count} entries.',
   viewing_x_collection_one_entry:
     'You’re now viewing the “{collection}” collection, which has one entry.',
-  viewing_x_collection_no_entry:
-    'You’re now viewing the “{collection}” collection, which has no entry yet.',
+  viewing_x_collection_no_entries:
+    'You’re now viewing the “{collection}” collection, which has no entries yet.',
   viewing_x_asset_folder_many_assets:
     'You’re now viewing the “{folder}” asset folder, which has {count} assets.',
   viewing_x_asset_folder_one_asset:
     'You’re now viewing the “{folder}” asset folder, which has one asset.',
   viewing_x_asset_folder_no_assets:
-    'You’re now viewing the “{folder}” asset folder, which has no asset yet.',
+    'You’re now viewing the “{folder}” asset folder, which has no assets yet.',
   collection_not_found: 'Collection not found',
   file_not_found: 'File not found.',
   switch_view: 'Switch View',
@@ -169,10 +168,10 @@ export const strings = {
     'You’re now viewing search results for “{terms}”. We’ve found {entries} and {assets}.',
   many_entries: '{count} entries',
   one_entry: 'one entry',
-  no_entry: 'no entry',
+  no_entries: 'no entries',
   many_assets: '{count} assets',
   one_asset: 'one asset',
-  no_asset: 'no asset',
+  no_assets: 'no assets',
   no_files_found: 'No files found.',
   no_entries_found: 'No entries found.',
   upload_assets: 'Upload New Assets',
@@ -333,7 +332,7 @@ export const strings = {
   // Media details
   viewing_x_asset_details: 'You’re viewing the details of the “{name}” asset.',
   asset_editor: 'Asset Editor',
-  no_preview_available: 'No Preview Available.',
+  preview_unavailable: 'Preview Unavailable.',
   public_url: 'Public URL',
   public_urls: 'Public URLs',
   file_path: 'File Path',

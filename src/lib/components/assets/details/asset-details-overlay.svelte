@@ -63,7 +63,7 @@
           {/await}
         {:else}
           <EmptyState>
-            <span role="alert">{$_('no_preview_available')}</span>
+            <span role="alert">{$_('preview_unavailable')}</span>
           </EmptyState>
         {/if}
       </div>

@@ -59,7 +59,7 @@
           ? 'viewing_x_collection_many_entries'
           : count === 1
             ? 'viewing_x_collection_one_entry'
-            : 'viewing_x_collection_no_entry',
+            : 'viewing_x_collection_no_entries',
         { values: { collection: collectionLabel, count } },
       );
 

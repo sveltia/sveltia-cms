@@ -97,7 +97,6 @@ export const strings = {
   switch_page: 'ページを切り替え',
   search_placeholder: 'エントリーとアセットを検索…',
   create_entry_or_assets: 'エントリーまたはアセットを作成',
-  asset: 'アセット',
   publish_changes: '変更を公開',
   publishing_changes: '変更を公開しています…',
   publishing_changes_failed: '変更を公開できませんでした。後で再度お試しください。',
@@ -121,7 +120,7 @@ export const strings = {
     '「{collection}」コレクションを表示しています。ここには {count} 個のエントリーがあります。',
   viewing_x_collection_one_entry:
     '「{collection}」コレクションを表示しています。ここにはひとつのエントリーがあります。',
-  viewing_x_collection_no_entry:
+  viewing_x_collection_no_entries:
     '「{collection}」コレクションを表示しています。ここにはまだエントリーがありません。',
   viewing_x_asset_folder_many_assets:
     '「{folder}」アセットフォルダーを表示しています。ここには {count} 個のアセットがあります。',
@@ -169,10 +168,10 @@ export const strings = {
     '「{terms}」の検索結果を表示しています。{entries} と {assets} が見つかりました。',
   many_entries: '{count} 個のエントリー',
   one_entry: '1 個のエントリー',
-  no_entry: '0 個のエントリー',
+  no_entries: '0 個のエントリー',
   many_assets: '{count} 個のアセット',
   one_asset: '1 個のアセット',
-  no_asset: '0 個のアセット',
+  no_assets: '0 個のアセット',
   no_files_found: 'ファイルは見つかりませんでした。',
   no_entries_found: 'エントリーは見つかりませんでした。',
   upload_assets: '新しいアセットをアップロード',
@@ -336,7 +335,7 @@ export const strings = {
   // Media details
   viewing_x_asset_details: '「{name}」アセットの詳細を表示しています。',
   asset_editor: 'アセットエディター',
-  no_preview_available: 'プレビューは表示できません',
+  preview_unavailable: 'プレビューは表示できません',
   public_url: '公開 URL',
   public_urls: '公開 URL',
   file_path: 'ファイルパス',

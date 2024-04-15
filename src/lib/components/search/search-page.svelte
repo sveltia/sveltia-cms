@@ -30,14 +30,14 @@
             ? $_('many_entries', { values: { count: entryCount } })
             : entryCount === 1
               ? $_('one_entry')
-              : $_('no_entry'),
+              : $_('no_entries'),
         assets:
           // eslint-disable-next-line no-nested-ternary
           assetCount > 1
             ? $_('many_assets', { values: { count: assetCount } })
             : assetCount === 1
               ? $_('one_asset')
-              : $_('no_asset'),
+              : $_('no_assets'),
       },
     });
   };
