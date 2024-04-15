@@ -1,5 +1,5 @@
 <script>
-  import { Alert, Group, Toast } from '@sveltia/ui';
+  import { Alert, Group, Toast, sleep } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
@@ -29,7 +29,7 @@
    * Navigate to the asset list or asset details page given the URL hash.
    * @todo Show Not Found page.
    */
-  const navigate = () => {
+  const navigate = async () => {
     ({ path } = parseLocation());
 
     const [match, folderPath, fileName] =
@@ -54,6 +54,9 @@
     if (!fileName) {
       const count = $listedAssets.length;
 
+      // Wait for `selectedAssetFolderLabel` to be updated
+      await sleep(100);
+
       $overlaidAsset = undefined;
       $announcedPageStatus = $_(
         // eslint-disable-next-line no-nested-ternary
@@ -61,7 +64,7 @@
           ? 'viewing_x_asset_folder_many_assets'
           : count === 1
             ? 'viewing_x_asset_folder_one_asset'
-            : 'viewing_x_asset_folder_no_asset',
+            : 'viewing_x_asset_folder_no_assets',
         { values: { folder: selectedAssetFolderLabel, count } },
       );
 

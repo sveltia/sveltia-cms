@@ -127,7 +127,7 @@ export const strings = {
     'You’re now viewing the “{folder}” asset folder, which has {count} assets.',
   viewing_x_asset_folder_one_asset:
     'You’re now viewing the “{folder}” asset folder, which has one asset.',
-  viewing_x_asset_folder_no_asset:
+  viewing_x_asset_folder_no_assets:
     'You’re now viewing the “{folder}” asset folder, which has no asset yet.',
   collection_not_found: 'Collection not found',
   file_not_found: 'File not found.',
