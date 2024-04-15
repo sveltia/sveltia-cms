@@ -106,6 +106,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
+- Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
 
 ### Better content editing
 
@@ -564,3 +565,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^49]: Netlify/Decap CMS [#5752](https://github.com/decaporg/decap-cms/issues/5752)
 [^50]: Netlify/Decap CMS [#4646](https://github.com/decaporg/decap-cms/issues/4646)
 [^51]: Netlify/Decap CMS [#6731](https://github.com/decaporg/decap-cms/issues/6731)
+[^52]: Netlify/Decap CMS [#7147](https://github.com/decaporg/decap-cms/issues/7147)
