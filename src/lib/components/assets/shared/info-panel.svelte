@@ -1,5 +1,6 @@
 <script>
   import { Button } from '@sveltia/ui';
+  import mime from 'mime';
   import { _, locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -66,7 +67,11 @@
   {/if}
   <section>
     <h4>{$_('kind')}</h4>
-    <p>{$_(`file_type_labels.${extension}`, { default: extension.toUpperCase() })}</p>
+    <p>
+      {$_(`file_type_labels.${extension}`, {
+        default: mime.getType(path) ?? extension.toUpperCase(),
+      })}
+    </p>
   </section>
   <section>
     <h4>{$_('size')}</h4>
