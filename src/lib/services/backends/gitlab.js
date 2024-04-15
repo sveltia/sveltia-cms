@@ -68,8 +68,9 @@ const fetchGraphQL = async (query, variables = {}) => {
     await fetchAPI('/graphql', {
       method: 'POST',
       body: {
-        // Remove sequential whitespaces and line breaks
-        query: query.replace(/\s+/g, ' '),
+        // Remove line breaks and subsequent space characters; we must be careful as file paths may
+        // contain spaces
+        query: query.replace(/\n\s*/g, ' '),
         variables,
       },
     })
@@ -186,13 +187,15 @@ const fetchDefaultBranchName = async () => {
   const { owner, repo } = repository;
 
   const result = /** @type {{ project: { repository: { rootRef: string } } }} */ (
-    await fetchGraphQL(`query {
-      project(fullPath: "${owner}/${repo}") {
-        repository {
-          rootRef
+    await fetchGraphQL(`
+      query {
+        project(fullPath: "${owner}/${repo}") {
+          repository {
+            rootRef
+          }
         }
       }
-    }`)
+    `)
   );
 
   if (!result.project) {
@@ -223,17 +226,19 @@ const fetchLastCommitHash = async () => {
 
   const result =
     /** @type {{ project: { repository: { tree: { lastCommit: { sha: string }} } } }} */ (
-      await fetchGraphQL(`query {
-        project(fullPath: "${owner}/${repo}") {
-          repository {
-            tree(ref: "${branch}") {
-              lastCommit {
-                sha
+      await fetchGraphQL(`
+        query {
+          project(fullPath: "${owner}/${repo}") {
+            repository {
+              tree(ref: "${branch}") {
+                lastCommit {
+                  sha
+                }
               }
             }
           }
         }
-      }`)
+      `)
     );
 
   const { lastCommit } = result.project.repository.tree;
@@ -256,21 +261,23 @@ const fetchFileList = async () => {
   const { owner, repo, branch } = repository;
 
   const result = /** @type {{ project: { repository: { tree: { blobs: { nodes: any[] }} } } }} */ (
-    await fetchGraphQL(`query {
-      project(fullPath: "${owner}/${repo}") {
-        repository {
-          tree(ref: "${branch}", recursive: true) {
-            blobs {
-              nodes {
-                type
-                path
-                sha
+    await fetchGraphQL(`
+      query {
+        project(fullPath: "${owner}/${repo}") {
+          repository {
+            tree(ref: "${branch}", recursive: true) {
+              blobs {
+                nodes {
+                  type
+                  path
+                  sha
+                }
               }
             }
           }
         }
       }
-    }`)
+    `)
   );
 
   // The `size` is not available here; it will be retrieved in `fetchFileContents` below.
@@ -293,18 +300,20 @@ const fetchFileContents = async (fetchingFiles) => {
   // Fetch all the text contents with the GraphQL API
   const result = /** @type {{ project: { repository: { blobs: { nodes: any[] } } } }} */ (
     await fetchGraphQL(
-      `query ($paths: [String!]!) {
-        project(fullPath: "${owner}/${repo}") {
-          repository {
-            blobs(ref: "${branch}", paths: $paths) {
-              nodes {
-                size
-                rawTextBlob
+      `
+        query ($paths: [String!]!) {
+          project(fullPath: "${owner}/${repo}") {
+            repository {
+              blobs(ref: "${branch}", paths: $paths) {
+                nodes {
+                  size
+                  rawTextBlob
+                }
               }
             }
           }
         }
-      }`,
+      `,
       {
         paths: fetchingFiles.map(({ path }) => path),
       },

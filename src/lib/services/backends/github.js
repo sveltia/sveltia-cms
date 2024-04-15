@@ -66,8 +66,9 @@ const fetchGraphQL = async (query, variables = {}) => {
     await fetchAPI('/graphql', {
       method: 'POST',
       body: {
-        // Remove sequential whitespaces and line breaks
-        query: query.replace(/\s+/g, ' '),
+        // Remove line breaks and subsequent space characters; we must be careful as file paths may
+        // contain spaces
+        query: query.replace(/\n\s*/g, ' '),
         variables,
       },
     })
@@ -162,13 +163,15 @@ const fetchDefaultBranchName = async () => {
   const { owner, repo } = repository;
 
   const result = /** @type {{ repository: { defaultBranchRef: { name: string } } }} */ (
-    await fetchGraphQL(`query {
-      repository(owner: "${owner}", name: "${repo}") {
-        defaultBranchRef {
-          name
+    await fetchGraphQL(`
+      query {
+        repository(owner: "${owner}", name: "${repo}") {
+          defaultBranchRef {
+            name
+          }
         }
       }
-    }`)
+    `)
   );
 
   if (!result.repository) {
@@ -195,15 +198,17 @@ const fetchLastCommitHash = async () => {
   const { owner, repo, branch } = repository;
 
   const result = /** @type {{ repository: { ref: { target: { oid: string } } } }} */ (
-    await fetchGraphQL(`query {
-      repository(owner: "${owner}", name: "${repo}") {
-        ref(qualifiedName: "${branch}") {
-          target {
-            oid
+    await fetchGraphQL(`
+      query {
+        repository(owner: "${owner}", name: "${repo}") {
+          ref(qualifiedName: "${branch}") {
+            target {
+              oid
+            }
           }
         }
       }
-    }`)
+    `)
   );
 
   if (!result.repository.ref) {
@@ -245,30 +250,34 @@ const fetchFileContents = async (fetchingFiles) => {
       const str = [];
 
       if (type === 'entry') {
-        str.push(`content_${index}: object(oid: "${sha}") {
-          ... on Blob { text }
-        }`);
+        str.push(`
+          content_${index}: object(oid: "${sha}") {
+            ... on Blob { text }
+          }
+        `);
       }
 
-      str.push(`commit_${index}: ref(qualifiedName: "${branch}") {
-        target {
-          ... on Commit {
-            history(first: 1, path: "${path}") {
-              nodes {
-                author {
-                  name
-                  email
-                  user {
-                    id: databaseId
-                    login
+      str.push(`
+        commit_${index}: ref(qualifiedName: "${branch}") {
+          target {
+            ... on Commit {
+              history(first: 1, path: "${path}") {
+                nodes {
+                  author {
+                    name
+                    email
+                    user {
+                      id: databaseId
+                      login
+                    }
                   }
+                  committedDate
                 }
-                committedDate
               }
             }
           }
         }
-      }`);
+      `);
 
       return str.join('');
     })
@@ -276,11 +285,13 @@ const fetchFileContents = async (fetchingFiles) => {
 
   // Fetch all the text contents with the GraphQL API
   const result = /** @type {{ repository: { [key: string]: any } }} */ (
-    await fetchGraphQL(`query {
-      repository(owner: "${owner}", name: "${repo}") {
-        ${query}
+    await fetchGraphQL(`
+      query {
+        repository(owner: "${owner}", name: "${repo}") {
+          ${query}
+        }
       }
-    }`)
+    `)
   );
 
   return Object.fromEntries(
@@ -377,13 +388,15 @@ const commitChanges = async (changes, options) => {
 
   const result = /** @type {{ createCommitOnBranch: { commit: { url: string }} }} */ (
     await fetchGraphQL(
-      `mutation ($input: CreateCommitOnBranchInput!) {
-        createCommitOnBranch(input: $input) {
-          commit {
-            url
+      `
+        mutation ($input: CreateCommitOnBranchInput!) {
+          createCommitOnBranch(input: $input) {
+            commit {
+              url
+            }
           }
         }
-      }`,
+      `,
       {
         input: {
           branch: {
