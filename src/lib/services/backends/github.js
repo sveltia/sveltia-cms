@@ -152,7 +152,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
  * Sign out from GitHub. Nothing to do here.
  * @returns {Promise<void>}
  */
-const signOut = async () => undefined;
+const signOut = async () => void 0;
 
 /**
  * Fetch the repository’s default branch name, which is typically `master` or `main`.

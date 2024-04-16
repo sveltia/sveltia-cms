@@ -99,13 +99,11 @@ export default class IndexedDB {
       });
     }
 
-    return /** @type {Promise<void>} */ (
-      new Promise((resolve) => {
-        transaction.oncomplete = () => {
-          resolve();
-        };
-      })
-    );
+    return new Promise((resolve) => {
+      transaction.oncomplete = () => {
+        resolve(void 0);
+      };
+    });
   }
 
   /**

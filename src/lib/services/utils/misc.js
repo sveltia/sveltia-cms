@@ -23,7 +23,7 @@ export const isObjectArray = (input) =>
 export const sleep = (ms = 1000) =>
   new Promise((resolve) => {
     window.setTimeout(() => {
-      resolve();
+      resolve(void 0);
     }, ms);
   });
 
@@ -35,15 +35,14 @@ export const sleep = (ms = 1000) =>
  */
 export const waitForVisibility = (element) => {
   if (!element) {
-    return;
+    return void 0;
   }
 
-  // eslint-disable-next-line consistent-return
   return new Promise((resolve) => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         observer.disconnect();
-        resolve();
+        resolve(void 0);
       }
     });
 
