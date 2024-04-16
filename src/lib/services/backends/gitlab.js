@@ -135,17 +135,17 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
         authURL: authURL.replace('/authorize', '/token'),
       });
 
-      return;
+      return void 0;
     }
 
     if (auto) {
-      return;
+      return void 0;
     }
 
     token = await initClientSideAuth({ backendName, clientId, authURL, scope });
   } else {
     if (auto) {
-      return;
+      return void 0;
     }
 
     token = await initServerSideAuth({ backendName, siteDomain, authURL, scope });
@@ -159,7 +159,6 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     web_url: profileURL,
   } = /** @type {any} */ (await fetchAPI('/user', {}, { token }));
 
-  // eslint-disable-next-line consistent-return
   return {
     backendName,
     token,

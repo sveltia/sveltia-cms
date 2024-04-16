@@ -108,7 +108,7 @@ const init = () => {
  */
 const signIn = async ({ token: cachedToken, auto = false }) => {
   if (auto && !cachedToken) {
-    return;
+    return void 0;
   }
 
   const { hostname } = window.location;
@@ -136,7 +136,6 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     html_url: profileURL,
   } = /** @type {any} */ (await fetchAPI('/user', {}, { token }));
 
-  // eslint-disable-next-line consistent-return
   return {
     backendName,
     token,
