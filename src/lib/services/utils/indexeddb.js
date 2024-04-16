@@ -78,30 +78,34 @@ export default class IndexedDB {
   /**
    * Create a database if not yet initialized, then execute the given function over the store.
    * @param {(store: IDBObjectStore) => IDBRequest | void} getRequest - Function to be executed.
-   * @returns {Promise<any>} Result.
+   * @returns {Promise<any | void>} Result.
    */
   async #query(getRequest) {
     this.#database ??= await this.#getDatabase();
 
-    return new Promise((resolve) => {
-      const transaction = /** @type {IDBDatabase} */ (this.#database).transaction(
-        [this.#storeName],
-        'readwrite',
-      );
+    const transaction = /** @type {IDBDatabase} */ (this.#database).transaction(
+      [this.#storeName],
+      'readwrite',
+    );
 
-      const store = transaction.objectStore(this.#storeName);
-      const request = getRequest(store);
+    const store = transaction.objectStore(this.#storeName);
+    const request = getRequest(store);
 
-      if (request) {
+    if (request) {
+      return new Promise((resolve) => {
         request.onsuccess = () => {
           resolve(request.result);
         };
-      } else {
+      });
+    }
+
+    return /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
         transaction.oncomplete = () => {
-          resolve(undefined);
+          resolve();
         };
-      }
-    });
+      })
+    );
   }
 
   /**

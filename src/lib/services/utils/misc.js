@@ -35,14 +35,15 @@ export const sleep = (ms = 1000) =>
  */
 export const waitForVisibility = (element) => {
   if (!element) {
-    return undefined;
+    return;
   }
 
+  // eslint-disable-next-line consistent-return
   return new Promise((resolve) => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         observer.disconnect();
-        resolve(undefined);
+        resolve();
       }
     });
 

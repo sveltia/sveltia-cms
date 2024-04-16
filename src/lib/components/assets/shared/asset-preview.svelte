@@ -115,15 +115,17 @@
         : !(/** @type {HTMLMediaElement} */ (mediaElement).readyState)
     ) {
       // Not loaded yet; wait until it’s ready
-      await new Promise((resolve) => {
-        mediaElement.addEventListener(
-          isImage ? 'load' : 'loadedmetadata',
-          () => {
-            resolve(undefined);
-          },
-          { once: true },
-        );
-      });
+      await /** @type {Promise<void>} */ (
+        new Promise((resolve) => {
+          mediaElement.addEventListener(
+            isImage ? 'load' : 'loadedmetadata',
+            () => {
+              resolve();
+            },
+            { once: true },
+          );
+        })
+      );
     }
 
     // Enable a dissolve transition
