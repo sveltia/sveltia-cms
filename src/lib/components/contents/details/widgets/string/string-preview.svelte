@@ -30,20 +30,7 @@
   } = fieldConfig);
 
   $: isEmail = type === 'email';
-
-  $: isURL = (() => {
-    if (type === 'url') {
-      return true;
-    }
-
-    try {
-      // eslint-disable-next-line no-new
-      new URL(currentValue);
-      return true;
-    } catch {
-      return false;
-    }
-  })();
+  $: isURL = type === 'url' || URL.canParse(currentValue);
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
