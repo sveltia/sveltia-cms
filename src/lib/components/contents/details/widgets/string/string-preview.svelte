@@ -30,7 +30,26 @@
   } = fieldConfig);
 
   $: isEmail = type === 'email';
-  $: isURL = type === 'url' || URL.canParse(currentValue);
+
+  $: isURL = (() => {
+    if (type === 'url') {
+      return true;
+    }
+
+    // @ts-ignore
+    if (typeof URL.canParse === 'function') {
+      // @ts-ignore
+      return URL.canParse(currentValue);
+    }
+
+    try {
+      // eslint-disable-next-line no-new
+      new URL(currentValue);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
