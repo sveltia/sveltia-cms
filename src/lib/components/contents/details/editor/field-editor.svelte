@@ -390,11 +390,4 @@
     line-height: var(--sui-line-height-compact);
     opacity: 0.75;
   }
-
-  .comment,
-  .hint {
-    :global(code) {
-      font-size: inherit;
-    }
-  }
 </style>
