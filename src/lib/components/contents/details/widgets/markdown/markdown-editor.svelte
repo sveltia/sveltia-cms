@@ -2,7 +2,6 @@
   @component
   Implement the editor for the Markdown widget.
   @see https://decapcms.org/docs/widgets/#markdown
-  @todo Implement the editor!
 -->
 <script>
   import { TextEditor } from '@sveltia/ui';
