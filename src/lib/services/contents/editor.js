@@ -995,7 +995,7 @@ const createEntryPath = (draft, locale, slug) => {
   }
 
   const { defaultLocale, structure } = collection._i18n;
-  const collectionFolder = collection.folder?.replace(/\/$/, '');
+  const collectionFolder = collection.folder;
 
   /**
    * Support folder collections path.

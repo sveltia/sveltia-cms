@@ -168,7 +168,7 @@ siteConfig.subscribe((config) => {
           yaml_quote: yamlQuote,
         }) => ({
           collectionName,
-          folderPath,
+          folderPath: stripSlashes(/** @type {string} */ (folderPath)),
           extension,
           format,
           frontmatterDelimiter,
@@ -190,7 +190,7 @@ siteConfig.subscribe((config) => {
           (files ?? []).map(({ name: fileName, file: filePath }) => ({
             collectionName,
             fileName,
-            filePath,
+            filePath: stripSlashes(filePath),
             extension,
             format,
             frontmatterDelimiter,

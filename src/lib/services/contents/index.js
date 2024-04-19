@@ -4,6 +4,7 @@ import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { getI18nConfig } from '$lib/services/contents/i18n';
+import { stripSlashes } from '$lib/services/utils/strings';
 
 /**
  * Regular expression to match `![alt](src "title")`.
@@ -54,7 +55,15 @@ export const getCollection = (name) => {
 
   const collection = get(siteConfig)?.collections.find((c) => c.name === name);
 
-  if (!collection) {
+  // Normalize folder/file paths by removing leading/trailing slashes
+  if (collection?.folder) {
+    collection.folder = stripSlashes(collection.folder);
+  } else if (collection?.files) {
+    collection.files.forEach((f) => {
+      f.file = stripSlashes(f.file);
+    });
+  } else {
+    // Invalid collection
     collectionCache.set(name, undefined);
 
     return undefined;
