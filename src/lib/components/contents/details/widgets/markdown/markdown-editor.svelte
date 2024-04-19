@@ -5,7 +5,13 @@
   @todo Implement the editor!
 -->
 <script>
-  import { TextArea } from '@sveltia/ui';
+  import { TextEditor } from '@sveltia/ui';
+  import {
+    buttonNameMap,
+    defaultButtons,
+    defaultModes,
+    modeNameMap,
+  } from '$lib/components/contents/details/widgets/markdown';
 
   /**
    * @type {LocaleCode}
@@ -29,7 +35,6 @@
   /**
    * @type {MarkdownField}
    */
-  // svelte-ignore unused-export-let
   export let fieldConfig;
   /**
    * @type {string}
@@ -47,15 +52,40 @@
    * @type {boolean}
    */
   export let invalid = false;
+
+  $: ({
+    // Widget-specific options
+    modes = [...defaultModes],
+    buttons = [...defaultButtons],
+    minimal = false,
+  } = fieldConfig);
 </script>
 
-<TextArea
-  bind:value={currentValue}
-  flex
-  {readonly}
-  {required}
-  {invalid}
-  aria-labelledby="{fieldId}-label"
-  aria-errormessage="{fieldId}-error"
-  autoResize={true}
-/>
+<div role="none" class="wrapper" class:minimal>
+  <TextEditor
+    modes={modes.map((name) => modeNameMap[name]).filter(Boolean)}
+    buttons={buttons.map((name) => buttonNameMap[name]).filter(Boolean)}
+    bind:value={currentValue}
+    flex
+    {readonly}
+    {required}
+    {invalid}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
+    autoResize={true}
+  />
+</div>
+
+<style lang="scss">
+  .wrapper {
+    display: contents;
+
+    &.minimal {
+      :global([role='textbox']),
+      :global(textarea) {
+        overflow: auto;
+        max-height: 240px;
+      }
+    }
+  }
+</style>
