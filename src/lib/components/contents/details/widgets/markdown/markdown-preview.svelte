@@ -35,6 +35,7 @@
 
   /** @type {import("marked").MarkedOptions} */
   const markedOptions = {
+    breaks: true,
     async: true,
     // eslint-disable-next-line jsdoc/require-jsdoc
     walkTokens: async (token) => {
