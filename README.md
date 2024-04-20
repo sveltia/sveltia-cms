@@ -96,10 +96,10 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
 - You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
 - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
-- Resolves the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
+- Removes the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
-- Fixes problems with Chinese, Japanese and Korean (CJK) IME text input in the rich text editor for the Markdown widget[^54].
+- Solves problems with Chinese, Japanese and Korean (CJK) IME text input in the rich text editor for the Markdown widget[^54].
 
 ### Better collections
 
@@ -570,4 +570,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^51]: Netlify/Decap CMS [#6731](https://github.com/decaporg/decap-cms/issues/6731)
 [^52]: Netlify/Decap CMS [#7147](https://github.com/decaporg/decap-cms/issues/7147)
 [^53]: Netlify/Decap CMS [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6482](https://github.com/decaporg/decap-cms/issues/6482), [#6707](https://github.com/decaporg/decap-cms/issues/6707), [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7047](https://github.com/decaporg/decap-cms/issues/7047), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7152](https://github.com/decaporg/decap-cms/issues/7152)
-[^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#6287](https://github.com/decaporg/decap-cms/issues/6287) — Decap 3.0 updated the Slate library in an attempt to fix the problem, but the IME bug on mobile/tablet browsers remains unresolved.
+[^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#6287](https://github.com/decaporg/decap-cms/issues/6287) — Decap 3.0 updated the Slate editor in an attempt to fix the problems, but the IME issues remain unresolved when using a mobile/tablet browser.
