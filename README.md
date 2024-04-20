@@ -42,7 +42,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
-- Small footprint: The bundle size is less than 350 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- Small footprint: The bundle size is less than 400 KB when minified and gzipped, compared to 1.5 MB of Netlify/Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - A list of repository files is cached locally for faster startup and bandwidth savings.
@@ -141,6 +141,8 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - String
   - Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
+- Markdown
+  - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves several problems found in Netlify/Decap CMS, including fatal application crashes[^53].
 - Boolean, Number and String
   - Supports the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
 - List and Object
@@ -203,7 +205,7 @@ While it’s not our goal to recreate all the features found in Netlify/Decap CM
 | DateTime | The `date_format` and `time_format` options with Moment.js tokens are not supported yet. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
 | File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not supported yet. |
-| Markdown | It’s a plain text editor at this time. A rich text editor is coming soon. We will not support Remark plugins. |
+| Markdown | Editor components are not supported yet. Remark plugins will not be supported. |
 
 ### Other features
 
@@ -566,3 +568,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^50]: Netlify/Decap CMS [#4646](https://github.com/decaporg/decap-cms/issues/4646)
 [^51]: Netlify/Decap CMS [#6731](https://github.com/decaporg/decap-cms/issues/6731)
 [^52]: Netlify/Decap CMS [#7147](https://github.com/decaporg/decap-cms/issues/7147)
+[^53]: Netlify/Decap CMS [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6482](https://github.com/decaporg/decap-cms/issues/6482), [#6707](https://github.com/decaporg/decap-cms/issues/6707), [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7047](https://github.com/decaporg/decap-cms/issues/7047), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7152](https://github.com/decaporg/decap-cms/issues/7152)
