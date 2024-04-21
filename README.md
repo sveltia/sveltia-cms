@@ -20,6 +20,18 @@ To achieve radical improvements in UX, performance, i18n and other areas, it was
 
 Our goal is to make it a viable successor to Netlify CMS, expand the Git-based headless CMS market, empower small businesses and individuals who need a simple yet powerful CMS solution, and showcase the huge potential of the Svelte framework.
 
+## Development status
+
+**Sveltia CMS is still in beta**, so please be careful when trying it out.
+
+We are fixing all reported bugs quickly, but our overall progress might be slower than you think. The thing is, it’s not only a personal project of [@kyoshino](https://github.com/kyoshino), but also involves three kinds of activities:
+
+- Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
+- “Effectively” solving as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far Sveltia CMS has addressed 65+ of them)
+- Implementing our own enhancement ideas
+
+It’s not an easy job, but **we hope to reach GA in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates!
+
 ## Features
 
 We are creating a **much better alternative to Netlify CMS** and Decap CMS by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
