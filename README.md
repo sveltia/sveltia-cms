@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and [Decap CMS](https://decapcms.org/). In some simple cases, migration is as easy as a single line of code change, although we’re still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and [Decap CMS](https://decapcms.org/). In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
 ![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1-20231124.webp)<br>
 
@@ -22,7 +22,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 ## Features
 
-We are working hard to create a **much better alternative to Netlify CMS** and Decap CMS by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
+We are creating a **much better alternative to Netlify CMS** and Decap CMS by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Compatible with Netlify/Decap CMS
 
@@ -42,7 +42,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
-- Small footprint: The bundle size is less than 500 KB when minified and gzipped, compared to 1.5 MB of Netlify CMS and 1.8 MB of Decap CMS. And [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB) and Decap CMS (1.8 MB). No technical debt, [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - A list of repository files is cached locally for faster startup and bandwidth savings.
@@ -52,7 +52,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 ### Better productivity
 
 - You can [work with a local Git repository](#working-with-a-local-git-repository) without any configuration or proxy server[^26].
-  - In addition to a streamlined workflow, it offers great performance because files are loaded natively through the browser rather than using an ad hoc API.
+  - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc API.
   - It also allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
 - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
@@ -77,9 +77,9 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better security
 
-- Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^34].
+- Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^33].
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS.
-- The `unsafe-eval` or `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^33].
+- The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 
 ### Better backend support
@@ -153,7 +153,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
     - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
-    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8].
+    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More services will be added later.
 - String, Text and Markdown
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - New widgets
@@ -184,7 +184,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ## Compatibility
 
-While it’s not our goal to recreate all the features found in Netlify/Decap CMS, we plan to maximize compatibility before the 1.0 release so that more users can migrate to our modern alternative. The table below is a summary of the current limitations of Sveltia CMS:
+We are working hard to make Sveltia CMS as compatible as possible with Netlify/Decap CMS before the 1.0 release, so that more users can seamlessly switch to our modern, powerful alternative. The table below shows the current limitations of Sveltia CMS:
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
