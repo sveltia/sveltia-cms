@@ -27,7 +27,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 Although we are fixing all reported bugs quickly, our overall progress might be slower than you think. The thing is, it’s not only a personal project of [@kyoshino](https://github.com/kyoshino), but also involves three kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
-- “Effectively” solving as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far Sveltia CMS has addressed 65+ of them)
+- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 65+ of them have been “effectively” in Sveltia CMS)
 - Implementing our own enhancement ideas
 
 At this point **we hope to reach GA in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates!
