@@ -18,10 +18,19 @@ export default defineConfig({
     rollupOptions: {
       // Output JavaScript only
       input: 'src/main.js',
-      output: {
-        entryFileNames: 'sveltia-cms.js',
-        format: 'iife',
-      },
+      output: [
+        {
+          entryFileNames: 'sveltia-cms.js',
+          format: 'iife',
+        },
+        {
+          entryFileNames: 'index.js',
+          format: 'es',
+        },
+      ],
+      // Keep exports in the ES module
+      // https://stackoverflow.com/q/71500190
+      preserveEntrySignatures: 'strict',
     },
   },
   plugins: [

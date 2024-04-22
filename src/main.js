@@ -1,5 +1,37 @@
 import App from './app.svelte';
 
+const knownFuncNames = [
+  'getBackend',
+  'getCustomFormats',
+  'getCustomFormatsExtensions',
+  'getCustomFormatsFormatters',
+  'getEditorComponents',
+  'getEventListeners',
+  'getLocale',
+  'getMediaLibrary',
+  'getPreviewStyles',
+  'getPreviewTemplate',
+  'getRemarkPlugins',
+  'getWidget',
+  'getWidgetValueSerializer',
+  'getWidgets',
+  'invokeEvent',
+  'moment',
+  'registerBackend',
+  'registerCustomFormat',
+  'registerEditorComponent',
+  'registerEventListener',
+  'registerLocale',
+  'registerMediaLibrary',
+  'registerPreviewStyle',
+  'registerPreviewTemplate',
+  'registerRemarkPlugin',
+  'registerWidget',
+  'registerWidgetValueSerializer',
+  'removeEventListener',
+  'resolveWidget',
+];
+
 /**
  * Initialize the CMS, optionally with the given configuration.
  * @param {object} [options] - Options.
@@ -7,7 +39,7 @@ import App from './app.svelte';
  * @see https://decapcms.org/docs/manual-initialization/
  * @see https://decapcms.org/docs/custom-mounting/
  */
-const init = ({ config = undefined } = {}) => {
+const init = ({ config = {} } = {}) => {
   // eslint-disable-next-line no-new
   new App({
     target: document.querySelector('#nc-root') ?? document.body,
@@ -15,7 +47,7 @@ const init = ({ config = undefined } = {}) => {
   });
 };
 
-window.CMS = new Proxy(
+const CMS = new Proxy(
   {
     init,
   },
@@ -30,38 +62,6 @@ window.CMS = new Proxy(
       if (key in obj) {
         return obj[key];
       }
-
-      const knownFuncNames = [
-        'getBackend',
-        'getCustomFormats',
-        'getCustomFormatsExtensions',
-        'getCustomFormatsFormatters',
-        'getEditorComponents',
-        'getEventListeners',
-        'getLocale',
-        'getMediaLibrary',
-        'getPreviewStyles',
-        'getPreviewTemplate',
-        'getRemarkPlugins',
-        'getWidget',
-        'getWidgetValueSerializer',
-        'getWidgets',
-        'invokeEvent',
-        'moment',
-        'registerBackend',
-        'registerCustomFormat',
-        'registerEditorComponent',
-        'registerEventListener',
-        'registerLocale',
-        'registerMediaLibrary',
-        'registerPreviewStyle',
-        'registerPreviewTemplate',
-        'registerRemarkPlugin',
-        'registerWidget',
-        'registerWidgetValueSerializer',
-        'removeEventListener',
-        'resolveWidget',
-      ];
 
       if (knownFuncNames.includes(key)) {
         // eslint-disable-next-line no-console
@@ -80,10 +80,12 @@ window.CMS = new Proxy(
   },
 );
 
+export default CMS;
+export { init };
+
+window.CMS = CMS;
 window.initCMS = init;
 
-window.addEventListener('DOMContentLoaded', () => {
-  if (!window.CMS_MANUAL_INIT) {
-    init();
-  }
-});
+if (!window.CMS_MANUAL_INIT) {
+  init();
+}

@@ -117,7 +117,7 @@ const validate = (config) => {
  * @param {any} [manualConfig] - Configuration specified with manual initialization.
  * @todo Normalize configuration object.
  */
-export const initSiteConfig = async (manualConfig) => {
+export const initSiteConfig = async (manualConfig = {}) => {
   siteConfig.set(undefined);
   siteConfigError.set(undefined);
 
@@ -134,7 +134,7 @@ export const initSiteConfig = async (manualConfig) => {
     } else {
       config = await fetchSiteConfig();
 
-      if (manualConfig) {
+      if (Object.entries(manualConfig).length) {
         config = merge(config, manualConfig);
       }
     }
