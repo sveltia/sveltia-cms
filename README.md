@@ -24,10 +24,10 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 **Sveltia CMS is still in beta**, so please be careful when trying it out.
 
-Although we are fixing all reported bugs quickly, our overall progress might be slower than you think. The thing is, it’s not only a personal project of [@kyoshino](https://github.com/kyoshino), but also involves three kinds of activities:
+While we are fixing all reported bugs as fast as we can, our overall progress may be slower than you think. The thing is, it’s not only a personal project of [@kyoshino](https://github.com/kyoshino), but also involves three kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
-- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 65+ of them have been effectively solved in Sveltia CMS)
+- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS)
 - Implementing our own enhancement ideas
 
 At this point **we hope to reach GA in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates!
@@ -54,7 +54,7 @@ We are creating a **much better alternative to Netlify CMS** and Decap CMS by im
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
-- Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB) and Decap CMS (1.8 MB). No technical debt, [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than bloated Netlify CMS (1.5 MB) and Decap CMS (1.8 MB)[^57]. Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - A list of repository files is cached locally for faster startup and bandwidth savings.
@@ -109,9 +109,10 @@ We are creating a **much better alternative to Netlify CMS** and Decap CMS by im
 - You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
 - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
 - Removes the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
+- Raises a validation error instead of an internal error if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
-- Solves problems with Chinese, Japanese and Korean (CJK) IME text input in the rich text editor for the Markdown widget[^54].
+- Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
 
 ### Better collections
 
@@ -151,6 +152,8 @@ We are creating a **much better alternative to Netlify CMS** and Decap CMS by im
   - An optional Object field can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - Relation
   - Field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
+- Select
+  - It’s possible to select an option with value `0`[^56].
 - String
   - Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
@@ -560,7 +563,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^29]: Netlify/Decap CMS [#4783](https://github.com/decaporg/decap-cms/issues/4783)
 [^30]: Netlify/Decap CMS [#565](https://github.com/decaporg/decap-cms/issues/565)
 [^31]: Netlify/Decap CMS [#1045](https://github.com/decaporg/decap-cms/issues/1045), [#3353](https://github.com/decaporg/decap-cms/issues/3353)
-[^32]: Netlify/Decap CMS [#302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549)
+[^32]: Netlify/Decap CMS [#302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549), [#6034](https://github.com/decaporg/decap-cms/issues/6034)
 [^33]: Netlify/Decap CMS [#6513](https://github.com/decaporg/decap-cms/issues/6513)
 [^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138)
 [^35]: Netlify/Decap CMS [#7086](https://github.com/decaporg/decap-cms/issues/7086)
@@ -583,3 +586,6 @@ This software is provided “as is” without any express or implied warranty. W
 [^52]: Netlify/Decap CMS [#7147](https://github.com/decaporg/decap-cms/issues/7147)
 [^53]: Netlify/Decap CMS [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6482](https://github.com/decaporg/decap-cms/issues/6482), [#6707](https://github.com/decaporg/decap-cms/issues/6707), [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7047](https://github.com/decaporg/decap-cms/issues/7047), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7152](https://github.com/decaporg/decap-cms/issues/7152)
 [^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#6287](https://github.com/decaporg/decap-cms/issues/6287) — Decap 3.0 updated the Slate editor in an attempt to fix the problems, but the IME issues remain unresolved when using a mobile/tablet browser.
+[^55]: Netlify/Decap CMS [#4480](https://github.com/decaporg/decap-cms/issues/4480), [#6353](https://github.com/decaporg/decap-cms/issues/6353)
+[^56]: Netlify/Decap CMS [#6515](https://github.com/decaporg/decap-cms/issues/6515)
+[^57]: Netlify/Decap CMS [#328](https://github.com/decaporg/decap-cms/issues/328), [#3853](https://github.com/decaporg/decap-cms/issues/3853)
