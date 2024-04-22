@@ -1,3 +1,4 @@
+import merge from 'deepmerge';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
@@ -29,6 +30,41 @@ export const siteConfig = writable();
  * @type {import('svelte/store').Writable<{ message: string } | undefined>}
  */
 export const siteConfigError = writable();
+
+/**
+ * Fetch the YAML site configuration file and return it as JSON.
+ * @returns {Promise<SiteConfig>} Configuration.
+ * @throws {Error} When fetching or parsing has failed.
+ */
+const fetchSiteConfig = async () => {
+  const { href = './config.yml' } =
+    /** @type {HTMLAnchorElement | undefined} */ (
+      document.querySelector('link[type="text/yaml"][rel="cms-config-url"]')
+    ) ?? {};
+
+  /** @type {Response} */
+  let response;
+
+  try {
+    response = await fetch(href);
+  } catch (/** @type {any} */ ex) {
+    throw new Error(get(_)('config.error.fetch_failed'), { cause: ex });
+  }
+
+  const { ok, status } = response;
+
+  if (!ok) {
+    throw new Error(get(_)('config.error.fetch_failed'), {
+      cause: new Error(get(_)('config.error.fetch_failed_not_ok', { values: { status } })),
+    });
+  }
+
+  try {
+    return YAML.parse(await response.text());
+  } catch (/** @type {any} */ ex) {
+    throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
+  }
+};
 
 /**
  * Validate the site configuration file.
@@ -76,46 +112,31 @@ const validate = (config) => {
 };
 
 /**
- * Fetch the configuration file and set the parsed result or any error.
+ * Initialize the site configuration state by loading the YAML file and optionally merge the object
+ * with one specified with `CMS.init()`.
+ * @param {any} [manualConfig] - Configuration specified with manual initialization.
  * @todo Normalize configuration object.
  */
-export const fetchSiteConfig = async () => {
+export const initSiteConfig = async (manualConfig) => {
   siteConfig.set(undefined);
   siteConfigError.set(undefined);
 
-  const { href = './config.yml' } =
-    /** @type {HTMLAnchorElement?} */ (
-      document.querySelector('link[type="text/yaml"][rel="cms-config-url"]')
-    ) ?? {};
-
-  /**
-   * @type {Response}
-   */
-  let response;
-  /**
-   * @type {SiteConfig}
-   */
+  /** @type {SiteConfig} */
   let config;
 
   try {
-    try {
-      response = await fetch(href);
-    } catch (/** @type {any} */ ex) {
-      throw new Error(get(_)('config.error.fetch_failed'), { cause: ex });
+    if (manualConfig && !isObject(manualConfig)) {
+      throw new Error(get(_)('config.error.parse_failed'));
     }
 
-    const { ok, status } = response;
+    if (manualConfig?.load_config_file === false) {
+      config = manualConfig;
+    } else {
+      config = await fetchSiteConfig();
 
-    if (!ok) {
-      throw new Error(get(_)('config.error.fetch_failed'), {
-        cause: new Error(get(_)('config.error.fetch_failed_not_ok', { values: { status } })),
-      });
-    }
-
-    try {
-      config = YAML.parse(await response.text());
-    } catch (/** @type {any} */ ex) {
-      throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
+      if (manualConfig) {
+        config = merge(config, manualConfig);
+      }
     }
 
     validate(config);

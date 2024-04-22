@@ -20,6 +20,7 @@ export default defineConfig({
       input: 'src/main.js',
       output: {
         entryFileNames: 'sveltia-cms.js',
+        format: 'iife',
       },
     },
   },

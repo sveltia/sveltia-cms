@@ -7,13 +7,19 @@
   import MainRouter from '$lib/components/global/main-router.svelte';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
-  import { fetchSiteConfig, siteURL } from '$lib/services/config';
+  import { initSiteConfig, siteURL } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user';
 
+  /**
+   * Configuration specified with manual initialization.
+   * @type {object | undefined}
+   */
+  export let config;
+
   onMount(() => {
     initAppLocale();
-    fetchSiteConfig();
+    initSiteConfig(config);
   });
 </script>
 

@@ -1,5 +1,7 @@
 interface Window {
   CMS: Proxy;
+  CMS_MANUAL_INIT?: boolean;
+  initCMS: Function;
   showDirectoryPicker: Function;
 }
 
