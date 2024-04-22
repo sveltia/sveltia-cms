@@ -64,11 +64,11 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./dist/sveltia-cms.mjs",
+  "module": "./dist/sveltia-cms.mjs",
   "exports": {
     ".": {
-      "import": "./dist/index.js"
+      "import": "./dist/sveltia-cms.mjs"
     }
   }
 }

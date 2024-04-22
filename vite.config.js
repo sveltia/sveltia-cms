@@ -24,7 +24,7 @@ export default defineConfig({
           format: 'iife',
         },
         {
-          entryFileNames: 'index.js',
+          entryFileNames: 'sveltia-cms.mjs',
           format: 'es',
         },
       ],
