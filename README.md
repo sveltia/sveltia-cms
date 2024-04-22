@@ -24,10 +24,10 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 **Sveltia CMS is still in beta**, so please be careful when trying it out.
 
-While we are fixing all reported bugs as fast as we can, our overall progress may be slower than you think. The thing is, it’s not only a personal project of [@kyoshino](https://github.com/kyoshino), but also involves three kinds of activities:
+While we are fixing reported bugs as fast as we can, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
-- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by our GA)
+- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
 - Implementing our own enhancement ideas
 
 At this point **we hope to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates!
@@ -46,7 +46,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
-- Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well.
+- Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management.
 - The screenshots above are worth a thousand words!
 - Read on to learn about many other enhancements, including performance, productivity, accessibility, service integrations, and an all-new Asset Library.
@@ -186,7 +186,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - Copy the public URL, file path, text data or image data of a selected asset to clipboard.
     - The file path starts with `/` as expected[^48].
-  - Edit plaintext assets, including SVG images.
+  - Edit plain text assets, including SVG images.
   - Replace existing assets.
   - Download one or more selected assets at once.
   - Delete one or more selected assets at once.
@@ -204,9 +204,9 @@ We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap C
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Installation | Installing with `npm` is not supported yet. |
-| Backends | Only the GitHub and GitLab backends are available. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
+| Backends | Only the GitHub and GitLab backends are available. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Netlify Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
 | UI Locales | Only English and Japanese are available at this time. |
-| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare soon. We will not support deprecated Netlify Large Media. |
+| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare soon. Deprecated Netlify Large Media will not be supported. |
 | Workflow | Editorial Workflow and Open Authoring are not supported yet. |
 | Collections | Nested collections are not supported yet. |
 | Widgets | Custom widgets are not supported yet. [See below](#widget-limitations) for other limitations. |
@@ -221,7 +221,7 @@ We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap C
 | DateTime | The `date_format` and `time_format` options with Moment.js tokens are not supported yet. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
 | File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not supported yet. |
-| Markdown | Editor components are not supported yet. Remark plugins will not be supported. |
+| Markdown | Editor components are not supported yet. Remark plugins will not be supported as they are not compatible with our Lexical-based rich text editor. |
 
 ### Other features
 
