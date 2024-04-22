@@ -1,6 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import TOML from '@ltd/j-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { allAssetFolders, getAssetKind } from '$lib/services/assets';
@@ -8,6 +7,7 @@ import { allEntryFolders, getCollection } from '$lib/services/contents';
 import { normalizeSlug } from '$lib/services/contents/slug';
 import { isObject } from '$lib/services/utils/misc';
 import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
+import TOML from '$lib/services/utils/toml';
 
 /**
  * Get the file extension for the given collection.
@@ -246,7 +246,7 @@ export const formatEntryFile = ({
       defaultStringType: yamlQuote ? 'QUOTE_DOUBLE' : 'PLAIN',
     }).trim();
 
-  const formatTOML = () => TOML.stringify(/** @type {any} */ (content), { newline: '\n' }).trim();
+  const formatTOML = () => TOML.stringify(content).trim();
   const formatJSON = () => JSON.stringify(content, null, 2).trim();
 
   try {
