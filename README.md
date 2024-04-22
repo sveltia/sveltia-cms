@@ -581,7 +581,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^47]: Netlify/Decap CMS [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596)
 [^48]: Netlify/Decap CMS [#5569](https://github.com/decaporg/decap-cms/issues/5569)
 [^49]: Netlify/Decap CMS [#5752](https://github.com/decaporg/decap-cms/issues/5752)
-[^50]: Netlify/Decap CMS [#4646](https://github.com/decaporg/decap-cms/issues/4646)
+[^50]: Netlify/Decap CMS [#4646](https://github.com/decaporg/decap-cms/issues/4646), [#7167](https://github.com/decaporg/decap-cms/issues/7167)
 [^51]: Netlify/Decap CMS [#6731](https://github.com/decaporg/decap-cms/issues/6731)
 [^52]: Netlify/Decap CMS [#7147](https://github.com/decaporg/decap-cms/issues/7147)
 [^53]: Netlify/Decap CMS [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6482](https://github.com/decaporg/decap-cms/issues/6482), [#6707](https://github.com/decaporg/decap-cms/issues/6707), [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7047](https://github.com/decaporg/decap-cms/issues/7047), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7152](https://github.com/decaporg/decap-cms/issues/7152)
