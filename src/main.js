@@ -86,6 +86,14 @@ export { init };
 window.CMS = CMS;
 window.initCMS = init;
 
-if (!window.CMS_MANUAL_INIT) {
+// Automatically initialize the CMS if manual initialization is not requested AND the script is NOT
+// a module; We can’t just use `document.currentScript` for module detection because the earlier
+// versions of Sveltia CMS were built and shipped as modules
+if (
+  !window.CMS_MANUAL_INIT &&
+  (!!document.currentScript ||
+    !!document.querySelector('script[src$="/sveltia-cms.js"]') ||
+    import.meta.env.DEV)
+) {
   init();
 }
