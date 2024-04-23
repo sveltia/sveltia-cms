@@ -67,8 +67,9 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc API.
   - It also allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
-- Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
-- The Entry Editor closes automatically when an entry is saved.
+- Eliminates some workflow disruptions in the Content Editor:
+  - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
+  - The editor closes automatically when an entry is saved.
 - You can upload multiple assets at once. (See below)
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
@@ -99,6 +100,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
 - You can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
+- The GitLab backend comes with background service status checking, just like GitHub.
 
 ### Better i18n support
 
@@ -203,31 +205,25 @@ We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap C
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
-| Installation | Installing with `npm` is not supported yet. |
 | Backends | Only the GitHub and GitLab backends are available. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Netlify Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
-| UI Locales | Only English and Japanese are available at this time. |
-| Media Libraries | External media storage services are not supported yet. We will add support for Cloudinary and Uploadcare soon. Deprecated Netlify Large Media will not be supported. |
-| Workflow | Editorial Workflow and Open Authoring are not supported yet. |
-| Collections | Nested collections are not supported yet. |
-| Widgets | Custom widgets are not supported yet. [See below](#widget-limitations) for other limitations. |
-| Customizations | Custom previews, custom formatters, manual initialization and event subscriptions are not supported yet. |
+| Configuration | UI Locales are currently only available in English and Japanese. Comprehensive config validation is not yet implemented. |
+| Media Libraries | We will add support for Cloudinary and Uploadcare soon. Deprecated Netlify Large Media will not be supported. |
+| Workflow | Editorial Workflow and Open Authoring are not yet supported. |
+| Content Editor | Auto-saving a draft entry is not yet implemented. |
+| Collections | Nested collections are not yet supported. |
+| Widgets | Custom widgets are not yet supported. [See below](#widget-limitations) for other limitations. |
+| Customizations | Custom previews, custom formatters and event subscriptions are not yet supported. |
 
 ### Widget limitations
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
-| Code | Not supported yet. |
+| Code | Not yet supported. |
 | Date | Sveltia CMS has dropped the support for the deprecated widget following Decap CMS 3.0. Use the DateTime widget instead. |
-| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not supported yet. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
-| File/Image | Field-specific media folders and media library options are not supported yet other than `media_library.config.max_file_size` for the default media library. |
-| Map | Not supported yet. |
-| Markdown | Editor components are not supported yet. Remark plugins will not be supported as they are not compatible with our Lexical-based rich text editor. |
-
-### Other features
-
-- Comprehensive config validation is not implemented yet.
-- Auto-saving a draft entry is not implemented yet.
-- [Backend health check](https://www.githubstatus.com/api) is not implemented yet.
+| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
+| File/Image | Field-specific media folders and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
+| Map | Not yet supported. |
+| Markdown | Editor components are not yet supported. Remark plugins will not be supported as they are not compatible with our Lexical-based rich text editor. |
 
 ## Roadmap
 
@@ -273,19 +269,21 @@ From Netlify CMS:
 
 ```diff
 -<script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
-+<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js" type="module"></script>
++<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
 ```
 
 From Decap CMS:
 
 ```diff
 -<script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-+<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js" type="module"></script>
++<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
 ```
 
 That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub or GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
 That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#working-with-a-local-git-repository) for how.
+
+For advanced users, we have also made the bundle available as an [npm package](https://www.npmjs.com/package/@sveltia/cms). You can install it by running `npm i @sveltia/cms` or `pnpm add @sveltia/cms` on your project. The [manual initialization](https://decapcms.org/docs/manual-initialization/) flow with the `init` method is the same as for Netlify/Decap CMS. Make sure to keep the dependency up to date!
 
 ### Updates
 
@@ -456,7 +454,7 @@ And combine the following policies depending on your Git backend and enabled int
 - GitLab: (If you’re running a self-hosted instance, you’ll also need to add the origin to these directives.)
   ```csp
   img-src https://gitlab.com https://secure.gravatar.com;
-  connect-src https://gitlab.com;
+  connect-src https://gitlab.com https://status-api.hostedstatus.com;
   ```
 - Pexels:
   ```csp
@@ -498,16 +496,6 @@ If you have image field(s) and expect that images will be inserted as URLs, you 
 ```csp
 img-src 'self' blob: data: https://*;
 ```
-
-### Self-hosting the CMS
-
-Sveltia CMS is open source for sure! You can host it on your server rather than loading it from UNPKG, though it’s not recommended due to missing bug fixes. Simply copy the latest [`sveltia-cms.js`](https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js) file from the CDN, or build it yourself:
-
-1. Clone this Git repository.
-1. Run `pnpm install && pnpm build` at the project root.
-1. `sveltia-cms.js` will be generated under the `dist` directory.
-
-Importing the CMS as an npm package is not supported yet.
 
 ## Support & feedback
 
