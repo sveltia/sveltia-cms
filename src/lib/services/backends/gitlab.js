@@ -17,6 +17,42 @@ const backendName = 'gitlab';
 const label = 'GitLab';
 /** @type {RepositoryInfo} */
 const repository = { ...repositoryProps };
+const statusDashboardURL = 'https://status.gitlab.com/';
+const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
+
+/**
+ * Check the GitLab service status.
+ * @returns {Promise<BackendServiceStatusIndicator>} Current status.
+ * @see https://status.gitlab.com/
+ * @see https://kb.status.io/developers/public-status-api/
+ */
+const checkStatus = async () => {
+  try {
+    const {
+      result: {
+        status_overall: { status_code: status },
+      },
+    } = /** @type {{ result: { status_overall: { status_code: number } } }} */ (
+      await sendRequest(statusCheckURL)
+    );
+
+    if (status === 100) {
+      return 'none';
+    }
+
+    if ([200, 300, 400].includes(status)) {
+      return 'minor';
+    }
+
+    if ([500, 600].includes(status)) {
+      return 'major';
+    }
+  } catch {
+    //
+  }
+
+  return 'unknown';
+};
 
 /**
  * Send a request to GitLab REST/GraphQL API.
@@ -413,6 +449,8 @@ export default {
   name: backendName,
   label,
   repository,
+  statusDashboardURL,
+  checkStatus,
   init,
   signIn,
   signOut,

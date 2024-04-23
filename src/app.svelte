@@ -4,9 +4,12 @@
   import { isLoading } from 'svelte-i18n';
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
+  import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
+  import UpdateNotification from '$lib/components/global/infobars/update-notification.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
+  import { backend } from '$lib/services/backends';
   import { initSiteConfig, siteURL } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user';
@@ -34,16 +37,30 @@
 
 <AppShell>
   {#if !$isLoading}
-    {#if $user && $dataLoaded}
-      <MainRouter />
-    {:else}
-      <EntrancePage />
-    {/if}
+    <div role="none" class="outer">
+      <UpdateNotification />
+      {#if $backend}
+        <BackendStatusIndicator />
+      {/if}
+      {#if $user && $dataLoaded}
+        <MainRouter />
+      {:else}
+        <EntrancePage />
+      {/if}
+    </div>
   {/if}
   <div role="status">{$announcedPageStatus}</div>
 </AppShell>
 
 <style lang="scss">
+  .outer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+
   [role='status'] {
     position: absolute;
     z-index: -1;

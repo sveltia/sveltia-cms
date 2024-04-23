@@ -57,11 +57,19 @@
  */
 
 /**
+ * @typedef {'none' | 'minor' | 'major' | 'unknown'} BackendServiceStatusIndicator
+ */
+
+/**
  * Backend service.
  * @typedef {object} BackendService
  * @property {string} name - Service name, e.g. `github`.
  * @property {string} label - Service label.
  * @property {RepositoryInfo} [repository] - Basic repository info. Git and local backends only.
+ * @property {string} [statusDashboardURL] - URL of status dashboard page of the service. Git
+ * backends only.
+ * @property {() => Promise<BackendServiceStatusIndicator>} [checkStatus] - Function to check the
+ * backend service’s status. Git backends only.
  * @property {() => void} init - Function to initialize the backend.
  * @property {(options: SignInOptions) => Promise<User | void>} signIn - Function to sign in.
  * @property {() => Promise<void>} signOut - Function to sign out.

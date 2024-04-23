@@ -56,6 +56,7 @@ export const strings = {
   collection: 'Collection',
   folder: 'Folder',
   api_key: 'API Key',
+  details: 'Details',
 
   // Common errors
   clipboard_error: 'There was an error while copying data.',
@@ -106,6 +107,14 @@ export const strings = {
   // Update notification
   update_available: 'The latest version of Sveltia CMS is available.',
   update_now: 'Update Now',
+
+  // Backend status indicator
+  backend_status: {
+    minor_incident:
+      '{service} is experiencing a minor incident. It may cause problems while using the CMS.',
+    major_incident:
+      '{service} is experiencing a major incident. You may want to wait until the problem is resolved.',
+  },
 
   // Library
   content_library: 'Content Library',

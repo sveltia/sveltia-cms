@@ -14,6 +14,37 @@ const backendName = 'github';
 const label = 'GitHub';
 /** @type {RepositoryInfo} */
 const repository = { ...repositoryProps };
+const statusDashboardURL = 'https://www.githubstatus.com/';
+const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
+
+/**
+ * Check the GitHub service status.
+ * @returns {Promise<BackendServiceStatusIndicator>} Current status.
+ * @see https://www.githubstatus.com/api
+ */
+const checkStatus = async () => {
+  try {
+    const {
+      status: { indicator },
+    } = /** @type {{ status: { indicator: string }}} */ (await sendRequest(statusCheckURL));
+
+    if (indicator === 'none') {
+      return 'none';
+    }
+
+    if (indicator === 'minor') {
+      return 'minor';
+    }
+
+    if (indicator === 'major' || indicator === 'critical') {
+      return 'major';
+    }
+  } catch {
+    //
+  }
+
+  return 'unknown';
+};
 
 /**
  * Send a request to GitHub REST/GraphQL API.
@@ -440,6 +471,8 @@ export default {
   name: backendName,
   label,
   repository,
+  statusDashboardURL,
+  checkStatus,
   init,
   signIn,
   signOut,

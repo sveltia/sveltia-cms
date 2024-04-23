@@ -73,7 +73,7 @@
     font-size: var(--sui-font-size-small);
 
     :global(button) {
-      font-size: inherit;
+      font-size: inherit !important;
     }
   }
 </style>

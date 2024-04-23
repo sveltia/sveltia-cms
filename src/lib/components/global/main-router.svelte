@@ -8,7 +8,6 @@
   import ContentsPage from '$lib/components/contents/contents-page.svelte';
   import TranslatorApiKeyDialog from '$lib/components/contents/details/editor/translator-api-key-dialog.svelte';
   import GlobalToolbar from '$lib/components/global/toolbar/global-toolbar.svelte';
-  import UpdateNotification from '$lib/components/global/updater/update-notification.svelte';
   import SearchPage from '$lib/components/search/search-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
@@ -52,22 +51,9 @@
   }}
 />
 
-<div role="none" class="outer">
-  <UpdateNotification />
-  <GlobalToolbar />
-  <svelte:component this={pages[$selectedPageName]} />
-</div>
+<GlobalToolbar />
+<svelte:component this={pages[$selectedPageName]} />
 
 <UploadAssetsDialog />
 <UploadAssetsConfirmDialog />
 <TranslatorApiKeyDialog />
-
-<style lang="scss">
-  .outer {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-  }
-</style>

@@ -56,12 +56,12 @@
 
 <style lang="scss">
   .container {
-    position: fixed;
-    inset: 32px;
+    flex: auto;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 16px;
+    padding: 32px;
 
     .inner {
       display: flex;
