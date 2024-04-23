@@ -2,6 +2,7 @@
   import { Button } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import { siteConfig } from '$lib/services/config';
   import { backend } from '$lib/services/backends';
 
   const interval = 5 * 60 * 1000; // 5 minutes
@@ -17,15 +18,12 @@
       return;
     }
 
-    status = await $backend?.checkStatus();
-
-    if (status === 'unavailable') {
-      window.clearInterval(timer);
-    }
+    status = await $backend.checkStatus();
   };
 
   onMount(() => {
-    if (!$backend?.checkStatus) {
+    // Cannot get the status of the local backend or a self-hosted Git instance
+    if (!$backend?.checkStatus || !!$siteConfig?.backend.api_root) {
       return void 0;
     }
 

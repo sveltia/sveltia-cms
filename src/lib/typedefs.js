@@ -58,7 +58,7 @@
 
 /**
  * The current status of a Git backend service.
- * @typedef {'none' | 'minor' | 'major' | 'unknown' | 'unavailable'} BackendServiceStatus
+ * @typedef {'none' | 'minor' | 'major' | 'unknown'} BackendServiceStatus
  */
 
 /**

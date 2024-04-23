@@ -23,13 +23,6 @@ const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
  * @see https://www.githubstatus.com/api
  */
 const checkStatus = async () => {
-  const { api_root: apiRoot } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
-
-  if (apiRoot) {
-    // Cannot get the status of a self-hosted instance (Enterprise Server)
-    return 'unavailable';
-  }
-
   try {
     const {
       status: { indicator },
