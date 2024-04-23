@@ -12,10 +12,6 @@
    * Check if an update is available.
    */
   const checkForUpdates = async () => {
-    if (import.meta.env.DEV) {
-      return;
-    }
-
     try {
       const response = await fetch('https://unpkg.com/@sveltia/cms/package.json');
 
@@ -34,6 +30,14 @@
   };
 
   onMount(() => {
+    // Enable update checking only if the script is installed on the site via UNPKG
+    if (
+      import.meta.env.DEV ||
+      !document.querySelector('script[src^="https://unpkg.com/@sveltia/cms"]')
+    ) {
+      return void 0;
+    }
+
     checkForUpdates();
 
     timer = window.setInterval(() => {

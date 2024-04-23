@@ -21,6 +21,10 @@
   };
 
   onMount(() => {
+    if (!$backend?.checkStatus) {
+      return void 0;
+    }
+
     checkStatus();
 
     timer = window.setInterval(() => {
