@@ -2,16 +2,16 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
 
+import { getHash } from '@sveltia/utils/crypto';
+import { readAsText } from '@sveltia/utils/file';
+import IndexedDB from '@sveltia/utils/indexed-db';
+import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
 import { repositoryProps } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
-import { getHash } from '$lib/services/utils/crypto';
-import { readAsText } from '$lib/services/utils/files';
-import IndexedDB from '$lib/services/utils/indexeddb';
-import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 
 const backendName = 'local';
 const label = 'Local Repository';

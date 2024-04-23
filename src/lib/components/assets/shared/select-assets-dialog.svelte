@@ -1,5 +1,6 @@
 <script>
   import { Dialog, Listbox, Option, OptionGroup, SearchBar, TextInput } from '@sveltia/ui';
+  import { generateUUID } from '@sveltia/utils/crypto';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
@@ -15,7 +16,6 @@
     allStockPhotoServices,
   } from '$lib/services/integrations/media-libraries';
   import { prefs } from '$lib/services/prefs';
-  import { generateUUID } from '$lib/services/utils/crypto';
 
   export let open = false;
   /**

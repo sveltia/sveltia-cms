@@ -1,3 +1,5 @@
+import { getHash } from '@sveltia/utils/crypto';
+import { escapeRegExp } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import {
   allAssetFolders,
@@ -8,9 +10,7 @@ import {
 } from '$lib/services/assets';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
-import { getHash } from '$lib/services/utils/crypto';
-import { renameIfNeeded } from '$lib/services/utils/files';
-import { escapeRegExp } from '$lib/services/utils/strings';
+import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**
  * @type {import('svelte/store').Writable<UpdatesToastState>}

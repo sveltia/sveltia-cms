@@ -4,7 +4,7 @@
   @see https://decapcms.org/docs/widgets/#string
 -->
 <script>
-  import { isURL } from '@sveltia/ui';
+  import { isURL } from '@sveltia/utils/string';
 
   /**
    * @type {LocaleCode}

@@ -1,7 +1,7 @@
+import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
+import LocalStorage from '@sveltia/utils/local-storage';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
-import { generateRandomId, generateUUID, getHash } from '$lib/services/utils/crypto';
-import LocalStorage from '$lib/services/utils/local-storage';
 
 export const inAuthPopup = writable(false);
 

@@ -1,10 +1,10 @@
+import { stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { getI18nConfig } from '$lib/services/contents/i18n';
-import { stripSlashes } from '$lib/services/utils/strings';
 
 /**
  * Regular expression to match `![alt](src "title")`.

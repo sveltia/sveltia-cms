@@ -1,9 +1,9 @@
+import LocalStorage from '@sveltia/utils/local-storage';
+import { isObject } from '@sveltia/utils/object';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
-import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
-import LocalStorage from '$lib/services/utils/local-storage';
-import { isObject } from '$lib/services/utils/misc';
+import { backend, backendName } from '$lib/services/backends';
 
 /**
  * @type {import('svelte/store').Writable<User | null | undefined>}

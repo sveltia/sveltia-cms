@@ -1,7 +1,7 @@
 <script>
   import { Icon } from '@sveltia/ui';
+  import { waitForVisibility } from '@sveltia/utils/element';
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets';
-  import { waitForVisibility } from '$lib/services/utils/misc';
 
   /**
    * Asset type.

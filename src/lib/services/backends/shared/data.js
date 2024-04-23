@@ -1,7 +1,7 @@
+import IndexedDB from '@sveltia/utils/indexed-db';
 import { allAssets } from '$lib/services/assets';
 import { allEntries, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
-import IndexedDB from '$lib/services/utils/indexeddb';
 
 /** @type {RepositoryInfo} */
 export const repositoryProps = {

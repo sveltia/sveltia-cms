@@ -1,10 +1,10 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import { goto } from '$lib/services/app/navigation';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
-  import { sleep } from '$lib/services/utils/misc';
 </script>
 
 <MenuButton

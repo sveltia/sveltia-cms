@@ -1,7 +1,7 @@
+import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten, unflatten } from 'flat';
 import { getEntriesByCollection } from '$lib/services/contents';
 import { getFieldConfig } from '$lib/services/contents/entry';
-import { escapeRegExp } from '$lib/services/utils/strings';
 
 /**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.

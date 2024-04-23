@@ -1,4 +1,4 @@
-import { isObject } from '$lib/services/utils/misc';
+import { isObject } from '@sveltia/utils/object';
 
 /**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other

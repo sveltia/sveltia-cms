@@ -1,14 +1,15 @@
 <script>
-  import { Divider, Icon, Menu, MenuButton, MenuItem, Spacer, getRandomId } from '@sveltia/ui';
+  import { Divider, Icon, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
+  import { generateElementId } from '@sveltia/utils/element';
+  import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
-  import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
-  import { editors } from '$lib/components/contents/details/widgets';
-  import { entryDraft, revertChanges } from '$lib/services/contents/editor';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
-  import { escapeRegExp } from '$lib/services/utils/strings';
+  import { entryDraft, revertChanges } from '$lib/services/contents/editor';
+  import { editors } from '$lib/components/contents/details/widgets';
+  import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
 
   /**
    * @type {LocaleCode}
@@ -23,7 +24,7 @@
    */
   export let fieldConfig;
 
-  const fieldId = getRandomId('field');
+  const fieldId = generateElementId('field');
 
   /**
    * Parse the given string as Markdown and sanitize the result to only allow certain tags.

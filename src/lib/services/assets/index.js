@@ -1,10 +1,11 @@
+import { isTextFileType } from '@sveltia/utils/file';
+import IndexedDB from '@sveltia/utils/indexed-db';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
-import { isTextFileType, resolvePath } from '$lib/services/utils/files';
-import IndexedDB from '$lib/services/utils/indexeddb';
+import { resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
 export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];

@@ -1,24 +1,24 @@
+import { getDateTimeParts } from '@sveltia/utils/datetime';
+import LocalStorage from '@sveltia/utils/local-storage';
+import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
+import { prefs } from '$lib/services/prefs';
+import { applyTemplateFilter } from '$lib/services/contents/slug';
+import {
+  getFieldConfig,
+  getFieldDisplayValue,
+  getPropertyValue,
+} from '$lib/services/contents/entry';
+import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
 import {
   allEntries,
   getEntriesByCollection,
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
-import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor';
-import {
-  getFieldConfig,
-  getFieldDisplayValue,
-  getPropertyValue,
-} from '$lib/services/contents/entry';
-import { applyTemplateFilter } from '$lib/services/contents/slug';
-import { prefs } from '$lib/services/prefs';
-import { getDateTimeParts } from '$lib/services/utils/datetime';
-import LocalStorage from '$lib/services/utils/local-storage';
-import { stripSlashes } from '$lib/services/utils/strings';
 
 const storageKey = 'sveltia-cms.contents-view';
 /**

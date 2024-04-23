@@ -4,8 +4,8 @@
   @see https://decapcms.org/docs/widgets/#select
 -->
 <script>
+  import { isObjectArray } from '@sveltia/utils/object';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
-  import { isObjectArray } from '$lib/services/utils/misc';
 
   /**
    * @type {LocaleCode}

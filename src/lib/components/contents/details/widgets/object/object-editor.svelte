@@ -5,6 +5,8 @@
 -->
 <script>
   import { Group } from '@sveltia/ui';
+  import { generateUUID } from '@sveltia/utils/crypto';
+  import { waitForVisibility } from '@sveltia/utils/element';
   import { onMount, tick } from 'svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
@@ -18,8 +20,6 @@
   } from '$lib/services/contents/editor';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
-  import { generateUUID } from '$lib/services/utils/crypto';
-  import { waitForVisibility } from '$lib/services/utils/misc';
 
   /**
    * @type {LocaleCode}

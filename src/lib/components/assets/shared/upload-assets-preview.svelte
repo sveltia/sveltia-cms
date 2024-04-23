@@ -2,7 +2,7 @@
   import { Button, Icon } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
   import Image from '$lib/components/common/image.svelte';
-  import { formatSize } from '$lib/services/utils/files';
+  import { formatSize } from '$lib/services/utils/file';
 
   /**
    * @type {File[]}

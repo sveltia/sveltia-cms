@@ -1,5 +1,5 @@
-import { isObjectArray } from '$lib/services/utils/misc';
-import { escapeRegExp } from '$lib/services/utils/strings';
+import { isObjectArray } from '@sveltia/utils/object';
+import { escapeRegExp } from '@sveltia/utils/string';
 
 /**
  * @type {Map<string, any | any[]>}

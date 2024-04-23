@@ -1,5 +1,6 @@
 <script>
-  import { Alert, Group, Toast, sleep } from '@sveltia/ui';
+  import { Alert, Group, Toast } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';

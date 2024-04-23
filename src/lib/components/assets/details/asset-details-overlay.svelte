@@ -1,5 +1,6 @@
 <script>
   import { Group } from '@sveltia/ui';
+  import { isTextFileType } from '@sveltia/utils/file';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
@@ -7,7 +8,6 @@
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import { getAssetBlob, overlaidAsset } from '$lib/services/assets';
-  import { isTextFileType } from '$lib/services/utils/files';
 
   /**
    * A reference to the wrapper element.

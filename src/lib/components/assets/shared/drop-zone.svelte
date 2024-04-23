@@ -1,10 +1,10 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
+  import { scanFiles } from '@sveltia/utils/file';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import { scanFiles } from '$lib/services/utils/files';
+  import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
 
   /**
    * @type {string | undefined}

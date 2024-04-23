@@ -1,4 +1,5 @@
 <script>
+  import { escapeRegExp } from '@sveltia/utils/string';
   import { previews } from '$lib/components/contents/details/widgets';
   import {
     entryDraft,
@@ -6,7 +7,6 @@
     syncExpanderStates,
   } from '$lib/services/contents/editor';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
-  import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
    * @type {LocaleCode}

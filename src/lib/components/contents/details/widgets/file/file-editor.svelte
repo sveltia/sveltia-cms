@@ -6,6 +6,7 @@
 -->
 <script>
   import { AlertDialog, Button, ConfirmationDialog, TextArea } from '@sveltia/ui';
+  import { getDataURL } from '@sveltia/utils/file';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -13,7 +14,7 @@
   import Image from '$lib/components/common/image.svelte';
   import { getAssetPublicURL, getMediaFieldURL } from '$lib/services/assets';
   import { entryDraft } from '$lib/services/contents/editor';
-  import { formatSize, getDataURL } from '$lib/services/utils/files';
+  import { formatSize } from '$lib/services/utils/file';
 
   /**
    * @type {LocaleCode}

@@ -1,9 +1,9 @@
 <script>
   import { Alert, Icon, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
+  import { isTextFileType } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
-  import { isTextFileType } from '$lib/services/utils/files';
   import { convertImage } from '$lib/services/utils/media';
+  import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
 
   /**
    * @type {Asset[]}

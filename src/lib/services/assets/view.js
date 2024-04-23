@@ -1,6 +1,9 @@
+import LocalStorage from '@sveltia/utils/local-storage';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
+import { prefs } from '$lib/services/prefs';
+import { siteConfig } from '$lib/services/config';
 import {
   allAssetFolders,
   allAssets,
@@ -9,9 +12,6 @@ import {
   selectedAssets,
   uploadingAssets,
 } from '$lib/services/assets';
-import { siteConfig } from '$lib/services/config';
-import { prefs } from '$lib/services/prefs';
-import LocalStorage from '$lib/services/utils/local-storage';
 
 const storageKey = 'sveltia-cms.assets-view';
 

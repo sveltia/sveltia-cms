@@ -4,12 +4,12 @@
   @see https://decapcms.org/docs/widgets/#list
 -->
 <script>
+  import { waitForVisibility } from '@sveltia/utils/element';
+  import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/editor';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
-  import { waitForVisibility } from '$lib/services/utils/misc';
-  import { escapeRegExp } from '$lib/services/utils/strings';
 
   /**
    * @type {LocaleCode}

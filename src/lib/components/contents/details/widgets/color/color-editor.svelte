@@ -5,7 +5,8 @@
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
-  import { Button, Icon, Slider, TextInput, getRandomId } from '@sveltia/ui';
+  import { Button, Icon, Slider, TextInput } from '@sveltia/ui';
+  import { generateElementId } from '@sveltia/utils/element';
   import { _ } from 'svelte-i18n';
 
   /**
@@ -54,7 +55,7 @@
     enableAlpha = false,
   } = fieldConfig);
 
-  const id = getRandomId('color');
+  const id = generateElementId('color');
   let inputValue = '';
   let inputAlphaValue = 255;
 

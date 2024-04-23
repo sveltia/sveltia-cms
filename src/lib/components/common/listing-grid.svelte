@@ -4,7 +4,7 @@
 -->
 <script>
   import { Grid } from '@sveltia/ui';
-  import { waitForVisibility } from '$lib/services/utils/misc';
+  import { waitForVisibility } from '@sveltia/utils/element';
 
   /**
    * View type.

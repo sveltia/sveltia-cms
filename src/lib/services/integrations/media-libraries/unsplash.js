@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
 
+import { sleep } from '@sveltia/utils/misc';
 import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import { sleep } from '$lib/services/utils/misc';
 
 /**
  * @see https://unsplash.com/documentation#supported-languages

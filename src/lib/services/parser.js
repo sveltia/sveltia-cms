@@ -1,12 +1,12 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
+import { isObject } from '@sveltia/utils/object';
+import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { allAssetFolders, getAssetKind } from '$lib/services/assets';
 import { allEntryFolders, getCollection } from '$lib/services/contents';
 import { normalizeSlug } from '$lib/services/contents/slug';
-import { isObject } from '$lib/services/utils/misc';
-import { escapeRegExp, stripSlashes } from '$lib/services/utils/strings';
 import TOML from '$lib/services/utils/toml';
 
 /**

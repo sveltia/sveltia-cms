@@ -2,6 +2,10 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-continue */
 
+import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
+import { getDateTimeParts } from '@sveltia/utils/datetime';
+import LocalStorage from '@sveltia/utils/local-storage';
+import { escapeRegExp, stripTags } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten, unflatten } from 'flat';
 import { get, writable } from 'svelte/store';
@@ -16,11 +20,7 @@ import { translator } from '$lib/services/integrations/translators';
 import { formatEntryFile, getFileExtension } from '$lib/services/parser';
 import { prefs } from '$lib/services/prefs';
 import { user } from '$lib/services/user';
-import { generateRandomId, generateUUID, getHash } from '$lib/services/utils/crypto';
-import { getDateTimeParts } from '$lib/services/utils/datetime';
-import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/files';
-import LocalStorage from '$lib/services/utils/local-storage';
-import { escapeRegExp, stripTags } from '$lib/services/utils/strings';
+import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/file';
 
 const storageKey = 'sveltia-cms.entry-view';
 

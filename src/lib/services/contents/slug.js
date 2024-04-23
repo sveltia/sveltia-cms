@@ -1,12 +1,12 @@
+import { generateUUID } from '@sveltia/utils/crypto';
+import { getDateTimeParts } from '@sveltia/utils/datetime';
+import { truncate } from '@sveltia/utils/string';
 import moment from 'moment';
 import { get } from 'svelte/store';
-import { siteConfig } from '$lib/services/config';
-import { getEntriesByCollection } from '$lib/services/contents';
+import { renameIfNeeded } from '$lib/services/utils/file';
 import { getFieldConfig } from '$lib/services/contents/entry';
-import { generateUUID } from '$lib/services/utils/crypto';
-import { getDateTimeParts } from '$lib/services/utils/datetime';
-import { renameIfNeeded } from '$lib/services/utils/files';
-import { truncate } from '$lib/services/utils/strings';
+import { getEntriesByCollection } from '$lib/services/contents';
+import { siteConfig } from '$lib/services/config';
 
 /**
  * Transform slug template.

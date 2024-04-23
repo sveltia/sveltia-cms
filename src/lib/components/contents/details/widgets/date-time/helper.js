@@ -1,5 +1,5 @@
+import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
-import { getDateTimeParts } from '$lib/services/utils/datetime';
 
 /**
  * Get the current value given the input value.

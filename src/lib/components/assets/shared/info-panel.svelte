@@ -6,7 +6,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { getAssetDetails } from '$lib/services/assets';
   import { getCollection } from '$lib/services/contents';
-  import { formatSize } from '$lib/services/utils/files';
+  import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media';
 
   /**

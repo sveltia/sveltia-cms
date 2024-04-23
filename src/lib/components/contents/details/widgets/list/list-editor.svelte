@@ -5,23 +5,23 @@
 -->
 <script>
   import { Button, Group, Icon, Spacer, TextInput } from '@sveltia/ui';
+  import { generateUUID } from '@sveltia/utils/crypto';
+  import { waitForVisibility } from '@sveltia/utils/element';
+  import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
-  import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
-  import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
+  import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import {
     entryDraft,
     getDefaultValues,
     syncExpanderStates,
     updateListField,
   } from '$lib/services/contents/editor';
-  import { getFieldDisplayValue } from '$lib/services/contents/entry';
-  import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
-  import { generateUUID } from '$lib/services/utils/crypto';
-  import { waitForVisibility } from '$lib/services/utils/misc';
-  import { escapeRegExp } from '$lib/services/utils/strings';
+  import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
+  import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
+  import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
 
   /**
    * @type {LocaleCode}

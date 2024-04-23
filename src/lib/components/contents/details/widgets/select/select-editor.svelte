@@ -5,9 +5,9 @@
 -->
 <script>
   import { Button, Icon, Option, Select } from '@sveltia/ui';
+  import { isObject } from '@sveltia/utils/object';
   import { _ } from 'svelte-i18n';
   import { entryDraft, updateListField } from '$lib/services/contents/editor';
-  import { isObject } from '$lib/services/utils/misc';
 
   /**
    * @type {LocaleCode}

@@ -1,13 +1,13 @@
+import { isObject } from '@sveltia/utils/object';
+import { stripSlashes } from '@sveltia/utils/string';
 import merge from 'deepmerge';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
-import { allAssetFolders } from '$lib/services/assets';
-import { allBackendServices } from '$lib/services/backends';
-import { allEntryFolders, getCollection, selectedCollection } from '$lib/services/contents';
 import { prefs } from '$lib/services/prefs';
-import { isObject } from '$lib/services/utils/misc';
-import { stripSlashes } from '$lib/services/utils/strings';
+import { allEntryFolders, getCollection, selectedCollection } from '$lib/services/contents';
+import { allBackendServices } from '$lib/services/backends';
+import { allAssetFolders } from '$lib/services/assets';
 
 const { DEV, VITE_SITE_URL } = import.meta.env;
 

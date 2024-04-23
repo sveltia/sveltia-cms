@@ -1,3 +1,5 @@
+import { getBase64 } from '@sveltia/utils/file';
+import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import {
@@ -9,9 +11,7 @@ import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles, repositoryProps } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { user } from '$lib/services/user';
-import { getBase64 } from '$lib/services/utils/files';
 import { sendRequest } from '$lib/services/utils/networking';
-import { stripSlashes } from '$lib/services/utils/strings';
 
 const backendName = 'gitlab';
 const label = 'GitLab';

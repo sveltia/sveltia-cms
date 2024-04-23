@@ -1,7 +1,7 @@
+import { isObject } from '@sveltia/utils/object';
 import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
-import { isObject } from '$lib/services/utils/misc';
 
 /**
  * The default, normalized i18n configuration with no locales defined.
