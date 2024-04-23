@@ -6,7 +6,7 @@
 
   const interval = 5 * 60 * 1000; // 5 minutes
   let timer = 0;
-  /** @type {BackendServiceStatusIndicator} */
+  /** @type {BackendServiceStatus} */
   let status = 'none';
 
   /**
@@ -18,6 +18,10 @@
     }
 
     status = await $backend?.checkStatus();
+
+    if (status === 'unavailable') {
+      window.clearInterval(timer);
+    }
   };
 
   onMount(() => {

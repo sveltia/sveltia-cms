@@ -22,11 +22,17 @@ const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc650
 
 /**
  * Check the GitLab service status.
- * @returns {Promise<BackendServiceStatusIndicator>} Current status.
- * @see https://status.gitlab.com/
+ * @returns {Promise<BackendServiceStatus>} Current status.
  * @see https://kb.status.io/developers/public-status-api/
  */
 const checkStatus = async () => {
+  const { api_root: apiRoot } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+
+  if (apiRoot) {
+    // Cannot get the status of a self-hosted instance
+    return 'unavailable';
+  }
+
   try {
     const {
       result: {
