@@ -111,9 +111,9 @@ export const strings = {
   // Backend status indicator
   backend_status: {
     minor_incident:
-      '{service} で軽微なインシデントが発生しています。CMS を使用中に問題が発生する可能性があります。',
+      '{service} で軽微な障害が発生しています。ワークフローに潜在的な影響が及ぶ可能性があります。',
     major_incident:
-      '{service} で重大なインシデントが発生しています。問題が解決するまで待った方が良いかもしれません。',
+      '{service} で重大な障害が発生しています。状況が改善されるまで待った方が良いでしょう。',
   },
 
   // Library

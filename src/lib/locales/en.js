@@ -111,9 +111,9 @@ export const strings = {
   // Backend status indicator
   backend_status: {
     minor_incident:
-      '{service} is experiencing a minor incident. It may cause problems while using the CMS.',
+      '{service} is experiencing a minor incident. Your workflow may be potentially affected.',
     major_incident:
-      '{service} is experiencing a major incident. You may want to wait until the problem is resolved.',
+      '{service} is experiencing a major incident. You may want to wait until the situation has improved.',
   },
 
   // Library
