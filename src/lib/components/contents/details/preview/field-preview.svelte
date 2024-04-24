@@ -74,13 +74,10 @@
         }
 
         targetField.classList.add('highlight');
-        targetField.addEventListener(
-          'animationend',
-          () => {
-            targetField.classList.remove('highlight');
-          },
-          { once: true },
-        );
+
+        window.setTimeout(() => {
+          targetField.classList.remove('highlight');
+        }, 1500);
       }
     });
   };

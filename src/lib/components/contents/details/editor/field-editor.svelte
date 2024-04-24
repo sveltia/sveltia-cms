@@ -283,8 +283,21 @@
       max-width: 768px;
     }
 
+    &:global(.highlight) {
+      @media (prefers-reduced-motion) {
+        animation: none;
+        outline-width: 4px !important;
+        outline-color: var(--sui-primary-accent-color-translucent);
+        outline-offset: -4px;
+      }
+    }
+
     &:global(.highlight > *) {
       animation: highlight 750ms 2;
+
+      @media (prefers-reduced-motion) {
+        animation: none;
+      }
     }
   }
 
