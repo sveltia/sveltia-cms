@@ -12,8 +12,8 @@ importers:
         specifier: ^0.12.1
         version: 0.12.1
       '@sveltia/utils':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.1
+        version: 0.1.1
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1
@@ -845,8 +845,8 @@ packages:
   '@sveltia/ui@0.12.1':
     resolution: {integrity: sha512-M4P1niqZppBZhnHsLMNY2bjHXbGixaNag9PT3TZmQI7GOaYZdgnCRFjSkqmbMOpkhW699sxlgydhz0/gegfKOA==}
 
-  '@sveltia/utils@0.1.0':
-    resolution: {integrity: sha512-N6/xpyrvO1b1RyPpYkKG23L+OFXBkqegVggtIjO2UBpPOeU/TFm+L5Mq5KSeHbTh6OBjHyPCDyi0NQM6j5/1SQ==}
+  '@sveltia/utils@0.1.1':
+    resolution: {integrity: sha512-eOJdqih3K6P/uXDU9SvQXhLGT8CxQG4rtC/N3YT4PVk1sQ/L59x5y4pnT83qKy+gpVvqq58LAMfFE+YMnTPJ/Q==}
 
   '@types/dompurify@3.0.5':
     resolution: {integrity: sha512-1Wg0g3BtQF7sSb27fJQAKck1HECM6zV1EB66j8JH9i3LCjYabJa0FSdiSgsD5K/RbrsR0SiraKacLB+T8ZVYAg==}
@@ -3701,11 +3701,11 @@ snapshots:
       '@lexical/selection': 0.14.5
       '@lexical/table': 0.14.5
       '@lexical/utils': 0.14.5
-      '@sveltia/utils': 0.1.0
+      '@sveltia/utils': 0.1.1
       lexical: 0.14.5
       svelte: 4.2.15
 
-  '@sveltia/utils@0.1.0':
+  '@sveltia/utils@0.1.1':
     dependencies:
       base32-encode: 2.0.0
 

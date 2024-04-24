@@ -1,5 +1,5 @@
 import { isTextFileType } from '@sveltia/utils/file';
-import IndexedDB from '@sveltia/utils/indexed-db';
+import { IndexedDB } from '@sveltia/utils/storage';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';

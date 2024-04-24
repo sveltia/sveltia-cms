@@ -1,4 +1,4 @@
-import LocalStorage from '@sveltia/utils/local-storage';
+import { LocalStorage } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { locale as appLocale, locales as appLocales } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';

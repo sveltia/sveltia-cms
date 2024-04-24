@@ -4,7 +4,7 @@
 
 import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import LocalStorage from '@sveltia/utils/local-storage';
+import { LocalStorage } from '@sveltia/utils/storage';
 import { escapeRegExp, stripTags } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten, unflatten } from 'flat';

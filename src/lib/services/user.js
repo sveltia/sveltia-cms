@@ -1,5 +1,5 @@
-import LocalStorage from '@sveltia/utils/local-storage';
 import { isObject } from '@sveltia/utils/object';
+import { LocalStorage } from '@sveltia/utils/storage';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';

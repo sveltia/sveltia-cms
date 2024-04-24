@@ -1,5 +1,5 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import LocalStorage from '@sveltia/utils/local-storage';
+import { LocalStorage } from '@sveltia/utils/storage';
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten } from 'flat';

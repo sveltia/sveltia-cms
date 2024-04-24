@@ -1,5 +1,5 @@
 import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
-import LocalStorage from '@sveltia/utils/local-storage';
+import { LocalStorage } from '@sveltia/utils/storage';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 

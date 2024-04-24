@@ -4,7 +4,7 @@
 
 import { getHash } from '@sveltia/utils/crypto';
 import { readAsText } from '@sveltia/utils/file';
-import IndexedDB from '@sveltia/utils/indexed-db';
+import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';

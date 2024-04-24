@@ -1,4 +1,4 @@
-import IndexedDB from '@sveltia/utils/indexed-db';
+import { IndexedDB } from '@sveltia/utils/storage';
 import { allAssets } from '$lib/services/assets';
 import { allEntries, dataLoaded } from '$lib/services/contents';
 import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
