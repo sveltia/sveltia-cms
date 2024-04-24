@@ -100,10 +100,11 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
 - You can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
-- The GitLab backend comes with background service status checking, just like GitHub.
+- The GitLab backend support comes with background service status checking, just like GitHub.
 
 ### Better i18n support
 
+- Sveltia CMS was built with a multilingual architecture from the very beginning. You can expect top-notch i18n support.
 - You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
 - Fields in non-default locales are validated as expected[^13].
 - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
@@ -111,7 +112,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
 - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
 - Removes the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7].
-- Raises a validation error instead of an internal error if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
+- Raises a validation error instead of failing silently if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
 - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
@@ -283,11 +284,13 @@ That’s it! You can open `https://[hostname]/admin/` as before to start editing
 
 That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#working-with-a-local-git-repository) for how.
 
-For advanced users, we have also made the bundle available as an [npm package](https://www.npmjs.com/package/@sveltia/cms). You can install it by running `npm i @sveltia/cms` or `pnpm add @sveltia/cms` on your project. The [manual initialization](https://decapcms.org/docs/manual-initialization/) flow with the `init` method is the same as for Netlify/Decap CMS. Make sure to keep the dependency up to date!
+For advanced users, we have also made the bundle available as an [npm package](https://www.npmjs.com/package/@sveltia/cms). You can install it by running `npm i @sveltia/cms` or `pnpm add @sveltia/cms` on your project. The [manual initialization](https://decapcms.org/docs/manual-initialization/) flow with the `init` method is the same as for Netlify/Decap CMS.
 
 ### Updates
 
-Updating Sveltia CMS is transparent, unless you include a specific version in the `<script>` source URL. Whenever you (re)load the CMS, the latest version will be served via [UNPKG](https://unpkg.com/). The CMS also periodically checks for updates and notifies you when a new version is available. After the product reaches GA, you could use a semantic version range (`^1.0.0`) like Netlify/Decap CMS.
+Updating Sveltia CMS is transparent, unless you include a specific version in the `<script>` source URL or use the npm package. Whenever you (re)load the CMS, the latest version will be served via [UNPKG](https://unpkg.com/). The CMS also periodically checks for updates and notifies you when a new version is available. After the product reaches GA, you could use a semantic version range (`^1.0.0`) like Netlify/Decap CMS.
+
+If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
 
 ## Tips & tricks
 
@@ -297,7 +300,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Working with a local Git repository
 
-You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](https://decapcms.org/docs/working-with-a-local-git-repository/), but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
+You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](https://decapcms.org/docs/working-with-a-local-git-repository/), but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and a proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
