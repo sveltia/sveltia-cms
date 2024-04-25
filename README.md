@@ -24,7 +24,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 **Sveltia CMS is still in beta**, so please be careful when trying it out.
 
-While we are fixing reported bugs as fast as we can, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
+While we are fixing reported bugs as fast as we can, usually within 48 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
@@ -57,10 +57,9 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than bloated Netlify CMS (1.5 MB) and Decap CMS (1.8 MB)[^57]. Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
-- A list of repository files is cached locally for faster startup and bandwidth savings.
+- Using caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
-- Using caching and lazy loading techniques to improve performance.
-- The forthcoming [Svelte 5](https://svelte.dev/blog/runes) upgrade is expected to provide a further boost in performance, including accelerated speed and a reduced bundle size.
+- The upcoming [Svelte 5](https://svelte.dev/blog/runes) upgrade is anticipated to deliver a further boost in performance, including accelerated speed and reduced code size.
 
 ### Better productivity
 
@@ -204,7 +203,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ## Compatibility
 
-We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS before the 1.0 release, so that more users can seamlessly switch to our modern, powerful alternative. However, some features will be omitted due to performance and other factors.
+We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS, so that more users can seamlessly switch to our modern, powerful alternative. However, some features will be omitted due to deprecations and other factors.
 
 ### Current limitations
 
@@ -231,10 +230,10 @@ The table below shows the current limitations of Sveltia CMS, that are expected 
 
 ### Features not to be implemented
 
-- The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609).
+- The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported due to performance limitations. We may implement a performant Git Gateway alternative in the future.
 - The Netlify Identity Widget will not be supported as it’s not useful without Git Gateway.
-- The deprecated Netlify Large Media service will not be supported.
+- The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
 - Remark plugins will not be supported as they are not compatible with our Lexical-based rich text editor.
 
@@ -242,9 +241,9 @@ The table below shows the current limitations of Sveltia CMS, that are expected 
 
 ### Before the 1.0 release
 
+- Enhanced compatibility with Netlify/Decap CMS (see above for the status)
+- Automation test coverage (Vitest + Playwright)
 - [Svelte 5](https://svelte.dev/blog/runes) migration
-- Automation test coverage
-- Further Netlify/Decap CMS compatibility, including Editorial Workflow
 - Localization
 - Documentation
 - Marketing site
@@ -521,6 +520,8 @@ Want to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.
 ## Contributions
 
 Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new) so we can make it better for everyone. Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources and the upcoming Svelte 5 migration. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
+
+Tips are always welcome! The project hasn’t set up a sponsorship program, but maintainer [@kyoshino](https://github.com/kyoshino) has a [PayPal account](https://paypal.me/kohei).
 
 ## Related links
 
