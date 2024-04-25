@@ -150,6 +150,9 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing[^44].
   - You can enter spaces in a simple text-based List field[^50].
   - You can preview variable types without having to register a preview template[^42].
+- Markdown
+  - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves several problems found in Netlify/Decap CMS, including fatal application crashes[^53].
+  - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
 - Object
   - Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
   - An optional Object field can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
@@ -160,19 +163,16 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - String
   - Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
-- Markdown
-  - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves several problems found in Netlify/Decap CMS, including fatal application crashes[^53].
-  - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `[raw, rich_text]` to the field configuration.
 - Boolean, Number and String
   - Supports the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
-- List and Object
-  - The `summary` is displayed correctly when it refers to a Relation field[^36].
 - File and Image
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
     - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More services will be added later.
+- List and Object
+  - The `summary` is displayed correctly when it refers to a Relation field[^36].
 - String, Text and Markdown
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - New widgets
