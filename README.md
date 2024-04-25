@@ -204,29 +204,35 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ## Compatibility
 
-We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS before the 1.0 release, so that more users can seamlessly switch to our modern, powerful alternative. However, some features will be omitted due to performance and other factors. The table below shows the current limitations of Sveltia CMS:
+We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS before the 1.0 release, so that more users can seamlessly switch to our modern, powerful alternative. However, some features will be omitted due to performance and other factors. The table below shows the current limitations of Sveltia CMS, that are expected to be resolved before GA:
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
-| Backends | Currently only GitHub and GitLab are available. We’ll add Test and maybe Azure DevOps, but Bitbucket, Gitea/Forgejo and Git Gateway will not be supported due to performance limitations. We may implement a performant Git Gateway alternative in the future. |
-| Configuration | UI Locales are currently only available in English and Japanese. Comprehensive config validation is not yet implemented. |
-| Media Libraries | We will add support for Cloudinary and Uploadcare soon. Deprecated Netlify Large Media will not be supported. |
+| Backends | Only GitHub and GitLab are available. We’ll add the Test backend for our demo site and see if Azure can also be supported. |
+| Configuration | UI Locales are only available in English and Japanese. Comprehensive config validation is not yet implemented. |
+| Media Libraries | Cloudinary and Uploadcare are not yet supported. |
 | Workflow | Editorial Workflow and Open Authoring are not yet supported. |
 | Content Editor | Auto-saving a draft entry is not yet implemented. |
 | Collections | Nested collections are not yet supported. |
-| Widgets | Custom widgets are not yet supported. [See below](#widget-limitations) for other limitations. |
+| Widgets | Custom widgets are not yet supported. See the table below for other limitations. |
 | Customizations | Custom previews, custom formatters and event subscriptions are not yet supported. |
-
-### Widget limitations
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | Code | Not yet supported. |
-| Date | Sveltia CMS has dropped the support for the deprecated widget following Decap CMS 3.0. Use the DateTime widget instead. |
 | DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
 | File/Image | Field-specific media folders and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not yet supported. |
-| Markdown | Editor components are not yet supported. Remark plugins will not be supported as they are not compatible with our Lexical-based rich text editor. |
+| Markdown | Editor components are not yet supported. |
+
+### Features not to be implemented
+
+- The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609).
+- The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported due to performance limitations. We may implement a performant Git Gateway alternative in the future.
+- The Netlify Identity Widget will not be supported as it’s not useful without Git Gateway.
+- The deprecated Netlify Large Media service will not be supported.
+- Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
+- Remark plugins will not be supported as they are not compatible with our Lexical-based rich text editor.
 
 ## Roadmap
 
