@@ -208,7 +208,7 @@ We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap C
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
-| Backends | Only the GitHub and GitLab backends are available. We’ll add the Test backend for our demo site, but Azure, Bitbucket and Gitea are unlikely to be supported due to performance limitations. Netlify Git Gateway will not be supported for the same reason; we may implement a performant alternative sometime later. |
+| Backends | Currently only GitHub and GitLab are available. We’ll add Test and maybe Azure DevOps, but Bitbucket, Gitea/Forgejo and Git Gateway will not be supported due to performance limitations. We may implement a performant Git Gateway alternative in the future. |
 | Configuration | UI Locales are currently only available in English and Japanese. Comprehensive config validation is not yet implemented. |
 | Media Libraries | We will add support for Cloudinary and Uploadcare soon. Deprecated Netlify Large Media will not be supported. |
 | Workflow | Editorial Workflow and Open Authoring are not yet supported. |
