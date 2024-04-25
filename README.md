@@ -104,7 +104,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ### Better i18n support
 
-- Sveltia CMS was built with a multilingual architecture from the very beginning. You can expect top-notch i18n support.
+- Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect top-notch i18n support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla.
 - You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
 - Fields in non-default locales are validated as expected[^13].
 - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
