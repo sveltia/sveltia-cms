@@ -162,6 +162,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
   - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
 - Markdown
   - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves several problems found in Netlify/Decap CMS, including fatal application crashes[^53].
+  - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `[raw, rich_text]` to the field configuration.
 - Boolean, Number and String
   - Supports the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
 - List and Object
@@ -580,3 +581,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^55]: Netlify/Decap CMS [#4480](https://github.com/decaporg/decap-cms/issues/4480), [#6353](https://github.com/decaporg/decap-cms/issues/6353)
 [^56]: Netlify/Decap CMS [#6515](https://github.com/decaporg/decap-cms/issues/6515)
 [^57]: Netlify/Decap CMS [#328](https://github.com/decaporg/decap-cms/issues/328), [#3853](https://github.com/decaporg/decap-cms/issues/3853)
+[^58]: Netlify/Decap CMS [#5125](https://github.com/decaporg/decap-cms/issues/5125)
