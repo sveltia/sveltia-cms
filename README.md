@@ -60,6 +60,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - A list of repository files is cached locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
 - Using caching and lazy loading techniques to improve performance.
+- The forthcoming [Svelte 5](https://svelte.dev/blog/runes) upgrade is expected to provide a further boost in performance, including accelerated speed and a reduced bundle size.
 
 ### Better productivity
 
