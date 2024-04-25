@@ -285,7 +285,6 @@
 
     &:global(.highlight) {
       @media (prefers-reduced-motion) {
-        animation: none;
         outline-width: 4px !important;
         outline-color: var(--sui-primary-accent-color-translucent);
         outline-offset: -4px;
