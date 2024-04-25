@@ -204,7 +204,11 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 
 ## Compatibility
 
-We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS before the 1.0 release, so that more users can seamlessly switch to our modern, powerful alternative. However, some features will be omitted due to performance and other factors. The table below shows the current limitations of Sveltia CMS, that are expected to be resolved before GA:
+We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS before the 1.0 release, so that more users can seamlessly switch to our modern, powerful alternative. However, some features will be omitted due to performance and other factors.
+
+### Current limitations
+
+The table below shows the current limitations of Sveltia CMS, that are expected to be resolved before GA:
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
