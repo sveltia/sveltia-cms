@@ -7,6 +7,8 @@
   /** @type {Asset | undefined} */
   $: asset = $editingAsset;
 
+  /** @type {boolean} */
+  let open = false;
   /** @type {Blob | undefined} */
   let blob = undefined;
   /** @type {string | undefined} */
@@ -23,6 +25,7 @@
     blob = await getAssetBlob(/** @type {Asset} */ (asset));
     originalValue = await blob.text();
     currentValue = originalValue;
+    open = true;
   };
 
   /**
@@ -58,28 +61,26 @@
   }
 </script>
 
-{#if asset}
-  <Dialog
-    size="x-large"
-    title={$_('edit_x', { values: { name: asset.name } })}
-    open={true}
-    okLabel={$_('save')}
-    okDisabled={currentValue === originalValue}
-    on:ok={() => {
-      saveAsset();
-    }}
-    on:close={() => {
-      resetState();
-    }}
-  >
-    <div role="none" class="wrapper" class:wrap>
-      <TextArea bind:value={currentValue} flex />
-    </div>
-    <svelte:fragment slot="footer-extra">
-      <Switch label={$_('wrap_long_lines')} bind:checked={wrap} />
-    </svelte:fragment>
-  </Dialog>
-{/if}
+<Dialog
+  size="x-large"
+  title={$_('edit_x', { values: { name: asset?.name } })}
+  bind:open
+  okLabel={$_('save')}
+  okDisabled={currentValue === originalValue}
+  on:ok={() => {
+    saveAsset();
+  }}
+  on:close={() => {
+    resetState();
+  }}
+>
+  <div role="none" class="wrapper" class:wrap>
+    <TextArea bind:value={currentValue} flex />
+  </div>
+  <svelte:fragment slot="footer-extra">
+    <Switch label={$_('wrap_long_lines')} bind:checked={wrap} />
+  </svelte:fragment>
+</Dialog>
 
 <style lang="scss">
   .wrapper {
