@@ -64,7 +64,7 @@
   $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
   $: modified =
     isNew || !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
-  $: errorCount = Object.values(validities)
+  $: errorCount = Object.values(validities ?? {})
     .map((validity) => Object.values(validity).map(({ valid }) => !valid))
     .flat(1)
     .filter(Boolean).length;

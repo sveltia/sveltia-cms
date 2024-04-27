@@ -11,7 +11,9 @@
   import SearchPage from '$lib/components/search/search-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
+  import { showAssetOverlay } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
+  import { showContentOverlay } from '$lib/services/contents/editor';
 
   /**
    * @type {{ [key: string]: any }}
@@ -29,6 +31,9 @@
    * @todo Show Not Found page.
    */
   export const selectPage = () => {
+    $showContentOverlay = false;
+    $showAssetOverlay = false;
+
     const { path } = parseLocation();
     const [, _pageName] = path.match(`^\\/(${Object.keys(pages).join('|')})\\b`) ?? [];
 

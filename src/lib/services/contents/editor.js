@@ -25,6 +25,11 @@ import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/fil
 const storageKey = 'sveltia-cms.entry-view';
 
 /**
+ * @type {import('svelte/store').Writable<boolean>}
+ */
+export const showContentOverlay = writable(false);
+
+/**
  * @type {import('svelte/store').Writable<?EntryEditorPane>}
  */
 export const editorLeftPane = writable(null);

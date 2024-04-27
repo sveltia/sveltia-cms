@@ -18,6 +18,7 @@
     allAssets,
     overlaidAsset,
     selectedAssetFolder,
+    showAssetOverlay,
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
@@ -58,7 +59,6 @@
       // Wait for `selectedAssetFolderLabel` to be updated
       await sleep(100);
 
-      $overlaidAsset = undefined;
       $announcedPageStatus = $_(
         // eslint-disable-next-line no-nested-ternary
         count > 1
@@ -78,6 +78,7 @@
     $announcedPageStatus = $overlaidAsset
       ? $_('viewing_x_asset_details', { values: { name: $overlaidAsset.name } })
       : $_('file_not_found');
+    $showAssetOverlay = true;
   };
 
   onMount(() => {
@@ -110,10 +111,7 @@
   </Group>
 </PageContainer>
 
-{#if $overlaidAsset}
-  <AssetDetailsOverlay />
-{/if}
-
+<AssetDetailsOverlay />
 <EditAssetDialog />
 
 <Toast bind:show={$assetUpdatesToast.saved}>

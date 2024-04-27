@@ -42,10 +42,9 @@
       {#if $backend}
         <BackendStatusIndicator />
       {/if}
+      <EntrancePage />
       {#if $user && $dataLoaded}
         <MainRouter />
-      {:else}
-        <EntrancePage />
       {/if}
     </div>
   {/if}

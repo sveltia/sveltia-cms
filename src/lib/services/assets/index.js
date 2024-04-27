@@ -55,6 +55,11 @@ export const selectedAssets = writable([]);
 export const focusedAsset = writable();
 
 /**
+ * @type {import('svelte/store').Writable<boolean>}
+ */
+export const showAssetOverlay = writable(false);
+
+/**
  * Asset to be displayed in `<AssetDetailsOverlay>`.
  * @type {import('svelte/store').Writable<Asset | undefined>}
  */

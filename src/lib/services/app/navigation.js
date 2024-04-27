@@ -1,7 +1,7 @@
 import { derived, get, writable } from 'svelte/store';
-import { overlaidAsset } from '$lib/services/assets';
+import { showAssetOverlay } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
-import { entryDraft } from '$lib/services/contents/editor';
+import { showContentOverlay } from '$lib/services/contents/editor';
 
 /**
  * Whether the app has an overlay. Some elements have to be `inert` while an overlay is displayed.
@@ -9,9 +9,10 @@ import { entryDraft } from '$lib/services/contents/editor';
  * including the toast notifications and announced page title.
  * @type {import('svelte/store').Readable<boolean>}
  */
-export const hasOverlay = derived([entryDraft, overlaidAsset], ([draft, asset], set) => {
-  set(!!(draft || asset));
-});
+export const hasOverlay = derived(
+  [showContentOverlay, showAssetOverlay],
+  ([_showContentOverlay, _showAssetOverlay]) => _showContentOverlay || _showAssetOverlay,
+);
 
 /**
  * @type {import('svelte/store').Writable<string>}

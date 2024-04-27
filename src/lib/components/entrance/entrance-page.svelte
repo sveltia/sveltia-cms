@@ -14,7 +14,7 @@
   $: $announcedPageStatus = $_('welcome_to_sveltia_cms');
 </script>
 
-<div role="none" class="container">
+<div role="none" class="container" inert={$user && $dataLoaded}>
   <div role="none" class="inner">
     <img
       loading="lazy"
@@ -56,12 +56,20 @@
 
 <style lang="scss">
   .container {
+    position: fixed;
+    inset: 0;
+    z-index: 101;
     flex: auto;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 16px;
     padding: 32px;
+    transition: filter 250ms;
+
+    &[inert] {
+      filter: opacity(0);
+    }
 
     .inner {
       display: flex;

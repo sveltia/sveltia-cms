@@ -14,7 +14,7 @@
   import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
   import { getCollection, getFile, selectedCollection } from '$lib/services/contents';
   import { contentUpdatesToast } from '$lib/services/contents/data';
-  import { createDraft, entryDraft } from '$lib/services/contents/editor';
+  import { createDraft, showContentOverlay } from '$lib/services/contents/editor';
   import { formatSummary, listedEntries } from '$lib/services/contents/view';
 
   /**
@@ -38,8 +38,6 @@
     if (collection && !collection.hide && $selectedCollection !== collection) {
       $selectedCollection = collection;
     }
-
-    $entryDraft = null;
 
     if (!$selectedCollection) {
       $announcedPageStatus = $_('collection_not_found');
@@ -66,6 +64,9 @@
       return;
     }
 
+    $showContentOverlay = true;
+
+    // eslint-disable-next-line no-unreachable
     if (_fileMap) {
       // File collection
       if (_state === 'entries' && _slug) {
@@ -160,9 +161,7 @@
   </Group>
 </PageContainer>
 
-{#if $entryDraft}
-  <ContentDetailsOverlay />
-{/if}
+<ContentDetailsOverlay />
 
 <Toast bind:show={$contentUpdatesToast.saved}>
   <Alert status="success">
