@@ -30,11 +30,11 @@ While we are fixing reported bugs as fast as we can, usually within 48 hours, th
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
 - Implementing our own enhancement ideas
 
-At this point **we hope to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates!
+At this point **we hope to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
 
 ## Features
 
-We are working hard to create a **much better alternative to Netlify CMS** and Decap CMS by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
+We are working hard to create a **significantly better alternative to Netlify CMS** and Decap CMS by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Compatible with Netlify/Decap CMS
 
@@ -132,6 +132,7 @@ We are working hard to create a **much better alternative to Netlify CMS** and D
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
+- A long validation error message is displayed in full, without being hidden behind the field label[^59].
 
 ### Better data output
 
@@ -594,3 +595,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^56]: Netlify/Decap CMS [#6515](https://github.com/decaporg/decap-cms/issues/6515)
 [^57]: Netlify/Decap CMS [#328](https://github.com/decaporg/decap-cms/issues/328), [#3853](https://github.com/decaporg/decap-cms/issues/3853)
 [^58]: Netlify/Decap CMS [#5125](https://github.com/decaporg/decap-cms/issues/5125)
+[^59]: Netlify/Decap CMS [#1654](https://github.com/decaporg/decap-cms/issues/1654)
