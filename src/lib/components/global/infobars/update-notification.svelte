@@ -73,7 +73,9 @@
     gap: 8px;
     height: 32px;
     text-align: center;
-    border-bottom: 1px solid var(--sui-secondary-border-color);
+    border-bottom: 1px solid var(--sui-info-border-color);
+    color: var(--sui-info-foreground-color);
+    background-color: var(--sui-info-background-color);
     font-size: var(--sui-font-size-small);
 
     :global(button) {
