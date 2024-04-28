@@ -30,7 +30,7 @@ While we are fixing reported bugs as fast as we can, usually within 48 hours, th
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
 - Implementing our own enhancement ideas
 
-At this point **we hope to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
+At this point, **we are aiming to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
 
 ## Features
 
@@ -174,14 +174,18 @@ We are working hard to create a **significantly better alternative to Netlify CM
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More services will be added later.
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36].
-- String, Text and Markdown
+- Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
-- New widgets
+
+#### New widgets
+
+- Compute
+  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
+- UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
     - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
     - `read_only`: Whether to make the field read-only. Default: `true`.
-  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
 
 ### Better asset management
 
@@ -233,10 +237,10 @@ The table below shows the current limitations of Sveltia CMS, that are expected 
 
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported due to performance limitations. We may implement a performant Git Gateway alternative in the future.
-- The Netlify Identity Widget will not be supported as it’s not useful without Git Gateway.
+- The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
-- Remark plugins will not be supported as they are not compatible with our Lexical-based rich text editor.
+- Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
 
 ## Roadmap
 
