@@ -42,10 +42,12 @@
       {#if $backend}
         <BackendStatusIndicator />
       {/if}
-      <EntrancePage />
-      {#if $user && $dataLoaded}
-        <MainRouter />
-      {/if}
+      <div role="none" class="main">
+        <EntrancePage />
+        {#if $user && $dataLoaded}
+          <MainRouter />
+        {/if}
+      </div>
     </div>
   {/if}
   <div role="status">{$announcedPageStatus}</div>
@@ -58,6 +60,13 @@
     position: fixed;
     inset: 0;
     overflow: hidden;
+  }
+
+  .main {
+    position: relative;
+    flex: auto;
+    display: flex;
+    flex-direction: column;
   }
 
   [role='status'] {

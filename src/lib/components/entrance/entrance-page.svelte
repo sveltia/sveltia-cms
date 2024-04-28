@@ -56,7 +56,7 @@
 
 <style lang="scss">
   .container {
-    position: fixed;
+    position: absolute;
     inset: 0;
     z-index: 101;
     flex: auto;
