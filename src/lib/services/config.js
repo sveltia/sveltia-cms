@@ -60,7 +60,7 @@ const fetchSiteConfig = async () => {
   }
 
   try {
-    return YAML.parse(await response.text());
+    return YAML.parse(await response.text(), { merge: true });
   } catch (/** @type {any} */ ex) {
     throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
   }
