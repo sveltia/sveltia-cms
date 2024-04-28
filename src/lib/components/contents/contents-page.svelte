@@ -66,7 +66,6 @@
 
     $showContentOverlay = true;
 
-    // eslint-disable-next-line no-unreachable
     if (_fileMap) {
       // File collection
       if (_state === 'entries' && _slug) {
