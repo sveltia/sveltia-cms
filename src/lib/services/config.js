@@ -37,10 +37,8 @@ export const siteConfigError = writable();
  * @throws {Error} When fetching or parsing has failed.
  */
 const fetchSiteConfig = async () => {
-  const { href = './config.yml' } =
-    /** @type {HTMLAnchorElement | undefined} */ (
-      document.querySelector('link[type="text/yaml"][rel="cms-config-url"]')
-    ) ?? {};
+  const { href = './config.yml', type = 'text/yaml' } =
+    /** @type {?HTMLLinkElement} */ (document.querySelector('link[rel="cms-config-url"]')) ?? {};
 
   /** @type {Response} */
   let response;
@@ -60,6 +58,10 @@ const fetchSiteConfig = async () => {
   }
 
   try {
+    if (type === 'application/json') {
+      return response.json();
+    }
+
     return YAML.parse(await response.text(), { merge: true });
   } catch (/** @type {any} */ ex) {
     throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
