@@ -26,7 +26,7 @@
   export let thatPaneContentArea;
 
   $: ({ syncScrolling } = $entryEditorSettings);
-  $: ({ currentLocales, currentValues } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({ currentLocales = {}, currentValues = {} } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ locale, mode } = $thisPane ?? /** @type {EntryEditorPane} */ ({}));
   $: hasContent = !!currentValues[locale];
   $: labelOptions = { values: { locale: getLocaleLabel(locale) } };

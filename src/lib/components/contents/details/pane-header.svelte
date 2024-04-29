@@ -43,8 +43,14 @@
 
   $: ({ editor: { preview: showPreviewPane = true } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
-  $: ({ collection, collectionFile, currentLocales, currentValues, originalValues, validities } =
-    $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({
+    collection,
+    collectionFile,
+    currentLocales = {},
+    currentValues = {},
+    originalValues = {},
+    validities = {},
+  } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ i18nEnabled, saveAllLocales, locales, defaultLocale } =
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: isLocaleEnabled = currentLocales[$thisPane?.locale ?? ''];
