@@ -310,9 +310,17 @@ If you’ve chosen to install with npm, updating the package is your responsibil
 
 ## Tips & tricks
 
+### Migrating from Git Gateway backend
+
+Sveltia CMS does not support the Git Gateway backend (and Netlify Identity) due to performance limitations. If you don’t care about user management, you can easily migrate to the [GitHub backend](https://decapcms.org/docs/github-backend/) or [GitLab backend](https://decapcms.org/docs/gitlab-backend/). Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify still facilitates the auth flow.
+
 ### Moving your site from Netlify to another hosting service
 
 You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
+
+### Working around authentication error
+
+If you get an “Authentication Aborted” error when trying to sign in to GitHub or GitLab using the authorization code flow, you may need to check your site’s [`Cross-Origin-Opener-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy). The COOP header is not widely used, but it breaks the OAuth flow with a popup window. If that’s your case, changing `same-origin` to `same-origin-allow-popups` solves the problem. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/131))
 
 ### Working with a local Git repository
 
