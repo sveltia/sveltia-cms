@@ -145,7 +145,7 @@
 
 <div role="none" class="wrapper" inert={!$showContentOverlay} bind:this={wrapper}>
   <Group class="content-editor" aria-label={$_('content_editor')}>
-    {#key $entryDraft?.slug}
+    {#key $entryDraft?.originalEntry?.id}
       <Toolbar />
       <div role="none" class="cols">
         {#if collection}
