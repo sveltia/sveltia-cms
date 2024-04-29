@@ -49,17 +49,17 @@
     "vitest": "^1.5.2"
   },
   "dependencies": {
-    "@sveltia/ui": "^0.12.2",
+    "@sveltia/ui": "^0.12.3",
     "@sveltia/utils": "^0.1.1",
     "deepmerge": "^4.3.1",
     "fast-deep-equal": "^3.1.3",
     "flat": "^6.0.1",
-    "isomorphic-dompurify": "^2.7.0",
+    "isomorphic-dompurify": "^2.8.0",
     "marked": "^12.0.2",
     "mime": "^4.0.3",
     "moment": "^2.30.1",
     "smol-toml": "^1.1.4",
-    "yaml": "^2.4.1"
+    "yaml": "^2.4.2"
   },
   "files": [
     "dist"

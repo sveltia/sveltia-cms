@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@sveltia/ui':
-        specifier: ^0.12.2
-        version: 0.12.2
+        specifier: ^0.12.3
+        version: 0.12.3
       '@sveltia/utils':
         specifier: ^0.1.1
         version: 0.1.1
@@ -24,8 +24,8 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
       isomorphic-dompurify:
-        specifier: ^2.7.0
-        version: 2.7.0
+        specifier: ^2.8.0
+        version: 2.8.0
       marked:
         specifier: ^12.0.2
         version: 12.0.2
@@ -39,8 +39,8 @@ importers:
         specifier: ^1.1.4
         version: 1.1.4
       yaml:
-        specifier: ^2.4.1
-        version: 2.4.1
+        specifier: ^2.4.2
+        version: 2.4.2
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^3.1.0
@@ -842,8 +842,8 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       vite: ^5.0.0
 
-  '@sveltia/ui@0.12.2':
-    resolution: {integrity: sha512-79ewJvbdEd/Jp7y6fxgIbQuaKUft45dUIkYrgWUzt9kfonvlIWGwiBTLRMSG41L0nm4+f0POXybY42QJDK6pQQ==}
+  '@sveltia/ui@0.12.3':
+    resolution: {integrity: sha512-vjp4BDojUphdefrocCdm8/OyOwJU1SJd/yx97ep3Hvq4horK+OYB7++jMQ9A/dbl9bH8VveQGjkoLf3s6XvqBg==}
 
   '@sveltia/utils@0.1.1':
     resolution: {integrity: sha512-eOJdqih3K6P/uXDU9SvQXhLGT8CxQG4rtC/N3YT4PVk1sQ/L59x5y4pnT83qKy+gpVvqq58LAMfFE+YMnTPJ/Q==}
@@ -1292,8 +1292,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.1.0:
-    resolution: {integrity: sha512-yoU4rhgPKCo+p5UrWWWNKiIq+ToGqmVVhk0PmMYBK4kRsR3/qhemNFL8f6CFmBd4gMwm3F4T7HBoydP5uY07fA==}
+  dompurify@3.1.1:
+    resolution: {integrity: sha512-tVP8C/GJwnABOn/7cx/ymx/hXpmBfWIPihC1aOEvS8GbMqy3pgeYtJk1HXN3CO7tu+8bpY18f6isjR5Cymj0TQ==}
 
   domutils@3.0.1:
     resolution: {integrity: sha512-z08c1l761iKhDFtfXO04C7kTdPBLi41zwOZl00WS8b5eiaebNpY00HKbztwBq+e3vyqWNwWF3mP9YLUeqIrF+Q==}
@@ -1919,8 +1919,8 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
-  isomorphic-dompurify@2.7.0:
-    resolution: {integrity: sha512-0FTlXP/gEEWW+O/sXaO9yZ4bgegrHnOqzbdCNAMeO2KYIOVMAcqVIo+uTcWYd1+DmI+nV58vUmNW03nauoKn2w==}
+  isomorphic-dompurify@2.8.0:
+    resolution: {integrity: sha512-8c+MZ8cKDqsqT9ZCOpoeiaG5AAkvdp8S+VPn2iuxRox0lbE8d039nKRhVDHbEdrqyJoEmPYAFAJzJpRUc0OJfg==}
     engines: {node: '>=18'}
 
   jackspeak@2.3.6:
@@ -3059,8 +3059,8 @@ packages:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
 
-  yaml@2.4.1:
-    resolution: {integrity: sha512-pIXzoImaqmfOrL7teGUBt/T7ZDnyeGBWyXQBvOVhLkWLN37GXv8NMLK406UY6dS51JfcQHsmcW5cJ441bHg6Lg==}
+  yaml@2.4.2:
+    resolution: {integrity: sha512-B3VqDZ+JAg1nZpaEmWtTXUlBneoGx6CPM9b0TENK6aoSu5t73dItudwdgmi6tHlIZZId4dZ9skcAQ2UbcyAeVA==}
     engines: {node: '>= 14'}
     hasBin: true
 
@@ -3686,7 +3686,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.12.2':
+  '@sveltia/ui@0.12.3':
     dependencies:
       '@lexical/code': 0.14.5
       '@lexical/history': 0.14.5
@@ -4052,7 +4052,7 @@ snapshots:
     dependencies:
       '@cspell/cspell-types': 8.7.0
       comment-json: 4.2.3
-      yaml: 2.4.1
+      yaml: 2.4.2
 
   cspell-dictionary@8.7.0:
     dependencies:
@@ -4216,7 +4216,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.1.0: {}
+  dompurify@3.1.1: {}
 
   domutils@3.0.1:
     dependencies:
@@ -5007,10 +5007,10 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-dompurify@2.7.0:
+  isomorphic-dompurify@2.8.0:
     dependencies:
       '@types/dompurify': 3.0.5
-      dompurify: 3.1.0
+      dompurify: 3.1.1
       jsdom: 24.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -6191,7 +6191,7 @@ snapshots:
 
   yaml@1.10.2: {}
 
-  yaml@2.4.1: {}
+  yaml@2.4.2: {}
 
   yargs-parser@21.1.1: {}
 
