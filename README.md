@@ -124,6 +124,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
+- Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
 
 ### Better content editing
 
@@ -309,6 +310,16 @@ Updating Sveltia CMS is transparent, unless you include a specific version in th
 If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
 
 ## Tips & tricks
+
+### Providing a JSON configuration file
+
+Sveltia CMS supports a configuration file written in the JSON format in addition to the standard YAML format. This allows developers to programmatically generate the CMS configuration to enable bulk or complex collections. To do this, simply add a `<link>` tag to your HTML, just like a [custom YAML config link](https://decapcms.org/docs/configuration-options/#configuration-file), but with the type `application/json`:
+
+```html
+<link href="path/to/config.json" type="application/json" rel="cms-config-url" />
+```
+
+Alternatively, you can [manually initialize](https://decapcms.org/docs/manual-initialization/) the CMS with a JavaScript configuration object.
 
 ### Migrating from Git Gateway backend
 
@@ -608,3 +619,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^57]: Netlify/Decap CMS [#328](https://github.com/decaporg/decap-cms/issues/328), [#3853](https://github.com/decaporg/decap-cms/issues/3853)
 [^58]: Netlify/Decap CMS [#5125](https://github.com/decaporg/decap-cms/issues/5125)
 [^59]: Netlify/Decap CMS [#1654](https://github.com/decaporg/decap-cms/issues/1654)
+[^60]: Netlify/Decap CMS [#386](https://github.com/decaporg/decap-cms/issues/386)
