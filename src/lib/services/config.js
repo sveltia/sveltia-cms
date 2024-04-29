@@ -37,7 +37,7 @@ export const siteConfigError = writable();
  * @throws {Error} When fetching or parsing has failed.
  */
 const fetchSiteConfig = async () => {
-  const { href = './config.yml', type = 'text/yaml' } =
+  const { href = './config.yml', type = 'application/yaml' } =
     /** @type {?HTMLLinkElement} */ (document.querySelector('link[rel="cms-config-url"]')) ?? {};
 
   /** @type {Response} */

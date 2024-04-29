@@ -31,7 +31,7 @@
   <meta name="referrer" content="same-origin" />
   <link rel="icon" href="data:image/svg+xml;base64,{btoa(SveltiaLogo)}" type="image/svg+xml" />
   {#if siteURL}
-    <link href="{siteURL}/admin/config.yml" type="text/yaml" rel="cms-config-url" />
+    <link href="{siteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
   {/if}
 </svelte:head>
 
