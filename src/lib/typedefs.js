@@ -735,7 +735,6 @@
  * Entry draft.
  * @typedef {object} EntryDraft
  * @property {boolean} [isNew] - `true` if it’s a new folder collection entry draft.
- * @property {string} [slug] - Entry slug. Empty if it’s new.
  * @property {string} collectionName - Collection name.
  * @property {Collection} collection - Collection details.
  * @property {string} [fileName] - File name. File collection only.
