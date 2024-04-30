@@ -24,7 +24,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 **Sveltia CMS is still in beta**, so please be careful when trying it out.
 
-While we are fixing reported bugs as fast as we can, usually within 48 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
+While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
@@ -40,7 +40,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating a single line of code.
 - Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Various features are still missing though — look at the [compatibility chart](#compatibility) below to see if you can migrate.
+- Various features are still missing though — look at the [compatibility info](#compatibility) below to see if you can migrate.
 
 ### Better UX
 
@@ -59,7 +59,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Using caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
-- The upcoming [Svelte 5](https://svelte.dev/blog/runes) upgrade is anticipated to deliver a further boost in performance, including accelerated speed and reduced code size.
+- The upcoming [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver a further boost in performance, including accelerated speed and reduced code size.
 
 ### Better productivity
 
@@ -238,7 +238,7 @@ The table below shows the current limitations of Sveltia CMS, that are expected 
 
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported due to performance limitations. We may implement a performant Git Gateway alternative in the future.
-- The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway.
+- The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
@@ -249,7 +249,7 @@ The table below shows the current limitations of Sveltia CMS, that are expected 
 
 - Enhanced compatibility with Netlify/Decap CMS (see above for the status)
 - Automation test coverage (Vitest + Playwright)
-- [Svelte 5](https://svelte.dev/blog/runes) migration
+- [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) migration
 - Localization
 - Documentation
 - Marketing site
@@ -281,7 +281,7 @@ Alternatively, you can probably use one of the [Netlify/Decap CMS templates](htt
 
 ### Migration
 
-Have a look at the [compatibility chart](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository.
+Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository.
 
 From Netlify CMS:
 
@@ -323,7 +323,7 @@ Alternatively, you can [manually initialize](https://decapcms.org/docs/manual-in
 
 ### Migrating from Git Gateway backend
 
-Sveltia CMS does not support the Git Gateway backend (and Netlify Identity) due to performance limitations. If you don’t care about user management, you can easily migrate to the [GitHub backend](https://decapcms.org/docs/github-backend/) or [GitLab backend](https://decapcms.org/docs/gitlab-backend/). Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify still facilitates the auth flow.
+Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub backend](https://decapcms.org/docs/github-backend/) or [GitLab backend](https://decapcms.org/docs/gitlab-backend/) instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
 
 ### Moving your site from Netlify to another hosting service
 
@@ -331,7 +331,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Working around authentication error
 
-If you get an “Authentication Aborted” error when trying to sign in to GitHub or GitLab using the authorization code flow, you may need to check your site’s [`Cross-Origin-Opener-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy). The COOP header is not widely used, but it breaks the OAuth flow with a popup window. If that’s your case, changing `same-origin` to `same-origin-allow-popups` solves the problem. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/131))
+If you get an “Authentication Aborted” error when trying to sign in to GitHub or GitLab using the authorization code flow, you may need to check your site’s [`Cross-Origin-Opener-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy). The COOP header is not widely used, but it’s known to break the OAuth flow with a popup window. If that’s your case, changing `same-origin` to `same-origin-allow-popups` solves the problem. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/131))
 
 ### Working with a local Git repository
 
@@ -482,52 +482,76 @@ script-src 'self' https://unpkg.com;
 connect-src 'self' blob: data: https://unpkg.com;
 ```
 
-And combine the following policies depending on your Git backend and enabled integrations.
+Then, add the following origins depending on your Git backend and enabled integrations.
 
-- GitHub: (If you’re running GitHub Enterprise Server, you’ll also need to add the origin to these directives.)
-  ```csp
-  img-src https://*.githubusercontent.com;
-  connect-src https://api.github.com https://www.githubstatus.com;
-  ```
+- GitHub: (If you’re running a GitHub Enterprise Server, you’ll also need to add the origin to these directives.)
+  - `img-src`
+    ```
+    https://*.githubusercontent.com
+    ```
+  - `connect-src`
+    ```
+    https://api.github.com https://www.githubstatus.com
+    ```
 - GitLab: (If you’re running a self-hosted instance, you’ll also need to add the origin to these directives.)
-  ```csp
-  img-src https://gitlab.com https://secure.gravatar.com;
-  connect-src https://gitlab.com https://status-api.hostedstatus.com;
-  ```
+  - `img-src`
+    ```
+    https://gitlab.com https://secure.gravatar.com
+    ```
+  - `connect-src`
+    ```
+    https://gitlab.com https://status-api.hostedstatus.com
+    ```
 - Pexels:
-  ```csp
-  img-src https://images.pexels.com;
-  connect-src https://images.pexels.com https://api.pexels.com;
-  ```
+  - `img-src`
+    ```
+    https://images.pexels.com
+    ```
+  - `connect-src`
+    ```
+    https://images.pexels.com https://api.pexels.com
+    ```
 - Pixabay:
-  ```csp
-  img-src https://pixabay.com;
-  connect-src https://pixabay.com;
-  ```
+  - `img-src`
+    ```
+    https://pixabay.com
+    ```
+  - `connect-src`
+    ```
+    https://pixabay.com
+    ```
 - Unsplash:
-  ```csp
-  img-src https://images.unsplash.com;
-  connect-src https://images.unsplash.com https://api.unsplash.com;
-  ```
+  - `img-src`
+    ```
+    https://images.unsplash.com
+    ```
+  - `connect-src`
+    ```
+    https://images.unsplash.com https://api.unsplash.com
+    ```
 - DeepL API Free:
-  ```csp
-  connect-src https://api-free.deepl.com;
-  ```
+  - `connect-src`
+    ```
+    https://api-free.deepl.com
+    ```
 - DeepL API Pro:
-  ```csp
-  connect-src https://api.deepl.com;
-  ```
+  - `connect-src`
+    ```
+    https://api.deepl.com
+    ```
 
 If you choose to [disable automatic deployments](#disabling-automatic-deployments) and have configured a webhook URL, you may need to add the origin to the `connect-src` directive. For example,
 
 - Netlify:
-  ```csp
-  connect-src https://api.netlify.com;
-  ```
+  - `connect-src`
+    ```csp
+    https://api.netlify.com
+    ```
 - Cloudflare Pages
-  ```csp
-  connect-src https://api.cloudflare.com;
-  ```
+  - `connect-src`
+    ```csp
+    https://api.cloudflare.com
+    ```
 
 If you have image field(s) and expect that images will be inserted as URLs, you may want to allow any source using a wildcard instead of specifying individual origins:
 
