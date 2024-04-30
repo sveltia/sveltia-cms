@@ -46,11 +46,11 @@
     collection,
     collectionFile,
     originalEntry,
-    originalLocales,
-    currentLocales,
-    originalValues,
-    currentValues,
-    validities,
+    originalLocales = {},
+    currentLocales = {},
+    originalValues = {},
+    currentValues = {},
+    validities = {},
   } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
   $: ({
