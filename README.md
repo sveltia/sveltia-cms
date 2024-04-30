@@ -119,12 +119,12 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better collections
 
+- Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
 - You can choose a [custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
 - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
-- Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
 
 ### Better content editing
 
@@ -218,7 +218,7 @@ The table below shows the current limitations of Sveltia CMS, that are expected 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
 | Backends | Only GitHub and GitLab are available. We’ll add the Test backend for our demo site and see if Azure can also be supported. |
-| Configuration | UI Locales are only available in English and Japanese. Comprehensive config validation is not yet implemented. |
+| Configuration | The application UI locales are only available in English and Japanese. Comprehensive config validation is not yet implemented. |
 | Media Libraries | Cloudinary and Uploadcare are not yet supported. |
 | Workflow | Editorial Workflow and Open Authoring are not yet supported. |
 | Content Editor | Auto-saving a draft entry is not yet implemented. |
