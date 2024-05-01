@@ -67,6 +67,7 @@
     flex: auto;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   [role='status'] {
