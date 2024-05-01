@@ -177,6 +177,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - The `summary` is displayed correctly when it refers to a Relation field[^36].
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
+- Relation and Select
+  - When there are 5 or fewer options, the UI switches from a dropdown list to checkboxes or radio buttons for faster data entry[^61].
 
 #### New widgets
 
@@ -644,3 +646,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^58]: Netlify/Decap CMS [#5125](https://github.com/decaporg/decap-cms/issues/5125)
 [^59]: Netlify/Decap CMS [#1654](https://github.com/decaporg/decap-cms/issues/1654)
 [^60]: Netlify/Decap CMS [#386](https://github.com/decaporg/decap-cms/issues/386)
+[^61]: Netlify/Decap CMS [#1489](https://github.com/decaporg/decap-cms/issues/1489)
