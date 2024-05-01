@@ -125,6 +125,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
+- You can use nested fields (dot notation) in the `path` option, e.g. `{{fields.state.name}}/{{slug}}`[^62].
 
 ### Better content editing
 
@@ -178,7 +179,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
-  - When there are 5 or fewer options, the UI switches from a dropdown list to checkboxes or radio buttons for faster data entry[^61].
+  - When there are 5 or fewer options, the UI switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61].
 
 #### New widgets
 
@@ -648,3 +649,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^59]: Netlify/Decap CMS [#1654](https://github.com/decaporg/decap-cms/issues/1654)
 [^60]: Netlify/Decap CMS [#386](https://github.com/decaporg/decap-cms/issues/386)
 [^61]: Netlify/Decap CMS [#1489](https://github.com/decaporg/decap-cms/issues/1489)
+[^62]: Netlify/Decap CMS [#7192](https://github.com/decaporg/decap-cms/issues/7192)
