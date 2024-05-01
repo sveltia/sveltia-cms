@@ -27,14 +27,14 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
-- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
+- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 80+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
 - Implementing our own enhancement ideas
 
 At this point, **we are aiming to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
 
 ## Features
 
-We are working hard to create a **significantly better alternative to Netlify CMS** and Decap CMS by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
+We are working hard to create a **significantly better alternative to Netlify CMS and Decap CMS** by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Compatible with Netlify/Decap CMS
 
@@ -244,6 +244,7 @@ The table below shows the current limitations of Sveltia CMS, that are expected 
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
+- Undocumented [methods available on the `window.CMS` object](https://github.com/sveltia/sveltia-cms/blob/b7f62741e02dc390c63c03291f95b2ca315d811b/src/main.js#L3-L33) will not be implemented.
 
 ## Roadmap
 
