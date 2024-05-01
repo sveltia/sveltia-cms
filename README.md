@@ -125,7 +125,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
-- You can use nested fields (dot notation) in the `path` option, e.g. `{{fields.state.name}}/{{slug}}`[^62].
+- You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
 
 ### Better content editing
 
