@@ -47,7 +47,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
-- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also avoids common React application crashes that say “Failed to execute 'removeChild' on 'Node'” likely due to a DOM-manipulating browser extension[^63].
+- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also avoids fatal application crashes that seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538)[^63]. Best of all, it’s fast!
 - The screenshots above are worth a thousand words!
 - Read on to learn about many other enhancements, including performance, productivity, accessibility, service integrations, and an all-new Asset Library.
 
@@ -574,6 +574,8 @@ Want to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.
 Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new) so we can make it better for everyone. Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources and the upcoming Svelte 5 migration. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
 Tips are always welcome! The project hasn’t set up a sponsorship program, but maintainer [@kyoshino](https://github.com/kyoshino) has a [PayPal account](https://paypal.me/kohei).
+
+Last but not least, don’t forget to star this project and spread the word so more users can benefit from the app!
 
 ## Related links
 
