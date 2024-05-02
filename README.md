@@ -40,14 +40,14 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating a single line of code.
 - Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Various features are still missing though — look at the [compatibility info](#compatibility) below to see if you can migrate.
+- Various features are still missing though — look at the [compatibility info](#compatibility) below to see if you can migrate now or later.
 
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
-- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management.
+- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also avoids common React application crashes that say “Failed to execute 'removeChild' on 'Node'” likely due to a DOM-manipulating browser extension[^63].
 - The screenshots above are worth a thousand words!
 - Read on to learn about many other enhancements, including performance, productivity, accessibility, service integrations, and an all-new Asset Library.
 
@@ -285,7 +285,7 @@ Alternatively, you can probably use one of the [Netlify/Decap CMS templates](htt
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository.
+Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `script` tag, and push the change to your repository.
 
 From Netlify CMS:
 
@@ -650,3 +650,4 @@ This software is provided “as is” without any express or implied warranty. W
 [^60]: Netlify/Decap CMS [#386](https://github.com/decaporg/decap-cms/issues/386)
 [^61]: Netlify/Decap CMS [#1489](https://github.com/decaporg/decap-cms/issues/1489)
 [^62]: Netlify/Decap CMS [#7192](https://github.com/decaporg/decap-cms/issues/7192)
+[^63]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194)
