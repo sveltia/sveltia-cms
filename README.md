@@ -40,16 +40,15 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating a single line of code.
 - Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Various features are still missing though — look at the [compatibility info](#compatibility) below to see if you can migrate now or later.
+- Various features are still missing though — look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
 
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
-- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also avoids fatal application crashes that seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538)[^63]. Best of all, it’s fast!
-- The screenshots above are worth a thousand words!
-- Read on to learn about many other enhancements, including performance, productivity, accessibility, service integrations, and an all-new Asset Library.
+- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid fatal application crashes that seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538)[^63]. Best of all, Svelte offers great performance!
+- The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
 
 ### Better performance
 
@@ -64,7 +63,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better productivity
 
 - You can [work with a local Git repository](#working-with-a-local-git-repository) without any configuration or proxy server[^26].
-  - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc API.
+  - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
   - It also allows you to bypass the 30 MB file size limit[^51].
   - The `logo_url` defined in the configuration will be used[^49].
 - Eliminates some workflow disruptions in the Content Editor:
@@ -216,7 +215,7 @@ We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap C
 
 ### Current limitations
 
-The table below shows the current limitations of Sveltia CMS, that are expected to be resolved before GA:
+These limitations are expected to be resolved before GA:
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
@@ -311,7 +310,7 @@ For advanced users, we have also made the bundle available as an [npm package](h
 
 Updating Sveltia CMS is transparent, unless you include a specific version in the `<script>` source URL or use the npm package. Whenever you (re)load the CMS, the latest version will be served via [UNPKG](https://unpkg.com/). The CMS also periodically checks for updates and notifies you when a new version is available. After the product reaches GA, you could use a semantic version range (`^1.0.0`) like Netlify/Decap CMS.
 
-If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
+If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) or a service like [Dependabot](https://github.blog/2020-06-01-keep-all-your-packages-up-to-date-with-dependabot/) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
 
 ## Tips & tricks
 
