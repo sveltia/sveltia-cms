@@ -58,7 +58,7 @@
       />
       <MenuItem
         label={$_('git_repository')}
-        disabled={isLocal}
+        disabled={!$backend?.repository?.branchURL}
         on:click={() => {
           window.open($backend?.repository?.branchURL);
         }}

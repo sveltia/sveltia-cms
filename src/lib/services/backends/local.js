@@ -8,6 +8,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
+import { allBackendServices } from '$lib/services/backends';
 import { repositoryProps } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
@@ -90,16 +91,10 @@ const discardDirHandle = async () => {
  * Initialize the backend.
  */
 const init = () => {
-  const {
-    name: service,
-    repo: projectPath,
-    branch,
-  } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
-
-  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
+  const { name: service, repo: projectPath } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
   if (!repository.owner) {
-    Object.assign(repository, { service, owner, repo, branch });
+    Object.assign(repository, allBackendServices[service]?.getRepositoryInfo?.() ?? {});
   }
 
   rootDirHandleDB = new IndexedDB(`${service}:${projectPath}`, 'file-system-handles');

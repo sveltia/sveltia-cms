@@ -109,10 +109,10 @@ const fetchGraphQL = async (query, variables = {}) => {
 };
 
 /**
- * Initialize the GitHub backend.
- * @throws {Error} When the backend is not configured properly.
+ * Get the configured repository’s basic information.
+ * @returns {RepositoryInfo} Repository info.
  */
-const init = () => {
+const getRepositoryInfo = () => {
   const {
     repo: projectPath,
     branch,
@@ -120,13 +120,19 @@ const init = () => {
   } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
+  const origin = apiRoot ? new URL(apiRoot).origin : 'https://github.com';
+  const baseURL = `${origin}/${owner}/${repo}`;
+  const branchURL = branch ? `${baseURL}/tree/${branch}` : baseURL;
 
+  return { service: backendName, owner, repo, branch, baseURL, branchURL };
+};
+
+/**
+ * Initialize the GitHub backend.
+ */
+const init = () => {
   if (!repository.owner) {
-    const origin = apiRoot ? new URL(apiRoot).origin : 'https://github.com';
-    const baseURL = `${origin}/${owner}/${repo}`;
-    const branchURL = branch ? `${baseURL}/tree/${branch}` : baseURL;
-
-    Object.assign(repository, { service: backendName, owner, repo, branch, baseURL, branchURL });
+    Object.assign(repository, getRepositoryInfo());
   }
 };
 
@@ -473,6 +479,7 @@ export default {
   repository,
   statusDashboardURL,
   checkStatus,
+  getRepositoryInfo,
   init,
   signIn,
   signOut,

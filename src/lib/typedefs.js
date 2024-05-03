@@ -32,8 +32,7 @@
  * @property {string} service - Repository hosting service name, e.g. `github`.
  * @property {string} owner - Owner name, which could be either an organization or individual user.
  * @property {string} repo - Repository name.
- * @property {string} branch - Branch name. It’s `master` by default for historical reasons, though
- * the current default branch name on GitHub is `main`.
+ * @property {string} [branch] - Branch name, e.g. `master` or `main`.
  * @property {string} [baseURL] - The repository’s web-accessible URL that can be linked from the
  * CMS UI to the backend service. Git backend only.
  * @property {string} [branchURL] - Repository URL with a branch name. It’s the same as `baseURL`
@@ -71,6 +70,8 @@
  * backends only.
  * @property {() => Promise<BackendServiceStatus>} [checkStatus] - Function to check the backend
  * service’s status. Git backends only.
+ * @property {() => RepositoryInfo} [getRepositoryInfo] - Function to get the configured
+ * repository’s basic information. Git backends only.
  * @property {() => void} init - Function to initialize the backend.
  * @property {(options: SignInOptions) => Promise<User | void>} signIn - Function to sign in.
  * @property {() => Promise<void>} signOut - Function to sign out.
