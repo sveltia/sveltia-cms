@@ -360,7 +360,7 @@ const fetchFileContents = async (fetchingFiles) => {
 
       const data = {
         sha,
-        size,
+        size: Number(size),
         text: rawTextBlob,
         meta: {
           repoFileURL: `${baseURL}/-/blob/${branch}/${path}`,
