@@ -1,8 +1,9 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { LocalStorage } from '@sveltia/utils/storage';
+import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
+import { tick } from 'svelte';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import { prefs } from '$lib/services/prefs';
@@ -19,8 +20,11 @@ import {
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
+import { backend } from '$lib/services/backends';
 
-const storageKey = 'sveltia-cms.contents-view';
+/** @type {IndexedDB | null | undefined} */
+let settingsDB = undefined;
+const storageKey = 'contents-view';
 /**
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
@@ -286,28 +290,29 @@ const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefi
 const entryListSettings = writable({}, (set) => {
   (async () => {
     try {
-      /** @type {{ [key: string]: EntryListView }} */
-      const cache = (await LocalStorage.get(storageKey)) ?? {};
-      let foundLegacySetting = false;
-
-      const settings = Object.fromEntries(
-        Object.entries(cache).map(([key, view]) => {
-          // Migrate legacy single filter setting
-          if (view.filter) {
-            foundLegacySetting = true;
-            view.filters ??= [];
-            view.filters.push(view.filter);
-            delete view.filter;
+      /** @type {RepositoryInfo} */
+      const { service, owner, repo } = await new Promise((resolve) => {
+        const unsubscribe = backend.subscribe(async (_backend) => {
+          if (_backend) {
+            resolve(/** @type {RepositoryInfo} */ (_backend.repository ?? {}));
+            await tick();
+            unsubscribe();
           }
+        });
+      });
 
-          return [key, view];
-        }),
-      );
+      settingsDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'ui-settings') : null;
+
+      const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
+      const settings = legacyCache ?? (await settingsDB?.get(storageKey)) ?? {};
 
       set(settings);
 
-      if (foundLegacySetting) {
-        await LocalStorage.set(storageKey, settings);
+      // Delete legacy cache on LocalStorage as we have migrated to IndexedDB
+      // @todo Remove this migration before GA
+      if (legacyCache) {
+        await settingsDB?.set(storageKey, settings);
+        await LocalStorage.delete(`sveltia-cms.${storageKey}`);
       }
     } catch {
       //
@@ -442,7 +447,7 @@ listedEntries.subscribe((entries) => {
   }
 });
 
-selectedCollection.subscribe((collection) => {
+selectedCollection.subscribe(async (collection) => {
   if (!collection) {
     return;
   }
@@ -477,7 +482,18 @@ selectedCollection.subscribe((collection) => {
     },
   };
 
-  const view = get(entryListSettings)[collectionName] ?? defaultView;
+  // Wait for `entryListSettings` to be set asynchronously
+  const _entryListSettings = await new Promise((resolve) => {
+    const unsubscribe = entryListSettings.subscribe(async (settings) => {
+      if (Object.keys(settings).length) {
+        resolve(settings);
+        await tick();
+        unsubscribe();
+      }
+    });
+  });
+
+  const view = _entryListSettings[collectionName] ?? defaultView;
 
   if (!equal(view, get(currentView))) {
     currentView.set(view);
@@ -500,8 +516,8 @@ entryListSettings.subscribe((settings) => {
 
   (async () => {
     try {
-      if (!equal(settings, await LocalStorage.get(storageKey))) {
-        await LocalStorage.set(storageKey, settings);
+      if (!equal(settings, await settingsDB?.get(storageKey))) {
+        await settingsDB?.set(storageKey, settings);
       }
     } catch {
       //

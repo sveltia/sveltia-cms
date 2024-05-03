@@ -4,10 +4,11 @@
 
 import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { LocalStorage } from '@sveltia/utils/storage';
+import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import { escapeRegExp, stripTags } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten, unflatten } from 'flat';
+import { tick } from 'svelte';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
 import { backend, backendName } from '$lib/services/backends';
@@ -22,7 +23,9 @@ import { prefs } from '$lib/services/prefs';
 import { user } from '$lib/services/user';
 import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/file';
 
-const storageKey = 'sveltia-cms.entry-view';
+/** @type {IndexedDB | null | undefined} */
+let settingsDB = undefined;
+const storageKey = 'entry-view';
 
 /**
  * @type {import('svelte/store').Writable<boolean>}
@@ -51,15 +54,37 @@ export const selectAssetsView = writable({});
 export const entryEditorSettings = writable({}, (set) => {
   (async () => {
     try {
+      /** @type {RepositoryInfo} */
+      const { service, owner, repo } = await new Promise((resolve) => {
+        const unsubscribe = backend.subscribe(async (_backend) => {
+          if (_backend) {
+            resolve(/** @type {RepositoryInfo} */ (_backend.repository ?? {}));
+            await tick();
+            unsubscribe();
+          }
+        });
+      });
+
+      settingsDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'ui-settings') : null;
+
+      const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
+
       const settings = {
         showPreview: true,
         syncScrolling: true,
         selectAssetsView: { type: 'grid' },
-        ...((await LocalStorage.get(storageKey)) ?? {}),
+        ...(legacyCache ?? (await settingsDB?.get(storageKey)) ?? {}),
       };
 
       set(settings);
       selectAssetsView.set(settings.selectAssetsView);
+
+      // Delete legacy cache on LocalStorage as we have migrated to IndexedDB
+      // @todo Remove this migration before GA
+      if (legacyCache) {
+        await settingsDB?.set(storageKey, settings);
+        await LocalStorage.delete(`sveltia-cms.${storageKey}`);
+      }
     } catch {
       //
     }
@@ -1356,8 +1381,8 @@ entryEditorSettings.subscribe((settings) => {
 
   (async () => {
     try {
-      if (!equal(settings, await LocalStorage.get(storageKey))) {
-        await LocalStorage.set(storageKey, settings);
+      if (!equal(settings, await settingsDB?.get(storageKey))) {
+        await settingsDB?.set(storageKey, settings);
       }
     } catch {
       //

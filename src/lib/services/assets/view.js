@@ -1,9 +1,11 @@
-import { LocalStorage } from '@sveltia/utils/storage';
+import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
+import { tick } from 'svelte';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import { prefs } from '$lib/services/prefs';
 import { siteConfig } from '$lib/services/config';
+import { backend } from '$lib/services/backends';
 import {
   allAssetFolders,
   allAssets,
@@ -13,7 +15,9 @@ import {
   uploadingAssets,
 } from '$lib/services/assets';
 
-const storageKey = 'sveltia-cms.assets-view';
+/** @type {IndexedDB | null | undefined} */
+let settingsDB = undefined;
+const storageKey = 'assets-view';
 
 /**
  * Whether to show the Upload Assets dialog.
@@ -242,7 +246,23 @@ export const currentView = writable({ type: 'grid', showInfo: true });
 const assetListSettings = writable({}, (set) => {
   (async () => {
     try {
-      set((await LocalStorage.get(storageKey)) ?? {});
+      /** @type {RepositoryInfo} */
+      const { service, owner, repo } = await new Promise((resolve) => {
+        const unsubscribe = backend.subscribe(async (_backend) => {
+          if (_backend) {
+            resolve(/** @type {RepositoryInfo} */ (_backend.repository ?? {}));
+            await tick();
+            unsubscribe();
+          }
+        });
+      });
+
+      settingsDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'ui-settings') : null;
+
+      const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
+      const settings = legacyCache ?? (await settingsDB?.get(storageKey)) ?? {};
+
+      set(settings);
 
       selectedAssetFolder.subscribe((folder) => {
         const view =
@@ -252,6 +272,13 @@ const assetListSettings = writable({}, (set) => {
           currentView.set(view);
         }
       });
+
+      // Delete legacy cache on LocalStorage as we have migrated to IndexedDB
+      // @todo Remove this migration before GA
+      if (legacyCache) {
+        await settingsDB?.set(storageKey, settings);
+        await LocalStorage.delete(`sveltia-cms.${storageKey}`);
+      }
     } catch {
       //
     }
@@ -336,8 +363,8 @@ assetListSettings.subscribe((settings) => {
 
   (async () => {
     try {
-      if (!equal(settings, await LocalStorage.get(storageKey))) {
-        await LocalStorage.set(storageKey, settings);
+      if (!equal(settings, await settingsDB?.get(storageKey))) {
+        await settingsDB?.set(storageKey, settings);
       }
     } catch {
       //
