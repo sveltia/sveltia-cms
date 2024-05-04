@@ -28,18 +28,20 @@ export const prefs = writable({}, (set) => {
   })();
 });
 
-prefs.subscribe(async (newPrefs) => {
+prefs.subscribe((newPrefs) => {
   if (!newPrefs || !Object.keys(newPrefs).length) {
     return;
   }
 
-  try {
-    if (!equal(newPrefs, await LocalStorage.get(storageKey))) {
-      await LocalStorage.set(storageKey, newPrefs);
+  (async () => {
+    try {
+      if (!equal(newPrefs, await LocalStorage.get(storageKey))) {
+        await LocalStorage.set(storageKey, newPrefs);
+      }
+    } catch {
+      //
     }
-  } catch {
-    //
-  }
+  })();
 
   const { locale, theme, devModeEnabled = false } = newPrefs;
 
