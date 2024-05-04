@@ -58,9 +58,9 @@
       />
       <MenuItem
         label={$_('git_repository')}
-        disabled={!$backend?.repository?.branchURL}
+        disabled={!$backend?.repository?.treeBaseURL}
         on:click={() => {
-          window.open($backend?.repository?.branchURL);
+          window.open($backend?.repository?.treeBaseURL);
         }}
       />
       <PublishMenuItem />

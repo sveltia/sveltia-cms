@@ -290,6 +290,8 @@ export const strings = {
   locale_x_has_been_disabled: '{locale} コンテンツは無効化されています。',
   locale_x_now_disabled:
     '{locale} コンテンツは無効化されました。エントリーを保存する際に削除されます。',
+  view_in_repository: 'レポジトリ内で見る',
+  view_on_x: '{service} で見る',
   copy_from: '他の言語からコピー…',
   copy_from_x: '{locale} からコピー',
   translate_from: '他の言語から翻訳…',

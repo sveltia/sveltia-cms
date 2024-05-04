@@ -6,6 +6,7 @@ import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/
 /** @type {RepositoryInfo} */
 export const repositoryProps = {
   service: '',
+  label: '',
   owner: '',
   repo: '',
   branch: '',

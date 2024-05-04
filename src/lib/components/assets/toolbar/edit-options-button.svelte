@@ -1,8 +1,9 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
+  import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { canEditAsset, editingAsset, uploadingAssets } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
+  import { backend } from '$lib/services/backends';
 
   /**
    * @type {Asset | undefined}
@@ -35,6 +36,17 @@
       on:click={() => {
         $uploadingAssets = { folder: undefined, files: [], originalAsset: asset };
         $showUploadAssetsDialog = true;
+      }}
+    />
+    <Divider />
+    <MenuItem
+      disabled={!$backend?.repository || !asset?.repoFileURL}
+      label={$_('view_on_x', {
+        values: { service: $backend?.repository?.label },
+        default: $_('view_in_repository'),
+      })}
+      on:click={() => {
+        window.open(`${asset?.repoFileURL}?plain=1`);
       }}
     />
   </Menu>

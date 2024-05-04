@@ -14,6 +14,7 @@
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
+  import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import {
     entryDraft,
@@ -46,6 +47,7 @@
   $: ({
     collection,
     collectionFile,
+    originalEntry,
     currentLocales = {},
     currentValues = {},
     originalValues = {},
@@ -155,6 +157,24 @@
               disabled={isLocaleEnabled && isOnlyLocale}
               on:click={() => {
                 toggleLocale($thisPane?.locale ?? '');
+              }}
+            />
+          {/if}
+          {#if originalEntry}
+            <Divider />
+            <MenuItem
+              disabled={!$backend?.repository}
+              label={$_('view_on_x', {
+                values: { service: $backend?.repository?.label },
+                default: $_('view_in_repository'),
+              })}
+              on:click={() => {
+                if (originalEntry && $thisPane) {
+                  window.open(
+                    `${$backend?.repository?.blobBaseURL}/` +
+                      `${originalEntry.locales[$thisPane.locale].path}?plain=1`,
+                  );
+                }
               }}
             />
           {/if}

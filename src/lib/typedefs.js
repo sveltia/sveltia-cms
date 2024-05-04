@@ -30,13 +30,16 @@
  * Basic Git repository information retrieved from the config file.
  * @typedef {object} RepositoryInfo
  * @property {string} service - Repository hosting service name, e.g. `github`.
+ * @property {string} label - Service label, e.g. `GitHub`.
  * @property {string} owner - Owner name, which could be either an organization or individual user.
  * @property {string} repo - Repository name.
  * @property {string} [branch] - Branch name, e.g. `master` or `main`.
  * @property {string} [baseURL] - The repository’s web-accessible URL that can be linked from the
- * CMS UI to the backend service. Git backend only.
- * @property {string} [branchURL] - Repository URL with a branch name. It’s the same as `baseURL`
- * when the default branch is used. Git backend only.
+ * CMS UI to the backend service. Git backends only.
+ * @property {string} [treeBaseURL] - Repository’s tree base URL with a branch name. It’s the same
+ * as `baseURL` when the default branch is used. Git backends only.
+ * @property {string} [blobBaseURL] - Repository’s blob base URL with a branch name. Git backends
+ * only.
  */
 
 /**
@@ -52,7 +55,7 @@
  * Options for the `signIn` function on {@link BackendService}.
  * @typedef {object} SignInOptions
  * @property {boolean} auto - Whether the sign-in process is automatic.
- * @property {string} [token] - User’s Locally-cached authentication token. Git backend only.
+ * @property {string} [token] - User’s Locally-cached authentication token. Git backends only.
  */
 
 /**
@@ -64,7 +67,7 @@
  * Backend service.
  * @typedef {object} BackendService
  * @property {string} name - Service name, e.g. `github`.
- * @property {string} label - Service label.
+ * @property {string} label - Service label, e.g. `GitHub`.
  * @property {RepositoryInfo} [repository] - Basic repository info. Git and local backends only.
  * @property {string} [statusDashboardURL] - URL of status dashboard page of the service. Git
  * backends only.
@@ -77,10 +80,10 @@
  * @property {() => Promise<void>} signOut - Function to sign out.
  * @property {() => Promise<void>} fetchFiles - Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] - Function to fetch an asset as a Blob.
- * Git backend only.
+ * Git backends only.
  * @property {(changes: FileChange[], options: CommitChangesOptions) =>
  * Promise<string | void>} commitChanges - Function to save file changes, including additions and
- * deletions, and return the commit URL (Git backend only).
+ * deletions, and return the commit URL (Git backends only).
  * @property {() => Promise<Response>} [triggerDeployment] - Function to manually trigger a new
  * deployment on any connected CI/CD provider. GitHub only.
  */
@@ -188,7 +191,7 @@
  * @property {string} sha - SHA-1 hash for the file.
  * @property {number} size - File size in bytes.
  * @property {string} [text] - Raw text for a plaintext file, like HTML or Markdown.
- * @property {RepositoryFileMetadata} [meta] - Metadata from the repository. Git backend only.
+ * @property {RepositoryFileMetadata} [meta] - Metadata from the repository. Git backends only.
  */
 
 /**
@@ -285,7 +288,7 @@
  * @property {{ [key: string]: string }} [backend.commit_messages] - Commit message map.
  * @property {boolean} [backend.automatic_deployments] - Whether to enable or disable automatic
  * deployments with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If
- * `false`, the `[skip ci]` prefix will be added to commit messages. Git backend only.
+ * `false`, the `[skip ci]` prefix will be added to commit messages. Git backends only.
  * @property {string} [site_url] - Site URL.
  * @property {string} [display_url] - Site URL linked from the UI.
  * @property {string} [logo_url] - Site logo URL.
@@ -810,7 +813,7 @@
  * media folder.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.
- * @property {string} [repoFileURL] - Web-accessible URL on the Git repository. Git backend only.
+ * @property {string} [repoFileURL] - Web-accessible URL on the Git repository. Git backends only.
  */
 
 /**

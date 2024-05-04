@@ -128,9 +128,17 @@ const getRepositoryInfo = () => {
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://gitlab.com';
   const baseURL = `${origin}/${owner}/${repo}`;
-  const branchURL = branch ? `${baseURL}/-/tree/${branch}` : baseURL;
 
-  return { service: backendName, owner, repo, branch, baseURL, branchURL };
+  return {
+    service: backendName,
+    label,
+    owner,
+    repo,
+    branch,
+    baseURL,
+    treeBaseURL: branch ? `${baseURL}/-/tree/${branch}` : baseURL,
+    blobBaseURL: `${baseURL}/-/blob/${branch}`,
+  };
 };
 
 /**
@@ -335,7 +343,7 @@ const fetchFileList = async () => {
  * @todo Retrieve the latest commit for each file, including the author and date.
  */
 const fetchFileContents = async (fetchingFiles) => {
-  const { owner, repo, branch, baseURL } = repository;
+  const { owner, repo, branch, blobBaseURL } = repository;
 
   // Fetch all the text contents with the GraphQL API
   const result = /** @type {{ project: { repository: { blobs: { nodes: any[] } } } }} */ (
@@ -369,7 +377,7 @@ const fetchFileContents = async (fetchingFiles) => {
         size: Number(size),
         text: rawTextBlob,
         meta: {
-          repoFileURL: `${baseURL}/-/blob/${branch}/${path}`,
+          repoFileURL: `${blobBaseURL}/${path}`,
         },
       };
 

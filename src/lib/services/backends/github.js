@@ -122,9 +122,17 @@ const getRepositoryInfo = () => {
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://github.com';
   const baseURL = `${origin}/${owner}/${repo}`;
-  const branchURL = branch ? `${baseURL}/tree/${branch}` : baseURL;
 
-  return { service: backendName, owner, repo, branch, baseURL, branchURL };
+  return {
+    service: backendName,
+    label,
+    owner,
+    repo,
+    branch,
+    baseURL,
+    treeBaseURL: branch ? `${baseURL}/tree/${branch}` : baseURL,
+    blobBaseURL: `${baseURL}/blob/${branch}`,
+  };
 };
 
 /**
@@ -279,7 +287,7 @@ const fetchFileList = async () => {
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 const fetchFileContents = async (fetchingFiles) => {
-  const { owner, repo, branch, baseURL } = repository;
+  const { owner, repo, branch, blobBaseURL } = repository;
 
   const query = fetchingFiles
     .map(({ type, path, sha }, index) => {
@@ -342,7 +350,7 @@ const fetchFileContents = async (fetchingFiles) => {
         size,
         text: result.repository[`content_${index}`]?.text,
         meta: {
-          repoFileURL: `${baseURL}/blob/${branch}/${path}`,
+          repoFileURL: `${blobBaseURL}/${path}`,
           commitAuthor: {
             name,
             email,
