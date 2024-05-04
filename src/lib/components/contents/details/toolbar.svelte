@@ -29,7 +29,7 @@
     revertChanges,
     saveEntry,
   } from '$lib/services/contents/editor';
-  import { getAssociatedAssets } from '$lib/services/contents/entry';
+  import { getAssociatedAssets, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/view';
 
@@ -211,10 +211,7 @@
           })}
           on:click={() => {
             if (originalEntry) {
-              window.open(
-                `${$backend?.repository?.blobBaseURL}/` +
-                  `${originalEntry.locales[defaultLocale].path}?plain=1`,
-              );
+              window.open(getEntryRepoBlobURL(originalEntry, defaultLocale));
             }
           }}
         />

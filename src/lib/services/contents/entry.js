@@ -1,7 +1,9 @@
 import { flatten } from 'flat';
+import { get } from 'svelte/store';
 import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
 import { getOptionLabel } from '$lib/components/contents/details/widgets/select/helper';
 import { getAssetByPath } from '$lib/services/assets';
+import { backend } from '$lib/services/backends';
 import { getCollection } from '$lib/services/contents';
 
 /**
@@ -209,3 +211,12 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
       .filter((value, index, array) => !!value && array.indexOf(value) === index)
   );
 };
+
+/**
+ * Get the given entry file’s web-accessible URL on the repository.
+ * @param {Entry} entry - Entry.
+ * @param {LocaleCode} locale - Locale.
+ * @returns {string} URL on the repository.
+ */
+export const getEntryRepoBlobURL = (entry, locale) =>
+  `${get(backend)?.repository?.blobBaseURL}/${entry.locales[locale].path}?plain=1`;

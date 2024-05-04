@@ -22,6 +22,7 @@
     revertChanges,
     toggleLocale,
   } from '$lib/services/contents/editor';
+  import { getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
@@ -169,10 +170,7 @@
               })}
               on:click={() => {
                 if (originalEntry && $thisPane) {
-                  window.open(
-                    `${$backend?.repository?.blobBaseURL}/` +
-                      `${originalEntry.locales[$thisPane.locale].path}?plain=1`,
-                  );
+                  window.open(getEntryRepoBlobURL(originalEntry, $thisPane.locale));
                 }
               }}
             />
