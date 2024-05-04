@@ -19,7 +19,7 @@
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import { goBack, goto } from '$lib/services/app/navigation';
-  import { backendName } from '$lib/services/backends';
+  import { backend, backendName } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/data';
   import {
@@ -201,6 +201,24 @@
           revertChanges();
         }}
       />
+      {#if originalEntry}
+        <Divider />
+        <MenuItem
+          disabled={!$backend?.repository}
+          label={$_('view_on_x', {
+            values: { service: $backend?.repository?.label },
+            default: $_('view_in_repository'),
+          })}
+          on:click={() => {
+            if (originalEntry) {
+              window.open(
+                `${$backend?.repository?.blobBaseURL}/` +
+                  `${originalEntry.locales[defaultLocale].path}?plain=1`,
+              );
+            }
+          }}
+        />
+      {/if}
     </Menu>
   </MenuButton>
   {#if showSaveOptions}

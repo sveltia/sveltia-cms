@@ -133,7 +133,6 @@
               <Divider />
             {/if}
             <CopyMenuItems anchor={menuButton} locale={$thisPane?.locale} />
-            <Divider />
           {/if}
           <MenuItem
             label={$_('revert_changes')}
@@ -142,7 +141,7 @@
               revertChanges($thisPane?.locale);
             }}
           />
-          {#if !saveAllLocales && $thisPane?.locale !== defaultLocale}
+          {#if !saveAllLocales}
             <Divider />
             <MenuItem
               label={$_(
@@ -154,7 +153,7 @@
                     : 'enable_x_locale',
                 { values: { locale: localeLabel } },
               )}
-              disabled={isLocaleEnabled && isOnlyLocale}
+              disabled={$thisPane?.locale === defaultLocale || (isLocaleEnabled && isOnlyLocale)}
               on:click={() => {
                 toggleLocale($thisPane?.locale ?? '');
               }}
