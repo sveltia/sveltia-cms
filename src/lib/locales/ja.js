@@ -292,6 +292,7 @@ export const strings = {
     '{locale} コンテンツは無効化されました。エントリーを保存する際に削除されます。',
   view_in_repository: 'レポジトリ内で見る',
   view_on_x: '{service} で見る',
+  view_on_live_site: '管理対象サイトで見る',
   copy_from: '他の言語からコピー…',
   copy_from_x: '{locale} からコピー',
   translate_from: '他の言語から翻訳…',

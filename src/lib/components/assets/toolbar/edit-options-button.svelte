@@ -1,7 +1,12 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { canEditAsset, editingAsset, uploadingAssets } from '$lib/services/assets';
+  import {
+    canEditAsset,
+    editingAsset,
+    getAssetDetails,
+    uploadingAssets,
+  } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
 
@@ -9,6 +14,23 @@
    * @type {Asset | undefined}
    */
   export let asset;
+
+  /**
+   * @type {string | undefined}
+   */
+  let publicURL = undefined;
+
+  /**
+   * Update the properties above.
+   */
+  const updateProps = async () => {
+    ({ publicURL = undefined } = asset ? await getAssetDetails(asset) : {});
+  };
+
+  $: {
+    void asset;
+    updateProps();
+  }
 </script>
 
 <MenuButton
@@ -39,6 +61,13 @@
       }}
     />
     <Divider />
+    <MenuItem
+      label={$_('view_on_live_site')}
+      disabled={!publicURL}
+      on:click={() => {
+        window.open(publicURL);
+      }}
+    />
     <MenuItem
       disabled={!$backend?.repository || !asset?.repoFileURL}
       label={$_('view_on_x', {
