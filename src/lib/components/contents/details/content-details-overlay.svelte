@@ -29,7 +29,7 @@
   $: ({ editor: { preview: showPreviewPane = true } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ showPreview, paneStates } = $entryEditorSettings);
+  $: ({ showPreview, paneStates } = $entryEditorSettings ?? {});
   $: ({ i18nEnabled, locales, defaultLocale } =
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
@@ -101,7 +101,7 @@
       return;
     }
 
-    entryEditorSettings.update((view) => ({
+    entryEditorSettings.update((view = {}) => ({
       ...view,
       paneStates: {
         ...(view.paneStates ?? {}),

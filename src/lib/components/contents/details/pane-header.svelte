@@ -95,7 +95,7 @@
             </SelectButton>
           {/if}
         {/each}
-        {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings.showPreview}
+        {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings?.showPreview}
           <SelectButton
             selected={$thisPane?.mode === 'preview'}
             variant="tertiary"

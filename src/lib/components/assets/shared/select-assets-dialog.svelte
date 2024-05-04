@@ -76,7 +76,11 @@
 >
   <svelte:fragment slot="header-extra">
     {#if isLocalLibrary || isEnabledMediaService}
-      <ViewSwitcher currentView={selectAssetsView} aria-controls="select-assets-grid" />
+      {#if $selectAssetsView}
+        {@const _selectAssetsView =
+          /** @type {import('svelte/store').Writable<SelectAssetsView>} */ (selectAssetsView)}
+        <ViewSwitcher currentView={_selectAssetsView} aria-controls="select-assets-grid" />
+      {/if}
       <SearchBar
         bind:value={searchTerms}
         disabled={!!selectedAsset?.file}

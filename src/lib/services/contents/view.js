@@ -3,7 +3,6 @@ import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
-import { tick } from 'svelte';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import { prefs } from '$lib/services/prefs';
@@ -285,40 +284,9 @@ const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefi
 
 /**
  * View settings for all the folder collections.
- * @type {import('svelte/store').Writable<{ [key: string]: EntryListView }>}
+ * @type {import('svelte/store').Writable<{ [key: string]: EntryListView } | undefined>}
  */
-const entryListSettings = writable({}, (set) => {
-  (async () => {
-    try {
-      /** @type {RepositoryInfo} */
-      const { service, owner, repo } = await new Promise((resolve) => {
-        const unsubscribe = backend.subscribe(async (_backend) => {
-          if (_backend) {
-            resolve(/** @type {RepositoryInfo} */ (_backend.repository ?? {}));
-            await tick();
-            unsubscribe();
-          }
-        });
-      });
-
-      settingsDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'ui-settings') : null;
-
-      const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
-      const settings = legacyCache ?? (await settingsDB?.get(storageKey)) ?? {};
-
-      set(settings);
-
-      // Delete legacy cache on LocalStorage as we have migrated to IndexedDB
-      // @todo Remove this migration before GA
-      if (legacyCache) {
-        await settingsDB?.set(storageKey, settings);
-        await LocalStorage.delete(`sveltia-cms.${storageKey}`);
-      }
-    } catch {
-      //
-    }
-  })();
-});
+const entryListSettings = writable();
 
 /**
  * Get a field’s label by key.
@@ -438,6 +406,97 @@ export const entryGroups = derived(
   },
 );
 
+/**
+ * Initialize {@link entryListSettings} and relevant subscribers.
+ * @param {BackendService} _backend - Backend service.
+ */
+const initSettings = async ({ repository }) => {
+  const { service, owner, repo } = repository ?? {};
+
+  settingsDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'ui-settings') : null;
+
+  const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
+  const settings = legacyCache ?? (await settingsDB?.get(storageKey)) ?? {};
+
+  entryListSettings.set(settings);
+
+  entryListSettings.subscribe((_settings) => {
+    (async () => {
+      try {
+        if (!equal(_settings, await settingsDB?.get(storageKey))) {
+          await settingsDB?.set(storageKey, _settings);
+        }
+      } catch {
+        //
+      }
+    })();
+  });
+
+  selectedCollection.subscribe((collection) => {
+    if (!collection) {
+      return;
+    }
+
+    if (get(prefs).devModeEnabled) {
+      // eslint-disable-next-line no-console
+      console.info('selectedCollection', collection);
+    }
+
+    const { name: collectionName, identifier_field: customIdField, fields = [] } = collection;
+
+    // Reset the editor panes
+    editorLeftPane.set(null);
+    editorRightPane.set(null);
+
+    // This only works for folder/entry collections
+    if (!fields.length) {
+      return;
+    }
+
+    /**
+     * @type {EntryListView}
+     */
+    const defaultView = {
+      type: 'list',
+      sort: {
+        // Every folder collection should have at least the `title` (or `name`) field, or the
+        // `identifier_field` property.
+        // @see https://decapcms.org/docs/configuration-options/#identifier_field
+        key: customIdField || fields.find((f) => defaultSortableFields.includes(f.name))?.name,
+        order: 'ascending',
+      },
+    };
+
+    const view = get(entryListSettings)?.[collectionName] ?? defaultView;
+
+    if (!equal(view, get(currentView))) {
+      currentView.set(view);
+    }
+  });
+
+  currentView.subscribe((view) => {
+    const { name } = get(selectedCollection) ?? {};
+    const savedView = get(entryListSettings)?.[name ?? ''] ?? {};
+
+    if (name && !equal(view, savedView)) {
+      entryListSettings.update((_settings) => ({ ..._settings, [name]: view }));
+    }
+  });
+
+  // Delete legacy cache on LocalStorage as we have migrated to IndexedDB
+  // @todo Remove this migration before GA
+  if (legacyCache) {
+    await settingsDB?.set(storageKey, settings);
+    await LocalStorage.delete(`sveltia-cms.${storageKey}`);
+  }
+};
+
+backend.subscribe((_backend) => {
+  if (_backend && !get(entryListSettings)) {
+    initSettings(_backend);
+  }
+});
+
 listedEntries.subscribe((entries) => {
   selectedEntries.set([]);
 
@@ -445,82 +504,4 @@ listedEntries.subscribe((entries) => {
     // eslint-disable-next-line no-console
     console.info('listedEntries', entries);
   }
-});
-
-selectedCollection.subscribe(async (collection) => {
-  if (!collection) {
-    return;
-  }
-
-  if (get(prefs).devModeEnabled) {
-    // eslint-disable-next-line no-console
-    console.info('selectedCollection', collection);
-  }
-
-  const { name: collectionName, identifier_field: customIdField, fields = [] } = collection;
-
-  // Reset the editor panes
-  editorLeftPane.set(null);
-  editorRightPane.set(null);
-
-  // This only works for folder/entry collections
-  if (!fields.length) {
-    return;
-  }
-
-  /**
-   * @type {EntryListView}
-   */
-  const defaultView = {
-    type: 'list',
-    sort: {
-      // Every folder collection should have at least the `title` (or `name`) field, or the
-      // `identifier_field` property.
-      // @see https://decapcms.org/docs/configuration-options/#identifier_field
-      key: customIdField || fields.find((f) => defaultSortableFields.includes(f.name))?.name,
-      order: 'ascending',
-    },
-  };
-
-  // Wait for `entryListSettings` to be set asynchronously
-  const _entryListSettings = await new Promise((resolve) => {
-    const unsubscribe = entryListSettings.subscribe(async (settings) => {
-      if (Object.keys(settings).length) {
-        resolve(settings);
-        await tick();
-        unsubscribe();
-      }
-    });
-  });
-
-  const view = _entryListSettings[collectionName] ?? defaultView;
-
-  if (!equal(view, get(currentView))) {
-    currentView.set(view);
-  }
-});
-
-currentView.subscribe((view) => {
-  const { name } = get(selectedCollection) ?? {};
-  const savedView = get(entryListSettings)[name ?? ''] ?? {};
-
-  if (name && !equal(view, savedView)) {
-    entryListSettings.update((settings) => ({ ...settings, [name]: view }));
-  }
-});
-
-entryListSettings.subscribe((settings) => {
-  if (!settings || !Object.keys(settings).length) {
-    return;
-  }
-
-  (async () => {
-    try {
-      if (!equal(settings, await settingsDB?.get(storageKey))) {
-        await settingsDB?.set(storageKey, settings);
-      }
-    } catch {
-      //
-    }
-  })();
 });

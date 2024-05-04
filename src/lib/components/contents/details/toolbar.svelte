@@ -173,10 +173,10 @@
     <Menu slot="popup" aria-label={$_('editor_options')}>
       <MenuItemCheckbox
         label={$_('show_preview')}
-        checked={$entryEditorSettings.showPreview}
+        checked={$entryEditorSettings?.showPreview}
         disabled={!canPreview}
         on:change={() => {
-          entryEditorSettings.update((view) => ({
+          entryEditorSettings.update((view = {}) => ({
             ...view,
             showPreview: !view.showPreview,
           }));
@@ -184,10 +184,10 @@
       />
       <MenuItemCheckbox
         label={$_('sync_scrolling')}
-        checked={$entryEditorSettings.syncScrolling}
+        checked={$entryEditorSettings?.syncScrolling}
         disabled={!canPreview && Object.keys(currentValues).length === 1}
         on:change={() => {
-          entryEditorSettings.update((view) => ({
+          entryEditorSettings.update((view = {}) => ({
             ...view,
             syncScrolling: !view.syncScrolling,
           }));

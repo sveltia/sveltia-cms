@@ -25,7 +25,7 @@
    */
   export let thatPaneContentArea;
 
-  $: ({ syncScrolling } = $entryEditorSettings);
+  $: ({ syncScrolling } = $entryEditorSettings ?? {});
   $: ({ currentLocales = {}, currentValues = {} } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: ({ locale, mode } = $thisPane ?? /** @type {EntryEditorPane} */ ({}));
   $: hasContent = !!currentValues[locale];
