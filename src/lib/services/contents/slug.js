@@ -110,13 +110,15 @@ export const normalizeSlug = (string) => {
  * Fill the given slug template.
  * @param {string} template - Template string literal containing tags like `{{title}}`.
  * @param {object} options - Options.
+ * @param {'preview_path' | 'media_folder'} [options.type] - Slug type.
  * @param {Collection} options.collection - Entry collection.
  * @param {FlattenedEntryContent} options.content - Entry content for the default locale.
  * @param {string} [options.currentSlug] - Entry slug already created for the path.
- * @param {boolean} [options.isMediaFolder] - Whether to support additional template tags, for a
- * collection-specific media/public folder: `dirname`, `filename` and `extension`.
- * @param {string} [options.entryFilePath] - File path of the entry. Required if the `isMediaFolder`
- * option is `true`.
+ * @param {string} [options.entryFilePath] - File path of the entry. Required if the `type` is
+ * `preview_path` or `media_folder`.
+ * @param {LocaleCode} [options.locale] - Locale. Required if the `type` is `preview_path`.
+ * @param {{ [key: string]: string }} [options.dateTimeParts] - Map of date/time parts. Required if
+ * the `type` is `preview_path`.
  * @returns {string} Filled template that can be used for an entry slug, path, etc.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug
@@ -124,7 +126,15 @@ export const normalizeSlug = (string) => {
  */
 export const fillSlugTemplate = (
   template,
-  { collection, content: valueMap, currentSlug = '', isMediaFolder = false, entryFilePath = '' },
+  {
+    type,
+    collection,
+    content: valueMap,
+    currentSlug,
+    entryFilePath,
+    locale,
+    dateTimeParts = getDateTimeParts(),
+  },
 ) => {
   const {
     name: collectionName,
@@ -132,8 +142,6 @@ export const fillSlugTemplate = (
     folder: collectionFolderPath,
     slug_length: slugMaxLength = undefined,
   } = collection;
-
-  const dateTimeParts = getDateTimeParts();
 
   /**
    * Replacer subroutine.
@@ -161,7 +169,13 @@ export const fillSlugTemplate = (
       return generateUUID('shorter');
     }
 
-    if (isMediaFolder) {
+    if (type === 'preview_path') {
+      if (tag === 'locale') {
+        return locale;
+      }
+    }
+
+    if (type === 'preview_path' || type === 'media_folder') {
       if (!entryFilePath) {
         return '';
       }

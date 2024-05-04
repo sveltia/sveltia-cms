@@ -1,10 +1,14 @@
+import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { flatten } from 'flat';
+import moment from 'moment';
 import { get } from 'svelte/store';
 import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
 import { getOptionLabel } from '$lib/components/contents/details/widgets/select/helper';
 import { getAssetByPath } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
+import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents';
+import { fillSlugTemplate } from '$lib/services/contents/slug';
 
 /**
  * @type {Map<string, Field | undefined>}
@@ -210,6 +214,68 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
       .flat(1)
       .filter((value, index, array) => !!value && array.indexOf(value) === index)
   );
+};
+
+/**
+ * Get the given entry file’s web-accessible URL on the live site.
+ * @param {Entry} entry - Entry.
+ * @param {LocaleCode} locale - Locale.
+ * @param {Collection} collection - Collection.
+ * @param {CollectionFile} [collectionFile] - Collection file. File collection only.
+ * @returns {string | undefined} URL on the live site.
+ */
+export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
+  const { show_preview_links: showLinks = true, site_url: baseURL } = get(siteConfig) ?? {};
+  const { path: entryFilePath, content } = entry.locales[locale];
+
+  const {
+    preview_path: pathTemplate,
+    preview_path_date_field: dateFieldName,
+    fields,
+  } = collectionFile ?? collection;
+
+  if (!showLinks || !baseURL || !entryFilePath || !content || !pathTemplate) {
+    return undefined;
+  }
+
+  const valueMap = flatten(content);
+  /** @type {{ [key: string]: string } | undefined} */
+  let dateTimeParts;
+
+  if (pathTemplate.match(/\b{{(?:year|month|day|hour|minute|second)}}\b/g)) {
+    const fieldConfig = dateFieldName
+      ? fields?.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
+      : fields?.find(({ widget }) => widget === 'datetime');
+
+    const fieldValue = fieldConfig ? valueMap[fieldConfig.name] : undefined;
+
+    if (!fieldConfig || !fieldValue) {
+      return undefined;
+    }
+
+    const { format, picker_utc: pickerUTC = false } = /** @type {DateTimeField} */ (fieldConfig);
+
+    dateTimeParts = getDateTimeParts({
+      date: (pickerUTC ? moment.utc : moment)(fieldValue, format).toDate(),
+      timeZone: pickerUTC ? 'UTC' : undefined,
+    });
+  }
+
+  try {
+    const path = fillSlugTemplate(pathTemplate, {
+      type: 'preview_path',
+      collection,
+      content: valueMap,
+      locale,
+      currentSlug: entry.slug,
+      entryFilePath,
+      dateTimeParts,
+    });
+
+    return `${baseURL.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+  } catch {
+    return undefined;
+  }
 };
 
 /**

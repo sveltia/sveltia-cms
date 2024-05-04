@@ -29,7 +29,11 @@
     revertChanges,
     saveEntry,
   } from '$lib/services/contents/editor';
-  import { getAssociatedAssets, getEntryRepoBlobURL } from '$lib/services/contents/entry';
+  import {
+    getAssociatedAssets,
+    getEntryPreviewURL,
+    getEntryRepoBlobURL,
+  } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/view';
 
@@ -72,6 +76,9 @@
     !!originalEntry && !!collection._assetFolder?.entryRelative
       ? getAssociatedAssets(originalEntry, { relative: true })
       : [];
+  $: previewURL = originalEntry
+    ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
+    : undefined;
 
   /**
    * Duplicate the current entry.
@@ -142,6 +149,15 @@
     {/if}
   </h2>
   <Spacer flex />
+  {#if previewURL}
+    <Button
+      variant="tertiary"
+      label={$_('view_on_live_site')}
+      on:click={() => {
+        window.open(previewURL);
+      }}
+    />
+  {/if}
   {#if !collectionFile && !isNew}
     <Button
       variant="ghost"

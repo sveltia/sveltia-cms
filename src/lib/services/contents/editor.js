@@ -1107,8 +1107,8 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   const { internalAssetFolder, publicAssetFolder } = getEntryAssetFolderPaths({
     ...fillSlugOptions,
+    type: 'media_folder',
     currentSlug: slug,
-    isMediaFolder: true,
     entryFilePath: createEntryPath(draft, defaultLocale, slug),
   });
 

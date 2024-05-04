@@ -22,7 +22,7 @@
     revertChanges,
     toggleLocale,
   } from '$lib/services/contents/editor';
-  import { getEntryRepoBlobURL } from '$lib/services/contents/entry';
+  import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
@@ -64,6 +64,10 @@
   $: canRevert =
     $thisPane?.locale &&
     !equal(currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]);
+  $: previewURL =
+    originalEntry && $thisPane?.locale
+      ? getEntryPreviewURL(originalEntry, $thisPane?.locale, collection, collectionFile)
+      : undefined;
 </script>
 
 <div role="none" {id} class="header">
@@ -162,6 +166,14 @@
           {/if}
           {#if originalEntry}
             <Divider />
+            {#if previewURL}
+              <MenuItem
+                label={$_('view_on_live_site')}
+                on:click={() => {
+                  window.open(previewURL);
+                }}
+              />
+            {/if}
             <MenuItem
               disabled={!$backend?.repository}
               label={$_('view_on_x', {

@@ -305,7 +305,7 @@
  * @property {boolean} editor.preview - Whether to show the preview pane for all the collections.
  * Default: `true`.
  * @property {'simple' | 'editorial_workflow'} [publish_mode] - Enable Editorial Workflow.
- * @property {boolean} [show_preview_links] - Whether to show preview links in Editorial Workflow.
+ * @property {boolean} [show_preview_links] - Whether to show site preview links.
  * @see https://decapcms.org/docs/configuration-options/
  */
 
@@ -386,6 +386,8 @@
  * @property {string} file - File path.
  * @property {Field[]} fields - Fields.
  * @property {RawI18nConfig | boolean} [i18n] - I18n configuration.
+ * @property {string} [preview_path] - Preview URL template.
+ * @property {string} [preview_path_date_field] - Date field used for the preview URL template.
  * @property {object} [editor] - Editor view configuration.
  * @property {boolean} editor.preview - Whether to show the preview pane for the collection.
  * Default: `true`.
