@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@sveltia/ui':
-        specifier: ^0.13.1
-        version: 0.13.1
+        specifier: ^0.13.2
+        version: 0.13.2
       '@sveltia/utils':
         specifier: ^0.1.1
         version: 0.1.1
@@ -842,8 +842,8 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       vite: ^5.0.0
 
-  '@sveltia/ui@0.13.1':
-    resolution: {integrity: sha512-430Hpa4gWfkkSRbmb4294O8E92MaBbNucMHePyEvfuRyrG8qK0oZfNophTZGmuME6WnceYNOTelLg76o+titwQ==}
+  '@sveltia/ui@0.13.2':
+    resolution: {integrity: sha512-2KW24nRu7v5YIPicJdA1IhRoBfjYvayfbH9bz8YevagfZe8szpjPF1bN2vOPtppHaV2DWQiQb8KUsS4/RiJ5cg==}
 
   '@sveltia/utils@0.1.1':
     resolution: {integrity: sha512-eOJdqih3K6P/uXDU9SvQXhLGT8CxQG4rtC/N3YT4PVk1sQ/L59x5y4pnT83qKy+gpVvqq58LAMfFE+YMnTPJ/Q==}
@@ -3686,7 +3686,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.13.1':
+  '@sveltia/ui@0.13.2':
     dependencies:
       '@lexical/code': 0.14.5
       '@lexical/history': 0.14.5

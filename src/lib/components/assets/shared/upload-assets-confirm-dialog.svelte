@@ -2,11 +2,18 @@
   import { ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import { uploadingAssets } from '$lib/services/assets';
+  import { showAssetOverlay, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
   import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
 
   $: ({ files, folder, originalAsset } = $uploadingAssets);
+
+  $: {
+    if (!$showAssetOverlay) {
+      // Close the dialog
+      $uploadingAssets = { folder: undefined, files: [] };
+    }
+  }
 </script>
 
 <!-- @todo Confirm to replace an old image if a file with the same same exists. -->

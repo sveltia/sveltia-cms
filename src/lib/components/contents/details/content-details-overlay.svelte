@@ -1,6 +1,6 @@
 <script>
   import { Group } from '@sveltia/ui';
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
@@ -121,6 +121,19 @@
    * @type {HTMLElement}
    */
   let wrapper;
+  /**
+   * A reference to the group element.
+   * @type {HTMLElement}
+   */
+  let group;
+  /**
+   * @type {boolean}
+   */
+  let hiding = false;
+  /**
+   * @type {boolean}
+   */
+  let hidden = true;
 
   /**
    * Move focus to the wrapper once the overlay is loaded.
@@ -129,21 +142,43 @@
     // Wait until `inert` is updated
     await tick();
 
-    const group = /** @type {HTMLElement} */ (wrapper.querySelector('[role="group"]'));
-
     group.tabIndex = 0;
     group.focus();
   };
 
+  onMount(() => {
+    group = /** @type {HTMLElement} */ (wrapper.querySelector('[role="group"]'));
+
+    group.addEventListener('transitionend', () => {
+      if (!$showContentOverlay) {
+        hiding = false;
+        hidden = true;
+      }
+    });
+  });
+
   $: {
-    if (wrapper && $showContentOverlay) {
-      switchPanes();
-      moveFocus();
+    if (wrapper) {
+      if ($showContentOverlay) {
+        hiding = false;
+        hidden = false;
+        switchPanes();
+        moveFocus();
+      } else {
+        hiding = true;
+      }
     }
   }
 </script>
 
-<div role="none" class="wrapper" inert={!$showContentOverlay} bind:this={wrapper}>
+<div
+  role="none"
+  class="wrapper"
+  class:hiding
+  {hidden}
+  inert={!$showContentOverlay}
+  bind:this={wrapper}
+>
   <Group class="content-editor" aria-label={$_('content_editor')}>
     {#key $entryDraft?.originalEntry?.id}
       <Toolbar />
@@ -203,6 +238,10 @@
 <style lang="scss">
   .wrapper {
     display: contents;
+
+    &[hidden] {
+      display: none;
+    }
 
     & > :global(.sui.group) {
       position: fixed;

@@ -2,7 +2,7 @@
   import { PromptDialog } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
-  import { copyFromLocale } from '$lib/services/contents/editor';
+  import { copyFromLocale, showContentOverlay } from '$lib/services/contents/editor';
   import {
     pendingTranslatorRequest,
     showTranslatorApiKeyDialog,
@@ -12,6 +12,12 @@
 
   $: ({ serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } =
     $translator ?? /** @type {TranslationService} */ ({}));
+
+  $: {
+    if (!$showContentOverlay) {
+      $showTranslatorApiKeyDialog = false;
+    }
+  }
 </script>
 
 <PromptDialog

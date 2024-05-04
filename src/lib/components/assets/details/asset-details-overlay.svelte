@@ -1,7 +1,7 @@
 <script>
   import { Group } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -14,6 +14,19 @@
    * @type {HTMLElement}
    */
   let wrapper;
+  /**
+   * A reference to the group element.
+   * @type {HTMLElement}
+   */
+  let group;
+  /**
+   * @type {boolean}
+   */
+  let hiding = false;
+  /**
+   * @type {boolean}
+   */
+  let hidden = true;
   /**
    * @type {Blob | undefined}
    */
@@ -34,20 +47,42 @@
     // Wait until `inert` is updated
     await tick();
 
-    const group = /** @type {HTMLElement} */ (wrapper.querySelector('[role="group"]'));
-
     group.tabIndex = 0;
     group.focus();
   };
 
+  onMount(() => {
+    group = /** @type {HTMLElement} */ (wrapper.querySelector('[role="group"]'));
+
+    group.addEventListener('transitionend', () => {
+      if (!$showAssetOverlay) {
+        hiding = false;
+        hidden = true;
+      }
+    });
+  });
+
   $: {
-    if (wrapper && $showAssetOverlay) {
-      moveFocus();
+    if (wrapper) {
+      if ($showAssetOverlay) {
+        hiding = false;
+        hidden = false;
+        moveFocus();
+      } else {
+        hiding = true;
+      }
     }
   }
 </script>
 
-<div role="none" class="wrapper" inert={!$showAssetOverlay} bind:this={wrapper}>
+<div
+  role="none"
+  class="wrapper"
+  class:hiding
+  {hidden}
+  inert={!$showAssetOverlay}
+  bind:this={wrapper}
+>
   <Group aria-label={$_('asset_editor')}>
     {#key $overlaidAsset?.sha}
       <Toolbar />
@@ -85,6 +120,10 @@
 <style lang="scss">
   .wrapper {
     display: contents;
+
+    &[hidden] {
+      display: none;
+    }
 
     & > :global(.sui.group) {
       position: fixed;

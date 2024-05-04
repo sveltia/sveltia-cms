@@ -10,7 +10,7 @@
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssetFolders, allAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
-  import { selectAssetsView } from '$lib/services/contents/editor';
+  import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import {
     allCloudStorageServices,
     allStockPhotoServices,
@@ -56,6 +56,12 @@
     if (open) {
       // Reset values
       enteredURL = '';
+    }
+  }
+
+  $: {
+    if (!$showContentOverlay) {
+      open = false;
     }
   }
 

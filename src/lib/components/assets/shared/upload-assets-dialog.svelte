@@ -5,7 +5,12 @@
   import { _ } from 'svelte-i18n';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
-  import { globalAssetFolder, selectedAssetFolder, uploadingAssets } from '$lib/services/assets';
+  import {
+    globalAssetFolder,
+    selectedAssetFolder,
+    showAssetOverlay,
+    uploadingAssets,
+  } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
 
   let canDragDrop = true;
@@ -40,6 +45,12 @@
     // Open the file picker directly if drag & drop is not supported (on mobile)
     if (!canDragDrop && filePicker && $showUploadAssetsDialog) {
       filePicker.open();
+    }
+  }
+
+  $: {
+    if (!$showAssetOverlay) {
+      $showUploadAssetsDialog = false;
     }
   }
 </script>
