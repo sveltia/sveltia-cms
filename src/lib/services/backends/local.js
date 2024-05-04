@@ -152,6 +152,7 @@ const getHandleByPath = async (path) => {
  * @returns {Promise<BaseFileListItem[]>} File list.
  */
 const getAllFiles = async () => {
+  const { blobBaseURL } = repository;
   const _rootDirHandle = get(rootDirHandle);
   /** @type {{ file: File, path: string }[]} */
   const availableFileList = [];
@@ -218,7 +219,15 @@ const getAllFiles = async () => {
         name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? readAsText(file) : undefined,
       ]);
 
-      return { file, path, name, sha, size, text };
+      const data = { file, path, name, sha, size, text };
+
+      if (blobBaseURL) {
+        Object.assign(data, {
+          meta: { repoFileURL: `${blobBaseURL}/${path}` },
+        });
+      }
+
+      return data;
     }),
   );
 };

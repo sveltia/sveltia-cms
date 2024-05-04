@@ -813,7 +813,8 @@
  * media folder.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.
- * @property {string} [repoFileURL] - Web-accessible URL on the Git repository. Git backends only.
+ * @property {string} [repoFileURL] - Web-accessible URL on the Git repository. Git and local
+ * backends only.
  */
 
 /**
