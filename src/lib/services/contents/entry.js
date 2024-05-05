@@ -226,7 +226,7 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
   const { show_preview_links: showLinks = true, site_url: baseURL } = get(siteConfig) ?? {};
-  const { path: entryFilePath, content } = entry.locales[locale];
+  const { path: entryFilePath, content } = entry.locales[locale] ?? {};
 
   const {
     preview_path: pathTemplate,
@@ -285,4 +285,4 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
  * @returns {string} URL on the repository.
  */
 export const getEntryRepoBlobURL = (entry, locale) =>
-  `${get(backend)?.repository?.blobBaseURL}/${entry.locales[locale].path}?plain=1`;
+  `${get(backend)?.repository?.blobBaseURL}/${entry.locales[locale]?.path}?plain=1`;
