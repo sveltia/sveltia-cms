@@ -402,6 +402,7 @@ export const strings = {
       description: 'Use the following credit if possible:',
     },
   },
+  youtube_video_player: 'YouTube video player',
 
   // Content preview
   boolean: {

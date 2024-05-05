@@ -405,6 +405,7 @@ export const strings = {
       description: '可能であれば以下のクレジットを使ってください:',
     },
   },
+  youtube_video_player: 'YouTube 動画プレーヤー',
 
   // Content preview
   boolean: {
