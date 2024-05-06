@@ -27,7 +27,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
-- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 70+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
+- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
 - Implementing our own enhancement ideas
 
 At this point, **we are aiming to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
@@ -47,13 +47,14 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant UX improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
-- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid fatal crashes in a React application[^100]. Best of all, Svelte offers great performance!
+- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid fatal React app crashes[^100]. Best of all, Svelte offers great performance!
 - The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
 
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
 - Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than bloated Netlify CMS (1.5 MB) and Decap CMS (1.8 MB)[^57][^64]. Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- No typing slowness on input widgets, especially within nested lists and objects[^77].
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Using caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
@@ -64,8 +65,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - You can [work with a local Git repository](#working-with-a-local-git-repository) without any configuration or proxy server[^26].
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
-  - It also allows you to bypass the 30 MB file size limit[^51].
-  - The `logo_url` defined in the configuration will be used[^49].
+  - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved.
@@ -149,19 +149,21 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Boolean
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error[^45].
   - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing[^46].
+- Hidden
+  - The `default` value is saved when you create a file collection item, not just a folder collection item[^78].
 - List
   - A required List field with no subfield or value is marked as invalid[^43].
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing[^44].
   - You can enter spaces in a simple text-based List field[^50].
   - You can preview variable types without having to register a preview template[^42].
 - Markdown
-  - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves several problems found in Netlify/Decap CMS, including fatal application crashes[^53][^70][^71][^72][^73].
+  - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves various problems found in Netlify/Decap CMS, including fatal application crashes[^53][^70][^71][^72][^73].
   - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
 - Object
   - Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
   - An optional Object field can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - Relation
-  - Field options are displayed with no additional API requests[^14]. The `options_length` property is therefore ignored.
+  - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
 - Select
   - It’s possible to select an option with value `0`[^56].
 - String
@@ -200,7 +202,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - Navigate between the global media folder and per-collection media folders[^6].
   - Preview image, audio, video, text and PDF files.
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
-  - Copy the public URL, file path, text data or image data of a selected asset to clipboard.
+  - Copy the public URL[^74], file path, text data or image data of a selected asset to clipboard.
     - The file path starts with `/` as expected[^48].
   - Edit plain text assets, including SVG images.
   - Replace existing assets.
@@ -611,7 +613,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505)
 [^10]: Netlify/Decap CMS [#341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
 [^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382)
-[^12]: Netlify/Decap CMS [#1975](https://github.com/decaporg/decap-cms/issues/1975)
+[^12]: Netlify/Decap CMS [#1975](https://github.com/decaporg/decap-cms/issues/1975), [#3712](https://github.com/decaporg/decap-cms/issues/3712)
 [^13]: Netlify/Decap CMS [#5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
 [^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
 [^15]: Netlify/Decap CMS [#6932](https://github.com/decaporg/decap-cms/issues/6932)
@@ -673,4 +675,9 @@ This software is provided “as is” without any express or implied warranty. W
 [^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7152](https://github.com/decaporg/decap-cms/issues/7152)
 [^72]: Netlify/Decap CMS [#7047](https://github.com/decaporg/decap-cms/issues/7047)
 [^73]: Netlify/Decap CMS [#7123](https://github.com/decaporg/decap-cms/issues/7123)
+[^74]: Netlify/Decap CMS [#4209](https://github.com/decaporg/decap-cms/issues/4209)
+[^75]: Netlify/Decap CMS [#5472](https://github.com/decaporg/decap-cms/issues/5472)
+[^76]: Netlify/Decap CMS [#4738](https://github.com/decaporg/decap-cms/issues/4738)
+[^77]: Netlify/Decap CMS [#6565](https://github.com/decaporg/decap-cms/issues/6565)
+[^78]: Netlify/Decap CMS [#3046](https://github.com/decaporg/decap-cms/issues/3046)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
