@@ -164,6 +164,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - An optional Object field can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - Relation
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
+  - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
 - Select
   - It’s possible to select an option with value `0`[^56].
 - String
