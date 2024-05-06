@@ -69,6 +69,10 @@
    * Hide the preview pane if it’s disabled by the user or the collection/file.
    */
   const switchPanes = async () => {
+    if (!$entryDraft) {
+      return;
+    }
+
     if (await restorePanes()) {
       return;
     }
