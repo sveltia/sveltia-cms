@@ -2,15 +2,15 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and [Decap CMS](https://decapcms.org/). In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
-![Screenshot: Git-based Headless CMS with Dark Mode](docs/screenshot-1-20231124.webp)<br>
+![Screenshot: Open Source Git-based Headless CMS](docs/screenshot-1-20240507.webp)<br>
 
-![Screenshot: Instant Entry Listing, Searching, Saving](docs/screenshot-2-20231124.webp)<br>
+![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](docs/screenshot-2-20240507.webp)<br>
 
-![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](docs/screenshot-3-20231124.webp)<br>
+![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](docs/screenshot-3-20240507.webp)<br>
 
-![Screenshot: All-New Asset Library; Full Internationalization Support with DeepL](docs/screenshot-4-20231124.webp)<br>
+![Screenshot: All-New Asset Library; First Class I18n Support with DeepL](docs/screenshot-4-20240507.webp)<br>
 
-![Screenshot: Works with Remote (GitHub, GitLab) and Local Repositories; Single-Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](docs/screenshot-5-20240405.webp)<br>
+![Screenshot: Works with Remote (GitHub, GitLab) and Local Repositories; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](docs/screenshot-5-20240507.webp)<br>
 
 ## Motivation
 
@@ -69,7 +69,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Eliminates some workflow disruptions in the Content Editor:
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved.
-- You can upload multiple assets at once. (See below)
+- You can upload multiple assets at once[^5].
 - You can delete multiple entries and assets at once.
 - Some keyboard shortcuts are available for faster editing. More to come!
   - View the Content Library: `Alt+1`
