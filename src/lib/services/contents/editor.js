@@ -315,6 +315,11 @@ export const createProxy = ({
   return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {string} */ keyPath, value) => {
+      // Handle special keys that always save the given value
+      if (['translationKey'].includes(keyPath)) {
+        return Reflect.set(obj, keyPath, value);
+      }
+
       const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
       const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
 
@@ -1103,7 +1108,48 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   const { i18nEnabled, locales, defaultLocale, structure } = (collectionFile ?? collection)._i18n;
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
-  const slug = fileName || originalEntry?.slug || fillSlugTemplate(slugTemplate, fillSlugOptions);
+  const currentSlug = fileName ?? originalEntry?.slug;
+  /**
+   * The slug of the default locale aka canonical slug.
+   */
+  const slug = currentSlug ?? fillSlugTemplate(slugTemplate, fillSlugOptions);
+
+  /**
+   * List of key paths that the value will be localized.
+   */
+  const localizingKeyPaths = [...slugTemplate.matchAll(/{{(.+?) \| localize}}/g)].map(
+    ([, keyPath]) => keyPath,
+  );
+
+  /**
+   * Localized slug map. This only applies when the i18n structure is multiple files or folders, and
+   * the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
+   */
+  const localizedSlugs =
+    structure !== 'single_file' && !!localizingKeyPaths.length
+      ? Object.fromEntries(
+          Object.entries(currentLocales)
+            .filter(([, enabled]) => enabled)
+            .map(([locale]) => [
+              locale,
+              locale === defaultLocale
+                ? slug
+                : fillSlugTemplate(slugTemplate, {
+                    collection,
+                    content: {
+                      // Merge the default locale content and localized content
+                      ...currentValues[defaultLocale],
+                      ...Object.fromEntries(
+                        localizingKeyPaths.map((keyPath) => [
+                          keyPath,
+                          currentValues[locale][keyPath],
+                        ]),
+                      ),
+                    },
+                  }),
+            ]),
+        )
+      : undefined;
 
   const { internalAssetFolder, publicAssetFolder } = getEntryAssetFolderPaths({
     ...fillSlugOptions,
@@ -1142,10 +1188,18 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const savingEntryLocales = Object.fromEntries(
     await Promise.all(
       Object.entries(currentValues).map(async ([locale, valueMap]) => {
-        const path = createEntryPath(draft, locale, slug);
+        const localizedSlug = localizedSlugs?.[locale];
+        const path = createEntryPath(draft, locale, localizedSlug ?? slug);
 
         if (!currentLocales[locale]) {
           return [locale, { path }];
+        }
+
+        // Support for Hugo’s translation linking; keep the existing `translationKey`, otherwise
+        // save the canonical slug using the special property if the slug is localized
+        // @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
+        if (localizedSlug && !valueMap.translationKey) {
+          valueMap.translationKey = slug;
         }
 
         // Normalize data

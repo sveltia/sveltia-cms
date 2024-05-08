@@ -313,6 +313,12 @@ const getSlug = (collectionName, filePath, content) => {
     return '';
   }
 
+  // Support for Hugo’s translation linking
+  // @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
+  if (content.translationKey) {
+    return content.translationKey;
+  }
+
   const { path: pathTemplate, identifier_field: identifierField = 'title' } = collection;
 
   if (!pathTemplate) {
