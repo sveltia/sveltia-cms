@@ -1,11 +1,24 @@
 <script>
   import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
+  import DOMPurify from 'isomorphic-dompurify';
+  import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
-  import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
-  import { goto } from '$lib/services/app/navigation';
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
+  import { goto } from '$lib/services/app/navigation';
+  import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
 
   let showDeleteDialog = false;
+
+  /**
+   * Parse the given string as Markdown and sanitize the result to only allow certain tags.
+   * @param {string} str - Original string.
+   * @returns {string} Sanitized string.
+   */
+  const sanitize = (str) =>
+    DOMPurify.sanitize(/** @type {string} */ (marked.parseInline(str)), {
+      ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a'],
+      ALLOWED_ATTR: ['href'],
+    });
 
   $: ({
     name,
@@ -21,7 +34,7 @@
 {#if $selectedCollection}
   <Toolbar variant="primary" aria-label={$_('collection')}>
     <h2 role="none">{collectionLabel}</h2>
-    <div role="none" class="description">{description || ''}</div>
+    <div role="none" class="description">{@html sanitize(description || '')}</div>
     <Spacer flex />
     {#if !files}
       <Button
