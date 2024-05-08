@@ -117,6 +117,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
 - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
 - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
+- You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
 
 ### Better collections
 
@@ -127,6 +128,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
 - You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
+- You can use Markdown in collection descriptions[^79]. Bold, italic, strikethrough, code and links are allowed.
 
 ### Better content editing
 
@@ -414,6 +416,42 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 1. Open any entry, and you can now translate all fields or individual fields by selecting Translate from the three-dot menu.
 1. If you have upgraded to DeepL API Pro, provide your new Authentication Key in the same way.
 
+### Localizing entry slugs
+
+In Sveltia CMS, it’s possible to localize entry slugs (filenames) if the i18n structure is `multiple_files` or `multiple_folders`. All you need is the `localize` filter for `slug` template tags:
+
+```yaml
+i18n:
+  structure: multiple_folders
+  locales: [en, fr]
+
+collections:
+  - name: posts
+    label: Blog posts
+    create: true
+    folder: data/posts/
+    slug: '{{title | localize}}'
+    format: yaml
+    fields:
+      - name: title
+        label: Title
+        widget: string
+        i18n: true
+```
+
+With this configuration, an entry is saved with localized filenames, while the default locale’s slug is stored in each file as the extra `translationKey` property, which is used in [Hugo’s multilingual support](https://gohugo.io/content-management/multilingual/#bypassing-default-linking). Even if you’re using a different framework, you can still use this property to link localized files.
+
+- `data/posts/en/my-trip-to-new-york.yaml`
+  ```yaml
+  title: My trip to New York
+  translationKey: my-trip-to-new-york
+  ```
+- `data/posts/fr/mon-voyage-a-new-york.yaml`
+  ```yaml
+  title: Mon voyage à New York
+  translationKey: my-trip-to-new-york
+  ```
+
 ### Disabling non-default locale content
 
 You can now disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
@@ -682,4 +720,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^76]: Netlify/Decap CMS [#4738](https://github.com/decaporg/decap-cms/issues/4738)
 [^77]: Netlify/Decap CMS [#6565](https://github.com/decaporg/decap-cms/issues/6565)
 [^78]: Netlify/Decap CMS [#3046](https://github.com/decaporg/decap-cms/issues/3046)
+[^79]: Netlify/Decap CMS [#5726](https://github.com/decaporg/decap-cms/issues/5726)
+[^80]: Netlify/Decap CMS [#5493](https://github.com/decaporg/decap-cms/issues/5493), [#6600](https://github.com/decaporg/decap-cms/issues/6600)
+[^81]: Netlify/Decap CMS [#4645](https://github.com/decaporg/decap-cms/issues/4645)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
