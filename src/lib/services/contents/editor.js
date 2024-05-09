@@ -253,7 +253,7 @@ export const getDefaultValues = (fields, dynamicValues = {}) => {
         } else if (dateFormat === false) {
           newContent[keyPath] = timeStr;
         } else {
-          newContent[keyPath] = `${dateStr}T${timeStr}:00.000Z`;
+          newContent[keyPath] = `${dateStr}T${timeStr}${pickerUTC ? ':00.000Z' : ''}`;
         }
       }
 

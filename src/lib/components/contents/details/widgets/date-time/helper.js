@@ -29,7 +29,11 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
       return (pickerUTC ? moment.utc(inputValue) : moment(inputValue)).format(format);
     }
 
-    return new Date(inputValue).toISOString();
+    if (pickerUTC) {
+      return new Date(inputValue).toISOString();
+    }
+
+    return inputValue;
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
@@ -56,6 +60,11 @@ export const getInputValue = (currentValue, fieldConfig) => {
 
   const dateOnly = timeFormat === false;
   const timeOnly = dateFormat === false;
+
+  // If the default value is an empty string, the input will be blank by default
+  if (currentValue === '') {
+    return '';
+  }
 
   if (!required && !currentValue) {
     return undefined;
