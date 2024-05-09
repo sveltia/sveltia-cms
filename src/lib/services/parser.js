@@ -313,12 +313,6 @@ const getSlug = (collectionName, filePath, content) => {
     return '';
   }
 
-  // Support for Hugo’s translation linking
-  // @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
-  if (content.translationKey) {
-    return content.translationKey;
-  }
-
   const { path: pathTemplate, identifier_field: identifierField = 'title' } = collection;
 
   if (!pathTemplate) {
@@ -391,22 +385,25 @@ export const parseEntryFiles = (entryFiles) => {
       return;
     }
 
-    /** @type {any} */
-    const entry = { sha, collectionName, fileName, locales: {}, ...meta };
+    /** @type {Entry} */
+    const entry = { id: '', slug: '', sha, collectionName, fileName, locales: {}, ...meta };
 
     if (!i18nEnabled) {
-      entry.slug = fileName || getSlug(collectionName, filePath, parsedFile);
-      entry.locales._default = { content: parsedFile, path, sha };
+      const slug = fileName || getSlug(collectionName, filePath, parsedFile);
+
+      entry.slug = slug;
+      entry.locales._default = { slug, path, sha, content: parsedFile };
     }
 
     if (i18nEnabled && (structure === 'single_file' || fileName)) {
       const content = parsedFile[defaultLocale] ?? Object.values(parsedFile)[0];
+      const slug = fileName || getSlug(collectionName, filePath, content);
 
-      entry.slug = fileName || getSlug(collectionName, filePath, content);
+      entry.slug = slug;
       entry.locales = Object.fromEntries(
         locales
           .filter((locale) => locale in parsedFile)
-          .map((locale) => [locale, { content: parsedFile[locale], path, sha }]),
+          .map((locale) => [locale, { slug, path, sha, content: parsedFile[locale] }]),
       );
     }
 
@@ -430,19 +427,23 @@ export const parseEntryFiles = (entryFiles) => {
         return;
       }
 
-      const slug = fileName || getSlug(collectionName, _filePath, parsedFile);
+      const localizedSlug = fileName || getSlug(collectionName, _filePath, parsedFile);
+      const localizedEntry = { slug: localizedSlug, path, sha, content: parsedFile };
+      // Support for Hugo’s translation linking
+      // @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
+      const canonicalSlug = parsedFile.translationKey ?? localizedSlug;
       // Check if the entry has already been added for another locale
-      const index = entries.findIndex((e) => e.id === `${collectionName}/${slug}`);
+      const index = entries.findIndex((e) => e.id === `${collectionName}/${canonicalSlug}`);
 
       // If found, add a new locale to an existing entry; don’t add another entry
       if (index > -1) {
-        entries[index].locales[locale] = { content: parsedFile, path, sha };
+        entries[index].locales[locale] = localizedEntry;
 
         return;
       }
 
-      entry.slug = slug;
-      entry.locales[locale] = { content: parsedFile, path, sha };
+      entry.slug = canonicalSlug;
+      entry.locales[locale] = localizedEntry;
     }
 
     if (!entry.slug || !Object.keys(entry.locales).length) {

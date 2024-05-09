@@ -688,7 +688,7 @@
  * @property {string} sha - SHA-1 hash from one of the locales. It serves as the ID of an entry, so
  * it can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
- * @property {string} slug - Entry slug.
+ * @property {string} slug - The slug of the default locale aka canonical slug.
  * @property {{ [locale: LocaleCode]: LocalizedEntry }} locales - Localized content map keyed with a
  * locale code. When i18n is not enabled with the site configuration, there will be one single
  * property named `_default`.
@@ -706,9 +706,10 @@
 /**
  * Each locale’s content and metadata.
  * @typedef {object} LocalizedEntry
+ * @property {string} slug - Localized entry slug.
+ * @property {string} path - File path.
+ * @property {string} sha - SHA-1 hash for the file.
  * @property {EntryContent} content - Parsed, localized entry content.
- * @property {string} [path] - File path.
- * @property {string} [sha] - SHA-1 hash for the file.
  */
 
 /**

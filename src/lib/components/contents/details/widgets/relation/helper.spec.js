@@ -4,6 +4,8 @@ import { siteConfig } from '$lib/services/config';
 
 describe('Test getOptions()', () => {
   const locale = '_default';
+  /** @type {LocalizedEntry} */
+  const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
 
   /** @type {Entry[]} */
   const memberEntries = [
@@ -14,6 +16,7 @@ describe('Test getOptions()', () => {
       collectionName: 'members',
       locales: {
         _default: {
+          ...localizedEntryProps,
           content: {
             slug: 'member-melvin-lucas',
             name: {
@@ -33,6 +36,7 @@ describe('Test getOptions()', () => {
       collectionName: 'members',
       locales: {
         _default: {
+          ...localizedEntryProps,
           content: {
             slug: 'member-elsie-mcbride',
             name: {
@@ -52,6 +56,7 @@ describe('Test getOptions()', () => {
       collectionName: 'members',
       locales: {
         _default: {
+          ...localizedEntryProps,
           content: {
             slug: 'member-maxine-field',
             name: {
@@ -193,6 +198,7 @@ describe('Test getOptions()', () => {
         fileName: 'cities',
         locales: {
           _default: {
+            ...localizedEntryProps,
             content: {
               cities: [
                 { id: 'YYZ', name: 'Toronto' },
@@ -251,6 +257,7 @@ describe('Test getOptions()', () => {
         collectionName: 'pages',
         locales: {
           _default: {
+            ...localizedEntryProps,
             content: {
               route: '/about',
               sections: [
@@ -268,6 +275,7 @@ describe('Test getOptions()', () => {
         collectionName: 'pages',
         locales: {
           _default: {
+            ...localizedEntryProps,
             content: {
               route: '/projects',
               sections: [
@@ -378,6 +386,7 @@ describe('Test getOptions()', () => {
         collectionName: 'posts',
         locales: {
           en: {
+            ...localizedEntryProps,
             content: { category: 'cats', draft: true, title: 'Ragdoll' },
           },
         },
@@ -389,6 +398,7 @@ describe('Test getOptions()', () => {
         collectionName: 'posts',
         locales: {
           en: {
+            ...localizedEntryProps,
             content: { category: 'cats', draft: false, title: 'Persian' },
           },
         },
@@ -400,6 +410,7 @@ describe('Test getOptions()', () => {
         collectionName: 'posts',
         locales: {
           en: {
+            ...localizedEntryProps,
             content: { category: 'dogs', draft: true, title: 'Bulldog' },
           },
         },
@@ -411,6 +422,7 @@ describe('Test getOptions()', () => {
         collectionName: 'posts',
         locales: {
           en: {
+            ...localizedEntryProps,
             content: { category: 'dogs', draft: false, title: 'Poodle' },
           },
         },

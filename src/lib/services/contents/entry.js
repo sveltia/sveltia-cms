@@ -226,7 +226,7 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
   const { show_preview_links: showLinks = true, site_url: baseURL } = get(siteConfig) ?? {};
-  const { path: entryFilePath, content } = entry.locales[locale] ?? {};
+  const { slug, path: entryFilePath, content } = entry.locales[locale] ?? {};
 
   const {
     preview_path: pathTemplate,
@@ -267,7 +267,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
       collection,
       content: valueMap,
       locale,
-      currentSlug: entry.slug,
+      currentSlug: slug,
       entryFilePath,
       dateTimeParts,
     });

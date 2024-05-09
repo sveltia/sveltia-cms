@@ -1108,11 +1108,12 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   const { i18nEnabled, locales, defaultLocale, structure } = (collectionFile ?? collection)._i18n;
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
-  const currentSlug = fileName ?? originalEntry?.slug;
+
   /**
    * The slug of the default locale aka canonical slug.
    */
-  const slug = currentSlug ?? fillSlugTemplate(slugTemplate, fillSlugOptions);
+  const canonicalSlug =
+    fileName ?? originalEntry?.slug ?? fillSlugTemplate(slugTemplate, fillSlugOptions);
 
   /**
    * List of key paths that the value will be localized.
@@ -1133,7 +1134,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
             .map(([locale]) => [
               locale,
               locale === defaultLocale
-                ? slug
+                ? canonicalSlug
                 : fillSlugTemplate(slugTemplate, {
                     collection,
                     content: {
@@ -1154,8 +1155,8 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const { internalAssetFolder, publicAssetFolder } = getEntryAssetFolderPaths({
     ...fillSlugOptions,
     type: 'media_folder',
-    currentSlug: slug,
-    entryFilePath: createEntryPath(draft, defaultLocale, slug),
+    currentSlug: canonicalSlug,
+    entryFilePath: createEntryPath(draft, defaultLocale, canonicalSlug),
   });
 
   const assetsInSameFolder = get(allAssets)
@@ -1189,7 +1190,8 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     await Promise.all(
       Object.entries(currentValues).map(async ([locale, valueMap]) => {
         const localizedSlug = localizedSlugs?.[locale];
-        const path = createEntryPath(draft, locale, localizedSlug ?? slug);
+        const slug = localizedSlug ?? canonicalSlug;
+        const path = createEntryPath(draft, locale, slug);
 
         if (!currentLocales[locale]) {
           return [locale, { path }];
@@ -1199,7 +1201,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
         // save the canonical slug using the special property if the slug is localized
         // @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
         if (localizedSlug && !valueMap.translationKey) {
-          valueMap.translationKey = slug;
+          valueMap.translationKey = canonicalSlug;
         }
 
         // Normalize data
@@ -1272,7 +1274,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
         const content = unflatten(valueMap);
         const sha = await getHash(new Blob([content], { type: 'text/plain' }));
 
-        return [locale, { content, sha, path }];
+        return [locale, { slug, path, sha, content }];
       }),
     ),
   );
@@ -1281,10 +1283,10 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
    * @type {Entry}
    */
   const savingEntry = {
-    id: `${collectionName}/${slug}`,
+    id: `${collectionName}/${canonicalSlug}`,
     collectionName,
     fileName,
-    slug,
+    slug: canonicalSlug,
     sha: /** @type {string} */ (savingEntryLocales[defaultLocale].sha),
     locales: Object.fromEntries(
       Object.entries(savingEntryLocales).filter(([, { content }]) => !!content),
@@ -1301,13 +1303,11 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const config = { extension, format, frontmatterDelimiter, yamlQuote };
 
   if (collectionFile || !i18nEnabled || structure === 'single_file') {
-    const { path, content } = /** @type {{ path: string, content: LocalizedEntry }} */ (
-      savingEntryLocales[defaultLocale]
-    );
+    const { path, content } = savingEntryLocales[defaultLocale];
 
     changes.push({
       action: isNew ? 'create' : 'update',
-      slug,
+      slug: canonicalSlug,
       path,
       data: formatEntryFile({
         content: i18nEnabled
@@ -1321,9 +1321,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     });
   } else {
     locales.forEach((locale) => {
-      const { path, content } = /** @type {{ path: string, content: LocalizedEntry }} */ (
-        savingEntryLocales[locale]
-      );
+      const { slug, path, content } = savingEntryLocales[locale];
 
       if (currentLocales[locale]) {
         changes.push({

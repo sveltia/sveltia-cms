@@ -16,6 +16,9 @@ describe('Test formatSummary()', () => {
     slug_length: 50,
   };
 
+  /** @type {LocalizedEntry} */
+  const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
+
   /** @type {Entry} */
   const entry = {
     id: '',
@@ -24,6 +27,7 @@ describe('Test formatSummary()', () => {
     collectionName: 'pages-tags',
     locales: {
       de: {
+        ...localizedEntryProps,
         content: {
           slug: 'dotnet',
           translationKey: 'tag-dotnet',
