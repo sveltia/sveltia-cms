@@ -63,7 +63,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better productivity
 
-- You can [work with a local Git repository](#working-with-a-local-git-repository) without any configuration or proxy server[^26].
+- You can [work with a local Git repository](#working-with-a-local-git-repository) without any extra configuration or proxy server[^26].
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
@@ -104,7 +104,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better i18n support
 
-- Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect top-notch i18n support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla.
+- Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect top-notch i18n support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
 - You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
 - Fields in non-default locales are validated as expected[^13].
 - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
@@ -425,6 +425,10 @@ i18n:
   structure: multiple_folders
   locales: [en, fr]
 
+slug:
+  encoding: ascii
+  clean_accents: true
+
 collections:
   - name: posts
     label: Blog posts
@@ -439,7 +443,7 @@ collections:
         i18n: true
 ```
 
-With this configuration, an entry is saved with localized filenames, while the default locale’s slug is stored in each file as the extra `translationKey` property, which is used in [Hugo’s multilingual support](https://gohugo.io/content-management/multilingual/#bypassing-default-linking). Even if you’re using a different framework, you can still use this property to link localized files.
+With this configuration, an entry is saved with localized filenames, while the default locale’s slug is stored in each file as the extra `translationKey` property, which is used in [Hugo’s multilingual support](https://gohugo.io/content-management/multilingual/#bypassing-default-linking). Even if you’re running a different framework, you can still read this property to link localized files.
 
 - `data/posts/en/my-trip-to-new-york.yaml`
   ```yaml
