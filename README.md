@@ -436,6 +436,7 @@ collections:
     folder: data/posts/
     slug: '{{title | localize}}'
     format: yaml
+    i18n: true
     fields:
       - name: title
         label: Title
