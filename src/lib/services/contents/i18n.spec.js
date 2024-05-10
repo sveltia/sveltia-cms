@@ -66,6 +66,8 @@ describe('Test getI18nConfig()', () => {
     },
   };
 
+  const canonicalSlug = { key: 'translationKey', value: '{{slug}}' };
+
   test('no i18n defined at top-level or collection-level', () => {
     siteConfig.set({
       backend: { name: 'github' },
@@ -119,6 +121,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['en', 'fr'],
       defaultLocale: 'en',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(getI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
@@ -127,6 +130,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['en', 'fr'],
       defaultLocale: 'en',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(getI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
@@ -135,6 +139,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['_default'],
       defaultLocale: '_default',
       saveAllLocales: true,
+      canonicalSlug,
     });
   });
 
@@ -156,6 +161,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['en', 'de', 'fr'],
       defaultLocale: 'fr',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(getI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
@@ -164,6 +170,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['en', 'de', 'fr'],
       defaultLocale: 'fr',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(getI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
@@ -172,6 +179,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['_default'],
       defaultLocale: '_default',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(defaultI18nConfig);
@@ -199,6 +207,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['fr'],
       defaultLocale: 'fr',
       saveAllLocales: true,
+      canonicalSlug,
     });
   });
 
@@ -220,6 +229,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['es'],
       defaultLocale: 'es',
       saveAllLocales: true,
+      canonicalSlug,
     });
   });
 
@@ -241,6 +251,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['de'],
       defaultLocale: 'de',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithPartialI18nOverride)).toEqual(
@@ -255,6 +266,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['de'],
       defaultLocale: 'de',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(
@@ -265,6 +277,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['de'],
       defaultLocale: 'de',
       saveAllLocales: true,
+      canonicalSlug,
     });
   });
 
@@ -286,6 +299,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['es'],
       defaultLocale: 'es',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithCompleteI18nOverride)).toEqual(
@@ -300,6 +314,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['es'],
       defaultLocale: 'es',
       saveAllLocales: true,
+      canonicalSlug,
     });
 
     expect(
@@ -310,6 +325,7 @@ describe('Test getI18nConfig()', () => {
       locales: ['es'],
       defaultLocale: 'es',
       saveAllLocales: true,
+      canonicalSlug,
     });
   });
 });
