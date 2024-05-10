@@ -343,7 +343,7 @@ const getSlug = (collectionName, filePath, content) => {
  * @returns {Entry[]} Entry list.
  */
 export const parseEntryFiles = (entryFiles) => {
-  /** @type {Entry[]} */
+  /** @type {any[]} */
   const entries = [];
 
   entryFiles.forEach((file) => {
@@ -367,7 +367,14 @@ export const parseEntryFiles = (entryFiles) => {
     }
 
     const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
-    const { i18nEnabled, locales, defaultLocale, structure } = (collectionFile ?? collection)._i18n;
+
+    const {
+      i18nEnabled,
+      locales,
+      defaultLocale,
+      structure,
+      canonicalSlug: { key: canonicalSlugKey },
+    } = (collectionFile ?? collection)._i18n;
 
     const extension = getFileExtension({
       format: collection.format,
@@ -427,34 +434,48 @@ export const parseEntryFiles = (entryFiles) => {
         return;
       }
 
-      const localizedSlug = fileName || getSlug(collectionName, _filePath, parsedFile);
-      const localizedEntry = { slug: localizedSlug, path, sha, content: parsedFile };
-      // Support for Hugo’s translation linking
-      // @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
-      const canonicalSlug = parsedFile.translationKey ?? localizedSlug;
+      const slug = fileName || getSlug(collectionName, _filePath, parsedFile);
+      const localizedEntry = { slug, path, sha, content: parsedFile };
+      // Support a canonical slug to link localized files
+      const canonicalSlug = parsedFile[canonicalSlugKey];
+      // Use a temporary ID to locate all the localized files for the entry
+      const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
       // Check if the entry has already been added for another locale
-      const index = entries.findIndex((e) => e.id === `${collectionName}/${canonicalSlug}`);
+      const existingEntry = entries.find((e) => e.id === tempId);
 
-      // If found, add a new locale to an existing entry; don’t add another entry
-      if (index > -1) {
-        entries[index].locales[locale] = localizedEntry;
+      // If found, add a new locale to the existing entry; don’t add another entry
+      if (existingEntry) {
+        existingEntry.locales[locale] = localizedEntry;
+
+        if (locale === defaultLocale) {
+          existingEntry.slug = slug;
+        }
 
         return;
       }
 
-      entry.slug = canonicalSlug;
+      entry.id = tempId;
       entry.locales[locale] = localizedEntry;
+
+      if (locale === defaultLocale) {
+        entry.slug = slug;
+      }
     }
 
-    if (!entry.slug || !Object.keys(entry.locales).length) {
-      return;
-    }
-
-    entry.id = `${collectionName}/${entry.slug}`;
     entries.push(entry);
   });
 
-  return entries;
+  return entries.filter((entry) => {
+    const { collectionName, slug, locales } = entry;
+
+    if (!slug || !Object.keys(locales).length) {
+      return false;
+    }
+
+    entry.id = `${collectionName}/${slug}`;
+
+    return true;
+  });
 };
 
 /**

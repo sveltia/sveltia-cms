@@ -241,7 +241,12 @@
  * @property {boolean} [save_all_locales] - Whether to save collection entries in all the locales.
  * If `false`, editors will be able to disable the output of non-default locales through the UI. An
  * option suggested in https://github.com/decaporg/decap-cms/issues/6932.
+ * @property {{ key: string, value: string }} [canonical_slug] - Property name and value template
+ * used to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
+ * localized files when entry slugs are localized. The default property name is `translationKey`
+ * used in Hugo’s multilingual support, and the default value is the default locale’s slug.
  * @see https://decapcms.org/docs/i18n/
+ * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
  */
 
 /**
@@ -253,6 +258,7 @@
  * @property {LocaleCode[]} locales - List of locales, or `['_default']` if i18n is not enabled.
  * @property {LocaleCode} defaultLocale - Default locale, or `_default` if i18n is not enabled.
  * @property {I18nFileStructure} structure - File structure.
+ * @property {{ key: string, value: string }} canonicalSlug - See `canonical_slug` above.
  */
 
 /**
@@ -688,7 +694,7 @@
  * @property {string} sha - SHA-1 hash from one of the locales. It serves as the ID of an entry, so
  * it can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
- * @property {string} slug - The slug of the default locale aka canonical slug.
+ * @property {string} slug - The slug of the default locale.
  * @property {{ [locale: LocaleCode]: LocalizedEntry }} locales - Localized content map keyed with a
  * locale code. When i18n is not enabled with the site configuration, there will be one single
  * property named `_default`.

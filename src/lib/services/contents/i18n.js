@@ -13,6 +13,10 @@ export const defaultI18nConfig = {
   locales: ['_default'],
   defaultLocale: '_default',
   structure: 'single_file',
+  canonicalSlug: {
+    key: 'translationKey',
+    value: '{{slug}}',
+  },
 };
 
 /**
@@ -54,6 +58,10 @@ export const getI18nConfig = (collection, file) => {
     locales = [],
     default_locale: defaultLocale = undefined,
     save_all_locales: saveAllLocales = true,
+    canonical_slug: {
+      key: canonicalSlugKey = 'translationKey',
+      value: canonicalSlugTemplate = '{{slug}}',
+    } = {},
   } = /** @type {RawI18nConfig} */ (config ?? {});
 
   const i18nEnabled = !!locales.length;
@@ -71,6 +79,10 @@ export const getI18nConfig = (collection, file) => {
     // @todo Figure out how file collections can utilize the `multiple_files` or `multiple_folders`
     // i18n structure. https://github.com/decaporg/decap-cms/issues/5280
     structure: file ? 'single_file' : structure,
+    canonicalSlug: {
+      key: canonicalSlugKey,
+      value: canonicalSlugTemplate,
+    },
   };
 };
 
