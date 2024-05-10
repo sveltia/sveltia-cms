@@ -12,6 +12,7 @@ describe('Test formatSummary()', () => {
       locales: ['en', 'de'],
       defaultLocale: 'de',
       structure: 'multiple_files',
+      canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     },
     slug_length: 50,
   };
