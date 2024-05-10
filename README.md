@@ -30,7 +30,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
 - Implementing our own enhancement ideas
 
-At this point, **we are aiming to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
+At this point, **we are on track to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
 
 ## Features
 
@@ -137,7 +137,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
-- You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in the multiline Text widget, you could write `/^.{0,280}$/s`.
+- You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s`.
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
 
 ### Better data output
@@ -458,7 +458,7 @@ With this configuration, an entry is saved with localized filenames, while the d
   translationKey: my-trip-to-new-york
   ```
 
-You can customize the property name and value for a different framework or i18n library by adding the `canonical_slug` option to your top-level or per-collection `i18n` configuration. The example below is for [`@astrolicious/i18n`](https://github.com/astrolicious/i18n) ([demo](https://github.com/CarloBu/astrolicious-i18n-demo)), which requires a locale prefix in the value:
+You can customize the property name and value for a different framework or i18n library by adding the `canonical_slug` option to your top-level or per-collection `i18n` configuration. The example below is for [`@astrolicious/i18n`](https://github.com/astrolicious/i18n), which requires a locale prefix in the value ([discussion](https://github.com/sveltia/sveltia-cms/issues/137)):
 
 ```yaml
 i18n:
