@@ -874,7 +874,7 @@ const validateEntry = () => {
         if (_required && Array.isArray(validation) && typeof validation[0] === 'string') {
           // Parse the regex to support simple pattern, e.g `.{12,}`, and complete expression, e.g.
           // `/^.{0,280}$/s` // cspell:disable-next-line
-          const [, pattern, flags] = validation[0].match(/^\/?(.+?)(?:\/([dgimsuvy]+))?$/) || [];
+          const [, pattern, flags] = validation[0].match(/^\/?(.+?)(?:\/([dgimsuvy]*))?$/) || [];
 
           if (pattern && !String(value).match(new RegExp(pattern, flags))) {
             patternMismatch = true;
