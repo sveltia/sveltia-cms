@@ -804,7 +804,14 @@ const validateEntry = () => {
       }
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
-      const { widget: widgetName = 'string', required = true, i18n = false, pattern } = fieldConfig;
+
+      const {
+        widget: widgetName = 'string',
+        required = true,
+        i18n = false,
+        pattern: validation,
+      } = fieldConfig;
+
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
       const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
@@ -864,13 +871,14 @@ const validateEntry = () => {
           valueMissing = true;
         }
 
-        if (
-          _required &&
-          Array.isArray(pattern) &&
-          pattern.length === 2 &&
-          !String(value).match(pattern[0])
-        ) {
-          patternMismatch = true;
+        if (_required && Array.isArray(validation) && typeof validation[0] === 'string') {
+          // Parse the regex to support simple pattern, e.g `.{12,}`, and complete expression, e.g.
+          // `/^.{0,280}$/s` // cspell:disable-next-line
+          const [, pattern, flags] = validation[0].match(/^\/?(.+?)(?:\/([dgimsuvy]+))?$/) || [];
+
+          if (pattern && !String(value).match(new RegExp(pattern, flags))) {
+            patternMismatch = true;
+          }
         }
 
         // Check the URL or email with native form validation
