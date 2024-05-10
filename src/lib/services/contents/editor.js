@@ -426,6 +426,7 @@ export const duplicateDraft = () => {
   const { collection, collectionFile } = draft;
 
   const {
+    locales: allLocales,
     canonicalSlug: { key: canonicalSlugKey },
   } = (collectionFile ?? collection)._i18n;
 
@@ -438,6 +439,7 @@ export const duplicateDraft = () => {
     ...draft,
     isNew: true,
     originalEntry: undefined,
+    validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
   });
 
   showDuplicateToast.set(true);
