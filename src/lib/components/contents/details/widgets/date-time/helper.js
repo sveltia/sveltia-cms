@@ -2,6 +2,47 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
 
 /**
+ * Get the default value for a DateTime field.
+ * @param {DateTimeField} fieldConfig - Field configuration.
+ * @returns {string} Default value.
+ * @todo Write tests for this.
+ */
+export const getDefaultValue = (fieldConfig) => {
+  const {
+    default: defaultValue,
+    date_format: dateFormat,
+    time_format: timeFormat,
+    picker_utc: pickerUTC = false,
+  } = fieldConfig;
+
+  if (typeof defaultValue === 'string') {
+    return defaultValue;
+  }
+
+  // Default to current date/time
+  const { year, month, day, hour, minute } = getDateTimeParts({
+    timeZone: pickerUTC ? 'UTC' : undefined,
+  });
+
+  const dateStr = `${year}-${month}-${day}`;
+  const timeStr = `${hour}:${minute}`;
+
+  if (timeFormat === false) {
+    return dateStr;
+  }
+
+  if (dateFormat === false) {
+    return timeStr;
+  }
+
+  if (pickerUTC) {
+    return `${dateStr}T${timeStr}:00.000Z`;
+  }
+
+  return `${dateStr}T${timeStr}`;
+};
+
+/**
  * Get the current value given the input value.
  * @param {string | undefined} inputValue - Value on the date/time input widget.
  * @param {DateTimeField} fieldConfig - Field configuration.
@@ -26,7 +67,7 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
 
   try {
     if (format) {
-      return (pickerUTC ? moment.utc(inputValue) : moment(inputValue)).format(format);
+      return (pickerUTC ? moment.utc : moment)(inputValue).format(format);
     }
 
     if (pickerUTC) {
@@ -76,7 +117,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
   try {
     const { year, month, day, hour, minute } = getDateTimeParts({
       date: currentValue
-        ? (pickerUTC ? moment.utc(currentValue, format) : moment(currentValue, format)).toDate()
+        ? (pickerUTC ? moment.utc : moment)(currentValue, format).toDate()
         : new Date(),
       timeZone: pickerUTC ? 'UTC' : undefined,
     });
@@ -118,11 +159,7 @@ export const getDate = (currentValue, fieldConfig) => {
 
   try {
     if (format) {
-      if (pickerUTC) {
-        return moment.utc(currentValue, format).toDate();
-      }
-
-      return moment(currentValue, format).toDate();
+      return (pickerUTC ? moment.utc : moment)(currentValue, format).toDate();
     }
 
     if (timeOnly) {

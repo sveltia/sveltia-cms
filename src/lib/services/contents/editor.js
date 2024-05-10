@@ -3,12 +3,12 @@
 /* eslint-disable no-continue */
 
 import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
-import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import { escapeRegExp, stripTags } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten, unflatten } from 'flat';
 import { get, writable } from 'svelte/store';
+import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
 import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
@@ -231,31 +231,7 @@ export const getDefaultValues = (fields, dynamicValues = {}) => {
     }
 
     if (widgetName === 'datetime') {
-      if (typeof defaultValue === 'string') {
-        newContent[keyPath] = defaultValue;
-      } else {
-        const {
-          date_format: dateFormat,
-          time_format: timeFormat,
-          picker_utc: pickerUTC = false,
-        } = /** @type {DateTimeField} */ (fieldConfig);
-
-        // Default to current date/time
-        const { year, month, day, hour, minute } = getDateTimeParts({
-          timeZone: pickerUTC ? 'UTC' : undefined,
-        });
-
-        const dateStr = `${year}-${month}-${day}`;
-        const timeStr = `${hour}:${minute}`;
-
-        if (timeFormat === false) {
-          newContent[keyPath] = dateStr;
-        } else if (dateFormat === false) {
-          newContent[keyPath] = timeStr;
-        } else {
-          newContent[keyPath] = `${dateStr}T${timeStr}${pickerUTC ? ':00.000Z' : ''}`;
-        }
-      }
+      newContent[keyPath] = getDefaultDateTimeValue(/** @type {DateTimeField} */ (fieldConfig));
 
       return;
     }
