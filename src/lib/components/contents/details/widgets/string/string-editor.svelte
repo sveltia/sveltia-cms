@@ -62,11 +62,7 @@
    * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.
    */
   const setInputValue = () => {
-    if (currentValue === undefined) {
-      return;
-    }
-
-    let newValue = currentValue;
+    let newValue = currentValue ?? '';
 
     if (prefix && newValue.startsWith(prefix)) {
       newValue = newValue.slice(prefix.length);

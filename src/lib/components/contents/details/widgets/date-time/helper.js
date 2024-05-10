@@ -51,7 +51,6 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
  */
 export const getInputValue = (currentValue, fieldConfig) => {
   const {
-    required = true,
     format,
     date_format: dateFormat,
     time_format: timeFormat,
@@ -62,12 +61,8 @@ export const getInputValue = (currentValue, fieldConfig) => {
   const timeOnly = dateFormat === false;
 
   // If the default value is an empty string, the input will be blank by default
-  if (currentValue === '') {
+  if (!currentValue) {
     return '';
-  }
-
-  if (!required && !currentValue) {
-    return undefined;
   }
 
   if (dateOnly && currentValue?.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -102,7 +97,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
     // eslint-disable-next-line no-console
     console.error(ex);
 
-    return undefined;
+    return '';
   }
 };
 
