@@ -163,8 +163,9 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves various problems found in Netlify/Decap CMS, including fatal application crashes[^53][^70][^71][^72][^73].
   - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
 - Object
-  - Supports [variable types](https://decapcms.org/docs/variable-type-widgets/) just like the List widget. This allows you to have dependent fields in a collection[^30].
-  - An optional Object field can be manually added or removed. If unadded or removed, the required subfields won’t trigger validation errors[^16].
+  - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
+    - You can use [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) with the Object widget just like the List widget.
+    - An optional Object field (`required: false`) can be manually added or removed with a checkbox. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - Relation
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
