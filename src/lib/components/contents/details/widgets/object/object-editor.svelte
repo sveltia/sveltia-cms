@@ -4,10 +4,11 @@
   @see https://decapcms.org/docs/widgets/#object
 -->
 <script>
-  import { Group } from '@sveltia/ui';
+  import { Checkbox, Group } from '@sveltia/ui';
   import { generateUUID } from '@sveltia/utils/crypto';
   import { waitForVisibility } from '@sveltia/utils/element';
   import { onMount, tick } from 'svelte';
+  import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
@@ -37,7 +38,6 @@
   /**
    * @type {string}
    */
-  // svelte-ignore unused-export-let
   export let fieldLabel;
   /**
    * @type {ObjectField}
@@ -64,6 +64,7 @@
   export let invalid = false;
 
   $: ({
+    name: fieldName,
     i18n = false,
     // Widget-specific options
     collapsed = false,
@@ -92,7 +93,6 @@
     : undefined;
   $: subFields = (hasVariableTypes ? typeConfig?.fields : fields) ?? [];
   $: summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary;
-  $: addButtonVisible = !required || hasVariableTypes;
   $: addButtonDisabled = locale !== defaultLocale && i18n === 'duplicate';
 
   let widgetId = '';
@@ -190,7 +190,26 @@
   };
 </script>
 
-{#if (!addButtonVisible || hasValues) && canEdit}
+{#if !required}
+  <Checkbox
+    label={$_('add_x', { values: { name: fieldLabel || fieldName } })}
+    checked={hasValues}
+    disabled={addButtonDisabled}
+    on:change={({ detail: { checked } }) => {
+      if (checked) {
+        addFields();
+      } else {
+        removeFields();
+      }
+    }}
+  />
+{/if}
+
+{#if hasVariableTypes && !hasValues}
+  <AddItemButton disabled={addButtonDisabled} {fieldConfig} addItem={addFields} />
+{/if}
+
+{#if (!(!required || hasVariableTypes) || hasValues) && canEdit}
   <div role="none" class="wrapper">
     <Group aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}>
       <ObjectHeader
@@ -200,7 +219,7 @@
         toggleExpanded={() => {
           syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
         }}
-        removeButtonVisible={addButtonVisible}
+        removeButtonVisible={hasVariableTypes}
         removeButtonDisabled={addButtonDisabled}
         remove={() => {
           removeFields();
@@ -227,13 +246,15 @@
   </div>
 {/if}
 
-{#if addButtonVisible && !hasValues && canEdit}
-  <AddItemButton disabled={addButtonDisabled} {fieldConfig} addItem={addFields} />
-{/if}
-
 <style lang="scss">
   .wrapper {
     display: contents;
+
+    :global(.sui.checkbox) + & {
+      & > :global(.group) {
+        margin-top: 8px;
+      }
+    }
 
     & > :global(.group) {
       border-width: 2px;
