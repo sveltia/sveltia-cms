@@ -257,7 +257,7 @@ export const strings = {
   cancel_editing: 'Cancel Editing',
   creating_x: 'Creating {name}',
   creating_x_collection_entry: 'You’re now creating a new entry in the “{collection}” collection.',
-  editing_x_in_x: 'Editing {collection} / {entry}',
+  editing_x_in_x: 'Editing {collection} › {entry}',
   editing_x_collection_entry:
     'You’re now editing the “{entry}” entry in the “{collection}” collection.',
   editing_x_collection_file:

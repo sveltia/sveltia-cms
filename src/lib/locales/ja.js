@@ -261,7 +261,7 @@ export const strings = {
   cancel_editing: '編集をキャンセル',
   creating_x: '{name} を作成',
   creating_x_collection_entry: '「{collection}」コレクションの新しいエントリーを作成しています。',
-  editing_x_in_x: '{collection} / {entry} を編集',
+  editing_x_in_x: '{collection} › {entry} を編集',
   editing_x_collection_entry:
     '「{collection}」コレクションの「{entry}」エントリーを編集しています。',
   editing_x_collection_file: '「{collection}」コレクションの「{file}」ファイルを編集しています。',

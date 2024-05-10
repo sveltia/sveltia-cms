@@ -138,7 +138,7 @@
           }}
         >
           <span role="none">
-            {collection.label || collection.name} »
+            {collection.label || collection.name} ›
             {#if collectionFile}
               {collectionFile.label || collectionFile.name}
             {:else if content}
