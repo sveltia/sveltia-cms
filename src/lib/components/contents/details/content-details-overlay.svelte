@@ -1,5 +1,5 @@
 <script>
-  import { Group } from '@sveltia/ui';
+  import { Alert, Group, Toast } from '@sveltia/ui';
   import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
@@ -12,6 +12,7 @@
     entryDraft,
     entryEditorSettings,
     showContentOverlay,
+    showDuplicateToast,
   } from '$lib/services/contents/editor';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 
@@ -235,6 +236,12 @@
     {/key}
   </Group>
 </div>
+
+<Toast bind:show={$showDuplicateToast}>
+  <Alert status="success">
+    {$_('entry_duplicated')}
+  </Alert>
+</Toast>
 
 <style lang="scss">
   .wrapper {

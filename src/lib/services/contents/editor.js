@@ -32,6 +32,11 @@ const storageKey = 'entry-view';
 export const showContentOverlay = writable(false);
 
 /**
+ * @type {import('svelte/store').Writable<boolean>}
+ */
+export const showDuplicateToast = writable(false);
+
+/**
  * @type {import('svelte/store').Writable<?EntryEditorPane>}
  */
 export const editorLeftPane = writable(null);
@@ -411,6 +416,31 @@ export const createDraft = (entry, dynamicValues) => {
     // Any locale-agnostic view states will be put under the `_` key
     expanderStates: { _: {} },
   });
+};
+
+/**
+ * Duplicate the current entry draft.
+ */
+export const duplicateDraft = () => {
+  const draft = /** @type {EntryDraft} */ (get(entryDraft));
+  const { collection, collectionFile } = draft;
+
+  const {
+    canonicalSlug: { key: canonicalSlugKey },
+  } = (collectionFile ?? collection)._i18n;
+
+  // Remove the canonical slug
+  Object.keys(draft.currentValues).forEach((locale) => {
+    delete draft.currentValues[locale][canonicalSlugKey];
+  });
+
+  entryDraft.set({
+    ...draft,
+    isNew: true,
+    originalEntry: undefined,
+  });
+
+  showDuplicateToast.set(true);
 };
 
 /**

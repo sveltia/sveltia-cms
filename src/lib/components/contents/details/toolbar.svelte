@@ -24,6 +24,7 @@
   import { deleteEntries } from '$lib/services/contents/data';
   import {
     copyFromLocaleToast,
+    duplicateDraft,
     entryDraft,
     entryEditorSettings,
     revertChanges,
@@ -37,7 +38,6 @@
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/view';
 
-  let showDuplicateToast = false;
   let showValidationToast = false;
   let showDeleteDialog = false;
   let showErrorDialog = false;
@@ -79,19 +79,6 @@
   $: previewURL = originalEntry
     ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
     : undefined;
-
-  /**
-   * Duplicate the current entry.
-   */
-  const duplicateDraft = async () => {
-    showDuplicateToast = true;
-    goto(`/collections/${collection?.name}/new`, { replaceState: true, notifyChange: false });
-    $entryDraft = {
-      .../** @type {EntryDraft} */ ($entryDraft ?? {}),
-      isNew: true,
-      originalEntry: undefined,
-    };
-  };
 
   /**
    * Save the entry draft.
@@ -165,6 +152,7 @@
       aria-label={$_('duplicate_entry')}
       disabled={collection?.create === false}
       on:click={() => {
+        goto(`/collections/${collection?.name}/new`, { replaceState: true, notifyChange: false });
         duplicateDraft();
       }}
     />
@@ -260,12 +248,6 @@
     />
   {/if}
 </Toolbar>
-
-<Toast bind:show={showDuplicateToast}>
-  <Alert status="success">
-    {$_('entry_duplicated')}
-  </Alert>
-</Toast>
 
 <Toast bind:show={showValidationToast}>
   <Alert status="error">
