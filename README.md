@@ -137,6 +137,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
+- You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in the multiline Text widget, you could write `/^.{0,280}$/s`.
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
 
 ### Better data output
@@ -444,7 +445,7 @@ collections:
         i18n: true
 ```
 
-With this configuration, an entry is saved with localized filenames, while the default locale’s slug is stored in each file as the extra `translationKey` property, which is used in [Hugo’s multilingual support](https://gohugo.io/content-management/multilingual/#bypassing-default-linking). Even if you’re running a different framework, you can still read this property to link localized files.
+With this configuration, an entry is saved with localized filenames, while the default locale’s slug is stored in each file as an extra `translationKey` property, which is used in [Hugo’s multilingual support](https://gohugo.io/content-management/multilingual/#bypassing-default-linking). Sveltia CMS and Hugo read this property to link localized files.
 
 - `data/posts/en/my-trip-to-new-york.yaml`
   ```yaml
@@ -456,6 +457,15 @@ With this configuration, an entry is saved with localized filenames, while the d
   title: Mon voyage à New York
   translationKey: my-trip-to-new-york
   ```
+
+You can customize the property name and value for a different framework or i18n library by adding the `canonical_slug` option to your top-level or per-collection `i18n` configuration. The example below is for [`@astrolicious/i18n`](https://github.com/astrolicious/i18n) ([demo](https://github.com/CarloBu/astrolicious-i18n-demo)), which requires a locale prefix in the value:
+
+```yaml
+i18n:
+  canonical_slug:
+    key: defaultLocaleVersion # default: translationKey
+    value: 'en/{{slug}}' # default: {{slug}}
+```
 
 ### Disabling non-default locale content
 
@@ -728,4 +738,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^79]: Netlify/Decap CMS [#5726](https://github.com/decaporg/decap-cms/issues/5726)
 [^80]: Netlify/Decap CMS [#5493](https://github.com/decaporg/decap-cms/issues/5493), [#6600](https://github.com/decaporg/decap-cms/issues/6600)
 [^81]: Netlify/Decap CMS [#4645](https://github.com/decaporg/decap-cms/issues/4645)
+[^82]: Netlify/Decap CMS [#6500](https://github.com/decaporg/decap-cms/issues/6500)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).

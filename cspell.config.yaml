@@ -18,6 +18,7 @@ ignorePaths:
   - data/**/*.json
   - dist/**
 words:
+  - astrolicious
   - astros
   - camelcase
   - Cloudinary
