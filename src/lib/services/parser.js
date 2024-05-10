@@ -449,6 +449,7 @@ export const parseEntryFiles = (entryFiles) => {
 
         if (locale === defaultLocale) {
           existingEntry.slug = slug;
+          existingEntry.sha = sha;
         }
 
         return;
@@ -459,6 +460,7 @@ export const parseEntryFiles = (entryFiles) => {
 
       if (locale === defaultLocale) {
         entry.slug = slug;
+        entry.sha = sha;
       }
     }
 
