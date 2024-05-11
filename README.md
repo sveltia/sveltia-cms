@@ -298,7 +298,11 @@ Alternatively, you can probably use one of the [Netlify/Decap CMS templates](htt
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository.
+Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository. Your new `<script>` tag is:
+
+```html
+<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
+```
 
 From Netlify CMS:
 
@@ -318,6 +322,8 @@ That’s it! You can open `https://[hostname]/admin/` as before to start editing
 
 That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#working-with-a-local-git-repository) for how.
 
+### Installing with npm
+
 For advanced users, we have also made the bundle available as an [npm package](https://www.npmjs.com/package/@sveltia/cms). You can install it by running `npm i @sveltia/cms` or `pnpm add @sveltia/cms` on your project. The [manual initialization](https://decapcms.org/docs/manual-initialization/) flow with the `init` method is the same as for Netlify/Decap CMS.
 
 ### Updates
@@ -327,6 +333,17 @@ Updating Sveltia CMS is transparent, unless you include a specific version in th
 If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) or a service like [Dependabot](https://github.blog/2020-06-01-keep-all-your-packages-up-to-date-with-dependabot/) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
 
 ## Tips & tricks
+
+### Working around configuration loading issue
+
+Depending on your server or framework’s configuration, when you access the CMS at `/admin/`, you’ll be redirected to `/admin` with the trailing slash removed. The CMS assumes that your configuration exists in the same directory, which means `/config.yml` is loaded instead of `/admin/config.yml`, resulting in an error saying “The configuration file could not be retrieved.” There are a couple of ways to work around this problem:
+
+- Access `/admin/index.html` or `/admin/#/`
+- Rename `/admin/index.html` to `/admin/cms.html`, and access `/admin/cms`
+- [Specify the configuration file path](https://decapcms.org/docs/configuration-options/#configuration-file) with a `<link>` tag in the `/admin/index.html`:
+  ```html
+  <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
+  ```
 
 ### Providing a JSON configuration file
 
