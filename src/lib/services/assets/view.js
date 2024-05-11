@@ -94,7 +94,7 @@ const sortAssets = (assets, { key, order } = {}) => {
 
   const type =
     { commit_author: String, commit_date: Date }[key] ||
-    /** @type {{ [key: string]: any }} */ (_assets[0])?.[key]?.constructor ||
+    /** @type {Record<string, any>} */ (_assets[0])?.[key]?.constructor ||
     String;
 
   /**
@@ -119,7 +119,7 @@ const sortAssets = (assets, { key, order } = {}) => {
       return asset.name.split('.')[0];
     }
 
-    return /** @type {{ [key: string]: any }} */ (asset)[key] ?? '';
+    return /** @type {Record<string, any>} */ (asset)[key] ?? '';
   };
 
   _assets.sort((a, b) => {
@@ -166,7 +166,7 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
 
   return assets.filter((asset) => {
-    const value = /** @type {{ [key: string]: any }} */ (asset)[field];
+    const value = /** @type {Record<string, any>} */ (asset)[field];
 
     if (regex) {
       return String(value ?? '').match(regex);
@@ -180,7 +180,7 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
  * Group the given assets.
  * @param {Asset[]} assets - Asset list.
  * @param {GroupingConditions} [conditions] - Grouping conditions.
- * @returns {{ [key: string]: Asset[] }} Grouped assets, where key is a group label and value is an
+ * @returns {Record<string, Asset[]>} Grouped assets, where key is a group label and value is an
  * asset list.
  */
 const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefined }) => {
@@ -189,12 +189,12 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
   }
 
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
-  /** @type {{ [key: string]: Asset[] }} */
+  /** @type {Record<string, Asset[]>} */
   const groups = {};
   const otherKey = get(_)('other');
 
   assets.forEach((asset) => {
-    const value = /** @type {{ [key: string]: any }} */ (asset)[field];
+    const value = /** @type {Record<string, any>} */ (asset)[field];
     /**
      * @type {string}
      */
@@ -240,7 +240,7 @@ export const currentView = writable({ type: 'grid', showInfo: true });
 
 /**
  * View settings for all the asset collection.
- * @type {import('svelte/store').Writable<{ [key: string]: AssetListView } | undefined>}
+ * @type {import('svelte/store').Writable<Record<string, AssetListView> | undefined>}
  */
 const assetListSettings = writable();
 
@@ -280,7 +280,7 @@ export const listedAssets = derived(
 
 /**
  * Sorted, filtered and grouped assets for the selected asset collection.
- * @type {import('svelte/store').Readable<{ [key: string]: Asset[] }>}
+ * @type {import('svelte/store').Readable<Record<string, Asset[]>>}
  */
 export const assetGroups = derived(
   [listedAssets, currentView],

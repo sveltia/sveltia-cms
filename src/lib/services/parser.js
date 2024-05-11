@@ -23,7 +23,7 @@ export const getFileExtension = ({ file, format, extension }) => {
   }
 
   if (file) {
-    return (file.match(/[^.]+$/) ?? [])[0] ?? 'md';
+    return file.match(/[^.]+$/)?.[0] ?? 'md';
   }
 
   if (format === 'yml' || format === 'yaml') {
@@ -145,7 +145,7 @@ const parseEntryFile = ({
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || (filePath?.match(/\.([^.]+)$/) ?? [])[1];
+      : extension || filePath?.match(/\.([^.]+)$/)?.[1];
 
   // Ignore files with unknown format
   if (!format) {
@@ -237,7 +237,11 @@ export const formatEntryFile = ({
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || (path.match(/\.([^.]+)$/) ?? [])[1];
+      : extension || path.match(/\.([^.]+)$/)?.[1];
+
+  if (!format) {
+    return '';
+  }
 
   const formatYAML = () =>
     YAML.stringify(content, null, {

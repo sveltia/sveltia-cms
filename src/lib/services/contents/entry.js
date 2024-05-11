@@ -22,7 +22,7 @@ const fieldConfigCache = new Map();
  * @param {string} [args.fileName] - File name if the collection is a file collection.
  * @param {FlattenedEntryContent} [args.valueMap] - Object holding current entry values. This is
  * required when working with list/object widget variable types.
- * @param {string} args.keyPath - Key path, e.g. `author.name`.
+ * @param {FieldKeyPath} args.keyPath - Key path, e.g. `author.name`.
  * @returns {Field | undefined} Field configuration.
  */
 export const getFieldConfig = ({
@@ -97,7 +97,7 @@ export const getFieldConfig = ({
  * @param {string} args.collectionName - Collection name.
  * @param {string} [args.fileName] - File name.
  * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
- * @param {string} args.keyPath - Key path, e.g. `author.name`.
+ * @param {FieldKeyPath} args.keyPath - Key path, e.g. `author.name`.
  * @param {LocaleCode} args.locale - Locale.
  * @returns {any | any[]} Resolved field value(s).
  */
@@ -239,7 +239,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
   }
 
   const valueMap = flatten(content);
-  /** @type {{ [key: string]: string } | undefined} */
+  /** @type {Record<string, string> | undefined} */
   let dateTimeParts;
 
   if (pathTemplate.match(/{{(?:year|month|day|hour|minute|second)}}/g)) {

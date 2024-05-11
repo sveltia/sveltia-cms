@@ -117,8 +117,8 @@ export const normalizeSlug = (string) => {
  * @param {string} [options.entryFilePath] - File path of the entry. Required if the `type` is
  * `preview_path` or `media_folder`.
  * @param {LocaleCode} [options.locale] - Locale. Required if the `type` is `preview_path`.
- * @param {{ [key: string]: string }} [options.dateTimeParts] - Map of date/time parts. Required if
- * the `type` is `preview_path`.
+ * @param {Record<string, string>} [options.dateTimeParts] - Map of date/time parts. Required if the
+ * `type` is `preview_path`.
  * @returns {string} Filled template that can be used for an entry slug, path, etc.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug

@@ -28,7 +28,7 @@
    */
   export let locale;
   /**
-   * @type {string}
+   * @type {FieldKeyPath}
    */
   export let keyPath;
   /**
@@ -94,7 +94,7 @@
   $: parentExpandedKeyPath = `${keyPath}#`;
   $: parentExpanded = !!expanderStates?._[parentExpandedKeyPath];
 
-  /** @type {{ [key: string]: any }[]} */
+  /** @type {Record<string, any>[]} */
   $: items =
     unflatten(
       Object.fromEntries(
@@ -250,7 +250,7 @@
 
   /**
    * Format the summary template.
-   * @param {{ [key: string]: any }} item - List item.
+   * @param {Record<string, any>} item - List item.
    * @param {number} index - List index.
    * @param {string} [summaryTemplate] - Summary template, e.g. `{{fields.slug}}`.
    * @returns {string} Formatted summary.

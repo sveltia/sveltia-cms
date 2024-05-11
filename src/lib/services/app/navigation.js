@@ -28,7 +28,7 @@ export const announcedPageStatus = writable('');
 /**
  * Parse the URL and return the decoded result.
  * @param {Location} [loc] - URL. Omit this to use the current URL.
- * @returns {{ path: string, params: { [key: string]: string } }} Path and search params.
+ * @returns {{ path: string, params: Record<string, string> }} Path and search params.
  */
 export const parseLocation = (loc = window.location) => {
   const { pathname, searchParams } = new URL(`${loc.origin}${loc.hash.substring(1)}`);

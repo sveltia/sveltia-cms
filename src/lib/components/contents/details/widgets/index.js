@@ -27,7 +27,7 @@ import UuidEditor from '$lib/components/contents/details/widgets/uuid/uuid-edito
 import UuidPreview from '$lib/components/contents/details/widgets/uuid/uuid-preview.svelte';
 
 /**
- * @type {{ [key: string]: any }}
+ * @type {Record<string, any>}
  */
 export const editors = {
   boolean: BooleanEditor,
@@ -48,7 +48,7 @@ export const editors = {
 };
 
 /**
- * @type {{ [key: string]: any }}
+ * @type {Record<string, any>}
  */
 export const previews = {
   boolean: BooleanPreview,

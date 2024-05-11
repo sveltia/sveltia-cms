@@ -1,6 +1,5 @@
 <script>
   import { onMount } from 'svelte';
-  import { get } from 'svelte/store';
   import AssetsPage from '$lib/components/assets/assets-page.svelte';
   import UploadAssetsConfirmDialog from '$lib/components/assets/shared/upload-assets-confirm-dialog.svelte';
   import UploadAssetsDialog from '$lib/components/assets/shared/upload-assets-dialog.svelte';
@@ -16,7 +15,7 @@
   import { showContentOverlay } from '$lib/services/contents/editor';
 
   /**
-   * @type {{ [key: string]: any }}
+   * @type {Record<string, any>}
    */
   export const pages = {
     collections: ContentsPage,
@@ -39,9 +38,9 @@
 
     if (!_pageName) {
       // Redirect any invalid page to the contents page
-      window.location.replace(`#/collections/${get(selectedCollection)?.name}`);
-    } else if (get(selectedPageName) !== _pageName) {
-      selectedPageName.set(_pageName);
+      window.location.replace(`#/collections/${$selectedCollection?.name}`);
+    } else if ($selectedPageName !== _pageName) {
+      $selectedPageName = _pageName;
     }
   };
 

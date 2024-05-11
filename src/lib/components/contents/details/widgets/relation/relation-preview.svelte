@@ -13,7 +13,7 @@
    */
   export let locale;
   /**
-   * @type {string}
+   * @type {FieldKeyPath}
    */
   // svelte-ignore unused-export-let
   export let keyPath;
@@ -61,6 +61,6 @@
   $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
 </script>
 
-{#if refValues?.length}
+{#if refValues.length}
   <p>{listFormatter.format(refValues)}</p>
 {/if}

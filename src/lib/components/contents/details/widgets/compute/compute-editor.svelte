@@ -14,7 +14,7 @@
    */
   export let locale;
   /**
-   * @type {string}
+   * @type {FieldKeyPath}
    */
   // svelte-ignore unused-export-let
   export let keyPath;

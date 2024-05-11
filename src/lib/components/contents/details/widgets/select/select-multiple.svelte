@@ -4,7 +4,7 @@
 
   /** @type {LocaleCode} */
   export let locale;
-  /** @type {string} */
+  /** @type {FieldKeyPath} */
   export let keyPath;
   /** @type {string} */
   export let fieldId;

@@ -3,7 +3,7 @@
 
   /** @type {LocaleCode} */ // svelte-ignore unused-export-let
   export let locale;
-  /** @type {string} */ // svelte-ignore unused-export-let
+  /** @type {FieldKeyPath} */ // svelte-ignore unused-export-let
   export let keyPath;
   /** @type {string} */
   export let fieldId;

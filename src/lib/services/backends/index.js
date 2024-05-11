@@ -5,7 +5,7 @@ import local from '$lib/services/backends/local';
 
 /**
  * List of all the supported backend services.
- * @type {{ [name: string]: BackendService }}
+ * @type {Record<string, BackendService>}
  * @see https://decapcms.org/docs/backends-overview/
  */
 export const allBackendServices = {

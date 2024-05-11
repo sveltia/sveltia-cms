@@ -12,7 +12,7 @@ export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
 
 /**
  * Common file extension regex list that can be used for filtering.
- * @type {{ [key: string]: RegExp }}
+ * @type {Record<string, RegExp>}
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
  */
 export const assetExtensions = {

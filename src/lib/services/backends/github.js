@@ -328,7 +328,7 @@ const fetchFileContents = async (fetchingFiles) => {
     .join('');
 
   // Fetch all the text contents with the GraphQL API
-  const result = /** @type {{ repository: { [key: string]: any } }} */ (
+  const result = /** @type {{ repository: Record<string, any> }} */ (
     await fetchGraphQL(`
       query {
         repository(owner: "${owner}", name: "${repo}") {

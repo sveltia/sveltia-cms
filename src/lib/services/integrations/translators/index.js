@@ -3,7 +3,7 @@ import deepl from './deepl';
 
 /**
  * List of all the supported translation services.
- * @type {{ [name: string]: TranslationService }}
+ * @type {Record<string, TranslationService>}
  */
 export const allTranslationServices = {
   deepl,

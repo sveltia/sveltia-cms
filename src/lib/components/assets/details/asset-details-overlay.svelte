@@ -99,8 +99,8 @@
             />
           {:else if blob?.type === 'application/pdf'}
             <iframe src={blobURL} title={name} />
-          {:else if blob?.type && isTextFileType(blob?.type)}
-            {#await $overlaidAsset?.text ?? blob?.text() then text}
+          {:else if blob?.type && isTextFileType(blob.type)}
+            {#await $overlaidAsset?.text ?? blob.text() then text}
               <pre role="figure">{text}</pre>
             {/await}
           {:else}

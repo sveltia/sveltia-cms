@@ -95,7 +95,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
        * multiple references can be replaced at once. Otherwise, the key is a complete key path
        * except for `slug`, and the value is the actual value.
-       * @type {{ [key: string]: string | number | object[] }}
+       * @type {Record<string, string | number | object[]>}
        */
       const replacers = Object.fromEntries(
         [
@@ -205,7 +205,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
  * @param {object} args - Arguments.
  * @param {RelationField} args.fieldConfig - Field configuration.
  * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
- * @param {string} args.keyPath - Field key path, e.g. `author.name`.
+ * @param {FieldKeyPath} args.keyPath - Field key path, e.g. `author.name`.
  * @param {LocaleCode} args.locale - Locale.
  * @returns {any | any[]} Resolved field value(s).
  * @todo Write tests for this.

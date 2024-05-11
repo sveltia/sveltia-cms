@@ -66,7 +66,7 @@ export const entryDraft = writable();
  * Parse the given dynamic default value.
  * @param {object} args - Arguments.
  * @param {Field} args.fieldConfig - Field configuration.
- * @param {string} args.keyPath - Field key path, e.g. `author.name`.
+ * @param {FieldKeyPath} args.keyPath - Field key path, e.g. `author.name`.
  * @param {FlattenedEntryContent} args.newContent - An object holding a content key-value map.
  * @param {string} args.value - Dynamic default value.
  * @see https://decapcms.org/docs/dynamic-default-values/
@@ -143,7 +143,7 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
  * @param {Field[]} fields - Field list of a collection.
- * @param {{ [key: string]: string }} [dynamicValues] - Dynamic default values.
+ * @param {Record<string, string>} [dynamicValues] - Dynamic default values.
  * @returns {FlattenedEntryContent} Flattened entry content for creating a new draft content or
  * adding a new list item.
  * @todo Make this more diligent.
@@ -157,7 +157,7 @@ export const getDefaultValues = (fields, dynamicValues = {}) => {
    * look for the field configuration’s `default` property.
    * @param {object} args - Arguments.
    * @param {Field} args.fieldConfig - Field configuration.
-   * @param {string} args.keyPath - Field key path, e.g. `author.name`.
+   * @param {FieldKeyPath} args.keyPath - Field key path, e.g. `author.name`.
    */
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
     if (keyPath in dynamicValues) {
@@ -299,7 +299,7 @@ export const createProxy = ({
 
   return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
-    set: (obj, /** @type {string} */ keyPath, value) => {
+    set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
       // Handle special keys that always save the given value
       if ([canonicalSlugKey].includes(keyPath)) {
         return Reflect.set(obj, keyPath, value);
@@ -315,7 +315,7 @@ export const createProxy = ({
       // Copy value to other locales
       if (fieldConfig.i18n === 'duplicate' && sourceLocale === defaultLocale) {
         Object.entries(
-          /** @type {{ [key: string]: any }} */ (get(entryDraft))[entryDraftProp],
+          /** @type {Record<string, any>} */ (get(entryDraft))[entryDraftProp],
         ).forEach(([targetLocale, content]) => {
           // Don’t duplicate the value if the parent object doesn’t exist
           if (keyPath.includes('.')) {
@@ -343,8 +343,8 @@ export const createProxy = ({
  * Create an entry draft.
  * @param {any} entry - Entry to be edited, or a partial {@link Entry} object containing at least
  * the collection name for a new entry.
- * @param {{ [key: string]: string }} [dynamicValues] - Dynamic default values for a new entry
- * passed through URL parameters.
+ * @param {Record<string, string>} [dynamicValues] - Dynamic default values for a new entry passed
+ * through URL parameters.
  */
 export const createDraft = (entry, dynamicValues) => {
   const { id, collectionName, fileName, locales } = entry;
@@ -368,7 +368,7 @@ export const createDraft = (entry, dynamicValues) => {
     allLocales.map((locale) => [locale, isNew || enabledLocales.includes(locale)]),
   );
 
-  /** @type {{ [locale: LocaleCode]: FlattenedEntryContent }} */
+  /** @type {Record<LocaleCode, FlattenedEntryContent>} */
   const originalValues = Object.fromEntries(
     enabledLocales.map((locale) => [
       locale,
@@ -423,23 +423,26 @@ export const createDraft = (entry, dynamicValues) => {
  */
 export const duplicateDraft = () => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { collection, collectionFile } = draft;
+  const { collection, collectionFile, currentValues, validities } = draft;
 
   const {
-    locales: allLocales,
     canonicalSlug: { key: canonicalSlugKey },
   } = (collectionFile ?? collection)._i18n;
 
   // Remove the canonical slug
-  Object.keys(draft.currentValues).forEach((locale) => {
-    delete draft.currentValues[locale][canonicalSlugKey];
+  Object.keys(currentValues).forEach((locale) => {
+    delete currentValues[locale][canonicalSlugKey];
+  });
+
+  // Reset the validities
+  Object.keys(validities).forEach((locale) => {
+    validities[locale] = {};
   });
 
   entryDraft.set({
     ...draft,
     isNew: true,
     originalEntry: undefined,
-    validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
   });
 
   showDuplicateToast.set(true);
@@ -453,9 +456,9 @@ export const duplicateDraft = () => {
 const unflattenObj = (obj) => unflatten(JSON.parse(JSON.stringify(obj)));
 
 /**
- * Traverse the given object by decoding dot-connected `keyPath`.
+ * Traverse the given object by decoding dot-notated key path.
  * @param {any} obj - Unflatten object.
- * @param {string} keyPath - Dot-connected field name.
+ * @param {FieldKeyPath} keyPath - Dot-notated field name.
  * @returns {any[]} Values.
  */
 const getItemList = (obj, keyPath) =>
@@ -471,7 +474,7 @@ const getItemList = (obj, keyPath) =>
 /**
  * Update the value in a list field.
  * @param {LocaleCode} locale - Target locale.
- * @param {string} keyPath - Dot-connected field name.
+ * @param {FieldKeyPath} keyPath - Dot-notated field name.
  * @param {(arg: { valueList: object[], expanderStateList: boolean[] }) => void} manipulate - A
  * function to manipulate the list, which takes one object argument containing the value list and
  * view state list. The typical usage is `list.splice()`.
@@ -611,11 +614,11 @@ export const copyFromLocaleToast = writable({
 
 /**
  * Copy or translate field value(s) from another locale.
- * @param {string} sourceLocale - Source locale, e.g. `en`.
- * @param {string} targetLocale - Target locale, e.g. `ja`.
- * @param {string} [keyPath] - Flattened (dot-connected) object keys that will be used for searching
- * the source values. Omit this if copying all the fields. If the triggered widget is List or
- * Object, this will likely match multiple fields.
+ * @param {LocaleCode} sourceLocale - Source locale, e.g. `en`.
+ * @param {LocaleCode} targetLocale - Target locale, e.g. `ja`.
+ * @param {FieldKeyPath} [keyPath] - Flattened (dot-notated) object keys that will be used for
+ * searching the source values. Omit this if copying all the fields. If the triggered widget is List
+ * or Object, this will likely match multiple fields.
  * @param {boolean} [translate] - Whether to translate the copied text fields.
  */
 export const copyFromLocale = async (
@@ -719,9 +722,9 @@ export const copyFromLocale = async (
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
  * @param {LocaleCode} [locale] - Target locale, e.g. `ja`. Can be empty if reverting everything.
- * @param {string} [keyPath] - Flattened (dot-connected) object keys that will be used for searching
- * the source values. Omit this if copying all the fields. If the triggered widget is List or
- * Object, this will likely match multiple fields.
+ * @param {FieldKeyPath} [keyPath] - Flattened (dot-notated) object keys that will be used for
+ * searching the source values. Omit this if copying all the fields. If the triggered widget is List
+ * or Object, this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
   const { collection, collectionFile, fileName, currentValues, originalValues } =
@@ -1007,7 +1010,7 @@ const createEntryPath = (draft, locale, slug) => {
   }
 
   if (originalEntry?.locales[locale]) {
-    return /** @type {string} */ (originalEntry?.locales[locale].path);
+    return originalEntry.locales[locale].path;
   }
 
   const { defaultLocale, structure } = collection._i18n;
@@ -1043,7 +1046,7 @@ const createEntryPath = (draft, locale, slug) => {
 
 /**
  * Sync the field object/list expander states between locales.
- * @param {{ [keyPath: string]: boolean }} stateMap - Map of keypath and state.
+ * @param {Record<FieldKeyPath, boolean>} stateMap - Map of key path and state.
  */
 export const syncExpanderStates = (stateMap) => {
   entryDraft.update((_draft) => {
@@ -1076,7 +1079,7 @@ export const joinExpanderKeyPathSegments = (arr, end) =>
  * Expand any invalid fields, including the parent list/object(s).
  */
 const expandInvalidFields = () => {
-  /** @type {{ [keyPath: string]: boolean }} */
+  /** @type {Record<FieldKeyPath, boolean>} */
   const stateMap = {};
 
   Object.values(get(entryDraft)?.validities ?? {}).forEach((validities) => {
@@ -1229,7 +1232,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   };
 
   /**
-   * @type {{ [locale: LocaleCode]: LocalizedEntry }}
+   * @type {Record<LocaleCode, LocalizedEntry>}
    */
   const savingEntryLocales = Object.fromEntries(
     await Promise.all(
@@ -1330,7 +1333,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     collectionName,
     fileName,
     slug: defaultLocaleSlug,
-    sha: /** @type {string} */ (savingEntryLocales[defaultLocale].sha),
+    sha: savingEntryLocales[defaultLocale].sha,
     locales: Object.fromEntries(
       Object.entries(savingEntryLocales).filter(([, { content }]) => !!content),
     ),

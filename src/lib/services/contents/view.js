@@ -249,7 +249,7 @@ const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefi
   const sortCondition = get(currentView).sort;
   const { defaultLocale } = /** @type {Collection} */ (get(selectedCollection))._i18n;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
-  /** @type {{ [key: string]: Entry[] }} */
+  /** @type {Record<string, Entry[]>} */
   const groups = {};
   const otherKey = get(_)('other');
 
@@ -260,7 +260,7 @@ const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefi
       return;
     }
 
-    const key = regex ? (String(value).match(regex) ?? [])[0] ?? otherKey : String(value);
+    const key = regex ? String(value).match(regex)?.[0] ?? otherKey : String(value);
 
     if (!(key in groups)) {
       groups[key] = [];
@@ -284,7 +284,7 @@ const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefi
 
 /**
  * View settings for all the folder collections.
- * @type {import('svelte/store').Writable<{ [key: string]: EntryListView } | undefined>}
+ * @type {import('svelte/store').Writable<Record<string, EntryListView> | undefined>}
  */
 const entryListSettings = writable();
 

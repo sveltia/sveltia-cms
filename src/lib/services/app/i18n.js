@@ -8,7 +8,7 @@ import { addMessages, getLocaleFromNavigator } from 'svelte-i18n';
  */
 export const initAppLocale = () => {
   /**
-   * @type {{ [key: string]: { strings: object }}}
+   * @type {Record<string, { strings: object }>}
    */
   const modules = import.meta.glob('$lib/locales/*.js', { eager: true });
 

@@ -13,7 +13,7 @@
    */
   export let locale;
   /**
-   * @type {string}
+   * @type {FieldKeyPath}
    */
   export let keyPath;
   /**

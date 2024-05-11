@@ -5,7 +5,7 @@ export const defaultModes = ['rich_text', 'raw'];
 
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
- * @type {{ [key: string]: string }}
+ * @type {Record<string, string>}
  */
 export const modeNameMap = {
   rich_text: 'rich-text',
@@ -33,7 +33,7 @@ export const defaultButtons = [
 
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
- * @type {{ [key: string]: string }}
+ * @type {Record<string, string>}
  */
 export const buttonNameMap = {
   bold: 'bold',

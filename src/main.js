@@ -54,7 +54,7 @@ const CMS = new Proxy(
   {
     /**
      * Define the getter.
-     * @param {{ [key: string]: Function }} obj - Object itself.
+     * @param {Record<string, Function>} obj - Object itself.
      * @param {string} key - Property name.
      * @returns {any} Property value.
      */

@@ -16,8 +16,8 @@
 /**
  * User preferences.
  * @typedef {object} Preferences
- * @property {{ [key: string]: string }} [apiKeys] - API keys for integrations.
- * @property {{ [key: string]: string }} [logins] - Log-in credentials (user name and password) for
+ * @property {Record<string, string>} [apiKeys] - API keys for integrations.
+ * @property {Record<string, string>} [logins] - Log-in credentials (user name and password) for
  * integrations.
  * @property {string} [theme] - Selected UI theme, either `dark` or `light`.
  * @property {LocaleCode} [locale] - Selected UI locale, e.g. `en`.
@@ -178,7 +178,7 @@
 /**
  * Canonical metadata of entry/asset files as well as text file contents retrieved from a Git
  * repository, keyed with a file path.
- * @typedef {{ [path: string]: RepositoryFileInfo }} RepositoryContentsMap
+ * @typedef {Record<string, RepositoryFileInfo>} RepositoryContentsMap
  */
 
 /**
@@ -291,7 +291,7 @@
  * @property {string} [backend.auth_endpoint] - OAuth URL path.
  * @property {'pkce' | 'implicit'} [backend.auth_type] - OAuth authentication method. GitLab only.
  * @property {string} [backend.app_id] - OAuth application ID. GitLab only.
- * @property {{ [key: string]: string }} [backend.commit_messages] - Commit message map.
+ * @property {Record<string, string>} [backend.commit_messages] - Commit message map.
  * @property {boolean} [backend.automatic_deployments] - Whether to enable or disable automatic
  * deployments with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If
  * `false`, the `[skip ci]` prefix will be added to commit messages. Git backends only.
@@ -372,8 +372,8 @@
 /**
  * Extra properties for a collection.
  * @typedef {object} ExtraCollectionProps
- * @property {{ [fileName: string]: CollectionFile }} [_fileMap] - File map with normalized
- * collection file definitions. File collection only.
+ * @property {Record<string, CollectionFile>} [_fileMap] - File map with normalized collection file
+ * definitions. The key is a filename. File collection only.
  * @property {I18nConfig} _i18n - Normalized i18n configuration combined with the top-level
  * configuration.
  * @property {CollectionAssetFolder} [_assetFolder] - Asset folder configuration.
@@ -517,8 +517,7 @@
 /**
  * List field properties.
  * @typedef {object} ListFieldProps
- * @property {string[] | { [key: string]: any }[] | { [key: string]: any }} [default] - Default
- * value.
+ * @property {string[] | Record<string, any>[] | Record<string, any>} [default] - Default value.
  * @property {boolean} [allow_add] - Whether to allow adding new values.
  * @property {boolean} [add_to_top] - Whether show the Add button at the top of items.
  * @property {string} [label_singular] - Label to be displayed on the Add button.
@@ -695,7 +694,7 @@
  * it can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
  * @property {string} slug - The slug of the default locale.
- * @property {{ [locale: LocaleCode]: LocalizedEntry }} locales - Localized content map keyed with a
+ * @property {Record<LocaleCode, LocalizedEntry>} locales - Localized content map keyed with a
  * locale code. When i18n is not enabled with the site configuration, there will be one single
  * property named `_default`.
  * @property {string} collectionName - Collection name.
@@ -706,7 +705,7 @@
 
 /**
  * Parsed, localized entry content.
- * @typedef {{ [key: string]: any }} EntryContent
+ * @typedef {Record<string, any>} EntryContent
  */
 
 /**
@@ -719,29 +718,34 @@
  */
 
 /**
+ * Field name with a dot notation, e.g. `author.name`.
+ * @typedef {string} FieldKeyPath
+ */
+
+/**
  * Flattened {@link EntryContent} object.
- * @typedef {{ [keyPath: string]: any }} FlattenedEntryContent - where key is a key path:
- * dot-connected field name like `author.name` and value is the corresponding field value.
+ * @typedef {Record<FieldKeyPath, any>} FlattenedEntryContent - where key is a key path and value is
+ * the corresponding field value.
  * @see https://www.npmjs.com/package/flatten
  */
 
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be a file to be
  * uploaded.
- * @typedef {{ [keyPath: string]: File }} FlattenedEntryContentFileList
+ * @typedef {Record<FieldKeyPath, File>} FlattenedEntryContentFileList
  */
 
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
  * validity, using the same properties as the native HTML5 constraint validation.
- * @typedef {{ [keyPath: string]: { [key: string]: boolean } }} FlattenedEntryContentValidityState
+ * @typedef {Record<FieldKeyPath, Record<string, boolean>>} FlattenedEntryContentValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be the field’s
  * expander UI state.
- * @typedef {{ [keyPath: string]: boolean }} FlattenedEntryContentExpanderState
+ * @typedef {Record<FieldKeyPath, boolean>} FlattenedEntryContentExpanderState
  */
 
 /**
@@ -753,20 +757,20 @@
  * @property {string} [fileName] - File name. File collection only.
  * @property {CollectionFile} [collectionFile] - File details. File collection only.
  * @property {Entry} [originalEntry] - Original entry or `undefined` if it’s a new entry draft.
- * @property {{ [locale: LocaleCode]: boolean }} originalLocales - Key is a locale code, value is
- * whether to disable the locale’s content output. The original state of `currentLocales`.
- * @property {{ [locale: LocaleCode]: boolean }} currentLocales - Key is a locale code, value is
- * whether to disable the locale’s content output.
- * @property {{ [locale: LocaleCode]: FlattenedEntryContent }} originalValues - Key is a locale
- * code, value is a flattened object containing all the original field values.
- * @property {{ [locale: LocaleCode]: FlattenedEntryContent }} currentValues - Key is a locale code,
- * value is a flattened object containing all the current field values while editing.
- * @property {{ [locale: LocaleCode]: FlattenedEntryContentFileList }} files - Files to be uploaded.
- * @property {{ [locale: LocaleCode]: FlattenedEntryContentValidityState }} validities - Key is a
- * locale code, value is a flattened object containing validation results of all the current field
- * values while editing.
- * @property {{ [locale: LocaleCode]: FlattenedEntryContentExpanderState }} expanderStates - Key is
- * a locale code, value is a flattened object containing the expander UI state.
+ * @property {Record<LocaleCode, boolean>} originalLocales - Key is a locale code, value is whether
+ * to disable the locale’s content output. The original state of `currentLocales`.
+ * @property {Record<LocaleCode, boolean>} currentLocales - Key is a locale code, value is whether
+ * to disable the locale’s content output.
+ * @property {Record<LocaleCode, FlattenedEntryContent>} originalValues - Key is a locale code,
+ * value is a flattened object containing all the original field values.
+ * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
+ * is a flattened object containing all the current field values while editing.
+ * @property {Record<LocaleCode, FlattenedEntryContentFileList>} files - Files to be uploaded.
+ * @property {Record<LocaleCode, FlattenedEntryContentValidityState>} validities - Key is a locale
+ * code, value is a flattened object containing validation results of all the current field values
+ * while editing.
+ * @property {Record<LocaleCode, FlattenedEntryContentExpanderState>} expanderStates - Key is a
+ * locale code, value is a flattened object containing the expander UI state.
  */
 
 /**
@@ -927,9 +931,9 @@
  * @property {boolean} [showPreview] - Whether to show the preview pane.
  * @property {boolean} [syncScrolling] - Whether to sync the scrolling position between the editor
  * and preview panes.
- * @property {{ [collectionName: string]: [?EntryEditorPane, ?EntryEditorPane]}} [paneStates] - Key
- * is a collection name, value is the left and right pane states. The state can be `null` if preview
- * is disabled.
+ * @property {Record<string, [?EntryEditorPane, ?EntryEditorPane]>} [paneStates] - Key is a
+ * collection name, value is the left and right pane states. The state can be `null` if preview is
+ * disabled.
  * @property {SelectAssetsView} [selectAssetsView] - View settings for the Select Assets dialog.
  */
 

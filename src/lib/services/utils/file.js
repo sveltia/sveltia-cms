@@ -62,7 +62,7 @@ export const renameIfNeeded = (name, otherNames) => {
     return name;
   }
 
-  const number = Number((dupName.match(regex) ?? [])[1] ?? 0) + 1;
+  const number = Number(dupName.match(regex)?.[1] ?? 0) + 1;
 
   return `${slug}-${number}${extension ? `.${extension}` : ''}`;
 };

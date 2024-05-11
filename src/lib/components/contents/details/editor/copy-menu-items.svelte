@@ -15,7 +15,7 @@
    */
   export let locale;
   /**
-   * @type {string}
+   * @type {FieldKeyPath}
    */
   export let keyPath = '';
   export let translate = false;
@@ -40,7 +40,7 @@
 
   /**
    * Copy or translate field value(s) from another locale.
-   * @param {string} otherLocale - Source locale, e.g. `en`.
+   * @param {LocaleCode} otherLocale - Source locale, e.g. `en`.
    */
   const _copyFromLocale = async (otherLocale) => {
     if (translate && !apiKey) {
