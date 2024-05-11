@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 import { getBase64 } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
@@ -303,33 +305,63 @@ const fetchLastCommitHash = async () => {
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
  * @returns {Promise<BaseFileListItem[]>} File list.
+ * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#repositorytree
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
 const fetchFileList = async () => {
   const { owner, repo, branch } = repository;
+  /** @type {{ type: string, path: string, sha: string }[]} */
+  const blobs = [];
+  let cursor = '';
 
-  const result = /** @type {{ project: { repository: { tree: { blobs: { nodes: any[] }} } } }} */ (
-    await fetchGraphQL(`
-      query {
-        project(fullPath: "${owner}/${repo}") {
-          repository {
-            tree(ref: "${branch}", recursive: true) {
-              blobs {
-                nodes {
-                  type
-                  path
-                  sha
+  // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
+  for (;;) {
+    const result = //
+      /**
+       * @type {{ project: { repository: { tree: { blobs: {
+       * nodes: { type: string, path: string, sha: string }[],
+       * pageInfo: { hasNextPage: boolean, endCursor: string }
+       * } } } } }}
+       */ (
+        await fetchGraphQL(`
+          query {
+            project(fullPath: "${owner}/${repo}") {
+              repository {
+                tree(ref: "${branch}", recursive: true) {
+                  blobs(after: "${cursor}") {
+                    nodes {
+                      type
+                      path
+                      sha
+                    }
+                    pageInfo {
+                      hasNextPage
+                      endCursor
+                    }
+                  }
                 }
               }
             }
           }
-        }
-      }
-    `)
-  );
+        `)
+      );
+
+    const {
+      nodes,
+      pageInfo: { hasNextPage, endCursor },
+    } = result.project.repository.tree.blobs;
+
+    blobs.push(...nodes);
+
+    if (!hasNextPage) {
+      break;
+    }
+
+    cursor = endCursor;
+  }
 
   // The `size` is not available here; it will be retrieved in `fetchFileContents` below.
-  return result.project.repository.tree.blobs.nodes
+  return blobs
     .filter(({ type }) => type === 'blob')
     .map(({ path, sha }) => ({ path, sha, size: 0 }));
 };
@@ -344,33 +376,62 @@ const fetchFileList = async () => {
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch, blobBaseURL } = repository;
+  /** @type {{ size: string, rawTextBlob: string }[]} */
+  const blobs = [];
+  let cursor = '';
 
   // Fetch all the text contents with the GraphQL API
-  const result = /** @type {{ project: { repository: { blobs: { nodes: any[] } } } }} */ (
-    await fetchGraphQL(
-      `
-        query ($paths: [String!]!) {
-          project(fullPath: "${owner}/${repo}") {
-            repository {
-              blobs(ref: "${branch}", paths: $paths) {
-                nodes {
-                  size
-                  rawTextBlob
+  // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
+  for (;;) {
+    const result = //
+      /**
+       * @type {{ project: { repository: { blobs: {
+       * nodes: { size: string, rawTextBlob: string }[]
+       * pageInfo: { hasNextPage: boolean, endCursor: string }
+       * } } } }}
+       */ (
+        await fetchGraphQL(
+          `
+            query ($paths: [String!]!) {
+              project(fullPath: "${owner}/${repo}") {
+                repository {
+                  blobs(ref: "${branch}", paths: $paths, after: "${cursor}") {
+                    nodes {
+                      size
+                      rawTextBlob
+                    }
+                    pageInfo {
+                      hasNextPage
+                      endCursor
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      `,
-      {
-        paths: fetchingFiles.map(({ path }) => path),
-      },
-    )
-  );
+          `,
+          {
+            paths: fetchingFiles.map(({ path }) => path),
+          },
+        )
+      );
+
+    const {
+      nodes,
+      pageInfo: { hasNextPage, endCursor },
+    } = result.project.repository.blobs;
+
+    blobs.push(...nodes);
+
+    if (!hasNextPage) {
+      break;
+    }
+
+    cursor = endCursor;
+  }
 
   return Object.fromEntries(
     fetchingFiles.map(({ path, sha }, index) => {
-      const { size, rawTextBlob } = result.project.repository.blobs.nodes[index];
+      const { size, rawTextBlob } = blobs[index];
 
       const data = {
         sha,
