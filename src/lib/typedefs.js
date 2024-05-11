@@ -718,7 +718,8 @@
  */
 
 /**
- * Field name with a dot notation, e.g. `author.name`.
+ * A field name. It can be written in dot notation if the field is nested, e.g. `author.name`. We
+ * call it `keyPath`, which is derived from the IndexedDB API’s namesake property.
  * @typedef {string} FieldKeyPath
  */
 

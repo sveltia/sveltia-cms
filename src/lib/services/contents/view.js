@@ -291,8 +291,8 @@ const entryListSettings = writable();
 /**
  * Get a field’s label by key.
  * @param {Collection} collection - Collection.
- * @param {string} key - Field name, which can be dot notation like `name.en` for a nested field,
- * or one of other entry metadata property keys: `slug`, `commit_author` and `commit_date` .
+ * @param {FieldKeyPath | string} key - Field key path or one of other entry metadata property keys:
+ * `slug`, `commit_author` and `commit_date`.
  * @returns {string} Label. For a nested field, it would be something like `Name – English`.
  */
 const getSortFieldLabel = (collection, key) => {

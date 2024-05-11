@@ -131,8 +131,8 @@ export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPa
  * Get an entry’s field value by locale and key.
  * @param {Entry} entry - Entry.
  * @param {LocaleCode} locale - Locale code.
- * @param {string} key - Field name, which can be dot notation like `name.en` for a nested field, or
- * one of other entry metadata property keys: `slug`, `commit_author` and `commit_date` .
+ * @param {FieldKeyPath | string} key - Field key path or one of other entry metadata property keys:
+ * `slug`, `commit_author` and `commit_date`.
  * @param {object} [options] - Options.
  * @param {boolean} [options.resolveRef] - Whether to resolve the referenced value if the target
  * field is a relation field.
