@@ -320,7 +320,7 @@ const fetchFileList = async () => {
       /**
        * @type {{ project: { repository: { tree: { blobs: {
        * nodes: { type: string, path: string, sha: string }[],
-       * pageInfo: { hasNextPage: boolean, endCursor: string }
+       * pageInfo: { endCursor: string, hasNextPage: boolean }
        * } } } } }}
        */ (
         await fetchGraphQL(`
@@ -335,8 +335,8 @@ const fetchFileList = async () => {
                       sha
                     }
                     pageInfo {
-                      hasNextPage
                       endCursor
+                      hasNextPage
                     }
                   }
                 }
@@ -348,16 +348,15 @@ const fetchFileList = async () => {
 
     const {
       nodes,
-      pageInfo: { hasNextPage, endCursor },
+      pageInfo: { endCursor, hasNextPage },
     } = result.project.repository.tree.blobs;
 
     blobs.push(...nodes);
+    cursor = endCursor;
 
     if (!hasNextPage) {
       break;
     }
-
-    cursor = endCursor;
   }
 
   // The `size` is not available here; it will be retrieved in `fetchFileContents` below.
@@ -376,6 +375,7 @@ const fetchFileList = async () => {
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch, blobBaseURL } = repository;
+  const paths = fetchingFiles.map(({ path }) => path);
   /** @type {{ size: string, rawTextBlob: string }[]} */
   const blobs = [];
   let cursor = '';
@@ -387,7 +387,7 @@ const fetchFileContents = async (fetchingFiles) => {
       /**
        * @type {{ project: { repository: { blobs: {
        * nodes: { size: string, rawTextBlob: string }[]
-       * pageInfo: { hasNextPage: boolean, endCursor: string }
+       * pageInfo: { endCursor: string, hasNextPage: boolean }
        * } } } }}
        */ (
         await fetchGraphQL(
@@ -401,32 +401,29 @@ const fetchFileContents = async (fetchingFiles) => {
                       rawTextBlob
                     }
                     pageInfo {
-                      hasNextPage
                       endCursor
+                      hasNextPage
                     }
                   }
                 }
               }
             }
           `,
-          {
-            paths: fetchingFiles.map(({ path }) => path),
-          },
+          { paths },
         )
       );
 
     const {
       nodes,
-      pageInfo: { hasNextPage, endCursor },
+      pageInfo: { endCursor, hasNextPage },
     } = result.project.repository.blobs;
 
     blobs.push(...nodes);
+    cursor = endCursor;
 
     if (!hasNextPage) {
       break;
     }
-
-    cursor = endCursor;
   }
 
   return Object.fromEntries(
