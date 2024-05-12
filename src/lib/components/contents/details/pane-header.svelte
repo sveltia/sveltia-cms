@@ -175,7 +175,7 @@
               />
             {/if}
             <MenuItem
-              disabled={!$backend?.repository}
+              disabled={!$backend?.repository?.blobBaseURL}
               label={$_('view_on_x', {
                 values: { service: $backend?.repository?.label },
                 default: $_('view_in_repository'),

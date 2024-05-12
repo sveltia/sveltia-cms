@@ -16,8 +16,25 @@ import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/
 
 const backendName = 'local';
 const label = 'Local Repository';
-/** @type {RepositoryInfo} */
-const repository = { ...repositoryProps };
+/**
+ * @type {RepositoryInfo | undefined}
+ */
+let remoteRepository = undefined;
+
+/**
+ * @type {RepositoryInfo}
+ */
+const repository = new Proxy(/** @type {any} */ ({}), {
+  /**
+   * Define the getter.
+   * @param {Record<string, any>} _obj - Object itself.
+   * @param {string} key - Property name.
+   * @returns {any} Property value.
+   */
+  // @ts-ignore
+  get: (_obj, key) => (remoteRepository ?? repositoryProps)[key],
+});
+
 /**
  * @type {import('svelte/store').Writable<?FileSystemDirectoryHandle>}
  */
@@ -93,10 +110,7 @@ const discardDirHandle = async () => {
 const init = () => {
   const { name: service, repo: projectPath } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
-  if (!repository.owner) {
-    Object.assign(repository, allBackendServices[service]?.getRepositoryInfo?.() ?? {});
-  }
-
+  remoteRepository = allBackendServices[service]?.getRepositoryInfo?.();
   rootDirHandleDB = new IndexedDB(`${service}:${projectPath}`, 'file-system-handles');
 };
 
@@ -152,7 +166,6 @@ const getHandleByPath = async (path) => {
  * @returns {Promise<BaseFileListItem[]>} File list.
  */
 const getAllFiles = async () => {
-  const { blobBaseURL } = repository;
   const _rootDirHandle = get(rootDirHandle);
   /** @type {{ file: File, path: string }[]} */
   const availableFileList = [];
@@ -220,12 +233,6 @@ const getAllFiles = async () => {
       ]);
 
       const data = { file, path, name, sha, size, text };
-
-      if (blobBaseURL) {
-        Object.assign(data, {
-          meta: { repoFileURL: `${blobBaseURL}/${path}` },
-        });
-      }
 
       return data;
     }),

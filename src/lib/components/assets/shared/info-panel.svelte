@@ -19,22 +19,26 @@
    */
   export let showPreview = false;
 
-  $: ({ path, size, kind, commitAuthor, commitDate, repoFileURL } = asset);
+  $: ({ path, size, kind, commitAuthor, commitDate } = asset);
   $: [, extension = ''] = path.match(/\.([^.]+)$/) ?? [];
   $: canPreview = ['image', 'audio', 'video'].includes(kind) || path.endsWith('.pdf');
 
   /**
    * @type {string | undefined}
    */
-  let publicURL;
+  let publicURL = undefined;
+  /**
+   * @type {string | undefined}
+   */
+  let repoBlobURL = undefined;
   /**
    * @type {{ width: number, height: number } | undefined}
    */
-  let dimensions;
+  let dimensions = undefined;
   /**
    * @type {number | undefined}
    */
-  let duration;
+  let duration = undefined;
   /**
    * @type {Entry[]}
    */
@@ -44,7 +48,13 @@
    * Update the properties above.
    */
   const updateProps = async () => {
-    ({ publicURL, dimensions, duration, usedEntries } = await getAssetDetails(asset));
+    ({
+      publicURL = undefined,
+      repoBlobURL = undefined,
+      dimensions = undefined,
+      duration = undefined,
+      usedEntries = [],
+    } = asset ? await getAssetDetails(asset) : {});
   };
 
   $: {
@@ -102,8 +112,8 @@
   <section>
     <h4>{$_('file_path')}</h4>
     <p>
-      {#if repoFileURL}
-        <a href={repoFileURL}>/{path}</a>
+      {#if repoBlobURL}
+        <a href={repoBlobURL}>/{path}</a>
       {:else}
         /{path}
       {/if}

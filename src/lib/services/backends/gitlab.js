@@ -10,17 +10,44 @@ import {
   initServerSideAuth,
 } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
-import { fetchAndParseFiles, repositoryProps } from '$lib/services/backends/shared/data';
+import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { user } from '$lib/services/user';
 import { sendRequest } from '$lib/services/utils/networking';
 
 const backendName = 'gitlab';
 const label = 'GitLab';
-/** @type {RepositoryInfo} */
-const repository = { ...repositoryProps };
 const statusDashboardURL = 'https://status.gitlab.com/';
 const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
+
+/**
+ * @type {RepositoryInfo}
+ */
+const repository = new Proxy(/** @type {any} */ ({}), {
+  /**
+   * Define the getter.
+   * @param {Record<string, any>} obj - Object itself.
+   * @param {string} key - Property name.
+   * @returns {any} Property value.
+   */
+  get: (obj, key) => {
+    if (key in obj) {
+      return obj[key];
+    }
+
+    const { baseURL, branch } = obj;
+
+    if (key === 'treeBaseURL') {
+      return branch ? `${baseURL}/-/tree/${branch}` : baseURL;
+    }
+
+    if (key === 'blobBaseURL') {
+      return branch ? `${baseURL}/-/blob/${branch}` : '';
+    }
+
+    return undefined;
+  },
+});
 
 /**
  * Check the GitLab service status.
@@ -131,25 +158,21 @@ const getRepositoryInfo = () => {
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://gitlab.com';
   const baseURL = `${origin}/${owner}/${repo}`;
 
-  return {
+  return Object.assign(repository, {
     service: backendName,
     label,
     owner,
     repo,
     branch,
     baseURL,
-    treeBaseURL: branch ? `${baseURL}/-/tree/${branch}` : baseURL,
-    blobBaseURL: `${baseURL}/-/blob/${branch}`,
-  };
+  });
 };
 
 /**
  * Initialize the GitLab backend.
  */
 const init = () => {
-  if (!repository.owner) {
-    Object.assign(repository, getRepositoryInfo());
-  }
+  getRepositoryInfo();
 };
 
 /**
@@ -372,7 +395,7 @@ const fetchFileList = async () => {
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
  */
 const fetchFileContents = async (fetchingFiles) => {
-  const { owner, repo, branch, blobBaseURL } = repository;
+  const { owner, repo, branch } = repository;
   const paths = fetchingFiles.map(({ path }) => path);
   /** @type {{ size: string, rawTextBlob: string }[]} */
   const blobs = [];
@@ -496,7 +519,6 @@ const fetchFileContents = async (fetchingFiles) => {
         size: Number(size),
         text: rawTextBlob,
         meta: {
-          repoFileURL: `${blobBaseURL}/${path}`,
           commitAuthor: {
             name: authorName,
             email: authorEmail,

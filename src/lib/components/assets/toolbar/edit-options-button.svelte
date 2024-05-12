@@ -19,12 +19,18 @@
    * @type {string | undefined}
    */
   let publicURL = undefined;
+  /**
+   * @type {string | undefined}
+   */
+  let repoBlobURL = undefined;
 
   /**
    * Update the properties above.
    */
   const updateProps = async () => {
-    ({ publicURL = undefined } = asset ? await getAssetDetails(asset) : {});
+    ({ publicURL = undefined, repoBlobURL = undefined } = asset
+      ? await getAssetDetails(asset)
+      : {});
   };
 
   $: {
@@ -69,13 +75,13 @@
       }}
     />
     <MenuItem
-      disabled={!$backend?.repository || !asset?.repoFileURL}
+      disabled={!$backend?.repository || !repoBlobURL}
       label={$_('view_on_x', {
         values: { service: $backend?.repository?.label },
         default: $_('view_in_repository'),
       })}
       on:click={() => {
-        window.open(`${asset?.repoFileURL}?plain=1`);
+        window.open(`${repoBlobURL}?plain=1`);
       }}
     />
   </Menu>

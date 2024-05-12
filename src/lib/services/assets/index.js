@@ -332,7 +332,8 @@ export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {})
  * @returns {Promise<AssetDetails>} Details.
  */
 export const getAssetDetails = async (asset) => {
-  const { kind } = asset;
+  const { kind, path } = asset;
+  const { blobBaseURL } = get(backend)?.repository ?? {};
   const blobURL = await getAssetBlobURL(asset);
   const publicURL = getAssetPublicURL(asset);
   const url = blobURL ?? publicURL;
@@ -345,6 +346,7 @@ export const getAssetDetails = async (asset) => {
 
   return {
     publicURL,
+    repoBlobURL: blobBaseURL ? `${blobBaseURL}/${path}` : undefined,
     dimensions,
     duration,
     usedEntries: url ? await getEntriesByAssetURL(url) : [],

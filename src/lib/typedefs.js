@@ -161,7 +161,6 @@
 /**
  * Metadata of a file retrieved from a Git repository.
  * @typedef {object} RepositoryFileMetadata
- * @property {string} repoFileURL - Web-accessible URL of the file.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.
  */
@@ -828,14 +827,14 @@
  * media folder.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.
- * @property {string} [repoFileURL] - Web-accessible URL on the Git repository. Git and local
- * backends only.
  */
 
 /**
  * Asset details.
  * @typedef {object} AssetDetails
  * @property {string} [publicURL] - The asset’s public URL on the live site.
+ * @property {string} [repoBlobURL] - Web-accessible URL on the Git repository. Git and local
+ * backends only.
  * @property {{ width: number, height: number }} [dimensions] - Media dimensions available for an
  * image, video or audio file.
  * @property {number} [duration] - Media duration available for a video or audio file, in seconds.
