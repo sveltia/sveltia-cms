@@ -370,8 +370,8 @@ const fetchFileList = async () => {
  * @param {(BaseEntryListItem | BaseAssetListItem)[]} fetchingFiles - Base entry/asset list items.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repositoryblob
+ * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#tree
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
- * @todo Retrieve the latest commit for each file, including the author and date.
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch, blobBaseURL } = repository;
@@ -426,9 +426,72 @@ const fetchFileContents = async (fetchingFiles) => {
     }
   }
 
+  /**
+   * @type {{
+   * author: { id?: string, username?: string },
+   * authorName: string, authorEmail: string, committedDate: string
+   * }[]}
+   */
+  const commits = [];
+
+  // Since GitLab has a limit of 250 maximum complexity, we can only get 10 records per query
+  for (;;) {
+    const result = //
+      /**
+       * @type {{ project: { repository: { [tree_index: string]: { lastCommit: {
+       * author: { id?: string, username?: string },
+       * authorName: string, authorEmail: string, committedDate: string
+       * } } } } } }}
+       */ (
+        await fetchGraphQL(
+          `
+            query {
+              project(fullPath: "${owner}/${repo}") {
+                repository {
+                  ${paths
+                    .splice(0, 10)
+                    .map(
+                      (path, index) => `
+                        tree_${index}: tree(ref: "${branch}", path: "${path}") {
+                          lastCommit {
+                            author {
+                              id
+                              username
+                            }
+                            authorName
+                            authorEmail
+                            committedDate
+                          }
+                        }
+                      `,
+                    )
+                    .join('')}
+                }
+              }
+            }
+          `,
+        )
+      );
+
+    commits.push(...Object.values(result.project.repository).map(({ lastCommit }) => lastCommit));
+
+    if (!paths.length) {
+      break;
+    }
+  }
+
   return Object.fromEntries(
     fetchingFiles.map(({ path, sha }, index) => {
       const { size, rawTextBlob } = blobs[index];
+
+      const {
+        author: { id, username },
+        authorName,
+        authorEmail,
+        committedDate,
+      } = commits[index];
+
+      const idMatcher = id?.match(/\d+/);
 
       const data = {
         sha,
@@ -436,6 +499,13 @@ const fetchFileContents = async (fetchingFiles) => {
         text: rawTextBlob,
         meta: {
           repoFileURL: `${blobBaseURL}/${path}`,
+          commitAuthor: {
+            name: authorName,
+            email: authorEmail,
+            id: idMatcher ? Number(idMatcher[0]) : undefined,
+            login: username,
+          },
+          committedDate: new Date(committedDate),
         },
       };
 
