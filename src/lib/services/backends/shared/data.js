@@ -84,21 +84,32 @@ export const fetchAndParseFiles = async ({
 
   allEntries.set(
     parseEntryFiles(
-      entryFiles.map((file) => ({
-        ...file,
-        text: file.text ?? fetchedFileMap[file.path].text,
-        meta: file.meta ?? fetchedFileMap[file.path].meta,
-      })),
+      entryFiles.map((file) => {
+        const { text, meta } = fetchedFileMap[file.path] ?? {};
+
+        return {
+          ...file,
+          text: file.text ?? text,
+          meta: file.meta ?? meta,
+        };
+      }),
     ),
   );
 
   allAssets.set(
     parseAssetFiles(
-      assetFiles.map((file) => ({
-        ...file,
-        name: file.path.split('/').pop(),
-        meta: file.meta ?? fetchedFileMap[file.path].meta,
-      })),
+      assetFiles.map((file) => {
+        const { meta, text, size } = fetchedFileMap[file.path] ?? {};
+
+        return {
+          ...file,
+          name: file.path.split('/').pop(),
+          meta: file.meta ?? meta,
+          // The size and text are only available in the 2nd request (`fetchFileContents`) on GitLab
+          size: file.size ?? size,
+          text: file.text ?? text,
+        };
+      }),
     ),
   );
 

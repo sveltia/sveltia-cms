@@ -360,9 +360,7 @@ const fetchFileList = async () => {
   }
 
   // The `size` is not available here; it will be retrieved in `fetchFileContents` below.
-  return blobs
-    .filter(({ type }) => type === 'blob')
-    .map(({ path, sha }) => ({ path, sha, size: 0 }));
+  return blobs.filter(({ type }) => type === 'blob').map(({ path, sha }) => ({ path, sha }));
 };
 
 /**
