@@ -1,5 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n';
+  import { validateStringField } from '$lib/components/contents/details/widgets/string/helper';
 
   /**
    * @type {StringField | TextField}
@@ -11,13 +12,7 @@
   export let currentValue;
 
   $: ({ minlength, maxlength } = fieldConfig);
-  $: hasMin =
-    Number.isInteger(minlength) && /** @type {number} */ (minlength) <= (maxlength ?? Infinity);
-  $: hasMax = Number.isInteger(maxlength) && (minlength ?? 0) <= /** @type {number} */ (maxlength);
-  $: count = currentValue ? [...currentValue.trim()].length : 0;
-  $: tooShort = hasMin && count < /** @type {number} */ (minlength);
-  $: tooLong = hasMax && count > /** @type {number} */ (maxlength);
-  $: invalid = tooShort || tooLong;
+  $: ({ count, hasMin, hasMax, invalid } = validateStringField(fieldConfig, currentValue));
 </script>
 
 {#if hasMin || hasMax}

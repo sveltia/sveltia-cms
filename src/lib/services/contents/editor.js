@@ -9,6 +9,7 @@ import equal from 'fast-deep-equal';
 import { flatten, unflatten } from 'flat';
 import { get, writable } from 'svelte/store';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
+import { validateStringField } from '$lib/components/contents/details/widgets/string/helper';
 import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
@@ -896,24 +897,10 @@ const validateEntry = () => {
 
         // Check the number of characters
         if (['string', 'text'].includes(widgetName)) {
-          const { minlength, maxlength } = /** @type {StringField | TextField} */ (fieldConfig);
-
-          const hasMin =
-            Number.isInteger(minlength) &&
-            /** @type {number} */ (minlength) <= (maxlength ?? Infinity);
-
-          const hasMax =
-            Number.isInteger(maxlength) && (minlength ?? 0) <= /** @type {number} */ (maxlength);
-
-          const count = value ? [...value].length : 0;
-
-          if (hasMin && count < /** @type {number} */ (minlength)) {
-            tooShort = true;
-          }
-
-          if (hasMax && count > /** @type {number} */ (maxlength)) {
-            tooLong = true;
-          }
+          ({ tooShort, tooLong } = validateStringField(
+            /** @type {StringField | TextField} */ (fieldConfig),
+            value,
+          ));
         }
 
         // Check the URL or email with native form validation
