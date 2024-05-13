@@ -332,6 +332,8 @@ export const strings = {
       add_many: '追加できるのは最大で {max} 項目です。',
       add_one: '追加できるのは最大で {max} 項目です。',
     },
+    too_short: '少なくとも {min} 文字は入力してください。',
+    too_long: '{max} 文字を超える入力はできません。',
     type_mismatch: {
       email: '正しいメールアドレスを入力してください。',
       url: '正しい URL を入力してください。',
@@ -404,6 +406,11 @@ export const strings = {
       title: '写真クレジット',
       description: '可能であれば以下のクレジットを使ってください:',
     },
+  },
+  character_counter: {
+    min_max: '{count} 文字入力されています。最小: {min}。最大 {max}。',
+    min: '{count} 文字入力されています。最小: {min}。',
+    max: '{count} 文字入力されています。最大: {max}。',
   },
   youtube_video_player: 'YouTube 動画プレーヤー',
 

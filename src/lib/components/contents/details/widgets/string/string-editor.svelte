@@ -5,6 +5,7 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
+  import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
 
   /**
    * @type {LocaleCode}
@@ -120,3 +121,5 @@
   aria-labelledby="{fieldId}-label"
   aria-errormessage="{fieldId}-error"
 />
+
+<CharacterCounter {fieldConfig} {currentValue} />

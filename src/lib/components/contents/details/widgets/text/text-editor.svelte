@@ -5,6 +5,7 @@
 -->
 <script>
   import { TextArea } from '@sveltia/ui';
+  import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
 
   /**
    * @type {LocaleCode}
@@ -28,7 +29,6 @@
   /**
    * @type {TextField}
    */
-  // svelte-ignore unused-export-let
   export let fieldConfig;
   /**
    * @type {string}
@@ -58,3 +58,5 @@
   aria-errormessage="{fieldId}-error"
   autoResize={true}
 />
+
+<CharacterCounter {fieldConfig} {currentValue} />

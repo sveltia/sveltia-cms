@@ -171,6 +171,22 @@
             {$_('validation.value_missing')}
           </div>
         {/if}
+        {#if validity.tooShort}
+          <div role="none">
+            <Icon name="error" />
+            {$_('validation.too_short', {
+              values: { min: /** @type {StringField | TextField} */ (fieldConfig).minlength },
+            })}
+          </div>
+        {/if}
+        {#if validity.tooLong}
+          <div role="none">
+            <Icon name="error" />
+            {$_('validation.too_long', {
+              values: { max: /** @type {StringField | TextField} */ (fieldConfig).maxlength },
+            })}
+          </div>
+        {/if}
         {#if validity.rangeUnderflow}
           <div role="none">
             <Icon name="error" />

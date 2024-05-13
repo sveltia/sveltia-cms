@@ -832,6 +832,8 @@ const validateEntry = () => {
       const canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
       const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;
+      let tooShort = false;
+      let tooLong = false;
       let rangeUnderflow = false;
       let rangeOverflow = false;
       let patternMismatch = false;
@@ -892,6 +894,28 @@ const validateEntry = () => {
           }
         }
 
+        // Check the number of characters
+        if (['string', 'text'].includes(widgetName)) {
+          const { minlength, maxlength } = /** @type {StringField | TextField} */ (fieldConfig);
+
+          const hasMin =
+            Number.isInteger(minlength) &&
+            /** @type {number} */ (minlength) < (maxlength ?? Infinity);
+
+          const hasMax =
+            Number.isInteger(maxlength) && (minlength ?? 0) < /** @type {number} */ (maxlength);
+
+          const count = value ? [...value].length : 0;
+
+          if (hasMin && count < /** @type {number} */ (minlength)) {
+            tooShort = true;
+          }
+
+          if (hasMax && count > /** @type {number} */ (maxlength)) {
+            tooLong = true;
+          }
+        }
+
         // Check the URL or email with native form validation
         if (widgetName === 'string' && value) {
           const { type = 'text' } = /** @type {StringField} */ (fieldConfig);
@@ -914,6 +938,8 @@ const validateEntry = () => {
 
       const validity = {
         valueMissing,
+        tooShort,
+        tooLong,
         rangeUnderflow,
         rangeOverflow,
         patternMismatch,

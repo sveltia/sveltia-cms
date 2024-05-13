@@ -636,6 +636,8 @@
  * String field properties.
  * @typedef {object} StringFieldProps
  * @property {string} [default] - Default value.
+ * @property {number} [minlength] - Minimum number of characters required for input.
+ * @property {number} [maxlength] - Maximum number of characters required for input.
  * @property {'email' | 'url' | 'text'} [type] - Input type.
  * @property {string} [prefix] - A string to be prepended to the value. Default: an empty string.
  * @property {string} [suffix] - A string to be appended to the value. Default: an empty string.
@@ -655,6 +657,8 @@
  * Text field properties.
  * @typedef {object} TextFieldProps
  * @property {string} [default] - Default value.
+ * @property {number} [minlength] - Minimum number of characters required for input.
+ * @property {number} [maxlength] - Maximum number of characters required for input.
  * @see https://decapcms.org/docs/widgets/#text
  */
 
