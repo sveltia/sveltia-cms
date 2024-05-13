@@ -271,7 +271,7 @@ const fetchLastCommitHash = async () => {
     `)
   );
 
-  if (!result.repository.ref) {
+  if (!result?.repository?.ref) {
     throw new Error('Failed to retrieve the last commit hash.', {
       cause: new Error(get(_)('branch_not_found', { values: { repo, branch } })),
     });
