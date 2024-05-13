@@ -13,12 +13,10 @@ export const allBackendServices = {
   gitlab,
   local,
 };
-
 /**
  * @type {import('svelte/store').Writable<string | undefined>}
  */
 export const backendName = writable();
-
 /**
  * @type {import('svelte/store').Readable<BackendService | undefined>}
  */

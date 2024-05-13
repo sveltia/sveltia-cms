@@ -60,7 +60,6 @@ export const getFieldConfig = ({
     } else if (field) {
       const isNumericKey = key.match(/^\d+$/);
       const keyPathArraySub = keyPathArray.slice(0, index);
-
       const {
         field: subField,
         fields: subFields,
@@ -227,7 +226,6 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
   const { show_preview_links: showLinks = true, site_url: baseURL } = get(siteConfig) ?? {};
   const { slug, path: entryFilePath, content } = entry.locales[locale] ?? {};
-
   const {
     preview_path: pathTemplate,
     preview_path_date_field: dateFieldName,
@@ -246,7 +244,6 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
     const fieldConfig = dateFieldName
       ? fields?.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
       : fields?.find(({ widget }) => widget === 'datetime');
-
     const fieldValue = fieldConfig ? valueMap[fieldConfig.name] : undefined;
 
     if (!fieldConfig || !fieldValue) {

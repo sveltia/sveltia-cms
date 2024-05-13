@@ -13,12 +13,10 @@ export const hasOverlay = derived(
   [showContentOverlay, showAssetOverlay],
   ([_showContentOverlay, _showAssetOverlay]) => _showContentOverlay || _showAssetOverlay,
 );
-
 /**
  * @type {import('svelte/store').Writable<string>}
  */
 export const selectedPageName = writable('');
-
 /**
  * Page status to be announced by screen readers.
  * @type {import('svelte/store').Writable<string>}

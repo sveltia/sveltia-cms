@@ -63,7 +63,6 @@ export const getI18nConfig = (collection, file) => {
       value: canonicalSlugTemplate = '{{slug}}',
     } = {},
   } = /** @type {RawI18nConfig} */ (config ?? {});
-
   const i18nEnabled = !!locales.length;
 
   return {

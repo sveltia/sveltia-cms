@@ -41,7 +41,6 @@
       }
 
       const { x, y } = thisPaneContentArea.getBoundingClientRect();
-
       const thisElement = /** @type {HTMLElement | undefined} */ (
         document.elementsFromPoint(x + 80, y).find((e) => e.matches('[data-key-path]'))
       );
@@ -53,7 +52,6 @@
       const { keyPath } = thisElement.dataset;
       const { top, height } = thisElement.getBoundingClientRect();
       const ratio = (y - top) / height;
-
       const thatElement = /** @type {HTMLElement | undefined} */ (
         thatPaneContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath ?? '')}"]`)
       );

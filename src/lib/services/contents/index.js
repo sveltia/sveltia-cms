@@ -15,22 +15,18 @@ const markdownImageRegEx = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
  * @type {import('svelte/store').Writable<boolean>}
  */
 export const dataLoaded = writable(false);
-
 /**
  * @type {import('svelte/store').Writable<CollectionEntryFolder[]>}
  */
 export const allEntryFolders = writable([]);
-
 /**
  * @type {import('svelte/store').Writable<Entry[]>}
  */
 export const allEntries = writable([]);
-
 /**
  * @type {import('svelte/store').Writable<Collection | undefined>}
  */
 export const selectedCollection = writable();
-
 /**
  * @type {import('svelte/store').Writable<Entry[]>}
  */
@@ -134,15 +130,12 @@ export const getEntriesByAssetURL = async (url) => {
   const siteURL = get(siteConfig)?.site_url;
   const assetURL = siteURL && !url.startsWith('blob:') ? url.replace(siteURL, '') : url;
   const entries = get(allEntries);
-
   const results = await Promise.all(
     entries.map(async (entry) => {
       const { locales, collectionName, fileName } = entry;
-
       const _results = await Promise.all(
         Object.values(locales).map(async ({ content }) => {
           const valueMap = flatten(content);
-
           const __results = await Promise.all(
             Object.entries(valueMap).map(async ([keyPath, value]) => {
               if (typeof value !== 'string' || !value) {

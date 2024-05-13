@@ -28,7 +28,6 @@ user.subscribe((_user) => {
  * @type {import('svelte/store').Writable<{ message: string, canRetry: boolean }>}
  */
 export const signInError = writable({ message: '', canRetry: false });
-
 /**
  * @type {import('svelte/store').Writable<boolean>}
  */
@@ -41,7 +40,6 @@ export const unauthenticated = writable(false);
 const logError = (ex) => {
   let message =
     /** @type {{ message: string }} */ (ex.cause)?.message || get(_)('unexpected_error');
-
   let canRetry = false;
 
   if (ex.name === 'NotFoundError') {
@@ -78,7 +76,6 @@ export const signInAutomatically = async () => {
   // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
   // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
   const isLocal = !!window.location.hostname.match(/^(?:.+\.)?localhost$/);
-
   // Netlify/Decap CMS uses `proxy` as the backend name when running the local proxy server and
   // leaves it in local storage. Sveltia CMS uses `local` instead.
   const _backendName =

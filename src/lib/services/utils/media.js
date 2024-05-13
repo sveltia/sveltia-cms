@@ -22,7 +22,6 @@ let pdfjs;
  */
 export const getMediaMetadata = (src, kind) => {
   const isImage = kind === 'image';
-
   const element = isImage
     ? new Image()
     : /** @type {HTMLMediaElement} */ (document.createElement(kind));
@@ -175,7 +174,6 @@ export const renderPDF = async (
       isEvalSupported: false,
       disableAutoFetch: true,
     }).promise;
-
     const pdfPage = await pdfDocument.getPage(1);
     const viewport = pdfPage.getViewport({ scale: 1 });
     const { width, height } = viewport;

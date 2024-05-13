@@ -20,12 +20,10 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  * with the dev server’s middleware, or loading the CMS config file may fail due to a CORS error.
  */
 export const siteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
-
 /**
  * @type {import('svelte/store').Writable<SiteConfig | undefined>}
  */
 export const siteConfig = writable();
-
 /**
  * @type {import('svelte/store').Writable<{ message: string } | undefined>}
  */
@@ -223,15 +221,12 @@ siteConfig.subscribe((config) => {
       .flat(1)
       .sort((a, b) => a.filePath.localeCompare(b.filePath)),
   ];
-
   const globalMediaFolder = stripSlashes(_globalMediaFolder);
-
   // Some frameworks expect asset paths starting with `@`, like `@assets/images/...`. Remove an
   // extra leading slash in that case. A trailing slash should always be removed internally.
   const globalPublicFolder = _globalPublicFolder
     ? `/${stripSlashes(_globalPublicFolder)}`.replace(/^\/@/, '@')
     : `/${globalMediaFolder}`;
-
   /** @type {CollectionAssetFolder} */
   const globalAssetFolder = {
     collectionName: undefined,
@@ -239,7 +234,6 @@ siteConfig.subscribe((config) => {
     publicPath: globalPublicFolder,
     entryRelative: false,
   };
-
   /**
    * Folder Collections Media and Public Folder.
    * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
@@ -289,7 +283,6 @@ siteConfig.subscribe((config) => {
       })
       .filter(Boolean)
   ).sort((a, b) => a.internalPath.localeCompare(b.internalPath));
-
   const _allAssetFolders = [globalAssetFolder, ...collectionAssetFolders];
 
   allEntryFolders.set(_allEntryFolders);

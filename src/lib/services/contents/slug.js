@@ -31,10 +31,8 @@ export const applyTemplateFilter = (slugPart, tf, fieldConfig) => {
 
   if (dateTransformer) {
     const [, format] = dateTransformer;
-
     const { time_format: timeFormat = undefined, picker_utc: pickerUTC = false } =
       /** @type {DateTimeField} */ (fieldConfig) ?? /** @type {DateTimeField} */ ({});
-
     const dateOnly = timeFormat === false;
 
     return (

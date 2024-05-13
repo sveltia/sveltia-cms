@@ -22,7 +22,6 @@ const storageKey = 'assets-view';
  * Whether to show the Upload Assets dialog.
  */
 export const showUploadAssetsDialog = writable(false);
-
 /**
  * @type {import('svelte/store').Readable<boolean>}
  */
@@ -91,7 +90,6 @@ const sortAssets = (assets, { key, order } = {}) => {
   }
 
   const _assets = [...assets];
-
   const type =
     { commit_author: String, commit_date: Date }[key] ||
     /** @type {Record<string, any>} */ (_assets[0])?.[key]?.constructor ||
@@ -262,7 +260,6 @@ export const sortFields = derived([allAssets, appLocale], ([_allAssets], set) =>
 
   set(_sortFields.map((key) => ({ key, label: get(_)(`sort_keys.${key}`) })));
 });
-
 /**
  * List of all the assets for the selected asset collection.
  * @type {import('svelte/store').Readable<Asset[]>}
@@ -277,7 +274,6 @@ export const listedAssets = derived(
     }
   },
 );
-
 /**
  * Sorted, filtered and grouped assets for the selected asset collection.
  * @type {import('svelte/store').Readable<Record<string, Asset[]>>}

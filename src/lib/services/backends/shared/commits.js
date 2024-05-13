@@ -31,7 +31,6 @@ export const createCommitMessage = (
       automatic_deployments: autoDeployEnabled,
     },
   } = /** @type {SiteConfig} */ (get(siteConfig));
-
   const { login = '', name = '' } = /** @type {User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);

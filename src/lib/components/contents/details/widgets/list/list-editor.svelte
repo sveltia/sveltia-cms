@@ -189,7 +189,6 @@
       const subFields = typeName
         ? types?.find(({ name }) => name === typeName)?.fields ?? []
         : fields ?? (field ? [field] : []);
-
       const index = addToTop ? 0 : valueList.length;
       const newItem = unflatten(getDefaultValues(subFields));
 

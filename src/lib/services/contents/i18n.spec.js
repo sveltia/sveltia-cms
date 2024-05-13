@@ -4,19 +4,16 @@ import { defaultI18nConfig, getCanonicalLocale, getI18nConfig } from '$lib/servi
 
 describe('Test getI18nConfig()', () => {
   const mediaFolder = 'static/images/uploads';
-
   /** @type {RawCollection} */
   const collectionWithoutI18n = {
     name: 'posts',
     fields: [],
   };
-
   /** @type {RawCollection} */
   const collectionWithI18n = {
     ...collectionWithoutI18n,
     i18n: true,
   };
-
   /** @type {RawCollection} */
   const collectionWithPartialI18nOverride = {
     name: 'posts',
@@ -25,7 +22,6 @@ describe('Test getI18nConfig()', () => {
       locales: ['fr'],
     },
   };
-
   /** @type {RawCollection} */
   const collectionWithCompleteI18nOverride = {
     name: 'posts',
@@ -34,20 +30,17 @@ describe('Test getI18nConfig()', () => {
       locales: ['es'],
     },
   };
-
   /** @type {RawCollectionFile} */
   const collectionFileWithoutI18n = {
     name: 'home',
     file: 'data/home.json',
     fields: [],
   };
-
   /** @type {RawCollectionFile} */
   const collectionFileWithI18n = {
     ...collectionFileWithoutI18n,
     i18n: true,
   };
-
   /** @type {RawCollectionFile} */
   const collectionFileWithPartialI18nOverride = {
     ...collectionFileWithoutI18n,
@@ -56,7 +49,6 @@ describe('Test getI18nConfig()', () => {
       locales: ['de'],
     },
   };
-
   /** @type {RawCollectionFile} */
   const collectionFileWithCompleteI18nOverride = {
     ...collectionFileWithoutI18n,
@@ -65,7 +57,6 @@ describe('Test getI18nConfig()', () => {
       locales: ['es'],
     },
   };
-
   const canonicalSlug = { key: 'translationKey', value: '{{slug}}' };
 
   test('no i18n defined at top-level or collection-level', () => {

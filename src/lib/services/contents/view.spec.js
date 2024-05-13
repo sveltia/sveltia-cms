@@ -16,10 +16,8 @@ describe('Test formatSummary()', () => {
     },
     slug_length: 50,
   };
-
   /** @type {LocalizedEntry} */
   const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
-
   /** @type {Entry} */
   const entry = {
     id: '',
@@ -40,7 +38,6 @@ describe('Test formatSummary()', () => {
       },
     },
   };
-
   /**
    * Wrapper for {@link formatSummary}.
    * @param {string} summary - Summary string template.

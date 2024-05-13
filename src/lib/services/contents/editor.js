@@ -31,33 +31,27 @@ const storageKey = 'entry-view';
  * @type {import('svelte/store').Writable<boolean>}
  */
 export const showContentOverlay = writable(false);
-
 /**
  * @type {import('svelte/store').Writable<boolean>}
  */
 export const showDuplicateToast = writable(false);
-
 /**
  * @type {import('svelte/store').Writable<?EntryEditorPane>}
  */
 export const editorLeftPane = writable(null);
-
 /**
  * @type {import('svelte/store').Writable<?EntryEditorPane>}
  */
 export const editorRightPane = writable(null);
-
 /**
  * @type {import('svelte/store').Writable<EntryEditorView | undefined>}
  */
 export const entryEditorSettings = writable();
-
 /**
  * View settings for the Select Assets dialog.
  * @type {import('svelte/store').Writable<SelectAssetsView | undefined>}
  */
 export const selectAssetsView = writable();
-
 /**
  * @type {import('svelte/store').Writable<EntryDraft | null | undefined>}
  */
@@ -292,7 +286,6 @@ export const createProxy = ({
   }
 
   const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
-
   const {
     defaultLocale,
     canonicalSlug: { key: canonicalSlugKey },
@@ -360,15 +353,12 @@ export const createDraft = (entry, dynamicValues) => {
   const { fields = [], _i18n } = collectionFile ?? collection;
   const { i18nEnabled, locales: allLocales } = _i18n;
   const newContent = getDefaultValues(fields, dynamicValues);
-
   const enabledLocales = isNew
     ? allLocales
     : allLocales.filter((locale) => !!locales?.[locale]?.content);
-
   const originalLocales = Object.fromEntries(
     allLocales.map((locale) => [locale, isNew || enabledLocales.includes(locale)]),
   );
-
   /** @type {Record<LocaleCode, FlattenedEntryContent>} */
   const originalValues = Object.fromEntries(
     enabledLocales.map((locale) => [
@@ -425,7 +415,6 @@ export const createDraft = (entry, dynamicValues) => {
 export const duplicateDraft = () => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collection, collectionFile, currentValues, validities } = draft;
-
   const {
     canonicalSlug: { key: canonicalSlugKey },
   } = (collectionFile ?? collection)._i18n;
@@ -455,7 +444,6 @@ export const duplicateDraft = () => {
  * @returns {object} Processed object.
  */
 const unflattenObj = (obj) => unflatten(JSON.parse(JSON.stringify(obj)));
-
 /**
  * Traverse the given object by decoding dot-notated key path.
  * @param {any} obj - Unflatten object.
@@ -552,7 +540,6 @@ export const toggleLocale = (locale) => {
     if (enabled && !currentValues[locale]) {
       const { collection, collectionName, collectionFile, fileName, originalValues, files } =
         _draft;
-
       const { fields = [], _i18n } = collectionFile ?? collection;
       const { defaultLocale } = _i18n;
       const newContent = getDefaultValues(fields);
@@ -630,7 +617,6 @@ export const copyFromLocale = async (
 ) => {
   const { collectionName, fileName, currentValues } = /** @type {EntryDraft} */ (get(entryDraft));
   const valueMap = currentValues[sourceLocale];
-
   const copingFields = Object.fromEntries(
     Object.entries(valueMap).filter(([_keyPath, value]) => {
       const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath });
@@ -650,7 +636,6 @@ export const copyFromLocale = async (
       return true;
     }),
   );
-
   const count = Object.keys(copingFields).length;
   const countType = count === 1 ? 'one' : 'many';
   const operationType = translate ? 'translation' : 'copy';
@@ -730,7 +715,6 @@ export const copyFromLocale = async (
 export const revertChanges = (locale = '', keyPath = '') => {
   const { collection, collectionFile, fileName, currentValues, originalValues } =
     /** @type {EntryDraft} */ (get(entryDraft));
-
   const { locales: allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
   const locales = locale ? [locale] : allLocales;
 
@@ -784,7 +768,6 @@ export const revertChanges = (locale = '', keyPath = '') => {
 const validateEntry = () => {
   const { collection, collectionFile, fileName, currentLocales, currentValues, validities } =
     /** @type {EntryDraft} */ (get(entryDraft));
-
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
   let validated = true;
 
@@ -816,20 +799,16 @@ const validateEntry = () => {
       }
 
       const arrayMatch = keyPath.match(/\.(\d+)$/);
-
       const {
         widget: widgetName = 'string',
         required = true,
         i18n = false,
         pattern: validation,
       } = fieldConfig;
-
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
-
       const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
         fieldConfig
       );
-
       const canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
       const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;
@@ -852,7 +831,6 @@ const validateEntry = () => {
         }
 
         const keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
-
         const values =
           Array.isArray(value) && value.length
             ? value
@@ -932,7 +910,6 @@ const validateEntry = () => {
         patternMismatch,
         typeMismatch,
       };
-
       const valid = !Object.values(validity).some(Boolean);
 
       validities[locale][keyPath] = { ...validity, valid };
@@ -964,7 +941,6 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
       _assetFolder,
     },
   } = fillSlugOptions;
-
   const subPath = entryPath?.match(/(.+?)(?:\/[^/]+)?$/)[1];
   const isMultiFolders = structure === 'multiple_folders';
   const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];
@@ -1028,7 +1004,6 @@ const createEntryPath = (draft, locale, slug) => {
 
   const { defaultLocale, structure } = collection._i18n;
   const collectionFolder = collection.folder;
-
   /**
    * Support folder collections path.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
@@ -1040,14 +1015,11 @@ const createEntryPath = (draft, locale, slug) => {
         currentSlug: slug,
       })
     : slug;
-
   const extension = getFileExtension({
     format: collection.format,
     extension: collection.extension,
   });
-
   const defaultOption = `${collectionFolder}/${path}.${extension}`;
-
   const pathOptions = {
     multiple_folders: `${collectionFolder}/${locale}/${path}.${extension}`,
     multiple_files: `${collectionFolder}/${path}.${locale}.${extension}`,
@@ -1123,7 +1095,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   const _user = /** @type {User} */ (get(user));
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-
   const {
     collection,
     isNew,
@@ -1136,12 +1107,10 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     currentValues,
     files,
   } = draft;
-
   const {
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
   } = collection;
-
   const {
     i18nEnabled,
     locales,
@@ -1149,22 +1118,18 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     structure,
     canonicalSlug: { key: canonicalSlugKey, value: canonicalSlugTemplate },
   } = (collectionFile ?? collection)._i18n;
-
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
-
   /**
    * The slug of the default locale.
    */
   const defaultLocaleSlug =
     fileName ?? originalEntry?.slug ?? fillSlugTemplate(slugTemplate, fillSlugOptions);
-
   /**
    * List of key paths that the value will be localized.
    */
   const localizingKeyPaths = [...slugTemplate.matchAll(/{{(?:fields\.)?(.+?) \| localize}}/g)].map(
     ([, keyPath]) => keyPath,
   );
-
   /**
    * Localized slug map. This only applies when the i18n structure is multiple files or folders, and
    * the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
@@ -1194,7 +1159,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
                   }),
             ]),
         );
-
   /**
    * A canonical slug to be added to the content of each file when the slug is localized. It helps
    * Sveltia CMS and some frameworks to link localized files. The default property name is
@@ -1212,18 +1176,15 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           ...fillSlugOptions,
           currentSlug: defaultLocaleSlug,
         });
-
   const { internalAssetFolder, publicAssetFolder } = getEntryAssetFolderPaths({
     ...fillSlugOptions,
     type: 'media_folder',
     currentSlug: defaultLocaleSlug,
     entryFilePath: createEntryPath(draft, defaultLocale, defaultLocaleSlug),
   });
-
   const assetsInSameFolder = get(allAssets)
     .map((a) => a.path)
     .filter((p) => p.match(`^\\/${escapeRegExp(internalAssetFolder)}\\/[^\\/]+$`));
-
   /**
    * @type {FileChange[]}
    */
@@ -1232,7 +1193,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
    * @type {Asset[]}
    */
   const savingAssets = [];
-
   const savingAssetProps = {
     /** @type {string | undefined} */
     text: undefined,
@@ -1243,7 +1203,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       : undefined,
     commitDate: new Date(), // Use the current datetime
   };
-
   /**
    * @type {Record<LocaleCode, LocalizedEntry>}
    */
@@ -1294,7 +1253,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
                 return new File([blob], `${type}-${Date.now()}.${extension}`, { type: mimeType });
               })());
-
             const sha = await getHash(file);
             const dupFile = savingAssets.find((f) => f.sha === sha);
 
@@ -1311,7 +1269,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
               ...assetsInSameFolder,
               ...savingAssets.map((a) => a.name),
             ]);
-
             const assetPath = `${internalAssetFolder}/${_fileName}`;
 
             changes.push({ action: 'create', path: assetPath, data: file, base64 });
@@ -1337,7 +1294,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       }),
     ),
   );
-
   /**
    * @type {Entry}
    */
@@ -1351,14 +1307,12 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       Object.entries(savingEntryLocales).filter(([, { content }]) => !!content),
     ),
   };
-
   const {
     extension,
     format,
     frontmatter_delimiter: frontmatterDelimiter,
     yaml_quote: yamlQuote,
   } = collection;
-
   const config = { extension, format, frontmatterDelimiter, yamlQuote };
 
   if (collectionFile || !i18nEnabled || structure === 'single_file') {
@@ -1420,7 +1374,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   entryDraft.set(null);
 
   const isLocal = get(backendName) === 'local';
-
   const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 
@@ -1441,7 +1394,6 @@ const initSettings = async ({ repository }) => {
   settingsDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'ui-settings') : null;
 
   const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
-
   const settings = {
     showPreview: true,
     syncScrolling: true,

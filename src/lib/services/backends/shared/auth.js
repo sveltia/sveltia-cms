@@ -22,7 +22,6 @@ const authorize = async ({ backendName, authURL }) => {
   const { availHeight, availWidth } = window.screen;
   const top = availHeight / 2 - height / 2;
   const left = availWidth / 2 - width / 2;
-
   const popup = window.open(
     authURL,
     'auth',
@@ -127,7 +126,6 @@ export const initServerSideAuth = async ({ backendName, siteDomain, authURL, sco
  */
 const createAuthSecrets = async () => {
   const codeVerifier = `${generateRandomId()}${generateRandomId()}`;
-
   const codeChallenge = btoa(
     await getHash(codeVerifier, { algorithm: 'SHA-256', format: 'binary' }),
   )
@@ -156,7 +154,6 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
   const { csrfToken, codeVerifier, codeChallenge } = await createAuthSecrets();
   const { origin, pathname } = window.location;
   const redirectURL = `${origin}${pathname}`;
-
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectURL,

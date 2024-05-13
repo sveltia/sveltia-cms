@@ -19,7 +19,6 @@ export const contentUpdatesToast = writable({
  */
 export const deleteEntries = async (ids, assetPaths = []) => {
   const _allEntries = get(allEntries);
-
   const changes = /** @type {FileChange[]} */ (
     ids
       .map((id) => {

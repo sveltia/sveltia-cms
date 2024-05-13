@@ -29,14 +29,12 @@ export const assetUpdatesToast = writable({
  */
 export const saveAssets = async (uploadingAssets, options) => {
   const { files, folder, originalAsset } = uploadingAssets;
-
   const assetNamesInSameFolder = /** @type {string[]} */ (
     get(allAssets)
       .map((a) => a.path)
       .filter((p) => p.match(`^${escapeRegExp(/** @type {string} */ (folder))}\\/[^\\/]+$`))
       .map((p) => p.split('/').pop())
   );
-
   const savingFileList = files.map((file) => {
     const name =
       originalAsset?.name ?? renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
@@ -60,7 +58,6 @@ export const saveAssets = async (uploadingAssets, options) => {
 
   const { collectionName } =
     get(allAssetFolders).findLast(({ internalPath }) => folder === internalPath) ?? {};
-
   /**
    * @type {Asset[]}
    */
@@ -100,7 +97,6 @@ export const saveAssets = async (uploadingAssets, options) => {
   }
 
   const isLocal = get(backendName) === 'local';
-
   const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 

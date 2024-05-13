@@ -6,7 +6,6 @@ describe('Test getOptions()', () => {
   const locale = '_default';
   /** @type {LocalizedEntry} */
   const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
-
   /** @type {Entry[]} */
   const memberEntries = [
     {
@@ -95,7 +94,6 @@ describe('Test getOptions()', () => {
       display_fields: ['twitterHandle', 'followerCount'],
       search_fields: ['name.first', 'twitterHandle'],
     };
-
     const entries = memberEntries;
 
     expect(getOptions(locale, config, entries)).toEqual([
@@ -187,7 +185,6 @@ describe('Test getOptions()', () => {
       display_fields: ['cities.*.name'],
       value_field: 'cities.*.id',
     };
-
     /** @type {Entry[]} */
     const entries = [
       {
@@ -247,7 +244,6 @@ describe('Test getOptions()', () => {
       display_fields: ['sections.*.name'],
       search_fields: ['sections.*.name'],
     };
-
     /** @type {Entry[]} */
     const entries = [
       {
@@ -357,7 +353,6 @@ describe('Test getOptions()', () => {
       display_fields: ['twitterHandle', 'followerCount'],
       search_fields: ['name.first', 'twitterHandle'],
     };
-
     const entries = memberEntries;
 
     expect(getOptions('en', config, entries)).toEqual([
@@ -377,7 +372,6 @@ describe('Test getOptions()', () => {
       display_fields: ['title'],
       search_fields: ['title', 'category'],
     };
-
     const entries = [
       {
         id: '',

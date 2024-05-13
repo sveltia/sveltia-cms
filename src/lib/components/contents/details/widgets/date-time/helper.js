@@ -23,7 +23,6 @@ export const getDefaultValue = (fieldConfig) => {
   const { year, month, day, hour, minute } = getDateTimeParts({
     timeZone: pickerUTC ? 'UTC' : undefined,
   });
-
   const dateStr = `${year}-${month}-${day}`;
   const timeStr = `${hour}:${minute}`;
 
@@ -97,7 +96,6 @@ export const getInputValue = (currentValue, fieldConfig) => {
     time_format: timeFormat,
     picker_utc: pickerUTC = false,
   } = fieldConfig;
-
   const dateOnly = timeFormat === false;
   const timeOnly = dateFormat === false;
 
@@ -121,7 +119,6 @@ export const getInputValue = (currentValue, fieldConfig) => {
         : new Date(),
       timeZone: pickerUTC ? 'UTC' : undefined,
     });
-
     const dateStr = `${year}-${month}-${day}`;
     const timeStr = `${hour}:${minute}`;
 

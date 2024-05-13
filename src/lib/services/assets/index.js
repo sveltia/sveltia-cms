@@ -9,7 +9,6 @@ import { resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
 export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
-
 /**
  * Common file extension regex list that can be used for filtering.
  * @type {Record<string, RegExp>}
@@ -21,55 +20,45 @@ export const assetExtensions = {
   audio: /\.(?:aac|midi?|mp3|opus|wav|weba)$/i,
   document: /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/i,
 };
-
 /**
  * @type {import('svelte/store').Writable<Asset[]>}
  */
 export const allAssets = writable([]);
-
 /**
  * @type {import('svelte/store').Writable<CollectionAssetFolder[]>}
  */
 export const allAssetFolders = writable([]);
-
 /**
  * @type {import('svelte/store').Readable<CollectionAssetFolder | undefined>}
  */
 export const globalAssetFolder = derived([allAssetFolders], ([_allAssetFolders], set) => {
   set(_allAssetFolders.find(({ collectionName }) => !collectionName));
 });
-
 /**
  * @type {import('svelte/store').Writable<CollectionAssetFolder | undefined>}
  */
 export const selectedAssetFolder = writable();
-
 /**
  * @type {import('svelte/store').Writable<Asset[]>}
  */
 export const selectedAssets = writable([]);
-
 /**
  * @type {import('svelte/store').Writable<Asset | undefined>}
  */
 export const focusedAsset = writable();
-
 /**
  * @type {import('svelte/store').Writable<boolean>}
  */
 export const showAssetOverlay = writable(false);
-
 /**
  * Asset to be displayed in `<AssetDetailsOverlay>`.
  * @type {import('svelte/store').Writable<Asset | undefined>}
  */
 export const overlaidAsset = writable();
-
 /**
  * @type {import('svelte/store').Writable<UploadingAssets>}
  */
 export const uploadingAssets = writable({ folder: undefined, files: [] });
-
 /**
  * @type {import('svelte/store').Writable<Asset | undefined>}
  */
@@ -268,7 +257,6 @@ export const getAssetByPath = (savedPath, entry) => {
  */
 export const getAssetPublicURL = (asset, { pathOnly = false, allowSpecial = false } = {}) => {
   const _allAssetFolders = get(allAssetFolders);
-
   const { publicPath, entryRelative } =
     _allAssetFolders.find(({ collectionName }) => collectionName === asset.collectionName) ??
     _allAssetFolders.find(({ collectionName }) => collectionName === null) ??

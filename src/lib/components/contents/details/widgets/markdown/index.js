@@ -2,7 +2,6 @@
  * The default `modes` property options.
  */
 export const defaultModes = ['rich_text', 'raw'];
-
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
  * @type {Record<string, string>}
@@ -11,7 +10,6 @@ export const modeNameMap = {
   rich_text: 'rich-text',
   raw: 'plain-text',
 };
-
 /**
  * The default `buttons` property options.
  */
@@ -30,7 +28,6 @@ export const defaultButtons = [
   'numbered-list',
   'quote',
 ];
-
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
  * @type {Record<string, string>}

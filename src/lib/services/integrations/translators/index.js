@@ -8,17 +8,14 @@ import deepl from './deepl';
 export const allTranslationServices = {
   deepl,
 };
-
 /**
  * @type {import('svelte/store').Writable<TranslationService>}
  */
 export const translator = writable(deepl);
-
 /**
  * @type {import('svelte/store').Writable<boolean>}
  */
 export const showTranslatorApiKeyDialog = writable(false);
-
 /**
  * @type {import('svelte/store').Writable<[string, string, string, boolean] | undefined>}
  */

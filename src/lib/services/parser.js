@@ -63,11 +63,9 @@ export const createFileList = (files) => {
     const { path } = fileInfo;
     const name = /** @type {string} */ (path.split('/').pop());
     const extension = name.split('.').pop();
-
     const entryFolderConfig = get(allEntryFolders).findLast(({ filePath, folderPath }) =>
       folderPath ? path.startsWith(folderPath) : path === filePath,
     );
-
     const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
       if (entryRelative) {
         return path.startsWith(`${internalPath}/`);
@@ -173,7 +171,6 @@ const parseEntryFile = ({
 
   if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/) && path.match(/\.(?:md|markdown)$/)) {
     const [startDelimiter, endDelimiter] = getFrontmatterDelimiters(format, frontmatterDelimiter);
-
     const [, head, body = ''] =
       text.match(
         new RegExp(
@@ -249,7 +246,6 @@ export const formatEntryFile = ({
       defaultKeyType: 'PLAIN',
       defaultStringType: yamlQuote ? 'QUOTE_DOUBLE' : 'PLAIN',
     }).trim();
-
   const formatTOML = () => TOML.stringify(content).trim();
   const formatJSON = () => JSON.stringify(content, null, 2).trim();
 
@@ -363,7 +359,6 @@ export const parseEntryFiles = (entryFiles) => {
       meta = {},
       config: { folderPath: configFolderPath = '', collectionName, fileName },
     } = file;
-
     const collection = getCollection(collectionName);
 
     if (!collection) {
@@ -371,7 +366,6 @@ export const parseEntryFiles = (entryFiles) => {
     }
 
     const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
-
     const {
       i18nEnabled,
       locales,
@@ -379,13 +373,11 @@ export const parseEntryFiles = (entryFiles) => {
       structure,
       canonicalSlug: { key: canonicalSlugKey },
     } = (collectionFile ?? collection)._i18n;
-
     const extension = getFileExtension({
       format: collection.format,
       extension: collection.extension,
       file: fileName,
     });
-
     const [, filePath] = fileName
       ? []
       : path.match(

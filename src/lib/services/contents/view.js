@@ -47,7 +47,6 @@ export const currentView = writable({ type: 'list' });
  */
 export const formatSummary = (collection, entry, locale, { useTemplate = true } = {}) => {
   const { content } = /** @type {{ content: EntryContent }} */ (entry.locales[locale]);
-
   const {
     name: collectionName,
     folder: collectionFolder,
@@ -156,12 +155,10 @@ const sortEntries = (entries, { key, order }) => {
 
   const _entries = [...entries];
   const { defaultLocale } = /** @type {Collection} */ (get(selectedCollection))._i18n;
-
   const type =
     { slug: String, commit_author: String, commit_date: Date }[key] ||
     (_entries.length ? getPropertyValue(_entries[0], defaultLocale, key)?.constructor : String) ||
     String;
-
   const valueMap = Object.fromEntries(
     _entries.map((entry) => [entry.slug, getPropertyValue(entry, defaultLocale, key)]),
   );
@@ -204,7 +201,6 @@ const filterEntries = (entries, filters) => {
     view_filters: configuredFilters = [],
     _i18n: { defaultLocale },
   } = /** @type {Collection} */ (get(selectedCollection));
-
   // Ignore invalid filters
   const validFilters = filters.filter(
     ({ field, pattern }) =>
@@ -340,7 +336,6 @@ export const sortFields = derived(
     }
 
     const { commitAuthor, commitDate } = _allEntries?.[0] ?? {};
-
     const _sortFields = (
       Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
     ).filter((keyPath) => !!getFieldConfig({ collectionName, keyPath }));
@@ -361,7 +356,6 @@ export const sortFields = derived(
     );
   },
 );
-
 /**
  * List of all the entries for the selected folder collection.
  * @type {import('svelte/store').Readable<Entry[]>}
@@ -376,7 +370,6 @@ export const listedEntries = derived(
     }
   },
 );
-
 /**
  * Sorted, filtered and grouped entries for the selected folder collection.
  * @type {import('svelte/store').Readable<{ name: string, entries: Entry[] }[]>}
@@ -466,7 +459,6 @@ const initSettings = async ({ repository }) => {
         order: 'ascending',
       },
     };
-
     const view = get(entryListSettings)?.[collectionName] ?? defaultView;
 
     if (!equal(view, get(currentView))) {

@@ -7,7 +7,6 @@ import { allEntries } from '$lib/services/contents';
  * @type {import('svelte/store').Writable<string>}
  */
 export const searchTerms = writable('');
-
 /**
  * Hold search results for the current search terms.
  * @type {import('svelte/store').Readable<{ entries: Entry[], assets: Asset[] }>}
@@ -27,7 +26,6 @@ export const searchResults = derived(
             ),
           )
         : [];
-
     const assets =
       _allAssets?.length && _searchTerms
         ? _allAssets.filter((asset) =>
