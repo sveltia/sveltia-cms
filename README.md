@@ -137,7 +137,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
-- You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s`.
+- You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead).
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
 
 ### Better data output
@@ -342,7 +342,7 @@ Depending on your server or framework’s configuration, when you access the CMS
 
 - Access `/admin/index.html` or `/admin/#/`
 - Rename `/admin/index.html` to `/admin/cms.html`, and access `/admin/cms`
-- [Specify the configuration file path](https://decapcms.org/docs/configuration-options/#configuration-file) with a `<link>` tag in the `/admin/index.html`:
+- [Specify the configuration file path](https://decapcms.org/docs/configuration-options/#configuration-file) with a `<link>` tag in `/admin/index.html`:
   ```html
   <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
   ```
