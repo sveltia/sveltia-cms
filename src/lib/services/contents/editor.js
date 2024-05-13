@@ -1294,7 +1294,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
               continue;
             }
 
-            const _fileName = renameIfNeeded(file.name, [
+            const _fileName = renameIfNeeded(file.name.normalize(), [
               ...assetsInSameFolder,
               ...savingAssets.map((a) => a.name),
             ]);

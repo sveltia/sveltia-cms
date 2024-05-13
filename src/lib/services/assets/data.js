@@ -38,7 +38,8 @@ export const saveAssets = async (uploadingAssets, options) => {
   );
 
   const savingFileList = files.map((file) => {
-    const name = originalAsset?.name ?? renameIfNeeded(file.name, assetNamesInSameFolder);
+    const name =
+      originalAsset?.name ?? renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
 
     if (!assetNamesInSameFolder.includes(name)) {
       assetNamesInSameFolder.push(name);
