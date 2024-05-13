@@ -329,8 +329,14 @@ export const strings = {
       add_many: 'You cannot add more than {max} items.',
       add_one: 'You cannot add more than {max} item.',
     },
-    too_short: 'You must enter at least {min} characters.',
-    too_long: 'You cannot enter more than {max} characters.',
+    too_short: {
+      one: 'You must enter at least {min} character.',
+      many: 'You must enter at least {min} characters.',
+    },
+    too_long: {
+      one: 'You cannot enter more than {max} character.',
+      many: 'You cannot enter more than {max} characters.',
+    },
     type_mismatch: {
       email: 'Please enter a valid email.',
       url: 'Please enter a valid URL.',
@@ -405,9 +411,18 @@ export const strings = {
     },
   },
   character_counter: {
-    min_max: '{count} characters entered. Minimum: {min}. Maximum: {max}.',
-    min: '{count} characters entered. Minimum: {min}.',
-    max: '{count} characters entered. Maximum: {max}.',
+    min_max: {
+      one: '{count} character entered. Minimum: {min}. Maximum: {max}.',
+      many: '{count} characters entered. Minimum: {min}. Maximum: {max}.',
+    },
+    min: {
+      one: '{count} character entered. Minimum: {min}.',
+      many: '{count} characters entered. Minimum: {min}.',
+    },
+    max: {
+      one: '{count} character entered. Maximum: {max}.',
+      many: '{count} characters entered. Maximum: {max}.',
+    },
   },
   youtube_video_player: 'YouTube video player',
 

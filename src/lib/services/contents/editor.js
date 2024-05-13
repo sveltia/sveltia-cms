@@ -900,10 +900,10 @@ const validateEntry = () => {
 
           const hasMin =
             Number.isInteger(minlength) &&
-            /** @type {number} */ (minlength) < (maxlength ?? Infinity);
+            /** @type {number} */ (minlength) <= (maxlength ?? Infinity);
 
           const hasMax =
-            Number.isInteger(maxlength) && (minlength ?? 0) < /** @type {number} */ (maxlength);
+            Number.isInteger(maxlength) && (minlength ?? 0) <= /** @type {number} */ (maxlength);
 
           const count = value ? [...value].length : 0;
 

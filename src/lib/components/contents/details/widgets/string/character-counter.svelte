@@ -12,8 +12,8 @@
 
   $: ({ minlength, maxlength } = fieldConfig);
   $: hasMin =
-    Number.isInteger(minlength) && /** @type {number} */ (minlength) < (maxlength ?? Infinity);
-  $: hasMax = Number.isInteger(maxlength) && (minlength ?? 0) < /** @type {number} */ (maxlength);
+    Number.isInteger(minlength) && /** @type {number} */ (minlength) <= (maxlength ?? Infinity);
+  $: hasMax = Number.isInteger(maxlength) && (minlength ?? 0) <= /** @type {number} */ (maxlength);
   $: count = currentValue ? [...currentValue.trim()].length : 0;
   $: tooShort = hasMin && count < /** @type {number} */ (minlength);
   $: tooLong = hasMax && count > /** @type {number} */ (maxlength);
@@ -26,10 +26,17 @@
     aria-label={$_(
       // eslint-disable-next-line no-nested-ternary
       hasMin && hasMax
-        ? 'character_counter.min_max'
-        : hasMin
-          ? 'character_counter.min'
-          : 'character_counter.max',
+        ? count === 1
+          ? 'character_counter.min_max.one'
+          : 'character_counter.min_max.many'
+        : // eslint-disable-next-line no-nested-ternary
+          hasMin
+          ? count === 1
+            ? 'character_counter.min.one'
+            : 'character_counter.min.many'
+          : count === 1
+            ? 'character_counter.max.one'
+            : 'character_counter.max.many',
       { values: { count, min: minlength, max: maxlength } },
     )}
   >
