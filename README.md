@@ -174,10 +174,10 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - String
   - When a YouTube video URL is entered in a String field, it appears as an embedded video in the preview pane.
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
-  - Supports the `type` property that accepts `url` or `email` as a value, which will validate the value as a URL or email.
-  - Supports the `prefix` and `suffix` string properties, which automatically prepend and/or append the developer-defined value to the user-input value.
+  - Supports the `type` option that accepts `url` or `email` as a value, which will validate the value as a URL or email.
+  - Supports the `prefix` and `suffix` string options, which automatically prepend and/or append the developer-defined value to the user-input value.
 - Boolean, Number and String
-  - Supports the `before_input` and `after_input` string properties, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
+  - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
 - File and Image
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
     - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
@@ -190,6 +190,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
   - When there are 5 or fewer options, the UI switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61].
+- String and Text
+  - Supports the `minlength` and `maxlength` options, which allow developers to specify the minimum and maximum number of characters required for input without having to write a custom regular expression with the `pattern` option. A character counter is available when one of the options is given, and a user-friendly validation error is displayed if the condition is not met.
 
 #### New widgets
 
