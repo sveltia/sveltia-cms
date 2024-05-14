@@ -35,7 +35,7 @@
     ({ path } = parseLocation());
 
     const [match, folderPath, fileName] =
-      path.match(/^\/assets(?:\/([/\-\w]+))?(?:\/([^/]+.\w{2,4}))?$/) ?? [];
+      path.match(/^\/assets(?:\/([/\-\w]+))?(?:\/([^/]+\.[A-Za-z0-9]+))?$/) ?? [];
 
     if (!match) {
       return;
@@ -72,7 +72,7 @@
       return;
     }
 
-    $overlaidAsset = path.match(/^\/assets\/(.+?)\.[a-zA-Z0-9]+$/)
+    $overlaidAsset = fileName
       ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`)
       : undefined;
     $announcedPageStatus = $overlaidAsset

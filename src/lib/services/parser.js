@@ -1,13 +1,14 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
+import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
-import { allAssetFolders, getAssetKind } from '$lib/services/assets';
-import { allEntryFolders, getCollection } from '$lib/services/contents';
-import { normalizeSlug } from '$lib/services/contents/slug';
 import TOML from '$lib/services/utils/toml';
+import { normalizeSlug } from '$lib/services/contents/slug';
+import { allEntryFolders, getCollection } from '$lib/services/contents';
+import { allAssetFolders, getAssetKind } from '$lib/services/assets';
 
 /**
  * Get the file extension for the given collection.
@@ -234,7 +235,7 @@ export const formatEntryFile = ({
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || path.match(/\.([^.]+)$/)?.[1];
+      : extension || getPathInfo(path).extension;
 
   if (!format) {
     return '';

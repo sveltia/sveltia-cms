@@ -1,3 +1,4 @@
+import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
@@ -47,7 +48,7 @@ export const renameIfNeeded = (name, otherNames) => {
     return name;
   }
 
-  const [, slug, extension] = name.match(/(.+?)(?:\.([a-zA-Z0-9]+?))?$/) ?? [];
+  const { filename: slug, extension } = getPathInfo(name);
   const regex = new RegExp(
     `^${escapeRegExp(slug)}(?:-(\\d+?))?${extension ? `\\.${extension}` : ''}$`,
   );

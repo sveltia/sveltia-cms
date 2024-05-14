@@ -1,5 +1,6 @@
 <script>
   import { Button } from '@sveltia/ui';
+  import { getPathInfo } from '@sveltia/utils/file';
   import mime from 'mime';
   import { _, locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -20,7 +21,7 @@
   export let showPreview = false;
 
   $: ({ path, size, kind, commitAuthor, commitDate } = asset);
-  $: [, extension = ''] = path.match(/\.([^.]+)$/) ?? [];
+  $: ({ extension = '' } = getPathInfo(path));
   $: canPreview = ['image', 'audio', 'video'].includes(kind) || path.endsWith('.pdf');
 
   /**
