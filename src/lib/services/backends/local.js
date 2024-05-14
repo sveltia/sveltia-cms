@@ -227,9 +227,17 @@ const getAllFiles = async () => {
         getHash(file),
         name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? readAsText(file) : undefined,
       ]);
-      const data = { file, path, name, sha, size, text };
 
-      return data;
+      // Both the file path and name should be normalized, as certain non-ASCII (Japanese)
+      // characters can be problematic particularly on macOS
+      return {
+        file,
+        path: path.normalize(),
+        name: name.normalize(),
+        sha,
+        size,
+        text,
+      };
     }),
   );
 };

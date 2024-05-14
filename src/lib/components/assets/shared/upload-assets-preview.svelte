@@ -24,7 +24,7 @@
         </span>
       {/if}
       <div role="none" class="meta">
-        <div role="none" class="name">{name}</div>
+        <div role="none" class="name">{name.normalize()}</div>
         <div role="none" class="size">
           {$appLocale ? formatSize(size) : ''}
           ·

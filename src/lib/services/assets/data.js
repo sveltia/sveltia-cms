@@ -33,7 +33,7 @@ export const saveAssets = async (uploadingAssets, options) => {
     get(allAssets)
       .map((a) => a.path)
       .filter((p) => p.match(`^${escapeRegExp(/** @type {string} */ (folder))}\\/[^\\/]+$`))
-      .map((p) => p.split('/').pop()?.normalize())
+      .map((p) => p.split('/').pop())
   );
   const savingFileList = files.map((file) => {
     const name =

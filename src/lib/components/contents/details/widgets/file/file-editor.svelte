@@ -170,7 +170,7 @@
         aria-errormessage="{fieldId}-error"
       >
         {#if file}
-          {file.name}
+          {file.name.normalize()}
         {:else if !currentValue.startsWith('data:')}
           {currentValue}
         {/if}
