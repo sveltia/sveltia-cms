@@ -5,7 +5,9 @@
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
+  import { setContext } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import { writable } from 'svelte/store';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
   import { entryDraft, revertChanges } from '$lib/services/contents/editor';
   import { editors } from '$lib/components/contents/details/widgets';
@@ -36,6 +38,11 @@
       ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a', 'br'],
       ALLOWED_ATTR: ['href'],
     });
+
+  /** @type {import('svelte/store').Writable<import('svelte').ComponentType>} */
+  const extraHint = writable();
+
+  setContext('field-editor', { extraHint });
 
   /** @type {MenuButton} */
   let menuButton;
@@ -274,8 +281,13 @@
         {/if}
       {/if}
     </div>
-    {#if !readonly && hint}
-      <p class="hint">{@html sanitize(hint)}</p>
+    {#if !readonly && (hint || $extraHint)}
+      <div role="none" class="footer">
+        {#if hint}
+          <p class="hint">{@html sanitize(hint)}</p>
+        {/if}
+        <svelte:component this={$extraHint} {fieldConfig} {currentValue} />
+      </div>
     {/if}
   </section>
 {/if}
@@ -412,8 +424,16 @@
     line-height: var(--sui-line-height-compact);
   }
 
+  .footer {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
   .hint {
-    margin: 4px 4px 0;
+    flex: auto;
+    margin: 0;
     font-size: var(--sui-font-size-small);
     line-height: var(--sui-line-height-compact);
     opacity: 0.75;

@@ -49,8 +49,10 @@
 
 <style lang="scss">
   .wrapper {
+    flex: none;
     color: var(--sui-tertiary-foreground-color) !important;
     font-size: var(--sui-font-size-small);
+    line-height: var(--sui-line-height-compact);
     text-align: right;
   }
 

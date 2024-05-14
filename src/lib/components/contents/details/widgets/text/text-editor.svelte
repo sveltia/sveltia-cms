@@ -5,6 +5,7 @@
 -->
 <script>
   import { TextArea } from '@sveltia/ui';
+  import { getContext } from 'svelte';
   import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
 
   /**
@@ -29,6 +30,7 @@
   /**
    * @type {TextField}
    */
+  // svelte-ignore unused-export-let
   export let fieldConfig;
   /**
    * @type {string}
@@ -46,6 +48,10 @@
    * @type {boolean}
    */
   export let invalid = false;
+
+  const { extraHint } = getContext('field-editor');
+
+  $extraHint = CharacterCounter;
 </script>
 
 <TextArea
@@ -58,5 +64,3 @@
   aria-errormessage="{fieldId}-error"
   autoResize={true}
 />
-
-<CharacterCounter {fieldConfig} {currentValue} />

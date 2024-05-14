@@ -5,6 +5,7 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
+  import { getContext } from 'svelte';
   import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
 
   /**
@@ -108,6 +109,10 @@
     void inputValue;
     setCurrentValue();
   }
+
+  const { extraHint } = getContext('field-editor');
+
+  $extraHint = CharacterCounter;
 </script>
 
 <TextInput
@@ -121,5 +126,3 @@
   aria-labelledby="{fieldId}-label"
   aria-errormessage="{fieldId}-error"
 />
-
-<CharacterCounter {fieldConfig} {currentValue} />
