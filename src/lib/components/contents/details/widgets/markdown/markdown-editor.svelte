@@ -15,10 +15,12 @@
   /**
    * @type {LocaleCode}
    */
+  // svelte-ignore unused-export-let
   export let locale;
   /**
    * @type {FieldKeyPath}
    */
+  // svelte-ignore unused-export-let
   export let keyPath;
   /**
    * @type {string}
@@ -59,20 +61,18 @@
 </script>
 
 <div role="none" class="wrapper" class:minimal>
-  {#key [locale, keyPath].join(',')}
-    <TextEditor
-      modes={modes.map((name) => modeNameMap[name]).filter(Boolean)}
-      buttons={buttons.map((name) => buttonNameMap[name]).filter(Boolean)}
-      bind:value={currentValue}
-      flex
-      {readonly}
-      {required}
-      {invalid}
-      aria-labelledby="{fieldId}-label"
-      aria-errormessage="{fieldId}-error"
-      autoResize={true}
-    />
-  {/key}
+  <TextEditor
+    modes={modes.map((name) => modeNameMap[name]).filter(Boolean)}
+    buttons={buttons.map((name) => buttonNameMap[name]).filter(Boolean)}
+    bind:value={currentValue}
+    flex
+    {readonly}
+    {required}
+    {invalid}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
+    autoResize={true}
+  />
 </div>
 
 <style lang="scss">

@@ -18,7 +18,7 @@
 
 <div role="none" class="{viewType}-view" bind:this={wrapper}>
   {#await waitForVisibility(wrapper) then}
-    <Grid multiple {...$$restProps}>
+    <Grid multiple clickToSelect={false} {...$$restProps}>
       <slot />
     </Grid>
   {/await}

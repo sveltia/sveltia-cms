@@ -10,7 +10,8 @@
   import { focusedAsset, selectedAssetFolder, selectedAssets } from '$lib/services/assets';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
 
-  $: assets = $selectedAssets;
+  // eslint-disable-next-line no-nested-ternary
+  $: assets = $selectedAssets.length ? $selectedAssets : $focusedAsset ? [$focusedAsset] : [];
 </script>
 
 <Toolbar variant="primary" aria-label={$_('folder')}>
