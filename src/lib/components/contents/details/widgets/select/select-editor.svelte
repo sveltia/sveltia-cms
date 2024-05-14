@@ -75,15 +75,17 @@
   })();
 </script>
 
-<svelte:component
-  this={multiple ? SelectMultiple : SelectSingle}
-  {locale}
-  {keyPath}
-  {fieldId}
-  {fieldConfig}
-  bind:currentValue
-  {readonly}
-  {required}
-  {invalid}
-  {options}
-/>
+{#key JSON.stringify(options)}
+  <svelte:component
+    this={multiple ? SelectMultiple : SelectSingle}
+    {locale}
+    {keyPath}
+    {fieldId}
+    {fieldConfig}
+    bind:currentValue
+    {readonly}
+    {required}
+    {invalid}
+    {options}
+  />
+{/key}

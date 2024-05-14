@@ -31,7 +31,7 @@
     aria-errormessage="{fieldId}-error"
   >
     {#each options as { label, value, searchValue } (value)}
-      <Option {label} {value} {searchValue} selected={value === currentValue} />
+      <Option {label} {value} {searchValue} selected={value === currentValue} wrap />
     {/each}
   </Select>
 {:else}
