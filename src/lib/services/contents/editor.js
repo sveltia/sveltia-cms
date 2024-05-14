@@ -798,19 +798,23 @@ const validateEntry = () => {
         return;
       }
 
-      const arrayMatch = keyPath.match(/\.(\d+)$/);
       const {
         widget: widgetName = 'string',
         required = true,
         i18n = false,
         pattern: validation,
       } = fieldConfig;
+
+      // Skip validation on non-editable fields
+      if (locale !== defaultLocale && (!i18nEnabled || i18n === false || i18n === 'duplicate')) {
+        return;
+      }
+
+      const arrayMatch = keyPath.match(/\.(\d+)$/);
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
       const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
         fieldConfig
       );
-      const canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
-      const _required = required !== false && (locale === defaultLocale || canTranslate);
       let valueMissing = false;
       let tooShort = false;
       let tooLong = false;
@@ -839,7 +843,7 @@ const validateEntry = () => {
                 .map(([, savedValue]) => savedValue)
                 .filter((val) => val !== undefined) ?? [];
 
-        if (_required && !values.length) {
+        if (required && !values.length) {
           valueMissing = true;
         } else if (typeof min === 'number' && values.length < min) {
           rangeUnderflow = true;
@@ -849,7 +853,7 @@ const validateEntry = () => {
       }
 
       if (widgetName === 'object') {
-        if (_required && !value) {
+        if (required && !value) {
           valueMissing = true;
         }
       }
@@ -859,11 +863,11 @@ const validateEntry = () => {
           value = value.trim();
         }
 
-        if (_required && (value === undefined || value === '' || (multiple && !value.length))) {
+        if (required && (value === undefined || value === '' || (multiple && !value.length))) {
           valueMissing = true;
         }
 
-        if (_required && Array.isArray(validation) && typeof validation[0] === 'string') {
+        if (Array.isArray(validation) && typeof validation[0] === 'string') {
           // Parse the regex to support simple pattern, e.g `.{12,}`, and complete expression, e.g.
           // `/^.{0,280}$/s` // cspell:disable-next-line
           const [, pattern, flags] = validation[0].match(/^\/?(.+?)(?:\/([dgimsuvy]*))?$/) || [];
