@@ -27,7 +27,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
-- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 75+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
+- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 80+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
 - Implementing our own enhancement ideas
 
 At this point, **we are on track to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
@@ -115,6 +115,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Raises a validation error instead of failing silently if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
+- Relation fields with i18n enabled won’t trigger a change in content draft status when you start editing an existing entry[^84].
 - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
 - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
 - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
@@ -189,6 +190,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
+  - If a dropdown list has options with long wrapping labels, they won’t overlap with the next option[^83].
   - When there are 5 or fewer options, the UI switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61].
 - String and Text
   - Supports the `minlength` and `maxlength` options, which allow developers to specify the minimum and maximum number of characters required for input without having to write a custom regular expression with the `pattern` option. A character counter is available when one of the options is given, and a user-friendly validation error is displayed if the condition is not met.
@@ -759,4 +761,6 @@ This software is provided “as is” without any express or implied warranty. W
 [^80]: Netlify/Decap CMS [#5493](https://github.com/decaporg/decap-cms/issues/5493), [#6600](https://github.com/decaporg/decap-cms/issues/6600)
 [^81]: Netlify/Decap CMS [#4645](https://github.com/decaporg/decap-cms/issues/4645)
 [^82]: Netlify/Decap CMS [#6500](https://github.com/decaporg/decap-cms/issues/6500)
+[^83]: Netlify/Decap CMS [#6508](https://github.com/decaporg/decap-cms/issues/6508)
+[^84]: Netlify/Decap CMS [#7142](https://github.com/decaporg/decap-cms/issues/7142)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
