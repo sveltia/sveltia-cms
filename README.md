@@ -250,7 +250,7 @@ These limitations are expected to be resolved before GA:
 | DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
 | File/Image | Field-specific media folders and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not yet supported. |
-| Markdown | Editor components are not yet supported. |
+| Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
 
 If we have missed any other features, let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues).
 
@@ -279,6 +279,7 @@ If we have missed any other features, let us know by [filing an issue](https://g
 
 ### After the 1.0 release
 
+- Compatibility with Static CMS, a community fork of Netlify CMS
 - Roles[^23]
 - Config editor[^10]
 - Mobile support[^18]
