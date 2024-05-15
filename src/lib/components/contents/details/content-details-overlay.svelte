@@ -6,14 +6,14 @@
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { siteConfig } from '$lib/services/config';
+  import { entryDraft } from '$lib/services/contents/editor';
   import {
     editorLeftPane,
     editorRightPane,
-    entryDraft,
     entryEditorSettings,
     showContentOverlay,
     showDuplicateToast,
-  } from '$lib/services/contents/editor';
+  } from '$lib/services/contents/editor/view';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**

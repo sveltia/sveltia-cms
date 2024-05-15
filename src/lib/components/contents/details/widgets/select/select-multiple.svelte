@@ -1,6 +1,7 @@
 <script>
   import { Checkbox, CheckboxGroup, SelectTags } from '@sveltia/ui';
-  import { entryDraft, updateListField } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/editor';
+  import { updateListField } from '$lib/services/contents/editor/update';
 
   /** @type {LocaleCode} */
   export let locale;

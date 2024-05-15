@@ -1,7 +1,7 @@
 import { derived, get, writable } from 'svelte/store';
 import { showAssetOverlay } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
-import { showContentOverlay } from '$lib/services/contents/editor';
+import { showContentOverlay } from '$lib/services/contents/editor/view';
 
 /**
  * Whether the app has an overlay. Some elements have to be `inert` while an overlay is displayed.

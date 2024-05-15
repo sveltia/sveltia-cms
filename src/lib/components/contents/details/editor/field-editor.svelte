@@ -9,7 +9,8 @@
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
-  import { entryDraft, revertChanges } from '$lib/services/contents/editor';
+  import { revertChanges } from '$lib/services/contents/editor/update';
+  import { entryDraft } from '$lib/services/contents/editor';
   import { editors } from '$lib/components/contents/details/widgets';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
 

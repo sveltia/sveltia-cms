@@ -11,17 +11,15 @@
   import { unflatten } from 'flat';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
-  import { getFieldDisplayValue } from '$lib/services/contents/entry';
-  import {
-    entryDraft,
-    getDefaultValues,
-    syncExpanderStates,
-    updateListField,
-  } from '$lib/services/contents/editor';
-  import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
-  import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
+  import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
+  import { entryDraft } from '$lib/services/contents/editor';
+  import { getDefaultValues } from '$lib/services/contents/editor/create';
+  import { updateListField } from '$lib/services/contents/editor/update';
+  import { syncExpanderStates } from '$lib/services/contents/editor/view';
+  import { getFieldDisplayValue } from '$lib/services/contents/entry';
+  import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}

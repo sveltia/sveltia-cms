@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getEntryAssetFolderPaths } from '$lib/services/contents/editor';
+import { getEntryAssetFolderPaths } from '$lib/services/contents/editor/save';
 
 describe('Test getEntryAssetFolderPaths()', () => {
   const currentSlug = 'foo';

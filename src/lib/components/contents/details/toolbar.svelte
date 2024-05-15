@@ -22,14 +22,11 @@
   import { backend, backendName } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/data';
-  import {
-    copyFromLocaleToast,
-    duplicateDraft,
-    entryDraft,
-    entryEditorSettings,
-    revertChanges,
-    saveEntry,
-  } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/editor';
+  import { duplicateDraft } from '$lib/services/contents/editor/create';
+  import { saveEntry } from '$lib/services/contents/editor/save';
+  import { revertChanges } from '$lib/services/contents/editor/update';
+  import { copyFromLocaleToast, entryEditorSettings } from '$lib/services/contents/editor/view';
   import {
     getAssociatedAssets,
     getEntryPreviewURL,
