@@ -2,8 +2,8 @@
   import { PromptDialog } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
-  import { copyFromLocale } from '$lib/services/contents/editor/update';
-  import { showContentOverlay } from '$lib/services/contents/editor/view';
+  import { showContentOverlay } from '$lib/services/contents/draft/editor';
+  import { copyFromLocale } from '$lib/services/contents/draft/update';
   import {
     pendingTranslatorRequest,
     showTranslatorApiKeyDialog,

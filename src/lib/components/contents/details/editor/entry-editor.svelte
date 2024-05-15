@@ -1,6 +1,6 @@
 <script>
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/draft';
 
   /**
    * @type {LocaleCode}

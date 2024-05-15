@@ -1,11 +1,11 @@
 <script>
   import { escapeRegExp } from '@sveltia/utils/string';
   import { previews } from '$lib/components/contents/details/widgets';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/draft';
   import {
     joinExpanderKeyPathSegments,
     syncExpanderStates,
-  } from '$lib/services/contents/editor/view';
+  } from '$lib/services/contents/draft/editor';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**

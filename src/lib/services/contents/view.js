@@ -12,7 +12,7 @@ import {
   getFieldDisplayValue,
   getPropertyValue,
 } from '$lib/services/contents/entry';
-import { editorLeftPane, editorRightPane } from '$lib/services/contents/editor/view';
+import { editorLeftPane, editorRightPane } from '$lib/services/contents/draft/editor';
 import {
   allEntries,
   getEntriesByCollection,

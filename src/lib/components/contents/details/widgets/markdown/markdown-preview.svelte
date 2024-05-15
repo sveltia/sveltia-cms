@@ -7,7 +7,7 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { getMediaFieldURL } from '$lib/services/assets';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/draft';
 
   /**
    * @type {LocaleCode}

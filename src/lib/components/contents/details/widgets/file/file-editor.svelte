@@ -13,7 +13,7 @@
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
   import Image from '$lib/components/common/image.svelte';
   import { getAssetPublicURL, getMediaFieldURL } from '$lib/services/assets';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/draft';
   import { formatSize } from '$lib/services/utils/file';
 
   /**

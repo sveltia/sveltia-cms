@@ -8,7 +8,7 @@
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/draft';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**

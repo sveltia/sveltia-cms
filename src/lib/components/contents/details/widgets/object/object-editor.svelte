@@ -12,10 +12,10 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
-  import { entryDraft } from '$lib/services/contents/editor';
-  import { createProxy, getDefaultValues } from '$lib/services/contents/editor/create';
-  import { copyDefaultLocaleValues } from '$lib/services/contents/editor/update';
-  import { syncExpanderStates } from '$lib/services/contents/editor/view';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import { createProxy, getDefaultValues } from '$lib/services/contents/draft/create';
+  import { syncExpanderStates } from '$lib/services/contents/draft/editor';
+  import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
 

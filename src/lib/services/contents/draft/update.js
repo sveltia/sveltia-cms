@@ -1,8 +1,8 @@
 import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
-import { entryDraft } from '$lib/services/contents/editor';
-import { createProxy, getDefaultValues } from '$lib/services/contents/editor/create';
-import { copyFromLocaleToast } from '$lib/services/contents/editor/view';
+import { entryDraft } from '$lib/services/contents/draft';
+import { createProxy, getDefaultValues } from '$lib/services/contents/draft/create';
+import { copyFromLocaleToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/prefs';

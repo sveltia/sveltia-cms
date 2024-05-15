@@ -5,7 +5,7 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 

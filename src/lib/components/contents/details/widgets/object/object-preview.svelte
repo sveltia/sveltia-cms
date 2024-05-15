@@ -6,7 +6,7 @@
 <script>
   import { waitForVisibility } from '@sveltia/utils/element';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/draft';
 
   /**
    * @type {LocaleCode}

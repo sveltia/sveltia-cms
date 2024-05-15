@@ -12,7 +12,7 @@
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { showAssetOverlay } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
-  import { showContentOverlay } from '$lib/services/contents/editor/view';
+  import { showContentOverlay } from '$lib/services/contents/draft/editor';
 
   /**
    * @type {Record<string, any>}

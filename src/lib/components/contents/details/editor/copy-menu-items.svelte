@@ -1,8 +1,8 @@
 <script>
   import { MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { entryDraft } from '$lib/services/contents/editor';
-  import { copyFromLocale } from '$lib/services/contents/editor/update';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import { copyFromLocale } from '$lib/services/contents/draft/update';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import {
     pendingTranslatorRequest,

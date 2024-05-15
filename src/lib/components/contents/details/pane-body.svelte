@@ -4,9 +4,9 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
-  import { entryDraft } from '$lib/services/contents/editor';
-  import { toggleLocale } from '$lib/services/contents/editor/update';
-  import { entryEditorSettings } from '$lib/services/contents/editor/view';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import { entryEditorSettings } from '$lib/services/contents/draft/editor';
+  import { toggleLocale } from '$lib/services/contents/draft/update';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**

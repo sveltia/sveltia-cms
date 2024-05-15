@@ -14,8 +14,8 @@
   import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
   import { getCollection, getFile, selectedCollection } from '$lib/services/contents';
   import { contentUpdatesToast } from '$lib/services/contents/data';
-  import { createDraft } from '$lib/services/contents/editor/create';
-  import { showContentOverlay } from '$lib/services/contents/editor/view';
+  import { createDraft } from '$lib/services/contents/draft/create';
+  import { showContentOverlay } from '$lib/services/contents/draft/editor';
   import { formatSummary, listedEntries } from '$lib/services/contents/view';
 
   /**

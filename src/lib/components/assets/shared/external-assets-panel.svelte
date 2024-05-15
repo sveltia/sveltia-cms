@@ -11,7 +11,7 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
-  import { selectAssetsView } from '$lib/services/contents/editor/view';
+  import { selectAssetsView } from '$lib/services/contents/draft/editor';
   import { prefs } from '$lib/services/prefs';
 
   /**

@@ -16,9 +16,9 @@
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
-  import { entryDraft } from '$lib/services/contents/editor';
-  import { revertChanges, toggleLocale } from '$lib/services/contents/editor/update';
-  import { entryEditorSettings } from '$lib/services/contents/editor/view';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import { entryEditorSettings } from '$lib/services/contents/draft/editor';
+  import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 

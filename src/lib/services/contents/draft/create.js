@@ -4,8 +4,8 @@ import { flatten } from 'flat';
 import { get } from 'svelte/store';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
 import { getCollection } from '$lib/services/contents';
-import { entryDraft } from '$lib/services/contents/editor';
-import { showDuplicateToast } from '$lib/services/contents/editor/view';
+import { entryDraft } from '$lib/services/contents/draft';
+import { showDuplicateToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
 
 /**

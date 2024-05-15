@@ -1,7 +1,7 @@
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
-import { entryDraft } from '$lib/services/contents/editor';
+import { entryDraft } from '$lib/services/contents/draft';
 import { backend } from '$lib/services/backends';
 
 /** @type {IndexedDB | null | undefined} */

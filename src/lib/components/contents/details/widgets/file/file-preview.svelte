@@ -7,7 +7,7 @@
 <script>
   import Image from '$lib/components/common/image.svelte';
   import { getMediaFieldURL } from '$lib/services/assets';
-  import { entryDraft } from '$lib/services/contents/editor';
+  import { entryDraft } from '$lib/services/contents/draft';
 
   /**
    * @type {LocaleCode}
