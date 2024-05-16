@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { getPathInfo } from '@sveltia/utils/file';
-import { isObject } from '@sveltia/utils/object';
+import { isObject, toRaw } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
@@ -230,7 +230,7 @@ export const formatEntryFile = ({
   path,
   config: { extension, format, frontmatterDelimiter, yamlQuote = false },
 }) => {
-  content = JSON.parse(JSON.stringify(content));
+  content = toRaw(content);
 
   format ||=
     extension === 'md' || path.endsWith('.md')

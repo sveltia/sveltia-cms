@@ -1,3 +1,4 @@
+import { toRaw } from '@sveltia/utils/object';
 import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
@@ -12,7 +13,7 @@ import { prefs } from '$lib/services/prefs';
  * @param {Proxy | object} obj - Original proxy or object.
  * @returns {object} Processed object.
  */
-const unflattenObj = (obj) => unflatten(JSON.parse(JSON.stringify(obj)));
+const unflattenObj = (obj) => unflatten(toRaw(obj));
 /**
  * Traverse the given object by decoding dot-notated key path.
  * @param {any} obj - Unflatten object.
