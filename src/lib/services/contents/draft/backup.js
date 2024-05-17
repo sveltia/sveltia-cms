@@ -199,6 +199,6 @@ entryDraft.subscribe((draft) => {
     window.clearTimeout(backupTimeout);
     backupTimeout = window.setTimeout(() => {
       saveBackup(draft);
-    }, 750);
+    }, 500);
   }
 });
