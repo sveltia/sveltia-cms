@@ -23,8 +23,9 @@
         folder,
         hide = false,
         create = false,
+        divider = false,
       } = collection}
-      {#if folder && !hide}
+      {#if folder && !hide && !divider}
         <MenuItem
           label={labelSingular || label || name}
           disabled={!create}

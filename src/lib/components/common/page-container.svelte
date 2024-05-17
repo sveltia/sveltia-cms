@@ -104,6 +104,10 @@
           background-color: var(--sui-primary-accent-color) !important;
         }
       }
+
+      :global(.sui.divider) {
+        margin: 8px 0;
+      }
     }
 
     :global(.main) {

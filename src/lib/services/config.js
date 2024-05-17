@@ -178,7 +178,7 @@ siteConfig.subscribe((config) => {
   /** @type {CollectionEntryFolder[]} */
   const _allEntryFolders = [
     ...collections
-      .filter(({ folder }) => !!folder)
+      .filter(({ folder, hide, divider }) => !!folder && !hide && !divider)
       .map(
         ({
           name: collectionName,
@@ -198,7 +198,7 @@ siteConfig.subscribe((config) => {
       )
       .sort((a, b) => (a.folderPath ?? '').localeCompare(b.folderPath ?? '')),
     ...collections
-      .filter(({ files }) => !!files)
+      .filter(({ files, hide, divider }) => !!files && !hide && !divider)
       .map(
         ({
           name: collectionName,
@@ -240,6 +240,7 @@ siteConfig.subscribe((config) => {
    */
   const collectionAssetFolders = /** @type {CollectionAssetFolder[]} */ (
     collections
+      .filter(({ hide, divider }) => !hide && !divider)
       .map((collection) => {
         const {
           name: collectionName,

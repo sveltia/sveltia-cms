@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Listbox, Option } from '@sveltia/ui';
+  import { Divider, Icon, Listbox, Option } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
@@ -10,8 +10,10 @@
 
 <div role="none" class="primary-sidebar">
   <Listbox aria-label={$_('collections')} aria-controls="collection-container">
-    {#each collections as { name, label, icon, hide = false } (name)}
-      {#if !hide}
+    {#each collections as { name, label, icon, divider = false } (name)}
+      {#if divider}
+        <Divider />
+      {:else}
         <Option
           label={label || name}
           selected={$selectedCollection?.name === name}
