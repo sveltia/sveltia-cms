@@ -62,10 +62,9 @@
 
   /**
    * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.
+   * @param {string} newValue - New value to be set.
    */
-  const setInputValue = () => {
-    let newValue = currentValue ?? '';
-
+  const setInputValue = (newValue) => {
     if (prefix && newValue.startsWith(prefix)) {
       newValue = newValue.slice(prefix.length);
     }
@@ -82,10 +81,9 @@
 
   /**
    * Update {@link currentValue} based on {@link inputValue}. Add the suffix/prefix if needed.
+   * @param {string} newValue - New value to be set.
    */
-  const setCurrentValue = () => {
-    let newValue = inputValue;
-
+  const setCurrentValue = (newValue) => {
     if (prefix && !newValue.startsWith(prefix)) {
       newValue = `${prefix}${newValue}`;
     }
@@ -100,15 +98,8 @@
     }
   };
 
-  $: {
-    void currentValue;
-    setInputValue();
-  }
-
-  $: {
-    void inputValue;
-    setCurrentValue();
-  }
+  $: setInputValue(currentValue?.trim() ?? '');
+  $: setCurrentValue(inputValue?.trim() ?? '');
 
   const { extraHint } = getContext('field-editor');
 

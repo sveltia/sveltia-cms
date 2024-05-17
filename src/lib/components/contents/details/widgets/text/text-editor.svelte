@@ -49,13 +49,41 @@
    */
   export let invalid = false;
 
+  /**
+   * @type {string}
+   */
+  let inputValue = '';
+
+  /**
+   * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
+   * @param {string} newValue - New value to be set.
+   */
+  const setInputValue = (newValue) => {
+    if (inputValue !== newValue) {
+      inputValue = newValue;
+    }
+  };
+
+  /**
+   * Update {@link currentValue} based on {@link inputValue} while avoiding a cycle dependency.
+   * @param {string} newValue - New value to be set.
+   */
+  const setCurrentValue = (newValue) => {
+    if (currentValue !== newValue) {
+      currentValue = newValue;
+    }
+  };
+
+  $: setInputValue(currentValue?.trim() ?? '');
+  $: setCurrentValue(inputValue?.trim() ?? '');
+
   const { extraHint } = getContext('field-editor');
 
   $extraHint = CharacterCounter;
 </script>
 
 <TextArea
-  bind:value={currentValue}
+  bind:value={inputValue}
   flex
   {readonly}
   {required}
