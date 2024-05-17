@@ -28,6 +28,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 80+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
+- Responding to user feedback
 - Implementing our own enhancement ideas
 
 At this point, **we are on track to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
