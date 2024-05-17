@@ -1,3 +1,4 @@
+import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { stripSlashes } from '@sveltia/utils/string';
 import merge from 'deepmerge';
@@ -24,6 +25,10 @@ export const siteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefine
  * @type {import('svelte/store').Writable<SiteConfig | undefined>}
  */
 export const siteConfig = writable();
+/**
+ * @type {import('svelte/store').Writable<string | undefined>}
+ */
+export const siteConfigVersion = writable();
 /**
  * @type {import('svelte/store').Writable<{ message: string } | undefined>}
  */
@@ -147,6 +152,7 @@ export const initSiteConfig = async (manualConfig = {}) => {
     }
 
     siteConfig.set(config);
+    siteConfigVersion.set(await getHash(YAML.stringify(config)));
   } catch (/** @type {any} */ ex) {
     siteConfigError.set({
       message: ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected'),

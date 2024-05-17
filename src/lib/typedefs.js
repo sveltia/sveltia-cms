@@ -782,6 +782,21 @@
  */
 
 /**
+ * Entry draft backup, which is a subset of {@link EntryDraft} plus metadata.
+ * @typedef {object} EntryDraftBackup
+ * @property {Date} timestamp - When the backup was created.
+ * @property {string} siteConfigVersion - The SHA-1 hash of the site configuration file, which is
+ * used to verify that the backup can be safely restored.
+ * @property {string} collectionName - Collection name.
+ * @property {string} slug - Entry slug. An empty string for a new entry.
+ * @property {Record<LocaleCode, boolean>} currentLocales - Key is a locale code, value is whether
+ * to disable the locale’s content output.
+ * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
+ * is a flattened object containing all the current field values while editing.
+ * @property {Record<LocaleCode, FlattenedEntryContentFileList>} files - Files to be uploaded.
+ */
+
+/**
  * Commit action to perform. It should match GitLab’s commit action types.
  * @typedef {'create' | 'update' | 'delete'} CommitAction
  * @see https://docs.gitlab.com/ee/api/commits.html#create-a-commit-with-multiple-files-and-actions

@@ -13,6 +13,7 @@ import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { contentUpdatesToast } from '$lib/services/contents/data';
 import { entryDraft } from '$lib/services/contents/draft';
+import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
@@ -597,4 +598,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     saved: true,
     published: !isLocal && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false),
   });
+
+  deleteBackup(collectionName, defaultLocaleSlug);
 };

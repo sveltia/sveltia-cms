@@ -14,6 +14,7 @@
     { feature: 'search', keys: 'Accel+F' },
     { feature: 'create_entry', keys: 'Accel+E' },
     { feature: 'save_entry', keys: 'Accel+S' },
+    { feature: 'cancel_editing', keys: 'Escape' },
   ];
 
   let accel = 'Ctrl';

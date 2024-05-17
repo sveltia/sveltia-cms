@@ -2,11 +2,16 @@
   import { Alert, Group, Toast } from '@sveltia/ui';
   import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { siteConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
+  import {
+    resetBackupToastState,
+    showBackupToastIfNeeded,
+  } from '$lib/services/contents/draft/backup';
   import {
     editorLeftPane,
     editorRightPane,
@@ -31,7 +36,10 @@
 
   $: ({ editor: { preview: showPreviewPane = true } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
-  $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({ collection, collectionFile, originalEntry } =
+    $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: entryId =
+    originalEntry?.id ?? [collection?.name ?? '-', collectionFile?.name ?? '-'].join('/');
   $: ({ showPreview } = $entryEditorSettings ?? {});
   $: ({ i18nEnabled, locales, defaultLocale } =
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
@@ -155,19 +163,22 @@
       if (!$showContentOverlay) {
         hiding = false;
         hidden = true;
+        $entryDraft = null;
       }
     });
   });
 
   $: {
     if (wrapper) {
-      if ($showContentOverlay) {
+      if (!$showContentOverlay) {
+        hiding = true;
+        showBackupToastIfNeeded();
+      } else if (hidden) {
         hiding = false;
         hidden = false;
         switchPanes();
         moveFocus();
-      } else {
-        hiding = true;
+        resetBackupToastState();
       }
     }
   }
@@ -182,7 +193,7 @@
   bind:this={wrapper}
 >
   <Group class="content-editor" aria-label={$_('content_editor')}>
-    {#key $entryDraft?.originalEntry?.id}
+    {#key entryId}
       <Toolbar />
       <div role="none" class="cols">
         {#if collection}
@@ -236,6 +247,8 @@
     {/key}
   </Group>
 </div>
+
+<BackupFeedback />
 
 <Toast bind:show={$showDuplicateToast}>
   <Alert status="success">

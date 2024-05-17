@@ -49,6 +49,8 @@ export const strings = {
   expand: 'Expand',
   collapse: 'Collapse',
   insert: 'Insert',
+  restore: 'Restore',
+  discard: 'Discard',
   searching: 'Searching…',
   global: 'Global',
   primary: 'Primary',
@@ -254,6 +256,12 @@ export const strings = {
 
   // Content editor
   content_editor: 'Content Editor',
+  restore_backup_title: 'Restore Draft',
+  restore_backup_description:
+    'This entry has a backup from {datetime}. Do you want to restore the edited draft?',
+  draft_backup_saved: 'Draft backup has been saved.',
+  draft_backup_restored: 'Draft backup has been restored.',
+  draft_backup_deleted: 'Draft backup has been deleted.',
   cancel_editing: 'Cancel Editing',
   creating_x: 'Creating {name}',
   creating_x_collection_entry: 'You’re now creating a new entry in the “{collection}” collection.',
@@ -544,6 +552,7 @@ export const strings = {
     search: 'Search for entries and assets',
     create_entry: 'Create a new entry',
     save_entry: 'Save an entry',
+    cancel_editing: 'Cancel entry editing',
   },
 
   // File types

@@ -48,8 +48,6 @@
   /** @type {MenuButton} */
   let menuButton;
 
-  // @todo Save & restore draft from local storage.
-
   $: ({
     name: fieldName,
     label = '',

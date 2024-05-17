@@ -49,6 +49,8 @@ export const strings = {
   expand: '広げる',
   collapse: '折り畳む',
   insert: '挿入',
+  restore: '復元',
+  discard: '破棄',
   searching: '検索中…',
   global: 'グローバル',
   primary: 'プライマリー',
@@ -258,6 +260,12 @@ export const strings = {
 
   // Content editor
   content_editor: 'コンテンツエディター',
+  restore_backup_title: '下書きを復元',
+  restore_backup_description:
+    'このエントリーには {datetime} に保存されたバックアップがあります。その編集済みの下書きを復元しますか？',
+  draft_backup_saved: '下書きのバックアップが保存されました。',
+  draft_backup_restored: '下書きのバックアップが復元されました。',
+  draft_backup_deleted: '下書きのバックアップが削除されました。',
   cancel_editing: '編集をキャンセル',
   creating_x: '{name} を作成',
   creating_x_collection_entry: '「{collection}」コレクションの新しいエントリーを作成しています。',
@@ -547,6 +555,7 @@ export const strings = {
     search: 'エントリーとアセットを検索',
     create_entry: '新しいエントリーを作成',
     save_entry: 'エントリーを保存',
+    cancel_editing: 'エントリーの編集をキャンセル',
   },
 
   // File types

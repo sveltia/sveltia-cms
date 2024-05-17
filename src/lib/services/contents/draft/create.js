@@ -4,7 +4,8 @@ import { flatten } from 'flat';
 import { get } from 'svelte/store';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
 import { getCollection } from '$lib/services/contents';
-import { entryDraft } from '$lib/services/contents/draft';
+import { entryDraft, i18nDuplicationEnabled } from '$lib/services/contents/draft';
+import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
 
@@ -245,8 +246,8 @@ export const createProxy = ({
   return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
-      // Handle special keys that always save the given value
-      if ([canonicalSlugKey].includes(keyPath)) {
+      // Just save the given value in some cases
+      if ([canonicalSlugKey].includes(keyPath) || !get(i18nDuplicationEnabled)) {
         return Reflect.set(obj, keyPath, value);
       }
 
@@ -292,7 +293,7 @@ export const createProxy = ({
  * through URL parameters.
  */
 export const createDraft = (entry, dynamicValues) => {
-  const { id, collectionName, fileName, locales } = entry;
+  const { id, slug, collectionName, fileName, locales } = entry;
   const isNew = id === undefined;
   const collection = getCollection(collectionName);
 
@@ -358,6 +359,8 @@ export const createDraft = (entry, dynamicValues) => {
     // Any locale-agnostic view states will be put under the `_` key
     expanderStates: { _: {} },
   });
+
+  restoreBackupIfNeeded(collectionName, slug);
 };
 
 /**

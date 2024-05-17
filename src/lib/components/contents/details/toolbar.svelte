@@ -106,6 +106,7 @@
     variant="ghost"
     iconic
     aria-label={$_('cancel_editing')}
+    keyShortcuts="Escape"
     on:click={() => {
       goBack(`/collections/${collection?.name}`);
     }}
