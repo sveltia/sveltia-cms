@@ -41,7 +41,7 @@
     <Icon slot="start-icon" name="add" />
     <Menu slot="popup" aria-label={$_('select_list_type')}>
       {#each types as { name, label: itemLabel } (name)}
-        <MenuItem label={itemLabel} on:click={() => addItem(name)} />
+        <MenuItem label={itemLabel || name} on:click={() => addItem(name)} />
       {/each}
     </Menu>
   </MenuButton>
