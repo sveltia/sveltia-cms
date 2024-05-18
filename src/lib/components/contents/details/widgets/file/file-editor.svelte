@@ -6,7 +6,6 @@
 -->
 <script>
   import { AlertDialog, Button, ConfirmationDialog, TextArea } from '@sveltia/ui';
-  import { getDataURL } from '@sveltia/utils/file';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -124,9 +123,8 @@
       ) {
         showSizeLimitDialog = true;
       } else {
-        // Use the `data:` URL temporarily, and replace it later; avoid `blob:` here because it will
-        // be unavailable event after Vite HMR
-        currentValue = await getDataURL(file);
+        // Set a temporary blob URL, which will be later replaced with the actual file path
+        currentValue = URL.createObjectURL(file);
         // Cache the file itself for later upload
         /** @type {EntryDraft} */ ($entryDraft).files[locale][keyPath] = file;
       }
@@ -141,6 +139,13 @@
       showPhotoCreditDialog = true;
     }
   };
+
+  $: {
+    // Restore `file` after a draft backup is restored
+    if (currentValue?.startsWith('blob:') && !file) {
+      file = /** @type {EntryDraft} */ ($entryDraft).files[locale][keyPath];
+    }
+  }
 
   $: (async () => {
     src =
@@ -171,7 +176,7 @@
       >
         {#if file}
           {file.name.normalize()}
-        {:else if !currentValue.startsWith('data:')}
+        {:else if !currentValue.startsWith('blob:')}
           {currentValue}
         {/if}
       </div>

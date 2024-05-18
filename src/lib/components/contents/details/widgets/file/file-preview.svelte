@@ -48,6 +48,6 @@
   <p>
     <Image {src} />
   </p>
-{:else if typeof currentValue === 'string' && currentValue.trim() && !currentValue.startsWith('data:')}
+{:else if typeof currentValue === 'string' && currentValue.trim() && !currentValue.startsWith('blob:')}
   <p>{currentValue}</p>
 {/if}

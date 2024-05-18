@@ -138,6 +138,11 @@ export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
         });
         Object.entries(draft.files).forEach(([locale, _files]) => {
           Object.assign(_files, files[locale]);
+          Object.entries(files[locale]).forEach(([keyPath, value]) => {
+            if (value) {
+              draft.currentValues[locale][keyPath] = URL.createObjectURL(value);
+            }
+          });
         });
       }
 

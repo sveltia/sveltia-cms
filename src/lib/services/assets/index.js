@@ -298,7 +298,7 @@ export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {})
     return undefined;
   }
 
-  if (value.match(/^(?:https?|data):/)) {
+  if (value.match(/^(?:https?|data|blob):/)) {
     return value;
   }
 

@@ -452,23 +452,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           // Remove leading & trailing whitespace
           valueMap[keyPath] = value.trim();
 
-          const [, mimeType, base64] = value.match(/^data:(.+?\/.+?);base64,(.+)/) ?? [];
-
-          // Replace asset `data:` URLs with the final paths
-          if (mimeType) {
-            const file =
-              files[locale][keyPath] ||
-              // Temporary cache files will be lost once the browser session is ended, then restore
-              // it from the data URL stored in the draft.
-              (await (async () => {
-                const response = await fetch(value);
-                const blob = await response.blob();
-                const [type, subtype] = mimeType.split('/');
-                // MIME type can be `image/svg+xml`, then we only need `svg` as the file extension
-                const [extension] = subtype.split('+');
-
-                return new File([blob], `${type}-${Date.now()}.${extension}`, { type: mimeType });
-              })());
+          // Replace a blob URL with the final path, and add the file to the changeset
+          if (value.startsWith('blob:')) {
+            const file = files[locale][keyPath];
             const sha = await getHash(file);
             const dupFile = savingAssets.find((f) => f.sha === sha);
 
@@ -487,7 +473,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
             ]);
             const assetPath = `${internalAssetFolder}/${_fileName}`;
 
-            changes.push({ action: 'create', path: assetPath, data: file, base64 });
+            changes.push({ action: 'create', path: assetPath, data: file });
 
             savingAssets.push({
               ...savingAssetProps,
