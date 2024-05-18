@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { getPathInfo } from '@sveltia/utils/file';
-import { isObject, toRaw } from '@sveltia/utils/object';
+import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
@@ -215,7 +215,8 @@ const parseEntryFile = ({
 /**
  * Parse raw content with given file details.
  * @param {object} entry - File entry.
- * @param {any} entry.content - Content object.
+ * @param {any} entry.content - Content object. Note that this method may modify the `content` (the
+ * `body` property will be removed if exists) so it shouldn’t be a reference to an existing object.
  * @param {string} entry.path - File path.
  * @param {object} entry.config - File’s collection configuration.
  * @param {string} [entry.config.extension] - Configured file extension.
@@ -230,8 +231,6 @@ export const formatEntryFile = ({
   path,
   config: { extension, format, frontmatterDelimiter, yamlQuote = false },
 }) => {
-  content = toRaw(content);
-
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'

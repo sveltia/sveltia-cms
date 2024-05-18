@@ -297,6 +297,129 @@ const createEntryPath = (draft, locale, slug) => {
 };
 
 /**
+ * Create a list of field names (flattened key path list) from the configured collection fields.
+ * @param {Field[]} fields - Field list of a collection or a file.
+ * @returns {FieldKeyPath[]} Sorted key path list. List items are keyed with `*`.
+ * @example [`author.name`, `books.*.title`, `books.*.summary`, `publishDate`, `body`]
+ */
+const createKeyPathList = (fields) => {
+  /** @type {FieldKeyPath[]} */
+  const list = [];
+
+  /**
+   * Parse a field to generate a sorted key path list.
+   * @param {Field} field - Single field.
+   * @param {FieldKeyPath} keyPath - Key path of the field.
+   */
+  const parseField = (field, keyPath) => {
+    const { widget } = field;
+    const isList = widget === 'list';
+
+    if (isList || widget === 'object') {
+      const {
+        fields: subFields,
+        types,
+        typeKey = 'type',
+      } = /** @type {ListField | ObjectField} */ (field);
+
+      if (subFields) {
+        subFields.forEach((subField) => {
+          parseField(
+            subField,
+            isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,
+          );
+        });
+      } else if (types) {
+        list.push(isList ? `${keyPath}.*.${typeKey}` : `${keyPath}.${typeKey}`);
+
+        types.forEach((type) => {
+          type.fields.forEach((subField) => {
+            parseField(
+              subField,
+              isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,
+            );
+          });
+        });
+      } else if (isList) {
+        const { field: subField } = /** @type {ListField} */ (field);
+
+        if (subField) {
+          parseField(subField, `${keyPath}.*`);
+        } else {
+          list.push(`${keyPath}.*`);
+        }
+      }
+    } else if (widget === 'select' || widget === 'relation') {
+      const { multiple = false } = /** @type {SelectField | RelationField} */ (field);
+
+      list.push(multiple ? `${keyPath}.*` : keyPath);
+    } else {
+      list.push(keyPath);
+    }
+  };
+
+  // Iterate over the top-level fields first
+  fields.forEach((field) => {
+    parseField(field, field.name);
+  });
+
+  return list;
+};
+
+/**
+ * Sort the entry draft content’s object properties by the order of the configured collection
+ * fields. The result can be formatted as expected with `JSON.stringify()`, as the built-in method
+ * uses insertion order for string key ordering.
+ * @param {Field[]} fields - Field list of a collection or a file.
+ * @param {FlattenedEntryContent} valueMap - Flattened entry content.
+ * @param {string} [canonicalSlugKey] - Property name of a canonical slug.
+ * @returns {FlattenedEntryContent} Flattened entry content sorted by fields.
+ */
+const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
+  /** @type {FlattenedEntryContent} */
+  const unsortedMap = JSON.parse(JSON.stringify(valueMap));
+  /** @type {FlattenedEntryContent} */
+  const sortedMap = {};
+
+  /**
+   * Move a property name/value from {@link unsortedMap} to {@link sortedMap}.
+   * @param {string} key - Property name.
+   */
+  const copyProperty = (key) => {
+    sortedMap[key] = unsortedMap[key];
+    delete unsortedMap[key];
+  };
+
+  // Add the slug first
+  if (canonicalSlugKey && canonicalSlugKey in unsortedMap) {
+    copyProperty(canonicalSlugKey);
+  }
+
+  // Move the listed properties to a new object
+  createKeyPathList(fields).forEach((keyPath) => {
+    if (keyPath in unsortedMap) {
+      copyProperty(keyPath);
+    } else {
+      const regex = new RegExp(
+        `^${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')}$`,
+      );
+
+      Object.keys(unsortedMap)
+        .filter((_keyPath) => _keyPath.match(regex))
+        .sort(([a, b]) => a.localeCompare(b))
+        .forEach(copyProperty);
+    }
+  });
+
+  // Move the remainder, if any, to a new object
+  Object.keys(unsortedMap)
+    .sort(([a, b]) => a.localeCompare(b))
+    .forEach(copyProperty);
+
+  return sortedMap;
+};
+
+/**
  * Save the entry draft.
  * @param {object} [options] - Options.
  * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
@@ -328,12 +451,15 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     slug: slugTemplate = `{{${identifierField}}}`,
   } = collection;
   const {
-    i18nEnabled,
-    locales,
-    defaultLocale,
-    structure,
-    canonicalSlug: { key: canonicalSlugKey, value: canonicalSlugTemplate },
-  } = (collectionFile ?? collection)._i18n;
+    fields = [],
+    _i18n: {
+      i18nEnabled,
+      locales,
+      defaultLocale,
+      structure,
+      canonicalSlug: { key: canonicalSlugKey, value: canonicalSlugTemplate },
+    },
+  } = collectionFile ?? collection;
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
   /**
    * The slug of the default locale.
@@ -489,7 +615,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           }
         }
 
-        const content = unflatten(valueMap);
+        const content = unflatten(sortContentProps(fields, valueMap, canonicalSlugKey));
         const sha = await getHash(new Blob([content], { type: 'text/plain' }));
 
         return [locale, { slug, path, sha, content }];
