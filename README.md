@@ -414,14 +414,14 @@ You can have an icon for each collection for easy identification in the collecti
 
 ### Adding dividers to the collection list
 
-Sveltia CMS allows developers to add dividers to the collection list to distinguish different types of collections. To do this, insert a fake collection with the `divider: true` option. In VS Code, you may get a validation error if `config.yml` is treated as a “Netlify YAML config” file. You can work around this by adding a random `name` and an empty `files`:
+Sveltia CMS allows developers to add dividers to the collection list to distinguish different types of collections. To do this, insert a fake collection with the `divider: true` option along with a random `name`. In VS Code, you may get a validation error if `config.yml` is treated as a “Netlify YAML config” file. You can work around this by adding an empty `files` as well:
 
 ```yaml
 collections:
   - name: products
     ...
   - divider: true
-    name: d1 # d2, d3, etc.
+    name: d1 # d2, d3, etc. Should be unique for each divider
     files: []
   - name: pages
     ...
@@ -776,7 +776,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^75]: Netlify/Decap CMS [#5472](https://github.com/decaporg/decap-cms/issues/5472)
 [^76]: Netlify/Decap CMS [#4738](https://github.com/decaporg/decap-cms/issues/4738)
 [^77]: Netlify/Decap CMS [#6565](https://github.com/decaporg/decap-cms/issues/6565)
-[^78]: Netlify/Decap CMS [#3046](https://github.com/decaporg/decap-cms/issues/3046)
+[^78]: Netlify/Decap CMS [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363)
 [^79]: Netlify/Decap CMS [#5726](https://github.com/decaporg/decap-cms/issues/5726)
 [^80]: Netlify/Decap CMS [#5493](https://github.com/decaporg/decap-cms/issues/5493), [#6600](https://github.com/decaporg/decap-cms/issues/6600)
 [^81]: Netlify/Decap CMS [#4645](https://github.com/decaporg/decap-cms/issues/4645)
