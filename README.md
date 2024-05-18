@@ -68,6 +68,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
+  - A backup of an entry draft is automatically created without interruption by a confirmation dialog. It can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved.
 - You can upload multiple assets at once[^5].
@@ -78,6 +79,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - Search for entries and assets: `Ctrl+F` (Windows/Linux) or `Command+F` (macOS)
   - Create a new entry: `Ctrl+E` (Windows/Linux) or `Command+E` (macOS)
   - Save an entry: `Ctrl+S` (Windows/Linux) or `Command+S` (macOS)
+  - Cancel entry editing: `Escape`
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
 
 ### Better accessibility
@@ -125,6 +127,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
 - You can choose a [custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
+- You can [add dividers to the collection list](#adding-dividers-to-the-collection-list).
 - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
 - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
 - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
@@ -144,6 +147,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better data output
 
+- The keys in generated JSON/TOML/YAML content are always sorted according to the order of configured fields, making Git commits clean and consistent[^86].
 - For data consistency, Boolean, List (see below) and other fields are always saved as a proper value, such as an empty string or an empty array, rather than nothing, even if it’s optional or empty.
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11][^69].
@@ -240,7 +244,6 @@ These limitations are expected to be resolved before GA:
 | Configuration | The application UI locales are only available in English and Japanese. Comprehensive config validation is not yet implemented. |
 | Media Libraries | Cloudinary and Uploadcare are not yet supported. |
 | Workflow | Editorial Workflow and Open Authoring are not yet supported. |
-| Content Editor | Auto-saving a draft entry is not yet implemented. |
 | Collections | Nested collections are not yet supported. |
 | Widgets | Custom widgets are not yet supported. See the table below for other limitations. |
 | Customizations | Custom previews, custom formatters and event subscriptions are not yet supported. |
@@ -407,6 +410,21 @@ You can have an icon for each collection for easy identification in the collecti
 +    icon: sell
      create: true
      folder: data/tags/
+```
+
+### Adding dividers to the collection list
+
+Sveltia CMS allows developers to add dividers to the collection list to distinguish different types of collections. To do this, insert a fake collection with the `divider: true` option. In VS Code, you may get a validation error if `config.yml` is treated as a “Netlify YAML config” file. You can work around this by adding a random `name` and an empty `files`:
+
+```yaml
+collections:
+  - name: products
+    ...
+  - divider: true
+    name: d1 # d2, d3, etc.
+    files: []
+  - name: pages
+    ...
 ```
 
 ### Using a custom media folder for a collection
@@ -765,4 +783,6 @@ This software is provided “as is” without any express or implied warranty. W
 [^82]: Netlify/Decap CMS [#6500](https://github.com/decaporg/decap-cms/issues/6500)
 [^83]: Netlify/Decap CMS [#6508](https://github.com/decaporg/decap-cms/issues/6508)
 [^84]: Netlify/Decap CMS [#7142](https://github.com/decaporg/decap-cms/issues/7142)
+[^85]: Netlify/Decap CMS [#5055](https://github.com/decaporg/decap-cms/issues/5055), [#5470](https://github.com/decaporg/decap-cms/issues/5470), [#6989](https://github.com/decaporg/decap-cms/issues/6989)
+[^86]: Netlify/Decap CMS [#6759](https://github.com/decaporg/decap-cms/issues/6759), [#6901](https://github.com/decaporg/decap-cms/issues/6901)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
