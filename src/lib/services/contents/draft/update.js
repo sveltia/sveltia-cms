@@ -22,6 +22,11 @@ const unflattenObj = (obj) => unflatten(toRaw(obj));
  */
 const getItemList = (obj, keyPath) =>
   keyPath.split('.').reduce((_obj, key) => {
+    // @todo This avoids an error but behaves wrong; FIXME
+    if (typeof _obj === 'boolean') {
+      return [_obj];
+    }
+
     const _key = key.match(/^\d+$/) ? Number(key) : key;
 
     // Create a new array when adding a new item
