@@ -31,7 +31,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 - Responding to user feedback
 - Implementing our own enhancement ideas
 
-At this point, **we are on track to ship version 1.0 in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
+Sveltia CMS **version 1.0 is expected to ship in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
 
 ## Features
 
@@ -68,7 +68,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
-  - A backup of an entry draft is automatically created without interruption by a confirmation dialog. It can then be reliably restored without unexpected overwriting[^85].
+  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog. It can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved.
 - You can upload multiple assets at once[^5].
@@ -147,7 +147,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better data output
 
-- The keys in generated JSON/TOML/YAML content are always sorted according to the order of configured fields, making Git commits clean and consistent[^86].
+- Keys in generated JSON/TOML/YAML content are always sorted according to the order of configured fields, making Git commits clean and consistent[^86].
 - For data consistency, Boolean, List (see below) and other fields are always saved as a proper value, such as an empty string or an empty array, rather than nothing, even if it’s optional or empty.
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11][^69].
@@ -273,7 +273,7 @@ If we have missed any other features, let us know by [filing an issue](https://g
 ### Before the 1.0 release
 
 - Enhanced compatibility with Netlify/Decap CMS (see above for the status)
-- Automation test coverage (Vitest + Playwright)
+- Broad automation test coverage (Vitest + Playwright)
 - [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) migration
 - Localization
 - Documentation
