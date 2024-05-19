@@ -3,9 +3,9 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import TOML from 'smol-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
-import TOML from '$lib/services/utils/toml';
 import { normalizeSlug } from '$lib/services/contents/slug';
 import { allEntryFolders, getCollection } from '$lib/services/contents';
 import { allAssetFolders, getAssetKind } from '$lib/services/assets';
