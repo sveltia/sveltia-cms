@@ -122,7 +122,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
 - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
 - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
-- Supports multiple files/folders i18n structure for file collections[^87]. To enable this, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/{{locale}}/about.json`. The global `structure` option is only used for folder collections.
+- Supports multiple files/folders i18n structure for file collections[^87]. To enable this, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. The global `structure` option is only used for folder collections.
 
 ### Better collections
 
