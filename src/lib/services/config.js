@@ -6,6 +6,7 @@ import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
 import { prefs } from '$lib/services/prefs';
+import { getI18nConfig } from '$lib/services/contents/i18n';
 import { allEntryFolders, getCollection, selectedCollection } from '$lib/services/contents';
 import { allBackendServices } from '$lib/services/backends';
 import { allAssetFolders } from '$lib/services/assets';
@@ -205,27 +206,41 @@ siteConfig.subscribe((config) => {
       .sort((a, b) => (a.folderPath ?? '').localeCompare(b.folderPath ?? '')),
     ...collections
       .filter(({ files, hide, divider }) => !!files && !hide && !divider)
-      .map(
-        ({
+      .map((collection) => {
+        const {
           name: collectionName,
           files,
           extension,
           format,
           frontmatter_delimiter: frontmatterDelimiter,
           yaml_quote: yamlQuote,
-        }) =>
-          (files ?? []).map(({ name: fileName, file: filePath }) => ({
+        } = collection;
+
+        return (files ?? []).map((file) => {
+          const path = stripSlashes(file.file);
+
+          return {
             collectionName,
-            fileName,
-            filePath: stripSlashes(filePath),
+            fileName: file.name,
+            filePathMap: path.includes('{{locale}}')
+              ? Object.fromEntries(
+                  getI18nConfig(collection, file).locales.map((locale) => [
+                    locale,
+                    path.replace('{{locale}}', locale),
+                  ]),
+                )
+              : { _default: path },
             extension,
             format,
             frontmatterDelimiter,
             yamlQuote,
-          })),
-      )
+          };
+        });
+      })
       .flat(1)
-      .sort((a, b) => a.filePath.localeCompare(b.filePath)),
+      .sort((a, b) =>
+        Object.values(a.filePathMap)[0].localeCompare(Object.values(b.filePathMap)[0]),
+      ),
   ];
   const globalMediaFolder = stripSlashes(_globalMediaFolder);
   // Some frameworks expect asset paths starting with `@`, like `@assets/images/...`. Remove an

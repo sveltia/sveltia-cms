@@ -169,7 +169,11 @@ const getAllFiles = async () => {
   /** @type {{ file: File, path: string }[]} */
   const availableFileList = [];
   const scanningPaths = [
-    ...get(allEntryFolders).map(({ filePath, folderPath }) => filePath || folderPath),
+    ...get(allEntryFolders)
+      .map(({ filePathMap, folderPath }) =>
+        filePathMap ? Object.values(filePathMap) : [folderPath],
+      )
+      .flat(1),
     ...get(allAssetFolders).map(({ internalPath }) => internalPath),
   ].map((path) => stripSlashes(path ?? ''));
   /**

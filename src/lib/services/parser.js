@@ -64,8 +64,8 @@ export const createFileList = (files) => {
     const { path } = fileInfo;
     const name = /** @type {string} */ (path.split('/').pop());
     const extension = name.split('.').pop();
-    const entryFolderConfig = get(allEntryFolders).findLast(({ filePath, folderPath }) =>
-      folderPath ? path.startsWith(folderPath) : path === filePath,
+    const entryFolderConfig = get(allEntryFolders).findLast(({ filePathMap, folderPath }) =>
+      folderPath ? path.startsWith(folderPath) : Object.values(filePathMap ?? {}).includes(path),
     );
     const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
       if (entryRelative) {
@@ -79,7 +79,8 @@ export const createFileList = (files) => {
 
     if (
       entryFolderConfig &&
-      (path === entryFolderConfig.filePath || extension === getFileExtension(entryFolderConfig))
+      (Object.values(entryFolderConfig.filePathMap ?? {}).includes(path) ||
+        extension === getFileExtension(entryFolderConfig))
     ) {
       entryFiles.push({
         ...fileInfo,
@@ -139,12 +140,12 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 const parseEntryFile = ({
   text = '',
   path,
-  config: { filePath, extension, format, frontmatterDelimiter },
+  config: { filePathMap, extension, format, frontmatterDelimiter },
 }) => {
   format ||=
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || filePath?.match(/\.([^.]+)$/)?.[1];
+      : extension || Object.values(filePathMap ?? {})[0]?.match(/\.([^.]+)$/)?.[1];
 
   // Ignore files with unknown format
   if (!format) {
@@ -357,7 +358,7 @@ export const parseEntryFiles = (entryFiles) => {
       path,
       sha,
       meta = {},
-      config: { folderPath: configFolderPath = '', collectionName, fileName },
+      config: { folderPath: configFolderPath = '', collectionName, fileName, filePathMap },
     } = file;
     const collection = getCollection(collectionName);
 
@@ -378,13 +379,13 @@ export const parseEntryFiles = (entryFiles) => {
       extension: collection.extension,
       file: fileName,
     });
-    const [, filePath] = fileName
-      ? []
+    const filePath = fileName
+      ? path
       : path.match(
           new RegExp(`^${escapeRegExp(stripSlashes(configFolderPath))}\\/(.+)\\.${extension}$`),
-        ) ?? [];
+        )?.[1];
 
-    if (!fileName && !filePath) {
+    if (!filePath) {
       return;
     }
 
@@ -398,7 +399,7 @@ export const parseEntryFiles = (entryFiles) => {
       entry.locales._default = { slug, path, sha, content: parsedFile };
     }
 
-    if (i18nEnabled && (structure === 'single_file' || fileName)) {
+    if (i18nEnabled && structure === 'single_file') {
       const content = parsedFile[defaultLocale] ?? Object.values(parsedFile)[0];
       const slug = fileName || getSlug(collectionName, filePath, content);
 
@@ -412,15 +413,18 @@ export const parseEntryFiles = (entryFiles) => {
 
     if (i18nEnabled && (structure === 'multiple_folders' || structure === 'multiple_files')) {
       /**
-       * @type {string}
+       * @type {string | undefined}
        */
       let _filePath;
       /**
-       * @type {string}
+       * @type {LocaleCode | undefined}
        */
       let locale;
 
-      if (structure === 'multiple_folders') {
+      if (fileName) {
+        [locale, _filePath] =
+          Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === filePath) ?? [];
+      } else if (structure === 'multiple_folders') {
         [, locale, _filePath] = filePath.match(`^(${locales.join('|')})\\/(.+)$`) ?? [];
       } else {
         [, _filePath, locale] = filePath.match(`^(.+)\\.(${locales.join('|')})$`) ?? [];

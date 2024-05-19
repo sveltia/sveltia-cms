@@ -75,9 +75,12 @@ export const getI18nConfig = (collection, file) => {
       : defaultLocale && locales.includes(defaultLocale)
         ? defaultLocale
         : locales[0],
-    // @todo Figure out how file collections can utilize the `multiple_files` or `multiple_folders`
-    // i18n structure. https://github.com/decaporg/decap-cms/issues/5280
-    structure: file ? 'single_file' : structure,
+    // eslint-disable-next-line no-nested-ternary
+    structure: !file
+      ? structure
+      : file.file.includes('{{locale}}')
+        ? 'multiple_files'
+        : 'single_file',
     canonicalSlug: {
       key: canonicalSlugKey,
       value: canonicalSlugTemplate,

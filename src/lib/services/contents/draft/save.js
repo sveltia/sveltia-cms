@@ -262,7 +262,9 @@ const createEntryPath = (draft, locale, slug) => {
   const { collection, collectionFile, originalEntry, currentValues } = draft;
 
   if (collectionFile) {
-    return collectionFile.file;
+    const path = collectionFile.file;
+
+    return path.includes('{{locale}}') ? path.replace('{{locale}}', locale) : path;
   }
 
   if (originalEntry?.locales[locale]) {
@@ -643,7 +645,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   } = collection;
   const config = { extension, format, frontmatterDelimiter, yamlQuote };
 
-  if (collectionFile || !i18nEnabled || structure === 'single_file') {
+  if (!i18nEnabled || structure === 'single_file') {
     const { path, content } = savingEntryLocales[defaultLocale];
 
     changes.push({

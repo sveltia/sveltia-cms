@@ -198,7 +198,8 @@
  * @typedef {object} CollectionEntryFolder
  * @property {string} collectionName - Collection name.
  * @property {string} [fileName] - File identifier. File collection only.
- * @property {string} [filePath] - File path. File collection only.
+ * @property {Record<LocaleCode, string>} [filePathMap] - File path map. The key is a locale, and
+ * the value is the corresponding file path. File collection only.
  * @property {string} [folderPath] - Folder path. Folder/entry collection only.
  * @property {string} [extension] - File extension.
  * @property {string} [format] - File format.
