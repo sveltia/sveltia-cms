@@ -92,8 +92,10 @@ export const saveBackup = async (draft) => {
       collectionName,
       slug,
       currentLocales,
-      currentValues: /** @type {Record<string, FlattenedEntryContent>} */ (toRaw(currentValues)),
-      files: /** @type {Record<string, FlattenedEntryFileList>} */ (
+      currentValues: /** @type {Record<LocaleCode, FlattenedEntryContent>} */ (
+        toRaw(currentValues)
+      ),
+      files: /** @type {Record<LocaleCode, FlattenedEntryFileList>} */ (
         Object.fromEntries(Object.entries(files).map(([locale, _files]) => [locale, { ..._files }]))
       ),
     };
