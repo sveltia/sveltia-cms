@@ -197,7 +197,7 @@
  * Entry folder configuration by collection.
  * @typedef {object} CollectionEntryFolder
  * @property {string} collectionName - Collection name.
- * @property {string} [fileName] - File name. File collection only.
+ * @property {string} [fileName] - File identifier. File collection only.
  * @property {string} [filePath] - File path. File collection only.
  * @property {string} [folderPath] - Folder path. Folder/entry collection only.
  * @property {string} [extension] - File extension.
@@ -375,7 +375,7 @@
  * Extra properties for a collection.
  * @typedef {object} ExtraCollectionProps
  * @property {Record<string, CollectionFile>} [_fileMap] - File map with normalized collection file
- * definitions. The key is a filename. File collection only.
+ * definitions. The key is a file identifier. File collection only.
  * @property {I18nConfig} _i18n - Normalized i18n configuration combined with the top-level
  * configuration.
  * @property {CollectionAssetFolder} [_assetFolder] - Asset folder configuration.
@@ -389,7 +389,7 @@
 /**
  * A raw collection file defined in the configuration file.
  * @typedef {object} RawCollectionFile
- * @property {string} name - File name.
+ * @property {string} name - File identifier.
  * @property {string} [label] - File label.
  * @property {string} file - File path.
  * @property {Field[]} fields - Fields.
@@ -601,7 +601,7 @@
  * Relation field properties.
  * @typedef {object} RelationFieldProps
  * @property {string} collection - Referenced collection name.
- * @property {string} [file] - Referenced file name for a file collection.
+ * @property {string} [file] - Referenced file identifier for a file collection.
  * @property {string} value_field - Name of field to be stored as the value.
  * @property {string[]} [search_fields] - Name of fields to be searched. It’s a required field as
  * per the Decap CMS document, but we can fall back if the value is missing.
@@ -704,7 +704,7 @@
  * locale code. When i18n is not enabled with the site configuration, there will be one single
  * property named `_default`.
  * @property {string} collectionName - Collection name.
- * @property {string} [fileName] - File name for a file collection.
+ * @property {string} [fileName] - File identifier for a file collection.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.
  */
@@ -740,20 +740,20 @@
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be a file to be
  * uploaded.
- * @typedef {Record<FieldKeyPath, File>} FlattenedEntryContentFileList
+ * @typedef {Record<FieldKeyPath, File>} FlattenedEntryFileList
  */
 
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
  * validity, using the same properties as the native HTML5 constraint validation.
- * @typedef {Record<FieldKeyPath, Record<string, boolean>>} FlattenedEntryContentValidityState
+ * @typedef {Record<FieldKeyPath, Record<string, boolean>>} FlattenedEntryValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
  * Flattened {@link EntryContent} object, where key is a key path, but value will be the field’s
  * expander UI state.
- * @typedef {Record<FieldKeyPath, boolean>} FlattenedEntryContentExpanderState
+ * @typedef {Record<FieldKeyPath, boolean>} FlattenedEntryExpanderState
  */
 
 /**
@@ -762,7 +762,7 @@
  * @property {boolean} [isNew] - `true` if it’s a new folder collection entry draft.
  * @property {string} collectionName - Collection name.
  * @property {Collection} collection - Collection details.
- * @property {string} [fileName] - File name. File collection only.
+ * @property {string} [fileName] - File identifier. File collection only.
  * @property {CollectionFile} [collectionFile] - File details. File collection only.
  * @property {Entry} [originalEntry] - Original entry or `undefined` if it’s a new entry draft.
  * @property {Record<LocaleCode, boolean>} originalLocales - Key is a locale code, value is whether
@@ -772,13 +772,15 @@
  * @property {Record<LocaleCode, FlattenedEntryContent>} originalValues - Key is a locale code,
  * value is a flattened object containing all the original field values.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
- * is a flattened object containing all the current field values while editing.
- * @property {Record<LocaleCode, FlattenedEntryContentFileList>} files - Files to be uploaded.
- * @property {Record<LocaleCode, FlattenedEntryContentValidityState>} validities - Key is a locale
- * code, value is a flattened object containing validation results of all the current field values
- * while editing.
- * @property {Record<LocaleCode, FlattenedEntryContentExpanderState>} expanderStates - Key is a
- * locale code, value is a flattened object containing the expander UI state.
+ * is a flattened object containing all the current field values while editing. If i18n is enabled,
+ * the value object is proxified.
+ * @property {Record<LocaleCode, FlattenedEntryFileList>} files - Files to be uploaded. If i18n is
+ * enabled, the value object is proxified.
+ * @property {Record<LocaleCode, FlattenedEntryValidityState>} validities - Key is a locale code,
+ * value is a flattened object containing validation results of all the current field values while
+ * editing.
+ * @property {Record<LocaleCode, FlattenedEntryExpanderState>} expanderStates - Key is a locale
+ * code, value is a flattened object containing the expander UI state.
  */
 
 /**
@@ -793,7 +795,7 @@
  * to disable the locale’s content output.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
  * is a flattened object containing all the current field values while editing.
- * @property {Record<LocaleCode, FlattenedEntryContentFileList>} files - Files to be uploaded.
+ * @property {Record<LocaleCode, FlattenedEntryFileList>} files - Files to be uploaded.
  */
 
 /**
