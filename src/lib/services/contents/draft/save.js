@@ -713,5 +713,5 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     published: !isLocal && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false),
   });
 
-  deleteBackup(collectionName, defaultLocaleSlug);
+  deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 };

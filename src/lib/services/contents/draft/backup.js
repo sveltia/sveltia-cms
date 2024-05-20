@@ -200,10 +200,11 @@ backend.subscribe((_backend) => {
   backupDB = null;
 });
 
+// Automatically backup the draft; use a timer to avoid typing lag
 entryDraft.subscribe((draft) => {
-  // Automatically backup the draft; use a timer to avoid typing lag
+  window.clearTimeout(backupTimeout);
+
   if (draft && backupDB) {
-    window.clearTimeout(backupTimeout);
     backupTimeout = window.setTimeout(() => {
       saveBackup(draft);
     }, 500);
