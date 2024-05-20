@@ -7,7 +7,7 @@ import { siteConfigVersion } from '$lib/services/config';
 import { backend } from '$lib/services/backends';
 
 /**
- * @type {number}
+ * @type {number | NodeJS.Timeout}
  */
 let backupTimeout = 0;
 /**
@@ -202,10 +202,10 @@ backend.subscribe((_backend) => {
 
 // Automatically backup the draft; use a timer to avoid typing lag
 entryDraft.subscribe((draft) => {
-  window.clearTimeout(backupTimeout);
+  globalThis.clearTimeout(backupTimeout);
 
   if (draft && backupDB) {
-    backupTimeout = window.setTimeout(() => {
+    backupTimeout = globalThis.setTimeout(() => {
       saveBackup(draft);
     }, 500);
   }
