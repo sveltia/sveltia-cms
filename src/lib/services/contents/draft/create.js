@@ -268,7 +268,8 @@ export const createProxy = ({
             const [, parentKeyPath] = keyPath.match(/(.+)\.[^.]+$/) ?? [];
 
             if (
-              !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`))
+              !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`)) &&
+              !getFieldConfig({ collectionName, fileName, valueMap, keyPath: parentKeyPath })
             ) {
               return;
             }
