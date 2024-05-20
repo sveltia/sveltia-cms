@@ -136,7 +136,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
 - You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
 - You can use Markdown in collection descriptions[^79]. Bold, italic, strikethrough, code and links are allowed.
-- A useless new page button won’t appear when a developer accidentally sets the `create: true` option on a file collection[^89].
+- The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
+- The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because these preset files should not be deleted.
 - A folder collection filter with a boolean value works as expected[^93].
 
 ### Better content editing
@@ -153,7 +154,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better data output
 
-- Keys in generated JSON/TOML/YAML content are always sorted according to the order of configured fields, making Git commits clean and consistent[^86].
+- Keys in generated JSON/TOML/YAML content are always sorted by the order of configured fields, making Git commits clean and consistent[^86].
 - For data consistency, Boolean, List (see below) and other fields are always saved as a proper value, such as an empty string or an empty array, rather than nothing, even if it’s optional or empty.
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11][^69].
@@ -176,6 +177,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Markdown
   - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves various problems found in Netlify/Decap CMS, including fatal application crashes[^53][^70][^71][^72][^73].
   - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
+  - Line breaks are rendered as line breaks in the Preview pane according to GitHub Flavored Markdown.
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
     - You can use [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) with the Object widget just like the List widget.
@@ -202,7 +204,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More services will be added later.
-  - Large images automatically fit in the preview pane instead of being displayed at their original size.
+  - Large images automatically fit in the Preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36].
 - Markdown, String and Text
@@ -242,6 +244,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
 - Hidden files (dot files) don’t appear in the Asset Library[^47].
+- You can add assets using the Quick Add button in the upper right corner of the application.
 
 ## Compatibility
 
