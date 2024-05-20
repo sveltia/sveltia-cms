@@ -109,6 +109,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect top-notch i18n support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
 - You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
+- Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. For example, it might be difficult to recognize `DE` as German or `NL` as Dutch.
 - Fields in non-default locales are validated as expected[^13].
 - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
 - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
@@ -190,6 +191,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - String
   - When a YouTube video URL is entered in a String field, it appears as an embedded video in the preview pane.
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
+  - When a regular URL is entered in a String field, it appears as a link that can be opened in a new browser tab.
   - Supports the `type` option that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string options, which automatically prepend and/or append the developer-defined value to the user-input value.
 - Boolean, Number and String
