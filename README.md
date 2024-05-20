@@ -27,7 +27,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
-- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 80+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
+- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 90+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
 - Responding to user feedback
 - Implementing our own enhancement ideas
 
@@ -118,11 +118,11 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Raises a validation error instead of failing silently if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
 - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
 - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
-- Relation fields with i18n enabled won’t trigger a change in content draft status when you start editing an existing entry[^84].
+- Relation fields with i18n enabled won’t trigger a change in the content draft status when you start editing an existing entry[^84].
 - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
 - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
 - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
-- Supports multiple files/folders i18n structure for file collections[^87]. To enable this, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. The global `structure` option is only used for folder collections.
+- Supports multiple files/folders i18n structure for file collections[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. The global `structure` option only applies to folder collections as before.
 
 ### Better collections
 
@@ -135,6 +135,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
 - You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
 - You can use Markdown in collection descriptions[^79]. Bold, italic, strikethrough, code and links are allowed.
+- A useless new page button won’t appear when a developer accidentally sets the `create: true` option on a file collection[^89].
+- A folder collection filter with a boolean value works as expected[^93].
 
 ### Better content editing
 
@@ -143,6 +145,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
+- The Preview pane displays the titles of all fields, making it easier to see which fields are filled in.
+- Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
 - You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead).
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
 
@@ -159,6 +163,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Boolean
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error[^45].
   - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing[^46].
+- DateTime
+  - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry[^90].
 - Hidden
   - The `default` value is saved when you create a file collection item, not just a folder collection item[^78].
 - List
@@ -172,12 +178,15 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
     - You can use [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) with the Object widget just like the List widget.
-    - An optional Object field (`required: false`) can be manually added or removed with a checkbox. If unadded or removed, the required subfields won’t trigger validation errors[^16].
+    - An optional Object field (`required: false`) can be manually added or removed with a checkbox[^88]. If unadded or removed, the required subfields won’t trigger validation errors[^16].
 - Relation
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
+  - `slug` can be used for `value_field` to show all available options instead of just one in some situations[^91].
+  - `display_fields` is displayed in the Preview page instead of `value_field`.
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
 - Select
   - It’s possible to select an option with value `0`[^56].
+  - `label` is displayed in the Preview page instead of `value`.
 - String
   - When a YouTube video URL is entered in a String field, it appears as an embedded video in the preview pane.
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
@@ -191,6 +200,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More services will be added later.
+  - Large images automatically fit in the preview pane instead of being displayed at their original size.
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36].
 - Markdown, String and Text
@@ -752,7 +762,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^50]: Netlify/Decap CMS [#4646](https://github.com/decaporg/decap-cms/issues/4646), [#7167](https://github.com/decaporg/decap-cms/issues/7167)
 [^51]: Netlify/Decap CMS [#6731](https://github.com/decaporg/decap-cms/issues/6731)
 [^52]: Netlify/Decap CMS [#7147](https://github.com/decaporg/decap-cms/issues/7147)
-[^53]: Netlify/Decap CMS [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6707](https://github.com/decaporg/decap-cms/issues/6707)
+[^53]: Netlify/Decap CMS [#512](https://github.com/decaporg/decap-cms/issues/512), [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6707](https://github.com/decaporg/decap-cms/issues/6707)
 [^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#6287](https://github.com/decaporg/decap-cms/issues/6287) — Decap 3.0 updated the Slate editor in an attempt to fix the problems, but the IME issues remain unresolved when using a mobile/tablet browser.
 [^55]: Netlify/Decap CMS [#4480](https://github.com/decaporg/decap-cms/issues/4480), [#6353](https://github.com/decaporg/decap-cms/issues/6353)
 [^56]: Netlify/Decap CMS [#6515](https://github.com/decaporg/decap-cms/issues/6515)
@@ -777,7 +787,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^75]: Netlify/Decap CMS [#5472](https://github.com/decaporg/decap-cms/issues/5472)
 [^76]: Netlify/Decap CMS [#4738](https://github.com/decaporg/decap-cms/issues/4738)
 [^77]: Netlify/Decap CMS [#6565](https://github.com/decaporg/decap-cms/issues/6565)
-[^78]: Netlify/Decap CMS [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363)
+[^78]: Netlify/Decap CMS [#2294](https://github.com/decaporg/decap-cms/issues/2294), [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363)
 [^79]: Netlify/Decap CMS [#5726](https://github.com/decaporg/decap-cms/issues/5726)
 [^80]: Netlify/Decap CMS [#5493](https://github.com/decaporg/decap-cms/issues/5493), [#6600](https://github.com/decaporg/decap-cms/issues/6600)
 [^81]: Netlify/Decap CMS [#4645](https://github.com/decaporg/decap-cms/issues/4645)
@@ -787,4 +797,10 @@ This software is provided “as is” without any express or implied warranty. W
 [^85]: Netlify/Decap CMS [#5055](https://github.com/decaporg/decap-cms/issues/5055), [#5470](https://github.com/decaporg/decap-cms/issues/5470), [#6989](https://github.com/decaporg/decap-cms/issues/6989)
 [^86]: Netlify/Decap CMS [#6759](https://github.com/decaporg/decap-cms/issues/6759), [#6901](https://github.com/decaporg/decap-cms/issues/6901)
 [^87]: Netlify/Decap CMS [#5280](https://github.com/decaporg/decap-cms/issues/5280)
+[^88]: Netlify/Decap CMS [#1267](https://github.com/decaporg/decap-cms/issues/1267)
+[^89]: Netlify/Decap CMS [#4255](https://github.com/decaporg/decap-cms/issues/4255)
+[^90]: Netlify/Decap CMS [#725](https://github.com/decaporg/decap-cms/issues/725)
+[^91]: Netlify/Decap CMS [#4954](https://github.com/decaporg/decap-cms/issues/4954)
+[^92]: Netlify/Decap CMS [#1466](https://github.com/decaporg/decap-cms/issues/1466)
+[^93]: Netlify/Decap CMS [#1000](https://github.com/decaporg/decap-cms/issues/1000)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
