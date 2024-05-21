@@ -102,7 +102,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
 - You can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
-- The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub. Checks are performed frequently and a notification is displayed prominently for both services.
+- The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub. Checks are performed frequently and an incident notification is displayed prominently for both services.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
 
 ### Better i18n support
@@ -186,7 +186,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Relation
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
   - `slug` can be used for `value_field` to show all available options instead of just one in some situations[^91].
-  - Template strings with a wildcard can also be used for `value_field`[^94].
+  - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`[^94].
   - `display_fields` is displayed in the Preview page instead of `value_field`.
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
 - Select
