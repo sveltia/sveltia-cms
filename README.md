@@ -102,14 +102,16 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
 - You can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
-- The GitLab backend support comes with background service status checking, just like GitHub.
+- The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub. Checks are performed frequently and a notification is displayed prominently for both services.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
 
 ### Better i18n support
 
 - Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect top-notch i18n support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
+- Supports multiple files/folders i18n structure for file collections[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections as before.
+- Eliminates UI confusion — the Preview pane can be displayed without toggling i18n in the Content Editor.
 - You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
-- Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. For example, it might be difficult to recognize `DE` as German or `NL` as Dutch.
+- Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. (For example, it might be difficult to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.)
 - Fields in non-default locales are validated as expected[^13].
 - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
 - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
@@ -123,7 +125,6 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
 - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
 - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
-- Supports multiple files/folders i18n structure for file collections[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. The global `structure` option only applies to folder collections as before.
 
 ### Better collections
 
@@ -147,7 +148,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
-- The Preview pane displays the titles of all fields, making it easier to see which fields are filled in.
+- The Preview pane displays all fields, including each title, making it easier to see which fields are populated.
 - Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
 - You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead).
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
@@ -185,13 +186,14 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Relation
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
   - `slug` can be used for `value_field` to show all available options instead of just one in some situations[^91].
+  - Template strings with a wildcard can also be used for `value_field`[^94].
   - `display_fields` is displayed in the Preview page instead of `value_field`.
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
 - Select
   - It’s possible to select an option with value `0`[^56].
   - `label` is displayed in the Preview page instead of `value`.
 - String
-  - When a YouTube video URL is entered in a String field, it appears as an embedded video in the preview pane.
+  - When a YouTube video URL is entered in a String field, it appears as an embedded video in the Preview pane.
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - When a regular URL is entered in a String field, it appears as a link that can be opened in a new browser tab.
   - Supports the `type` option that accepts `url` or `email` as a value, which will validate the value as a URL or email.
@@ -791,7 +793,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^74]: Netlify/Decap CMS [#4209](https://github.com/decaporg/decap-cms/issues/4209)
 [^75]: Netlify/Decap CMS [#5472](https://github.com/decaporg/decap-cms/issues/5472)
 [^76]: Netlify/Decap CMS [#4738](https://github.com/decaporg/decap-cms/issues/4738)
-[^77]: Netlify/Decap CMS [#6565](https://github.com/decaporg/decap-cms/issues/6565)
+[^77]: Netlify/Decap CMS [#3415](https://github.com/decaporg/decap-cms/issues/3415), [#6565](https://github.com/decaporg/decap-cms/issues/6565)
 [^78]: Netlify/Decap CMS [#2294](https://github.com/decaporg/decap-cms/issues/2294), [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363)
 [^79]: Netlify/Decap CMS [#5726](https://github.com/decaporg/decap-cms/issues/5726)
 [^80]: Netlify/Decap CMS [#5493](https://github.com/decaporg/decap-cms/issues/5493), [#6600](https://github.com/decaporg/decap-cms/issues/6600)
@@ -808,4 +810,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^91]: Netlify/Decap CMS [#4954](https://github.com/decaporg/decap-cms/issues/4954)
 [^92]: Netlify/Decap CMS [#1466](https://github.com/decaporg/decap-cms/issues/1466)
 [^93]: Netlify/Decap CMS [#1000](https://github.com/decaporg/decap-cms/issues/1000)
+[^94]: Netlify/Decap CMS [#5487](https://github.com/decaporg/decap-cms/issues/5487)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
