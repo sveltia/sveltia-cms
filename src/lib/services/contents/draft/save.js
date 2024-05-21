@@ -16,8 +16,8 @@ import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
+import { formatEntryFile, getFileExtension } from '$lib/services/contents/parser';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
-import { formatEntryFile, getFileExtension } from '$lib/services/parser';
 import { user } from '$lib/services/user';
 import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/file';
 

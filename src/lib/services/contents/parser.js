@@ -4,11 +4,9 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import TOML from 'smol-toml';
-import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { normalizeSlug } from '$lib/services/contents/slug';
-import { allEntryFolders, getCollection } from '$lib/services/contents';
-import { allAssetFolders, getAssetKind } from '$lib/services/assets';
+import { getCollection } from '$lib/services/contents';
 
 /**
  * Get the file extension for the given collection.
@@ -40,70 +38,6 @@ export const getFileExtension = ({ file, format, extension }) => {
   }
 
   return 'md';
-};
-
-/**
- * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
- * relevant collection/file configuration added.
- * @param {BaseFileListItem[]} files - Unfiltered file list.
- * @returns {{
- * entryFiles: BaseEntryListItem[],
- * assetFiles: BaseAssetListItem[],
- * allFiles: (BaseEntryListItem | BaseAssetListItem)[],
- * count: number,
- * }} File
- * list, including both entries and assets.
- */
-export const createFileList = (files) => {
-  /** @type {BaseEntryListItem[]} */
-  const entryFiles = [];
-  /** @type {BaseAssetListItem[]} */
-  const assetFiles = [];
-
-  files.forEach((fileInfo) => {
-    const { path } = fileInfo;
-    const name = /** @type {string} */ (path.split('/').pop());
-    const extension = name.split('.').pop();
-    const entryFolderConfig = get(allEntryFolders).findLast(({ filePathMap, folderPath }) =>
-      folderPath ? path.startsWith(folderPath) : Object.values(filePathMap ?? {}).includes(path),
-    );
-    const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
-      if (entryRelative) {
-        return path.startsWith(`${internalPath}/`);
-      }
-
-      // Compare that the enclosing directory is exactly the same as the internal path, and ignore
-      // any subdirectories, as there is no way to upload assets to them.
-      return path.match(/^(.+)\//)?.[1] === internalPath;
-    });
-
-    if (
-      entryFolderConfig &&
-      (Object.values(entryFolderConfig.filePathMap ?? {}).includes(path) ||
-        extension === getFileExtension(entryFolderConfig))
-    ) {
-      entryFiles.push({
-        ...fileInfo,
-        type: 'entry',
-        config: entryFolderConfig,
-      });
-    }
-
-    // Exclude files with a leading `+` sign, which are Svelte page/layout files. Also exclude files
-    // already listed as entries. These files can appear in the file list when a relative media path
-    // is configured for a collection
-    if (mediaFolderConfig && !name.startsWith('+') && !entryFiles.find((e) => e.path === path)) {
-      assetFiles.push({
-        ...fileInfo,
-        type: 'asset',
-        config: mediaFolderConfig,
-      });
-    }
-  });
-
-  const allFiles = [...entryFiles, ...assetFiles];
-
-  return { entryFiles, assetFiles, allFiles, count: allFiles.length };
 };
 
 /**
@@ -479,36 +413,3 @@ export const parseEntryFiles = (entryFiles) => {
     return true;
   });
 };
-
-/**
- * Parse the given asset files to create a complete, serialized asset list.
- * @param {BaseAssetListItem[]} assetFiles - Asset file list.
- * @returns {Asset[]} Asset list.
- */
-export const parseAssetFiles = (assetFiles) =>
-  assetFiles.map((assetInfo) => {
-    const {
-      file,
-      path,
-      name = /** @type {string} */ (path.split('/').pop()),
-      sha,
-      size,
-      text = undefined,
-      meta = {},
-      config: { collectionName, internalPath },
-    } = assetInfo;
-
-    return /** @type {Asset} */ ({
-      file,
-      blobURL: undefined,
-      path,
-      name,
-      sha,
-      size,
-      kind: getAssetKind(name),
-      text,
-      collectionName,
-      folder: internalPath,
-      ...meta,
-    });
-  });

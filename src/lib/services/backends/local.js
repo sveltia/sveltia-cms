@@ -8,11 +8,12 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
+import { parseAssetFiles } from '$lib/services/assets/parser';
 import { allBackendServices } from '$lib/services/backends';
-import { repositoryProps } from '$lib/services/backends/shared/data';
+import { createFileList, repositoryProps } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
-import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
+import { parseEntryFiles } from '$lib/services/contents/parser';
 
 const backendName = 'local';
 const label = 'Local Repository';

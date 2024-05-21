@@ -1,7 +1,9 @@
 import { IndexedDB } from '@sveltia/utils/storage';
-import { allAssets } from '$lib/services/assets';
-import { allEntries, dataLoaded } from '$lib/services/contents';
-import { createFileList, parseAssetFiles, parseEntryFiles } from '$lib/services/parser';
+import { get } from 'svelte/store';
+import { allAssetFolders, allAssets } from '$lib/services/assets';
+import { parseAssetFiles } from '$lib/services/assets/parser';
+import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
+import { getFileExtension, parseEntryFiles } from '$lib/services/contents/parser';
 
 /** @type {RepositoryInfo} */
 export const repositoryProps = {
@@ -10,6 +12,70 @@ export const repositoryProps = {
   owner: '',
   repo: '',
   branch: '',
+};
+
+/**
+ * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
+ * relevant collection/file configuration added.
+ * @param {BaseFileListItem[]} files - Unfiltered file list.
+ * @returns {{
+ * entryFiles: BaseEntryListItem[],
+ * assetFiles: BaseAssetListItem[],
+ * allFiles: (BaseEntryListItem | BaseAssetListItem)[],
+ * count: number,
+ * }} File
+ * list, including both entries and assets.
+ */
+export const createFileList = (files) => {
+  /** @type {BaseEntryListItem[]} */
+  const entryFiles = [];
+  /** @type {BaseAssetListItem[]} */
+  const assetFiles = [];
+
+  files.forEach((fileInfo) => {
+    const { path } = fileInfo;
+    const name = /** @type {string} */ (path.split('/').pop());
+    const extension = name.split('.').pop();
+    const entryFolderConfig = get(allEntryFolders).findLast(({ filePathMap, folderPath }) =>
+      folderPath ? path.startsWith(folderPath) : Object.values(filePathMap ?? {}).includes(path),
+    );
+    const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
+      if (entryRelative) {
+        return path.startsWith(`${internalPath}/`);
+      }
+
+      // Compare that the enclosing directory is exactly the same as the internal path, and ignore
+      // any subdirectories, as there is no way to upload assets to them.
+      return path.match(/^(.+)\//)?.[1] === internalPath;
+    });
+
+    if (
+      entryFolderConfig &&
+      (Object.values(entryFolderConfig.filePathMap ?? {}).includes(path) ||
+        extension === getFileExtension(entryFolderConfig))
+    ) {
+      entryFiles.push({
+        ...fileInfo,
+        type: 'entry',
+        config: entryFolderConfig,
+      });
+    }
+
+    // Exclude files with a leading `+` sign, which are Svelte page/layout files. Also exclude files
+    // already listed as entries. These files can appear in the file list when a relative media path
+    // is configured for a collection
+    if (mediaFolderConfig && !name.startsWith('+') && !entryFiles.find((e) => e.path === path)) {
+      assetFiles.push({
+        ...fileInfo,
+        type: 'asset',
+        config: mediaFolderConfig,
+      });
+    }
+  });
+
+  const allFiles = [...entryFiles, ...assetFiles];
+
+  return { entryFiles, assetFiles, allFiles, count: allFiles.length };
 };
 
 /**
