@@ -164,10 +164,9 @@ export const getAssetThumbnailURL = async (asset) => {
 
   // Initialize the thumbnail DB
   if (thumbnailDB === undefined) {
-    const { repository: { service, owner, repo } = /** @type {RepositoryInfo} */ ({}) } =
-      get(backend) ?? /** @type {BackendService} */ ({});
+    const { databaseName } = get(backend)?.repository ?? {};
 
-    thumbnailDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'asset-thumbnails') : null;
+    thumbnailDB = databaseName ? new IndexedDB(databaseName, 'asset-thumbnails') : null;
   }
 
   /** @type {Blob | undefined} */

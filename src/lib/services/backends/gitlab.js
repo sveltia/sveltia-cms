@@ -154,7 +154,6 @@ const getRepositoryInfo = () => {
   } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://gitlab.com';
-  const baseURL = `${origin}/${owner}/${repo}`;
 
   return Object.assign(repository, {
     service: backendName,
@@ -162,7 +161,8 @@ const getRepositoryInfo = () => {
     owner,
     repo,
     branch,
-    baseURL,
+    baseURL: `${origin}/${owner}/${repo}`,
+    databaseName: `${backendName}:${owner}/${repo}`,
   });
 };
 

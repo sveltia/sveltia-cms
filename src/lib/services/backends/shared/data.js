@@ -34,9 +34,9 @@ export const fetchAndParseFiles = async ({
   fetchFileList,
   fetchFileContents,
 }) => {
-  const { service, owner, repo, branch: branchName } = repository;
-  const metaDB = new IndexedDB(`${service}:${owner}/${repo}`, 'meta');
-  const cacheDB = new IndexedDB(`${service}:${owner}/${repo}`, 'file-cache');
+  const { databaseName, branch: branchName } = repository;
+  const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
+  const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
   const cachedHash = await metaDB.get('last_commit_hash');
   const cachedFileEntries = await cacheDB.entries();
   let branch = branchName;

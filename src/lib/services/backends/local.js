@@ -40,9 +40,9 @@ const repository = new Proxy(/** @type {any} */ ({}), {
 const rootDirHandle = writable(null);
 const rootDirHandleKey = 'root_dir_handle';
 /**
- * @type {IndexedDB}
+ * @type {IndexedDB | null | undefined}
  */
-let rootDirHandleDB;
+let rootDirHandleDB = undefined;
 
 /**
  * Get the project’s root directory handle so the app can read all the files under the directory.
@@ -64,7 +64,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
   /**
    * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function } | null}
    */
-  let handle = forceReload ? null : (await rootDirHandleDB.get(rootDirHandleKey)) ?? null;
+  let handle = forceReload ? null : (await rootDirHandleDB?.get(rootDirHandleKey)) ?? null;
 
   if (handle) {
     if ((await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') {
@@ -89,7 +89,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
       // This will throw `NotFoundError` when it’s not a project root directory
       await handle.getDirectoryHandle('.git');
       // If it looks fine, cache the directory handle
-      await rootDirHandleDB.set(rootDirHandleKey, handle);
+      await rootDirHandleDB?.set(rootDirHandleKey, handle);
     }
   }
 
@@ -100,17 +100,20 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
  * Discard the root directory handle stored in the IndexedDB.
  */
 const discardDirHandle = async () => {
-  await rootDirHandleDB.delete(rootDirHandleKey);
+  await rootDirHandleDB?.delete(rootDirHandleKey);
 };
 
 /**
  * Initialize the backend.
  */
 const init = () => {
-  const { name: service, repo: projectPath } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+  const { name: service } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
   remoteRepository = allBackendServices[service]?.getRepositoryInfo?.();
-  rootDirHandleDB = new IndexedDB(`${service}:${projectPath}`, 'file-system-handles');
+
+  const { databaseName } = remoteRepository ?? {};
+
+  rootDirHandleDB = databaseName ? new IndexedDB(databaseName, 'file-system-handles') : null;
 };
 
 /**

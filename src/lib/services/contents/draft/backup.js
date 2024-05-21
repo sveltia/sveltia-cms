@@ -186,10 +186,10 @@ export const resetBackupToastState = () => {
 
 backend.subscribe((_backend) => {
   if (_backend && !backupDB) {
-    const { service, owner, repo } = _backend.repository ?? {};
+    const { databaseName } = _backend.repository ?? {};
 
-    if (repo) {
-      backupDB = new IndexedDB(`${service}:${owner}/${repo}`, 'draft-backups', {
+    if (databaseName) {
+      backupDB = new IndexedDB(databaseName, 'draft-backups', {
         keyPath: ['collectionName', 'slug'], // Composite key
       });
 

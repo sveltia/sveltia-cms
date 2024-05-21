@@ -109,9 +109,9 @@ export const expandInvalidFields = () => {
  * @param {BackendService} _backend - Backend service.
  */
 const initSettings = async ({ repository }) => {
-  const { service, owner, repo } = repository ?? {};
+  const { databaseName } = repository ?? {};
 
-  settingsDB = repo ? new IndexedDB(`${service}:${owner}/${repo}`, 'ui-settings') : null;
+  settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
 
   const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
   const settings = {
