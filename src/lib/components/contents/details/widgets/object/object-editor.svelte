@@ -273,5 +273,9 @@
     padding: 8px;
     white-space: nowrap;
     text-overflow: ellipsis;
+
+    &:empty {
+      display: none;
+    }
   }
 </style>

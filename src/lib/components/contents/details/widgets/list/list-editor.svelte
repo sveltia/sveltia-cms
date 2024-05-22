@@ -105,6 +105,12 @@
       ),
     )[fieldName] ?? [];
 
+  $: itemExpanderStates = items.map((_item, index) => {
+    const key = `${keyPath}.${index}`;
+
+    return [key, !!expanderStates._[key]];
+  });
+
   let mounted = false;
   let widgetId = '';
   let inputValue = '';
@@ -297,10 +303,32 @@
         {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
       </div>
       <Spacer flex />
-      {#if allowAdd && (addToTop || !items.length)}
-        <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
+      {#if parentExpanded && items.length > 1}
+        <Button
+          variant="tertiary"
+          size="small"
+          label={$_('expand_all')}
+          disabled={itemExpanderStates.every(([, value]) => value)}
+          on:click={() => {
+            syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])));
+          }}
+        />
+        <Button
+          variant="tertiary"
+          size="small"
+          label={$_('collapse_all')}
+          disabled={itemExpanderStates.every(([, value]) => !value)}
+          on:click={() => {
+            syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])));
+          }}
+        />
       {/if}
     </div>
+    {#if parentExpanded && allowAdd && (addToTop || !items.length)}
+      <div role="none" class="toolbar top">
+        <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
+      </div>
+    {/if}
     <div
       role="none"
       id="list-{widgetId}-item-list"
@@ -385,7 +413,7 @@
         </div>
       {/each}
     </div>
-    {#if allowAdd && !addToTop && items.length}
+    {#if parentExpanded && allowAdd && !addToTop && items.length}
       <div role="none" class="toolbar bottom">
         <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
         <Spacer flex />
@@ -410,7 +438,12 @@
   .toolbar {
     display: flex;
     align-items: center;
-    gap: 8px;
+  }
+
+  .summary {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .item-list {
@@ -426,10 +459,11 @@
     border-radius: var(--sui-control-medium-border-radius);
 
     .summary {
-      overflow: hidden;
       padding: 8px;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+
+      &:empty {
+        display: none;
+      }
     }
   }
 </style>
