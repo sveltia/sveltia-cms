@@ -140,26 +140,41 @@
     }
   };
 
-  $: {
-    // Restore `file` after a draft backup is restored
-    if (currentValue?.startsWith('blob:') && !file) {
-      file = /** @type {EntryDraft} */ ($entryDraft).files[locale][keyPath];
-    }
-  }
+  /**
+   * Update a couple of properties when {@link currentValue} is updated.
+   */
+  const updateProps = async () => {
+    console.info(currentValue, asset);
 
-  $: (async () => {
+    // Restore `file` after a draft backup is restored
+    if (currentValue?.startsWith('blob:') && $entryDraft) {
+      file = $entryDraft.files[locale][keyPath];
+    }
+
+    // Remove `file` after the value is removed
+    if (!currentValue) {
+      file = undefined;
+      asset = undefined;
+    }
+
+    // Update the `src` when an asset is selected
     src =
       isImageWidget && currentValue
         ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry, { thumbnail: true })
         : undefined;
-  })();
+  };
+
+  $: {
+    void currentValue;
+    updateProps();
+  }
 </script>
 
 <div role="none" class="image-widget">
-  {#if asset}
-    <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
-  {:else if src}
+  {#if src}
     <Image {src} variant="tile" checkerboard={true} />
+  {:else if asset}
+    <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
   {/if}
   <div role="none">
     {#if typeof currentValue === 'string'}

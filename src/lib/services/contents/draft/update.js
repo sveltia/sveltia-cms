@@ -1,7 +1,6 @@
-import { toRaw } from '@sveltia/utils/object';
 import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
-import { entryDraft } from '$lib/services/contents/draft';
+import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { createProxy, getDefaultValues } from '$lib/services/contents/draft/create';
 import { copyFromLocaleToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
@@ -9,11 +8,24 @@ import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/prefs';
 
 /**
- * Unproxify & unflatten the given object.
- * @param {Proxy | object} obj - Original proxy or object.
- * @returns {object} Processed object.
+ * Update a flatten object with new properties by adding, updating and deleting properties.
+ * @param {Record<string, any>} obj - Original object.
+ * @param {Record<string, any>} newProps - New properties.
  */
-const unflattenObj = (obj) => unflatten(toRaw(obj));
+const updateObject = (obj, newProps) => {
+  Object.entries(newProps).forEach(([key, value]) => {
+    if (obj[key] !== value) {
+      obj[key] = value;
+    }
+  });
+
+  Object.keys(obj).forEach((key) => {
+    if (!(key in newProps)) {
+      delete obj[key];
+    }
+  });
+};
+
 /**
  * Traverse the given object by decoding dot-notated key path.
  * @param {any} obj - Unflatten object.
@@ -39,39 +51,36 @@ const getItemList = (obj, keyPath) =>
  * Update the value in a list field.
  * @param {LocaleCode} locale - Target locale.
  * @param {FieldKeyPath} keyPath - Dot-notated field name.
- * @param {(arg: { valueList: object[], expanderStateList: boolean[] }) => void} manipulate - A
- * function to manipulate the list, which takes one object argument containing the value list and
- * view state list. The typical usage is `list.splice()`.
+ * @param {(arg: { valueList: any[], fileList: any[], expanderStateList: boolean[] }) =>
+ * void } manipulate - A function to manipulate the list, which takes one object argument containing
+ * the value list, file list and view state list. The typical usage is `list.splice()`.
  */
 export const updateListField = (locale, keyPath, manipulate) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
-  const currentValues = unflattenObj(draft.currentValues[locale]);
-  const expanderStates = unflattenObj(draft.expanderStates._);
+  const currentValues = unflatten(draft.currentValues[locale]);
+  const files = unflatten(draft.files[locale]);
+  const expanderStates = unflatten(draft.expanderStates._);
 
   manipulate({
     valueList: getItemList(currentValues, keyPath),
+    fileList: getItemList(files, keyPath),
     // Manipulation should only happen once with the default locale
     expanderStateList: locale === defaultLocale ? getItemList(expanderStates, keyPath) : [],
   });
 
-  /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
-    ..._draft,
-    currentValues: {
-      ..._draft.currentValues,
-      // Flatten & proxify the object again
-      [locale]: createProxy({
-        draft: _draft,
-        locale,
-        target: flatten(currentValues),
-      }),
-    },
-    expanderStates: {
-      ..._draft.expanderStates,
-      _: flatten(expanderStates),
-    },
-  }));
+  i18nAutoDupEnabled.set(false);
+
+  /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
+    updateObject(_draft.currentValues[locale], flatten(currentValues));
+    updateObject(_draft.files[locale], flatten(files));
+    updateObject(_draft.expanderStates._, flatten(expanderStates));
+
+    return _draft;
+  });
+
+  i18nAutoDupEnabled.set(true);
 };
 
 /**

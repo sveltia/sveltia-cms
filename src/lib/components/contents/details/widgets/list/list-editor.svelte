@@ -6,7 +6,6 @@
 <script>
   import { Button, Group, Icon, Spacer, TextInput } from '@sveltia/ui';
   import { generateUUID } from '@sveltia/utils/crypto';
-  import { waitForVisibility } from '@sveltia/utils/element';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import { onMount } from 'svelte';
@@ -108,14 +107,12 @@
   $: itemExpanderStates = items.map((_item, index) => {
     const key = `${keyPath}.${index}`;
 
-    return [key, !!expanderStates._[key]];
+    return [key, expanderStates._[key] ?? true];
   });
 
   let mounted = false;
   let widgetId = '';
   let inputValue = '';
-  /** @type {HTMLElement[]} */
-  const wrappers = [];
 
   onMount(() => {
     mounted = true;
@@ -171,8 +168,8 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   * @param {(arg: { valueList: object[], expanderStateList: boolean[] }) => void} manipulate - See
-   * {@link updateListField}.
+   * @param {(arg: { valueList: any[], fileList: any[], expanderStateList: boolean[] }) =>
+   * void} manipulate - See {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
     Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
@@ -189,7 +186,7 @@
    * @see https://decapcms.org/docs/variable-type-widgets/
    */
   const addItem = (typeName) => {
-    updateComplexList(({ valueList, expanderStateList }) => {
+    updateComplexList(({ valueList, fileList, expanderStateList }) => {
       const subFields = typeName
         ? types?.find(({ name }) => name === typeName)?.fields ?? []
         : fields ?? (field ? [field] : []);
@@ -201,6 +198,7 @@
       }
 
       valueList.splice(index, 0, hasSingleSubField && field ? newItem[field.name] : newItem);
+      fileList.splice(index, 0, hasSingleSubField && field ? null : {});
       expanderStateList.splice(index, 0, true);
     });
   };
@@ -210,8 +208,9 @@
    * @param {number} index - Target index.
    */
   const removeItem = (index) => {
-    updateComplexList(({ valueList, expanderStateList }) => {
+    updateComplexList(({ valueList, fileList, expanderStateList }) => {
       valueList.splice(index, 1);
+      fileList.splice(index, 1);
       expanderStateList.splice(index, 1);
     });
   };
@@ -221,8 +220,9 @@
    * @param {number} index - Target index.
    */
   const moveUpItem = (index) => {
-    updateComplexList(({ valueList, expanderStateList }) => {
+    updateComplexList(({ valueList, fileList, expanderStateList }) => {
       [valueList[index], valueList[index - 1]] = [valueList[index - 1], valueList[index]];
+      [fileList[index], fileList[index - 1]] = [fileList[index - 1], fileList[index]];
       [expanderStateList[index], expanderStateList[index - 1]] = [
         expanderStateList[index - 1],
         expanderStateList[index],
@@ -235,8 +235,9 @@
    * @param {number} index - Target index.
    */
   const moveDownItem = (index) => {
-    updateComplexList(({ valueList, expanderStateList }) => {
+    updateComplexList(({ valueList, fileList, expanderStateList }) => {
       [valueList[index], valueList[index + 1]] = [valueList[index + 1], valueList[index]];
+      [fileList[index], fileList[index + 1]] = [fileList[index + 1], fileList[index]];
       [expanderStateList[index], expanderStateList[index + 1]] = [
         expanderStateList[index + 1],
         expanderStateList[index],
@@ -337,7 +338,7 @@
     >
       {#each items as item, index}
         {@const expandedKeyPath = `${keyPath}.${index}`}
-        {@const expanded = !!expanderStates?._[expandedKeyPath]}
+        {@const expanded = expanderStates?._[expandedKeyPath] ?? true}
         {@const typeConfig = hasVariableTypes
           ? types?.find(({ name }) => name === item[typeKey])
           : undefined}
@@ -386,29 +387,22 @@
               </Button>
             </svelte:fragment>
           </ObjectHeader>
-          <div
-            role="none"
-            class="item-body"
-            id="list-{widgetId}-item-{index}-body"
-            bind:this={wrappers[index]}
-          >
-            {#await waitForVisibility(wrappers[index]) then}
-              {#if expanded}
-                {#each subFields as subField (subField.name)}
-                  <FieldEditor
-                    keyPath={hasSingleSubField
-                      ? `${keyPath}.${index}`
-                      : `${keyPath}.${index}.${subField.name}`}
-                    {locale}
-                    fieldConfig={subField}
-                  />
-                {/each}
-              {:else}
-                <div role="none" class="summary">
-                  {formatSummary(item, index, summaryTemplate)}
-                </div>
-              {/if}
-            {/await}
+          <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
+            {#if expanded}
+              {#each subFields as subField (subField.name)}
+                <FieldEditor
+                  keyPath={hasSingleSubField
+                    ? `${keyPath}.${index}`
+                    : `${keyPath}.${index}.${subField.name}`}
+                  {locale}
+                  fieldConfig={subField}
+                />
+              {/each}
+            {:else}
+              <div role="none" class="summary">
+                {formatSummary(item, index, summaryTemplate)}
+              </div>
+            {/if}
           </div>
         </div>
       {/each}
