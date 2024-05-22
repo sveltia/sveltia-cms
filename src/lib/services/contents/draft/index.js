@@ -6,10 +6,10 @@ import { prefs } from '$lib/services/prefs';
  */
 export const entryDraft = writable();
 /**
- * Whether to enable the i18n duplication in proxies in {@link entryDraft}. This can be temporarily
- * disabled for performance when doing a mass copy.
+ * Whether to enable automatic i18n duplication in proxies in {@link entryDraft}. This can be
+ * temporarily disabled for performance reasons when making large changes to the values.
  */
-export const i18nDuplicationEnabled = writable(true);
+export const i18nAutoDupEnabled = writable(true);
 
 entryDraft.subscribe((draft) => {
   if (get(prefs).devModeEnabled) {

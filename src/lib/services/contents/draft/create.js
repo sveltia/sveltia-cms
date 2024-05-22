@@ -4,7 +4,7 @@ import { flatten } from 'flat';
 import { get } from 'svelte/store';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
 import { getCollection } from '$lib/services/contents';
-import { entryDraft, i18nDuplicationEnabled } from '$lib/services/contents/draft';
+import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
@@ -247,7 +247,7 @@ export const createProxy = ({
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
       // Just save the given value in some cases
-      if ([canonicalSlugKey].includes(keyPath) || !get(i18nDuplicationEnabled)) {
+      if ([canonicalSlugKey].includes(keyPath) || !get(i18nAutoDupEnabled)) {
         return Reflect.set(obj, keyPath, value);
       }
 

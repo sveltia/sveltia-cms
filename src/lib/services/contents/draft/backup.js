@@ -2,7 +2,7 @@ import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
-import { entryDraft, i18nDuplicationEnabled } from '$lib/services/contents/draft';
+import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { siteConfigVersion } from '$lib/services/config';
 import { backend } from '$lib/services/backends';
 
@@ -130,7 +130,7 @@ export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
   });
 
   if (doRestore) {
-    i18nDuplicationEnabled.set(false);
+    i18nAutoDupEnabled.set(false);
 
     entryDraft.update((draft) => {
       if (draft) {
@@ -151,7 +151,7 @@ export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
       return draft;
     });
 
-    i18nDuplicationEnabled.set(true);
+    i18nAutoDupEnabled.set(true);
   } else {
     await deleteBackup(collectionName, slug);
   }
