@@ -39,7 +39,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Compatible with Netlify/Decap CMS
 
-- Ready to replace Netlify/Decap CMS _in some casual use case scenarios_ by updating a single line of code.
+- Ready to be used as a drop-in replacement for Netlify/Decap CMS _in some casual use case scenarios_ with a single line of code update.
 - Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
 - Various features are still missing though — look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
 
@@ -189,11 +189,11 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
   - `slug` can be used for `value_field` to show all available options instead of just one in some situations[^91].
   - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`[^94].
-  - `display_fields` is displayed in the Preview page instead of `value_field`.
+  - `display_fields` is displayed in the Preview pane instead of `value_field`.
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
 - Select
   - It’s possible to select an option with value `0`[^56].
-  - `label` is displayed in the Preview page instead of `value`.
+  - `label` is displayed in the Preview pane instead of `value`.
 - String
   - When a YouTube video URL is entered in a String field, it appears as an embedded video in the Preview pane.
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
