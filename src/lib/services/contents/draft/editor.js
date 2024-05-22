@@ -17,6 +17,10 @@ export const showContentOverlay = writable(false);
  */
 export const showDuplicateToast = writable(false);
 /**
+ * @type {import('svelte/store').Writable<{ show: boolean, multiple: boolean, resolve?: Function }>}
+ */
+export const translatorApiKeyDialogState = writable({ show: false, multiple: false });
+/**
  * Copy/translation toast state.
  * @type {import('svelte/store').Writable<{
  * id: number | undefined,

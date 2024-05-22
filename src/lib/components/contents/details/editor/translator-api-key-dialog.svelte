@@ -2,13 +2,11 @@
   import { PromptDialog } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
-  import { showContentOverlay } from '$lib/services/contents/draft/editor';
-  import { copyFromLocale } from '$lib/services/contents/draft/update';
   import {
-    pendingTranslatorRequest,
-    showTranslatorApiKeyDialog,
-    translator,
-  } from '$lib/services/integrations/translators';
+    showContentOverlay,
+    translatorApiKeyDialogState,
+  } from '$lib/services/contents/draft/editor';
+  import { translator } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/prefs';
 
   $: ({ serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } =
@@ -16,20 +14,15 @@
 
   $: {
     if (!$showContentOverlay) {
-      $showTranslatorApiKeyDialog = false;
+      $translatorApiKeyDialogState.show = false;
     }
   }
 </script>
 
 <PromptDialog
-  title={$_('prefs.languages.translator.field_label', {
-    values: { service: serviceLabel },
-  })}
-  bind:open={$showTranslatorApiKeyDialog}
+  bind:open={$translatorApiKeyDialogState.show}
+  title={$_($translatorApiKeyDialogState.multiple ? 'translate_fields' : 'translate_field')}
   showOk={false}
-  on:cancel={() => {
-    $pendingTranslatorRequest = undefined;
-  }}
   textboxAttrs={{ spellcheck: false, 'aria-label': $_('api_key') }}
   on:input={(event) => {
     const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
@@ -37,13 +30,12 @@
     if (apiKeyPattern && _value.match(apiKeyPattern)) {
       $prefs.apiKeys ??= {};
       $prefs.apiKeys[serviceId] = _value;
-      $showTranslatorApiKeyDialog = false;
-
-      if ($pendingTranslatorRequest) {
-        copyFromLocale(...$pendingTranslatorRequest);
-        $pendingTranslatorRequest = undefined;
-      }
+      $translatorApiKeyDialogState.show = false;
+      $translatorApiKeyDialogState.resolve?.(_value);
     }
+  }}
+  on:cancel={() => {
+    $translatorApiKeyDialogState.resolve?.();
   }}
 >
   {@html DOMPurify.sanitize(

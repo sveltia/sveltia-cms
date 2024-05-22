@@ -14,6 +14,7 @@
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
+  import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -36,9 +37,6 @@
    * @type {import('svelte/store').Writable<?EntryEditorPane>}
    */
   export let thatPane = writable(null);
-
-  /** @type {MenuButton} */
-  let menuButton;
 
   $: ({ editor: { preview: showPreviewPane = true } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
@@ -117,12 +115,14 @@
     <Spacer flex />
     {#if $thisPane?.mode === 'edit'}
       {@const localeLabel = getLocaleLabel($thisPane?.locale)}
+      {#if canCopy}
+        <TranslateButton locale={$thisPane?.locale} {otherLocales} />
+      {/if}
       <MenuButton
         variant="ghost"
         iconic
         popupPosition="bottom-right"
         aria-label={$_('show_content_options_x_locale', { values: { locale: localeLabel } })}
-        bind:this={menuButton}
       >
         <Icon slot="start-icon" name="more_vert" />
         <Menu
@@ -130,11 +130,7 @@
           aria-label={$_('content_options_x_locale', { values: { locale: localeLabel } })}
         >
           {#if canCopy}
-            <CopyMenuItems anchor={menuButton} locale={$thisPane?.locale} translate={true} />
-            {#if otherLocales.length > 1}
-              <Divider />
-            {/if}
-            <CopyMenuItems anchor={menuButton} locale={$thisPane?.locale} />
+            <CopyMenuItems locale={$thisPane?.locale} {otherLocales} />
           {/if}
           <MenuItem
             label={$_('revert_changes')}

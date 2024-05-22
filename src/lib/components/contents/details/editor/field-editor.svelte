@@ -1,5 +1,5 @@
 <script>
-  import { Divider, Icon, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
+  import { Icon, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
   import { generateElementId } from '@sveltia/utils/element';
   import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
@@ -12,6 +12,7 @@
   import { revertChanges } from '$lib/services/contents/draft/update';
   import { entryDraft } from '$lib/services/contents/draft';
   import { editors } from '$lib/components/contents/details/widgets';
+  import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
 
   /**
@@ -44,9 +45,6 @@
   const extraHint = writable();
 
   setContext('field-editor', { extraHint });
-
-  /** @type {MenuButton} */
-  let menuButton;
 
   $: ({
     name: fieldName,
@@ -130,6 +128,9 @@
         <div class="required" aria-label={$_('required')}>*</div>
       {/if}
       <Spacer flex />
+      {#if canCopy && ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
+        <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
+      {/if}
       {#if canCopy || canRevert}
         <MenuButton
           variant="ghost"
@@ -137,21 +138,11 @@
           iconic
           popupPosition="bottom-right"
           aria-label={$_('show_field_options')}
-          bind:this={menuButton}
         >
           <Icon slot="start-icon" name="more_vert" />
           <Menu slot="popup" aria-label={$_('field_options')}>
             {#if canCopy}
-              {#if ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
-                <CopyMenuItems anchor={menuButton} {keyPath} {locale} translate={true} />
-                {#if otherLocales.length > 1}
-                  <Divider />
-                {/if}
-              {/if}
-              <CopyMenuItems anchor={menuButton} {keyPath} {locale} />
-            {/if}
-            {#if canCopy && canRevert}
-              <Divider />
+              <CopyMenuItems {locale} {otherLocales} {keyPath} />
             {/if}
             {#if canRevert}
               <MenuItem
@@ -332,7 +323,6 @@
   header {
     display: flex;
     align-items: center;
-    gap: 8px;
     margin-bottom: 8px;
 
     h4 {
@@ -342,7 +332,7 @@
     }
 
     .required {
-      margin: 2px 0 0 -4px;
+      margin: 2px 0 0 2px;
       color: var(--sui-error-foreground-color);
       font-size: var(--sui-font-size-large);
     }

@@ -2,7 +2,10 @@ import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { createProxy, getDefaultValues } from '$lib/services/contents/draft/create';
-import { copyFromLocaleToast } from '$lib/services/contents/draft/editor';
+import {
+  copyFromLocaleToast,
+  translatorApiKeyDialogState,
+} from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/prefs';
@@ -168,16 +171,16 @@ export const toggleLocale = (locale) => {
  * Copy or translate field value(s) from another locale.
  * @param {LocaleCode} sourceLocale - Source locale, e.g. `en`.
  * @param {LocaleCode} targetLocale - Target locale, e.g. `ja`.
- * @param {FieldKeyPath} [keyPath] - Flattened (dot-notated) object keys that will be used for
- * searching the source values. Omit this if copying all the fields. If the triggered widget is List
- * or Object, this will likely match multiple fields.
- * @param {boolean} [translate] - Whether to translate the copied text fields.
+ * @param {object} [options] - Options.
+ * @param {FieldKeyPath} [options.keyPath] - Flattened (dot-notated) object keys that will be used
+ * for searching the source values. Omit this if copying all the fields. If the triggered widget is
+ * List or Object, this will likely match multiple fields.
+ * @param {boolean} [options.translate] - Whether to translate the copied text fields.
  */
 export const copyFromLocale = async (
   sourceLocale,
   targetLocale,
-  keyPath = '',
-  translate = false,
+  { keyPath = '', translate = false } = {},
 ) => {
   const { collectionName, fileName, currentValues } = /** @type {EntryDraft} */ (get(entryDraft));
   const valueMap = currentValues[sourceLocale];
@@ -227,17 +230,22 @@ export const copyFromLocale = async (
   }
 
   if (translate) {
-    const apiKey = get(prefs).apiKeys?.[get(translator)?.serviceId];
+    const _translator = get(translator);
+    const apiKey =
+      get(prefs).apiKeys?.[_translator.serviceId] ||
+      (await new Promise((resolve) => {
+        // The promise will be resolved once the user enters an API key on the dialog
+        translatorApiKeyDialogState.set({ show: true, multiple: count > 1, resolve });
+      }));
 
     if (!apiKey) {
-      // This shouldn’t happen because the API key dialog will show up in advance
       return;
     }
 
     updateToast('info', 'translation.started');
 
     try {
-      const translatedValues = await get(translator).translate(Object.values(copingFields), {
+      const translatedValues = await _translator.translate(Object.values(copingFields), {
         apiKey,
         sourceLocale,
         targetLocale,
