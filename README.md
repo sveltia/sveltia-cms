@@ -22,7 +22,7 @@ Our goal is to make it a viable successor to Netlify CMS, expand the Git-based h
 
 ## Development status
 
-**Sveltia CMS is still in beta**, so please be careful when trying it out.
+Sveltia CMS is **still in beta**, so please be careful when trying it out.
 
 While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
@@ -171,6 +171,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Hidden
   - The `default` value is saved when you create a file collection item, not just a folder collection item[^78].
 - List
+  - The Add Item button appears at the bottom of the list when the `add_to_top` option is not `true`, so you don’t have to scroll up each time to add new items.
+  - You can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once.
   - A required List field with no subfield or value is marked as invalid[^43].
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing[^44].
   - You can enter spaces in a simple text-based List field[^50].
@@ -369,7 +371,7 @@ Depending on your server or framework’s configuration, when you access the CMS
 - Rename `/admin/index.html` to `/admin/cms.html`, and access `/admin/cms`
 - [Specify the configuration file path](https://decapcms.org/docs/configuration-options/#configuration-file) with a `<link>` tag in `/admin/index.html`:
   ```html
-  <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
+  <link href="/admin/config.yml" type="application/yaml" rel="cms-config-url" />
   ```
 
 ### Providing a JSON configuration file
@@ -694,7 +696,7 @@ img-src 'self' blob: data: https://*;
 
 Visit the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page on this GitHub repository and start a new discussion. Tell us about your use cases!
 
-Want to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements.
+Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements. Feel free to reach out!
 
 ## Contributions
 
@@ -702,7 +704,7 @@ Since Sveltia CMS is still in beta, we expect various problems. Please [report a
 
 Tips are always welcome! The project hasn’t set up a sponsorship program, but maintainer [@kyoshino](https://github.com/kyoshino) has a [PayPal account](https://paypal.me/kohei).
 
-Last but not least, don’t forget to star this project and spread the word so more users can benefit from the app!
+Last but not least, don’t forget to star this project and spread the word so more users can benefit from a better CMS experience!
 
 ## Related links
 
