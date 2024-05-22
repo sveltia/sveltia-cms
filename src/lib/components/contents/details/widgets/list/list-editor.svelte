@@ -254,7 +254,13 @@
    */
   const formatSummary = (item, index, summaryTemplate) => {
     if (!summaryTemplate) {
-      return item.title || item.name || '';
+      return (
+        item.title ||
+        item.name ||
+        // Use the first string-type field value, if available
+        Object.values(item).find((value) => typeof value === 'string' && !!value) ||
+        ''
+      );
     }
 
     return summaryTemplate.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {

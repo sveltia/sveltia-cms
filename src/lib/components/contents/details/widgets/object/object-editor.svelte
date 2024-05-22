@@ -170,7 +170,15 @@
    */
   const formatSummary = () => {
     if (!summaryTemplate) {
-      return valueMap[`${keyPath}.title`] ?? valueMap[`${keyPath}.name`] ?? '';
+      return (
+        valueMap[`${keyPath}.title`] ||
+        valueMap[`${keyPath}.name`] ||
+        // Use the first string-type field value, if available
+        Object.entries(valueMap).find(
+          ([key, value]) => key.startsWith(`${keyPath}.`) && typeof value === 'string' && !!value,
+        )?.[1] ||
+        ''
+      );
     }
 
     return summaryTemplate.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {
