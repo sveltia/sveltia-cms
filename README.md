@@ -28,7 +28,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far 90+ of them have been effectively solved in Sveltia CMS, with the goal of solving 125 by GA
+  - So far 95+ of them have been effectively solved in Sveltia CMS, with the goal of solving 125 by GA
 - Responding to user feedback
 - Implementing our own enhancement ideas
 
@@ -126,6 +126,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
 - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
 - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
+- The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
 
 ### Better collections
 
@@ -820,4 +821,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^95]: Netlify/Decap CMS [#4417](https://github.com/decaporg/decap-cms/issues/4417)
 [^96]: Netlify/Decap CMS [#962](https://github.com/decaporg/decap-cms/issues/962)
 [^97]: Netlify/Decap CMS [#4288](https://github.com/decaporg/decap-cms/issues/4288)
+[^98]: Netlify/Decap CMS [#3856](https://github.com/decaporg/decap-cms/issues/3856)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
