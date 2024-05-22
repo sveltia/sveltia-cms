@@ -144,8 +144,6 @@
    * Update a couple of properties when {@link currentValue} is updated.
    */
   const updateProps = async () => {
-    console.info(currentValue, asset);
-
     // Restore `file` after a draft backup is restored
     if (currentValue?.startsWith('blob:') && $entryDraft) {
       file = $entryDraft.files[locale][keyPath];
