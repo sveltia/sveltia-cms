@@ -27,7 +27,8 @@ Sveltia CMS is **still in beta**, so please be careful when trying it out.
 While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
-- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible (so far 90+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 100 by GA)
+- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
+  - So far 90+ of them have been effectively solved in Sveltia CMS, with the goal of solving 125 (or 25% of 500+ open issues) by GA
 - Responding to user feedback
 - Implementing our own enhancement ideas
 
@@ -138,7 +139,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
 - You can use Markdown in collection descriptions[^79]. Bold, italic, strikethrough, code and links are allowed.
 - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
-- The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because these preset files should not be deleted.
+- The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
 - A folder collection filter with a boolean value works as expected[^93].
 
 ### Better content editing
@@ -249,6 +250,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
 - Hidden files (dot files) don’t appear in the Asset Library[^47].
 - You can add assets using the Quick Add button in the upper right corner of the application.
+- Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens[^97].
 
 ## Compatibility
 
@@ -817,4 +819,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^94]: Netlify/Decap CMS [#5487](https://github.com/decaporg/decap-cms/issues/5487)
 [^95]: Netlify/Decap CMS [#4417](https://github.com/decaporg/decap-cms/issues/4417)
 [^96]: Netlify/Decap CMS [#962](https://github.com/decaporg/decap-cms/issues/962)
+[^97]: Netlify/Decap CMS [#4288](https://github.com/decaporg/decap-cms/issues/4288)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
