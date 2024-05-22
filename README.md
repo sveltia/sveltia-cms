@@ -100,7 +100,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better backend support
 
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
-- The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^27].
+- The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^95][^27].
 - You can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub. Checks are performed frequently and an incident notification is displayed prominently for both services.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
@@ -231,7 +231,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better asset management
 
-- A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.
+- A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents[^96].
   - Navigate between the global media folder and per-collection media folders[^6].
   - Preview image, audio, video, text and PDF files.
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
@@ -411,7 +411,9 @@ You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](htt
 1. Open the dev site at `http://localhost:[port]/` to check the rendered pages.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
-Remember that the local repository support doesn’t do any Git operation. You have to fetch, pull, commit and push all changes manually with a Git client. Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates (this will be unnecessary once browsers support the proposed `FileSystemObserver` API).
+Keep in mind that the local repository support doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the near future, we’ll figure out if there’s a way to do this in a browser (because `netlify-cms-proxy-server` actually has undocumented `git` mode that allows developers to create commits to a local repository).
+
+Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates. This will be unnecessary once browsers support the proposed `FileSystemObserver` API.
 
 ### Using a custom icon for a collection
 
@@ -727,7 +729,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^6]: Netlify/Decap CMS [#3240](https://github.com/decaporg/decap-cms/issues/3240)
 [^7]: Netlify/Decap CMS [#4386](https://github.com/decaporg/decap-cms/issues/4386)
 [^8]: Netlify/Decap CMS [#2579](https://github.com/decaporg/decap-cms/issues/2579)
-[^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505)
+[^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505), [#4211](https://github.com/decaporg/decap-cms/issues/4211)
 [^10]: Netlify/Decap CMS [#341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
 [^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382)
 [^12]: Netlify/Decap CMS [#1975](https://github.com/decaporg/decap-cms/issues/1975), [#3712](https://github.com/decaporg/decap-cms/issues/3712)
@@ -746,7 +748,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^25]: Netlify/Decap CMS [#526](https://github.com/decaporg/decap-cms/issues/526), [#6987](https://github.com/decaporg/decap-cms/issues/6987)
 [^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285)
 [^27]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/5617)
-[^28]: Netlify/Decap CMS [#6836](https://github.com/decaporg/decap-cms/pull/6836)
+[^28]: Netlify/Decap CMS [#2677](https://github.com/decaporg/decap-cms/pull/2677), [#6836](https://github.com/decaporg/decap-cms/pull/6836)
 [^29]: Netlify/Decap CMS [#4783](https://github.com/decaporg/decap-cms/issues/4783)
 [^30]: Netlify/Decap CMS [#565](https://github.com/decaporg/decap-cms/issues/565)
 [^31]: Netlify/Decap CMS [#1045](https://github.com/decaporg/decap-cms/issues/1045)
@@ -761,7 +763,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^40]: Netlify/Decap CMS [#5630](https://github.com/decaporg/decap-cms/issues/5630)
 [^41]: Netlify/Decap CMS [#7011](https://github.com/decaporg/decap-cms/issues/7011)
 [^42]: Netlify/Decap CMS [#2307](https://github.com/decaporg/decap-cms/issues/2307)
-[^43]: Netlify/Decap CMS [#5381](https://github.com/decaporg/decap-cms/issues/5381)
+[^43]: Netlify/Decap CMS [#4387](https://github.com/decaporg/decap-cms/issues/4387), [#5381](https://github.com/decaporg/decap-cms/issues/5381)
 [^44]: Netlify/Decap CMS [#2613](https://github.com/decaporg/decap-cms/issues/2613)
 [^45]: Netlify/Decap CMS [#1424](https://github.com/decaporg/decap-cms/issues/1424)
 [^46]: Netlify/Decap CMS [#4726](https://github.com/decaporg/decap-cms/issues/4726)
@@ -779,7 +781,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^58]: Netlify/Decap CMS [#5125](https://github.com/decaporg/decap-cms/issues/5125)
 [^59]: Netlify/Decap CMS [#1654](https://github.com/decaporg/decap-cms/issues/1654)
 [^60]: Netlify/Decap CMS [#386](https://github.com/decaporg/decap-cms/issues/386)
-[^61]: Netlify/Decap CMS [#1489](https://github.com/decaporg/decap-cms/issues/1489)
+[^61]: Netlify/Decap CMS [#1489](https://github.com/decaporg/decap-cms/issues/1489), [#5838](https://github.com/decaporg/decap-cms/issues/5838)
 [^62]: Netlify/Decap CMS [#7192](https://github.com/decaporg/decap-cms/issues/7192)
 [^63]: Netlify/Decap CMS [#4877](https://github.com/decaporg/decap-cms/issues/4877)
 [^64]: Netlify/Decap CMS [#3853](https://github.com/decaporg/decap-cms/issues/3853)
@@ -813,4 +815,6 @@ This software is provided “as is” without any express or implied warranty. W
 [^92]: Netlify/Decap CMS [#1466](https://github.com/decaporg/decap-cms/issues/1466)
 [^93]: Netlify/Decap CMS [#1000](https://github.com/decaporg/decap-cms/issues/1000)
 [^94]: Netlify/Decap CMS [#5487](https://github.com/decaporg/decap-cms/issues/5487)
+[^95]: Netlify/Decap CMS [#4417](https://github.com/decaporg/decap-cms/issues/4417)
+[^96]: Netlify/Decap CMS [#962](https://github.com/decaporg/decap-cms/issues/962)
 [^100]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
