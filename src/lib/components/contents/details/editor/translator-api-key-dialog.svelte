@@ -14,7 +14,9 @@
 
   $: {
     if (!$showContentOverlay) {
+      // Close the dialog when the Content Editor is closed
       $translatorApiKeyDialogState.show = false;
+      $translatorApiKeyDialogState.resolve?.();
     }
   }
 </script>
