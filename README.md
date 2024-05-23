@@ -28,7 +28,8 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far 95+ of them have been effectively solved in Sveltia CMS, with the goal of solving 125 by GA
+  - So far, 95+ of them have been effectively solved in Sveltia CMS, with the goal of solving 125 by GA and 200 in later releases.
+  - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have a specific issue you’d like us to fix!
 - Responding to user feedback
 - Implementing our own enhancement ideas
 
@@ -273,12 +274,12 @@ These limitations are expected to be resolved before GA:
 | Map | Not yet supported. |
 | Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
 
-If we have missed any other features, let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues).
+Missing other features? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
 
 ### Features not to be implemented
 
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
-- The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported due to performance limitations. We may implement a performant Git Gateway alternative in the future.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** due to performance limitations. We may implement a performant Git Gateway alternative in the future.
 - The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
