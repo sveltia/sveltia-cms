@@ -74,13 +74,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - The editor closes automatically when an entry is saved.
 - You can upload multiple assets at once[^5].
 - You can delete multiple entries and assets at once.
-- Some keyboard shortcuts are available for faster editing. More to come!
-  - View the Content Library: `Alt+1`
-  - View the Asset Library: `Alt+2`
-  - Search for entries and assets: `Ctrl+F` (Windows/Linux) or `Command+F` (macOS)
-  - Create a new entry: `Ctrl+E` (Windows/Linux) or `Command+E` (macOS)
-  - Save an entry: `Ctrl+S` (Windows/Linux) or `Command+S` (macOS)
-  - Cancel entry editing: `Escape`
+- Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
 
 ### Better accessibility
@@ -473,16 +467,32 @@ Rather, if you’d like to add all the media files for a collection in one singl
 
 In Sveltia CMS, those per-collection media folders are displayed prominently for easier asset management.
 
+### Using keyboard shortcuts
+
+- View the Content Library: `Alt+1`
+- View the Asset Library: `Alt+2`
+- Search for entries and assets: `Ctrl+F` (Windows/Linux) or `Command+F` (macOS)
+- Create a new entry: `Ctrl+E` (Windows/Linux) or `Command+E` (macOS)
+- Save an entry: `Ctrl+S` (Windows/Linux) or `Command+S` (macOS)
+- Cancel entry editing: `Escape`
+
 ### Using DeepL to translate entry fields
 
 Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the content editor. To enable the high-quality, quick translation feature:
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
-1. Go back to Sveltia CMS, click on the Account button in the top right corner, then click Settings.
-1. Paste your key to the DeepL API Authentication Key field, and close the Settings dialog.
-1. Open any entry, and you can now translate all fields or individual fields by selecting Translate from the three-dot menu.
-1. If you have upgraded to DeepL API Pro, provide your new Authentication Key in the same way.
+1. Open an entry in Sveltia CMS.
+1. Click on the Translation button on the header or each field, right next to the 3-dot menu.
+1. Paste your key when prompted.
+1. The field(s) will be automatically translated.
+
+If you have upgraded to DeepL API Pro, provide your new Authentication Key:
+
+1. Click the Account button in the upper right corner, then click Settings.
+1. Select the Language tab.
+1. Paste your key to the DeepL API Authentication Key field.
+1. Close the Settings dialog.
 
 ### Localizing entry slugs
 
