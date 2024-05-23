@@ -89,7 +89,7 @@
   $: canonicalLocale = getCanonicalLocale(locale);
   $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
   $: parentExpandedKeyPath = `${keyPath}#`;
-  $: parentExpanded = !!expanderStates?._[parentExpandedKeyPath];
+  $: parentExpanded = expanderStates?._[parentExpandedKeyPath] ?? true;
 
   /** @type {Record<string, any>[]} */
   $: items =

@@ -1,3 +1,4 @@
+import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
@@ -31,24 +32,21 @@ const updateObject = (obj, newProps) => {
 
 /**
  * Traverse the given object by decoding dot-notated key path.
- * @param {any} obj - Unflatten object.
+ * @param {any} obj - Original object.
  * @param {FieldKeyPath} keyPath - Dot-notated field name.
- * @returns {any[]} Values.
+ * @returns {[values: any, remainder: any]} Unflatten values and flatten remainder.
  */
-const getItemList = (obj, keyPath) =>
-  keyPath.split('.').reduce((_obj, key) => {
-    // @todo This avoids an error but behaves wrong; FIXME
-    if (typeof _obj === 'boolean') {
-      return [_obj];
-    }
+const getItemList = (obj, keyPath) => {
+  const regex = new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`);
+  const filtered = Object.entries(obj)
+    .filter(([k]) => k.match(regex))
+    .map(([k, v]) => [k.replace(regex, '_'), v]);
 
-    const _key = key.match(/^\d+$/) ? Number(key) : key;
-
-    // Create a new array when adding a new item
-    _obj[_key] ??= [];
-
-    return _obj[_key];
-  }, obj);
+  return [
+    unflatten(Object.fromEntries(filtered))._ ?? [],
+    Object.fromEntries(Object.entries(obj).filter(([k]) => !k.match(regex))),
+  ];
+};
 
 /**
  * Update the value in a list field.
@@ -62,23 +60,32 @@ export const updateListField = (locale, keyPath, manipulate) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
-  const currentValues = unflatten(draft.currentValues[locale]);
-  const files = unflatten(draft.files[locale]);
-  const expanderStates = unflatten(draft.expanderStates._);
-
-  manipulate({
-    valueList: getItemList(currentValues, keyPath),
-    fileList: getItemList(files, keyPath),
+  const [valueList, valueListRemainder] = getItemList(draft.currentValues[locale], keyPath);
+  const [fileList, fileListRemainder] = getItemList(draft.files[locale], keyPath);
+  const [expanderStateList, expanderStateListRemainder] =
     // Manipulation should only happen once with the default locale
-    expanderStateList: locale === defaultLocale ? getItemList(expanderStates, keyPath) : [],
-  });
+    locale === defaultLocale ? getItemList(draft.expanderStates._, keyPath) : [[], []];
+
+  manipulate({ valueList, fileList, expanderStateList });
 
   i18nAutoDupEnabled.set(false);
 
   /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-    updateObject(_draft.currentValues[locale], flatten(currentValues));
-    updateObject(_draft.files[locale], flatten(files));
-    updateObject(_draft.expanderStates._, flatten(expanderStates));
+    updateObject(_draft.currentValues[locale], {
+      ...flatten({ [keyPath]: valueList }),
+      ...valueListRemainder,
+    });
+    updateObject(_draft.files[locale], {
+      ...flatten({ [keyPath]: fileList }),
+      ...fileListRemainder,
+    });
+
+    if (locale === defaultLocale) {
+      updateObject(_draft.expanderStates._, {
+        ...flatten({ [keyPath]: expanderStateList }),
+        ...expanderStateListRemainder,
+      });
+    }
 
     return _draft;
   });

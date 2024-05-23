@@ -82,7 +82,7 @@
   $: canonicalLocale = getCanonicalLocale(locale);
   $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
   $: parentExpandedKeyPath = `${keyPath}#`;
-  $: parentExpanded = !!expanderStates?._[parentExpandedKeyPath];
+  $: parentExpanded = expanderStates?._[parentExpandedKeyPath] ?? true;
   $: hasVariableTypes = Array.isArray(types);
   $: typeKeyPath = `${keyPath}.${typeKey}`;
   $: typeConfig = hasVariableTypes
