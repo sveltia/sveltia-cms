@@ -185,17 +185,21 @@ export const copyFromLocale = async (
   const { collectionName, fileName, currentValues } = /** @type {EntryDraft} */ (get(entryDraft));
   const valueMap = currentValues[sourceLocale];
   const copingFields = Object.fromEntries(
-    Object.entries(valueMap).filter(([_keyPath, value]) => {
+    Object.entries(valueMap).filter(([_keyPath, sourceLocaleValue]) => {
+      const targetLocaleValue = currentValues[targetLocale][_keyPath];
       const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath });
 
-      // prettier-ignore
       if (
         (keyPath && !_keyPath.startsWith(keyPath)) ||
-        typeof value !== 'string' ||
+        typeof sourceLocaleValue !== 'string' ||
+        !sourceLocaleValue ||
         !['markdown', 'text', 'string', 'list'].includes(field?.widget ?? 'string') ||
+        // prettier-ignore
         (field?.widget === 'list' &&
           (/** @type {ListField} */ (field).field ?? /** @type {ListField} */ (field).fields)) ||
-        (!translate && value === currentValues[targetLocale][_keyPath])
+        (!translate && sourceLocaleValue === targetLocaleValue) ||
+        // Skip populated fields when translating all the fields
+        (!keyPath && translate && !!targetLocaleValue)
       ) {
         return false;
       }
