@@ -136,7 +136,7 @@ export const toggleLocale = (locale) => {
         _draft;
       const { fields = [], _i18n } = collectionFile ?? collection;
       const { defaultLocale } = _i18n;
-      const newContent = getDefaultValues(fields);
+      const newContent = getDefaultValues(fields, locale);
 
       return {
         ..._draft,

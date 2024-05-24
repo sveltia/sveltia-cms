@@ -122,7 +122,7 @@
 
     const newValueMap = copyDefaultLocaleValues(
       Object.fromEntries(
-        Object.entries(getDefaultValues(subFields)) //
+        Object.entries(getDefaultValues(subFields, locale)) //
           .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
       ),
     );

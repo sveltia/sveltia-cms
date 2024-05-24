@@ -90,12 +90,13 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
  * @param {Field[]} fields - Field list of a collection.
+ * @param {LocaleCode} locale - Locale.
  * @param {Record<string, string>} [dynamicValues] - Dynamic default values.
  * @returns {FlattenedEntryContent} Flattened entry content for creating a new draft content or
  * adding a new list item.
  * @todo Make this more diligent.
  */
-export const getDefaultValues = (fields, dynamicValues = {}) => {
+export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
   /** @type {FlattenedEntryContent} */
   const newContent = {};
 
@@ -195,6 +196,16 @@ export const getDefaultValues = (fields, dynamicValues = {}) => {
       newContent[keyPath] = prefix ? `${prefix}${value}` : value;
 
       return;
+    }
+
+    if (widgetName === 'hidden') {
+      if (typeof defaultValue === 'string') {
+        newContent[keyPath] = defaultValue
+          .replace('{{locale}}', locale)
+          .replace('{{datetime}}', new Date().toJSON().replace(/\d+\.\d+Z$/, '00.000Z'));
+
+        return;
+      }
     }
 
     newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
@@ -305,7 +316,6 @@ export const createDraft = (entry, dynamicValues) => {
   const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
   const { fields = [], _i18n } = collectionFile ?? collection;
   const { i18nEnabled, locales: allLocales } = _i18n;
-  const newContent = getDefaultValues(fields, dynamicValues);
   const enabledLocales = isNew
     ? allLocales
     : allLocales.filter((locale) => !!locales?.[locale]?.content);
@@ -316,7 +326,7 @@ export const createDraft = (entry, dynamicValues) => {
   const originalValues = Object.fromEntries(
     enabledLocales.map((locale) => [
       locale,
-      isNew ? newContent : flatten(locales?.[locale].content),
+      isNew ? getDefaultValues(fields, locale, dynamicValues) : flatten(locales?.[locale].content),
     ]),
   );
 
