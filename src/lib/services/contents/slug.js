@@ -1,3 +1,4 @@
+import transliterate from '@sindresorhus/transliterate';
 import { generateUUID } from '@sveltia/utils/crypto';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
@@ -89,8 +90,12 @@ export const normalizeSlug = (string) => {
   let slug = string;
 
   if (cleanAccents) {
-    // Remove any accent @see https://stackoverflow.com/q/990904
-    slug = slug.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    // Remove any accent after transliteration
+    // @see https://www.npmjs.com/package/@sindresorhus/transliterate
+    // @see https://stackoverflow.com/q/990904
+    slug = transliterate(slug)
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '');
   }
 
   if (encoding === 'ascii') {

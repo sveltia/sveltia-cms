@@ -49,6 +49,7 @@
     "vitest": "^1.6.0"
   },
   "dependencies": {
+    "@sindresorhus/transliterate": "^1.6.0",
     "@sveltia/ui": "^0.15.1",
     "@sveltia/utils": "^0.3.0",
     "deepmerge": "^4.3.1",
