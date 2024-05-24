@@ -122,7 +122,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
 - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
-- When the `clean_accents` option is enabled for entry slugs, certain characters, such as German umlauts, will be [transliterated](https://www.npmjs.com/package/@sindresorhus/transliterate)[^99].
+- When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://www.npmjs.com/package/@sindresorhus/transliterate)[^99].
 - You can embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`[^101].
 
 ### Better collections
