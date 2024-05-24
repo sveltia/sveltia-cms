@@ -28,7 +28,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 95+ of them have been effectively solved in Sveltia CMS, with the goal of solving 125 by GA and 200 in later releases.
+  - So far, 95+ of them have been effectively solved in Sveltia CMS, with the goal of solving 125 by GA and 250 in later releases.
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have a specific issue you’d like us to fix!
 - Responding to user feedback
 - Implementing our own enhancement ideas
@@ -122,7 +122,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
 - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
-- When the `clean_accents` option is enabled for entry slugs, the certain characters, such as German umlauts, will be [transliterated](https://www.npmjs.com/package/@sindresorhus/transliterate)[^99].
+- When the `clean_accents` option is enabled for entry slugs, certain characters, such as German umlauts, will be [transliterated](https://www.npmjs.com/package/@sindresorhus/transliterate)[^99].
 - You can embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`[^101].
 
 ### Better collections
@@ -547,6 +547,14 @@ i18n:
   canonical_slug:
     key: defaultLocaleVersion # default: translationKey
     value: 'en/{{slug}}' # default: {{slug}}
+```
+
+Or, for [Jekyll](https://migueldavid.eu/how-to-make-jekyll-multilingual-c13e74c18f1c), you may want to use the `ref` property:
+
+```yaml
+i18n:
+  canonical_slug:
+    key: ref
 ```
 
 ### Disabling non-default locale content
