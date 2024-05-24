@@ -27,13 +27,24 @@
 </script>
 
 <svelte:head>
-  <base target="_blank" />
   <meta name="referrer" content="same-origin" />
   <link rel="icon" href="data:image/svg+xml;base64,{btoa(SveltiaLogo)}" type="image/svg+xml" />
   {#if siteURL}
     <link href="{siteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
   {/if}
 </svelte:head>
+
+<svelte:body
+  on:mousedown={(event) => {
+    // Open external links in a new browser tab, internal links in the same tab
+    if (
+      /** @type {?HTMLElement} */ (event?.target)?.matches('a') &&
+      /** @type {HTMLAnchorElement} */ (event.target).origin !== window.location.origin
+    ) {
+      /** @type {HTMLAnchorElement} */ (event.target).target = '_blank';
+    }
+  }}
+/>
 
 <AppShell>
   {#if !$isLoading}
