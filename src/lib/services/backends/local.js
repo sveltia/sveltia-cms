@@ -63,7 +63,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
   }
 
   /**
-   * @type {FileSystemDirectoryHandle & { requestPermission: Function, entries: Function } | null}
+   * @type {FileSystemDirectoryHandle | null}
    */
   let handle = forceReload ? null : (await rootDirHandleDB?.get(rootDirHandleKey)) ?? null;
 
@@ -151,9 +151,14 @@ const signOut = async () => {
  * @returns {Promise<FileSystemFileHandle | FileSystemDirectoryHandle>} Handle.
  */
 const getHandleByPath = async (path) => {
+  let handle = /** @type {FileSystemFileHandle | FileSystemDirectoryHandle} */ (get(rootDirHandle));
+
+  if (!path) {
+    return handle;
+  }
+
   const pathParts = stripSlashes(path).split('/');
   const create = true;
-  let handle = /** @type {FileSystemFileHandle | FileSystemDirectoryHandle} */ (get(rootDirHandle));
 
   for (const name of pathParts) {
     handle = await (name.includes('.')
@@ -282,9 +287,32 @@ const commitChanges = async (changes) => {
 
         if (action === 'delete') {
           const [, dirPath, fileName] = stripSlashes(path).match(/(.+)\/([^/]+)$/) ?? [];
-          const handle = /** @type {FileSystemDirectoryHandle} */ (await getHandleByPath(dirPath));
+          const dirPathArray = dirPath.split('/');
+          let handle = /** @type {FileSystemDirectoryHandle} */ (await getHandleByPath(dirPath));
 
           await handle.removeEntry(fileName);
+
+          // Delete an empty enclosing folder recursively
+          for (;;) {
+            /** @type {string[]} */
+            const keys = [];
+
+            for await (const key of handle.keys()) {
+              keys.push(key);
+            }
+
+            if (keys.length > 1 || !dirPathArray.length) {
+              break;
+            }
+
+            const dirName = /** @type {string} */ (dirPathArray.pop());
+
+            // Get the parent directory handle
+            handle = /** @type {FileSystemDirectoryHandle} */ (
+              await getHandleByPath(dirPathArray.join('/'))
+            );
+            handle.removeEntry(dirName);
+          }
         }
       } catch (/** @type {any} */ ex) {
         // eslint-disable-next-line no-console

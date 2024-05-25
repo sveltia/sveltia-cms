@@ -17,6 +17,12 @@ interface FileSystemFileHandle {
   createWritable: Function;
 }
 
+interface FileSystemDirectoryHandle {
+  keys: Function;
+  entries: Function;
+  requestPermission: Function;
+}
+
 /**
  * @see https://github.com/microsoft/TypeScript/issues/29129
  */
