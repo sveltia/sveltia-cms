@@ -28,7 +28,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 - Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 95+ of them have been effectively solved in Sveltia CMS, with the goal of solving 125 by GA and 250 in later releases.
+  - So far, 100+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 125 by GA and 250 in later releases.
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have a specific issue you’d like us to fix!
 - Responding to user feedback
 - Implementing our own enhancement ideas
@@ -103,27 +103,31 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better i18n support
 
-- Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect top-notch i18n support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
-- Supports multiple files/folders i18n structure for file collections[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections as before.
-- Eliminates UI confusion — the Preview pane can be displayed without toggling i18n in the Content Editor.
-- You can easily switch between locales while editing with just a click on a button instead of a dropdown list.
-- Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. (For example, it might be difficult to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.)
-- Fields in non-default locales are validated as expected[^13].
-- Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
-- [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
-- You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
-- You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
-- Removes the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7][^68].
-- Raises a validation error instead of failing silently if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
-- [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
-- Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
-- Relation fields with i18n enabled won’t trigger a change in the content draft status when you start editing an existing entry[^84].
-- Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
-- You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
-- You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
-- The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
-- When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://www.npmjs.com/package/@sindresorhus/transliterate)[^99].
-- You can embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`[^101].
+Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect first-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
+
+- Configuration
+  - Supports multiple files/folders i18n structure for file collections[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections as before.
+  - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
+  - Removes the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7][^68].
+  - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
+  - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
+  - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
+  - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://www.npmjs.com/package/@sindresorhus/transliterate)[^99].
+  - You can embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`[^101].
+- User interface
+  - Eliminates UI confusion: The preview pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
+  - You can easily switch between locales while editing by clicking a button instead of a dropdown list. No internal error is thrown when changing the locale[^103].
+  - Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. (For example, it might be difficult to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.)
+  - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
+- Content editing
+  - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
+  - You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
+  - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
+  - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
+  - Relation fields with i18n enabled won’t trigger a change in the content draft status when you start editing an existing entry[^84].
+  - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
+  - Raises a validation error instead of failing silently if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
+  - Fields in non-default locales are validated as expected[^13].
 
 ### Better collections
 
@@ -146,8 +150,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can revert changes to all fields or a specific field.
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
-- When you click on a field in the Preview pane, the corresponding field in the Editor pane is highlighted. It will be automatically expanded if collapsed[^41].
-- The Preview pane displays all fields, including each title, making it easier to see which fields are populated.
+- When you click on a field in the preview pane, the corresponding field in the edit pane is highlighted. It will be automatically expanded if collapsed[^41].
+- The preview pane displays all fields, including each title, making it easier to see which fields are populated.
 - Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
 - You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead).
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
@@ -156,7 +160,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better data output
 
 - Keys in generated JSON/TOML/YAML content are always sorted by the order of configured fields, making Git commits clean and consistent[^86].
-- For data consistency, Boolean, List (see below) and other fields are always saved as a proper value, such as an empty string or an empty array, rather than nothing, even if it’s optional or empty.
+- For data consistency, Boolean, List (see below) and other fields are always saved as a proper value, such as an empty string or an empty array, rather than nothing, even if it’s optional or empty[^45][^46][^44].
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11][^69].
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
@@ -166,6 +170,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Boolean
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error[^45].
   - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing[^46].
+- Color
+  - The preview shows both the RGB(A) hex value and the `rgb()` function notation.
 - DateTime
   - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry[^90].
 - Hidden
@@ -181,7 +187,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Markdown
   - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves various problems found in Netlify/Decap CMS, including fatal application crashes[^53][^70][^71][^72][^73].
   - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
-  - Line breaks are rendered as line breaks in the Preview pane according to GitHub Flavored Markdown.
+  - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown.
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
     - You can use [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) with the Object widget just like the List widget.
@@ -190,13 +196,13 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
   - `slug` can be used for `value_field` to show all available options instead of just one in some situations[^91].
   - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`[^94].
-  - `display_fields` is displayed in the Preview pane instead of `value_field`.
+  - `display_fields` is displayed in the preview pane instead of `value_field`.
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
 - Select
   - It’s possible to select an option with value `0`[^56].
-  - `label` is displayed in the Preview pane instead of `value`.
+  - `label` is displayed in the preview pane instead of `value`.
 - String
-  - When a YouTube video URL is entered in a String field, it appears as an embedded video in the Preview pane.
+  - When a YouTube video URL is entered in a String field, it appears as an embedded video in the preview pane.
     - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - When a regular URL is entered in a String field, it appears as a link that can be opened in a new browser tab.
   - Supports the `type` option that accepts `url` or `email` as a value, which will validate the value as a URL or email.
@@ -209,7 +215,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More services will be added later.
-  - Large images automatically fit in the Preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
+  - Large images automatically fit in the preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36].
 - Markdown, String and Text
@@ -849,4 +855,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^100]: Netlify/Decap CMS [#4147](https://github.com/decaporg/decap-cms/issues/4147)
 [^101]: Netlify/Decap CMS [#5969](https://github.com/decaporg/decap-cms/issues/5969)
 [^102]: Netlify/Decap CMS [#1270](https://github.com/decaporg/decap-cms/issues/1270)
+[^103]: Netlify/Decap CMS [#6307](https://github.com/decaporg/decap-cms/issues/6307)
 [^999]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
