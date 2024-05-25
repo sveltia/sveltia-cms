@@ -47,7 +47,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better UX
 
-- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant UX improvements across the platform.
+- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant user experience (UX) and developer experience (DX) improvements across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid fatal React app crashes[^999]. Best of all, Svelte offers great performance!
@@ -70,7 +70,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
-  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem when it’s dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
+  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved.
 - You can upload multiple assets at once[^5].
@@ -486,9 +486,11 @@ Sveltia CMS comes with a handy DeepL integration so that you can translate any t
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
 1. Open an entry in Sveltia CMS.
-1. Click on the Translation button on the header or each field, right next to the 3-dot menu.
+1. Click on the Translation button on the pane header or each field, right next to the 3-dot menu.
 1. Paste your key when prompted.
 1. The field(s) will be automatically translated.
+
+Note that the Translation button on the pane header only translates empty fields, while in-field Translation buttons override any filled text.
 
 If you have upgraded to DeepL API Pro, provide your new Authentication Key:
 
@@ -538,7 +540,7 @@ With this configuration, an entry is saved with localized filenames, while the d
   translationKey: my-trip-to-new-york
   ```
 
-You can customize the property name and value for a different framework or i18n library by adding the `canonical_slug` option to your top-level or per-collection `i18n` configuration. The example below is for [`@astrolicious/i18n`](https://github.com/astrolicious/i18n), which requires a locale prefix in the value ([discussion](https://github.com/sveltia/sveltia-cms/issues/137)):
+You can customize the property name and value for a different framework or i18n library by adding the `canonical_slug` option to your top-level or per-collection `i18n` configuration. The example below is for [@astrolicious/i18n](https://github.com/astrolicious/i18n), which requires a locale prefix in the value ([discussion](https://github.com/sveltia/sveltia-cms/issues/137)):
 
 ```yaml
 i18n:
