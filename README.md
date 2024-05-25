@@ -94,6 +94,11 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 
+### Better configuration
+
+- Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`/config.yml`), which results in a 404 Not Found[^107].
+- Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
+
 ### Better backend support
 
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
@@ -132,7 +137,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better collections
 
-- Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
 - You can choose a [custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
 - You can [add dividers to the collection list](#adding-dividers-to-the-collection-list).
 - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
@@ -254,7 +258,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
   - More features are planned so that you’ll be able to utilize Sveltia CMS as digital asset management (DAM) software.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
-- Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22].
+- Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22]. If you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
 - Hidden files (dot files) don’t appear in the Asset Library[^47].
 - You can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens[^97].
@@ -369,19 +373,6 @@ For advanced users, we have also made the bundle available as an [npm package](h
 Updating Sveltia CMS is transparent, unless you include a specific version in the `<script>` source URL or use the npm package. Whenever you (re)load the CMS, the latest version will be served via [UNPKG](https://unpkg.com/). The CMS also periodically checks for updates and notifies you when a new version is available. After the product reaches GA, you could use a semantic version range (`^1.0.0`) like Netlify/Decap CMS.
 
 If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) or a service like [Dependabot](https://github.blog/2020-06-01-keep-all-your-packages-up-to-date-with-dependabot/) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
-
-## Tips & tricks
-
-### Working around configuration loading issue
-
-Depending on your server or framework’s configuration, when you access the CMS at `/admin/`, you’ll be redirected to `/admin` with the trailing slash removed. The CMS assumes that your configuration exists in the same directory, which means `/config.yml` is loaded instead of `/admin/config.yml`, resulting in an error saying “The configuration file could not be retrieved.” There are a couple of ways to work around this problem:
-
-- Access `/admin/index.html` or `/admin/#/`
-- Rename `/admin/index.html` to `/admin/cms.html`, and access `/admin/cms`
-- [Specify the configuration file path](https://decapcms.org/docs/configuration-options/#configuration-file) with a `<link>` tag in `/admin/index.html`:
-  ```html
-  <link href="/admin/config.yml" type="application/yaml" rel="cms-config-url" />
-  ```
 
 ### Providing a JSON configuration file
 
@@ -775,7 +766,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^19]: Netlify/Decap CMS [#5910](https://github.com/decaporg/decap-cms/issues/5910)
 [^20]: Netlify/Decap CMS [#4563](https://github.com/decaporg/decap-cms/issues/4563)
 [^21]: Netlify/Decap CMS [#4781](https://github.com/decaporg/decap-cms/issues/4781)
-[^22]: Netlify/Decap CMS [#6642](https://github.com/decaporg/decap-cms/issues/6642)
+[^22]: Netlify/Decap CMS [#3615](https://github.com/decaporg/decap-cms/issues/3615), [#4069](https://github.com/decaporg/decap-cms/issues/4069), [#5097](https://github.com/decaporg/decap-cms/issues/5097), [#6642](https://github.com/decaporg/decap-cms/issues/6642)
 [^23]: Netlify/Decap CMS [#2](https://github.com/decaporg/decap-cms/issues/2)
 [^24]: Netlify/Decap CMS [#6831](https://github.com/decaporg/decap-cms/issues/6831)
 [^25]: Netlify/Decap CMS [#526](https://github.com/decaporg/decap-cms/issues/526), [#6987](https://github.com/decaporg/decap-cms/issues/6987)
@@ -860,4 +851,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^104]: Netlify/Decap CMS [#6819](https://github.com/decaporg/decap-cms/issues/6819)
 [^105]: Netlify/Decap CMS [#5701](https://github.com/decaporg/decap-cms/issues/5701)
 [^106]: Netlify/Decap CMS [#2822](https://github.com/decaporg/decap-cms/issues/2822)
+[^107]: Netlify/Decap CMS [#332](https://github.com/decaporg/decap-cms/issues/332), [#683](https://github.com/decaporg/decap-cms/issues/683), [#999](https://github.com/decaporg/decap-cms/issues/999), [#1456](https://github.com/decaporg/decap-cms/issues/1456), [#4175](https://github.com/decaporg/decap-cms/issues/4175), [#5688](https://github.com/decaporg/decap-cms/issues/5688), [#6828](https://github.com/decaporg/decap-cms/issues/6828), [#6862](https://github.com/decaporg/decap-cms/issues/6862), [#7023](https://github.com/decaporg/decap-cms/issues/7023)
 [^999]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
