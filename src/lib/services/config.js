@@ -41,8 +41,13 @@ export const siteConfigError = writable();
  * @throws {Error} When fetching or parsing has failed.
  */
 const fetchSiteConfig = async () => {
-  const { href = './config.yml', type = 'application/yaml' } =
-    /** @type {?HTMLLinkElement} */ (document.querySelector('link[rel="cms-config-url"]')) ?? {};
+  const {
+    // Depending on the server or framework configuration, the trailing slash may be removed from
+    // the CMS `/admin/` URL. In that case, fetch the config file from a root-relative URL instead
+    // of a regular relative URL to avoid 404 Not Found.
+    href = window.location.pathname === '/admin' ? '/admin/config.yml' : './config.yml',
+    type = 'application/yaml',
+  } = /** @type {?HTMLLinkElement} */ (document.querySelector('link[rel="cms-config-url"]')) ?? {};
 
   /** @type {Response} */
   let response;
