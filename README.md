@@ -70,7 +70,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
-  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem when it’s dismissed[^106]. It can then be reliably restored without unexpected overwriting[^85].
+  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem when it’s dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved.
 - You can upload multiple assets at once[^5].
@@ -90,13 +90,13 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better security
 
 - Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^33].
-- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS.
+- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS[^108].
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 
 ### Better configuration
 
-- Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`/config.yml`) that results in a 404 Not Found error[^107].
+- Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error[^107].
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
 
 ### Better backend support
@@ -258,7 +258,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
   - More features are planned so that you’ll be able to utilize Sveltia CMS as digital asset management (DAM) software.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
-- Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22]. If you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
+- Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22]. When you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
 - Hidden files (dot files) don’t appear in the Asset Library[^47].
 - You can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens[^97].
@@ -770,7 +770,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^23]: Netlify/Decap CMS [#2](https://github.com/decaporg/decap-cms/issues/2)
 [^24]: Netlify/Decap CMS [#6831](https://github.com/decaporg/decap-cms/issues/6831)
 [^25]: Netlify/Decap CMS [#526](https://github.com/decaporg/decap-cms/issues/526), [#6987](https://github.com/decaporg/decap-cms/issues/6987)
-[^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285)
+[^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285), [#7030](https://github.com/decaporg/decap-cms/issues/7030), [#7067](https://github.com/decaporg/decap-cms/issues/7067)
 [^27]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/5617)
 [^28]: Netlify/Decap CMS [#2677](https://github.com/decaporg/decap-cms/pull/2677), [#6836](https://github.com/decaporg/decap-cms/pull/6836)
 [^29]: Netlify/Decap CMS [#4783](https://github.com/decaporg/decap-cms/issues/4783)
@@ -798,7 +798,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^51]: Netlify/Decap CMS [#6731](https://github.com/decaporg/decap-cms/issues/6731)
 [^52]: Netlify/Decap CMS [#7147](https://github.com/decaporg/decap-cms/issues/7147)
 [^53]: Netlify/Decap CMS [#512](https://github.com/decaporg/decap-cms/issues/512), [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6707](https://github.com/decaporg/decap-cms/issues/6707)
-[^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#6287](https://github.com/decaporg/decap-cms/issues/6287) — Decap 3.0 updated the Slate editor in an attempt to fix the problems, but the IME issues remain unresolved when using a mobile/tablet browser.
+[^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#6287](https://github.com/decaporg/decap-cms/issues/6287), [#6826](https://github.com/decaporg/decap-cms/issues/6826) — Decap 3.0 updated the Slate editor in an attempt to fix the problems, but the IME issues remain unresolved when using a mobile/tablet browser.
 [^55]: Netlify/Decap CMS [#4480](https://github.com/decaporg/decap-cms/issues/4480), [#6353](https://github.com/decaporg/decap-cms/issues/6353)
 [^56]: Netlify/Decap CMS [#6515](https://github.com/decaporg/decap-cms/issues/6515)
 [^57]: Netlify/Decap CMS [#328](https://github.com/decaporg/decap-cms/issues/328)
@@ -852,4 +852,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^105]: Netlify/Decap CMS [#5701](https://github.com/decaporg/decap-cms/issues/5701)
 [^106]: Netlify/Decap CMS [#2822](https://github.com/decaporg/decap-cms/issues/2822)
 [^107]: Netlify/Decap CMS [#332](https://github.com/decaporg/decap-cms/issues/332), [#683](https://github.com/decaporg/decap-cms/issues/683), [#999](https://github.com/decaporg/decap-cms/issues/999), [#1456](https://github.com/decaporg/decap-cms/issues/1456), [#4175](https://github.com/decaporg/decap-cms/issues/4175), [#5688](https://github.com/decaporg/decap-cms/issues/5688), [#6828](https://github.com/decaporg/decap-cms/issues/6828), [#6862](https://github.com/decaporg/decap-cms/issues/6862), [#7023](https://github.com/decaporg/decap-cms/issues/7023)
+[^108]: Netlify/Decap CMS [#6829](https://github.com/decaporg/decap-cms/issues/6829)
 [^999]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
