@@ -70,7 +70,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
-  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog. It can then be reliably restored without unexpected overwriting[^85].
+  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem when it’s dismissed[^106]. It can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved.
 - You can upload multiple assets at once[^5].
@@ -84,6 +84,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver.
 - Ensures sufficient contrast between the foreground text and background colours.
 - Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
+- Enabled and disabled buttons can be clearly distinguished[^105].
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
 ### Better security
@@ -229,7 +230,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 #### New widgets
 
 - Compute
-  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
+  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets[^104]. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
@@ -761,7 +762,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^6]: Netlify/Decap CMS [#3240](https://github.com/decaporg/decap-cms/issues/3240)
 [^7]: Netlify/Decap CMS [#4386](https://github.com/decaporg/decap-cms/issues/4386)
 [^8]: Netlify/Decap CMS [#2579](https://github.com/decaporg/decap-cms/issues/2579)
-[^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505), [#4211](https://github.com/decaporg/decap-cms/issues/4211)
+[^9]: Netlify/Decap CMS [#3505](https://github.com/decaporg/decap-cms/issues/3505), [#4211](https://github.com/decaporg/decap-cms/issues/4211), [#5439](https://github.com/decaporg/decap-cms/issues/5439)
 [^10]: Netlify/Decap CMS [#341](https://github.com/decaporg/decap-cms/issues/341), [#1167](https://github.com/decaporg/decap-cms/issues/1167)
 [^11]: Netlify/Decap CMS [#1382](https://github.com/decaporg/decap-cms/issues/1382)
 [^12]: Netlify/Decap CMS [#1975](https://github.com/decaporg/decap-cms/issues/1975), [#3712](https://github.com/decaporg/decap-cms/issues/3712)
@@ -823,7 +824,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^68]: Netlify/Decap CMS [#6978](https://github.com/decaporg/decap-cms/issues/6978)
 [^69]: Netlify/Decap CMS [#6994](https://github.com/decaporg/decap-cms/issues/6994)
 [^70]: Netlify/Decap CMS [#6482](https://github.com/decaporg/decap-cms/issues/6482)
-[^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7152](https://github.com/decaporg/decap-cms/issues/7152)
+[^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7000](https://github.com/decaporg/decap-cms/issues/7000), [#7001](https://github.com/decaporg/decap-cms/issues/7001), [#7152](https://github.com/decaporg/decap-cms/issues/7152)
 [^72]: Netlify/Decap CMS [#7047](https://github.com/decaporg/decap-cms/issues/7047)
 [^73]: Netlify/Decap CMS [#7123](https://github.com/decaporg/decap-cms/issues/7123)
 [^74]: Netlify/Decap CMS [#4209](https://github.com/decaporg/decap-cms/issues/4209)
@@ -856,4 +857,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^101]: Netlify/Decap CMS [#5969](https://github.com/decaporg/decap-cms/issues/5969)
 [^102]: Netlify/Decap CMS [#1270](https://github.com/decaporg/decap-cms/issues/1270)
 [^103]: Netlify/Decap CMS [#6307](https://github.com/decaporg/decap-cms/issues/6307)
+[^104]: Netlify/Decap CMS [#6819](https://github.com/decaporg/decap-cms/issues/6819)
+[^105]: Netlify/Decap CMS [#5701](https://github.com/decaporg/decap-cms/issues/5701)
+[^106]: Netlify/Decap CMS [#2822](https://github.com/decaporg/decap-cms/issues/2822)
 [^999]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
