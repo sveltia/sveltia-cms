@@ -26,14 +26,14 @@ Sveltia CMS is **still in beta**, so please be careful when trying it out.
 
 While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
-- Ensuring maximum compatibility with existing versions of Netlify/Decap CMS
+- Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 100+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 150 by GA and 250 in later releases.
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
 - Implementing our own enhancement ideas
 
-Sveltia CMS **version 1.0 is expected to ship in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates.
+Sveltia CMS **version 1.0 is expected to ship in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
 ## Features
 
@@ -305,14 +305,15 @@ Missing other features? Let us know by [filing an issue](https://github.com/svel
 
 ### Before the 1.0 release
 
-- Enhanced compatibility with Netlify/Decap CMS (see above for the status)
+- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
+- [Tackling more Netlify/Decap CMS issues](#development-status)
 - Broad automation test coverage (Vitest + Playwright)
 - [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) migration
-- Localization
+- Localization with [Fluent](https://projectfluent.org)
 - Documentation
 - Marketing site
-- Demo site
-- Starter templates
+- Live demo site
+- Starter templates for popular frameworks
 
 ### After the 1.0 release
 
