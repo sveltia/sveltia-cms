@@ -70,6 +70,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - You can [work with a local Git repository](#working-with-a-local-git-repository) without any extra configuration or proxy server[^26].
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
+  - Deleting an entry or asset file also deletes the empty enclosing folder, so you don’t have to delete it manually. (This only applies to the local backend, as Git doesn’t track folders.)
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
@@ -142,14 +143,16 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - You can choose a [custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
 - You can [add dividers to the collection list](#adding-dividers-to-the-collection-list).
 - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
-- Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
-- You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
-- Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
 - You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
 - You can use Markdown in collection descriptions[^79]. Bold, italic, strikethrough, code and links are allowed.
 - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
 - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
 - A folder collection filter with a boolean value works as expected[^93].
+- Improved entry slugs
+  - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
+  - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
+  - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
+  - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 
 ### Better content editing
 
