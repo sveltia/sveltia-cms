@@ -39,6 +39,8 @@ Sveltia CMS **version 1.0 is expected to ship in Q3 2024**. Check our [release n
 
 We are working hard to create a **significantly better alternative to Netlify CMS and Decap CMS** by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
 
+![100+ Netlify/Decap CMS Issues Solved in Sveltia CMS](docs/headline-1-20240526.webp)<br>
+
 ### Compatible with Netlify/Decap CMS
 
 - Ready to be used as a drop-in replacement for Netlify/Decap CMS _in some casual use case scenarios_ with a single line of code update.
@@ -90,7 +92,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better security
 
 - Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^33].
-- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS[^108].
+- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration[^108].
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 
@@ -374,6 +376,8 @@ For advanced users, we have also made the bundle available as an [npm package](h
 Updating Sveltia CMS is transparent, unless you include a specific version in the `<script>` source URL or use the npm package. Whenever you (re)load the CMS, the latest version will be served via [UNPKG](https://unpkg.com/). The CMS also periodically checks for updates and notifies you when a new version is available. After the product reaches GA, you could use a semantic version range (`^1.0.0`) like Netlify/Decap CMS.
 
 If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) or a service like [Dependabot](https://github.blog/2020-06-01-keep-all-your-packages-up-to-date-with-dependabot/) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
+
+## Tips & tricks
 
 ### Providing a JSON configuration file
 
