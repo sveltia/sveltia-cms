@@ -31,7 +31,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
   - So far, 100+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 150 by GA and 250 in later releases.
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
-- Implementing our own enhancement ideas
+- Implementing our own UX enhancement ideas
 
 Sveltia CMS **version 1.0 is expected to ship in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
@@ -45,11 +45,11 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Ready to be used as a drop-in replacement for Netlify/Decap CMS _in some casual use case scenarios_ with a single line of code update.
 - Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Various features are still missing though — look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
+- Some features are still missing or will not be added though — look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
 
 ### Better UX
 
-- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant user experience (UX) and developer experience (DX) improvements across the platform.
+- Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid fatal React app crashes[^999]. Best of all, Svelte offers great performance!
@@ -69,8 +69,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better productivity
 
 - You can [work with a local Git repository](#working-with-a-local-git-repository) without any extra configuration or proxy server[^26].
+  - Deleting an entry or asset file also deletes the empty enclosing folder, so you don’t have to delete it manually.
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
-  - Deleting an entry or asset file also deletes the empty enclosing folder, so you don’t have to delete it manually. (This only applies to the local backend, as Git doesn’t track folders.)
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
 - Eliminates some workflow disruptions in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
@@ -86,8 +86,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys[^17][^67].
 - Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver.
 - Ensures sufficient contrast between the foreground text and background colours.
-- Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
 - Enabled and disabled buttons can be clearly distinguished[^105].
+- Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
 ### Better security
@@ -107,7 +107,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^95][^27].
 - You can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
-- The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub. Checks are performed frequently and an incident notification is displayed prominently for both services.
+- The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
+- Service status checks are performed frequently and an incident notification is displayed prominently.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
 
 ### Better i18n support
@@ -489,7 +490,7 @@ In Sveltia CMS, those per-collection media folders are displayed prominently for
 
 ### Using DeepL to translate entry fields
 
-Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the content editor. To enable the high-quality, quick translation feature:
+Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the content editor. To enable the high quality, AI-powered, quick translation feature:
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
@@ -506,6 +507,8 @@ If you have upgraded to DeepL API Pro, provide your new Authentication Key:
 1. Select the Language tab.
 1. Paste your key to the DeepL API Authentication Key field.
 1. Close the Settings dialog.
+
+More translation service providers will be added in the future.
 
 ### Localizing entry slugs
 
