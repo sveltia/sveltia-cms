@@ -35,11 +35,11 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 Sveltia CMS **version 1.0 is expected to ship in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
+![100+ Netlify/Decap CMS Issues Solved in Sveltia CMS](docs/headline-1-20240527.webp)<br>
+
 ## Features
 
 We are working hard to create a **significantly better alternative to Netlify CMS and Decap CMS** by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
-
-![100+ Netlify/Decap CMS Issues Solved in Sveltia CMS](docs/headline-1-20240526.webp)<br>
 
 ### Compatible with Netlify/Decap CMS
 
