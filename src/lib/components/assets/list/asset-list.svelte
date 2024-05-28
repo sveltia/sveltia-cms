@@ -14,17 +14,17 @@
 </script>
 
 <ListContainer aria-label={$_('asset_list')}>
-  {#if Object.values($assetGroups).flat(1).length}
-    <DropZone
-      disabled={uploadDisabled}
-      multiple={true}
-      on:select={({ detail: { files } }) => {
-        $uploadingAssets = {
-          folder: $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
-          files,
-        };
-      }}
-    >
+  <DropZone
+    disabled={uploadDisabled}
+    multiple={true}
+    on:select={({ detail: { files } }) => {
+      $uploadingAssets = {
+        folder: $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
+        files,
+      };
+    }}
+  >
+    {#if Object.values($assetGroups).flat(1).length}
       <ListingGrid
         id="asset-list"
         viewType={$currentView.type}
@@ -41,10 +41,10 @@
           </GridBody>
         {/each}
       </ListingGrid>
-    </DropZone>
-  {:else}
-    <EmptyState>
-      <span role="none">{$_('no_files_found')}</span>
-    </EmptyState>
-  {/if}
+    {:else}
+      <EmptyState>
+        <span role="none">{$_('no_files_found')}</span>
+      </EmptyState>
+    {/if}
+  </DropZone>
 </ListContainer>
