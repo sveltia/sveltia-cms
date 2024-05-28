@@ -71,6 +71,7 @@
 
 <style lang="scss">
   .grid-wrapper {
-    display: contents;
+    overflow-y: auto;
+    height: 100%;
   }
 </style>
