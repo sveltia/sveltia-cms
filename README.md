@@ -234,6 +234,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Relation and Select
   - If a dropdown list has options with long wrapping labels, they won’t overlap with the next option[^83].
   - When there are 5 or fewer options, the UI switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61].
+    - This number can be changed with the `dropdown_threshold` option for the `relation` and `select` widgets.
 - String and Text
   - Supports the `minlength` and `maxlength` options, which allow developers to specify the minimum and maximum number of characters required for input without having to write a custom regular expression with the `pattern` option. A character counter is available when one of the options is given, and a user-friendly validation error is displayed if the condition is not met.
 
