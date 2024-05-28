@@ -15,7 +15,6 @@
     Toast,
     Toolbar,
   } from '@sveltia/ui';
-  import { truncate } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import { goBack, goto } from '$lib/services/app/navigation';
@@ -114,24 +113,23 @@
     <Icon slot="start-icon" name="arrow_back_ios_new" />
   </Button>
   <h2 role="none">
-    {#if isNew}
-      {$_('creating_x', { values: { name: collectionLabelSingular } })}
-    {:else}
-      {$_('editing_x_in_x', {
-        values: {
-          collection: collectionLabel,
-          // eslint-disable-next-line no-nested-ternary
-          entry: collectionFile
-            ? collectionFile.label || collectionFile.name
-            : originalEntry
-              ? truncate(
-                  formatSummary(collection, originalEntry, defaultLocale, { useTemplate: false }),
-                  40,
-                )
-              : '',
-        },
-      })}
-    {/if}
+    <strong role="none">
+      {#if isNew}
+        {$_('creating_x', { values: { name: collectionLabelSingular } })}
+      {:else}
+        {$_('editing_x_in_x', {
+          values: {
+            collection: collectionLabel,
+            // eslint-disable-next-line no-nested-ternary
+            entry: collectionFile
+              ? collectionFile.label || collectionFile.name
+              : originalEntry
+                ? formatSummary(collection, originalEntry, defaultLocale, { useTemplate: false })
+                : '',
+          },
+        })}
+      {/if}
+    </strong>
   </h2>
   <Spacer flex />
   {#if previewURL}
