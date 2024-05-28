@@ -613,6 +613,8 @@
  * @property {number} [min] - Minimum number of items.
  * @property {number} [max] - Maximum number of items.
  * @property {{ field: string, values: any[] }[]} [filters] - Entry filters.
+ * @property {number} [dropdown_threshold] - Maximum number of options to be displayed as radio
+ * buttons (single-select) or checkboxes (multi-select) rather than a dropdown list. Default: 5.
  * @see https://decapcms.org/docs/widgets/#relation
  */
 
@@ -629,6 +631,8 @@
  * @property {boolean} [multiple] - Whether to accept multiple values.
  * @property {number} [min] - Minimum number of items.
  * @property {number} [max] - Maximum number of items.
+ * @property {number} [dropdown_threshold] - Maximum number of options to be displayed as radio
+ * buttons (single-select) or checkboxes (multi-select) rather than a dropdown list. Default: 5.
  * @see https://decapcms.org/docs/widgets/#select
  */
 

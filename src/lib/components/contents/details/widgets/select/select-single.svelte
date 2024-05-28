@@ -7,7 +7,7 @@
   export let keyPath;
   /** @type {string} */
   export let fieldId;
-  /** @type {SelectField} */ // svelte-ignore unused-export-let
+  /** @type {SelectField} */
   export let fieldConfig;
   /** @type {string} */
   export let currentValue;
@@ -19,9 +19,11 @@
   export let invalid = false;
   /** @type {{ label: string, value: string, searchValue?: string }[]} */
   export let options;
+
+  $: ({ dropdown_threshold = 5 } = fieldConfig);
 </script>
 
-{#if options.length > 5}
+{#if options.length > dropdown_threshold}
   <Select
     bind:value={currentValue}
     {readonly}

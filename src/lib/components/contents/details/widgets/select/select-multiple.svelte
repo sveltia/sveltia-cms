@@ -22,7 +22,7 @@
   /** @type {{ label: string, value: string, searchValue?: string }[]} */
   export let options;
 
-  $: ({ i18n, max } = fieldConfig);
+  $: ({ i18n, max, dropdown_threshold = 5 } = fieldConfig);
 
   /**
    * Update the value for the list.
@@ -61,7 +61,7 @@
   };
 </script>
 
-{#if options.length > 5}
+{#if options.length > dropdown_threshold}
   <SelectTags
     disabled={readonly}
     {readonly}
