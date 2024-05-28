@@ -1,6 +1,6 @@
 {
   "name": "@sveltia/cms",
-  "version": "0.31.0",
+  "version": "0.31.1",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
