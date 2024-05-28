@@ -324,6 +324,7 @@
     display: flex;
     align-items: center;
     margin-bottom: 8px;
+    height: var(--sui-button-small-height);
 
     h4 {
       font-size: var(--sui-font-size-small);
