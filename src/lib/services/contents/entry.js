@@ -1,5 +1,4 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { flatten } from 'flat';
 import moment from 'moment';
 import { get } from 'svelte/store';
 import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
@@ -152,14 +151,11 @@ export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {})
     return commitDate;
   }
 
-  /** @type {EntryContent} */
-  const content = locales[locale]?.content;
+  const { content } = locales[locale] ?? {};
 
   if (content === undefined) {
     return undefined;
   }
-
-  const valueMap = key.includes('.') ? flatten(content) : content;
 
   if (resolveRef) {
     const fieldConfig = getFieldConfig({ collectionName: entry.collectionName, keyPath: key });
@@ -169,14 +165,14 @@ export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {})
       return getReferencedOptionLabel({
         // eslint-disable-next-line object-shorthand
         fieldConfig: /** @type {RelationField} */ (fieldConfig),
-        valueMap,
+        valueMap: content,
         keyPath: key,
         locale,
       });
     }
   }
 
-  return valueMap[key];
+  return content[key];
 };
 
 /**
@@ -236,7 +232,6 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
     return undefined;
   }
 
-  const valueMap = flatten(content);
   /** @type {Record<string, string> | undefined} */
   let dateTimeParts;
 
@@ -244,7 +239,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
     const fieldConfig = dateFieldName
       ? fields?.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
       : fields?.find(({ widget }) => widget === 'datetime');
-    const fieldValue = fieldConfig ? valueMap[fieldConfig.name] : undefined;
+    const fieldValue = fieldConfig ? content[fieldConfig.name] : undefined;
 
     if (!fieldConfig || !fieldValue) {
       return undefined;
@@ -262,7 +257,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
     const path = fillSlugTemplate(pathTemplate, {
       type: 'preview_path',
       collection,
-      content: valueMap,
+      content,
       locale,
       currentSlug: slug,
       entryFilePath,

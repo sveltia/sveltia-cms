@@ -2,24 +2,23 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
-import { flatten } from 'flat';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
-import { prefs } from '$lib/services/prefs';
-import { applyTemplateFilter } from '$lib/services/contents/slug';
-import {
-  getFieldConfig,
-  getFieldDisplayValue,
-  getPropertyValue,
-} from '$lib/services/contents/entry';
-import { editorLeftPane, editorRightPane } from '$lib/services/contents/draft/editor';
+import { backend } from '$lib/services/backends';
 import {
   allEntries,
   getEntriesByCollection,
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
-import { backend } from '$lib/services/backends';
+import { editorLeftPane, editorRightPane } from '$lib/services/contents/draft/editor';
+import {
+  getFieldConfig,
+  getFieldDisplayValue,
+  getPropertyValue,
+} from '$lib/services/contents/entry';
+import { applyTemplateFilter } from '$lib/services/contents/slug';
+import { prefs } from '$lib/services/prefs';
 
 /** @type {IndexedDB | null | undefined} */
 let settingsDB = undefined;
@@ -46,7 +45,7 @@ export const currentView = writable({ type: 'list' });
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
 export const formatSummary = (collection, entry, locale, { useTemplate = true } = {}) => {
-  const { content } = /** @type {{ content: EntryContent }} */ (entry.locales[locale]);
+  const { content } = entry.locales[locale];
   const {
     name: collectionName,
     folder: collectionFolder,
@@ -66,7 +65,6 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
 
   const { locales, slug, commitDate, commitAuthor } = entry;
   const { path: entryPath = '' } = locales[locale];
-  const valueMap = flatten(content);
 
   /**
    * Replacer subroutine.
@@ -100,7 +98,7 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
 
     return getFieldDisplayValue({
       collectionName,
-      valueMap,
+      valueMap: content,
       keyPath: tag.replace(/^fields\./, ''),
       locale: defaultLocale,
     });
@@ -126,7 +124,7 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
     }
 
     if (transformations.length) {
-      const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath: tag });
+      const fieldConfig = getFieldConfig({ collectionName, valueMap: content, keyPath: tag });
 
       transformations.forEach((tf) => {
         slugPart = applyTemplateFilter(slugPart, tf, fieldConfig);

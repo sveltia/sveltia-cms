@@ -1,5 +1,4 @@
 import { stripSlashes } from '@sveltia/utils/string';
-import { flatten } from 'flat';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
@@ -135,14 +134,18 @@ export const getEntriesByAssetURL = async (url) => {
       const { locales, collectionName, fileName } = entry;
       const _results = await Promise.all(
         Object.values(locales).map(async ({ content }) => {
-          const valueMap = flatten(content);
           const __results = await Promise.all(
-            Object.entries(valueMap).map(async ([keyPath, value]) => {
+            Object.entries(content).map(async ([keyPath, value]) => {
               if (typeof value !== 'string' || !value) {
                 return false;
               }
 
-              const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
+              const field = getFieldConfig({
+                collectionName,
+                fileName,
+                valueMap: content,
+                keyPath,
+              });
 
               if (!field) {
                 return false;

@@ -1,4 +1,3 @@
-import { flatten } from 'flat';
 import { derived, writable } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { allEntries } from '$lib/services/contents';
@@ -18,11 +17,13 @@ export const searchResults = derived(
   ([_allEntries, _allAssets, _searchTerms], set) => {
     const entries =
       _allEntries?.length && _searchTerms
-        ? _allEntries.filter((entry) =>
-            Object.values(flatten(entry)).some(
-              (value) =>
-                typeof value === 'string' &&
-                value.toLowerCase().includes(_searchTerms.toLowerCase()),
+        ? _allEntries.filter(({ locales }) =>
+            Object.values(locales).some(({ content }) =>
+              Object.values(content).some(
+                (value) =>
+                  typeof value === 'string' &&
+                  value.toLowerCase().includes(_searchTerms.toLowerCase()),
+              ),
             ),
           )
         : [];

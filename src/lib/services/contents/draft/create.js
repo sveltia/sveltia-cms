@@ -1,6 +1,5 @@
 import { generateRandomId, generateUUID } from '@sveltia/utils/crypto';
 import { stripTags } from '@sveltia/utils/string';
-import { flatten } from 'flat';
 import { get } from 'svelte/store';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
 import { getCollection } from '$lib/services/contents';
@@ -324,10 +323,11 @@ export const createDraft = (entry, dynamicValues) => {
   );
   /** @type {Record<LocaleCode, FlattenedEntryContent>} */
   const originalValues = Object.fromEntries(
-    enabledLocales.map((locale) => [
-      locale,
-      isNew ? getDefaultValues(fields, locale, dynamicValues) : flatten(locales?.[locale].content),
-    ]),
+    enabledLocales.map((locale) =>
+      isNew
+        ? [locale, getDefaultValues(fields, locale, dynamicValues)]
+        : [locale, structuredClone(locales?.[locale].content)],
+    ),
   );
 
   entryDraft.set({

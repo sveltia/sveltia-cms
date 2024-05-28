@@ -1,3 +1,4 @@
+import { flatten } from 'flat';
 import { describe, expect, test } from 'vitest';
 import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
 import { siteConfig } from '$lib/services/config';
@@ -16,7 +17,7 @@ describe('Test getOptions()', () => {
       locales: {
         _default: {
           ...localizedEntryProps,
-          content: {
+          content: flatten({
             slug: 'member-melvin-lucas',
             name: {
               first: 'Melvin',
@@ -24,7 +25,7 @@ describe('Test getOptions()', () => {
             },
             twitterHandle: 'MelvinLucas',
             followerCount: 123,
-          },
+          }),
         },
       },
     },
@@ -36,7 +37,7 @@ describe('Test getOptions()', () => {
       locales: {
         _default: {
           ...localizedEntryProps,
-          content: {
+          content: flatten({
             slug: 'member-elsie-mcbride',
             name: {
               first: 'Elsie',
@@ -44,7 +45,7 @@ describe('Test getOptions()', () => {
             },
             twitterHandle: 'ElsieMcbride',
             followerCount: 234,
-          },
+          }),
         },
       },
     },
@@ -56,7 +57,7 @@ describe('Test getOptions()', () => {
       locales: {
         _default: {
           ...localizedEntryProps,
-          content: {
+          content: flatten({
             slug: 'member-maxine-field',
             name: {
               first: 'Maxine',
@@ -64,7 +65,7 @@ describe('Test getOptions()', () => {
             },
             twitterHandle: 'MaxineField',
             followerCount: 345,
-          },
+          }),
         },
       },
     },
@@ -196,13 +197,13 @@ describe('Test getOptions()', () => {
         locales: {
           _default: {
             ...localizedEntryProps,
-            content: {
+            content: flatten({
               cities: [
                 { id: 'YYZ', name: 'Toronto' },
                 { id: 'YVR', name: 'Vancouver' },
                 { id: 'YYC', name: 'Calgary' },
               ],
-            },
+            }),
             path: 'src/lib/data/pages/cities.json',
             sha: 'e5498c0c3d4592aaa18905e58bdf1cafa5b659c6',
           },
@@ -254,13 +255,13 @@ describe('Test getOptions()', () => {
         locales: {
           _default: {
             ...localizedEntryProps,
-            content: {
+            content: flatten({
               route: '/about',
               sections: [
                 { id: 'team', name: 'Team' },
                 { id: 'contact', name: 'Contact' },
               ],
-            },
+            }),
           },
         },
       },
@@ -272,13 +273,13 @@ describe('Test getOptions()', () => {
         locales: {
           _default: {
             ...localizedEntryProps,
-            content: {
+            content: flatten({
               route: '/projects',
               sections: [
                 { id: 'overview', name: 'Overview' },
                 { id: 'members', name: 'Members' },
               ],
-            },
+            }),
           },
         },
       },

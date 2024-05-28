@@ -3,6 +3,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import { flatten } from 'flat';
 import TOML from 'smol-toml';
 import YAML from 'yaml';
 import { normalizeSlug } from '$lib/services/contents/slug';
@@ -69,7 +70,7 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 /**
  * Parse raw content with given file details.
  * @param {BaseEntryListItem} entry - File entry.
- * @returns {EntryContent | null} Parsed content.
+ * @returns {RawEntryContent | null} Parsed content.
  */
 const parseEntryFile = ({
   text = '',
@@ -236,7 +237,7 @@ export const formatEntryFile = ({
  * @param {string} filePath - File path without the collection folder and extension. It’s a slug in
  * most cases, but it may be a path containing slash(es) when the Folder Collections Path is
  * configured.
- * @param {EntryContent} content - Entry content.
+ * @param {RawEntryContent} content - Entry content.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
@@ -330,7 +331,7 @@ export const parseEntryFiles = (entryFiles) => {
       const slug = fileName || getSlug(collectionName, filePath, parsedFile);
 
       entry.slug = slug;
-      entry.locales._default = { slug, path, sha, content: parsedFile };
+      entry.locales._default = { slug, path, sha, content: flatten(parsedFile) };
     }
 
     if (i18nEnabled && structure === 'single_file') {
@@ -341,7 +342,7 @@ export const parseEntryFiles = (entryFiles) => {
       entry.locales = Object.fromEntries(
         locales
           .filter((locale) => locale in parsedFile)
-          .map((locale) => [locale, { slug, path, sha, content: parsedFile[locale] }]),
+          .map((locale) => [locale, { slug, path, sha, content: flatten(parsedFile[locale]) }]),
       );
     }
 
@@ -369,7 +370,7 @@ export const parseEntryFiles = (entryFiles) => {
       }
 
       const slug = fileName || getSlug(collectionName, _filePath, parsedFile);
-      const localizedEntry = { slug, path, sha, content: parsedFile };
+      const localizedEntry = { slug, path, sha, content: flatten(parsedFile) };
       // Support a canonical slug to link localized files
       const canonicalSlug = parsedFile[canonicalSlugKey];
       // Use a temporary ID to locate all the localized files for the entry

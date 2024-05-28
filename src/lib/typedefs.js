@@ -712,17 +712,12 @@
  */
 
 /**
- * Parsed, localized entry content.
- * @typedef {Record<string, any>} EntryContent
- */
-
-/**
  * Each locale’s content and metadata.
  * @typedef {object} LocalizedEntry
  * @property {string} slug - Localized entry slug.
  * @property {string} path - File path.
  * @property {string} sha - SHA-1 hash for the file.
- * @property {EntryContent} content - Parsed, localized entry content.
+ * @property {FlattenedEntryContent} content - Parsed, localized, flattened entry content.
  */
 
 /**
@@ -733,27 +728,32 @@
  */
 
 /**
- * Flattened {@link EntryContent} object.
+ * Parsed, localized entry content.
+ * @typedef {Record<string, any>} RawEntryContent
+ */
+
+/**
+ * Flattened {@link RawEntryContent} object.
  * @typedef {Record<FieldKeyPath, any>} FlattenedEntryContent - where key is a key path and value is
  * the corresponding field value.
  * @see https://www.npmjs.com/package/flatten
  */
 
 /**
- * Flattened {@link EntryContent} object, where key is a key path, but value will be a file to be
+ * Flattened entry file list object, where key is a key path, but value will be a file to be
  * uploaded.
  * @typedef {Record<FieldKeyPath, File>} FlattenedEntryFileList
  */
 
 /**
- * Flattened {@link EntryContent} object, where key is a key path, but value will be the value’s
+ * Flattened entry validity state object, where key is a key path, but value will be the value’s
  * validity, using the same properties as the native HTML5 constraint validation.
  * @typedef {Record<FieldKeyPath, Record<string, boolean>>} FlattenedEntryValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
- * Flattened {@link EntryContent} object, where key is a key path, but value will be the field’s
+ * Flattened entry expander state object, where key is a key path, but value will be the field’s
  * expander UI state.
  * @typedef {Record<FieldKeyPath, boolean>} FlattenedEntryExpanderState
  */

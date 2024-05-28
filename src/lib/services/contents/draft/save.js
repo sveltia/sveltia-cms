@@ -617,8 +617,10 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           }
         }
 
-        const content = unflatten(sortContentProps(fields, valueMap, canonicalSlugKey));
-        const sha = await getHash(new Blob([content], { type: 'text/plain' }));
+        const content = sortContentProps(fields, valueMap, canonicalSlugKey);
+        const sha = await getHash(
+          new Blob([JSON.stringify(unflatten(content))], { type: 'text/plain' }),
+        );
 
         return [locale, { slug, path, sha, content }];
       }),
@@ -655,9 +657,12 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       data: formatEntryFile({
         content: i18nEnabled
           ? Object.fromEntries(
-              Object.entries(savingEntryLocales).map(([locale, le]) => [locale, le.content]),
+              Object.entries(savingEntryLocales).map(([locale, le]) => [
+                locale,
+                unflatten(le.content),
+              ]),
             )
-          : content,
+          : unflatten(content),
         path,
         config,
       }),
@@ -671,7 +676,11 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           action: isNew || !originalLocales[locale] ? 'create' : 'update',
           slug,
           path,
-          data: formatEntryFile({ content, path, config }),
+          data: formatEntryFile({
+            content: unflatten(content),
+            path,
+            config,
+          }),
         });
       } else if (originalLocales[locale]) {
         changes.push({ action: 'delete', slug, path });

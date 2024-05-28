@@ -1,5 +1,5 @@
 import { escapeRegExp } from '@sveltia/utils/string';
-import { flatten, unflatten } from 'flat';
+import { unflatten } from 'flat';
 import { getEntriesByCollection } from '$lib/services/contents';
 import { getFieldConfig } from '$lib/services/contents/entry';
 
@@ -79,15 +79,14 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       return {
         refEntry,
         hasContent: !!content,
-        flattenedContent: /** @type {FlattenedEntryContent} */ (content ? flatten(content) : {}),
+        content: content ?? {},
       };
     })
     .filter(
-      ({ hasContent, flattenedContent }) =>
-        hasContent &&
-        entryFilters.every(({ field, values }) => values.includes(flattenedContent[field])),
+      ({ hasContent, content }) =>
+        hasContent && entryFilters.every(({ field, values }) => values.includes(content[field])),
     )
-    .map(({ refEntry, flattenedContent }) => {
+    .map(({ refEntry, content }) => {
       /**
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
@@ -115,7 +114,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             );
             const valueMap = unflatten(
               Object.fromEntries(
-                Object.entries(flattenedContent).filter(([keyPath]) => !!keyPath.match(regex)),
+                Object.entries(content).filter(([keyPath]) => !!keyPath.match(regex)),
               ),
             );
 
@@ -131,7 +130,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             keyPath: fieldName,
           });
           const keyPath = fieldName.replace(/^fields\./, '');
-          const value = flattenedContent[keyPath];
+          const value = content[keyPath];
 
           // Resolve the displayed value for a nested relation field
           if (_fieldConfig?.widget === 'relation') {
@@ -140,7 +139,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
               // eslint-disable-next-line no-use-before-define
               getReferencedOptionLabel({
                 fieldConfig: /** @type {RelationField} */ (_fieldConfig),
-                valueMap: flattenedContent,
+                valueMap: content,
                 keyPath,
                 locale,
               }) ?? '',

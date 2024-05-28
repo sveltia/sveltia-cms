@@ -11,7 +11,7 @@
    */
   export let entry;
   /**
-   * @type {EntryContent}
+   * @type {FlattenedEntryContent}
    */
   export let content;
   /**
