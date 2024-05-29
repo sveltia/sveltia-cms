@@ -256,9 +256,17 @@ export const createProxy = ({
   return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
-      // Just save the given value in some cases
-      if ([canonicalSlugKey].includes(keyPath) || !get(i18nAutoDupEnabled)) {
-        return Reflect.set(obj, keyPath, value);
+      if (typeof value === 'string') {
+        value = value.trim();
+      }
+
+      if (obj[keyPath] !== value) {
+        obj[keyPath] = value;
+      }
+
+      // Skip the rest in some cases
+      if ([canonicalSlugKey].includes(keyPath)) {
+        return true;
       }
 
       const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
@@ -268,8 +276,24 @@ export const createProxy = ({
         return true;
       }
 
+      if (entryDraftProp === 'currentValues') {
+        const validity = get(entryDraft)?.validities?.[sourceLocale]?.[keyPath];
+
+        // Update validity in real time if validation has already been performed
+        if (validity) {
+          // @todo Perform all the field validations, not just `valueMissing` for string fields
+          if (typeof value === 'string' && fieldConfig.required !== false) {
+            validity.valueMissing = !value;
+          }
+        }
+      }
+
       // Copy value to other locales
-      if (fieldConfig.i18n === 'duplicate' && sourceLocale === defaultLocale) {
+      if (
+        get(i18nAutoDupEnabled) &&
+        fieldConfig.i18n === 'duplicate' &&
+        sourceLocale === defaultLocale
+      ) {
         Object.entries(
           /** @type {Record<string, any>} */ (get(entryDraft))[entryDraftProp],
         ).forEach(([targetLocale, content]) => {
@@ -291,7 +315,7 @@ export const createProxy = ({
         });
       }
 
-      return Reflect.set(obj, keyPath, value);
+      return true;
     },
   });
 };
@@ -314,7 +338,7 @@ export const createDraft = (entry, dynamicValues) => {
 
   const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
   const { fields = [], _i18n } = collectionFile ?? collection;
-  const { i18nEnabled, locales: allLocales } = _i18n;
+  const { locales: allLocales } = _i18n;
   const enabledLocales = isNew
     ? allLocales
     : allLocales.filter((locale) => !!locales?.[locale]?.content);
@@ -343,27 +367,23 @@ export const createDraft = (entry, dynamicValues) => {
     currentValues: Object.fromEntries(
       enabledLocales.map((locale) => [
         locale,
-        i18nEnabled
-          ? createProxy({
-              draft: { collectionName, fileName },
-              locale,
-              target: structuredClone(originalValues[locale]),
-            })
-          : structuredClone(originalValues[locale]),
+        createProxy({
+          draft: { collectionName, fileName },
+          locale,
+          target: structuredClone(originalValues[locale]),
+        }),
       ]),
     ),
     files: Object.fromEntries(
       enabledLocales.map((locale) => [
         locale,
-        i18nEnabled
-          ? createProxy({
-              draft: { collectionName, fileName },
-              prop: 'files',
-              locale,
-              // eslint-disable-next-line jsdoc/require-jsdoc
-              getValueMap: () => /** @type {EntryDraft} */ (get(entryDraft)).currentValues[locale],
-            })
-          : {},
+        createProxy({
+          draft: { collectionName, fileName },
+          prop: 'files',
+          locale,
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          getValueMap: () => /** @type {EntryDraft} */ (get(entryDraft)).currentValues[locale],
+        }),
       ]),
     ),
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),

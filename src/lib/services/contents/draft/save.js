@@ -168,20 +168,30 @@ export const validateEntry = () => {
         }
       }
 
-      const validity = {
-        valueMissing,
-        tooShort,
-        tooLong,
-        rangeUnderflow,
-        rangeOverflow,
-        patternMismatch,
-        typeMismatch,
-      };
-      const valid = !Object.values(validity).some(Boolean);
+      const validity = new Proxy(
+        {
+          valueMissing,
+          tooShort,
+          tooLong,
+          rangeUnderflow,
+          rangeOverflow,
+          patternMismatch,
+          typeMismatch,
+        },
+        {
+          /**
+           * Getter.
+           * @param {Record<string, boolean>} obj - Object itself.
+           * @param {string} prop - Property name.
+           * @returns {boolean | undefined} Property value.
+           */
+          get: (obj, prop) => (prop === 'valid' ? !Object.values(obj).some(Boolean) : obj[prop]),
+        },
+      );
 
-      validities[locale][keyPath] = { ...validity, valid };
+      validities[locale][keyPath] = validity;
 
-      if (!valid) {
+      if (!validity.valid) {
         validated = false;
       }
     });

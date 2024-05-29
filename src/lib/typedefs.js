@@ -778,10 +778,9 @@
  * @property {Record<LocaleCode, FlattenedEntryContent>} originalValues - Key is a locale code,
  * value is a flattened object containing all the original field values.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
- * is a flattened object containing all the current field values while editing. If i18n is enabled,
- * the value object is proxified.
- * @property {Record<LocaleCode, FlattenedEntryFileList>} files - Files to be uploaded. If i18n is
- * enabled, the value object is proxified.
+ * is a flattened, proxified object containing all the current field values while editing.
+ * @property {Record<LocaleCode, FlattenedEntryFileList>} files - Files to be uploaded, value is a
+ * proxified object.
  * @property {Record<LocaleCode, FlattenedEntryValidityState>} validities - Key is a locale code,
  * value is a flattened object containing validation results of all the current field values while
  * editing.
