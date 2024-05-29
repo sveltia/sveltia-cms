@@ -150,7 +150,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
 - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
 - A folder collection filter with a boolean value works as expected[^93].
-- Sort by a DateTime field works as expected[^110].
+- Sorting entries by a DateTime field works as expected[^110].
 - Improved entry slugs
   - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
