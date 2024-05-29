@@ -8,7 +8,7 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
-  $: ({ fields } = $selectedCollection ?? /** @type {Collection} */ ({}));
+  $: ({ name: collectionName, fields } = $selectedCollection ?? /** @type {Collection} */ ({}));
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
   $: firstImageField = fields?.find(({ widget }) => widget === 'image');
   $: hasListedEntries = !!$listedEntries.length;
@@ -40,6 +40,7 @@
       disabled={!hasMultipleEntries || !$sortFields.length}
       {currentView}
       fields={$sortFields}
+      {collectionName}
       aria-controls="entry-list"
     />
     {#if $selectedCollection.view_filters?.length}

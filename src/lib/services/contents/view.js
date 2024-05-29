@@ -4,6 +4,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
+import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
 import { backend } from '$lib/services/backends';
 import {
   allEntries,
@@ -160,6 +161,10 @@ const sortEntries = (entries, { key, order }) => {
   const valueMap = Object.fromEntries(
     _entries.map((entry) => [entry.slug, getPropertyValue(entry, defaultLocale, key)]),
   );
+  const { collectionName, fileName } = _entries[0];
+  const fieldConfig = getFieldConfig({ collectionName, fileName, keyPath: key });
+  const dateFieldConfig =
+    fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
 
   _entries.sort((a, b) => {
     const aValue = valueMap[a.slug];
@@ -167,6 +172,15 @@ const sortEntries = (entries, { key, order }) => {
 
     if (aValue === undefined || bValue === undefined) {
       return 0;
+    }
+
+    if (dateFieldConfig) {
+      const aDate = getDate(aValue, dateFieldConfig);
+      const bDate = getDate(bValue, dateFieldConfig);
+
+      if (aDate && bDate) {
+        return Number(aDate) - Number(bDate);
+      }
     }
 
     if (type === String) {
