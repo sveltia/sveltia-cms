@@ -49,7 +49,12 @@ export const validateEntry = () => {
     // Reset the state first
     validities[locale] = {};
 
-    valueEntries.forEach(([keyPath, value]) => {
+    /**
+     * Validate each field.
+     * @param {string} keyPath - Field key path.
+     * @param {any} value - Field value.
+     */
+    const validateField = (keyPath, value) => {
       const fieldConfig = getFieldConfig({
         collectionName: collection.name,
         fileName,
@@ -73,7 +78,15 @@ export const validateEntry = () => {
         return;
       }
 
-      const arrayMatch = keyPath.match(/\.(\d+)$/);
+      // Validate a list itself before the items
+      if (!['select', 'relation'].includes(widgetName) && keyPath.match(/\.\d+$/)) {
+        const listKeyPath = keyPath.replace(/\.\d+$/, '');
+
+        if (!(listKeyPath in validities[locale])) {
+          validateField(listKeyPath, undefined);
+        }
+      }
+
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
       const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
         fieldConfig
@@ -86,13 +99,9 @@ export const validateEntry = () => {
       let patternMismatch = false;
       let typeMismatch = false;
 
-      // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.n`,
-      // we should validate only once against all these values
-      if (widgetName === 'list' || arrayMatch) {
-        if (arrayMatch) {
-          keyPath = keyPath.replace(/\.\d+$/, '');
-        }
-
+      if (widgetName === 'list') {
+        // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.n`,
+        // we should validate only once against all these values
         if (keyPath in validities[locale]) {
           return;
         }
@@ -194,6 +203,10 @@ export const validateEntry = () => {
       if (!validity.valid) {
         validated = false;
       }
+    };
+
+    valueEntries.forEach(([keyPath, value]) => {
+      validateField(keyPath, value);
     });
   });
 
