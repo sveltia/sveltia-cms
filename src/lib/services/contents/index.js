@@ -76,6 +76,9 @@ export const getCollection = (name) => {
       : undefined,
     _i18n: getI18nConfig(collection),
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
+    _thumbnailFieldName: collection.folder
+      ? collection.thumbnail ?? collection.fields?.find(({ widget }) => widget === 'image')?.name
+      : undefined,
   };
 
   collectionCache.set(name, _collection);

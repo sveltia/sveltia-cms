@@ -21,9 +21,7 @@
   $: ({ defaultLocale } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
   $: ({ content } = locales[locale] ?? {});
-  $: thumbnailFieldName = !collectionFile
-    ? collection?.thumbnail ?? collection?.fields?.find(({ widget }) => widget === 'image')?.name
-    : undefined;
+  $: thumbnailFieldName = collection?._thumbnailFieldName;
 
   $: (async () => {
     src =

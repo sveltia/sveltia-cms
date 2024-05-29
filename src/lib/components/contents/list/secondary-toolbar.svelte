@@ -8,13 +8,9 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
-  $: ({
-    name: collectionName,
-    thumbnail,
-    fields,
-  } = $selectedCollection ?? /** @type {Collection} */ ({}));
+  $: ({ name: collectionName, _thumbnailFieldName: thumbnailFieldName } =
+    $selectedCollection ?? /** @type {Collection} */ ({}));
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
-  $: thumbnailFieldName = thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name;
   $: hasListedEntries = !!$listedEntries.length;
   $: hasMultipleEntries = $listedEntries.length > 1;
 </script>

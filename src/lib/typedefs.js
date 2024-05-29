@@ -384,6 +384,8 @@
  * @property {I18nConfig} _i18n - Normalized i18n configuration combined with the top-level
  * configuration.
  * @property {CollectionAssetFolder} [_assetFolder] - Asset folder configuration.
+ * @property {FieldKeyPath} [_thumbnailFieldName] - Key path to an entry thumbnail. The `thumbnail`
+ * option or the first image field name. Folder collection only.
  */
 
 /**
