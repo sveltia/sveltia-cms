@@ -10,7 +10,7 @@
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
 
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
-  $: firstImageFieldName =
+  $: thumbnailFieldName =
     $selectedCollection?.thumbnail ??
     $selectedCollection?.fields?.find(({ widget }) => widget === 'image')?.name;
 </script>
@@ -38,7 +38,7 @@
                   {content}
                   {locale}
                   viewType={$currentView.type}
-                  {firstImageFieldName}
+                  {thumbnailFieldName}
                 />
               {/if}
             {/each}

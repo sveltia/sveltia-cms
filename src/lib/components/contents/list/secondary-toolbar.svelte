@@ -14,7 +14,7 @@
     fields,
   } = $selectedCollection ?? /** @type {Collection} */ ({}));
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
-  $: firstImageFieldName = thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name;
+  $: thumbnailFieldName = thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name;
   $: hasListedEntries = !!$listedEntries.length;
   $: hasMultipleEntries = $listedEntries.length > 1;
 </script>
@@ -65,7 +65,7 @@
       />
     {/if}
     <ViewSwitcher
-      disabled={!hasListedEntries || !firstImageFieldName}
+      disabled={!hasListedEntries || !thumbnailFieldName}
       {currentView}
       aria-controls="entry-list"
     />

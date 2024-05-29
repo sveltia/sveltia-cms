@@ -28,7 +28,7 @@
   /**
    * @type {string | undefined}
    */
-  export let firstImageFieldName;
+  export let thumbnailFieldName;
 
   /**
    * @type {string | undefined}
@@ -37,8 +37,8 @@
 
   $: (async () => {
     src =
-      content && firstImageFieldName
-        ? await getMediaFieldURL(content[firstImageFieldName], entry, { thumbnail: true })
+      content && thumbnailFieldName
+        ? await getMediaFieldURL(content[thumbnailFieldName], entry, { thumbnail: true })
         : undefined;
   })();
 
@@ -82,7 +82,7 @@
       }}
     />
   </GridCell>
-  {#if firstImageFieldName}
+  {#if thumbnailFieldName}
     <GridCell class="image">
       {#if src}
         <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
