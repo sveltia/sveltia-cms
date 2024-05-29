@@ -24,6 +24,21 @@
     initAppLocale();
     initSiteConfig(config);
   });
+
+  // Fix the position of the custom mount element if needed
+  // @see https://decapcms.org/docs/custom-mounting/
+  onMount(() => {
+    const ncRoot = /** @type {?HTMLElement} */ (document.querySelector('#nc-root'));
+
+    if (
+      !!ncRoot &&
+      !!ncRoot.clientWidth &&
+      !!ncRoot.clientHeight &&
+      window.getComputedStyle(ncRoot).position === 'static'
+    ) {
+      ncRoot.classList.add('relative');
+    }
+  });
 </script>
 
 <svelte:head>
@@ -65,10 +80,18 @@
 </AppShell>
 
 <style lang="scss">
+  :global(#nc-root.relative) {
+    position: relative;
+
+    & > :global(.sui.app-shell) {
+      position: absolute;
+    }
+  }
+
   .outer {
     display: flex;
     flex-direction: column;
-    position: fixed;
+    position: absolute;
     inset: 0;
     overflow: hidden;
   }

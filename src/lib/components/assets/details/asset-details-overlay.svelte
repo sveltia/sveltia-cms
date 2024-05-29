@@ -126,7 +126,7 @@
     }
 
     & > :global(.sui.group) {
-      position: fixed;
+      position: absolute;
       inset: 0;
       z-index: 100;
       display: flex;
