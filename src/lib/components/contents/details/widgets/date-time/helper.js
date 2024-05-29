@@ -104,11 +104,12 @@ export const getInputValue = (currentValue, fieldConfig) => {
     return '';
   }
 
-  if (dateOnly && currentValue?.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return currentValue;
-  }
-
-  if (timeOnly && currentValue?.match(/^\d{2}:\d{2}$/)) {
+  // If the current value is the standard format, return it as is
+  if (
+    (dateOnly && currentValue?.match(/^\d{4}-\d{2}-\d{2}$/)) ||
+    (timeOnly && currentValue?.match(/^\d{2}:\d{2}$/)) ||
+    currentValue?.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
+  ) {
     return currentValue;
   }
 
