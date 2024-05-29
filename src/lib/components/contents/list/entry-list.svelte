@@ -10,7 +10,9 @@
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
 
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
-  $: firstImageField = $selectedCollection?.fields?.find(({ widget }) => widget === 'image');
+  $: firstImageFieldName =
+    $selectedCollection?.thumbnail ??
+    $selectedCollection?.fields?.find(({ widget }) => widget === 'image')?.name;
 </script>
 
 <ListContainer aria-label={$selectedCollection?.files ? $_('file_list') : $_('entry_list')}>
@@ -36,7 +38,7 @@
                   {content}
                   {locale}
                   viewType={$currentView.type}
-                  {firstImageField}
+                  {firstImageFieldName}
                 />
               {/if}
             {/each}

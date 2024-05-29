@@ -21,14 +21,14 @@
   $: ({ defaultLocale } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
   $: ({ content } = locales[locale] ?? {});
-  $: firstImageField = !collectionFile
-    ? collection?.fields?.find(({ widget }) => widget === 'image')
+  $: firstImageFieldName = !collectionFile
+    ? collection?.thumbnail ?? collection?.fields?.find(({ widget }) => widget === 'image')?.name
     : undefined;
 
   $: (async () => {
     src =
-      content && firstImageField
-        ? await getMediaFieldURL(content[firstImageField.name], entry, { thumbnail: true })
+      content && firstImageFieldName
+        ? await getMediaFieldURL(content[firstImageFieldName], entry, { thumbnail: true })
         : undefined;
   })();
 </script>

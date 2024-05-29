@@ -8,9 +8,13 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
-  $: ({ name: collectionName, fields } = $selectedCollection ?? /** @type {Collection} */ ({}));
+  $: ({
+    name: collectionName,
+    thumbnail,
+    fields,
+  } = $selectedCollection ?? /** @type {Collection} */ ({}));
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
-  $: firstImageField = fields?.find(({ widget }) => widget === 'image');
+  $: firstImageFieldName = thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name;
   $: hasListedEntries = !!$listedEntries.length;
   $: hasMultipleEntries = $listedEntries.length > 1;
 </script>
@@ -61,7 +65,7 @@
       />
     {/if}
     <ViewSwitcher
-      disabled={!hasListedEntries || !firstImageField}
+      disabled={!hasListedEntries || !firstImageFieldName}
       {currentView}
       aria-controls="entry-list"
     />

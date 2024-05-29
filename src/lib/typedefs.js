@@ -370,6 +370,9 @@
  * @property {boolean} [divider] - A special option to make this collection a divider UI in the
  * primary sidebar’s collection list. Other options will be ignored, but you may still need a random
  * `name` and an empty `files` list to avoid a config file validation error in VS Code.
+ * @property {string} [thumbnail] - Key path to an entry thumbnail displayed on the entry list. A
+ * nested field can be specified using dot notation, e.g. `images.0.src`. If omitted, the `name` of
+ * the first image field is used.
  * @see https://decapcms.org/docs/configuration-options/#collections
  */
 
