@@ -151,7 +151,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
 - A folder collection filter with a boolean value works as expected[^93].
 - Sorting entries by a DateTime field works as expected[^110].
-- You can use the `thumbnail` option for a collection to specify the field name for an entry thumbnail displayed on the entry list. A nested field can be specified using dot notation, e.g. `images.0.src`. If omitted, the `name` of the first image field is used.
+- You can use the `thumbnail` option for a collection to specify the field name for a thumbnail displayed on the entry list. A nested field can be specified using dot notation, e.g. `images.0.src`. If omitted, the `name` of the first image field is used.
 - Improved entry slugs
   - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
@@ -787,7 +787,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^23]: Netlify/Decap CMS [#2](https://github.com/decaporg/decap-cms/issues/2)
 [^24]: Netlify/Decap CMS [#6831](https://github.com/decaporg/decap-cms/issues/6831)
 [^25]: Netlify/Decap CMS [#526](https://github.com/decaporg/decap-cms/issues/526), [#6987](https://github.com/decaporg/decap-cms/issues/6987)
-[^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285), [#7030](https://github.com/decaporg/decap-cms/issues/7030), [#7067](https://github.com/decaporg/decap-cms/issues/7067)
+[^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285), [#7030](https://github.com/decaporg/decap-cms/issues/7030), [#7067](https://github.com/decaporg/decap-cms/issues/7067), [#7217](https://github.com/decaporg/decap-cms/issues/7217)
 [^27]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/5617)
 [^28]: Netlify/Decap CMS [#2677](https://github.com/decaporg/decap-cms/pull/2677), [#6836](https://github.com/decaporg/decap-cms/pull/6836)
 [^29]: Netlify/Decap CMS [#4783](https://github.com/decaporg/decap-cms/issues/4783)
