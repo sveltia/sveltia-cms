@@ -101,7 +101,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error[^107].
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
-- The application renders within the dimensions of the custom mount element (`<div id="nc-root">`), if it exists[^109].
+- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if it exists[^109].
 
 ### Better backend support
 
