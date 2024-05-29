@@ -85,6 +85,15 @@ export const validateEntry = () => {
         if (!(listKeyPath in validities[locale])) {
           validateField(listKeyPath, undefined);
         }
+
+        if (widgetName === 'list') {
+          const { field, fields, types } = /** @type {ListField} */ (fieldConfig);
+
+          if (!field && !fields && !types) {
+            // Simple list field
+            return;
+          }
+        }
       }
 
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
