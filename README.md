@@ -18,7 +18,12 @@ Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stal
 
 To achieve radical improvements in UX, performance, i18n and other areas, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new offering has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
-Our goal is to make it a viable successor to Netlify CMS, expand the Git-based headless CMS market, empower small businesses and individuals who need a simple yet powerful CMS solution, and showcase the huge potential of the Svelte framework.
+### Our goals
+
+- Making Sveltia CMS a viable successor to Netlify CMS
+- Expanding the Git-based headless CMS market
+- Empowering small businesses and individuals who need a simple, free, yet powerful CMS solution
+- Showcasing the vast potential of the Svelte framework
 
 ## Development status
 
@@ -142,21 +147,24 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better collections
 
-- You can choose a [custom icon for each collection](#using-a-custom-icon-for-a-collection) with the `icon` collection option[^3].
-- You can [add dividers to the collection list](#adding-dividers-to-the-collection-list) with the `divider` collection option.
-- Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
-- You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
-- You can use Markdown in collection descriptions[^79]. Bold, italic, strikethrough, code and links are allowed.
-- The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
-- The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
-- A folder collection filter with a boolean value works as expected[^93].
-- Sorting entries by a DateTime field works as expected[^110].
-- You can use the `thumbnail` collection option to specify the field name for a thumbnail displayed on the entry list. A nested field can be specified using dot notation, e.g. `images.0.src`. If omitted, the `name` of the first image field is used.
-- Improved entry slugs
+- Configuration
+  - You can [choose a custom icon for each collection](#using-a-custom-icon-for-a-collection) with the new `icon` collection option[^3].
+  - You can [add dividers to the collection list](#adding-dividers-to-the-collection-list) with the new `divider` collection option.
+  - You can specify the field name for a thumbnail displayed on the entry list with the new `thumbnail` collection option. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
+  - You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
+  - You can use Markdown in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
+- Entry slugs
   - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
   - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
+- User interface
+  - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
+  - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
+  - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
+- Entry listing
+  - A folder collection filter with a boolean value works as expected[^93].
+  - Sorting entries by a DateTime field works as expected[^110].
 
 ### Better content editing
 
@@ -216,8 +224,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to select an option with value `0`[^56].
   - `label` is displayed in the preview pane instead of `value`.
 - String
-  - When a YouTube video URL is entered in a String field, it appears as an embedded video in the preview pane.
-    - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
+  - When a YouTube video URL is entered in a String field, it appears as an embedded video in the preview pane. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - When a regular URL is entered in a String field, it appears as a link that can be opened in a new browser tab.
   - Supports the `type` option that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string options, which automatically prepend and/or append the developer-defined value to the user-input value.
@@ -236,8 +243,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
   - If a dropdown list has options with long wrapping labels, they won’t overlap with the next option[^83].
-  - When there are 5 or fewer options, the UI switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61].
-    - This number can be changed with the `dropdown_threshold` option for the `relation` and `select` widgets.
+  - When there are 5 or fewer options, the UI switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61]. This number can be changed with the `dropdown_threshold` option for the `relation` and `select` widgets.
 - String and Text
   - Supports the `minlength` and `maxlength` options, which allow developers to specify the minimum and maximum number of characters required for input without having to write a custom regular expression with the `pattern` option. A character counter is available when one of the options is given, and a user-friendly validation error is displayed if the condition is not met.
 
@@ -255,10 +261,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 - A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents[^96].
   - Navigate between the global media folder and per-collection media folders[^6].
-  - Preview image, audio, video, text and PDF files.
-    - Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
-  - Copy the public URL[^74], file path, text data or image data of a selected asset to clipboard.
-    - The file path starts with `/` as expected[^48].
+  - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
+  - Copy the public URL[^74], file path, text data or image data of a selected asset to clipboard. The file path starts with `/` as expected[^48].
   - Edit plain text assets, including SVG images.
   - Replace existing assets.
   - Download one or more selected assets at once.
@@ -833,7 +837,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^68]: Netlify/Decap CMS [#6978](https://github.com/decaporg/decap-cms/issues/6978)
 [^69]: Netlify/Decap CMS [#6994](https://github.com/decaporg/decap-cms/issues/6994)
 [^70]: Netlify/Decap CMS [#6482](https://github.com/decaporg/decap-cms/issues/6482)
-[^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7000](https://github.com/decaporg/decap-cms/issues/7000), [#7001](https://github.com/decaporg/decap-cms/issues/7001), [#7152](https://github.com/decaporg/decap-cms/issues/7152)
+[^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7000](https://github.com/decaporg/decap-cms/issues/7000), [#7001](https://github.com/decaporg/decap-cms/issues/7001), [#7152](https://github.com/decaporg/decap-cms/issues/7152), [#7220](https://github.com/decaporg/decap-cms/issues/7220)
 [^72]: Netlify/Decap CMS [#7047](https://github.com/decaporg/decap-cms/issues/7047)
 [^73]: Netlify/Decap CMS [#6993](https://github.com/decaporg/decap-cms/issues/6993), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7127](https://github.com/decaporg/decap-cms/issues/7127), [#7128](https://github.com/decaporg/decap-cms/issues/7128)
 [^74]: Netlify/Decap CMS [#4209](https://github.com/decaporg/decap-cms/issues/4209)
