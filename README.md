@@ -101,7 +101,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error[^107].
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
-- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if it exists[^109].
+- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists[^109].
 
 ### Better backend support
 
@@ -142,8 +142,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better collections
 
-- You can choose a [custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
-- You can [add dividers to the collection list](#adding-dividers-to-the-collection-list).
+- You can choose a [custom icon for each collection](#using-a-custom-icon-for-a-collection) with the `icon` collection option[^3].
+- You can [add dividers to the collection list](#adding-dividers-to-the-collection-list) with the `divider` collection option.
 - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
 - You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
 - You can use Markdown in collection descriptions[^79]. Bold, italic, strikethrough, code and links are allowed.
@@ -151,7 +151,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
 - A folder collection filter with a boolean value works as expected[^93].
 - Sorting entries by a DateTime field works as expected[^110].
-- You can use the `thumbnail` option for a collection to specify the field name for a thumbnail displayed on the entry list. A nested field can be specified using dot notation, e.g. `images.0.src`. If omitted, the `name` of the first image field is used.
+- You can use the `thumbnail` collection option to specify the field name for a thumbnail displayed on the entry list. A nested field can be specified using dot notation, e.g. `images.0.src`. If omitted, the `name` of the first image field is used.
 - Improved entry slugs
   - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
