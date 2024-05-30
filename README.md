@@ -33,7 +33,8 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 100+ of them have been effectively solved in Sveltia CMS, with the goal of reaching 150 by GA and 250 in later releases.
+  - So far, 100+ of them (or 180+ including duplicates) have been effectively solved in Sveltia CMS
+  - Goal: Reaching 150 by GA, 250 in a later release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
 - Implementing our own UX enhancement ideas
