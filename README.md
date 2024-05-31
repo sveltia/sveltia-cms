@@ -34,7 +34,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 100+ of them (or 180+ including duplicates) have been effectively solved in Sveltia CMS
-  - Goal: Reaching 150 by GA, 250 in a later release
+  - Target: 150 issues by GA, 250 in a later release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
 - Implementing our own UX enhancement ideas
@@ -51,7 +51,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Ready to be used as a drop-in replacement for Netlify/Decap CMS _in some casual use case scenarios_ with a single line of code update.
 - Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- Some features are still missing or will not be added though — look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
+- However, some features are still missing or will not be added — look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
 
 ### Better UX
 
@@ -70,7 +70,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Using caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
-- The upcoming [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver a further boost in performance, including accelerated speed and reduced code size.
+- The upcoming [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver further performance improvements, including accelerated speed and reduced bundle size (50+ KB reduction).
 
 ### Better productivity
 
@@ -159,13 +159,12 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
   - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
-- User interface
-  - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
-  - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
-  - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
 - Entry listing
   - A folder collection filter with a boolean value works as expected[^93].
   - Sorting entries by a DateTime field works as expected[^110].
+  - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
+  - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
+  - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
 
 ### Better content editing
 
