@@ -160,10 +160,10 @@
       playsinline
       {...$$restProps}
       bind:this={mediaElement}
-    />
+    ></video>
   {:else if kind === 'audio'}
     {#if controls}
-      <audio {src} controls playsinline {...$$restProps} bind:this={mediaElement} />
+      <audio {src} controls playsinline {...$$restProps} bind:this={mediaElement}></audio>
     {:else}
       <Icon name="audio_file" />
     {/if}
@@ -172,10 +172,10 @@
   {/if}
   {#if blurBackground}
     <div role="none" class="blur">
-      <div role="none" class="overlay" />
+      <div role="none" class="overlay"></div>
       {#if kind === 'video'}
         <!-- svelte-ignore a11y-media-has-caption -->
-        <video {src} playsinline />
+        <video {src} playsinline></video>
       {:else}
         <img {loading} {src} alt="" />
       {/if}

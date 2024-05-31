@@ -98,7 +98,7 @@
               controls={kind === 'audio' || kind === 'video'}
             />
           {:else if blob?.type === 'application/pdf'}
-            <iframe src={blobURL} title={name} />
+            <iframe src={blobURL} title={name}></iframe>
           {:else if blob?.type && isTextFileType(blob.type)}
             {#await $overlaidAsset?.text ?? blob.text() then text}
               <pre role="figure">{text}</pre>

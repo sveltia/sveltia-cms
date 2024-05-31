@@ -40,8 +40,7 @@
         allow="autoplay; encrypted-media; picture-in-picture"
         referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen
-      >
-      </iframe>
+      ></iframe>
     {/await}
   {:else}
     <a href={encodeURI(url)}>{url}</a>

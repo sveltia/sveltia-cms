@@ -15,7 +15,7 @@
   let toastMessage = '';
   let showToast = false;
 
-  $: panels = [
+  const panels = [
     { key: 'appearance', icon: 'palette', component: AppearancePanel },
     { key: 'languages', icon: 'language', component: LanguagesPanel },
     { key: 'media', icon: 'photo_library', component: MediaPanel },

@@ -91,9 +91,11 @@
                 }
               }}
             >
-              {#if invalid}
-                <Icon slot="end-icon" name="error" aria-label={$_('locale_content_errors')} />
-              {/if}
+              <svelte:fragment slot="end-icon">
+                {#if invalid}
+                  <Icon name="error" aria-label={$_('locale_content_errors')} />
+                {/if}
+              </svelte:fragment>
             </SelectButton>
           {/if}
         {/each}
