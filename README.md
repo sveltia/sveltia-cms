@@ -64,21 +64,21 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
-- Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than bloated Netlify CMS (1.5 MB) and Decap CMS (1.8 MB)[^57][^64]. Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (a Netlify CMS fork, 2.6 MB)[^57][^64]. Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - No typing lag on input widgets, especially within nested lists and objects[^77].
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Using caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
-- The upcoming [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver further performance improvements, including accelerated speed and reduced bundle size (50+ KB reduction).
+- The upcoming [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver further performance improvements, including accelerated speed and even smaller bundle size (50+ KB reduction).
 
 ### Better productivity
 
 - You can [work with a local Git repository](#working-with-a-local-git-repository) without any extra configuration or proxy server[^26].
-  - Deleting an entry or asset file also deletes the empty enclosing folder, so you don’t have to delete it manually.
   - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
-- Eliminates some workflow disruptions in the Content Editor:
+  - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
+- Provides a smoother user experience in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved.
@@ -137,7 +137,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. (For example, it might be difficult to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.)
   - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
 - Content editing
-  - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click.
+  - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click. More translation services will be added in the future.
   - You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
   - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
   - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
@@ -235,7 +235,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
-    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More services will be added later.
+    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More stock photo providers will be added in the future.
   - Large images automatically fit in the preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36].
@@ -314,7 +314,7 @@ Missing other features? Let us know by [filing an issue](https://github.com/svel
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
-- Undocumented [methods available on the `window.CMS` object](https://github.com/sveltia/sveltia-cms/blob/b7f62741e02dc390c63c03291f95b2ca315d811b/src/main.js#L3-L33) will not be implemented. This includes custom backends, if any.
+- Undocumented [methods available on the `window.CMS` object](https://github.com/sveltia/sveltia-cms/blob/b7f62741e02dc390c63c03291f95b2ca315d811b/src/main.js#L3-L33) will not be implemented. This includes custom backends and custom media libraries, if any.
 
 ## Roadmap
 
@@ -333,6 +333,7 @@ Missing other features? Let us know by [filing an issue](https://github.com/svel
 ### After the 1.0 release
 
 - Compatibility with Static CMS, a community fork of Netlify CMS
+- AI integrations
 - Roles[^23]
 - Config editor[^10]
 - Mobile support[^18]
@@ -516,8 +517,6 @@ If you have upgraded to DeepL API Pro, provide your new Authentication Key:
 1. Select the Language tab.
 1. Paste your key to the DeepL API Authentication Key field.
 1. Close the Settings dialog.
-
-More translation service providers will be added in the future.
 
 ### Localizing entry slugs
 
