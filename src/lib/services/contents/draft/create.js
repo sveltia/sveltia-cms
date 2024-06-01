@@ -248,6 +248,7 @@ export const createProxy = ({
   }
 
   const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
+
   const {
     defaultLocale,
     canonicalSlug: { key: canonicalSlugKey },
@@ -339,12 +340,15 @@ export const createDraft = (entry, dynamicValues) => {
   const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
   const { fields = [], _i18n } = collectionFile ?? collection;
   const { locales: allLocales } = _i18n;
+
   const enabledLocales = isNew
     ? allLocales
     : allLocales.filter((locale) => !!locales?.[locale]?.content);
+
   const originalLocales = Object.fromEntries(
     allLocales.map((locale) => [locale, isNew || enabledLocales.includes(locale)]),
   );
+
   /** @type {Record<LocaleCode, FlattenedEntryContent>} */
   const originalValues = Object.fromEntries(
     enabledLocales.map((locale) =>
@@ -400,6 +404,7 @@ export const createDraft = (entry, dynamicValues) => {
 export const duplicateDraft = () => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collection, collectionFile, currentValues, validities } = draft;
+
   const {
     canonicalSlug: { key: canonicalSlugKey },
   } = (collectionFile ?? collection)._i18n;

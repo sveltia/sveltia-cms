@@ -32,6 +32,7 @@ const supportedLocales = [
   'ko',
   'zh',
 ];
+
 const endpoint = 'https://pixabay.com/api';
 
 /**
@@ -45,6 +46,7 @@ const endpoint = 'https://pixabay.com/api';
  */
 const search = async (query, { apiKey }) => {
   const [locale] = /** @type {string} */ (get(appLocale)).toLowerCase().split('-');
+
   const params = new URLSearchParams(
     /** @type {Record<string, any>} */ ({
       key: apiKey,
@@ -57,6 +59,7 @@ const search = async (query, { apiKey }) => {
       per_page: 150,
     }),
   );
+
   const response = await fetch(`${endpoint}/?${params.toString()}`);
 
   if (!response.ok) {

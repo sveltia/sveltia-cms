@@ -118,6 +118,7 @@ const supportedLocales = [
   'yua',
   'zu',
 ];
+
 const endpoint = 'https://api.unsplash.com';
 const creditLinkParams = 'utm_source=sveltia-cms&utm_medium=referral';
 
@@ -154,6 +155,7 @@ const search = async (query, { apiKey }) => {
           per_page: 30,
         }),
       );
+
       const response = await fetch(`${endpoint}/search/photos?${params.toString()}`, { headers });
 
       if (!response.ok) {
@@ -177,6 +179,7 @@ const search = async (query, { apiKey }) => {
         per_page: 30,
       }),
     );
+
     const response = await fetch(`${endpoint}/photos?${params.toString()}`, { headers });
 
     if (!response.ok) {

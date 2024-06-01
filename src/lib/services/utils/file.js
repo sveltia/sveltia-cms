@@ -12,6 +12,7 @@ export const formatSize = (size) => {
   const formatter = new Intl.NumberFormat(/** @type {string} */ (get(appLocale)), {
     maximumFractionDigits: 1,
   });
+
   const kb = 1000;
   const mb = kb * 1000;
   const gb = mb * 1000;
@@ -49,9 +50,11 @@ export const renameIfNeeded = (name, otherNames) => {
   }
 
   const { filename: slug, extension } = getPathInfo(name);
+
   const regex = new RegExp(
     `^${escapeRegExp(slug)}(?:-(\\d+?))?${extension ? `\\.${extension}` : ''}$`,
   );
+
   const dupName = otherNames
     .sort((a, b) => a.split('.')[0].localeCompare(b.split('.')[0]))
     .findLast((p) => p.match(regex));

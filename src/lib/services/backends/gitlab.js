@@ -19,6 +19,7 @@ const backendName = 'gitlab';
 const label = 'GitLab';
 const statusDashboardURL = 'https://status.gitlab.com/';
 const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
+
 /**
  * @type {RepositoryInfo}
  */
@@ -152,6 +153,7 @@ const getRepositoryInfo = () => {
     branch,
     api_root: apiRoot, // Self-hosted only
   } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://gitlab.com';
 
@@ -183,6 +185,7 @@ const init = () => {
  */
 const signIn = async ({ token: cachedToken, auto = false }) => {
   const { origin, hostname } = window.location;
+
   const {
     site_domain: siteDomain = hostname,
     base_url: baseURL = 'https://gitlab.com',
@@ -190,6 +193,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     auth_type: authType,
     app_id: clientId = '',
   } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+
   const authURL = `${stripSlashes(baseURL)}/${stripSlashes(path)}`;
   const scope = 'api';
   let token = '';
@@ -254,6 +258,7 @@ const signOut = async () => void 0;
  */
 const fetchDefaultBranchName = async () => {
   const { owner, repo } = repository;
+
   const result = /** @type {{ project: { repository: { rootRef: string } } }} */ (
     await fetchGraphQL(`
       query {
@@ -291,6 +296,7 @@ const fetchDefaultBranchName = async () => {
  */
 const fetchLastCommitHash = async () => {
   const { owner, repo, branch } = repository;
+
   const result =
     /** @type {{ project: { repository: { tree: { lastCommit: { sha: string }} } } }} */ (
       await fetchGraphQL(`
@@ -368,6 +374,7 @@ const fetchFileList = async () => {
           }
         `)
       );
+
     const {
       nodes,
       pageInfo: { endCursor, hasNextPage },
@@ -432,6 +439,7 @@ const fetchFileContents = async (fetchingFiles) => {
           { paths },
         )
       );
+
     const {
       nodes,
       pageInfo: { endCursor, hasNextPage },
@@ -502,13 +510,16 @@ const fetchFileContents = async (fetchingFiles) => {
   return Object.fromEntries(
     fetchingFiles.map(({ path, sha }, index) => {
       const { size, rawTextBlob } = blobs[index];
+
       const {
         author: { id, username },
         authorName,
         authorEmail,
         committedDate,
       } = commits[index];
+
       const idMatcher = id?.match(/\d+/);
+
       const data = {
         sha,
         size: Number(size),
@@ -576,6 +587,7 @@ const fetchBlob = async (asset) => {
  */
 const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
+
   const result = /** @type {{ web_url: string }} */ (
     await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`, {
       method: 'POST',

@@ -247,12 +247,15 @@ siteConfig.subscribe((config) => {
         Object.values(a.filePathMap)[0].localeCompare(Object.values(b.filePathMap)[0]),
       ),
   ];
+
   const globalMediaFolder = stripSlashes(_globalMediaFolder);
+
   // Some frameworks expect asset paths starting with `@`, like `@assets/images/...`. Remove an
   // extra leading slash in that case. A trailing slash should always be removed internally.
   const globalPublicFolder = _globalPublicFolder
     ? `/${stripSlashes(_globalPublicFolder)}`.replace(/^\/@/, '@')
     : `/${globalMediaFolder}`;
+
   /** @type {CollectionAssetFolder} */
   const globalAssetFolder = {
     collectionName: undefined,
@@ -260,6 +263,7 @@ siteConfig.subscribe((config) => {
     publicPath: globalPublicFolder,
     entryRelative: false,
   };
+
   /**
    * Folder Collections Media and Public Folder.
    * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
@@ -310,6 +314,7 @@ siteConfig.subscribe((config) => {
       })
       .filter(Boolean)
   ).sort((a, b) => a.internalPath.localeCompare(b.internalPath));
+
   const _allAssetFolders = [globalAssetFolder, ...collectionAssetFolders];
 
   allEntryFolders.set(_allEntryFolders);

@@ -36,9 +36,11 @@ export const createFileList = (files) => {
     const { path } = fileInfo;
     const name = /** @type {string} */ (path.split('/').pop());
     const extension = name.split('.').pop();
+
     const entryFolderConfig = get(allEntryFolders).findLast(({ filePathMap, folderPath }) =>
       folderPath ? path.startsWith(folderPath) : Object.values(filePathMap ?? {}).includes(path),
     );
+
     const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
       if (entryRelative) {
         return path.startsWith(`${internalPath}/`);

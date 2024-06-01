@@ -132,9 +132,11 @@ export const getEntriesByAssetURL = async (url) => {
   const siteURL = get(siteConfig)?.site_url;
   const assetURL = siteURL && !url.startsWith('blob:') ? url.replace(siteURL, '') : url;
   const entries = get(allEntries);
+
   const results = await Promise.all(
     entries.map(async (entry) => {
       const { locales, collectionName, fileName } = entry;
+
       const _results = await Promise.all(
         Object.values(locales).map(async ({ content }) => {
           const __results = await Promise.all(

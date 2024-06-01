@@ -14,6 +14,7 @@ const backendName = 'github';
 const label = 'GitHub';
 const statusDashboardURL = 'https://www.githubstatus.com/';
 const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
+
 /**
  * @type {RepositoryInfo}
  */
@@ -144,6 +145,7 @@ const getRepositoryInfo = () => {
     branch,
     api_root: apiRoot, // GitHub Enterprise only; API server = web server
   } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://github.com';
 
@@ -178,11 +180,13 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
   }
 
   const { hostname } = window.location;
+
   const {
     site_domain: siteDomain = hostname,
     base_url: baseURL = 'https://api.netlify.com',
     auth_endpoint: path = 'auth',
   } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+
   const token =
     cachedToken ||
     (await initServerSideAuth({
@@ -191,6 +195,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
       authURL: `${stripSlashes(baseURL)}/${stripSlashes(path)}`,
       scope: 'repo,user',
     }));
+
   const {
     name,
     login,
@@ -223,6 +228,7 @@ const signOut = async () => void 0;
  */
 const fetchDefaultBranchName = async () => {
   const { owner, repo } = repository;
+
   const result = /** @type {{ repository: { defaultBranchRef: { name: string } } }} */ (
     await fetchGraphQL(`
       query {
@@ -257,6 +263,7 @@ const fetchDefaultBranchName = async () => {
  */
 const fetchLastCommitHash = async () => {
   const { owner, repo, branch } = repository;
+
   const result = /** @type {{ repository: { ref: { target: { oid: string } } } }} */ (
     await fetchGraphQL(`
       query {
@@ -292,6 +299,7 @@ const fetchLastCommitHash = async () => {
  */
 const fetchFileList = async () => {
   const { owner, repo, branch } = repository;
+
   const result =
     /** @type {{ tree: { type: string, path: string, sha: string, size: number }[] }} */ (
       await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`)
@@ -309,6 +317,7 @@ const fetchFileList = async () => {
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
+
   const query = fetchingFiles
     .map(({ type, path, sha }, index) => {
       const str = [];
@@ -346,6 +355,7 @@ const fetchFileContents = async (fetchingFiles) => {
       return str.join('');
     })
     .join('');
+
   // Fetch all the text contents with the GraphQL API
   const result = /** @type {{ repository: Record<string, any> }} */ (
     await fetchGraphQL(`
@@ -363,6 +373,7 @@ const fetchFileContents = async (fetchingFiles) => {
         author: { name, email, user: _user },
         committedDate,
       } = result.repository[`commit_${index}`].target.history.nodes[0];
+
       const data = {
         sha,
         // eslint-disable-next-line object-shorthand
@@ -407,6 +418,7 @@ const fetchFiles = async () => {
 const fetchBlob = async (asset) => {
   const { owner, repo } = repository;
   const { sha, path } = asset;
+
   const response = /** @type {Response} */ (
     await fetchAPI(
       `/repos/${owner}/${repo}/git/blobs/${sha}`,
@@ -433,6 +445,7 @@ const fetchBlob = async (asset) => {
  */
 const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
+
   const additions = await Promise.all(
     changes
       .filter(({ action }) => ['create', 'update', 'move'].includes(action))
@@ -441,9 +454,11 @@ const commitChanges = async (changes, options) => {
         contents: base64 ?? (await getBase64(data ?? '')),
       })),
   );
+
   const deletions = changes
     .filter(({ action }) => ['move', 'delete'].includes(action))
     .map(({ previousPath, path }) => ({ path: previousPath ?? path }));
+
   const result = /** @type {{ createCommitOnBranch: { commit: { url: string }} }} */ (
     await fetchGraphQL(
       `

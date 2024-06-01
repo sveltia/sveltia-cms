@@ -35,6 +35,7 @@ const repository = new Proxy(/** @type {any} */ ({}), {
   // @ts-ignore
   get: (_obj, key) => (remoteRepository ?? repositoryProps)[key],
 });
+
 /**
  * @type {import('svelte/store').Writable<?FileSystemDirectoryHandle>}
  */
@@ -177,6 +178,7 @@ const getAllFiles = async () => {
   const _rootDirHandle = get(rootDirHandle);
   /** @type {{ file: File, path: string }[]} */
   const availableFileList = [];
+
   const scanningPaths = [
     ...get(allEntryFolders)
       .map(({ filePathMap, folderPath }) =>
@@ -185,6 +187,7 @@ const getAllFiles = async () => {
       .flat(1),
     ...get(allAssetFolders).map(({ internalPath }) => internalPath),
   ].map((path) => stripSlashes(path ?? ''));
+
   /**
    * Get a regular expression to match the given path.
    * @param {string} path - Path.
@@ -236,6 +239,7 @@ const getAllFiles = async () => {
   return Promise.all(
     availableFileList.map(async ({ file, path }) => {
       const { name, size } = file;
+
       const [sha, text] = await Promise.all([
         getHash(file),
         name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? readAsText(file) : undefined,

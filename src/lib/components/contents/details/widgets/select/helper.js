@@ -24,6 +24,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
 
   const { multiple, options } = fieldConfig;
   const hasLabels = isObjectArray(options);
+
   /**
    * Get the label by value.
    * @param {any} _value - Stored value.
@@ -37,6 +38,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
     const values = Object.entries(valueMap)
       .filter(([key]) => key.match(`^${escapeRegExp(keyPath)}\\.\\d+$`))
       .map(([, _value]) => _value);
+
     const labels = hasLabels ? values.map(getLabel) : values;
 
     labelCache.set(cacheKey, labels);

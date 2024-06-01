@@ -31,6 +31,7 @@ import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/fil
 export const validateEntry = () => {
   const { collection, collectionFile, fileName, currentLocales, currentValues, validities } =
     /** @type {EntryDraft} */ (get(entryDraft));
+
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
   let validated = true;
 
@@ -97,9 +98,11 @@ export const validateEntry = () => {
       }
 
       const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
+
       const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
         fieldConfig
       );
+
       let valueMissing = false;
       let tooShort = false;
       let tooLong = false;
@@ -116,6 +119,7 @@ export const validateEntry = () => {
         }
 
         const keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
+
         const values =
           Array.isArray(value) && value.length
             ? value
@@ -240,6 +244,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
       _assetFolder,
     },
   } = fillSlugOptions;
+
   const subPath = entryPath?.match(/(.+?)(?:\/[^/]+)?$/)[1];
   const isMultiFolders = structure === 'multiple_folders';
   const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];
@@ -305,6 +310,7 @@ const createEntryPath = (draft, locale, slug) => {
 
   const { defaultLocale, structure } = collection._i18n;
   const collectionFolder = collection.folder;
+
   /**
    * Support folder collections path.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
@@ -316,11 +322,14 @@ const createEntryPath = (draft, locale, slug) => {
         currentSlug: slug,
       })
     : slug;
+
   const extension = getFileExtension({
     format: collection.format,
     extension: collection.extension,
   });
+
   const defaultOption = `${collectionFolder}/${path}.${extension}`;
+
   const pathOptions = {
     multiple_folders: `${collectionFolder}/${locale}/${path}.${extension}`,
     multiple_files: `${collectionFolder}/${path}.${locale}.${extension}`,
@@ -468,6 +477,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   const _user = /** @type {User} */ (get(user));
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
+
   const {
     collection,
     isNew,
@@ -480,10 +490,12 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     currentValues,
     files,
   } = draft;
+
   const {
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
   } = collection;
+
   const {
     fields = [],
     _i18n: {
@@ -494,18 +506,22 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       canonicalSlug: { key: canonicalSlugKey, value: canonicalSlugTemplate },
     },
   } = collectionFile ?? collection;
+
   const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
+
   /**
    * The slug of the default locale.
    */
   const defaultLocaleSlug =
     fileName ?? originalEntry?.slug ?? fillSlugTemplate(slugTemplate, fillSlugOptions);
+
   /**
    * List of key paths that the value will be localized.
    */
   const localizingKeyPaths = [...slugTemplate.matchAll(/{{(?:fields\.)?(.+?) \| localize}}/g)].map(
     ([, keyPath]) => keyPath,
   );
+
   /**
    * Localized slug map. This only applies when the i18n structure is multiple files or folders, and
    * the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
@@ -535,6 +551,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
                   }),
             ]),
         );
+
   /**
    * A canonical slug to be added to the content of each file when the slug is localized. It helps
    * Sveltia CMS and some frameworks to link localized files. The default property name is
@@ -552,15 +569,18 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           ...fillSlugOptions,
           currentSlug: defaultLocaleSlug,
         });
+
   const { internalAssetFolder, publicAssetFolder } = getEntryAssetFolderPaths({
     ...fillSlugOptions,
     type: 'media_folder',
     currentSlug: defaultLocaleSlug,
     entryFilePath: createEntryPath(draft, defaultLocale, defaultLocaleSlug),
   });
+
   const assetsInSameFolder = get(allAssets)
     .map((a) => a.path)
     .filter((p) => p.match(`^\\/${escapeRegExp(internalAssetFolder)}\\/[^\\/]+$`));
+
   /**
    * @type {FileChange[]}
    */
@@ -569,6 +589,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
    * @type {Asset[]}
    */
   const savingAssets = [];
+
   const savingAssetProps = {
     /** @type {string | undefined} */
     text: undefined,
@@ -579,6 +600,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       : undefined,
     commitDate: new Date(), // Use the current datetime
   };
+
   /**
    * @type {Record<LocaleCode, LocalizedEntry>}
    */
@@ -631,6 +653,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
               ...assetsInSameFolder,
               ...savingAssets.map((a) => a.name),
             ]);
+
             const assetPath = `${internalAssetFolder}/${_fileName}`;
 
             changes.push({ action: 'create', path: assetPath, data: file });
@@ -650,6 +673,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
         }
 
         const content = sortContentProps(fields, valueMap, canonicalSlugKey);
+
         const sha = await getHash(
           new Blob([JSON.stringify(unflatten(content))], { type: 'text/plain' }),
         );
@@ -658,6 +682,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       }),
     ),
   );
+
   /**
    * @type {Entry}
    */
@@ -671,12 +696,14 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       Object.entries(savingEntryLocales).filter(([, { content }]) => !!content),
     ),
   };
+
   const {
     extension,
     format,
     frontmatter_delimiter: frontmatterDelimiter,
     yaml_quote: yamlQuote,
   } = collection;
+
   const config = { extension, format, frontmatterDelimiter, yamlQuote };
 
   if (!i18nEnabled || structure === 'single_file') {
@@ -745,6 +772,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   entryDraft.set(null);
 
   const isLocal = get(backendName) === 'local';
+
   const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 

@@ -90,6 +90,7 @@ const sortAssets = (assets, { key, order } = {}) => {
   }
 
   const _assets = [...assets];
+
   const type =
     { commit_author: String, commit_date: Date }[key] ||
     /** @type {Record<string, any>} */ (_assets[0])?.[key]?.constructor ||

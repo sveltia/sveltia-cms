@@ -256,6 +256,7 @@ export const getAssetByPath = (savedPath, entry) => {
  */
 export const getAssetPublicURL = (asset, { pathOnly = false, allowSpecial = false } = {}) => {
   const _allAssetFolders = get(allAssetFolders);
+
   const { publicPath, entryRelative } =
     _allAssetFolders.find(({ collectionName }) => collectionName === asset.collectionName) ??
     _allAssetFolders.find(({ collectionName }) => collectionName === null) ??

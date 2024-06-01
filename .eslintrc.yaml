@@ -68,29 +68,46 @@ rules:
   # https://github.com/airbnb/javascript/issues/1660#issuecomment-353018874 + small tweaks
   padding-line-between-statements:
     - error
-    - blankLine: never
-      prev: const
-      next: const
-    - blankLine: never
-      prev: let
-      next: let
-    - blankLine: never
-      prev: var
-      next: var
-    - blankLine: never
-      prev: import
-      next: import
-    - blankLine: never
-      prev: export
-      next: export
     - blankLine: always
       prev: "*"
       next:
-        - multiline-block-like
-        - return
+        - block
+        - block-like
+        - cjs-export
+        - class
+        - const
+        - export
+        - import
+        - let
+        - var
     - blankLine: always
-      prev: multiline-block-like
+      prev:
+        - block
+        - block-like
+        - cjs-export
+        - class
+        - const
+        - export
+        - import
+        - let
+        - var
       next: "*"
+    - blankLine: never
+      prev:
+        - singleline-const
+        - singleline-let
+        - singleline-var
+      next:
+        - singleline-const
+        - singleline-let
+        - singleline-var
+    - blankLine: any
+      prev:
+        - export
+        - import
+      next:
+        - export
+        - import
   quotes:
     - error
     - single

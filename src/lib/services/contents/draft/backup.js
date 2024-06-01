@@ -14,6 +14,7 @@ let backupTimeout = 0;
  * @type {IndexedDB | null | undefined}
  */
 let backupDB = undefined;
+
 /**
  * Default for {@link backupToastState}.
  */
@@ -81,6 +82,7 @@ export const saveBackup = async (draft) => {
     currentValues = {},
     files,
   } = draft;
+
   const slug = originalEntry?.slug || '';
   const modified = !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
 
@@ -123,6 +125,7 @@ export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
   }
 
   const { timestamp, currentLocales, currentValues, files } = backup;
+
   /** @type {boolean} */
   const doRestore = await new Promise((resolve) => {
     // The promise will be resolved once the Restore or Discard button is clicked on the dialog

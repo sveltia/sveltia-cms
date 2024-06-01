@@ -10,6 +10,7 @@ import { getFieldConfig } from '$lib/services/contents/entry';
  */
 const normalizeFieldName = (fieldName) =>
   fieldName.match(/{{.+?}}/) ? fieldName : `{{${fieldName}}}`;
+
 /**
  * @type {Map<string, { label: string, value: any }[]>}
  */
@@ -71,6 +72,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * Entry filters.
    */
   const entryFilters = fieldConfig.filters ?? [];
+
   const options = refEntries
     .map((refEntry) => {
       // Fall back to the default locale if needed
@@ -112,6 +114,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             const regex = new RegExp(
               `^${escapeRegExp(fieldName).replace('\\.\\*', '\\.\\d+\\.[^.]+')}$`,
             );
+
             const valueMap = unflatten(
               Object.fromEntries(
                 Object.entries(content).filter(([keyPath]) => !!keyPath.match(regex)),
@@ -129,6 +132,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             collectionName: fieldConfig.collection,
             keyPath: fieldName,
           });
+
           const keyPath = fieldName.replace(/^fields\./, '');
           const value = content[keyPath];
 
@@ -149,6 +153,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           return [fieldName, value ?? ''];
         }),
       );
+
       /**
        * The number of options.
        */

@@ -118,6 +118,7 @@ const initSettings = async ({ repository }) => {
   settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
 
   const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
+
   const settings = {
     showPreview: true,
     syncScrolling: true,

@@ -38,6 +38,7 @@ const updateObject = (obj, newProps) => {
  */
 const getItemList = (obj, keyPath) => {
   const regex = new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`);
+
   const filtered = Object.entries(obj)
     .filter(([k]) => k.match(regex))
     .map(([k, v]) => [k.replace(regex, '_'), v]);
@@ -62,6 +63,7 @@ export const updateListField = (locale, keyPath, manipulate) => {
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const [valueList, valueListRemainder] = getItemList(draft.currentValues[locale], keyPath);
   const [fileList, fileListRemainder] = getItemList(draft.files[locale], keyPath);
+
   const [expanderStateList, expanderStateListRemainder] =
     // Manipulation should only happen once with the default locale
     locale === defaultLocale ? getItemList(draft.expanderStates._, keyPath) : [[], []];
@@ -134,6 +136,7 @@ export const toggleLocale = (locale) => {
     if (enabled && !currentValues[locale]) {
       const { collection, collectionName, collectionFile, fileName, originalValues, files } =
         _draft;
+
       const { fields = [], _i18n } = collectionFile ?? collection;
       const { defaultLocale } = _i18n;
       const newContent = getDefaultValues(fields, locale);
@@ -191,6 +194,7 @@ export const copyFromLocale = async (
 ) => {
   const { collectionName, fileName, currentValues } = /** @type {EntryDraft} */ (get(entryDraft));
   const valueMap = currentValues[sourceLocale];
+
   const copingFields = Object.fromEntries(
     Object.entries(valueMap).filter(([_keyPath, sourceLocaleValue]) => {
       const targetLocaleValue = currentValues[targetLocale][_keyPath];
@@ -214,6 +218,7 @@ export const copyFromLocale = async (
       return true;
     }),
   );
+
   const count = Object.keys(copingFields).length;
   const countType = count === 1 ? 'one' : 'many';
   const operationType = translate ? 'translation' : 'copy';
@@ -242,6 +247,7 @@ export const copyFromLocale = async (
 
   if (translate) {
     const _translator = get(translator);
+
     const apiKey =
       get(prefs).apiKeys?.[_translator.serviceId] ||
       (await new Promise((resolve) => {
@@ -298,6 +304,7 @@ export const copyFromLocale = async (
 export const revertChanges = (locale = '', keyPath = '') => {
   const { collection, collectionFile, fileName, currentValues, originalValues } =
     /** @type {EntryDraft} */ (get(entryDraft));
+
   const { locales: allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
   const locales = locale ? [locale] : allLocales;
 

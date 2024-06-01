@@ -29,6 +29,7 @@ export const searchResults = derived(
   [allEntries, allAssets, searchTerms],
   ([_allEntries, _allAssets, _searchTerms], set) => {
     const terms = _searchTerms ? normalize(_searchTerms) : '';
+
     const entries = (() => {
       if (!_allEntries?.length || !terms) {
         return [];
@@ -36,6 +37,7 @@ export const searchResults = derived(
 
       return _allEntries.filter(({ collectionName, fileName, locales }) => {
         const collection = getCollection(collectionName);
+
         const label = fileName
           ? collection?._fileMap?.[fileName]?.label || fileName
           : collection?.label || collectionName;
@@ -51,6 +53,7 @@ export const searchResults = derived(
         );
       });
     })();
+
     const assets = (() => {
       if (!_allAssets?.length || !terms) {
         return [];
