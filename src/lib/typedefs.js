@@ -809,8 +809,9 @@
  */
 
 /**
- * Commit action to perform. It should match GitLab’s commit action types.
- * @typedef {'create' | 'update' | 'delete'} CommitAction
+ * Commit action to perform. It should match GitLab’s commit action types. The `move` action can be
+ * combined with a content update, not just a moving/renaming of the file.
+ * @typedef {'create' | 'update' | 'move' | 'delete'} CommitAction
  * @see https://docs.gitlab.com/ee/api/commits.html#create-a-commit-with-multiple-files-and-actions
  */
 
@@ -819,6 +820,8 @@
  * @typedef {object} FileChange
  * @property {CommitAction} action - Commit action.
  * @property {string} path - File path.
+ * @property {string} [previousPath] - Original path to a file being moved. Required when the commit
+ * `action` is `move`.
  * @property {string} [slug] - Entry slug or `undefined` for an asset.
  * @property {string | File} [data] - File data.
  * @property {string} [base64] - Base64 of the data.

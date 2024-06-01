@@ -15,6 +15,7 @@ interface Element {
 
 interface FileSystemFileHandle {
   createWritable: Function;
+  move: Function;
 }
 
 interface FileSystemDirectoryHandle {

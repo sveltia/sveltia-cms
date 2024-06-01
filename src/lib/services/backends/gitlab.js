@@ -583,11 +583,12 @@ const commitChanges = async (changes, options) => {
         branch,
         commit_message: createCommitMessage(changes, options),
         actions: await Promise.all(
-          changes.map(async ({ action, path, data = '', base64 }) => ({
+          changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
             action,
             content: base64 ?? (typeof data !== 'string' ? await getBase64(data) : data),
             encoding: base64 || typeof data !== 'string' ? 'base64' : 'text',
             file_path: path,
+            previous_path: previousPath,
           })),
         ),
       },

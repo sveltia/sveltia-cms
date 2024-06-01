@@ -435,15 +435,15 @@ const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
   const additions = await Promise.all(
     changes
-      .filter(({ action }) => ['create', 'update'].includes(action))
+      .filter(({ action }) => ['create', 'update', 'move'].includes(action))
       .map(async ({ path, data, base64 }) => ({
         path,
         contents: base64 ?? (await getBase64(data ?? '')),
       })),
   );
   const deletions = changes
-    .filter(({ action }) => action === 'delete')
-    .map(({ path }) => ({ path }));
+    .filter(({ action }) => ['move', 'delete'].includes(action))
+    .map(({ previousPath, path }) => ({ path: previousPath ?? path }));
   const result = /** @type {{ createCommitOnBranch: { commit: { url: string }} }} */ (
     await fetchGraphQL(
       `

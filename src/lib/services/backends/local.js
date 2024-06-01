@@ -3,7 +3,7 @@
 /* eslint-disable no-restricted-syntax */
 
 import { getHash } from '@sveltia/utils/crypto';
-import { readAsText } from '@sveltia/utils/file';
+import { getPathInfo, readAsText } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
@@ -275,11 +275,27 @@ const fetchFiles = async () => {
  */
 const commitChanges = async (changes) => {
   await Promise.all(
-    changes.map(async ({ action, path, data }) => {
+    changes.map(async ({ action, path, previousPath, data }) => {
       try {
-        if (['create', 'update'].includes(action) && data) {
-          const handle = /** @type {FileSystemFileHandle} */ (await getHandleByPath(path));
-          const writer = await handle.createWritable();
+        /** @type {FileSystemFileHandle | undefined} */
+        let fileHandle;
+
+        if (action === 'move' && previousPath) {
+          const { dirname, basename } = getPathInfo(path);
+
+          fileHandle = /** @type {FileSystemFileHandle} */ (await getHandleByPath(previousPath));
+
+          if (dirname && dirname !== getPathInfo(previousPath).dirname) {
+            await fileHandle.move(await getHandleByPath(dirname), basename);
+          } else {
+            await fileHandle.move(basename);
+          }
+        }
+
+        if (['create', 'update', 'move'].includes(action) && data) {
+          fileHandle ??= /** @type {FileSystemFileHandle} */ (await getHandleByPath(path));
+
+          const writer = await fileHandle.createWritable();
 
           await writer.write(data);
           await writer.close();
@@ -288,16 +304,16 @@ const commitChanges = async (changes) => {
         if (action === 'delete') {
           const [, dirPath, fileName] = stripSlashes(path).match(/(.+)\/([^/]+)$/) ?? [];
           const dirPathArray = dirPath.split('/');
-          let handle = /** @type {FileSystemDirectoryHandle} */ (await getHandleByPath(dirPath));
+          let dirHandle = /** @type {FileSystemDirectoryHandle} */ (await getHandleByPath(dirPath));
 
-          await handle.removeEntry(fileName);
+          await dirHandle.removeEntry(fileName);
 
           // Delete an empty enclosing folder recursively
           for (;;) {
             /** @type {string[]} */
             const keys = [];
 
-            for await (const key of handle.keys()) {
+            for await (const key of dirHandle.keys()) {
               keys.push(key);
             }
 
@@ -308,10 +324,10 @@ const commitChanges = async (changes) => {
             const dirName = /** @type {string} */ (dirPathArray.pop());
 
             // Get the parent directory handle
-            handle = /** @type {FileSystemDirectoryHandle} */ (
+            dirHandle = /** @type {FileSystemDirectoryHandle} */ (
               await getHandleByPath(dirPathArray.join('/'))
             );
-            handle.removeEntry(dirName);
+            dirHandle.removeEntry(dirName);
           }
         }
       } catch (/** @type {any} */ ex) {
