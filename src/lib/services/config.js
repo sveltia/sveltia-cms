@@ -202,10 +202,7 @@ siteConfig.subscribe((config) => {
         }) => ({
           collectionName,
           folderPath: stripSlashes(/** @type {string} */ (folderPath)),
-          extension,
-          format,
-          frontmatterDelimiter,
-          yamlQuote,
+          parserConfig: { extension, format, frontmatterDelimiter, yamlQuote },
         }),
       )
       .sort((a, b) => (a.folderPath ?? '').localeCompare(b.folderPath ?? '')),
@@ -235,10 +232,7 @@ siteConfig.subscribe((config) => {
                   ]),
                 )
               : { _default: path },
-            extension,
-            format,
-            frontmatterDelimiter,
-            yamlQuote,
+            parserConfig: { extension, format, frontmatterDelimiter, yamlQuote },
           };
         });
       })

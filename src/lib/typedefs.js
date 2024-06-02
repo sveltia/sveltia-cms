@@ -195,6 +195,26 @@
  */
 
 /**
+ * Supported file extension.
+ * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html'} FileExtension
+ */
+
+/**
+ * Supported file format.
+ * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'frontmatter' | 'yaml-frontmatter' |
+ * 'toml-frontmatter' | 'json-frontmatter'} FileFormat
+ */
+
+/**
+ * File parser/formatter configuration.
+ * @typedef {object} ParserConfig
+ * @property {FileExtension} [extension] - File extension.
+ * @property {FileFormat} [format] - File format.
+ * @property {string | string[]} [frontmatterDelimiter] - Frontmatter delimiter.
+ * @property {boolean} [yamlQuote] - YAML quote configuration.
+ */
+
+/**
  * Entry folder configuration by collection.
  * @typedef {object} CollectionEntryFolder
  * @property {string} collectionName - Collection name.
@@ -202,10 +222,7 @@
  * @property {Record<LocaleCode, string>} [filePathMap] - File path map. The key is a locale, and
  * the value is the corresponding file path. File collection only.
  * @property {string} [folderPath] - Folder path. Folder/entry collection only.
- * @property {string} [extension] - File extension.
- * @property {string} [format] - File format.
- * @property {string | string[]} [frontmatterDelimiter] - Frontmatter delimiter.
- * @property {boolean} [yamlQuote] - YAML quote configuration.
+ * @property {ParserConfig} parserConfig - File parser/formatter configuration.
  */
 
 /**
@@ -225,12 +242,12 @@
 
 /**
  * File info being processed as {@link Entry}.
- * @typedef {BaseFileListItem & { config: CollectionEntryFolder }} BaseEntryListItem
+ * @typedef {BaseFileListItem & { folder: CollectionEntryFolder }} BaseEntryListItem
  */
 
 /**
  * File info being processed as {@link Asset}.
- * @typedef {BaseFileListItem & { config: CollectionAssetFolder }} BaseAssetListItem
+ * @typedef {BaseFileListItem & { folder: CollectionAssetFolder }} BaseAssetListItem
  */
 
 /**
@@ -348,8 +365,8 @@
  * @property {boolean} [create] - Whether to allow creating items in a folder/entry collection.
  * @property {boolean} [delete] - Whether to allow deleting items in a folder/entry collection.
  * @property {boolean} [publish] - Whether to hide the publishing control UI for Editorial Workflow.
- * @property {string} [format] - File format.
- * @property {string} [extension] - File extension.
+ * @property {FileExtension} [extension] - File extension.
+ * @property {FileFormat} [format] - File format.
  * @property {string | string[]} [frontmatter_delimiter] - Delimiters used for the Frontmatter
  * format.
  * @property {boolean} [yaml_quote] - Whether to double-quote all the strings values if the YAML
@@ -379,10 +396,11 @@
 /**
  * Extra properties for a collection.
  * @typedef {object} ExtraCollectionProps
- * @property {Record<string, CollectionFile>} [_fileMap] - File map with normalized collection file
- * definitions. The key is a file identifier. File collection only.
+ * @property {ParserConfig} _parserConfig - File parser/formatter configuration.
  * @property {I18nConfig} _i18n - Normalized i18n configuration combined with the top-level
  * configuration.
+ * @property {Record<string, CollectionFile>} [_fileMap] - File map with normalized collection file
+ * definitions. The key is a file identifier. File collection only.
  * @property {CollectionAssetFolder} [_assetFolder] - Asset folder configuration.
  * @property {FieldKeyPath} [_thumbnailFieldName] - Key path to an entry thumbnail. The `thumbnail`
  * option or the first image field name. Folder collection only.
@@ -703,6 +721,21 @@
  */
 
 /**
+ * Each locale’s content and metadata.
+ * @typedef {object} LocalizedEntry
+ * @property {string} slug - Localized entry slug.
+ * @property {string} path - File path.
+ * @property {string} sha - SHA-1 hash for the file.
+ * @property {FlattenedEntryContent} content - Parsed, localized, flattened entry content.
+ */
+
+/**
+ * Localized entry map keyed with a locale code. When i18n is not enabled with the site config,
+ * there will be one single property named `_default`.
+ * @typedef {Record<LocaleCode, LocalizedEntry>} LocalizedEntryMap
+ */
+
+/**
  * Entry item.
  * @typedef {object} Entry
  * @property {string} id - Unique entry ID mainly used on the cross-collection search page, where
@@ -711,22 +744,11 @@
  * it can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
  * @property {string} slug - The slug of the default locale.
- * @property {Record<LocaleCode, LocalizedEntry>} locales - Localized content map keyed with a
- * locale code. When i18n is not enabled with the site configuration, there will be one single
- * property named `_default`.
+ * @property {LocalizedEntryMap} locales - Localized entry map.
  * @property {string} collectionName - Collection name.
  * @property {string} [fileName] - File identifier for a file collection.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.
- */
-
-/**
- * Each locale’s content and metadata.
- * @typedef {object} LocalizedEntry
- * @property {string} slug - Localized entry slug.
- * @property {string} path - File path.
- * @property {string} sha - SHA-1 hash for the file.
- * @property {FlattenedEntryContent} content - Parsed, localized, flattened entry content.
  */
 
 /**
@@ -768,18 +790,21 @@
  */
 
 /**
+ * Key is a locale code, value is whether to enable/disable the locale’s content output.
+ * @typedef {Record<LocaleCode, boolean>} LocaleStateMap
+ */
+
+/**
  * Entry draft.
  * @typedef {object} EntryDraft
- * @property {boolean} [isNew] - `true` if it’s a new folder collection entry draft.
+ * @property {boolean} isNew - `true` if it’s a new folder collection entry draft.
  * @property {string} collectionName - Collection name.
  * @property {Collection} collection - Collection details.
  * @property {string} [fileName] - File identifier. File collection only.
  * @property {CollectionFile} [collectionFile] - File details. File collection only.
  * @property {Entry} [originalEntry] - Original entry or `undefined` if it’s a new entry draft.
- * @property {Record<LocaleCode, boolean>} originalLocales - Key is a locale code, value is whether
- * to disable the locale’s content output. The original state of `currentLocales`.
- * @property {Record<LocaleCode, boolean>} currentLocales - Key is a locale code, value is whether
- * to disable the locale’s content output.
+ * @property {LocaleStateMap} originalLocales - Original locale state at the time of draft creation.
+ * @property {LocaleStateMap} currentLocales - Current locale state.
  * @property {Record<LocaleCode, FlattenedEntryContent>} originalValues - Key is a locale code,
  * value is a flattened object containing all the original field values.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
@@ -801,8 +826,7 @@
  * used to verify that the backup can be safely restored.
  * @property {string} collectionName - Collection name.
  * @property {string} slug - Entry slug. An empty string for a new entry.
- * @property {Record<LocaleCode, boolean>} currentLocales - Key is a locale code, value is whether
- * to disable the locale’s content output.
+ * @property {LocaleStateMap} currentLocales - Current locale state.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
  * is a flattened object containing all the current field values while editing.
  * @property {Record<LocaleCode, FlattenedEntryFileList>} files - Files to be uploaded.

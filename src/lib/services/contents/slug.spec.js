@@ -7,6 +7,7 @@ describe('Test fillSlugTemplate()', () => {
   /** @type {Collection} */
   const collection = {
     name: 'posts',
+    _parserConfig: {},
     _i18n: defaultI18nConfig,
     slug_length: 50,
   };

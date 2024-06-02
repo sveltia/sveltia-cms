@@ -15,7 +15,7 @@ export const parseAssetFiles = (assetFiles) =>
       size,
       text = undefined,
       meta = {},
-      config: { collectionName, internalPath },
+      folder: { collectionName, internalPath },
     } = assetInfo;
 
     return /** @type {Asset} */ ({

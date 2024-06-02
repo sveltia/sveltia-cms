@@ -37,11 +37,11 @@ export const createFileList = (files) => {
     const name = /** @type {string} */ (path.split('/').pop());
     const extension = name.split('.').pop();
 
-    const entryFolderConfig = get(allEntryFolders).findLast(({ filePathMap, folderPath }) =>
+    const entryFolder = get(allEntryFolders).findLast(({ filePathMap, folderPath }) =>
       folderPath ? path.startsWith(folderPath) : Object.values(filePathMap ?? {}).includes(path),
     );
 
-    const mediaFolderConfig = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
+    const assetFolder = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
       if (entryRelative) {
         return path.startsWith(`${internalPath}/`);
       }
@@ -52,25 +52,25 @@ export const createFileList = (files) => {
     });
 
     if (
-      entryFolderConfig &&
-      (Object.values(entryFolderConfig.filePathMap ?? {}).includes(path) ||
-        extension === getFileExtension(entryFolderConfig))
+      entryFolder &&
+      (Object.values(entryFolder.filePathMap ?? {}).includes(path) ||
+        extension === getFileExtension(entryFolder.parserConfig))
     ) {
       entryFiles.push({
         ...fileInfo,
         type: 'entry',
-        config: entryFolderConfig,
+        folder: entryFolder,
       });
     }
 
     // Exclude files with a leading `+` sign, which are Svelte page/layout files. Also exclude files
     // already listed as entries. These files can appear in the file list when a relative media path
     // is configured for a collection
-    if (mediaFolderConfig && !name.startsWith('+') && !entryFiles.find((e) => e.path === path)) {
+    if (assetFolder && !name.startsWith('+') && !entryFiles.find((e) => e.path === path)) {
       assetFiles.push({
         ...fileInfo,
         type: 'asset',
-        config: mediaFolderConfig,
+        folder: assetFolder,
       });
     }
   });

@@ -48,42 +48,53 @@ export const getCollection = (name) => {
     return cache;
   }
 
-  const collection = get(siteConfig)?.collections.find((c) => c.name === name);
+  const rawCollection = get(siteConfig)?.collections.find((c) => c.name === name);
 
-  // Normalize folder/file paths by removing leading/trailing slashes
-  if (collection?.folder) {
-    collection.folder = stripSlashes(collection.folder);
-  } else if (collection?.files) {
-    collection.files.forEach((f) => {
-      f.file = stripSlashes(f.file);
-    });
-  } else {
-    // Invalid collection
+  // Ignore invalid collection
+  if (!rawCollection?.folder && !rawCollection?.files) {
     collectionCache.set(name, undefined);
 
     return undefined;
   }
 
-  const _collection = {
-    ...collection,
-    _fileMap: collection.files?.length
+  const {
+    fields,
+    thumbnail,
+    folder,
+    files,
+    extension,
+    format,
+    frontmatter_delimiter: frontmatterDelimiter,
+    yaml_quote: yamlQuote,
+  } = rawCollection;
+
+  // Normalize folder/file paths by removing leading/trailing slashes
+  if (folder) {
+    rawCollection.folder = stripSlashes(folder);
+  } else if (files) {
+    files.forEach((f) => {
+      f.file = stripSlashes(f.file);
+    });
+  }
+
+  const collection = {
+    ...rawCollection,
+    _parserConfig: { extension, format, frontmatterDelimiter, yamlQuote },
+    _i18n: getI18nConfig(rawCollection),
+    _fileMap: files?.length
       ? Object.fromEntries(
-          collection.files.map((file) => [
-            file.name,
-            { ...file, _i18n: getI18nConfig(collection, file) },
-          ]),
+          files.map((file) => [file.name, { ...file, _i18n: getI18nConfig(rawCollection, file) }]),
         )
       : undefined,
-    _i18n: getI18nConfig(collection),
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
-    _thumbnailFieldName: collection.folder
-      ? collection.thumbnail ?? collection.fields?.find(({ widget }) => widget === 'image')?.name
+    _thumbnailFieldName: rawCollection.folder
+      ? thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name
       : undefined,
   };
 
-  collectionCache.set(name, _collection);
+  collectionCache.set(name, collection);
 
-  return _collection;
+  return collection;
 };
 
 /**

@@ -3,6 +3,7 @@
 /* eslint-disable no-continue */
 
 import { getHash } from '@sveltia/utils/crypto';
+import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { get } from 'svelte/store';
@@ -420,7 +421,7 @@ const createKeyPathList = (fields) => {
  */
 const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
   /** @type {FlattenedEntryContent} */
-  const unsortedMap = JSON.parse(JSON.stringify(valueMap));
+  const unsortedMap = toRaw(valueMap);
   /** @type {FlattenedEntryContent} */
   const sortedMap = {};
 
@@ -463,6 +464,108 @@ const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
 };
 
 /**
+ * Create saving entry data.
+ * @param {object} args - Arguments.
+ * @param {boolean} args.isNew - `true` if it’s a new folder collection entry draft.
+ * @param {Collection} args.collection - Collection details.
+ * @param {CollectionFile} [args.collectionFile] - File details. File collection only.
+ * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
+ * @param {LocaleStateMap} args.originalLocales - Locale state map when the draft is created.
+ * @param {LocaleStateMap} args.currentLocales - Current locale state.
+ * @param {LocalizedEntryMap} args.localizedEntryMap - Localized entry map.
+ * @returns {Promise<{ savingEntry: Entry, changes: FileChange[] }>} Saving entry and file changes.
+ */
+export const createSavingEntryData = async ({
+  isNew,
+  collection,
+  collectionFile,
+  defaultLocaleSlug,
+  originalLocales,
+  currentLocales,
+  localizedEntryMap,
+}) => {
+  const {
+    fields = [],
+    _i18n: {
+      i18nEnabled,
+      locales,
+      defaultLocale,
+      structure,
+      canonicalSlug: { key: canonicalSlugKey },
+    },
+  } = collectionFile ?? collection;
+
+  /**
+   * @type {Entry}
+   */
+  const savingEntry = {
+    id: `${collection.name}/${defaultLocaleSlug}`,
+    collectionName: collection.name,
+    fileName: collectionFile?.name,
+    slug: defaultLocaleSlug,
+    sha: '', // Populated later
+    locales: Object.fromEntries(
+      Object.entries(localizedEntryMap).filter(([, { content }]) => !!content),
+    ),
+  };
+
+  /**
+   * @type {FileChange[]}
+   */
+  const changes = [];
+
+  if (!i18nEnabled || structure === 'single_file') {
+    const localizedEntry = savingEntry.locales[defaultLocale];
+    const { slug, path, content } = localizedEntry;
+    const action = isNew ? 'create' : 'update';
+
+    const data = formatEntryFile({
+      content: i18nEnabled
+        ? Object.fromEntries(
+            Object.entries(savingEntry.locales).map(([locale, le]) => [
+              locale,
+              unflatten(sortContentProps(fields, le.content, canonicalSlugKey)),
+            ]),
+          )
+        : unflatten(sortContentProps(fields, content, canonicalSlugKey)),
+      path,
+      config: collection._parserConfig,
+    });
+
+    changes.push({ action, slug, path, data });
+    localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
+  } else {
+    await Promise.all(
+      locales.map(async (locale) => {
+        const localizedEntry = savingEntry.locales[locale];
+        const { slug, path, content } = localizedEntry;
+
+        if (currentLocales[locale]) {
+          const action = isNew || !originalLocales[locale] ? 'create' : 'update';
+
+          const data = formatEntryFile({
+            content: unflatten(sortContentProps(fields, content, canonicalSlugKey)),
+            path,
+            config: collection._parserConfig,
+          });
+
+          changes.push({ action, slug, path, data });
+          localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
+        } else if (originalLocales[locale]) {
+          changes.push({ action: 'delete', slug, path });
+        }
+
+        return true;
+      }),
+    );
+  }
+
+  savingEntry.sha = savingEntry.locales[defaultLocale].sha;
+
+  return { savingEntry, changes };
+};
+
+/**
  * Save the entry draft.
  * @param {object} [options] - Options.
  * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
@@ -497,10 +600,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   } = collection;
 
   const {
-    fields = [],
     _i18n: {
-      i18nEnabled,
-      locales,
       defaultLocale,
       structure,
       canonicalSlug: { key: canonicalSlugKey, value: canonicalSlugTemplate },
@@ -602,11 +702,11 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   };
 
   /**
-   * @type {Record<LocaleCode, LocalizedEntry>}
+   * @type {LocalizedEntryMap}
    */
-  const savingEntryLocales = Object.fromEntries(
+  const localizedEntryMap = Object.fromEntries(
     await Promise.all(
-      Object.entries(currentValues).map(async ([locale, valueMap]) => {
+      Object.entries(currentValues).map(async ([locale, content]) => {
         const localizedSlug = localizedSlugs?.[locale];
         const slug = localizedSlug ?? defaultLocaleSlug;
         const path = createEntryPath(draft, locale, slug);
@@ -616,14 +716,14 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
         }
 
         // Add the canonical slug if it doesn’t exist in the content
-        if (!valueMap[canonicalSlugKey] && canonicalSlug) {
-          valueMap[canonicalSlugKey] = canonicalSlug;
+        if (!content[canonicalSlugKey] && canonicalSlug) {
+          content[canonicalSlugKey] = canonicalSlug;
         }
 
         // Normalize data
-        for (const [keyPath, value] of Object.entries(valueMap)) {
+        for (const [keyPath, value] of Object.entries(content)) {
           if (value === undefined) {
-            delete valueMap[keyPath];
+            delete content[keyPath];
             continue;
           }
 
@@ -632,7 +732,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           }
 
           // Remove leading & trailing whitespace
-          valueMap[keyPath] = value.trim();
+          content[keyPath] = value.trim();
 
           // Replace a blob URL with the final path, and add the file to the changeset
           if (value.startsWith('blob:')) {
@@ -642,7 +742,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
             // Check if the file has already been added for other field or locale
             if (dupFile) {
-              valueMap[keyPath] = publicAssetFolder
+              content[keyPath] = publicAssetFolder
                 ? `${publicAssetFolder}/${dupFile.name}`
                 : dupFile.name;
 
@@ -668,84 +768,26 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
               kind: getAssetKind(_fileName),
             });
 
-            valueMap[keyPath] = publicAssetFolder ? `${publicAssetFolder}/${_fileName}` : _fileName;
+            content[keyPath] = publicAssetFolder ? `${publicAssetFolder}/${_fileName}` : _fileName;
           }
         }
 
-        const content = sortContentProps(fields, valueMap, canonicalSlugKey);
-
-        const sha = await getHash(
-          new Blob([JSON.stringify(unflatten(content))], { type: 'text/plain' }),
-        );
-
-        return [locale, { slug, path, sha, content }];
+        return [locale, { slug, path, sha: '', content: toRaw(content) }];
       }),
     ),
   );
 
-  /**
-   * @type {Entry}
-   */
-  const savingEntry = {
-    id: `${collectionName}/${defaultLocaleSlug}`,
-    collectionName,
-    fileName,
-    slug: defaultLocaleSlug,
-    sha: savingEntryLocales[defaultLocale].sha,
-    locales: Object.fromEntries(
-      Object.entries(savingEntryLocales).filter(([, { content }]) => !!content),
-    ),
-  };
+  const { savingEntry, changes: savingEntryChanges } = await createSavingEntryData({
+    isNew,
+    collection,
+    collectionFile,
+    defaultLocaleSlug,
+    localizedEntryMap,
+    currentLocales,
+    originalLocales,
+  });
 
-  const {
-    extension,
-    format,
-    frontmatter_delimiter: frontmatterDelimiter,
-    yaml_quote: yamlQuote,
-  } = collection;
-
-  const config = { extension, format, frontmatterDelimiter, yamlQuote };
-
-  if (!i18nEnabled || structure === 'single_file') {
-    const { path, content } = savingEntryLocales[defaultLocale];
-
-    changes.push({
-      action: isNew ? 'create' : 'update',
-      slug: defaultLocaleSlug,
-      path,
-      data: formatEntryFile({
-        content: i18nEnabled
-          ? Object.fromEntries(
-              Object.entries(savingEntryLocales).map(([locale, le]) => [
-                locale,
-                unflatten(le.content),
-              ]),
-            )
-          : unflatten(content),
-        path,
-        config,
-      }),
-    });
-  } else {
-    locales.forEach((locale) => {
-      const { slug, path, content } = savingEntryLocales[locale];
-
-      if (currentLocales[locale]) {
-        changes.push({
-          action: isNew || !originalLocales[locale] ? 'create' : 'update',
-          slug,
-          path,
-          data: formatEntryFile({
-            content: unflatten(content),
-            path,
-            config,
-          }),
-        });
-      } else if (originalLocales[locale]) {
-        changes.push({ action: 'delete', slug, path });
-      }
-    });
-  }
+  changes.push(...savingEntryChanges);
 
   try {
     await /** @type {BackendService} */ (get(backend)).commitChanges(changes, {

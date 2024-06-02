@@ -235,7 +235,7 @@ export const getAssetByPath = (savedPath, entry) => {
   }
 
   const { internalPath } =
-    get(allAssetFolders).findLast((config) => config.publicPath === publicPath) ?? {};
+    get(allAssetFolders).findLast((folder) => folder.publicPath === publicPath) ?? {};
 
   if (!internalPath) {
     return undefined;

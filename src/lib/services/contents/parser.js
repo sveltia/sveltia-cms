@@ -12,12 +12,12 @@ import { getCollection } from '$lib/services/contents';
 /**
  * Get the file extension for the given collection.
  * @param {object} pathConfig - File’s path configuration. (part of `CollectionEntryFolder`).
- * @param {string} [pathConfig.format] - File format, e.g. `json`.
- * @param {string} [pathConfig.extension] - File extension, e.g. `json`.
+ * @param {FileExtension} [pathConfig.extension] - File extension.
+ * @param {FileFormat} [pathConfig.format] - File format.
  * @param {string} [pathConfig.file] - File name, e.g. `about.json`.
  * @returns {string} Determined extension.
  */
-export const getFileExtension = ({ file, format, extension }) => {
+export const getFileExtension = ({ file, extension, format }) => {
   if (extension) {
     return extension;
   }
@@ -43,7 +43,7 @@ export const getFileExtension = ({ file, format, extension }) => {
 
 /**
  * Get the Frontmatter format’s delimiters.
- * @param {string} format - File format.
+ * @param {FileFormat} format - File format.
  * @param {string | string[]} [delimiter] - Configured delimiter.
  * @returns {string[]} Start and end delimiters.
  */
@@ -75,12 +75,16 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 const parseEntryFile = ({
   text = '',
   path,
-  config: { filePathMap, extension, format, frontmatterDelimiter },
+  folder: {
+    filePathMap,
+    parserConfig: { extension, format, frontmatterDelimiter },
+  },
 }) => {
-  format ||=
+  format ||= /** @type {FileFormat | undefined} */ (
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || Object.values(filePathMap ?? {})[0]?.match(/\.([^.]+)$/)?.[1];
+      : extension || Object.values(filePathMap ?? {})[0]?.match(/\.([^.]+)$/)?.[1]
+  );
 
   // Ignore files with unknown format
   if (!format) {
@@ -155,12 +159,7 @@ const parseEntryFile = ({
  * @param {any} entry.content - Content object. Note that this method may modify the `content` (the
  * `body` property will be removed if exists) so it shouldn’t be a reference to an existing object.
  * @param {string} entry.path - File path.
- * @param {object} entry.config - File’s collection configuration.
- * @param {string} [entry.config.extension] - Configured file extension.
- * @param {string} [entry.config.format] - Configured file format.
- * @param {string | string[]} [entry.config.frontmatterDelimiter] - Configured Frontmatter
- * delimiter.
- * @param {boolean} [entry.config.yamlQuote] - Configured YAML string value quotation.
+ * @param {ParserConfig} entry.config - File parser/formatter configuration.
  * @returns {string} Formatted string.
  */
 export const formatEntryFile = ({
@@ -168,10 +167,11 @@ export const formatEntryFile = ({
   path,
   config: { extension, format, frontmatterDelimiter, yamlQuote = false },
 }) => {
-  format ||=
+  format ||= /** @type {FileFormat | undefined} */ (
     extension === 'md' || path.endsWith('.md')
       ? 'yaml-frontmatter'
-      : extension || getPathInfo(path).extension;
+      : extension || getPathInfo(path).extension
+  );
 
   if (!format) {
     return '';
@@ -295,7 +295,7 @@ export const parseEntryFiles = (entryFiles) => {
       path,
       sha,
       meta = {},
-      config: { folderPath: configFolderPath = '', collectionName, fileName, filePathMap },
+      folder: { folderPath: configFolderPath = '', collectionName, fileName, filePathMap },
     } = file;
 
     const collection = getCollection(collectionName);

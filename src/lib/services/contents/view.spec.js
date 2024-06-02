@@ -6,6 +6,7 @@ describe('Test formatSummary()', () => {
   const collection = {
     name: 'pages-tags',
     folder: 'content/tags',
+    _parserConfig: {},
     _i18n: {
       i18nEnabled: true,
       saveAllLocales: true,
