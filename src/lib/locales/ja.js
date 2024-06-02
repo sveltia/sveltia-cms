@@ -42,6 +42,7 @@ export const strings = {
   delete: '削除',
   save: '保存',
   saving: '保存中…',
+  rename: '名前を変更',
   replace: '差し替え',
   remove: '削除',
   remove_x: '{name} を削除',
@@ -193,6 +194,18 @@ export const strings = {
   edit_asset: 'アセットを編集',
   edit_x: '{name} を編集',
   wrap_long_lines: '長い行を折り返す',
+  rename_asset: 'アセットの名前を変更',
+  rename_x: '{name} の名前を変更',
+  enter_new_name_for_asset: '新しい名前を以下に入力してください。',
+  enter_new_name_for_asset_with_one_entry:
+    '新しい名前を以下に入力してください。このアセットを使用している 1 個のエントリーも更新されます。',
+  enter_new_name_for_asset_with_many_entries:
+    '新しい名前を以下に入力してください。このアセットを使用している {count} 個のエントリーも更新されます。',
+  enter_new_name_for_asset_error: {
+    empty: 'ファイル名を空白にすることはできません。',
+    character: 'ファイル名に特別な文字を含めることはできません。',
+    duplicate: 'このファイル名は他のアセットに使われています。',
+  },
   replace_asset: 'アセットを差し替え',
   replace_x: '{name} を差し替え',
   drop_file_or_browse: 'ここにファイルをドロップするか下のボタンをクリックして参照:',
@@ -257,6 +270,10 @@ export const strings = {
   asset_data_copied: 'アセットファイルがクリップボードにコピーされました。',
   asset_downloaded: 'アセットファイルがダウンロードされました。',
   assets_downloaded: 'アセットファイルがダウンロードされました。',
+  asset_moved: 'アセットが移動されました。',
+  assets_moved: '{count} 個のアセットが移動されました。',
+  asset_renamed: 'アセットの名前が変更されました。',
+  assets_renamed: '{count} 個のアセットの名前が変更されました。',
   asset_deleted: 'アセットが削除されました。',
   assets_deleted: '{count} 個のアセットが削除されました。',
 

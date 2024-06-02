@@ -274,11 +274,12 @@ const fetchFiles = async () => {
 /**
  * Save entries or assets locally.
  * @param {FileChange[]} changes - File changes to be saved.
+ * @returns {Promise<(?File)[]>} - Created or updated files, if available.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry
  */
-const commitChanges = async (changes) => {
-  await Promise.all(
+const commitChanges = async (changes) =>
+  Promise.all(
     changes.map(async ({ action, path, previousPath, data }) => {
       try {
         /** @type {FileSystemFileHandle | undefined} */
@@ -301,8 +302,15 @@ const commitChanges = async (changes) => {
 
           const writer = await fileHandle.createWritable();
 
-          await writer.write(data);
-          await writer.close();
+          try {
+            await writer.write(data);
+            await writer.close();
+          } catch {
+            // Can throw if the file has just been moved/renamed without any change, and then the
+            // `data` is no longer available
+          }
+
+          return fileHandle.getFile();
         }
 
         if (action === 'delete') {
@@ -338,9 +346,10 @@ const commitChanges = async (changes) => {
         // eslint-disable-next-line no-console
         console.error(ex);
       }
+
+      return null;
     }),
   );
-};
 
 /**
  * @type {BackendService}

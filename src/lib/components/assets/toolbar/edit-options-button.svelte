@@ -5,6 +5,7 @@
     canEditAsset,
     editingAsset,
     getAssetDetails,
+    renamingAsset,
     uploadingAssets,
   } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
@@ -54,6 +55,15 @@
       disabled={!asset || !canEditAsset(asset)}
       on:click={() => {
         $editingAsset = asset;
+      }}
+    />
+    <MenuItem
+      variant="ghost"
+      label={$_('rename')}
+      aria-label={$_('rename_asset')}
+      disabled={!asset}
+      on:click={() => {
+        $renamingAsset = asset;
       }}
     />
     <MenuItem

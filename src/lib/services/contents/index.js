@@ -135,14 +135,19 @@ export const getEntriesByCollection = (collectionName) => {
 };
 
 /**
- * Get a list of entries using the given asset.
+ * Find entries by an asset URL, and replace the URL if needed.
  * @param {string} url - Asset’s public or blob URL.
- * @returns {Promise<Entry[]>} Entries.
+ * @param {object} [options] - Options.
+ * @param {Entry[]} [options.entries] - Entries to be searched.
+ * @param {string} [options.newURL] - New URL to replace the found URL.
+ * @returns {Promise<Entry[]>} Found (and replaced) entries.
  */
-export const getEntriesByAssetURL = async (url) => {
+export const getEntriesByAssetURL = async (
+  url,
+  { entries = get(allEntries), newURL = '' } = {},
+) => {
   const siteURL = get(siteConfig)?.site_url;
   const assetURL = siteURL && !url.startsWith('blob:') ? url.replace(siteURL, '') : url;
-  const entries = get(allEntries);
 
   const results = await Promise.all(
     entries.map(async (entry) => {
@@ -170,7 +175,13 @@ export const getEntriesByAssetURL = async (url) => {
               const { widget: widgetName = 'string' } = field;
 
               if (['image', 'file'].includes(widgetName)) {
-                return (await getMediaFieldURL(value, entry)) === assetURL;
+                const match = (await getMediaFieldURL(value, entry)) === assetURL;
+
+                if (match && newURL) {
+                  content[keyPath] = newURL;
+                }
+
+                return match;
               }
 
               // Search images in markdown body
@@ -179,8 +190,18 @@ export const getEntriesByAssetURL = async (url) => {
 
                 if (matches.length) {
                   return (
-                    await Promise.all(matches.map(([, src]) => getMediaFieldURL(src, entry)))
-                  ).includes(assetURL);
+                    await Promise.all(
+                      matches.map(async ([, src]) => {
+                        const match = (await getMediaFieldURL(src, entry)) === assetURL;
+
+                        if (match && newURL) {
+                          content[keyPath] = content[keyPath].replace(src, newURL);
+                        }
+
+                        return match;
+                      }),
+                    )
+                  ).some(Boolean);
                 }
               }
 

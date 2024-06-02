@@ -1,4 +1,4 @@
-import { isTextFileType } from '@sveltia/utils/file';
+import { getPathInfo, isTextFileType } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
@@ -63,6 +63,10 @@ export const uploadingAssets = writable({ folder: undefined, files: [] });
  * @type {import('svelte/store').Writable<Asset | undefined>}
  */
 export const editingAsset = writable();
+/**
+ * @type {import('svelte/store').Writable<Asset | undefined>}
+ */
+export const renamingAsset = writable();
 
 /**
  * Whether the given asset is previewable.
@@ -340,6 +344,14 @@ export const getAssetDetails = async (asset) => {
     usedEntries: url ? await getEntriesByAssetURL(url) : [],
   };
 };
+
+/**
+ * Get a list of assets stored in the given folder.
+ * @param {string} dirname - Folder path.
+ * @returns {Asset[]} Assets.
+ */
+export const getAssetsByDirName = (dirname) =>
+  get(allAssets).filter((a) => getPathInfo(a.path).dirname === dirname);
 
 // Reset the asset selection when a different folder is selected
 selectedAssetFolder.subscribe(() => {

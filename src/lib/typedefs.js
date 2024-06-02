@@ -83,8 +83,9 @@
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] - Function to fetch an asset as a Blob.
  * Git backends only.
  * @property {(changes: FileChange[], options: CommitChangesOptions) =>
- * Promise<string | void>} commitChanges - Function to save file changes, including additions and
- * deletions, and return the commit URL (Git backends only).
+ * Promise<string | (?File)[] | void>} commitChanges - Function to save file changes, including
+ * additions and deletions, and return the commit URL (Git backends only) or created/updated files
+ * (local backend only).
  * @property {() => Promise<Response>} [triggerDeployment] - Function to manually trigger a new
  * deployment on any connected CI/CD provider. GitHub only.
  */
@@ -856,6 +857,8 @@
  * @typedef {object} UpdatesToastState
  * @property {number} count - The number of items.
  * @property {boolean} [saved] - Whether the items have been created or updated.
+ * @property {boolean} [moved] - Whether the items have been moved.
+ * @property {boolean} [renamed] - Whether the items have been renamed.
  * @property {boolean} [deleted] - Whether the items have been deleted.
  * @property {boolean} [published] - Whether the items have been published. This is `true` only when
  * automatic deployments are enabled and triggered.
@@ -867,6 +870,13 @@
  * @property {string | undefined} folder - Target folder path.
  * @property {File[]} files - File list.
  * @property {Asset} [originalAsset] - Asset to be replaced.
+ */
+
+/**
+ * Asset to be moved.
+ * @typedef {object} MovingAsset
+ * @property {Asset} asset - Asset.
+ * @property {string} path - New file path.
  */
 
 /**

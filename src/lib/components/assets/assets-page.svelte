@@ -5,6 +5,7 @@
   import { _ } from 'svelte-i18n';
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
   import EditAssetDialog from '$lib/components/assets/details/edit-asset-dialog.svelte';
+  import RenameAssetDialog from '$lib/components/assets/details/rename-asset-dialog.svelte';
   import AssetList from '$lib/components/assets/list/asset-list.svelte';
   import PrimarySidebar from '$lib/components/assets/list/primary-sidebar.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
@@ -113,6 +114,7 @@
 
 <AssetDetailsOverlay />
 <EditAssetDialog />
+<RenameAssetDialog />
 
 <Toast bind:show={$assetUpdatesToast.saved}>
   <Alert status="success">
@@ -129,6 +131,22 @@
         values: { count: $assetUpdatesToast.count },
       },
     )}
+  </Alert>
+</Toast>
+
+<Toast bind:show={$assetUpdatesToast.moved}>
+  <Alert status="success">
+    {$_($assetUpdatesToast.count === 1 ? 'asset_moved' : 'assets_moved', {
+      values: { count: $assetUpdatesToast.count },
+    })}
+  </Alert>
+</Toast>
+
+<Toast bind:show={$assetUpdatesToast.renamed}>
+  <Alert status="success">
+    {$_($assetUpdatesToast.count === 1 ? 'asset_renamed' : 'assets_renamed', {
+      values: { count: $assetUpdatesToast.count },
+    })}
   </Alert>
 </Toast>
 

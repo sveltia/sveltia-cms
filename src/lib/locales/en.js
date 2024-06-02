@@ -42,6 +42,7 @@ export const strings = {
   delete: 'Delete',
   save: 'Save',
   saving: 'Saving…',
+  rename: 'Rename',
   replace: 'Replace',
   remove: 'Remove',
   remove_x: 'Remove {name}',
@@ -193,6 +194,18 @@ export const strings = {
   edit_asset: 'Edit Asset',
   edit_x: 'Edit {name}',
   wrap_long_lines: 'Wrap Long Lines',
+  rename_asset: 'Rename Asset',
+  rename_x: 'Rename {name}',
+  enter_new_name_for_asset: 'Enter a new name below.',
+  enter_new_name_for_asset_with_one_entry:
+    'Enter a new name below. An entry using the asset will also be updated.',
+  enter_new_name_for_asset_with_many_entries:
+    'Enter a new name below. {count} entries using the asset will also be updated.',
+  enter_new_name_for_asset_error: {
+    empty: 'File name cannot be empty.',
+    character: 'File name cannot contain special characters.',
+    duplicate: 'This file name is used for another asset.',
+  },
   replace_asset: 'Replace Asset',
   replace_x: 'Replace {name}',
   drop_file_or_browse: 'Drop a file here or click to browse:',
@@ -253,6 +266,10 @@ export const strings = {
   asset_data_copied: 'Asset file has been copied to clipboard.',
   asset_downloaded: 'Asset file has been downloaded.',
   assets_downloaded: 'Asset files have been downloaded.',
+  asset_moved: 'Asset has been moved.',
+  assets_moved: '{count} assets have been moved.',
+  asset_renamed: 'Asset has been renamed.',
+  assets_renamed: '{count} assets have been renamed.',
   asset_deleted: 'Asset has been deleted.',
   assets_deleted: '{count} assets have been deleted.',
 
