@@ -21,8 +21,9 @@ To achieve radical improvements in UX, performance, i18n and other areas, it was
 ### Our goals
 
 - Making Sveltia CMS a viable successor to Netlify CMS
-- Emerging as the leading open source offering in the Git-based headless content management system (CMS) and digital asset management (DAM) markets
+- Emerging as the leading open source offering in the Git-based CMS market
 - Empowering small businesses and individuals who need a simple, free, yet powerful CMS solution
+- Extending its capabilities as digital asset management (DAM) software
 - Showcasing the vast potential of the Svelte framework
 
 ## Development status
@@ -272,7 +273,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
-  - More features are planned so that you’ll be able to utilize Sveltia CMS as digital asset management (DAM) software.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
 - Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22]. When you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
 - Hidden files (dot files) don’t appear in the Asset Library[^47].
@@ -339,7 +339,7 @@ Missing other features? Let us know by [filing an issue](https://github.com/svel
 - Roles[^23]
 - Config editor[^10]
 - Mobile support[^18]
-- Advanced digital asset management (DAM) capabilities
+- Advanced digital asset management (DAM) features, including image editing
 - and more!
 
 ## Getting started
