@@ -265,8 +265,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - Copy the public URL[^74], file path, text data or image data of a selected asset to clipboard. The file path starts with `/` as expected[^48].
   - Edit a plain text asset, including SVG images.
-  - Rename an existing asset.
-  - Replace an existing asset. If the asset is used in any entries, the File/Image fields will be automatically updated with a new file path.
+  - Rename an existing asset. If the asset is used in any entries, the File/Image fields will be automatically updated with a new file path.
+  - Replace an existing asset.
   - Download one or more selected assets at once.
   - Delete one or more selected assets at once.
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
