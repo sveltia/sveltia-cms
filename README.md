@@ -20,7 +20,7 @@ To achieve radical improvements in UX, performance, i18n and other areas, it was
 
 ### Our goals
 
-- Making Sveltia CMS a viable successor to Netlify CMS
+- Making Sveltia CMS a viable, definitive successor to Netlify CMS
 - Emerging as the leading open source offering in the Git-based CMS market
 - Empowering small businesses and individuals who need a simple, free, yet powerful CMS solution
 - Extending its capabilities as digital asset management (DAM) software
@@ -64,7 +64,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better performance
 
-- Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with almost any framework.
+- Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files while building your website or application.
 - Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (a Netlify CMS fork, 2.6 MB), even though we haven’t implemented some features yet[^57][^64].
 - The upcoming [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver further performance improvements, including accelerated speed and even smaller bundle size (an estimated 70 KB reduction).
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
@@ -306,7 +306,7 @@ These limitations are expected to be resolved before GA:
 | Map | Not yet supported. |
 | Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
 
-Missing other features? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
+Missing any other features? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
 
 ### Features not to be implemented
 
@@ -330,7 +330,7 @@ Missing other features? Let us know by [filing an issue](https://github.com/svel
 - Documentation
 - Marketing site
 - Live demo site
-- Starter templates for popular frameworks
+- Official starter templates for the most popular frameworks, including SvelteKit and Next.js
 
 ### After the 1.0 release
 
