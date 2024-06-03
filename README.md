@@ -21,7 +21,7 @@ To achieve radical improvements in UX, performance, i18n and other areas, it was
 ### Our goals
 
 - Making Sveltia CMS a viable successor to Netlify CMS
-- Emerging as the leading open source offering in the Git-based headless CMS market
+- Emerging as the leading open source offering in the Git-based headless content management system (CMS) and digital asset management (DAM) markets
 - Empowering small businesses and individuals who need a simple, free, yet powerful CMS solution
 - Showcasing the vast potential of the Svelte framework
 
@@ -339,6 +339,7 @@ Missing other features? Let us know by [filing an issue](https://github.com/svel
 - Roles[^23]
 - Config editor[^10]
 - Mobile support[^18]
+- Advanced digital asset management (DAM) capabilities
 - and more!
 
 ## Getting started
