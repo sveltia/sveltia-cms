@@ -23,6 +23,7 @@
     :global(.secondary-sidebar) {
       flex: none;
       overflow: auto;
+      box-sizing: content-box;
       width: 320px;
       border-left: 1px solid var(--sui-primary-border-color);
     }
