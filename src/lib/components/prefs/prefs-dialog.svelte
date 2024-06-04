@@ -1,6 +1,7 @@
 <script>
   import { Alert, Dialog, Icon, Tab, TabList, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import AccessibilityPanel from '$lib/components/prefs/panels/accessibility-panel.svelte';
   import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
   import AppearancePanel from '$lib/components/prefs/panels/appearance-panel.svelte';
   import LanguagesPanel from '$lib/components/prefs/panels/languages-panel.svelte';
@@ -19,6 +20,7 @@
     { key: 'appearance', icon: 'palette', component: AppearancePanel },
     { key: 'languages', icon: 'language', component: LanguagesPanel },
     { key: 'media', icon: 'photo_library', component: MediaPanel },
+    { key: 'accessibility', icon: 'accessibility_new', component: AccessibilityPanel },
     { key: 'advanced', icon: 'build', component: AdvancedPanel },
   ];
 </script>
@@ -68,7 +70,6 @@
 
     :global(.tab-list) {
       flex: none;
-      width: 160px !important;
     }
 
     :global(.tab-panel) {

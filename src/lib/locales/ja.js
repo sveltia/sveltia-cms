@@ -552,6 +552,15 @@ export const strings = {
         credit: '写真提供: {service}',
       },
     },
+    accessibility: {
+      title: 'アクセシビリティ',
+      underline_links: {
+        title: 'リンクに下線を付ける',
+        description:
+          'エントリープレビューやユーザーインターフェイスラベル内のリンクに下線を表示します。',
+        switch_label: '常に下線を付ける',
+      },
+    },
     advanced: {
       title: '詳細',
       deploy_hook: {

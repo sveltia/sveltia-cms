@@ -20,6 +20,7 @@ export const prefs = writable({}, (set) => {
       const _prefs = (await LocalStorage.get(storageKey)) ?? {};
 
       _prefs.apiKeys ??= {};
+      _prefs.underlineLinks ??= true;
       set(_prefs);
     } catch {
       prefsError.set({ type: 'permission_denied' });
@@ -42,7 +43,7 @@ prefs.subscribe((newPrefs) => {
     }
   })();
 
-  const { locale, theme, devModeEnabled = false } = newPrefs;
+  const { locale, theme, underlineLinks = true, devModeEnabled = false } = newPrefs;
 
   if (locale && get(appLocales).includes(locale)) {
     appLocale.set(locale);
@@ -54,6 +55,7 @@ prefs.subscribe((newPrefs) => {
   Object.assign(document.documentElement.dataset, {
     theme: autoTheming ? autoTheme : theme,
     autoTheming,
+    underlineLinks,
     env: devModeEnabled ? 'dev' : 'prod',
   });
 });

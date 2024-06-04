@@ -549,6 +549,14 @@ export const strings = {
         credit: 'Photos provided by {service}',
       },
     },
+    accessibility: {
+      title: 'Accessibility',
+      underline_links: {
+        title: 'Underline Links',
+        description: 'Show underline for links in the entry preview and user interface labels.',
+        switch_label: 'Always Underline Links',
+      },
+    },
     advanced: {
       title: 'Advanced',
       deploy_hook: {

@@ -21,6 +21,7 @@
  * integrations.
  * @property {string} [theme] - Selected UI theme, either `dark` or `light`.
  * @property {LocaleCode} [locale] - Selected UI locale, e.g. `en`.
+ * @property {boolean} [underlineLinks] - Whether to always underline links.
  * @property {boolean} [devModeEnabled] - Whether to enable the developer mode.
  * @property {string} [deployHookURL] - Webhook URL to manually trigger a new deployment on any
  * connected CI/CD provider.
