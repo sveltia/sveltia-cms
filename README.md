@@ -95,6 +95,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver.
 - Ensures sufficient contrast between the foreground text and background colours.
 - Enabled and disabled buttons can be clearly distinguished[^105].
+- Links are underlined by default to make them easier to recognize. This behaviour can be changed in the Accessibility Settings if you prefer.
 - Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
