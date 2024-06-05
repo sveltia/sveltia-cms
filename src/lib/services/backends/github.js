@@ -370,20 +370,21 @@ const fetchFileContents = async (fetchingFiles) => {
 
     baseIndex += chunkSize;
 
-    return query;
+    return `
+      query {
+        repository(owner: "${owner}", name: "${repo}") {
+          ${query}
+        }
+      }
+    `;
   };
 
+  // Split the file list into chunks and repeat requests to avoid API timeout
   for (;;) {
     // Fetch all the text contents with the GraphQL API
     const result = /** @type {{ repository: Record<string, any> }} */ (
       // eslint-disable-next-line no-await-in-loop
-      await fetchGraphQL(`
-        query {
-          repository(owner: "${owner}", name: "${repo}") {
-            ${getQuery()}
-          }
-        }
-      `)
+      await fetchGraphQL(getQuery())
     );
 
     Object.assign(results, result.repository);
