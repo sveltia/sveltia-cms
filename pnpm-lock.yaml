@@ -15,8 +15,8 @@ importers:
         specifier: ^0.15.5
         version: 0.15.5
       '@sveltia/utils':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.4.0
+        version: 0.4.0
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1
@@ -857,6 +857,9 @@ packages:
 
   '@sveltia/utils@0.3.0':
     resolution: {integrity: sha512-HsWJzzTS0uMjJ6YhNQ1//P/1Z5CUojtRWwzM2rl3fzxuXs03rwIiodUanw4QCCSVNTMXKXUrv3Bl/ruz8iZVqA==}
+
+  '@sveltia/utils@0.4.0':
+    resolution: {integrity: sha512-ppMqiGeGyQEdzE26kVWfLY5TOlYduYRgS+wBJfPVURkShwwGCoPTBQiPBUiTwVgoL67xsziLO2wz32TWgx/liQ==}
 
   '@types/dompurify@3.0.5':
     resolution: {integrity: sha512-1Wg0g3BtQF7sSb27fJQAKck1HECM6zV1EB66j8JH9i3LCjYabJa0FSdiSgsD5K/RbrsR0SiraKacLB+T8ZVYAg==}
@@ -3730,6 +3733,10 @@ snapshots:
       svelte: 4.2.17
 
   '@sveltia/utils@0.3.0':
+    dependencies:
+      base32-encode: 2.0.0
+
+  '@sveltia/utils@0.4.0':
     dependencies:
       base32-encode: 2.0.0
 

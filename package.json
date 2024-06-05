@@ -51,7 +51,7 @@
   "dependencies": {
     "@sindresorhus/transliterate": "^1.6.0",
     "@sveltia/ui": "^0.15.5",
-    "@sveltia/utils": "^0.3.0",
+    "@sveltia/utils": "^0.4.0",
     "deepmerge": "^4.3.1",
     "fast-deep-equal": "^3.1.3",
     "flat": "^6.0.1",

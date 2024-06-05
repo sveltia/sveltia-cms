@@ -5,6 +5,7 @@
 -->
 <script>
   import { isObject } from '@sveltia/utils/object';
+  import { compare } from '@sveltia/utils/string';
   import SelectMultiple from '$lib/components/contents/details/widgets/select/select-multiple.svelte';
   import SelectSingle from '$lib/components/contents/details/widgets/select/select-single.svelte';
 
@@ -68,7 +69,7 @@
       );
 
     if (sortOptions) {
-      _options.sort((a, b) => a.label.localeCompare(b.label));
+      _options.sort((a, b) => compare(a.label, b.label));
     }
 
     return _options;

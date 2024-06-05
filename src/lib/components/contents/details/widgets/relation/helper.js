@@ -1,4 +1,4 @@
-import { escapeRegExp } from '@sveltia/utils/string';
+import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { getEntriesByCollection } from '$lib/services/contents';
 import { getFieldConfig } from '$lib/services/contents/entry';
@@ -192,7 +192,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       }));
     })
     .flat(1)
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .sort((a, b) => compare(a.label, b.label));
 
   optionCache.set(cacheKey, options);
 

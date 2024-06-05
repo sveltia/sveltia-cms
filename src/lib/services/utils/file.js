@@ -1,5 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { escapeRegExp } from '@sveltia/utils/string';
+import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
@@ -56,7 +56,7 @@ export const renameIfNeeded = (name, otherNames) => {
   );
 
   const dupName = otherNames
-    .sort((a, b) => a.split('.')[0].localeCompare(b.split('.')[0]))
+    .sort((a, b) => compare(a.split('.')[0], b.split('.')[0]))
     .findLast((p) => p.match(regex));
 
   if (!dupName) {

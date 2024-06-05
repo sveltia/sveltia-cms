@@ -1,6 +1,6 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
-import { stripSlashes } from '@sveltia/utils/string';
+import { compare, stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
@@ -189,7 +189,7 @@ const sortEntries = (entries, { key, order }) => {
     }
 
     if (type === String) {
-      return aValue.localeCompare(bValue);
+      return compare(aValue, bValue);
     }
 
     if (type === Date) {
@@ -286,7 +286,7 @@ const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefi
   // Sort groups by key
   const sortedGroups = Object.entries(groups)
     .map(([name, _entries]) => ({ name, entries: _entries }))
-    .sort(({ name: aKey }, { name: bKey }) => aKey.localeCompare(bKey));
+    .sort(({ name: aKey }, { name: bKey }) => compare(aKey, bKey));
 
   // Keep the descending order if already sorted, especially on the date field
   if (sortCondition?.key === field && sortCondition?.order === 'descending') {

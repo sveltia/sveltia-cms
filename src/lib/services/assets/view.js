@@ -1,7 +1,11 @@
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
+import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
+import { prefs } from '$lib/services/prefs';
+import { siteConfig } from '$lib/services/config';
+import { backend } from '$lib/services/backends';
 import {
   allAssetFolders,
   allAssets,
@@ -10,9 +14,6 @@ import {
   selectedAssets,
   uploadingAssets,
 } from '$lib/services/assets';
-import { backend } from '$lib/services/backends';
-import { siteConfig } from '$lib/services/config';
-import { prefs } from '$lib/services/prefs';
 
 /** @type {IndexedDB | null | undefined} */
 let settingsDB = undefined;
@@ -126,7 +127,7 @@ const sortAssets = (assets, { key, order } = {}) => {
     const bValue = getValue(b);
 
     if (type === String) {
-      return aValue.localeCompare(bValue);
+      return compare(aValue, bValue);
     }
 
     if (type === Date) {
@@ -213,9 +214,7 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
   });
 
   // Sort groups by key
-  return Object.fromEntries(
-    Object.entries(groups).sort(([aKey], [bKey]) => aKey.localeCompare(bKey)),
-  );
+  return Object.fromEntries(Object.entries(groups).sort(([aKey], [bKey]) => compare(aKey, bKey)));
 };
 
 /**

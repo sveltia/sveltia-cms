@@ -4,7 +4,7 @@
 
 import { getHash } from '@sveltia/utils/crypto';
 import { toRaw } from '@sveltia/utils/object';
-import { escapeRegExp } from '@sveltia/utils/string';
+import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { get } from 'svelte/store';
 import { validateStringField } from '$lib/components/contents/details/widgets/string/helper';
@@ -450,14 +450,14 @@ const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
 
       Object.keys(unsortedMap)
         .filter((_keyPath) => _keyPath.match(regex))
-        .sort(([a, b]) => a.localeCompare(b))
+        .sort(([a, b]) => compare(a, b))
         .forEach(copyProperty);
     }
   });
 
   // Move the remainder, if any, to a new object
   Object.keys(unsortedMap)
-    .sort(([a, b]) => a.localeCompare(b))
+    .sort(([a, b]) => compare(a, b))
     .forEach(copyProperty);
 
   return sortedMap;

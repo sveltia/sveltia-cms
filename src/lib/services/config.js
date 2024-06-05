@@ -1,6 +1,6 @@
 import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
-import { stripSlashes } from '@sveltia/utils/string';
+import { compare, stripSlashes } from '@sveltia/utils/string';
 import merge from 'deepmerge';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
@@ -205,7 +205,7 @@ siteConfig.subscribe((config) => {
           parserConfig: { extension, format, frontmatterDelimiter, yamlQuote },
         }),
       )
-      .sort((a, b) => (a.folderPath ?? '').localeCompare(b.folderPath ?? '')),
+      .sort((a, b) => compare(a.folderPath ?? '', b.folderPath ?? '')),
     ...collections
       .filter(({ files, hide, divider }) => !!files && !hide && !divider)
       .map((collection) => {
@@ -237,9 +237,7 @@ siteConfig.subscribe((config) => {
         });
       })
       .flat(1)
-      .sort((a, b) =>
-        Object.values(a.filePathMap)[0].localeCompare(Object.values(b.filePathMap)[0]),
-      ),
+      .sort((a, b) => compare(Object.values(a.filePathMap)[0], Object.values(b.filePathMap)[0])),
   ];
 
   const globalMediaFolder = stripSlashes(_globalMediaFolder);
@@ -307,7 +305,7 @@ siteConfig.subscribe((config) => {
         };
       })
       .filter(Boolean)
-  ).sort((a, b) => a.internalPath.localeCompare(b.internalPath));
+  ).sort((a, b) => compare(a.internalPath, b.internalPath));
 
   const _allAssetFolders = [globalAssetFolder, ...collectionAssetFolders];
 
