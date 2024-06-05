@@ -317,68 +317,94 @@ const fetchFileList = async () => {
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
+  const fetchingFileList = structuredClone(fetchingFiles);
+  const chunkSize = 500;
+  let baseIndex = 0;
+  /** @type {any} */
+  const results = {};
 
-  const query = fetchingFiles
-    .map(({ type, path, sha }, index) => {
-      const str = [];
+  /**
+   * Get a query string for a new API request.
+   * @returns {string} Query string.
+   */
+  const getQuery = () => {
+    const query = fetchingFileList
+      .splice(0, chunkSize)
+      .map(({ type, path, sha }, i) => {
+        const str = [];
+        const index = baseIndex + i;
 
-      if (type === 'entry') {
+        if (type === 'entry') {
+          str.push(`
+            content_${index}: object(oid: "${sha}") {
+              ... on Blob { text }
+            }
+          `);
+        }
+
         str.push(`
-          content_${index}: object(oid: "${sha}") {
-            ... on Blob { text }
-          }
-        `);
-      }
-
-      str.push(`
-        commit_${index}: ref(qualifiedName: "${branch}") {
-          target {
-            ... on Commit {
-              history(first: 1, path: "${path}") {
-                nodes {
-                  author {
-                    name
-                    email
-                    user {
-                      id: databaseId
-                      login
+          commit_${index}: ref(qualifiedName: "${branch}") {
+            target {
+              ... on Commit {
+                history(first: 1, path: "${path}") {
+                  nodes {
+                    author {
+                      name
+                      email
+                      user {
+                        id: databaseId
+                        login
+                      }
                     }
+                    committedDate
                   }
-                  committedDate
                 }
               }
             }
           }
-        }
-      `);
+        `);
 
-      return str.join('');
-    })
-    .join('');
+        return str.join('');
+      })
+      .join('');
 
-  // Fetch all the text contents with the GraphQL API
-  const result = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(`
-      query {
-        repository(owner: "${owner}", name: "${repo}") {
-          ${query}
+    baseIndex += chunkSize;
+
+    return query;
+  };
+
+  for (;;) {
+    // Fetch all the text contents with the GraphQL API
+    const result = /** @type {{ repository: Record<string, any> }} */ (
+      // eslint-disable-next-line no-await-in-loop
+      await fetchGraphQL(`
+        query {
+          repository(owner: "${owner}", name: "${repo}") {
+            ${getQuery()}
+          }
         }
-      }
-    `)
-  );
+      `)
+    );
+
+    Object.assign(results, result.repository);
+
+    if (!fetchingFileList.length) {
+      break;
+    }
+  }
 
   return Object.fromEntries(
     fetchingFiles.map(({ path, sha, size }, index) => {
       const {
         author: { name, email, user: _user },
         committedDate,
-      } = result.repository[`commit_${index}`].target.history.nodes[0];
+      } = results[`commit_${index}`].target.history.nodes[0];
 
       const data = {
         sha,
         // eslint-disable-next-line object-shorthand
         size: /** @type {number} */ (size),
-        text: result.repository[`content_${index}`]?.text,
+        text: results[`content_${index}`]?.text,
         meta: {
           commitAuthor: {
             name,
