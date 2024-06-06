@@ -410,7 +410,7 @@
   }
 
   .comment {
-    margin: 4px;
+    margin-block: 4px;
     line-height: var(--sui-line-height-compact);
   }
 
