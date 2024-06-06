@@ -10,7 +10,7 @@
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
-  import { initSiteConfig, siteURL } from '$lib/services/config';
+  import { initSiteConfig, siteConfig, siteURL } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user';
 
@@ -43,7 +43,11 @@
 
 <svelte:head>
   <meta name="referrer" content="same-origin" />
-  <link rel="icon" href="data:image/svg+xml;base64,{btoa(SveltiaLogo)}" type="image/svg+xml" />
+  <link
+    rel="icon"
+    href={$siteConfig?.logo_url || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
+    type="image/svg+xml"
+  />
   {#if siteURL}
     <link href="{siteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
   {/if}
