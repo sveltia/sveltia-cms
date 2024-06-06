@@ -185,8 +185,6 @@ siteConfig.subscribe((config) => {
     collections,
   } = config;
 
-  selectedCollection.set(getCollection(collections[0].name));
-
   /** @type {CollectionEntryFolder[]} */
   const _allEntryFolders = [
     ...collections
@@ -311,6 +309,8 @@ siteConfig.subscribe((config) => {
 
   allEntryFolders.set(_allEntryFolders);
   allAssetFolders.set(_allAssetFolders);
+  // `getCollection` depends on `allAssetFolders`
+  selectedCollection.set(getCollection(collections[0].name));
 
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
