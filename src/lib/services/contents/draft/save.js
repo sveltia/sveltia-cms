@@ -618,9 +618,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   /**
    * List of key paths that the value will be localized.
    */
-  const localizingKeyPaths = [...slugTemplate.matchAll(/{{(?:fields\.)?(.+?) \| localize}}/g)].map(
-    ([, keyPath]) => keyPath,
-  );
+  const localizingKeyPaths = [...slugTemplate.matchAll(/{{(?:fields\.)?(.+?)( \| localize)?}}/g)]
+    .filter(([, , localize]) => !!localize)
+    .map(([, keyPath]) => keyPath);
 
   /**
    * Localized slug map. This only applies when the i18n structure is multiple files or folders, and
