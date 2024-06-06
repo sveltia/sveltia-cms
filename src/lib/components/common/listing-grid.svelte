@@ -179,7 +179,10 @@
       }
 
       :global([role='gridcell'].image) {
+        box-sizing: content-box;
         padding: 8px;
+        width: 40px;
+        height: 40px;
       }
     }
   }
