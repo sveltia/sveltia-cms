@@ -1,4 +1,5 @@
 import { getBase64 } from '@sveltia/utils/file';
+import { sleep } from '@sveltia/utils/misc';
 import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
 import { _ } from 'svelte-i18n';
@@ -318,21 +319,23 @@ const fetchFileList = async () => {
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
   const fetchingFileList = structuredClone(fetchingFiles);
+  /** @type {any[][]} */
+  const chunks = [];
   const chunkSize = 500;
-  let baseIndex = 0;
   /** @type {any} */
   const results = {};
 
   /**
    * Get a query string for a new API request.
+   * @param {any[]} chunk - Sliced `fetchingFileList`.
+   * @param {number} startIndex - Start index.
    * @returns {string} Query string.
    */
-  const getQuery = () => {
-    const query = fetchingFileList
-      .splice(0, chunkSize)
+  const getQuery = (chunk, startIndex) => {
+    const innerQuery = chunk
       .map(({ type, path, sha }, i) => {
         const str = [];
-        const index = baseIndex + i;
+        const index = startIndex + i;
 
         if (type === 'entry') {
           str.push(`
@@ -368,31 +371,32 @@ const fetchFileContents = async (fetchingFiles) => {
       })
       .join('');
 
-    baseIndex += chunkSize;
-
     return `
       query {
         repository(owner: "${owner}", name: "${repo}") {
-          ${query}
+          ${innerQuery}
         }
       }
     `;
   };
 
-  // Split the file list into chunks and repeat requests to avoid API timeout
-  for (;;) {
-    // Fetch all the text contents with the GraphQL API
-    const result = /** @type {{ repository: Record<string, any> }} */ (
-      // eslint-disable-next-line no-await-in-loop
-      await fetchGraphQL(getQuery())
-    );
-
-    Object.assign(results, result.repository);
-
-    if (!fetchingFileList.length) {
-      break;
-    }
+  for (let i = 0; i < fetchingFileList.length; i += chunkSize) {
+    chunks.push(fetchingFileList.slice(i, i + chunkSize));
   }
+
+  // Split the file list into chunks and repeat requests to avoid API timeout
+  await Promise.all(
+    chunks.map(async (chunk, index) => {
+      // Add a short delay to avoid Too Many Requests error
+      await sleep(index * 500);
+
+      const result = /** @type {{ repository: Record<string, any> }} */ (
+        await fetchGraphQL(getQuery(chunk, index * chunkSize))
+      );
+
+      Object.assign(results, result.repository);
+    }),
+  );
 
   return Object.fromEntries(
     fetchingFiles.map(({ path, sha, size }, index) => {
