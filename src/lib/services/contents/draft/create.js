@@ -1,7 +1,7 @@
-import { generateRandomId, generateUUID } from '@sveltia/utils/crypto';
 import { stripTags } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
+import { getDefaultValue as getDefaultUuidValue } from '$lib/components/contents/details/widgets/uuid/helper';
 import { getCollection } from '$lib/services/contents';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
@@ -184,15 +184,6 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
 
     if (widgetName === 'datetime') {
       newContent[keyPath] = getDefaultDateTimeValue(/** @type {DateTimeField} */ (fieldConfig));
-
-      return;
-    }
-
-    if (widgetName === 'uuid') {
-      const { prefix, use_b32_encoding: useEncoding } = /** @type {UuidField} */ (fieldConfig);
-      const value = useEncoding ? generateRandomId() : generateUUID();
-
-      newContent[keyPath] = prefix ? `${prefix}${value}` : value;
 
       return;
     }
@@ -403,15 +394,27 @@ export const createDraft = (entry, dynamicValues) => {
  */
 export const duplicateDraft = () => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { collection, collectionFile, currentValues, validities } = draft;
+  const { collectionName, fileName, collection, collectionFile, currentValues, validities } = draft;
+  const { defaultLocale } = (collectionFile ?? collection)._i18n;
 
   const {
     canonicalSlug: { key: canonicalSlugKey },
   } = (collectionFile ?? collection)._i18n;
 
-  // Remove the canonical slug
-  Object.keys(currentValues).forEach((locale) => {
-    delete currentValues[locale][canonicalSlugKey];
+  Object.entries(currentValues).forEach(([locale, valueMap]) => {
+    // Remove the canonical slug
+    delete valueMap[canonicalSlugKey];
+
+    // Reset UUID
+    Object.keys(valueMap).forEach((keyPath) => {
+      const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
+
+      if (fieldConfig?.widget === 'uuid') {
+        if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
+          valueMap[keyPath] = getDefaultUuidValue(/** @type {UuidField} */ (fieldConfig));
+        }
+      }
+    });
   });
 
   // Reset the validities

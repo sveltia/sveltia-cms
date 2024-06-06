@@ -5,11 +5,14 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
+  import { onMount } from 'svelte';
+  import { getDefaultValue } from '$lib/components/contents/details/widgets/uuid/helper';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
    */
-  // svelte-ignore unused-export-let
   export let locale;
   /**
    * @type {FieldKeyPath}
@@ -45,6 +48,19 @@
    * @type {boolean}
    */
   export let invalid = false;
+
+  $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+
+  // Generate the default value here instead of in `create.js` because `getDefaultValues()` doesn’t
+  // i18n-duplicate the value
+  onMount(() => {
+    if (!currentValue) {
+      if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
+        currentValue = getDefaultValue(fieldConfig);
+      }
+    }
+  });
 </script>
 
 <TextInput
