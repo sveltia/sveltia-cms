@@ -248,6 +248,7 @@
     }
 
     & > :is(img, video) {
+      flex: 0;
       max-width: 100%;
       max-height: 100%;
     }
