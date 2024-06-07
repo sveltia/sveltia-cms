@@ -1,5 +1,6 @@
 <script>
   import { AppShell } from '@sveltia/ui';
+  import mime from 'mime';
   import { onMount } from 'svelte';
   import { isLoading } from 'svelte-i18n';
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
@@ -19,6 +20,8 @@
    * @type {object | undefined}
    */
   export let config;
+
+  $: logoURL = $siteConfig?.logo_url;
 
   onMount(() => {
     initAppLocale();
@@ -45,8 +48,8 @@
   <meta name="referrer" content="same-origin" />
   <link
     rel="icon"
-    href={$siteConfig?.logo_url || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
-    type="image/svg+xml"
+    href={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
+    type={logoURL ? mime.getType(logoURL) ?? undefined : 'image/svg+xml'}
   />
   {#if siteURL}
     <link href="{siteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
