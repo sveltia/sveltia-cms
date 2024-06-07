@@ -241,6 +241,10 @@
 
     &.cover {
       padding: 0;
+
+      & > :is(img, video) {
+        flex: auto;
+      }
     }
 
     & > :is(img, video) {

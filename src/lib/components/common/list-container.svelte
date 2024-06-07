@@ -25,9 +25,16 @@
 
       :global(:is(.grid-view, .list-view)) {
         display: block;
-        padding: 12px;
         height: 100%;
         overflow-y: auto;
+      }
+
+      :global(.grid-view) {
+        padding: 4px;
+      }
+
+      :global(.list-view) {
+        padding: 12px;
       }
     }
   }

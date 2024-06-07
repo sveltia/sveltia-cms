@@ -28,6 +28,7 @@
   .grid-view {
     :global(.row-group-caption) {
       display: block;
+      margin: 8px;
       grid-column: 1 / -1; // span the entire row
 
       :global(th) {
@@ -35,14 +36,9 @@
       }
     }
 
-    :global(.row-group:not(:first-child)) {
-      margin: 16px 0 0;
-    }
-
     :global(.grid-body) {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(var(--grid-size, 200px), 1fr));
-      gap: 16px;
       border-width: 0;
     }
 
@@ -50,11 +46,10 @@
       display: block;
       position: relative;
       overflow: hidden;
-      padding: 0;
       height: auto;
       text-align: left;
 
-      &:focus {
+      &:focus-visible {
         outline-color: transparent;
 
         :global(.preview) {
@@ -63,10 +58,6 @@
           outline-style: solid;
           outline-color: var(--sui-primary-accent-color-light);
         }
-      }
-
-      :global([role='row'][tabindex]) {
-        cursor: pointer;
       }
 
       :global(.grid-cell) {
@@ -95,6 +86,19 @@
           height: 40px;
           line-height: 1.5;
         }
+      }
+    }
+
+    :global([role='row'][tabindex]) {
+      border-radius: var(--sui-control-medium-border-radius);
+      padding: 8px;
+      cursor: pointer;
+      transition: background-color 200ms;
+
+      &:hover,
+      &:focus,
+      &:active {
+        background-color: var(--sui-hover-background-color);
       }
     }
   }
