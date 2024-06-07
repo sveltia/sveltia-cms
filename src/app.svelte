@@ -87,6 +87,10 @@
 </AppShell>
 
 <style lang="scss">
+  :global(body:not(:has(#nc-root))) {
+    overflow: hidden;
+  }
+
   :global(#nc-root.relative) {
     position: relative;
 
