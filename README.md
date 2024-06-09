@@ -18,6 +18,16 @@ Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stal
 
 To achieve radical improvements in UX, performance, i18n and other areas, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
+### Our advantage
+
+Due to its unfortunate abandonment, Netlify CMS has spawned 3 successors:
+
+- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community maintenance fork, first appeared on GitHub in September 2022
+- [Decap CMS](https://github.com/decaporg/decap-cms): the official successor, owned by a Netlify agency partner, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/)
+- Sveltia CMS: a total reboot, started in November 2022, first appeared on GitHub in March 2023
+
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2016. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the hundreds of improvements we have already made.
+
 ### Our goals
 
 - Making Sveltia CMS a viable, definitive successor to Netlify CMS
