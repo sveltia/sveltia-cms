@@ -73,6 +73,7 @@ export const strings = {
   loading_site_data_error: 'There was an error while loading site data.',
   sign_in_with_x: 'Sign In with {service}',
   authorizing: 'Authorizing…',
+  signing_in: 'Signing in…',
   work_with_local_repo: 'Work with Local Repository',
   work_with_local_repo_description:
     'Click the button to select the root directory of the “{repo}” repository.',

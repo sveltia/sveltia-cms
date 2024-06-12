@@ -94,7 +94,7 @@
       font-size: var(--sui-font-size-xxx-large);
     }
 
-    .message {
+    :global(.message) {
       margin: 0 0 16px;
       font-size: var(--sui-font-size-large);
       font-weight: normal;

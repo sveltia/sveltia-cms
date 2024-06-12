@@ -88,17 +88,19 @@ export const signInAutomatically = async () => {
 
   const _backend = get(backend);
 
-  if (!_user || !_backend) {
-    return;
+  if (_user && _backend) {
+    try {
+      _user = await _backend.signIn({ token: _user.token, auto: true });
+    } catch {
+      //
+    }
   }
 
-  try {
-    _user = await _backend.signIn({ token: _user.token, auto: true });
-  } catch {
+  if (!_user) {
     unauthenticated.set(true);
   }
 
-  if (!_user || get(unauthenticated)) {
+  if (!_user || !_backend) {
     return;
   }
 

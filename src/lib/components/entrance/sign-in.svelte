@@ -19,7 +19,9 @@
 </script>
 
 <div role="none" class="buttons">
-  {#if $backendName === 'local'}
+  {#if !$unauthenticated}
+    <div role="alert" class="message">{$_('signing_in')}</div>
+  {:else if $backendName === 'local'}
     {#if !('showDirectoryPicker' in window)}
       <div role="alert">
         {$_('unsupported.browser')}
