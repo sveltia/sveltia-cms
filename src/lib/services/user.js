@@ -92,7 +92,8 @@ export const signInAutomatically = async () => {
     try {
       _user = await _backend.signIn({ token: _user.token, auto: true });
     } catch {
-      //
+      // The local backend may throw if the file handle permission is not given
+      _user = undefined;
     }
   }
 
