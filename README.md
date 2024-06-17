@@ -64,7 +64,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Ready to be used as a drop-in replacement for Netlify/Decap CMS _in some casual use case scenarios_ with a single line of code update.
 - Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
-- However, some features are still missing or will not be added — look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
+- However, some features are still missing or will not be added, most notably Git Gateway and Netlify Identity. Look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
 
 ### Better UX
 
