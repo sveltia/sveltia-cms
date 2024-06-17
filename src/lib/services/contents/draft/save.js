@@ -359,6 +359,8 @@ const createKeyPathList = (fields) => {
     const { widget } = field;
     const isList = widget === 'list';
 
+    list.push(keyPath);
+
     if (isList || widget === 'object') {
       const {
         fields: subFields,
@@ -393,12 +395,12 @@ const createKeyPathList = (fields) => {
           list.push(`${keyPath}.*`);
         }
       }
-    } else if (widget === 'select' || widget === 'relation') {
+    }
+
+    if (widget === 'select' || widget === 'relation') {
       const { multiple = false } = /** @type {SelectField | RelationField} */ (field);
 
       list.push(multiple ? `${keyPath}.*` : keyPath);
-    } else {
-      list.push(keyPath);
     }
   };
 
