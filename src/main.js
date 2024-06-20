@@ -1,6 +1,16 @@
 import App from './app.svelte';
 
 const knownFuncNames = [
+  'registerCustomFormat',
+  'registerEditorComponent',
+  'registerEventListener',
+  'registerLocale',
+  'registerPreviewStyle',
+  'registerPreviewTemplate',
+  'registerWidget',
+];
+
+const unsupportedFuncNames = [
   'getBackend',
   'getCustomFormats',
   'getCustomFormatsExtensions',
@@ -18,19 +28,14 @@ const knownFuncNames = [
   'invokeEvent',
   'moment',
   'registerBackend',
-  'registerCustomFormat',
-  'registerEditorComponent',
-  'registerEventListener',
-  'registerLocale',
   'registerMediaLibrary',
-  'registerPreviewStyle',
-  'registerPreviewTemplate',
   'registerRemarkPlugin',
-  'registerWidget',
   'registerWidgetValueSerializer',
   'removeEventListener',
   'resolveWidget',
 ];
+
+const compatibilityURL = 'https://github.com/sveltia/sveltia-cms#compatibility';
 
 /**
  * Initialize the CMS, optionally with the given configuration.
@@ -63,12 +68,20 @@ const CMS = new Proxy(
         return obj[key];
       }
 
+      let message = '';
+
       if (knownFuncNames.includes(key)) {
+        message = 'CMS.%s() is not yet supported in Sveltia CMS, but we plan to implement it soon.';
+      }
+
+      if (unsupportedFuncNames.includes(key)) {
+        message =
+          'CMS.%s() is not supported in Sveltia CMS, and we don’t have any plans to implement it.';
+      }
+
+      if (message) {
         // eslint-disable-next-line no-console
-        console.error(
-          `CMS.${key}() is not yet supported in Sveltia CMS. ` +
-            'See https://github.com/sveltia/sveltia-cms#compatibility for compatibility information.',
-        );
+        console.error(`${message} See %s for compatibility information.`, key, compatibilityURL);
 
         // eslint-disable-next-line jsdoc/require-description
         /** @returns {void} */
