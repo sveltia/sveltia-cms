@@ -329,7 +329,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
-- Undocumented [methods available on the `window.CMS` object](https://github.com/sveltia/sveltia-cms/blob/b7f62741e02dc390c63c03291f95b2ca315d811b/src/main.js#L3-L33) will not be implemented. This includes custom backends and custom media libraries, if any.
+- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/6b8a86174f9beb4acc4bddcaa3848f773c1b2e52/src/main.js#L13-L36) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any.
 
 ## Roadmap
 
