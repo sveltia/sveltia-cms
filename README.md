@@ -46,7 +46,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 100+ of them (or 180+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 110+ of them (or 180+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 in a later release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
@@ -54,7 +54,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 
 Sveltia CMS **version 1.0 is expected to ship in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
-![100+ Netlify/Decap CMS Issues Solved in Sveltia CMS](docs/headline-1-20240527.webp)<br>
+![110+ Netlify/Decap CMS Issues Solved in Sveltia CMS](docs/headline-1-20240623.webp)<br>
 
 ## Features
 
@@ -132,6 +132,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
+- You won’t get a 404 Not Found error when you sign in to the GitLab backend[^115].
 
 ### Better i18n support
 
@@ -1010,3 +1011,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^113]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194) — These `removeChild` crashes are common in React apps and seem to be caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
 
 [^114]: Netlify/Decap CMS [#5029](https://github.com/decaporg/decap-cms/issues/5029), [#5048](https://github.com/decaporg/decap-cms/issues/5048)
+
+[^115]: Netlify/Decap CMS [#7172](https://github.com/decaporg/decap-cms/issues/7172)
