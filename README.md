@@ -23,12 +23,12 @@ To achieve radical improvements in UX, performance, i18n and other areas, it was
 Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community maintenance fork, first appeared on GitHub in September 2022
-- Sveltia CMS: a total reboot, started in November 2022, first appeared on GitHub in March 2023
+- **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, owned by a Netlify agency partner, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2016. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the hundreds of improvements we have already made.
 
-While Sveltia CMS is specifically designed to replace Netlify CMS, it also aims to serve as a substitute for the other products that are not receiving active development. (Note: Static CMS compatibility will be worked on after the Sveltia CMS 1.0 release)
+While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products that are not receiving active development. (Note: Static CMS compatibility will be worked on after the Sveltia CMS 1.0 release)
 
 ### Our goals
 
@@ -47,7 +47,7 @@ While we are fixing reported bugs as fast as we can, usually within 24 hours, th
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 110+ of them (or 180+ including duplicates) have been effectively solved in Sveltia CMS
-  - Target: 150 issues by GA, 250 in a later release
+  - Target: 150 issues by GA, 250 in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
 - Implementing our own UX enhancement ideas
