@@ -28,7 +28,7 @@ Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2016. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the hundreds of improvements we have already made.
 
-While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products that are not receiving active development. (Note: Static CMS compatibility will be worked on after the Sveltia CMS 1.0 release)
+While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products that are not receiving substantial updates. (Note: Static CMS compatibility will be worked on after the Sveltia CMS 1.0 release)
 
 ### Our goals
 
@@ -42,7 +42,7 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 
 Sveltia CMS is **still in beta**, so please be careful when trying it out.
 
-While we are fixing reported bugs as fast as we can, usually within 24 hours, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
+While we are fixing reported bugs as fast as we can, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
