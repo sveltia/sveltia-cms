@@ -202,9 +202,13 @@
  */
 
 /**
+ * Supported Markdown front matter format.
+ * @typedef {'yaml-frontmatter' | 'toml-frontmatter' | 'json-frontmatter'} FrontMatterFormat
+ */
+
+/**
  * Supported file format.
- * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'frontmatter' | 'yaml-frontmatter' |
- * 'toml-frontmatter' | 'json-frontmatter'} FileFormat
+ * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'frontmatter' | FrontMatterFormat} FileFormat
  */
 
 /**

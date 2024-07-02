@@ -68,6 +68,25 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 };
 
 /**
+ * Determine the Markdown front matter serialization format by checking a delimiter in the content.
+ * @param {string} text - File content.
+ * @returns {FrontMatterFormat} JSON, TOML or YAML front matter.
+ */
+const detectFrontmatterFormat = (text) => {
+  const str = text.trim();
+
+  if (str.startsWith('{')) {
+    return 'json-frontmatter';
+  }
+
+  if (str.startsWith('+++')) {
+    return 'toml-frontmatter';
+  }
+
+  return 'yaml-frontmatter';
+};
+
+/**
  * Parse raw content with given file details.
  * @param {BaseEntryListItem} entry - File entry.
  * @returns {RawEntryContent | null} Parsed content.
@@ -81,8 +100,8 @@ const parseEntryFile = ({
   },
 }) => {
   format ||= /** @type {FileFormat | undefined} */ (
-    extension === 'md' || path.endsWith('.md')
-      ? 'yaml-frontmatter'
+    ['md', 'markdown'].includes(extension ?? '') || path.match(/\.(?:md|markdown)$/)
+      ? detectFrontmatterFormat(text)
       : extension || Object.values(filePathMap ?? {})[0]?.match(/\.([^.]+)$/)?.[1]
   );
 
