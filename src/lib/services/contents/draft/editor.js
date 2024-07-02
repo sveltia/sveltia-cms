@@ -1,8 +1,9 @@
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
-import { entryDraft } from '$lib/services/contents/draft';
 import { backend } from '$lib/services/backends';
+import { entryDraft } from '$lib/services/contents/draft';
+import { getFieldConfig } from '$lib/services/contents/entry';
 
 /** @type {IndexedDB | null | undefined} */
 let settingsDB = undefined;
@@ -76,30 +77,75 @@ export const syncExpanderStates = (stateMap) => {
 };
 
 /**
- * Join key path segments for the expander UI state.
- * @param {string[]} arr - Key path array, e.g. `testimonials.0.authors.2.foo.bar`.
- * @param {number} end - End index for `Array.slice()`.
- * @returns {string} Joined string, e.g. `testimonials.0.authors.10.foo#.bar#`.
+ * Get a list of keys for the expander states, given the key path. The returned keys could include
+ * nested lists and objects.
+ * @param {object} args - Partial arguments for {@link getFieldConfig}.
+ * @param {string} args.collectionName - Collection name.
+ * @param {string} [args.fileName] - File name.
+ * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
+ * @param {FieldKeyPath} args.keyPath - Key path, e.g. `testimonials.0.authors.2.foo`.
+ * @returns {string[]} Keys, e.g. `['testimonials', 'testimonials.0', 'testimonials.0.authors',
+ * 'testimonials.0.authors.2', 'testimonials.0.authors.2.foo']`.
  */
-export const joinExpanderKeyPathSegments = (arr, end) =>
-  arr
-    .slice(0, end)
-    .map((k) => `${k}#`)
-    .join('.')
-    .replaceAll(/#\.(\d+)#/g, '.$1');
+export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath }) => {
+  const keys = new Set();
+
+  keyPath.split('.').forEach((_keyPart, index, arr) => {
+    const _keyPath = arr.slice(0, index + 1).join('.');
+    const config = getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath });
+
+    if (config?.widget === 'object') {
+      if (_keyPath.match(/\.\d+$/)) {
+        keys.add(_keyPath);
+      }
+
+      keys.add(`${_keyPath}#`);
+    } else if (config?.widget === 'list') {
+      keys.add(_keyPath.match(/\.\d+$/) ? _keyPath : `${_keyPath}#`);
+    } else if (index > 0) {
+      const parentKeyPath = arr.slice(0, index).join('.');
+
+      const parentConfig = getFieldConfig({
+        collectionName,
+        fileName,
+        valueMap,
+        keyPath: parentKeyPath,
+      });
+
+      if (parentConfig?.widget === 'object' && /** @type {ObjectField} */ (parentConfig).fields) {
+        keys.add(`${parentKeyPath}.${parentConfig.name}#`);
+      }
+
+      if (parentConfig?.widget === 'list' && /** @type {ListField} */ (parentConfig).field) {
+        keys.add(_keyPath);
+      }
+    }
+  });
+
+  return [...keys];
+};
 
 /**
  * Expand any invalid fields, including the parent list/object(s).
+ * @param {object} args - Partial arguments for {@link getFieldConfig}.
+ * @param {string} args.collectionName - Collection name.
+ * @param {string} [args.fileName] - File name.
+ * @param {Record<LocaleCode, FlattenedEntryContent>} args.currentValues - Field values.
  */
-export const expandInvalidFields = () => {
+export const expandInvalidFields = ({ collectionName, fileName, currentValues }) => {
   /** @type {Record<FieldKeyPath, boolean>} */
   const stateMap = {};
 
-  Object.values(get(entryDraft)?.validities ?? {}).forEach((validities) => {
+  Object.entries(get(entryDraft)?.validities ?? {}).forEach(([locale, validities]) => {
     Object.entries(validities).forEach(([keyPath, { valid }]) => {
       if (!valid) {
-        keyPath.split('.').forEach((_key, index, arr) => {
-          stateMap[joinExpanderKeyPathSegments(arr, index + 1)] = true;
+        getExpanderKeys({
+          collectionName,
+          fileName,
+          valueMap: currentValues[locale],
+          keyPath,
+        }).forEach((key) => {
+          stateMap[key] = true;
         });
       }
     });

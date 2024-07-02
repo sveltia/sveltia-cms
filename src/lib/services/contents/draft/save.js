@@ -574,13 +574,6 @@ export const createSavingEntryData = async ({
  * @throws {Error} When the entry could not be validated or saved.
  */
 export const saveEntry = async ({ skipCI = undefined } = {}) => {
-  if (!validateEntry()) {
-    expandInvalidFields();
-
-    throw new Error('validation_failed');
-  }
-
-  const _user = /** @type {User} */ (get(user));
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
 
   const {
@@ -595,6 +588,14 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     currentValues,
     files,
   } = draft;
+
+  if (!validateEntry()) {
+    expandInvalidFields({ collectionName, fileName, currentValues });
+
+    throw new Error('validation_failed');
+  }
+
+  const _user = /** @type {User} */ (get(user));
 
   const {
     identifier_field: identifierField = 'title',

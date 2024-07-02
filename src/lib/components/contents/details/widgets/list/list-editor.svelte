@@ -121,7 +121,13 @@
     // Initialize the expander state
     syncExpanderStates({
       [parentExpandedKeyPath]: !minimizeCollapsed,
-      ...Object.fromEntries(items.map((__, index) => [`${keyPath}.${index}`, !collapsed])),
+      ...Object.fromEntries(
+        items.map((__, index) => {
+          const key = `${keyPath}.${index}`;
+
+          return [key, expanderStates?._[key] ?? !collapsed];
+        }),
+      ),
     });
   });
 

@@ -100,7 +100,9 @@
     widgetId = generateUUID('short');
 
     // Initialize the expander state
-    syncExpanderStates({ [parentExpandedKeyPath]: !collapsed });
+    syncExpanderStates({
+      [parentExpandedKeyPath]: expanderStates?._[parentExpandedKeyPath] ?? !collapsed,
+    });
   });
 
   /**
