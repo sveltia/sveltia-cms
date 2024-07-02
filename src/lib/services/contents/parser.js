@@ -4,7 +4,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
-import TOML from 'smol-toml';
+import * as TOML from 'smol-toml';
 import YAML from 'yaml';
 import { normalizeSlug } from '$lib/services/contents/slug';
 import { getCollection } from '$lib/services/contents';
