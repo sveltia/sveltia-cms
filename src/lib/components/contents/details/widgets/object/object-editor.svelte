@@ -152,6 +152,8 @@
    * Remove the object’s subfields from the entry draft.
    */
   const removeFields = () => {
+    $i18nAutoDupEnabled = false;
+
     Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
         Object.keys(_valueMap).forEach((_keyPath) => {
@@ -161,12 +163,12 @@
           }
         });
 
-        if (required) {
-          // Enable validation
-          /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][keyPath] = null;
-        }
+        // Enable validation
+        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][keyPath] = null;
       }
     });
+
+    $i18nAutoDupEnabled = true;
   };
 
   /**
