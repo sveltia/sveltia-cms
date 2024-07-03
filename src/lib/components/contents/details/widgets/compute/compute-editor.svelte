@@ -16,7 +16,6 @@
   /**
    * @type {FieldKeyPath}
    */
-  // svelte-ignore unused-export-let
   export let keyPath;
   /**
    * @type {string}
@@ -32,7 +31,7 @@
    */
   export let fieldConfig;
   /**
-   * @type {string}
+   * @type {string | number}
    */
   export let currentValue;
   /**
@@ -58,20 +57,45 @@
   $: listFormatter = getListFormatter(locale);
 
   /**
+   * Get a list index found in the `keyPath`.
+   * @returns {number | undefined} Index.
+   * @see https://github.com/sveltia/sveltia-cms/issues/172
+   */
+  const getIndex = () => {
+    const [index] = keyPath.split('.').splice(-2, 1);
+
+    return index?.match(/^\d+$/) ? Number(index) : undefined;
+  };
+
+  /**
    * Update {@link currentValue} based on the current values.
    */
   const updateCurrentValue = () => {
-    const newValue = valueTemplate.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {
-      const value = getFieldDisplayValue({
-        collectionName,
-        fileName,
-        valueMap,
-        keyPath: _fieldName,
-        locale,
-      });
+    const newValue = (() => {
+      if (valueTemplate === '{{index}}') {
+        return getIndex() ?? '';
+      }
 
-      return Array.isArray(value) ? listFormatter.format(value) : String(value);
-    });
+      return valueTemplate.replaceAll(/{{(.+?)}}/g, (_match, tagName) => {
+        if (tagName === 'index') {
+          return String(getIndex() ?? '');
+        }
+
+        if (tagName.startsWith('fields.')) {
+          const value = getFieldDisplayValue({
+            collectionName,
+            fileName,
+            valueMap,
+            keyPath: tagName.replace(/^fields\./, ''),
+            locale,
+          });
+
+          return Array.isArray(value) ? listFormatter.format(value) : String(value);
+        }
+
+        return '';
+      });
+    })();
 
     // Make sure to avoid infinite loops
     if (currentValue !== newValue) {
