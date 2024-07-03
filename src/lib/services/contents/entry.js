@@ -1,4 +1,5 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
+import { escapeRegExp } from '@sveltia/utils/string';
 import moment from 'moment';
 import { get } from 'svelte/store';
 import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
@@ -7,6 +8,7 @@ import { getAssetByPath } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents';
+import { getListFormatter } from '$lib/services/contents/i18n';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
 
 /**
@@ -121,6 +123,24 @@ export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPa
       valueMap,
       keyPath,
     });
+  }
+
+  if (fieldConfig?.widget === 'list') {
+    const { fields, types } = /** @type {ListField} */ (fieldConfig);
+
+    if (fields || types) {
+      // Ignore
+    } else {
+      // Concat values of single field list or simple list
+      value = getListFormatter(locale).format(
+        Object.entries(valueMap)
+          .filter(
+            ([key, val]) =>
+              key.match(`^${escapeRegExp(keyPath)}\\.\\d+$`) && typeof val === 'string' && !!val,
+          )
+          .map(([, val]) => val),
+      );
+    }
   }
 
   return value ?? '';
