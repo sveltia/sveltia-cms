@@ -71,6 +71,12 @@
    * Update {@link currentValue} based on the current values.
    */
   const updateCurrentValue = () => {
+    // Check if the `keyPath` is valid, otherwise a list item containing this compute field cannot
+    // be removed due to the `currentValue` update below
+    if (!Object.keys(valueMap).includes(keyPath)) {
+      return;
+    }
+
     const newValue = (() => {
       if (valueTemplate === '{{index}}') {
         return getIndex() ?? '';
