@@ -271,7 +271,9 @@
         item.title ||
         item.name ||
         // Use the first string-type field value, if available
-        Object.values(item).find((value) => typeof value === 'string' && !!value) ||
+        (typeof item === 'string'
+          ? item
+          : Object.values(item).find((value) => typeof value === 'string' && !!value)) ||
         ''
       );
     }
