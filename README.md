@@ -133,6 +133,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
 - You won’t get a 404 Not Found error when you sign in to the GitLab backend[^115].
+- You can select the local and remote backends while working on a local server.
 
 ### Better i18n support
 
@@ -254,7 +255,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More stock photo providers will be added in the future.
   - Large images automatically fit in the preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
 - List and Object
-  - The `summary` is displayed correctly when it refers to a Relation field[^36].
+  - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
@@ -267,6 +268,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 - Compute
   - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets[^104]. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
+  - The `value` property also supports `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
