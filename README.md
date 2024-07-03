@@ -230,7 +230,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
     - You can use [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) with the Object widget just like the List widget.
-    - An optional Object field (`required: false`) can be manually added or removed with a checkbox[^88]. If unadded or removed, the required subfields won’t trigger validation errors[^16].
+    - An optional Object field (`required: false`) can be manually added or removed with a checkbox[^88]. If unadded or removed, the required subfields won’t trigger validation errors[^16], and the field will be saved as `null`.
 - Relation
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
   - `slug` can be used for `value_field` to show all available options instead of just one in some situations[^91].
