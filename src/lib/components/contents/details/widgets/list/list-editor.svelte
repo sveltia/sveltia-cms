@@ -267,13 +267,15 @@
    */
   const formatSummary = (item, index, summaryTemplate) => {
     if (!summaryTemplate) {
+      if (typeof item === 'string') {
+        return item;
+      }
+
       return (
         item.title ||
         item.name ||
         // Use the first string-type field value, if available
-        (typeof item === 'string'
-          ? item
-          : Object.values(item).find((value) => typeof value === 'string' && !!value)) ||
+        Object.values(item).find((value) => typeof value === 'string' && !!value) ||
         ''
       );
     }
