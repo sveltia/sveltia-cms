@@ -7,13 +7,14 @@
   import { Checkbox, Group } from '@sveltia/ui';
   import { generateUUID } from '@sveltia/utils/crypto';
   import { waitForVisibility } from '@sveltia/utils/element';
+  import { toRaw } from '@sveltia/utils/object';
   import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
-  import { createProxy, getDefaultValues } from '$lib/services/contents/draft/create';
+  import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+  import { getDefaultValues } from '$lib/services/contents/draft/create';
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
@@ -110,6 +111,9 @@
    * will be `undefined`.
    */
   const addFields = async (typeName) => {
+    // Avoid triggering the Proxy’s i18n duplication strategy for descendant fields
+    $i18nAutoDupEnabled = false;
+
     if (typeName) {
       Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
         if (_locale === locale || i18n === 'duplicate') {
@@ -128,20 +132,20 @@
       ),
     );
 
-    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
+    Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
-        // Since we don’t want to trigger the Proxy’s i18n duplication strategy for descendant
-        // fields, manually update the locale’s content and proxify the object again
-        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale] = createProxy({
-          draft: $entryDraft,
-          locale: _locale,
-          target: { ...newValueMap, ...$entryDraft?.currentValues[_locale] },
-        });
+        // Apply the new values while keeping the Proxy
+        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale] = Object.assign(
+          _valueMap,
+          toRaw({ ...newValueMap, ..._valueMap }),
+        );
 
         // Disable validation
         delete (/** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][keyPath]);
       }
     });
+
+    $i18nAutoDupEnabled = true;
   };
 
   /**
