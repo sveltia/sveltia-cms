@@ -74,15 +74,11 @@ export const signInAutomatically = async () => {
     (await LocalStorage.get('netlify-cms-user'));
 
   let _user = isObject(userCache) && !!userCache.backendName ? userCache : undefined;
-  // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
-  // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
-  const isLocal = !!window.location.hostname.match(/^(?:.+\.)?localhost$/);
 
   // Netlify/Decap CMS uses `proxy` as the backend name when running the local proxy server and
   // leaves it in local storage. Sveltia CMS uses `local` instead.
   const _backendName =
-    _user?.backendName?.replace('proxy', 'local') ??
-    (isLocal ? 'local' : get(siteConfig)?.backend?.name);
+    _user?.backendName?.replace('proxy', 'local') ?? get(siteConfig)?.backend?.name;
 
   backendName.set(_backendName);
 
@@ -126,14 +122,21 @@ export const signInAutomatically = async () => {
 
 /**
  * Sign in with the given backend.
- * @param {string} [token] - User’s auth token. Can be empty for the local backend or when a token
- * is not saved in the local storage.
+ * @param {string} _backendName - Backend name to be used.
  */
-export const signInManually = async (token = '') => {
+export const signInManually = async (_backendName) => {
+  backendName.set(_backendName);
+
+  const _backend = get(backend);
+
+  if (!_backend) {
+    return;
+  }
+
   let _user;
 
   try {
-    _user = await get(backend)?.signIn({ token, auto: false });
+    _user = await _backend.signIn({ auto: false });
   } catch (/** @type {any} */ ex) {
     logError(ex);
 
@@ -147,7 +150,7 @@ export const signInManually = async (token = '') => {
   user.set(_user);
 
   try {
-    await get(backend)?.fetchFiles();
+    await _backend.fetchFiles();
     // Reset error
     signInError.set({ message: '', canRetry: false });
   } catch (/** @type {any} */ ex) {
