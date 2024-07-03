@@ -268,7 +268,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 - Compute
   - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets[^104]. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
-  - The `value` property also supports `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
+  - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
