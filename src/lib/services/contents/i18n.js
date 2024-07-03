@@ -136,3 +136,16 @@ export const getLocaleLabel = (locale) => {
     return locale;
   }
 };
+
+/**
+ * Get a simple list formatter.
+ * @param {LocaleCode} locale - Locale code.
+ * @param {Partial<Intl.ListFormatOptions>} options - Format options.
+ * @returns {Intl.ListFormat} Formatter.
+ */
+export const getListFormatter = (locale, options = {}) =>
+  new Intl.ListFormat(getCanonicalLocale(locale), {
+    style: 'narrow',
+    type: 'conjunction',
+    ...options,
+  });

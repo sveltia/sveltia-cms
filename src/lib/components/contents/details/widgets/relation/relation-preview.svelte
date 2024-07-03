@@ -6,7 +6,7 @@
 <script>
   import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
   import { getEntriesByCollection, getFile } from '$lib/services/contents';
-  import { getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
@@ -57,8 +57,7 @@
       return value;
     });
 
-  $: canonicalLocale = getCanonicalLocale(locale);
-  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
+  $: listFormatter = getListFormatter(locale);
 </script>
 
 {#if refValues.length}

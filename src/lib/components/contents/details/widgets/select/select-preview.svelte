@@ -5,7 +5,7 @@
 -->
 <script>
   import { isObjectArray } from '@sveltia/utils/object';
-  import { getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
@@ -27,8 +27,7 @@
 
   $: ({ options, multiple } = fieldConfig);
   $: hasLabels = isObjectArray(options);
-  $: canonicalLocale = getCanonicalLocale(locale);
-  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
+  $: listFormatter = getListFormatter(locale);
 
   /**
    * Get the display label by value.

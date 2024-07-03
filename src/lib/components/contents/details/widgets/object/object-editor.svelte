@@ -17,7 +17,7 @@
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
-  import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { defaultI18nConfig, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
@@ -79,8 +79,7 @@
     ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && value !== null,
   );
   $: canEdit = locale === defaultLocale || i18n !== false;
-  $: canonicalLocale = getCanonicalLocale(locale);
-  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
+  $: listFormatter = getListFormatter(locale);
   $: parentExpandedKeyPath = `${keyPath}#`;
   $: parentExpanded = expanderStates?._[parentExpandedKeyPath] ?? true;
   $: hasVariableTypes = Array.isArray(types);

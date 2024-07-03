@@ -7,7 +7,7 @@
   import { TextInput } from '@sveltia/ui';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
-  import { getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
@@ -55,8 +55,7 @@
 
   $: ({ collectionName, fileName, currentValues } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
   $: valueMap = currentValues[locale];
-  $: canonicalLocale = getCanonicalLocale(locale);
-  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
+  $: listFormatter = getListFormatter(locale);
 
   /**
    * Update {@link currentValue} based on the current values.

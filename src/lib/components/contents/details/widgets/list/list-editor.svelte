@@ -18,7 +18,7 @@
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { updateListField } from '$lib/services/contents/draft/update';
   import { getFieldDisplayValue } from '$lib/services/contents/entry';
-  import { defaultI18nConfig, getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { defaultI18nConfig, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
@@ -86,8 +86,7 @@
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: isDuplicateField = locale !== defaultLocale && i18n === 'duplicate';
   $: valueMap = currentValues[locale];
-  $: canonicalLocale = getCanonicalLocale(locale);
-  $: listFormatter = new Intl.ListFormat(canonicalLocale, { style: 'narrow', type: 'conjunction' });
+  $: listFormatter = getListFormatter(locale);
   $: parentExpandedKeyPath = `${keyPath}#`;
   $: parentExpanded = expanderStates?._[parentExpandedKeyPath] ?? true;
 
