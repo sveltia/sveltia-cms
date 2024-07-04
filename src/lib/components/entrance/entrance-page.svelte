@@ -78,7 +78,7 @@
       gap: 32px;
       min-width: 240px;
       max-width: 800px;
-      height: 240px;
+      min-height: 240px;
     }
 
     .logo {
