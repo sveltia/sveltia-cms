@@ -8,7 +8,7 @@
   import { goto, openProductionSite } from '$lib/services/app/navigation';
   import { backend, backendName } from '$lib/services/backends';
   import { prefs } from '$lib/services/prefs';
-  import { user } from '$lib/services/user';
+  import { signOut, user } from '$lib/services/user';
 
   /** @type {MenuButton} */
   let menuButton;
@@ -122,8 +122,7 @@
         on:click={async () => {
           // Wait a bit before the menu is closed
           window.requestAnimationFrame(() => {
-            $user = null;
-            $backend?.signOut();
+            signOut();
           });
         }}
       />

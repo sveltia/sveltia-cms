@@ -2,6 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
+import { dataLoaded } from '$lib/services/contents';
 import { siteConfig } from '$lib/services/config';
 import { backend, backendName } from '$lib/services/backends';
 
@@ -31,7 +32,7 @@ export const signInError = writable({ message: '', canRetry: false });
 /**
  * @type {import('svelte/store').Writable<boolean>}
  */
-export const unauthenticated = writable(false);
+export const unauthenticated = writable(true);
 
 /**
  * Log an authentication error on the UI and in the browser console.
@@ -93,9 +94,7 @@ export const signInAutomatically = async () => {
     }
   }
 
-  if (!_user) {
-    unauthenticated.set(true);
-  }
+  unauthenticated.set(!_user);
 
   if (!_user || !_backend) {
     return;
@@ -138,10 +137,13 @@ export const signInManually = async (_backendName) => {
   try {
     _user = await _backend.signIn({ auto: false });
   } catch (/** @type {any} */ ex) {
+    unauthenticated.set(true);
     logError(ex);
 
     return;
   }
+
+  unauthenticated.set(!_user);
 
   if (!_user) {
     return;
@@ -156,4 +158,16 @@ export const signInManually = async (_backendName) => {
   } catch (/** @type {any} */ ex) {
     logError(ex);
   }
+};
+
+/**
+ * Sign out from the current backend.
+ */
+export const signOut = async () => {
+  await get(backend)?.signOut();
+  await LocalStorage.delete('sveltia-cms.user');
+  backendName.set(undefined);
+  user.set(undefined);
+  unauthenticated.set(true);
+  dataLoaded.set(false);
 };
