@@ -6,6 +6,7 @@
   import { backend } from '$lib/services/backends';
 
   const interval = 5 * 60 * 1000; // 5 minutes
+  let mounted = false;
   let timer = 0;
   /** @type {BackendServiceStatus} */
   let status = 'none';
@@ -21,23 +22,54 @@
     status = await $backend.checkStatus();
   };
 
-  onMount(() => {
-    // Cannot get the status of the local backend or a self-hosted Git instance
-    if (!$backend?.checkStatus || !!$siteConfig?.backend.api_root) {
-      return void 0;
-    }
-
+  /**
+   * Start checking the status.
+   */
+  const startChecking = () => {
     checkStatus();
 
     timer = window.setInterval(() => {
       checkStatus();
     }, interval);
+  };
+
+  /**
+   * Stop checking the status.
+   */
+  const stopChecking = () => {
+    window.clearInterval(timer);
+    status = 'none';
+  };
+
+  /**
+   * Initialize the status checker.
+   */
+  const init = () => {
+    if (mounted) {
+      // Cannot get the status of the local backend or a self-hosted Git instance
+      if ($backend?.checkStatus && !$siteConfig?.backend.api_root) {
+        startChecking();
+      } else {
+        stopChecking();
+      }
+    }
+  };
+
+  onMount(() => {
+    mounted = true;
 
     // onUnmount
     return () => {
-      window.clearInterval(timer);
+      stopChecking();
     };
   });
+
+  $: {
+    void mounted;
+    void $backend;
+    void $siteConfig;
+    init();
+  }
 </script>
 
 {#if ['minor', 'major'].includes(status)}
