@@ -46,13 +46,13 @@ While we are fixing reported bugs as fast as we can, the overall progress may be
 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 110+ of them (or 180+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 110+ of them (or 185+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
 - Implementing our own UX enhancement ideas
 
-Sveltia CMS **version 1.0 is expected to ship in Q3 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS **version 1.0 is expected to ship by the end of 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
 ![110+ Netlify/Decap CMS Issues Solved in Sveltia CMS](docs/headline-1-20240623.webp)<br>
 
@@ -133,6 +133,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
 - You won’t get a 404 Not Found error when you sign in to the GitLab backend[^115].
+- Comes with all-new local backend support that boosts DX. See the [productivity section](#better-productivity) above.
 - You can select the local and remote backends while working on a local server.
 
 ### Better i18n support
