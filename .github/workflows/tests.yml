@@ -3,8 +3,8 @@ name: Tests
 on: push
 
 jobs:
-  lint:
-    name: Lint
+  check:
+    name: Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the branch
@@ -20,8 +20,8 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install
-      - name: Run all lint checks
-        run: pnpm lint
+      - name: Run all checks
+        run: pnpm check
   test:
     name: Test
     runs-on: ubuntu-latest
