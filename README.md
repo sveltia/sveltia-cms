@@ -108,12 +108,12 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Ensures sufficient contrast between the foreground text and background colours.
 - Enabled and disabled buttons can be clearly distinguished[^105].
 - Links are underlined by default to make them easier to recognize. This behaviour can be changed in the Accessibility Settings if you prefer.
-- Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings.
+- Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings. (Support for [high contrast mode](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) will be added later.)
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
 ### Better security
 
-- Avoids high/critical severity vulnerabilities through constant dependency updates and frequent releases[^33].
+- Avoids high/critical severity vulnerabilities through constant dependency updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases[^33].
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration[^108].
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
@@ -133,7 +133,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
 - You won’t get a 404 Not Found error when you sign in to the GitLab backend[^115].
-- Comes with all-new local backend support that boosts DX. See the [productivity section](#better-productivity) above.
+- Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - You can select the local and remote backends while working on a local server.
 
 ### Better i18n support
@@ -327,9 +327,9 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 ### Features not to be implemented
 
-- The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** due to performance limitations. We may implement a performant Git Gateway alternative in the future.
 - The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
+- The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
