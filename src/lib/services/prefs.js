@@ -20,6 +20,7 @@ export const prefs = writable({}, (set) => {
       const _prefs = (await LocalStorage.get(storageKey)) ?? {};
 
       _prefs.apiKeys ??= {};
+      _prefs.closeOnSave ??= true;
       _prefs.underlineLinks ??= true;
       set(_prefs);
     } catch {

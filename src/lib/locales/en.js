@@ -540,6 +540,15 @@ export const strings = {
           'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your Authentication Key</a> here to enable quick translation of text entry fields.',
       },
     },
+    contents: {
+      title: 'Contents',
+      editor: {
+        title: 'Editor',
+        close_on_save: {
+          switch_label: 'Close the editor after saving a draft',
+        },
+      },
+    },
     media: {
       title: 'Media',
       stock_photos: {

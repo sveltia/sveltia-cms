@@ -571,6 +571,7 @@ export const createSavingEntryData = async ({
  * Save the entry draft.
  * @param {object} [options] - Options.
  * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
+ * @returns {Promise<Entry>} Saved entry.
  * @throws {Error} When the entry could not be validated or saved.
  */
 export const saveEntry = async ({ skipCI = undefined } = {}) => {
@@ -814,8 +815,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     ...savingAssets,
   ]);
 
-  entryDraft.set(null);
-
   const isLocal = get(backendName) === 'local';
 
   const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
@@ -828,4 +827,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   });
 
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
+
+  return savingEntry;
 };

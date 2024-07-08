@@ -543,6 +543,15 @@ export const strings = {
           '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された認証キー</a> をここに入力すると、テキストエントリー項目の素早い翻訳が可能となります。',
       },
     },
+    contents: {
+      title: 'コンテンツ',
+      editor: {
+        title: 'エディター',
+        close_on_save: {
+          switch_label: '下書き保存後にエディターを閉じる',
+        },
+      },
+    },
     media: {
       title: 'メディア',
       stock_photos: {

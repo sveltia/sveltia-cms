@@ -22,7 +22,7 @@
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/data';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { duplicateDraft } from '$lib/services/contents/draft/create';
+  import { createDraft, duplicateDraft } from '$lib/services/contents/draft/create';
   import { copyFromLocaleToast, entryEditorSettings } from '$lib/services/contents/draft/editor';
   import { saveEntry } from '$lib/services/contents/draft/save';
   import { revertChanges } from '$lib/services/contents/draft/update';
@@ -33,6 +33,7 @@
   } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/view';
+  import { prefs } from '$lib/services/prefs';
 
   let showValidationToast = false;
   let showDeleteDialog = false;
@@ -82,10 +83,26 @@
    * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
    */
   const save = async ({ skipCI = undefined } = {}) => {
+    saving = true;
+
     try {
-      saving = true;
-      await saveEntry({ skipCI });
-      goBack(`/collections/${collection?.name}`);
+      const savedEntry = await saveEntry({ skipCI });
+
+      if ($prefs?.closeOnSave ?? true) {
+        goBack(`/collections/${collection?.name}`);
+        $entryDraft = null;
+      } else {
+        if (isNew) {
+          // Update the URL
+          goto(`/collections/${collection?.name}/entries/${savedEntry.slug}`, {
+            replaceState: true,
+            notifyChange: false,
+          });
+        }
+
+        // Reset the draft
+        createDraft(savedEntry);
+      }
     } catch (/** @type {any} */ ex) {
       if (ex.message === 'validation_failed') {
         showValidationToast = true;
