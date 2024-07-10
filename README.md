@@ -89,7 +89,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better productivity
 
 - You can [work with a local Git repository](#working-with-a-local-git-repository) without any extra configuration or proxy server[^26].
-  - In addition to a streamlined workflow, it offers great performance by loading files natively through the browser rather than using a slow, ad hoc REST API.
+  - In addition to a streamlined workflow, it offers great performance by reading and writing files natively through the browser rather than using a slow, ad hoc REST API.
   - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
   - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
 - Provides a smoother user experience in the Content Editor:
@@ -453,7 +453,7 @@ You can use Sveltia CMS with a local Git repository like [Netlify/Decap CMS](htt
 
 Keep in mind that the local repository support doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the near future, we’ll figure out if there’s a way to do this in a browser (because `netlify-cms-proxy-server` actually has undocumented `git` mode that allows developers to create commits to a local repository).
 
-Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates. This will be unnecessary once browsers support the proposed `FileSystemObserver` API.
+Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates. This manual work will be unnecessary once the proposed `FileSystemObserver` API, which is being [implemented in Chromium](https://issues.chromium.org/issues/40105284) behind a flag, becomes available.
 
 ### Using a custom icon for a collection
 
