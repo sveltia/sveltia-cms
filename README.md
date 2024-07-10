@@ -95,7 +95,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Provides a smoother user experience in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
-  - The editor closes automatically when an entry is saved.
+  - The editor closes automatically when an entry is saved. This behaviour can be changed in Settings.
 - You can upload multiple assets at once[^5].
 - You can delete multiple entries and assets at once.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
