@@ -49,7 +49,7 @@
   <link
     rel="icon"
     href={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
-    type={logoURL ? mime.getType(logoURL) ?? undefined : 'image/svg+xml'}
+    type={logoURL ? (mime.getType(logoURL) ?? undefined) : 'image/svg+xml'}
   />
   {#if siteURL}
     <link href="{siteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />

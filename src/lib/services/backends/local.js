@@ -66,7 +66,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
   /**
    * @type {FileSystemDirectoryHandle | null}
    */
-  let handle = forceReload ? null : (await rootDirHandleDB?.get(rootDirHandleKey)) ?? null;
+  let handle = forceReload ? null : ((await rootDirHandleDB?.get(rootDirHandleKey)) ?? null);
 
   if (handle) {
     if ((await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') {

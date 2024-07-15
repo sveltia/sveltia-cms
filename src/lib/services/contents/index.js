@@ -88,7 +88,7 @@ export const getCollection = (name) => {
       : undefined,
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
     _thumbnailFieldName: rawCollection.folder
-      ? thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name
+      ? (thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name)
       : undefined,
   };
 

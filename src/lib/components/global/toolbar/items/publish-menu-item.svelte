@@ -27,7 +27,7 @@
     try {
       const { ok, status } = deployHookURL
         ? await fetch(deployHookURL, { method: 'POST', mode: 'no-cors' })
-        : (await triggerDeployment?.()) ?? {};
+        : ((await triggerDeployment?.()) ?? {});
 
       // If the `mode` is `no-cors`, the regular response status will be `0`
       if (!ok && status !== 0) {

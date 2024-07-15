@@ -294,7 +294,7 @@ siteConfig.subscribe((config) => {
 
         return {
           collectionName,
-          internalPath: stripSlashes(entryRelative ? collectionFolder ?? '' : mediaFolder),
+          internalPath: stripSlashes(entryRelative ? (collectionFolder ?? '') : mediaFolder),
           publicPath: (publicFolder ?? mediaFolder).replace(
             '{{public_folder}}',
             globalPublicFolder,

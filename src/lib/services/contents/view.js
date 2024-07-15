@@ -274,7 +274,7 @@ const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefi
       return;
     }
 
-    const key = regex ? String(value).match(regex)?.[0] ?? otherKey : String(value);
+    const key = regex ? (String(value).match(regex)?.[0] ?? otherKey) : String(value);
 
     if (!(key in groups)) {
       groups[key] = [];

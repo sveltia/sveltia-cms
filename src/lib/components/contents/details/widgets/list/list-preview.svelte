@@ -63,8 +63,8 @@
       ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
       : undefined}
     {@const subFields = subFieldName
-      ? types?.find(({ name }) => name === subFieldName)?.fields ?? []
-      : fields ?? (field ? [field] : [])}
+      ? (types?.find(({ name }) => name === subFieldName)?.fields ?? [])
+      : (fields ?? (field ? [field] : []))}
     <section class="subsection" bind:this={wrappers[index]}>
       {#await waitForVisibility(wrappers[index]) then}
         {#each subFields as subField (subField.name)}

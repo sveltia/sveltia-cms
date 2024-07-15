@@ -19,7 +19,7 @@
 
   $: ({ originalAsset } = $uploadingAssets);
   $: multiple = !originalAsset;
-  $: accept = originalAsset ? mime.getType(originalAsset.name) ?? undefined : undefined;
+  $: accept = originalAsset ? (mime.getType(originalAsset.name) ?? undefined) : undefined;
 
   /**
    * Update the asset list, which will show the confirmation dialog.

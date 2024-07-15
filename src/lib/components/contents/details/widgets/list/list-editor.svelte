@@ -193,8 +193,8 @@
   const addItem = (typeName) => {
     updateComplexList(({ valueList, fileList, expanderStateList }) => {
       const subFields = typeName
-        ? types?.find(({ name }) => name === typeName)?.fields ?? []
-        : fields ?? (field ? [field] : []);
+        ? (types?.find(({ name }) => name === typeName)?.fields ?? [])
+        : (fields ?? (field ? [field] : []));
 
       const index = addToTop ? 0 : valueList.length;
       const newItem = unflatten(getDefaultValues(subFields, locale));
@@ -353,8 +353,8 @@
           ? types?.find(({ name }) => name === item[typeKey])
           : undefined}
         {@const subFields = hasVariableTypes
-          ? typeConfig?.fields ?? []
-          : fields ?? (field ? [field] : [])}
+          ? (typeConfig?.fields ?? [])
+          : (fields ?? (field ? [field] : []))}
         {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <!-- @todo Support drag sorting. -->
         <div role="none" class="item">

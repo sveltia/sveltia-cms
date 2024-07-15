@@ -64,7 +64,8 @@
     fieldConfig
   ));
   $: type =
-    widgetName === 'string' ? /** @type {StringField} */ (fieldConfig).type ?? 'text' : undefined;
+    // prettier-ignore
+    widgetName === 'string' ? (/** @type {StringField} */ (fieldConfig).type ?? 'text') : undefined;
   $: allowPrefix = ['string'].includes(widgetName);
   $: prefix = allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined;
   $: suffix = allowPrefix ? /** @type {StringField} */ (fieldConfig).suffix : undefined;

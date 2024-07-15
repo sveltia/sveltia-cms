@@ -124,10 +124,10 @@ export const validateEntry = () => {
         const values =
           Array.isArray(value) && value.length
             ? value
-            : valueEntries
+            : (valueEntries
                 .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
                 .map(([, savedValue]) => savedValue)
-                .filter((val) => val !== undefined) ?? [];
+                .filter((val) => val !== undefined) ?? []);
 
         if (required && !values.length) {
           valueMissing = true;
