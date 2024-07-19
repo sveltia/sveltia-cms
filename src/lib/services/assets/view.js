@@ -247,14 +247,13 @@ const assetListSettings = writable();
  * @type {import('svelte/store').Readable<{ key: string, label: string }[]>}
  */
 export const sortFields = derived([allAssets, appLocale], ([_allAssets], set) => {
-  const { commitAuthor, commitDate } = _allAssets?.[0] ?? {};
   const _sortFields = ['name'];
 
-  if (commitAuthor) {
+  if (_allAssets.every((asset) => !!asset.commitAuthor)) {
     _sortFields.push('commit_author');
   }
 
-  if (commitDate) {
+  if (_allAssets.every((asset) => !!asset.commitDate)) {
     _sortFields.push('commit_date');
   }
 

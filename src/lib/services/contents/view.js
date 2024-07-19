@@ -353,17 +353,15 @@ export const sortFields = derived(
       return;
     }
 
-    const { commitAuthor, commitDate } = _allEntries?.[0] ?? {};
-
     const _sortFields = (
       Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
     ).filter((keyPath) => !!getFieldConfig({ collectionName, keyPath }));
 
-    if (commitAuthor && !_sortFields.includes('author')) {
+    if (_allEntries.every((entry) => !!entry.commitAuthor) && !_sortFields.includes('author')) {
       _sortFields.push('commit_author');
     }
 
-    if (commitDate && !_sortFields.includes('date')) {
+    if (_allEntries.every((entry) => !!entry.commitDate) && !_sortFields.includes('date')) {
       _sortFields.push('commit_date');
     }
 

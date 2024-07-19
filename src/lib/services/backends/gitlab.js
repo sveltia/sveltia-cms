@@ -399,22 +399,23 @@ const fetchFileList = async () => {
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#tree
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
+ * @see https://docs.gitlab.com/ee/api/graphql/#limits
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
-  const paths = fetchingFiles.map(({ path }) => path);
+  const allPaths = fetchingFiles.map(({ path }) => path);
   /** @type {{ size: string, rawTextBlob: string }[]} */
   const blobs = [];
-  let cursor = '';
+  let paths = [...allPaths];
 
-  // Fetch all the text contents with the GraphQL API
-  // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
+  // Fetch all the text contents with the GraphQL API. Pagination would fail if `paths` becomes too
+  // long, so we just use a fixed number of paths to iterate. The complexity score of this query is
+  // 15 + (2 * node size) so 115 paths = 245 complexity, where the max is 250 or 300
   for (;;) {
     const result = //
       /**
        * @type {{ project: { repository: { blobs: {
        * nodes: { size: string, rawTextBlob: string }[]
-       * pageInfo: { endCursor: string, hasNextPage: boolean }
        * } } } }}
        */ (
         await fetchGraphQL(
@@ -422,33 +423,23 @@ const fetchFileContents = async (fetchingFiles) => {
             query ($paths: [String!]!) {
               project(fullPath: "${owner}/${repo}") {
                 repository {
-                  blobs(ref: "${branch}", paths: $paths, after: "${cursor}") {
+                  blobs(ref: "${branch}", paths: $paths) {
                     nodes {
                       size
                       rawTextBlob
-                    }
-                    pageInfo {
-                      endCursor
-                      hasNextPage
                     }
                   }
                 }
               }
             }
           `,
-          { paths },
+          { paths: paths.splice(0, 115) },
         )
       );
 
-    const {
-      nodes,
-      pageInfo: { endCursor, hasNextPage },
-    } = result.project.repository.blobs;
+    blobs.push(...result.project.repository.blobs.nodes);
 
-    blobs.push(...nodes);
-    cursor = endCursor;
-
-    if (!hasNextPage) {
+    if (!paths.length) {
       break;
     }
   }
@@ -461,70 +452,80 @@ const fetchFileContents = async (fetchingFiles) => {
    */
   const commits = [];
 
-  // Since GitLab has a limit of 250 maximum complexity, we can only get 10 records per query
-  for (;;) {
-    const result = //
-      /**
-       * @type {{ project: { repository: { [tree_index: string]: { lastCommit: {
-       * author: { id?: string, username?: string },
-       * authorName: string, authorEmail: string, committedDate: string
-       * } } } } } }}
-       */ (
-        await fetchGraphQL(
-          `
-            query {
-              project(fullPath: "${owner}/${repo}") {
-                repository {
-                  ${paths
-                    .splice(0, 10)
-                    .map(
-                      (path, index) => `
-                        tree_${index}: tree(ref: "${branch}", path: "${path}") {
-                          lastCommit {
-                            author {
-                              id
-                              username
+  // Fetch commit info only when there aren’t many files, because it’s costly
+  if (allPaths.length < 100) {
+    paths = [...allPaths];
+
+    // The complexity score of this query is 5 + (18 * node size) so 13 paths = 239 complexity
+    for (;;) {
+      const result = //
+        /**
+         * @type {{ project: { repository: { [tree_index: string]: { lastCommit: {
+         * author: { id?: string, username?: string },
+         * authorName: string, authorEmail: string, committedDate: string
+         * } } } } } }}
+         */ (
+          await fetchGraphQL(
+            `
+              query {
+                project(fullPath: "${owner}/${repo}") {
+                  repository {
+                    ${paths
+                      .splice(0, 13)
+                      .map(
+                        (path, index) => `
+                          tree_${index}: tree(ref: "${branch}", path: "${path}") {
+                            lastCommit {
+                              author {
+                                id
+                                username
+                              }
+                              authorName
+                              authorEmail
+                              committedDate
                             }
-                            authorName
-                            authorEmail
-                            committedDate
                           }
-                        }
-                      `,
-                    )
-                    .join('')}
+                        `,
+                      )
+                      .join('')}
+                  }
                 }
               }
-            }
-          `,
-        )
-      );
+            `,
+          )
+        );
 
-    commits.push(...Object.values(result.project.repository).map(({ lastCommit }) => lastCommit));
+      commits.push(...Object.values(result.project.repository).map(({ lastCommit }) => lastCommit));
 
-    if (!paths.length) {
-      break;
+      if (!paths.length) {
+        break;
+      }
     }
   }
 
   return Object.fromEntries(
     fetchingFiles.map(({ path, sha }, index) => {
       const { size, rawTextBlob } = blobs[index];
-
-      const {
-        author: { id, username },
-        authorName,
-        authorEmail,
-        committedDate,
-      } = commits[index];
-
-      const idMatcher = id?.match(/\d+/);
+      const commit = commits[index];
 
       const data = {
         sha,
         size: Number(size),
         text: rawTextBlob,
-        meta: {
+        meta: {},
+      };
+
+      if (commit) {
+        const {
+          author: { id, username },
+          authorName,
+          authorEmail,
+          committedDate,
+        } = commit;
+
+        const idMatcher = id?.match(/\d+/);
+
+        data.meta = {
           commitAuthor: {
             name: authorName,
             email: authorEmail,
@@ -532,8 +533,8 @@ const fetchFileContents = async (fetchingFiles) => {
             login: username,
           },
           committedDate: new Date(committedDate),
-        },
-      };
+        };
+      }
 
       return [path, data];
     }),
