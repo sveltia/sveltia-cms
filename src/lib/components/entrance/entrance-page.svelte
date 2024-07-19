@@ -7,7 +7,7 @@
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { inAuthPopup } from '$lib/services/backends/shared/auth';
   import { siteConfig, siteConfigError } from '$lib/services/config';
-  import { dataLoaded } from '$lib/services/contents';
+  import { dataLoaded, dataLoadedProgress } from '$lib/services/contents';
   import { prefs, prefsError } from '$lib/services/prefs';
   import { signInError, unauthenticated, user } from '$lib/services/user';
 
@@ -50,6 +50,11 @@
       <SignIn />
     {:else if !$dataLoaded}
       <div role="alert" class="message">{$_('loading_site_data')}</div>
+      {#if $dataLoadedProgress !== undefined}
+        <div role="progressbar" aria-valuenow={$dataLoadedProgress}>
+          <div style:width={`${$dataLoadedProgress}%`}></div>
+        </div>
+      {/if}
     {/if}
   </div>
 </div>
@@ -108,6 +113,20 @@
       font-size: var(--sui-font-size-default);
       line-height: 1.5;
       text-align: center;
+    }
+  }
+
+  [role='progressbar'] {
+    overflow: hidden;
+    border-radius: 16px;
+    width: 240px;
+    height: 8px;
+    background-color: var(--sui-secondary-background-color);
+
+    div {
+      height: 100%;
+      background-color: var(--sui-info-foreground-color);
+      transition: width 250ms;
     }
   }
 </style>

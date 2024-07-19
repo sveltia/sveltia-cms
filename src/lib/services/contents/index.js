@@ -15,6 +15,10 @@ const markdownImageRegEx = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
  */
 export const dataLoaded = writable(false);
 /**
+ * @type {import('svelte/store').Writable<number | undefined>}
+ */
+export const dataLoadedProgress = writable();
+/**
  * @type {import('svelte/store').Writable<CollectionEntryFolder[]>}
  */
 export const allEntryFolders = writable([]);

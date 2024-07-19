@@ -12,6 +12,7 @@ import {
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
+import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';
 import { sendRequest } from '$lib/services/utils/networking';
 
@@ -408,6 +409,8 @@ const fetchFileContents = async (fetchingFiles) => {
   const blobs = [];
   let paths = [...allPaths];
 
+  dataLoadedProgress.set(0);
+
   // Fetch all the text contents with the GraphQL API. Pagination would fail if `paths` becomes too
   // long, so we just use a fixed number of paths to iterate. The complexity score of this query is
   // 15 + (2 * node size) so 115 paths = 245 complexity, where the max is 250 or 300
@@ -438,11 +441,14 @@ const fetchFileContents = async (fetchingFiles) => {
       );
 
     blobs.push(...result.project.repository.blobs.nodes);
+    dataLoadedProgress.set(Math.ceil(((allPaths.length - paths.length) / allPaths.length) * 100));
 
     if (!paths.length) {
       break;
     }
   }
+
+  dataLoadedProgress.set(undefined);
 
   /**
    * @type {{
