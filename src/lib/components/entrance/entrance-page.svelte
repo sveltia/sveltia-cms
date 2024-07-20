@@ -52,7 +52,7 @@
       <div role="alert" class="message">{$_('loading_site_data')}</div>
       {#if $dataLoadedProgress !== undefined}
         <div role="progressbar" aria-valuenow={$dataLoadedProgress}>
-          <div style:width={`${$dataLoadedProgress}%`}></div>
+          <div role="none" style:width={`${$dataLoadedProgress}%`}></div>
         </div>
       {/if}
     {/if}
