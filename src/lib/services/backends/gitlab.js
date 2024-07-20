@@ -413,7 +413,8 @@ const fetchFileContents = async (fetchingFiles) => {
 
   // Fetch all the text contents with the GraphQL API. Pagination would fail if `paths` becomes too
   // long, so we just use a fixed number of paths to iterate. The complexity score of this query is
-  // 15 + (2 * node size) so 115 paths = 245 complexity, where the max is 250 or 300
+  // 15 + (2 * node size) so 100 paths = 215 complexity, where the max number of records is 100 and
+  // max complexity is 250 or 300
   for (;;) {
     const result = //
       /**
@@ -436,7 +437,7 @@ const fetchFileContents = async (fetchingFiles) => {
               }
             }
           `,
-          { paths: paths.splice(0, 115) },
+          { paths: paths.splice(0, 100) },
         )
       );
 
