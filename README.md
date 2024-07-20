@@ -47,7 +47,7 @@ While we are fixing reported bugs as fast as we can, the overall progress may be
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 110+ of them (or 185+ including duplicates) have been effectively solved in Sveltia CMS
-  - Target: 150 issues by GA, 250 in a future release
+  - Target: 125 issues by GA, 250 in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
 - Implementing our own UX enhancement ideas
@@ -303,12 +303,13 @@ We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap C
 
 ### Current limitations
 
-These limitations are expected to be resolved before GA:
+These limitations are expected to be resolved before or shortly after GA:
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
-| Backends | Only GitHub and GitLab are available. We’ll add the Test backend for our demo site and see if Azure can also be supported. |
-| Configuration | The application UI locales are only available in English and Japanese. Comprehensive config validation is not yet implemented. |
+| Backends | The Test backend needed for our demo site is not yet added. We’ll see if Azure can also be supported. |
+| Configuration | Comprehensive config validation is not yet implemented. |
+| Localization | The application UI is only available in English and Japanese at this time. |
 | Media Libraries | Cloudinary and Uploadcare are not yet supported. |
 | Workflow | Editorial Workflow and Open Authoring are not yet supported. |
 | Collections | Nested collections are not yet supported. |
@@ -343,7 +344,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 - [Tackling more Netlify/Decap CMS issues](#development-status)
 - Broad automation test coverage (Vitest + Playwright)
 - [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) migration
-- Localization with [Fluent](https://projectfluent.org)
+- Localization with the new, [Fluent](https://projectfluent.org)-powered `sveltia-i18n` library
 - Documentation
 - Marketing site
 - Live demo site
@@ -441,7 +442,8 @@ If you get an “Authentication Aborted” error when trying to sign in to GitHu
 You can use Sveltia CMS with a local Git repository like Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and a proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 1. Make sure you have configured the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend.
-   - Please note that the Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS. You can remove the `local_backend` property, which is ignored in Sveltia CMS.
+   - Please note that the Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition.
+   - You can remove `local_backend` from your configuration, as it will be ignored by Sveltia CMS.
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
    - Other Chromium-based browsers may also work. In Brave, you need to enable the File System Access API [with a flag](https://github.com/brave/brave-browser/issues/20563#issuecomment-1021567573).
