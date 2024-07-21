@@ -1,7 +1,7 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
-import sveltePreprocess from 'svelte-preprocess';
+import { sveltePreprocess } from 'svelte-preprocess';
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
