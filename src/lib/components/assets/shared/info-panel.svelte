@@ -135,7 +135,7 @@
   <section>
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as { sha, slug, locales, collectionName, fileName } (sha)}
-      {@const collection = /** @type {Collection} */ (getCollection(collectionName))}
+      {@const collection = (() => /** @type {Collection} */ (getCollection(collectionName)))()}
       {@const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined}
       {@const { defaultLocale } = (collectionFile ?? collection)._i18n}
       {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}

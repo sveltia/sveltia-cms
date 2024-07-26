@@ -170,7 +170,7 @@
           </div>
         {/if}
         {#if validity.tooShort}
-          {@const { minlength } = /** @type {StringField | TextField} */ (fieldConfig)}
+          {@const { minlength } = (() => /** @type {StringField | TextField} */ (fieldConfig))()}
           <div role="none">
             <Icon name="error" />
             {$_(minlength === 1 ? 'validation.too_short.one' : 'validation.too_short.many', {
@@ -179,7 +179,7 @@
           </div>
         {/if}
         {#if validity.tooLong}
-          {@const { maxlength } = /** @type {StringField | TextField} */ (fieldConfig)}
+          {@const { maxlength } = (() => /** @type {StringField | TextField} */ (fieldConfig))()}
           <div role="none">
             <Icon name="error" />
             {$_(maxlength === 1 ? 'validation.too_long.one' : 'validation.too_long.many', {
