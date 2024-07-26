@@ -78,7 +78,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files while building your website or application.
 - Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB), even though we haven’t implemented some features yet[^57][^64].
-- The upcoming [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver further performance improvements, including accelerated speed and even smaller bundle size (an estimated 100 KB reduction).
+- The ongoing [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver further performance improvements, including accelerated speed and even smaller bundle size (an estimated 100 KB reduction).
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
@@ -772,7 +772,7 @@ Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://gith
 
 ## Contributions
 
-Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new) so we can make it better for everyone. Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources and the upcoming Svelte 5 migration. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
+Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new) so we can make it better for everyone. Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources and the ongoing Svelte 5 migration. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
 Tips are always welcome! The project hasn’t set up a sponsorship program, but maintainer [@kyoshino](https://github.com/kyoshino) has a [PayPal account](https://paypal.me/kohei).
 
