@@ -105,7 +105,7 @@ const validate = (config) => {
     );
   }
 
-  if (typeof config.backend.repo !== 'string' || config.backend.repo.split('/').length !== 2) {
+  if (typeof config.backend.repo !== 'string') {
     throw new Error(get(_)('config.error.no_repository'));
   }
 

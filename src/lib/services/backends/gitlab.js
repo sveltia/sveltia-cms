@@ -150,22 +150,20 @@ const fetchGraphQL = async (query, variables = {}) => {
  */
 const getRepositoryInfo = () => {
   const {
-    repo: projectPath,
+    repo,
     branch,
     api_root: apiRoot, // Self-hosted only
   } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
-  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://gitlab.com';
 
   return Object.assign(repository, {
     service: backendName,
     label,
-    owner,
     repo,
     branch,
-    baseURL: `${origin}/${owner}/${repo}`,
-    databaseName: `${backendName}:${owner}/${repo}`,
+    baseURL: `${origin}/${repo}`,
+    databaseName: `${backendName}:${repo}`,
   });
 };
 
@@ -258,12 +256,12 @@ const signOut = async () => void 0;
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repository
  */
 const fetchDefaultBranchName = async () => {
-  const { owner, repo } = repository;
+  const { repo } = repository;
 
   const result = /** @type {{ project: { repository: { rootRef: string } } }} */ (
     await fetchGraphQL(`
       query {
-        project(fullPath: "${owner}/${repo}") {
+        project(fullPath: "${repo}") {
           repository {
             rootRef
           }
@@ -296,13 +294,13 @@ const fetchDefaultBranchName = async () => {
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#tree
  */
 const fetchLastCommitHash = async () => {
-  const { owner, repo, branch } = repository;
+  const { repo, branch } = repository;
 
   const result =
     /** @type {{ project: { repository: { tree: { lastCommit: { sha: string }} } } }} */ (
       await fetchGraphQL(`
         query {
-          project(fullPath: "${owner}/${repo}") {
+          project(fullPath: "${repo}") {
             repository {
               tree(ref: "${branch}") {
                 lastCommit {
@@ -339,7 +337,7 @@ const fetchLastCommitHash = async () => {
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
 const fetchFileList = async () => {
-  const { owner, repo, branch } = repository;
+  const { repo, branch } = repository;
   /** @type {{ type: string, path: string, sha: string }[]} */
   const blobs = [];
   let cursor = '';
@@ -355,7 +353,7 @@ const fetchFileList = async () => {
        */ (
         await fetchGraphQL(`
           query {
-            project(fullPath: "${owner}/${repo}") {
+            project(fullPath: "${repo}") {
               repository {
                 tree(ref: "${branch}", recursive: true) {
                   blobs(after: "${cursor}") {
@@ -403,7 +401,7 @@ const fetchFileList = async () => {
  * @see https://docs.gitlab.com/ee/api/graphql/#limits
  */
 const fetchFileContents = async (fetchingFiles) => {
-  const { owner, repo, branch } = repository;
+  const { repo, branch } = repository;
   const allPaths = fetchingFiles.map(({ path }) => path);
   /** @type {{ size: string, rawTextBlob: string }[]} */
   const blobs = [];
@@ -425,7 +423,7 @@ const fetchFileContents = async (fetchingFiles) => {
         await fetchGraphQL(
           `
             query ($paths: [String!]!) {
-              project(fullPath: "${owner}/${repo}") {
+              project(fullPath: "${repo}") {
                 repository {
                   blobs(ref: "${branch}", paths: $paths) {
                     nodes {
@@ -475,7 +473,7 @@ const fetchFileContents = async (fetchingFiles) => {
           await fetchGraphQL(
             `
               query {
-                project(fullPath: "${owner}/${repo}") {
+                project(fullPath: "${repo}") {
                   repository {
                     ${paths
                       .splice(0, 13)
@@ -569,12 +567,12 @@ const fetchFiles = async () => {
  * @see https://docs.gitlab.com/ee/api/repository_files.html#get-raw-file-from-repository
  */
 const fetchBlob = async (asset) => {
-  const { owner, repo, branch } = repository;
+  const { repo, branch } = repository;
   const { path } = asset;
 
   return /** @type {Promise<Blob>} */ (
     fetchAPI(
-      `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/files` +
+      `/projects/${encodeURIComponent(`${repo}`)}/repository/files` +
         `/${encodeURIComponent(path)}/raw?ref=${branch}`,
       {},
       { responseType: 'blob' },
@@ -594,10 +592,10 @@ const fetchBlob = async (asset) => {
  * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
  */
 const commitChanges = async (changes, options) => {
-  const { owner, repo, branch } = repository;
+  const { repo, branch } = repository;
 
   const result = /** @type {{ web_url: string }} */ (
-    await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`, {
+    await fetchAPI(`/projects/${encodeURIComponent(`${repo}`)}/repository/commits`, {
       method: 'POST',
       body: {
         branch,
