@@ -51,6 +51,7 @@ While we are fixing reported bugs as fast as we can, the overall progress may be
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
 - Implementing our own UX enhancement ideas
+- Upgrading to [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) for unparalleled performance
 
 Sveltia CMS **version 1.0 is expected to ship by the end of 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
