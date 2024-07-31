@@ -773,7 +773,7 @@ Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://gith
 
 ## Contributions
 
-See [Contributing to Sveltia CMS](CONTRIBUTING.md).
+See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md).
 
 ## Related links
 

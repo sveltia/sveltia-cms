@@ -6,17 +6,17 @@ Since Sveltia CMS is still in beta, we expect various problems. Please [report a
 
 ## Feature requests
 
-Feel free to [submit feature requests](https://github.com/sveltia/sveltia-cms/issues) as well, but please keep in mind that we have a lot of work to do before/after the 1.0 release, so we may not be able to fulfil your request anytime soon.
+Feel free to [submit feature requests](https://github.com/sveltia/sveltia-cms/issues) as well, but please keep in mind that we have a lot of work to do before/after the 1.0 release, so we may not be able to fulfil your request anytime soon. See also the [compatibility info](https://github.com/sveltia/sveltia-cms#compatibility) for some features we will be implementing soon or will not be supporting.
 
 ## Code contributions
 
-Pull requests are not accepted for the time being due to limited review resources and the ongoing Svelte 5 migration. Please file issues instead.
+Due to limited review resources and the ongoing Svelte 5 migration, pull requests will not be accepted for the time being, except for trivial changes. Please file issues instead.
 
-## Localization
+## Localizations
 
 As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
-## Donation
+## Donations
 
 Tips are always welcome! The project hasn’t set up a sponsorship program, but maintainer [@kyoshino](https://github.com/kyoshino) has a [PayPal account](https://paypal.me/kohei).
 
