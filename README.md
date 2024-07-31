@@ -773,11 +773,7 @@ Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://gith
 
 ## Contributions
 
-Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new) so we can make it better for everyone. Feel free to submit feature requests as well. Meanwhile, pull requests may not be accepted for the time being due to limited review resources and the ongoing Svelte 5 migration. As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
-
-Tips are always welcome! The project hasn’t set up a sponsorship program, but maintainer [@kyoshino](https://github.com/kyoshino) has a [PayPal account](https://paypal.me/kohei).
-
-Last but not least, don’t forget to star this project and spread the word so more users can benefit from a better CMS experience!
+See [Contributing to Sveltia CMS](CONTRIBUTING.md).
 
 ## Related links
 
