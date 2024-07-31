@@ -155,7 +155,14 @@ const getRepositoryInfo = () => {
     api_root: apiRoot, // Self-hosted only
   } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
 
-  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
+  /**
+   * In GitLab terminology, an owner is called a namespace, and a repository is called a project. A
+   * namespace can contain a group and a subgroup concatenated with a `/` so we cannot simply use
+   * `split('/')` here. A project name should not contain a `/`.
+   * @see https://docs.gitlab.com/ee/user/namespace/
+   * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/80055
+   */
+  const [, owner, repo] = /** @type {string} */ (projectPath).match(/(.+)\/([^/]+)$/) ?? [];
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://gitlab.com';
 
   return Object.assign(repository, {
@@ -569,13 +576,13 @@ const fetchFiles = async () => {
  * @see https://docs.gitlab.com/ee/api/repository_files.html#get-raw-file-from-repository
  */
 const fetchBlob = async (asset) => {
-  const { owner, repo, branch } = repository;
+  const { owner, repo, branch = '' } = repository;
   const { path } = asset;
 
   return /** @type {Promise<Blob>} */ (
     fetchAPI(
       `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/files` +
-        `/${encodeURIComponent(path)}/raw?ref=${branch}`,
+        `/${encodeURIComponent(path)}/raw?ref=${encodeURIComponent(branch)}`,
       {},
       { responseType: 'blob' },
     )
