@@ -443,7 +443,7 @@ If you get an “Authentication Aborted” error when trying to sign in to GitHu
 You can use Sveltia CMS with a local Git repository like Netlify/Decap CMS, but Sveltia CMS has simplified the workflow by removing the need for additional configuration (the `local_backend` property) and a proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 1. Make sure you have configured the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend.
-   - Please note that the Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition.
+   - Please note that the Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition. If you haven’t determined your repository name yet, just use a random one.
    - You can remove `local_backend` from your configuration, as it will be ignored by Sveltia CMS.
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
