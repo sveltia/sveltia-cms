@@ -767,7 +767,7 @@ img-src 'self' blob: data: https://*;
 
 ## Support & feedback
 
-Visit the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page on this GitHub repository and start a new discussion. Tell us about your use cases!
+While we don’t have dedicated developer/user support resources, quick questions and feedback are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of this GitHub repository.
 
 Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements. Feel free to reach out!
 
