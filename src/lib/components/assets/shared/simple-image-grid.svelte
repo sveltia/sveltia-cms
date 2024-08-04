@@ -63,6 +63,7 @@
         min-height: calc(var(--sui-font-size-default) * 2);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         overflow: hidden;
         white-space: normal;
         line-height: var(--sui-line-height-compact);
