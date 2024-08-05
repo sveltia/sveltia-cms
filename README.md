@@ -110,6 +110,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Enabled and disabled buttons can be clearly distinguished[^105].
 - Links are underlined by default to make them easier to recognize. This behaviour can be changed in the Accessibility Settings if you prefer.
 - Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings. (Support for [high contrast mode](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) will be added later.)
+- Browser console logs for developers are readable in either light or dark mode[^116].
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
 ### Better security
@@ -155,6 +156,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can easily switch between locales while editing by clicking a button instead of a dropdown list. No internal error is thrown when changing the locale[^103].
   - Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. (For example, it might be difficult to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.)
   - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
+  - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container[^117].
 - Content editing
   - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click. More translation services will be added in the future.
   - You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
@@ -1017,3 +1019,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^114]: Netlify/Decap CMS [#5029](https://github.com/decaporg/decap-cms/issues/5029), [#5048](https://github.com/decaporg/decap-cms/issues/5048)
 
 [^115]: Netlify/Decap CMS [#7172](https://github.com/decaporg/decap-cms/issues/7172)
+
+[^116]: Netlify/Decap CMS [#3431](https://github.com/decaporg/decap-cms/issues/3431)
+
+[^117]: Netlify/Decap CMS [#3562](https://github.com/decaporg/decap-cms/issues/3562)
