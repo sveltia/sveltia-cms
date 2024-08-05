@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { isURL } from '@sveltia/utils/string';
 
 /**
@@ -124,18 +123,20 @@ export const convertImage = async (
         const video = document.createElement('video');
 
         video.addEventListener(
-          'loadeddata',
+          'canplay',
           async () => {
-            // Wait a bit until `<video>` shows the first frame
-            await sleep(250);
+            video.pause();
             ({ videoWidth: width, videoHeight: height } = video);
             resolve(video);
           },
           { once: true },
         );
 
+        video.muted = true;
+        video.autoplay = true;
         video.playsInline = true;
         video.src = blobURL;
+
         // Add `<video>` to DOM or it won’t be rendered on canvas
         video.style.opacity = '0';
         document.body.appendChild(video);
