@@ -78,6 +78,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
+      text-align: left;
 
       .size {
         font-size: var(--sui-font-size-small);
