@@ -8,7 +8,8 @@ import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
 import { resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
-export const assetKinds = ['image', 'video', 'audio', 'document', 'other'];
+export const mediaKinds = ['image', 'video', 'audio'];
+export const assetKinds = [...mediaKinds, 'document', 'other'];
 /**
  * Common file extension regex list that can be used for filtering.
  * @type {Record<string, RegExp>}
@@ -69,6 +70,13 @@ export const editingAsset = writable();
 export const renamingAsset = writable();
 
 /**
+ * Check if the given asset kind is media.
+ * @param {string} kind - Kind, e.g. `image` or `video`.
+ * @returns {boolean} Result.
+ */
+export const isMediaKind = (kind) => mediaKinds.includes(kind);
+
+/**
  * Whether the given asset is previewable.
  * @param {Asset} asset - Asset.
  * @returns {boolean} Result.
@@ -76,11 +84,42 @@ export const renamingAsset = writable();
 export const canPreviewAsset = (asset) => {
   const type = mime.getType(asset.path);
 
-  return (
-    ['image', 'audio', 'video'].includes(asset.kind) ||
-    type === 'application/pdf' ||
-    (!!type && isTextFileType(type))
-  );
+  return isMediaKind(asset.kind) || type === 'application/pdf' || (!!type && isTextFileType(type));
+};
+
+/**
+ * Get the media type of the given blob or path.
+ * @param {Blob | string} source - Blob, blob URL, or asset path.
+ * @returns {Promise<AssetKind | undefined>} Kind.
+ */
+export const getMediaKind = async (source) => {
+  let mimeType = '';
+
+  if (typeof source === 'string') {
+    if (source.startsWith('blob:')) {
+      try {
+        mimeType = (await (await fetch(source)).blob()).type;
+      } catch {
+        //
+      }
+    } else {
+      mimeType = mime.getType(source) ?? '';
+    }
+  } else if (source instanceof Blob) {
+    mimeType = source.type;
+  }
+
+  if (!mimeType) {
+    return undefined;
+  }
+
+  const [type, subType] = mimeType.split('/');
+
+  if (isMediaKind(type) && !subType.startsWith('x-')) {
+    return /** @type {AssetKind} */ (type);
+  }
+
+  return undefined;
 };
 
 /**
@@ -158,12 +197,18 @@ let thumbnailDB = undefined;
 /**
  * Get a thumbnail image for the given asset.
  * @param {Asset} asset - Asset.
- * @returns {Promise<string>} Thumbnail blob URL.
+ * @returns {Promise<string | undefined>} Thumbnail blob URL.
  */
 export const getAssetThumbnailURL = async (asset) => {
   // Use a cached image if available
   if (asset.thumbnailURL) {
     return asset.thumbnailURL;
+  }
+
+  const isPDF = asset.name.endsWith('.pdf');
+
+  if (!(['image', 'video'].includes(asset.kind) || isPDF)) {
+    return undefined;
   }
 
   // Initialize the thumbnail DB
@@ -180,9 +225,7 @@ export const getAssetThumbnailURL = async (asset) => {
     const blob = await getAssetBlob(asset);
     const options = { format: /** @type {'webp'} */ ('webp'), quality: 0.85, dimension: 512 };
 
-    thumbnailBlob = asset.name.endsWith('.pdf')
-      ? await renderPDF(blob, options)
-      : await convertImage(blob, options);
+    thumbnailBlob = isPDF ? await renderPDF(blob, options) : await convertImage(blob, options);
 
     await thumbnailDB?.set(asset.sha, thumbnailBlob);
   }

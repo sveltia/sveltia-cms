@@ -1,3 +1,4 @@
+import { sleep } from '@sveltia/utils/misc';
 import { isURL } from '@sveltia/utils/string';
 
 /**
@@ -115,19 +116,46 @@ export const convertImage = async (
     source = await createImageBitmap(blob);
     ({ width, height } = source);
   } catch {
-    // Fall back to `<img>` when thrown, possibly by SVG
+    // Fall back to `<img>` or `<video>` when thrown; this includes SVG
+    const blobURL = URL.createObjectURL(blob);
+
     source = await new Promise((resolve) => {
-      const image = new Image();
-      const blobURL = URL.createObjectURL(blob);
+      if (blob.type.startsWith('video/')) {
+        const video = document.createElement('video');
 
-      image.addEventListener('load', () => {
-        ({ naturalWidth: width, naturalHeight: height } = image);
-        resolve(image);
-        URL.revokeObjectURL(blobURL);
-      });
+        video.addEventListener(
+          'loadeddata',
+          async () => {
+            // Wait a bit until `<video>` shows the first frame
+            await sleep(250);
+            ({ videoWidth: width, videoHeight: height } = video);
+            resolve(video);
+          },
+          { once: true },
+        );
 
-      image.src = blobURL;
+        video.playsInline = true;
+        video.src = blobURL;
+        // Add `<video>` to DOM or it won’t be rendered on canvas
+        video.style.opacity = '0';
+        document.body.appendChild(video);
+      } else {
+        const image = new Image();
+
+        image.addEventListener(
+          'load',
+          () => {
+            ({ naturalWidth: width, naturalHeight: height } = image);
+            resolve(image);
+          },
+          { once: true },
+        );
+
+        image.src = blobURL;
+      }
     });
+
+    URL.revokeObjectURL(blobURL);
   }
 
   const canvas = new OffscreenCanvas(512, 512);
@@ -135,6 +163,11 @@ export const convertImage = async (
 
   resizeCanvas(canvas, width, height, dimension);
   context.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+  // Clean up
+  if (source instanceof HTMLVideoElement) {
+    document.body.removeChild(source);
+  }
 
   return canvas.convertToBlob({ type: `image/${format}`, quality });
 };

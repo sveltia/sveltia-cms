@@ -10,8 +10,12 @@
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
-  import Image from '$lib/components/common/image.svelte';
-  import { getAssetPublicURL, getMediaFieldURL } from '$lib/services/assets';
+  import {
+    getAssetByPath,
+    getAssetPublicURL,
+    getMediaFieldURL,
+    getMediaKind,
+  } from '$lib/services/assets';
   import { entryDraft } from '$lib/services/contents/draft';
   import { formatSize } from '$lib/services/utils/file';
 
@@ -65,6 +69,10 @@
    * @type {string | undefined}
    */
   let url;
+  /**
+   * @type {AssetKind | undefined}
+   */
+  let kind;
   /**
    * @type {string | undefined}
    */
@@ -149,17 +157,27 @@
       file = $entryDraft.files[locale][keyPath];
     }
 
-    // Remove `file` after the value is removed
-    if (!currentValue) {
-      file = undefined;
+    if (currentValue) {
+      // Update the `src` when an asset is selected
+      if (currentValue.startsWith('blob:')) {
+        asset = undefined;
+        kind = currentValue ? await getMediaKind(currentValue) : undefined;
+        src =
+          currentValue && kind
+            ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry, { thumbnail: true })
+            : undefined;
+      } else {
+        asset = getAssetByPath(currentValue);
+        kind = undefined;
+        src = undefined;
+      }
+    } else {
+      // Remove `file` after the value is removed
       asset = undefined;
+      file = undefined;
+      kind = undefined;
+      src = undefined;
     }
-
-    // Update the `src` when an asset is selected
-    src =
-      isImageWidget && currentValue
-        ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry, { thumbnail: true })
-        : undefined;
   };
 
   $: {
@@ -169,8 +187,8 @@
 </script>
 
 <div role="none" class="image-widget">
-  {#if src}
-    <Image {src} variant="tile" checkerboard={true} />
+  {#if kind && src}
+    <AssetPreview {kind} {src} variant="tile" checkerboard={true} />
   {:else if asset}
     <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
   {/if}

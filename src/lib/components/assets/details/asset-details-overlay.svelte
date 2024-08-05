@@ -7,7 +7,7 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
-  import { getAssetBlob, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
+  import { getAssetBlob, isMediaKind, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
 
   /**
    * A reference to the wrapper element.
@@ -88,14 +88,14 @@
       <Toolbar />
       <div role="none" class="row">
         <div role="none" class="preview">
-          {#if ['image', 'audio', 'video'].includes(kind)}
+          {#if isMediaKind(kind)}
             <AssetPreview
               {kind}
               asset={$overlaidAsset}
-              blurBackground={kind === 'image' || kind === 'video'}
+              blurBackground={['image', 'video'].includes(kind)}
               checkerboard={kind === 'image'}
               alt={kind === 'image' ? name : undefined}
-              controls={kind === 'audio' || kind === 'video'}
+              controls={['audio', 'video'].includes(kind)}
             />
           {:else if blob?.type === 'application/pdf'}
             <iframe src={blobURL} title={name}></iframe>

@@ -5,7 +5,7 @@
   import { _, locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { getAssetDetails } from '$lib/services/assets';
+  import { getAssetDetails, isMediaKind } from '$lib/services/assets';
   import { getCollection } from '$lib/services/contents';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media';
@@ -22,7 +22,7 @@
 
   $: ({ path, size, kind, commitAuthor, commitDate } = asset);
   $: ({ extension = '' } = getPathInfo(path));
-  $: canPreview = ['image', 'audio', 'video'].includes(kind) || path.endsWith('.pdf');
+  $: canPreview = isMediaKind(kind) || path.endsWith('.pdf');
 
   /**
    * @type {string | undefined}
@@ -72,7 +72,7 @@
         {asset}
         variant="tile"
         checkerboard={kind === 'image'}
-        controls={kind === 'audio' || kind === 'video'}
+        controls={['audio', 'video'].includes(kind)}
       />
     </div>
   {/if}

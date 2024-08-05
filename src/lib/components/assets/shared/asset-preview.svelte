@@ -69,7 +69,8 @@
   let hasError = false;
   let loaded = false;
 
-  $: isImage = kind === 'image' || asset?.name.endsWith('.pdf');
+  $: isThumbnail = !!asset && !!variant;
+  $: isImage = isThumbnail || kind === 'image' || asset?.name.endsWith('.pdf');
 
   /**
    * Update the {@link src} property.
@@ -87,7 +88,7 @@
     }
 
     try {
-      src = variant ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
+      src = isThumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
     } catch {
       hasError = true;
     }
