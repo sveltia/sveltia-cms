@@ -28,7 +28,7 @@ Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2016. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the hundreds of improvements we have already made.
 
-While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products that are not receiving substantial updates. (Note: Static CMS compatibility will be worked on after the Sveltia CMS 1.0 release)
+While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products. (Note: Static CMS compatibility will be worked on after the Sveltia CMS 1.0 release)
 
 ### Our goals
 
@@ -72,7 +72,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
-- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid fatal React application crashes[^113]. Best of all, Svelte offers great performance!
+- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113]. Best of all, Svelte offers great performance!
 - The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
 
 ### Better performance
@@ -84,7 +84,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Using caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
-- Thumbnails of assets, including PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
+- Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
 - No typing lag on input widgets, especially within nested lists and objects[^77].
 
 ### Better productivity
@@ -300,7 +300,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ## Compatibility
 
-We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS, so that more users can seamlessly switch to our modern, powerful alternative. However, some features will be omitted due to deprecations and other factors.
+We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS, so that more users can seamlessly switch to our modern, powerful, performant alternative. However, some features will be omitted due to deprecations and other factors.
 
 ### Current limitations
 
@@ -329,7 +329,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** due to performance limitations. We may implement a performant Git Gateway alternative in the future.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** due to performance limitations. We may implement a high-performance Git Gateway alternative in the future.
 - The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
