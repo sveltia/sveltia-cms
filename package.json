@@ -3,6 +3,10 @@
   "version": "0.36.5",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "github:sveltia/sveltia-cms"
+  },
   "publishConfig": {
     "access": "public"
   },
