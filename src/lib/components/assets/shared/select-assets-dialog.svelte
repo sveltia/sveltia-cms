@@ -1,11 +1,11 @@
 <script>
   import { Dialog, Listbox, Option, OptionGroup, SearchBar, TextInput } from '@sveltia/ui';
   import { generateUUID } from '@sveltia/utils/crypto';
+  import { getPathInfo } from '@sveltia/utils/file';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
-  import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import ExternalAssetsPanel from '$lib/components/assets/shared/external-assets-panel.svelte';
+  import InternalAssetsPanel from '$lib/components/assets/shared/internal-assets-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssetFolders, allAssets } from '$lib/services/assets';
@@ -23,18 +23,12 @@
    */
   export let kind;
   export let canEnterURL = true;
+  /** @type {Entry | undefined} */
+  export let entry;
 
   const dispatch = createEventDispatcher();
   const title = kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file');
   let libraryName = 'upload';
-  /**
-   * @type {DropZone}
-   */
-  let collectionAssetsDropZone;
-  /**
-   * @type {DropZone}
-   */
-  let allAssetsDropZone;
   let elementIdPrefix = '';
   /**
    * @type {SelectedAsset | null}
@@ -47,7 +41,9 @@
     $selectedCollection?._assetFolder ?? /** @type {any} */ ({}));
   $: showUploader = libraryName === 'upload';
   $: showCollectionAssets = !!internalPath && !entryRelative;
-  $: isLocalLibrary = ['collection-files', 'all-files'].includes(libraryName);
+  $: showEntryAssets = !!entry && entryRelative;
+  $: entryDirName = entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined;
+  $: isLocalLibrary = ['all-assets', 'collection-assets', 'entry-assets'].includes(libraryName);
   $: isEnabledMediaService =
     (Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName]) ||
     (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]);
@@ -115,22 +111,31 @@
       on:change={(event) => {
         libraryName = /** @type {CustomEvent} */ (event).detail.name;
         selectedAsset = null;
-        collectionAssetsDropZone?.reset();
-        allAssetsDropZone?.reset();
       }}
     >
       <OptionGroup label={$_('assets_dialog.location.local')}>
         <Option name="upload" label={$_('upload')} selected={showUploader} />
       </OptionGroup>
       <OptionGroup label={$_('assets_dialog.location.repository')}>
-        {#if showCollectionAssets}
+        {#if showEntryAssets}
           <Option
-            name="collection-files"
-            label={$_('collection_assets')}
-            selected={libraryName === 'collection-files'}
+            name="entry-assets"
+            label={$_('entry_assets')}
+            selected={libraryName === 'entry-assets'}
           />
         {/if}
-        <Option name="all-files" label={$_('all_assets')} selected={libraryName === 'all-files'} />
+        {#if showCollectionAssets}
+          <Option
+            name="collection-assets"
+            label={$_('collection_assets')}
+            selected={libraryName === 'collection-assets'}
+          />
+        {/if}
+        <Option
+          name="all-assets"
+          label={$_('all_assets')}
+          selected={libraryName === 'all-assets'}
+        />
       </OptionGroup>
       {#if canEnterURL || !!Object.keys(allCloudStorageServices).length}
         <OptionGroup label={$_('assets_dialog.location.external_locations')}>
@@ -149,62 +154,42 @@
       </OptionGroup>
     </Listbox>
     <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
-      {#if showCollectionAssets && (libraryName === 'collection-files' || showUploader)}
-        <DropZone
-          bind:this={collectionAssetsDropZone}
-          accept={kind === 'image' ? 'image/*' : undefined}
-          showUploadButton={showUploader}
-          showFilePreview={true}
-          on:select={({ detail: { files } }) => {
-            selectedAsset = files.length ? { file: files[0] } : null;
-          }}
-        >
-          {#if !showUploader}
-            <AssetsPanel
-              assets={$allAssets.filter(
-                (asset) => (!kind || kind === asset.kind) && internalPath === asset.folder,
-              )}
-              viewType={$selectAssetsView?.type}
-              {searchTerms}
-              gridId="select-assets-grid"
-              checkerboard={true}
-              on:select={({ detail }) => {
-                selectedAsset = detail;
-              }}
-            />
-          {/if}
-        </DropZone>
-      {/if}
-      {#if libraryName === 'all-files' || (!showCollectionAssets && showUploader)}
-        <DropZone
-          bind:this={allAssetsDropZone}
-          accept={kind === 'image' ? 'image/*' : undefined}
-          showUploadButton={showUploader}
-          showFilePreview={true}
-          on:select={({ detail: { files } }) => {
-            selectedAsset = files.length ? { file: files[0] } : null;
-          }}
-        >
-          {#if !showUploader}
-            <AssetsPanel
-              assets={$allAssets.filter(
-                (asset) =>
-                  (!kind || kind === asset.kind) &&
-                  // Hide assets stored in an entry-relative path, since these files are only used
-                  // for the associated entry
-                  !$allAssetFolders.find((folder) => folder.collectionName === asset.collectionName)
-                    ?.entryRelative,
-              )}
-              viewType={$selectAssetsView?.type}
-              {searchTerms}
-              gridId="select-assets-grid"
-              checkerboard={true}
-              on:select={({ detail }) => {
-                selectedAsset = detail;
-              }}
-            />
-          {/if}
-        </DropZone>
+      {#if showEntryAssets && (libraryName === 'entry-assets' || showUploader)}
+        <InternalAssetsPanel
+          {kind}
+          assets={$allAssets.filter(
+            (asset) =>
+              (!kind || kind === asset.kind) && getPathInfo(asset.path).dirname === entryDirName,
+          )}
+          bind:selectedAsset
+          {showUploader}
+          {searchTerms}
+        />
+      {:else if showCollectionAssets && (libraryName === 'collection-assets' || showUploader)}
+        <InternalAssetsPanel
+          {kind}
+          assets={$allAssets.filter(
+            (asset) => (!kind || kind === asset.kind) && asset.folder === internalPath,
+          )}
+          bind:selectedAsset
+          {showUploader}
+          {searchTerms}
+        />
+      {:else if libraryName === 'all-assets' || showUploader}
+        <InternalAssetsPanel
+          {kind}
+          assets={$allAssets.filter(
+            (asset) =>
+              (!kind || kind === asset.kind) &&
+              // Hide assets stored in an entry-relative path, since these files are only used
+              // for the associated entry
+              !$allAssetFolders.find((folder) => folder.collectionName === asset.collectionName)
+                ?.entryRelative,
+          )}
+          bind:selectedAsset
+          {showUploader}
+          {searchTerms}
+        />
       {/if}
       {#if canEnterURL && libraryName === 'enter-url'}
         <EmptyState>

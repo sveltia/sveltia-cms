@@ -126,6 +126,7 @@ export const strings = {
   content_library: 'Content Library',
   asset_library: 'Asset Library',
   collection_assets: 'Collection Assets',
+  entry_assets: 'Entry Assets',
   entry_list: 'Entry List',
   file_list: 'File List',
   asset_list: 'Asset List',

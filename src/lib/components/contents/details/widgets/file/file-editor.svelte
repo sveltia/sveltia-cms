@@ -95,6 +95,7 @@
     } = {},
   } = fieldConfig);
   $: isImageWidget = widgetName === 'image';
+  $: entry = $entryDraft?.originalEntry;
 
   /**
    * Reset the current selection.
@@ -117,7 +118,7 @@
     ({ asset, file, url, credit } = selectedAsset);
 
     if (asset) {
-      currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true });
+      currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true, entry });
     }
 
     if (file) {
@@ -164,10 +165,10 @@
         kind = currentValue ? await getMediaKind(currentValue) : undefined;
         src =
           currentValue && kind
-            ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry, { thumbnail: true })
+            ? await getMediaFieldURL(currentValue, entry, { thumbnail: true })
             : undefined;
       } else {
-        asset = getAssetByPath(currentValue);
+        asset = getAssetByPath(currentValue, entry);
         kind = undefined;
         src = undefined;
       }
@@ -242,6 +243,7 @@
 <SelectAssetsDialog
   kind={isImageWidget ? 'image' : undefined}
   {canEnterURL}
+  {entry}
   bind:open={showSelectAssetsDialog}
   on:select={({ detail }) => {
     onAssetSelect(detail);
