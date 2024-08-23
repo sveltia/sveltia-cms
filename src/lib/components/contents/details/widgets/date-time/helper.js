@@ -15,31 +15,38 @@ export const getDefaultValue = (fieldConfig) => {
     picker_utc: pickerUTC = false,
   } = fieldConfig;
 
-  if (typeof defaultValue === 'string') {
-    return defaultValue;
+  if (typeof defaultValue !== 'string') {
+    return '';
   }
 
-  // Default to current date/time
-  const { year, month, day, hour, minute } = getDateTimeParts({
-    timeZone: pickerUTC ? 'UTC' : undefined,
-  });
+  // Decap CMS 3.3.0 changed the default value from the current date/time to blank, requiring
+  // `{{now}}` to use the current date/time.
+  // @see https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0
+  // @see https://github.com/decaporg/decap-website/commit/01e54d8392e368e5d7b9fec307f50af584b12c91
+  if (defaultValue === '{{now}}') {
+    const { year, month, day, hour, minute } = getDateTimeParts({
+      timeZone: pickerUTC ? 'UTC' : undefined,
+    });
 
-  const dateStr = `${year}-${month}-${day}`;
-  const timeStr = `${hour}:${minute}`;
+    const dateStr = `${year}-${month}-${day}`;
+    const timeStr = `${hour}:${minute}`;
 
-  if (timeFormat === false) {
-    return dateStr;
+    if (timeFormat === false) {
+      return dateStr;
+    }
+
+    if (dateFormat === false) {
+      return timeStr;
+    }
+
+    if (pickerUTC) {
+      return `${dateStr}T${timeStr}:00.000Z`;
+    }
+
+    return `${dateStr}T${timeStr}`;
   }
 
-  if (dateFormat === false) {
-    return timeStr;
-  }
-
-  if (pickerUTC) {
-    return `${dateStr}T${timeStr}:00.000Z`;
-  }
-
-  return `${dateStr}T${timeStr}`;
+  return defaultValue;
 };
 
 /**
