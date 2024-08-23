@@ -16,6 +16,7 @@
     allStockPhotoServices,
   } from '$lib/services/integrations/media-libraries';
   import { prefs } from '$lib/services/prefs';
+  import { normalize } from '$lib/services/search';
 
   export let open = false;
   /**
@@ -35,8 +36,9 @@
    */
   let selectedAsset = null;
   let enteredURL = '';
-  let searchTerms = '';
+  let rawSearchTerms = '';
 
+  $: searchTerms = normalize(rawSearchTerms);
   $: ({ internalPath = '', entryRelative = false } =
     $selectedCollection?._assetFolder ?? /** @type {any} */ ({}));
   $: showUploader = libraryName === 'upload';
@@ -86,7 +88,7 @@
         />
       {/if}
       <SearchBar
-        bind:value={searchTerms}
+        bind:value={rawSearchTerms}
         disabled={!!selectedAsset?.file}
         aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
       />

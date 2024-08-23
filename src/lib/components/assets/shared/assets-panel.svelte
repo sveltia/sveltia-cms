@@ -3,9 +3,10 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
-  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
+  import EmptyState from '$lib/components/common/empty-state.svelte';
+  import { normalize } from '$lib/services/search';
 
   const dispatch = createEventDispatcher();
 
@@ -33,7 +34,7 @@
   export let checkerboard = false;
 
   $: filteredAssets = searchTerms
-    ? assets.filter(({ name }) => name.toLowerCase().includes(searchTerms.toLowerCase()))
+    ? assets.filter(({ name }) => normalize(name).includes(searchTerms))
     : assets;
 </script>
 

@@ -13,7 +13,7 @@ export const searchTerms = writable('');
  * @param {string} value - Original value.
  * @returns {string} Normalized value.
  */
-const normalize = (value) =>
+export const normalize = (value) =>
   value
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
