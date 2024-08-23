@@ -46,7 +46,7 @@ While we are fixing reported bugs as fast as we can, the overall progress may be
 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 110+ of them (or 185+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 110+ of them (or 190+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 125 issues by GA, 250 in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
@@ -191,6 +191,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - You can revert changes to all fields or a specific field.
+- If you revert changes and there are no unsaved changes, the Save button is disabled as expected[^118].
 - You can hide the preview of a specific field with `preview: false`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the preview pane, the corresponding field in the edit pane is highlighted. It will be automatically expanded if collapsed[^41].
@@ -207,6 +208,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11][^69].
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
+- YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
 
 ### Better widgets
 
@@ -322,7 +324,7 @@ These limitations are expected to be resolved before or shortly after GA:
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | Code | Not yet supported. |
-| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note: Decap CMS 3.1 has replaced Moment.js with [Day.js](https://day.js.org/); we’ll follow the change soon. |
+| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow the change soon. |
 | File/Image | Field-specific media folders and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not yet supported. |
 | Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
@@ -1023,3 +1025,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^116]: Netlify/Decap CMS [#3431](https://github.com/decaporg/decap-cms/issues/3431)
 
 [^117]: Netlify/Decap CMS [#3562](https://github.com/decaporg/decap-cms/issues/3562)
+
+[^118]: Netlify/Decap CMS [#7267](https://github.com/decaporg/decap-cms/issues/7267)
+
+[^119]: Netlify/Decap CMS [#5640](https://github.com/decaporg/decap-cms/issues/5640)
