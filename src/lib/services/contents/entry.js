@@ -1,10 +1,11 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
+import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 import moment from 'moment';
 import { get } from 'svelte/store';
 import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
 import { getOptionLabel } from '$lib/components/contents/details/widgets/select/helper';
-import { getAssetByPath } from '$lib/services/assets';
+import { allAssets, getAssetByPath } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents';
@@ -206,7 +207,7 @@ export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {})
 export const getAssociatedAssets = (entry, { relative = false } = {}) => {
   const { collectionName, locales } = entry;
 
-  return /** @type {Asset[]} */ (
+  const assets = /** @type {Asset[]} */ (
     Object.values(locales)
       .map(({ content }) =>
         Object.entries(content).map(([keyPath, value]) => {
@@ -230,6 +231,22 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
       .flat(1)
       .filter((value, index, array) => !!value && array.indexOf(value) === index)
   );
+
+  // Add orphaned/unused entry-relative assets
+  if (relative && getCollection(entry.collectionName)?._assetFolder?.entryRelative) {
+    const entryDirName = getPathInfo(Object.values(entry.locales)[0].path).dirname;
+
+    get(allAssets).forEach((asset) => {
+      if (
+        getPathInfo(asset.path).dirname === entryDirName &&
+        !assets.find(({ path }) => path === asset.path)
+      ) {
+        assets.push(asset);
+      }
+    });
+  }
+
+  return assets;
 };
 
 /**
