@@ -1,5 +1,6 @@
 <script>
   import { Option, Radio, RadioGroup, Select } from '@sveltia/ui';
+  import { _ } from 'svelte-i18n';
 
   /** @type {LocaleCode} */ // svelte-ignore unused-export-let
   export let locale;
@@ -20,7 +21,14 @@
   /** @type {{ label: string, value: string, searchValue?: string }[]} */
   export let options;
 
-  $: ({ dropdown_threshold = 5 } = fieldConfig);
+  $: ({ required = true, dropdown_threshold = 5 } = fieldConfig);
+
+  $: {
+    // Allow to deselect an option if the field is optional
+    if (!required && !options.some(({ value }) => value === '')) {
+      options.unshift({ label: $_('unselected_option'), value: '', searchValue: '' });
+    }
+  }
 </script>
 
 {#if options.length > dropdown_threshold}

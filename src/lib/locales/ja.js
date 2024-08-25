@@ -413,6 +413,7 @@ export const strings = {
   add_x: '{name} を追加',
   select_list_type: 'リストタイプを選択',
   opacity: '透明度',
+  unselected_option: '(なし)',
   assets_dialog: {
     title: {
       file: 'ファイルを選択',

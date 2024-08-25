@@ -410,6 +410,7 @@ export const strings = {
   add_x: 'Add {name}',
   select_list_type: 'Select List Type',
   opacity: 'Opacity',
+  unselected_option: '(None)',
   assets_dialog: {
     title: {
       file: 'Select File',
