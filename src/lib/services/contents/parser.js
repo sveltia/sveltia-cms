@@ -73,13 +73,11 @@ const getFrontmatterDelimiters = (format, delimiter) => {
  * @returns {FrontMatterFormat} JSON, TOML or YAML front matter.
  */
 const detectFrontMatterFormat = (text) => {
-  const str = text.trim();
-
-  if (str.startsWith('{')) {
+  if (text.startsWith('{')) {
     return 'json-frontmatter';
   }
 
-  if (str.startsWith('+++')) {
+  if (text.startsWith('+++')) {
     return 'toml-frontmatter';
   }
 
@@ -99,6 +97,8 @@ const parseEntryFile = ({
     parserConfig: { extension, format, frontmatterDelimiter },
   },
 }) => {
+  text = text.trim();
+
   format ||= /** @type {FileFormat | undefined} */ (
     ['md', 'markdown'].includes(extension ?? '') || path.match(/\.(?:md|markdown)$/)
       ? detectFrontMatterFormat(text)
