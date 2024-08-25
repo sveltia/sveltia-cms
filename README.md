@@ -324,7 +324,7 @@ These limitations are expected to be resolved before or shortly after GA:
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | Code | Not yet supported. |
-| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow the change soon. |
+| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes soon. |
 | File/Image | Field-specific media folders and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not yet supported. |
 | Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
