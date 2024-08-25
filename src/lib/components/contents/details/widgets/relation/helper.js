@@ -1,7 +1,8 @@
+import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
-import { getEntriesByCollection } from '$lib/services/contents';
 import { getFieldConfig } from '$lib/services/contents/entry';
+import { getEntriesByCollection } from '$lib/services/contents';
 
 /**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.
@@ -97,19 +98,17 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
        * @type {Record<string, string | number | object[]>}
        */
       const replacers = Object.fromEntries(
-        [
-          ...new Set(
-            [
-              ...[..._displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-              ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-              ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-            ].map((fieldName) =>
-              fieldName.includes('.')
-                ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
-                : fieldName,
-            ),
+        unique(
+          [
+            ...[..._displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+            ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+            ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+          ].map((fieldName) =>
+            fieldName.includes('.')
+              ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
+              : fieldName,
           ),
-        ].map((fieldName) => {
+        ).map((/** @type {string} */ fieldName) => {
           if (fieldName.endsWith('.*')) {
             const regex = new RegExp(
               `^${escapeRegExp(fieldName).replace('\\.\\*', '\\.\\d+\\.[^.]+')}$`,

@@ -1,3 +1,4 @@
+import { unique } from '@sveltia/utils/array';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
@@ -109,7 +110,7 @@ export const copyDefaultLocaleValues = (content, { prop = 'currentValues' } = {}
   const { collectionName, fileName, collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const defaultLocaleValues = draft[prop][defaultLocale];
-  const keys = [...new Set([...Object.keys(content), ...Object.keys(defaultLocaleValues)])];
+  const keys = unique([...Object.keys(content), ...Object.keys(defaultLocaleValues)]);
   const newContent = /** @type {FlattenedEntryContent} */ ({});
 
   keys.forEach((keyPath) => {

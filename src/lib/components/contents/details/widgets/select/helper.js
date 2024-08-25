@@ -1,4 +1,4 @@
-import { isObjectArray } from '@sveltia/utils/object';
+import { isObjectArray } from '@sveltia/utils/array';
 import { escapeRegExp } from '@sveltia/utils/string';
 
 /**
