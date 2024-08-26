@@ -99,6 +99,12 @@ export const strings = {
   branch_not_found: '「{repo}」レポジトリに「{branch}」ブランチは存在しません。',
   unexpected_error: '予期せぬエラー',
 
+  // Parser errors
+  entry_parse_error:
+    'エントリーファイルの読み込み中にエラーが発生しました。詳しくはブラウザーのコンソールを確認してください。',
+  entry_parse_errors:
+    'エントリーファイルの読み込み中にエラーが発生しました。詳しくはブラウザーのコンソールを確認してください。',
+
   // Global toolbar
   visit_live_site: '管理対象サイトを開く',
   switch_page: 'ページを切り替え',

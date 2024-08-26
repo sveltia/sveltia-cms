@@ -99,6 +99,12 @@ export const strings = {
   branch_not_found: 'The “{repo}” repository doesn’t have the “{branch}” branch.',
   unexpected_error: 'Unexpected Error',
 
+  // Parser errors
+  entry_parse_error:
+    'There was an error while parsing an entry file. Check the browser console for details.',
+  entry_parse_errors:
+    'There were errors while parsing entry files. Check the browser console for details.',
+
   // Global toolbar
   visit_live_site: 'Visit Live Site',
   switch_page: 'Switch Page',

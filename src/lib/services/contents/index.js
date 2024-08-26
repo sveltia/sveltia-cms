@@ -27,6 +27,10 @@ export const allEntryFolders = writable([]);
  */
 export const allEntries = writable([]);
 /**
+ * @type {import('svelte/store').Writable<Error[]>}
+ */
+export const entryParseErrors = writable([]);
+/**
  * @type {import('svelte/store').Writable<Collection | undefined>}
  */
 export const selectedCollection = writable();

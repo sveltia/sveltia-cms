@@ -2,7 +2,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
-import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
+import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { getFileExtension, parseEntryFiles } from '$lib/services/contents/parser';
 
 /** @type {RepositoryInfo} */
@@ -150,19 +150,20 @@ export const fetchAndParseFiles = async ({
   const fetchingFiles = allFiles.filter(({ meta }) => !meta);
   const fetchedFileMap = fetchingFiles.length ? await fetchFileContents(fetchingFiles) : {};
 
-  allEntries.set(
-    parseEntryFiles(
-      entryFiles.map((file) => {
-        const { text, meta } = fetchedFileMap[file.path] ?? {};
+  const { entries, errors } = parseEntryFiles(
+    entryFiles.map((file) => {
+      const { text, meta } = fetchedFileMap[file.path] ?? {};
 
-        return {
-          ...file,
-          text: file.text ?? text,
-          meta: file.meta ?? meta,
-        };
-      }),
-    ),
+      return {
+        ...file,
+        text: file.text ?? text,
+        meta: file.meta ?? meta,
+      };
+    }),
   );
+
+  allEntries.set(entries);
+  entryParseErrors.set(errors);
 
   allAssets.set(
     parseAssetFiles(

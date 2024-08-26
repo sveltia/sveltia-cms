@@ -87,7 +87,8 @@ const detectFrontMatterFormat = (text) => {
 /**
  * Parse raw content with given file details.
  * @param {BaseEntryListItem} entry - File entry.
- * @returns {RawEntryContent | null} Parsed content.
+ * @returns {RawEntryContent} Parsed content.
+ * @throws {Error} When the content could not be parsed.
  */
 const parseEntryFile = ({
   text = '',
@@ -107,7 +108,7 @@ const parseEntryFile = ({
 
   // Ignore files with unknown format
   if (!format) {
-    return null;
+    throw new Error(`${path} could not be parsed due to an unknown format`);
   }
 
   try {
@@ -122,54 +123,36 @@ const parseEntryFile = ({
     if (format === 'json' && path.match(/\.json$/)) {
       return JSON.parse(text);
     }
-  } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
 
-    return null;
-  }
+    if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/) && path.match(/\.(?:md|markdown)$/)) {
+      const [startDelimiter, endDelimiter] = getFrontmatterDelimiters(format, frontmatterDelimiter);
 
-  if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/) && path.match(/\.(?:md|markdown)$/)) {
-    const [startDelimiter, endDelimiter] = getFrontmatterDelimiters(format, frontmatterDelimiter);
+      const [, head, body = ''] =
+        text.match(
+          new RegExp(
+            `^${escapeRegExp(startDelimiter)}\\n(.+?)\\n${escapeRegExp(endDelimiter)}(?:\\n(.+))?`,
+            'ms',
+          ),
+        ) ?? [];
 
-    const [, head, body = ''] =
-      text.match(
-        new RegExp(
-          `^${escapeRegExp(startDelimiter)}\\n(.+?)\\n${escapeRegExp(endDelimiter)}(?:\\n(.+))?`,
-          'ms',
-        ),
-      ) ?? [];
-
-    // If the format is `frontmatter`, try to parse in different formats, starting with YAML
-    if (head && (format === 'frontmatter' || format === 'yaml-frontmatter')) {
-      try {
+      // If the format is `frontmatter`, try to parse in different formats, starting with YAML
+      if (head && (format === 'frontmatter' || format === 'yaml-frontmatter')) {
         return { ...YAML.parse(head), body };
-      } catch (/** @type {any} */ ex) {
-        // eslint-disable-next-line no-console
-        console.error(ex);
       }
-    }
 
-    if (head && (format === 'frontmatter' || format === 'toml-frontmatter')) {
-      try {
+      if (head && (format === 'frontmatter' || format === 'toml-frontmatter')) {
         return { ...TOML.parse(head), body };
-      } catch (/** @type {any} */ ex) {
-        // eslint-disable-next-line no-console
-        console.error(ex);
       }
-    }
 
-    if (head && (format === 'frontmatter' || format === 'json-frontmatter')) {
-      try {
+      if (head && (format === 'frontmatter' || format === 'json-frontmatter')) {
         return { ...JSON.parse(head), body };
-      } catch (/** @type {any} */ ex) {
-        // eslint-disable-next-line no-console
-        console.error(ex);
       }
     }
+  } catch (/** @type {any} */ ex) {
+    throw new Error(`${path} could not be parsed due to ${ex.name}: ${ex.message}`);
   }
 
-  return null;
+  throw new Error(`${path} could not be parsed due to an unknown format: ${format}`);
 };
 
 /**
@@ -297,14 +280,25 @@ const getSlug = (collectionName, filePath, content) => {
 /**
  * Parse the given entry files to create a complete, serialized entry list.
  * @param {BaseEntryListItem[]} entryFiles - Entry file list.
- * @returns {Entry[]} Entry list.
+ * @returns {{ entries: Entry[], errors: Error[] }} Entry list and error list.
  */
 export const parseEntryFiles = (entryFiles) => {
   /** @type {any[]} */
   const entries = [];
+  /** @type {Error[]} */
+  const errors = [];
 
   entryFiles.forEach((file) => {
-    const parsedFile = parseEntryFile(file);
+    /** @type {RawEntryContent | null | undefined} */
+    let parsedFile;
+
+    try {
+      parsedFile = parseEntryFile(file);
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
+      errors.push(ex);
+    }
 
     if (!parsedFile || !isObject(parsedFile)) {
       return;
@@ -427,7 +421,7 @@ export const parseEntryFiles = (entryFiles) => {
     entries.push(entry);
   });
 
-  return entries.filter((entry) => {
+  const filteredEntries = entries.filter((entry) => {
     const { collectionName, slug, locales } = entry;
 
     if (!slug || !Object.keys(locales).length) {
@@ -438,4 +432,6 @@ export const parseEntryFiles = (entryFiles) => {
 
     return true;
   });
+
+  return { entries: filteredEntries, errors };
 };

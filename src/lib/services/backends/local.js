@@ -12,7 +12,7 @@ import { parseAssetFiles } from '$lib/services/assets/parser';
 import { allBackendServices } from '$lib/services/backends';
 import { createFileList, repositoryProps } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
-import { allEntries, allEntryFolders, dataLoaded } from '$lib/services/contents';
+import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { parseEntryFiles } from '$lib/services/contents/parser';
 
 const backendName = 'local';
@@ -265,8 +265,10 @@ const getAllFiles = async () => {
  */
 const fetchFiles = async () => {
   const { entryFiles, assetFiles } = createFileList(await getAllFiles());
+  const { entries, errors } = parseEntryFiles(entryFiles);
 
-  allEntries.set(parseEntryFiles(entryFiles));
+  allEntries.set(entries);
+  entryParseErrors.set(errors);
   allAssets.set(parseAssetFiles(assetFiles));
   dataLoaded.set(true);
 };
