@@ -182,7 +182,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Entry listing
   - A folder collection filter with a boolean value works as expected[^93].
-  - Hugo’s special `_index.md` files are ignored in a folder collection. You can still manage these files as part of a file collection if necessary[^120].
+  - Hugo’s special `_index.md` files are ignored in folder collections. You can still manage these files as part of a file collection if necessary[^120].
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
   - Sorting entries by a DateTime field works as expected[^110].
   - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
