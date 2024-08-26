@@ -2,15 +2,15 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
-![Screenshot: Open Source Git-based Headless CMS](docs/screenshot-1-20240507.webp)<br>
+![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
 
-![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](docs/screenshot-2-20240507.webp)<br>
+![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2-20240507.webp)<br>
 
-![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](docs/screenshot-3-20240507.webp)<br>
+![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3-20240507.webp)<br>
 
-![Screenshot: All-New Asset Library; First Class I18n Support with DeepL](docs/screenshot-4-20240507.webp)<br>
+![Screenshot: All-New Asset Library; First Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4-20240507.webp)<br>
 
-![Screenshot: Works with Remote (GitHub, GitLab) and Local Repositories; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](docs/screenshot-5-20240507.webp)<br>
+![Screenshot: Works with Remote (GitHub, GitLab) and Local Repositories; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5-20240507.webp)<br>
 
 ## Motivation
 
@@ -46,7 +46,7 @@ While we are fixing reported bugs as fast as we can, the overall progress may be
 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 110+ of them (or 190+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 115+ of them (or 190+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 125 issues by GA, 250 in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to user feedback
@@ -55,7 +55,7 @@ While we are fixing reported bugs as fast as we can, the overall progress may be
 
 Sveltia CMS **version 1.0 is expected to ship by the end of 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
-![110+ Netlify/Decap CMS Issues Solved in Sveltia CMS](docs/headline-1-20240623.webp)<br>
+![115+ Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20240825.webp)<br>
 
 ## Features
 
@@ -78,7 +78,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files while building your website or application.
-- Small footprint: The bundle size is less than 500 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB), even though we haven’t implemented some features yet[^57][^64].
+- Small footprint: The bundle size is less than 550 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB), even though we haven’t implemented some features yet[^57][^64].
 - The ongoing [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) upgrade is anticipated to deliver further performance improvements, including accelerated speed and even smaller bundle size (an estimated 100 KB reduction).
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
@@ -182,6 +182,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Entry listing
   - A folder collection filter with a boolean value works as expected[^93].
+  - Hugo’s special `_index.md` files are ignored in a folder collection. You can still manage these files as part of a file collection if necessary[^120].
+  - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
   - Sorting entries by a DateTime field works as expected[^110].
   - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
   - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
@@ -1029,3 +1031,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^118]: Netlify/Decap CMS [#7267](https://github.com/decaporg/decap-cms/issues/7267)
 
 [^119]: Netlify/Decap CMS [#5640](https://github.com/decaporg/decap-cms/issues/5640)
+
+[^120]: Netlify/Decap CMS [#2727](https://github.com/decaporg/decap-cms/issues/2727), [#4884](https://github.com/decaporg/decap-cms/issues/4884)
+
+[^121]: Netlify/Decap CMS [#7262](https://github.com/decaporg/decap-cms/issues/7262)
