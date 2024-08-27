@@ -360,9 +360,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 ### After the 1.0 release
 
 - Compatibility with Static CMS
-- Roles[^23]
-- Config editor[^10]
-- Mobile support[^18]
+- [Top-voted features for Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
 - AI integrations
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - and more!
@@ -1035,3 +1033,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^120]: Netlify/Decap CMS [#2727](https://github.com/decaporg/decap-cms/issues/2727), [#4884](https://github.com/decaporg/decap-cms/issues/4884)
 
 [^121]: Netlify/Decap CMS [#7262](https://github.com/decaporg/decap-cms/issues/7262)
+
+[^122]: Netlify/Decap CMS [#1776](https://github.com/decaporg/decap-cms/issues/1776), [#2064](https://github.com/decaporg/decap-cms/issues/2064), [#7158](https://github.com/decaporg/decap-cms/issues/7158), [#7259](https://github.com/decaporg/decap-cms/issues/7259)
