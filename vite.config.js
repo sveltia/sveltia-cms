@@ -33,6 +33,8 @@ export default defineConfig({
       preserveEntrySignatures: 'strict',
     },
   },
+  // https://esbuild.github.io/api/#legal-comments
+  esbuild: { legalComments: 'eof' },
   plugins: [
     svelte({
       emitCss: false,
