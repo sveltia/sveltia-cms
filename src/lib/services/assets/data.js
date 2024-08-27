@@ -36,7 +36,10 @@ export const assetUpdatesToast = writable({
  */
 export const saveAssets = async (uploadingAssets, options) => {
   const { files, folder, originalAsset } = uploadingAssets;
-  const assetNamesInSameFolder = folder ? getAssetsByDirName(folder).map((a) => a.name) : [];
+
+  const assetNamesInSameFolder = folder
+    ? getAssetsByDirName(folder).map((a) => a.name.normalize())
+    : [];
 
   const savingFileList = files.map((file) => {
     const name =

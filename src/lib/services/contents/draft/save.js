@@ -8,7 +8,7 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { get } from 'svelte/store';
 import { validateStringField } from '$lib/components/contents/details/widgets/string/helper';
-import { allAssetFolders, allAssets, getAssetKind } from '$lib/services/assets';
+import { allAssetFolders, allAssets, getAssetKind, getAssetsByDirName } from '$lib/services/assets';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -681,9 +681,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     entryFilePath: createEntryPath(draft, defaultLocale, defaultLocaleSlug),
   });
 
-  const assetsInSameFolder = get(allAssets)
-    .map((a) => a.path)
-    .filter((p) => p.match(`^\\/${escapeRegExp(internalAssetFolder)}\\/[^\\/]+$`));
+  const assetNamesInSameFolder = getAssetsByDirName(internalAssetFolder).map((a) =>
+    a.name.normalize(),
+  );
 
   /**
    * @type {FileChange[]}
@@ -753,26 +753,23 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
               continue;
             }
 
-            const _fileName = renameIfNeeded(file.name.normalize(), [
-              ...assetsInSameFolder,
-              ...savingAssets.map((a) => a.name),
-            ]);
+            const assetName = renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
+            const assetPath = `${internalAssetFolder}/${assetName}`;
 
-            const assetPath = `${internalAssetFolder}/${_fileName}`;
-
+            assetNamesInSameFolder.push(assetName);
             changes.push({ action: 'create', path: assetPath, data: file });
 
             savingAssets.push({
               ...savingAssetProps,
               blobURL: URL.createObjectURL(file),
-              name: _fileName,
+              name: assetName,
               path: assetPath,
               sha,
               size: file.size,
-              kind: getAssetKind(_fileName),
+              kind: getAssetKind(assetName),
             });
 
-            content[keyPath] = publicAssetFolder ? `${publicAssetFolder}/${_fileName}` : _fileName;
+            content[keyPath] = publicAssetFolder ? `${publicAssetFolder}/${assetName}` : assetName;
           }
         }
 
