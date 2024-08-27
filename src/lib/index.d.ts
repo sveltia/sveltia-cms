@@ -6,7 +6,7 @@ interface Window {
 }
 
 interface Navigator {
-  userAgentData: { platform: string };
+  userAgentData: { platform: string; brands: { brand: string }[] };
 }
 
 interface Element {

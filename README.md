@@ -454,7 +454,7 @@ You can use Sveltia CMS with a local Git repository like Netlify/Decap CMS, but 
    - You can remove `local_backend` from your configuration, as it will be ignored by Sveltia CMS.
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
-   - Other Chromium-based browsers may also work. In Brave, you need to enable the File System Access API [with a flag](https://github.com/brave/brave-browser/issues/20563#issuecomment-1021567573).
+   - Other Chromium-based browsers may also work. Brave user? [See below](#enable-local-development-in-brave).
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
    - If you get an error saying “not a repository root directory”, make sure you’ve turned the folder into a repository with either a CUI ([`git init`](https://github.com/git-guides/git-init)) or GUI, and the hidden `.git` folder exists.
    - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646) and [this thread](https://github.com/sveltia/sveltia-cms/discussions/101).
@@ -466,6 +466,14 @@ You can use Sveltia CMS with a local Git repository like Netlify/Decap CMS, but 
 Keep in mind that the local repository support doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the near future, we’ll figure out if there’s a way to do this in a browser (because `netlify-cms-proxy-server` actually has undocumented `git` mode that allows developers to create commits to a local repository).
 
 Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates. This manual work will be unnecessary once the proposed `FileSystemObserver` API, which is being [implemented in Chromium](https://issues.chromium.org/issues/40105284) behind a flag, becomes available.
+
+#### Enable local development in Brave
+
+In the Brave browser, you must enable the File System Access API with an experiment flag to take advantage of local development.
+
+1. Open `brave://flags/#file-system-access-api` in a new browser tab.
+1. Click Default (Disabled) next to File System Access API and select Enabled.
+1. Relaunch the browser.
 
 ### Using a custom icon for a collection
 

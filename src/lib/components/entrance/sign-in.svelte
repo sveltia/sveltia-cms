@@ -1,18 +1,20 @@
 <script>
   import { Button } from '@sveltia/ui';
+  import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { allBackendServices } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
   import {
     signInAutomatically,
     signInError,
     signInManually,
     unauthenticated,
   } from '$lib/services/user';
+  import { siteConfig } from '$lib/services/config';
+  import { allBackendServices } from '$lib/services/backends';
 
   $: isLocalHost = false;
   $: isLocalBackendSupported = false;
+  $: isBrave = false;
   $: configuredBackendName = $siteConfig?.backend?.name;
   $: configuredBackend = configuredBackendName ? allBackendServices[configuredBackendName] : null;
   $: repositoryName = $siteConfig?.backend?.repo?.split('/')?.[1];
@@ -22,6 +24,7 @@
     // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
     isLocalHost = !!window.location.hostname.match(/^(?:.+\.)?localhost$/);
     isLocalBackendSupported = 'showDirectoryPicker' in window;
+    isBrave = navigator.userAgentData?.brands.some(({ brand }) => brand === 'Brave') ?? false;
 
     signInAutomatically();
   });
@@ -53,7 +56,17 @@
       />
       {#if !isLocalBackendSupported}
         <div role="alert">
-          {$_('unsupported.browser')}
+          {#if isBrave}
+            {@html DOMPurify.sanitize(
+              $_('local_backend.disabled').replace(
+                '<a>',
+                '<a href="https://github.com/sveltia/sveltia-cms#enable-local-development-in-brave" target="_blank">',
+              ),
+              { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target'] },
+            )}
+          {:else}
+            {$_('local_backend.unsupported_browser')}
+          {/if}
         </div>
       {:else if !$signInError.message}
         <div role="none">

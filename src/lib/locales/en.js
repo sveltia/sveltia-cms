@@ -502,9 +502,10 @@ export const strings = {
   },
 
   // Backends
-  unsupported: {
-    browser:
+  local_backend: {
+    unsupported_browser:
       'Local development is not supported in your browser. Please use Chrome or Edge instead.',
+    disabled: 'Local development is disabled in your browser. <a>Here’s how to enable it</a>.',
   },
 
   // Editorial Workflow
