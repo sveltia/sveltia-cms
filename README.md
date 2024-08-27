@@ -106,6 +106,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys[^17][^67].
 - Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver.
+- The rich text editor is built with [Lexical](https://lexical.dev/), which is said to follow accessibility best practices. The [Dragon NaturallySpeaking support](https://lexical.dev/docs/packages/lexical-dragon) is enabled.
 - Ensures sufficient contrast between the foreground text and background colours.
 - Enabled and disabled buttons can be clearly distinguished[^105].
 - Links are underlined by default to make them easier to recognize. This behaviour can be changed in the Accessibility Settings if you prefer.
@@ -232,7 +233,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can enter spaces in a simple text-based List field[^50].
   - You can preview variable types without having to register a preview template[^42].
 - Markdown
-  - The rich text editor is built with [Lexical](https://github.com/facebook/lexical) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves various problems found in Netlify/Decap CMS, including fatal application crashes[^53][^70][^71][^72][^73][^111].
+  - The rich text editor is built with [Lexical](https://lexical.dev/) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves various problems found in Netlify/Decap CMS, including fatal application crashes[^53][^70][^71][^72][^73][^111].
   - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown.
 - Object
@@ -347,22 +348,24 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 ### Before the 1.0 release
 
-- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
-- [Tackling more Netlify/Decap CMS issues](#development-status)
-- Broad automation test coverage (Vitest + Playwright)
 - [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) migration
-- Localization with the new, [Fluent](https://projectfluent.org)-powered `sveltia-i18n` library
-- Documentation
+- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
+- Localization with the new [Fluent](https://projectfluent.org)-powered sveltia-i18n library
+- Accessibility audit
+- Developer documentation (implementation guide)
 - Marketing site
 - Live demo site
 - Official starter templates for the most popular frameworks, including SvelteKit and Next.js
+- Broad automation test coverage (Vitest + Playwright)
 
 ### After the 1.0 release
 
-- Compatibility with Static CMS
-- [Top-voted features for Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
-- AI integrations
+- Tackling more Netlify/Decap CMS issues, especially [top voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
+- Compatibility with Static CMS, a community fork of Netlify CMS
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
+- AI integrations
+- End-user documentation
+- Contributor documentation
 - and more!
 
 ## Getting started
