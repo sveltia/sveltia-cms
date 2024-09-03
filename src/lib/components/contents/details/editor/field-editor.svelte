@@ -364,16 +364,6 @@
       gap: 4px;
     }
 
-    :global(input[type='color']),
-    :global(input[type='date']),
-    :global(input[type='datetime-local']),
-    :global(input[type='time']),
-    :global(input[type='number']) {
-      outline: 0;
-      border: 0;
-      color: inherit;
-    }
-
     :global(input[type='text']),
     :global(textarea) {
       width: 100%;
@@ -381,10 +371,12 @@
 
     :global(input[type='color']),
     :global(input[type='number']) {
-      background-color: var(--sui-textbox-background-color);
+      outline: 0;
       border-width: 1px;
       border-color: var(--sui-primary-border-color);
       border-radius: var(--sui-control-medium-border-radius);
+      color: inherit;
+      background-color: var(--sui-textbox-background-color);
     }
 
     :global(input[type='file']),
@@ -396,9 +388,17 @@
     :global(input[type='date']),
     :global(input[type='datetime-local']),
     :global(input[type='time']) {
+      outline: 0;
+      border-width: var(--sui-textbox-border-width, 1px);
+      border-color: var(--sui-primary-border-color);
+      border-radius: var(--sui-control-medium-border-radius);
+      padding: var(--sui-textbox-singleline-padding);
       width: auto;
+      height: var(--sui-textbox-height);
+      background-color: var(--sui-textbox-background-color);
+      font-family: var(--sui-textbox-font-family);
+      font-size: var(--sui-textbox-font-size);
       text-transform: uppercase;
-      background-color: transparent;
     }
   }
 
