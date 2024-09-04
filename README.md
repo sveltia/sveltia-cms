@@ -42,14 +42,14 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 
 Sveltia CMS is **still in beta**, so please be careful when trying it out.
 
-While we are fixing reported bugs as fast as we can, the overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
+While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 115+ of them (or 190+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 125 issues by GA, 250 in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
-- Responding to user feedback
+- Responding to feedback from clients and regular users
 - Implementing our own UX enhancement ideas
 - Upgrading to [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) for unparalleled performance
 
