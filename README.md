@@ -22,13 +22,13 @@ To achieve radical improvements in UX, performance, i18n and other areas, it was
 
 Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
-- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community maintenance fork, first appeared on GitHub in September 2022
+- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community maintenance fork, initial commit made in September 2022
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, owned by a Netlify agency partner, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2016. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the hundreds of improvements we have already made.
 
-While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products. (Note: Static CMS compatibility will be worked on after the Sveltia CMS 1.0 release)
+While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products. (Note: While we are closely following the development of Decap CMS, compatibility with Static CMS will be worked on after the release of Sveltia CMS 1.0)
 
 ### Our goals
 
@@ -360,13 +360,13 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 ### After the 1.0 release
 
-- Tackling more Netlify/Decap CMS issues, especially [top voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
-- Compatibility with Static CMS, a community fork of Netlify CMS
+- Tackling more Netlify/Decap CMS issues, especially the [top voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
+- Compatibility with Static CMS, a community fork of Netlify CMS, including the [KeyValue widget](https://www.staticcms.org/docs/widget-keyvalue)[^123]
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - AI integrations
 - End-user documentation
 - Contributor documentation
-- and more!
+- and so much more!
 
 ## Getting started
 
@@ -1046,3 +1046,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^121]: Netlify/Decap CMS [#7262](https://github.com/decaporg/decap-cms/issues/7262)
 
 [^122]: Netlify/Decap CMS [#1776](https://github.com/decaporg/decap-cms/issues/1776), [#2064](https://github.com/decaporg/decap-cms/issues/2064), [#7158](https://github.com/decaporg/decap-cms/issues/7158), [#7259](https://github.com/decaporg/decap-cms/issues/7259)
+
+[^123]: Netlify/Decap CMS [#5489](https://github.com/decaporg/decap-cms/issues/5489)
