@@ -46,7 +46,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 115+ of them (or 190+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 115+ of them (or 195+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 125 issues by GA, 250 in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
@@ -233,7 +233,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can enter spaces in a simple text-based List field[^50].
   - You can preview variable types without having to register a preview template[^42].
 - Markdown
-  - The rich text editor is built with [Lexical](https://lexical.dev/) instead of [Slate](https://github.com/ianstormtaylor/slate), which solves various problems found in Netlify/Decap CMS, including fatal application crashes[^53][^70][^71][^72][^73][^111].
+  - The rich text editor is built with [Lexical](https://lexical.dev/), which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
   - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown.
 - Object
@@ -1048,3 +1048,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^122]: Netlify/Decap CMS [#1776](https://github.com/decaporg/decap-cms/issues/1776), [#2064](https://github.com/decaporg/decap-cms/issues/2064), [#7158](https://github.com/decaporg/decap-cms/issues/7158), [#7259](https://github.com/decaporg/decap-cms/issues/7259)
 
 [^123]: Netlify/Decap CMS [#5489](https://github.com/decaporg/decap-cms/issues/5489)
+
+[^124]: Netlify/Decap CMS [#7233](https://github.com/decaporg/decap-cms/issues/7233)
