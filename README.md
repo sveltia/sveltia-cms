@@ -360,7 +360,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 ### After the 1.0 release
 
 - Tackling more Netlify/Decap CMS issues, especially the [top voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
-- Compatibility with Static CMS, a community fork of Netlify CMS, including the [KeyValue widget](https://www.staticcms.org/docs/widget-keyvalue)[^123]
+- Compatibility with Static CMS, a community fork of Netlify CMS, including the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - AI integrations
 - End-user documentation
