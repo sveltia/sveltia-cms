@@ -22,7 +22,7 @@ To achieve radical improvements in UX, performance, i18n and other areas, it was
 
 Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
-- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community maintenance fork, initial commit made in September 2022
+- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community maintenance fork, initial commit made in September 2022, discontinued in September 2024
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, owned by a Netlify agency partner, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor
 
