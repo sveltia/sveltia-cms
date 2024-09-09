@@ -47,11 +47,10 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 115+ of them (or 195+ including duplicates) have been effectively solved in Sveltia CMS
-  - Target: 125 issues by GA, 250 in a future release
+  - Target: 150 issues by GA, 250 in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
-- Implementing our own UX enhancement ideas
-- Upgrading to [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) for unparalleled performance
+- Implementing our own enhancement ideas for every part of the product
 
 Sveltia CMS **version 1.0 is expected to ship by the end of 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
@@ -71,7 +70,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
-- Comes with touch device support. While the UI is not yet optimized for small screens, large tablets like iPad Pro or Pixel Tablet should work well. Mobile support is planned after the 1.0 release.
+- Comes with touch device support. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support is planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113]. Best of all, Svelte offers great performance!
 - The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
 
@@ -116,7 +115,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better security
 
-- Avoids high/critical severity vulnerabilities through constant dependency updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases[^33].
+- Avoids severity vulnerabilities through constant dependency updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases[^33].
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration[^108].
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
@@ -697,6 +696,8 @@ frame-src blob:;
 script-src 'self' https://unpkg.com;
 connect-src 'self' blob: data: https://unpkg.com;
 ```
+
+(UNPKG is used not only to download the CMS script bundle, but also to check for the latest version and retrieve additional dependencies such as [PDF.js](https://github.com/mozilla/pdf.js))
 
 Then, add the following origins depending on your Git backend and enabled integrations.
 
