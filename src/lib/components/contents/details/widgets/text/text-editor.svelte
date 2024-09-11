@@ -74,7 +74,7 @@
     }
   };
 
-  $: setInputValue(currentValue?.trim() ?? '');
+  $: setInputValue(typeof currentValue === 'string' ? currentValue.trim() : '');
   $: setCurrentValue(inputValue?.trim() ?? '');
 
   const { extraHint } = getContext('field-editor');
