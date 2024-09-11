@@ -335,7 +335,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** due to performance limitations. We may implement a high-performance Git Gateway alternative in the future.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** due to performance limitations. We may implement a high-performance Git Gateway alternative in the future. We may also support the other services if/when their APIs improve to allow the CMS to fetch multiple files at once.
 - The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
