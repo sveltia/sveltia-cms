@@ -77,7 +77,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files while building your website or application.
-- Small footprint: The bundle size is less than 400 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB), even though we haven’t implemented some features yet[^57][^64].
+- Small footprint: The bundle size is less than 450 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB), even though we haven’t implemented some features yet[^57][^64].
 - We have upgraded from Svelte 4 to [Svelte 5 Release Candidate](https://svelte.dev/blog/svelte-5-release-candidate) to further boost performance, including accelerated speed, reduced memory usage and even smaller bundle size. A full migration to the Svelte 5 _runes_ reactivity API will follow.
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
