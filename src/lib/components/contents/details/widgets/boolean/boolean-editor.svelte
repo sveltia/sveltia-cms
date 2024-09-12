@@ -31,7 +31,7 @@
   // svelte-ignore unused-export-let
   export let fieldConfig;
   /**
-   * @type {boolean}
+   * @type {boolean | 'mixed'}
    */
   export let currentValue;
   /**

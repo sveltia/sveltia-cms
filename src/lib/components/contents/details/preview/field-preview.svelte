@@ -100,13 +100,8 @@
   >
     <h4>{label || fieldName}</h4>
     {#if widgetName in previews}
-      <svelte:component
-        this={previews[widgetName]}
-        {keyPath}
-        {locale}
-        {fieldConfig}
-        {currentValue}
-      />
+      {@const Preview = previews[widgetName]}
+      <Preview {keyPath} {locale} {fieldConfig} {currentValue} />
     {/if}
   </section>
 {/if}

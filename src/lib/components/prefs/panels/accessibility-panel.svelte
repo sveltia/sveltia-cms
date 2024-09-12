@@ -2,6 +2,15 @@
   import { Switch, TabPanel } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { prefs } from '$lib/services/prefs';
+
+  /** @type {boolean | 'mixed' | undefined} */
+  $: underlineLinks = $prefs.underlineLinks;
+
+  $: {
+    if ($prefs.underlineLinks !== underlineLinks) {
+      $prefs.underlineLinks = Boolean(underlineLinks);
+    }
+  }
 </script>
 
 <TabPanel id="prefs-tab-accessibility">
@@ -14,7 +23,7 @@
     </p>
     <div role="none">
       <Switch
-        bind:checked={$prefs.underlineLinks}
+        bind:checked={underlineLinks}
         label={$_('prefs.accessibility.underline_links.switch_label')}
       />
     </div>

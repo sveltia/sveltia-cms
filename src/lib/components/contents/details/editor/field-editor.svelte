@@ -41,7 +41,7 @@
       ALLOWED_ATTR: ['href'],
     });
 
-  /** @type {import('svelte/store').Writable<import('svelte').ComponentType>} */
+  /** @type {import('svelte/store').Writable<import('svelte').Component>} */
   const extraHint = writable();
 
   setContext('field-editor', { extraHint });
@@ -233,8 +233,8 @@
       {#if !(widgetName in editors)}
         <div role="none">{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
       {:else if isList}
-        <svelte:component
-          this={editors[widgetName]}
+        {@const Editor = editors[widgetName]}
+        <Editor
           {locale}
           {keyPath}
           {fieldId}
@@ -252,8 +252,8 @@
         {#if prefix}
           <div role="none" class="prefix">{prefix}</div>
         {/if}
-        <svelte:component
-          this={editors[widgetName]}
+        {@const Editor = editors[widgetName]}
+        <Editor
           {locale}
           {keyPath}
           {fieldId}

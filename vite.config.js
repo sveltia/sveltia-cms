@@ -40,6 +40,11 @@ export default defineConfig({
     svelte({
       emitCss: false,
       preprocess: sveltePreprocess(),
+      compilerOptions: {
+        // Silence a warning on `<svelte:options accessors={true} />`
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        warningFilter: (warning) => warning.code !== 'options_deprecated_accessors',
+      },
     }),
     // https://www.npmjs.com/package/rollup-plugin-visualizer
     visualizer({

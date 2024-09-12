@@ -74,11 +74,12 @@
 
     return _options;
   })();
+
+  $: Select = multiple ? SelectMultiple : SelectSingle;
 </script>
 
 {#key JSON.stringify(options)}
-  <svelte:component
-    this={multiple ? SelectMultiple : SelectSingle}
+  <Select
     {locale}
     {keyPath}
     {fieldId}

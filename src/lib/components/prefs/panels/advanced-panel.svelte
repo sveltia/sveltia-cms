@@ -8,6 +8,15 @@
   $: ({ backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
 
+  /** @type {boolean | 'mixed' | undefined} */
+  $: devModeEnabled = $prefs.devModeEnabled;
+
+  $: {
+    if ($prefs.devModeEnabled !== devModeEnabled) {
+      $prefs.devModeEnabled = Boolean(devModeEnabled);
+    }
+  }
+
   const dispatch = createEventDispatcher();
 </script>
 
@@ -47,7 +56,7 @@
     </p>
     <div role="none">
       <Switch
-        bind:checked={$prefs.devModeEnabled}
+        bind:checked={devModeEnabled}
         label={$_('prefs.advanced.developer_mode.switch_label')}
       />
     </div>

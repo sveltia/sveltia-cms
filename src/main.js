@@ -1,3 +1,4 @@
+import { mount } from 'svelte';
 import App from './app.svelte';
 
 const knownFuncNames = [
@@ -46,7 +47,7 @@ const compatibilityURL = 'https://github.com/sveltia/sveltia-cms#compatibility';
  */
 const init = ({ config = {} } = {}) => {
   // eslint-disable-next-line no-new
-  new App({
+  mount(App, {
     target: document.querySelector('#nc-root') ?? document.body,
     props: { config },
   });

@@ -15,7 +15,7 @@
   let originalValue = undefined;
   /** @type {string | undefined} */
   let currentValue = undefined;
-  /** @type {boolean} */
+  /** @type {boolean | 'mixed'} */
   let wrap = false;
 
   /**

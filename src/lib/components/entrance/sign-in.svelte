@@ -16,6 +16,7 @@
   $: isLocalBackendSupported = false;
   $: isBrave = false;
   $: configuredBackendName = $siteConfig?.backend?.name;
+  // svelte-ignore reactive_declaration_non_reactive_property
   $: configuredBackend = configuredBackendName ? allBackendServices[configuredBackendName] : null;
   $: repositoryName = $siteConfig?.backend?.repo?.split('/')?.[1];
 
