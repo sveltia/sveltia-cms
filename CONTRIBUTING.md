@@ -10,7 +10,7 @@ Feel free to [submit feature requests](https://github.com/sveltia/sveltia-cms/is
 
 ## Code contributions
 
-Due to limited review resources and the ongoing Svelte 5 migration, pull requests will not be accepted for the time being. Please file issues instead.
+Due to limited review resources and the ongoing Svelte 5 _runes_ migration, pull requests will not be accepted for the time being. Please file issues instead.
 
 ## Localizations
 
