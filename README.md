@@ -44,7 +44,7 @@ Sveltia CMS is **still in beta**, so please be careful when trying it out.
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
-- Ensuring maximum [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
+- Ensuring substantial [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 115+ of them (or 195+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 in a future release
@@ -306,7 +306,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ## Compatibility
 
-We are trying to make Sveltia CMS as compatible as possible with Netlify/Decap CMS, so that more users can seamlessly switch to our modern, powerful, performant alternative. However, some features will be omitted due to deprecations and other factors.
+We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern, powerful, high performance alternative. However, some features will be omitted due to performance, deprecations and other factors.
 
 ### Current limitations
 
@@ -335,7 +335,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** due to performance limitations. We may implement a high-performance Git Gateway alternative in the future. We may also support the other services if/when their APIs improve to allow the CMS to fetch multiple files at once.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We may implement a high-performance Git Gateway alternative in the future. We may also support the other services if/when their APIs improve to allow the CMS to fetch multiple files at once.
 - The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
