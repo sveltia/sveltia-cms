@@ -61,7 +61,7 @@
             {@html DOMPurify.sanitize(
               $_('local_backend.disabled').replace(
                 '<a>',
-                '<a href="https://github.com/sveltia/sveltia-cms#enable-local-development-in-brave" target="_blank">',
+                '<a href="https://github.com/sveltia/sveltia-cms#enabling-local-development-in-brave" target="_blank">',
               ),
               { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target'] },
             )}
