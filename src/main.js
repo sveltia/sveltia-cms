@@ -46,7 +46,6 @@ const compatibilityURL = 'https://github.com/sveltia/sveltia-cms#compatibility';
  * @see https://decapcms.org/docs/custom-mounting/
  */
 const init = ({ config = {} } = {}) => {
-  // eslint-disable-next-line no-new
   mount(App, {
     target: document.querySelector('#nc-root') ?? document.body,
     props: { config },
