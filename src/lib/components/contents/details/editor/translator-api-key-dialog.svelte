@@ -13,7 +13,7 @@
     $translator ?? /** @type {TranslationService} */ ({}));
 
   $: {
-    if (!$showContentOverlay) {
+    if (!$showContentOverlay && $translatorApiKeyDialogState.show) {
       // Close the dialog when the Content Editor is closed
       $translatorApiKeyDialogState.show = false;
       $translatorApiKeyDialogState.resolve?.();
