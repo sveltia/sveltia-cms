@@ -4,13 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  semver@<5.7.2: '>=5.7.2'
-  semver@>=6.0.0 <6.3.1: '>=6.3.1'
-  es5-ext@>=0.10.0 <0.10.63: '>=0.10.63'
-  braces@<3.0.3: '>=3.0.3'
-  ws@>=8.0.0 <8.17.1: '>=8.17.1'
-
 importers:
 
   .:
@@ -4193,7 +4186,7 @@ snapshots:
       eslint-plugin-import: 2.30.0(eslint@8.57.0)
       object.assign: 4.1.5
       object.entries: 1.1.8
-      semver: 7.6.3
+      semver: 6.3.1
 
   eslint-config-prettier@9.1.0(eslint@8.57.0):
     dependencies:
