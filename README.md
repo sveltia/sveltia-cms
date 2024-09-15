@@ -308,6 +308,16 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern, powerful, high performance alternative. However, some features will be omitted due to deprecations and other factors.
 
+### Features not to be implemented
+
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We may implement a high-performance Git Gateway alternative in the future. We may also support the other services if/when their APIs improve to allow the CMS to fetch multiple files at once.
+- **The Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
+- The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
+- The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
+- The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget instead.
+- Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
+- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any.
+
 ### Current limitations
 
 These limitations are expected to be resolved before or shortly after GA:
@@ -332,16 +342,6 @@ These limitations are expected to be resolved before or shortly after GA:
 | Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
 
 Missing any other features? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
-
-### Features not to be implemented
-
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We may implement a high-performance Git Gateway alternative in the future. We may also support the other services if/when their APIs improve to allow the CMS to fetch multiple files at once.
-- The Netlify Identity Widget will not be supported, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
-- The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
-- The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
-- Sveltia CMS has dropped the support for the deprecated Date widget following Decap CMS 3.0. Use the DateTime widget instead.
-- Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
-- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/6b8a86174f9beb4acc4bddcaa3848f773c1b2e52/src/main.js#L13-L36) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any.
 
 ## Roadmap
 
