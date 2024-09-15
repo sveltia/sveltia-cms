@@ -255,6 +255,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Supports the `prefix` and `suffix` string options, which automatically prepend and/or append the developer-defined value to the user-input value.
 - Boolean, Number and String
   - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
+    - _Compatibility note_: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively.
 - File and Image
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
     - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
@@ -349,6 +350,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 - [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) _runes_ migration
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
+- Certain compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, including the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
 - Localization with the new [Fluent](https://projectfluent.org)-powered sveltia-i18n library
 - Accessibility audit
 - Developer documentation (implementation guide)
@@ -360,7 +362,6 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 ### After the 1.0 release
 
 - Tackling more Netlify/Decap CMS issues, especially the [top voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
-- Certain compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, including the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - AI integrations
 - End-user documentation
