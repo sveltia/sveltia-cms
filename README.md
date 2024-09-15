@@ -70,15 +70,15 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
-- Comes with touch device support, including larger button controls. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
+- Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113]. Best of all, Svelte offers unmatched performance!
 - The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
 
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files while building your website or application.
-- Small footprint: The bundle size is less than 450 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB), even though we haven’t implemented some features yet[^57][^64].
-- We have upgraded from Svelte 4 to [Svelte 5 Release Candidate](https://svelte.dev/blog/svelte-5-release-candidate) to further boost performance, including faster rendering, reduced memory usage and even smaller bundle size. A full migration to the _runes_ reactivity API will follow.
+- Small footprint: The bundle size is less than 450 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet. That’s the power of Svelte + Vite.
+- We have upgraded from Svelte 4 to [Svelte 5 Release Candidate](https://svelte.dev/blog/svelte-5-release-candidate) to further boost performance, resulting in faster rendering, reduced memory usage and even smaller bundle size. A full migration to the _runes_ reactivity API will follow.
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
