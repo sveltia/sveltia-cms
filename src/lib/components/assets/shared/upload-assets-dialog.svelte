@@ -26,6 +26,10 @@
    * @param {File[]} files - Selected files.
    */
   const onSelect = (files) => {
+    if (!files.length) {
+      return;
+    }
+
     $uploadingAssets = {
       folder: originalAsset
         ? originalAsset.folder
