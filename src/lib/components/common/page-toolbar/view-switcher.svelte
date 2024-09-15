@@ -17,14 +17,16 @@
       variant="ghost"
       iconic
       aria-label={$_('list_view')}
-      on:select={() => {
+      onSelect={() => {
         currentView.update((view) => ({
           ...view,
           type: 'list',
         }));
       }}
     >
-      <Icon slot="start-icon" name="format_list_bulleted" />
+      {#snippet startIcon()}
+        <Icon name="format_list_bulleted" />
+      {/snippet}
     </SelectButton>
     <SelectButton
       {disabled}
@@ -32,14 +34,16 @@
       variant="ghost"
       iconic
       aria-label={$_('grid_view')}
-      on:select={() => {
+      onSelect={() => {
         currentView.update((view) => ({
           ...view,
           type: 'grid',
         }));
       }}
     >
-      <Icon slot="start-icon" name="grid_view" />
+      {#snippet startIcon()}
+        <Icon name="grid_view" />
+      {/snippet}
     </SelectButton>
   </SelectButtonGroup>
 </div>

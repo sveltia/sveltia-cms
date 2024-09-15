@@ -36,7 +36,7 @@
         iconic
         aria-label={$_('remove')}
         hidden={files.length === 1}
-        on:click={(event) => {
+        onclick={(event) => {
           event.stopPropagation();
           files.splice(index, 1);
           files = files;

@@ -72,10 +72,10 @@
     {max}
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
-    on:AddValue={({ detail: { value } }) => {
+    onAddValue={({ detail: { value } }) => {
       addValue(value);
     }}
-    on:RemoveValue={({ detail: { value } }) => {
+    onRemoveValue={({ detail: { value } }) => {
       removeValue(value);
     }}
   />
@@ -90,7 +90,7 @@
         {invalid}
         checked={currentValue.includes(value)}
         aria-errormessage="{fieldId}-error"
-        on:change={({ detail: { checked } }) => {
+        onChange={({ detail: { checked } }) => {
           if (checked) {
             addValue(value);
           } else {

@@ -41,13 +41,13 @@
 
 <GridRow
   aria-rowindex={$listedAssets.indexOf(asset)}
-  on:change={(event) => {
+  onChange={(event) => {
     updateSelection(/** @type {CustomEvent} */ (event).detail.selected);
   }}
-  on:focus={() => {
+  onfocus={() => {
     $focusedAsset = asset;
   }}
-  on:dblclick={() => {
+  ondblclick={() => {
     if ($focusedAsset && canPreviewAsset($focusedAsset)) {
       goto(`/assets/${$focusedAsset?.path}`);
     }
@@ -58,7 +58,7 @@
       role="none"
       tabindex="-1"
       checked={$selectedAssets.includes(asset)}
-      on:change={({ detail: { checked } }) => {
+      onChange={({ detail: { checked } }) => {
         updateSelection(checked);
       }}
     />

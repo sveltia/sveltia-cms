@@ -108,11 +108,13 @@
             variant="primary"
             label={$_(multiple ? 'choose_files' : 'choose_file')}
             {disabled}
-            on:click={() => {
+            onclick={() => {
               openFilePicker();
             }}
           >
-            <Icon slot="start-icon" name="cloud_upload" />
+            {#snippet startIcon()}
+              <Icon name="cloud_upload" />
+            {/snippet}
           </Button>
         </div>
         {#if typeMismatch}

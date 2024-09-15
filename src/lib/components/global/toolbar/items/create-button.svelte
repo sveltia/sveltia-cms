@@ -13,36 +13,40 @@
   popupPosition="bottom-right"
   aria-label={$_('create_entry_or_assets')}
 >
-  <Icon slot="start-icon" name="add" />
-  <Menu slot="popup" aria-label={$_('create_entry_or_assets')}>
-    {#each $siteConfig?.collections ?? [] as collection (collection.name)}
-      {@const {
-        name,
-        label,
-        label_singular: labelSingular,
-        folder,
-        hide = false,
-        create = false,
-        divider = false,
-      } = collection}
-      {#if folder && !hide && !divider}
-        <MenuItem
-          label={labelSingular || label || name}
-          disabled={!create}
-          on:click={() => {
-            goto(`/collections/${name}/new`);
-          }}
-        />
-      {/if}
-    {/each}
-    <Divider />
-    <MenuItem
-      label={$_('assets')}
-      on:click={async () => {
-        goto('/assets');
-        await sleep(100);
-        $showUploadAssetsDialog = true;
-      }}
-    />
-  </Menu>
+  {#snippet startIcon()}
+    <Icon name="add" />
+  {/snippet}
+  {#snippet popup()}
+    <Menu aria-label={$_('create_entry_or_assets')}>
+      {#each $siteConfig?.collections ?? [] as collection (collection.name)}
+        {@const {
+          name,
+          label,
+          label_singular: labelSingular,
+          folder,
+          hide = false,
+          create = false,
+          divider = false,
+        } = collection}
+        {#if folder && !hide && !divider}
+          <MenuItem
+            label={labelSingular || label || name}
+            disabled={!create}
+            onclick={() => {
+              goto(`/collections/${name}/new`);
+            }}
+          />
+        {/if}
+      {/each}
+      <Divider />
+      <MenuItem
+        label={$_('assets')}
+        onclick={async () => {
+          goto('/assets');
+          await sleep(100);
+          $showUploadAssetsDialog = true;
+        }}
+      />
+    </Menu>
+  {/snippet}
 </MenuButton>

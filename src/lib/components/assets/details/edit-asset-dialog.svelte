@@ -73,19 +73,19 @@
   bind:open
   okLabel={$_('save')}
   okDisabled={currentValue === originalValue}
-  on:ok={() => {
+  onOk={() => {
     saveAsset();
   }}
-  on:close={() => {
+  onClose={() => {
     resetState();
   }}
 >
   <div role="none" class="wrapper" class:wrap>
     <TextArea bind:value={currentValue} flex />
   </div>
-  <svelte:fragment slot="footer-extra">
+  {#snippet footerExtra()}
     <Switch label={$_('wrap_long_lines')} bind:checked={wrap} />
-  </svelte:fragment>
+  {/snippet}
 </Dialog>
 
 <style lang="scss">

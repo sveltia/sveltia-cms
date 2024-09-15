@@ -42,11 +42,13 @@
         selected={$selectedPageName === key}
         aria-label={label}
         keyShortcuts="Alt+{index + 1}"
-        on:select={() => {
+        onSelect={() => {
           goto(link);
         }}
       >
-        <Icon slot="start-icon" name={icon} />
+        {#snippet startIcon()}
+          <Icon name={icon} />
+        {/snippet}
       </SelectButton>
     {/each}
   </SelectButtonGroup>

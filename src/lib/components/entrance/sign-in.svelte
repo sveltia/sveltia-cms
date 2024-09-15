@@ -42,7 +42,7 @@
     <Button
       variant="primary"
       label={$_('sign_in_with_x', { values: { service: configuredBackend?.label } })}
-      on:click={async () => {
+      onclick={async () => {
         await signInManually(/** @type {string} */ (configuredBackendName));
       }}
     />
@@ -51,7 +51,7 @@
         variant="primary"
         label={$_('work_with_local_repo')}
         disabled={!isLocalBackendSupported}
-        on:click={async () => {
+        onclick={async () => {
           await signInManually('local');
         }}
       />

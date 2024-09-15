@@ -74,11 +74,11 @@
   okLabel={$_('insert')}
   okDisabled={!selectedAsset}
   bind:open
-  on:ok={() => {
+  onOk={() => {
     dispatch('select', selectedAsset);
   }}
 >
-  <svelte:fragment slot="header-extra">
+  {#snippet headerExtra()}
     {#if isLocalLibrary || isEnabledMediaService}
       {#if $selectAssetsView}
         <ViewSwitcher
@@ -93,8 +93,8 @@
         aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
       />
     {/if}
-  </svelte:fragment>
-  <svelte:fragment slot="footer-extra">
+  {/snippet}
+  {#snippet footerExtra()}
     {#if isEnabledMediaService}
       {@const { showServiceLink, serviceLabel, serviceURL } =
         allStockPhotoServices[libraryName] ?? {}}
@@ -104,13 +104,13 @@
         </a>
       {/if}
     {/if}
-  </svelte:fragment>
+  {/snippet}
   <div role="none" class="wrapper">
     <Listbox
       class="tabs"
       aria-label={$_('assets_dialog.locations')}
       aria-controls="{elementIdPrefix}-content-pane"
-      on:change={(event) => {
+      onChange={(event) => {
         libraryName = /** @type {CustomEvent} */ (event).detail.name;
         selectedAsset = null;
       }}
@@ -203,7 +203,7 @@
           <TextInput
             bind:value={enteredURL}
             flex
-            on:input={() => {
+            oninput={() => {
               selectedAsset = enteredURL.trim() ? { url: enteredURL.trim() } : null;
             }}
           />

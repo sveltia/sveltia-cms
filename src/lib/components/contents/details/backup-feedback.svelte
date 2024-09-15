@@ -22,10 +22,10 @@
   title={$_('restore_backup_title')}
   okLabel={$_('restore')}
   cancelLabel={$_('discard')}
-  on:ok={() => {
+  onOk={() => {
     resolve?.(true);
   }}
-  on:cancel={() => {
+  onCancel={() => {
     resolve?.(false);
   }}
 >

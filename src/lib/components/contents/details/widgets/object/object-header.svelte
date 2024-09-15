@@ -39,11 +39,13 @@
       aria-label={expanded ? $_('collapse') : $_('expand')}
       aria-expanded={expanded}
       aria-controls={controlId}
-      on:click={() => {
+      onclick={() => {
         toggleExpanded();
       }}
     >
-      <Icon slot="start-icon" name={expanded ? 'expand_more' : 'chevron_right'} />
+      {#snippet startIcon()}
+        <Icon name={expanded ? 'expand_more' : 'chevron_right'} />
+      {/snippet}
       {#if label}
         <span role="none" class="type">
           {label}
@@ -61,11 +63,13 @@
         iconic
         disabled={removeButtonDisabled}
         aria-label={$_('remove_this_item')}
-        on:click={() => {
+        onclick={() => {
           remove();
         }}
       >
-        <Icon slot="start-icon" name="close" />
+        {#snippet startIcon()}
+          <Icon name="close" />
+        {/snippet}
       </Button>
     {/if}
   </div>

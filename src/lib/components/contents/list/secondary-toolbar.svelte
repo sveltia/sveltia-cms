@@ -22,7 +22,7 @@
       disabled={$selectedEntries.length === allEntries.length}
       label={$_('select_all')}
       aria-controls="entry-list"
-      on:click={() => {
+      onclick={() => {
         $selectedEntries = allEntries;
       }}
     />
@@ -31,7 +31,7 @@
       disabled={!$selectedEntries.length}
       label={$_('clear_selection')}
       aria-controls="entry-list"
-      on:click={() => {
+      onclick={() => {
         $selectedEntries = [];
       }}
     />
@@ -74,14 +74,16 @@
       aria-controls="collection-assets"
       aria-expanded={$currentView.showMedia}
       aria-label={$_($currentView.showMedia ? 'hide_assets' : 'show_assets')}
-      on:click={() => {
+      onclick={() => {
         currentView.update((view) => ({
           ...view,
           showMedia: !$currentView.showMedia,
         }));
       }}
     >
-      <Icon slot="start-icon" name="photo_library" />
+      {#snippet startIcon()}
+        <Icon name="photo_library" />
+      {/snippet}
     </Button>
   </Toolbar>
 {/if}

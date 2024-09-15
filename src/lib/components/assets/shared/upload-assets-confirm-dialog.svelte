@@ -22,11 +22,11 @@
   open={$showUploadAssetsConfirmDialog}
   title={$_(originalAsset ? 'replace_asset' : 'upload_assets')}
   okLabel={$_(originalAsset ? 'replace' : 'upload')}
-  on:ok={async () => {
+  onOk={async () => {
     await saveAssets($uploadingAssets, { commitType: 'uploadMedia' });
     $uploadingAssets = { folder: undefined, files: [] };
   }}
-  on:cancel={() => {
+  onCancel={() => {
     $uploadingAssets = { folder: undefined, files: [] };
   }}
 >

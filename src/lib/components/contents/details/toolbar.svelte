@@ -123,11 +123,13 @@
     iconic
     aria-label={$_('cancel_editing')}
     keyShortcuts="Escape"
-    on:click={() => {
+    onclick={() => {
       goBack(`/collections/${collection?.name}`);
     }}
   >
-    <Icon slot="start-icon" name="arrow_back_ios_new" />
+    {#snippet startIcon()}
+      <Icon name="arrow_back_ios_new" />
+    {/snippet}
   </Button>
   <h2 role="none">
     <strong role="none">
@@ -153,7 +155,7 @@
     <Button
       variant="tertiary"
       label={$_('view_on_live_site')}
-      on:click={() => {
+      onclick={() => {
         window.open(previewURL);
       }}
     />
@@ -164,7 +166,7 @@
       label={$_('duplicate')}
       aria-label={$_('duplicate_entry')}
       disabled={collection?.create === false}
-      on:click={() => {
+      onclick={() => {
         goto(`/collections/${collection?.name}/new`, { replaceState: true, notifyChange: false });
         duplicateDraft();
       }}
@@ -174,7 +176,7 @@
       label={$_('delete')}
       aria-label={$_('delete_entry')}
       disabled={collection?.delete === false}
-      on:click={() => {
+      onclick={() => {
         showDeleteDialog = true;
       }}
     />
@@ -186,54 +188,58 @@
     aria-label={$_('show_editor_options')}
     bind:this={menuButton}
   >
-    <Icon slot="start-icon" name="more_vert" />
-    <Menu slot="popup" aria-label={$_('editor_options')}>
-      <MenuItemCheckbox
-        label={$_('show_preview')}
-        checked={$entryEditorSettings?.showPreview}
-        disabled={!canPreview}
-        on:change={() => {
-          entryEditorSettings.update((view = {}) => ({
-            ...view,
-            showPreview: !view.showPreview,
-          }));
-        }}
-      />
-      <MenuItemCheckbox
-        label={$_('sync_scrolling')}
-        checked={$entryEditorSettings?.syncScrolling}
-        disabled={!canPreview && Object.keys(currentValues).length === 1}
-        on:change={() => {
-          entryEditorSettings.update((view = {}) => ({
-            ...view,
-            syncScrolling: !view.syncScrolling,
-          }));
-        }}
-      />
-      <Divider />
-      <MenuItem
-        label={$_('revert_all_changes')}
-        disabled={!modified}
-        on:click={() => {
-          revertChanges();
-        }}
-      />
-      {#if originalEntry}
-        <Divider />
-        <MenuItem
-          disabled={!$backend?.repository?.blobBaseURL}
-          label={$_('view_on_x', {
-            values: { service: $backend?.repository?.label },
-            default: $_('view_in_repository'),
-          })}
-          on:click={() => {
-            if (originalEntry) {
-              window.open(getEntryRepoBlobURL(originalEntry, defaultLocale));
-            }
+    {#snippet startIcon()}
+      <Icon name="more_vert" />
+    {/snippet}
+    {#snippet popup()}
+      <Menu aria-label={$_('editor_options')}>
+        <MenuItemCheckbox
+          label={$_('show_preview')}
+          checked={$entryEditorSettings?.showPreview}
+          disabled={!canPreview}
+          onChange={() => {
+            entryEditorSettings.update((view = {}) => ({
+              ...view,
+              showPreview: !view.showPreview,
+            }));
           }}
         />
-      {/if}
-    </Menu>
+        <MenuItemCheckbox
+          label={$_('sync_scrolling')}
+          checked={$entryEditorSettings?.syncScrolling}
+          disabled={!canPreview && Object.keys(currentValues).length === 1}
+          onChange={() => {
+            entryEditorSettings.update((view = {}) => ({
+              ...view,
+              syncScrolling: !view.syncScrolling,
+            }));
+          }}
+        />
+        <Divider />
+        <MenuItem
+          label={$_('revert_all_changes')}
+          disabled={!modified}
+          onclick={() => {
+            revertChanges();
+          }}
+        />
+        {#if originalEntry}
+          <Divider />
+          <MenuItem
+            disabled={!$backend?.repository?.blobBaseURL}
+            label={$_('view_on_x', {
+              values: { service: $backend?.repository?.label },
+              default: $_('view_in_repository'),
+            })}
+            onclick={() => {
+              if (originalEntry) {
+                window.open(getEntryRepoBlobURL(originalEntry, defaultLocale));
+              }
+            }}
+          />
+        {/if}
+      </Menu>
+    {/snippet}
   </MenuButton>
   {#if showSaveOptions}
     <SplitButton
@@ -241,15 +247,21 @@
       label={$_(saving ? 'saving' : 'save')}
       disabled={!modified || saving}
       keyShortcuts="Accel+S"
-      on:click={() => save()}
+      onclick={() => {
+        save();
+      }}
     >
-      <Menu slot="popup">
+      {#snippet popup()}
         <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
-        <MenuItem
-          label={$_(autoDeployEnabled ? 'save_without_publishing' : 'save_and_publish')}
-          on:click={() => save({ skipCI: autoDeployEnabled })}
-        />
-      </Menu>
+        <Menu>
+          <MenuItem
+            label={$_(autoDeployEnabled ? 'save_without_publishing' : 'save_and_publish')}
+            onclick={() => {
+              save({ skipCI: autoDeployEnabled });
+            }}
+          />
+        </Menu>
+      {/snippet}
     </SplitButton>
   {:else}
     <Button
@@ -257,7 +269,9 @@
       label={$_(saving ? 'saving' : 'save')}
       disabled={!modified || saving}
       keyShortcuts="Accel+S"
-      on:click={() => save()}
+      onclick={() => {
+        save();
+      }}
     />
   {/if}
 </Toolbar>
@@ -283,7 +297,7 @@
   bind:open={showDeleteDialog}
   title={$_('delete_entry')}
   okLabel={$_('delete')}
-  on:ok={async () => {
+  onOk={async () => {
     if (originalEntry) {
       await deleteEntries(
         [originalEntry.id],
@@ -293,7 +307,7 @@
 
     goBack(`/collections/${collection?.name}`);
   }}
-  on:close={() => {
+  onClose={() => {
     menuButton.focus();
   }}
 >
@@ -308,7 +322,7 @@
 <AlertDialog
   bind:open={showErrorDialog}
   title={$_('saving_entry.error.title')}
-  on:close={() => {
+  onClose={() => {
     menuButton.focus();
   }}
 >

@@ -24,29 +24,29 @@
 </script>
 
 <MenuButton variant="ghost" label={label || $_('sort')} {disabled}>
-  <Icon slot="end-icon" name="arrow_drop_down" />
-  <Menu
-    slot="popup"
-    aria-label={$_('sorting_options')}
-    aria-controls={$$restProps['aria-controls']}
-  >
-    {#each fields as { key, label: _label } (key)}
-      {#each sortOrders as order (order)}
-        <MenuItemRadio
-          label={$_(
-            dateFields.includes(key) ||
-              (!!collectionName &&
-                getFieldConfig({ collectionName, keyPath: key })?.widget === 'datetime')
-              ? `${order}_date`
-              : order,
-            { values: { label: _label } },
-          )}
-          checked={$currentView.sort?.key === key && $currentView.sort?.order === order}
-          on:select={() => {
-            currentView.update((view) => ({ ...view, sort: { key, order } }));
-          }}
-        />
+  {#snippet endIcon()}
+    <Icon name="arrow_drop_down" />
+  {/snippet}
+  {#snippet popup()}
+    <Menu aria-label={$_('sorting_options')} aria-controls={$$restProps['aria-controls']}>
+      {#each fields as { key, label: _label } (key)}
+        {#each sortOrders as order (order)}
+          <MenuItemRadio
+            label={$_(
+              dateFields.includes(key) ||
+                (!!collectionName &&
+                  getFieldConfig({ collectionName, keyPath: key })?.widget === 'datetime')
+                ? `${order}_date`
+                : order,
+              { values: { label: _label } },
+            )}
+            checked={$currentView.sort?.key === key && $currentView.sort?.order === order}
+            onSelect={() => {
+              currentView.update((view) => ({ ...view, sort: { key, order } }));
+            }}
+          />
+        {/each}
       {/each}
-    {/each}
-  </Menu>
+    </Menu>
+  {/snippet}
 </MenuButton>

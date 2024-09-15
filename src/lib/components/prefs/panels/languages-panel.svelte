@@ -19,7 +19,7 @@
         <Select
           aria-label={$_('prefs.languages.ui_language.select_language')}
           value={$appLocale ?? undefined}
-          on:change={(/** @type {CustomEvent} */ event) => {
+          onChange={(/** @type {CustomEvent} */ event) => {
             $prefs = { ...$prefs, locale: event.detail.value };
           }}
         >
@@ -60,7 +60,7 @@
               aria-label={$_('prefs.languages.translator.field_label', {
                 values: { service: serviceLabel },
               })}
-              on:change={() => {
+              onChange={() => {
                 dispatch('change', {
                   message: $_(
                     $prefs.apiKeys?.[serviceId]

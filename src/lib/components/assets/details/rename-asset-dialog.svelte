@@ -75,14 +75,14 @@
   bind:open
   okLabel={$_('rename')}
   okDisabled={newName === filename || invalid}
-  on:ok={() => {
+  onOk={() => {
     if (asset) {
       moveAssets('rename', [
         { asset, path: `${dirname}/${newName}${extension ? `.${extension}` : ''}` },
       ]);
     }
   }}
-  on:close={() => {
+  onClose={() => {
     $renamingAsset = undefined;
   }}
 >

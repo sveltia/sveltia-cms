@@ -51,7 +51,7 @@
     {invalid}
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
-    on:change={({ detail: { value } }) => {
+    onChange={({ detail: { value } }) => {
       currentValue = value;
     }}
   >

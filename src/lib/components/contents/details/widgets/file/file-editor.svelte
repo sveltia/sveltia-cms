@@ -220,7 +220,7 @@
         label={currentValue ? $_('replace') : $_('select')}
         aria-label={currentValue ? $_(`replace_${widgetName}`) : $_(`select_${widgetName}`)}
         aria-controls="{fieldId}-value"
-        on:click={() => {
+        onclick={() => {
           showSelectAssetsDialog = true;
         }}
       />
@@ -231,7 +231,7 @@
           label={$_('remove')}
           aria-label={$_(`remove_${widgetName}`)}
           aria-controls="{fieldId}-value"
-          on:click={() => {
+          onclick={() => {
             resetSelection();
           }}
         />
@@ -260,7 +260,7 @@
   bind:open={showPhotoCreditDialog}
   title={$_('assets_dialog.photo_credit.title')}
   okLabel={$_('copy')}
-  on:ok={() => {
+  onOk={() => {
     navigator.clipboard.writeText(photoCredit);
   }}
 >
@@ -270,7 +270,7 @@
       flex
       readonly
       value={photoCredit}
-      on:click={(event) => {
+      onclick={(event) => {
         /** @type {HTMLTextAreaElement} */ (event.target).focus();
         /** @type {HTMLTextAreaElement} */ (event.target).select();
       }}

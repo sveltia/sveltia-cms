@@ -17,7 +17,7 @@
     >
       {#each $selectedCollection.files as { name, label } (name)}
         <GridRow
-          on:click={() => {
+          onclick={() => {
             goto(`/collections/${$selectedCollection?.name}/entries/${name}`);
           }}
         >

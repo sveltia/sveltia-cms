@@ -98,7 +98,7 @@
       <Button
         variant="tertiary"
         label={$_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
-        on:click={() => {
+        onclick={() => {
           toggleLocale(locale);
         }}
       />

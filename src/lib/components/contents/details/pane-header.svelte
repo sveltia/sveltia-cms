@@ -83,7 +83,7 @@
               size="small"
               class={invalid ? 'error' : ''}
               label={localeLabel}
-              on:select={() => {
+              onSelect={() => {
                 $thisPane = { mode: 'edit', locale };
 
                 if ($thatPane?.mode === 'preview') {
@@ -91,11 +91,11 @@
                 }
               }}
             >
-              <svelte:fragment slot="end-icon">
+              {#snippet endIcon()}
                 {#if invalid}
                   <Icon name="error" aria-label={$_('locale_content_errors')} />
                 {/if}
-              </svelte:fragment>
+              {/snippet}
             </SelectButton>
           {/if}
         {/each}
@@ -105,7 +105,7 @@
             variant="tertiary"
             size="small"
             label={$_('preview')}
-            on:select={() => {
+            onSelect={() => {
               $thisPane = { mode: 'preview', locale: $thatPane?.locale ?? '' };
             }}
           />
@@ -126,63 +126,64 @@
         popupPosition="bottom-right"
         aria-label={$_('show_content_options_x_locale', { values: { locale: localeLabel } })}
       >
-        <Icon slot="start-icon" name="more_vert" />
-        <Menu
-          slot="popup"
-          aria-label={$_('content_options_x_locale', { values: { locale: localeLabel } })}
-        >
-          {#if canCopy}
-            <CopyMenuItems locale={$thisPane?.locale} {otherLocales} />
-          {/if}
-          <MenuItem
-            label={$_('revert_changes')}
-            disabled={!canRevert}
-            on:click={() => {
-              revertChanges($thisPane?.locale);
-            }}
-          />
-          {#if !saveAllLocales}
-            <Divider />
+        {#snippet startIcon()}
+          <Icon name="more_vert" />
+        {/snippet}
+        {#snippet popup()}
+          <Menu aria-label={$_('content_options_x_locale', { values: { locale: localeLabel } })}>
+            {#if canCopy && $thisPane?.locale}
+              <CopyMenuItems locale={$thisPane.locale} {otherLocales} />
+            {/if}
             <MenuItem
-              label={$_(
-                // eslint-disable-next-line no-nested-ternary
-                isLocaleEnabled
-                  ? 'disable_x_locale'
-                  : currentValues[$thisPane?.locale]
-                    ? 'reenable_x_locale'
-                    : 'enable_x_locale',
-                { values: { locale: localeLabel } },
-              )}
-              disabled={$thisPane?.locale === defaultLocale || (isLocaleEnabled && isOnlyLocale)}
-              on:click={() => {
-                toggleLocale($thisPane?.locale ?? '');
+              label={$_('revert_changes')}
+              disabled={!canRevert}
+              onclick={() => {
+                revertChanges($thisPane?.locale);
               }}
             />
-          {/if}
-          {#if originalEntry}
-            <Divider />
-            {#if previewURL}
+            {#if !saveAllLocales && $thisPane?.locale}
+              <Divider />
               <MenuItem
-                label={$_('view_on_live_site')}
-                on:click={() => {
-                  window.open(previewURL);
+                label={$_(
+                  // eslint-disable-next-line no-nested-ternary
+                  isLocaleEnabled
+                    ? 'disable_x_locale'
+                    : currentValues[$thisPane.locale]
+                      ? 'reenable_x_locale'
+                      : 'enable_x_locale',
+                  { values: { locale: localeLabel } },
+                )}
+                disabled={$thisPane.locale === defaultLocale || (isLocaleEnabled && isOnlyLocale)}
+                onclick={() => {
+                  toggleLocale($thisPane?.locale ?? '');
                 }}
               />
             {/if}
-            <MenuItem
-              disabled={!$backend?.repository?.blobBaseURL}
-              label={$_('view_on_x', {
-                values: { service: $backend?.repository?.label },
-                default: $_('view_in_repository'),
-              })}
-              on:click={() => {
-                if (originalEntry && $thisPane) {
-                  window.open(getEntryRepoBlobURL(originalEntry, $thisPane.locale));
-                }
-              }}
-            />
-          {/if}
-        </Menu>
+            {#if originalEntry}
+              <Divider />
+              {#if previewURL}
+                <MenuItem
+                  label={$_('view_on_live_site')}
+                  onclick={() => {
+                    window.open(previewURL);
+                  }}
+                />
+              {/if}
+              <MenuItem
+                disabled={!$backend?.repository?.blobBaseURL}
+                label={$_('view_on_x', {
+                  values: { service: $backend?.repository?.label },
+                  default: $_('view_in_repository'),
+                })}
+                onclick={() => {
+                  if (originalEntry && $thisPane) {
+                    window.open(getEntryRepoBlobURL(originalEntry, $thisPane.locale));
+                  }
+                }}
+              />
+            {/if}
+          </Menu>
+        {/snippet}
       </MenuButton>
     {/if}
   </Toolbar>

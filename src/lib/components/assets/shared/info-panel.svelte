@@ -144,7 +144,7 @@
         <Button
           role="link"
           variant="link"
-          on:click={() => {
+          onclick={() => {
             goto(`/collections/${collectionName}/entries/${fileName || slug}`);
           }}
         >

@@ -78,7 +78,7 @@
     <Button
       variant="link"
       label={$_('details')}
-      on:click={() => {
+      onclick={() => {
         window.open($backend?.statusDashboardURL, '_blank');
       }}
     />

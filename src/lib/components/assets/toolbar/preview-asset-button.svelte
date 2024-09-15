@@ -15,7 +15,7 @@
   disabled={!asset || !canPreviewAsset(asset)}
   label={$_('preview')}
   aria-label={$_('show_preview')}
-  on:click={() => {
+  onclick={() => {
     goto(`/assets/${asset?.path}`);
   }}
 />

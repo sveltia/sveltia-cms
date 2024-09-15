@@ -14,7 +14,7 @@
 </script>
 
 <GridRow
-  on:click={() => {
+  onclick={() => {
     goto(`/assets/${path}`);
   }}
 >

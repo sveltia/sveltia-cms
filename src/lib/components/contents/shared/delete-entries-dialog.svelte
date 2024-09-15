@@ -18,7 +18,7 @@
   bind:open
   title={$selectedEntries.length === 1 ? $_('delete_entry') : $_('delete_entries')}
   okLabel={$_('delete')}
-  on:ok={() => {
+  onOk={() => {
     deleteEntries(
       $selectedEntries.map(({ id }) => id),
       associatedAssets.map(({ path }) => path),

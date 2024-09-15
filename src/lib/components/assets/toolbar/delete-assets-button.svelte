@@ -26,7 +26,7 @@
   disabled={!assets.length}
   label={$_('delete')}
   aria-label={buttonDescription}
-  on:click={() => {
+  onclick={() => {
     showDialog = true;
   }}
 />
@@ -35,7 +35,7 @@
   bind:open={showDialog}
   title={assets.length === 1 ? $_('delete_asset') : $_('delete_assets')}
   okLabel={$_('delete')}
-  on:ok={() => {
+  onOk={() => {
     deleteAssets(assets);
     dispatch('delete');
   }}

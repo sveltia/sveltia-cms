@@ -41,7 +41,7 @@
       (translate &&
         (!sourceLanguages.includes(locale.toUpperCase()) ||
           !targetLanguages.includes(otherLocale.toUpperCase())))}
-    on:click={() => {
+    onclick={() => {
       copyFromLocale(otherLocale, locale, { keyPath, translate });
     }}
   />

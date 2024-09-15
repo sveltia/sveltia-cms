@@ -13,9 +13,11 @@
   label={$_('upload')}
   disabled={uploadDisabled}
   aria-label={$_('upload_assets')}
-  on:click={() => {
+  onclick={() => {
     $showUploadAssetsDialog = true;
   }}
 >
-  <Icon slot="start-icon" name="cloud_upload" />
+  {#snippet startIcon()}
+    <Icon name="cloud_upload" />
+  {/snippet}
 </Button>

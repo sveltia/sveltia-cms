@@ -303,11 +303,13 @@
         aria-label={parentExpanded ? $_('collapse') : $_('expand')}
         aria-expanded={parentExpanded}
         aria-controls="list-{widgetId}-item-list"
-        on:click={() => {
+        onclick={() => {
           syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
         }}
       >
-        <Icon slot="start-icon" name={parentExpanded ? 'expand_more' : 'chevron_right'} />
+        {#snippet startIcon()}
+          <Icon name={parentExpanded ? 'expand_more' : 'chevron_right'} />
+        {/snippet}
       </Button>
       <div role="none" class="summary" id="object-{widgetId}-summary">
         {items.length}
@@ -320,7 +322,7 @@
           size="small"
           label={$_('expand_all')}
           disabled={itemExpanderStates.every(([, value]) => value)}
-          on:click={() => {
+          onclick={() => {
             syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])));
           }}
         />
@@ -329,7 +331,7 @@
           size="small"
           label={$_('collapse_all')}
           disabled={itemExpanderStates.every(([, value]) => !value)}
-          on:click={() => {
+          onclick={() => {
             syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])));
           }}
         />
@@ -377,11 +379,13 @@
                 iconic
                 disabled={isDuplicateField || index === 0}
                 aria-label={$_('move_up')}
-                on:click={() => {
+                onclick={() => {
                   moveUpItem(index);
                 }}
               >
-                <Icon slot="start-icon" name="arrow_upward" />
+                {#snippet startIcon()}
+                  <Icon name="arrow_upward" />
+                {/snippet}
               </Button>
               <Spacer />
               <Button
@@ -389,11 +393,13 @@
                 size="small"
                 disabled={isDuplicateField || index === items.length - 1}
                 aria-label={$_('move_down')}
-                on:click={() => {
+                onclick={() => {
                   moveDownItem(index);
                 }}
               >
-                <Icon slot="start-icon" name="arrow_downward" />
+                {#snippet startIcon()}
+                  <Icon name="arrow_downward" />
+                {/snippet}
               </Button>
             </svelte:fragment>
           </ObjectHeader>
@@ -431,7 +437,7 @@
       {required}
       {invalid}
       aria-errormessage="{fieldId}-error"
-      on:input={() => {
+      oninput={() => {
         updateSimpleList();
       }}
     />

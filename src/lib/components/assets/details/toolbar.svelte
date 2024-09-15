@@ -17,11 +17,13 @@
     iconic
     aria-label={$_('cancel_editing')}
     keyShortcuts="Escape"
-    on:click={() => {
+    onclick={() => {
       goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
     }}
   >
-    <Icon slot="start-icon" name="arrow_back_ios_new" />
+    {#snippet startIcon()}
+      <Icon name="arrow_back_ios_new" />
+    {/snippet}
   </Button>
   <h2 role="none">
     <strong role="none">{$overlaidAsset?.name}</strong>

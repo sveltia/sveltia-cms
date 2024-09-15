@@ -43,11 +43,13 @@
     disabled={sourceDisabled ||
       !currentLocales[otherLocale] ||
       !targetLanguages.includes(otherLocale.toUpperCase())}
-    on:click={() => {
+    onclick={() => {
       copyFromLocale(otherLocale, locale, { keyPath, translate: true });
     }}
   >
-    <Icon slot="start-icon" name="translate" />
+    {#snippet startIcon()}
+      <Icon name="translate" />
+    {/snippet}
   </Button>
 {:else}
   <MenuButton
@@ -58,9 +60,13 @@
     aria-label={$_('translate')}
     disabled={sourceDisabled}
   >
-    <Icon slot="start-icon" name="translate" />
-    <Menu slot="popup" aria-label={$_('translation_options')}>
-      <CopyMenuItems {locale} {otherLocales} {keyPath} translate={true} />
-    </Menu>
+    {#snippet startIcon()}
+      <Icon name="translate" />
+    {/snippet}
+    {#snippet popup()}
+      <Menu aria-label={$_('translation_options')}>
+        <CopyMenuItems {locale} {otherLocales} {keyPath} translate={true} />
+      </Menu>
+    {/snippet}
   </MenuButton>
 {/if}

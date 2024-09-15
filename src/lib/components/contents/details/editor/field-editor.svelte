@@ -140,21 +140,25 @@
           popupPosition="bottom-right"
           aria-label={$_('show_field_options')}
         >
-          <Icon slot="start-icon" name="more_vert" />
-          <Menu slot="popup" aria-label={$_('field_options')}>
-            {#if canCopy}
-              <CopyMenuItems {locale} {otherLocales} {keyPath} />
-            {/if}
-            {#if canRevert}
-              <MenuItem
-                label={$_('revert_changes')}
-                disabled={equal(currentValue, originalValue)}
-                on:click={() => {
-                  revertChanges(locale, keyPath);
-                }}
-              />
-            {/if}
-          </Menu>
+          {#snippet startIcon()}
+            <Icon name="more_vert" />
+          {/snippet}
+          {#snippet popup()}
+            <Menu aria-label={$_('field_options')}>
+              {#if canCopy}
+                <CopyMenuItems {locale} {otherLocales} {keyPath} />
+              {/if}
+              {#if canRevert}
+                <MenuItem
+                  label={$_('revert_changes')}
+                  disabled={equal(currentValue, originalValue)}
+                  onclick={() => {
+                    revertChanges(locale, keyPath);
+                  }}
+                />
+              {/if}
+            </Menu>
+          {/snippet}
         </MenuButton>
       {/if}
     </header>

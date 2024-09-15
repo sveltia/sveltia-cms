@@ -43,7 +43,7 @@
 </script>
 
 {#if showButton}
-  <MenuItem label={$_('publish_changes')} disabled={!canPublish} on:click={() => publish()} />
+  <MenuItem label={$_('publish_changes')} disabled={!canPublish} onclick={() => publish()} />
   <Toast bind:show={showToast}>
     <Alert status={toastStatus}>
       {$_(toastStatus === 'error' ? 'publishing_changes_failed' : 'publishing_changes')}

@@ -44,7 +44,7 @@
           ? $_('delete_selected_entry')
           : $_('delete_selected_entries')}
         disabled={!$selectedEntries.length || !canDelete}
-        on:click={() => {
+        onclick={() => {
           showDeleteDialog = true;
         }}
       />
@@ -54,11 +54,13 @@
         label={$_('create')}
         aria-label={$_('create_new_entry')}
         keyShortcuts="Accel+E"
-        on:click={() => {
+        onclick={() => {
           goto(`/collections/${name}/new`);
         }}
       >
-        <Icon slot="start-icon" name="edit" />
+        {#snippet startIcon()}
+          <Icon name="edit" />
+        {/snippet}
       </Button>
     {/if}
   </Toolbar>

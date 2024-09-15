@@ -57,7 +57,7 @@
     <Button
       variant="link"
       label={$_('update_now')}
-      on:click={() => {
+      onclick={() => {
         window.location.reload();
       }}
     />

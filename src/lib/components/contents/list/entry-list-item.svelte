@@ -65,10 +65,10 @@
 
 <GridRow
   aria-rowindex={$listedEntries.indexOf(entry)}
-  on:change={(event) => {
+  onChange={(event) => {
     updateSelection(/** @type {CustomEvent} */ (event).detail.selected);
   }}
-  on:click={() => {
+  onclick={() => {
     goto(`/collections/${$selectedCollection?.name}/entries/${entry.slug}`);
   }}
 >
@@ -77,7 +77,7 @@
       role="none"
       tabindex="-1"
       checked={$selectedEntries.includes(entry)}
-      on:change={({ detail: { checked } }) => {
+      onChange={({ detail: { checked } }) => {
         updateSelection(checked);
       }}
     />

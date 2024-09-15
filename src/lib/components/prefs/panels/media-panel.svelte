@@ -37,7 +37,7 @@
             aria-label={$_('prefs.media.stock_photos.field_label', {
               values: { service: serviceLabel },
             })}
-            on:change={() => {
+            onChange={() => {
               dispatch('change', {
                 message: $_(
                   $prefs.apiKeys?.[serviceId]

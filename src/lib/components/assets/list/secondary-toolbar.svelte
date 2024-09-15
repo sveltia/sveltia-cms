@@ -19,7 +19,7 @@
       disabled={$selectedAssets.length === Object.values($assetGroups).flat(1).length}
       label={$_('select_all')}
       aria-controls="asset-list"
-      on:click={() => {
+      onclick={() => {
         $selectedAssets = Object.values($assetGroups).flat(1);
       }}
     />
@@ -28,7 +28,7 @@
       disabled={!$selectedAssets.length}
       label={$_('clear_selection')}
       aria-controls="asset-list"
-      on:click={() => {
+      onclick={() => {
         $selectedAssets = [];
       }}
     />
@@ -57,14 +57,16 @@
       aria-controls="asset-info"
       aria-expanded={!!$currentView?.showInfo}
       aria-label={$_($currentView?.showInfo ? 'hide_info' : 'show_info')}
-      on:click={() => {
+      onclick={() => {
         currentView.update((view) => ({
           ...view,
           showInfo: !$currentView?.showInfo,
         }));
       }}
     >
-      <Icon slot="start-icon" name="info" />
+      {#snippet startIcon()}
+        <Icon name="info" />
+      {/snippet}
     </Button>
   </Toolbar>
 {/if}

@@ -23,58 +23,59 @@
 </script>
 
 <MenuButton variant="ghost" label={label || $_('filter')} {disabled}>
-  <Icon slot="end-icon" name="arrow_drop_down" />
-  <Menu
-    slot="popup"
-    aria-label={$_('filtering_options')}
-    aria-controls={$$restProps['aria-controls']}
-  >
-    {#if multiple}
-      {#each filters as { label: _label, field, pattern }}
-        {@const index = ($currentView.filters || []).findIndex(
-          (f) => f.field === field && f.pattern === pattern,
-        )}
-        <MenuItemCheckbox
-          label={_label}
-          checked={index > -1}
-          on:change={() => {
-            currentView.update((view) => {
-              const updatedFilters = view.filters ? [...view.filters] : [];
+  {#snippet endIcon()}
+    <Icon name="arrow_drop_down" />
+  {/snippet}
+  {#snippet popup()}
+    <Menu aria-label={$_('filtering_options')} aria-controls={$$restProps['aria-controls']}>
+      {#if multiple}
+        {#each filters as { label: _label, field, pattern }}
+          {@const index = ($currentView.filters || []).findIndex(
+            (f) => f.field === field && f.pattern === pattern,
+          )}
+          <MenuItemCheckbox
+            label={_label}
+            checked={index > -1}
+            onChange={() => {
+              currentView.update((view) => {
+                const updatedFilters = view.filters ? [...view.filters] : [];
 
-              if (index > -1) {
-                updatedFilters.splice(index, 1);
-              } else {
-                updatedFilters.push({ field, pattern });
-              }
+                if (index > -1) {
+                  updatedFilters.splice(index, 1);
+                } else {
+                  updatedFilters.push({ field, pattern });
+                }
 
-              return { ...view, filters: updatedFilters };
-            });
-          }}
-        />
-      {/each}
-    {:else}
-      <MenuItemRadio
-        label={noneLabel || $_('sort_keys.none')}
-        checked={!$currentView.filter}
-        on:select={() => {
-          currentView.update((view) => ({
-            ...view,
-            filter: undefined,
-          }));
-        }}
-      />
-      {#each filters as { label: _label, field, pattern }}
+                return { ...view, filters: updatedFilters };
+              });
+            }}
+          />
+        {/each}
+      {:else}
         <MenuItemRadio
-          label={_label}
-          checked={$currentView.filter?.field === field && $currentView.filter?.pattern === pattern}
-          on:select={() => {
+          label={noneLabel || $_('sort_keys.none')}
+          checked={!$currentView.filter}
+          onSelect={() => {
             currentView.update((view) => ({
               ...view,
-              filter: { field, pattern },
+              filter: undefined,
             }));
           }}
         />
-      {/each}
-    {/if}
-  </Menu>
+        {#each filters as { label: _label, field, pattern }}
+          <MenuItemRadio
+            label={_label}
+            checked={$currentView.filter?.field === field &&
+              $currentView.filter?.pattern === pattern}
+            onSelect={() => {
+              currentView.update((view) => ({
+                ...view,
+                filter: { field, pattern },
+              }));
+            }}
+          />
+        {/each}
+      {/if}
+    </Menu>
+  {/snippet}
 </MenuButton>

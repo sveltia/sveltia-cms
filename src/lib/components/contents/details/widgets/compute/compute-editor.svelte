@@ -116,7 +116,7 @@
 </script>
 
 <TextInput
-  value={currentValue}
+  value={String(currentValue)}
   flex
   {readonly}
   {required}

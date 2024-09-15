@@ -28,105 +28,103 @@
     aria-label={$_('show_account_menu')}
     bind:this={menuButton}
   >
-    <svelte:component
-      this={hasAvatar ? undefined : Icon}
-      slot="start-icon"
-      name={'account_circle'}
-    />
-    <svelte:element
-      this={hasAvatar ? 'img' : undefined}
-      class="avatar"
-      loading="lazy"
-      src={$user?.avatarURL}
-    />
-    <Menu slot="popup" aria-label={$_('account')}>
-      <MenuItem
-        label={isLocal
-          ? $_('working_with_local_repo')
-          : $_('signed_in_as_x', { values: { name: $user?.login } })}
-        disabled={isLocal}
-        on:click={() => {
-          window.open($user?.profileURL, '_blank');
-        }}
-      />
-      <Divider />
-      <MenuItem
-        label={$_('live_site')}
-        on:click={() => {
-          openProductionSite();
-        }}
-      />
-      <MenuItem
-        label={$_('git_repository')}
-        disabled={!$backend?.repository?.treeBaseURL}
-        on:click={() => {
-          window.open($backend?.repository?.treeBaseURL);
-        }}
-      />
-      <PublishMenuItem />
-      <Divider />
-      <MenuItem
-        label={$_('settings')}
-        on:click={() => {
-          showPrefsDialog = true;
-        }}
-      />
-      {#if $prefs.devModeEnabled}
+    {#snippet startIcon()}
+      {#if hasAvatar}
+        <img class="avatar" loading="lazy" src={$user?.avatarURL} alt="" />
+      {:else}
+        <Icon name={'account_circle'} />
+      {/if}
+    {/snippet}
+    {#snippet popup()}
+      <Menu aria-label={$_('account')}>
         <MenuItem
-          label={$_('site_config')}
-          on:click={() => {
-            goto('/config');
+          label={isLocal
+            ? $_('working_with_local_repo')
+            : $_('signed_in_as_x', { values: { name: $user?.login } })}
+          disabled={isLocal}
+          onclick={() => {
+            window.open($user?.profileURL, '_blank');
           }}
         />
-      {/if}
-      <Divider />
-      <!-- Assume the user has a physical keyboard if the pointer is mouse (on desktop) -->
-      {#if window.matchMedia('(pointer: fine)').matches}
+        <Divider />
         <MenuItem
-          label={$_('help.keyboard_shortcuts')}
-          on:click={() => {
-            showShortcutsDialog = true;
+          label={$_('live_site')}
+          onclick={() => {
+            openProductionSite();
           }}
         />
-      {/if}
-      <MenuItem
-        label={$_('help.documentation')}
-        on:click={() => {
-          window.open('https://github.com/sveltia/sveltia-cms/blob/main/README.md', '_blank');
-        }}
-      />
-      <MenuItem
-        label={$prefs.devModeEnabled
-          ? $_('help.release_notes_version_x', { values: { version } })
-          : $_('help.release_notes')}
-        on:click={() => {
-          window.open('https://github.com/sveltia/sveltia-cms/releases', '_blank');
-        }}
-      />
-      <Divider />
-      <MenuItem
-        label={$_('help.issue')}
-        on:click={() => {
-          window.open('https://github.com/sveltia/sveltia-cms/issues', '_blank');
-        }}
-      />
-      <MenuItem
-        label={$_('help.feedback')}
-        on:click={() => {
-          window.open('https://github.com/sveltia/sveltia-cms/discussions', '_blank');
-        }}
-      />
-      <Divider />
-      <MenuItem
-        label={$_('sign_out')}
-        on:click={async () => {
-          // Wait a bit before the menu is closed
-          window.requestAnimationFrame(() => {
-            signOut();
-          });
-        }}
-      />
-    </Menu>
+        <MenuItem
+          label={$_('git_repository')}
+          disabled={!$backend?.repository?.treeBaseURL}
+          onclick={() => {
+            window.open($backend?.repository?.treeBaseURL);
+          }}
+        />
+        <PublishMenuItem />
+        <Divider />
+        <MenuItem
+          label={$_('settings')}
+          onclick={() => {
+            showPrefsDialog = true;
+          }}
+        />
+        {#if $prefs.devModeEnabled}
+          <MenuItem
+            label={$_('site_config')}
+            onclick={() => {
+              goto('/config');
+            }}
+          />
+        {/if}
+        <Divider />
+        <!-- Assume the user has a physical keyboard if the pointer is mouse (on desktop) -->
+        {#if window.matchMedia('(pointer: fine)').matches}
+          <MenuItem
+            label={$_('help.keyboard_shortcuts')}
+            onclick={() => {
+              showShortcutsDialog = true;
+            }}
+          />
+        {/if}
+        <MenuItem
+          label={$_('help.documentation')}
+          onclick={() => {
+            window.open('https://github.com/sveltia/sveltia-cms/blob/main/README.md', '_blank');
+          }}
+        />
+        <MenuItem
+          label={$prefs.devModeEnabled
+            ? $_('help.release_notes_version_x', { values: { version } })
+            : $_('help.release_notes')}
+          onclick={() => {
+            window.open('https://github.com/sveltia/sveltia-cms/releases', '_blank');
+          }}
+        />
+        <Divider />
+        <MenuItem
+          label={$_('help.issue')}
+          onclick={() => {
+            window.open('https://github.com/sveltia/sveltia-cms/issues', '_blank');
+          }}
+        />
+        <MenuItem
+          label={$_('help.feedback')}
+          onclick={() => {
+            window.open('https://github.com/sveltia/sveltia-cms/discussions', '_blank');
+          }}
+        />
+        <Divider />
+        <MenuItem
+          label={$_('sign_out')}
+          onclick={async () => {
+            // Wait a bit before the menu is closed
+            window.requestAnimationFrame(() => {
+              signOut();
+            });
+          }}
+        />
+      </Menu>
+    {/snippet}
   </MenuButton>
 </div>
 

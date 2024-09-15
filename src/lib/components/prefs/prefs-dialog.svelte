@@ -1,5 +1,6 @@
 <script>
   import { Alert, Dialog, Icon, Tab, TabList, Toast } from '@sveltia/ui';
+  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AccessibilityPanel from '$lib/components/prefs/panels/accessibility-panel.svelte';
   import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
@@ -17,6 +18,8 @@
   let toastMessage = '';
   let showToast = false;
 
+  const dispatch = createEventDispatcher();
+
   const panels = [
     { key: 'appearance', icon: 'palette', component: AppearancePanel },
     { key: 'languages', icon: 'language', component: LanguagesPanel },
@@ -33,7 +36,9 @@
   showOk={false}
   showCancel={false}
   showClose={true}
-  on:close
+  onClose={(event) => {
+    dispatch('close', event.detail);
+  }}
 >
   <div role="none" class="wrapper">
     <TabList orientation="vertical" aria-label={$_('categories')}>
@@ -42,11 +47,13 @@
           label={$_(`prefs.${key}.title`)}
           selected={key === selectedPanel}
           aria-controls="prefs-tab-{key}"
-          on:select={() => {
+          onSelect={() => {
             selectedPanel = key;
           }}
         >
-          <Icon slot="start-icon" name={icon} />
+          {#snippet startIcon()}
+            <Icon name={icon} />
+          {/snippet}
         </Tab>
       {/each}
     </TabList>

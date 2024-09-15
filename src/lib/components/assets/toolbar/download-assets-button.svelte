@@ -35,7 +35,7 @@
   variant="ghost"
   disabled={!assets.length}
   label={$_('download')}
-  on:click={() => {
+  onclick={() => {
     downloadFiles();
   }}
 />

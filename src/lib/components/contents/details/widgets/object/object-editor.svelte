@@ -207,7 +207,7 @@
     label={$_('add_x', { values: { name: fieldLabel || fieldName } })}
     checked={hasValues}
     disabled={addButtonDisabled}
-    on:change={({ detail: { checked } }) => {
+    onChange={({ detail: { checked } }) => {
       if (checked) {
         addFields();
       } else {

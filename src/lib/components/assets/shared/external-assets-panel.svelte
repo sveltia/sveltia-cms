@@ -218,7 +218,7 @@
           aria-label={$_('prefs.media.stock_photos.field_label', {
             values: { service: serviceLabel },
           })}
-          on:input={(event) => {
+          oninput={(event) => {
             const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
 
             if (apiKeyPattern && _value.match(apiKeyPattern)) {
@@ -254,7 +254,7 @@
           variant="secondary"
           label={$_('sign_in')}
           disabled={!input.userName || !input.password || authState === 'requested'}
-          on:click={async () => {
+          onclick={async () => {
             authState = 'requested';
             input.userName = input.userName.trim();
             input.password = input.password.trim();

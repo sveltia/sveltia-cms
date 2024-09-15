@@ -29,10 +29,10 @@
       <Option
         {selected}
         label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}
-        on:select={() => {
+        onSelect={() => {
           goto(internalPath ? `/assets/${internalPath}` : '/assets');
         }}
-        on:dragover={(event) => {
+        ondragover={(event) => {
           event.preventDefault();
 
           if (uploadDisabled) {
@@ -46,7 +46,7 @@
             /** @type {HTMLElement} */ (event.target).classList.add('dragover');
           }
         }}
-        on:dragleave={(event) => {
+        ondragleave={(event) => {
           event.preventDefault();
 
           if (uploadDisabled) {
@@ -55,7 +55,7 @@
 
           /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
         }}
-        on:dragend={(event) => {
+        ondragend={(event) => {
           event.preventDefault();
 
           if (uploadDisabled) {
@@ -64,7 +64,7 @@
 
           /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
         }}
-        on:drop={(event) => {
+        ondrop={(event) => {
           event.preventDefault();
 
           if (uploadDisabled) {
@@ -76,7 +76,9 @@
           // confirmation dialog.
         }}
       >
-        <Icon slot="start-icon" name={collection?.icon || 'folder'} />
+        {#snippet startIcon()}
+          <Icon name={collection?.icon || 'folder'} />
+        {/snippet}
       </Option>
     {/each}
   </Listbox>

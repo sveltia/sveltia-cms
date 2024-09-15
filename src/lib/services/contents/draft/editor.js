@@ -26,7 +26,7 @@ export const translatorApiKeyDialogState = writable({ show: false, multiple: fal
  * @type {import('svelte/store').Writable<{
  * id: number | undefined,
  * show: boolean,
- * status: 'info' | 'success' | 'error' | undefined,
+ * status: 'info' | 'success' | 'error',
  * message: string | undefined,
  * count: number,
  * sourceLocale: LocaleCode | undefined,
@@ -35,7 +35,7 @@ export const translatorApiKeyDialogState = writable({ show: false, multiple: fal
 export const copyFromLocaleToast = writable({
   id: undefined,
   show: false,
-  status: undefined,
+  status: 'success',
   message: undefined,
   count: 1,
   sourceLocale: undefined,

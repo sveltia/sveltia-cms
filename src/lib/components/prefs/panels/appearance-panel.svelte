@@ -10,7 +10,7 @@
     <div role="none">
       <SelectButtonGroup
         aria-label={$_('prefs.appearance.select_theme')}
-        on:change={(event) => {
+        onChange={(event) => {
           $prefs = { ...$prefs, theme: /** @type {CustomEvent} */ (event).detail.value };
         }}
       >

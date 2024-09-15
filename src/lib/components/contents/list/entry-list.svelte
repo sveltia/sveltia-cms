@@ -54,11 +54,13 @@
           variant="primary"
           disabled={!$selectedCollection.create}
           label={$_('create_new_entry')}
-          on:click={() => {
+          onclick={() => {
             goto(`/collections/${$selectedCollection?.name}/new`);
           }}
         >
-          <Icon slot="start-icon" name="edit" />
+          {#snippet startIcon()}
+            <Icon name="edit" />
+          {/snippet}
         </Button>
       </EmptyState>
     {/if}

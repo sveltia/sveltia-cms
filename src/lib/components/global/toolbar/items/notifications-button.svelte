@@ -8,9 +8,11 @@
   iconic
   hidden
   aria-label={$_('show_notifications')}
-  on:click={() => {
+  onclick={() => {
     // @todo Implement this!
   }}
 >
-  <Icon slot="start-icon" name="notifications" />
+  {#snippet startIcon()}
+    <Icon name="notifications" />
+  {/snippet}
 </Button>

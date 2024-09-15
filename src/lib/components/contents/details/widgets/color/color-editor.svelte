@@ -154,12 +154,14 @@
     disabled={!inputValue}
     aria-label={$_('clear')}
     aria-controls={`${id}-picker ${allowInput ? `${id}-input` : ''}`}
-    on:click={() => {
+    onclick={() => {
       inputValue = '';
       inputAlphaValue = 255;
     }}
   >
-    <Icon slot="start-icon" name="delete" />
+    {#snippet startIcon()}
+      <Icon name="delete" />
+    {/snippet}
   </Button>
 </div>
 

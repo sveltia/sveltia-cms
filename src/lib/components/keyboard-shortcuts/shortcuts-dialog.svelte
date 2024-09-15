@@ -1,12 +1,14 @@
 <script>
   import { Dialog, Table, TableCell, TableRow } from '@sveltia/ui';
-  import { onMount } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   /**
    * Whether to open the dialog.
    */
   export let open = false;
+
+  const dispatch = createEventDispatcher();
 
   const shortcuts = [
     { feature: 'view_content_library', keys: 'Alt+1' },
@@ -32,7 +34,9 @@
   showOk={false}
   showCancel={false}
   showClose={true}
-  on:close
+  onClose={(event) => {
+    dispatch('close', event.detail);
+  }}
 >
   <div role="none" class="wrapper">
     <Table aria-label={$_('help.keyboard_shortcuts')}>

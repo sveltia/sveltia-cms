@@ -33,7 +33,7 @@
 
 {#if content}
   <GridRow
-    on:click={() => {
+    onclick={() => {
       goto(`/collections/${collectionName}/entries/${fileName || slug}`);
     }}
   >

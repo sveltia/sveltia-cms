@@ -38,15 +38,21 @@
 
 {#if Array.isArray(types)}
   <MenuButton variant="tertiary" {label} disabled={_disabled}>
-    <Icon slot="start-icon" name="add" />
-    <Menu slot="popup" aria-label={$_('select_list_type')}>
-      {#each types as { name, label: itemLabel } (name)}
-        <MenuItem label={itemLabel || name} on:click={() => addItem(name)} />
-      {/each}
-    </Menu>
+    {#snippet startIcon()}
+      <Icon name="add" />
+    {/snippet}
+    {#snippet popup()}
+      <Menu aria-label={$_('select_list_type')}>
+        {#each types as { name, label: itemLabel } (name)}
+          <MenuItem label={itemLabel || name} onclick={() => addItem(name)} />
+        {/each}
+      </Menu>
+    {/snippet}
   </MenuButton>
 {:else}
-  <Button variant="tertiary" {label} disabled={_disabled} on:click={() => addItem()}>
-    <Icon slot="start-icon" name="add" />
+  <Button variant="tertiary" {label} disabled={_disabled} onclick={() => addItem()}>
+    {#snippet startIcon()}
+      <Icon name="add" />
+    {/snippet}
   </Button>
 {/if}
