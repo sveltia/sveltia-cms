@@ -33,13 +33,16 @@
   onMount(() => {
     const ncRoot = /** @type {?HTMLElement} */ (document.querySelector('#nc-root'));
 
-    if (
-      !!ncRoot &&
-      !!ncRoot.clientWidth &&
-      !!ncRoot.clientHeight &&
-      window.getComputedStyle(ncRoot).position === 'static'
-    ) {
-      ncRoot.classList.add('relative');
+    if (!!ncRoot && window.getComputedStyle(ncRoot).position === 'static') {
+      const { top, height } = ncRoot.getBoundingClientRect();
+
+      if (height) {
+        ncRoot.style.position = 'relative';
+      } else {
+        // Make sure the CMS UI won’t overlap with a header
+        ncRoot.style.position = 'fixed';
+        ncRoot.style.inset = `${top}px 0 0 0`;
+      }
     }
   });
 </script>
@@ -91,12 +94,8 @@
     overflow: hidden;
   }
 
-  :global(#nc-root.relative) {
-    position: relative;
-
-    & > :global(.sui.app-shell) {
-      position: absolute;
-    }
+  :global(#nc-root > .sui.app-shell) {
+    position: absolute;
   }
 
   .outer {
