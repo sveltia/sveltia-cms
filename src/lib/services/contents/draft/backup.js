@@ -126,11 +126,15 @@ export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
 
   const { timestamp, currentLocales, currentValues, files } = backup;
 
-  /** @type {boolean} */
+  /** @type {boolean | undefined} */
   const doRestore = await new Promise((resolve) => {
     // The promise will be resolved once the Restore or Discard button is clicked on the dialog
     restoreDialogState.set({ show: true, timestamp, resolve });
   });
+
+  if (doRestore === undefined) {
+    return;
+  }
 
   if (doRestore) {
     i18nAutoDupEnabled.set(false);

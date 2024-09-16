@@ -2,6 +2,7 @@
   import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
   import { backupToastState, restoreDialogState } from '$lib/services/contents/draft/backup';
+  import { showContentOverlay } from '$lib/services/contents/draft/editor';
 
   $: now = new Date();
   $: ({ resolve, timestamp } = $restoreDialogState);
@@ -15,6 +16,14 @@
     hour: 'numeric',
     minute: 'numeric',
   });
+
+  $: {
+    if (!$showContentOverlay && $restoreDialogState.show) {
+      // Close the dialog when the Content Editor is closed
+      $restoreDialogState.show = false;
+      resolve?.();
+    }
+  }
 </script>
 
 <ConfirmationDialog
