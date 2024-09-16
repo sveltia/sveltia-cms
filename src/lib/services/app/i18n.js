@@ -1,5 +1,7 @@
 import { initLocales } from '@sveltia/ui';
 import { addMessages, getLocaleFromNavigator } from 'svelte-i18n';
+import { get } from 'svelte/store';
+import { prefs } from '$lib/services/prefs';
 
 /**
  * Load strings and initialize the locales.
@@ -20,6 +22,6 @@ export const initAppLocale = () => {
 
   initLocales({
     fallbackLocale: 'en',
-    initialLocale: (getLocaleFromNavigator() ?? '').split('-')[0] || 'en',
+    initialLocale: get(prefs).locale || (getLocaleFromNavigator() ?? '').split('-')[0] || 'en',
   });
 };
