@@ -194,7 +194,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Required fields, not optional fields, are clearly marked for efficient data entry.
 - You can revert changes to all fields or a specific field.
 - If you revert changes and there are no unsaved changes, the Save button is disabled as expected[^118].
-- You can hide the preview of a specific field with `preview: false`.
+- You can hide the preview of a specific field with `preview: false`[^126].
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the preview pane, the corresponding field in the edit pane is highlighted. It will be automatically expanded if collapsed[^41].
 - The preview pane displays all fields, including each title, making it easier to see which fields are populated.
@@ -1054,3 +1054,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^124]: Netlify/Decap CMS [#7233](https://github.com/decaporg/decap-cms/issues/7233)
 
 [^125]: Netlify/Decap CMS [#475](https://github.com/decaporg/decap-cms/issues/475)
+
+[^126]: Netlify/Decap CMS [#7279](https://github.com/decaporg/decap-cms/issues/7279)
