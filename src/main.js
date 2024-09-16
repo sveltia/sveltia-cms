@@ -45,7 +45,15 @@ const compatibilityURL = 'https://github.com/sveltia/sveltia-cms#compatibility';
  * @see https://decapcms.org/docs/manual-initialization/
  * @see https://decapcms.org/docs/custom-mounting/
  */
-const init = ({ config = {} } = {}) => {
+const init = async ({ config = {} } = {}) => {
+  if (!document.querySelector('#nc-root')) {
+    // A custom mount element (`<div id="nc-root">`) could appear after the CMS `<script>`, so just
+    // wait until the page content is loaded
+    await new Promise((resolve) => {
+      window.addEventListener('DOMContentLoaded', () => resolve(undefined), { once: true });
+    });
+  }
+
   mount(App, {
     target: document.querySelector('#nc-root') ?? document.body,
     props: { config },
