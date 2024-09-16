@@ -24,7 +24,7 @@
   /**
    * @type {boolean}
    */
-  export let currentValue;
+  export let currentValue = false;
 </script>
 
 {#if typeof currentValue === 'boolean'}

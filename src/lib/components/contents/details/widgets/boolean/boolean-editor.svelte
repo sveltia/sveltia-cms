@@ -33,7 +33,7 @@
   /**
    * @type {boolean | 'mixed'}
    */
-  export let currentValue;
+  export let currentValue = false;
   /**
    * @type {boolean}
    */
