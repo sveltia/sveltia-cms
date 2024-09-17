@@ -319,6 +319,7 @@ const createEntryPath = (draft, locale, slug) => {
   const path = collection.path
     ? fillSlugTemplate(collection.path, {
         collection,
+        locale,
         content: currentValues[defaultLocale],
         currentSlug: slug,
       })
@@ -642,6 +643,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
                 ? defaultLocaleSlug
                 : fillSlugTemplate(slugTemplate, {
                     collection,
+                    locale,
                     content: {
                       // Merge the default locale content and localized content
                       ...currentValues[defaultLocale],
