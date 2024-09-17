@@ -34,7 +34,7 @@
           bind:value={$prefs.deployHookURL}
           flex
           label={$_('prefs.advanced.deploy_hook.field_label')}
-          onChange={() => {
+          onchange={() => {
             dispatch('change', {
               message: $_(
                 $prefs.deployHookURL
