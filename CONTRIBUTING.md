@@ -2,7 +2,7 @@
 
 ## Bug reports
 
-Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues) so we can make it better for everyone.
+Since Sveltia CMS is still in beta, we expect various problems. And even though Sveltia CMS doesn’t share any code with Netlify/Decap CMS, we might have the same bugs because of similarities in features. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues) so we can make it better for everyone.
 
 ## Feature requests
 
@@ -10,7 +10,7 @@ Feel free to [submit feature requests](https://github.com/sveltia/sveltia-cms/is
 
 ## Code contributions
 
-Due to limited review resources and the ongoing Svelte 5 _runes_ migration, pull requests will not be accepted for the time being. Please file issues instead.
+Due to limited review resources and the ongoing Svelte 5 _runes_ migration, pull requests may not be accepted for the time being (but small fixes are fine.) Please file issues instead. Note that we plan to create contributor documents _after_ the 1.0 release.
 
 ## Localizations
 
@@ -22,4 +22,4 @@ Tips are always welcome! The project hasn’t set up a sponsorship program, but 
 
 ## Other things you can do
 
-Last but not least, don’t forget to star this project and spread the word so more users can benefit from a better CMS experience!
+Last but not least, don’t forget to star this project on Github and spread the word so more users can benefit from a better CMS experience!
