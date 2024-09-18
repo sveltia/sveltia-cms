@@ -47,7 +47,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 115+ of them (or 195+ including duplicates) have been effectively solved in Sveltia CMS
-  - Target: 150 issues by GA, 250 in a future release
+  - Target: 150 issues by GA, 250 (or all the relevant and fixable issues) in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
 - Implementing our own enhancement ideas for every part of the product
@@ -76,7 +76,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better performance
 
-- Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files while building your website or application.
+- Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files during the build process.
 - Small footprint: The bundle size is less than 450 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet. That’s the power of Svelte + Vite.
 - We have upgraded from Svelte 4 to [Svelte 5 Release Candidate](https://svelte.dev/blog/svelte-5-release-candidate) to further boost performance, resulting in faster rendering, reduced memory usage and even smaller bundle size. A full migration to the _runes_ reactivity API will follow.
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
@@ -116,6 +116,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better security
 
 - Avoids severity vulnerabilities through constant dependency updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases[^33].
+- We have enabled [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/).
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration[^108].
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
@@ -363,9 +364,10 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 - Tackling more Netlify/Decap CMS issues, especially the [top voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
-- AI integrations
+- AI integrations for image generation and content writing
 - End-user documentation
 - Contributor documentation
+- Marketplace for custom widgets, etc.
 - and so much more!
 
 ## Getting started
