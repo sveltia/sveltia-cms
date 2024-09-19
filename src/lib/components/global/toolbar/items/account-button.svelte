@@ -128,7 +128,7 @@
         <MenuItem
           label={$_('help.discord')}
           onclick={() => {
-            window.open('https://discord.gg/6zC5eTCw', '_blank');
+            window.open('https://discord.gg/5hwCGqup5b', '_blank');
           }}
         />
         <Divider />

@@ -788,7 +788,7 @@ img-src 'self' blob: data: https://*;
 
 ## Support & feedback
 
-While we don’t have dedicated developer/user support resources, quick questions and feedback are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of this GitHub repository. We also have a [Discord channel](https://discord.gg/6zC5eTCw) for casual chat and instant help.
+While we don’t have dedicated developer/user support resources, quick questions and feedback are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of this GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat and instant help.
 
 Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements. Feel free to reach out!
 
