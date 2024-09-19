@@ -8,12 +8,11 @@
   $: ({ backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
 
-  /** @type {boolean | 'mixed' | undefined} */
   $: devModeEnabled = $prefs.devModeEnabled ?? false;
 
   $: {
     if ($prefs.devModeEnabled !== devModeEnabled) {
-      $prefs.devModeEnabled = Boolean(devModeEnabled);
+      $prefs.devModeEnabled = devModeEnabled;
     }
   }
 

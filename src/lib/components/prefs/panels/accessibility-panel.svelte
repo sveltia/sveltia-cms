@@ -3,12 +3,11 @@
   import { _ } from 'svelte-i18n';
   import { prefs } from '$lib/services/prefs';
 
-  /** @type {boolean | 'mixed' | undefined} */
   $: underlineLinks = $prefs.underlineLinks ?? true;
 
   $: {
     if ($prefs.underlineLinks !== underlineLinks) {
-      $prefs.underlineLinks = Boolean(underlineLinks);
+      $prefs.underlineLinks = underlineLinks;
     }
   }
 </script>

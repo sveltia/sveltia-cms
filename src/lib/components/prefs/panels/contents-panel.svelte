@@ -3,12 +3,11 @@
   import { _ } from 'svelte-i18n';
   import { prefs } from '$lib/services/prefs';
 
-  /** @type {boolean | 'mixed' | undefined} */
   $: closeOnSave = $prefs.closeOnSave ?? true;
 
   $: {
     if ($prefs.closeOnSave !== closeOnSave) {
-      $prefs.closeOnSave = Boolean(closeOnSave);
+      $prefs.closeOnSave = closeOnSave;
     }
   }
 </script>
