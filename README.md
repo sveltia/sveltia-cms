@@ -72,6 +72,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113]. Best of all, Svelte offers unmatched performance!
+- The Account menu contains relevant links, including release notes, feedback and help.
+- Users can customize the application with various settings.
 - The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
 
 ### Better performance
@@ -1043,7 +1045,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^118]: Netlify/Decap CMS [#7267](https://github.com/decaporg/decap-cms/issues/7267)
 
-[^119]: Netlify/Decap CMS [#5640](https://github.com/decaporg/decap-cms/issues/5640)
+[^119]: Netlify/Decap CMS [#5640](https://github.com/decaporg/decap-cms/issues/5640), [#6444](https://github.com/decaporg/decap-cms/issues/6444)
 
 [^120]: Netlify/Decap CMS [#2727](https://github.com/decaporg/decap-cms/issues/2727), [#4884](https://github.com/decaporg/decap-cms/issues/4884)
 
