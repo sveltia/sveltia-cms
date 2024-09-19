@@ -468,6 +468,8 @@ export const strings = {
     },
   },
   youtube_video_player: 'YouTube 動画プレーヤー',
+  today: '今日',
+  now: '現在時刻',
 
   // Content preview
   boolean: {

@@ -30,7 +30,7 @@
     // Widget-specific options
     date_format: dateFormat,
     time_format: timeFormat,
-    picker_utc: pickerUTC = false,
+    picker_utc: utc = false,
   } = fieldConfig);
   $: dateOnly = timeFormat === false;
   $: timeOnly = dateFormat === false;
@@ -53,7 +53,7 @@
           {date.toLocaleDateString(canonicalLocale, {
             ...dateFormatOptions,
             timeZone:
-              pickerUTC ||
+              utc ||
               (dateOnly && !!currentValue?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
               (dateOnly && !!currentValue?.match(/T00:00(?::00)?(?:\.000)?Z$/))
                 ? 'UTC'
@@ -63,10 +63,13 @@
           {date.toLocaleString(canonicalLocale, {
             ...dateFormatOptions,
             ...timeFormatOptions,
-            timeZone: pickerUTC ? 'UTC' : undefined,
+            timeZone: utc ? 'UTC' : undefined,
           })}
         {/if}
       </time>
+    {/if}
+    {#if utc}
+      (UTC)
     {/if}
   </p>
 {/if}

@@ -285,11 +285,11 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
       return undefined;
     }
 
-    const { format, picker_utc: pickerUTC = false } = /** @type {DateTimeField} */ (fieldConfig);
+    const { format, picker_utc: utc = false } = /** @type {DateTimeField} */ (fieldConfig);
 
     dateTimeParts = getDateTimeParts({
-      date: (pickerUTC ? moment.utc : moment)(fieldValue, format).toDate(),
-      timeZone: pickerUTC ? 'UTC' : undefined,
+      date: (utc ? moment.utc : moment)(fieldValue, format).toDate(),
+      timeZone: utc ? 'UTC' : undefined,
     });
   }
 

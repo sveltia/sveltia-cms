@@ -393,16 +393,28 @@
     :global(input[type='datetime-local']),
     :global(input[type='time']) {
       outline: 0;
+      margin: var(--sui-focus-ring-width);
       border-width: var(--sui-textbox-border-width, 1px);
       border-color: var(--sui-primary-border-color);
       border-radius: var(--sui-control-medium-border-radius);
       padding: var(--sui-textbox-singleline-padding);
       width: auto;
       height: var(--sui-textbox-height);
+      color: var(--sui-textbox-foreground-color);
       background-color: var(--sui-textbox-background-color);
       font-family: var(--sui-textbox-font-family);
       font-size: var(--sui-textbox-font-size);
       text-transform: uppercase;
+
+      &:disabled {
+        opacity: 0.4;
+      }
+    }
+
+    :global(input[type='date'][aria-invalid='true']),
+    :global(input[type='datetime-local'][aria-invalid='true']),
+    :global(input[type='time'][aria-invalid='true']) {
+      border-color: var(--sui-error-foreground-color);
     }
   }
 

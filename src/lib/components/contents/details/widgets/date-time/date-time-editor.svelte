@@ -5,7 +5,10 @@
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
+  import { Button } from '@sveltia/ui';
+  import { _ } from 'svelte-i18n';
   import {
+    getCurrentDateTime,
     getCurrentValue,
     getInputValue,
   } from '$lib/components/contents/details/widgets/date-time/helper';
@@ -54,6 +57,7 @@
     // Widget-specific options
     date_format: dateFormat,
     time_format: timeFormat,
+    picker_utc: utc = false,
   } = fieldConfig);
   $: dateOnly = timeFormat === false;
   $: timeOnly = dateFormat === false;
@@ -113,26 +117,35 @@
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
   />
+  {#if utc}
+    <span role="none" class="utc">UTC</span>
+  {/if}
+  <Button
+    variant="tertiary"
+    label={$_(dateOnly ? 'today' : 'now')}
+    onclick={() => {
+      currentValue = getCurrentDateTime(fieldConfig);
+    }}
+  />
+  <Button
+    variant="tertiary"
+    label={$_('clear')}
+    disabled={!currentValue}
+    onclick={() => {
+      currentValue = '';
+    }}
+  />
 </div>
 
 <style lang="scss">
   div {
     display: flex;
     align-items: center;
+  }
 
-    input {
-      margin-right: auto;
-      color: inherit;
-      background-color: transparent;
-      font-family: var(--sui-textbox-font-family);
-
-      &:disabled {
-        opacity: 0.4;
-      }
-    }
-
-    :global(button) {
-      margin: 4px;
-    }
+  .utc {
+    margin: 0 8px;
+    color: var(--sui-secondary-foreground-color);
+    font-size: var(--sui-font-size-small);
   }
 </style>

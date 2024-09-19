@@ -465,6 +465,8 @@ export const strings = {
     },
   },
   youtube_video_player: 'YouTube video player',
+  today: 'Today',
+  now: 'Now',
 
   // Content preview
   boolean: {

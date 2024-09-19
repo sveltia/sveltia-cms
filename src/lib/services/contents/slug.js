@@ -33,13 +33,13 @@ export const applyTemplateFilter = (slugPart, tf, fieldConfig) => {
   if (dateTransformer) {
     const [, format] = dateTransformer;
 
-    const { time_format: timeFormat = undefined, picker_utc: pickerUTC = false } =
+    const { time_format: timeFormat = undefined, picker_utc: utc = false } =
       /** @type {DateTimeField} */ (fieldConfig) ?? /** @type {DateTimeField} */ ({});
 
     const dateOnly = timeFormat === false;
 
     return (
-      pickerUTC ||
+      utc ||
       (dateOnly && !!slugPartStr?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
       (dateOnly && !!slugPartStr.match(/T00:00(?::00)?(?:\.000)?Z$/))
         ? moment.utc(slugPartStr)

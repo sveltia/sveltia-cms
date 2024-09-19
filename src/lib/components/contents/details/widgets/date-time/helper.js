@@ -2,18 +2,43 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
 
 /**
+ * Get the current date/time.
+ * @param {DateTimeField} fieldConfig - Field configuration.
+ * @returns {string} Current date/time in the ISO 8601 format.
+ */
+export const getCurrentDateTime = (fieldConfig) => {
+  const { date_format: dateFormat, time_format: timeFormat, picker_utc: utc = false } = fieldConfig;
+
+  const { year, month, day, hour, minute } = getDateTimeParts({
+    timeZone: utc ? 'UTC' : undefined,
+  });
+
+  const dateStr = `${year}-${month}-${day}`;
+  const timeStr = `${hour}:${minute}`;
+
+  if (timeFormat === false) {
+    return dateStr;
+  }
+
+  if (dateFormat === false) {
+    return timeStr;
+  }
+
+  if (utc) {
+    return `${dateStr}T${timeStr}:00.000Z`;
+  }
+
+  return `${dateStr}T${timeStr}`;
+};
+
+/**
  * Get the default value for a DateTime field.
  * @param {DateTimeField} fieldConfig - Field configuration.
  * @returns {string} Default value.
  * @todo Write tests for this.
  */
 export const getDefaultValue = (fieldConfig) => {
-  const {
-    default: defaultValue,
-    date_format: dateFormat,
-    time_format: timeFormat,
-    picker_utc: pickerUTC = false,
-  } = fieldConfig;
+  const { default: defaultValue } = fieldConfig;
 
   if (typeof defaultValue !== 'string') {
     return '';
@@ -24,26 +49,7 @@ export const getDefaultValue = (fieldConfig) => {
   // @see https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0
   // @see https://github.com/decaporg/decap-website/commit/01e54d8392e368e5d7b9fec307f50af584b12c91
   if (defaultValue === '{{now}}') {
-    const { year, month, day, hour, minute } = getDateTimeParts({
-      timeZone: pickerUTC ? 'UTC' : undefined,
-    });
-
-    const dateStr = `${year}-${month}-${day}`;
-    const timeStr = `${hour}:${minute}`;
-
-    if (timeFormat === false) {
-      return dateStr;
-    }
-
-    if (dateFormat === false) {
-      return timeStr;
-    }
-
-    if (pickerUTC) {
-      return `${dateStr}T${timeStr}:00.000Z`;
-    }
-
-    return `${dateStr}T${timeStr}`;
+    return getCurrentDateTime(fieldConfig);
   }
 
   return defaultValue;
@@ -57,7 +63,7 @@ export const getDefaultValue = (fieldConfig) => {
  * @todo Write tests for this.
  */
 export const getCurrentValue = (inputValue, fieldConfig) => {
-  const { format, date_format: dateFormat, picker_utc: pickerUTC = false } = fieldConfig;
+  const { format, date_format: dateFormat, picker_utc: utc = false } = fieldConfig;
   const timeOnly = dateFormat === false;
 
   if (inputValue === '') {
@@ -74,10 +80,10 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
 
   try {
     if (format) {
-      return (pickerUTC ? moment.utc : moment)(inputValue).format(format);
+      return (utc ? moment.utc : moment)(inputValue).format(format);
     }
 
-    if (pickerUTC) {
+    if (utc) {
       return new Date(inputValue).toISOString();
     }
 
@@ -102,7 +108,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
     format,
     date_format: dateFormat,
     time_format: timeFormat,
-    picker_utc: pickerUTC = false,
+    picker_utc: utc = false,
   } = fieldConfig;
 
   const dateOnly = timeFormat === false;
@@ -124,10 +130,8 @@ export const getInputValue = (currentValue, fieldConfig) => {
 
   try {
     const { year, month, day, hour, minute } = getDateTimeParts({
-      date: currentValue
-        ? (pickerUTC ? moment.utc : moment)(currentValue, format).toDate()
-        : new Date(),
-      timeZone: pickerUTC ? 'UTC' : undefined,
+      date: currentValue ? (utc ? moment.utc : moment)(currentValue, format).toDate() : new Date(),
+      timeZone: utc ? 'UTC' : undefined,
     });
 
     const dateStr = `${year}-${month}-${day}`;
@@ -158,7 +162,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
  * @todo Write tests for this.
  */
 export const getDate = (currentValue, fieldConfig) => {
-  const { format, date_format: dateFormat, picker_utc: pickerUTC = false } = fieldConfig;
+  const { format, date_format: dateFormat, picker_utc: utc = false } = fieldConfig;
   const timeOnly = dateFormat === false;
 
   if (!currentValue) {
@@ -166,12 +170,12 @@ export const getDate = (currentValue, fieldConfig) => {
   }
 
   try {
-    if (format) {
-      return (pickerUTC ? moment.utc : moment)(currentValue, format).toDate();
-    }
-
     if (timeOnly) {
       return new Date(new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`));
+    }
+
+    if (format) {
+      return (utc ? moment.utc : moment)(currentValue, format).toDate();
     }
 
     return new Date(currentValue);
