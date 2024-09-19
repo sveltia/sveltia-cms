@@ -20,6 +20,8 @@ export const strings = {
     release_notes_version_x: 'Release Notes (v{version})',
     issue: 'Report Issue',
     feedback: 'Share Feedback',
+    support: 'Get Help',
+    discord: 'Join Us on Discord',
   },
 
   // Account

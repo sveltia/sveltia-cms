@@ -104,13 +104,31 @@
         <MenuItem
           label={$_('help.issue')}
           onclick={() => {
-            window.open('https://github.com/sveltia/sveltia-cms/issues', '_blank');
+            window.open('https://github.com/sveltia/sveltia-cms/issues/new', '_blank');
           }}
         />
         <MenuItem
           label={$_('help.feedback')}
           onclick={() => {
-            window.open('https://github.com/sveltia/sveltia-cms/discussions', '_blank');
+            window.open(
+              'https://github.com/sveltia/sveltia-cms/discussions/new?category=general',
+              '_blank',
+            );
+          }}
+        />
+        <MenuItem
+          label={$_('help.support')}
+          onclick={() => {
+            window.open(
+              'https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a',
+              '_blank',
+            );
+          }}
+        />
+        <MenuItem
+          label={$_('help.discord')}
+          onclick={() => {
+            window.open('https://discord.gg/6zC5eTCw', '_blank');
           }}
         />
         <Divider />

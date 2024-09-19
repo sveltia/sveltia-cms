@@ -20,6 +20,8 @@ export const strings = {
     release_notes_version_x: 'リリースノート (v{version})',
     issue: '問題を報告',
     feedback: 'フィードバックを共有',
+    support: 'サポートを求める',
+    discord: 'Discord チャンネルに参加',
   },
 
   // Account
