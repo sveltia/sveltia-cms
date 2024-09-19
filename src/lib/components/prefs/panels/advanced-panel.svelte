@@ -9,7 +9,7 @@
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
 
   /** @type {boolean | 'mixed' | undefined} */
-  $: devModeEnabled = $prefs.devModeEnabled;
+  $: devModeEnabled = $prefs.devModeEnabled ?? false;
 
   $: {
     if ($prefs.devModeEnabled !== devModeEnabled) {

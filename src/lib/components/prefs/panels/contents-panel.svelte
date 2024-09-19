@@ -4,7 +4,7 @@
   import { prefs } from '$lib/services/prefs';
 
   /** @type {boolean | 'mixed' | undefined} */
-  $: closeOnSave = $prefs.closeOnSave;
+  $: closeOnSave = $prefs.closeOnSave ?? true;
 
   $: {
     if ($prefs.closeOnSave !== closeOnSave) {

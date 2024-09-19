@@ -4,7 +4,7 @@
   import { prefs } from '$lib/services/prefs';
 
   /** @type {boolean | 'mixed' | undefined} */
-  $: underlineLinks = $prefs.underlineLinks;
+  $: underlineLinks = $prefs.underlineLinks ?? true;
 
   $: {
     if ($prefs.underlineLinks !== underlineLinks) {
