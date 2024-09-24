@@ -9,11 +9,17 @@ import {
   getAssetKind,
   getAssetPublicURL,
   getAssetsByDirName,
+  getCollectionsByAsset,
   overlaidAsset,
 } from '$lib/services/assets';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
-import { allEntries, getCollection, getEntriesByAssetURL } from '$lib/services/contents';
+import {
+  allEntries,
+  getCollectionsByEntry,
+  getEntriesByAssetURL,
+  getFilesByEntry,
+} from '$lib/services/contents';
 import { createSavingEntryData } from '$lib/services/contents/draft/save';
 import { renameIfNeeded } from '$lib/services/utils/file';
 
@@ -62,9 +68,6 @@ export const saveAssets = async (uploadingAssets, options) => {
     options,
   );
 
-  const { collectionName } =
-    get(allAssetFolders).findLast(({ internalPath }) => folder === internalPath) ?? {};
-
   /**
    * @type {Asset[]}
    */
@@ -79,7 +82,6 @@ export const saveAssets = async (uploadingAssets, options) => {
           size: file.size,
           kind: getAssetKind(name),
           text: undefined,
-          collectionName,
           folder,
         }),
     ),
@@ -151,7 +153,9 @@ export const moveAssets = async (action, movingAssets) => {
       }
 
       const { publicPath } =
-        _allAssetFolders.find(({ collectionName }) => collectionName === asset.collectionName) ??
+        _allAssetFolders.find(({ collectionName }) =>
+          getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
+        ) ??
         _allAssetFolders.find(({ collectionName }) => collectionName === null) ??
         {};
 
@@ -162,25 +166,47 @@ export const moveAssets = async (action, movingAssets) => {
 
       await Promise.all(
         updatedEntries.map(async (entry) => {
-          const { collectionName, fileName, locales, slug } = entry;
-          const collection = /** @type {Collection} */ (getCollection(collectionName));
+          const { locales, slug } = entry;
 
-          const originalLocales = Object.fromEntries(
-            Object.keys(locales).map((locale) => [locale, true]),
+          await Promise.all(
+            getCollectionsByEntry(entry).map(async (collection) => {
+              const originalLocales = Object.fromEntries(
+                Object.keys(locales).map((locale) => [locale, true]),
+              );
+
+              const savingDataProps = {
+                isNew: false,
+                collection,
+                originalEntry: entry,
+                defaultLocaleSlug: slug,
+                originalLocales,
+                currentLocales: originalLocales,
+                localizedEntryMap: locales,
+              };
+
+              /**
+               * Add saving entry data to the stack.
+               * @param {CollectionFile} [collectionFile] - File. File collection only.
+               */
+              const addSavingEntryData = async (collectionFile) => {
+                const { savingEntry, changes: savingEntryChanges } = await createSavingEntryData({
+                  ...savingDataProps,
+                  collectionFile,
+                });
+
+                savingEntries.push(savingEntry);
+                changes.push(...savingEntryChanges);
+              };
+
+              const collectionFiles = getFilesByEntry(collection, entry);
+
+              if (collectionFiles.length) {
+                await Promise.all(collectionFiles.map(addSavingEntryData));
+              } else {
+                await addSavingEntryData();
+              }
+            }),
           );
-
-          const { savingEntry, changes: savingEntryChanges } = await createSavingEntryData({
-            isNew: false,
-            collection,
-            collectionFile: fileName ? collection._fileMap?.[fileName] : undefined,
-            defaultLocaleSlug: slug,
-            originalLocales,
-            currentLocales: originalLocales,
-            localizedEntryMap: locales,
-          });
-
-          savingEntries.push(savingEntry);
-          changes.push(...savingEntryChanges);
         }),
       );
     }),

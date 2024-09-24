@@ -3,7 +3,7 @@
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getMediaFieldURL } from '$lib/services/assets';
-  import { getCollection } from '$lib/services/contents';
+  import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
 
   /**
    * @type {Entry}
@@ -15,9 +15,9 @@
    */
   let src;
 
-  $: ({ slug, locales, fileName, collectionName } = entry);
-  $: collection = getCollection(collectionName);
-  $: collectionFile = fileName ? collection?._fileMap?.[fileName] : undefined;
+  $: ({ slug, locales } = entry);
+  $: [collection] = getCollectionsByEntry(entry); // Use the first matching collection only
+  $: [collectionFile] = getFilesByEntry(collection, entry); // Use the first matching file only
   $: ({ defaultLocale } = collection?._i18n ?? /** @type {I18nConfig} */ ({}));
   $: locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
   $: ({ content } = locales[locale] ?? {});
@@ -34,7 +34,7 @@
 {#if content}
   <GridRow
     onclick={() => {
-      goto(`/collections/${collectionName}/entries/${fileName || slug}`);
+      goto(`/collections/${collection?.name}/entries/${collectionFile?.name || slug}`);
     }}
   >
     <GridCell class="image">

@@ -14,7 +14,6 @@ describe('Test getOptions()', () => {
       id: '',
       sha: '',
       slug: 'melvin-lucas',
-      collectionName: 'members',
       locales: {
         _default: {
           ...localizedEntryProps,
@@ -34,7 +33,6 @@ describe('Test getOptions()', () => {
       id: '',
       sha: '',
       slug: 'elsie-mcbride',
-      collectionName: 'members',
       locales: {
         _default: {
           ...localizedEntryProps,
@@ -54,7 +52,6 @@ describe('Test getOptions()', () => {
       id: '',
       sha: '',
       slug: 'maxine-field',
-      collectionName: 'members',
       locales: {
         _default: {
           ...localizedEntryProps,
@@ -195,8 +192,6 @@ describe('Test getOptions()', () => {
         id: '',
         sha: 'e5498c0c3d4592aaa18905e58bdf1cafa5b659c6',
         slug: '',
-        collectionName: 'relation_files',
-        fileName: 'cities',
         locales: {
           _default: {
             ...localizedEntryProps,
@@ -255,7 +250,6 @@ describe('Test getOptions()', () => {
         id: '',
         sha: '',
         slug: '',
-        collectionName: 'pages',
         locales: {
           _default: {
             ...localizedEntryProps,
@@ -273,7 +267,6 @@ describe('Test getOptions()', () => {
         id: '',
         sha: '',
         slug: '',
-        collectionName: 'pages',
         locales: {
           _default: {
             ...localizedEntryProps,

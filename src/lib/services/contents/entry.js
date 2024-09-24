@@ -5,7 +5,7 @@ import moment from 'moment';
 import { get } from 'svelte/store';
 import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
 import { getOptionLabel } from '$lib/components/contents/details/widgets/select/helper';
-import { allAssets, getAssetByPath } from '$lib/services/assets';
+import { allAssets, getAssetByPath, getCollectionsByAsset } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents';
@@ -149,16 +149,17 @@ export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPa
 
 /**
  * Get an entry’s field value by locale and key.
- * @param {Entry} entry - Entry.
- * @param {LocaleCode} locale - Locale code.
- * @param {FieldKeyPath | string} key - Field key path or one of other entry metadata property keys:
- * `slug`, `commit_author` and `commit_date`.
- * @param {object} [options] - Options.
- * @param {boolean} [options.resolveRef] - Whether to resolve the referenced value if the target
+ * @param {object} args - Arguments.
+ * @param {Entry} args.entry - Entry.
+ * @param {LocaleCode} args.locale - Locale code.
+ * @param {string} args.collectionName - Name of a collection that the entry belongs to.
+ * @param {FieldKeyPath | string} args.key - Field key path or one of other entry metadata property
+ * keys: `slug`, `commit_author` and `commit_date`.
+ * @param {boolean} [args.resolveRef] - Whether to resolve the referenced value if the target
  * field is a relation field.
  * @returns {any} Value.
  */
-export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {}) => {
+export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRef = true }) => {
   const { slug, locales, commitAuthor: { name, login, email } = {}, commitDate } = entry;
 
   if (key === 'slug') {
@@ -180,7 +181,7 @@ export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {})
   }
 
   if (resolveRef) {
-    const fieldConfig = getFieldConfig({ collectionName: entry.collectionName, keyPath: key });
+    const fieldConfig = getFieldConfig({ collectionName, keyPath: key });
 
     // Resolve the displayed value for a relation field
     if (fieldConfig?.widget === 'relation') {
@@ -199,13 +200,14 @@ export const getPropertyValue = (entry, locale, key, { resolveRef = true } = {})
 
 /**
  * Get a list of assets associated with the given entry.
- * @param {Entry} entry - Entry.
- * @param {object} [options] - Options.
- * @param {boolean} [options.relative] - Whether to only collect assets stored at a relative path.
+ * @param {object} args - Arguments.
+ * @param {Entry} args.entry - Entry.
+ * @param {string} args.collectionName - Name of a collection that the entry belongs to.
+ * @param {boolean} [args.relative] - Whether to only collect assets stored at a relative path.
  * @returns {Asset[]} Assets.
  */
-export const getAssociatedAssets = (entry, { relative = false } = {}) => {
-  const { collectionName, locales } = entry;
+export const getAssociatedAssets = ({ entry, collectionName, relative = false }) => {
+  const { locales } = entry;
 
   const assets = /** @type {Asset[]} */ (
     Object.values(locales)
@@ -220,7 +222,10 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
           ) {
             const asset = getAssetByPath(value, entry);
 
-            if (asset?.collectionName === collectionName) {
+            if (
+              asset &&
+              getCollectionsByAsset(asset).some((collection) => collection.name === collectionName)
+            ) {
               return asset;
             }
           }
@@ -233,7 +238,7 @@ export const getAssociatedAssets = (entry, { relative = false } = {}) => {
   );
 
   // Add orphaned/unused entry-relative assets
-  if (relative && getCollection(entry.collectionName)?._assetFolder?.entryRelative) {
+  if (relative && getCollection(collectionName)?._assetFolder?.entryRelative) {
     const entryDirName = getPathInfo(Object.values(entry.locales)[0].path).dirname;
 
     get(allAssets).forEach((asset) => {

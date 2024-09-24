@@ -437,6 +437,7 @@
 /**
  * Extra properties for a collection file.
  * @typedef {object} ExtraCollectionFileProps
+ * @property {string} _path - File path of the default locale with `{{locale}}` replaced.
  * @property {I18nConfig} _i18n - Normalized i18n configuration combined with the top-level and
  * collection-level configuration.
  */
@@ -752,8 +753,6 @@
  * collections could have entries with the same slug.
  * @property {string} slug - The slug of the default locale.
  * @property {LocalizedEntryMap} locales - Localized entry map.
- * @property {string} collectionName - Collection name.
- * @property {string} [fileName] - File identifier for a file collection.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.
  */
@@ -899,7 +898,6 @@
  * @property {number} size - File size in bytes.
  * @property {AssetKind} kind - Basic file type.
  * @property {string} [text] - Raw text for a plaintext file, like HTML or Markdown.
- * @property {string} [collectionName] - Collection name if it belongs to a collection asset folder.
  * @property {string} folder - Path of a collection-specific folder that contains the file or global
  * media folder.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.

@@ -40,7 +40,7 @@
       $selectedCollection = collection;
     }
 
-    if (!$selectedCollection) {
+    if (!collection || !$selectedCollection) {
       $announcedPageStatus = $_('collection_not_found');
 
       return; // Not Found
@@ -70,20 +70,22 @@
     if (_fileMap) {
       // File collection
       if (_state === 'entries' && _slug) {
-        const selectedEntry = getFile(collectionName, _slug);
+        const originalEntry = getFile(collectionName, _slug);
         const collectionFile = _fileMap[_slug];
 
-        if (selectedEntry) {
-          createDraft(selectedEntry);
-        } else if (collectionFile) {
+        if (originalEntry) {
+          createDraft({ collection, collectionFile, originalEntry });
+        } else {
           const { locales } = collectionFile._i18n;
 
           // File is not yet created
           createDraft({
-            collectionName,
-            fileName: collectionFile.name,
-            slug: collectionFile.name,
-            locales: Object.fromEntries(locales.map((_locale) => [_locale, {}])),
+            collection,
+            collectionFile,
+            originalEntry: {
+              slug: collectionFile.name,
+              locales: Object.fromEntries(locales.map((_locale) => [_locale, {}])),
+            },
           });
         }
 
@@ -97,7 +99,7 @@
     } else {
       // Folder collection
       if (_state === 'new' && !_slug && create) {
-        createDraft({ collectionName }, params);
+        createDraft({ collection, dynamicValues: params });
 
         $announcedPageStatus = $_('creating_x_collection_entry', {
           values: {
@@ -107,17 +109,17 @@
       }
 
       if (_state === 'entries' && _slug) {
-        const selectedEntry = $listedEntries.find(({ slug }) => slug === _slug);
+        const originalEntry = $listedEntries.find(({ slug }) => slug === _slug);
 
-        if (selectedEntry) {
+        if (originalEntry) {
           const { defaultLocale } = _i18n;
 
-          createDraft(selectedEntry);
+          createDraft({ collection, originalEntry });
 
           $announcedPageStatus = $_('editing_x_collection_entry', {
             values: {
               collection: collectionLabel,
-              entry: formatSummary($selectedCollection, selectedEntry, defaultLocale, {
+              entry: formatSummary($selectedCollection, originalEntry, defaultLocale, {
                 useTemplate: false,
               }),
             },

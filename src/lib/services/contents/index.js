@@ -1,9 +1,11 @@
+import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { getI18nConfig } from '$lib/services/contents/i18n';
+import { getFileExtension } from '$lib/services/contents/parser';
 
 /**
  * Regular expression to match `![alt](src "title")`.
@@ -85,13 +87,19 @@ export const getCollection = (name) => {
     });
   }
 
+  /** @type {Collection} */
   const collection = {
     ...rawCollection,
     _parserConfig: { extension, format, frontmatterDelimiter, yamlQuote },
     _i18n: getI18nConfig(rawCollection),
     _fileMap: files?.length
       ? Object.fromEntries(
-          files.map((file) => [file.name, { ...file, _i18n: getI18nConfig(rawCollection, file) }]),
+          files.map((file) => {
+            const _i18n = getI18nConfig(rawCollection, file);
+            const _path = file.file.replace('{{locale}}', _i18n.defaultLocale);
+
+            return [file.name, { ...file, _path, _i18n }];
+          }),
         )
       : undefined,
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
@@ -106,15 +114,66 @@ export const getCollection = (name) => {
 };
 
 /**
- * Get a file collection entry.
+ * Get collection entry folders that match the given path.
+ * @param {string} path - Entry path.
+ * @returns {CollectionEntryFolder[]} Entry folders.
+ */
+export const getEntryFoldersByPath = (path) => {
+  const { extension } = getPathInfo(path);
+
+  return get(allEntryFolders).filter(({ filePathMap, folderPath, parserConfig }) =>
+    folderPath
+      ? path.startsWith(folderPath) && getFileExtension(parserConfig) === extension
+      : Object.values(filePathMap ?? {}).includes(path),
+  );
+};
+
+/**
+ * Get a list of collections the given entry belongs to. One entry can theoretically appear in
+ * multiple collections depending on the configuration, so that the result is an array.
+ * @param {Entry} entry - Entry.
+ * @returns {Collection[]} Collections.
+ */
+export const getCollectionsByEntry = (entry) =>
+  getEntryFoldersByPath(Object.values(entry.locales)[0].path)
+    .map(({ collectionName }) => getCollection(collectionName))
+    .filter((collection) => !!collection);
+
+/**
+ * Get a file collection’s file configurations that matches the given entry. One file can
+ * theoretically appear in multiple collections files depending on the configuration, so that the
+ * result is an array.
+ * @param {Collection} collection - Collection.
+ * @param {Entry} entry - Entry.
+ * @returns {CollectionFile[]} Collection files.
+ */
+export const getFilesByEntry = (collection, entry) => {
+  const { _fileMap } = collection;
+
+  if (!_fileMap) {
+    // It’s a folder collection
+    return [];
+  }
+
+  return Object.values(_fileMap).filter(
+    ({ _path, _i18n }) => _path === entry.locales[_i18n.defaultLocale].path,
+  );
+};
+
+/**
+ * Get a file collection entry that matches the given collection name and file name.
  * @param {string} collectionName - Collection name.
  * @param {string} fileName - File name.
  * @returns {Entry | undefined} File.
  * @see https://decapcms.org/docs/collection-types/#file-collections
  */
 export const getFile = (collectionName, fileName) =>
-  get(allEntries).find(
-    (entry) => entry.collectionName === collectionName && entry.fileName === fileName,
+  get(allEntries).find((entry) =>
+    getCollectionsByEntry(entry).some(
+      (collection) =>
+        collection.name === collectionName &&
+        getFilesByEntry(collection, entry).some((file) => file.name === fileName),
+    ),
   );
 
 /**
@@ -132,13 +191,14 @@ export const getEntriesByCollection = (collectionName) => {
 
   const {
     filter,
-    _i18n: { defaultLocale },
+    _i18n: { defaultLocale: locale },
   } = collection;
 
   return get(allEntries).filter(
     (entry) =>
-      entry.collectionName === collectionName &&
-      (!filter || getPropertyValue(entry, defaultLocale, filter.field) === filter.value),
+      getCollectionsByEntry(entry).some((_collection) => _collection.name === collectionName) &&
+      (!filter ||
+        getPropertyValue({ entry, locale, collectionName, key: filter.field }) === filter.value),
   );
 };
 
@@ -159,7 +219,8 @@ export const getEntriesByAssetURL = async (
 
   const results = await Promise.all(
     entries.map(async (entry) => {
-      const { locales, collectionName, fileName } = entry;
+      const { locales } = entry;
+      const collections = getCollectionsByEntry(entry);
 
       const _results = await Promise.all(
         Object.values(locales).map(async ({ content }) => {
@@ -169,51 +230,72 @@ export const getEntriesByAssetURL = async (
                 return false;
               }
 
-              const field = getFieldConfig({
-                collectionName,
-                fileName,
-                valueMap: content,
-                keyPath,
-              });
+              const ___results = await Promise.all(
+                collections.map(async (collection) => {
+                  /**
+                   * Check if the field contains the asset.
+                   * @param {CollectionFile} [collectionFile] - File. File collection only.
+                   * @returns {Promise<boolean>} Result.
+                   */
+                  const hasAsset = async (collectionFile) => {
+                    const field = getFieldConfig({
+                      collectionName: collection.name,
+                      fileName: collectionFile?.name,
+                      valueMap: content,
+                      keyPath,
+                    });
 
-              if (!field) {
-                return false;
-              }
+                    if (!field) {
+                      return false;
+                    }
 
-              const { widget: widgetName = 'string' } = field;
+                    const { widget: widgetName = 'string' } = field;
 
-              if (['image', 'file'].includes(widgetName)) {
-                const match = (await getMediaFieldURL(value, entry)) === assetURL;
+                    if (['image', 'file'].includes(widgetName)) {
+                      const match = (await getMediaFieldURL(value, entry)) === assetURL;
 
-                if (match && newURL) {
-                  content[keyPath] = newURL;
-                }
+                      if (match && newURL) {
+                        content[keyPath] = newURL;
+                      }
 
-                return match;
-              }
+                      return match;
+                    }
 
-              // Search images in markdown body
-              if (widgetName === 'markdown') {
-                const matches = [...value.matchAll(markdownImageRegEx)];
+                    // Search images in markdown body
+                    if (widgetName === 'markdown') {
+                      const matches = [...value.matchAll(markdownImageRegEx)];
 
-                if (matches.length) {
-                  return (
-                    await Promise.all(
-                      matches.map(async ([, src]) => {
-                        const match = (await getMediaFieldURL(src, entry)) === assetURL;
+                      if (matches.length) {
+                        return (
+                          await Promise.all(
+                            matches.map(async ([, src]) => {
+                              const match = (await getMediaFieldURL(src, entry)) === assetURL;
 
-                        if (match && newURL) {
-                          content[keyPath] = content[keyPath].replace(src, newURL);
-                        }
+                              if (match && newURL) {
+                                content[keyPath] = content[keyPath].replace(src, newURL);
+                              }
 
-                        return match;
-                      }),
-                    )
-                  ).some(Boolean);
-                }
-              }
+                              return match;
+                            }),
+                          )
+                        ).some(Boolean);
+                      }
+                    }
 
-              return false;
+                    return false;
+                  };
+
+                  const collectionFiles = getFilesByEntry(collection, entry);
+
+                  if (collectionFiles.length) {
+                    return (await Promise.all(collectionFiles.map(hasAsset))).includes(true);
+                  }
+
+                  return hasAsset();
+                }),
+              );
+
+              return ___results.includes(true);
             }),
           );
 

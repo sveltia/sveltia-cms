@@ -1,9 +1,13 @@
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
-import { allAssetFolders, allAssets } from '$lib/services/assets';
+import { allAssets, getAssetFoldersByPath } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
-import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
-import { getFileExtension, parseEntryFiles } from '$lib/services/contents/parser';
+import {
+  allEntries,
+  dataLoaded,
+  entryParseErrors,
+  getEntryFoldersByPath,
+} from '$lib/services/contents';
+import { parseEntryFiles } from '$lib/services/contents/parser';
 
 /** @type {RepositoryInfo} */
 export const repositoryProps = {
@@ -34,44 +38,17 @@ export const createFileList = (files) => {
 
   files.forEach((fileInfo) => {
     const { path } = fileInfo;
-    const name = /** @type {string} */ (path.split('/').pop());
-    const extension = name.split('.').pop();
+    const [entryFolder] = getEntryFoldersByPath(path);
+    const [assetFolder] = getAssetFoldersByPath(path);
 
-    const entryFolder = get(allEntryFolders).findLast(({ filePathMap, folderPath }) =>
-      folderPath ? path.startsWith(folderPath) : Object.values(filePathMap ?? {}).includes(path),
-    );
-
-    const assetFolder = get(allAssetFolders).findLast(({ internalPath, entryRelative }) => {
-      if (entryRelative) {
-        return path.startsWith(`${internalPath}/`);
-      }
-
-      // Compare that the enclosing directory is exactly the same as the internal path, and ignore
-      // any subdirectories, as there is no way to upload assets to them.
-      return path.match(/^(.+)\//)?.[1] === internalPath;
-    });
-
-    if (
-      entryFolder &&
-      (Object.values(entryFolder.filePathMap ?? {}).includes(path) ||
-        extension === getFileExtension(entryFolder.parserConfig))
-    ) {
-      entryFiles.push({
-        ...fileInfo,
-        type: 'entry',
-        folder: entryFolder,
-      });
+    if (entryFolder) {
+      entryFiles.push({ ...fileInfo, type: 'entry', folder: entryFolder });
     }
 
-    // Exclude files with a leading `+` sign, which are Svelte page/layout files. Also exclude files
-    // already listed as entries. These files can appear in the file list when a relative media path
-    // is configured for a collection
-    if (assetFolder && !name.startsWith('+') && !entryFiles.find((e) => e.path === path)) {
-      assetFiles.push({
-        ...fileInfo,
-        type: 'asset',
-        folder: assetFolder,
-      });
+    // Exclude files already listed as entries. These files can appear in the file list when a
+    // relative media path is configured for a collection
+    if (assetFolder && !entryFiles.find((e) => e.path === path)) {
+      assetFiles.push({ ...fileInfo, type: 'asset', folder: assetFolder });
     }
   });
 

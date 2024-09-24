@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-continue */
 
-import { getHash } from '@sveltia/utils/crypto';
+import { generateUUID, getHash } from '@sveltia/utils/crypto';
 import { toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
@@ -471,6 +471,7 @@ const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
  * @param {object} args - Arguments.
  * @param {boolean} args.isNew - `true` if it’s a new folder collection entry draft.
  * @param {Collection} args.collection - Collection details.
+ * @param {Entry} [args.originalEntry] - Original entry if the entry draft is not new.
  * @param {CollectionFile} [args.collectionFile] - File details. File collection only.
  * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
  * @param {LocaleStateMap} args.originalLocales - Locale state map when the draft is created.
@@ -482,6 +483,7 @@ export const createSavingEntryData = async ({
   isNew,
   collection,
   collectionFile,
+  originalEntry,
   defaultLocaleSlug,
   originalLocales,
   currentLocales,
@@ -502,9 +504,7 @@ export const createSavingEntryData = async ({
    * @type {Entry}
    */
   const savingEntry = {
-    id: `${collection.name}/${defaultLocaleSlug}`,
-    collectionName: collection.name,
-    fileName: collectionFile?.name,
+    id: originalEntry?.id ?? generateUUID(),
     slug: defaultLocaleSlug,
     sha: '', // Populated later
     locales: Object.fromEntries(
@@ -784,6 +784,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     isNew,
     collection,
     collectionFile,
+    originalEntry,
     defaultLocaleSlug,
     localizedEntryMap,
     currentLocales,

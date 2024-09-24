@@ -9,6 +9,7 @@ import { backend } from '$lib/services/backends';
 import {
   allEntries,
   getEntriesByCollection,
+  getFilesByEntry,
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
@@ -144,29 +145,35 @@ export const formatSummary = (collection, entry, locale, { useTemplate = true } 
 /**
  * Sort the given entries.
  * @param {Entry[]} entries - Entry list.
+ * @param {Collection} collection - Collection that the entries belong to.
  * @param {SortingConditions} conditions - Sorting conditions.
  * @returns {Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
-const sortEntries = (entries, { key, order }) => {
+const sortEntries = (entries, collection, { key, order }) => {
   if (key === undefined || order === undefined) {
     return entries;
   }
 
   const _entries = [...entries];
-  const { defaultLocale } = /** @type {Collection} */ (get(selectedCollection))._i18n;
+
+  const {
+    name: collectionName,
+    _i18n: { defaultLocale: locale },
+  } = collection;
 
   const type =
     { slug: String, commit_author: String, commit_date: Date }[key] ||
-    (_entries.length ? getPropertyValue(_entries[0], defaultLocale, key)?.constructor : String) ||
+    (_entries.length
+      ? getPropertyValue({ entry: _entries[0], locale, collectionName, key })?.constructor
+      : String) ||
     String;
 
   const valueMap = Object.fromEntries(
-    _entries.map((entry) => [entry.slug, getPropertyValue(entry, defaultLocale, key)]),
+    _entries.map((entry) => [entry.slug, getPropertyValue({ entry, locale, collectionName, key })]),
   );
 
-  const { collectionName, fileName } = _entries[0];
-  const fieldConfig = getFieldConfig({ collectionName, fileName, keyPath: key });
+  const fieldConfig = getFieldConfig({ collectionName, keyPath: key });
 
   const dateFieldConfig =
     fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
@@ -209,15 +216,17 @@ const sortEntries = (entries, { key, order }) => {
 /**
  * Filter the given entries.
  * @param {Entry[]} entries - Entry list.
+ * @param {Collection} collection - Collection that the entries belong to.
  * @param {FilteringConditions[]} filters - One or more filtering conditions.
  * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
-const filterEntries = (entries, filters) => {
+const filterEntries = (entries, collection, filters) => {
   const {
+    name: collectionName,
     view_filters: configuredFilters = [],
-    _i18n: { defaultLocale },
-  } = /** @type {Collection} */ (get(selectedCollection));
+    _i18n: { defaultLocale: locale },
+  } = collection;
 
   // Ignore invalid filters
   const validFilters = filters.filter(
@@ -230,8 +239,9 @@ const filterEntries = (entries, filters) => {
   return entries.filter((entry) =>
     validFilters.every(({ field, pattern }) => {
       // Check both the raw value and referenced value
-      const rawValue = getPropertyValue(entry, defaultLocale, field, { resolveRef: false });
-      const refValue = getPropertyValue(entry, defaultLocale, field);
+      const args = { entry, locale, collectionName, key: field };
+      const rawValue = getPropertyValue({ ...args, resolveRef: false });
+      const refValue = getPropertyValue({ ...args });
       const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
 
       if (rawValue === undefined || refValue === undefined) {
@@ -250,25 +260,34 @@ const filterEntries = (entries, filters) => {
 /**
  * Group the given entries.
  * @param {Entry[]} entries - Entry list.
+ * @param {Collection} collection - Collection that the entries belong to.
  * @param {GroupingConditions} [conditions] - Grouping conditions.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
-const groupEntries = (entries, { field, pattern } = { field: '', pattern: undefined }) => {
+const groupEntries = (
+  entries,
+  collection,
+  { field, pattern } = { field: '', pattern: undefined },
+) => {
   if (!field) {
     return entries.length ? [{ name: '*', entries }] : [];
   }
 
+  const {
+    name: collectionName,
+    _i18n: { defaultLocale: locale },
+  } = collection;
+
   const sortCondition = get(currentView).sort;
-  const { defaultLocale } = /** @type {Collection} */ (get(selectedCollection))._i18n;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
   /** @type {Record<string, Entry[]>} */
   const groups = {};
   const otherKey = get(_)('other');
 
   entries.forEach((entry) => {
-    const value = getPropertyValue(entry, defaultLocale, field);
+    const value = getPropertyValue({ entry, locale, collectionName, key: field });
 
     if (value === undefined) {
       return;
@@ -394,24 +413,25 @@ export const listedEntries = derived(
 export const entryGroups = derived(
   [listedEntries, currentView],
   ([_listedEntries, _currentView], set) => {
+    const collection = /** @type {Collection} */ (get(selectedCollection));
     /**
      * @type {Entry[]}
      */
     let entries = [..._listedEntries];
 
     // Reset the groups if the current collection is empty or a file collection
-    if (!entries.length || !!entries[0].fileName) {
+    if (!entries.length || !!getFilesByEntry(collection, entries[0]).length) {
       set([]);
     } else {
       if (_currentView?.sort) {
-        entries = sortEntries(entries, _currentView.sort);
+        entries = sortEntries(entries, collection, _currentView.sort);
       }
 
       if (_currentView?.filters) {
-        entries = filterEntries(entries, _currentView.filters);
+        entries = filterEntries(entries, collection, _currentView.filters);
       }
 
-      set(groupEntries(entries, _currentView?.group));
+      set(groupEntries(entries, collection, _currentView?.group));
     }
   },
 );

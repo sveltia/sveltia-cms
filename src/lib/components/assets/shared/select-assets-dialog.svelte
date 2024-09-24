@@ -8,7 +8,7 @@
   import InternalAssetsPanel from '$lib/components/assets/shared/internal-assets-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { allAssetFolders, allAssets } from '$lib/services/assets';
+  import { allAssetFolders, allAssets, getCollectionsByAsset } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
   import {
@@ -185,8 +185,11 @@
               (!kind || kind === asset.kind) &&
               // Hide assets stored in an entry-relative path, since these files are only used
               // for the associated entry
-              !$allAssetFolders.find((folder) => folder.collectionName === asset.collectionName)
-                ?.entryRelative,
+              !$allAssetFolders.find((folder) =>
+                getCollectionsByAsset(asset).some(
+                  (collection) => collection.name === folder.collectionName,
+                ),
+              )?.entryRelative,
           )}
           bind:selectedAsset
           {showUploader}

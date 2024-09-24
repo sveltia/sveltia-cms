@@ -26,7 +26,6 @@ describe('Test formatSummary()', () => {
     id: '',
     sha: '',
     slug: 'net',
-    collectionName: 'pages-tags',
     locales: {
       de: {
         ...localizedEntryProps,

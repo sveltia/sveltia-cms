@@ -314,21 +314,18 @@ export const createProxy = ({
 
 /**
  * Create an entry draft.
- * @param {any} entry - Entry to be edited, or a partial {@link Entry} object containing at least
- * the collection name for a new entry.
- * @param {Record<string, string>} [dynamicValues] - Dynamic default values for a new entry passed
- * through URL parameters.
+ * @param {object} args - Arguments.
+ * @param {Collection} args.collection - Collection that the entry belongs to.
+ * @param {CollectionFile} [args.collectionFile] - Collection file. File collection only.
+ * @param {any} [args.originalEntry] - Entry to be edited, or a partial {@link Entry} object.
+ * @param {Record<string, string>} [args.dynamicValues] - Dynamic default values for a new entry
+ * passed through URL parameters.
  */
-export const createDraft = (entry, dynamicValues) => {
-  const { id, slug, collectionName, fileName, locales } = entry;
+export const createDraft = ({ collection, collectionFile, originalEntry = {}, dynamicValues }) => {
+  const collectionName = collection.name;
+  const fileName = collectionFile?.name;
+  const { id, slug, locales } = originalEntry;
   const isNew = id === undefined;
-  const collection = getCollection(collectionName);
-
-  if (!collection) {
-    return;
-  }
-
-  const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
   const { fields = [], _i18n } = collectionFile ?? collection;
   const { locales: allLocales } = _i18n;
 
@@ -355,7 +352,7 @@ export const createDraft = (entry, dynamicValues) => {
     collection,
     fileName,
     collectionFile,
-    originalEntry: isNew ? undefined : entry,
+    originalEntry: isNew ? undefined : originalEntry,
     originalLocales,
     currentLocales: structuredClone(originalLocales),
     originalValues,

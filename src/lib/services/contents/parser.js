@@ -1,5 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
+import { generateUUID } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
@@ -350,7 +351,13 @@ export const parseEntryFiles = (entryFiles) => {
     }
 
     /** @type {Entry} */
-    const entry = { id: '', slug: '', sha, collectionName, fileName, locales: {}, ...meta };
+    const entry = {
+      id: generateUUID(),
+      slug: '',
+      sha,
+      locales: {},
+      ...meta,
+    };
 
     if (!i18nEnabled) {
       const slug = fileName || getSlug(collectionName, filePath, parsedFile);
@@ -415,7 +422,6 @@ export const parseEntryFiles = (entryFiles) => {
         return;
       }
 
-      entry.id = tempId;
       entry.locales[locale] = localizedEntry;
 
       if (locale === defaultLocale) {
@@ -427,17 +433,8 @@ export const parseEntryFiles = (entryFiles) => {
     entries.push(entry);
   });
 
-  const filteredEntries = entries.filter((entry) => {
-    const { collectionName, slug, locales } = entry;
-
-    if (!slug || !Object.keys(locales).length) {
-      return false;
-    }
-
-    entry.id = `${collectionName}/${slug}`;
-
-    return true;
-  });
-
-  return { entries: filteredEntries, errors };
+  return {
+    entries: entries.filter(({ slug, locales }) => !!slug && !!Object.keys(locales).length),
+    errors,
+  };
 };

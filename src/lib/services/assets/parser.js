@@ -15,7 +15,7 @@ export const parseAssetFiles = (assetFiles) =>
       size,
       text = undefined,
       meta = {},
-      folder: { collectionName, internalPath },
+      folder: { internalPath },
     } = assetInfo;
 
     return /** @type {Asset} */ ({
@@ -27,7 +27,6 @@ export const parseAssetFiles = (assetFiles) =>
       size,
       kind: getAssetKind(name),
       text,
-      collectionName,
       folder: internalPath,
       ...meta,
     });

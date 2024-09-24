@@ -1,6 +1,6 @@
 import { derived, writable } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
-import { allEntries, getCollection } from '$lib/services/contents';
+import { allEntries, getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
 
 /**
  * @type {import('svelte/store').Writable<string>}
@@ -29,29 +29,30 @@ export const searchResults = derived(
   [allEntries, allAssets, searchTerms],
   ([_allEntries, _allAssets, _searchTerms], set) => {
     const terms = _searchTerms ? normalize(_searchTerms) : '';
+    /**
+     * Check if the given label matches the search terms.
+     * @param {string} label - Label.
+     * @returns {boolean} Result.
+     */
+    const masMatch = (label) => normalize(label).includes(terms);
 
     const entries = (() => {
       if (!_allEntries?.length || !terms) {
         return [];
       }
 
-      return _allEntries.filter(({ collectionName, fileName, locales }) => {
-        const collection = getCollection(collectionName);
-
-        const label = fileName
-          ? collection?._fileMap?.[fileName]?.label || fileName
-          : collection?.label || collectionName;
-
-        if (normalize(label).includes(terms)) {
-          return true;
-        }
-
-        return Object.values(locales).some(({ content }) =>
-          Object.values(content).some(
-            (value) => typeof value === 'string' && !!value && normalize(value).includes(terms),
-          ),
-        );
-      });
+      return _allEntries.filter((entry) =>
+        getCollectionsByEntry(entry).some(
+          (collection) =>
+            masMatch(collection.label || collection.name) ||
+            getFilesByEntry(collection, entry).some((file) => masMatch(file.label || file.name)) ||
+            Object.values(entry.locales).some(({ content }) =>
+              Object.values(content).some(
+                (value) => typeof value === 'string' && !!value && masMatch(value),
+              ),
+            ),
+        ),
+      );
     })();
 
     const assets = (() => {

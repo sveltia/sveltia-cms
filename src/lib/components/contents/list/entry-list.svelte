@@ -26,7 +26,7 @@
         {#each $entryGroups as { name, entries } (name)}
           <!-- @todo Implement custom table column option that can replace summary template -->
           <GridBody label={name !== '*' ? name : undefined}>
-            {#each entries as entry (entry.slug)}
+            {#each entries as entry (entry.id)}
               {@const { locales } = entry}
               {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
               {@const { content } = locales[locale]}

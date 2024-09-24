@@ -6,7 +6,7 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getAssetDetails, isMediaKind } from '$lib/services/assets';
-  import { getCollection } from '$lib/services/contents';
+  import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media';
 
@@ -63,6 +63,16 @@
     updateProps();
   }
 </script>
+
+{#snippet usedEntryLink(
+  /** @type {Record<string, string>} */ { link, collectionLabel, entryLabel },
+)}
+  <p>
+    <Button role="link" variant="link" onclick={() => goto(link)}>
+      <span role="none">{collectionLabel} › {entryLabel}</span>
+    </Button>
+  </p>
+{/snippet}
 
 <div role="none" class="detail">
   {#if showPreview && canPreview}
@@ -134,33 +144,32 @@
   {/if}
   <section>
     <h4>{$_('used_in')}</h4>
-    {#each usedEntries as { sha, slug, locales, collectionName, fileName } (sha)}
-      {@const collection = (() => /** @type {Collection} */ (getCollection(collectionName)))()}
-      {@const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined}
-      {@const { defaultLocale } = (collectionFile ?? collection)._i18n}
-      {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
-      {@const { content } = locales[locale]}
-      <p>
-        <Button
-          role="link"
-          variant="link"
-          onclick={() => {
-            goto(`/collections/${collectionName}/entries/${fileName || slug}`);
-          }}
-        >
-          <span role="none">
-            {collection.label || collection.name} ›
-            {#if collectionFile}
-              {collectionFile.label || collectionFile.name}
-            {:else if content}
-              {content[collection.identifier_field ?? ''] ||
-                content.title ||
-                content.name ||
-                content.label}
-            {/if}
-          </span>
-        </Button>
-      </p>
+    {#each usedEntries as entry (entry.sha)}
+      {@const { slug, locales } = entry}
+      {#each getCollectionsByEntry(entry) as collection (collection.name)}
+        {@const collectionLabel = collection.label || collection.name}
+        {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
+          {@render usedEntryLink({
+            link: `/collections/${collection.name}/entries/${collectionFile.name}`,
+            collectionLabel,
+            entryLabel: collectionFile.label || collectionFile.name,
+          })}
+        {:else}
+          {@const { defaultLocale } = collection._i18n}
+          {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
+          {@const { content } = locales[locale]}
+          {@render usedEntryLink({
+            link: `/collections/${collection.name}/entries/${slug}`,
+            collectionLabel,
+            entryLabel:
+              content?.[collection.identifier_field ?? ''] ||
+              content?.title ||
+              content?.name ||
+              content?.label ||
+              slug,
+          })}
+        {/each}
+      {/each}
     {:else}
       <p>{$_('sort_keys.none')}</p>
     {/each}
@@ -184,18 +193,17 @@
 
     section {
       margin: 0 0 16px;
+
+      & > :global(*) {
+        margin: 0 0 4px;
+        word-break: break-all;
+      }
     }
 
     h4 {
       font-size: var(--sui-font-size-small);
       font-weight: 600;
       color: var(--sui-secondary-foreground-color);
-    }
-
-    h4,
-    p {
-      margin: 0 0 4px;
-      word-break: break-all;
     }
   }
 </style>

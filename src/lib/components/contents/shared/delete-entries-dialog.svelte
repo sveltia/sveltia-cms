@@ -10,7 +10,15 @@
 
   $: associatedAssets =
     !!$selectedEntries.length && !!$selectedCollection?._assetFolder?.entryRelative
-      ? $selectedEntries.map((entry) => getAssociatedAssets(entry, { relative: true })).flat(1)
+      ? $selectedEntries
+          .map((entry) =>
+            getAssociatedAssets({
+              entry,
+              collectionName: $selectedCollection.name,
+              relative: true,
+            }),
+          )
+          .flat(1)
       : [];
 </script>
 

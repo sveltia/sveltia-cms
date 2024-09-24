@@ -60,7 +60,8 @@
   } = $siteConfig ?? /** @type {SiteConfig} */ ({}));
   $: showSaveOptions = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: collectionLabel = collection?.label || collection?.name;
+  $: collectionName = collection?.name;
+  $: collectionLabel = collection?.label || collectionName;
   $: collectionLabelSingular = collection?.label_singular || collectionLabel;
   $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
   $: modified =
@@ -71,7 +72,7 @@
     .filter(Boolean).length;
   $: associatedAssets =
     !!originalEntry && !!collection._assetFolder?.entryRelative
-      ? getAssociatedAssets(originalEntry, { relative: true })
+      ? getAssociatedAssets({ entry: originalEntry, collectionName, relative: true })
       : [];
   $: previewURL = originalEntry
     ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
@@ -89,19 +90,19 @@
       const savedEntry = await saveEntry({ skipCI });
 
       if ($prefs?.closeOnSave ?? true) {
-        goBack(`/collections/${collection?.name}`);
+        goBack(`/collections/${collectionName}`);
         $entryDraft = null;
       } else {
         if (isNew) {
           // Update the URL
-          goto(`/collections/${collection?.name}/entries/${savedEntry.slug}`, {
+          goto(`/collections/${collectionName}/entries/${savedEntry.slug}`, {
             replaceState: true,
             notifyChange: false,
           });
         }
 
         // Reset the draft
-        createDraft(savedEntry);
+        createDraft({ collection, collectionFile, originalEntry: savedEntry });
       }
     } catch (/** @type {any} */ ex) {
       if (ex.message === 'validation_failed') {
@@ -124,7 +125,7 @@
     aria-label={$_('cancel_editing')}
     keyShortcuts="Escape"
     onclick={() => {
-      goBack(`/collections/${collection?.name}`);
+      goBack(`/collections/${collectionName}`);
     }}
   >
     {#snippet startIcon()}
@@ -167,7 +168,7 @@
       aria-label={$_('duplicate_entry')}
       disabled={collection?.create === false}
       onclick={() => {
-        goto(`/collections/${collection?.name}/new`, { replaceState: true, notifyChange: false });
+        goto(`/collections/${collectionName}/new`, { replaceState: true, notifyChange: false });
         duplicateDraft();
       }}
     />
@@ -305,7 +306,7 @@
       );
     }
 
-    goBack(`/collections/${collection?.name}`);
+    goBack(`/collections/${collectionName}`);
   }}
   onClose={() => {
     menuButton.focus();

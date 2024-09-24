@@ -4,7 +4,12 @@ import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
-import { getCollection, getEntriesByAssetURL } from '$lib/services/contents';
+import {
+  getCollection,
+  getCollectionsByEntry,
+  getEntriesByAssetURL,
+  getFilesByEntry,
+} from '$lib/services/contents';
 import { resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
@@ -239,6 +244,40 @@ export const getAssetThumbnailURL = async (asset) => {
 };
 
 /**
+ * Get collection asset folders that match the given path.
+ * @param {string} path - Asset path.
+ * @returns {CollectionAssetFolder[]} Asset folders.
+ */
+export const getAssetFoldersByPath = (path) => {
+  const { filename } = getPathInfo(path);
+
+  // Exclude files with a leading `+` sign, which are Svelte page/layout files
+  if (filename.startsWith('+')) {
+    return [];
+  }
+
+  return get(allAssetFolders).filter(({ internalPath, entryRelative }) => {
+    if (entryRelative) {
+      return path.startsWith(`${internalPath}/`);
+    }
+
+    // Compare that the enclosing directory is exactly the same as the internal path, and ignore any
+    // subdirectories, as there is no way to upload assets to them.
+    return path.match(/^(.+)\//)?.[1] === internalPath;
+  });
+};
+
+/**
+ * Get a list of collections the given asset belongs to.
+ * @param {Asset} asset - Asset.
+ * @returns {Collection[]} Collections.
+ */
+export const getCollectionsByAsset = (asset) =>
+  getAssetFoldersByPath(asset.path)
+    .map(({ collectionName }) => (collectionName ? getCollection(collectionName) : undefined))
+    .filter((collection) => !!collection);
+
+/**
  * Get an asset by a public path typically stored as an image field value.
  * @param {string} savedPath - Saved absolute path or relative path.
  * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
@@ -253,26 +292,39 @@ export const getAssetByPath = (savedPath, entry) => {
       return undefined;
     }
 
-    const { collectionName, fileName, locales } = entry;
-    const collection = getCollection(collectionName);
+    const { locales } = entry;
 
-    if (!collection) {
-      return undefined;
-    }
+    /**
+     * Find an asset.
+     * @param {Collection | CollectionFile} input - Collection or single collection file.
+     * @returns {Asset | undefined} Found asset.
+     */
+    const getAsset = ({ _i18n }) => {
+      const { defaultLocale } = _i18n;
+      const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
+      const { path: entryFilePath, content: entryContent } = locales[locale];
 
-    const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
-    const { defaultLocale } = (collectionFile ?? collection)._i18n;
-    const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
-    const { path: entryFilePath, content: entryContent } = locales[locale];
+      if (!entryFilePath || !entryContent) {
+        return undefined;
+      }
 
-    if (!entryFilePath || !entryContent) {
-      return undefined;
-    }
+      const [, entryFolder] = entryFilePath.match(/(.+?)(?:\/[^/]+)?$/) ?? [];
+      const resolvedPath = resolvePath(`${entryFolder}/${savedPath}`);
 
-    const [, entryFolder] = entryFilePath.match(/(.+?)(?:\/[^/]+)?$/) ?? [];
-    const resolvedPath = resolvePath(`${entryFolder}/${savedPath}`);
+      return get(allAssets).find((asset) => asset.path === resolvedPath);
+    };
 
-    return get(allAssets).find((asset) => asset.path === resolvedPath);
+    const assets = getCollectionsByEntry(entry).map((collection) => {
+      const collectionFiles = getFilesByEntry(collection, entry);
+
+      if (collectionFiles.length) {
+        return collectionFiles.map(getAsset);
+      }
+
+      return getAsset(collection);
+    });
+
+    return assets.flat(1).filter(Boolean)[0] ?? undefined;
   }
 
   const [, publicPath, fileName] = savedPath.match(/(.+?)\/([^/]+)$/) ?? [];
@@ -310,7 +362,9 @@ export const getAssetPublicURL = (
   const _allAssetFolders = get(allAssetFolders);
 
   const { publicPath, entryRelative } =
-    _allAssetFolders.find(({ collectionName }) => collectionName === asset.collectionName) ??
+    _allAssetFolders.find(({ collectionName }) =>
+      getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
+    ) ??
     _allAssetFolders.find(({ collectionName }) => collectionName === null) ??
     {};
 
