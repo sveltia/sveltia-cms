@@ -4,6 +4,7 @@
   @see https://decapcms.org/docs/widgets/#relation
 -->
 <script>
+  import { waitForVisibility } from '@sveltia/utils/element';
   import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
   import SelectEditor from '$lib/components/contents/details/widgets/select/select-editor.svelte';
   import { getEntriesByCollection, getFile } from '$lib/services/contents';
@@ -51,21 +52,42 @@
     file: fileName,
   } = fieldConfig);
 
-  $: refEntries = fileName
-    ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
-    : getEntriesByCollection(collectionName);
-  $: options = getOptions(locale, fieldConfig, refEntries);
+  /**
+   * @type {HTMLElement | undefined}
+   */
+  let wrapper;
+
+  /**
+   * @type {{ label: string, value: any }[]}
+   */
+  let options = [];
+
+  $: {
+    if (wrapper) {
+      (async () => {
+        await waitForVisibility(wrapper);
+
+        const refEntries = fileName
+          ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
+          : getEntriesByCollection(collectionName);
+
+        options = getOptions(locale, fieldConfig, refEntries);
+      })();
+    }
+  }
 </script>
 
-<SelectEditor
-  {locale}
-  {keyPath}
-  {fieldId}
-  {fieldLabel}
-  fieldConfig={{ ...fieldConfig, options }}
-  bind:currentValue
-  {readonly}
-  {required}
-  {invalid}
-  sortOptions={true}
-/>
+<div role="none" class="wrapper" bind:this={wrapper}>
+  <SelectEditor
+    {locale}
+    {keyPath}
+    {fieldId}
+    {fieldLabel}
+    fieldConfig={{ ...fieldConfig, options }}
+    bind:currentValue
+    {readonly}
+    {required}
+    {invalid}
+    sortOptions={true}
+  />
+</div>

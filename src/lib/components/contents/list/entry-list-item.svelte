@@ -1,5 +1,6 @@
 <script>
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
+  import { waitForVisibility } from '@sveltia/utils/element';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getMediaFieldURL } from '$lib/services/assets';
@@ -29,6 +30,11 @@
    * @type {string | undefined}
    */
   export let thumbnailFieldName;
+
+  /**
+   * @type {HTMLElement | undefined}
+   */
+  let wrapper;
 
   /**
    * @type {string | undefined}
@@ -72,28 +78,40 @@
     goto(`/collections/${$selectedCollection?.name}/entries/${entry.slug}`);
   }}
 >
-  <GridCell class="checkbox">
-    <Checkbox
-      role="none"
-      tabindex="-1"
-      checked={$selectedEntries.includes(entry)}
-      onChange={({ detail: { checked } }) => {
-        updateSelection(checked);
-      }}
-    />
-  </GridCell>
-  {#if thumbnailFieldName}
-    <GridCell class="image">
-      {#if src}
-        <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
-      {/if}
-    </GridCell>
-  {/if}
-  <GridCell class="title">
-    <span role="none">
-      {#if $selectedCollection}
-        {formatSummary($selectedCollection, entry, locale)}
-      {/if}
-    </span>
-  </GridCell>
+  <div role="none" class="wrapper" bind:this={wrapper}>
+    {#if wrapper?.parentElement}
+      {#await waitForVisibility(wrapper.parentElement) then}
+        <GridCell class="checkbox">
+          <Checkbox
+            role="none"
+            tabindex="-1"
+            checked={$selectedEntries.includes(entry)}
+            onChange={({ detail: { checked } }) => {
+              updateSelection(checked);
+            }}
+          />
+        </GridCell>
+        {#if thumbnailFieldName}
+          <GridCell class="image">
+            {#if src}
+              <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
+            {/if}
+          </GridCell>
+        {/if}
+        <GridCell class="title">
+          <span role="none">
+            {#if $selectedCollection}
+              {formatSummary($selectedCollection, entry, locale)}
+            {/if}
+          </span>
+        </GridCell>
+      {/await}
+    {/if}
+  </div>
 </GridRow>
+
+<style lang="scss">
+  .wrapper {
+    display: contents;
+  }
+</style>
