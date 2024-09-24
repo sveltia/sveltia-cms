@@ -191,6 +191,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
   - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
   - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
+  - A single file can be used for more than one item in a file collection[^127].
 
 ### Better content editing
 
@@ -1060,3 +1061,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^125]: Netlify/Decap CMS [#475](https://github.com/decaporg/decap-cms/issues/475)
 
 [^126]: Netlify/Decap CMS [#7279](https://github.com/decaporg/decap-cms/issues/7279)
+
+[^127]: Netlify/Decap CMS [#4518](https://github.com/decaporg/decap-cms/issues/4518)
