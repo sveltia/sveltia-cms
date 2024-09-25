@@ -16,7 +16,7 @@
   import { contentUpdatesToast } from '$lib/services/contents/data';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
-  import { formatEntryTitle, listedEntries } from '$lib/services/contents/view';
+  import { getEntryTitle, listedEntries } from '$lib/services/contents/view';
 
   /**
    * Navigate to the content list or content details page given the URL hash.
@@ -117,7 +117,7 @@
           $announcedPageStatus = $_('editing_x_collection_entry', {
             values: {
               collection: collectionLabel,
-              entry: formatEntryTitle($selectedCollection, originalEntry, { useTemplate: false }),
+              entry: getEntryTitle($selectedCollection, originalEntry),
             },
           });
         }

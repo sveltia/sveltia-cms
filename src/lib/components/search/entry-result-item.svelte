@@ -3,7 +3,7 @@
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
-  import { formatEntryTitle, getEntryThumbnail } from '$lib/services/contents/view';
+  import { getEntryThumbnail, getEntryTitle } from '$lib/services/contents/view';
 
   /**
    * @type {Entry}
@@ -37,7 +37,7 @@
       {#if collectionFile}
         {collectionFile.label || collectionFile.name}
       {:else}
-        {formatEntryTitle(collection, entry, { useTemplate: false })}
+        {getEntryTitle(collection, entry)}
       {/if}
     </GridCell>
   </GridRow>

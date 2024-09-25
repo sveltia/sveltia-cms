@@ -4,7 +4,7 @@
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents';
-  import { formatEntryTitle, getEntryThumbnail, listedEntries } from '$lib/services/contents/view';
+  import { getEntryThumbnail, getEntryTitle, listedEntries } from '$lib/services/contents/view';
 
   /**
    * @type {Collection}
@@ -78,7 +78,7 @@
         {/if}
         <GridCell class="title">
           <span role="none">
-            {formatEntryTitle(collection, entry)}
+            {getEntryTitle(collection, entry, { useTemplate: true })}
           </span>
         </GridCell>
       {/await}

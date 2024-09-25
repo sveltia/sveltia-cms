@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { formatEntryTitle } from '$lib/services/contents/view';
+import { getEntryTitle } from '$lib/services/contents/view';
 
-describe('Test formatEntryTitle()', () => {
+describe('Test getEntryTitle()', () => {
   /** @type {Collection} */
   const collection = {
     name: 'pages-tags',
@@ -42,11 +42,12 @@ describe('Test formatEntryTitle()', () => {
   };
 
   /**
-   * Wrapper for {@link formatEntryTitle}.
+   * Wrapper for {@link getEntryTitle}.
    * @param {string} summary - Summary string template.
    * @returns {string} Formatted summary.
    */
-  const format = (summary) => formatEntryTitle({ ...collection, summary }, entry, { locale: 'de' });
+  const format = (summary) =>
+    getEntryTitle({ ...collection, summary }, entry, { locale: 'de', useTemplate: true });
 
   test('metadata', () => {
     expect(format('{{slug}}')).toEqual('net');

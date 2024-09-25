@@ -35,8 +35,8 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
 export const currentView = writable({ type: 'list' });
 
 /**
- * Format the given entry’s title that can be displayed in the entry list and other places. Parse
- * the summary template if necessary, or simply use the `title` or similar field.
+ * Get the given entry’s title that can be displayed in the entry list and other places. Format it
+ * with the summary template if necessary, or simply use the `title` or similar field in the entry.
  * @param {Collection} collection - Entry’s collection.
  * @param {Entry} entry - Entry.
  * @param {object} [options] - Options.
@@ -46,7 +46,7 @@ export const currentView = writable({ type: 'list' });
  * @returns {string} Formatted entry title.
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
-export const formatEntryTitle = (collection, entry, { locale, useTemplate = true } = {}) => {
+export const getEntryTitle = (collection, entry, { locale, useTemplate = false } = {}) => {
   const {
     name: collectionName,
     folder: collectionFolder,

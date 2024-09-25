@@ -32,7 +32,7 @@
     getEntryRepoBlobURL,
   } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
-  import { formatEntryTitle } from '$lib/services/contents/view';
+  import { getEntryTitle } from '$lib/services/contents/view';
   import { prefs } from '$lib/services/prefs';
 
   let showValidationToast = false;
@@ -144,7 +144,7 @@
             entry: collectionFile
               ? collectionFile.label || collectionFile.name
               : originalEntry
-                ? formatEntryTitle(collection, originalEntry, { useTemplate: false })
+                ? getEntryTitle(collection, originalEntry)
                 : '',
           },
         })}

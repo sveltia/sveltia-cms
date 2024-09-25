@@ -7,7 +7,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { getAssetDetails, isMediaKind } from '$lib/services/assets';
   import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
-  import { formatEntryTitle } from '$lib/services/contents/view';
+  import { getEntryTitle } from '$lib/services/contents/view';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media';
 
@@ -159,7 +159,7 @@
           {@render usedEntryLink({
             link: `/collections/${collection.name}/entries/${slug}`,
             collectionLabel,
-            entryLabel: formatEntryTitle(collection, entry, { useTemplate: false }),
+            entryLabel: getEntryTitle(collection, entry),
           })}
         {/each}
       {/each}
