@@ -5,6 +5,7 @@ import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
+import { getMediaFieldURL } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import {
   allEntries,
@@ -137,6 +138,28 @@ export const formatEntryTitle = (collection, entry, { locale, useTemplate = true
   return summaryTemplate
     .replace(/{{(.+?)}}/g, (_match, placeholder) => replace(placeholder))
     .trim();
+};
+
+/**
+ * Get the given entry’s thumbnail URL.
+ * @param {Collection} collection - Entry’s collection.
+ * @param {Entry} entry - Entry.
+ * @returns {Promise<string | undefined>} URL.
+ */
+export const getEntryThumbnail = async (collection, entry) => {
+  const {
+    _i18n: { defaultLocale },
+    _thumbnailFieldName,
+  } = collection;
+
+  const { locales } = entry;
+  const { content } = locales[defaultLocale] ?? Object.values(locales)[0];
+
+  if (content && _thumbnailFieldName) {
+    return getMediaFieldURL(content[_thumbnailFieldName], entry, { thumbnail: true });
+  }
+
+  return undefined;
 };
 
 /**

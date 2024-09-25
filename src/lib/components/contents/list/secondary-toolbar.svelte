@@ -8,7 +8,7 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
-  $: ({ name: collectionName, _thumbnailFieldName: thumbnailFieldName } =
+  $: ({ name: collectionName, _thumbnailFieldName } =
     $selectedCollection ?? /** @type {Collection} */ ({}));
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
   $: hasListedEntries = !!$listedEntries.length;
@@ -61,7 +61,7 @@
       />
     {/if}
     <ViewSwitcher
-      disabled={!hasListedEntries || !thumbnailFieldName}
+      disabled={!hasListedEntries || !_thumbnailFieldName}
       {currentView}
       aria-controls="entry-list"
     />

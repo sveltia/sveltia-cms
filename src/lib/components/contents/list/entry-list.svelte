@@ -9,16 +9,17 @@
   import { selectedCollection } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
 
+  $: collection = $selectedCollection;
+  $: viewType = $currentView.type;
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
-  $: thumbnailFieldName = $selectedCollection?._thumbnailFieldName;
 </script>
 
-<ListContainer aria-label={$selectedCollection?.files ? $_('file_list') : $_('entry_list')}>
-  {#if $selectedCollection}
+<ListContainer aria-label={collection?.files ? $_('file_list') : $_('entry_list')}>
+  {#if collection}
     {#if allEntries.length}
-      {@const { defaultLocale } = $selectedCollection._i18n}
+      {@const { defaultLocale } = collection._i18n}
       <ListingGrid
-        viewType={$currentView.type}
+        {viewType}
         id="entry-list"
         aria-label={$_('entries')}
         aria-rowcount={$listedEntries.length}
@@ -28,15 +29,9 @@
           <GridBody label={name !== '*' ? name : undefined}>
             {#each entries as entry (entry.id)}
               {@const { locales } = entry}
-              {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
-              {@const { content } = locales[locale]}
+              {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
               {#if content}
-                <EntryListItem
-                  {entry}
-                  {content}
-                  viewType={$currentView.type}
-                  {thumbnailFieldName}
-                />
+                <EntryListItem {collection} {entry} {viewType} />
               {/if}
             {/each}
           </GridBody>
@@ -51,10 +46,10 @@
         <span role="none">{$_('no_entries_created')}</span>
         <Button
           variant="primary"
-          disabled={!$selectedCollection.create}
+          disabled={!collection.create}
           label={$_('create_new_entry')}
           onclick={() => {
-            goto(`/collections/${$selectedCollection?.name}/new`);
+            goto(`/collections/${collection?.name}/new`);
           }}
         >
           {#snippet startIcon()}

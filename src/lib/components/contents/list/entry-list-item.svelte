@@ -3,43 +3,26 @@
   import { waitForVisibility } from '@sveltia/utils/element';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { getMediaFieldURL } from '$lib/services/assets';
-  import { selectedCollection, selectedEntries } from '$lib/services/contents';
-  import { formatEntryTitle, listedEntries } from '$lib/services/contents/view';
+  import { selectedEntries } from '$lib/services/contents';
+  import { formatEntryTitle, getEntryThumbnail, listedEntries } from '$lib/services/contents/view';
 
+  /**
+   * @type {Collection}
+   */
+  export let collection;
   /**
    * @type {Entry}
    */
   export let entry;
   /**
-   * @type {FlattenedEntryContent}
-   */
-  export let content;
-  /**
    * @type {ViewType}
    */
   export let viewType;
-  /**
-   * @type {string | undefined}
-   */
-  export let thumbnailFieldName;
 
   /**
    * @type {HTMLElement | undefined}
    */
   let wrapper;
-
-  /**
-   * @type {string | undefined}
-   */
-  let src;
-
-  $: (async () => {
-    src =
-      content && thumbnailFieldName
-        ? await getMediaFieldURL(content[thumbnailFieldName], entry, { thumbnail: true })
-        : undefined;
-  })();
 
   /**
    * Update the entry selection.
@@ -68,7 +51,7 @@
     updateSelection(/** @type {CustomEvent} */ (event).detail.selected);
   }}
   onclick={() => {
-    goto(`/collections/${$selectedCollection?.name}/entries/${entry.slug}`);
+    goto(`/collections/${collection.name}/entries/${entry.slug}`);
   }}
 >
   <div role="none" class="wrapper" bind:this={wrapper}>
@@ -84,18 +67,18 @@
             }}
           />
         </GridCell>
-        {#if thumbnailFieldName}
+        {#if collection._thumbnailFieldName}
           <GridCell class="image">
-            {#if src}
-              <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
-            {/if}
+            {#await getEntryThumbnail(collection, entry) then src}
+              {#if src}
+                <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
+              {/if}
+            {/await}
           </GridCell>
         {/if}
         <GridCell class="title">
           <span role="none">
-            {#if $selectedCollection}
-              {formatEntryTitle($selectedCollection, entry)}
-            {/if}
+            {formatEntryTitle(collection, entry)}
           </span>
         </GridCell>
       {/await}
