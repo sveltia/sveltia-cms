@@ -74,12 +74,13 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113]. Best of all, Svelte offers unmatched performance!
 - The Account menu contains relevant links, including release notes, feedback and help.
 - Users can customize the application with various settings.
+- Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
 - The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
 
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files during the build process.
-- Small footprint: The bundle size is less than 450 KB when minified and gzipped, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet. That’s the power of Svelte + Vite.
+- Small footprint: The bundle size is less than 450 KB when minified and brotlied, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet. That’s the power of Svelte + Vite.
 - We have upgraded from Svelte 4 to [Svelte 5 Release Candidate](https://svelte.dev/blog/svelte-5-release-candidate) to further boost performance, resulting in faster rendering, reduced memory usage and even smaller bundle size. A full migration to the _runes_ reactivity API will follow.
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
@@ -101,7 +102,6 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - You can upload multiple assets at once[^5].
 - You can delete multiple entries and assets at once.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
-- Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
 
 ### Better accessibility
 
@@ -354,7 +354,7 @@ Missing any other features? Let us know by [filing an issue](https://github.com/
 
 - [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) _runes_ migration
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
-- Certain compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, including the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
+- Certain compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, specifically the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
 - Localization with the new [Fluent](https://projectfluent.org)-powered sveltia-i18n library
 - Accessibility audit
 - Developer documentation (implementation guide)

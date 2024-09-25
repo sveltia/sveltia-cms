@@ -20,6 +20,7 @@ ignorePaths:
 words:
   - astrolicious
   - astros
+  - brotlied
   - camelcase
   - Cloudinary
   - CVEs
@@ -32,7 +33,6 @@ words:
   - Flavored
   - Forgejo
   - Gitea
-  - gzipped
   - hotlinking
   - hugolify
   - iarna
