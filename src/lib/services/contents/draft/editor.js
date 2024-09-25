@@ -1,13 +1,9 @@
-import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
+import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getFieldConfig } from '$lib/services/contents/entry';
-
-/** @type {IndexedDB | null | undefined} */
-let settingsDB = undefined;
-const storageKey = 'entry-view';
 
 /**
  * @type {import('svelte/store').Writable<boolean>}
@@ -160,16 +156,14 @@ export const expandInvalidFields = ({ collectionName, fileName, currentValues })
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};
-
-  settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
-
-  const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
+  const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
+  const storageKey = 'entry-view';
 
   const settings = {
     showPreview: true,
     syncScrolling: true,
     selectAssetsView: { type: 'grid' },
-    ...(legacyCache ?? (await settingsDB?.get(storageKey)) ?? {}),
+    ...((await settingsDB?.get(storageKey)) ?? {}),
   };
 
   entryEditorSettings.set(settings);
@@ -198,13 +192,6 @@ const initSettings = async ({ repository }) => {
       entryEditorSettings.update((_settings) => ({ ..._settings, selectAssetsView: view }));
     }
   });
-
-  // Delete legacy cache on LocalStorage as we have migrated to IndexedDB
-  // @todo Remove this migration before GA
-  if (legacyCache) {
-    await settingsDB?.set(storageKey, settings);
-    await LocalStorage.delete(`sveltia-cms.${storageKey}`);
-  }
 };
 
 backend.subscribe((_backend) => {

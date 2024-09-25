@@ -1,4 +1,4 @@
-import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
+import { IndexedDB } from '@sveltia/utils/storage';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
@@ -14,10 +14,6 @@ import {
   selectedAssets,
   uploadingAssets,
 } from '$lib/services/assets';
-
-/** @type {IndexedDB | null | undefined} */
-let settingsDB = undefined;
-const storageKey = 'assets-view';
 
 /**
  * Whether to show the Upload Assets dialog.
@@ -298,13 +294,10 @@ export const assetGroups = derived(
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};
+  const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
+  const storageKey = 'assets-view';
 
-  settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
-
-  const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
-  const settings = legacyCache ?? (await settingsDB?.get(storageKey)) ?? {};
-
-  assetListSettings.set(settings);
+  assetListSettings.set((await settingsDB?.get(storageKey)) ?? {});
 
   assetListSettings.subscribe((_settings) => {
     (async () => {
@@ -335,13 +328,6 @@ const initSettings = async ({ repository }) => {
       assetListSettings.update((_settings) => ({ ..._settings, [path]: view }));
     }
   });
-
-  // Delete legacy cache on LocalStorage as we have migrated to IndexedDB
-  // @todo Remove this migration before GA
-  if (legacyCache) {
-    await settingsDB?.set(storageKey, settings);
-    await LocalStorage.delete(`sveltia-cms.${storageKey}`);
-  }
 };
 
 backend.subscribe((_backend) => {

@@ -1,5 +1,5 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
+import { IndexedDB } from '@sveltia/utils/storage';
 import { compare, stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
@@ -22,9 +22,6 @@ import {
 import { applyTemplateFilter } from '$lib/services/contents/slug';
 import { prefs } from '$lib/services/prefs';
 
-/** @type {IndexedDB | null | undefined} */
-let settingsDB = undefined;
-const storageKey = 'contents-view';
 /**
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
@@ -442,13 +439,10 @@ export const entryGroups = derived(
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};
+  const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
+  const storageKey = 'contents-view';
 
-  settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
-
-  const legacyCache = await LocalStorage.get(`sveltia-cms.${storageKey}`);
-  const settings = legacyCache ?? (await settingsDB?.get(storageKey)) ?? {};
-
-  entryListSettings.set(settings);
+  entryListSettings.set((await settingsDB?.get(storageKey)) ?? {});
 
   entryListSettings.subscribe((_settings) => {
     (async () => {
@@ -512,13 +506,6 @@ const initSettings = async ({ repository }) => {
       entryListSettings.update((_settings) => ({ ..._settings, [name]: view }));
     }
   });
-
-  // Delete legacy cache on LocalStorage as we have migrated to IndexedDB
-  // @todo Remove this migration before GA
-  if (legacyCache) {
-    await settingsDB?.set(storageKey, settings);
-    await LocalStorage.delete(`sveltia-cms.${storageKey}`);
-  }
 };
 
 backend.subscribe((_backend) => {
