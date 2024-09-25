@@ -7,6 +7,7 @@
   import { Checkbox, Group } from '@sveltia/ui';
   import { generateUUID } from '@sveltia/utils/crypto';
   import { waitForVisibility } from '@sveltia/utils/element';
+  import { sleep } from '@sveltia/utils/misc';
   import { toRaw } from '@sveltia/utils/object';
   import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -241,11 +242,13 @@
         {#await waitForVisibility(wrapper) then}
           {#if parentExpanded}
             {#each subFields as subField (subField.name)}
-              <FieldEditor
-                keyPath={[keyPath, subField.name].join('.')}
-                {locale}
-                fieldConfig={subField}
-              />
+              {#await sleep(0) then}
+                <FieldEditor
+                  keyPath={[keyPath, subField.name].join('.')}
+                  {locale}
+                  fieldConfig={subField}
+                />
+              {/await}
             {/each}
           {:else}
             <div role="none" class="summary" id="object-{widgetId}-summary">

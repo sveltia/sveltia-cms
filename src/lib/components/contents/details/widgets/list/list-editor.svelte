@@ -6,6 +6,7 @@
 <script>
   import { Button, Group, Icon, Spacer, TextInput } from '@sveltia/ui';
   import { generateUUID } from '@sveltia/utils/crypto';
+  import { sleep } from '@sveltia/utils/misc';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import { onMount } from 'svelte';
@@ -406,13 +407,15 @@
           <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
             {#if expanded}
               {#each subFields as subField (subField.name)}
-                <FieldEditor
-                  keyPath={hasSingleSubField
-                    ? `${keyPath}.${index}`
-                    : `${keyPath}.${index}.${subField.name}`}
-                  {locale}
-                  fieldConfig={subField}
-                />
+                {#await sleep(0) then}
+                  <FieldEditor
+                    keyPath={hasSingleSubField
+                      ? `${keyPath}.${index}`
+                      : `${keyPath}.${index}.${subField.name}`}
+                    {locale}
+                    fieldConfig={subField}
+                  />
+                {/await}
               {/each}
             {:else}
               <div role="none" class="summary">

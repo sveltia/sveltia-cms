@@ -1,4 +1,5 @@
 <script>
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -15,7 +16,9 @@
 
 <div role="document" aria-label={$_('content_preview')}>
   {#each fields as fieldConfig (fieldConfig.name)}
-    <FieldPreview keyPath={fieldConfig.name} {locale} {fieldConfig} />
+    {#await sleep(0) then}
+      <FieldPreview keyPath={fieldConfig.name} {locale} {fieldConfig} />
+    {/await}
   {/each}
 </div>
 

@@ -5,6 +5,7 @@
 -->
 <script>
   import { waitForVisibility } from '@sveltia/utils/element';
+  import { sleep } from '@sveltia/utils/misc';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
 
@@ -51,11 +52,13 @@
   <section class="subsection" bind:this={wrapper}>
     {#await waitForVisibility(wrapper) then}
       {#each subFields as subField (subField.name)}
-        <FieldPreview
-          keyPath={[keyPath, subField.name].join('.')}
-          {locale}
-          fieldConfig={subField}
-        />
+        {#await sleep(0) then}
+          <FieldPreview
+            keyPath={[keyPath, subField.name].join('.')}
+            {locale}
+            fieldConfig={subField}
+          />
+        {/await}
       {/each}
     {/await}
   </section>

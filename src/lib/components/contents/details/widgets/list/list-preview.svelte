@@ -5,11 +5,12 @@
 -->
 <script>
   import { waitForVisibility } from '@sveltia/utils/element';
+  import { sleep } from '@sveltia/utils/misc';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
-  import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
   import { getListFormatter } from '$lib/services/contents/i18n';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
 
   /**
    * @type {LocaleCode}
@@ -68,11 +69,13 @@
     <section class="subsection" bind:this={wrappers[index]}>
       {#await waitForVisibility(wrappers[index]) then}
         {#each subFields as subField (subField.name)}
-          <FieldPreview
-            keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
-            {locale}
-            fieldConfig={subField}
-          />
+          {#await sleep(0) then}
+            <FieldPreview
+              keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
+              {locale}
+              fieldConfig={subField}
+            />
+          {/await}
         {/each}
       {/await}
     </section>
