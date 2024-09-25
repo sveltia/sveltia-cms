@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { formatSummary } from '$lib/services/contents/view';
+import { formatEntryTitle } from '$lib/services/contents/view';
 
-describe('Test formatSummary()', () => {
+describe('Test formatEntryTitle()', () => {
   /** @type {Collection} */
   const collection = {
     name: 'pages-tags',
@@ -42,27 +42,27 @@ describe('Test formatSummary()', () => {
   };
 
   /**
-   * Wrapper for {@link formatSummary}.
+   * Wrapper for {@link formatEntryTitle}.
    * @param {string} summary - Summary string template.
    * @returns {string} Formatted summary.
    */
-  const _formatSummary = (summary) => formatSummary({ ...collection, summary }, entry, 'de');
+  const format = (summary) => formatEntryTitle({ ...collection, summary }, entry, { locale: 'de' });
 
   test('metadata', () => {
-    expect(_formatSummary('{{slug}}')).toEqual('net');
-    expect(_formatSummary('{{dirname}}')).toEqual('net');
-    expect(_formatSummary('{{filename}}')).toEqual('index');
-    expect(_formatSummary('{{extension}}')).toEqual('md');
+    expect(format('{{slug}}')).toEqual('net');
+    expect(format('{{dirname}}')).toEqual('net');
+    expect(format('{{filename}}')).toEqual('index');
+    expect(format('{{extension}}')).toEqual('md');
   });
 
   test('fields', () => {
-    expect(_formatSummary('{{title}}')).toEqual('.Net');
-    expect(_formatSummary('{{fields.title}}')).toEqual('.Net');
-    expect(_formatSummary('{{fields.slug}}')).toEqual('dotnet');
+    expect(format('{{title}}')).toEqual('.Net');
+    expect(format('{{fields.title}}')).toEqual('.Net');
+    expect(format('{{fields.slug}}')).toEqual('dotnet');
   });
 
   test('transformations', () => {
-    expect(_formatSummary("{{date | date('MMM D, YYYY')}}")).toEqual('Jan 23, 2024');
-    expect(_formatSummary("{{draft | ternary('Draft', 'Public')}}")).toEqual('Public');
+    expect(format("{{date | date('MMM D, YYYY')}}")).toEqual('Jan 23, 2024');
+    expect(format("{{draft | ternary('Draft', 'Public')}}")).toEqual('Public');
   });
 });

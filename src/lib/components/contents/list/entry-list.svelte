@@ -34,7 +34,6 @@
                 <EntryListItem
                   {entry}
                   {content}
-                  {locale}
                   viewType={$currentView.type}
                   {thumbnailFieldName}
                 />

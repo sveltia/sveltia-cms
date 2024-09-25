@@ -37,34 +37,32 @@ export const currentView = writable({ type: 'list' });
  * Parse the collection summary template to generate the summary to be displayed on the entry list.
  * @param {Collection} collection - Entry’s collection.
  * @param {Entry} entry - Entry.
- * @param {LocaleCode} locale - Locale.
  * @param {object} [options] - Options.
+ * @param {LocaleCode} [options.locale] - Locale.
  * @param {boolean} [options.useTemplate] - Whether to use the collection’s template if available.
  * @returns {string} Formatted summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
-export const formatSummary = (collection, entry, locale, { useTemplate = true } = {}) => {
-  const { content } = entry.locales[locale];
-
+export const formatEntryTitle = (collection, entry, { locale, useTemplate = true } = {}) => {
   const {
     name: collectionName,
     folder: collectionFolder,
-    identifier_field: identifierField,
+    identifier_field: identifierField = 'title',
     summary: summaryTemplate,
     _i18n: { defaultLocale },
   } = collection;
 
-  // Fields other than `title` should be defined with `identifier_field` as per the Netlify/Decap
-  // CMS document, but actually `name` also works as a fallback. We also use the label` property and
-  // the entry slug.
-  if (!useTemplate || !summaryTemplate) {
-    return (
-      content[identifierField ?? ''] || content.title || content.name || content.label || entry.slug
-    );
-  }
-
   const { locales, slug, commitDate, commitAuthor } = entry;
-  const { path: entryPath = '' } = locales[locale];
+
+  const { content = {}, path: entryPath = '' } =
+    locales[locale ?? defaultLocale] ?? Object.values(locales)[0];
+
+  // Fields other than `title` should be defined with `identifier_field` as per the Netlify/Decap
+  // CMS document, but actually `name` also works as a fallback. We also use the `label` property
+  // and the entry slug.
+  if (!useTemplate || !summaryTemplate) {
+    return content[identifierField] || content.title || content.name || content.label || slug;
+  }
 
   /**
    * Replacer subroutine.

@@ -5,7 +5,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { getMediaFieldURL } from '$lib/services/assets';
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
-  import { formatSummary, listedEntries } from '$lib/services/contents/view';
+  import { formatEntryTitle, listedEntries } from '$lib/services/contents/view';
 
   /**
    * @type {Entry}
@@ -15,13 +15,6 @@
    * @type {FlattenedEntryContent}
    */
   export let content;
-  /**
-   * @type {string}
-   */
-  /**
-   * @type {LocaleCode}
-   */
-  export let locale;
   /**
    * @type {ViewType}
    */
@@ -101,7 +94,7 @@
         <GridCell class="title">
           <span role="none">
             {#if $selectedCollection}
-              {formatSummary($selectedCollection, entry, locale)}
+              {formatEntryTitle($selectedCollection, entry)}
             {/if}
           </span>
         </GridCell>

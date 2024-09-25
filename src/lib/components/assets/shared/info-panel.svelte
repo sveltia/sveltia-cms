@@ -7,6 +7,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { getAssetDetails, isMediaKind } from '$lib/services/assets';
   import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
+  import { formatEntryTitle } from '$lib/services/contents/view';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media';
 
@@ -145,7 +146,7 @@
   <section>
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as entry (entry.sha)}
-      {@const { slug, locales } = entry}
+      {@const { slug } = entry}
       {#each getCollectionsByEntry(entry) as collection (collection.name)}
         {@const collectionLabel = collection.label || collection.name}
         {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
@@ -155,18 +156,10 @@
             entryLabel: collectionFile.label || collectionFile.name,
           })}
         {:else}
-          {@const { defaultLocale } = collection._i18n}
-          {@const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0]}
-          {@const { content } = locales[locale]}
           {@render usedEntryLink({
             link: `/collections/${collection.name}/entries/${slug}`,
             collectionLabel,
-            entryLabel:
-              content?.[collection.identifier_field ?? ''] ||
-              content?.title ||
-              content?.name ||
-              content?.label ||
-              slug,
+            entryLabel: formatEntryTitle(collection, entry, { useTemplate: false }),
           })}
         {/each}
       {/each}

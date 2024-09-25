@@ -4,6 +4,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { getMediaFieldURL } from '$lib/services/assets';
   import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
+  import { formatEntryTitle } from '$lib/services/contents/view';
 
   /**
    * @type {Entry}
@@ -48,11 +49,8 @@
     <GridCell class="title">
       {#if collectionFile}
         {collectionFile.label || collectionFile.name}
-      {:else if content}
-        {content[collection?.identifier_field ?? ''] ||
-          content.title ||
-          content.name ||
-          content.label}
+      {:else}
+        {formatEntryTitle(collection, entry, { useTemplate: false })}
       {/if}
     </GridCell>
   </GridRow>

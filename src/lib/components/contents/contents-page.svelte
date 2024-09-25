@@ -16,7 +16,7 @@
   import { contentUpdatesToast } from '$lib/services/contents/data';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
-  import { formatSummary, listedEntries } from '$lib/services/contents/view';
+  import { formatEntryTitle, listedEntries } from '$lib/services/contents/view';
 
   /**
    * Navigate to the content list or content details page given the URL hash.
@@ -46,7 +46,7 @@
       return; // Not Found
     }
 
-    const { name: collectionName, label, create, _fileMap, _i18n } = $selectedCollection;
+    const { name: collectionName, label, create, _fileMap } = $selectedCollection;
     const collectionLabel = label || collectionName;
 
     if (!_state) {
@@ -112,16 +112,12 @@
         const originalEntry = $listedEntries.find(({ slug }) => slug === _slug);
 
         if (originalEntry) {
-          const { defaultLocale } = _i18n;
-
           createDraft({ collection, originalEntry });
 
           $announcedPageStatus = $_('editing_x_collection_entry', {
             values: {
               collection: collectionLabel,
-              entry: formatSummary($selectedCollection, originalEntry, defaultLocale, {
-                useTemplate: false,
-              }),
+              entry: formatEntryTitle($selectedCollection, originalEntry, { useTemplate: false }),
             },
           });
         }
