@@ -34,7 +34,7 @@ export const searchResults = derived(
      * @param {string} label - Label.
      * @returns {boolean} Result.
      */
-    const masMatch = (label) => normalize(label).includes(terms);
+    const hasMatch = (label) => normalize(label).includes(terms);
 
     const entries = (() => {
       if (!_allEntries?.length || !terms) {
@@ -44,11 +44,11 @@ export const searchResults = derived(
       return _allEntries.filter((entry) =>
         getCollectionsByEntry(entry).some(
           (collection) =>
-            masMatch(collection.label || collection.name) ||
-            getFilesByEntry(collection, entry).some((file) => masMatch(file.label || file.name)) ||
+            hasMatch(collection.label || collection.name) ||
+            getFilesByEntry(collection, entry).some((file) => hasMatch(file.label || file.name)) ||
             Object.values(entry.locales).some(({ content }) =>
               Object.values(content).some(
-                (value) => typeof value === 'string' && !!value && masMatch(value),
+                (value) => typeof value === 'string' && !!value && hasMatch(value),
               ),
             ),
         ),
