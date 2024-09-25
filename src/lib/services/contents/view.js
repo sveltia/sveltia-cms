@@ -58,7 +58,7 @@ export const formatEntryTitle = (collection, entry, { locale, useTemplate = true
   const { locales, slug, commitDate, commitAuthor } = entry;
 
   const { content = {}, path: entryPath = '' } =
-    locales[locale ?? defaultLocale] ?? Object.values(locales)[0];
+    locales[locale ?? defaultLocale] ?? Object.values(locales)[0] ?? {};
 
   // Fields other than `title` should be defined with `identifier_field` as per the Netlify/Decap
   // CMS document, but actually `name` also works as a fallback. We also use the `label` property
@@ -153,7 +153,7 @@ export const getEntryThumbnail = async (collection, entry) => {
   } = collection;
 
   const { locales } = entry;
-  const { content } = locales[defaultLocale] ?? Object.values(locales)[0];
+  const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {};
 
   if (content && _thumbnailFieldName) {
     return getMediaFieldURL(content[_thumbnailFieldName], entry, { thumbnail: true });
