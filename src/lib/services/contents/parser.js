@@ -351,13 +351,7 @@ export const parseEntryFiles = (entryFiles) => {
     }
 
     /** @type {Entry} */
-    const entry = {
-      id: generateUUID(),
-      slug: '',
-      sha,
-      locales: {},
-      ...meta,
-    };
+    const entry = { id: '', slug: '', sha, locales: {}, ...meta };
 
     if (!i18nEnabled) {
       const slug = fileName || getSlug(collectionName, filePath, parsedFile);
@@ -422,6 +416,7 @@ export const parseEntryFiles = (entryFiles) => {
         return;
       }
 
+      entry.id = tempId;
       entry.locales[locale] = localizedEntry;
 
       if (locale === defaultLocale) {
@@ -434,7 +429,12 @@ export const parseEntryFiles = (entryFiles) => {
   });
 
   return {
-    entries: entries.filter(({ slug, locales }) => !!slug && !!Object.keys(locales).length),
+    entries: entries.filter((entry) => {
+      // Override a temporary ID
+      entry.id = generateUUID();
+
+      return !!entry.slug && !!Object.keys(entry.locales).length;
+    }),
     errors,
   };
 };
