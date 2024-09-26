@@ -37,7 +37,7 @@
       {#if collectionFile}
         {collectionFile.label || collectionFile.name}
       {:else}
-        {getEntryTitle(collection, entry)}
+        {getEntryTitle(collection, entry, { useTemplate: true })}
       {/if}
     </GridCell>
   </GridRow>

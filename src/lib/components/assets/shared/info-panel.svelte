@@ -159,7 +159,7 @@
           {@render usedEntryLink({
             link: `/collections/${collection.name}/entries/${slug}`,
             collectionLabel,
-            entryLabel: getEntryTitle(collection, entry),
+            entryLabel: getEntryTitle(collection, entry, { useTemplate: true }),
           })}
         {/each}
       {/each}
