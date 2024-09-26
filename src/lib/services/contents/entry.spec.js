@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getEntryTitle } from '$lib/services/contents/view';
+import { getEntryTitle } from '$lib/services/contents/entry';
 
 describe('Test getEntryTitle()', () => {
   /** @type {Collection} */

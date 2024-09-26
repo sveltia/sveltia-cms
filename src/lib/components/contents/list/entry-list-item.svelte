@@ -4,7 +4,8 @@
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents';
-  import { getEntryThumbnail, getEntryTitle, listedEntries } from '$lib/services/contents/view';
+  import { getEntryThumbnail, getEntryTitle } from '$lib/services/contents/entry';
+  import { listedEntries } from '$lib/services/contents/view';
 
   /**
    * @type {Collection}

@@ -1,11 +1,9 @@
-import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { IndexedDB } from '@sveltia/utils/storage';
-import { compare, stripSlashes } from '@sveltia/utils/string';
+import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
-import { getMediaFieldURL } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import {
   allEntries,
@@ -15,12 +13,7 @@ import {
   selectedEntries,
 } from '$lib/services/contents';
 import { editorLeftPane, editorRightPane } from '$lib/services/contents/draft/editor';
-import {
-  getFieldConfig,
-  getFieldDisplayValue,
-  getPropertyValue,
-} from '$lib/services/contents/entry';
-import { applyTemplateFilter } from '$lib/services/contents/slug';
+import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { prefs } from '$lib/services/prefs';
 
 /**
@@ -33,134 +26,6 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
  * @type {import('svelte/store').Writable<EntryListView>}
  */
 export const currentView = writable({ type: 'list' });
-
-/**
- * Get the given entry’s title that can be displayed in the entry list and other places. Format it
- * with the summary template if necessary, or simply use the `title` or similar field in the entry.
- * @param {Collection} collection - Entry’s collection.
- * @param {Entry} entry - Entry.
- * @param {object} [options] - Options.
- * @param {LocaleCode} [options.locale] - Target locale. The default locale is used if omitted.
- * @param {boolean} [options.useTemplate] - Whether to use the collection’s `summary` template if
- * available.
- * @returns {string} Formatted entry title.
- * @see https://decapcms.org/docs/configuration-options/#summary
- */
-export const getEntryTitle = (collection, entry, { locale, useTemplate = false } = {}) => {
-  const {
-    name: collectionName,
-    folder: collectionFolder,
-    identifier_field: identifierField = 'title',
-    summary: summaryTemplate,
-    _i18n: { defaultLocale },
-  } = collection;
-
-  const { locales, slug, commitDate, commitAuthor } = entry;
-
-  const { content = {}, path: entryPath = '' } =
-    locales[locale ?? defaultLocale] ?? Object.values(locales)[0] ?? {};
-
-  // Fields other than `title` should be defined with `identifier_field` as per the Netlify/Decap
-  // CMS document, but actually `name` also works as a fallback. We also use the `label` property
-  // and the entry slug.
-  if (!useTemplate || !summaryTemplate) {
-    return content[identifierField] || content.title || content.name || content.label || slug;
-  }
-
-  /**
-   * Replacer subroutine.
-   * @param {string} tag - Field name or one of special tags.
-   * @returns {any} Summary.
-   */
-  const replaceSub = (tag) => {
-    if (tag === 'slug') {
-      return slug;
-    }
-
-    if (tag === 'dirname') {
-      return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(collectionFolder ?? '', ''));
-    }
-
-    if (tag === 'filename') {
-      return /** @type {string} */ (entryPath.split('/').pop()).split('.').shift();
-    }
-
-    if (tag === 'extension') {
-      return /** @type {string} */ (entryPath.split('/').pop()).split('.').pop();
-    }
-
-    if (tag === 'commit_date') {
-      return commitDate ?? '';
-    }
-
-    if (tag === 'commit_author') {
-      return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
-    }
-
-    return getFieldDisplayValue({
-      collectionName,
-      valueMap: content,
-      keyPath: tag.replace(/^fields\./, ''),
-      locale: defaultLocale,
-    });
-  };
-
-  /**
-   * Replacer.
-   * @param {string} placeholder - Field name or one of special tags. May contain transformations.
-   * @returns {string} Replaced string.
-   */
-  const replace = (placeholder) => {
-    const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
-    let slugPart = replaceSub(tag);
-
-    if (slugPart === undefined) {
-      return '';
-    }
-
-    if (slugPart instanceof Date && !transformations.length) {
-      const { year, month, day } = getDateTimeParts({ date: slugPart });
-
-      return `${year}-${month}-${day}`;
-    }
-
-    if (transformations.length) {
-      const fieldConfig = getFieldConfig({ collectionName, valueMap: content, keyPath: tag });
-
-      transformations.forEach((tf) => {
-        slugPart = applyTemplateFilter(slugPart, tf, fieldConfig);
-      });
-    }
-
-    return String(slugPart);
-  };
-
-  return summaryTemplate
-    .replace(/{{(.+?)}}/g, (_match, placeholder) => replace(placeholder))
-    .trim();
-};
-
-/**
- * Get the given entry’s thumbnail URL.
- * @param {Collection} collection - Entry’s collection.
- * @param {Entry} entry - Entry.
- * @returns {Promise<string | undefined>} URL.
- */
-export const getEntryThumbnail = async (collection, entry) => {
-  const {
-    _i18n: { defaultLocale },
-    _thumbnailFieldName,
-  } = collection;
-
-  const { locales } = entry;
-  const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {};
-
-  if (content && _thumbnailFieldName) {
-    return getMediaFieldURL(content[_thumbnailFieldName], entry, { thumbnail: true });
-  }
-
-  return undefined;
-};
 
 /**
  * Sort the given entries.

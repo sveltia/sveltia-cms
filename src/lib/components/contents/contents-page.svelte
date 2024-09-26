@@ -16,7 +16,8 @@
   import { contentUpdatesToast } from '$lib/services/contents/data';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
-  import { getEntryTitle, listedEntries } from '$lib/services/contents/view';
+  import { getEntryTitle } from '$lib/services/contents/entry';
+  import { listedEntries } from '$lib/services/contents/view';
 
   /**
    * Navigate to the content list or content details page given the URL hash.

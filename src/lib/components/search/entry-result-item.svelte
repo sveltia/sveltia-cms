@@ -3,7 +3,7 @@
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
-  import { getEntryThumbnail, getEntryTitle } from '$lib/services/contents/view';
+  import { getEntryThumbnail, getEntryTitle } from '$lib/services/contents/entry';
 
   /**
    * @type {Entry}
