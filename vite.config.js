@@ -39,12 +39,7 @@ export default defineConfig({
   plugins: [
     svelte({
       emitCss: false,
-      preprocess: sveltePreprocess({
-        scss: {
-          // https://stackoverflow.com/q/78997907
-          silenceDeprecations: ['legacy-js-api'],
-        },
-      }),
+      preprocess: sveltePreprocess(),
       compilerOptions: {
         // Silence a warning on `<svelte:options accessors={true} />`
         // eslint-disable-next-line jsdoc/require-jsdoc
