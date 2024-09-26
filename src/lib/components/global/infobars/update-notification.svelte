@@ -4,12 +4,16 @@
   import { _ } from 'svelte-i18n';
   import { version as userVersion } from '$lib/services/app';
 
-  const interval = 60 * 60 * 1000; // 1 hour
+  const checkInterval = 60 * 60 * 1000; // 1 hour
+  const cacheTimeout = 10 * 60 * 1000; // 10 min
   let timer = 0;
   let updateAvailable = false;
 
   /**
-   * Check if an update is available.
+   * Check for a new version of the application. If an update is available, wait 10 minutes before
+   * displaying the update notification, as redirects are cached by the UNPKG CDN. Otherwise, an
+   * older script will be served when the user reloads the page, and the notification will persist.
+   * @see https://unpkg.com/#cache-behavior
    */
   const checkForUpdates = async () => {
     try {
@@ -22,7 +26,9 @@
       const { version: latestVersion } = await response.json();
 
       if (latestVersion && latestVersion !== userVersion) {
-        updateAvailable = true;
+        window.setTimeout(() => {
+          updateAvailable = true;
+        }, cacheTimeout);
       }
     } catch {
       //
@@ -42,7 +48,7 @@
 
     timer = window.setInterval(() => {
       checkForUpdates();
-    }, interval);
+    }, checkInterval);
 
     // onUnmount
     return () => {
