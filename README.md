@@ -46,7 +46,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 115+ of them (or 195+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 120+ of them (or 200+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 (or all the relevant and fixable issues) in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
@@ -54,7 +54,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 Sveltia CMS **version 1.0 is expected to ship by the end of 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
-![115+ Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20240825.webp)<br>
+![115+ Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20240927.webp)<br>
 
 ## Features
 
@@ -222,6 +222,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error[^45].
   - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing[^46].
 - Color
+  - The widget doesn’t cause scrolling issues[^128].
   - The preview shows both the RGB(A) hex value and the `rgb()` function notation.
 - DateTime
   - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry[^90].
@@ -1063,3 +1064,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^126]: Netlify/Decap CMS [#7279](https://github.com/decaporg/decap-cms/issues/7279)
 
 [^127]: Netlify/Decap CMS [#4518](https://github.com/decaporg/decap-cms/issues/4518)
+
+[^128]: Netlify/Decap CMS [#7092](https://github.com/decaporg/decap-cms/issues/7092)
