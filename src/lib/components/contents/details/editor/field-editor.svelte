@@ -379,6 +379,7 @@
       border-width: 1px;
       border-color: var(--sui-primary-border-color);
       border-radius: var(--sui-control-medium-border-radius);
+      height: var(--sui-button-medium-height);
       color: inherit;
       background-color: var(--sui-textbox-background-color);
     }
@@ -411,6 +412,7 @@
       }
     }
 
+    :global(input[type='color'][aria-invalid='true']),
     :global(input[type='date'][aria-invalid='true']),
     :global(input[type='datetime-local'][aria-invalid='true']),
     :global(input[type='time'][aria-invalid='true']) {

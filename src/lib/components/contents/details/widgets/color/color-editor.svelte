@@ -5,7 +5,7 @@
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
-  import { Button, Icon, Slider, TextInput } from '@sveltia/ui';
+  import { Button, Slider, TextInput } from '@sveltia/ui';
   import { generateElementId } from '@sveltia/utils/element';
   import { _ } from 'svelte-i18n';
 
@@ -125,44 +125,41 @@
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
   />
-  <span role="none" class="value">
-    {#if allowInput}
-      <TextInput
-        id="{id}-input"
-        bind:value={inputValue}
-        {invalid}
-        {readonly}
-        {required}
-        aria-labelledby="{fieldId}-label"
-        aria-errormessage="{fieldId}-error"
-      />
-    {/if}
-    {#if enableAlpha}
-      {$_('opacity')}
-      <Slider
-        min={0}
-        max={255}
-        disabled={!inputValue}
-        bind:value={inputAlphaValue}
-        aria-label={$_('opacity')}
-      />
-    {/if}
-  </span>
+  {#if allowInput || enableAlpha}
+    <span role="none" class="value">
+      {#if allowInput}
+        <TextInput
+          id="{id}-input"
+          bind:value={inputValue}
+          {invalid}
+          {readonly}
+          {required}
+          aria-labelledby="{fieldId}-label"
+          aria-errormessage="{fieldId}-error"
+        />
+      {/if}
+      {#if enableAlpha}
+        {$_('opacity')}
+        <Slider
+          min={0}
+          max={255}
+          disabled={!inputValue}
+          bind:value={inputAlphaValue}
+          aria-label={$_('opacity')}
+        />
+      {/if}
+    </span>
+  {/if}
   <Button
     variant="tertiary"
-    iconic
+    label={$_('clear')}
     disabled={!inputValue}
-    aria-label={$_('clear')}
     aria-controls={`${id}-picker ${allowInput ? `${id}-input` : ''}`}
     onclick={() => {
       inputValue = '';
       inputAlphaValue = 255;
     }}
-  >
-    {#snippet startIcon()}
-      <Icon name="delete" />
-    {/snippet}
-  </Button>
+  />
 </div>
 
 <style lang="scss">
@@ -172,7 +169,6 @@
     gap: 8px;
 
     .value {
-      flex: auto;
       display: flex;
       align-items: center;
       gap: 8px;
