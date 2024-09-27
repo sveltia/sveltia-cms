@@ -319,11 +319,6 @@ export const parseEntryFiles = (entryFiles) => {
       return;
     }
 
-    // Skip Hugo’s special index page that shouldn’t appear in a folder collection
-    if (name === '_index.md' && !fileName) {
-      return;
-    }
-
     const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
 
     const {
@@ -340,11 +335,36 @@ export const parseEntryFiles = (entryFiles) => {
       file: fileName,
     });
 
-    const filePath = fileName
-      ? path
-      : path.match(
-          new RegExp(`^${escapeRegExp(stripSlashes(configFolderPath))}\\/(.+)\\.${extension}$`),
-        )?.[1];
+    // Skip Hugo’s special index page that shouldn’t appear in a folder collection, unless the
+    // collection’s `path` ends with `_index` and the extension is `md`.
+    if (
+      name === '_index.md' &&
+      !(collection.path?.split('/').pop() === '_index' && extension === 'md') &&
+      !fileName
+    ) {
+      return;
+    }
+
+    const filePath = (() => {
+      if (fileName) {
+        return path;
+      }
+
+      /**
+       * The path pattern in the middle, which should match the filename (without extension),
+       * possibly with the parent directory. If the collection’s `path` is configured, use it to
+       * generate a pattern.
+       * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
+       */
+      const filePathMatcher =
+        collection.path?.replace(/{{.+?}}/g, '.+?').replace(/\//g, '\\/') ?? '.+';
+
+      const regex = new RegExp(
+        `^${escapeRegExp(stripSlashes(configFolderPath))}\\/(${filePathMatcher})\\.${extension}$`,
+      );
+
+      return path.match(regex)?.[1];
+    })();
 
     if (!filePath) {
       return;
