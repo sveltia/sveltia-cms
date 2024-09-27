@@ -98,8 +98,8 @@
     }
   };
 
-  $: setInputValue(typeof currentValue === 'string' ? currentValue.trim() : '');
-  $: setCurrentValue(inputValue?.trim() ?? '');
+  $: setInputValue(typeof currentValue === 'string' ? currentValue : '');
+  $: setCurrentValue(inputValue ?? '');
 
   const { extraHint } = getContext('field-editor');
 

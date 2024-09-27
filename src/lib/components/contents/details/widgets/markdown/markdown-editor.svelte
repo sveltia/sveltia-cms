@@ -84,8 +84,8 @@
     }
   };
 
-  $: setInputValue(typeof currentValue === 'string' ? currentValue.trim() : '');
-  $: setCurrentValue(inputValue?.trim() ?? '');
+  $: setInputValue(typeof currentValue === 'string' ? currentValue : '');
+  $: setCurrentValue(inputValue ?? '');
 </script>
 
 <div role="none" class="wrapper" class:minimal>

@@ -248,10 +248,6 @@ export const createProxy = ({
   return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
-      if (typeof value === 'string') {
-        value = value.trim();
-      }
-
       if (obj[keyPath] !== value) {
         obj[keyPath] = value;
       }
