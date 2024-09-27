@@ -22,7 +22,7 @@
           }}
         >
           <GridCell class="title">
-            {label}
+            {label || name}
           </GridCell>
         </GridRow>
       {/each}
