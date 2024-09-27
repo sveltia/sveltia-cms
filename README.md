@@ -69,7 +69,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
-- The maintainer tries to remain responsive. The turnaround time for bug fixes can be as little as 1 hour.
+- The maintainer tries to stay responsive. The turnaround time for bug fixes can be as little as 1 hour.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113]. Best of all, Svelte offers unmatched performance!
@@ -186,7 +186,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Entry listing
   - A folder collection filter with a boolean value works as expected[^93].
-  - Hugo’s special `_index.md` files are ignored in folder collections. You can still manage these files as part of a file collection if necessary[^120].
+  - Hugo’s special `_index.md` files are ignored in folder collections unless the `path` option is configured to end with `_index` and `extension` is `md`. You can still manage these files as part of a file collection if necessary[^120].
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
   - Sorting entries by a DateTime field works as expected[^110].
   - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
