@@ -18,7 +18,7 @@
   import { getDefaultValues } from '$lib/services/contents/draft/create';
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
-  import { getFieldDisplayValue } from '$lib/services/contents/entry';
+  import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
@@ -78,7 +78,11 @@
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: valueMap = currentValues[locale];
   $: hasValues = Object.entries(valueMap).some(
-    ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && value !== null,
+    ([_keyPath, value]) =>
+      !!_keyPath.startsWith(`${keyPath}.`) &&
+      (value !== null ||
+        getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath })?.widget ===
+          'object'),
   );
   $: canEdit = locale === defaultLocale || i18n !== false;
   $: listFormatter = getListFormatter(locale);
