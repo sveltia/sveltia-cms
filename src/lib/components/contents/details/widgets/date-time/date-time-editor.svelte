@@ -127,14 +127,16 @@
       currentValue = getCurrentDateTime(fieldConfig);
     }}
   />
-  <Button
-    variant="tertiary"
-    label={$_('clear')}
-    disabled={!currentValue}
-    onclick={() => {
-      currentValue = '';
-    }}
-  />
+  {#if !required}
+    <Button
+      variant="tertiary"
+      label={$_('clear')}
+      disabled={!currentValue}
+      onclick={() => {
+        currentValue = '';
+      }}
+    />
+  {/if}
 </div>
 
 <style lang="scss">

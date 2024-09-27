@@ -150,16 +150,18 @@
       {/if}
     </span>
   {/if}
-  <Button
-    variant="tertiary"
-    label={$_('clear')}
-    disabled={!inputValue}
-    aria-controls={`${id}-picker ${allowInput ? `${id}-input` : ''}`}
-    onclick={() => {
-      inputValue = '';
-      inputAlphaValue = 255;
-    }}
-  />
+  {#if !required}
+    <Button
+      variant="tertiary"
+      label={$_('clear')}
+      disabled={!inputValue}
+      aria-controls={`${id}-picker ${allowInput ? `${id}-input` : ''}`}
+      onclick={() => {
+        inputValue = '';
+        inputAlphaValue = 255;
+      }}
+    />
+  {/if}
 </div>
 
 <style lang="scss">
