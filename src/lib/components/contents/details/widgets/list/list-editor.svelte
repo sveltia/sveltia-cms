@@ -338,7 +338,7 @@
         />
       {/if}
     </div>
-    {#if parentExpanded && allowAdd && (addToTop || !items.length)}
+    {#if allowAdd && (addToTop || !items.length)}
       <div role="none" class="toolbar top">
         <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
       </div>
@@ -426,7 +426,7 @@
         </div>
       {/each}
     </div>
-    {#if parentExpanded && allowAdd && !addToTop && items.length}
+    {#if allowAdd && !addToTop && items.length}
       <div role="none" class="toolbar bottom">
         <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
         <Spacer flex />
