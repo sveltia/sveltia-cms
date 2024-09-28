@@ -46,7 +46,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 120+ of them (or 200+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 120+ of them (or 210+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 (or all the relevant and fixable issues) in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
@@ -54,7 +54,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 Sveltia CMS **version 1.0 is expected to ship by the end of 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
-![120+ Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20240927.webp)<br>
+![120 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20240928.webp)<br>
 
 ## Features
 
@@ -69,10 +69,9 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
-- The maintainer tries to stay responsive. The turnaround time for bug fixes can be as little as 1 hour.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
-- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113]. Best of all, Svelte offers unmatched performance!
+- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113][^129]. Best of all, Svelte offers unmatched performance!
 - The Account menu contains relevant links, including release notes, feedback and help.
 - Users can customize the application with various settings.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
@@ -1067,3 +1066,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^127]: Netlify/Decap CMS [#4518](https://github.com/decaporg/decap-cms/issues/4518)
 
 [^128]: Netlify/Decap CMS [#7092](https://github.com/decaporg/decap-cms/issues/7092)
+
+[^129]: Netlify/Decap CMS [#4961](https://github.com/decaporg/decap-cms/issues/4961), [#4979](https://github.com/decaporg/decap-cms/issues/4979), [#5545](https://github.com/decaporg/decap-cms/issues/5545), [#5778](https://github.com/decaporg/decap-cms/issues/5778), [#6279](https://github.com/decaporg/decap-cms/issues/6279), [#6464](https://github.com/decaporg/decap-cms/issues/6464), [#6810](https://github.com/decaporg/decap-cms/issues/6810), [#6922](https://github.com/decaporg/decap-cms/issues/6922), [#7118](https://github.com/decaporg/decap-cms/issues/7118), [#7293](https://github.com/decaporg/decap-cms/issues/7293) — A comment on one of the issues says the crash was due to Google Translate.
