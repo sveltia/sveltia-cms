@@ -21,9 +21,11 @@
             aria-label={$_('entries')}
             aria-rowcount={$searchResults.entries.length}
           >
-            {#each $searchResults.entries as entry (entry.id)}
-              <EntryResultItem {entry} />
-            {/each}
+            {#key $searchTerms}
+              {#each $searchResults.entries as entry (entry.id)}
+                <EntryResultItem {entry} />
+              {/each}
+            {/key}
           </ListingGrid>
         {:else}
           {$_('no_entries_found')}
@@ -39,9 +41,11 @@
             aria-label={$_('assets')}
             aria-rowcount={$searchResults.assets.length}
           >
-            {#each $searchResults.assets as asset (asset.path)}
-              <AssetResultItem {asset} />
-            {/each}
+            {#key $searchTerms}
+              {#each $searchResults.assets as asset (asset.path)}
+                <AssetResultItem {asset} />
+              {/each}
+            {/key}
           </ListingGrid>
         {:else}
           {$_('no_files_found')}
