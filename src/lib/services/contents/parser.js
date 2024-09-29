@@ -306,7 +306,6 @@ export const parseEntryFiles = (entryFiles) => {
     }
 
     const {
-      name,
       path,
       sha,
       meta = {},
@@ -338,7 +337,7 @@ export const parseEntryFiles = (entryFiles) => {
     // Skip Hugo’s special index page that shouldn’t appear in a folder collection, unless the
     // collection’s `path` ends with `_index` and the extension is `md`.
     if (
-      name === '_index.md' &&
+      getPathInfo(path).basename === '_index.md' &&
       !(collection.path?.split('/').pop() === '_index' && extension === 'md') &&
       !fileName
     ) {

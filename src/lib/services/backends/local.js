@@ -237,24 +237,18 @@ const getAllFiles = async () => {
   await iterate(_rootDirHandle);
 
   return Promise.all(
-    availableFileList.map(async ({ file, path }) => {
+    availableFileList.map(async ({ file, path: rawPath }) => {
       const { name, size } = file;
+      // The file path must be normalized, as certain non-ASCII characters (e.g. Japanese) can be
+      // problematic particularly on macOS
+      const path = rawPath.normalize();
 
       const [sha, text] = await Promise.all([
         getHash(file),
         name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? readAsText(file) : undefined,
       ]);
 
-      // Both the file path and name should be normalized, as certain non-ASCII (Japanese)
-      // characters can be problematic particularly on macOS
-      return {
-        file,
-        path: path.normalize(),
-        name: name.normalize(),
-        sha,
-        size,
-        text,
-      };
+      return { file, path, sha, size, text };
     }),
   );
 };

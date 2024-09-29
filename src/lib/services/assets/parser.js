@@ -1,3 +1,4 @@
+import { getPathInfo } from '@sveltia/utils/file';
 import { getAssetKind } from '$lib/services/assets';
 
 /**
@@ -10,7 +11,6 @@ export const parseAssetFiles = (assetFiles) =>
     const {
       file,
       path,
-      name = /** @type {string} */ (path.split('/').pop()),
       sha,
       size,
       text = undefined,
@@ -22,10 +22,10 @@ export const parseAssetFiles = (assetFiles) =>
       file,
       blobURL: undefined,
       path,
-      name,
+      name: getPathInfo(path).basename,
       sha,
       size,
-      kind: getAssetKind(name),
+      kind: getAssetKind(path),
       text,
       folder: internalPath,
       ...meta,

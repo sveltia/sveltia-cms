@@ -189,7 +189,6 @@
  * @typedef {object} BaseFileListItem
  * @property {'entry' | 'asset'} [type] - File type handled in the CMS.
  * @property {File} [file] - File object. Local backend only.
- * @property {string} [name] - File name.
  * @property {string} path - File path.
  * @property {string} sha - SHA-1 hash for the file.
  * @property {number} [size] - File size in bytes.
