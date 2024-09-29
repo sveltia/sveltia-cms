@@ -2,12 +2,33 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
 
 /**
+ * Parse the DateTime field configuration and return as normalized format.
+ * @param {DateTimeField} fieldConfig - Field config.
+ * @returns {DateTimeFieldNormalizedProps} Normalized properties.
+ */
+export const parseDateTimeConfig = (fieldConfig) => {
+  const {
+    date_format: dateFormat = undefined,
+    time_format: timeFormat = undefined,
+    picker_utc: utc = false,
+  } = fieldConfig;
+
+  return {
+    dateFormat,
+    timeFormat,
+    dateOnly: timeFormat === false,
+    timeOnly: dateFormat === false,
+    utc,
+  };
+};
+
+/**
  * Get the current date/time.
  * @param {DateTimeField} fieldConfig - Field configuration.
  * @returns {string} Current date/time in the ISO 8601 format.
  */
 export const getCurrentDateTime = (fieldConfig) => {
-  const { date_format: dateFormat, time_format: timeFormat, picker_utc: utc = false } = fieldConfig;
+  const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
 
   const { year, month, day, hour, minute } = getDateTimeParts({
     timeZone: utc ? 'UTC' : undefined,
@@ -16,11 +37,11 @@ export const getCurrentDateTime = (fieldConfig) => {
   const dateStr = `${year}-${month}-${day}`;
   const timeStr = `${hour}:${minute}`;
 
-  if (timeFormat === false) {
+  if (dateOnly) {
     return dateStr;
   }
 
-  if (dateFormat === false) {
+  if (timeOnly) {
     return timeStr;
   }
 
@@ -63,8 +84,8 @@ export const getDefaultValue = (fieldConfig) => {
  * @todo Write tests for this.
  */
 export const getCurrentValue = (inputValue, fieldConfig) => {
-  const { format, date_format: dateFormat, picker_utc: utc = false } = fieldConfig;
-  const timeOnly = dateFormat === false;
+  const { format } = fieldConfig;
+  const { timeOnly, utc } = parseDateTimeConfig(fieldConfig);
 
   if (inputValue === '') {
     return '';
@@ -104,15 +125,8 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
  * @todo Write tests for this.
  */
 export const getInputValue = (currentValue, fieldConfig) => {
-  const {
-    format,
-    date_format: dateFormat,
-    time_format: timeFormat,
-    picker_utc: utc = false,
-  } = fieldConfig;
-
-  const dateOnly = timeFormat === false;
-  const timeOnly = dateFormat === false;
+  const { format } = fieldConfig;
+  const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
 
   // If the default value is an empty string, the input will be blank by default
   if (!currentValue) {
@@ -162,8 +176,8 @@ export const getInputValue = (currentValue, fieldConfig) => {
  * @todo Write tests for this.
  */
 export const getDate = (currentValue, fieldConfig) => {
-  const { format, date_format: dateFormat, picker_utc: utc = false } = fieldConfig;
-  const timeOnly = dateFormat === false;
+  const { format } = fieldConfig;
+  const { timeOnly, utc } = parseDateTimeConfig(fieldConfig);
 
   if (!currentValue) {
     return undefined;

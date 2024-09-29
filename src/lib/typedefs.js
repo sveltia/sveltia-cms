@@ -528,6 +528,15 @@
  */
 
 /**
+ * @typedef {object} DateTimeFieldNormalizedProps
+ * @property {string | boolean | undefined} dateFormat - Same as `date_field`.
+ * @property {string | boolean | undefined} timeFormat - Same as `time_format`.
+ * @property {boolean} dateOnly - Whether the field is date only.
+ * @property {boolean} timeOnly - Whether the field is time only.
+ * @property {boolean} utc - Whether the field’s picker is UTC.
+ */
+
+/**
  * DateTime field definition.
  * @typedef {CommonFieldProps & DateTimeFieldProps} DateTimeField
  */

@@ -4,7 +4,10 @@
   @see https://decapcms.org/docs/widgets/#datetime
 -->
 <script>
-  import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
+  import {
+    getDate,
+    parseDateTimeConfig,
+  } from '$lib/components/contents/details/widgets/date-time/helper';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
@@ -25,15 +28,7 @@
    */
   export let currentValue;
 
-  $: ({
-    // i18n,
-    // Widget-specific options
-    date_format: dateFormat,
-    time_format: timeFormat,
-    picker_utc: utc = false,
-  } = fieldConfig);
-  $: dateOnly = timeFormat === false;
-  $: timeOnly = dateFormat === false;
+  $: ({ dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig));
   $: date = getDate(currentValue, fieldConfig);
   $: canonicalLocale = getCanonicalLocale(locale);
 

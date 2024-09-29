@@ -11,6 +11,7 @@
     getCurrentDateTime,
     getCurrentValue,
     getInputValue,
+    parseDateTimeConfig,
   } from '$lib/components/contents/details/widgets/date-time/helper';
 
   /**
@@ -53,14 +54,7 @@
    */
   export let invalid = false;
 
-  $: ({
-    // Widget-specific options
-    date_format: dateFormat,
-    time_format: timeFormat,
-    picker_utc: utc = false,
-  } = fieldConfig);
-  $: dateOnly = timeFormat === false;
-  $: timeOnly = dateFormat === false;
+  $: ({ dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig));
 
   /**
    * @type {string}

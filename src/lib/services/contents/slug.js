@@ -8,6 +8,7 @@ import { renameIfNeeded } from '$lib/services/utils/file';
 import { getFieldConfig } from '$lib/services/contents/entry';
 import { getEntriesByCollection } from '$lib/services/contents';
 import { siteConfig } from '$lib/services/config';
+import { parseDateTimeConfig } from '$lib/components/contents/details/widgets/date-time/helper';
 
 /**
  * Transform slug template.
@@ -32,11 +33,7 @@ export const applyTemplateFilter = (slugPart, tf, fieldConfig) => {
 
   if (dateTransformer) {
     const [, format] = dateTransformer;
-
-    const { time_format: timeFormat = undefined, picker_utc: utc = false } =
-      /** @type {DateTimeField} */ (fieldConfig) ?? /** @type {DateTimeField} */ ({});
-
-    const dateOnly = timeFormat === false;
+    const { dateOnly, utc } = parseDateTimeConfig(/** @type {DateTimeField} */ (fieldConfig ?? {}));
 
     return (
       utc ||
