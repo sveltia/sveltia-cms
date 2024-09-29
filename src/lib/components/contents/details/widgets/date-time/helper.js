@@ -85,7 +85,7 @@ export const getDefaultValue = (fieldConfig) => {
  */
 export const getCurrentValue = (inputValue, fieldConfig) => {
   const { format } = fieldConfig;
-  const { timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+  const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
 
   if (inputValue === '') {
     return '';
@@ -108,7 +108,12 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
       return new Date(inputValue).toISOString();
     }
 
-    return inputValue;
+    if (dateOnly) {
+      return inputValue;
+    }
+
+    // Append seconds for framework (Hugo) compatibility
+    return `${inputValue}:00`;
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
