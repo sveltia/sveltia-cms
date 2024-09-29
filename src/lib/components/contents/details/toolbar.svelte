@@ -39,7 +39,7 @@
   let showDeleteDialog = false;
   let showErrorDialog = false;
   let saving = false;
-  /** @type {MenuButton} */
+  /** @type {any} */
   let menuButton;
 
   $: ({

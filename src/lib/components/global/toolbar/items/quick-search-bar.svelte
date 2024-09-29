@@ -28,7 +28,7 @@
    */
   let wrapper;
   /**
-   * @type {SearchBar}
+   * @type {any}
    */
   let searchBar;
 

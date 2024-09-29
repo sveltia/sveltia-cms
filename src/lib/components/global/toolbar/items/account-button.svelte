@@ -10,7 +10,7 @@
   import { prefs } from '$lib/services/prefs';
   import { signOut, user } from '$lib/services/user';
 
-  /** @type {MenuButton} */
+  /** @type {any} */
   let menuButton;
   let showPrefsDialog = false;
   let showShortcutsDialog = false;
