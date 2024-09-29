@@ -317,7 +317,7 @@ We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possib
 ### Features not to be implemented
 
 - **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We may implement a high-performance Git Gateway alternative in the future. We may also support the other services if/when their APIs improve to allow the CMS to fetch multiple files at once.
-- **The Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
+- **The Netlify Identity widget will not be supported**, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget instead.
@@ -442,6 +442,12 @@ Alternatively, you can [manually initialize](https://decapcms.org/docs/manual-in
 ### Migrating from Git Gateway backend
 
 Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub backend](https://decapcms.org/docs/github-backend/) or [GitLab backend](https://decapcms.org/docs/gitlab-backend/) instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
+
+Once you have migrated from the Git Gateway and Netlify Identity combo, you can remove the Netlify Identity widget script tag from your HTML:
+
+```diff
+-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+```
 
 ### Moving your site from Netlify to another hosting service
 
