@@ -352,11 +352,11 @@ export const parseEntryFiles = (entryFiles) => {
       /**
        * The path pattern in the middle, which should match the filename (without extension),
        * possibly with the parent directory. If the collection’s `path` is configured, use it to
-       * generate a pattern.
+       * generate a pattern, so that unrelated files are excluded.
        * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
        */
       const filePathMatcher =
-        collection.path?.replace(/{{.+?}}/g, '.+?').replace(/\//g, '\\/') ?? '.+';
+        collection.path?.replace(/\//g, '\\/').replace(/{{.+?}}/g, '[^\\/]+') ?? '.+';
 
       const regex = new RegExp(
         `^${escapeRegExp(stripSlashes(configFolderPath))}\\/(${filePathMatcher})\\.${extension}$`,
