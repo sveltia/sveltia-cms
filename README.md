@@ -45,8 +45,8 @@ Sveltia CMS is **still in beta**, so please be careful when trying it out.
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
 - Ensuring substantial [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
-- Tackling as many [issues reported to Netlify/Decap CMS](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 120+ of them (or 210+ including duplicates) have been effectively solved in Sveltia CMS
+- Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
+  - So far, 120+ of them (or 215+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 (or all the relevant and fixable issues) in a future release
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
@@ -175,7 +175,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Configuration
   - You can [choose a custom icon for each collection](#using-a-custom-icon-for-a-collection) with the new `icon` collection option[^3].
   - You can [add dividers to the collection list](#adding-dividers-to-the-collection-list) with the new `divider` collection option.
-  - You can specify the field name for a thumbnail displayed on the entry list with the new `thumbnail` collection option. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
+  - You can specify the field name for a thumbnail displayed on the entry list with the new `thumbnail` collection option[^130]. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
   - You can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
   - You can use Markdown in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
 - Entry slugs
@@ -185,7 +185,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Entry listing
   - A folder collection filter with a boolean value works as expected[^93].
-  - Hugo’s special `_index.md` files are ignored in folder collections unless the `path` option is configured to end with `_index` and `extension` is `md`. You can still manage these files as part of a file collection if necessary[^120].
+  - Hugo’s special `_index.md` files are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
   - Sorting entries by a DateTime field works as expected[^110].
   - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
@@ -843,7 +843,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^13]: Netlify/Decap CMS [#5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
 
-[^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410)
+[^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410), [#6924](https://github.com/decaporg/decap-cms/issues/6924)
 
 [^15]: Netlify/Decap CMS [#6932](https://github.com/decaporg/decap-cms/issues/6932)
 
@@ -987,7 +987,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^85]: Netlify/Decap CMS [#5055](https://github.com/decaporg/decap-cms/issues/5055), [#5470](https://github.com/decaporg/decap-cms/issues/5470), [#6989](https://github.com/decaporg/decap-cms/issues/6989)
 
-[^86]: Netlify/Decap CMS [#6759](https://github.com/decaporg/decap-cms/issues/6759), [#6901](https://github.com/decaporg/decap-cms/issues/6901)
+[^86]: Netlify/Decap CMS [#5253](https://github.com/decaporg/decap-cms/issues/5253), [#6759](https://github.com/decaporg/decap-cms/issues/6759), [#6901](https://github.com/decaporg/decap-cms/issues/6901)
 
 [^87]: Netlify/Decap CMS [#5280](https://github.com/decaporg/decap-cms/issues/5280)
 
@@ -1029,7 +1029,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^106]: Netlify/Decap CMS [#2822](https://github.com/decaporg/decap-cms/issues/2822)
 
-[^107]: Netlify/Decap CMS [#332](https://github.com/decaporg/decap-cms/issues/332), [#683](https://github.com/decaporg/decap-cms/issues/683), [#999](https://github.com/decaporg/decap-cms/issues/999), [#1456](https://github.com/decaporg/decap-cms/issues/1456), [#4175](https://github.com/decaporg/decap-cms/issues/4175), [#5688](https://github.com/decaporg/decap-cms/issues/5688), [#6828](https://github.com/decaporg/decap-cms/issues/6828), [#6862](https://github.com/decaporg/decap-cms/issues/6862), [#7023](https://github.com/decaporg/decap-cms/issues/7023)
+[^107]: Netlify/Decap CMS [#332](https://github.com/decaporg/decap-cms/issues/332), [#683](https://github.com/decaporg/decap-cms/issues/683), [#999](https://github.com/decaporg/decap-cms/issues/999), [#1456](https://github.com/decaporg/decap-cms/issues/1456), [#4175](https://github.com/decaporg/decap-cms/issues/4175), [#4818](https://github.com/decaporg/decap-cms/issues/4175), [#5688](https://github.com/decaporg/decap-cms/issues/5688), [#6828](https://github.com/decaporg/decap-cms/issues/6828), [#6862](https://github.com/decaporg/decap-cms/issues/6862), [#7023](https://github.com/decaporg/decap-cms/issues/7023)
 
 [^108]: Netlify/Decap CMS [#6829](https://github.com/decaporg/decap-cms/issues/6829)
 
@@ -1063,7 +1063,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^123]: Netlify/Decap CMS [#5489](https://github.com/decaporg/decap-cms/issues/5489)
 
-[^124]: Netlify/Decap CMS [#7233](https://github.com/decaporg/decap-cms/issues/7233)
+[^124]: Netlify/Decap CMS [#991](https://github.com/decaporg/decap-cms/issues/991), [#4488](https://github.com/decaporg/decap-cms/issues/4488), [#7233](https://github.com/decaporg/decap-cms/issues/7233)
 
 [^125]: Netlify/Decap CMS [#475](https://github.com/decaporg/decap-cms/issues/475)
 
@@ -1074,3 +1074,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^128]: Netlify/Decap CMS [#7092](https://github.com/decaporg/decap-cms/issues/7092)
 
 [^129]: Netlify/Decap CMS [#4961](https://github.com/decaporg/decap-cms/issues/4961), [#4979](https://github.com/decaporg/decap-cms/issues/4979), [#5545](https://github.com/decaporg/decap-cms/issues/5545), [#5778](https://github.com/decaporg/decap-cms/issues/5778), [#6279](https://github.com/decaporg/decap-cms/issues/6279), [#6464](https://github.com/decaporg/decap-cms/issues/6464), [#6810](https://github.com/decaporg/decap-cms/issues/6810), [#6922](https://github.com/decaporg/decap-cms/issues/6922), [#7118](https://github.com/decaporg/decap-cms/issues/7118), [#7293](https://github.com/decaporg/decap-cms/issues/7293) — A comment on one of the issues says the crash was due to Google Translate.
+
+[^130]: Netlify/Decap CMS [#6571](https://github.com/decaporg/decap-cms/issues/6571)
