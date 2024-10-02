@@ -246,7 +246,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
     },
   } = fillSlugOptions;
 
-  const subPath = entryPath?.match(/(.+?)(?:\/[^/]+)?$/)[1];
+  const subPath = entryPath?.match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
   const isMultiFolders = structure === 'multiple_folders';
   const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];
 
