@@ -53,7 +53,7 @@ const init = async ({ config = {} } = {}) => {
 
   initialized = true;
 
-  if (!document.querySelector('#nc-root')) {
+  if (document.readyState === 'loading' && !document.querySelector('#nc-root')) {
     // A custom mount element (`<div id="nc-root">`) could appear after the CMS `<script>`, so just
     // wait until the page content is loaded
     await new Promise((resolve) => {
