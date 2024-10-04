@@ -86,6 +86,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Using caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
+- Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
 - Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
 - No typing lag on input widgets, especially within nested lists and objects[^77].
 
@@ -185,6 +186,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Entry listing
+  - The collection list displays the number of items in each collection.
   - A folder collection filter with a boolean value works as expected[^93].
   - Hugo’s special `_index.md` files are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
