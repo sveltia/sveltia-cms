@@ -79,9 +79,9 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better performance
 
-- Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework that can load static data files during the build process.
+- Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
 - Small footprint: The bundle size is less than 450 KB when minified and brotlied, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet. That’s the power of Svelte + Vite.
-- We have upgraded from Svelte 4 to [Svelte 5 Release Candidate](https://svelte.dev/blog/svelte-5-release-candidate) to further boost performance, resulting in faster rendering, reduced memory usage and even smaller bundle size. A full migration to the _runes_ reactivity API will follow.
+- We have upgraded from Svelte 4 to [Svelte 5 Release Candidate](https://svelte.dev/blog/svelte-5-release-candidate) to further improve performance, including an even smaller bundle size. A full migration to the _runes_ reactivity API will follow.
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65]. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
@@ -137,6 +137,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - You can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
+- We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - You won’t get a 404 Not Found error when you sign in to the GitLab backend[^115].
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - You can select the local and remote backends while working on a local server.
@@ -589,7 +590,7 @@ collections:
     label: Blog posts
     create: true
     folder: data/posts/
-    slug: '{{title | localize}}'
+    slug: '{{title | localize}}' # This does the trick
     format: yaml
     i18n: true
     fields:
