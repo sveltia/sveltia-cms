@@ -1,8 +1,15 @@
 <script>
   import { Icon, Listbox, Option } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
+  import SidebarItemCount from '$lib/components/common/sidebar-item-count.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets';
+  import {
+    allAssetFolders,
+    allAssets,
+    getAssetsByDirName,
+    selectedAssetFolder,
+  } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection } from '$lib/services/contents';
 
@@ -78,6 +85,16 @@
       >
         {#snippet startIcon()}
           <Icon name={collection?.icon || 'folder'} />
+        {/snippet}
+        {#snippet endIcon()}
+          {#key $allAssets}
+            {#await sleep(0) then}
+              <SidebarItemCount
+                type="assets"
+                count={(internalPath ? getAssetsByDirName(internalPath) : $allAssets).length}
+              />
+            {/await}
+          {/key}
         {/snippet}
       </Option>
     {/each}
