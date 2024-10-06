@@ -2,7 +2,6 @@
   import { Icon, Listbox, Option } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
-  import SidebarItemCount from '$lib/components/common/sidebar-item-count.svelte';
   import { goto } from '$lib/services/app/navigation';
   import {
     allAssetFolders,
@@ -89,10 +88,17 @@
         {#snippet endIcon()}
           {#key $allAssets}
             {#await sleep(0) then}
-              <SidebarItemCount
-                type="assets"
-                count={(internalPath ? getAssetsByDirName(internalPath) : $allAssets).length}
-              />
+              {@const count = (internalPath ? getAssetsByDirName(internalPath) : $allAssets).length}
+              <span
+                class="count"
+                aria-label="({$_(
+                  // eslint-disable-next-line no-nested-ternary
+                  count > 1 ? 'many_assets' : count === 1 ? 'one_asset' : 'no_assets',
+                  { values: { count } },
+                )})"
+              >
+                {count}
+              </span>
             {/await}
           {/key}
         {/snippet}

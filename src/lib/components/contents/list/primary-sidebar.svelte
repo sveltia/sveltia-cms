@@ -2,7 +2,6 @@
   import { Divider, Icon, Listbox, Option } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
-  import SidebarItemCount from '$lib/components/common/sidebar-item-count.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
   import { allEntries, getEntriesByCollection, selectedCollection } from '$lib/services/contents';
@@ -29,10 +28,17 @@
           {#snippet endIcon()}
             {#key $allEntries}
               {#await sleep(0) then}
-                <SidebarItemCount
-                  type="entries"
-                  count={(files ?? getEntriesByCollection(name)).length}
-                />
+                {@const count = (files ?? getEntriesByCollection(name)).length}
+                <span
+                  class="count"
+                  aria-label="({$_(
+                    // eslint-disable-next-line no-nested-ternary
+                    count > 1 ? 'many_entries' : count === 1 ? 'one_entry' : 'no_entries',
+                    { values: { count } },
+                  )})"
+                >
+                  {count}
+                </span>
               {/await}
             {/key}
           {/snippet}
