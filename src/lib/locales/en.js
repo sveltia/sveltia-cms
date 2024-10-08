@@ -7,22 +7,6 @@ export const strings = {
   media: 'Media',
   workflow: 'Workflow',
   editorial_workflow: 'Editorial Workflow',
-  notifications: 'Notifications',
-  site_config: 'Site Configuration',
-  settings: 'Settings',
-  account: 'Account',
-  live_site: 'Live Site',
-  git_repository: 'Git Repository',
-  help: {
-    keyboard_shortcuts: 'Keyboard Shortcuts',
-    documentation: 'Documentation',
-    release_notes: 'Release Notes',
-    release_notes_version_x: 'Release Notes (v{version})',
-    issue: 'Report Issue',
-    feedback: 'Share Feedback',
-    support: 'Get Help',
-    discord: 'Join Us on Discord',
-  },
 
   // Account
   user_name: 'User Name',
@@ -116,7 +100,23 @@ export const strings = {
   publishing_changes: 'Publishing Changes…',
   publishing_changes_failed: 'Changes could not be published. Please try again later.',
   show_notifications: 'Show Notifications',
+  notifications: 'Notifications',
   show_account_menu: 'Show Account Menu',
+  account: 'Account',
+  live_site: 'Live Site',
+  git_repository: 'Git Repository',
+  settings: 'Settings',
+  site_config: 'Site Configuration',
+  show_help_menu: 'Show Help Menu',
+  help: 'Help',
+  keyboard_shortcuts: 'Keyboard Shortcuts',
+  documentation: 'Documentation',
+  release_notes: 'Release Notes',
+  version_x: 'Version {version}',
+  report_issue: 'Report Issue',
+  share_feedback: 'Share Feedback',
+  get_help: 'Get Help',
+  join_discord: 'Join Us on Discord',
 
   // Update notification
   update_available: 'The latest version of Sveltia CMS is available.',
@@ -600,7 +600,7 @@ export const strings = {
   },
 
   // Keyboard shortcuts
-  keyboard_shortcuts: {
+  keyboard_shortcuts_: {
     view_content_library: 'View Content Library',
     view_asset_library: 'View Asset Library',
     search: 'Search for entries and assets',

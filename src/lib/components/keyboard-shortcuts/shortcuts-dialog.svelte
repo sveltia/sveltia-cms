@@ -42,7 +42,7 @@
     <Table aria-label={$_('help.keyboard_shortcuts')}>
       {#each shortcuts as { feature, keys } (keys)}
         <TableRow>
-          <TableCell class="feature">{$_(`keyboard_shortcuts.${feature}`)}</TableCell>
+          <TableCell class="feature">{$_(`keyboard_shortcuts_.${feature}`)}</TableCell>
           <TableCell class="keys">
             {#each keys.split('+') as key}
               <kbd>{key.replace('Accel', accel)}</kbd>

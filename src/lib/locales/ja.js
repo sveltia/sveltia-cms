@@ -7,22 +7,6 @@ export const strings = {
   media: 'メディア',
   workflow: 'ワークフロー',
   editorial_workflow: '編集ワークフロー',
-  notifications: '通知',
-  site_config: 'サイト設定',
-  settings: '設定',
-  account: 'アカウント',
-  live_site: '管理対象サイト',
-  git_repository: 'Git レポジトリ',
-  help: {
-    keyboard_shortcuts: 'キーボードショートカット',
-    documentation: 'ドキュメンテーション',
-    release_notes: 'リリースノート',
-    release_notes_version_x: 'リリースノート (v{version})',
-    issue: '問題を報告',
-    feedback: 'フィードバックを共有',
-    support: 'サポートを求める',
-    discord: 'Discord チャンネルに参加',
-  },
 
   // Account
   user_name: 'ユーザー名',
@@ -116,7 +100,23 @@ export const strings = {
   publishing_changes: '変更を公開しています…',
   publishing_changes_failed: '変更を公開できませんでした。後で再度お試しください。',
   show_notifications: '通知を表示',
+  notifications: '通知',
   show_account_menu: 'アカウントメニューを表示',
+  account: 'アカウント',
+  live_site: '管理対象サイト',
+  git_repository: 'Git レポジトリ',
+  settings: '設定',
+  site_config: 'サイト設定',
+  show_help_menu: 'ヘルプメニューを表示',
+  help: 'ヘルプ',
+  keyboard_shortcuts: 'キーボードショートカット',
+  documentation: 'ドキュメンテーション',
+  release_notes: 'リリースノート',
+  version_x: 'バージョン {version}',
+  report_issue: '問題を報告',
+  share_feedback: 'フィードバックを共有',
+  get_help: 'サポート',
+  join_discord: 'Discord チャンネルに参加',
 
   // Update notification
   update_available: 'Sveltia CMS の最新版が利用可能です。',
@@ -605,7 +605,7 @@ export const strings = {
   },
 
   // Keyboard shortcuts
-  keyboard_shortcuts: {
+  keyboard_shortcuts_: {
     view_content_library: 'コンテンツライブラリを表示',
     view_asset_library: 'アセットライブラリを表示',
     search: 'エントリーとアセットを検索',
