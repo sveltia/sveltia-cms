@@ -235,7 +235,7 @@
         width: 100%;
         height: 100%;
         z-index: -2;
-        object-fit: contain;
+        object-fit: cover;
         transform: scale(1.2);
       }
     }
