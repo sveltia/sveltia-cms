@@ -23,7 +23,7 @@
   const dateFields = ['date', 'commit_date'];
 </script>
 
-<MenuButton variant="ghost" label={label || $_('sort')} {disabled}>
+<MenuButton variant="ghost" label={label || $_('sort')} {disabled} popupPosition="bottom-right">
   {#snippet endIcon()}
     <Icon name="arrow_drop_down" />
   {/snippet}

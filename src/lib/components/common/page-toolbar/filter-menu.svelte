@@ -22,7 +22,7 @@
   export let filters = [];
 </script>
 
-<MenuButton variant="ghost" label={label || $_('filter')} {disabled}>
+<MenuButton variant="ghost" label={label || $_('filter')} {disabled} popupPosition="bottom-right">
   {#snippet endIcon()}
     <Icon name="arrow_drop_down" />
   {/snippet}

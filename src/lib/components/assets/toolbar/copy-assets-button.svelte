@@ -124,7 +124,12 @@
   })();
 </script>
 
-<MenuButton variant="ghost" disabled={!assets.length} label={$_('copy')}>
+<MenuButton
+  variant="ghost"
+  disabled={!assets.length}
+  label={$_('copy')}
+  popupPosition="bottom-right"
+>
   {#snippet endIcon()}
     <Icon name="arrow_drop_down" />
   {/snippet}
