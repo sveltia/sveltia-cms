@@ -9,6 +9,7 @@
     parseDateTimeConfig,
   } from '$lib/components/contents/details/widgets/date-time/helper';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
 
   /**
    * @type {LocaleCode}
@@ -31,11 +32,6 @@
   $: ({ dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig));
   $: date = getDate(currentValue, fieldConfig);
   $: canonicalLocale = getCanonicalLocale(locale);
-
-  /** @type {Intl.DateTimeFormatOptions} */
-  const dateFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-  /** @type {Intl.DateTimeFormatOptions} */
-  const timeFormatOptions = { hour: 'numeric', minute: 'numeric', hour12: true };
 </script>
 
 {#if date}

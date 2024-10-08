@@ -8,6 +8,7 @@
   import { getAssetDetails, isMediaKind } from '$lib/services/assets';
   import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
   import { getEntryTitle } from '$lib/services/contents/entry';
+  import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media';
 
@@ -140,7 +141,12 @@
   {#if commitDate}
     <section>
       <h4>{$_('sort_keys.commit_date')}</h4>
-      <p>{commitDate.toLocaleString($appLocale ?? undefined)}</p>
+      <p>
+        {commitDate.toLocaleString($appLocale ?? undefined, {
+          ...dateFormatOptions,
+          ...timeFormatOptions,
+        })}
+      </p>
     </section>
   {/if}
   <section>
