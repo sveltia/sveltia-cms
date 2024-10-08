@@ -2,6 +2,16 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
+![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
+
+![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2-20240507.webp)<br>
+
+![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3-20240507.webp)<br>
+
+![Screenshot: All-New Asset Library; First Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4-20240507.webp)<br>
+
+![Screenshot: Works with Remote (GitHub, GitLab) and Local Repositories; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5-20240507.webp)<br>
+
 ## Table of contents
 
 - [Motivation](#motivation)
@@ -56,16 +66,6 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 - [Related links](#related-links)
   - [As seen on](#as-seen-on)
 - [Disclaimer](#disclaimer)
-
-![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
-
-![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2-20240507.webp)<br>
-
-![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3-20240507.webp)<br>
-
-![Screenshot: All-New Asset Library; First Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4-20240507.webp)<br>
-
-![Screenshot: Works with Remote (GitHub, GitLab) and Local Repositories; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5-20240507.webp)<br>
 
 ## Motivation
 
