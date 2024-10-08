@@ -2,20 +2,6 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
 
-## Table of contents
-
-- [Motivation](#motivation)
-- [Development status](#development-status)
-- [Differentiators](#differentiators)
-- [Compatibility](#compatibility)
-- [Roadmap](#roadmap)
-- [Getting started](#getting-started)
-- [Tips & tricks](#tips--tricks)
-- [Support & feedback](#support--feedback)
-- [Contributions](#contributions)
-- [Related links](#related-links)
-- [Disclaimer](#disclaimer)
-
 ![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
 
 ![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2-20240507.webp)<br>
@@ -70,9 +56,15 @@ Sveltia CMS **version 1.0 is expected to ship by the end of 2024**. Check our [r
 
 ![120 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20240928.webp)<br>
 
-## Differentiators
+## Features
 
 We are working hard to create a **significantly better alternative to Netlify CMS and Decap CMS** by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
+
+### Compatible with Netlify/Decap CMS
+
+- Ready to be used as a drop-in replacement for Netlify/Decap CMS _in some casual use case scenarios_ with a single line of code update.
+- Your existing [configuration file](https://decapcms.org/docs/configuration-options/) can be reused as is.
+- However, some features are still missing or will not be added, most notably Git Gateway and Netlify Identity. Look at the [compatibility info](#compatibility) below to see if you can migrate now or soon.
 
 ### Better UX
 
@@ -323,7 +315,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ## Compatibility
 
-We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern, powerful, high performance alternative. It’s ready to be used as a drop-in replacement for Netlify/Decap CMS _in some casual use case scenarios_ with a [single line of code update](#migration). However, some features will be omitted due to deprecations and other factors. Look at the compatibility info below to see if you can migrate now or soon.
+We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern, powerful, high performance alternative. However, some features will be omitted due to deprecations and other factors.
 
 ### Features not to be implemented
 
@@ -642,7 +634,7 @@ i18n:
 
 ### Disabling non-default locale content
 
-You can disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
+You can now disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
 
 With the following configuration, you can disable the French and/or German translation while writing in English.
 
