@@ -120,9 +120,11 @@
  * @property {string} developerURL - URL of the page that provides the API/developer service.
  * @property {string} apiKeyURL - URL of the page that provides an API key.
  * @property {RegExp} apiKeyPattern - API key pattern.
- * @property {string[]} sourceLanguages - Supported source languages.
- * @property {string[]} targetLanguages - Supported target languages.
- * @property {(texts: string[], options: { sourceLocale: string | undefined, targetLocale: string,
+ * @property {(locale: string) => string | undefined} getSourceLanguage - Get a supported source
+ * language that matches the given locale code.
+ * @property {(locale: string) => string | undefined} getTargetLanguage - Get a supported target
+ * language that matches the given locale code.
+ * @property {(texts: string[], options: { sourceLocale: string, targetLocale: string,
  * apiKey: string }) => Promise<string[]>} translate - Function to translate strings.
  */
 

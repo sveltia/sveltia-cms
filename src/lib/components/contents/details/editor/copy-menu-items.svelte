@@ -24,7 +24,7 @@
   export let translate = false;
 
   $: ({ currentLocales = {}, currentValues = {} } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ sourceLanguages, targetLanguages } = $translator);
+  $: ({ getSourceLanguage, getTargetLanguage } = $translator);
 </script>
 
 {#each otherLocales as otherLocale}
@@ -38,9 +38,7 @@
       (!translate &&
         keyPath &&
         currentValues[otherLocale][keyPath] === currentValues[locale][keyPath]) ||
-      (translate &&
-        (!sourceLanguages.includes(locale.toUpperCase()) ||
-          !targetLanguages.includes(otherLocale.toUpperCase())))}
+      (translate && (!getSourceLanguage(locale) || !getTargetLanguage(otherLocale)))}
     onclick={() => {
       copyFromLocale(otherLocale, locale, { keyPath, translate });
     }}

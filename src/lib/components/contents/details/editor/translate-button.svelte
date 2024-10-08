@@ -25,8 +25,8 @@
   export let keyPath = '';
 
   $: ({ currentLocales = {} } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ sourceLanguages, targetLanguages } = $translator ?? {});
-  $: sourceDisabled = !currentLocales[locale] || !sourceLanguages.includes(locale.toUpperCase());
+  $: ({ getSourceLanguage, getTargetLanguage } = $translator ?? {});
+  $: sourceDisabled = !currentLocales[locale] || !getSourceLanguage(locale);
 </script>
 
 {#if otherLocales.length === 1}
@@ -40,9 +40,7 @@
     popupPosition="bottom-right"
     aria-label={label}
     title={label}
-    disabled={sourceDisabled ||
-      !currentLocales[otherLocale] ||
-      !targetLanguages.includes(otherLocale.toUpperCase())}
+    disabled={sourceDisabled || !currentLocales[otherLocale] || !getTargetLanguage(otherLocale)}
     onclick={() => {
       copyFromLocale(otherLocale, locale, { keyPath, translate: true });
     }}
