@@ -2,6 +2,7 @@
   import { Button, Divider, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
+  import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { assetKinds, selectedAssets } from '$lib/services/assets';
@@ -14,24 +15,7 @@
 
 {#if !$selectedCollection?.files}
   <Toolbar variant="secondary" aria-label={$_('asset_list')}>
-    <Button
-      variant="ghost"
-      disabled={$selectedAssets.length === Object.values($assetGroups).flat(1).length}
-      label={$_('select_all')}
-      aria-controls="asset-list"
-      onclick={() => {
-        $selectedAssets = Object.values($assetGroups).flat(1);
-      }}
-    />
-    <Button
-      variant="ghost"
-      disabled={!$selectedAssets.length}
-      label={$_('clear_selection')}
-      aria-controls="asset-list"
-      onclick={() => {
-        $selectedAssets = [];
-      }}
-    />
+    <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
     <Spacer flex />
     <SortMenu
       disabled={!hasMultipleAssets}
