@@ -78,6 +78,7 @@
             );
           }}
         />
+        <Divider />
         <MenuItem
           label={$_('join_discord')}
           onclick={() => {
