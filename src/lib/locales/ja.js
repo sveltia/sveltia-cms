@@ -173,7 +173,7 @@ export const strings = {
   filtering_options: '絞り込みオプション',
   group: 'グループ化', // Verb
   grouping_options: 'グループ化オプション',
-  file_type: 'ファイル形式',
+  type: '種類',
   all: 'すべて',
   image: '画像',
   video: '動画',

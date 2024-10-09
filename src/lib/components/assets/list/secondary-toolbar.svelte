@@ -22,7 +22,7 @@
     aria-controls="asset-list"
   />
   <FilterMenu
-    label={$_('file_type')}
+    label={$_('type')}
     disabled={!hasMultipleAssets}
     {currentView}
     noneLabel={$_('all')}

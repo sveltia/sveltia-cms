@@ -173,7 +173,7 @@ export const strings = {
   filtering_options: 'Filtering Options',
   group: 'Group', // Verb
   grouping_options: 'Grouping Options',
-  file_type: 'File Type',
+  type: 'Type',
   all: 'All',
   image: 'Image',
   video: 'Video',
