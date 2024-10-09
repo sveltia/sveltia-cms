@@ -156,7 +156,7 @@ export const moveAssets = async (action, movingAssets) => {
         _allAssetFolders.find(({ collectionName }) =>
           getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
         ) ??
-        _allAssetFolders.find(({ collectionName }) => collectionName === null) ??
+        _allAssetFolders.find(({ collectionName }) => !collectionName) ??
         {};
 
       const updatedEntries = await getEntriesByAssetURL(assetURL, {

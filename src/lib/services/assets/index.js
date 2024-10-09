@@ -365,7 +365,7 @@ export const getAssetPublicURL = (
     _allAssetFolders.find(({ collectionName }) =>
       getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
     ) ??
-    _allAssetFolders.find(({ collectionName }) => collectionName === null) ??
+    _allAssetFolders.find(({ collectionName }) => !collectionName) ??
     {};
 
   // Cannot determine the URL if it’s relative to an entry, unless the asset is in the same folder
