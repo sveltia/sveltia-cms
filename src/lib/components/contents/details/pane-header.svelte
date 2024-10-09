@@ -126,9 +126,6 @@
         popupPosition="bottom-right"
         aria-label={$_('show_content_options_x_locale', { values: { locale: localeLabel } })}
       >
-        {#snippet startIcon()}
-          <Icon name="more_vert" />
-        {/snippet}
         {#snippet popup()}
           <Menu aria-label={$_('content_options_x_locale', { values: { locale: localeLabel } })}>
             {#if canCopy && $thisPane?.locale}

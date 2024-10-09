@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "4.0.0-next.7",
-    "@types/node": "^22.7.4",
+    "@types/node": "^22.7.5",
     "cspell": "^8.14.4",
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -45,7 +45,7 @@
     "stylelint": "^16.9.0",
     "stylelint-config-recommended-scss": "^14.1.0",
     "stylelint-scss": "^6.7.0",
-    "svelte": "5.0.0-next.262",
+    "svelte": "5.0.0-next.263",
     "svelte-check": "^4.0.4",
     "svelte-i18n": "^4.0.0",
     "svelte-preprocess": "^6.0.3",
@@ -54,7 +54,7 @@
   },
   "dependencies": {
     "@sindresorhus/transliterate": "^1.6.0",
-    "@sveltia/ui": "^0.17.2",
+    "@sveltia/ui": "^0.18.0",
     "@sveltia/utils": "^0.5.0",
     "deepmerge": "^4.3.1",
     "fast-deep-equal": "^3.1.3",

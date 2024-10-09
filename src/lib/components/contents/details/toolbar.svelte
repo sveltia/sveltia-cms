@@ -189,9 +189,6 @@
     aria-label={$_('show_editor_options')}
     bind:this={menuButton}
   >
-    {#snippet startIcon()}
-      <Icon name="more_vert" />
-    {/snippet}
     {#snippet popup()}
       <Menu aria-label={$_('editor_options')}>
         <MenuItemCheckbox

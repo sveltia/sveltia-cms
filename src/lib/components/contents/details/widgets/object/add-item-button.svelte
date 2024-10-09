@@ -38,7 +38,7 @@
 
 {#if Array.isArray(types)}
   <MenuButton variant="tertiary" {label} disabled={_disabled}>
-    {#snippet startIcon()}
+    {#snippet endIcon()}
       <Icon name="add" />
     {/snippet}
     {#snippet popup()}

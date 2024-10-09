@@ -12,8 +12,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@sveltia/ui':
-        specifier: ^0.17.2
-        version: 0.17.2(svelte@5.0.0-next.262)
+        specifier: ^0.18.0
+        version: 0.18.0(svelte@5.0.0-next.263)
       '@sveltia/utils':
         specifier: ^0.5.0
         version: 0.5.0
@@ -47,10 +47,10 @@ importers:
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: 4.0.0-next.7
-        version: 4.0.0-next.7(svelte@5.0.0-next.262)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))
+        version: 4.0.0-next.7(svelte@5.0.0-next.263)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4))
       '@types/node':
-        specifier: ^22.7.4
-        version: 22.7.4
+        specifier: ^22.7.5
+        version: 22.7.5
       cspell:
         specifier: ^8.14.4
         version: 8.14.4
@@ -71,7 +71,7 @@ importers:
         version: 50.3.1(eslint@8.57.1)
       eslint-plugin-svelte:
         specifier: ^2.44.1
-        version: 2.44.1(eslint@8.57.1)(svelte@5.0.0-next.262)
+        version: 2.44.1(eslint@8.57.1)(svelte@5.0.0-next.263)
       postcss:
         specifier: ^8.4.47
         version: 8.4.47
@@ -83,7 +83,7 @@ importers:
         version: 3.3.3
       prettier-plugin-svelte:
         specifier: ^3.2.7
-        version: 3.2.7(prettier@3.3.3)(svelte@5.0.0-next.262)
+        version: 3.2.7(prettier@3.3.3)(svelte@5.0.0-next.263)
       rollup-plugin-visualizer:
         specifier: ^5.12.0
         version: 5.12.0(rollup@4.24.0)
@@ -100,23 +100,23 @@ importers:
         specifier: ^6.7.0
         version: 6.7.0(stylelint@16.9.0(typescript@5.5.4))
       svelte:
-        specifier: 5.0.0-next.262
-        version: 5.0.0-next.262
+        specifier: 5.0.0-next.263
+        version: 5.0.0-next.263
       svelte-check:
         specifier: ^4.0.4
-        version: 4.0.4(svelte@5.0.0-next.262)(typescript@5.5.4)
+        version: 4.0.4(svelte@5.0.0-next.263)(typescript@5.5.4)
       svelte-i18n:
         specifier: ^4.0.0
-        version: 4.0.0(svelte@5.0.0-next.262)
+        version: 4.0.0(svelte@5.0.0-next.263)
       svelte-preprocess:
         specifier: ^6.0.3
-        version: 6.0.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.79.4)(svelte@5.0.0-next.262)(typescript@5.5.4)
+        version: 6.0.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.79.4)(svelte@5.0.0-next.263)(typescript@5.5.4)
       vite:
         specifier: ^5.4.8
-        version: 5.4.8(@types/node@22.7.4)(sass@1.79.4)
+        version: 5.4.8(@types/node@22.7.5)(sass@1.79.4)
       vitest:
         specifier: ^2.1.2
-        version: 2.1.2(@types/node@22.7.4)(jsdom@25.0.1)(sass@1.79.4)
+        version: 2.1.2(@types/node@22.7.5)(jsdom@25.0.1)(sass@1.79.4)
 
 packages:
 
@@ -172,8 +172,8 @@ packages:
   '@cspell/dict-companies@3.1.4':
     resolution: {integrity: sha512-y9e0amzEK36EiiKx3VAA+SHQJPpf2Qv5cCt5eTUSggpTkiFkCh6gRKQ97rVlrKh5GJrqinDwYIJtTsxuh2vy2Q==}
 
-  '@cspell/dict-cpp@5.1.17':
-    resolution: {integrity: sha512-b+1SOTf0WkveOobmELlOzRXKtzBQIw87Vjm2UMwJ3GTo6Fnpws/NKnS4ZsBJWgzHU0RrqMC+wIW7yW+km/JOTQ==}
+  '@cspell/dict-cpp@5.1.19':
+    resolution: {integrity: sha512-i/odUPNFLdqWisOktu6c4qjUR4k+P9Al2RCri3Wso9EFblp53xt/5jIUdGMdDDVQGqX7s/KLtdqNxNKqP3/d+w==}
 
   '@cspell/dict-cryptocurrencies@5.0.0':
     resolution: {integrity: sha512-Z4ARIw5+bvmShL+4ZrhDzGhnc9znaAGHOEMaB/GURdS/jdoreEDY34wdN0NtdLHDO5KO7GduZnZyqGdRoiSmYA==}
@@ -187,8 +187,8 @@ packages:
   '@cspell/dict-dart@2.2.1':
     resolution: {integrity: sha512-yriKm7QkoPx3JPSSOcw6iX9gOb2N50bOo/wqWviqPYbhpMRh9Xiv6dkUy3+ot+21GuShZazO8X6U5+Vw67XEwg==}
 
-  '@cspell/dict-data-science@2.0.1':
-    resolution: {integrity: sha512-xeutkzK0eBe+LFXOFU2kJeAYO6IuFUc1g7iRLr7HeCmlC4rsdGclwGHh61KmttL3+YHQytYStxaRBdGAXWC8Lw==}
+  '@cspell/dict-data-science@2.0.2':
+    resolution: {integrity: sha512-VwAck6OZQVqrscKyOrvllixIugIPF+Q6YoFNvXZCPhHGtNyOAVraD3S7kOgPYBdUjgno4QbdMWm92BUPqL1QjQ==}
 
   '@cspell/dict-django@4.1.0':
     resolution: {integrity: sha512-bKJ4gPyrf+1c78Z0Oc4trEB9MuhcB+Yg+uTTWsvhY6O2ncFYbB/LbEZfqhfmmuK/XJJixXfI1laF2zicyf+l0w==}
@@ -232,8 +232,8 @@ packages:
   '@cspell/dict-git@3.0.0':
     resolution: {integrity: sha512-simGS/lIiXbEaqJu9E2VPoYW1OTC2xrwPPXNXFMa2uo/50av56qOuaxDrZ5eH1LidFXwoc8HROCHYeKoNrDLSw==}
 
-  '@cspell/dict-golang@6.0.12':
-    resolution: {integrity: sha512-LEPeoqd+4O+vceHF73S7D7+LYfrAjOvp4Dqzh4MT30ruzlQ77yHRSuYOJtrFN1GK5ntAt/ILSVOKg9sgsz1Llg==}
+  '@cspell/dict-golang@6.0.13':
+    resolution: {integrity: sha512-uBUWi+AjFpluB6qF0rsC1gGyooqXeKPUdWHSmSXW/DCnS5PBSjRW6VWWp8efc1Fanob0QJxiZiYlc4U7oxuG6Q==}
 
   '@cspell/dict-google@1.0.1':
     resolution: {integrity: sha512-dQr4M3n95uOhtloNSgB9tYYGXGGEGEykkFyRtfcp5pFuEecYUa0BSgtlGKx9RXVtJtKgR+yFT/a5uQSlt8WjqQ==}
@@ -280,14 +280,14 @@ packages:
   '@cspell/dict-php@4.0.10':
     resolution: {integrity: sha512-NfTZdp6kcZDF1PvgQ6cY0zE4FUO5rSwNmBH/iwCBuaLfJAFQ97rgjxo+D2bic4CFwNjyHutnHPtjJBRANO5XQw==}
 
-  '@cspell/dict-powershell@5.0.9':
-    resolution: {integrity: sha512-Vi0h0rlxS39tgTyUtxI6L3BPHH7MLPkLWCYkNfb/buQuNJYNFdHiF4bqoqVdJ/7ZrfIfNg4i6rzocnwGRn2ruw==}
+  '@cspell/dict-powershell@5.0.10':
+    resolution: {integrity: sha512-U4H0zm94sNK+YP7jSFb7xb160XLf2dKIPVt5sOYctKlEyR9M16sP8FHbyWV2Yp1YtxXugoNdeCm2vwGEDAd8sg==}
 
   '@cspell/dict-public-licenses@2.0.8':
     resolution: {integrity: sha512-Sup+tFS7cDV0fgpoKtUqEZ6+fA/H+XUgBiqQ/Fbs6vUE3WCjJHOIVsP+udHuyMH7iBfJ4UFYOYeORcY4EaKdMg==}
 
-  '@cspell/dict-python@4.2.6':
-    resolution: {integrity: sha512-Hkz399qDGEbfXi9GYa2hDl7GahglI86JmS2F1KP8sfjLXofUgtnknyC5NWc86nzHcP38pZiPqPbTigyDYw5y8A==}
+  '@cspell/dict-python@4.2.8':
+    resolution: {integrity: sha512-4y5dynLiajvowhB3PqlcwJ2C4okK1y2Hombec1+TGcV9sUBfo8FYNw6VRFUUrpsxO+Ut/3ncIifdZS5/zAWi5w==}
 
   '@cspell/dict-r@2.0.1':
     resolution: {integrity: sha512-KCmKaeYMLm2Ip79mlYPc8p+B2uzwBp4KMkzeLd5E6jUlCL93Y5Nvq68wV5fRLDRTf7N1LvofkVFWfDcednFOgA==}
@@ -295,14 +295,14 @@ packages:
   '@cspell/dict-ruby@5.0.4':
     resolution: {integrity: sha512-URw0jScj5pv8sKCVLNnde11qVCQR442rUpSd12u46Swl+5qBaSdnOUoCWQk419kd9/dpC6bB/3l4kOSY2fdYHw==}
 
-  '@cspell/dict-rust@4.0.5':
-    resolution: {integrity: sha512-DIvlPRDemjKQy8rCqftAgGNZxY5Bg+Ps7qAIJjxkSjmMETyDgl0KTVuaJPt7EK4jJt6uCZ4ILy96npsHDPwoXA==}
+  '@cspell/dict-rust@4.0.6':
+    resolution: {integrity: sha512-Buzy9PfLbdRPibSth8CV1D8ZsYqybo26yNIlAN+8ehU0pSBss0Jv4aleL4vKQ3FjouXeAC27rtEsLd7yaMZTog==}
 
   '@cspell/dict-scala@5.0.3':
     resolution: {integrity: sha512-4yGb4AInT99rqprxVNT9TYb1YSpq58Owzq7zi3ZS5T0u899Y4VsxsBiOgHnQ/4W+ygi+sp+oqef8w8nABR2lkg==}
 
-  '@cspell/dict-software-terms@4.1.5':
-    resolution: {integrity: sha512-txvSONYs7oT9z7qLVunSZUz9R4PRivGNyZvhHC8ysbWdWeCXo9q4R2kasuZE/YMpiPkfDLMfmd2huz4TRFercQ==}
+  '@cspell/dict-software-terms@4.1.7':
+    resolution: {integrity: sha512-+fFTALseXszDN8/khonF1DpTcYzwyNqYxhATLakr7CUPtUCO1fCH4lidMtBN4UtPVpE6tbjc5D8tj51PJxEOcw==}
 
   '@cspell/dict-sql@2.1.5':
     resolution: {integrity: sha512-FmxanytHXss7GAWAXmgaxl3icTCW7YxlimyOSPNfm+njqeUDjw3kEv4mFNDDObBJv8Ec5AWCbUDkWIpkE3IpKg==}
@@ -313,8 +313,8 @@ packages:
   '@cspell/dict-swift@2.0.1':
     resolution: {integrity: sha512-gxrCMUOndOk7xZFmXNtkCEeroZRnS2VbeaIPiymGRHj5H+qfTAzAKxtv7jJbVA3YYvEzWcVE2oKDP4wcbhIERw==}
 
-  '@cspell/dict-terraform@1.0.1':
-    resolution: {integrity: sha512-29lmUUnZgPh+ieZ5hunick8hzNIpNRtiJh9vAusNskPCrig3RTW6u7F+GG1a8uyslbzSw+Irjf40PTOan1OJJA==}
+  '@cspell/dict-terraform@1.0.2':
+    resolution: {integrity: sha512-UZdJwWIpib2Rx02w6vtXTU3z+M/VMZU0F1dhSL3Ab9otQsFntT8U1CX7wBSqQCLg8bJiCfnUyVvMK3UBm3SR8A==}
 
   '@cspell/dict-typescript@3.1.6':
     resolution: {integrity: sha512-1beC6O4P/j23VuxX+i0+F7XqPVc3hhiAzGJHEKqnWf5cWAXQtg0xz3xQJ5MvYx2a7iLaSa+lu7+05vG9UHyu9Q==}
@@ -865,8 +865,8 @@ packages:
       svelte: ^5.0.0-next.96 || ^5.0.0
       vite: ^5.0.0
 
-  '@sveltia/ui@0.17.2':
-    resolution: {integrity: sha512-NJ7bGMyHAqVwGkvg3WaBd4LTzsBmM5aqnbkhdZM7KGFhf6ZnVpk8O+og/YZTrSRYPZGKi41zucygUE3hudBdpQ==}
+  '@sveltia/ui@0.18.0':
+    resolution: {integrity: sha512-G9uA6m9Ew+gCxM4MZ+qRp4XXzGp+SauWw+wbCh/VgQdDhRnd7adI5Rh6VAYoI8Xxtt2rxhMii/5OgVr/mTMkVg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -882,8 +882,8 @@ packages:
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
 
-  '@types/node@22.7.4':
-    resolution: {integrity: sha512-y+NPi1rFzDs1NdQHHToqeiX2TIS79SWEAw9GYhkkx8bD0ChpfqC+n2j5OXOCpzfojBEBt6DnEnnG9MY0zk1XLg==}
+  '@types/node@22.7.5':
+    resolution: {integrity: sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -1469,6 +1469,7 @@ packages:
   eslint@8.57.1:
     resolution: {integrity: sha512-ypowyDxpVSYpkXr9WPv2PAZCtNip1Mv5KTW0SCurXv/9iOpcrH9PaqUElksqEB6pChqHGDRCFTyrZlGhnLNGiA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   esm-env@1.0.0:
@@ -1625,9 +1626,6 @@ packages:
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
-
-  get-func-name@2.0.2:
-    resolution: {integrity: sha512-8vXOvuE167CtIc3OyItco7N/dpRtBbYOsPsXCz7X/PMnlGjYjSGuZJgM1Y7mmew7BKf9BqvLX2tnOVy1BBUsxQ==}
 
   get-intrinsic@1.2.4:
     resolution: {integrity: sha512-5uYhsJH8VJBTv7oslg4BznJYhDoRI6waYCxMmCdnTrcCrHA/fCFKoTFz2JKKE0HdDFUF7/oQuhzumXJK7paBRQ==}
@@ -1984,8 +1982,8 @@ packages:
   lodash.truncate@4.4.2:
     resolution: {integrity: sha512-jttmRe7bRse52OsWIMDLaXxWqRAmtIUccAQ3garviCqJjafXOfNMO0yMfNpdD6zbGaTU0P5Nz7e7gAT6cKmJRw==}
 
-  loupe@3.1.1:
-    resolution: {integrity: sha512-edNu/8D5MKVfGVFRhFf8aAxiTM6Wumfz5XsaatSxlD3w4R1d/WEKUTydCdPGbl9K7QG/Ca3GnDV2sIKIpXRQcw==}
+  loupe@3.1.2:
+    resolution: {integrity: sha512-23I4pFZHmAemUnz8WZXbYRSKYj801VDaNv9ETuMh7IrMc7VuVVSo+Z9iLE3ni30+U48iDWfi30d3twAXBYmnCg==}
 
   lru-queue@0.1.0:
     resolution: {integrity: sha512-BpdYkt9EvGl8OfWHDQPISVpcl5xZthb+XPsbELj5AQXxIC8IriDZIQYjBJPEm5rS420sjZ0TLEzRcq5KdBhYrQ==}
@@ -2542,8 +2540,8 @@ packages:
       typescript:
         optional: true
 
-  svelte@5.0.0-next.262:
-    resolution: {integrity: sha512-gAY0POArLN5yI/ihvItG0wQCh7ycfvxSvvVlvPECshFKmR/ep6ZAlqX50+aUGDSG/5megFqnSJfP7piC6lOtew==}
+  svelte@5.0.0-next.263:
+    resolution: {integrity: sha512-vusQUBK3fIazd8D1uDP/r2y9aHNCKwmsG8rjOFQ5dgx7w/uuHF29tt+onVFlbRgaudlFwpjLNo3OVylrhD6zoQ==}
     engines: {node: '>=18'}
 
   svg-tags@1.0.0:
@@ -2552,8 +2550,8 @@ packages:
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
 
-  synckit@0.9.1:
-    resolution: {integrity: sha512-7gr8p9TQP6RAHusBOSLs46F4564ZrjV8xFmw5zCmgmhGUcw2hxsShhJ6CEiHQMgPDwAQ1fWHPM0ypc4RMAig4A==}
+  synckit@0.9.2:
+    resolution: {integrity: sha512-vrozgXDQwYO72vHjUb/HnFbQx1exDjoKzqx23aXEg2a9VIg2TSFZ8FmeZpTjUCFMYw7mpX4BE2SFu8wI7asYsw==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
   table@6.8.2:
@@ -2870,7 +2868,7 @@ snapshots:
       '@cspell/dict-aws': 4.0.4
       '@cspell/dict-bash': 4.1.5
       '@cspell/dict-companies': 3.1.4
-      '@cspell/dict-cpp': 5.1.17
+      '@cspell/dict-cpp': 5.1.19
       '@cspell/dict-cryptocurrencies': 5.0.0
       '@cspell/dict-csharp': 4.0.2
       '@cspell/dict-css': 4.0.13
@@ -2889,7 +2887,7 @@ snapshots:
       '@cspell/dict-fullstack': 3.2.0
       '@cspell/dict-gaming-terms': 1.0.5
       '@cspell/dict-git': 3.0.0
-      '@cspell/dict-golang': 6.0.12
+      '@cspell/dict-golang': 6.0.13
       '@cspell/dict-google': 1.0.1
       '@cspell/dict-haskell': 4.0.1
       '@cspell/dict-html': 4.0.6
@@ -2905,18 +2903,18 @@ snapshots:
       '@cspell/dict-node': 5.0.1
       '@cspell/dict-npm': 5.1.5
       '@cspell/dict-php': 4.0.10
-      '@cspell/dict-powershell': 5.0.9
+      '@cspell/dict-powershell': 5.0.10
       '@cspell/dict-public-licenses': 2.0.8
-      '@cspell/dict-python': 4.2.6
+      '@cspell/dict-python': 4.2.8
       '@cspell/dict-r': 2.0.1
       '@cspell/dict-ruby': 5.0.4
-      '@cspell/dict-rust': 4.0.5
+      '@cspell/dict-rust': 4.0.6
       '@cspell/dict-scala': 5.0.3
-      '@cspell/dict-software-terms': 4.1.5
+      '@cspell/dict-software-terms': 4.1.7
       '@cspell/dict-sql': 2.1.5
       '@cspell/dict-svelte': 1.0.2
       '@cspell/dict-swift': 2.0.1
-      '@cspell/dict-terraform': 1.0.1
+      '@cspell/dict-terraform': 1.0.2
       '@cspell/dict-typescript': 3.1.6
       '@cspell/dict-vue': 3.0.0
 
@@ -2942,7 +2940,7 @@ snapshots:
 
   '@cspell/dict-companies@3.1.4': {}
 
-  '@cspell/dict-cpp@5.1.17': {}
+  '@cspell/dict-cpp@5.1.19': {}
 
   '@cspell/dict-cryptocurrencies@5.0.0': {}
 
@@ -2952,7 +2950,7 @@ snapshots:
 
   '@cspell/dict-dart@2.2.1': {}
 
-  '@cspell/dict-data-science@2.0.1': {}
+  '@cspell/dict-data-science@2.0.2': {}
 
   '@cspell/dict-django@4.1.0': {}
 
@@ -2982,7 +2980,7 @@ snapshots:
 
   '@cspell/dict-git@3.0.0': {}
 
-  '@cspell/dict-golang@6.0.12': {}
+  '@cspell/dict-golang@6.0.13': {}
 
   '@cspell/dict-google@1.0.1': {}
 
@@ -3014,23 +3012,23 @@ snapshots:
 
   '@cspell/dict-php@4.0.10': {}
 
-  '@cspell/dict-powershell@5.0.9': {}
+  '@cspell/dict-powershell@5.0.10': {}
 
   '@cspell/dict-public-licenses@2.0.8': {}
 
-  '@cspell/dict-python@4.2.6':
+  '@cspell/dict-python@4.2.8':
     dependencies:
-      '@cspell/dict-data-science': 2.0.1
+      '@cspell/dict-data-science': 2.0.2
 
   '@cspell/dict-r@2.0.1': {}
 
   '@cspell/dict-ruby@5.0.4': {}
 
-  '@cspell/dict-rust@4.0.5': {}
+  '@cspell/dict-rust@4.0.6': {}
 
   '@cspell/dict-scala@5.0.3': {}
 
-  '@cspell/dict-software-terms@4.1.5': {}
+  '@cspell/dict-software-terms@4.1.7': {}
 
   '@cspell/dict-sql@2.1.5': {}
 
@@ -3038,7 +3036,7 @@ snapshots:
 
   '@cspell/dict-swift@2.0.1': {}
 
-  '@cspell/dict-terraform@1.0.1': {}
+  '@cspell/dict-terraform@1.0.2': {}
 
   '@cspell/dict-typescript@3.1.6': {}
 
@@ -3436,29 +3434,29 @@ snapshots:
     dependencies:
       escape-string-regexp: 5.0.0
 
-  '@sveltejs/vite-plugin-svelte-inspector@3.0.0-next.3(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.262)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.262)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))':
+  '@sveltejs/vite-plugin-svelte-inspector@3.0.0-next.3(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.263)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4)))(svelte@5.0.0-next.263)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 4.0.0-next.7(svelte@5.0.0-next.262)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))
+      '@sveltejs/vite-plugin-svelte': 4.0.0-next.7(svelte@5.0.0-next.263)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4))
       debug: 4.3.7
-      svelte: 5.0.0-next.262
-      vite: 5.4.8(@types/node@22.7.4)(sass@1.79.4)
+      svelte: 5.0.0-next.263
+      vite: 5.4.8(@types/node@22.7.5)(sass@1.79.4)
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.262)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))':
+  '@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.263)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte-inspector': 3.0.0-next.3(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.262)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.262)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))
+      '@sveltejs/vite-plugin-svelte-inspector': 3.0.0-next.3(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.263)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4)))(svelte@5.0.0-next.263)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4))
       debug: 4.3.7
       deepmerge: 4.3.1
       kleur: 4.1.5
       magic-string: 0.30.11
-      svelte: 5.0.0-next.262
-      vite: 5.4.8(@types/node@22.7.4)(sass@1.79.4)
-      vitefu: 1.0.2(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))
+      svelte: 5.0.0-next.263
+      vite: 5.4.8(@types/node@22.7.5)(sass@1.79.4)
+      vitefu: 1.0.2(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4))
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.17.2(svelte@5.0.0-next.262)':
+  '@sveltia/ui@0.18.0(svelte@5.0.0-next.263)':
     dependencies:
       '@lexical/code': 0.18.0
       '@lexical/dragon': 0.18.0
@@ -3472,7 +3470,7 @@ snapshots:
       '@lexical/utils': 0.18.0
       '@sveltia/utils': 0.5.0
       lexical: 0.18.0
-      svelte: 5.0.0-next.262
+      svelte: 5.0.0-next.263
 
   '@sveltia/utils@0.5.0':
     dependencies:
@@ -3486,7 +3484,7 @@ snapshots:
 
   '@types/json5@0.0.29': {}
 
-  '@types/node@22.7.4':
+  '@types/node@22.7.5':
     dependencies:
       undici-types: 6.19.8
 
@@ -3501,13 +3499,13 @@ snapshots:
       chai: 5.1.1
       tinyrainbow: 1.2.0
 
-  '@vitest/mocker@2.1.2(@vitest/spy@2.1.2)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))':
+  '@vitest/mocker@2.1.2(@vitest/spy@2.1.2)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4))':
     dependencies:
       '@vitest/spy': 2.1.2
       estree-walker: 3.0.3
       magic-string: 0.30.11
     optionalDependencies:
-      vite: 5.4.8(@types/node@22.7.4)(sass@1.79.4)
+      vite: 5.4.8(@types/node@22.7.5)(sass@1.79.4)
 
   '@vitest/pretty-format@2.1.2':
     dependencies:
@@ -3531,7 +3529,7 @@ snapshots:
   '@vitest/utils@2.1.2':
     dependencies:
       '@vitest/pretty-format': 2.1.2
-      loupe: 3.1.1
+      loupe: 3.1.2
       tinyrainbow: 1.2.0
 
   acorn-jsx@5.3.2(acorn@8.12.1):
@@ -3680,7 +3678,7 @@ snapshots:
       assertion-error: 2.0.1
       check-error: 2.1.1
       deep-eql: 5.0.2
-      loupe: 3.1.1
+      loupe: 3.1.2
       pathval: 2.0.0
 
   chalk-template@1.1.0:
@@ -4220,11 +4218,11 @@ snapshots:
       parse-imports: 2.2.1
       semver: 7.6.3
       spdx-expression-parse: 4.0.0
-      synckit: 0.9.1
+      synckit: 0.9.2
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-svelte@2.44.1(eslint@8.57.1)(svelte@5.0.0-next.262):
+  eslint-plugin-svelte@2.44.1(eslint@8.57.1)(svelte@5.0.0-next.263):
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.57.1)
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -4237,9 +4235,9 @@ snapshots:
       postcss-safe-parser: 6.0.0(postcss@8.4.47)
       postcss-selector-parser: 6.1.2
       semver: 7.6.3
-      svelte-eslint-parser: 0.41.1(svelte@5.0.0-next.262)
+      svelte-eslint-parser: 0.41.1(svelte@5.0.0-next.263)
     optionalDependencies:
-      svelte: 5.0.0-next.262
+      svelte: 5.0.0-next.263
     transitivePeerDependencies:
       - ts-node
 
@@ -4439,8 +4437,6 @@ snapshots:
   gensequence@7.0.0: {}
 
   get-caller-file@2.0.5: {}
-
-  get-func-name@2.0.2: {}
 
   get-intrinsic@1.2.4:
     dependencies:
@@ -4798,9 +4794,7 @@ snapshots:
 
   lodash.truncate@4.4.2: {}
 
-  loupe@3.1.1:
-    dependencies:
-      get-func-name: 2.0.2
+  loupe@3.1.2: {}
 
   lru-queue@0.1.0:
     dependencies:
@@ -5018,10 +5012,10 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-svelte@3.2.7(prettier@3.3.3)(svelte@5.0.0-next.262):
+  prettier-plugin-svelte@3.2.7(prettier@3.3.3)(svelte@5.0.0-next.263):
     dependencies:
       prettier: 3.3.3
-      svelte: 5.0.0-next.262
+      svelte: 5.0.0-next.263
 
   prettier@3.3.3: {}
 
@@ -5315,19 +5309,19 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-check@4.0.4(svelte@5.0.0-next.262)(typescript@5.5.4):
+  svelte-check@4.0.4(svelte@5.0.0-next.263)(typescript@5.5.4):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       chokidar: 4.0.1
       fdir: 6.4.0
       picocolors: 1.1.0
       sade: 1.8.1
-      svelte: 5.0.0-next.262
+      svelte: 5.0.0-next.263
       typescript: 5.5.4
     transitivePeerDependencies:
       - picomatch
 
-  svelte-eslint-parser@0.41.1(svelte@5.0.0-next.262):
+  svelte-eslint-parser@0.41.1(svelte@5.0.0-next.263):
     dependencies:
       eslint-scope: 7.2.2
       eslint-visitor-keys: 3.4.3
@@ -5335,9 +5329,9 @@ snapshots:
       postcss: 8.4.47
       postcss-scss: 4.0.9(postcss@8.4.47)
     optionalDependencies:
-      svelte: 5.0.0-next.262
+      svelte: 5.0.0-next.263
 
-  svelte-i18n@4.0.0(svelte@5.0.0-next.262):
+  svelte-i18n@4.0.0(svelte@5.0.0-next.263):
     dependencies:
       cli-color: 2.0.4
       deepmerge: 4.3.1
@@ -5345,19 +5339,19 @@ snapshots:
       estree-walker: 2.0.2
       intl-messageformat: 10.5.14
       sade: 1.8.1
-      svelte: 5.0.0-next.262
+      svelte: 5.0.0-next.263
       tiny-glob: 0.2.9
 
-  svelte-preprocess@6.0.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.79.4)(svelte@5.0.0-next.262)(typescript@5.5.4):
+  svelte-preprocess@6.0.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.79.4)(svelte@5.0.0-next.263)(typescript@5.5.4):
     dependencies:
-      svelte: 5.0.0-next.262
+      svelte: 5.0.0-next.263
     optionalDependencies:
       postcss: 8.4.47
       postcss-load-config: 3.1.4(postcss@8.4.47)
       sass: 1.79.4
       typescript: 5.5.4
 
-  svelte@5.0.0-next.262:
+  svelte@5.0.0-next.263:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -5377,7 +5371,7 @@ snapshots:
 
   symbol-tree@3.2.4: {}
 
-  synckit@0.9.1:
+  synckit@0.9.2:
     dependencies:
       '@pkgr/core': 0.1.1
       tslib: 2.7.0
@@ -5498,12 +5492,12 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite-node@2.1.2(@types/node@22.7.4)(sass@1.79.4):
+  vite-node@2.1.2(@types/node@22.7.5)(sass@1.79.4):
     dependencies:
       cac: 6.7.14
       debug: 4.3.7
       pathe: 1.1.2
-      vite: 5.4.8(@types/node@22.7.4)(sass@1.79.4)
+      vite: 5.4.8(@types/node@22.7.5)(sass@1.79.4)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5515,24 +5509,24 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.4.8(@types/node@22.7.4)(sass@1.79.4):
+  vite@5.4.8(@types/node@22.7.5)(sass@1.79.4):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.4.47
       rollup: 4.24.0
     optionalDependencies:
-      '@types/node': 22.7.4
+      '@types/node': 22.7.5
       fsevents: 2.3.3
       sass: 1.79.4
 
-  vitefu@1.0.2(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)):
+  vitefu@1.0.2(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4)):
     optionalDependencies:
-      vite: 5.4.8(@types/node@22.7.4)(sass@1.79.4)
+      vite: 5.4.8(@types/node@22.7.5)(sass@1.79.4)
 
-  vitest@2.1.2(@types/node@22.7.4)(jsdom@25.0.1)(sass@1.79.4):
+  vitest@2.1.2(@types/node@22.7.5)(jsdom@25.0.1)(sass@1.79.4):
     dependencies:
       '@vitest/expect': 2.1.2
-      '@vitest/mocker': 2.1.2(@vitest/spy@2.1.2)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))
+      '@vitest/mocker': 2.1.2(@vitest/spy@2.1.2)(vite@5.4.8(@types/node@22.7.5)(sass@1.79.4))
       '@vitest/pretty-format': 2.1.2
       '@vitest/runner': 2.1.2
       '@vitest/snapshot': 2.1.2
@@ -5547,11 +5541,11 @@ snapshots:
       tinyexec: 0.3.0
       tinypool: 1.0.1
       tinyrainbow: 1.2.0
-      vite: 5.4.8(@types/node@22.7.4)(sass@1.79.4)
-      vite-node: 2.1.2(@types/node@22.7.4)(sass@1.79.4)
+      vite: 5.4.8(@types/node@22.7.5)(sass@1.79.4)
+      vite-node: 2.1.2(@types/node@22.7.5)(sass@1.79.4)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 22.7.4
+      '@types/node': 22.7.5
       jsdom: 25.0.1
     transitivePeerDependencies:
       - less

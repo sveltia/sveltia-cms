@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
+  import { Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { getFieldConfig } from '$lib/services/contents/entry';
 
@@ -24,9 +24,6 @@
 </script>
 
 <MenuButton variant="ghost" label={label || $_('sort')} {disabled} popupPosition="bottom-right">
-  {#snippet endIcon()}
-    <Icon name="arrow_drop_down" />
-  {/snippet}
   {#snippet popup()}
     <Menu aria-label={$_('sorting_options')} aria-controls={$$restProps['aria-controls']}>
       {#each fields as { key, label: _label } (key)}

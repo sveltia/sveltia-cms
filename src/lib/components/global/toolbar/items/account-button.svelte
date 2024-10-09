@@ -25,7 +25,7 @@
     aria-label={$_('show_account_menu')}
     bind:this={menuButton}
   >
-    {#snippet startIcon()}
+    {#snippet endIcon()}
       {#if hasAvatar}
         <img class="avatar" loading="lazy" src={$user?.avatarURL} alt="" />
       {:else}

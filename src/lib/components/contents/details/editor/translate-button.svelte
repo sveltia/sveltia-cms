@@ -58,7 +58,7 @@
     aria-label={$_('translate')}
     disabled={sourceDisabled}
   >
-    {#snippet startIcon()}
+    {#snippet endIcon()}
       <Icon name="translate" />
     {/snippet}
     {#snippet popup()}

@@ -13,7 +13,7 @@
   popupPosition="bottom-right"
   aria-label={$_('create_entry_or_assets')}
 >
-  {#snippet startIcon()}
+  {#snippet endIcon()}
     <Icon name="add" />
   {/snippet}
   {#snippet popup()}

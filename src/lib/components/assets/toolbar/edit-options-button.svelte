@@ -1,5 +1,5 @@
 <script>
-  import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
+  import { Divider, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import {
     canEditAsset,
@@ -46,9 +46,6 @@
   popupPosition="bottom-right"
   aria-label={$_('show_edit_options')}
 >
-  {#snippet startIcon()}
-    <Icon name="more_vert" />
-  {/snippet}
   {#snippet popup()}
     <Menu aria-label={$_('edit_options')}>
       <MenuItem

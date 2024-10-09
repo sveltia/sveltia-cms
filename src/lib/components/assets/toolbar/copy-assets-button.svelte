@@ -1,5 +1,5 @@
 <script>
-  import { Alert, Icon, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
+  import { Alert, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
   import { convertImage } from '$lib/services/utils/media';
@@ -130,9 +130,6 @@
   label={$_('copy')}
   popupPosition="bottom-right"
 >
-  {#snippet endIcon()}
-    <Icon name="arrow_drop_down" />
-  {/snippet}
   {#snippet popup()}
     <Menu aria-label={$_('copy_options')}>
       <MenuItem

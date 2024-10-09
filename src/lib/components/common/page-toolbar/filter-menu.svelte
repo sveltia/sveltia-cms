@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItemCheckbox, MenuItemRadio } from '@sveltia/ui';
+  import { Menu, MenuButton, MenuItemCheckbox, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   export let label = '';
@@ -23,9 +23,6 @@
 </script>
 
 <MenuButton variant="ghost" label={label || $_('filter')} {disabled} popupPosition="bottom-right">
-  {#snippet endIcon()}
-    <Icon name="arrow_drop_down" />
-  {/snippet}
   {#snippet popup()}
     <Menu aria-label={$_('filtering_options')} aria-controls={$$restProps['aria-controls']}>
       {#if multiple}

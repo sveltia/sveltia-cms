@@ -140,9 +140,6 @@
           popupPosition="bottom-right"
           aria-label={$_('show_field_options')}
         >
-          {#snippet startIcon()}
-            <Icon name="more_vert" />
-          {/snippet}
           {#snippet popup()}
             <Menu aria-label={$_('field_options')}>
               {#if canCopy}

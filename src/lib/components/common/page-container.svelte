@@ -59,7 +59,6 @@
       }
 
       :global([role='listbox']) {
-        gap: 4px;
         margin: 8px;
         border-width: 0;
         background-color: transparent;
@@ -68,7 +67,6 @@
           display: flex;
           justify-content: flex-start;
           border-radius: var(--sui-control-medium-border-radius);
-          padding-inline: 8px;
           width: 100%;
           text-align: left;
 
