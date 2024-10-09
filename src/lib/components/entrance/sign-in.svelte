@@ -23,7 +23,9 @@
   onMount(() => {
     // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
     // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
-    isLocalHost = !!window.location.hostname.match(/^(?:.+\.)?localhost$/);
+    isLocalHost =
+      !!window.location.hostname.match(/^(?:.+\.)?localhost$/) ||
+      window.location.hostname === '127.0.0.1';
     isLocalBackendSupported = 'showDirectoryPicker' in window;
     isBrave = navigator.userAgentData?.brands.some(({ brand }) => brand === 'Brave') ?? false;
 
