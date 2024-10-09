@@ -7,50 +7,47 @@
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { assetKinds, selectedAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
-  import { selectedCollection } from '$lib/services/contents';
 
   $: hasListedAssets = !!$listedAssets.length;
   $: hasMultipleAssets = $listedAssets.length > 1;
 </script>
 
-{#if !$selectedCollection?.files}
-  <Toolbar variant="secondary" aria-label={$_('asset_list')}>
-    <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
-    <Spacer flex />
-    <SortMenu
-      disabled={!hasMultipleAssets}
-      {currentView}
-      fields={$sortFields}
-      aria-controls="asset-list"
-    />
-    <FilterMenu
-      label={$_('file_type')}
-      disabled={!hasMultipleAssets}
-      {currentView}
-      noneLabel={$_('all')}
-      filters={assetKinds.map((type) => ({ label: $_(type), field: 'fileType', pattern: type }))}
-      aria-controls="asset-list"
-    />
-    <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
-    <Divider orientation="vertical" />
-    <Button
-      variant="ghost"
-      iconic
-      disabled={!hasListedAssets}
-      pressed={!!$currentView?.showInfo}
-      aria-controls="asset-info"
-      aria-expanded={!!$currentView?.showInfo}
-      aria-label={$_($currentView?.showInfo ? 'hide_info' : 'show_info')}
-      onclick={() => {
-        currentView.update((view) => ({
-          ...view,
-          showInfo: !$currentView?.showInfo,
-        }));
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="info" />
-      {/snippet}
-    </Button>
-  </Toolbar>
-{/if}
+<Toolbar variant="secondary" aria-label={$_('asset_list')}>
+  <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
+  <Spacer flex />
+  <SortMenu
+    disabled={!hasMultipleAssets}
+    {currentView}
+    fields={$sortFields}
+    aria-controls="asset-list"
+  />
+  <FilterMenu
+    label={$_('file_type')}
+    disabled={!hasMultipleAssets}
+    {currentView}
+    noneLabel={$_('all')}
+    filters={assetKinds.map((type) => ({ label: $_(type), field: 'fileType', pattern: type }))}
+    aria-controls="asset-list"
+  />
+  <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
+  <Divider orientation="vertical" />
+  <Button
+    variant="ghost"
+    iconic
+    disabled={!hasListedAssets}
+    pressed={!!$currentView?.showInfo}
+    aria-controls="asset-info"
+    aria-expanded={!!$currentView?.showInfo}
+    aria-label={$_($currentView?.showInfo ? 'hide_info' : 'show_info')}
+    onclick={() => {
+      currentView.update((view) => ({
+        ...view,
+        showInfo: !$currentView?.showInfo,
+      }));
+    }}
+  >
+    {#snippet startIcon()}
+      <Icon name="info" />
+    {/snippet}
+  </Button>
+</Toolbar>
