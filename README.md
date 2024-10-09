@@ -36,18 +36,15 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 - [Compatibility](#compatibility)
   - [Features not to be implemented](#features-not-to-be-implemented)
   - [Current limitations](#current-limitations)
-- [Roadmap](#roadmap)
-  - [Before the 1.0 release](#before-the-10-release)
-  - [After the 1.0 release](#after-the-10-release)
 - [Getting started](#getting-started)
   - [New users](#new-users)
   - [Migration](#migration)
+    - [Migrating from Git Gateway backend](#migrating-from-git-gateway-backend)
+    - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
   - [Installing with npm](#installing-with-npm)
   - [Updates](#updates)
 - [Tips \& tricks](#tips--tricks)
   - [Providing a JSON configuration file](#providing-a-json-configuration-file)
-  - [Migrating from Git Gateway backend](#migrating-from-git-gateway-backend)
-  - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
   - [Working around authentication error](#working-around-authentication-error)
   - [Working with a local Git repository](#working-with-a-local-git-repository)
   - [Enabling local development in Brave](#enabling-local-development-in-brave)
@@ -63,6 +60,9 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
   - [Setting up Content Security Policy](#setting-up-content-security-policy)
 - [Support \& feedback](#support--feedback)
 - [Contributions](#contributions)
+- [Roadmap](#roadmap)
+  - [Before the 1.0 release](#before-the-10-release)
+  - [After the 1.0 release](#after-the-10-release)
 - [Related links](#related-links)
   - [As seen on](#as-seen-on)
 - [Disclaimer](#disclaimer)
@@ -124,7 +124,6 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - The Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can customize the application with various settings.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
-- The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
 
 ### Better performance
 
@@ -149,6 +148,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved. This behaviour can be changed in Settings.
+- Uploading files can be done with drag and drop[^20].
 - You can upload multiple assets at once[^5].
 - You can delete multiple entries and assets at once.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
@@ -161,7 +161,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Ensures sufficient contrast between the foreground text and background colours.
 - Enabled and disabled buttons can be clearly distinguished[^105].
 - Links are underlined by default to make them easier to recognize. This behaviour can be changed in the Accessibility Settings if you prefer.
-- Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings. (Support for [high contrast mode](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) will be added later.)
+- Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings. Support for [high contrast mode](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) will be added later.
 - Browser console logs for developers are readable in either light or dark mode[^116].
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
@@ -344,7 +344,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better asset management
 
-- A completely new Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents[^96].
+- A completely new, full-fledged Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents[^96].
   - Navigate between the global media folder and per-collection media folders[^6].
   - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - Copy the public URL[^74], file path, text data or image data of a selected asset to clipboard. The file path starts with `/` as expected[^48].
@@ -402,31 +402,6 @@ These limitations are expected to be resolved before or shortly after GA:
 
 Missing any other features? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
 
-## Roadmap
-
-### Before the 1.0 release
-
-- [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) _runes_ migration
-- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
-- Certain compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, specifically the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
-- Localization with the new [Fluent](https://projectfluent.org)-powered sveltia-i18n library
-- Accessibility audit
-- Developer documentation (implementation guide)
-- Marketing site
-- Live demo site
-- Official starter templates for the most popular frameworks, including SvelteKit and Next.js
-- Broad automation test coverage (Vitest + Playwright)
-
-### After the 1.0 release
-
-- Tackling more Netlify/Decap CMS issues, especially the [top voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
-- Advanced digital asset management (DAM) features, including image editing and tagging[^114]
-- AI integrations for image generation and content writing
-- End-user documentation
-- Contributor documentation
-- Marketplace for custom widgets, etc.
-- and so much more!
-
 ## Getting started
 
 ### New users
@@ -470,6 +445,20 @@ That’s it! You can open `https://[hostname]/admin/` as before to start editing
 
 That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#working-with-a-local-git-repository) for how.
 
+#### Migrating from Git Gateway backend
+
+Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub backend](https://decapcms.org/docs/github-backend/) or [GitLab backend](https://decapcms.org/docs/gitlab-backend/) instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
+
+Once you have migrated from the Git Gateway and Netlify Identity combo, you can remove the Netlify Identity widget script tag from your HTML:
+
+```diff
+-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+```
+
+#### Moving your site from Netlify to another hosting service
+
+You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
+
 ### Installing with npm
 
 For advanced users, we have also made the bundle available as an [npm package](https://www.npmjs.com/package/@sveltia/cms). You can install it by running `npm i @sveltia/cms` or `pnpm add @sveltia/cms` on your project. The [manual initialization](https://decapcms.org/docs/manual-initialization/) flow with the `init` method is the same as for Netlify/Decap CMS.
@@ -491,20 +480,6 @@ Sveltia CMS supports a configuration file written in the JSON format in addition
 ```
 
 Alternatively, you can [manually initialize](https://decapcms.org/docs/manual-initialization/) the CMS with a JavaScript configuration object.
-
-### Migrating from Git Gateway backend
-
-Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub backend](https://decapcms.org/docs/github-backend/) or [GitLab backend](https://decapcms.org/docs/gitlab-backend/) instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
-
-Once you have migrated from the Git Gateway and Netlify Identity combo, you can remove the Netlify Identity widget script tag from your HTML:
-
-```diff
--<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-```
-
-### Moving your site from Netlify to another hosting service
-
-You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
 
 ### Working around authentication error
 
@@ -856,6 +831,31 @@ Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://gith
 ## Contributions
 
 See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md).
+
+## Roadmap
+
+### Before the 1.0 release
+
+- [Svelte 5](https://svelte.dev/blog/svelte-5-release-candidate) _runes_ migration
+- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
+- Certain compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, specifically the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
+- Localization with the new [Fluent](https://projectfluent.org)-powered sveltia-i18n library
+- Accessibility audit
+- Developer documentation (implementation guide)
+- Marketing site
+- Live demo site
+- Official starter templates for the most popular frameworks, including SvelteKit and Next.js
+- Broad automation test coverage (Vitest + Playwright)
+
+### After the 1.0 release
+
+- Tackling more Netlify/Decap CMS issues, especially the [top voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
+- Advanced digital asset management (DAM) features, including image editing and tagging[^114]
+- AI integrations for image generation and content writing
+- End-user documentation
+- Contributor documentation
+- Marketplace for custom widgets, etc.
+- and so much more!
 
 ## Related links
 
