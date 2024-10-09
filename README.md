@@ -121,7 +121,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113][^129]. Best of all, Svelte offers unmatched performance!
-- The Account menu contains relevant links, including release notes, feedback and help.
+- The Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can customize the application with various settings.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
 - The screenshots above are worth a thousand words, but read on to learn about many other improvements in detail.
@@ -319,6 +319,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More stock photo providers will be added in the future.
+  - You can also simply drag and drop a file onto a File/Image field to attach it without having to open the Select File dialog.
   - Large images automatically fit in the preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
