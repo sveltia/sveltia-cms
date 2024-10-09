@@ -4,6 +4,14 @@ import { _, locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
 /**
+ * Check if the user’s browsing environment supports drag & drop operation. Assume drag & drop is
+ * supported if the pointer is mouse (on desktop).
+ * @returns {boolean} Result.
+ */
+export const canDragDrop = () =>
+  (globalThis.matchMedia('(pointer: fine)')?.matches ?? false) && 'ondrop' in globalThis;
+
+/**
  * Format the given file size in bytes, KB, MB, GB or TB.
  * @param {number} size - File size.
  * @returns {string} Formatted size.

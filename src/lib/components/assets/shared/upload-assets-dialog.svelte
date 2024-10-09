@@ -1,7 +1,6 @@
 <script>
   import { Dialog } from '@sveltia/ui';
   import mime from 'mime';
-  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
@@ -12,8 +11,8 @@
     uploadingAssets,
   } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
+  import { canDragDrop } from '$lib/services/utils/file';
 
-  let canDragDrop = true;
   /** @type {FilePicker} */
   let filePicker;
 
@@ -40,14 +39,9 @@
     $showUploadAssetsDialog = false;
   };
 
-  onMount(() => {
-    // Assume drag & drop is supported if the pointer is mouse (on desktop)
-    canDragDrop = window.matchMedia('(pointer: fine)').matches;
-  });
-
   $: {
     // Open the file picker directly if drag & drop is not supported (on mobile)
-    if (!canDragDrop && filePicker && $showUploadAssetsDialog) {
+    if (!canDragDrop() && filePicker && $showUploadAssetsDialog) {
       filePicker.open();
     }
   }
@@ -59,7 +53,7 @@
   }
 </script>
 
-{#if canDragDrop}
+{#if canDragDrop()}
   <Dialog
     title={originalAsset
       ? $_('replace_x', { values: { name: originalAsset.name } })

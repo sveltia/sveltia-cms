@@ -29,7 +29,6 @@
 
   const dispatch = createEventDispatcher();
   const title = kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file');
-  let libraryName = 'upload';
   let elementIdPrefix = '';
   /**
    * @type {SelectedAsset | null}
@@ -41,9 +40,15 @@
   $: searchTerms = normalize(rawSearchTerms);
   $: ({ internalPath = '', entryRelative = false } =
     $selectedCollection?._assetFolder ?? /** @type {any} */ ({}));
-  $: showUploader = libraryName === 'upload';
   $: showCollectionAssets = !!internalPath && !entryRelative;
   $: showEntryAssets = !!entry && entryRelative;
+  // eslint-disable-next-line no-nested-ternary
+  $: libraryName = showEntryAssets
+    ? 'entry-assets'
+    : showCollectionAssets
+      ? 'collection-assets'
+      : 'all-assets';
+  $: showUploader = libraryName === 'upload';
   $: entryDirName = entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined;
   $: isLocalLibrary = ['all-assets', 'collection-assets', 'entry-assets'].includes(libraryName);
   $: isEnabledMediaService =
@@ -115,9 +120,6 @@
         selectedAsset = null;
       }}
     >
-      <OptionGroup label={$_('assets_dialog.location.local')}>
-        <Option name="upload" label={$_('upload')} selected={showUploader} />
-      </OptionGroup>
       <OptionGroup label={$_('assets_dialog.location.repository')}>
         {#if showEntryAssets}
           <Option
@@ -138,6 +140,9 @@
           label={$_('all_assets')}
           selected={libraryName === 'all-assets'}
         />
+      </OptionGroup>
+      <OptionGroup label={$_('assets_dialog.location.local')}>
+        <Option name="upload" label={$_('upload')} selected={showUploader} />
       </OptionGroup>
       {#if canEnterURL || !!Object.keys(allCloudStorageServices).length}
         <OptionGroup label={$_('assets_dialog.location.external_locations')}>

@@ -5,10 +5,11 @@
   @see https://decapcms.org/docs/widgets/#image
 -->
 <script>
-  import { AlertDialog, Button, ConfirmationDialog, TextArea } from '@sveltia/ui';
+  import { AlertDialog, Button, ConfirmationDialog, Icon, TextArea } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
   import {
     getAssetByPath,
@@ -17,7 +18,7 @@
     getMediaKind,
   } from '$lib/services/assets';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { formatSize } from '$lib/services/utils/file';
+  import { canDragDrop, formatSize } from '$lib/services/utils/file';
 
   /**
    * @type {LocaleCode}
@@ -86,6 +87,9 @@
   let showPhotoCreditDialog = false;
   let photoCredit = '';
 
+  /** @type {DropZone} */
+  let dropZone;
+
   $: ({
     widget: widgetName,
     // Widget-specific options
@@ -106,6 +110,7 @@
     file = undefined;
     url = undefined;
     credit = undefined;
+    dropZone?.reset();
   };
 
   /**
@@ -187,58 +192,97 @@
   }
 </script>
 
-<div role="none" class="image-widget">
-  {#if kind && src}
-    <AssetPreview {kind} {src} variant="tile" checkerboard={true} />
-  {:else if asset}
-    <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
-  {/if}
-  <div role="none">
-    {#if typeof currentValue === 'string'}
-      <div
-        role="textbox"
-        id="{fieldId}-value"
-        tabindex="0"
-        class="filename"
-        aria-readonly={readonly}
-        aria-invalid={invalid}
-        aria-required={required}
-        aria-labelledby="{fieldId}-label"
-        aria-errormessage="{fieldId}-error"
-      >
-        {#if file}
-          {file.name.normalize()}
-        {:else if !currentValue.startsWith('blob:')}
-          {currentValue}
-        {/if}
-      </div>
-    {/if}
-    <div role="none">
-      <Button
-        disabled={readonly}
-        variant="tertiary"
-        label={currentValue ? $_('replace') : $_('select')}
-        aria-label={currentValue ? $_(`replace_${widgetName}`) : $_(`select_${widgetName}`)}
-        aria-controls="{fieldId}-value"
-        onclick={() => {
-          showSelectAssetsDialog = true;
-        }}
-      />
-      {#if currentValue}
-        <Button
-          disabled={readonly}
-          variant="tertiary"
-          label={$_('remove')}
-          aria-label={$_(`remove_${widgetName}`)}
-          aria-controls="{fieldId}-value"
-          onclick={() => {
-            resetSelection();
-          }}
-        />
+<DropZone
+  bind:this={dropZone}
+  disabled={readonly}
+  accept={isImageWidget ? 'image/*' : undefined}
+  on:select={({ detail: { files } }) => {
+    if (files.length) {
+      onAssetSelect({ file: files[0] });
+    }
+  }}
+>
+  {#if currentValue}
+    <div role="none" class="filled">
+      {#if kind && src}
+        <AssetPreview {kind} {src} variant="tile" checkerboard={true} />
+      {:else if asset}
+        <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
+      {:else}
+        <span role="none" class="preview no-thumbnail">
+          <Icon name="draft" />
+        </span>
       {/if}
+      <div role="none">
+        {#if typeof currentValue === 'string'}
+          <div
+            role="textbox"
+            id="{fieldId}-value"
+            tabindex="0"
+            class="filename"
+            aria-readonly={readonly}
+            aria-invalid={invalid}
+            aria-required={required}
+            aria-labelledby="{fieldId}-label"
+            aria-errormessage="{fieldId}-error"
+          >
+            {#if file}
+              {file.name.normalize()}
+            {:else if !currentValue.startsWith('blob:')}
+              {currentValue}
+            {/if}
+          </div>
+        {/if}
+        <div role="none">
+          <Button
+            disabled={readonly}
+            variant="tertiary"
+            label={$_('replace')}
+            aria-label={$_(`replace_${widgetName}`)}
+            aria-controls="{fieldId}-value"
+            onclick={() => {
+              showSelectAssetsDialog = true;
+            }}
+          />
+          <Button
+            disabled={readonly}
+            variant="tertiary"
+            label={$_('remove')}
+            aria-label={$_(`remove_${widgetName}`)}
+            aria-controls="{fieldId}-value"
+            onclick={() => {
+              resetSelection();
+            }}
+          />
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+  {:else}
+    <div class="empty" class:invalid>
+      <Button
+        flex
+        role="button"
+        variant="tertiary"
+        disabled={readonly}
+        tabindex="0"
+        onclick={() => {
+          if (!readonly) {
+            showSelectAssetsDialog = true;
+          }
+        }}
+      >
+        <Icon name="cloud_upload" />
+        <div role="none">
+          {#if isImageWidget}
+            {$_(canDragDrop() ? 'drop_or_browse_image_file' : 'browse_file')}
+          {:else}
+            {$_(canDragDrop() ? 'drop_or_browse_file' : 'browse_file')}
+          {/if}
+        </div>
+      </Button>
+    </div>
+  {/if}
+</DropZone>
 
 <SelectAssetsDialog
   kind={isImageWidget ? 'image' : undefined}
@@ -279,10 +323,11 @@
 </ConfirmationDialog>
 
 <style lang="scss">
-  .image-widget {
+  .filled {
     display: flex !important;
     align-items: center;
     gap: 16px;
+    margin: var(--sui-focus-ring-width);
 
     :global(.preview) {
       flex: none;
@@ -291,6 +336,17 @@
       border-width: 1px;
       border-color: var(--sui-control-border-color);
       border-radius: var(--sui-control-medium-border-radius);
+    }
+
+    :global(.preview.no-thumbnail) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--sui-secondary-background-color);
+
+      :global(.icon) {
+        font-size: 64px;
+      }
     }
 
     & > div {
@@ -306,6 +362,33 @@
           margin: 0;
           padding: 0;
         }
+      }
+    }
+  }
+
+  .empty {
+    :global(button) {
+      flex-direction: column;
+      justify-content: center;
+      height: 160px;
+
+      :global(.icon) {
+        color: var(--sui-secondary-foreground-color);
+        font-size: 48px;
+      }
+    }
+
+    :global(button:disabled) {
+      pointer-events: none !important;
+
+      :global(*) {
+        opacity: 0.5;
+      }
+    }
+
+    &.invalid {
+      :global(button) {
+        border-color: var(--sui-error-foreground-color);
       }
     }
   }
