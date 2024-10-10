@@ -200,12 +200,13 @@ export const renderPDF = async (
     }
   }
 
+  const blobURL = URL.createObjectURL(blob);
   const canvas = new OffscreenCanvas(512, 512);
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
 
   try {
     const pdfDocument = await pdfjs.getDocument({
-      url: URL.createObjectURL(blob),
+      url: blobURL,
       isEvalSupported: false,
       disableAutoFetch: true,
     }).promise;
@@ -219,6 +220,8 @@ export const renderPDF = async (
       canvasContext: context,
       viewport: scale === 1 ? viewport : pdfPage.getViewport({ scale }),
     }).promise;
+
+    URL.revokeObjectURL(blobURL);
   } catch {
     throw new Error('Failed to render PDF');
   }

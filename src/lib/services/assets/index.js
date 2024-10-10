@@ -205,11 +205,6 @@ let thumbnailDB = undefined;
  * @returns {Promise<string | undefined>} Thumbnail blob URL.
  */
 export const getAssetThumbnailURL = async (asset) => {
-  // Use a cached image if available
-  if (asset.thumbnailURL) {
-    return asset.thumbnailURL;
-  }
-
   const isPDF = asset.name.endsWith('.pdf');
 
   if (!(['image', 'video'].includes(asset.kind) || isPDF)) {
@@ -235,12 +230,7 @@ export const getAssetThumbnailURL = async (asset) => {
     await thumbnailDB?.set(asset.sha, thumbnailBlob);
   }
 
-  const thumbnailURL = URL.createObjectURL(thumbnailBlob);
-
-  // Cache the image as blob URL for later use
-  asset.thumbnailURL = thumbnailURL;
-
-  return thumbnailURL;
+  return URL.createObjectURL(thumbnailBlob);
 };
 
 /**

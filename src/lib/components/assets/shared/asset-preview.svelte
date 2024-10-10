@@ -106,7 +106,7 @@
    * Update the {@link loaded} state when the media is loaded.
    */
   const checkLoaded = async () => {
-    if (!mediaElement) {
+    if (!mediaElement || !src) {
       return;
     }
 
@@ -133,10 +133,16 @@
     }
 
     loaded = true;
+
+    // Revoke the thumbnail blob URL
+    if (asset && isThumbnail && src?.startsWith('blob:')) {
+      URL.revokeObjectURL(src);
+    }
   };
 
   $: {
     void mediaElement;
+    void src;
     checkLoaded();
   }
 </script>
