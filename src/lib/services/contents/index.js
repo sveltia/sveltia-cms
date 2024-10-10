@@ -1,5 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { stripSlashes } from '@sveltia/utils/string';
+import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
@@ -123,7 +123,8 @@ export const getEntryFoldersByPath = (path) => {
 
   return get(allEntryFolders).filter(({ filePathMap, folderPath, parserConfig }) =>
     folderPath
-      ? path.startsWith(folderPath) && getFileExtension(parserConfig) === extension
+      ? !!path.match(`^${escapeRegExp(folderPath)}/`) &&
+        getFileExtension(parserConfig) === extension
       : Object.values(filePathMap ?? {}).includes(path),
   );
 };
