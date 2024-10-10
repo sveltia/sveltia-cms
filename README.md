@@ -40,10 +40,10 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
   - [New users](#new-users)
   - [Migration](#migration)
     - [Migrating from Git Gateway backend](#migrating-from-git-gateway-backend)
-    - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
   - [Installing with npm](#installing-with-npm)
   - [Updates](#updates)
 - [Tips \& tricks](#tips--tricks)
+  - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
   - [Providing a JSON configuration file](#providing-a-json-configuration-file)
   - [Working around authentication error](#working-around-authentication-error)
   - [Working with a local Git repository](#working-with-a-local-git-repository)
@@ -376,6 +376,7 @@ However, some features are still missing or will not be added due to deprecation
 - **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We may implement a high-performance Git Gateway alternative in the future. We may also support the other platforms if/when their APIs improve to allow the CMS to fetch multiple files at once.
 - **The Netlify Identity widget will not be supported**, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
+- `netlify-cms-proxy-server` and `decap-server` will not be supported, as we have made it possible to [work with a local repository](#working-with-a-local-git-repository) without a proxy server.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget instead.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
@@ -459,9 +460,7 @@ Once you have migrated from the Git Gateway and Netlify Identity combo, you can 
 -<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 ```
 
-#### Moving your site from Netlify to another hosting service
-
-You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
+If you want to stay with Netlify Identity, unfortunately you can’t migrate to Sveltia CMS right now. We plan to develop a high-performance Git Gateway alternative with Netlify Identity support in the future.
 
 ### Installing with npm
 
@@ -474,6 +473,10 @@ Updating Sveltia CMS is transparent, unless you include a specific version in th
 If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) or a service like [Dependabot](https://github.blog/2020-06-01-keep-all-your-packages-up-to-date-with-dependabot/) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
 
 ## Tips & tricks
+
+### Moving your site from Netlify to another hosting service
+
+You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
 
 ### Providing a JSON configuration file
 
