@@ -1,5 +1,6 @@
 <script>
   import { Group } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import AssetResultItem from '$lib/components/search/asset-result-item.svelte';
@@ -23,7 +24,9 @@
           >
             {#key $searchTerms}
               {#each $searchResults.entries as entry (entry.id)}
-                <EntryResultItem {entry} />
+                {#await sleep(0) then}
+                  <EntryResultItem {entry} />
+                {/await}
               {/each}
             {/key}
           </ListingGrid>
@@ -43,7 +46,9 @@
           >
             {#key $searchTerms}
               {#each $searchResults.assets as asset (asset.path)}
-                <AssetResultItem {asset} />
+                {#await sleep(0) then}
+                  <AssetResultItem {asset} />
+                {/await}
               {/each}
             {/key}
           </ListingGrid>

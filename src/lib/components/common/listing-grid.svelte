@@ -4,24 +4,18 @@
 -->
 <script>
   import { Grid } from '@sveltia/ui';
-  import { waitForVisibility } from '@sveltia/utils/element';
 
   /**
    * View type.
    * @type {ViewType}
    */
   export let viewType;
-
-  /** @type {HTMLElement | undefined} */
-  let wrapper;
 </script>
 
-<div role="none" class="{viewType}-view" bind:this={wrapper}>
-  {#await waitForVisibility(wrapper) then}
-    <Grid multiple clickToSelect={false} {...$$restProps}>
-      <slot />
-    </Grid>
-  {/await}
+<div role="none" class="{viewType}-view">
+  <Grid multiple clickToSelect={false} {...$$restProps}>
+    <slot />
+  </Grid>
 </div>
 
 <style lang="scss">

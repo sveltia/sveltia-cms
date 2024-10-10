@@ -5,6 +5,7 @@
 -->
 <script>
   import { Button, Option, PasswordInput, TextInput } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import DOMPurify from 'isomorphic-dompurify';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -177,10 +178,12 @@
       }}
     >
       {#each searchResults as { id, previewURL, description, kind: _kind } (id)}
-        <Option label="" value={id}>
-          <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
-          <span role="none" class="name">{description}</span>
-        </Option>
+        {#await sleep(0) then}
+          <Option label="" value={id}>
+            <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
+            <span role="none" class="name">{description}</span>
+          </Option>
+        {/await}
       {/each}
     </SimpleImageGrid>
   {/if}

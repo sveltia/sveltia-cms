@@ -1,6 +1,5 @@
 <script>
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
-  import { waitForVisibility } from '@sveltia/utils/element';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents';
@@ -19,11 +18,6 @@
    * @type {ViewType}
    */
   export let viewType;
-
-  /**
-   * @type {HTMLElement | undefined}
-   */
-  let wrapper;
 
   /**
    * Update the entry selection.
@@ -55,40 +49,28 @@
     goto(`/collections/${collection.name}/entries/${entry.slug}`);
   }}
 >
-  <div role="none" class="wrapper" bind:this={wrapper}>
-    {#if wrapper?.parentElement}
-      {#await waitForVisibility(wrapper.parentElement) then}
-        <GridCell class="checkbox">
-          <Checkbox
-            role="none"
-            tabindex="-1"
-            checked={$selectedEntries.includes(entry)}
-            onChange={({ detail: { checked } }) => {
-              updateSelection(checked);
-            }}
-          />
-        </GridCell>
-        {#if collection._thumbnailFieldName}
-          <GridCell class="image">
-            {#await getEntryThumbnail(collection, entry) then src}
-              {#if src}
-                <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
-              {/if}
-            {/await}
-          </GridCell>
+  <GridCell class="checkbox">
+    <Checkbox
+      role="none"
+      tabindex="-1"
+      checked={$selectedEntries.includes(entry)}
+      onChange={({ detail: { checked } }) => {
+        updateSelection(checked);
+      }}
+    />
+  </GridCell>
+  {#if collection._thumbnailFieldName}
+    <GridCell class="image">
+      {#await getEntryThumbnail(collection, entry) then src}
+        {#if src}
+          <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
         {/if}
-        <GridCell class="title">
-          <span role="none">
-            {getEntryTitle(collection, entry, { useTemplate: true })}
-          </span>
-        </GridCell>
       {/await}
-    {/if}
-  </div>
+    </GridCell>
+  {/if}
+  <GridCell class="title">
+    <span role="none">
+      {getEntryTitle(collection, entry, { useTemplate: true })}
+    </span>
+  </GridCell>
 </GridRow>
-
-<style lang="scss">
-  .wrapper {
-    display: contents;
-  }
-</style>

@@ -1,5 +1,6 @@
 <script>
   import { GridCell, GridRow } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
@@ -16,15 +17,17 @@
       aria-rowcount={$selectedCollection.files.length}
     >
       {#each $selectedCollection.files as { name, label } (name)}
-        <GridRow
-          onclick={() => {
-            goto(`/collections/${$selectedCollection?.name}/entries/${name}`);
-          }}
-        >
-          <GridCell class="title">
-            {label || name}
-          </GridCell>
-        </GridRow>
+        {#await sleep(0) then}
+          <GridRow
+            onclick={() => {
+              goto(`/collections/${$selectedCollection?.name}/entries/${name}`);
+            }}
+          >
+            <GridCell class="title">
+              {label || name}
+            </GridCell>
+          </GridRow>
+        {/await}
       {/each}
     </ListingGrid>
   {:else}

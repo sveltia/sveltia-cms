@@ -1,12 +1,13 @@
 <script>
   import { Option } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import DOMPurify from 'isomorphic-dompurify';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
   import { normalize } from '$lib/services/search';
+  import EmptyState from '$lib/components/common/empty-state.svelte';
+  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -51,16 +52,18 @@
       }}
     >
       {#each filteredAssets as asset (asset.path)}
-        {@const { sha, kind, name } = asset}
-        <Option label="" value={sha}>
-          <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
-          <span role="none" class="name">
-            <!-- Allow to line-break after a hyphen, underscore and dot -->
-            {@html DOMPurify.sanitize(name.replace(/([-_.])/g, '$1<wbr>'), {
-              ALLOWED_TAGS: ['wbr'],
-            })}
-          </span>
-        </Option>
+        {#await sleep(0) then}
+          {@const { sha, kind, name } = asset}
+          <Option label="" value={sha}>
+            <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
+            <span role="none" class="name">
+              <!-- Allow to line-break after a hyphen, underscore and dot -->
+              {@html DOMPurify.sanitize(name.replace(/([-_.])/g, '$1<wbr>'), {
+                ALLOWED_TAGS: ['wbr'],
+              })}
+            </span>
+          </Option>
+        {/await}
       {/each}
     </SimpleImageGrid>
   </div>

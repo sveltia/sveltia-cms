@@ -1,5 +1,6 @@
 <script>
   import { Button, GridBody, Icon } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
@@ -28,11 +29,13 @@
           <!-- @todo Implement custom table column option that can replace summary template -->
           <GridBody label={name !== '*' ? name : undefined}>
             {#each entries as entry (entry.id)}
-              {@const { locales } = entry}
-              {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
-              {#if content}
-                <EntryListItem {collection} {entry} {viewType} />
-              {/if}
+              {#await sleep(0) then}
+                {@const { locales } = entry}
+                {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
+                {#if content}
+                  <EntryListItem {collection} {entry} {viewType} />
+                {/if}
+              {/await}
             {/each}
           </GridBody>
         {/each}

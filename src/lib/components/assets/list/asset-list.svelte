@@ -1,5 +1,6 @@
 <script>
   import { GridBody } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
@@ -35,7 +36,9 @@
           <GridBody label={name !== '*' ? name : undefined}>
             {#each assets as asset (asset.path)}
               {#key asset.sha}
-                <AssetListItem {asset} viewType={$currentView.type} />
+                {#await sleep(0) then}
+                  <AssetListItem {asset} viewType={$currentView.type} />
+                {/await}
               {/key}
             {/each}
           </GridBody>
