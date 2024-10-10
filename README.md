@@ -257,7 +257,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - When you click on a field in the preview pane, the corresponding field in the edit pane is highlighted. It will be automatically expanded if collapsed[^41].
 - The preview pane displays all fields, including each title, making it easier to see which fields are populated.
 - Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
-- You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead).
+- You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
 - Any links to other entries will work as expected, with the Content Editor being updated for the other[^100].
 
@@ -513,7 +513,7 @@ Basically there are only two differences: you don’t need to run the proxy serv
 1. Open the dev site at `http://localhost:[port]/` to check the rendered pages.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
-Keep in mind that the local repository support doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the near future, we’ll figure out if there’s a way to do this in a browser (because `netlify-cms-proxy-server` actually has undocumented `git` mode that allows developers to create commits to a local repository).
+Keep in mind that the local repository support doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the near future, we’ll figure out if there’s a way to do this in a browser (because `netlify-cms-proxy-server` actually has undocumented `git` mode that allows developers to create commits to a local repository[^131].)
 
 Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates. This manual work will be unnecessary once the proposed `FileSystemObserver` API, which is being [implemented in Chromium](https://issues.chromium.org/issues/40105284) behind a flag, becomes available.
 
@@ -1139,3 +1139,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^129]: Netlify/Decap CMS [#4961](https://github.com/decaporg/decap-cms/issues/4961), [#4979](https://github.com/decaporg/decap-cms/issues/4979), [#5545](https://github.com/decaporg/decap-cms/issues/5545), [#5778](https://github.com/decaporg/decap-cms/issues/5778), [#6279](https://github.com/decaporg/decap-cms/issues/6279), [#6464](https://github.com/decaporg/decap-cms/issues/6464), [#6810](https://github.com/decaporg/decap-cms/issues/6810), [#6922](https://github.com/decaporg/decap-cms/issues/6922), [#7118](https://github.com/decaporg/decap-cms/issues/7118), [#7293](https://github.com/decaporg/decap-cms/issues/7293) — A comment on one of the issues says the crash was due to Google Translate. Sveltia CMS has turned off Google Translate on the admin page.
 
 [^130]: Netlify/Decap CMS [#6571](https://github.com/decaporg/decap-cms/issues/6571)
+
+[^131]: Netlify/Decap CMS [#4429](https://github.com/decaporg/decap-cms/issues/4429)
