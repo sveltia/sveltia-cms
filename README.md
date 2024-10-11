@@ -101,7 +101,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 120+ of them (or 215+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 120+ of them (or 225+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 (or all the relevant and fixable issues) in a future release
   - Note: issues include both feature requests and bug reports
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
@@ -208,6 +208,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://www.npmjs.com/package/@sindresorhus/transliterate)[^99].
   - You can embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`[^101].
 - User interface
+  - The application UI locale is automatically selected based on the preferred language set with the browser[^132]. Currently, only English and Japanese are supported.
   - Eliminates UI confusion: The preview pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - You can easily switch between locales while editing by clicking a button instead of a dropdown list. No internal error is thrown when changing the locale[^103].
   - Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. (For example, it might be difficult to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.)
@@ -234,7 +235,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Entry slugs
   - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
-  - Single quotes in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
+  - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
 - Entry listing
   - The collection list displays the number of items in each collection.
@@ -906,7 +907,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^13]: Netlify/Decap CMS [#5112](https://github.com/decaporg/decap-cms/issues/5112), [#5653](https://github.com/decaporg/decap-cms/issues/5653)
 
-[^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410), [#6924](https://github.com/decaporg/decap-cms/issues/6924)
+[^14]: Netlify/Decap CMS [#4635](https://github.com/decaporg/decap-cms/issues/4635), [#5920](https://github.com/decaporg/decap-cms/issues/5920), [#6410](https://github.com/decaporg/decap-cms/issues/6410), [#6827](https://github.com/decaporg/decap-cms/issues/6827), [#6924](https://github.com/decaporg/decap-cms/issues/6924)
 
 [^15]: Netlify/Decap CMS [#6932](https://github.com/decaporg/decap-cms/issues/6932)
 
@@ -938,7 +939,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^29]: Netlify/Decap CMS [#4783](https://github.com/decaporg/decap-cms/issues/4783)
 
-[^30]: Netlify/Decap CMS [#565](https://github.com/decaporg/decap-cms/issues/565)
+[^30]: Netlify/Decap CMS [#565](https://github.com/decaporg/decap-cms/issues/565), [#6733](https://github.com/decaporg/decap-cms/issues/6733)
 
 [^31]: Netlify/Decap CMS [#1045](https://github.com/decaporg/decap-cms/issues/1045)
 
@@ -946,7 +947,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^33]: Netlify/Decap CMS [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295)
 
-[^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138)
+[^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138), [#5932](https://github.com/decaporg/decap-cms/issues/5932)
 
 [^35]: Netlify/Decap CMS [#7086](https://github.com/decaporg/decap-cms/issues/7086)
 
@@ -974,7 +975,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^47]: Netlify/Decap CMS [#2370](https://github.com/decaporg/decap-cms/issues/2370), [#5596](https://github.com/decaporg/decap-cms/issues/5596)
 
-[^48]: Netlify/Decap CMS [#5569](https://github.com/decaporg/decap-cms/issues/5569)
+[^48]: Netlify/Decap CMS [#5569](https://github.com/decaporg/decap-cms/issues/5569), [#6754](https://github.com/decaporg/decap-cms/issues/6754)
 
 [^49]: Netlify/Decap CMS [#5752](https://github.com/decaporg/decap-cms/issues/5752)
 
@@ -982,7 +983,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^51]: Netlify/Decap CMS [#6731](https://github.com/decaporg/decap-cms/issues/6731)
 
-[^52]: Netlify/Decap CMS [#7147](https://github.com/decaporg/decap-cms/issues/7147)
+[^52]: Netlify/Decap CMS [#6970](https://github.com/decaporg/decap-cms/issues/6970), [#7147](https://github.com/decaporg/decap-cms/issues/7147)
 
 [^53]: Netlify/Decap CMS [#512](https://github.com/decaporg/decap-cms/issues/512), [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6707](https://github.com/decaporg/decap-cms/issues/6707)
 
@@ -1092,9 +1093,9 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^106]: Netlify/Decap CMS [#2822](https://github.com/decaporg/decap-cms/issues/2822)
 
-[^107]: Netlify/Decap CMS [#332](https://github.com/decaporg/decap-cms/issues/332), [#683](https://github.com/decaporg/decap-cms/issues/683), [#999](https://github.com/decaporg/decap-cms/issues/999), [#1456](https://github.com/decaporg/decap-cms/issues/1456), [#4175](https://github.com/decaporg/decap-cms/issues/4175), [#4818](https://github.com/decaporg/decap-cms/issues/4818), [#5688](https://github.com/decaporg/decap-cms/issues/5688), [#6828](https://github.com/decaporg/decap-cms/issues/6828), [#6862](https://github.com/decaporg/decap-cms/issues/6862), [#7023](https://github.com/decaporg/decap-cms/issues/7023)
+[^107]: Netlify/Decap CMS [#332](https://github.com/decaporg/decap-cms/issues/332), [#683](https://github.com/decaporg/decap-cms/issues/683), [#999](https://github.com/decaporg/decap-cms/issues/999), [#1456](https://github.com/decaporg/decap-cms/issues/1456), [#4175](https://github.com/decaporg/decap-cms/issues/4175), [#4818](https://github.com/decaporg/decap-cms/issues/4818), [#5688](https://github.com/decaporg/decap-cms/issues/5688), [#6828](https://github.com/decaporg/decap-cms/issues/6828), [#6829](https://github.com/decaporg/decap-cms/issues/6829), [#6862](https://github.com/decaporg/decap-cms/issues/6862), [#7023](https://github.com/decaporg/decap-cms/issues/7023)
 
-[^108]: Netlify/Decap CMS [#6829](https://github.com/decaporg/decap-cms/issues/6829)
+[^108]: Netlify/Decap CMS [#6879](https://github.com/decaporg/decap-cms/issues/6879)
 
 [^109]: Netlify/Decap CMS [#7197](https://github.com/decaporg/decap-cms/issues/7197)
 
@@ -1141,3 +1142,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^130]: Netlify/Decap CMS [#6571](https://github.com/decaporg/decap-cms/issues/6571)
 
 [^131]: Netlify/Decap CMS [#4429](https://github.com/decaporg/decap-cms/issues/4429)
+
+[^132]: Netlify/Decap CMS [#6816](https://github.com/decaporg/decap-cms/issues/6816)
