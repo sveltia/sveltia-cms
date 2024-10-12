@@ -81,7 +81,7 @@ Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, owned by a Netlify agency partner, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2016. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the hundreds of improvements we have already made.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2016. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the [hundreds of improvements](#differentiators) we have already made.
 
 While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products. (Note: While we are closely following the development of Decap CMS, compatibility with Static CMS will be worked on after the release of Sveltia CMS 1.0)
 
@@ -199,9 +199,10 @@ We are working hard to create a **significantly better alternative to Netlify CM
 Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect first-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
 
 - Configuration
-  - Supports multiple files/folders i18n structure for file collections[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections as before.
+  - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
+    - File collections support multiple files/folders i18n structures[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections as before.
+    - You can use the `i18n: duplicate` field configuration with the List and Object widgets so that changes made with these widgets will be duplicated between locales as expected[^7][^68].
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
-  - Removes the [limitations in the List and Object widgets](https://decapcms.org/docs/i18n/#limitations) so that changes made with these widgets will be duplicated between locales as expected when using the `i18n: duplicate` field configuration[^7][^68].
   - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
   - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
   - You can [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
