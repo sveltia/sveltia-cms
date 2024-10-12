@@ -25,6 +25,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
   - [Better accessibility](#better-accessibility)
   - [Better security](#better-security)
   - [Better configuration](#better-configuration)
+  - [Better localization](#better-localization)
   - [Better backend support](#better-backend-support)
   - [Better i18n support](#better-i18n-support)
   - [Better collections](#better-collections)
@@ -33,6 +34,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
   - [Better widgets](#better-widgets)
     - [New widgets](#new-widgets)
   - [Better asset management](#better-asset-management)
+  - [Better customization](#better-customization)
 - [Compatibility](#compatibility)
   - [Features not to be implemented](#features-not-to-be-implemented)
   - [Current limitations](#current-limitations)
@@ -124,7 +126,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113][^129]. Best of all, Svelte offers unmatched performance!
 - The Help menu provides all links to useful resources, including release notes, feedback and support.
-- Users can customize the application with various settings.
+- Users can personalize the application with various settings.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
 
 ### Better performance
@@ -179,7 +181,13 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error[^107].
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
-- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists[^109].
+
+### Better localization
+
+- The application UI locale is automatically selected based on the preferred language set with the browser[^132]. The `locale` configuration option is ignored, and `CMS.registerLocale()` is not required.
+- The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
+- Long menu item labels, especially in non-English locales, don’t overflow the dropdown container[^117].
+- We’ll soon be migrating from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the [Fluent localization system](https://projectfluent.org/) to better handle singular/plural forms and even more complex grammars.
 
 ### Better backend support
 
@@ -209,12 +217,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://www.npmjs.com/package/@sindresorhus/transliterate)[^99].
   - You can embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`[^101].
 - User interface
-  - The application UI locale is automatically selected based on the preferred language set with the browser[^132]. Currently, only English and Japanese are supported.
   - Eliminates UI confusion: The preview pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - You can easily switch between locales while editing by clicking a button instead of a dropdown list. No internal error is thrown when changing the locale[^103].
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it may be difficult for non-technical users to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.
-  - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
-  - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container[^117].
 - Content editing
   - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click. More translation services will be added in the future.
   - You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
@@ -367,6 +372,10 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - You can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens[^97].
 - No fatal application crash when uploading assets[^112].
+
+### Better customization
+
+- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists[^109].
 
 ## Compatibility
 
