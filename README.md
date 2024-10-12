@@ -99,7 +99,7 @@ Sveltia CMS is **still in beta**, so please be careful when trying it out.
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
 
-- Ensuring substantial [compatibility with existing versions of Netlify/Decap CMS](#compatibility)
+- Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 120+ of them (or 225+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 (or all the relevant and fixable issues) in a future release
@@ -151,7 +151,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
   - The editor closes automatically when an entry is saved. This behaviour can be changed in Settings.
 - Uploading files can be done with drag and drop[^20].
-- You can upload multiple assets at once[^5].
+- You can upload multiple files at once to the Asset Library[^5].
 - You can delete multiple entries and assets at once.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
 
@@ -212,7 +212,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The application UI locale is automatically selected based on the preferred language set with the browser[^132]. Currently, only English and Japanese are supported.
   - Eliminates UI confusion: The preview pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - You can easily switch between locales while editing by clicking a button instead of a dropdown list. No internal error is thrown when changing the locale[^103].
-  - Language labels appear in human-readable display names instead of ISO 639 language codes, which not everyone is familiar with. (For example, it might be difficult to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.)
+  - Language labels appear in human-readable display names instead of ISO 639 language codes because it may be difficult for non-technical users to recognize `DE` as German, `NL` as Dutch, or `ZH` as Chinese.
   - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
   - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container[^117].
 - Content editing
@@ -235,9 +235,10 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can use Markdown in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
 - Entry slugs
   - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
+  - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values[^133].
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
-  - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option[^25].
+  - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms[^25].
 - Entry listing
   - The collection list displays the number of items in each collection.
   - A folder collection filter with a boolean value works as expected[^93].
@@ -251,7 +252,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better content editing
 
-- Required fields, not optional fields, are clearly marked for efficient data entry.
+- Required fields, not optional fields, are marked for efficient data entry.
 - You can revert changes to all fields or a specific field.
 - If you revert changes and there are no unsaved changes, the Save button is disabled as expected[^118].
 - You can hide the preview of a specific field with `preview: false`[^126].
@@ -293,7 +294,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - You can enter spaces in a simple text-based List field[^50].
   - You can preview variable types without having to register a preview template[^42].
 - Markdown
-  - The rich text editor is built with [Lexical](https://lexical.dev/), which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
+  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
   - You can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown.
 - Object
@@ -504,9 +505,11 @@ Basically there are only two differences: you don’t need to run the proxy serv
    - Please note that the Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition. If you haven’t determined your repository name yet, just use a random one.
    - You can remove `local_backend` from your configuration, as it will be ignored by Sveltia CMS.
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
-1. Visit `http://localhost:[port]/admin/index.html` with Chrome or Edge. The port number varies by framework.
-   - Other Chromium-based browsers may also work. Brave user? [See below](#enabling-local-development-in-brave).
+1. Open `http://localhost:[port]/admin/index.html` with Chrome or Edge.
+   - The port number varies by framework. Check the output from the previous step.
    - The `127.0.0.1` address can also be used instead of `localhost`.
+   - If your CMS instance is not located under `/admin/`, use the appropriate path.
+   - Other Chromium-based browsers may also work. Brave user? [See below](#enabling-local-development-in-brave).
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
    - If you get an error saying “not a repository root directory”, make sure you’ve turned the folder into a repository with either a CUI ([`git init`](https://github.com/git-guides/git-init)) or GUI, and the hidden `.git` folder exists.
    - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646) and [this thread](https://github.com/sveltia/sveltia-cms/discussions/101).
@@ -1145,3 +1148,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^131]: Netlify/Decap CMS [#4429](https://github.com/decaporg/decap-cms/issues/4429)
 
 [^132]: Netlify/Decap CMS [#6816](https://github.com/decaporg/decap-cms/issues/6816)
+
+[^133]: Netlify/Decap CMS [#445](https://github.com/decaporg/decap-cms/issues/445)
