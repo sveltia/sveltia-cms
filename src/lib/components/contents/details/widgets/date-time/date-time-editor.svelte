@@ -114,14 +114,16 @@
   {#if utc}
     <span role="none" class="utc">UTC</span>
   {/if}
-  <Button
-    variant="tertiary"
-    label={$_(dateOnly ? 'today' : 'now')}
-    onclick={() => {
-      currentValue = getCurrentDateTime(fieldConfig);
-    }}
-  />
-  {#if !required}
+  {#if !readonly}
+    <Button
+      variant="tertiary"
+      label={$_(dateOnly ? 'today' : 'now')}
+      onclick={() => {
+        currentValue = getCurrentDateTime(fieldConfig);
+      }}
+    />
+  {/if}
+  {#if !readonly && !required}
     <Button
       variant="tertiary"
       label={$_('clear')}

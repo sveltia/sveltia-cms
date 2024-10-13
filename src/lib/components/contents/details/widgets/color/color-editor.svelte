@@ -150,7 +150,7 @@
       {/if}
     </span>
   {/if}
-  {#if !required}
+  {#if !readonly && !required}
     <Button
       variant="tertiary"
       label={$_('clear')}
