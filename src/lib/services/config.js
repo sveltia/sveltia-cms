@@ -290,7 +290,9 @@ siteConfig.subscribe((config) => {
 
         mediaFolder = mediaFolder.replace('{{media_folder}}', globalMediaFolder);
 
-        const entryRelative = !mediaFolder.startsWith('/');
+        const entryRelative = !(
+          mediaFolder.startsWith('/') || mediaFolder.startsWith(globalMediaFolder)
+        );
 
         return {
           collectionName,

@@ -341,6 +341,7 @@ export const getEntryThumbnail = async (collection, entry) => {
  */
 export const getAssociatedAssets = ({ entry, collectionName, relative = false }) => {
   const { locales } = entry;
+  const collection = getCollection(collectionName);
 
   const assets = /** @type {Asset[]} */ (
     Object.values(locales)
@@ -353,12 +354,9 @@ export const getAssociatedAssets = ({ entry, collectionName, relative = false })
               getFieldConfig({ collectionName, keyPath })?.widget ?? 'string',
             )
           ) {
-            const asset = getAssetByPath(value, entry);
+            const asset = getAssetByPath(value, { entry, collection });
 
-            if (
-              asset &&
-              getCollectionsByAsset(asset).some((collection) => collection.name === collectionName)
-            ) {
+            if (asset && getCollectionsByAsset(asset).some((c) => c.name === collectionName)) {
               return asset;
             }
           }
@@ -371,7 +369,7 @@ export const getAssociatedAssets = ({ entry, collectionName, relative = false })
   );
 
   // Add orphaned/unused entry-relative assets
-  if (relative && getCollection(collectionName)?._assetFolder?.entryRelative) {
+  if (relative && collection?._assetFolder?.entryRelative) {
     const entryDirName = getPathInfo(Object.values(entry.locales)[0].path).dirname;
 
     get(allAssets).forEach((asset) => {

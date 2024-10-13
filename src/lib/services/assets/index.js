@@ -1,5 +1,6 @@
 import { getPathInfo, isTextFileType } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
+import { flatten } from 'flat';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
@@ -10,6 +11,7 @@ import {
   getEntriesByAssetURL,
   getFilesByEntry,
 } from '$lib/services/contents';
+import { fillSlugTemplate } from '$lib/services/contents/slug';
 import { resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
@@ -252,8 +254,9 @@ export const getAssetFoldersByPath = (path) => {
     }
 
     // Compare that the enclosing directory is exactly the same as the internal path, and ignore any
-    // subdirectories, as there is no way to upload assets to them.
-    return path.match(/^(.+)\//)?.[1] === internalPath;
+    // subdirectories, as there is no way to upload assets to them. The internal path can contain
+    // template tags like `{{slug}}` so that we have to take it into account.
+    return !!getPathInfo(path).dirname?.match(`^${internalPath.replace(/{{.+?}}/g, '.+?')}$`);
   });
 };
 
@@ -270,11 +273,14 @@ export const getCollectionsByAsset = (asset) =>
 /**
  * Get an asset by a public path typically stored as an image field value.
  * @param {string} savedPath - Saved absolute path or relative path.
- * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
- * path. Can be `undefined` when editing a new draft.
+ * @param {object} [options] - Options.
+ * @param {Entry} [options.entry] - Associated entry to be used to help locale an asset from a
+ * relative path. Can be `undefined` when editing a new draft.
+ * @param {Collection} [options.collection] - Associated collection. Can be undefined, then it will
+ * be automatically determined from the entry.
  * @returns {Asset | undefined} Corresponding asset.
  */
-export const getAssetByPath = (savedPath, entry) => {
+export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
   // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
   // considered as an absolute path.
   if (!savedPath.match(/^[/@]/)) {
@@ -304,30 +310,48 @@ export const getAssetByPath = (savedPath, entry) => {
       return get(allAssets).find((asset) => asset.path === resolvedPath);
     };
 
-    const assets = getCollectionsByEntry(entry).map((collection) => {
-      const collectionFiles = getFilesByEntry(collection, entry);
+    const assets = getCollectionsByEntry(entry).map((_collection) => {
+      const collectionFiles = getFilesByEntry(_collection, entry);
 
       if (collectionFiles.length) {
         return collectionFiles.map(getAsset);
       }
 
-      return getAsset(collection);
+      return getAsset(_collection);
     });
 
     return assets.flat(1).filter(Boolean)[0] ?? undefined;
   }
 
-  const [, publicPath, fileName] = savedPath.match(/(.+?)\/([^/]+)$/) ?? [];
+  const { dirname: publicPath, basename: fileName } = getPathInfo(savedPath);
 
   if (!publicPath) {
     return undefined;
   }
 
-  const { internalPath } =
-    get(allAssetFolders).findLast((folder) => folder.publicPath === publicPath) ?? {};
+  let { internalPath } =
+    get(allAssetFolders).findLast((folder) =>
+      publicPath.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}$`),
+    ) ?? {};
 
   if (!internalPath) {
     return undefined;
+  }
+
+  if (entry && !collection) {
+    [collection] = getCollectionsByEntry(entry);
+  }
+
+  if (entry && collection && !!internalPath.match(/{{.+?}}/)) {
+    const { content, path } = entry.locales[collection._i18n.defaultLocale];
+
+    internalPath = fillSlugTemplate(internalPath, {
+      type: 'media_folder',
+      collection,
+      content: flatten(content),
+      currentSlug: entry.slug,
+      entryFilePath: path,
+    });
   }
 
   return get(allAssets).find((asset) => asset.path === `${internalPath}/${fileName}`);
@@ -406,7 +430,7 @@ export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {})
     return value;
   }
 
-  const asset = getAssetByPath(value, entry);
+  const asset = getAssetByPath(value, { entry });
 
   if (!asset) {
     return undefined;
@@ -446,8 +470,15 @@ export const getAssetDetails = async (asset) => {
 };
 
 /**
- * Get a list of assets stored in the given folder.
- * @param {string} dirname - Folder path.
+ * Get a list of assets stored in the given collection defined folder.
+ * @param {string} folder - Folder path.
+ * @returns {Asset[]} Assets.
+ */
+export const getAssetsByFolder = (folder) => get(allAssets).filter((a) => a.folder === folder);
+
+/**
+ * Get a list of assets stored in the given internal directory.
+ * @param {string} dirname - Directory path.
  * @returns {Asset[]} Assets.
  */
 export const getAssetsByDirName = (dirname) =>

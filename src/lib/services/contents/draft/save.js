@@ -252,8 +252,8 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
 
   if (!entryRelative) {
     return {
-      internalAssetFolder: internalPath,
-      publicAssetFolder: publicPath,
+      internalAssetFolder: fillSlugTemplate(internalPath, fillSlugOptions),
+      publicAssetFolder: fillSlugTemplate(publicPath, fillSlugOptions),
     };
   }
 

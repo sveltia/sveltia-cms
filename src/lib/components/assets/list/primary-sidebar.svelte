@@ -6,7 +6,7 @@
   import {
     allAssetFolders,
     allAssets,
-    getAssetsByDirName,
+    getAssetsByFolder,
     selectedAssetFolder,
   } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
@@ -88,7 +88,7 @@
         {#snippet endIcon()}
           {#key $allAssets}
             {#await sleep(0) then}
-              {@const count = (internalPath ? getAssetsByDirName(internalPath) : $allAssets).length}
+              {@const count = (internalPath ? getAssetsByFolder(internalPath) : $allAssets).length}
               <span
                 class="count"
                 aria-label="({$_(

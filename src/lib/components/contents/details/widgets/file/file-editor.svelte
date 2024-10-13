@@ -99,6 +99,7 @@
     } = {},
   } = fieldConfig);
   $: isImageWidget = widgetName === 'image';
+  $: collection = $entryDraft?.collection;
   $: entry = $entryDraft?.originalEntry;
 
   /**
@@ -173,7 +174,7 @@
             ? await getMediaFieldURL(currentValue, entry, { thumbnail: true })
             : undefined;
       } else {
-        asset = getAssetByPath(currentValue, entry);
+        asset = getAssetByPath(currentValue, { entry, collection });
         kind = undefined;
         src = undefined;
       }
