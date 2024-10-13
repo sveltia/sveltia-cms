@@ -260,7 +260,10 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
   return {
     internalAssetFolder: resolvePath(
       fillSlugTemplate(
-        createPath([internalPath, isMultiFolders || entryPath.includes('/') ? subPath : undefined]),
+        createPath([
+          internalPath,
+          isMultiFolders || entryPath?.includes('/') ? subPath : undefined,
+        ]),
         fillSlugOptions,
       ),
     ),
