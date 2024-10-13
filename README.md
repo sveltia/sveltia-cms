@@ -103,7 +103,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 120+ of them (or 225+ including duplicates) have been effectively solved in Sveltia CMS
+  - So far, 130+ of them (or 235+ including duplicates) have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 (or all the relevant and fixable issues) in a future release
   - Note: issues include both feature requests and bug reports
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
@@ -112,7 +112,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 Sveltia CMS **version 1.0 is expected to ship by the end of 2024**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
-![120 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20240928.webp)<br>
+![130 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20241013.webp)<br>
 
 ## Differentiators
 
@@ -244,12 +244,14 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
   - You can set the maximum number of characters for an entry slug with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms[^25].
+  - Setting the collection `path` doesn’t affect the entry slugs used for the Relation widget[^137].
 - Entry listing
   - The collection list displays the number of items in each collection.
   - A folder collection filter with a boolean value works as expected[^93].
   - Hugo’s special `_index.md` files are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
   - Sorting entries by a DateTime field works as expected[^110].
+  - Whenever you’ve updated an entry’s title (or any other field) that appears as the collection’s `summary`, the entry list displays the updated title.
   - Assets stored in a [per-collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
   - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
   - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
@@ -262,12 +264,14 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - If you revert changes and there are no unsaved changes, the Save button is disabled as expected[^118].
 - You can hide the preview of a specific field with `preview: false`[^126].
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
+- The preview pane won’t cause a scrolling issue[^136].
 - When you click on a field in the preview pane, the corresponding field in the edit pane is highlighted. It will be automatically expanded if collapsed[^41].
 - The preview pane displays all fields, including each title, making it easier to see which fields are populated.
 - Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
 - You can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
 - Any links to other entries will work as expected, with the Content Editor being updated for the other[^100].
+- In the Boolean and Select widgets, you don’t have to update a value twice to re-enable the Save button after saving an entry[^139].
 
 ### Better data output
 
@@ -312,6 +316,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`[^94].
   - `display_fields` is displayed in the preview pane instead of `value_field`.
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
+  - A new referenced item created in another collection is immediately available in the options[^138].
 - Select
   - It’s possible to select an option with value `0`[^56].
   - `label` is displayed in the preview pane instead of `value`.
@@ -331,6 +336,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More stock photo providers will be added in the future.
   - You can also simply drag and drop a file onto a File/Image field to attach it without having to open the Select File dialog.
   - Large images automatically fit in the preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
+  - If the `public_folder` contains `{{slug}}` and you’ve edited an entry slug field (e.g. title) after uploading an asset, the updated slug will be used in the saved asset path[^140]. Other dynamic template tags such as `{{filename}}` will also be populated as expected[^141].
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
 - Markdown, String and Text
@@ -367,7 +373,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
-- Assets stored in an entry-relative media folder are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22]. When you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
+- Assets stored in an entry-relative media folder are displayed in the Asset Library[^142]. These assets are automatically deleted when the associated entry is deleted because these assets are not available for other entries[^22]. When you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
 - Hidden files (dot files) don’t appear in the Asset Library[^47].
 - You can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens[^97].
@@ -376,6 +382,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 ### Better customization
 
 - The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists[^109].
+- A custom logo defined with the `logo_url` property is displayed on the global application header and the browser tab (favicon)[^134]. A smaller logo is also correctly positioned on the authentication page[^135].
 
 ## Compatibility
 
@@ -1126,7 +1133,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^116]: Netlify/Decap CMS [#3431](https://github.com/decaporg/decap-cms/issues/3431)
 
-[^117]: Netlify/Decap CMS [#3562](https://github.com/decaporg/decap-cms/issues/3562)
+[^117]: Netlify/Decap CMS [#3562](https://github.com/decaporg/decap-cms/issues/3562), [#6215](https://github.com/decaporg/decap-cms/issues/6215)
 
 [^118]: Netlify/Decap CMS [#7267](https://github.com/decaporg/decap-cms/issues/7267)
 
@@ -1159,3 +1166,21 @@ This software is provided “as is” without any express or implied warranty. W
 [^132]: Netlify/Decap CMS [#6816](https://github.com/decaporg/decap-cms/issues/6816)
 
 [^133]: Netlify/Decap CMS [#445](https://github.com/decaporg/decap-cms/issues/445)
+
+[^134]: Netlify/Decap CMS [#5548](https://github.com/decaporg/decap-cms/issues/5548)
+
+[^135]: Netlify/Decap CMS [#2133](https://github.com/decaporg/decap-cms/issues/2133)
+
+[^136]: Netlify/Decap CMS [#7085](https://github.com/decaporg/decap-cms/issues/7085)
+
+[^137]: Netlify/Decap CMS [#4092](https://github.com/decaporg/decap-cms/issues/4092)
+
+[^138]: Netlify/Decap CMS [#4841](https://github.com/decaporg/decap-cms/issues/4841)
+
+[^139]: Netlify/Decap CMS [#6202](https://github.com/decaporg/decap-cms/issues/6202)
+
+[^140]: Netlify/Decap CMS [#5444](https://github.com/decaporg/decap-cms/issues/5444)
+
+[^141]: Netlify/Decap CMS [#3723](https://github.com/decaporg/decap-cms/issues/3723)
+
+[^142]: Netlify/Decap CMS [#7124](https://github.com/decaporg/decap-cms/issues/7124)
