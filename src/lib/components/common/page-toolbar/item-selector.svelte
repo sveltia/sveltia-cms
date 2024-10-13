@@ -19,6 +19,7 @@
 
 <div role="none" class="wrapper">
   <Checkbox
+    disabled={!totalCount}
     aria-label={$_('select_all')}
     checked={anySelected && !allSelected ? 'mixed' : anySelected}
     onChange={() => {
