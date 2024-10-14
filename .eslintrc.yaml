@@ -17,11 +17,6 @@ env:
   browser: true
   es2022: true
   node: true
-overrides:
-  - files:
-      - "*.svelte"
-      - "*.svelte.js"
-    parser: svelte-eslint-parser
 rules:
   class-methods-use-this: off
   import/extensions: off
