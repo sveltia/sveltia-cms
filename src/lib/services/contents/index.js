@@ -116,16 +116,23 @@ export const getCollection = (name) => {
 /**
  * Get collection entry folders that match the given path.
  * @param {string} path - Entry path.
- * @returns {CollectionEntryFolder[]} Entry folders.
+ * @returns {CollectionEntryFolder[]} Entry folders. Sometimes it’s hard to find the right folder
+ * because multiple collections can have the same folder or partially overlapping folder paths, but
+ * the first one is most likely what you need.
+ * @todo Make the logic more diligent, taking i18n config into account.
  */
 export const getEntryFoldersByPath = (path) => {
   const { extension } = getPathInfo(path);
 
-  return get(allEntryFolders).filter(({ filePathMap, folderPath, parserConfig }) =>
-    folderPath
-      ? path.startsWith(`${folderPath}/`) && getFileExtension(parserConfig) === extension
-      : Object.values(filePathMap ?? {}).includes(path),
-  );
+  return get(allEntryFolders)
+    .filter(({ filePathMap, folderPath, parserConfig }) => {
+      if (filePathMap) {
+        return Object.values(filePathMap ?? {}).includes(path);
+      }
+
+      return path.startsWith(`${folderPath}/`) && getFileExtension(parserConfig) === extension;
+    })
+    .sort((a, b) => b.folderPath?.localeCompare(a.folderPath ?? '') ?? 0);
 };
 
 /**
