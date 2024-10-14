@@ -152,9 +152,9 @@ export const initSiteConfig = async (manualConfig = {}) => {
 
     validate(config);
 
-    // Set the site URL for development. See also `/src/app.svelte`
-    if (DEV && !config.site_url) {
-      config.site_url = siteURL;
+    // Set the site URL for development and production. See also `/src/app.svelte`
+    if (!config.site_url) {
+      config.site_url = DEV ? siteURL : window.location.origin;
     }
 
     siteConfig.set(config);
