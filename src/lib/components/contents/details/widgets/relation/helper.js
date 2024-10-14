@@ -40,7 +40,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example '{{slug}}'
    * @example '{{fields.slug}}'
    */
-  // @ts-ignore Netlify/Decap CMS supports camelcase fields field name
+  // @ts-ignore Netlify/Decap CMS supports camelcase field name
   const valueField = fieldConfig.value_field ?? fieldConfig.valueField;
   /**
    * @example ['userId']
@@ -48,12 +48,12 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example ['cities.*.id', 'cities.*.name'] (with wildcard, multiple)
    * @example ['{{twitterHandle}} - {{followerCount}}'] (template)
    */
-  // @ts-ignore Netlify/Decap CMS supports camelcase fields field name
+  // @ts-ignore Netlify/Decap CMS supports camelcase field name
   const displayFields = fieldConfig.display_fields ?? fieldConfig.displayFields ?? [valueField];
   /**
    * The format is the same as {@link displayFields}.
    */
-  // @ts-ignore Netlify/Decap CMS supports camelcase fields field name
+  // @ts-ignore Netlify/Decap CMS supports camelcase field name
   const searchFields = fieldConfig.search_fields ?? fieldConfig.searchFields ?? displayFields;
   /**
    * Canonical, templatized value field.
