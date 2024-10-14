@@ -107,7 +107,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 130+ of them or 235+ including duplicates have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, and 250 or all relevant and fixable issues in a future release
-  - Note: issues include both feature requests and bug reports
+  - Note: Issues include both feature requests and bug reports; we also track [their discussions](https://github.com/decaporg/decap-cms/discussions)
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
 - Implementing our own enhancement ideas for every part of the product
@@ -125,8 +125,8 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned shortly after the 1.0 release.
 - Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal application crashes[^113][^129]. Best of all, Svelte offers unmatched performance!
-- The Help menu provides all links to useful resources, including release notes, feedback and support.
-- Users can personalize the application with various settings.
+- The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
+- Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
 
 ### Better performance
@@ -249,6 +249,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Entry listing
   - The collection list displays the number of items in each collection.
   - A folder collection filter with a boolean value works as expected[^93].
+  - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - Hugo’s special `_index.md` files are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
   - Sorting entries by a DateTime field works as expected[^110].
