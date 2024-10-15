@@ -9,7 +9,7 @@ import { unflatten } from 'flat';
 import { get } from 'svelte/store';
 import { validateStringField } from '$lib/components/contents/details/widgets/string/helper';
 import { allAssetFolders, allAssets, getAssetKind, getAssetsByDirName } from '$lib/services/assets';
-import { backend, backendName } from '$lib/services/backends';
+import { backend, backendName, isLastCommitPublished } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { contentUpdatesToast } from '$lib/services/contents/data';
@@ -828,12 +828,17 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 
+  const published =
+    !isLocal && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
+
   contentUpdatesToast.set({
     saved: true,
-    published: !isLocal && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false),
+    published,
     deleted: false,
     count: 1,
   });
+
+  isLastCommitPublished.set(published);
 
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 

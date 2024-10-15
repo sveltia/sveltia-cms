@@ -297,30 +297,33 @@ const fetchDefaultBranchName = async () => {
 };
 
 /**
- * Fetch the latest commit’s SHA-1 hash.
- * @returns {Promise<string>} Hash.
+ * Fetch the last commit on the repository.
+ * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#tree
  */
-const fetchLastCommitHash = async () => {
+const fetchLastCommit = async () => {
   const { owner, repo, branch } = repository;
 
-  const result =
-    /** @type {{ project: { repository: { tree: { lastCommit: { sha: string }} } } }} */ (
-      await fetchGraphQL(`
-        query {
-          project(fullPath: "${owner}/${repo}") {
-            repository {
-              tree(ref: "${branch}") {
-                lastCommit {
-                  sha
-                }
+  /**
+   * @type {{ project: { repository: { tree: { lastCommit: { sha: string, message: string }} } } }}
+   */
+  const result = /** @type {any} */ (
+    await fetchGraphQL(`
+      query {
+        project(fullPath: "${owner}/${repo}") {
+          repository {
+            tree(ref: "${branch}") {
+              lastCommit {
+                sha
+                message
               }
             }
           }
         }
-      `)
-    );
+      }
+    `)
+  );
 
   if (!result.project) {
     throw new Error('Failed to retrieve the last commit hash.', {
@@ -336,7 +339,9 @@ const fetchLastCommitHash = async () => {
     });
   }
 
-  return lastCommit.sha;
+  const { sha: hash, message } = lastCommit;
+
+  return { hash, message };
 };
 
 /**
@@ -563,7 +568,7 @@ const fetchFiles = async () => {
   await fetchAndParseFiles({
     repository,
     fetchDefaultBranchName,
-    fetchLastCommitHash,
+    fetchLastCommit,
     fetchFileList,
     fetchFileContents,
   });

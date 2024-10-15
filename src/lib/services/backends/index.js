@@ -31,3 +31,8 @@ export const backend = derived([backendName], ([name], _set, update) => {
     return newService;
   });
 });
+
+/**
+ * @type {import('svelte/store').Writable<boolean>}
+ */
+export const isLastCommitPublished = writable(true);

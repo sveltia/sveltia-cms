@@ -1,6 +1,7 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import { allAssets, getAssetFoldersByPath } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
+import { isLastCommitPublished } from '$lib/services/backends';
 import {
   allEntries,
   dataLoaded,
@@ -64,8 +65,8 @@ export const createFileList = (files) => {
  * @param {RepositoryInfo} args.repository - Repository info.
  * @param {() => Promise<string>} args.fetchDefaultBranchName - Function to fetch the repository’s
  * default branch name.
- * @param {() => Promise<string>} args.fetchLastCommitHash - Function to fetch the latest commit’s
- * SHA-1 hash.
+ * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit - Function to
+ * fetch the last commit’s SHA-1 hash and message.
  * @param {() => Promise<BaseFileListItem[]>} args.fetchFileList - Function to fetch the
  * repository’s complete file list.
  * @param {(fetchingFiles: (BaseEntryListItem | BaseAssetListItem)[]) =>
@@ -75,7 +76,7 @@ export const createFileList = (files) => {
 export const fetchAndParseFiles = async ({
   repository,
   fetchDefaultBranchName,
-  fetchLastCommitHash,
+  fetchLastCommit,
   fetchFileList,
   fetchFileContents,
 }) => {
@@ -93,7 +94,7 @@ export const fetchAndParseFiles = async ({
   }
 
   // This has to be done after the branch is determined
-  const lastHash = await fetchLastCommitHash();
+  const { hash: lastHash, message } = await fetchLastCommit();
 
   if (cachedHash && cachedHash === lastHash && cachedFileEntries.length) {
     // Skip fetching the file list if the cached hash matches the latest. But don’t skip if the file
@@ -104,6 +105,9 @@ export const fetchAndParseFiles = async ({
     fileList = createFileList(await fetchFileList());
     metaDB.set('last_commit_hash', lastHash);
   }
+
+  // @todo Check if the commit has a workflow run that trigged deployment
+  isLastCommitPublished.set(!message.startsWith('[skip ci]'));
 
   // Skip fetching files if no files found
   if (!fileList.count) {

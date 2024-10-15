@@ -1,7 +1,7 @@
 <script>
-  import { Alert, MenuItem, Toast } from '@sveltia/ui';
+  import { Alert, Button, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { backend, backendName } from '$lib/services/backends';
+  import { backend, backendName, isLastCommitPublished } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/prefs';
 
@@ -10,7 +10,8 @@
   $: ({ deployHookURL } = $prefs);
   $: ({ triggerDeployment } = $backend ?? /** @type {BackendService} */ ({}));
   $: showButton = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
-  $: canPublish = !!deployHookURL || typeof triggerDeployment === 'function';
+  $: canPublish =
+    (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished;
 
   /** @type {'info' | 'error'} */
   let toastStatus = 'info';
@@ -33,6 +34,8 @@
       if (!ok && status !== 0) {
         throw new Error(`Webhook returned ${status} error`);
       }
+
+      $isLastCommitPublished = true;
     } catch (/** @type {any} */ ex) {
       toastStatus = 'error';
       showToast = true;
@@ -43,7 +46,12 @@
 </script>
 
 {#if showButton}
-  <MenuItem label={$_('publish_changes')} disabled={!canPublish} onclick={() => publish()} />
+  <Button
+    variant="secondary"
+    label={$_('publish_changes')}
+    disabled={!canPublish}
+    onclick={() => publish()}
+  />
   <Toast bind:show={showToast}>
     <Alert status={toastStatus}>
       {$_(toastStatus === 'error' ? 'publishing_changes_failed' : 'publishing_changes')}

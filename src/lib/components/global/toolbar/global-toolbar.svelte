@@ -6,6 +6,7 @@
   import HelpButton from '$lib/components/global/toolbar/items/help-button.svelte';
   import NotificationsButton from '$lib/components/global/toolbar/items/notifications-button.svelte';
   import PageSwitcher from '$lib/components/global/toolbar/items/page-switcher.svelte';
+  import PublishMenuButton from '$lib/components/global/toolbar/items/publish-menu-button.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import SiteLogo from '$lib/components/global/toolbar/items/site-logo.svelte';
   import { hasOverlay } from '$lib/services/app/navigation';
@@ -19,6 +20,7 @@
     </div>
     <QuickSearchBar />
     <div role="none" class="buttons">
+      <PublishMenuButton />
       <CreateButton />
       <NotificationsButton />
       <HelpButton />

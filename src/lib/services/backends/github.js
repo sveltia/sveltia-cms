@@ -258,20 +258,31 @@ const fetchDefaultBranchName = async () => {
 };
 
 /**
- * Fetch the latest commit’s SHA-1 hash.
- * @returns {Promise<string>} Hash.
+ * Fetch the last commit on the repository.
+ * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
  */
-const fetchLastCommitHash = async () => {
+const fetchLastCommit = async () => {
   const { owner, repo, branch } = repository;
 
-  const result = /** @type {{ repository: { ref: { target: { oid: string } } } }} */ (
+  /**
+   * @type {{ repository: { ref: { target: { history: { nodes: [{ oid: string, message: string }] }
+   * } } } }}
+   */
+  const result = /** @type {any} */ (
     await fetchGraphQL(`
       query {
         repository(owner: "${owner}", name: "${repo}") {
           ref(qualifiedName: "${branch}") {
             target {
-              oid
+              ... on Commit {
+                history(first: 1) {
+                  nodes {
+                    oid
+                    message
+                  }
+                }
+              }
             }
           }
         }
@@ -291,7 +302,9 @@ const fetchLastCommitHash = async () => {
     });
   }
 
-  return result.repository.ref.target.oid;
+  const { oid: hash, message } = result.repository.ref.target.history.nodes[0];
+
+  return { hash, message };
 };
 
 /**
@@ -434,7 +447,7 @@ const fetchFiles = async () => {
   await fetchAndParseFiles({
     repository,
     fetchDefaultBranchName,
-    fetchLastCommitHash,
+    fetchLastCommit,
     fetchFileList,
     fetchFileContents,
   });
@@ -507,7 +520,7 @@ const commitChanges = async (changes, options) => {
             repositoryNameWithOwner: `${owner}/${repo}`,
             branchName: branch,
           },
-          expectedHeadOid: await fetchLastCommitHash(),
+          expectedHeadOid: (await fetchLastCommit()).hash,
           fileChanges: { additions, deletions },
           message: { headline: createCommitMessage(changes, options) },
         },

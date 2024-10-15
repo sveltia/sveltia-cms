@@ -1,7 +1,6 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import PublishMenuItem from '$lib/components/global/toolbar/items/publish-menu-item.svelte';
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
   import { goto, openProductionSite } from '$lib/services/app/navigation';
   import { backend, backendName } from '$lib/services/backends';
@@ -57,7 +56,6 @@
             window.open($backend?.repository?.treeBaseURL);
           }}
         />
-        <PublishMenuItem />
         <Divider />
         <MenuItem
           label={$_('settings')}
