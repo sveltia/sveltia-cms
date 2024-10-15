@@ -151,6 +151,15 @@
         }
       }
 
+      :global(.grid-cell.image:empty::before) {
+        display: block;
+        border-radius: var(--sui-control-medium-border-radius);
+        width: 40px;
+        height: 40px;
+        background-color: var(--sui-secondary-background-color);
+        content: '';
+      }
+
       :global([role='gridcell']:first-child) {
         padding-left: 16px;
       }
