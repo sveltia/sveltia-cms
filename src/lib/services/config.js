@@ -152,10 +152,8 @@ export const initSiteConfig = async (manualConfig = {}) => {
 
     validate(config);
 
-    // Set the site URL for development and production. See also `/src/app.svelte`
-    if (!config.site_url) {
-      config.site_url = DEV ? siteURL : window.location.origin;
-    }
+    // Set the site URL for development and production if undefined. See also `/src/app.svelte`
+    config.site_url ||= DEV ? siteURL : window.location.origin;
 
     siteConfig.set(config);
     siteConfigVersion.set(await getHash(YAML.stringify(config)));
