@@ -16,6 +16,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'src/content/blog',
       internalAssetFolder: 'src/content/blog/foo',
       publicAssetFolder: '../foo',
     });
@@ -33,6 +34,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'src/content/blog',
       internalAssetFolder: 'src/content/blog/foo',
       publicAssetFolder: '../../foo',
     });
@@ -50,6 +52,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'src/content/blog',
       internalAssetFolder: 'src/content/blog',
       publicAssetFolder: '',
     });
@@ -67,6 +70,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'src/content/blog',
       internalAssetFolder: 'src/content/blog/foo',
       publicAssetFolder: '',
     });
@@ -84,6 +88,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'src/content/blog',
       internalAssetFolder: 'src/content/blog',
       publicAssetFolder: '',
     });
@@ -101,6 +106,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'src/content/blog',
       internalAssetFolder: 'src/content/blog/foo',
       publicAssetFolder: '',
     });
@@ -118,6 +124,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog',
       internalAssetFolder: 'static/uploads/blog',
       publicAssetFolder: '/uploads/blog',
     });
@@ -135,6 +142,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog',
       internalAssetFolder: 'static/uploads/blog',
       publicAssetFolder: '/uploads/blog',
     });
@@ -152,6 +160,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog',
       internalAssetFolder: 'static/uploads/blog',
       publicAssetFolder: '/uploads/blog',
     });
@@ -169,6 +178,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog',
       internalAssetFolder: 'static/uploads/blog',
       publicAssetFolder: '/uploads/blog',
     });
@@ -186,6 +196,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog',
       internalAssetFolder: 'static/uploads/blog',
       publicAssetFolder: '/uploads/blog',
     });
@@ -203,6 +214,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     };
 
     expect(getEntryAssetFolderPaths({ collection, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog',
       internalAssetFolder: 'static/uploads/blog',
       publicAssetFolder: '/uploads/blog',
     });
