@@ -235,7 +235,9 @@ export const validateEntry = () => {
 /**
  * Get the internal/public asset path configuration for the entry assets.
  * @param {any} fillSlugOptions - Options to be passed to {@link fillSlugTemplate}.
- * @returns {{ internalAssetFolder: string, publicAssetFolder: string }} Determined paths.
+ * @returns {{ internalBaseAssetFolder: string, internalAssetFolder: string, publicAssetFolder:
+ * string }} Determined paths. `internalBaseAssetFolder` is the collection-defined path, while
+ * `internalAssetFolder` may contain a sub path when the asset is entry-relative.
  */
 export const getEntryAssetFolderPaths = (fillSlugOptions) => {
   const {
@@ -252,12 +254,14 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
 
   if (!entryRelative) {
     return {
+      internalBaseAssetFolder: internalPath,
       internalAssetFolder: fillSlugTemplate(internalPath, fillSlugOptions),
       publicAssetFolder: fillSlugTemplate(publicPath, fillSlugOptions),
     };
   }
 
   return {
+    internalBaseAssetFolder: internalPath,
     internalAssetFolder: resolvePath(
       fillSlugTemplate(
         createPath([
@@ -679,12 +683,13 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           currentSlug: defaultLocaleSlug,
         });
 
-  const { internalAssetFolder, publicAssetFolder } = getEntryAssetFolderPaths({
-    ...fillSlugOptions,
-    type: 'media_folder',
-    currentSlug: defaultLocaleSlug,
-    entryFilePath: createEntryPath(draft, defaultLocale, defaultLocaleSlug),
-  });
+  const { internalBaseAssetFolder, internalAssetFolder, publicAssetFolder } =
+    getEntryAssetFolderPaths({
+      ...fillSlugOptions,
+      type: 'media_folder',
+      currentSlug: defaultLocaleSlug,
+      entryFilePath: createEntryPath(draft, defaultLocale, defaultLocaleSlug),
+    });
 
   const assetNamesInSameFolder = getAssetsByDirName(internalAssetFolder).map((a) =>
     a.name.normalize(),
@@ -703,7 +708,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     /** @type {string | undefined} */
     text: undefined,
     collectionName,
-    folder: internalAssetFolder,
+    folder: internalBaseAssetFolder,
     commitAuthor: _user.email
       ? /** @type {CommitAuthor} */ ({ name: _user.name, email: _user.email })
       : undefined,
