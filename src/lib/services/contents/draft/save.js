@@ -824,9 +824,10 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 
   contentUpdatesToast.set({
-    count: 1,
     saved: true,
     published: !isLocal && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false),
+    deleted: false,
+    count: 1,
   });
 
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
