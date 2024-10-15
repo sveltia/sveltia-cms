@@ -1,4 +1,5 @@
 import { get, writable } from 'svelte/store';
+import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries, selectedCollection } from '$lib/services/contents';
 
@@ -57,4 +58,8 @@ export const deleteEntries = async (ids, assetPaths = []) => {
     deleted: true,
     count: ids.length,
   });
+
+  if (assetPaths.length) {
+    allAssets.update((assets) => assets.filter((asset) => !assetPaths.includes(asset.path)));
+  }
 };
