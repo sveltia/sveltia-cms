@@ -116,7 +116,7 @@
     <h4>{$_('public_url')}</h4>
     <p>
       {#if publicURL}
-        <a href={publicURL}>{publicURL}</a>
+        <a href={publicURL} target="_blank">{publicURL}</a>
       {:else}
         –
       {/if}
