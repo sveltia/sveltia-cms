@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source, UX-focused alternative to Netlify/Decap CMS is now in public beta — with more features to come.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source alternative to Netlify/Decap CMS is now in public beta, offering a stew of improvements in UX, performance, i18n support and more.
 
 ![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
 
@@ -204,7 +204,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
     - File collections support multiple files/folders i18n structures[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections as before.
-    - The `i18n: duplicate` field configuration can be used for the List and Object widgets so that changes made with these widgets are duplicated between locales[^7][^68].
+    - The `i18n: duplicate` field configuration can be used for the List and Object widgets so that changes made with these widgets are duplicated between locales[^7][^68]. Subfields can use the `i18n` configuration normally.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
   - You can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
   - You can [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
