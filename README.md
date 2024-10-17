@@ -152,7 +152,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Provides a smoother user experience in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
-  - The editor closes automatically when an entry is saved. This behaviour can be changed in Settings.
+  - The editor closes automatically when an entry is saved. This behaviour can be changed in the application settings.
 - Uploading files can be done with drag and drop[^20].
 - You can upload multiple files at once to the Asset Library[^5].
 - You can delete multiple entries and assets at once.
@@ -217,6 +217,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
   - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click. More translation services will be added in the future.
+  - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian[^146].
   - You can [disable non-default locale content](#disabling-non-default-locale-content)[^15].
   - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
   - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
@@ -385,7 +386,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better localization
 
-- The application UI locale is automatically selected based on the preferred language set with the browser[^132]. Users can also change the locale in the Settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
+- The application UI locale is automatically selected based on the preferred language set with the browser[^132]. Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
 - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container[^117].
 - We’ll soon be migrating from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the [Fluent localization system](https://projectfluent.org/) for natural-sounding translations in every locale.
@@ -619,7 +620,7 @@ In Sveltia CMS, those per-collection media folders are displayed prominently for
 
 ### Using DeepL to translate entry fields
 
-Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the content editor. To enable the high quality, AI-powered, quick translation feature:
+Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the Content Editor. To enable the high quality, AI-powered, quick translation feature:
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
@@ -697,7 +698,7 @@ i18n:
 
 ### Disabling non-default locale content
 
-You can disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the content editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
+You can disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or per-collection `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the Content Editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
 
 With the following configuration, you can disable the French and/or German translation while writing in English.
 
@@ -739,7 +740,7 @@ With Sveltia CMS, you can disable automatic deployments by default and manually 
    ```
 1. Commit and deploy the change to the config file and reload the CMS.
 1. Now, whenever you save an entry or asset, `[skip ci]` is automatically added to each commit message. However, deletions are always committed without the prefix to avoid unexpected data retention on your site.
-1. If you want to deploy a new or updated entry, as well as any other unpublished entries and assets, click an arrow next to the Save button in the content editor, then select **Save and Publish**. This will trigger CI/CD by omitting `[skip ci]`.
+1. If you want to deploy a new or updated entry, as well as any other unpublished entries and assets, click an arrow next to the Save button in the Content Editor, then select **Save and Publish**. This will trigger CI/CD by omitting `[skip ci]`.
 
 If you set `automatic_deployments` to `true`, the behaviour is reversed. CI/CD will be triggered by default, while you have an option to **Save without Publishing** that adds `[skip ci]` only to the associated commit.
 
@@ -1197,3 +1198,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^144]: Netlify/Decap CMS [#3284](https://github.com/decaporg/decap-cms/issues/3284)
 
 [^145]: Netlify/Decap CMS [#4733](https://github.com/decaporg/decap-cms/issues/4733)
+
+[^146]: Netlify/Decap CMS [#2524](https://github.com/decaporg/decap-cms/issues/2524)
