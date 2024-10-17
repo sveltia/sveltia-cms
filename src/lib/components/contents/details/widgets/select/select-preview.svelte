@@ -42,7 +42,7 @@
 </script>
 
 {#if multiple && Array.isArray(currentValue) && currentValue.length}
-  <p>{listFormatter.format(currentValue.map(getLabel).sort())}</p>
+  <p lang={locale} dir="auto">{listFormatter.format(currentValue.map(getLabel).sort())}</p>
 {:else if currentValue !== undefined}
-  <p>{getLabel(currentValue)}</p>
+  <p lang={locale} dir="auto">{getLabel(currentValue)}</p>
 {/if}

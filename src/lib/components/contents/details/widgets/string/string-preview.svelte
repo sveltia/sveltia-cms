@@ -11,7 +11,6 @@
   /**
    * @type {LocaleCode}
    */
-  // svelte-ignore unused-export-let
   export let locale;
   /**
    * @type {FieldKeyPath}
@@ -35,7 +34,7 @@
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
-  <p class:title={fieldName === 'title'}>
+  <p lang={locale} dir="auto" class:title={fieldName === 'title'}>
     {#if type === 'url' || isURL(currentValue)}
       {#if isYouTubeVideoURL(currentValue)}
         <YouTubeEmbed url={currentValue} />

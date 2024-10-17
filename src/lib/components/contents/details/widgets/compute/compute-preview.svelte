@@ -6,7 +6,6 @@
   /**
    * @type {LocaleCode}
    */
-  // svelte-ignore unused-export-let
   export let locale;
   /**
    * @type {FieldKeyPath}
@@ -24,4 +23,4 @@
   export let currentValue;
 </script>
 
-<p>{currentValue ?? ''}</p>
+<p lang={locale} dir="auto">{currentValue ?? ''}</p>

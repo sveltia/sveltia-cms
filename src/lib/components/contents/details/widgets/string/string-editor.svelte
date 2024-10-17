@@ -11,7 +11,6 @@
   /**
    * @type {LocaleCode}
    */
-  // svelte-ignore unused-export-let
   export let locale;
   /**
    * @type {FieldKeyPath}
@@ -107,6 +106,7 @@
 </script>
 
 <TextInput
+  lang={locale}
   bind:value={inputValue}
   {type}
   inputmode={type}

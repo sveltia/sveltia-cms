@@ -81,5 +81,5 @@
     </section>
   {/each}
 {:else if Array.isArray(currentValue) && currentValue.length}
-  <p>{listFormatter.format(currentValue)}</p>
+  <p lang={locale} dir="auto">{listFormatter.format(currentValue)}</p>
 {/if}

@@ -35,7 +35,7 @@
 </script>
 
 {#if date}
-  <p>
+  <p lang={locale} dir="auto">
     {#if timeOnly}
       {date.toLocaleTimeString(canonicalLocale, timeFormatOptions)}
     {:else}

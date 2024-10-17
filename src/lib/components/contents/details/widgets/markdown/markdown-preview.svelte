@@ -6,8 +6,9 @@
 <script>
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
-  import { getMediaFieldURL } from '$lib/services/assets';
+  import markedBidi from 'marked-bidi';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getMediaFieldURL } from '$lib/services/assets';
 
   /**
    * @type {LocaleCode}
@@ -32,6 +33,8 @@
     // Widget-specific options
     sanitize_preview: sanitize = false,
   } = fieldConfig);
+
+  marked.use(markedBidi());
 
   /** @type {import("marked").MarkedOptions} */
   const markedOptions = {

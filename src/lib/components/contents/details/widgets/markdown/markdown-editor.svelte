@@ -15,7 +15,6 @@
   /**
    * @type {LocaleCode}
    */
-  // svelte-ignore unused-export-let
   export let locale;
   /**
    * @type {FieldKeyPath}
@@ -90,6 +89,7 @@
 
 <div role="none" class="wrapper" class:minimal>
   <TextEditor
+    lang={locale}
     modes={modes.map((name) => modeNameMap[name]).filter(Boolean)}
     buttons={buttons.map((name) => buttonNameMap[name]).filter(Boolean)}
     bind:value={inputValue}

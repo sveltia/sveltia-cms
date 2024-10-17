@@ -11,7 +11,6 @@
   /**
    * @type {LocaleCode}
    */
-  // svelte-ignore unused-export-let
   export let locale;
   /**
    * @type {FieldKeyPath}
@@ -83,6 +82,7 @@
 </script>
 
 <TextArea
+  lang={locale}
   bind:value={inputValue}
   flex
   {readonly}

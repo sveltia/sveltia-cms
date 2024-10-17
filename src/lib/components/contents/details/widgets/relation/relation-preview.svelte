@@ -61,5 +61,5 @@
 </script>
 
 {#if refValues.length}
-  <p>{listFormatter.format(refValues)}</p>
+  <p lang={locale} dir="auto">{listFormatter.format(refValues)}</p>
 {/if}
