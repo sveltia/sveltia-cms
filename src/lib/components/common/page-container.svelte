@@ -94,10 +94,10 @@
             font-size: var(--sui-font-size-small);
             transition: color 200ms;
           }
+        }
 
-          &:not(:first-child) {
-            margin-top: 4px;
-          }
+        :global(button:not(:first-child)) {
+          margin-top: 4px;
         }
 
         :global(button:not(:focus)) {

@@ -85,10 +85,8 @@
       flex: auto;
       border-width: 0;
 
-      :global(section) {
-        &:not(:first-child) {
-          margin: 16px 0 0;
-        }
+      :global(section:not(:first-child)) {
+        margin: 16px 0 0;
       }
 
       :global(p) {
