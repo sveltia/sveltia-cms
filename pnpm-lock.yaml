@@ -12,8 +12,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@sveltia/ui':
-        specifier: ^0.18.2
-        version: 0.18.2(svelte@5.0.0-next.265)
+        specifier: ^0.19.0
+        version: 0.19.0(svelte@5.0.0-next.269)
       '@sveltia/utils':
         specifier: ^0.5.0
         version: 0.5.0
@@ -50,13 +50,13 @@ importers:
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: 4.0.0-next.8
-        version: 4.0.0-next.8(svelte@5.0.0-next.265)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5))
+        version: 4.0.0-next.8(svelte@5.0.0-next.269)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1))
       '@types/node':
-        specifier: ^22.7.5
-        version: 22.7.5
+        specifier: ^22.7.6
+        version: 22.7.6
       cspell:
-        specifier: ^8.15.2
-        version: 8.15.2
+        specifier: ^8.15.3
+        version: 8.15.3
       eslint:
         specifier: ^8.57.1
         version: 8.57.1
@@ -70,11 +70,11 @@ importers:
         specifier: ^2.31.0
         version: 2.31.0(eslint@8.57.1)
       eslint-plugin-jsdoc:
-        specifier: ^50.4.1
-        version: 50.4.1(eslint@8.57.1)
+        specifier: ^50.4.3
+        version: 50.4.3(eslint@8.57.1)
       eslint-plugin-svelte:
-        specifier: ^2.44.1
-        version: 2.44.1(eslint@8.57.1)(svelte@5.0.0-next.265)
+        specifier: ^2.45.1
+        version: 2.45.1(eslint@8.57.1)(svelte@5.0.0-next.269)
       postcss:
         specifier: ^8.4.47
         version: 8.4.47
@@ -86,13 +86,13 @@ importers:
         version: 3.3.3
       prettier-plugin-svelte:
         specifier: ^3.2.7
-        version: 3.2.7(prettier@3.3.3)(svelte@5.0.0-next.265)
+        version: 3.2.7(prettier@3.3.3)(svelte@5.0.0-next.269)
       rollup-plugin-visualizer:
         specifier: ^5.12.0
         version: 5.12.0(rollup@4.24.0)
       sass:
-        specifier: ^1.79.5
-        version: 1.79.5
+        specifier: ^1.80.1
+        version: 1.80.1
       stylelint:
         specifier: ^16.10.0
         version: 16.10.0(typescript@5.5.4)
@@ -100,26 +100,26 @@ importers:
         specifier: ^14.1.0
         version: 14.1.0(postcss@8.4.47)(stylelint@16.10.0(typescript@5.5.4))
       stylelint-scss:
-        specifier: ^6.7.0
-        version: 6.7.0(stylelint@16.10.0(typescript@5.5.4))
+        specifier: ^6.8.1
+        version: 6.8.1(stylelint@16.10.0(typescript@5.5.4))
       svelte:
-        specifier: 5.0.0-next.265
-        version: 5.0.0-next.265
+        specifier: 5.0.0-next.269
+        version: 5.0.0-next.269
       svelte-check:
         specifier: ^4.0.5
-        version: 4.0.5(picomatch@4.0.2)(svelte@5.0.0-next.265)(typescript@5.5.4)
+        version: 4.0.5(picomatch@4.0.2)(svelte@5.0.0-next.269)(typescript@5.5.4)
       svelte-i18n:
         specifier: ^4.0.0
-        version: 4.0.0(svelte@5.0.0-next.265)
+        version: 4.0.0(svelte@5.0.0-next.269)
       svelte-preprocess:
         specifier: ^6.0.3
-        version: 6.0.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.79.5)(svelte@5.0.0-next.265)(typescript@5.5.4)
+        version: 6.0.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.80.1)(svelte@5.0.0-next.269)(typescript@5.5.4)
       vite:
         specifier: ^5.4.9
-        version: 5.4.9(@types/node@22.7.5)(sass@1.79.5)
+        version: 5.4.9(@types/node@22.7.6)(sass@1.80.1)
       vitest:
         specifier: ^2.1.3
-        version: 2.1.3(@types/node@22.7.5)(jsdom@25.0.1)(sass@1.79.5)
+        version: 2.1.3(@types/node@22.7.6)(jsdom@25.0.1)(sass@1.80.1)
 
 packages:
 
@@ -139,28 +139,28 @@ packages:
     resolution: {integrity: sha512-iYyACpW3iW8Fw+ZybQK+drQre+ns/tKpXbNESfrhNnPLIklLbXr7MYJ6gPEd0iETGLOK+SxMjVvKb/ffmk+FEw==}
     engines: {node: '>=6.9.0'}
 
-  '@cspell/cspell-bundled-dicts@8.15.2':
-    resolution: {integrity: sha512-e+hxoD/GW7iyK1zMeRFd10yBr9tcClnnqFLxJM+tH1cSzLQ66ouXMIMuJpcd8LOCm7zMRdjTm4R72LehMgL79g==}
+  '@cspell/cspell-bundled-dicts@8.15.3':
+    resolution: {integrity: sha512-wIuJomJEJn60w+ts4dFBYEo3kkwdPe1R4qVn52hDq5CUzrNniSywCpeBQO8Sgy5ljk73ojENbMBCE8+Jrukk0Q==}
     engines: {node: '>=18'}
 
-  '@cspell/cspell-json-reporter@8.15.2':
-    resolution: {integrity: sha512-6p9eLdO5RLb1HNf+Rto4RG3tG02y05DutrWdpnK1Agn21EbUKAUIdIcsjQ2N52UeVT5cDvNhkAabKN57sFygag==}
+  '@cspell/cspell-json-reporter@8.15.3':
+    resolution: {integrity: sha512-348UsYDdPTaGUvzdRY+Tj8rnN/1yLFkbEc6FkTejkBPwL0rpaJLp27N3Y8uZfrFGyMem/fYS+aHAvB3kTIzieQ==}
     engines: {node: '>=18'}
 
-  '@cspell/cspell-pipe@8.15.2':
-    resolution: {integrity: sha512-TOcLiRiUSh75y+DQrAW59Ix0/D9WPrd4/KPtUShUepS3vLfoxMQ+TwpXfdc8FrzU73Hg5glXXnQjvdx7vAazVQ==}
+  '@cspell/cspell-pipe@8.15.3':
+    resolution: {integrity: sha512-Xodpkm1HJjGtmlL+V4B06PbeEsfhZtNwvPLTtaMExP4ED78VimBYlSz3lR+8jZgkHvZOhbQuHw7zwBqQd4u4Mg==}
     engines: {node: '>=18'}
 
-  '@cspell/cspell-resolver@8.15.2':
-    resolution: {integrity: sha512-XOcHfkKCN+a3zZMexK/BLmDxsqku8Q5ASqYu7JBFsu/axS4K11bkcQMxYoOvHVGBv20vb/gM2D+9MePuxAfssg==}
+  '@cspell/cspell-resolver@8.15.3':
+    resolution: {integrity: sha512-KoSv9iGbItS1uGlXspTg9XQmbBnjR7wkW5Du9Q3pLYAjSwcmArOVqQnumNAPfTsIldn9WsBalwGSm/uwawxAPg==}
     engines: {node: '>=18'}
 
-  '@cspell/cspell-service-bus@8.15.2':
-    resolution: {integrity: sha512-g9rhMIU0DX+avIQHFu0Mx3LAFi4lG6zX8iFa2zu+u3ll0IX0WtxTqrzft27jYSwebmm/ysWJUcOY+SWhZfPA0Q==}
+  '@cspell/cspell-service-bus@8.15.3':
+    resolution: {integrity: sha512-BLAaAc9fWn/sdNo/Z7bPwHtQ+z7snUnjXoLHYY9Vg8N0K2nMYkuJqAm7xbeKDy64sLykpu+pubdMR3DqEQJo/g==}
     engines: {node: '>=18'}
 
-  '@cspell/cspell-types@8.15.2':
-    resolution: {integrity: sha512-bHAkXsrfOhKyZZ+TA5eGH3fqh9DPcP3a2v+ozTnhhZa3zcfuzX7rZnYWEFA8LELMUStWXLECzFoGd9QUEHMstg==}
+  '@cspell/cspell-types@8.15.3':
+    resolution: {integrity: sha512-05xy2eeIQIHk2X6hUfBPBNbCnWcuSjE6D/F0XFTxLBl4ecUurSthJqvR3PrMjluETeZ71/cRIZMBnW+v7+yBgw==}
     engines: {node: '>=18'}
 
   '@cspell/dict-ada@4.0.5':
@@ -196,8 +196,8 @@ packages:
   '@cspell/dict-django@4.1.3':
     resolution: {integrity: sha512-yBspeL3roJlO0a1vKKNaWABURuHdHZ9b1L8d3AukX0AsBy9snSggc8xCavPmSzNfeMDXbH+1lgQiYBd3IW03fg==}
 
-  '@cspell/dict-docker@1.1.10':
-    resolution: {integrity: sha512-vWybMfsG/8jhN6kmPoilMon36GB3+Ef+m/mgYUfY8tJN23K/x4KD1rU1OOiNWzDqePhu3MMWVKO5W5x6VI6Gbw==}
+  '@cspell/dict-docker@1.1.11':
+    resolution: {integrity: sha512-s0Yhb16/R+UT1y727ekbR/itWQF3Qz275DR1ahOa66wYtPjHUXmhM3B/LT3aPaX+hD6AWmK23v57SuyfYHUjsw==}
 
   '@cspell/dict-dotnet@5.0.8':
     resolution: {integrity: sha512-MD8CmMgMEdJAIPl2Py3iqrx3B708MbCIXAuOeZ0Mzzb8YmLmiisY7QEYSZPg08D7xuwARycP0Ki+bb0GAkFSqg==}
@@ -289,8 +289,8 @@ packages:
   '@cspell/dict-public-licenses@2.0.11':
     resolution: {integrity: sha512-rR5KjRUSnVKdfs5G+gJ4oIvQvm8+NJ6cHWY2N+GE69/FSGWDOPHxulCzeGnQU/c6WWZMSimG9o49i9r//lUQyA==}
 
-  '@cspell/dict-python@4.2.11':
-    resolution: {integrity: sha512-bshNZqP5FYRO0CtZ9GgtVjHidrSuRRF537MU/sPew8oaqWPg066F9KQfPllbRi9AzFqqeS2l7/ACYUrFMe21gw==}
+  '@cspell/dict-python@4.2.12':
+    resolution: {integrity: sha512-U25eOFu+RE0aEcF2AsxZmq3Lic7y9zspJ9SzjrC0mfJz+yr3YmSCw4E0blMD3mZoNcf7H/vMshuKIY5AY36U+Q==}
 
   '@cspell/dict-r@2.0.4':
     resolution: {integrity: sha512-cBpRsE/U0d9BRhiNRMLMH1PpWgw+N+1A2jumgt1if9nBGmQw4MUpg2u9I0xlFVhstTIdzXiLXMxP45cABuiUeQ==}
@@ -304,8 +304,8 @@ packages:
   '@cspell/dict-scala@5.0.6':
     resolution: {integrity: sha512-tl0YWAfjUVb4LyyE4JIMVE8DlLzb1ecHRmIWc4eT6nkyDqQgHKzdHsnusxFEFMVLIQomgSg0Zz6hJ5S1E4W4ww==}
 
-  '@cspell/dict-software-terms@4.1.10':
-    resolution: {integrity: sha512-+9PuQ9MHQhlET6Hv1mGcWDh6Rb+StzjBMrjfksDeBHBIVdT66u9uCkaZapIzfgktflY4m9oK7+dEynr+BAxvtQ==}
+  '@cspell/dict-software-terms@4.1.11':
+    resolution: {integrity: sha512-77CTHxWFTVw6tVoMN8WBMrlNW2F2FbgATwD/6vcOuiyrJUmh8klN5ZK3m+yyK3ZzsnaW2Bduoc0fw2Ckcm/riQ==}
 
   '@cspell/dict-sql@2.1.8':
     resolution: {integrity: sha512-dJRE4JV1qmXTbbGm6WIcg1knmR6K5RXnQxF4XHs5HA3LAjc/zf77F95i5LC+guOGppVF6Hdl66S2UyxT+SAF3A==}
@@ -319,26 +319,26 @@ packages:
   '@cspell/dict-terraform@1.0.5':
     resolution: {integrity: sha512-qH3epPB2d6d5w1l4hR2OsnN8qDQ4P0z6oDB7+YiNH+BoECXv4Z38MIV1H8cxIzD2wkzkt2JTcFYaVW72MDZAlg==}
 
-  '@cspell/dict-typescript@3.1.9':
-    resolution: {integrity: sha512-ZtO1/cVWvvR477ftTl2TFR09+IIzXG1rcin8CGYA0FO5WhyDAbn8v3A85QikS158BhTVUoq09lPYuSF9HBzqvw==}
+  '@cspell/dict-typescript@3.1.10':
+    resolution: {integrity: sha512-7Zek3w4Rh3ZYyhihJ34FdnUBwP3OmRldnEq3hZ+FgQ0PyYZjXv5ztEViRBBxXjiFx1nHozr6pLi74TxToD8xsg==}
 
   '@cspell/dict-vue@3.0.3':
     resolution: {integrity: sha512-akmYbrgAGumqk1xXALtDJcEcOMYBYMnkjpmGzH13Ozhq1mkPF4VgllFQlm1xYde+BUKNnzMgPEzxrL2qZllgYA==}
 
-  '@cspell/dynamic-import@8.15.2':
-    resolution: {integrity: sha512-37eYzVLqMv3KnY7UMmv/wC9OlUjPC7EJ3xMDourgDTNp6BtiPlMkHRTN5/yvRjukQedi41R1hewgCcZbwSpNXg==}
+  '@cspell/dynamic-import@8.15.3':
+    resolution: {integrity: sha512-RG35KnoLSFRj9BwmDW3AmkEbh6NxkZrhRxCQ8s4ZfMl5QEkoYKdVpWYSPUBMlPqkq0U+SVggMvNbdMSqyITxxQ==}
     engines: {node: '>=18.0'}
 
-  '@cspell/filetypes@8.15.2':
-    resolution: {integrity: sha512-x2ciWqi6y2RoTcXRTG3BuxAly1TIr4puLzKHkMWtnYp1A++gohCBczMt33FwrwFav0Dfx9M0mCpT1h1ORVwzhA==}
+  '@cspell/filetypes@8.15.3':
+    resolution: {integrity: sha512-2B22/c2/pVqS2p3latOj3zCHk7vUWsxwkhCKhOKMA2tKt2cc7MHKUKMfsX4XpfY/571S/TTy1YYeGXlAxUtF3g==}
     engines: {node: '>=18'}
 
-  '@cspell/strong-weak-map@8.15.2':
-    resolution: {integrity: sha512-FMz3vgyPJjJsg0f78ToprOxR0lPhZOWwidxD+gOMLLfUzJ0mBC4VwoggrgIF6YEdXy/2UoIUtjh5B/Qfge9IDw==}
+  '@cspell/strong-weak-map@8.15.3':
+    resolution: {integrity: sha512-IhH+Reh2P+QXj8i5qGYsFI3Z01IWYMqUuN6CLnFXx5W0R8tWtxvmwWyT7j8lchV5foHSs8+mWaijKzwS6FSFVQ==}
     engines: {node: '>=18'}
 
-  '@cspell/url@8.15.2':
-    resolution: {integrity: sha512-AxS6nqh65V8BJf+ke7XNsDlieXfq/73XjZ4OxQAHvmML9kgXAbTviDcN6ddj6d2fTgU3EOSU1fBfDOqpS4n6Sg==}
+  '@cspell/url@8.15.3':
+    resolution: {integrity: sha512-JuQdGHj+W5anXpc+2pYggoUd+LsbNac4Rc7PdUUTnzMxV1EvlQZs28jEK4y27i4RI5pNQmsUWGZTHeMuwdlgSQ==}
     engines: {node: '>=18.0'}
 
   '@csstools/css-parser-algorithms@3.0.2':
@@ -944,8 +944,8 @@ packages:
       svelte: ^5.0.0-next.96 || ^5.0.0
       vite: ^5.0.0
 
-  '@sveltia/ui@0.18.2':
-    resolution: {integrity: sha512-yGxCn8m1XSTO/tcwf4sTZ9TGcLuQmpdnskpMiO5LUn9KCdOs3uMK71meXJS/Y52x21gDYMR4Df5/93B9bzYDMQ==}
+  '@sveltia/ui@0.19.0':
+    resolution: {integrity: sha512-/j/mLnJux25HB9WwNc8GjMpL0XVtMkWYEdf6G0CAsoiCttACMJGWZalKRfZWIS85GHsFBHD8imGAuSugo402Mw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -961,8 +961,8 @@ packages:
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
 
-  '@types/node@22.7.5':
-    resolution: {integrity: sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==}
+  '@types/node@22.7.6':
+    resolution: {integrity: sha512-/d7Rnj0/ExXDMcioS78/kf1lMzYk4BZV8MZGTBKzTGZ6/406ukkbYlIsZmMPhcR5KlkunDHQLrtAVmSq7r+mSw==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -1010,8 +1010,8 @@ packages:
     peerDependencies:
       acorn: '>=8.9.0'
 
-  acorn@8.12.1:
-    resolution: {integrity: sha512-tcpGyI9zbizT9JbV6oYE477V6mTlXvvi0T0G3SNIYE2apm/G5huBa1+K89VGeovbg+jycCrfhl3ADxErOuO6Jg==}
+  acorn@8.13.0:
+    resolution: {integrity: sha512-8zSiw54Oxrdym50NlZ9sUusyO1Z1ZchgRLWRaK6c86XJFClyCgFKetdowBg5bKxyp/u+CDBJG4Mpp0m3HLZl9w==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -1221,52 +1221,48 @@ packages:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
     engines: {node: '>= 8'}
 
-  cspell-config-lib@8.15.2:
-    resolution: {integrity: sha512-0vaZdp1gz5mt7RWTWStHHJBXfELtbtJNCl8RNz9E51906bhAyZ/yBvkOyjCW2Ofsdp2cKS11AuzTrq6N2lmK3g==}
+  cspell-config-lib@8.15.3:
+    resolution: {integrity: sha512-IMIvZ/2fzl628obiFhcgNsorcS4pimAgDi9M0k9GDA/zbLeweWZqjmSEN9tgUPvkRznQvJd0TZXJ0B5RkM5+2Q==}
     engines: {node: '>=18'}
 
-  cspell-dictionary@8.15.2:
-    resolution: {integrity: sha512-Kvn8ZD+oQs2KKgGoC601NBju3xQcrP4bz1MVZ23ZN9fm6pukb0J8x9hP3d+AuQd/Cl2XG/y/hWZi6MT92uChIg==}
+  cspell-dictionary@8.15.3:
+    resolution: {integrity: sha512-FwYpDou0oyHmfjz70juVvIskZo1/+Xzq4s6eX2ZjUNQSp/jaykWNOiqIw5eVx0Z3sq3cWzCJ9zUuHcXxvFi7EQ==}
     engines: {node: '>=18'}
 
-  cspell-gitignore@8.15.2:
-    resolution: {integrity: sha512-XrQ3iouv2VvvpkL1ygEnOuqY/BGNt0tBZngFrb/Y12LWgcZ6unLZk4IaMYXlmjRZPtq7QuBe4dvG1D2SFcNEng==}
-    engines: {node: '>=18'}
-    hasBin: true
-
-  cspell-glob@8.15.2:
-    resolution: {integrity: sha512-AQNskPt3FOF1Z6mc+cvCZ33Xnb+a4cMVZwcLlApc/4uup6OvyEoXNN9IyeHVmloAUPlXadaA79balp3cMj2rWg==}
-    engines: {node: '>=18'}
-
-  cspell-grammar@8.15.2:
-    resolution: {integrity: sha512-yvCiOlg6G2l+lMWBSmWwnVqIVfDK/uUBzY4WIJQaXWtXRuJ9MdsSEQ3TFd9NgJUhY1gSF8O1zSqeCmfPNuS44g==}
+  cspell-gitignore@8.15.3:
+    resolution: {integrity: sha512-h1O9y3F81e8RyDE87Bv7m6Faz4FjkUhr72QqakbGuhRsjembST5YEw1B5Okc4BSUQhRER+dEh4xLp90EmNzZuw==}
     engines: {node: '>=18'}
     hasBin: true
 
-  cspell-io@8.15.2:
-    resolution: {integrity: sha512-Y4bEsKVXC48VawU+gU1lcsO7B55pNAjc8/C8Qg8UByobSOxtZKd7jaRRqqvd60Rh8lbgG4Nc05zKCb1CxY1+2Q==}
+  cspell-glob@8.15.3:
+    resolution: {integrity: sha512-nsxe1PCFZyOHxVeo3Bqi2MyVy2JASF9p1xSCZAFjiVjeRmeqDrS098UcoucXRDFScJ2RP8A62niC6P3m6qg5IA==}
     engines: {node: '>=18'}
 
-  cspell-lib@8.15.2:
-    resolution: {integrity: sha512-u4tO8NoLq/LuOdCBqJdKBLE51uCcE2Ni/DvaEFNfuhk2fCF3rE/2nCzLx6ZEAiFPHZVMs44MJxpH7VF8Rn/T8g==}
+  cspell-grammar@8.15.3:
+    resolution: {integrity: sha512-HCtGzym6JsdrYjwGySxKFsLjvASAgftv7nEOTBFp/u3Y2zVPmoQaFmmlSWBbJRsNQa9elL0DyQOSC7WC6GbGSQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  cspell-io@8.15.3:
+    resolution: {integrity: sha512-ycKrfTSurfleQNR5x7QRmQ/qtMJ6JkBiqaq5qtCHNYUlOjrmQBNVXFpbmPJ3+qG+ObW+eQKEvZH5xr17F2BMjw==}
     engines: {node: '>=18'}
 
-  cspell-trie-lib@8.15.2:
-    resolution: {integrity: sha512-dqEc4832iareVCA+pXuvdNwtUF+F8S+w15Tlv0fRdPTz8X4wcUtK0R5npYnL5dyuPhKBdO/PmKXGb7/5I0vBMg==}
+  cspell-lib@8.15.3:
+    resolution: {integrity: sha512-LJIEZ3E8ZCOAqcMwkonXH3NEa6ITTlp3nZ9nhmxHE0GbMUYP5/CmTCWSnJUjrINmhjl5dMj6Z7xzDTgEAu0K9Q==}
     engines: {node: '>=18'}
 
-  cspell@8.15.2:
-    resolution: {integrity: sha512-2XN6LeBAWyRLPUAcKrJTBftNc50VVVeU/j1GVU07hEun4Q4KZG9CbUT+YaZEnZo8xexVUBfZLtB5YxSImCnBtQ==}
+  cspell-trie-lib@8.15.3:
+    resolution: {integrity: sha512-sJwGFE3ymkL6UsnZbMOGcD+iDOdYo7gyVafMDUJvb4rnKqAhLJumiCPT4bPLQ7oWAti7swHBQrOJ/Wp3phQ+LQ==}
+    engines: {node: '>=18'}
+
+  cspell@8.15.3:
+    resolution: {integrity: sha512-diJiVBMunG3m7dYJpelSTsO4biLxVZ3glzLJF9jVs8n86dph04A9NXf29DKeAR0py62CFBKOrB1R4VGhxDxStg==}
     engines: {node: '>=18'}
     hasBin: true
 
   css-functions-list@3.2.3:
     resolution: {integrity: sha512-IQOkD3hbR5KrN93MtcYuad6YPuTSUhntLHDuLEbFWE+ff2/XSZNdZG+LcbbIW5AXKg/WFIfYItIzVoHngHXZzA==}
     engines: {node: '>=12 || >=16'}
-
-  css-tree@2.3.1:
-    resolution: {integrity: sha512-6Fv1DV/TYw//QF5IzQdqsNDjx/wc8TrMBZsqjL9eW01tWb7R7k/mq+/VXfJCl7SoD5emsJop9cOByJZfs8hYIw==}
-    engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0}
 
   css-tree@3.0.0:
     resolution: {integrity: sha512-o88DVQ6GzsABn1+6+zo2ct801dBO5OASVyxbbvA2W20ue2puSh/VOuqUj90eUeMSX/xqGqBmOKiRQN7tJOuBXw==}
@@ -1522,14 +1518,14 @@ packages:
       '@typescript-eslint/parser':
         optional: true
 
-  eslint-plugin-jsdoc@50.4.1:
-    resolution: {integrity: sha512-OXIq+JJQPCLAKL473/esioFOwbXyRE5MAQ4HbZjcp3e+K3zdxt2uDpGs3FR+WezUXNStzEtTfgx15T+JFrVwBA==}
+  eslint-plugin-jsdoc@50.4.3:
+    resolution: {integrity: sha512-uWtwFxGRv6B8sU63HZM5dAGDhgsatb+LONwmILZJhdRALLOkCX2HFZhdL/Kw2ls8SQMAVEfK+LmnEfxInRN8HA==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
 
-  eslint-plugin-svelte@2.44.1:
-    resolution: {integrity: sha512-w6wkoJPw1FJKFtM/2oln21rlu5+HTd2CSkkzhm32A+trNoW2EYQqTQAbDTU6k2GI/6Vh64rBHYQejqEgDld7fw==}
+  eslint-plugin-svelte@2.45.1:
+    resolution: {integrity: sha512-mYAKNDRji0YWl7o00KQi0enREcrtzcN7xwK/8lwk5uLRoKLjzPXc+WjngsYpPV35I3AF7UlXc1+JfyNMJS+njA==}
     engines: {node: ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0-0 || ^9.0.0-0
@@ -1634,8 +1630,8 @@ packages:
   fastq@1.17.1:
     resolution: {integrity: sha512-sRVD3lWVIXWg6By68ZN7vho9a1pQcN/WBFaAAsDDFzlJjvoGx0P8z7V1t72grFJfJhu3YPZBuu25f7Kaw2jN1w==}
 
-  fdir@6.4.0:
-    resolution: {integrity: sha512-3oB133prH1o4j/L5lLW7uOCF1PlD+/It2L0eL/iAqWMB91RBbqTewABqxhj0ibBd90EEmWZq7ntIWzVaWcXTGQ==}
+  fdir@6.4.2:
+    resolution: {integrity: sha512-KnhMXsKSPZlAhp7+IjUkRZKPb4fUyccpDrdFXbi4QL1qkmFh9kVY09Yox+n4MaOb3lHZ1Tv829C3oaaXoMYPDQ==}
     peerDependencies:
       picomatch: ^3 || ^4
     peerDependenciesMeta:
@@ -2092,11 +2088,11 @@ packages:
   mathml-tag-names@2.1.3:
     resolution: {integrity: sha512-APMBEanjybaPzUrfqU0IMU5I0AswKMH7k8OTLs0vvV4KZpExkTkY87nR/zpbuTPj+gARop7aGUbl11pnDfW6xg==}
 
-  mdn-data@2.0.30:
-    resolution: {integrity: sha512-GaqWWShW4kv/G9IEucWScBx9G1/vsFZZJUO+tD26M8J8z3Kw5RDQjaoZe03YAClgeS/SWPOcb4nkFBTEi5DUEA==}
-
   mdn-data@2.10.0:
     resolution: {integrity: sha512-qq7C3EtK3yJXMwz1zAab65pjl+UhohqMOctTgcqjLOWABqmwj+me02LSsCuEUxnst9X1lCBpoE0WArGKgdGDzw==}
+
+  mdn-data@2.11.1:
+    resolution: {integrity: sha512-Hdx3wmyqPFrhd6YHVuSkUK2eIGAcxR0xlndcgZqjA68yMJTbfXrjJwbgsBOsNjI7LnBIVUQnmyMVSdi/ob0GpQ==}
 
   memoizee@0.4.17:
     resolution: {integrity: sha512-DGqD7Hjpi/1or4F/aYAspXKNm5Yili0QDAFAY4QYvpqpgiY6+1jOfqpmByzjxbWd/T9mChbCArXAbDAsTm5oXA==}
@@ -2256,8 +2252,8 @@ packages:
     resolution: {integrity: sha512-vE7JKRyES09KiunauX7nd2Q9/L7lhok4smP9RZTDeD4MVs72Dp2qNFVz39Nz5a0FVEW0BJR6C0DYrq6unoziZA==}
     engines: {node: '>= 14.16'}
 
-  picocolors@1.1.0:
-    resolution: {integrity: sha512-TQ92mBOW0l3LeMeyLV6mzy/kWr8lkd/hp3mTg7wYK7zJhuBStmGMBG0BdeDZS/dZx1IukaX6Bk11zcln25o1Aw==}
+  picocolors@1.1.1:
+    resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
@@ -2425,8 +2421,8 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
-  sass@1.79.5:
-    resolution: {integrity: sha512-W1h5kp6bdhqFh2tk3DsI771MoEJjvrSY/2ihJRJS4pjIyfJCw0nTsxqhnrUzaLMOJjFchj8rOvraI/YUVjtx5g==}
+  sass@1.80.1:
+    resolution: {integrity: sha512-9lBwDZ7j3y/1DKj5Ec249EVGo5CVpwnzIyIj+cqlCjKkApLnzsJ/l9SnV4YnORvW9dQwQN+gQvh/mFZ8CnDs7Q==}
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -2551,8 +2547,8 @@ packages:
     peerDependencies:
       stylelint: ^16.1.0
 
-  stylelint-scss@6.7.0:
-    resolution: {integrity: sha512-RFIa2A+pVWS5wjNT+whtK7wsbZEWazyqesCuSaPbPlZ8lh2TujwVJSnCYJijg6ChZzwI8pZPRZS1L6A9aCbXDg==}
+  stylelint-scss@6.8.1:
+    resolution: {integrity: sha512-al+5eRb72bKrFyVAY+CLWKUMX+k+wsDCgyooSfhISJA2exqnJq1PX1iIIpdrvhu3GtJgNJZl9/BIW6EVSMCxdg==}
     engines: {node: '>=18.12.0'}
     peerDependencies:
       stylelint: ^16.0.2
@@ -2586,8 +2582,8 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
 
-  svelte-eslint-parser@0.41.1:
-    resolution: {integrity: sha512-08ndI6zTghzI8SuJAFpvMbA/haPSGn3xz19pjre19yYMw8Nw/wQJ2PrZBI/L8ijGTgtkWCQQiLLy+Z1tfaCwNA==}
+  svelte-eslint-parser@0.42.0:
+    resolution: {integrity: sha512-e7LyqFPTuF43ZYhKOf0Gq1lzP+G64iWVJXAIcwVxohGx5FFyqdUkw7DEXNjZ+Fm+TAA98zPmDqWvgD1OpyMi5A==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
       svelte: ^3.37.0 || ^4.0.0 || ^5.0.0-next.191
@@ -2639,8 +2635,8 @@ packages:
       typescript:
         optional: true
 
-  svelte@5.0.0-next.265:
-    resolution: {integrity: sha512-+BX09mzBP1hKo7bsOnmxteEQTu0oIeerdjnD1pAb+7RXZbOKgRROjszpXP+Kzn/6D9ydJ3ioVRcKSmE92Cn4VQ==}
+  svelte@5.0.0-next.269:
+    resolution: {integrity: sha512-TiC0JWP0OwPcJ+z6ysS9UsH6WDplJYsJR+y4ble9fmbW5OYFEQHJrIlktrO23O8p8EPU/olUpKdfIcugR++jbQ==}
     engines: {node: '>=18'}
 
   svg-tags@1.0.0:
@@ -2670,8 +2666,8 @@ packages:
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
-  tinyexec@0.3.0:
-    resolution: {integrity: sha512-tVGE0mVJPGb0chKhqmsoosjsS+qUnJVGJpZgsHYQcGoPlG3B51R3PouqTgEGH2Dc9jjFyOqOpix6ZHNMXp1FZg==}
+  tinyexec@0.3.1:
+    resolution: {integrity: sha512-WiCJLEECkO18gwqIp6+hJg0//p23HXp4S+gGtAKu3mI2F2/sXC4FvHvXvB0zJVVaTPhx1/tOwdbRsa1sOBIKqQ==}
 
   tinyglobby@0.2.9:
     resolution: {integrity: sha512-8or1+BGEdk1Zkkw2ii16qSS7uVrQJPre5A9o/XkWPATkk23FZh/15BKFxPnlTy6vkljZxLqYCzzBMj30ZrSvjw==}
@@ -2689,11 +2685,11 @@ packages:
     resolution: {integrity: sha512-n1cw8k1k0x4pgA2+9XrOkFydTerNcJ1zWCO5Nn9scWHTD+5tp8dghT2x1uduQePZTZgd3Tupf+x9BxJjeJi77Q==}
     engines: {node: '>=14.0.0'}
 
-  tldts-core@6.1.51:
-    resolution: {integrity: sha512-bu9oCYYWC1iRjx+3UnAjqCsfrWNZV1ghNQf49b3w5xE8J/tNShHTzp5syWJfwGH+pxUgTTLUnzHnfuydW7wmbg==}
+  tldts-core@6.1.52:
+    resolution: {integrity: sha512-j4OxQI5rc1Ve/4m/9o2WhWSC4jGc4uVbCINdOEJRAraCi0YqTqgMcxUx7DbmuP0G3PCixoof/RZB0Q5Kh9tagw==}
 
-  tldts@6.1.51:
-    resolution: {integrity: sha512-33lfQoL0JsDogIbZ8fgRyvv77GnRtwkNE/MOKocwUgPO1WrSfsq7+vQRKxRQZai5zd+zg97Iv9fpFQSzHyWdLA==}
+  tldts@6.1.52:
+    resolution: {integrity: sha512-fgrDJXDjbAverY6XnIt0lNfv8A0cf7maTEaZxNykLGsLG7XP+5xhjBTrt/ieAsFjAlZ+G5nmXomLcZDkxXnDzw==}
     hasBin: true
 
   to-data-view@2.0.0:
@@ -2715,8 +2711,8 @@ packages:
   tsconfig-paths@3.15.0:
     resolution: {integrity: sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg==}
 
-  tslib@2.7.0:
-    resolution: {integrity: sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==}
+  tslib@2.8.0:
+    resolution: {integrity: sha512-jWVzBLplnCmoaTr13V9dYbiQ99wvZRd0vNWaDRg+aVYRcjDF3nDksxFDE/+fkXnKhpnUUkmx5pK/v8mCtLVqZA==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -2954,7 +2950,7 @@ snapshots:
   '@babel/code-frame@7.25.7':
     dependencies:
       '@babel/highlight': 7.25.7
-      picocolors: 1.1.0
+      picocolors: 1.1.1
 
   '@babel/helper-validator-identifier@7.25.7': {}
 
@@ -2963,9 +2959,9 @@ snapshots:
       '@babel/helper-validator-identifier': 7.25.7
       chalk: 2.4.2
       js-tokens: 4.0.0
-      picocolors: 1.1.0
+      picocolors: 1.1.1
 
-  '@cspell/cspell-bundled-dicts@8.15.2':
+  '@cspell/cspell-bundled-dicts@8.15.3':
     dependencies:
       '@cspell/dict-ada': 4.0.5
       '@cspell/dict-aws': 4.0.7
@@ -2977,7 +2973,7 @@ snapshots:
       '@cspell/dict-css': 4.0.16
       '@cspell/dict-dart': 2.2.4
       '@cspell/dict-django': 4.1.3
-      '@cspell/dict-docker': 1.1.10
+      '@cspell/dict-docker': 1.1.11
       '@cspell/dict-dotnet': 5.0.8
       '@cspell/dict-elixir': 4.0.6
       '@cspell/dict-en-common-misspellings': 2.0.7
@@ -3008,32 +3004,32 @@ snapshots:
       '@cspell/dict-php': 4.0.13
       '@cspell/dict-powershell': 5.0.13
       '@cspell/dict-public-licenses': 2.0.11
-      '@cspell/dict-python': 4.2.11
+      '@cspell/dict-python': 4.2.12
       '@cspell/dict-r': 2.0.4
       '@cspell/dict-ruby': 5.0.7
       '@cspell/dict-rust': 4.0.9
       '@cspell/dict-scala': 5.0.6
-      '@cspell/dict-software-terms': 4.1.10
+      '@cspell/dict-software-terms': 4.1.11
       '@cspell/dict-sql': 2.1.8
       '@cspell/dict-svelte': 1.0.5
       '@cspell/dict-swift': 2.0.4
       '@cspell/dict-terraform': 1.0.5
-      '@cspell/dict-typescript': 3.1.9
+      '@cspell/dict-typescript': 3.1.10
       '@cspell/dict-vue': 3.0.3
 
-  '@cspell/cspell-json-reporter@8.15.2':
+  '@cspell/cspell-json-reporter@8.15.3':
     dependencies:
-      '@cspell/cspell-types': 8.15.2
+      '@cspell/cspell-types': 8.15.3
 
-  '@cspell/cspell-pipe@8.15.2': {}
+  '@cspell/cspell-pipe@8.15.3': {}
 
-  '@cspell/cspell-resolver@8.15.2':
+  '@cspell/cspell-resolver@8.15.3':
     dependencies:
       global-directory: 4.0.1
 
-  '@cspell/cspell-service-bus@8.15.2': {}
+  '@cspell/cspell-service-bus@8.15.3': {}
 
-  '@cspell/cspell-types@8.15.2': {}
+  '@cspell/cspell-types@8.15.3': {}
 
   '@cspell/dict-ada@4.0.5': {}
 
@@ -3057,7 +3053,7 @@ snapshots:
 
   '@cspell/dict-django@4.1.3': {}
 
-  '@cspell/dict-docker@1.1.10': {}
+  '@cspell/dict-docker@1.1.11': {}
 
   '@cspell/dict-dotnet@5.0.8': {}
 
@@ -3119,7 +3115,7 @@ snapshots:
 
   '@cspell/dict-public-licenses@2.0.11': {}
 
-  '@cspell/dict-python@4.2.11':
+  '@cspell/dict-python@4.2.12':
     dependencies:
       '@cspell/dict-data-science': 2.0.5
 
@@ -3131,7 +3127,7 @@ snapshots:
 
   '@cspell/dict-scala@5.0.6': {}
 
-  '@cspell/dict-software-terms@4.1.10': {}
+  '@cspell/dict-software-terms@4.1.11': {}
 
   '@cspell/dict-sql@2.1.8': {}
 
@@ -3141,19 +3137,19 @@ snapshots:
 
   '@cspell/dict-terraform@1.0.5': {}
 
-  '@cspell/dict-typescript@3.1.9': {}
+  '@cspell/dict-typescript@3.1.10': {}
 
   '@cspell/dict-vue@3.0.3': {}
 
-  '@cspell/dynamic-import@8.15.2':
+  '@cspell/dynamic-import@8.15.3':
     dependencies:
       import-meta-resolve: 4.1.0
 
-  '@cspell/filetypes@8.15.2': {}
+  '@cspell/filetypes@8.15.3': {}
 
-  '@cspell/strong-weak-map@8.15.2': {}
+  '@cspell/strong-weak-map@8.15.3': {}
 
-  '@cspell/url@8.15.2': {}
+  '@cspell/url@8.15.3': {}
 
   '@csstools/css-parser-algorithms@3.0.2(@csstools/css-tokenizer@3.0.2)':
     dependencies:
@@ -3343,26 +3339,26 @@ snapshots:
     dependencies:
       '@formatjs/fast-memoize': 2.2.1
       '@formatjs/intl-localematcher': 0.5.5
-      tslib: 2.7.0
+      tslib: 2.8.0
 
   '@formatjs/fast-memoize@2.2.1':
     dependencies:
-      tslib: 2.7.0
+      tslib: 2.8.0
 
   '@formatjs/icu-messageformat-parser@2.7.10':
     dependencies:
       '@formatjs/ecma402-abstract': 2.2.0
       '@formatjs/icu-skeleton-parser': 1.8.4
-      tslib: 2.7.0
+      tslib: 2.8.0
 
   '@formatjs/icu-skeleton-parser@1.8.4':
     dependencies:
       '@formatjs/ecma402-abstract': 2.2.0
-      tslib: 2.7.0
+      tslib: 2.8.0
 
   '@formatjs/intl-localematcher@0.5.5':
     dependencies:
-      tslib: 2.7.0
+      tslib: 2.8.0
 
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
@@ -3594,29 +3590,29 @@ snapshots:
     dependencies:
       escape-string-regexp: 5.0.0
 
-  '@sveltejs/vite-plugin-svelte-inspector@3.0.0-next.3(@sveltejs/vite-plugin-svelte@4.0.0-next.8(svelte@5.0.0-next.265)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5)))(svelte@5.0.0-next.265)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5))':
+  '@sveltejs/vite-plugin-svelte-inspector@3.0.0-next.3(@sveltejs/vite-plugin-svelte@4.0.0-next.8(svelte@5.0.0-next.269)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1)))(svelte@5.0.0-next.269)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 4.0.0-next.8(svelte@5.0.0-next.265)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5))
+      '@sveltejs/vite-plugin-svelte': 4.0.0-next.8(svelte@5.0.0-next.269)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1))
       debug: 4.3.7
-      svelte: 5.0.0-next.265
-      vite: 5.4.9(@types/node@22.7.5)(sass@1.79.5)
+      svelte: 5.0.0-next.269
+      vite: 5.4.9(@types/node@22.7.6)(sass@1.80.1)
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltejs/vite-plugin-svelte@4.0.0-next.8(svelte@5.0.0-next.265)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5))':
+  '@sveltejs/vite-plugin-svelte@4.0.0-next.8(svelte@5.0.0-next.269)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte-inspector': 3.0.0-next.3(@sveltejs/vite-plugin-svelte@4.0.0-next.8(svelte@5.0.0-next.265)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5)))(svelte@5.0.0-next.265)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5))
+      '@sveltejs/vite-plugin-svelte-inspector': 3.0.0-next.3(@sveltejs/vite-plugin-svelte@4.0.0-next.8(svelte@5.0.0-next.269)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1)))(svelte@5.0.0-next.269)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1))
       debug: 4.3.7
       deepmerge: 4.3.1
       kleur: 4.1.5
       magic-string: 0.30.12
-      svelte: 5.0.0-next.265
-      vite: 5.4.9(@types/node@22.7.5)(sass@1.79.5)
-      vitefu: 1.0.3(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5))
+      svelte: 5.0.0-next.269
+      vite: 5.4.9(@types/node@22.7.6)(sass@1.80.1)
+      vitefu: 1.0.3(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1))
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.18.2(svelte@5.0.0-next.265)':
+  '@sveltia/ui@0.19.0(svelte@5.0.0-next.269)':
     dependencies:
       '@lexical/code': 0.18.0
       '@lexical/dragon': 0.18.0
@@ -3630,7 +3626,7 @@ snapshots:
       '@lexical/utils': 0.18.0
       '@sveltia/utils': 0.5.0
       lexical: 0.18.0
-      svelte: 5.0.0-next.265
+      svelte: 5.0.0-next.269
 
   '@sveltia/utils@0.5.0':
     dependencies:
@@ -3644,7 +3640,7 @@ snapshots:
 
   '@types/json5@0.0.29': {}
 
-  '@types/node@22.7.5':
+  '@types/node@22.7.6':
     dependencies:
       undici-types: 6.19.8
 
@@ -3659,13 +3655,13 @@ snapshots:
       chai: 5.1.1
       tinyrainbow: 1.2.0
 
-  '@vitest/mocker@2.1.3(@vitest/spy@2.1.3)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5))':
+  '@vitest/mocker@2.1.3(@vitest/spy@2.1.3)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1))':
     dependencies:
       '@vitest/spy': 2.1.3
       estree-walker: 3.0.3
       magic-string: 0.30.12
     optionalDependencies:
-      vite: 5.4.9(@types/node@22.7.5)(sass@1.79.5)
+      vite: 5.4.9(@types/node@22.7.6)(sass@1.80.1)
 
   '@vitest/pretty-format@2.1.3':
     dependencies:
@@ -3692,15 +3688,15 @@ snapshots:
       loupe: 3.1.2
       tinyrainbow: 1.2.0
 
-  acorn-jsx@5.3.2(acorn@8.12.1):
+  acorn-jsx@5.3.2(acorn@8.13.0):
     dependencies:
-      acorn: 8.12.1
+      acorn: 8.13.0
 
-  acorn-typescript@1.4.13(acorn@8.12.1):
+  acorn-typescript@1.4.13(acorn@8.13.0):
     dependencies:
-      acorn: 8.12.1
+      acorn: 8.13.0
 
-  acorn@8.12.1: {}
+  acorn@8.13.0: {}
 
   agent-base@7.1.1:
     dependencies:
@@ -3932,59 +3928,59 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  cspell-config-lib@8.15.2:
+  cspell-config-lib@8.15.3:
     dependencies:
-      '@cspell/cspell-types': 8.15.2
+      '@cspell/cspell-types': 8.15.3
       comment-json: 4.2.5
       yaml: 2.6.0
 
-  cspell-dictionary@8.15.2:
+  cspell-dictionary@8.15.3:
     dependencies:
-      '@cspell/cspell-pipe': 8.15.2
-      '@cspell/cspell-types': 8.15.2
-      cspell-trie-lib: 8.15.2
+      '@cspell/cspell-pipe': 8.15.3
+      '@cspell/cspell-types': 8.15.3
+      cspell-trie-lib: 8.15.3
       fast-equals: 5.0.1
 
-  cspell-gitignore@8.15.2:
+  cspell-gitignore@8.15.3:
     dependencies:
-      '@cspell/url': 8.15.2
-      cspell-glob: 8.15.2
-      cspell-io: 8.15.2
+      '@cspell/url': 8.15.3
+      cspell-glob: 8.15.3
+      cspell-io: 8.15.3
       find-up-simple: 1.0.0
 
-  cspell-glob@8.15.2:
+  cspell-glob@8.15.3:
     dependencies:
-      '@cspell/url': 8.15.2
+      '@cspell/url': 8.15.3
       micromatch: 4.0.8
 
-  cspell-grammar@8.15.2:
+  cspell-grammar@8.15.3:
     dependencies:
-      '@cspell/cspell-pipe': 8.15.2
-      '@cspell/cspell-types': 8.15.2
+      '@cspell/cspell-pipe': 8.15.3
+      '@cspell/cspell-types': 8.15.3
 
-  cspell-io@8.15.2:
+  cspell-io@8.15.3:
     dependencies:
-      '@cspell/cspell-service-bus': 8.15.2
-      '@cspell/url': 8.15.2
+      '@cspell/cspell-service-bus': 8.15.3
+      '@cspell/url': 8.15.3
 
-  cspell-lib@8.15.2:
+  cspell-lib@8.15.3:
     dependencies:
-      '@cspell/cspell-bundled-dicts': 8.15.2
-      '@cspell/cspell-pipe': 8.15.2
-      '@cspell/cspell-resolver': 8.15.2
-      '@cspell/cspell-types': 8.15.2
-      '@cspell/dynamic-import': 8.15.2
-      '@cspell/filetypes': 8.15.2
-      '@cspell/strong-weak-map': 8.15.2
-      '@cspell/url': 8.15.2
+      '@cspell/cspell-bundled-dicts': 8.15.3
+      '@cspell/cspell-pipe': 8.15.3
+      '@cspell/cspell-resolver': 8.15.3
+      '@cspell/cspell-types': 8.15.3
+      '@cspell/dynamic-import': 8.15.3
+      '@cspell/filetypes': 8.15.3
+      '@cspell/strong-weak-map': 8.15.3
+      '@cspell/url': 8.15.3
       clear-module: 4.1.2
       comment-json: 4.2.5
-      cspell-config-lib: 8.15.2
-      cspell-dictionary: 8.15.2
-      cspell-glob: 8.15.2
-      cspell-grammar: 8.15.2
-      cspell-io: 8.15.2
-      cspell-trie-lib: 8.15.2
+      cspell-config-lib: 8.15.3
+      cspell-dictionary: 8.15.3
+      cspell-glob: 8.15.3
+      cspell-grammar: 8.15.3
+      cspell-io: 8.15.3
+      cspell-trie-lib: 8.15.3
       env-paths: 3.0.0
       fast-equals: 5.0.1
       gensequence: 7.0.0
@@ -3994,27 +3990,27 @@ snapshots:
       vscode-uri: 3.0.8
       xdg-basedir: 5.1.0
 
-  cspell-trie-lib@8.15.2:
+  cspell-trie-lib@8.15.3:
     dependencies:
-      '@cspell/cspell-pipe': 8.15.2
-      '@cspell/cspell-types': 8.15.2
+      '@cspell/cspell-pipe': 8.15.3
+      '@cspell/cspell-types': 8.15.3
       gensequence: 7.0.0
 
-  cspell@8.15.2:
+  cspell@8.15.3:
     dependencies:
-      '@cspell/cspell-json-reporter': 8.15.2
-      '@cspell/cspell-pipe': 8.15.2
-      '@cspell/cspell-types': 8.15.2
-      '@cspell/dynamic-import': 8.15.2
-      '@cspell/url': 8.15.2
+      '@cspell/cspell-json-reporter': 8.15.3
+      '@cspell/cspell-pipe': 8.15.3
+      '@cspell/cspell-types': 8.15.3
+      '@cspell/dynamic-import': 8.15.3
+      '@cspell/url': 8.15.3
       chalk: 5.3.0
       chalk-template: 1.1.0
       commander: 12.1.0
-      cspell-dictionary: 8.15.2
-      cspell-gitignore: 8.15.2
-      cspell-glob: 8.15.2
-      cspell-io: 8.15.2
-      cspell-lib: 8.15.2
+      cspell-dictionary: 8.15.3
+      cspell-gitignore: 8.15.3
+      cspell-glob: 8.15.3
+      cspell-io: 8.15.3
+      cspell-lib: 8.15.3
       fast-json-stable-stringify: 2.1.0
       file-entry-cache: 9.1.0
       get-stdin: 9.0.0
@@ -4022,11 +4018,6 @@ snapshots:
       tinyglobby: 0.2.9
 
   css-functions-list@3.2.3: {}
-
-  css-tree@2.3.1:
-    dependencies:
-      mdn-data: 2.0.30
-      source-map-js: 1.2.1
 
   css-tree@3.0.0:
     dependencies:
@@ -4369,7 +4360,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-jsdoc@50.4.1(eslint@8.57.1):
+  eslint-plugin-jsdoc@50.4.3(eslint@8.57.1):
     dependencies:
       '@es-joy/jsdoccomment': 0.49.0
       are-docs-informative: 0.0.2
@@ -4386,7 +4377,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-svelte@2.44.1(eslint@8.57.1)(svelte@5.0.0-next.265):
+  eslint-plugin-svelte@2.45.1(eslint@8.57.1)(svelte@5.0.0-next.269):
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.57.1)
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -4399,9 +4390,9 @@ snapshots:
       postcss-safe-parser: 6.0.0(postcss@8.4.47)
       postcss-selector-parser: 6.1.2
       semver: 7.6.3
-      svelte-eslint-parser: 0.41.1(svelte@5.0.0-next.265)
+      svelte-eslint-parser: 0.42.0(svelte@5.0.0-next.269)
     optionalDependencies:
-      svelte: 5.0.0-next.265
+      svelte: 5.0.0-next.269
     transitivePeerDependencies:
       - ts-node
 
@@ -4468,14 +4459,14 @@ snapshots:
 
   espree@10.2.0:
     dependencies:
-      acorn: 8.12.1
-      acorn-jsx: 5.3.2(acorn@8.12.1)
+      acorn: 8.13.0
+      acorn-jsx: 5.3.2(acorn@8.13.0)
       eslint-visitor-keys: 4.1.0
 
   espree@9.6.1:
     dependencies:
-      acorn: 8.12.1
-      acorn-jsx: 5.3.2(acorn@8.12.1)
+      acorn: 8.13.0
+      acorn-jsx: 5.3.2(acorn@8.13.0)
       eslint-visitor-keys: 3.4.3
 
   esprima@4.0.1: {}
@@ -4536,7 +4527,7 @@ snapshots:
     dependencies:
       reusify: 1.0.4
 
-  fdir@6.4.0(picomatch@4.0.2):
+  fdir@6.4.2(picomatch@4.0.2):
     optionalDependencies:
       picomatch: 4.0.2
 
@@ -4773,7 +4764,7 @@ snapshots:
       '@formatjs/ecma402-abstract': 2.2.0
       '@formatjs/fast-memoize': 2.2.1
       '@formatjs/icu-messageformat-parser': 2.7.10
-      tslib: 2.7.0
+      tslib: 2.8.0
 
   is-array-buffer@3.0.4:
     dependencies:
@@ -4980,9 +4971,9 @@ snapshots:
 
   mathml-tag-names@2.1.3: {}
 
-  mdn-data@2.0.30: {}
-
   mdn-data@2.10.0: {}
+
+  mdn-data@2.11.1: {}
 
   memoizee@0.4.17:
     dependencies:
@@ -5137,7 +5128,7 @@ snapshots:
 
   pathval@2.0.0: {}
 
-  picocolors@1.1.0: {}
+  picocolors@1.1.1: {}
 
   picomatch@2.3.1: {}
 
@@ -5185,15 +5176,15 @@ snapshots:
   postcss@8.4.47:
     dependencies:
       nanoid: 3.3.7
-      picocolors: 1.1.0
+      picocolors: 1.1.1
       source-map-js: 1.2.1
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-svelte@3.2.7(prettier@3.3.3)(svelte@5.0.0-next.265):
+  prettier-plugin-svelte@3.2.7(prettier@3.3.3)(svelte@5.0.0-next.269):
     dependencies:
       prettier: 3.3.3
-      svelte: 5.0.0-next.265
+      svelte: 5.0.0-next.269
 
   prettier@3.3.3: {}
 
@@ -5290,7 +5281,7 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
-  sass@1.79.5:
+  sass@1.80.1:
     dependencies:
       '@parcel/watcher': 2.4.1
       chokidar: 4.0.1
@@ -5405,7 +5396,7 @@ snapshots:
       postcss-scss: 4.0.9(postcss@8.4.47)
       stylelint: 16.10.0(typescript@5.5.4)
       stylelint-config-recommended: 14.0.1(stylelint@16.10.0(typescript@5.5.4))
-      stylelint-scss: 6.7.0(stylelint@16.10.0(typescript@5.5.4))
+      stylelint-scss: 6.8.1(stylelint@16.10.0(typescript@5.5.4))
     optionalDependencies:
       postcss: 8.4.47
 
@@ -5413,11 +5404,12 @@ snapshots:
     dependencies:
       stylelint: 16.10.0(typescript@5.5.4)
 
-  stylelint-scss@6.7.0(stylelint@16.10.0(typescript@5.5.4)):
+  stylelint-scss@6.8.1(stylelint@16.10.0(typescript@5.5.4)):
     dependencies:
-      css-tree: 2.3.1
+      css-tree: 3.0.0
       is-plain-object: 5.0.0
       known-css-properties: 0.34.0
+      mdn-data: 2.11.1
       postcss-media-query-parser: 0.2.3
       postcss-resolve-nested-selector: 0.1.6
       postcss-selector-parser: 6.1.2
@@ -5452,7 +5444,7 @@ snapshots:
       meow: 13.2.0
       micromatch: 4.0.8
       normalize-path: 3.0.0
-      picocolors: 1.1.0
+      picocolors: 1.1.1
       postcss: 8.4.47
       postcss-resolve-nested-selector: 0.1.6
       postcss-safe-parser: 7.0.1(postcss@8.4.47)
@@ -5483,19 +5475,19 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-check@4.0.5(picomatch@4.0.2)(svelte@5.0.0-next.265)(typescript@5.5.4):
+  svelte-check@4.0.5(picomatch@4.0.2)(svelte@5.0.0-next.269)(typescript@5.5.4):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       chokidar: 4.0.1
-      fdir: 6.4.0(picomatch@4.0.2)
-      picocolors: 1.1.0
+      fdir: 6.4.2(picomatch@4.0.2)
+      picocolors: 1.1.1
       sade: 1.8.1
-      svelte: 5.0.0-next.265
+      svelte: 5.0.0-next.269
       typescript: 5.5.4
     transitivePeerDependencies:
       - picomatch
 
-  svelte-eslint-parser@0.41.1(svelte@5.0.0-next.265):
+  svelte-eslint-parser@0.42.0(svelte@5.0.0-next.269):
     dependencies:
       eslint-scope: 7.2.2
       eslint-visitor-keys: 3.4.3
@@ -5503,9 +5495,9 @@ snapshots:
       postcss: 8.4.47
       postcss-scss: 4.0.9(postcss@8.4.47)
     optionalDependencies:
-      svelte: 5.0.0-next.265
+      svelte: 5.0.0-next.269
 
-  svelte-i18n@4.0.0(svelte@5.0.0-next.265):
+  svelte-i18n@4.0.0(svelte@5.0.0-next.269):
     dependencies:
       cli-color: 2.0.4
       deepmerge: 4.3.1
@@ -5513,25 +5505,25 @@ snapshots:
       estree-walker: 2.0.2
       intl-messageformat: 10.7.0
       sade: 1.8.1
-      svelte: 5.0.0-next.265
+      svelte: 5.0.0-next.269
       tiny-glob: 0.2.9
 
-  svelte-preprocess@6.0.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.79.5)(svelte@5.0.0-next.265)(typescript@5.5.4):
+  svelte-preprocess@6.0.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.80.1)(svelte@5.0.0-next.269)(typescript@5.5.4):
     dependencies:
-      svelte: 5.0.0-next.265
+      svelte: 5.0.0-next.269
     optionalDependencies:
       postcss: 8.4.47
       postcss-load-config: 3.1.4(postcss@8.4.47)
-      sass: 1.79.5
+      sass: 1.80.1
       typescript: 5.5.4
 
-  svelte@5.0.0-next.265:
+  svelte@5.0.0-next.269:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@jridgewell/sourcemap-codec': 1.5.0
       '@types/estree': 1.0.6
-      acorn: 8.12.1
-      acorn-typescript: 1.4.13(acorn@8.12.1)
+      acorn: 8.13.0
+      acorn-typescript: 1.4.13(acorn@8.13.0)
       aria-query: 5.3.2
       axobject-query: 4.1.0
       esm-env: 1.0.0
@@ -5548,7 +5540,7 @@ snapshots:
   synckit@0.9.2:
     dependencies:
       '@pkgr/core': 0.1.1
-      tslib: 2.7.0
+      tslib: 2.8.0
 
   table@6.8.2:
     dependencies:
@@ -5572,11 +5564,11 @@ snapshots:
 
   tinybench@2.9.0: {}
 
-  tinyexec@0.3.0: {}
+  tinyexec@0.3.1: {}
 
   tinyglobby@0.2.9:
     dependencies:
-      fdir: 6.4.0(picomatch@4.0.2)
+      fdir: 6.4.2(picomatch@4.0.2)
       picomatch: 4.0.2
 
   tinypool@1.0.1: {}
@@ -5585,11 +5577,11 @@ snapshots:
 
   tinyspy@3.0.2: {}
 
-  tldts-core@6.1.51: {}
+  tldts-core@6.1.52: {}
 
-  tldts@6.1.51:
+  tldts@6.1.52:
     dependencies:
-      tldts-core: 6.1.51
+      tldts-core: 6.1.52
 
   to-data-view@2.0.0: {}
 
@@ -5599,7 +5591,7 @@ snapshots:
 
   tough-cookie@5.0.0:
     dependencies:
-      tldts: 6.1.51
+      tldts: 6.1.52
 
   tr46@5.0.0:
     dependencies:
@@ -5612,7 +5604,7 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tslib@2.7.0: {}
+  tslib@2.8.0: {}
 
   type-check@0.4.0:
     dependencies:
@@ -5671,12 +5663,12 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite-node@2.1.3(@types/node@22.7.5)(sass@1.79.5):
+  vite-node@2.1.3(@types/node@22.7.6)(sass@1.80.1):
     dependencies:
       cac: 6.7.14
       debug: 4.3.7
       pathe: 1.1.2
-      vite: 5.4.9(@types/node@22.7.5)(sass@1.79.5)
+      vite: 5.4.9(@types/node@22.7.6)(sass@1.80.1)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5688,24 +5680,24 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.4.9(@types/node@22.7.5)(sass@1.79.5):
+  vite@5.4.9(@types/node@22.7.6)(sass@1.80.1):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.4.47
       rollup: 4.24.0
     optionalDependencies:
-      '@types/node': 22.7.5
+      '@types/node': 22.7.6
       fsevents: 2.3.3
-      sass: 1.79.5
+      sass: 1.80.1
 
-  vitefu@1.0.3(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5)):
+  vitefu@1.0.3(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1)):
     optionalDependencies:
-      vite: 5.4.9(@types/node@22.7.5)(sass@1.79.5)
+      vite: 5.4.9(@types/node@22.7.6)(sass@1.80.1)
 
-  vitest@2.1.3(@types/node@22.7.5)(jsdom@25.0.1)(sass@1.79.5):
+  vitest@2.1.3(@types/node@22.7.6)(jsdom@25.0.1)(sass@1.80.1):
     dependencies:
       '@vitest/expect': 2.1.3
-      '@vitest/mocker': 2.1.3(@vitest/spy@2.1.3)(vite@5.4.9(@types/node@22.7.5)(sass@1.79.5))
+      '@vitest/mocker': 2.1.3(@vitest/spy@2.1.3)(vite@5.4.9(@types/node@22.7.6)(sass@1.80.1))
       '@vitest/pretty-format': 2.1.3
       '@vitest/runner': 2.1.3
       '@vitest/snapshot': 2.1.3
@@ -5717,14 +5709,14 @@ snapshots:
       pathe: 1.1.2
       std-env: 3.7.0
       tinybench: 2.9.0
-      tinyexec: 0.3.0
+      tinyexec: 0.3.1
       tinypool: 1.0.1
       tinyrainbow: 1.2.0
-      vite: 5.4.9(@types/node@22.7.5)(sass@1.79.5)
-      vite-node: 2.1.3(@types/node@22.7.5)(sass@1.79.5)
+      vite: 5.4.9(@types/node@22.7.6)(sass@1.80.1)
+      vite-node: 2.1.3(@types/node@22.7.6)(sass@1.80.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 22.7.5
+      '@types/node': 22.7.6
       jsdom: 25.0.1
     transitivePeerDependencies:
       - less
