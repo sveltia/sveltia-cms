@@ -417,12 +417,10 @@ These limitations are expected to be resolved before or shortly after GA:
 | Configuration | Comprehensive config validation is not yet implemented. |
 | Localization | The application UI is only available in English and Japanese at this time. |
 | Media Libraries | Cloudinary and Uploadcare are not yet supported. |
-| Workflow | Editorial Workflow and Open Authoring are not yet supported. |
-| Collections | Nested Collections are not yet supported. |
+| Workflow | Editorial Workflow and Open Authoring are not yet supported and will be implemented after the 1.0 release. |
+| Collections | Nested Collections are not yet supported and will be implemented after the 1.0 release. |
 | Widgets | Custom widgets are not yet supported. See the table below for other limitations. |
 | Customizations | Custom previews, custom formatters and event subscriptions are not yet supported. |
-
-Open Authoring and Nested Collections will be implemented after the 1.0 release.
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
