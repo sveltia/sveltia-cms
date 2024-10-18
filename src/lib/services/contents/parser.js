@@ -2,7 +2,7 @@
 
 import { generateUUID } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
-import { isObject } from '@sveltia/utils/object';
+import { isObject, toRaw } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import * as TOML from 'smol-toml';
@@ -86,6 +86,14 @@ const detectFrontMatterFormat = (text) => {
 };
 
 /**
+ * Parse TOML. The TOML parser returns date fields as `Date` objects, but we need strings to match
+ * the JSON and YAML parsers, so we have to parse twice.
+ * @param {string} str - TOML data.
+ * @returns {object} Parsed object.
+ */
+const parseTOML = (str) => toRaw(TOML.parse(str));
+
+/**
  * Parse raw content with given file details.
  * @param {BaseEntryListItem} entry - File entry.
  * @returns {RawEntryContent} Parsed content.
@@ -118,7 +126,7 @@ const parseEntryFile = ({
     }
 
     if (format === 'toml' && path.match(/\.toml$/)) {
-      return TOML.parse(text);
+      return parseTOML(text);
     }
 
     if (format === 'json' && path.match(/\.json$/)) {
@@ -142,7 +150,7 @@ const parseEntryFile = ({
       }
 
       if (head && (format === 'frontmatter' || format === 'toml-frontmatter')) {
-        return { ...TOML.parse(head), body };
+        return { ...parseTOML(head), body };
       }
 
       if (head && (format === 'frontmatter' || format === 'json-frontmatter')) {
