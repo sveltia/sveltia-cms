@@ -102,7 +102,7 @@
     :global(.message) {
       margin: 0 0 16px;
       font-size: var(--sui-font-size-large);
-      font-weight: normal;
+      font-weight: var(--sui-font-weight-normal);
       text-align: center;
     }
 

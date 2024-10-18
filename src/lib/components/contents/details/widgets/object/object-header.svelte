@@ -109,7 +109,7 @@
 
     .type {
       font-size: var(--sui-font-size-small);
-      font-weight: 600;
+      font-weight: var(--sui-font-weight-bold);
       color: var(--sui-secondary-foreground-color);
     }
   }

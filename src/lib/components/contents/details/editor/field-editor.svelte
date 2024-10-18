@@ -330,7 +330,7 @@
 
     h4 {
       font-size: var(--sui-font-size-small);
-      font-weight: 600;
+      font-weight: var(--sui-font-weight-bold);
       color: var(--sui-secondary-foreground-color);
     }
 
@@ -347,6 +347,7 @@
 
     div {
       display: flex;
+      align-items: center;
       gap: 4px;
       margin: 4px 0;
 

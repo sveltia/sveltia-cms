@@ -145,7 +145,7 @@
 
       :global(.title) {
         font-size: inherit;
-        font-weight: normal;
+        font-weight: var(--sui-font-weight-normal);
       }
     }
 

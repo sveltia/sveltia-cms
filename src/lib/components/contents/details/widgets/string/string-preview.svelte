@@ -52,6 +52,6 @@
 <style lang="scss">
   .title {
     font-size: var(--sui-font-size-xxx-large);
-    font-weight: 600;
+    font-weight: var(--sui-font-weight-bold);
   }
 </style>
