@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source alternative to Netlify/Decap CMS is now in public beta, offering a slew of improvements in UX, performance, i18n support and more.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility. The free, open source alternative to Netlify/Decap CMS is now in public beta, offering great UX, performance, i18n support and more.
 
 ![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
 
@@ -79,15 +79,13 @@ To achieve radical improvements in UX, performance, i18n and other areas, it was
 
 Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
-- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community maintenance fork, initial commit made in September 2022, discontinued in September 2024
+- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022, discontinued in September 2024
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, owned by a Netlify agency partner, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor
+- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor, with a Netlify agency partner taking ownership
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the [hundreds of improvements](#differentiators) we have already made.
 
 While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products.
-
-Note: While we are closely following the development of Decap CMS, compatibility with Static CMS will be worked on mostly after the release of Sveltia CMS 1.0.
 
 ### Our goals
 
@@ -101,7 +99,7 @@ Note: While we are closely following the development of Decap CMS, compatibility
 
 Sveltia CMS is currently in **beta**, and version 1.0 is expected to ship in **early 2025**, with a release candidate hopefully by the end of 2024. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
-While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities:
+While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities that require considerable effort:
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
@@ -430,6 +428,8 @@ These limitations are expected to be resolved before or shortly after GA:
 | Map | Not yet supported. |
 | Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
 
+We also plan to provide partial compatibility with new features added to Static CMS, such as the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue).
+
 Found a compatibility issue or other missing feature? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
 
 ## Getting started
@@ -478,6 +478,8 @@ That said, we strongly recommend testing your new Sveltia CMS instance first on 
 #### Migrating from Git Gateway backend
 
 Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub backend](https://decapcms.org/docs/github-backend/) or [GitLab backend](https://decapcms.org/docs/gitlab-backend/) instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
+
+To allow multiple users to edit content, simply invite people to your GitHub repository with the write role assigned.
 
 Once you have migrated from the Git Gateway and Netlify Identity combo, you can remove the Netlify Identity widget script tag from your HTML:
 
