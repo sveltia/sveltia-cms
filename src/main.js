@@ -1,8 +1,8 @@
 import { mount } from 'svelte';
+import { customFileProcessors } from '$lib/services/contents/parser';
 import App from './app.svelte';
 
 const knownFuncNames = [
-  'registerCustomFormat',
   'registerEditorComponent',
   'registerEventListener',
   'registerPreviewStyle',
@@ -67,9 +67,25 @@ const init = async ({ config = {} } = {}) => {
   });
 };
 
+/**
+ * Register a custom file formatter.
+ * @param {string} name - Formatter name.
+ * @param {string} extension - File extension. Unused?
+ * @param {{ fromFile: (text: string) => object, toFile: (value: object) => string }} methods -
+ * Parser and formatter methods.
+ * @see https://decapcms.org/docs/custom-formatters/
+ */
+const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
+  customFileProcessors.update((formatters) => ({
+    ...formatters,
+    [name]: { extension, parser: fromFile, formatter: toFile },
+  }));
+};
+
 const CMS = new Proxy(
   {
     init,
+    registerCustomFormat,
   },
   {
     /**

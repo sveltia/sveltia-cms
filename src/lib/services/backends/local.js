@@ -245,7 +245,7 @@ const getAllFiles = async () => {
 
       const [sha, text] = await Promise.all([
         getHash(file),
-        name.match(/\.(?:json|markdown|md|toml|ya?ml)$/i) ? readAsText(file) : undefined,
+        name.match(/\.(?:json5?|markdown|md|toml|ya?ml)$/i) ? readAsText(file) : undefined,
       ]);
 
       return { file, path, sha, size, text };

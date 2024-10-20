@@ -6,9 +6,15 @@ import { isObject, toRaw } from '@sveltia/utils/object';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import * as TOML from 'smol-toml';
+import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
 import { normalizeSlug } from '$lib/services/contents/slug';
 import { getCollection } from '$lib/services/contents';
+
+/**
+ * @type {import('svelte/store').Writable<Record<string, CustomFileProcessor>>}
+ */
+export const customFileProcessors = writable({});
 
 /**
  * Get the file extension for the given collection.
@@ -19,6 +25,12 @@ import { getCollection } from '$lib/services/contents';
  * @returns {string} Determined extension.
  */
 export const getFileExtension = ({ file, extension, format }) => {
+  const customExtension = format ? get(customFileProcessors)[format]?.extension : undefined;
+
+  if (customExtension) {
+    return customExtension;
+  }
+
   if (extension) {
     return extension;
   }
@@ -120,6 +132,12 @@ const parseEntryFile = ({
     throw new Error(`${path} could not be parsed due to an unknown format`);
   }
 
+  const customParser = get(customFileProcessors)[format]?.parser;
+
+  if (customParser) {
+    return customParser(text);
+  }
+
   try {
     if (format.match(/^ya?ml$/) && path.match(/\.ya?ml$/)) {
       return YAML.parse(text);
@@ -186,6 +204,12 @@ export const formatEntryFile = ({
 
   if (!format) {
     return '';
+  }
+
+  const customFormatter = get(customFileProcessors)[format]?.formatter;
+
+  if (customFormatter) {
+    return `${customFormatter(content).trim()}\n`;
   }
 
   const formatYAML = () =>

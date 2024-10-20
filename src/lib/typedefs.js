@@ -1031,3 +1031,11 @@
  * @property {GroupingConditions} [group] - Grouping conditions.
  * @property {boolean} [showInfo] - Whether to show the Info pane.
  */
+
+/**
+ * Custom file processor.
+ * @typedef {object} CustomFileProcessor
+ * @property {string} extension - File extension.
+ * @property {(text: string) => object} parser - Parser method.
+ * @property {(value: object) => string} formatter - Formatter method.
+ */
