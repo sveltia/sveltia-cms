@@ -418,7 +418,7 @@ These limitations are expected to be resolved before or shortly after GA:
 | Workflow | Editorial Workflow and Open Authoring are not yet supported and will be implemented after the 1.0 release. |
 | Collections | Nested Collections are not yet supported and will be implemented after the 1.0 release. |
 | Widgets | Custom widgets are not yet supported. See the table below for other limitations. |
-| Customizations | Custom previews, custom formatters and event subscriptions are not yet supported. |
+| Customizations | Custom previews and event subscriptions are not yet supported. |
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
