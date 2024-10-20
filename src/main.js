@@ -68,16 +68,16 @@ const init = async ({ config = {} } = {}) => {
 };
 
 /**
- * Register a custom file formatter.
- * @param {string} name - Formatter name.
- * @param {string} extension - File extension. Unused?
+ * Register a custom file processor.
+ * @param {string} name - Processor name.
+ * @param {string} extension - File extension.
  * @param {{ fromFile: (text: string) => object, toFile: (value: object) => string }} methods -
  * Parser and formatter methods.
  * @see https://decapcms.org/docs/custom-formatters/
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
-  customFileProcessors.update((formatters) => ({
-    ...formatters,
+  customFileProcessors.update((processors) => ({
+    ...processors,
     [name]: { extension, parser: fromFile, formatter: toFile },
   }));
 };
