@@ -97,14 +97,14 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 
 ## Development status
 
-Sveltia CMS is currently in **beta**, and version 1.0 is expected to ship in **early 2025**, with a release candidate hopefully by the end of 2024. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta**, and version 1.0 is expected to ship in **early 2025**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities that require considerable effort:
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 135+ of them, or 240+ including duplicates, have been effectively solved in Sveltia CMS
-  - Target: 150 issues by GA, and 250 or all relevant and fixable issues in a future release
+  - Target: 150 issues by GA, 250 or all relevant and fixable issues in a future release
   - Note: Issues include both feature requests and bug reports; we also track [their discussions](https://github.com/decaporg/decap-cms/discussions)
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
@@ -863,7 +863,7 @@ img-src 'self' blob: data: https://*;
 
 ## Support & feedback
 
-While we don’t have dedicated developer/user support resources, quick questions and feedback are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of this GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat and instant help.
+While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of this GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
 
 Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements. Feel free to reach out!
 
@@ -877,7 +877,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 - Svelte 5 Runes migration
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
-- Certain compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, specifically the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
+- Partial compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, specifically the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
 - Localization with the new [Fluent](https://projectfluent.org)-powered sveltia-i18n library
 - Accessibility audit
 - Developer documentation (implementation guide)
