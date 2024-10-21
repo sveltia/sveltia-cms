@@ -97,7 +97,7 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 
 ## Development status
 
-Sveltia CMS is currently in **beta**, and version 1.0 is expected to ship in **early 2025**. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta** and version 1.0 is expected to ship in **early 2025**, in time for the 10th anniversary of Netlify CMS. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities that require considerable effort:
 
