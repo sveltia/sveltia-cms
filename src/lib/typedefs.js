@@ -200,7 +200,7 @@
 
 /**
  * Supported file extension.
- * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html'} FileExtension
+ * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html' | string} FileExtension
  */
 
 /**

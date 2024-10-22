@@ -237,19 +237,14 @@ const getAllFiles = async () => {
   await iterate(_rootDirHandle);
 
   return Promise.all(
-    availableFileList.map(async ({ file, path: rawPath }) => {
-      const { name, size } = file;
+    availableFileList.map(async ({ file, path }) => ({
+      file,
       // The file path must be normalized, as certain non-ASCII characters (e.g. Japanese) can be
       // problematic particularly on macOS
-      const path = rawPath.normalize();
-
-      const [sha, text] = await Promise.all([
-        getHash(file),
-        name.match(/\.(?:json5?|markdown|md|toml|ya?ml)$/i) ? readAsText(file) : undefined,
-      ]);
-
-      return { file, path, sha, size, text };
-    }),
+      path: path.normalize(),
+      sha: await getHash(file),
+      size: file.size,
+    })),
   );
 };
 
@@ -259,6 +254,14 @@ const getAllFiles = async () => {
  */
 const fetchFiles = async () => {
   const { entryFiles, assetFiles } = createFileList(await getAllFiles());
+
+  // Load all entry text content
+  await Promise.all(
+    entryFiles.map(async (entryFile) => {
+      entryFile.text = await readAsText(/** @type {File} */ (entryFile.file));
+    }),
+  );
+
   const { entries, errors } = parseEntryFiles(entryFiles);
 
   allEntries.set(entries);

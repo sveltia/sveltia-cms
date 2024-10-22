@@ -83,7 +83,7 @@ const getFrontmatterDelimiters = (format, delimiter) => {
 /**
  * Determine the Markdown front matter serialization format by checking a delimiter in the content.
  * @param {string} text - File content.
- * @returns {FrontMatterFormat} JSON, TOML or YAML front matter.
+ * @returns {FrontMatterFormat | undefined} One of the formats or `undefined` if undetermined.
  */
 const detectFrontMatterFormat = (text) => {
   if (text.startsWith('{')) {
@@ -94,7 +94,11 @@ const detectFrontMatterFormat = (text) => {
     return 'toml-frontmatter';
   }
 
-  return 'yaml-frontmatter';
+  if (text.startsWith('---')) {
+    return 'yaml-frontmatter';
+  }
+
+  return undefined;
 };
 
 /**
@@ -127,6 +131,10 @@ const parseEntryFile = ({
       : extension || Object.values(filePathMap ?? {})[0]?.match(/\.([^.]+)$/)?.[1]
   );
 
+  if (format === 'frontmatter') {
+    format = detectFrontMatterFormat(text);
+  }
+
   // Ignore files with unknown format
   if (!format) {
     throw new Error(`${path} could not be parsed due to an unknown format`);
@@ -139,19 +147,19 @@ const parseEntryFile = ({
   }
 
   try {
-    if (format.match(/^ya?ml$/) && path.match(/\.ya?ml$/)) {
+    if (format.match(/^ya?ml$/)) {
       return YAML.parse(text);
     }
 
-    if (format === 'toml' && path.match(/\.toml$/)) {
+    if (format === 'toml') {
       return parseTOML(text);
     }
 
-    if (format === 'json' && path.match(/\.json$/)) {
+    if (format === 'json') {
       return JSON.parse(text);
     }
 
-    if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/) && path.match(/\.(?:md|markdown)$/)) {
+    if (format.match(/^(?:yaml|toml|json)-frontmatter$/)) {
       const [startDelimiter, endDelimiter] = getFrontmatterDelimiters(format, frontmatterDelimiter);
 
       const [, head, body = ''] =
@@ -162,16 +170,19 @@ const parseEntryFile = ({
           ),
         ) ?? [];
 
-      // If the format is `frontmatter`, try to parse in different formats, starting with YAML
-      if (head && (format === 'frontmatter' || format === 'yaml-frontmatter')) {
+      if (!head) {
+        throw new Error('No front matter block found');
+      }
+
+      if (format === 'yaml-frontmatter') {
         return { ...YAML.parse(head), body };
       }
 
-      if (head && (format === 'frontmatter' || format === 'toml-frontmatter')) {
+      if (format === 'toml-frontmatter') {
         return { ...parseTOML(head), body };
       }
 
-      if (head && (format === 'frontmatter' || format === 'json-frontmatter')) {
+      if (format === 'json-frontmatter') {
         return { ...JSON.parse(head), body };
       }
     }
