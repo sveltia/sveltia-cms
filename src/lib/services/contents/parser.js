@@ -86,16 +86,16 @@ const getFrontmatterDelimiters = (format, delimiter) => {
  * @returns {FrontMatterFormat | undefined} One of the formats or `undefined` if undetermined.
  */
 const detectFrontMatterFormat = (text) => {
-  if (text.startsWith('{')) {
-    return 'json-frontmatter';
+  if (text.startsWith('---')) {
+    return 'yaml-frontmatter';
   }
 
   if (text.startsWith('+++')) {
     return 'toml-frontmatter';
   }
 
-  if (text.startsWith('---')) {
-    return 'yaml-frontmatter';
+  if (text.startsWith('{')) {
+    return 'json-frontmatter';
   }
 
   return undefined;
