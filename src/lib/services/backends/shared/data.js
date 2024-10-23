@@ -40,7 +40,7 @@ export const createFileList = (files) => {
   files.forEach((fileInfo) => {
     const { path } = fileInfo;
     const [entryFolder] = getEntryFoldersByPath(path);
-    const [assetFolder] = getAssetFoldersByPath(path);
+    const [assetFolder] = getAssetFoldersByPath(path, { matchSubFolders: true });
 
     if (entryFolder) {
       entryFiles.push({ ...fileInfo, type: 'entry', folder: entryFolder });

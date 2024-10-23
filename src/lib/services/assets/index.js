@@ -1,5 +1,6 @@
 import { getPathInfo, isTextFileType } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
+import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
@@ -12,7 +13,7 @@ import {
   getFilesByEntry,
 } from '$lib/services/contents';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
-import { resolvePath } from '$lib/services/utils/file';
+import { createPath, resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
 export const mediaKinds = ['image', 'video', 'audio'];
@@ -238,9 +239,13 @@ export const getAssetThumbnailURL = async (asset) => {
 /**
  * Get collection asset folders that match the given path.
  * @param {string} path - Asset path.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.matchSubFolders] - Whether to match assets stored in the subfolders of
+ * a global/collection internal path. By default (`false`), for example, if the given `path` is
+ * `images/products/image.jpg`, it matches the `images/products` folder but not `images`.
  * @returns {CollectionAssetFolder[]} Asset folders.
  */
-export const getAssetFoldersByPath = (path) => {
+export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) => {
   const { filename } = getPathInfo(path);
 
   // Exclude files with a leading `+` sign, which are Svelte page/layout files
@@ -248,16 +253,20 @@ export const getAssetFoldersByPath = (path) => {
     return [];
   }
 
-  return get(allAssetFolders).filter(({ internalPath, entryRelative }) => {
-    if (entryRelative) {
-      return path.startsWith(`${internalPath}/`);
-    }
+  return get(allAssetFolders)
+    .filter(({ internalPath, entryRelative }) => {
+      if (entryRelative) {
+        return path.startsWith(`${internalPath}/`);
+      }
 
-    // Compare that the enclosing directory is exactly the same as the internal path, and ignore any
-    // subdirectories, as there is no way to upload assets to them. The internal path can contain
-    // template tags like `{{slug}}` so that we have to take it into account.
-    return !!getPathInfo(path).dirname?.match(`^${internalPath.replace(/{{.+?}}/g, '.+?')}$`);
-  });
+      // Compare that the enclosing directory is exactly the same as the internal path, and ignore
+      // any subdirectories, unless the `matchSubFolders` option is specified. The internal path can
+      // contain template tags like `{{slug}}` so that we have to take it into account.
+      return !!getPathInfo(path).dirname?.match(
+        `^${internalPath.replace(/{{.+?}}/g, '.+?')}${matchSubFolders ? '\\b' : '$'}`,
+      );
+    })
+    .sort((a, b) => b.internalPath?.localeCompare(a.internalPath ?? '') ?? 0);
 };
 
 /**
@@ -266,7 +275,7 @@ export const getAssetFoldersByPath = (path) => {
  * @returns {Collection[]} Collections.
  */
 export const getCollectionsByAsset = (asset) =>
-  getAssetFoldersByPath(asset.path)
+  getAssetFoldersByPath(asset.path, { matchSubFolders: true })
     .map(({ collectionName }) => (collectionName ? getCollection(collectionName) : undefined))
     .filter((collection) => !!collection);
 
@@ -331,7 +340,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
   let { internalPath } =
     get(allAssetFolders).findLast((folder) =>
-      publicPath.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}$`),
+      publicPath.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
     ) ?? {};
 
   if (!internalPath) {
@@ -354,7 +363,15 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     });
   }
 
-  return get(allAssets).find((asset) => asset.path === `${internalPath}/${fileName}`);
+  const _publicPath = collection?._assetFolder?.publicPath;
+
+  const subPath = _publicPath
+    ? stripSlashes(publicPath.replace(new RegExp(`^${escapeRegExp(_publicPath)}`), ''))
+    : '';
+
+  const fullPath = createPath([internalPath, subPath, fileName]);
+
+  return get(allAssets).find((asset) => asset.path === fullPath);
 };
 
 /**
