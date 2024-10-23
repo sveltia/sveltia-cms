@@ -163,7 +163,7 @@ export const getFilesByEntry = (collection, entry) => {
   }
 
   return Object.values(_fileMap).filter(
-    ({ _path, _i18n }) => _path === entry.locales[_i18n.defaultLocale].path,
+    ({ _path, _i18n }) => _path === entry.locales[_i18n.defaultLocale]?.path,
   );
 };
 
