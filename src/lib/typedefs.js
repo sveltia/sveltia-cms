@@ -1016,8 +1016,8 @@
  * @property {boolean} [syncScrolling] - Whether to sync the scrolling position between the editor
  * and preview panes.
  * @property {Record<string, [?EntryEditorPane, ?EntryEditorPane]>} [paneStates] - Key is a
- * collection name, value is the left and right pane states. The state can be `null` if preview is
- * disabled.
+ * collection name (and a file name joined by `|`), value is the left and right pane states. The
+ * state can be `null` if preview is disabled.
  * @property {SelectAssetsView} [selectAssetsView] - View settings for the Select Assets dialog.
  */
 

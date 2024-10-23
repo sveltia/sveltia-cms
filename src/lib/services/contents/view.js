@@ -12,7 +12,6 @@ import {
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
-import { editorLeftPane, editorRightPane } from '$lib/services/contents/draft/editor';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { prefs } from '$lib/services/prefs';
 
@@ -355,10 +354,6 @@ const initSettings = async ({ repository }) => {
     }
 
     const { name: collectionName, identifier_field: customIdField, fields = [] } = collection;
-
-    // Reset the editor panes
-    editorLeftPane.set(null);
-    editorRightPane.set(null);
 
     // This only works for folder/entry collections
     if (!fields.length) {

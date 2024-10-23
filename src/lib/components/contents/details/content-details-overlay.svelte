@@ -44,6 +44,17 @@
   $: ({ i18nEnabled, locales, defaultLocale } =
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
+  $: paneStateKey = collectionFile?.name
+    ? [collection?.name, collectionFile.name].join('|')
+    : collection?.name;
+
+  $: {
+    if (paneStateKey) {
+      // Reset the editor panes
+      $editorLeftPane = null;
+      $editorRightPane = null;
+    }
+  }
 
   /**
    * Restore the pane state from IndexedDB.
@@ -51,7 +62,7 @@
    */
   const restorePanes = async () => {
     const [_editorLeftPane, _editorRightPane] =
-      $entryEditorSettings?.paneStates?.[collection?.name] ?? [];
+      $entryEditorSettings?.paneStates?.[paneStateKey] ?? [];
 
     if (
       !_editorLeftPane ||
@@ -115,7 +126,7 @@
       ...view,
       paneStates: {
         ...(view.paneStates ?? {}),
-        [collection.name]: [$editorLeftPane, $editorRightPane],
+        [paneStateKey]: [$editorLeftPane, $editorRightPane],
       },
     }));
   };
