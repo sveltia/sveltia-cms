@@ -12,9 +12,9 @@ import { normalizeSlug } from '$lib/services/contents/slug';
 import { getCollection } from '$lib/services/contents';
 
 /**
- * @type {import('svelte/store').Writable<Record<string, CustomFileProcessor>>}
+ * @type {import('svelte/store').Writable<Record<string, CustomFileFormat>>}
  */
-export const customFileProcessors = writable({});
+export const customFileFormats = writable({});
 
 /**
  * Get the file extension for the given collection.
@@ -25,7 +25,7 @@ export const customFileProcessors = writable({});
  * @returns {string} Determined extension.
  */
 export const getFileExtension = ({ file, extension, format }) => {
-  const customExtension = format ? get(customFileProcessors)[format]?.extension : undefined;
+  const customExtension = format ? get(customFileFormats)[format]?.extension : undefined;
 
   if (customExtension) {
     return customExtension;
@@ -140,7 +140,7 @@ const parseEntryFile = ({
     throw new Error(`${path} could not be parsed due to an unknown format`);
   }
 
-  const customParser = get(customFileProcessors)[format]?.parser;
+  const customParser = get(customFileFormats)[format]?.parser;
 
   if (customParser) {
     return customParser(text);
@@ -217,7 +217,7 @@ export const formatEntryFile = ({
     return '';
   }
 
-  const customFormatter = get(customFileProcessors)[format]?.formatter;
+  const customFormatter = get(customFileFormats)[format]?.formatter;
 
   if (customFormatter) {
     return `${customFormatter(content).trim()}\n`;

@@ -1033,8 +1033,8 @@
  */
 
 /**
- * Custom file processor.
- * @typedef {object} CustomFileProcessor
+ * Custom file format definition.
+ * @typedef {object} CustomFileFormat
  * @property {string} extension - File extension.
  * @property {(text: string) => object} parser - Parser method.
  * @property {(value: object) => string} formatter - Formatter method.
