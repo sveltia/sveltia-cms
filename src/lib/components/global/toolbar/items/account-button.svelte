@@ -56,13 +56,6 @@
             window.open($backend?.repository?.treeBaseURL);
           }}
         />
-        <Divider />
-        <MenuItem
-          label={$_('settings')}
-          onclick={() => {
-            showPrefsDialog = true;
-          }}
-        />
         {#if $prefs.devModeEnabled}
           <MenuItem
             label={$_('site_config')}
@@ -71,6 +64,13 @@
             }}
           />
         {/if}
+        <Divider />
+        <MenuItem
+          label={$_('settings')}
+          onclick={() => {
+            showPrefsDialog = true;
+          }}
+        />
         <Divider />
         <MenuItem
           label={$_('sign_out')}
