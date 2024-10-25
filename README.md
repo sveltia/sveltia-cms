@@ -280,6 +280,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11][^69].
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
+- DateTime fields are stored in native date/time format instead of quoted strings when the data format is TOML[^147].
 
 ### Better widgets
 
@@ -1203,3 +1204,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^145]: Netlify/Decap CMS [#4733](https://github.com/decaporg/decap-cms/issues/4733)
 
 [^146]: Netlify/Decap CMS [#2524](https://github.com/decaporg/decap-cms/issues/2524)
+
+[^147]: Netlify/Decap CMS [#3583](https://github.com/decaporg/decap-cms/issues/3583)
