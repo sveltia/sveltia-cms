@@ -599,7 +599,7 @@ export const createSavingEntryData = async ({
     await Promise.all(
       locales.map(async (locale) => {
         const localizedEntry = savingEntry.locales[locale];
-        const { slug, path, content } = localizedEntry;
+        const { slug, path, content } = localizedEntry ?? {};
 
         if (currentLocales[locale]) {
           const action = isNew || !originalLocales[locale] ? 'create' : 'update';
