@@ -280,7 +280,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11][^69].
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
-- DateTime fields are stored in native date/time format instead of quoted strings when the data format is TOML[^147].
+- DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data format is TOML[^147].
 
 ### Better widgets
 
