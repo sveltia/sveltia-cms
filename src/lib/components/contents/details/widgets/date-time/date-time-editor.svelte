@@ -77,7 +77,7 @@
    * Update {@link currentValue} based on {@link inputValue}.
    */
   const setCurrentValue = () => {
-    const _currentValue = getCurrentValue(inputValue, fieldConfig);
+    const _currentValue = getCurrentValue(inputValue, currentValue, fieldConfig);
 
     // Avoid a cycle dependency & infinite loop
     if (_currentValue !== undefined && _currentValue !== currentValue) {

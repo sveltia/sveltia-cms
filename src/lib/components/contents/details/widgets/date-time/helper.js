@@ -79,13 +79,16 @@ export const getDefaultValue = (fieldConfig) => {
 /**
  * Get the current value given the input value.
  * @param {string | undefined} inputValue - Value on the date/time input widget.
+ * @param {string | undefined} currentValue - Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig - Field configuration.
  * @returns {string | undefined} New value.
  * @todo Write tests for this.
  */
-export const getCurrentValue = (inputValue, fieldConfig) => {
+export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
   const { format } = fieldConfig;
   const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+  // Append seconds (and milliseconds) for data format & framework compatibility
+  const timeSuffix = `:00${currentValue?.match(/\.000$/) ? '.000' : ''}`;
 
   if (inputValue === '') {
     return '';
@@ -96,7 +99,7 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
   }
 
   if (timeOnly) {
-    return inputValue;
+    return `${inputValue}${timeSuffix}`;
   }
 
   try {
@@ -112,8 +115,7 @@ export const getCurrentValue = (inputValue, fieldConfig) => {
       return inputValue;
     }
 
-    // Append seconds for framework (Hugo) compatibility
-    return `${inputValue}:00`;
+    return `${inputValue}${timeSuffix}`;
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
@@ -139,12 +141,15 @@ export const getInputValue = (currentValue, fieldConfig) => {
   }
 
   // If the current value is the standard format, return it as is
-  if (
-    (dateOnly && currentValue?.match(/^\d{4}-\d{2}-\d{2}$/)) ||
-    (timeOnly && currentValue?.match(/^\d{2}:\d{2}$/)) ||
-    currentValue?.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
-  ) {
-    return currentValue;
+  // eslint-disable-next-line no-nested-ternary
+  const [value] = dateOnly
+    ? (currentValue?.match(/^\d{4}-[01]\d-[0-3]\d\b/) ?? [])
+    : timeOnly
+      ? (currentValue?.match(/^[0-2]\d:[0-5]\d\b/) ?? [])
+      : (currentValue?.match(/^\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d\b/) ?? []);
+
+  if (value) {
+    return value;
   }
 
   try {

@@ -58,6 +58,7 @@ rules:
       tabWidth: 2
       ignoreUrls: true
       ignoreStrings: true
+      ignoreRegExpLiterals: true
   no-param-reassign: off
   no-void: off
   # https://github.com/sveltejs/eslint-plugin-svelte#white_check_mark-rules

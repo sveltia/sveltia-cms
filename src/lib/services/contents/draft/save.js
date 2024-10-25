@@ -6,6 +6,7 @@ import { generateUUID, getHash } from '@sveltia/utils/crypto';
 import { toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
+import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
 import { validateStringField } from '$lib/components/contents/details/widgets/string/helper';
 import { allAssetFolders, allAssets, getAssetKind, getAssetsByDirName } from '$lib/services/assets';
@@ -20,6 +21,7 @@ import { getFieldConfig } from '$lib/services/contents/entry';
 import { formatEntryFile, getFileExtension } from '$lib/services/contents/parser';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
 import { user } from '$lib/services/user';
+import { fullDateTimeRegEx } from '$lib/services/utils/date';
 import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/file';
 
 /**
@@ -474,6 +476,34 @@ const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
 };
 
 /**
+ * Modify the content for TOML output, particularly date/time.
+ * @param {object} args - Arguments.
+ * @param {string} args.collectionName - Collection name.
+ * @param {string} [args.fileName] - File name.
+ * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
+ * @returns {FlattenedEntryContent} Modified content.
+ * @see https://github.com/squirrelchat/smol-toml?tab=readme-ov-file#dates
+ * @see https://toml.io/en/v1.0.0#offset-date-time
+ */
+const modifyContentForTOML = ({ collectionName, fileName, valueMap }) => {
+  Object.entries(valueMap).forEach(([keyPath, value]) => {
+    if (
+      typeof value === 'string' &&
+      value.match(fullDateTimeRegEx) &&
+      getFieldConfig({ collectionName, fileName, valueMap, keyPath })?.widget === 'datetime'
+    ) {
+      try {
+        valueMap[keyPath] = new TomlDate(value);
+      } catch {
+        //
+      }
+    }
+  });
+
+  return valueMap;
+};
+
+/**
  * Create saving entry data.
  * @param {object} args - Arguments.
  * @param {boolean} args.isNew - `true` if it’s a new folder collection entry draft.
@@ -507,6 +537,27 @@ export const createSavingEntryData = async ({
     },
   } = collectionFile ?? collection;
 
+  const {
+    _parserConfig: { extension, format },
+  } = collection;
+
+  const collectionName = collection.name;
+  const fileName = collectionFile?.name;
+  const isTomlOutput = extension === 'toml' || format === 'toml' || format === 'toml-frontmatter';
+
+  /**
+   * Modify the content for a specific output format.
+   * @param {FlattenedEntryContent} valueMap - Original content.
+   * @returns {FlattenedEntryContent} Modified content.
+   */
+  const modifyContent = (valueMap) => {
+    if (isTomlOutput) {
+      return modifyContentForTOML({ collectionName, fileName, valueMap });
+    }
+
+    return valueMap;
+  };
+
   /**
    * @type {Entry}
    */
@@ -534,10 +585,10 @@ export const createSavingEntryData = async ({
         ? Object.fromEntries(
             Object.entries(savingEntry.locales).map(([locale, le]) => [
               locale,
-              unflatten(sortContentProps(fields, le.content, canonicalSlugKey)),
+              unflatten(modifyContent(sortContentProps(fields, le.content, canonicalSlugKey))),
             ]),
           )
-        : unflatten(sortContentProps(fields, content, canonicalSlugKey)),
+        : unflatten(modifyContent(sortContentProps(fields, content, canonicalSlugKey))),
       path,
       config: collection._parserConfig,
     });
@@ -554,7 +605,7 @@ export const createSavingEntryData = async ({
           const action = isNew || !originalLocales[locale] ? 'create' : 'update';
 
           const data = formatEntryFile({
-            content: unflatten(sortContentProps(fields, content, canonicalSlugKey)),
+            content: unflatten(modifyContent(sortContentProps(fields, content, canonicalSlugKey))),
             path,
             config: collection._parserConfig,
           });
