@@ -749,9 +749,9 @@ collections:
             root: true # This does the trick
             fields:
               - name: name
-                label: name
+                label: Name
               - name: github
-                label: GitHub
+                label: GitHub account
 ```
 
 ### Disabling automatic deployments
