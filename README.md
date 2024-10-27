@@ -296,6 +296,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The `default` value is saved when you create a file collection item, not just a folder collection item[^78].
   - The `default` value supports the `{{locale}}` and `{{datetime}}` template tags, which will be replaced by the locale code and the current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format), respectively[^101][^102].
 - List
+  - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list)[^148].
   - The `min` and `max` options can be used separately. You don’t need to specify both to use either option[^145].
   - The Add Item button appears at the bottom of the list when the `add_to_top` option is not `true`, so you don’t have to scroll up each time to add new items.
   - Users can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once.
@@ -726,6 +727,31 @@ It’s simple — just specify `{{uuid}}` (full UUID v4), `{{uuid_short}}` (last
      create: true
      folder: data/members/
 +    slug: '{{uuid_short}}'
+```
+
+### Editing data files with a top-level list
+
+Sveltia CMS allows you to have a list at the top-level of a data file without a field name. It’s simple: create a single List field with the new `root` option. The configuration below reproduces the [Jekyll data file example](https://jekyllrb.com/docs/datafiles/#example-list-of-members):
+
+```yaml
+collections:
+  - name: data
+    label: Data Files
+    files:
+      - name: members
+        label: List of Members
+        file: _data/members.yml
+        fields:
+          - name: members
+            label: Members
+            label_singular: Member
+            widget: list
+            root: true # This does the trick
+            fields:
+              - name: name
+                label: name
+              - name: github
+                label: GitHub
 ```
 
 ### Disabling automatic deployments
@@ -1206,3 +1232,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^146]: Netlify/Decap CMS [#2524](https://github.com/decaporg/decap-cms/issues/2524)
 
 [^147]: Netlify/Decap CMS [#3583](https://github.com/decaporg/decap-cms/issues/3583)
+
+[^148]: Netlify/Decap CMS [#531](https://github.com/decaporg/decap-cms/issues/531)
