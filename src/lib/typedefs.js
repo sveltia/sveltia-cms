@@ -576,6 +576,9 @@
  * @property {VariableFieldType[]} [types] - Multiple Object widgets (variable types) to be
  * selected.
  * @property {string} [typeKey] - Property name to store the type.
+ * @property {boolean} [root] - Whether to save the field value at the top-level of the data file
+ * without the field name. If the `single_file` i18n structure is enabled, the lists will still be
+ * saved under locale keys.
  * @see https://decapcms.org/docs/widgets/#list
  * @see https://decapcms.org/docs/variable-type-widgets/
  */

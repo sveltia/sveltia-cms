@@ -8,6 +8,7 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
+import { hasRootListField } from '$lib/components/contents/details/widgets/list/helper';
 import { allAssetFolders, allAssets, getAssetKind, getAssetsByDirName } from '$lib/services/assets';
 import { backend, backendName, isLastCommitPublished } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
@@ -332,6 +333,8 @@ export const createSavingEntryData = async ({
     },
   } = collectionFile ?? collection;
 
+  const _hasRootListField = hasRootListField(fields);
+
   /**
    * @type {Entry}
    */
@@ -361,7 +364,14 @@ export const createSavingEntryData = async ({
       content = modifyContentForTOML({ collectionName, fileName, valueMap: content });
     }
 
-    return unflatten(content);
+    content = unflatten(content);
+
+    // Handle a special case: top-level list field
+    if (_hasRootListField) {
+      content = content[fields[0].name] ?? [];
+    }
+
+    return content;
   };
 
   if (!i18nEnabled || structure === 'single_file') {

@@ -10,6 +10,7 @@ import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
 import { normalizeSlug } from '$lib/services/contents/slug';
 import { getCollection } from '$lib/services/contents';
+import { hasRootListField } from '$lib/components/contents/details/widgets/list/helper';
 
 /**
  * @type {import('svelte/store').Writable<Record<string, CustomFileFormat>>}
@@ -344,7 +345,7 @@ export const parseEntryFiles = (entryFiles) => {
       errors.push(ex);
     }
 
-    if (!parsedFile || !isObject(parsedFile)) {
+    if (!parsedFile) {
       return;
     }
 
@@ -364,12 +365,40 @@ export const parseEntryFiles = (entryFiles) => {
     const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
 
     const {
-      i18nEnabled,
-      locales,
-      defaultLocale,
-      structure,
-      canonicalSlug: { key: canonicalSlugKey },
-    } = (collectionFile ?? collection)._i18n;
+      fields = [],
+      _i18n: {
+        i18nEnabled,
+        locales,
+        defaultLocale,
+        structure,
+        canonicalSlug: { key: canonicalSlugKey },
+      },
+    } = collectionFile ?? collection;
+
+    // Handle a special case: top-level list field
+    if (hasRootListField(fields)) {
+      const fieldName = fields[0].name;
+
+      if (i18nEnabled && structure === 'single_file') {
+        if (!isObject(parsedFile) || !Object.values(parsedFile).every(Array.isArray)) {
+          return;
+        }
+
+        parsedFile = Object.fromEntries(
+          Object.entries(parsedFile).map(([locale, content]) => [locale, { [fieldName]: content }]),
+        );
+      } else {
+        if (!Array.isArray(parsedFile)) {
+          return;
+        }
+
+        parsedFile = { [fieldName]: parsedFile };
+      }
+    }
+
+    if (!isObject(parsedFile)) {
+      return;
+    }
 
     const extension = getFileExtension({
       format: collection.format,
