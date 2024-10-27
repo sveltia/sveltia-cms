@@ -58,6 +58,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
   - [Localizing entry slugs](#localizing-entry-slugs)
   - [Disabling non-default locale content](#disabling-non-default-locale-content)
   - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
+  - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
   - [Disabling automatic deployments](#disabling-automatic-deployments)
   - [Setting up Content Security Policy](#setting-up-content-security-policy)
 - [Support \& feedback](#support--feedback)
@@ -296,7 +297,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The `default` value is saved when you create a file collection item, not just a folder collection item[^78].
   - The `default` value supports the `{{locale}}` and `{{datetime}}` template tags, which will be replaced by the locale code and the current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format), respectively[^101][^102].
 - List
-  - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list)[^148].
+  - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list) with the new `root` option[^148].
   - The `min` and `max` options can be used separately. You don’t need to specify both to use either option[^145].
   - The Add Item button appears at the bottom of the list when the `add_to_top` option is not `true`, so you don’t have to scroll up each time to add new items.
   - Users can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once.
@@ -731,7 +732,7 @@ It’s simple — just specify `{{uuid}}` (full UUID v4), `{{uuid_short}}` (last
 
 ### Editing data files with a top-level list
 
-Sveltia CMS allows you to have a list at the top-level of a data file without a field name. It’s simple: create a single List field with the new `root` option. The configuration below reproduces the [Jekyll data file example](https://jekyllrb.com/docs/datafiles/#example-list-of-members):
+Sveltia CMS allows you to have a list at the top-level of a data file without a field name. All you have to do is create a single List field with the `root` option set to `true`. The configuration below reproduces the [Jekyll data file example](https://jekyllrb.com/docs/datafiles/#example-list-of-members):
 
 ```yaml
 collections:
