@@ -88,7 +88,7 @@ Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the [hundreds of improvements](#differentiators) we have already made.
 
-While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other products.
+While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other Netlify CMS successors. We hope that, especially with the robust i18n support, our offering will eventually become a leading choice for anyone looking for a free headless CMS.
 
 ### Our goals
 
@@ -200,7 +200,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better i18n support
 
-Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect first-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
+Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect first-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [multicultural city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
 
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
