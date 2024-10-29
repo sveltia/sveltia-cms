@@ -531,7 +531,7 @@ If you get an “Authentication Aborted” error when trying to sign in to GitHu
 
 Sveltia CMS has simplified the local repository workflow by removing the need for additional configuration (the `local_backend` property) and a proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
-Basically there are only two differences: you don’t need to run the proxy server, and you need to select your project folder in the browser instead. Here are the detailed steps:
+Basically there are only two differences from Netlify/Decap CMS: you don’t need to run the proxy server, and you need to select your project folder in the browser instead. Here are the detailed steps:
 
 1. Make sure you have configured the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend.
    - Please note that the Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition. If you haven’t determined your repository name yet, just use a tentative name.
