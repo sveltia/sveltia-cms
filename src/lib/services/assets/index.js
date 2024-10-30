@@ -332,6 +332,12 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     return assets.flat(1).filter(Boolean)[0] ?? undefined;
   }
 
+  const exactMatch = get(allAssets).find((asset) => asset.path === stripSlashes(savedPath));
+
+  if (exactMatch) {
+    return exactMatch;
+  }
+
   const { dirname: publicPath, basename: fileName } = getPathInfo(savedPath);
 
   if (!publicPath) {
