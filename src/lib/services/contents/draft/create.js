@@ -1,6 +1,7 @@
 import { stripTags } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
+import { getDefaultValue as getDefaultHiddenValue } from '$lib/components/contents/details/widgets/hidden/helper';
 import { getDefaultValue as getDefaultUuidValue } from '$lib/components/contents/details/widgets/uuid/helper';
 import { getCollection } from '$lib/services/contents';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
@@ -189,13 +190,9 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
     }
 
     if (widgetName === 'hidden') {
-      if (typeof defaultValue === 'string') {
-        newContent[keyPath] = defaultValue
-          .replace('{{locale}}', locale)
-          .replace('{{datetime}}', new Date().toJSON().replace(/\d+\.\d+Z$/, '00.000Z'));
+      newContent[keyPath] = getDefaultHiddenValue(/** @type {HiddenField} */ (fieldConfig), locale);
 
-        return;
-      }
+      return;
     }
 
     newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
@@ -398,13 +395,22 @@ export const duplicateDraft = () => {
     // Remove the canonical slug
     delete valueMap[canonicalSlugKey];
 
-    // Reset UUID
+    // Reset some unique values
     Object.keys(valueMap).forEach((keyPath) => {
       const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
 
       if (fieldConfig?.widget === 'uuid') {
         if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
           valueMap[keyPath] = getDefaultUuidValue(/** @type {UuidField} */ (fieldConfig));
+        }
+      }
+
+      if (fieldConfig?.widget === 'hidden') {
+        if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
+          valueMap[keyPath] = getDefaultHiddenValue(
+            /** @type {HiddenField} */ (fieldConfig),
+            locale,
+          );
         }
       }
     });

@@ -560,6 +560,18 @@
  */
 
 /**
+ * Hidden field properties.
+ * @typedef {object} HiddenFieldProps
+ * @property {string} [default] - Default value.
+ * @see https://decapcms.org/docs/widgets/#hiden
+ */
+
+/**
+ * Hidden field definition.
+ * @typedef {CommonFieldProps & HiddenFieldProps} HiddenField
+ */
+
+/**
  * List field properties.
  * @typedef {object} ListFieldProps
  * @property {string[] | Record<string, any>[] | Record<string, any>} [default] - Default value.
