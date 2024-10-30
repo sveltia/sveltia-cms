@@ -563,7 +563,7 @@
  * Hidden field properties.
  * @typedef {object} HiddenFieldProps
  * @property {string} [default] - Default value.
- * @see https://decapcms.org/docs/widgets/#hiden
+ * @see https://decapcms.org/docs/widgets/#hidden
  */
 
 /**
