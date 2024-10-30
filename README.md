@@ -296,8 +296,11 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - DateTime
   - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry[^90].
 - Hidden
+  - The `default` value supports the following template tags:
+    - `{{locale}}`: Replaced by the locale code[^101].
+    - `{{datetime}}` Replaced by the current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format)[^102].
+    - `{{uuid}}`, `{{uuid_short}}`, `{{uuid_shorter}}`: Replaced by a random UUID or its shorter version, just like the [slug template tags](#using-a-random-id-for-an-entry-slug).
   - The `default` value is saved when you create a file collection item, not just a folder collection item[^78].
-  - The `default` value supports the `{{locale}}` and `{{datetime}}` template tags, which will be replaced by the locale code and the current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format), respectively[^101][^102].
 - List
   - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list) using the new `root` option[^148].
   - The `min` and `max` options can be used separately. You don’t need to specify both to use either option[^145].
