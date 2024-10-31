@@ -278,9 +278,11 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 ### Better data output
 
 - Keys in generated JSON/TOML/YAML content are always sorted by the order of configured fields, making Git commits clean and consistent[^86].
-- For data consistency, Boolean, List (see below) and other fields are always saved as a proper value, such as an empty string or an empty array, rather than nothing, even if it’s optional or empty[^45][^46][^44].
-- Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
+- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output. Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string or an empty array, instead of nothing (`undefined`), regardless of the `required` option[^45][^46][^44].
+  - In other words, in Sveltia CMS, `required: false` makes data input optional, but doesn’t make data output optional.
+  - Note: If you have any data validation (type definition) that expects `undefined` values, you may need to revise it or the output from Sveitia CMS may break it.
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11][^69].
+- Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML[^147].
