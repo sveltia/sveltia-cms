@@ -353,7 +353,12 @@ export const parseEntryFiles = (entryFiles) => {
       path,
       sha,
       meta = {},
-      folder: { folderPath: configFolderPath = '', collectionName, fileName, filePathMap },
+      folder: {
+        folderPath: configFolderPath = '',
+        collectionName,
+        fileName: collectionFileName,
+        filePathMap,
+      },
     } = file;
 
     const collection = getCollection(collectionName);
@@ -362,7 +367,9 @@ export const parseEntryFiles = (entryFiles) => {
       return;
     }
 
-    const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
+    const collectionFile = collectionFileName
+      ? collection._fileMap?.[collectionFileName]
+      : undefined;
 
     const {
       fields = [],
@@ -375,11 +382,15 @@ export const parseEntryFiles = (entryFiles) => {
       },
     } = collectionFile ?? collection;
 
+    const i18nSingleFile = i18nEnabled && structure === 'single_file';
+    const i18nMultiFiles = i18nEnabled && structure === 'multiple_files';
+    const i18nMultiFolders = i18nEnabled && structure === 'multiple_folders';
+
     // Handle a special case: top-level list field
     if (hasRootListField(fields)) {
       const fieldName = fields[0].name;
 
-      if (i18nEnabled && structure === 'single_file') {
+      if (i18nSingleFile) {
         if (!isObject(parsedFile) || !Object.values(parsedFile).every(Array.isArray)) {
           return;
         }
@@ -403,7 +414,7 @@ export const parseEntryFiles = (entryFiles) => {
     const extension = getFileExtension({
       format: collection.format,
       extension: collection.extension,
-      file: fileName,
+      file: collectionFileName,
     });
 
     // Skip Hugo’s special index page that shouldn’t appear in a folder collection, unless the
@@ -411,16 +422,24 @@ export const parseEntryFiles = (entryFiles) => {
     if (
       getPathInfo(path).basename === '_index.md' &&
       !(collection.path?.split('/').pop() === '_index' && extension === 'md') &&
-      !fileName
+      !collectionFileName
     ) {
       return;
     }
 
-    const filePath = (() => {
-      if (fileName) {
-        return path;
-      }
+    /** @type {string | undefined} */
+    let filePath = undefined;
+    /** @type {LocaleCode | undefined} */
+    let locale = undefined;
 
+    if (collectionFileName) {
+      if (i18nMultiFiles || i18nMultiFolders) {
+        [locale, filePath] =
+          Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === path) ?? [];
+      } else {
+        filePath = path;
+      }
+    } else {
       /**
        * The path pattern in the middle, which should match the filename (without extension),
        * possibly with the parent directory. If the collection’s `path` is configured, use it to
@@ -432,11 +451,15 @@ export const parseEntryFiles = (entryFiles) => {
         : '.+';
 
       const regex = new RegExp(
-        `^${escapeRegExp(stripSlashes(configFolderPath))}\\/(${filePathMatcher})\\.${extension}$`,
+        `^${escapeRegExp(stripSlashes(configFolderPath))}\\/` +
+          `${i18nMultiFolders ? `(?<locale>${locales.join('|')})\\/` : ''}` +
+          `(?<filePath>${filePathMatcher})` +
+          `${i18nMultiFiles ? `\\.(?<locale>${locales.join('|')})` : ''}` +
+          `\\.${extension}$`,
       );
 
-      return path.match(regex)?.[1];
-    })();
+      ({ filePath, locale } = path.match(regex)?.groups ?? {});
+    }
 
     if (!filePath) {
       return;
@@ -446,48 +469,30 @@ export const parseEntryFiles = (entryFiles) => {
     const entry = { id: '', slug: '', sha, locales: {}, ...meta };
 
     if (!i18nEnabled) {
-      const slug = fileName || getSlug(collectionName, filePath, parsedFile);
+      const slug = collectionFileName || getSlug(collectionName, filePath, parsedFile);
 
       entry.slug = slug;
       entry.locales._default = { slug, path, sha, content: flatten(parsedFile) };
     }
 
-    if (i18nEnabled && structure === 'single_file') {
+    if (i18nSingleFile) {
       const content = parsedFile[defaultLocale] ?? Object.values(parsedFile)[0];
-      const slug = fileName || getSlug(collectionName, filePath, content);
+      const slug = collectionFileName || getSlug(collectionName, filePath, content);
 
       entry.slug = slug;
       entry.locales = Object.fromEntries(
         locales
-          .filter((locale) => locale in parsedFile)
-          .map((locale) => [locale, { slug, path, sha, content: flatten(parsedFile[locale]) }]),
+          .filter((_locale) => _locale in parsedFile)
+          .map((_locale) => [_locale, { slug, path, sha, content: flatten(parsedFile[_locale]) }]),
       );
     }
 
-    if (i18nEnabled && (structure === 'multiple_folders' || structure === 'multiple_files')) {
-      /**
-       * @type {string | undefined}
-       */
-      let _filePath;
-      /**
-       * @type {LocaleCode | undefined}
-       */
-      let locale;
-
-      if (fileName) {
-        [locale, _filePath] =
-          Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === filePath) ?? [];
-      } else if (structure === 'multiple_folders') {
-        [, locale, _filePath] = filePath.match(`^(${locales.join('|')})\\/(.+)$`) ?? [];
-      } else {
-        [, _filePath, locale] = filePath.match(`^(.+)\\.(${locales.join('|')})$`) ?? [];
-      }
-
-      if (!_filePath || !locale) {
+    if (i18nMultiFiles || i18nMultiFolders) {
+      if (!locale) {
         return;
       }
 
-      const slug = fileName || getSlug(collectionName, _filePath, parsedFile);
+      const slug = collectionFileName || getSlug(collectionName, filePath, parsedFile);
       const localizedEntry = { slug, path, sha, content: flatten(parsedFile) };
       // Support a canonical slug to link localized files
       const canonicalSlug = parsedFile[canonicalSlugKey];
