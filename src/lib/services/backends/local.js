@@ -303,10 +303,11 @@ const commitChanges = async (changes) =>
 
           try {
             await writer.write(data);
-            await writer.close();
           } catch {
             // Can throw if the file has just been moved/renamed without any change, and then the
             // `data` is no longer available
+          } finally {
+            await writer.close();
           }
 
           return fileHandle.getFile();
