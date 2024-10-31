@@ -122,7 +122,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
-- The maintainer tries to be as responsive as possible. Reported bugs are usually fixed within 24 hours.
+- The maintainer tries to be as responsive as possible, and while there are no guarantees, reported bugs are usually fixed within 24 hours.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - We develop [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned shortly after the 1.0 release.
@@ -297,9 +297,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry[^90].
 - Hidden
   - The `default` value supports the following template tags:
-    - `{{locale}}`: Replaced by the current locale code[^101].
-    - `{{datetime}}` Replaced by the current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format)[^102].
-    - `{{uuid}}`, `{{uuid_short}}` and `{{uuid_shorter}}`: Replaced by a random UUID or its shorter version, just like the [slug template tags](#using-a-random-id-for-an-entry-slug)[^12].
+    - `{{locale}}`: The current locale code[^101].
+    - `{{datetime}}`: The current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format)[^102].
+    - `{{uuid}}`, `{{uuid_short}}` and `{{uuid_shorter}}`: A random UUID or its shorter version, just like the [slug template tags](#using-a-random-id-for-an-entry-slug)[^12].
   - The `default` value is saved when you create a file collection item, not just a folder collection item[^78].
 - List
   - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list) using the new `root` option[^148].
