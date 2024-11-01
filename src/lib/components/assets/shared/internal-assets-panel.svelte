@@ -35,7 +35,7 @@
 >
   {#if !showUploader}
     <AssetsPanel
-      {assets}
+      assets={assets.sort((a, b) => a.name.localeCompare(b.name))}
       viewType={$selectAssetsView?.type}
       {searchTerms}
       gridId="select-assets-grid"
