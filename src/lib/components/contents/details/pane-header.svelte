@@ -22,6 +22,7 @@
   import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { prefs } from '$lib/services/prefs';
 
   /**
    * The wrapper element’s `id` attribute.
@@ -156,7 +157,7 @@
                 }}
               />
             {/if}
-            {#if originalEntry}
+            {#if originalEntry && (previewURL || $prefs.devModeEnabled)}
               <Divider />
               {#if previewURL}
                 <MenuItem
@@ -166,18 +167,20 @@
                   }}
                 />
               {/if}
-              <MenuItem
-                disabled={!$backend?.repository?.blobBaseURL}
-                label={$_('view_on_x', {
-                  values: { service: $backend?.repository?.label },
-                  default: $_('view_in_repository'),
-                })}
-                onclick={() => {
-                  if (originalEntry && $thisPane) {
-                    window.open(getEntryRepoBlobURL(originalEntry, $thisPane.locale));
-                  }
-                }}
-              />
+              {#if $prefs.devModeEnabled}
+                <MenuItem
+                  disabled={!$backend?.repository?.blobBaseURL}
+                  label={$_('view_on_x', {
+                    values: { service: $backend?.repository?.label },
+                    default: $_('view_in_repository'),
+                  })}
+                  onclick={() => {
+                    if (originalEntry && $thisPane) {
+                      window.open(getEntryRepoBlobURL(originalEntry, $thisPane.locale));
+                    }
+                  }}
+                />
+              {/if}
             {/if}
           </Menu>
         {/snippet}

@@ -10,6 +10,7 @@
   } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
+  import { prefs } from '$lib/services/prefs';
 
   /**
    * @type {Asset | undefined}
@@ -84,16 +85,18 @@
           window.open(publicURL);
         }}
       />
-      <MenuItem
-        disabled={!$backend?.repository || !repoBlobURL}
-        label={$_('view_on_x', {
-          values: { service: $backend?.repository?.label },
-          default: $_('view_in_repository'),
-        })}
-        onclick={() => {
-          window.open(`${repoBlobURL}?plain=1`);
-        }}
-      />
+      {#if $prefs.devModeEnabled}
+        <MenuItem
+          disabled={!$backend?.repository || !repoBlobURL}
+          label={$_('view_on_x', {
+            values: { service: $backend?.repository?.label },
+            default: $_('view_in_repository'),
+          })}
+          onclick={() => {
+            window.open(`${repoBlobURL}?plain=1`);
+          }}
+        />
+      {/if}
     </Menu>
   {/snippet}
 </MenuButton>

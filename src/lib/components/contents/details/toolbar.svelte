@@ -18,7 +18,7 @@
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import { goBack, goto } from '$lib/services/app/navigation';
-  import { backend, backendName } from '$lib/services/backends';
+  import { backendName } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/data';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -29,7 +29,6 @@
   import {
     getAssociatedAssets,
     getEntryPreviewURL,
-    getEntryRepoBlobURL,
     getEntryTitle,
   } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
@@ -221,21 +220,6 @@
             revertChanges();
           }}
         />
-        {#if originalEntry}
-          <Divider />
-          <MenuItem
-            disabled={!$backend?.repository?.blobBaseURL}
-            label={$_('view_on_x', {
-              values: { service: $backend?.repository?.label },
-              default: $_('view_in_repository'),
-            })}
-            onclick={() => {
-              if (originalEntry) {
-                window.open(getEntryRepoBlobURL(originalEntry, defaultLocale));
-              }
-            }}
-          />
-        {/if}
       </Menu>
     {/snippet}
   </MenuButton>

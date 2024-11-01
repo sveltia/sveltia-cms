@@ -49,14 +49,14 @@
             openProductionSite();
           }}
         />
-        <MenuItem
-          label={$_('git_repository')}
-          disabled={!$backend?.repository?.treeBaseURL}
-          onclick={() => {
-            window.open($backend?.repository?.treeBaseURL);
-          }}
-        />
         {#if $prefs.devModeEnabled}
+          <MenuItem
+            label={$_('git_repository')}
+            disabled={!$backend?.repository?.treeBaseURL}
+            onclick={() => {
+              window.open($backend?.repository?.treeBaseURL);
+            }}
+          />
           <MenuItem
             label={$_('site_config')}
             onclick={() => {
