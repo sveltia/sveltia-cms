@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "4.0.0",
-    "@types/node": "^22.8.4",
+    "@types/node": "^22.8.6",
     "cspell": "^8.15.5",
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -45,7 +45,7 @@
     "stylelint": "^16.10.0",
     "stylelint-config-recommended-scss": "^14.1.0",
     "stylelint-scss": "^6.8.1",
-    "svelte": "5.1.6",
+    "svelte": "5.1.9",
     "svelte-check": "^4.0.5",
     "svelte-i18n": "^4.0.1",
     "svelte-preprocess": "^6.0.3",
