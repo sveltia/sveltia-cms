@@ -1,11 +1,10 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
 import { getI18nConfig } from '$lib/services/contents/i18n';
-import { getFileExtension } from '$lib/services/contents/parser';
+import { getEntryPathRegEx } from '$lib/services/contents/parser';
 
 /**
  * Regular expression to match `![alt](src "title")`.
@@ -119,21 +118,23 @@ export const getCollection = (name) => {
  * @returns {CollectionEntryFolder[]} Entry folders. Sometimes it’s hard to find the right folder
  * because multiple collections can have the same folder or partially overlapping folder paths, but
  * the first one is most likely what you need.
- * @todo Make the logic more diligent, taking i18n config into account.
  */
-export const getEntryFoldersByPath = (path) => {
-  const { extension } = getPathInfo(path);
-
-  return get(allEntryFolders)
-    .filter(({ filePathMap, folderPath, parserConfig }) => {
+export const getEntryFoldersByPath = (path) =>
+  get(allEntryFolders)
+    .filter(({ collectionName, filePathMap }) => {
       if (filePathMap) {
-        return Object.values(filePathMap ?? {}).includes(path);
+        return Object.values(filePathMap).includes(path);
       }
 
-      return path.startsWith(`${folderPath}/`) && getFileExtension(parserConfig) === extension;
+      const collection = getCollection(collectionName);
+
+      if (!collection) {
+        return false;
+      }
+
+      return !!path.match(getEntryPathRegEx(collection));
     })
     .sort((a, b) => b.folderPath?.localeCompare(a.folderPath ?? '') ?? 0);
-};
 
 /**
  * Get a list of collections the given entry belongs to. One entry can theoretically appear in

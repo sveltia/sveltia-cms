@@ -323,6 +323,43 @@ const getSlug = (collectionName, filePath, content) => {
 };
 
 /**
+ * Get a regular expression that matches the entry paths of the given folder collection, taking i18n
+ * into account.
+ * @param {Collection} collection - Collection.
+ * @returns {RegExp} Regular expression.
+ */
+export const getEntryPathRegEx = (collection) => {
+  const {
+    extension,
+    format,
+    folder,
+    path,
+    _i18n: { i18nEnabled, locales, structure },
+  } = collection;
+
+  const folderPath = stripSlashes(/** @type {string} */ (folder));
+  const i18nMultiFiles = i18nEnabled && structure === 'multiple_files';
+  const i18nMultiFolders = i18nEnabled && structure === 'multiple_folders';
+  const ext = getFileExtension({ format, extension });
+  /**
+   * The path pattern in the middle, which should match the filename (without extension),
+   * possibly with the parent directory. If the collection’s `path` is configured, use it to
+   * generate a pattern, so that unrelated files are excluded.
+   * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
+   */
+  const filePathMatcher = path ? path.replace(/\//g, '\\/').replace(/{{.+?}}/g, '[^\\/]+') : '.+';
+  const localeMatcher = locales.join('|');
+
+  return new RegExp(
+    `^${escapeRegExp(stripSlashes(folderPath))}\\/` +
+      `${i18nMultiFolders ? `(?<locale>${localeMatcher})\\/` : ''}` +
+      `(?<filePath>${filePathMatcher})` +
+      `${i18nMultiFiles ? `\\.(?<locale>${localeMatcher})` : ''}` +
+      `\\.${ext}$`,
+  );
+};
+
+/**
  * Parse the given entry files to create a complete, serialized entry list.
  * @param {BaseEntryListItem[]} entryFiles - Entry file list.
  * @returns {{ entries: Entry[], errors: Error[] }} Entry list and error list.
@@ -353,12 +390,7 @@ export const parseEntryFiles = (entryFiles) => {
       path,
       sha,
       meta = {},
-      folder: {
-        folderPath: configFolderPath = '',
-        collectionName,
-        fileName: collectionFileName,
-        filePathMap,
-      },
+      folder: { collectionName, fileName, filePathMap },
     } = file;
 
     const collection = getCollection(collectionName);
@@ -367,9 +399,7 @@ export const parseEntryFiles = (entryFiles) => {
       return;
     }
 
-    const collectionFile = collectionFileName
-      ? collection._fileMap?.[collectionFileName]
-      : undefined;
+    const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
 
     const {
       fields = [],
@@ -414,7 +444,7 @@ export const parseEntryFiles = (entryFiles) => {
     const extension = getFileExtension({
       format: collection.format,
       extension: collection.extension,
-      file: collectionFileName,
+      file: fileName,
     });
 
     // Skip Hugo’s special index page that shouldn’t appear in a folder collection, unless the
@@ -422,7 +452,7 @@ export const parseEntryFiles = (entryFiles) => {
     if (
       getPathInfo(path).basename === '_index.md' &&
       !(collection.path?.split('/').pop() === '_index' && extension === 'md') &&
-      !collectionFileName
+      !fileName
     ) {
       return;
     }
@@ -432,7 +462,7 @@ export const parseEntryFiles = (entryFiles) => {
     /** @type {LocaleCode | undefined} */
     let locale = undefined;
 
-    if (collectionFileName) {
+    if (fileName) {
       if (i18nMultiFiles || i18nMultiFolders) {
         [locale, filePath] =
           Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === path) ?? [];
@@ -440,25 +470,7 @@ export const parseEntryFiles = (entryFiles) => {
         filePath = path;
       }
     } else {
-      /**
-       * The path pattern in the middle, which should match the filename (without extension),
-       * possibly with the parent directory. If the collection’s `path` is configured, use it to
-       * generate a pattern, so that unrelated files are excluded.
-       * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
-       */
-      const filePathMatcher = collection.path
-        ? collection.path.replace(/\//g, '\\/').replace(/{{.+?}}/g, '[^\\/]+')
-        : '.+';
-
-      const regex = new RegExp(
-        `^${escapeRegExp(stripSlashes(configFolderPath))}\\/` +
-          `${i18nMultiFolders ? `(?<locale>${locales.join('|')})\\/` : ''}` +
-          `(?<filePath>${filePathMatcher})` +
-          `${i18nMultiFiles ? `\\.(?<locale>${locales.join('|')})` : ''}` +
-          `\\.${extension}$`,
-      );
-
-      ({ filePath, locale } = path.match(regex)?.groups ?? {});
+      ({ filePath, locale } = path.match(getEntryPathRegEx(collection))?.groups ?? {});
     }
 
     if (!filePath) {
@@ -469,7 +481,7 @@ export const parseEntryFiles = (entryFiles) => {
     const entry = { id: '', slug: '', sha, locales: {}, ...meta };
 
     if (!i18nEnabled) {
-      const slug = collectionFileName || getSlug(collectionName, filePath, parsedFile);
+      const slug = fileName || getSlug(collectionName, filePath, parsedFile);
 
       entry.slug = slug;
       entry.locales._default = { slug, path, sha, content: flatten(parsedFile) };
@@ -477,7 +489,7 @@ export const parseEntryFiles = (entryFiles) => {
 
     if (i18nSingleFile) {
       const content = parsedFile[defaultLocale] ?? Object.values(parsedFile)[0];
-      const slug = collectionFileName || getSlug(collectionName, filePath, content);
+      const slug = fileName || getSlug(collectionName, filePath, content);
 
       entry.slug = slug;
       entry.locales = Object.fromEntries(
@@ -492,7 +504,7 @@ export const parseEntryFiles = (entryFiles) => {
         return;
       }
 
-      const slug = collectionFileName || getSlug(collectionName, filePath, parsedFile);
+      const slug = fileName || getSlug(collectionName, filePath, parsedFile);
       const localizedEntry = { slug, path, sha, content: flatten(parsedFile) };
       // Support a canonical slug to link localized files
       const canonicalSlug = parsedFile[canonicalSlugKey];
