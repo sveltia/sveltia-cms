@@ -13,7 +13,7 @@ import { allBackendServices } from '$lib/services/backends';
 import { createFileList, repositoryProps } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
-import { parseEntryFiles } from '$lib/services/contents/parser';
+import { prepareEntries } from '$lib/services/contents/file/process';
 
 const backendName = 'local';
 const label = 'Local Repository';
@@ -262,7 +262,7 @@ const fetchFiles = async () => {
     }),
   );
 
-  const { entries, errors } = parseEntryFiles(entryFiles);
+  const { entries, errors } = prepareEntries(entryFiles);
 
   allEntries.set(entries);
   entryParseErrors.set(errors);

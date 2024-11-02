@@ -8,7 +8,7 @@ import {
   entryParseErrors,
   getEntryFoldersByPath,
 } from '$lib/services/contents';
-import { parseEntryFiles } from '$lib/services/contents/parser';
+import { prepareEntries } from '$lib/services/contents/file/process';
 
 /** @type {RepositoryInfo} */
 export const repositoryProps = {
@@ -131,7 +131,7 @@ export const fetchAndParseFiles = async ({
   const fetchingFiles = allFiles.filter(({ meta }) => !meta);
   const fetchedFileMap = fetchingFiles.length ? await fetchFileContents(fetchingFiles) : {};
 
-  const { entries, errors } = parseEntryFiles(
+  const { entries, errors } = prepareEntries(
     entryFiles.map((file) => {
       const { text, meta } = fetchedFileMap[file.path] ?? {};
 

@@ -1,5 +1,5 @@
 import { mount } from 'svelte';
-import { customFileFormats } from '$lib/services/contents/parser';
+import { customFileFormats } from '$lib/services/contents/file';
 import App from './app.svelte';
 
 const knownFuncNames = [

@@ -3,8 +3,8 @@ import { get, writable } from 'svelte/store';
 import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
+import { getEntryPathRegEx } from '$lib/services/contents/file';
 import { getI18nConfig } from '$lib/services/contents/i18n';
-import { getEntryPathRegEx } from '$lib/services/contents/parser';
 
 /**
  * Regular expression to match `![alt](src "title")`.
