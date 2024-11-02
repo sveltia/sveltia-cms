@@ -131,7 +131,7 @@ export const fetchAndParseFiles = async ({
   const fetchingFiles = allFiles.filter(({ meta }) => !meta);
   const fetchedFileMap = fetchingFiles.length ? await fetchFileContents(fetchingFiles) : {};
 
-  const { entries, errors } = prepareEntries(
+  const { entries, errors } = await prepareEntries(
     entryFiles.map((file) => {
       const { text, meta } = fetchedFileMap[file.path] ?? {};
 

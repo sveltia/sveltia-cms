@@ -39,9 +39,9 @@ const formatYAML = (obj, { yamlQuote = false } = {}) =>
  * it shouldn’t be a reference to an existing object.
  * @param {string} entry.path - File path.
  * @param {ParserConfig} entry.config - File parser/formatter configuration.
- * @returns {string} Formatted string.
+ * @returns {Promise<string>} Formatted string.
  */
-export const formatEntryFile = ({
+export const formatEntryFile = async ({
   content,
   path,
   config: { extension, format, frontmatterDelimiter, yamlQuote = false },
@@ -59,7 +59,7 @@ export const formatEntryFile = ({
   const customFormatter = get(customFileFormats)[format]?.formatter;
 
   if (customFormatter) {
-    return `${customFormatter(content).trim()}\n`;
+    return `${(await customFormatter(content)).trim()}\n`;
   }
 
   try {

@@ -58,12 +58,12 @@ const getSlug = (collectionName, filePath, content) => {
  * @param {Entry[]} args.entries - List of prepared entries.
  * @param {Error[]} args.errors - List of parse errors.
  */
-const prepareEntry = ({ file, entries, errors }) => {
+const prepareEntry = async ({ file, entries, errors }) => {
   /** @type {any} */
   let rawContent;
 
   try {
-    rawContent = parseEntryFile(file);
+    rawContent = await parseEntryFile(file);
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
@@ -228,17 +228,15 @@ const prepareEntry = ({ file, entries, errors }) => {
 /**
  * Parse the given entry files to create a complete, serialized entry list.
  * @param {BaseEntryListItem[]} entryFiles - Entry file list.
- * @returns {{ entries: Entry[], errors: Error[] }} Entry list and error list.
+ * @returns {Promise<{ entries: Entry[], errors: Error[] }>} Entry list and error list.
  */
-export const prepareEntries = (entryFiles) => {
+export const prepareEntries = async (entryFiles) => {
   /** @type {Entry[]} */
   const entries = [];
   /** @type {Error[]} */
   const errors = [];
 
-  entryFiles.forEach((file) => {
-    prepareEntry({ file, entries, errors });
-  });
+  await Promise.all(entryFiles.map((file) => prepareEntry({ file, entries, errors })));
 
   return {
     entries: entries.filter((entry) => {

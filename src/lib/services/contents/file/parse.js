@@ -49,10 +49,10 @@ const detectFrontMatterFormat = (text) => {
 /**
  * Parse raw content with given file details.
  * @param {BaseEntryListItem} entry - Entry file list item.
- * @returns {any} Parsed content.
+ * @returns {Promise<any>} Parsed content.
  * @throws {Error} When the content could not be parsed.
  */
-export const parseEntryFile = ({
+export const parseEntryFile = async ({
   text = '',
   path,
   folder: {

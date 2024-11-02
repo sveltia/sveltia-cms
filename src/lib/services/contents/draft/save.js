@@ -380,7 +380,7 @@ export const createSavingEntryData = async ({
     const { slug, path, content } = localizedEntry;
     const action = isNew ? 'create' : 'update';
 
-    const data = formatEntryFile({
+    const data = await formatEntryFile({
       content: i18nEnabled
         ? Object.fromEntries(
             Object.entries(savingEntry.locales).map(([locale, le]) => [
@@ -404,7 +404,7 @@ export const createSavingEntryData = async ({
         if (currentLocales[locale]) {
           const action = isNew || !originalLocales[locale] ? 'create' : 'update';
 
-          const data = formatEntryFile({
+          const data = await formatEntryFile({
             content: finalizeContent(content),
             path,
             config: _parserConfig,

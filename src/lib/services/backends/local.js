@@ -262,7 +262,7 @@ const fetchFiles = async () => {
     }),
   );
 
-  const { entries, errors } = prepareEntries(entryFiles);
+  const { entries, errors } = await prepareEntries(entryFiles);
 
   allEntries.set(entries);
   entryParseErrors.set(errors);

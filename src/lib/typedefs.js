@@ -1048,9 +1048,19 @@
  */
 
 /**
+ * Entry file Parser.
+ * @typedef {(text: string) => any | Promise<any>} FileParser
+ */
+
+/**
+ * Entry file formatter.
+ * @typedef {(value: any) => string | Promise<string>} FileFormatter
+ */
+
+/**
  * Custom file format definition.
  * @typedef {object} CustomFileFormat
  * @property {string} extension - File extension.
- * @property {(text: string) => object} parser - Parser method.
- * @property {(value: object) => string} formatter - Formatter method.
+ * @property {FileParser} parser - Parser method.
+ * @property {FileFormatter} formatter - Formatter method.
  */
