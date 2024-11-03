@@ -1,7 +1,10 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import { sanitize } from 'isomorphic-dompurify';
+import { parseInline } from 'marked';
 import moment from 'moment';
+import { parseEntities } from 'parse-entities';
 import { get } from 'svelte/store';
 import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
 import { getOptionLabel } from '$lib/components/contents/details/widgets/select/helper';
@@ -204,6 +207,22 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
 };
 
 /**
+ * Parse the given entry title as Markdown and sanitize HTML with a few exceptions if the Markdown
+ * option is enabled. Also, parse HTML character references (entities).
+ * @param {string} str - Original string.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.allowMarkdown] - Whether to allow Markdown and return HTML string.
+ * @returns {string} Parsed string.
+ */
+const sanitizeEntryTitle = (str, { allowMarkdown = false } = {}) => {
+  str = /** @type {string} */ (parseInline(str));
+  str = sanitize(str, { ALLOWED_TAGS: allowMarkdown ? ['strong', 'em', 'code'] : [] });
+  str = parseEntities(str);
+
+  return str.trim();
+};
+
+/**
  * Get the given entry’s title that can be displayed in the entry list and other places. Format it
  * with the summary template if necessary, or simply use the `title` or similar field in the entry.
  * @param {Collection} collection - Entry’s collection.
@@ -212,10 +231,15 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
  * @param {LocaleCode} [options.locale] - Target locale. The default locale is used if omitted.
  * @param {boolean} [options.useTemplate] - Whether to use the collection’s `summary` template if
  * available.
+ * @param {boolean} [options.allowMarkdown] - Whether to allow Markdown and return HTML string.
  * @returns {string} Formatted entry title.
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
-export const getEntryTitle = (collection, entry, { locale, useTemplate = false } = {}) => {
+export const getEntryTitle = (
+  collection,
+  entry,
+  { locale, useTemplate = false, allowMarkdown = false } = {},
+) => {
   const {
     name: collectionName,
     folder: collectionFolder,
@@ -233,7 +257,10 @@ export const getEntryTitle = (collection, entry, { locale, useTemplate = false }
   // CMS document, but actually `name` also works as a fallback. We also use the `label` property
   // and the entry slug.
   if (!useTemplate || !summaryTemplate) {
-    return content[identifierField] || content.title || content.name || content.label || slug;
+    return sanitizeEntryTitle(
+      content[identifierField] || content.title || content.name || content.label || slug,
+      { allowMarkdown },
+    );
   }
 
   /**
@@ -304,9 +331,10 @@ export const getEntryTitle = (collection, entry, { locale, useTemplate = false }
     return String(slugPart);
   };
 
-  return summaryTemplate
-    .replace(/{{(.+?)}}/g, (_match, placeholder) => replace(placeholder))
-    .trim();
+  return sanitizeEntryTitle(
+    summaryTemplate.replace(/{{(.+?)}}/g, (_match, placeholder) => replace(placeholder)),
+    { allowMarkdown },
+  );
 };
 
 /**

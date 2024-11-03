@@ -44,10 +44,15 @@ describe('Test getEntryTitle()', () => {
   /**
    * Wrapper for {@link getEntryTitle}.
    * @param {string} summary - Summary string template.
+   * @param {object} [options] - Options.
    * @returns {string} Formatted summary.
    */
-  const format = (summary) =>
-    getEntryTitle({ ...collection, summary }, entry, { locale: 'de', useTemplate: true });
+  const format = (summary, options = {}) =>
+    getEntryTitle({ ...collection, summary }, entry, {
+      locale: 'de',
+      useTemplate: true,
+      ...options,
+    });
 
   test('metadata', () => {
     expect(format('{{slug}}')).toEqual('net');
@@ -65,5 +70,22 @@ describe('Test getEntryTitle()', () => {
   test('transformations', () => {
     expect(format("{{date | date('MMM D, YYYY')}}")).toEqual('Jan 23, 2024');
     expect(format("{{draft | ternary('Draft', 'Public')}}")).toEqual('Public');
+  });
+
+  test('Markdown', () => {
+    const markdownStr =
+      'This `code` on [GitHub](https://github.com/sveltia/sveltia-cms) _is_ ~~so~~ **good**!';
+
+    expect(format(markdownStr, { allowMarkdown: true })).toEqual(
+      'This <code>code</code> on GitHub <em>is</em> so <strong>good</strong>!',
+    );
+    expect(format(markdownStr, { allowMarkdown: false })).toEqual(
+      'This code on GitHub is so good!',
+    );
+
+    const charRefStr = '&laquo;ABC&shy;DEF&nbsp;GH&raquo;';
+
+    expect(format(charRefStr, { allowMarkdown: true })).toEqual('«ABC\u00adDEF\u00a0GH»');
+    expect(format(charRefStr, { allowMarkdown: false })).toEqual('«ABC\u00adDEF\u00a0GH»');
   });
 });

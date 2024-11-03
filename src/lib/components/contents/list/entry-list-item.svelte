@@ -70,7 +70,7 @@
   {/if}
   <GridCell class="title">
     <span role="none">
-      {getEntryTitle(collection, entry, { useTemplate: true })}
+      {@html getEntryTitle(collection, entry, { useTemplate: true, allowMarkdown: true })}
     </span>
   </GridCell>
 </GridRow>
