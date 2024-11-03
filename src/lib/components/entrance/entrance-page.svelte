@@ -16,12 +16,10 @@
 
 <div role="none" class="container" inert={$user && $dataLoaded}>
   <div role="none" class="inner">
-    <img
-      loading="lazy"
-      src={$siteConfig?.logo_url || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
-      alt=""
-      class="logo"
-    />
+    {#if $siteConfig}
+      {@const logoURL = $siteConfig.logo_url}
+      <img src={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`} alt="" class="logo" />
+    {/if}
     <h1>Sveltia CMS</h1>
     {#if $siteConfigError}
       <div role="alert" class="message">

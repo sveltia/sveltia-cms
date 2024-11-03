@@ -21,8 +21,6 @@
    */
   export let config;
 
-  $: logoURL = $siteConfig?.logo_url;
-
   onMount(() => {
     initAppLocale();
     initSiteConfig(config);
@@ -49,11 +47,14 @@
 
 <svelte:head>
   <meta name="referrer" content="same-origin" />
-  <link
-    rel="icon"
-    href={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
-    type={logoURL ? (mime.getType(logoURL) ?? undefined) : 'image/svg+xml'}
-  />
+  {#if $siteConfig}
+    {@const logoURL = $siteConfig.logo_url}
+    <link
+      rel="icon"
+      href={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
+      type={logoURL ? (mime.getType(logoURL) ?? undefined) : 'image/svg+xml'}
+    />
+  {/if}
   {#if siteURL}
     <link href="{siteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
   {/if}
