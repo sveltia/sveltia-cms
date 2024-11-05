@@ -334,7 +334,7 @@ const fetchFileContents = async (fetchingFiles) => {
   const fetchingFileList = structuredClone(fetchingFiles);
   /** @type {any[][]} */
   const chunks = [];
-  const chunkSize = 500;
+  const chunkSize = 250;
   /** @type {any} */
   const results = {};
 
