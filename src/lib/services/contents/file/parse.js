@@ -60,7 +60,8 @@ export const parseEntryFile = async ({
     parserConfig: { extension, format, frontmatterDelimiter },
   },
 }) => {
-  text = text.trim();
+  // Normalize line breaks
+  text = text.trim().replace(/\r\n?/g, '\n');
 
   format ||= /** @type {FileFormat | undefined} */ (
     ['md', 'markdown'].includes(extension ?? '') || path.match(/\.(?:md|markdown)$/)
@@ -98,16 +99,13 @@ export const parseEntryFile = async ({
 
     if (format.match(/^(?:yaml|toml|json)-frontmatter$/)) {
       const [startDelimiter, endDelimiter] = getFrontMatterDelimiters(format, frontmatterDelimiter);
+      const sd = escapeRegExp(startDelimiter);
+      const ed = escapeRegExp(endDelimiter);
+      // Front matter matching: allow an empty head
+      const regex = new RegExp(`^${sd}$\\n(?:(?<head>.*?)$\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms');
+      const { head, body } = text.match(regex)?.groups ?? {};
 
-      const [, head, body = ''] =
-        text.match(
-          new RegExp(
-            `^${escapeRegExp(startDelimiter)}\\n(.+?)\\n${escapeRegExp(endDelimiter)}(?:\\n(.+))?`,
-            'ms',
-          ),
-        ) ?? [];
-
-      if (!head) {
+      if (!head && !body) {
         throw new Error('No front matter block found');
       }
 
