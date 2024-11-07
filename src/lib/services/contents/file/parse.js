@@ -102,7 +102,7 @@ export const parseEntryFile = async ({
       const sd = escapeRegExp(startDelimiter);
       const ed = escapeRegExp(endDelimiter);
       // Front matter matching: allow an empty head
-      const regex = new RegExp(`^${sd}$\\n(?:(?<head>.*?)$\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms');
+      const regex = new RegExp(`^${sd}\\n(?:(?<head>.*?)\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms');
       const { head, body } = text.match(regex)?.groups ?? {};
 
       if (!head && !body) {
