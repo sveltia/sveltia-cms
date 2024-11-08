@@ -8,6 +8,7 @@ import { initServerSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
+import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';
 import { sendRequest } from '$lib/services/utils/networking';
 
@@ -393,6 +394,13 @@ const fetchFileContents = async (fetchingFiles) => {
     `;
   };
 
+  dataLoadedProgress.set(0);
+
+  // Show a fake progressbar because the request waiting time is long
+  const dataLoadedProgressInterval = window.setInterval(() => {
+    dataLoadedProgress.update((progress = 0) => progress + 1);
+  }, fetchingFileList.length / 10);
+
   for (let i = 0; i < fetchingFileList.length; i += chunkSize) {
     chunks.push(fetchingFileList.slice(i, i + chunkSize));
   }
@@ -410,6 +418,9 @@ const fetchFileContents = async (fetchingFiles) => {
       Object.assign(results, result.repository);
     }),
   );
+
+  window.clearInterval(dataLoadedProgressInterval);
+  dataLoadedProgress.set(undefined);
 
   return Object.fromEntries(
     fetchingFiles.map(({ path, sha, size }, index) => {
