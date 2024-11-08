@@ -284,7 +284,11 @@ export const assetGroups = derived(
     assets = sortAssets(assets, _currentView?.sort);
     assets = filterAssets(assets, _currentView?.filter);
 
-    set(groupAssets(assets, _currentView?.group));
+    const groups = groupAssets(assets, _currentView?.group);
+
+    if (!equal(get(assetGroups), groups)) {
+      set(groups);
+    }
   },
 );
 

@@ -315,7 +315,11 @@ export const entryGroups = derived(
         entries = filterEntries(entries, collection, _currentView.filters);
       }
 
-      set(groupEntries(entries, collection, _currentView?.group));
+      const groups = groupEntries(entries, collection, _currentView?.group);
+
+      if (!equal(get(entryGroups), groups)) {
+        set(groups);
+      }
     }
   },
 );
