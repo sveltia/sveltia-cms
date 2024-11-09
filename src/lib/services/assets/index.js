@@ -344,13 +344,24 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     return undefined;
   }
 
-  let { internalPath } =
+  // eslint-disable-next-line prefer-const
+  let { internalPath, collectionName } =
     get(allAssetFolders).findLast((folder) =>
       publicPath.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
     ) ?? {};
 
   if (!internalPath) {
     return undefined;
+  }
+
+  // Find a global/uncategorized asset
+  if (!collectionName) {
+    const fullPath = savedPath.replace(new RegExp(`^${escapeRegExp(publicPath)}`), internalPath);
+    const globalAsset = get(allAssets).find((asset) => asset.path === fullPath);
+
+    if (globalAsset) {
+      return globalAsset;
+    }
   }
 
   if (entry && !collection) {
