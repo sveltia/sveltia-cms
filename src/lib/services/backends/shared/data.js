@@ -67,8 +67,8 @@ export const createFileList = (files) => {
  * default branch name.
  * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit - Function to
  * fetch the last commit’s SHA-1 hash and message.
- * @param {() => Promise<BaseFileListItem[]>} args.fetchFileList - Function to fetch the
- * repository’s complete file list.
+ * @param {(lastHash: string) => Promise<BaseFileListItem[]>} args.fetchFileList - Function to fetch
+ * the repository’s complete file list.
  * @param {(fetchingFiles: (BaseEntryListItem | BaseAssetListItem)[]) =>
  * Promise<RepositoryContentsMap>} args.fetchFileContents - Function to fetch the metadata of
  * entry/asset files as well as text file contents.
@@ -102,7 +102,7 @@ export const fetchAndParseFiles = async ({
     fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
   } else {
     // Get a complete file list first, and filter what’s managed in CMS
-    fileList = createFileList(await fetchFileList());
+    fileList = createFileList(await fetchFileList(lastHash));
     metaDB.set('last_commit_hash', lastHash);
   }
 

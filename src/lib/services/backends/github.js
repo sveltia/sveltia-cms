@@ -310,14 +310,15 @@ const fetchLastCommit = async () => {
 
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
+ * @param {string} [lastHash] - The last commit’s SHA-1 hash.
  * @returns {Promise<BaseFileListItem[]>} File list.
  */
-const fetchFileList = async () => {
+const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
 
   const result =
     /** @type {{ tree: { type: string, path: string, sha: string, size: number }[] }} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`)
+      await fetchAPI(`/repos/${owner}/${repo}/git/trees/${lastHash ?? branch}?recursive=1`)
     );
 
   return result.tree
