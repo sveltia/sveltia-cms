@@ -27,6 +27,14 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
 export const currentView = writable({ type: 'list' });
 
 /**
+ * Remove some Markdown syntax characters at the beginning of the string for proper sorting. This
+ * includes bold, italic and code that are parsed if included in the entry summary/title.
+ * @param {string} str - Original string.
+ * @returns {string} Modified string.
+ */
+const removeMarkdownChars = (str) => str.replace(/^[_*`]+/, '');
+
+/**
  * Sort the given entries.
  * @param {Entry[]} entries - Entry list.
  * @param {Collection} collection - Collection that the entries belong to.
@@ -80,7 +88,7 @@ const sortEntries = (entries, collection, { key, order }) => {
     }
 
     if (type === String) {
-      return compare(aValue, bValue);
+      return compare(removeMarkdownChars(aValue), removeMarkdownChars(bValue));
     }
 
     if (type === Date) {
