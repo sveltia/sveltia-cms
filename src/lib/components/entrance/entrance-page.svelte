@@ -1,4 +1,5 @@
 <script>
+  import { Progressbar } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
@@ -49,9 +50,7 @@
     {:else if !$dataLoaded}
       <div role="alert" class="message">{$_('loading_site_data')}</div>
       {#if $dataLoadedProgress !== undefined}
-        <div role="progressbar" aria-valuenow={$dataLoadedProgress}>
-          <div role="none" style:width={`${$dataLoadedProgress}%`}></div>
-        </div>
+        <Progressbar now={$dataLoadedProgress} />
       {/if}
     {/if}
   </div>
@@ -111,20 +110,6 @@
       font-size: var(--sui-font-size-default);
       line-height: 1.5;
       text-align: center;
-    }
-  }
-
-  [role='progressbar'] {
-    overflow: hidden;
-    border-radius: 16px;
-    width: 240px;
-    height: 8px;
-    background-color: var(--sui-secondary-background-color);
-
-    div {
-      height: 100%;
-      background-color: var(--sui-info-foreground-color);
-      transition: width 250ms;
     }
   }
 </style>
