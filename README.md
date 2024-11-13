@@ -137,7 +137,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Small footprint: The bundle size is less than 450 KB when minified and brotlied, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet. That’s the power of Svelte + Vite.
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API will follow.
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
-- Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65], ignoring the `search` configuration option. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
+- Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
 - Uses caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
@@ -152,7 +152,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
   - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
 - Provides a smoother user experience in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
-  - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry.
+  - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry. Or just hit the `Ctrl+S` (Windows/Linux) or `Command+S` (macOS) key to save your time.
   - The editor closes automatically when an entry is saved. This behaviour can be changed in the application settings.
 - Uploading files can be done with drag and drop[^20].
 - Users can upload multiple files at once to the Asset Library[^5].
@@ -1017,7 +1017,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^32]: Netlify/Decap CMS [#302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549)
 
-[^33]: Netlify/Decap CMS [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295)
+[^33]: Netlify/Decap CMS [#542](https://github.com/decaporg/decap-cms/issues/542), [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295)
 
 [^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138), [#5932](https://github.com/decaporg/decap-cms/discussions/5932)
 
