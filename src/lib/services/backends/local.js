@@ -215,7 +215,13 @@ const getAllFiles = async () => {
         }
 
         try {
-          availableFileList.push({ file: await handle.getFile(), path });
+          /** @type {File} */
+          let file = await handle.getFile();
+
+          // Clone the file immediately to avoid potential permission problems
+          file = new File([file], file.name, { type: file.type, lastModified: file.lastModified });
+
+          availableFileList.push({ file, path });
         } catch (/** @type {any} */ ex) {
           // eslint-disable-next-line no-console
           console.error(ex);
@@ -242,8 +248,17 @@ const getAllFiles = async () => {
       // The file path must be normalized, as certain non-ASCII characters (e.g. Japanese) can be
       // problematic particularly on macOS
       path: path.normalize(),
-      sha: await getHash(file),
       size: file.size,
+      sha: await (() => {
+        try {
+          return getHash(file);
+        } catch (/** @type {any} */ ex) {
+          // eslint-disable-next-line no-console
+          console.error(ex);
+        }
+
+        return '';
+      })(),
     })),
   );
 };
@@ -258,7 +273,13 @@ const fetchFiles = async () => {
   // Load all entry text content
   await Promise.all(
     entryFiles.map(async (entryFile) => {
-      entryFile.text = await readAsText(/** @type {File} */ (entryFile.file));
+      try {
+        entryFile.text = await readAsText(/** @type {File} */ (entryFile.file));
+      } catch (/** @type {any} */ ex) {
+        entryFile.text = '';
+        // eslint-disable-next-line no-console
+        console.error(ex);
+      }
     }),
   );
 
