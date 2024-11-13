@@ -106,9 +106,9 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 140+ of them, or 245+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 140+ of them, or 250+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 150 issues by GA, 250 or all relevant and fixable issues in a future release
-  - Note: Issues include both feature requests and bug reports; we also track [their discussions](https://github.com/decaporg/decap-cms/discussions)
+  - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from clients and regular users
 - Implementing our own enhancement ideas for every part of the product
@@ -140,7 +140,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65], ignoring the `search` configuration option. It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
-- Using caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
+- Uses caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
 - No typing lag on input widgets, especially within nested lists and objects[^77].
 
@@ -298,6 +298,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The preview shows both the RGB(A) hex value and the `rgb()` function notation.
 - DateTime
   - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry[^90].
+  - User’s local time is not saved in UTC unless the `picker_utc` option is `true`[^150].
 - Hidden
   - The `default` value supports the following template tags:
     - `{{locale}}`: The current locale code[^101].
@@ -408,11 +409,11 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern alternative. It’s ready to be used as a drop-in replacement for Netlify/Decap CMS in some casual use case scenarios with a [single line of code update](#migration).
 
-However, 100% feature parity is not planned, and some features are still missing or will not be added due to deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
+However, 100% feature parity is not planned, and some features are still missing or will not be added due to performance, deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We may implement a high-performance Git Gateway alternative in the future. We may also support the other platforms if/when their APIs improve to allow the CMS to fetch multiple files at once.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We may implement a high-performance Git Gateway alternative in the future. We may also support the other platforms if/when their APIs improve to allow the CMS to fetch multiple entries at once.
 - **The Netlify Identity widget will not be supported**, as it’s not useful without Git Gateway. We may be able to support it in the future if/when a Git Gateway alternative is created.
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
@@ -438,7 +439,7 @@ These limitations are expected to be resolved before or shortly after GA:
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | Code | Not yet supported. |
-| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes soon. |
+| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
 | File/Image | Field-specific media folders and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | Map | Not yet supported. |
 | Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
@@ -1246,6 +1247,8 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^147]: Netlify/Decap CMS [#3583](https://github.com/decaporg/decap-cms/issues/3583)
 
-[^148]: Netlify/Decap CMS [#531](https://github.com/decaporg/decap-cms/issues/531)
+[^148]: Netlify/Decap CMS [#531](https://github.com/decaporg/decap-cms/issues/531), [#1282](https://github.com/decaporg/decap-cms/issues/1282), [#1877](https://github.com/decaporg/decap-cms/issues/1877)
 
 [^149]: Netlify/Decap CMS [#13](https://github.com/decaporg/decap-cms/issues/13) — The issue appears to have been closed without a fix being available.
+
+[^150]: Netlify/Decap CMS [#7319](https://github.com/decaporg/decap-cms/issues/7319)
