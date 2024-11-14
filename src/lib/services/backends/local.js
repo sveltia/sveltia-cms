@@ -249,9 +249,10 @@ const getAllFiles = async () => {
       // problematic particularly on macOS
       path: path.normalize(),
       size: file.size,
-      sha: await (() => {
+      sha: await (async () => {
         try {
-          return getHash(file);
+          // Need `await` here to catch any exception
+          return await getHash(file);
         } catch (/** @type {any} */ ex) {
           // eslint-disable-next-line no-console
           console.error(ex);
