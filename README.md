@@ -432,7 +432,7 @@ These limitations are expected to be resolved before or shortly after GA:
 | Localization | The application UI is only available in English and Japanese at this time. |
 | Media Libraries | Cloudinary and Uploadcare are not yet supported. |
 | Workflow | Editorial Workflow and Open Authoring are not yet supported and will be implemented after the 1.0 release. |
-| Collections | Nested Collections are not yet supported and will be implemented after the 1.0 release. |
+| Collections | Nested Collections (beta) are not yet supported and will be implemented after the 1.0 release. |
 | Widgets | Custom widgets are not yet supported. See the table below for other limitations. |
 | Customizations | Custom previews and event subscriptions are not yet supported. |
 
@@ -467,7 +467,7 @@ Alternatively, you can probably use one of the [Netlify/Decap CMS templates](htt
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any custom widget, custom preview or plugin, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository. Your new `<script>` tag is:
+Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository. Your new `<script>` tag is:
 
 ```html
 <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
@@ -743,7 +743,7 @@ It’s simple — just specify `{{uuid}}` (full UUID v4), `{{uuid_short}}` (last
 
 ### Editing data files with a top-level list
 
-Sveltia CMS allows you to edit and save a list at the top-level of a data file, without a field name. All you need to do is create a single List field with the new `root` option set to `true`. The configuration below reproduces a [Jekyll data file example](https://jekyllrb.com/docs/datafiles/#example-list-of-members):
+Sveltia CMS allows you to edit and save a list at the top-level of a data file, without a field name. All you need to do is create a single List field with the new `root` option set to `true`. The configuration below reproduces [this Jekyll data file example](https://jekyllrb.com/docs/datafiles/#example-list-of-members):
 
 ```yaml
 collections:
