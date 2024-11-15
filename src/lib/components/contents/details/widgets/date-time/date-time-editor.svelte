@@ -98,10 +98,7 @@
 
 <div role="none">
   <input
-    {...{
-      // @see https://github.com/sveltejs/svelte/issues/3921
-      type: dateOnly ? 'date' : timeOnly ? 'time' : 'datetime-local',
-    }}
+    type={dateOnly ? 'date' : timeOnly ? 'time' : 'datetime-local'}
     bind:value={inputValue}
     {readonly}
     aria-readonly={readonly}
