@@ -204,11 +204,8 @@ export const getEntriesByCollection = (collectionName) => {
 
   const filterField = filter?.field;
 
-  const filterValues = filter?.value
-    ? Array.isArray(filter.value)
-      ? filter.value
-      : [filter.value]
-    : [];
+  const filterValues =
+    filter?.value === undefined ? [] : Array.isArray(filter.value) ? filter.value : [filter.value];
 
   return get(allEntries).filter((entry) => {
     if (!getCollectionsByEntry(entry).some(({ name }) => name === collectionName)) {
