@@ -202,12 +202,28 @@ export const getEntriesByCollection = (collectionName) => {
     _i18n: { defaultLocale: locale },
   } = collection;
 
-  return get(allEntries).filter(
-    (entry) =>
-      getCollectionsByEntry(entry).some((_collection) => _collection.name === collectionName) &&
-      (!filter ||
-        getPropertyValue({ entry, locale, collectionName, key: filter.field }) === filter.value),
-  );
+  const filterField = filter?.field;
+
+  // eslint-disable-next-line no-nested-ternary
+  const filterValues = filter?.value
+    ? Array.isArray(filter.value)
+      ? filter.value
+      : [filter.value]
+    : [];
+
+  return get(allEntries).filter((entry) => {
+    if (!getCollectionsByEntry(entry).some(({ name }) => name === collectionName)) {
+      return false;
+    }
+
+    if (!filterField) {
+      return true;
+    }
+
+    return filterValues.includes(
+      getPropertyValue({ entry, locale, collectionName, key: filterField }),
+    );
+  });
 };
 
 /**
