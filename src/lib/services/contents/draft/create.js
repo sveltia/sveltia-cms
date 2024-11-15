@@ -62,7 +62,6 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
     const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
     newContent[keyPath] =
-      // eslint-disable-next-line no-nested-ternary
       valueType === 'int'
         ? Number.parseInt(value, 10)
         : valueType === 'float'

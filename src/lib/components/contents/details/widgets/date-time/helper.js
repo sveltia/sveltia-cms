@@ -141,7 +141,6 @@ export const getInputValue = (currentValue, fieldConfig) => {
   }
 
   // If the current value is the standard format, return it as is
-  // eslint-disable-next-line no-nested-ternary
   const [value] = dateOnly
     ? (currentValue?.match(/^\d{4}-[01]\d-[0-3]\d\b/) ?? [])
     : timeOnly

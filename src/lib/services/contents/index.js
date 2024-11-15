@@ -204,7 +204,6 @@ export const getEntriesByCollection = (collectionName) => {
 
   const filterField = filter?.field;
 
-  // eslint-disable-next-line no-nested-ternary
   const filterValues = filter?.value
     ? Array.isArray(filter.value)
       ? filter.value

@@ -54,7 +54,6 @@
       const count = $listedEntries.length;
 
       $announcedPageStatus = $_(
-        // eslint-disable-next-line no-nested-ternary
         count > 1
           ? 'viewing_x_collection_many_entries'
           : count === 1

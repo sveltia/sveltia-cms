@@ -19,13 +19,11 @@
   <div
     class="wrapper"
     aria-label={$_(
-      // eslint-disable-next-line no-nested-ternary
       hasMin && hasMax
         ? count === 1
           ? 'character_counter.min_max.one'
           : 'character_counter.min_max.many'
-        : // eslint-disable-next-line no-nested-ternary
-          hasMin
+        : hasMin
           ? count === 1
             ? 'character_counter.min.one'
             : 'character_counter.min.many'

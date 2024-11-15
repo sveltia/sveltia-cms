@@ -70,13 +70,11 @@ export const getI18nConfig = (collection, file) => {
     i18nEnabled,
     saveAllLocales,
     locales: i18nEnabled ? locales : ['_default'],
-    // eslint-disable-next-line no-nested-ternary
     defaultLocale: !i18nEnabled
       ? '_default'
       : defaultLocale && locales.includes(defaultLocale)
         ? defaultLocale
         : locales[0],
-    // eslint-disable-next-line no-nested-ternary
     structure: !file
       ? structure
       : file.file.includes('{{locale}}')

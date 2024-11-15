@@ -10,7 +10,6 @@
   import { focusedAsset, selectedAssetFolder, selectedAssets } from '$lib/services/assets';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
 
-  // eslint-disable-next-line no-nested-ternary
   $: assets = $selectedAssets.length ? $selectedAssets : $focusedAsset ? [$focusedAsset] : [];
 </script>
 
@@ -29,7 +28,6 @@
     {assets}
     buttonDescription={$_(assets.length === 1 ? 'delete_selected_asset' : 'delete_selected_assets')}
     dialogDescription={$_(
-      // eslint-disable-next-line no-nested-ternary
       assets.length === 1
         ? 'confirm_deleting_selected_asset'
         : assets.length === $listedAssets.length

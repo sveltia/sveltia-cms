@@ -25,14 +25,12 @@
       values: {
         terms: $searchTerms,
         entries:
-          // eslint-disable-next-line no-nested-ternary
           entryCount > 1
             ? $_('many_entries', { values: { count: entryCount } })
             : entryCount === 1
               ? $_('one_entry')
               : $_('no_entries'),
         assets:
-          // eslint-disable-next-line no-nested-ternary
           assetCount > 1
             ? $_('many_assets', { values: { count: assetCount } })
             : assetCount === 1

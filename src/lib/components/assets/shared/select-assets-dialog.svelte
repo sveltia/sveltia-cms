@@ -42,7 +42,6 @@
     $selectedCollection?._assetFolder ?? /** @type {any} */ ({}));
   $: showCollectionAssets = !!internalPath && !entryRelative;
   $: showEntryAssets = !!entry && entryRelative;
-  // eslint-disable-next-line no-nested-ternary
   $: libraryName = showEntryAssets
     ? 'entry-assets'
     : showCollectionAssets

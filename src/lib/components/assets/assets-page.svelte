@@ -61,7 +61,6 @@
       await sleep(100);
 
       $announcedPageStatus = $_(
-        // eslint-disable-next-line no-nested-ternary
         count > 1
           ? 'viewing_x_asset_folder_many_assets'
           : count === 1
@@ -119,7 +118,6 @@
 <Toast bind:show={$assetUpdatesToast.saved}>
   <Alert status="success">
     {$_(
-      // eslint-disable-next-line no-nested-ternary
       $assetUpdatesToast.published
         ? $assetUpdatesToast.count === 1
           ? 'asset_saved_and_published'

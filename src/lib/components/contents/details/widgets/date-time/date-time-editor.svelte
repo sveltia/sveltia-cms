@@ -100,7 +100,6 @@
   <input
     {...{
       // @see https://github.com/sveltejs/svelte/issues/3921
-      // eslint-disable-next-line no-nested-ternary
       type: dateOnly ? 'date' : timeOnly ? 'time' : 'datetime-local',
     }}
     bind:value={inputValue}

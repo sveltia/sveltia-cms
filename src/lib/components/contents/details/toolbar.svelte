@@ -139,7 +139,6 @@
         {$_('editing_x_in_x', {
           values: {
             collection: collectionLabel,
-            // eslint-disable-next-line no-nested-ternary
             entry: collectionFile
               ? collectionFile.label || collectionFile.name
               : originalEntry

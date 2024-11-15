@@ -32,7 +32,6 @@
                 <span
                   class="count"
                   aria-label="({$_(
-                    // eslint-disable-next-line no-nested-ternary
                     count > 1 ? 'many_entries' : count === 1 ? 'one_entry' : 'no_entries',
                     { values: { count } },
                   )})"

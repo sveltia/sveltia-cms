@@ -524,7 +524,6 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
    * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
    * @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
    */
-  // eslint-disable-next-line no-nested-ternary
   const canonicalSlug = !localizedSlugs
     ? undefined
     : canonicalSlugTemplate === '{{slug}}'

@@ -88,7 +88,6 @@
 >
   <p>
     {$_(
-      // eslint-disable-next-line no-nested-ternary
       usedEntries.length === 0
         ? 'enter_new_name_for_asset'
         : usedEntries.length === 1

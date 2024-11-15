@@ -143,7 +143,6 @@
               <Divider />
               <MenuItem
                 label={$_(
-                  // eslint-disable-next-line no-nested-ternary
                   isLocaleEnabled
                     ? 'disable_x_locale'
                     : currentValues[$thisPane.locale]
