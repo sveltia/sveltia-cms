@@ -452,7 +452,7 @@ Found a compatibility issue or other missing feature? Let us know by [filing an 
 
 ### New users
 
-Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Then migrate to Sveltia CMS as described below.
+Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Make sure you choose the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend (and ignore the Choosing a Backend page). Then migrate to Sveltia CMS as described below.
 
 As the product evolves, we’ll implement a built-in configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
 
@@ -493,7 +493,7 @@ That said, we strongly recommend testing your new Sveltia CMS instance first on 
 
 #### Migrating from Git Gateway backend
 
-Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub backend](https://decapcms.org/docs/github-backend/) or [GitLab backend](https://decapcms.org/docs/gitlab-backend/) instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
+Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
 
 To allow multiple users to edit content, simply invite people to your GitHub repository with the write role assigned.
 
