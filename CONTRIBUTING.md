@@ -18,4 +18,4 @@ Tips are always welcome! The project hasn’t set up a sponsorship program, but 
 
 ## Other things you can do
 
-Last but not least, don’t forget to star this project on Github and spread the word so more users can benefit from a better CMS experience!
+Last but not least, don’t forget to star this project on GitHub and spread the word so more users can benefit from a better CMS experience!
