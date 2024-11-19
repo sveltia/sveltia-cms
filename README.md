@@ -40,6 +40,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
 - [Compatibility](#compatibility)
   - [Features not to be implemented](#features-not-to-be-implemented)
   - [Current limitations](#current-limitations)
+  - [Other notes](#other-notes)
 - [Getting started](#getting-started)
   - [New users](#new-users)
   - [Migration](#migration)
@@ -539,7 +540,7 @@ If you get an “Authentication Aborted” error when trying to sign in to GitHu
 
 ### Working with a local Git repository
 
-Sveltia CMS has simplified the local repository workflow by removing the need for additional configuration (the `local_backend` property) and a proxy server, thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
+Sveltia CMS has simplified the local repository workflow by removing the need for additional configuration (the `local_backend` property) and a proxy server (`netlify-cms-proxy-server` or `decap-server`), thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 Basically there are only two differences from Netlify/Decap CMS: you don’t need to run the proxy server, and you need to select your project folder in the browser instead. Here are the detailed steps:
 
@@ -563,7 +564,7 @@ Keep in mind that, as with Netlify/Decap CMS, the local repository support in Sv
 
 Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates. This manual work will hopefully be unnecessary once the proposed `FileSystemObserver` API, which is being [implemented in Chromium](https://issues.chromium.org/issues/40105284) behind a flag, becomes available.
 
-If you have migrated from Netlify/Decap CMS and are happy with the local workflow of Sveltia CMS, you can remove the `local_backend` property from your configuration and uninstall the proxy server (`netlify-cms-proxy-server` or `decap-server`). If you have configured a custom port number with the `.env` file, you can remove it as well.
+If you have migrated from Netlify/Decap CMS and are happy with the local workflow of Sveltia CMS, you can remove the `local_backend` property from your configuration and uninstall the proxy server. If you have configured a custom port number with the `.env` file, you can remove it as well.
 
 ### Enabling local development in Brave
 
