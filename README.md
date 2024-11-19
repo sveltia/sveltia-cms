@@ -444,9 +444,11 @@ These limitations are expected to be resolved before or shortly after GA:
 | Map | Not yet supported. |
 | Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
 
-We also plan to provide partial compatibility with new features added to Static CMS, such as the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue).
+### Other notes
 
-Found a compatibility issue or other missing feature? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
+- The GitLab backend requires GitLab 16.3 or later.
+- We plan to provide partial compatibility with now-discontinued Static CMS, such as the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue).
+- Found a compatibility issue or other missing feature? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
 
 ## Getting started
 
