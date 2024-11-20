@@ -97,7 +97,7 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 - Emerging as the leading open source offering in the Git-based CMS market
 - Empowering small businesses and individuals who need a simple, free, yet powerful CMS solution
 - Extending its capabilities as digital asset management (DAM) software
-- Showcasing the vast potential of the Svelte framework
+- Showcasing the power of Svelte and UX engineering
 
 ## Development status
 
