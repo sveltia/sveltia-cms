@@ -193,7 +193,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 - Developers can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
 - Service status checks are performed frequently and an incident notification is displayed prominently.
-- Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu.
+- Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend[^115].
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
@@ -201,7 +201,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 ### Better i18n support
 
-Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect first-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [multicultural city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
+Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect best-in-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [multicultural city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
 
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
