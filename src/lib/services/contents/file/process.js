@@ -134,10 +134,11 @@ const prepareEntry = async ({ file, entries, errors }) => {
     return;
   }
 
-  // Skip Hugo’s special index page that shouldn’t appear in a folder collection, unless the
-  // collection’s `path` ends with `_index` and the extension is `md`.
+  // Skip Hugo’s special `_index.md` file that shouldn’t appear in a folder collection, unless the
+  // collection’s `path` ends with `_index` and the extension is `md`. Localized index files like
+  // `_index.en.md` are also excluded.
   if (
-    getPathInfo(path).basename === '_index.md' &&
+    getPathInfo(path).basename.match(/^_index(?:\..+)?\.md$/) &&
     !(subPath?.split('/').pop() === '_index' && extension === 'md') &&
     !fileName
   ) {
