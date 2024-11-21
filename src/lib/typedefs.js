@@ -214,11 +214,18 @@
  */
 
 /**
- * File parser/formatter configuration.
- * @typedef {object} ParserConfig
- * @property {FileExtension} [extension] - File extension.
- * @property {FileFormat} [format] - File format.
- * @property {string | string[]} [frontmatterDelimiter] - Frontmatter delimiter.
+ * Entry file configuration.
+ * @typedef {object} FileConfig
+ * @property {FileExtension} extension - File extension.
+ * @property {FileFormat} format - File format.
+ * @property {string} [basePath] - Normalized `folder` collection option, relative to the project
+ * root folder. Folder collection only.
+ * @property {string} [subPath] - Normalized `path` collection option, relative to `basePath`.
+ * Folder collection only.
+ * @property {RegExp} [fullPathRegEx] - Regular expression that matches full entry paths, taking the
+ * i18n structure into account. Folder collection only.
+ * @property {string} [fullPath] - File path of the default locale. File collection only.
+ * @property {[string, string]} [fmDelimiters] - Front matter delimiters.
  * @property {boolean} [yamlQuote] - YAML quote configuration.
  */
 
@@ -230,7 +237,6 @@
  * @property {Record<LocaleCode, string>} [filePathMap] - File path map. The key is a locale, and
  * the value is the corresponding file path. File collection only.
  * @property {string} [folderPath] - Folder path. Folder/entry collection only.
- * @property {ParserConfig} parserConfig - File parser/formatter configuration.
  */
 
 /**
@@ -375,7 +381,7 @@
  * @property {boolean} [publish] - Whether to hide the publishing control UI for Editorial Workflow.
  * @property {FileExtension} [extension] - File extension.
  * @property {FileFormat} [format] - File format.
- * @property {string | string[]} [frontmatter_delimiter] - Delimiters used for the Frontmatter
+ * @property {string | string[]} [frontmatter_delimiter] - Delimiters used for the front matter
  * format.
  * @property {boolean} [yaml_quote] - Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`.
@@ -403,20 +409,40 @@
 
 /**
  * Extra properties for a collection.
- * @typedef {object} ExtraCollectionProps
- * @property {ParserConfig} _parserConfig - File parser/formatter configuration.
+ * @typedef {object} CollectionExtraProps
  * @property {I18nConfig} _i18n - Normalized i18n configuration combined with the top-level
  * configuration.
- * @property {Record<string, CollectionFile>} [_fileMap] - File map with normalized collection file
- * definitions. The key is a file identifier. File collection only.
  * @property {CollectionAssetFolder} [_assetFolder] - Asset folder configuration.
+ */
+
+/**
+ * Extra properties for a folder/entry collection.
+ * @typedef {object} EntryCollectionExtraProps
+ * @property {FileConfig} _file - Entry file configuration.
  * @property {FieldKeyPath} [_thumbnailFieldName] - Key path to an entry thumbnail. The `thumbnail`
- * option or the first image field name. Folder collection only.
+ * option or the first image field name.
+ */
+
+/**
+ * A folder/entry collection definition.
+ * @typedef {RawCollection & CollectionExtraProps & EntryCollectionExtraProps} EntryCollection
+ */
+
+/**
+ * Extra properties for a file collection.
+ * @typedef {object} FileCollectionExtraProps
+ * @property {Record<string, CollectionFile>} _fileMap - File map with normalized collection file
+ * definitions. The key is a file identifier.
+ */
+
+/**
+ * A file collection definition.
+ * @typedef {RawCollection & CollectionExtraProps & FileCollectionExtraProps} FileCollection
  */
 
 /**
  * A collection definition.
- * @typedef {RawCollection & ExtraCollectionProps} Collection
+ * @typedef {EntryCollection | FileCollection} Collection
  */
 
 /**
@@ -438,7 +464,7 @@
 /**
  * Extra properties for a collection file.
  * @typedef {object} ExtraCollectionFileProps
- * @property {string} _path - File path of the default locale with `{{locale}}` replaced.
+ * @property {FileConfig} _file - Entry file configuration.
  * @property {I18nConfig} _i18n - Normalized i18n configuration combined with the top-level and
  * collection-level configuration.
  */
@@ -1063,4 +1089,18 @@
  * @property {string} extension - File extension.
  * @property {FileParser} parser - Parser method.
  * @property {FileFormatter} formatter - Formatter method.
+ */
+
+/**
+ * Options for the `fillSlugTemplate` method.
+ * @typedef {object} FillSlugTemplateOptions
+ * @property {'preview_path' | 'media_folder'} [type] - Slug type.
+ * @property {Collection} collection - Entry collection.
+ * @property {FlattenedEntryContent} content - Entry content for the default locale.
+ * @property {string} [currentSlug] - Entry slug already created for the path.
+ * @property {string} [entryFilePath] - File path of the entry. Required if the `type` is
+ * `preview_path` or `media_folder`.
+ * @property {LocaleCode} [locale] - Locale. Required if the `type` is `preview_path`.
+ * @property {Record<string, string>} [dateTimeParts] - Map of date/time parts. Required if the
+ * `type` is `preview_path`.
  */

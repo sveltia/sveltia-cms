@@ -19,7 +19,6 @@ import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { getFieldConfig } from '$lib/services/contents/entry';
-import { getFileExtension } from '$lib/services/contents/file';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { fillSlugTemplate } from '$lib/services/contents/slug';
 import { user } from '$lib/services/user';
@@ -28,21 +27,22 @@ import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/fil
 
 /**
  * Get the internal/public asset path configuration for the entry assets.
- * @param {any} fillSlugOptions - Options to be passed to {@link fillSlugTemplate}.
+ * @param {FillSlugTemplateOptions} fillSlugOptions - Options for {@link fillSlugTemplate}.
  * @returns {{ internalBaseAssetFolder: string, internalAssetFolder: string, publicAssetFolder:
  * string }} Determined paths. `internalBaseAssetFolder` is the collection-defined path, while
  * `internalAssetFolder` may contain a sub path when the asset is entry-relative.
  */
 export const getEntryAssetFolderPaths = (fillSlugOptions) => {
-  const {
-    collection: {
-      path: entryPath,
-      _i18n: { structure },
-      _assetFolder,
-    },
-  } = fillSlugOptions;
+  const { collection } = fillSlugOptions;
 
-  const subPath = entryPath?.match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
+  const {
+    folder,
+    _i18n: { structure },
+    _assetFolder,
+  } = collection;
+
+  const subPath = folder ? /** @type {EntryCollection} */ (collection)._file.subPath : undefined;
+  const subPathFirstPart = subPath?.match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
   const isMultiFolders = structure === 'multiple_folders';
   const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];
 
@@ -60,7 +60,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
       fillSlugTemplate(
         createPath([
           internalPath,
-          isMultiFolders || entryPath?.includes('/') ? subPath : undefined,
+          isMultiFolders || subPath?.includes('/') ? subPathFirstPart : undefined,
         ]),
         fillSlugOptions,
       ),
@@ -77,9 +77,9 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
                   // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md`
                   // and the asset path would be `{collection}/{slug}/{file}.jpg`
                   createPath([
-                    ...Array((entryPath?.match(/\//g) ?? []).length + 1).fill('..'),
+                    ...Array((subPath?.match(/\//g) ?? []).length + 1).fill('..'),
                     publicPath,
-                    subPath,
+                    subPathFirstPart,
                   ])
                 : publicPath,
               fillSlugOptions,
@@ -101,45 +101,39 @@ const createEntryPath = (draft, locale, slug) => {
   const { collection, collectionFile, originalEntry, currentValues } = draft;
 
   if (collectionFile) {
-    const path = collectionFile.file;
-
-    return path.includes('{{locale}}') ? path.replace('{{locale}}', locale) : path;
+    return collectionFile.file.replace('{{locale}}', locale);
   }
 
   if (originalEntry?.locales[locale]) {
     return originalEntry.locales[locale].path;
   }
 
-  const { defaultLocale, structure } = collection._i18n;
-  const collectionFolder = collection.folder;
+  const {
+    _file: { basePath, subPath, extension },
+    _i18n: { defaultLocale, structure },
+  } = /** @type {EntryCollection} */ (collection);
 
   /**
    * Support folder collections path.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    */
-  const path = collection.path
-    ? fillSlugTemplate(collection.path, {
-        collection,
+  const path = subPath
+    ? fillSlugTemplate(subPath, {
+        // eslint-disable-next-line object-shorthand
+        collection: /** @type {EntryCollection} */ (collection),
         locale,
         content: currentValues[defaultLocale],
         currentSlug: slug,
       })
     : slug;
 
-  const extension = getFileExtension({
-    format: collection.format,
-    extension: collection.extension,
-  });
-
-  const defaultOption = `${collectionFolder}/${path}.${extension}`;
-
   const pathOptions = {
-    multiple_folders: `${collectionFolder}/${locale}/${path}.${extension}`,
-    multiple_files: `${collectionFolder}/${path}.${locale}.${extension}`,
-    single_file: defaultOption,
+    multiple_folders: `${basePath}/${locale}/${path}.${extension}`,
+    multiple_files: `${basePath}/${path}.${locale}.${extension}`,
+    single_file: `${basePath}/${path}.${extension}`,
   };
 
-  return pathOptions[structure] || pathOptions.single_file;
+  return pathOptions[structure] ?? pathOptions.single_file;
 };
 
 /**
@@ -318,13 +312,12 @@ export const createSavingEntryData = async ({
   currentLocales,
   localizedEntryMap,
 }) => {
-  const { name: collectionName, _parserConfig } = collection;
+  const { name: collectionName } = collection;
   const fileName = collectionFile?.name;
-  const { extension, format } = _parserConfig;
-  const isTomlOutput = extension === 'toml' || format === 'toml' || format === 'toml-frontmatter';
 
   const {
     fields = [],
+    _file,
     _i18n: {
       i18nEnabled,
       locales,
@@ -332,8 +325,9 @@ export const createSavingEntryData = async ({
       structure,
       canonicalSlug: { key: canonicalSlugKey },
     },
-  } = collectionFile ?? collection;
+  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
+  const isTomlOutput = ['toml', 'toml-frontmatter'].includes(_file.format);
   const _hasRootListField = hasRootListField(fields);
 
   /**
@@ -389,8 +383,7 @@ export const createSavingEntryData = async ({
             ]),
           )
         : finalizeContent(content),
-      path,
-      config: _parserConfig,
+      _file,
     });
 
     changes.push({ action, slug, path, data });
@@ -403,12 +396,7 @@ export const createSavingEntryData = async ({
 
         if (currentLocales[locale]) {
           const action = isNew || !originalLocales[locale] ? 'create' : 'update';
-
-          const data = await formatEntryFile({
-            content: finalizeContent(content),
-            path,
-            config: _parserConfig,
-          });
+          const data = await formatEntryFile({ content: finalizeContent(content), _file });
 
           changes.push({ action, slug, path, data });
           localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
@@ -470,7 +458,11 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     },
   } = collectionFile ?? collection;
 
-  const fillSlugOptions = { collection, content: currentValues[defaultLocale] };
+  const fillSlugOptions = {
+    // eslint-disable-next-line object-shorthand
+    collection: /** @type {EntryCollection} */ (collection),
+    content: currentValues[defaultLocale],
+  };
 
   /**
    * The slug of the default locale.
@@ -500,7 +492,8 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
               locale === defaultLocale
                 ? defaultLocaleSlug
                 : fillSlugTemplate(slugTemplate, {
-                    collection,
+                    // eslint-disable-next-line object-shorthand
+                    collection: /** @type {EntryCollection} */ (collection),
                     locale,
                     content: {
                       // Merge the default locale content and localized content

@@ -4,6 +4,7 @@ import * as TOML from 'smol-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file';
+import { getCollection } from '$lib/services/contents';
 
 /**
  * Parse a JSON document using the built-in method.
@@ -28,13 +29,9 @@ const parseYAML = (str) => YAML.parse(str);
 /**
  * Determine the Markdown front matter serialization format by checking a delimiter in the content.
  * @param {string} text - File content.
- * @returns {FrontMatterFormat | undefined} One of the formats or `undefined` if undetermined.
+ * @returns {FrontMatterFormat} One of the formats.
  */
 const detectFrontMatterFormat = (text) => {
-  if (text.startsWith('---')) {
-    return 'yaml-frontmatter';
-  }
-
   if (text.startsWith('+++')) {
     return 'toml-frontmatter';
   }
@@ -43,7 +40,7 @@ const detectFrontMatterFormat = (text) => {
     return 'json-frontmatter';
   }
 
-  return undefined;
+  return 'yaml-frontmatter';
 };
 
 /**
@@ -52,32 +49,29 @@ const detectFrontMatterFormat = (text) => {
  * @returns {Promise<any>} Parsed content.
  * @throws {Error} When the content could not be parsed.
  */
-export const parseEntryFile = async ({
-  text = '',
-  path,
-  folder: {
-    filePathMap,
-    parserConfig: { extension, format, frontmatterDelimiter },
-  },
-}) => {
+export const parseEntryFile = async ({ text = '', path, folder: { collectionName, fileName } }) => {
+  const collection = getCollection(collectionName);
+
+  const collectionFile = fileName
+    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
+    : undefined;
+
+  if (!collection) {
+    throw new Error('Collection not found');
+  }
+
+  if (fileName && !collectionFile) {
+    throw new Error('Collection file not found');
+  }
+
   // Normalize line breaks
   text = text.trim().replace(/\r\n?/g, '\n');
 
-  format ||= /** @type {FileFormat | undefined} */ (
-    ['md', 'markdown'].includes(extension ?? '') || path.match(/\.(?:md|markdown)$/)
-      ? detectFrontMatterFormat(text)
-      : extension || Object.values(filePathMap ?? {})[0]?.match(/\.([^.]+)$/)?.[1]
-  );
+  const {
+    _file: { format: _format, fmDelimiters },
+  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
-  if (format === 'frontmatter') {
-    format = detectFrontMatterFormat(text);
-  }
-
-  // Ignore files with unknown format
-  if (!format) {
-    throw new Error(`${path} could not be parsed due to an unknown format`);
-  }
-
+  const format = _format === 'frontmatter' ? detectFrontMatterFormat(text) : _format;
   const customParser = get(customFileFormats)[format]?.parser;
 
   if (customParser) {
@@ -98,7 +92,10 @@ export const parseEntryFile = async ({
     }
 
     if (format.match(/^(?:yaml|toml|json)-frontmatter$/)) {
-      const [startDelimiter, endDelimiter] = getFrontMatterDelimiters(format, frontmatterDelimiter);
+      const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
+        ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
+        : fmDelimiters) ?? ['---', '---'];
+
       const sd = escapeRegExp(startDelimiter);
       const ed = escapeRegExp(endDelimiter);
       // Front matter matching: allow an empty head

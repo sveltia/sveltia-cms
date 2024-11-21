@@ -373,7 +373,8 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
     internalPath = fillSlugTemplate(internalPath, {
       type: 'media_folder',
-      collection,
+      // eslint-disable-next-line object-shorthand
+      collection: /** @type {EntryCollection} */ (collection),
       content: flatten(content),
       currentSlug: entry.slug,
       entryFilePath: path,

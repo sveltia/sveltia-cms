@@ -187,32 +187,15 @@ siteConfig.subscribe((config) => {
   const _allEntryFolders = [
     ...collections
       .filter(({ folder, hide, divider }) => !!folder && !hide && !divider)
-      .map(
-        ({
-          name: collectionName,
-          folder: folderPath,
-          extension,
-          format,
-          frontmatter_delimiter: frontmatterDelimiter,
-          yaml_quote: yamlQuote,
-        }) => ({
-          collectionName,
-          folderPath: stripSlashes(/** @type {string} */ (folderPath)),
-          parserConfig: { extension, format, frontmatterDelimiter, yamlQuote },
-        }),
-      )
+      .map(({ name: collectionName, folder }) => ({
+        collectionName,
+        folderPath: stripSlashes(/** @type {string} */ (folder)),
+      }))
       .sort((a, b) => compare(a.folderPath ?? '', b.folderPath ?? '')),
     ...collections
       .filter(({ files, hide, divider }) => !!files && !hide && !divider)
       .map((collection) => {
-        const {
-          name: collectionName,
-          files,
-          extension,
-          format,
-          frontmatter_delimiter: frontmatterDelimiter,
-          yaml_quote: yamlQuote,
-        } = collection;
+        const { name: collectionName, files } = collection;
 
         return (files ?? []).map((file) => {
           const path = stripSlashes(file.file);
@@ -228,7 +211,6 @@ siteConfig.subscribe((config) => {
                   ]),
                 )
               : { _default: path },
-            parserConfig: { extension, format, frontmatterDelimiter, yamlQuote },
           };
         });
       })

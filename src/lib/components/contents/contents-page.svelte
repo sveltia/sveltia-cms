@@ -47,8 +47,12 @@
       return; // Not Found
     }
 
-    const { name: collectionName, label, create, _fileMap } = $selectedCollection;
+    const { name: collectionName, label, create, files } = $selectedCollection;
     const collectionLabel = label || collectionName;
+
+    const _fileMap = files
+      ? /** @type {FileCollection} */ ($selectedCollection)._fileMap
+      : undefined;
 
     if (!_state) {
       const count = $listedEntries.length;

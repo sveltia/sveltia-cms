@@ -9,8 +9,9 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
-  $: ({ name: collectionName, _thumbnailFieldName } =
-    $selectedCollection ?? /** @type {Collection} */ ({}));
+  $: ({ name: collectionName, _thumbnailFieldName } = $selectedCollection?.folder
+    ? /** @type {EntryCollection} */ ($selectedCollection)
+    : /** @type {EntryCollection} */ ({}));
   $: hasListedEntries = !!$listedEntries.length;
   $: hasMultipleEntries = $listedEntries.length > 1;
 </script>

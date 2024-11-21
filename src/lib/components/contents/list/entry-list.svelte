@@ -10,7 +10,7 @@
   import { selectedCollection } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
 
-  $: collection = $selectedCollection;
+  $: collection = (() => /** @type {EntryCollection | undefined} */ ($selectedCollection))();
   $: viewType = $currentView.type;
   $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
 </script>

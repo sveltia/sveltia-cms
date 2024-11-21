@@ -7,7 +7,11 @@ describe('Test fillSlugTemplate()', () => {
   /** @type {Collection} */
   const collection = {
     name: 'posts',
-    _parserConfig: {},
+    _file: {
+      extension: 'md',
+      format: 'yaml-frontmatter',
+      basePath: 'content/posts',
+    },
     _i18n: defaultI18nConfig,
     slug_length: 50,
   };

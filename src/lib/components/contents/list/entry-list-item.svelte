@@ -7,7 +7,7 @@
   import { listedEntries } from '$lib/services/contents/view';
 
   /**
-   * @type {Collection}
+   * @type {EntryCollection}
    */
   export let collection;
   /**

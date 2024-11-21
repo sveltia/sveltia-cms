@@ -230,11 +230,13 @@ export const createProxy = ({
 }) => {
   const collection = getCollection(collectionName);
 
-  if (!collection) {
+  const collectionFile = fileName
+    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
+    : undefined;
+
+  if (!collection || (fileName && !collectionFile)) {
     return undefined;
   }
-
-  const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
 
   const {
     defaultLocale,

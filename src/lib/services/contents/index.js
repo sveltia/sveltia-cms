@@ -3,7 +3,7 @@ import { get, writable } from 'svelte/store';
 import { allAssetFolders, getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
-import { getEntryPathRegEx } from '$lib/services/contents/file';
+import { getFileConfig } from '$lib/services/contents/file';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
@@ -66,16 +66,7 @@ export const getCollection = (name) => {
     return undefined;
   }
 
-  const {
-    fields,
-    thumbnail,
-    folder,
-    files,
-    extension,
-    format,
-    frontmatter_delimiter: frontmatterDelimiter,
-    yaml_quote: yamlQuote,
-  } = rawCollection;
+  const { fields, thumbnail, folder, files } = rawCollection;
 
   // Normalize folder/file paths by removing leading/trailing slashes
   if (folder) {
@@ -86,26 +77,44 @@ export const getCollection = (name) => {
     });
   }
 
-  /** @type {Collection} */
-  const collection = {
-    ...rawCollection,
-    _parserConfig: { extension, format, frontmatterDelimiter, yamlQuote },
-    _i18n: getI18nConfig(rawCollection),
-    _fileMap: files?.length
-      ? Object.fromEntries(
-          files.map((file) => {
-            const _i18n = getI18nConfig(rawCollection, file);
-            const _path = file.file.replace('{{locale}}', _i18n.defaultLocale);
+  const _i18n = getI18nConfig(rawCollection);
 
-            return [file.name, { ...file, _path, _i18n }];
-          }),
-        )
-      : undefined,
+  const collectionBase = {
+    ...rawCollection,
+    _i18n,
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
-    _thumbnailFieldName: rawCollection.folder
-      ? (thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name)
-      : undefined,
   };
+
+  /** @type {Collection | undefined} */
+  const collection = (() => {
+    if (folder) {
+      return {
+        ...collectionBase,
+        _file: getFileConfig({ rawCollection, _i18n }),
+        _thumbnailFieldName: rawCollection.folder
+          ? (thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name)
+          : undefined,
+      };
+    }
+
+    if (files) {
+      return {
+        ...collectionBase,
+        _fileMap: files.length
+          ? Object.fromEntries(
+              files.map((file) => {
+                const __i18n = getI18nConfig(rawCollection, file);
+                const __file = getFileConfig({ rawCollection, file, _i18n: __i18n });
+
+                return [file.name, { ...file, _file: __file, _i18n: __i18n }];
+              }),
+            )
+          : {},
+      };
+    }
+
+    return undefined;
+  })();
 
   collectionCache.set(name, collection);
 
@@ -126,13 +135,9 @@ export const getEntryFoldersByPath = (path) =>
         return Object.values(filePathMap).includes(path);
       }
 
-      const collection = getCollection(collectionName);
-
-      if (!collection) {
-        return false;
-      }
-
-      return !!path.match(getEntryPathRegEx(collection));
+      return /** @type {EntryCollection} */ (
+        getCollection(collectionName)
+      )?._file?.fullPathRegEx?.test(path);
     })
     .sort((a, b) => b.folderPath?.localeCompare(a.folderPath ?? '') ?? 0);
 
@@ -156,7 +161,9 @@ export const getCollectionsByEntry = (entry) =>
  * @returns {CollectionFile[]} Collection files.
  */
 export const getFilesByEntry = (collection, entry) => {
-  const { _fileMap } = collection;
+  const _fileMap = collection.files
+    ? /** @type {FileCollection} */ (collection)._fileMap
+    : undefined;
 
   if (!_fileMap) {
     // It’s a folder collection
@@ -164,7 +171,7 @@ export const getFilesByEntry = (collection, entry) => {
   }
 
   return Object.values(_fileMap).filter(
-    ({ _path, _i18n }) => _path === entry.locales[_i18n.defaultLocale]?.path,
+    ({ _file, _i18n }) => _file.fullPath === entry.locales[_i18n.defaultLocale]?.path,
   );
 };
 

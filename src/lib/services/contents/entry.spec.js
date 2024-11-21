@@ -6,7 +6,11 @@ describe('Test getEntryTitle()', () => {
   const collection = {
     name: 'pages-tags',
     folder: 'content/tags',
-    _parserConfig: {},
+    _file: {
+      extension: 'md',
+      format: 'yaml-frontmatter',
+      basePath: 'content/tags',
+    },
     _i18n: {
       i18nEnabled: true,
       saveAllLocales: true,

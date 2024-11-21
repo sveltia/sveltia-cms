@@ -29,11 +29,13 @@
       }}
     >
       <GridCell class="image">
-        {#await getEntryThumbnail(collection, entry) then src}
-          {#if src}
-            <Image {src} variant="icon" cover />
-          {/if}
-        {/await}
+        {#if collection.folder}
+          {#await getEntryThumbnail(/** @type {EntryCollection} */ (collection), entry) then src}
+            {#if src}
+              <Image {src} variant="icon" cover />
+            {/if}
+          {/await}
+        {/if}
       </GridCell>
       <GridCell class="collection">
         {collection?.label || collection?.name}

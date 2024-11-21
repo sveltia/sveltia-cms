@@ -1,8 +1,7 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import * as TOML from 'smol-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
-import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file';
+import { customFileFormats } from '$lib/services/contents/file';
 
 /**
  * Format the given object as a JSON document using the built-in method.
@@ -37,25 +36,11 @@ const formatYAML = (obj, { yamlQuote = false } = {}) =>
  * @param {RawEntryContent | Record<LocaleCode, RawEntryContent>} entry.content - Content object.
  * Note that this method may modify the `content` (the `body` property will be removed if exists) so
  * it shouldn’t be a reference to an existing object.
- * @param {string} entry.path - File path.
- * @param {ParserConfig} entry.config - File parser/formatter configuration.
+ * @param {FileConfig} entry._file - Entry file configuration.
  * @returns {Promise<string>} Formatted string.
  */
-export const formatEntryFile = async ({
-  content,
-  path,
-  config: { extension, format, frontmatterDelimiter, yamlQuote = false },
-}) => {
-  format ||= /** @type {FileFormat | undefined} */ (
-    extension === 'md' || path.endsWith('.md')
-      ? 'yaml-frontmatter'
-      : extension || getPathInfo(path).extension
-  );
-
-  if (!format) {
-    return '';
-  }
-
+export const formatEntryFile = async ({ content, _file }) => {
+  const { format, fmDelimiters, yamlQuote = false } = _file;
   const customFormatter = get(customFileFormats)[format]?.formatter;
 
   if (customFormatter) {
@@ -82,7 +67,7 @@ export const formatEntryFile = async ({
   }
 
   if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/)) {
-    const [startDelimiter, endDelimiter] = getFrontMatterDelimiters(format, frontmatterDelimiter);
+    const [startDelimiter, endDelimiter] = fmDelimiters ?? ['---', '---'];
     const body = content.body ? `${content.body}\n` : '';
 
     delete content.body;

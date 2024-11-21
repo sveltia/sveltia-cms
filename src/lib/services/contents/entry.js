@@ -50,13 +50,16 @@ export const getFieldConfig = ({
 
   const collection = getCollection(collectionName);
 
-  if (!collection) {
+  const collectionFile = fileName
+    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
+    : undefined;
+
+  if (!collection || (fileName && !collectionFile)) {
     fieldConfigCache.set(cacheKey, undefined);
 
     return undefined;
   }
 
-  const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
   const { fields = [] } = collectionFile ?? collection;
   const keyPathArray = keyPath.split('.');
   /**
@@ -242,12 +245,13 @@ export const getEntryTitle = (
 ) => {
   const {
     name: collectionName,
-    folder: collectionFolder,
+    folder,
     identifier_field: identifierField = 'title',
     summary: summaryTemplate,
     _i18n: { defaultLocale },
   } = collection;
 
+  const basePath = folder ? /** @type {EntryCollection} */ (collection)._file.basePath : undefined;
   const { locales, slug, commitDate, commitAuthor } = entry;
 
   const { content = {}, path: entryPath = '' } =
@@ -274,7 +278,7 @@ export const getEntryTitle = (
     }
 
     if (tag === 'dirname') {
-      return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(collectionFolder ?? '', ''));
+      return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(basePath ?? '', ''));
     }
 
     if (tag === 'filename') {
@@ -339,7 +343,7 @@ export const getEntryTitle = (
 
 /**
  * Get the given entry’s thumbnail URL.
- * @param {Collection} collection - Entry’s collection.
+ * @param {EntryCollection} collection - Entry’s collection.
  * @param {Entry} entry - Entry.
  * @returns {Promise<string | undefined>} URL.
  */

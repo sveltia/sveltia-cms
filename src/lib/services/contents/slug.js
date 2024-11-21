@@ -111,16 +111,7 @@ export const normalizeSlug = (string) => {
 /**
  * Fill the given slug template.
  * @param {string} template - Template string literal containing tags like `{{title}}`.
- * @param {object} options - Options.
- * @param {'preview_path' | 'media_folder'} [options.type] - Slug type.
- * @param {Collection} options.collection - Entry collection.
- * @param {FlattenedEntryContent} options.content - Entry content for the default locale.
- * @param {string} [options.currentSlug] - Entry slug already created for the path.
- * @param {string} [options.entryFilePath] - File path of the entry. Required if the `type` is
- * `preview_path` or `media_folder`.
- * @param {LocaleCode} [options.locale] - Locale. Required if the `type` is `preview_path`.
- * @param {Record<string, string>} [options.dateTimeParts] - Map of date/time parts. Required if the
- * `type` is `preview_path`.
+ * @param {FillSlugTemplateOptions} options - Options.
  * @returns {string} Filled template that can be used for an entry slug, path, etc.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug
@@ -140,10 +131,12 @@ export const fillSlugTemplate = (
 ) => {
   const {
     name: collectionName,
+    folder,
     identifier_field: identifierField = 'title',
-    folder: collectionFolderPath,
     slug_length: slugMaxLength = undefined,
   } = collection;
+
+  const basePath = folder ? /** @type {EntryCollection} */ (collection)._file.basePath : undefined;
 
   /**
    * Replacer subroutine.
@@ -183,10 +176,7 @@ export const fillSlugTemplate = (
       }
 
       if (tag === 'dirname') {
-        return (
-          (entryFilePath.replace(collectionFolderPath ?? '', '').match(/(.+?)(?:\/[^/]+)?$/) ??
-            [])[1] ?? ''
-        );
+        return entryFilePath.replace(basePath ?? '', '').match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
       }
 
       if (tag === 'filename') {

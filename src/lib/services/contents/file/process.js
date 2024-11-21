@@ -3,11 +3,10 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
-import { hasRootListField } from '$lib/components/contents/details/widgets/list/helper';
-import { getCollection } from '$lib/services/contents';
-import { getEntryPathRegEx, getFileExtension } from '$lib/services/contents/file';
-import { parseEntryFile } from '$lib/services/contents/file/parse';
 import { normalizeSlug } from '$lib/services/contents/slug';
+import { parseEntryFile } from '$lib/services/contents/file/parse';
+import { getCollection } from '$lib/services/contents';
+import { hasRootListField } from '$lib/components/contents/details/widgets/list/helper';
 
 /**
  * Determine the slug for the given entry content.
@@ -27,7 +26,10 @@ const getSlug = (collectionName, filePath, content) => {
     return '';
   }
 
-  const { path: pathTemplate, identifier_field: identifierField = 'title' } = collection;
+  const {
+    identifier_field: identifierField = 'title',
+    _file: { subPath: pathTemplate },
+  } = /** @type {EntryCollection} */ (collection);
 
   if (!pathTemplate) {
     // It’s a slug
@@ -83,14 +85,17 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
   const collection = getCollection(collectionName);
 
-  if (!collection) {
+  const collectionFile = fileName
+    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
+    : undefined;
+
+  if (!collection || (fileName && !collectionFile)) {
     return;
   }
 
-  const collectionFile = fileName ? collection._fileMap?.[fileName] : undefined;
-
   const {
     fields = [],
+    _file: { fullPathRegEx, subPath, extension },
     _i18n: {
       i18nEnabled,
       locales,
@@ -98,11 +103,11 @@ const prepareEntry = async ({ file, entries, errors }) => {
       structure,
       canonicalSlug: { key: canonicalSlugKey },
     },
-  } = collectionFile ?? collection;
+  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
   const i18nSingleFile = i18nEnabled && structure === 'single_file';
-  const i18nMultiFiles = i18nEnabled && structure === 'multiple_files';
-  const i18nMultiFolders = i18nEnabled && structure === 'multiple_folders';
+  const i18nMultiFile = i18nEnabled && structure === 'multiple_files';
+  const i18nMultiFolder = i18nEnabled && structure === 'multiple_folders';
 
   // Handle a special case: top-level list field
   if (hasRootListField(fields)) {
@@ -129,17 +134,11 @@ const prepareEntry = async ({ file, entries, errors }) => {
     return;
   }
 
-  const extension = getFileExtension({
-    format: collection.format,
-    extension: collection.extension,
-    file: fileName,
-  });
-
   // Skip Hugo’s special index page that shouldn’t appear in a folder collection, unless the
   // collection’s `path` ends with `_index` and the extension is `md`.
   if (
     getPathInfo(path).basename === '_index.md' &&
-    !(collection.path?.split('/').pop() === '_index' && extension === 'md') &&
+    !(subPath?.split('/').pop() === '_index' && extension === 'md') &&
     !fileName
   ) {
     return;
@@ -151,14 +150,14 @@ const prepareEntry = async ({ file, entries, errors }) => {
   let locale = undefined;
 
   if (fileName) {
-    if (i18nMultiFiles || i18nMultiFolders) {
+    if (i18nMultiFile || i18nMultiFolder) {
       [locale, filePath] =
         Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === path) ?? [];
     } else {
       filePath = path;
     }
   } else {
-    ({ filePath, locale } = path.match(getEntryPathRegEx(collection))?.groups ?? {});
+    ({ filePath, locale } = path.match(/** @type {RegExp} */ (fullPathRegEx))?.groups ?? {});
   }
 
   if (!filePath) {
@@ -187,7 +186,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
     );
   }
 
-  if (i18nMultiFiles || i18nMultiFolders) {
+  if (i18nMultiFile || i18nMultiFolder) {
     if (!locale) {
       return;
     }
