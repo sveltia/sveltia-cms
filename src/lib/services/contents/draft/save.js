@@ -209,15 +209,26 @@ const createKeyPathList = (fields) => {
 };
 
 /**
- * Sort the entry draft content’s object properties by the order of the configured collection
- * fields. The result can be formatted as expected with `JSON.stringify()`, as the built-in method
- * uses insertion order for string key ordering.
- * @param {Field[]} fields - Field list of a collection or a file.
- * @param {FlattenedEntryContent} valueMap - Flattened entry content.
- * @param {string} [canonicalSlugKey] - Property name of a canonical slug.
- * @returns {FlattenedEntryContent} Flattened entry content sorted by fields.
+ * Finalize the content by sorting the entry draft content’s object properties by the order of the
+ * configured collection fields. The result can be formatted as expected with `JSON.stringify()`, as
+ * the built-in method uses insertion order for string key ordering.
+ * @param {object} args - Options.
+ * @param {string} args.collectionName - Collection name.
+ * @param {string} [args.fileName] - File name.
+ * @param {Field[]} args.fields - Field list of a collection or a file.
+ * @param {FlattenedEntryContent} args.valueMap - Flattened entry content.
+ * @param {string} [args.canonicalSlugKey] - Property name of a canonical slug.
+ * @param {boolean} [args.isTomlOutput] - Whether the output it TOML format.
+ * @returns {Record<string, any>} Unflattened entry content sorted by fields.
  */
-const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
+const finalizeContent = ({
+  collectionName,
+  fileName,
+  fields,
+  valueMap,
+  canonicalSlugKey,
+  isTomlOutput = false,
+}) => {
   /** @type {FlattenedEntryContent} */
   const unsortedMap = toRaw(valueMap);
   /** @type {FlattenedEntryContent} */
@@ -228,7 +239,25 @@ const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
    * @param {string} key - Property name.
    */
   const copyProperty = (key) => {
-    sortedMap[key] = unsortedMap[key];
+    let value = unsortedMap[key];
+
+    // Use native date for TOML
+    // @see https://github.com/squirrelchat/smol-toml?tab=readme-ov-file#dates
+    // @see https://toml.io/en/v1.0.0#offset-date-time
+    if (
+      isTomlOutput &&
+      typeof value === 'string' &&
+      value.match(fullDateTimeRegEx) &&
+      getFieldConfig({ collectionName, fileName, valueMap, keyPath: key })?.widget === 'datetime'
+    ) {
+      try {
+        value = new TomlDate(value);
+      } catch {
+        //
+      }
+    }
+
+    sortedMap[key] = value;
     delete unsortedMap[key];
   };
 
@@ -259,34 +288,6 @@ const sortContentProps = (fields, valueMap, canonicalSlugKey) => {
     .forEach(copyProperty);
 
   return sortedMap;
-};
-
-/**
- * Modify the content for TOML output, particularly date/time.
- * @param {object} args - Arguments.
- * @param {string} args.collectionName - Collection name.
- * @param {string} [args.fileName] - File name.
- * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
- * @returns {FlattenedEntryContent} Modified content.
- * @see https://github.com/squirrelchat/smol-toml?tab=readme-ov-file#dates
- * @see https://toml.io/en/v1.0.0#offset-date-time
- */
-const modifyContentForTOML = ({ collectionName, fileName, valueMap }) => {
-  Object.entries(valueMap).forEach(([keyPath, value]) => {
-    if (
-      typeof value === 'string' &&
-      value.match(fullDateTimeRegEx) &&
-      getFieldConfig({ collectionName, fileName, valueMap, keyPath })?.widget === 'datetime'
-    ) {
-      try {
-        valueMap[keyPath] = new TomlDate(value);
-      } catch {
-        //
-      }
-    }
-  });
-
-  return valueMap;
 };
 
 /**
@@ -348,16 +349,19 @@ export const createSavingEntryData = async ({
   const changes = [];
 
   /**
-   * Finalize the content by modifying for a specific data format and unflattening the object.
+   * Serialize the content for the output.
    * @param {FlattenedEntryContent} valueMap - Original content.
    * @returns {RawEntryContent} Modified and unflattened content.
    */
-  const finalizeContent = (valueMap) => {
-    let content = sortContentProps(fields, valueMap, canonicalSlugKey);
-
-    if (isTomlOutput) {
-      content = modifyContentForTOML({ collectionName, fileName, valueMap: content });
-    }
+  const serializeContent = (valueMap) => {
+    let content = finalizeContent({
+      collectionName,
+      fileName,
+      fields,
+      valueMap,
+      canonicalSlugKey,
+      isTomlOutput,
+    });
 
     content = unflatten(content);
 
@@ -379,10 +383,10 @@ export const createSavingEntryData = async ({
         ? Object.fromEntries(
             Object.entries(savingEntry.locales).map(([locale, le]) => [
               locale,
-              finalizeContent(le.content),
+              serializeContent(le.content),
             ]),
           )
-        : finalizeContent(content),
+        : serializeContent(content),
       _file,
     });
 
@@ -396,7 +400,7 @@ export const createSavingEntryData = async ({
 
         if (currentLocales[locale]) {
           const action = isNew || !originalLocales[locale] ? 'create' : 'update';
-          const data = await formatEntryFile({ content: finalizeContent(content), _file });
+          const data = await formatEntryFile({ content: serializeContent(content), _file });
 
           changes.push({ action, slug, path, data });
           localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
