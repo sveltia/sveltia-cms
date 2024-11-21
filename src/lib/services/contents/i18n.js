@@ -99,9 +99,8 @@ export const getCanonicalLocale = (locale) => {
   if (locale !== '_default') {
     try {
       [canonicalLocale] = Intl.getCanonicalLocales(locale);
-    } catch (/** @type {any} */ ex) {
-      // eslint-disable-next-line no-console
-      console.error(ex);
+    } catch {
+      //
     }
   }
 
