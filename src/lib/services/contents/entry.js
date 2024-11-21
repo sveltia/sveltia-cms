@@ -18,7 +18,7 @@ import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents';
 import { getListFormatter } from '$lib/services/contents/i18n';
-import { applyTemplateFilter, fillSlugTemplate } from '$lib/services/contents/slug';
+import { applyTransformations, fillSlugTemplate } from '$lib/services/contents/slug';
 
 /**
  * @type {Map<string, Field | undefined>}
@@ -82,7 +82,11 @@ export const getFieldConfig = ({
       } = /** @type {ListField} */ (field);
 
       if (subField) {
-        field = subField;
+        const subFieldName = isNumericKey ? keyPathArray[index + 1] : undefined;
+
+        // It’s possible to get a single-subfield List field with or without a subfield name (e.g.
+        // `image.0` or `image.0.src`), but when a subfield name is specified, check if it’s valid
+        field = !subFieldName || subField.name === subFieldName ? subField : undefined;
       } else if (subFields && !isNumericKey) {
         field = subFields.find(({ name }) => name === key);
       } else if (types && isNumericKey) {
@@ -112,9 +116,17 @@ export const getFieldConfig = ({
  * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath - Key path, e.g. `author.name`.
  * @param {LocaleCode} args.locale - Locale.
+ * @param {string[]} [args.transformations] - String transformations.
  * @returns {any | any[]} Resolved field value(s).
  */
-export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPath, locale }) => {
+export const getFieldDisplayValue = ({
+  collectionName,
+  fileName,
+  valueMap,
+  keyPath,
+  locale,
+  transformations,
+}) => {
   const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
   let value = valueMap[keyPath];
 
@@ -155,7 +167,15 @@ export const getFieldDisplayValue = ({ collectionName, fileName, valueMap, keyPa
     }
   }
 
-  return value ?? '';
+  if (Array.isArray(value)) {
+    value = getListFormatter(locale).format(value);
+  }
+
+  if (transformations?.length) {
+    value = applyTransformations({ fieldConfig, value, transformations });
+  }
+
+  return value ? String(value) : '';
 };
 
 /**
@@ -297,12 +317,7 @@ export const getEntryTitle = (
       return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
     }
 
-    return getFieldDisplayValue({
-      collectionName,
-      valueMap: content,
-      keyPath: tag.replace(/^fields\./, ''),
-      locale: defaultLocale,
-    });
+    return undefined;
   };
 
   /**
@@ -312,27 +327,34 @@ export const getEntryTitle = (
    */
   const replace = (placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
-    let slugPart = replaceSub(tag);
+    const valueMap = content;
+    const keyPath = tag.replace(/^fields\./, '');
+    /** @type {any} */
+    let value = replaceSub(tag);
 
-    if (slugPart === undefined) {
+    if (value === undefined) {
+      value = getFieldDisplayValue({ collectionName, valueMap, keyPath, locale: defaultLocale });
+    }
+
+    if (value === undefined) {
       return '';
     }
 
-    if (slugPart instanceof Date && !transformations.length) {
-      const { year, month, day } = getDateTimeParts({ date: slugPart });
+    if (value instanceof Date && !transformations.length) {
+      const { year, month, day } = getDateTimeParts({ date: value });
 
       return `${year}-${month}-${day}`;
     }
 
     if (transformations.length) {
-      const fieldConfig = getFieldConfig({ collectionName, valueMap: content, keyPath: tag });
-
-      transformations.forEach((tf) => {
-        slugPart = applyTemplateFilter(slugPart, tf, fieldConfig);
+      value = applyTransformations({
+        fieldConfig: getFieldConfig({ collectionName, valueMap, keyPath }),
+        value,
+        transformations,
       });
     }
 
-    return String(slugPart);
+    return String(value);
   };
 
   return sanitizeEntryTitle(

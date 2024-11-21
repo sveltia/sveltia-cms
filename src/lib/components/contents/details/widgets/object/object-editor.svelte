@@ -13,13 +13,14 @@
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
+  import { formatSummary } from '$lib/components/contents/details/widgets/object/helper';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/create';
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
-  import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry';
-  import { defaultI18nConfig, getListFormatter } from '$lib/services/contents/i18n';
+  import { getFieldConfig } from '$lib/services/contents/entry';
+  import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
@@ -85,7 +86,6 @@
           'object'),
   );
   $: canEdit = locale === defaultLocale || i18n !== false;
-  $: listFormatter = getListFormatter(locale);
   $: parentExpandedKeyPath = `${keyPath}#`;
   $: parentExpanded = expanderStates?._[parentExpandedKeyPath] ?? true;
   $: hasVariableTypes = Array.isArray(types);
@@ -180,31 +180,15 @@
    * Format the summary template.
    * @returns {string} Formatted summary.
    */
-  const formatSummary = () => {
-    if (!summaryTemplate) {
-      return (
-        valueMap[`${keyPath}.title`] ||
-        valueMap[`${keyPath}.name`] ||
-        // Use the first string-type field value, if available
-        Object.entries(valueMap).find(
-          ([key, value]) => key.startsWith(`${keyPath}.`) && typeof value === 'string' && !!value,
-        )?.[1] ||
-        ''
-      );
-    }
-
-    return summaryTemplate.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {
-      const value = getFieldDisplayValue({
-        collectionName,
-        fileName,
-        valueMap,
-        keyPath: `${keyPath}.${_fieldName}`,
-        locale,
-      });
-
-      return Array.isArray(value) ? listFormatter.format(value) : String(value);
+  const _formatSummary = () =>
+    formatSummary({
+      collectionName,
+      fileName,
+      keyPath,
+      valueMap,
+      locale,
+      summaryTemplate,
     });
-  };
 </script>
 
 {#if !required}
@@ -256,7 +240,7 @@
             {/each}
           {:else}
             <div role="none" class="summary" id="object-{widgetId}-summary">
-              {formatSummary()}
+              {_formatSummary()}
             </div>
           {/if}
         {/await}

@@ -12,14 +12,14 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import { formatSummary } from '$lib/components/contents/details/widgets/list/helper';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/create';
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { updateListField } from '$lib/services/contents/draft/update';
-  import { getFieldDisplayValue } from '$lib/services/contents/entry';
-  import { defaultI18nConfig, getListFormatter } from '$lib/services/contents/i18n';
+  import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
    * @type {LocaleCode}
@@ -87,7 +87,6 @@
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: isDuplicateField = locale !== defaultLocale && i18n === 'duplicate';
   $: valueMap = currentValues[locale];
-  $: listFormatter = getListFormatter(locale);
   $: parentExpandedKeyPath = `${keyPath}#`;
   $: parentExpanded = expanderStates?._[parentExpandedKeyPath] ?? true;
 
@@ -261,38 +260,21 @@
 
   /**
    * Format the summary template.
-   * @param {Record<string, any>} item - List item.
    * @param {number} index - List index.
    * @param {string} [summaryTemplate] - Summary template, e.g. `{{fields.slug}}`.
    * @returns {string} Formatted summary.
    */
-  const formatSummary = (item, index, summaryTemplate) => {
-    if (!summaryTemplate) {
-      if (typeof item === 'string') {
-        return item;
-      }
-
-      return (
-        item.title ||
-        item.name ||
-        // Use the first string-type field value, if available
-        Object.values(item).find((value) => typeof value === 'string' && !!value) ||
-        ''
-      );
-    }
-
-    return summaryTemplate.replaceAll(/{{fields\.(.+?)}}/g, (_match, _fieldName) => {
-      const value = getFieldDisplayValue({
-        collectionName,
-        fileName,
-        valueMap,
-        keyPath: hasSingleSubField ? `${keyPath}.${index}` : `${keyPath}.${index}.${_fieldName}`,
-        locale,
-      });
-
-      return Array.isArray(value) ? listFormatter.format(value) : String(value);
+  const _formatSummary = (index, summaryTemplate) =>
+    formatSummary({
+      collectionName,
+      fileName,
+      keyPath,
+      valueMap,
+      locale,
+      summaryTemplate,
+      hasSingleSubField,
+      index,
     });
-  };
 </script>
 
 <Group aria-labelledby="list-{widgetId}-summary">
@@ -419,7 +401,7 @@
               {/each}
             {:else}
               <div role="none" class="summary">
-                {formatSummary(item, index, summaryTemplate)}
+                {_formatSummary(index, summaryTemplate)}
               </div>
             {/if}
           </div>

@@ -87,19 +87,19 @@
           return String(getIndex() ?? '');
         }
 
-        if (tagName.startsWith('fields.')) {
-          const value = getFieldDisplayValue({
-            collectionName,
-            fileName,
-            valueMap,
-            keyPath: tagName.replace(/^fields\./, ''),
-            locale,
-          });
-
-          return Array.isArray(value) ? listFormatter.format(value) : String(value);
+        if (!tagName.startsWith('fields.')) {
+          return '';
         }
 
-        return '';
+        const value = getFieldDisplayValue({
+          collectionName,
+          fileName,
+          valueMap,
+          keyPath: tagName.replace(/^fields\./, ''),
+          locale,
+        });
+
+        return Array.isArray(value) ? listFormatter.format(value) : String(value);
       });
     })();
 

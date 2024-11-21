@@ -11,25 +11,26 @@ import { siteConfig } from '$lib/services/config';
 import { parseDateTimeConfig } from '$lib/components/contents/details/widgets/date-time/helper';
 
 /**
- * Transform slug template.
- * @param {any} slugPart - Original slug part.
- * @param {string} tf - Transformation.
- * @param {Field} [fieldConfig] - Field configuration.
- * @returns {string} Transformed slug part.
+ * Apply a string transformation to the value.
+ * @param {object} args - Arguments.
+ * @param {Field} [args.fieldConfig] - Field configuration.
+ * @param {string} args.value - Original value.
+ * @param {string} args.transformation - List of transformations.
+ * @returns {string} Transformed value.
  * @see https://decapcms.org/docs/summary-strings/
  */
-export const applyTemplateFilter = (slugPart, tf, fieldConfig) => {
-  const slugPartStr = String(slugPart);
+const applyTransformation = ({ fieldConfig, value, transformation }) => {
+  const slugPartStr = String(value);
 
-  if (tf === 'upper') {
+  if (transformation === 'upper') {
     return slugPartStr.toUpperCase();
   }
 
-  if (tf === 'lower') {
+  if (transformation === 'lower') {
     return slugPartStr.toLowerCase();
   }
 
-  const dateTransformer = tf.match(/^date\('(.*?)'\)$/);
+  const dateTransformer = transformation.match(/^date\('(.*?)'\)$/);
 
   if (dateTransformer) {
     const [, format] = dateTransformer;
@@ -44,23 +45,23 @@ export const applyTemplateFilter = (slugPart, tf, fieldConfig) => {
     ).format(format);
   }
 
-  const defaultTransformer = tf.match(/^default\('?(.*?)'?\)$/);
+  const defaultTransformer = transformation.match(/^default\('?(.*?)'?\)$/);
 
   if (defaultTransformer) {
     const [, defaultValue] = defaultTransformer;
 
-    return slugPart ? slugPartStr : defaultValue;
+    return value ? slugPartStr : defaultValue;
   }
 
-  const ternaryTransformer = tf.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
+  const ternaryTransformer = transformation.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
 
   if (ternaryTransformer) {
     const [, truthyValue, falsyValue] = ternaryTransformer;
 
-    return slugPart ? truthyValue : falsyValue;
+    return value ? truthyValue : falsyValue;
   }
 
-  const truncateTransformer = tf.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
+  const truncateTransformer = transformation.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
 
   if (truncateTransformer) {
     const [, max, ellipsis = ''] = truncateTransformer;
@@ -69,6 +70,22 @@ export const applyTemplateFilter = (slugPart, tf, fieldConfig) => {
   }
 
   return slugPartStr;
+};
+
+/**
+ * Apply string transformations to the value.
+ * @param {object} args - Arguments.
+ * @param {Field} [args.fieldConfig] - Field configuration.
+ * @param {string} args.value - Original value.
+ * @param {string[]} args.transformations - List of transformations.
+ * @returns {string} Transformed value.
+ */
+export const applyTransformations = ({ fieldConfig, value, transformations }) => {
+  transformations.forEach((transformation) => {
+    value = applyTransformation({ fieldConfig, value, transformation });
+  });
+
+  return value;
 };
 
 /**
@@ -141,7 +158,7 @@ export const fillSlugTemplate = (
   /**
    * Replacer subroutine.
    * @param {string} tag - Field name or one of special tags.
-   * @returns {any} Slug part.
+   * @returns {any} Replaced value.
    */
   const replaceSub = (tag) => {
     if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
@@ -208,27 +225,27 @@ export const fillSlugTemplate = (
    */
   const replace = (placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
-    let slugPart = replaceSub(tag);
+    let value = replaceSub(tag);
 
-    if (slugPart === undefined) {
+    if (value === undefined) {
       // Use a random ID as a fallback
       return generateUUID('short');
     }
 
     if (transformations.length) {
-      const fieldConfig = getFieldConfig({ collectionName, valueMap, keyPath: tag });
-
-      transformations.forEach((tf) => {
-        slugPart = applyTemplateFilter(slugPart, tf, fieldConfig);
+      value = applyTransformations({
+        fieldConfig: getFieldConfig({ collectionName, valueMap, keyPath: tag }),
+        value,
+        transformations,
       });
     }
 
-    if (slugPart !== undefined) {
-      slugPart = normalizeSlug(String(slugPart));
+    if (value !== undefined) {
+      value = normalizeSlug(String(value));
     }
 
-    if (slugPart) {
-      return String(slugPart);
+    if (value) {
+      return String(value);
     }
 
     // Use a random ID as a fallback
