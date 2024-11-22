@@ -225,7 +225,8 @@ siteConfig.subscribe((config) => {
       .sort((a, b) => compare(Object.values(a.filePathMap)[0], Object.values(b.filePathMap)[0])),
   ];
 
-  const globalMediaFolder = stripSlashes(_globalMediaFolder);
+  // Normalize the media folder: an empty string, `/` and `.` are all considered as the root folder
+  const globalMediaFolder = stripSlashes(_globalMediaFolder).replace(/^\.$/, '');
 
   // Some frameworks expect asset paths starting with `@`, like `@assets/images/...`. Remove an
   // extra leading slash in that case. A trailing slash should always be removed internally.
