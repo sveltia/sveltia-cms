@@ -10,8 +10,8 @@ export const customFileFormats = writable({});
 /**
  * Detect a file extension from the given entry file configuration.
  * @param {object} args - Arguments.
- * @param {FileExtension} [args.extension] - File extension.
- * @param {FileFormat} [args.format] - File format.
+ * @param {FileExtension} [args.extension] - Developer-defined file extension.
+ * @param {FileFormat} [args.format] - Developer-defined file format.
  * @param {string} [args.path] - File path, e.g. `about.json`.
  * @returns {FileExtension} Determined extension.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
@@ -50,7 +50,7 @@ const detectFileExtension = ({ extension, format, path }) => {
  * Detect a file format from the given entry file configuration.
  * @param {object} args - Arguments.
  * @param {FileExtension} args.extension - File extension.
- * @param {FileFormat} [args.format] - File format.
+ * @param {FileFormat} [args.format] - Developer-defined file format.
  * @returns {FileFormat} Determined format.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
@@ -79,7 +79,7 @@ const detectFileFormat = ({ extension, format }) => {
 };
 
 /**
- * Get a regular expression that matches the entry paths of the given folder collection, taking the
+ * Get a regular expression that matches the entry paths of the given entry collection, taking the
  * i18n structure into account.
  * @param {object} args - Arguments.
  * @param {FileExtension} args.extension - File extension.
@@ -151,8 +151,8 @@ export const getFrontMatterDelimiters = ({ format, delimiter }) => {
 /**
  * Get the normalized entry file configuration for the given collection or collection file.
  * @param {object} args - Arguments.
- * @param {RawCollection} args.rawCollection - Collection.
- * @param {RawCollectionFile} [args.file] - Collection file.
+ * @param {RawCollection} args.rawCollection - Developer-defined collection.
+ * @param {RawCollectionFile} [args.file] - Developer-defined collection file.
  * @param {I18nConfig} args._i18n - I18n configuration.
  * @returns {FileConfig} Entry file configuration.
  */

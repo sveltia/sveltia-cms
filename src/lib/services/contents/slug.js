@@ -15,7 +15,7 @@ import { parseDateTimeConfig } from '$lib/components/contents/details/widgets/da
  * @param {object} args - Arguments.
  * @param {Field} [args.fieldConfig] - Field configuration.
  * @param {string} args.value - Original value.
- * @param {string} args.transformation - List of transformations.
+ * @param {string} args.transformation - Transformation, e.g `upper`, `truncate(10)`.
  * @returns {string} Transformed value.
  * @see https://decapcms.org/docs/summary-strings/
  */

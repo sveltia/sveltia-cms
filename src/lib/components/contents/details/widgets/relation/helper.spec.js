@@ -81,7 +81,7 @@ describe('Test getOptions()', () => {
   });
 
   // https://decapcms.org/docs/widgets/#relation
-  // Referencing a folder collection example
+  // Referencing an entry collection example
   // String templates example
   test('nested fields', () => {
     const config = {
@@ -233,7 +233,7 @@ describe('Test getOptions()', () => {
   });
 
   // https://github.com/sveltia/sveltia-cms/issues/13
-  test('nested fields with wildcard matching, folder collection', () => {
+  test('nested fields with wildcard matching, entry collection', () => {
     const config = {
       name: 'section',
       label: 'Section',

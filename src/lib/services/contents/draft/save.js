@@ -296,7 +296,7 @@ const finalizeContent = ({
 /**
  * Create saving entry data.
  * @param {object} args - Arguments.
- * @param {boolean} args.isNew - `true` if it’s a new folder collection entry draft.
+ * @param {boolean} args.isNew - `true` if it’s a new entry draft in an entry collection.
  * @param {Collection} args.collection - Collection details.
  * @param {Entry} [args.originalEntry] - Original entry if the entry draft is not new.
  * @param {CollectionFile} [args.collectionFile] - File details. File collection only.

@@ -87,7 +87,7 @@ export const getCollection = (name) => {
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
   };
 
-  /** @type {Collection | undefined} */
+  /** @type {Collection} */
   const collection = isEntryCollection
     ? {
         ...collectionBase,
@@ -162,7 +162,7 @@ export const getFilesByEntry = (collection, entry) => {
     : undefined;
 
   if (!_fileMap) {
-    // It’s a folder collection
+    // It’s an entry collection
     return [];
   }
 

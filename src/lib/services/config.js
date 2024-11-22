@@ -271,7 +271,7 @@ siteConfig.subscribe((config) => {
             return null;
           }
 
-          // When specifying a `path` on a folder collection, `media_folder` defaults to an empty
+          // When specifying a `path` on an entry collection, `media_folder` defaults to an empty
           // string
           mediaFolder = '';
         }

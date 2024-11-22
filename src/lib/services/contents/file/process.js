@@ -133,7 +133,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
     return;
   }
 
-  // Skip Hugo’s special `_index.md` file that shouldn’t appear in a folder collection, unless the
+  // Skip Hugo’s special `_index.md` file that shouldn’t appear in an entry collection, unless the
   // collection’s `path` ends with `_index` and the extension is `md`. Localized index files like
   // `_index.en.md` are also excluded.
   if (

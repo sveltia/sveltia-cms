@@ -72,7 +72,7 @@ export const formatEntryFile = async ({ content, _file }) => {
 
     delete content.body;
 
-    // Allow headless front matter, particularly for VitePress
+    // Support Markdown without a front matter block, particularly for VitePress
     if (!Object.keys(content).length) {
       return `${body}\n`;
     }

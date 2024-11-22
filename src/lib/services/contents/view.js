@@ -26,7 +26,7 @@ import { getDate } from '$lib/components/contents/details/widgets/date-time/help
 const defaultSortableFields = ['title', 'name', 'date', 'author', 'description'];
 
 /**
- * View settings for the selected folder collection.
+ * View settings for the selected entry collection.
  * @type {import('svelte/store').Writable<EntryListView>}
  */
 export const currentView = writable({ type: 'list' });
@@ -258,7 +258,7 @@ const getSortFieldLabel = (collection, key) => {
 };
 
 /**
- * List of sort fields for the selected folder collection.
+ * List of sort fields for the selected entry collection.
  * @type {import('svelte/store').Readable<{ key: string, label: string }[]>}
  */
 export const sortFields = derived(
@@ -298,7 +298,7 @@ export const sortFields = derived(
   },
 );
 /**
- * List of all the entries for the selected folder collection.
+ * List of all the entries for the selected entry collection.
  * @type {import('svelte/store').Readable<Entry[]>}
  */
 export const listedEntries = derived(
@@ -312,7 +312,7 @@ export const listedEntries = derived(
   },
 );
 /**
- * Sorted, filtered and grouped entries for the selected folder collection.
+ * Sorted, filtered and grouped entries for the selected entry collection.
  * @type {import('svelte/store').Readable<{ name: string, entries: Entry[] }[]>}
  */
 export const entryGroups = derived(
@@ -378,7 +378,7 @@ const initSettings = async ({ repository }) => {
 
     const { name: collectionName, identifier_field: customIdField, fields = [] } = collection;
 
-    // This only works for folder/entry collections
+    // This only works for entry collections
     if (!fields.length) {
       return;
     }
@@ -389,7 +389,7 @@ const initSettings = async ({ repository }) => {
     const defaultView = {
       type: 'list',
       sort: {
-        // Every folder collection should have at least the `title` (or `name`) field, or the
+        // Every entry collection should have at least the `title` (or `name`) field, or the
         // `identifier_field` property.
         // @see https://decapcms.org/docs/configuration-options/#identifier_field
         key: customIdField || fields.find((f) => defaultSortableFields.includes(f.name))?.name,

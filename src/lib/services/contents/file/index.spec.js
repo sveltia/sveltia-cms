@@ -66,7 +66,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  test('folder collection without i18n', () => {
+  test('entry collection without i18n', () => {
     expect(
       getFileConfig({
         rawCollection: {
@@ -164,7 +164,7 @@ describe('Test getFileConfig()', () => {
     });
   });
 
-  test('folder collection with single-file i18n', () => {
+  test('entry collection with single-file i18n', () => {
     expect(
       getFileConfig({
         rawCollection: {
@@ -262,7 +262,7 @@ describe('Test getFileConfig()', () => {
     });
   });
 
-  test('folder collection with multi-file i18n', () => {
+  test('entry collection with multi-file i18n', () => {
     expect(
       getFileConfig({
         rawCollection: {
@@ -360,7 +360,7 @@ describe('Test getFileConfig()', () => {
     });
   });
 
-  test('folder collection with multi-folder i18n', () => {
+  test('entry collection with multi-folder i18n', () => {
     expect(
       getFileConfig({
         rawCollection: {

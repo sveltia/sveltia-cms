@@ -27,9 +27,9 @@ const parseTOML = (str) => toRaw(TOML.parse(str));
 const parseYAML = (str) => YAML.parse(str);
 
 /**
- * Determine the Markdown front matter serialization format by checking a delimiter in the content.
+ * Detect the Markdown front matter serialization format by checking a delimiter in the content.
  * @param {string} text - File content.
- * @returns {FrontMatterFormat} One of the formats.
+ * @returns {FrontMatterFormat} Determined format.
  */
 const detectFrontMatterFormat = (text) => {
   if (text.startsWith('+++')) {
@@ -103,7 +103,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
       const { head, body } = text.match(regex)?.groups ?? {};
 
       if (!head && !body) {
-        // Allow headless front matter, particularly for VitePress
+        // Support Markdown without a front matter block, particularly for VitePress
         if (text) {
           return { body: text };
         }

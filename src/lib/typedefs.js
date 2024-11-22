@@ -236,7 +236,7 @@
  * @property {string} [fileName] - File identifier. File collection only.
  * @property {Record<LocaleCode, string>} [filePathMap] - File path map. The key is a locale, and
  * the value is the corresponding file path. File collection only.
- * @property {string} [folderPath] - Folder path. Folder/entry collection only.
+ * @property {string} [folderPath] - Folder path. Entry collection only.
  */
 
 /**
@@ -366,18 +366,18 @@
  * @property {string} [icon] - Material Symbols icon name.
  * @property {string} [identifier_field] - Field name to be used as the ID of a collection item.
  * @property {RawCollectionFile[]} [files] - File list for a file collection.
- * @property {string} [folder] - Folder path for a folder/entry collection.
- * @property {Field[]} [fields] - Fields for a folder/entry collection.
- * @property {string} [path] - Subfolder path for a folder/entry collection.
- * @property {string} [media_folder] - Internal media folder path for a folder/entry collection.
- * @property {string} [public_folder] - Public media folder path for a folder/entry collection.
- * @property {object} [filter] - Filter for a folder/entry collection.
+ * @property {string} [folder] - Folder path for an entry collection.
+ * @property {Field[]} [fields] - Fields for an entry collection.
+ * @property {string} [path] - Subfolder path for an entry collection.
+ * @property {string} [media_folder] - Internal media folder path for an entry collection.
+ * @property {string} [public_folder] - Public media folder path for an entry collection.
+ * @property {object} [filter] - Filter for an entry collection.
  * @property {string} filter.field - Field name.
  * @property {any | any[]} filter.value - Field value. Multiple values can be defined with an array.
- * @property {object} [nested] - Nested collection config for a folder/entry collection.
+ * @property {object} [nested] - Nested collection config for an entry collection.
  * @property {boolean} [hide] - Whether to hide the collection in the UI.
- * @property {boolean} [create] - Whether to allow creating items in a folder/entry collection.
- * @property {boolean} [delete] - Whether to allow deleting items in a folder/entry collection.
+ * @property {boolean} [create] - Whether to allow creating items in an entry collection.
+ * @property {boolean} [delete] - Whether to allow deleting items in an entry collection.
  * @property {boolean} [publish] - Whether to hide the publishing control UI for Editorial Workflow.
  * @property {FileExtension} [extension] - File extension.
  * @property {FileFormat} [format] - File format.
@@ -385,10 +385,10 @@
  * format.
  * @property {boolean} [yaml_quote] - Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`.
- * @property {string} [slug] - Item slug template for a folder/entry collection.
+ * @property {string} [slug] - Item slug template for an entry collection.
  * @property {number} [slug_length] - The maximum number of characters allowed for an entry slug. An
  * option suggested in https://github.com/decaporg/decap-cms/issues/6987.
- * @property {string} [summary] - Item summary template for a folder/entry collection.
+ * @property {string} [summary] - Item summary template for an entry collection.
  * @property {string[]} [sortable_fields] - Custom sorting fields.
  * @property {ViewFilter[]} [view_filters] - Predefined view filters.
  * @property {ViewFilter[]} [view_groups] - Predefined view groups.
@@ -422,7 +422,7 @@
  */
 
 /**
- * Extra properties for a folder/entry collection.
+ * Extra properties for an entry collection.
  * @typedef {object} EntryCollectionExtraProps
  * @property {FileConfig} _file - Entry file configuration.
  * @property {FieldKeyPath} [_thumbnailFieldName] - Key path to an entry thumbnail. The `thumbnail`
@@ -430,7 +430,7 @@
  */
 
 /**
- * A folder/entry collection definition.
+ * An entry collection definition.
  * @typedef {RawCollection & CollectionExtraProps & EntryCollectionExtraProps} EntryCollection
  */
 
@@ -860,7 +860,7 @@
 /**
  * Entry draft.
  * @typedef {object} EntryDraft
- * @property {boolean} isNew - `true` if it’s a new folder collection entry draft.
+ * @property {boolean} isNew - `true` if it’s a new entry draft in an entry collection.
  * @property {string} collectionName - Collection name.
  * @property {Collection} collection - Collection details.
  * @property {string} [fileName] - File identifier. File collection only.

@@ -21,8 +21,8 @@ export const defaultI18nConfig = {
 
 /**
  * Get the normalized i18n configuration for the given collection or collection file.
- * @param {RawCollection} collection - Collection.
- * @param {RawCollectionFile} [file] - Collection file.
+ * @param {RawCollection} collection - Developer-defined collection.
+ * @param {RawCollectionFile} [file] - Developer-defined collection file.
  * @returns {I18nConfig} Config.
  * @see https://decapcms.org/docs/i18n/
  */
