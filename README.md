@@ -1,8 +1,8 @@
 # Sveltia CMS
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility.
 
-The free, open source alternative to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and many more enhancements.
+The free, open source alternative to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
 
 ![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
 
@@ -111,7 +111,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Target: 150 issues by GA, 250 or all relevant and fixable issues in a future release
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
-- Responding to feedback from clients and regular users
+- Responding to feedback from [@kyoshino](https://github.com/kyoshino)’s clients and regular users
 - Implementing our own enhancement ideas for every part of the product
 
 ![140 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20241104.webp)<br>
@@ -245,7 +245,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values[^133].
   - If a collection only has the Markdown `body` field, an entry slug will be generated from a header in the `body`, if exists. This supports a typical VitePress setup.
-  - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
+  - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
   - Developers can set the maximum number of characters for an entry slug with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms[^25].
   - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget[^137].
@@ -256,9 +256,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Sorting entries by a DateTime field works as expected[^110].
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
-  - A console error won’t be thrown when a collection doesn’t have the `title` field[^152]. In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug. This supports a typical VitePress setup.
+  - A console error won’t be thrown when a collection doesn’t have the `title` field[^152]. In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug, so the summary will never be an empty. This supports a typical VitePress setup.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
-  - An entry summary supports basic Markdown formatting syntax: bold, italic and code are allowed. HTML character references (entities) are also parsed properly[^69].
+  - In an entry summary, basic Markdown syntax used in the title, including bold, italic and code, are parsed as Markdown. HTML character references (entities) are also parsed properly[^69].
   - If you update an entry field that appears in the collection’s `summary`, such as `title`, the entry list displays an updated summary after you save the entry.
   - If entries don’t have an Image field for thumbnails, the entry list will only be displayed in list view, because it doesn’t make sense to show grid view[^143].
   - Assets stored in a [collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
@@ -357,7 +357,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - If the `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path[^140]. Other dynamic template tags such as `{{filename}}` will also be populated as expected[^141].
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
-  - The `summary` template tags support [summary string transformations](https://decapcms.org/docs/summary-strings/), e.g. `{{fields.date | date('YYYY-MM-DD')}}`.
+  - The `summary` template tags support [transformations](https://decapcms.org/docs/summary-strings/), e.g. `{{fields.date | date('YYYY-MM-DD')}}`.
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
@@ -435,22 +435,22 @@ These limitations are expected to be resolved before or shortly after GA:
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
-| Backends | The Test backend needed for our demo site is not yet added. We’ll see if Azure DevOps can also be supported. |
+| Backends | The [Test](https://decapcms.org/docs/test-backend/) backend needed for our demo site is not yet added. We’ll see if [Azure DevOps](https://decapcms.org/docs/azure-backend/) can also be supported. |
 | Configuration | Comprehensive config validation is not yet implemented. |
 | Localization | The application UI is only available in English and Japanese at this time. |
-| Media Libraries | Cloudinary and Uploadcare are not yet supported. |
-| Workflow | Editorial Workflow and Open Authoring are not yet supported and will be implemented after the 1.0 release. |
-| Collections | Nested Collections (beta) are not yet supported and will be implemented after the 1.0 release. |
-| Widgets | Custom widgets are not yet supported. See the table below for other limitations. |
-| Customizations | Custom previews and event subscriptions are not yet supported. |
+| Media Libraries | [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) are not yet supported. |
+| Workflow | [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/) and [Open Authoring](https://decapcms.org/docs/open-authoring/) are not yet supported and will be implemented after the 1.0 release. |
+| Collections | [Nested Collections](https://decapcms.org/docs/collection-nested/) (beta) are not yet supported and will be implemented after the 1.0 release. |
+| Widgets | [Custom widgets](https://decapcms.org/docs/custom-widgets/) are not yet supported. See the table below for other limitations. |
+| Customizations | [Custom previews](https://decapcms.org/docs/customization/) and [event subscriptions](https://decapcms.org/docs/registering-events/) are not yet supported. |
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
-| Code | Not yet supported. |
-| DateTime | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
-| File/Image | Field-specific media folders and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
-| Map | Not yet supported. |
-| Markdown | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
+| [Code](https://decapcms.org/docs/widgets/#code) | Not yet supported. |
+| [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
+| [File](https://decapcms.org/docs/widgets/#file)/[Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
+| [Map](https://decapcms.org/docs/widgets/#map) | Not yet supported. |
+| [Markdown](https://decapcms.org/docs/widgets/#markdown) | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
 
 ### Other notes
 
