@@ -262,9 +262,11 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) =>
       // Compare that the enclosing directory is exactly the same as the internal path, and ignore
       // any subdirectories, unless the `matchSubFolders` option is specified. The internal path can
       // contain template tags like `{{slug}}` so that we have to take it into account.
-      return !!getPathInfo(path).dirname?.match(
-        `^${internalPath.replace(/{{.+?}}/g, '.+?')}${matchSubFolders ? '\\b' : '$'}`,
+      const regex = new RegExp(
+        `^${internalPath.replace(/{{.+?}}/g, '.+?')}${internalPath && matchSubFolders ? '\\b' : '$'}`,
       );
+
+      return !!(getPathInfo(path).dirname ?? '').match(regex);
     })
     .sort((a, b) => b.internalPath?.localeCompare(a.internalPath ?? '') ?? 0);
 };
@@ -329,7 +331,11 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
       return getAsset(_collection);
     });
 
-    return assets.flat(1).filter(Boolean)[0] ?? undefined;
+    return (
+      assets.flat(1).filter(Boolean)[0] ??
+      // Fall back to exact match at the root folder
+      get(allAssets).find((asset) => asset.path === savedPath)
+    );
   }
 
   const exactMatch = get(allAssets).find((asset) => asset.path === stripSlashes(savedPath));
@@ -350,7 +356,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
       publicPath.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
     ) ?? {};
 
-  if (!internalPath) {
+  if (internalPath === undefined) {
     return undefined;
   }
 

@@ -117,7 +117,7 @@ const validate = (config) => {
     throw new Error(get(_)('config.error.oauth_no_app_id'));
   }
 
-  if (!config.media_folder) {
+  if (typeof config.media_folder !== 'string') {
     throw new Error(get(_)('config.error.no_media_folder'));
   }
 };

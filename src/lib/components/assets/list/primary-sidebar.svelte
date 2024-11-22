@@ -30,7 +30,7 @@
       <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
       {@const uploadDisabled = entryRelative}
       {@const selected =
-        (!internalPath && !$selectedAssetFolder) ||
+        (internalPath === undefined && !$selectedAssetFolder) ||
         internalPath === $selectedAssetFolder?.internalPath}
       <Option
         {selected}
@@ -45,7 +45,7 @@
             return;
           }
 
-          if (!internalPath || selected) {
+          if (internalPath === undefined || selected) {
             /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
           } else {
             /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';

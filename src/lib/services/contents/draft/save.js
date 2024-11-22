@@ -603,10 +603,11 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
             const file = files[locale][keyPath];
             const sha = await getHash(file);
             const dupFile = savingAssets.find((f) => f.sha === sha);
+            const useSubFolder = !!publicAssetFolder && publicAssetFolder !== '/';
 
             // Check if the file has already been added for other field or locale
             if (dupFile) {
-              content[keyPath] = publicAssetFolder
+              content[keyPath] = useSubFolder
                 ? `${publicAssetFolder}/${dupFile.name}`
                 : dupFile.name;
 
@@ -614,7 +615,10 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
             }
 
             const assetName = renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
-            const assetPath = `${internalAssetFolder}/${assetName}`;
+
+            const assetPath = internalAssetFolder
+              ? `${internalAssetFolder}/${assetName}`
+              : assetName;
 
             assetNamesInSameFolder.push(assetName);
             changes.push({ action: 'create', path: assetPath, data: file });
@@ -629,7 +633,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
               kind: getAssetKind(assetName),
             });
 
-            content[keyPath] = publicAssetFolder ? `${publicAssetFolder}/${assetName}` : assetName;
+            content[keyPath] = useSubFolder ? `${publicAssetFolder}/${assetName}` : assetName;
           }
         }
 
