@@ -238,6 +238,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list[^130]. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
   - Developers can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
   - Developers can use Markdown in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
+  - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
+  - A folder collection `filter` supports multiple possible values by using an array for the `value`[^151].
+  - Multiple [summary string transformations](https://decapcms.org/docs/summary-strings/) can be chained like `{{title | upper | truncate(20)}}`.
 - Entry slugs
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values[^133].
@@ -250,14 +253,12 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Entry listing
   - The collection list displays the number of items in each collection.
   - A folder collection `filter` with a boolean value works as expected[^93].
-  - A folder collection `filter` supports multiple possible values by using an array for the `value`[^151].
+  - Sorting entries by a DateTime field works as expected[^110].
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
-  - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
   - A console error won’t be thrown when a collection doesn’t have the `title` field[^152]. In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug. This supports a typical VitePress setup.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
-  - Sorting entries by a DateTime field works as expected[^110].
-  - The entry list supports basic Markdown formatting syntax in the titles: bold, italic and code are allowed. HTML character references (entities) are also parsed properly[^69].
+  - An entry summary supports basic Markdown formatting syntax: bold, italic and code are allowed. HTML character references (entities) are also parsed properly[^69].
   - If you update an entry field that appears in the collection’s `summary`, such as `title`, the entry list displays an updated summary after you save the entry.
   - If entries don’t have an Image field for thumbnails, the entry list will only be displayed in list view, because it doesn’t make sense to show grid view[^143].
   - Assets stored in a [collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
@@ -356,7 +357,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - If the `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path[^140]. Other dynamic template tags such as `{{filename}}` will also be populated as expected[^141].
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
-  - The `summary` template tags support [summary string transformations](https://decapcms.org/docs/summary-strings/).
+  - The `summary` template tags support [summary string transformations](https://decapcms.org/docs/summary-strings/), e.g. `{{fields.date | date('YYYY-MM-DD')}}`.
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
