@@ -408,8 +408,8 @@
  */
 
 /**
- * Collection type.
- * @typedef {'entry' | 'asset'} CollectionType
+ * Collection type. Note: Sveltia CMS calls a folder collection an entry collection.
+ * @typedef {'entry' | 'file'} CollectionType
  */
 
 /**
