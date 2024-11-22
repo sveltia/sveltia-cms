@@ -254,7 +254,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
-  - Entries can be listed and edited even if the collection doesn’t have the `title` field. In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug. This supports a typical VitePress setup.
+  - A console error won’t be thrown when a collection doesn’t have the `title` field[^152]. In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug. This supports a typical VitePress setup.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
   - Sorting entries by a DateTime field works as expected[^110].
   - The entry list supports basic Markdown formatting syntax in the titles: bold, italic and code are allowed. HTML character references (entities) are also parsed properly[^69].
@@ -1263,3 +1263,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^150]: Netlify/Decap CMS [#7319](https://github.com/decaporg/decap-cms/issues/7319)
 
 [^151]: Netlify/Decap CMS [#7319](https://github.com/decaporg/decap-cms/issues/7328)
+
+[^152]: Netlify/Decap CMS [#7319](https://github.com/decaporg/decap-cms/issues/2491)
