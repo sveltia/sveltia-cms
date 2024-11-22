@@ -313,9 +313,10 @@ export const getEntryTitle = (
     locales[locale ?? defaultLocale] ?? Object.values(locales)[0] ?? {};
 
   if (!useTemplate || !summaryTemplate) {
-    return sanitizeEntryTitle(getEntryTitleFromContent(content, { identifierField }) || slug, {
-      allowMarkdown,
-    });
+    return sanitizeEntryTitle(
+      getEntryTitleFromContent(content, { identifierField }) || slug.replaceAll('-', ' '),
+      { allowMarkdown },
+    );
   }
 
   /**
