@@ -9,14 +9,15 @@
   import { selectedCollection, selectedEntries } from '$lib/services/contents';
   import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
 
-  $: ({ name: collectionName, _thumbnailFieldName } = $selectedCollection?.folder
-    ? /** @type {EntryCollection} */ ($selectedCollection)
-    : /** @type {EntryCollection} */ ({}));
+  $: ({ name: collectionName, _thumbnailFieldName } =
+    $selectedCollection?._type === 'entry'
+      ? /** @type {EntryCollection} */ ($selectedCollection)
+      : /** @type {EntryCollection} */ ({}));
   $: hasListedEntries = !!$listedEntries.length;
   $: hasMultipleEntries = $listedEntries.length > 1;
 </script>
 
-{#if $selectedCollection?.folder}
+{#if $selectedCollection?._type === 'entry'}
   <Toolbar variant="secondary" aria-label={$_('entry_list')}>
     <ItemSelector
       allItems={$entryGroups.map(({ entries }) => entries).flat(1)}

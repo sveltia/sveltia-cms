@@ -58,9 +58,11 @@ export const getCollection = (name) => {
   }
 
   const rawCollection = get(siteConfig)?.collections.find((c) => c.name === name);
+  const isEntryCollection = typeof rawCollection?.folder === 'string';
+  const isFileCollection = !isEntryCollection && Array.isArray(rawCollection?.files);
 
   // Ignore invalid collection
-  if (!rawCollection?.folder && !rawCollection?.files) {
+  if (!isEntryCollection && !isFileCollection) {
     collectionCache.set(name, undefined);
 
     return undefined;
@@ -69,10 +71,10 @@ export const getCollection = (name) => {
   const { fields, thumbnail, folder, files } = rawCollection;
 
   // Normalize folder/file paths by removing leading/trailing slashes
-  if (folder) {
-    rawCollection.folder = stripSlashes(folder);
-  } else if (files) {
-    files.forEach((f) => {
+  if (isEntryCollection) {
+    rawCollection.folder = stripSlashes(/** @type {string} */ (folder));
+  } else {
+    /** @type {RawCollectionFile[]} */ (files).forEach((f) => {
       f.file = stripSlashes(f.file);
     });
   }
@@ -86,21 +88,19 @@ export const getCollection = (name) => {
   };
 
   /** @type {Collection | undefined} */
-  const collection = (() => {
-    if (folder) {
-      return {
+  const collection = isEntryCollection
+    ? {
         ...collectionBase,
+        _type: 'entry',
         _file: getFileConfig({ rawCollection, _i18n }),
         _thumbnailFieldName: rawCollection.folder
           ? (thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name)
           : undefined,
-      };
-    }
-
-    if (files) {
-      return {
+      }
+    : {
         ...collectionBase,
-        _fileMap: files.length
+        _type: 'file',
+        _fileMap: /** @type {RawCollectionFile[]} */ (files)?.length
           ? Object.fromEntries(
               files.map((file) => {
                 const __i18n = getI18nConfig(rawCollection, file);
@@ -111,10 +111,6 @@ export const getCollection = (name) => {
             )
           : {},
       };
-    }
-
-    return undefined;
-  })();
 
   collectionCache.set(name, collection);
 

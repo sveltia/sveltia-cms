@@ -148,12 +148,14 @@ export const fillSlugTemplate = (
 ) => {
   const {
     name: collectionName,
-    folder,
     identifier_field: identifierField = 'title',
     slug_length: slugMaxLength = undefined,
   } = collection;
 
-  const basePath = folder ? /** @type {EntryCollection} */ (collection)._file.basePath : undefined;
+  const basePath =
+    collection._type === 'entry'
+      ? /** @type {EntryCollection} */ (collection)._file.basePath
+      : undefined;
 
   /**
    * Replacer subroutine.

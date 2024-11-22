@@ -29,7 +29,7 @@
       }}
     >
       <GridCell class="image">
-        {#if collection.folder}
+        {#if collection._type === 'entry'}
           {#await getEntryThumbnail(/** @type {EntryCollection} */ (collection), entry) then src}
             {#if src}
               <Image {src} variant="icon" cover />

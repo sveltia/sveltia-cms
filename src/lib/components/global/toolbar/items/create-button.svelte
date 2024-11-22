@@ -8,7 +8,7 @@
 
   $: folderCollections = ($siteConfig?.collections ?? []).filter(
     ({ folder, create = false, hide = false, divider = false }) =>
-      !!folder && create && !hide && !divider,
+      typeof folder === 'string' && create && !hide && !divider,
   );
 </script>
 

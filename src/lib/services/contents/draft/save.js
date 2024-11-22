@@ -36,12 +36,15 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
   const { collection } = fillSlugOptions;
 
   const {
-    folder,
     _i18n: { structure },
     _assetFolder,
   } = collection;
 
-  const subPath = folder ? /** @type {EntryCollection} */ (collection)._file.subPath : undefined;
+  const subPath =
+    collection._type === 'entry'
+      ? /** @type {EntryCollection} */ (collection)._file.subPath
+      : undefined;
+
   const subPathFirstPart = subPath?.match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
   const isMultiFolders = structure === 'multiple_folders';
   const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];

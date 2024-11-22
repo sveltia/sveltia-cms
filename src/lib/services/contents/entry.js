@@ -297,13 +297,16 @@ export const getEntryTitle = (
 ) => {
   const {
     name: collectionName,
-    folder,
     identifier_field: identifierField = 'title',
     summary: summaryTemplate,
     _i18n: { defaultLocale },
   } = collection;
 
-  const basePath = folder ? /** @type {EntryCollection} */ (collection)._file.basePath : undefined;
+  const basePath =
+    collection._type === 'entry'
+      ? /** @type {EntryCollection} */ (collection)._file.basePath
+      : undefined;
+
   const { locales, slug, commitDate, commitAuthor } = entry;
 
   const { content = {}, path: entryPath = '' } =

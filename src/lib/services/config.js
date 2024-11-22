@@ -155,6 +155,13 @@ export const initSiteConfig = async (manualConfig = {}) => {
     // Set the site URL for development and production if undefined. See also `/src/app.svelte`
     config.site_url ||= DEV ? siteURL : window.location.origin;
 
+    // Handle root collection folder variants, particularly for VitePress
+    config.collections.forEach((collection) => {
+      if (collection.folder === '.' || collection.folder === '/') {
+        collection.folder = '';
+      }
+    });
+
     siteConfig.set(config);
     siteConfigVersion.set(await getHash(YAML.stringify(config)));
   } catch (/** @type {any} */ ex) {
@@ -186,14 +193,14 @@ siteConfig.subscribe((config) => {
   /** @type {CollectionEntryFolder[]} */
   const _allEntryFolders = [
     ...collections
-      .filter(({ folder, hide, divider }) => !!folder && !hide && !divider)
+      .filter(({ folder, hide, divider }) => typeof folder === 'string' && !hide && !divider)
       .map(({ name: collectionName, folder }) => ({
         collectionName,
         folderPath: stripSlashes(/** @type {string} */ (folder)),
       }))
       .sort((a, b) => compare(a.folderPath ?? '', b.folderPath ?? '')),
     ...collections
-      .filter(({ files, hide, divider }) => !!files && !hide && !divider)
+      .filter(({ files, hide, divider }) => Array.isArray(files) && !hide && !divider)
       .map((collection) => {
         const { name: collectionName, files } = collection;
 

@@ -107,7 +107,7 @@ const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
   const localeMatcher = `(?<locale>${locales.join('|')})`;
 
   return new RegExp(
-    `^${escapeRegExp(basePath)}\\/` +
+    `${basePath ? `^${escapeRegExp(basePath)}\\/` : '^'}` +
       `${i18nMultiFolder ? `${localeMatcher}\\/` : ''}` +
       `${filePathMatcher}` +
       `${i18nMultiFile ? `\\.${localeMatcher}` : ''}` +
@@ -166,19 +166,21 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     yaml_quote: yamlQuote = false,
   } = rawCollection;
 
+  const isEntryCollection = typeof folder === 'string';
   const filePath = file?.file;
   const extension = detectFileExtension({ format: _format, extension: _extension, path: filePath });
   const format = detectFileFormat({ format: _format, extension });
-  const basePath = folder ? stripSlashes(folder) : undefined;
+  const basePath = isEntryCollection ? stripSlashes(folder) : undefined;
 
   return {
     extension,
     format,
     basePath,
-    subPath: folder ? subPath : undefined,
-    fullPathRegEx: basePath
-      ? getEntryPathRegEx({ extension, format, basePath, subPath, _i18n })
-      : undefined,
+    subPath: isEntryCollection ? subPath : undefined,
+    fullPathRegEx:
+      basePath !== undefined
+        ? getEntryPathRegEx({ extension, format, basePath, subPath, _i18n })
+        : undefined,
     fullPath: filePath
       ? stripSlashes(filePath).replace('{{locale}}', _i18n.defaultLocale)
       : undefined,
