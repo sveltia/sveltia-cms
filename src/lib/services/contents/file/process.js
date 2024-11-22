@@ -3,10 +3,11 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
-import { normalizeSlug } from '$lib/services/contents/slug';
-import { parseEntryFile } from '$lib/services/contents/file/parse';
-import { getCollection } from '$lib/services/contents';
 import { hasRootListField } from '$lib/components/contents/details/widgets/list/helper';
+import { getCollection } from '$lib/services/contents';
+import { getEntryTitleFromContent } from '$lib/services/contents/entry';
+import { parseEntryFile } from '$lib/services/contents/file/parse';
+import { normalizeSlug } from '$lib/services/contents/slug';
 
 /**
  * Determine the slug for the given entry content.
@@ -48,9 +49,7 @@ const getSlug = (collectionName, filePath, content) => {
   }
 
   // We can’t determine the slug from the file path. Let’s fallback using the content
-  return normalizeSlug(
-    content[identifierField] || content.title || content.name || content.label || '',
-  );
+  return normalizeSlug(getEntryTitleFromContent(content, { identifierField }));
 };
 
 /**

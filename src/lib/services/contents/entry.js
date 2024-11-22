@@ -246,6 +246,38 @@ const sanitizeEntryTitle = (str, { allowMarkdown = false } = {}) => {
 };
 
 /**
+ * Determine an entry title from the given content. Fields other than `title` should be defined with
+ * the `identifier_field` collection option as per the Netlify/Decap CMS document. We also look for
+ * the `name` and `label` properties as well as a header in the Markdown `body` as a fallback.
+ * @param {FlattenedEntryContent | RawEntryContent} content - Content.
+ * @param {object} options - Options.
+ * @param {string} [options.identifierField] - Field name to identify the title.
+ * @param {boolean} [options.useBody] - Whether to fall back to a header in the Markdown `body`.
+ * @returns {string} Entry title. Can be an empty string if it cannot be determined.
+ * @see https://decapcms.org/docs/configuration-options/#identifier_field
+ */
+export const getEntryTitleFromContent = (
+  content,
+  { identifierField = 'title', useBody = true } = {},
+) => {
+  const idField = [identifierField, 'title', 'name', 'label'].find(
+    (fieldName) => typeof content[fieldName] === 'string' && !!content[fieldName].trim(),
+  );
+
+  if (idField) {
+    return content[idField].trim();
+  }
+
+  // Find a header in Markdown, excluding an anchor suffix
+  // https://vitepress.dev/guide/markdown#custom-anchors
+  if (useBody && typeof content.body === 'string') {
+    return content.body.match(/^#+\s+(.+?)(?:\s+\{#.+?\})?\s*$/m)?.[1] ?? '';
+  }
+
+  return '';
+};
+
+/**
  * Get the given entry’s title that can be displayed in the entry list and other places. Format it
  * with the summary template if necessary, or simply use the `title` or similar field in the entry.
  * @param {Collection} collection - Entry’s collection.
@@ -277,14 +309,10 @@ export const getEntryTitle = (
   const { content = {}, path: entryPath = '' } =
     locales[locale ?? defaultLocale] ?? Object.values(locales)[0] ?? {};
 
-  // Fields other than `title` should be defined with `identifier_field` as per the Netlify/Decap
-  // CMS document, but actually `name` also works as a fallback. We also use the `label` property
-  // and the entry slug.
   if (!useTemplate || !summaryTemplate) {
-    return sanitizeEntryTitle(
-      content[identifierField] || content.title || content.name || content.label || slug,
-      { allowMarkdown },
-    );
+    return sanitizeEntryTitle(getEntryTitleFromContent(content, { identifierField }) || slug, {
+      allowMarkdown,
+    });
   }
 
   /**

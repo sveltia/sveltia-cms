@@ -1,10 +1,15 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
+import { flatten } from 'flat';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
-import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
-import { backend } from '$lib/services/backends';
+import { prefs } from '$lib/services/prefs';
+import {
+  getEntryTitleFromContent,
+  getFieldConfig,
+  getPropertyValue,
+} from '$lib/services/contents/entry';
 import {
   allEntries,
   getEntriesByCollection,
@@ -12,8 +17,8 @@ import {
   selectedCollection,
   selectedEntries,
 } from '$lib/services/contents';
-import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
-import { prefs } from '$lib/services/prefs';
+import { backend } from '$lib/services/backends';
+import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
 
 /**
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
@@ -38,21 +43,29 @@ const removeMarkdownChars = (str) => str.replace(/[_*`]+/g, '');
  * Sort the given entries.
  * @param {Entry[]} entries - Entry list.
  * @param {Collection} collection - Collection that the entries belong to.
- * @param {SortingConditions} conditions - Sorting conditions.
+ * @param {SortingConditions} [conditions] - Sorting conditions.
  * @returns {Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
-const sortEntries = (entries, collection, { key, order }) => {
-  if (key === undefined || order === undefined) {
-    return entries;
-  }
-
+const sortEntries = (entries, collection, { key, order } = {}) => {
   const _entries = [...entries];
 
   const {
     name: collectionName,
     _i18n: { defaultLocale: locale },
   } = collection;
+
+  if (key === undefined) {
+    /**
+     * Determine the given entry’s title.
+     * @param {Entry} entry - Entry.
+     * @returns {string} Determined title.
+     */
+    const getTitle = ({ locales, slug }) =>
+      getEntryTitleFromContent(flatten(locales?.[locale]?.content ?? {})) || slug;
+
+    return _entries.sort((a, b) => getTitle(a).localeCompare(getTitle(b)));
+  }
 
   const type =
     { slug: String, commit_author: String, commit_date: Date }[key] ||
@@ -315,9 +328,7 @@ export const entryGroups = derived(
     if (!entries.length || !!getFilesByEntry(collection, entries[0]).length) {
       set([]);
     } else {
-      if (_currentView?.sort) {
-        entries = sortEntries(entries, collection, _currentView.sort);
-      }
+      entries = sortEntries(entries, collection, _currentView.sort);
 
       if (_currentView?.filters) {
         entries = filterEntries(entries, collection, _currentView.filters);

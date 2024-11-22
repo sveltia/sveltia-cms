@@ -5,7 +5,7 @@ import { truncate } from '@sveltia/utils/string';
 import moment from 'moment';
 import { get } from 'svelte/store';
 import { renameIfNeeded } from '$lib/services/utils/file';
-import { getFieldConfig } from '$lib/services/contents/entry';
+import { getEntryTitleFromContent, getFieldConfig } from '$lib/services/contents/entry';
 import { getEntriesByCollection } from '$lib/services/contents';
 import { siteConfig } from '$lib/services/config';
 import { parseDateTimeConfig } from '$lib/components/contents/details/widgets/date-time/helper';
@@ -210,7 +210,7 @@ export const fillSlugTemplate = (
     if (tag.startsWith('fields.')) {
       value = valueMap[tag.replace(/^fields\./, '')];
     } else if (tag === 'slug') {
-      value = valueMap[identifierField] || valueMap.title || valueMap.name || valueMap.label;
+      value = getEntryTitleFromContent(valueMap, { identifierField });
     } else {
       value = valueMap[tag];
     }
