@@ -103,6 +103,11 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
       const { head, body } = text.match(regex)?.groups ?? {};
 
       if (!head && !body) {
+        // Allow headless front matter, particularly for VitePress
+        if (text) {
+          return { body: text };
+        }
+
         throw new Error('No front matter block found');
       }
 

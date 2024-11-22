@@ -67,22 +67,27 @@ export const formatEntryFile = async ({ content, _file }) => {
   }
 
   if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/)) {
-    const [startDelimiter, endDelimiter] = fmDelimiters ?? ['---', '---'];
-    const body = content.body ? `${content.body}\n` : '';
+    const [sd, ed] = fmDelimiters ?? ['---', '---'];
+    const body = typeof content.body === 'string' ? content.body : '';
 
     delete content.body;
 
+    // Allow headless front matter, particularly for VitePress
+    if (!Object.keys(content).length) {
+      return `${body}\n`;
+    }
+
     try {
       if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-        return `${startDelimiter}\n${formatYAML(content, { yamlQuote })}\n${endDelimiter}\n${body}`;
+        return `${sd}\n${formatYAML(content, { yamlQuote })}\n${ed}\n${body}\n`;
       }
 
       if (format === 'toml-frontmatter') {
-        return `${startDelimiter}\n${formatTOML(content)}\n${endDelimiter}\n${body}`;
+        return `${sd}\n${formatTOML(content)}\n${ed}\n${body}\n`;
       }
 
       if (format === 'json-frontmatter') {
-        return `${startDelimiter}\n${formatJSON(content)}\n${endDelimiter}\n${body}`;
+        return `${sd}\n${formatJSON(content)}\n${ed}\n${body}\n`;
       }
     } catch (/** @type {any} */ ex) {
       // eslint-disable-next-line no-console
