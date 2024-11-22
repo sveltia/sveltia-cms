@@ -64,7 +64,7 @@ const applyTransformation = ({ fieldConfig, value, transformation }) => {
   const truncateTransformer = transformation.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
 
   if (truncateTransformer) {
-    const [, max, ellipsis = ''] = truncateTransformer;
+    const [, max, ellipsis = '…'] = truncateTransformer;
 
     return truncate(slugPartStr, Number(max), { ellipsis });
   }

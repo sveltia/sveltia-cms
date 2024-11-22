@@ -104,7 +104,7 @@ describe('Test formatSummary()', () => {
         valueMap,
         summaryTemplate: '{{fields.alt | upper | truncate(2)}}',
       }),
-    ).toEqual('HE');
+    ).toEqual('HE…');
     expect(
       formatSummary({
         ...baseArgs,

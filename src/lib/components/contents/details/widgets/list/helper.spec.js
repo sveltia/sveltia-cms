@@ -104,7 +104,7 @@ describe('Test formatSummary() — multiple fields', () => {
         valueMap,
         summaryTemplate: '{{fields.alt | upper | truncate(2)}}',
       }),
-    ).toEqual('HE');
+    ).toEqual('HE…');
     expect(
       formatSummary({
         ...baseArgs,
@@ -190,6 +190,6 @@ describe('Test formatSummary() — single field', () => {
         valueMap: { 'images.0': 'hello.jpg' },
         summaryTemplate: '{{fields.src | upper | truncate(5)}}',
       }),
-    ).toEqual('HELLO');
+    ).toEqual('HELLO…');
   });
 });
