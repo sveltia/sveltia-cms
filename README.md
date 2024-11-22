@@ -249,7 +249,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Entry slugs are [localizable](#localizing-entry-slugs)[^80].
 - Entry listing
   - The collection list displays the number of items in each collection.
-  - A folder collection filter with a boolean value works as expected[^93].
+  - A folder collection `filter` with a boolean value works as expected[^93].
+  - A folder collection `filter` supports multiple possible values by using an array for the `value`[^151].
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
@@ -389,6 +390,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
+- The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
 - Assets stored in an entry-relative media folder are displayed in the Asset Library[^142].
 - These entry-relative assets are automatically deleted when the associated entry is deleted because these are not available for other entries[^22]. When you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
@@ -396,7 +398,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Users can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens[^97].
 - No fatal application crash when uploading assets[^112].
-- `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 
 ### Better customization
 
@@ -1260,3 +1261,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^149]: Netlify/Decap CMS [#13](https://github.com/decaporg/decap-cms/issues/13) — The issue appears to have been closed without a fix being available.
 
 [^150]: Netlify/Decap CMS [#7319](https://github.com/decaporg/decap-cms/issues/7319)
+
+[^151]: Netlify/Decap CMS [#7319](https://github.com/decaporg/decap-cms/issues/7328)
