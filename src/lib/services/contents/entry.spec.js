@@ -6,6 +6,7 @@ describe('Test getEntryTitle()', () => {
   const collection = {
     name: 'pages-tags',
     folder: 'content/tags',
+    _type: 'entry',
     _file: {
       extension: 'md',
       format: 'yaml-frontmatter',

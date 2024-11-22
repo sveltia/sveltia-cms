@@ -5,6 +5,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   const currentSlug = 'foo';
 
   const collectionBase = {
+    _type: /** @type {CollectionType} */ ('entry'),
     name: 'blog',
     folder: 'src/content/blog',
   };
@@ -42,6 +43,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   };
 
   test('simple path, multiple folders, entry relative', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -57,6 +59,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders, entry relative', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -72,6 +75,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple files, entry relative', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -87,6 +91,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple files, entry relative', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -102,6 +107,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, single file, entry relative', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -117,6 +123,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, single file, entry relative', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -132,6 +139,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders, entry absolute', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -147,6 +155,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders, entry absolute', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -162,6 +171,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple files, entry absolute', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -177,6 +187,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple files, entry absolute', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -192,6 +203,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, single file, entry absolute', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -207,6 +219,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, single file, entry absolute', () => {
+    /** @type {Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },

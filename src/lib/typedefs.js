@@ -408,9 +408,14 @@
  */
 
 /**
+ * Collection type.
+ * @typedef {'entry' | 'asset'} CollectionType
+ */
+
+/**
  * Extra properties for a collection.
  * @typedef {object} CollectionExtraProps
- * @property {'entry' | 'file'} _type - Collection type.
+ * @property {CollectionType} _type - Collection type.
  * @property {I18nConfig} _i18n - Normalized i18n configuration combined with the top-level
  * configuration.
  * @property {CollectionAssetFolder} [_assetFolder] - Asset folder configuration.

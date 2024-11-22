@@ -91,7 +91,7 @@ export const getCollection = (name) => {
   const collection = isEntryCollection
     ? {
         ...collectionBase,
-        _type: 'entry',
+        _type: /** @type {CollectionType} */ ('entry'),
         _file: getFileConfig({ rawCollection, _i18n }),
         _thumbnailFieldName: rawCollection.folder
           ? (thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name)
@@ -99,7 +99,7 @@ export const getCollection = (name) => {
       }
     : {
         ...collectionBase,
-        _type: 'file',
+        _type: /** @type {CollectionType} */ ('file'),
         _fileMap: /** @type {RawCollectionFile[]} */ (files)?.length
           ? Object.fromEntries(
               files.map((file) => {

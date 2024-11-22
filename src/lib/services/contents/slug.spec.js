@@ -7,6 +7,7 @@ describe('Test fillSlugTemplate()', () => {
   /** @type {Collection} */
   const collection = {
     name: 'posts',
+    _type: 'entry',
     _file: {
       extension: 'md',
       format: 'yaml-frontmatter',
