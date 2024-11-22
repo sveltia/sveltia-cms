@@ -241,6 +241,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Entry slugs
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values[^133].
+  - If a collection only has the Markdown `body` field, an entry slug will be generated from a header in the `body`, if exists. This supports a typical VitePress setup.
   - Entry slug template tags support [filter transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
   - Developers can set the maximum number of characters for an entry slug with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms[^25].
@@ -250,7 +251,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The collection list displays the number of items in each collection.
   - A folder collection filter with a boolean value works as expected[^93].
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
-  - Hugo’s special `_index.md` files are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
+  - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
+  - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
+  - Entries can be listed and edited even if the collection doesn’t have the `title` field. In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug. This supports a typical VitePress setup.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
   - Sorting entries by a DateTime field works as expected[^110].
   - The entry list supports basic Markdown formatting syntax in the titles: bold, italic and code are allowed. HTML character references (entities) are also parsed properly[^69].
@@ -352,6 +355,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - If the `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path[^140]. Other dynamic template tags such as `{{filename}}` will also be populated as expected[^141].
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
+  - The `summary` template tags support [summary string transformations](https://decapcms.org/docs/summary-strings/).
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
@@ -392,6 +396,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Users can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens[^97].
 - No fatal application crash when uploading assets[^112].
+- `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 
 ### Better customization
 
