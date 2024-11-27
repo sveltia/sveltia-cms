@@ -1,13 +1,15 @@
 <script>
   import { Group } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
+  import DOMPurify from 'isomorphic-dompurify';
+  import { marked } from 'marked';
   import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import Toolbar from '$lib/components/assets/details/toolbar.svelte';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
   import { getAssetBlob, isMediaKind, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
+  import EmptyState from '$lib/components/common/empty-state.svelte';
+  import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import Toolbar from '$lib/components/assets/details/toolbar.svelte';
 
   /**
    * A reference to the wrapper element.
@@ -101,7 +103,17 @@
             <iframe src={blobURL} title={name}></iframe>
           {:else if blob?.type && isTextFileType(blob.type)}
             {#await $overlaidAsset?.text ?? blob.text() then text}
-              <pre role="figure">{text}</pre>
+              {#if name.endsWith('.md')}
+                {#await marked.parse(text, { breaks: true, async: true }) then rawHTML}
+                  <div role="figure" class="markdown">
+                    {@html DOMPurify.sanitize(rawHTML)}
+                  </div>
+                {:catch}
+                  <pre role="figure">{text}</pre>
+                {/await}
+              {:else}
+                <pre role="figure">{text}</pre>
+              {/if}
             {/await}
           {:else}
             <EmptyState>
@@ -150,16 +162,22 @@
         border-right: 1px solid var(--sui-primary-border-color);
 
         iframe,
-        pre {
+        pre,
+        .markdown {
           display: block;
           width: 100%;
           height: 100%;
         }
 
-        pre {
+        pre,
+        .markdown {
           margin: 0;
           padding: 16px;
           overflow: auto;
+        }
+
+        pre {
+          white-space: pre-wrap;
         }
       }
     }
