@@ -248,7 +248,12 @@ siteConfig.subscribe((config) => {
    */
   const collectionAssetFolders = /** @type {CollectionAssetFolder[]} */ (
     collections
-      .filter(({ hide, divider }) => !hide && !divider)
+      .filter(
+        ({ hide, divider, media_folder: mediaFolder, path: entryPath }) =>
+          // Show the asset folder if `media_folder` or `path` is defined, even if the collection is
+          // hidden with the `hide` option
+          (!hide || !!mediaFolder || !!entryPath) && !divider,
+      )
       .map((collection) => {
         const {
           name: collectionName,
