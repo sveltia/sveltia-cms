@@ -658,6 +658,13 @@ export const strings = {
     rtf: 'リッチテキストドキュメント',
     xls: 'Excel スプレッドシート',
     xlsx: 'Excel スプレッドシート',
+    html: 'HTML テキスト',
+    js: 'JavaScript',
+    json: 'JSON テキスト',
+    md: 'Markdown テキスト',
+    toml: 'TOML テキスト',
+    yaml: 'YAML テキスト',
+    yml: 'YAML テキスト',
   },
 
   // file size units

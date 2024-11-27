@@ -653,6 +653,13 @@ export const strings = {
     rtf: 'Rich text document',
     xls: 'Excel spreadsheet',
     xlsx: 'Excel spreadsheet',
+    html: 'HTML text',
+    js: 'JavaScript',
+    json: 'JSON text',
+    md: 'Markdown text',
+    toml: 'TOML text',
+    yaml: 'YAML text',
+    yml: 'YAML text',
   },
 
   // file size units
