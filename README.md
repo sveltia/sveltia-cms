@@ -190,7 +190,7 @@ We are working hard to create a **significantly better alternative to Netlify CM
 
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^95][^27].
-- Developers can [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
+- It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu when Developer Mode is enabled.
@@ -206,9 +206,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
     - File collections support multiple files/folders i18n structures[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections as before.
-    - The `i18n: duplicate` field configuration can be used for the List and Object widgets so that changes made with these widgets are duplicated between locales[^7][^68]. Subfields can use the `i18n` configuration normally.
+    - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales[^7][^68]. The `i18n` configuration can normally be used for the subfields.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
-  - Developers can use the `{{locale}}` template tag in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
+  - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
   - It’s possible to [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
   - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://en.wikipedia.org/wiki/Transliteration)[^99].
@@ -236,8 +236,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - `icon`: [Choose a custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
     - `divider`: [Add dividers to the collection list](#adding-dividers-to-the-collection-list).
     - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list[^130]. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
-  - Developers can use nested fields (dot notation) in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
-  - Developers can use Markdown in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
+  - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
+  - Markdown is supported in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
   - A folder collection `filter` supports multiple possible values by using an array for the `value`[^151].
   - Multiple [summary string transformations](https://decapcms.org/docs/summary-strings/) can be chained like `{{title | upper | truncate(20)}}`.
@@ -247,7 +247,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - If a collection only has the Markdown `body` field, an entry slug will be generated from a header in the `body`, if exists. This supports a typical VitePress setup.
   - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
-  - Developers can set the maximum number of characters for an entry slug with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms[^25].
+  - The maximum number of characters for an entry slug can be set with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms[^25].
   - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget[^137].
   - Entry slugs are [localizable](#localizing-entry-slugs)[^80].
 - Entry listing
@@ -271,13 +271,13 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Required fields, not optional fields, are marked for efficient data entry.
 - Users can revert changes to all fields or a specific field.
 - If you revert changes and there are no unsaved changes, the Save button is disabled as expected[^118].
-- Developers can hide the preview of a specific field with `preview: false`[^126].
+- The preview of a specific field can be hidden with `preview: false`[^126].
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
 - When you click on a field in the preview pane, the corresponding field in the edit pane is highlighted[^41]. It will be automatically expanded if collapsed.
 - The preview pane displays all fields, including each label, making it easier to see which fields are populated.
 - Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
 - The preview pane won’t cause a scrolling issue[^136].
-- Developers can use a full regular expression, including flags, for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
+- A full regular expression, including flags, can be used for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
 - Any links to other entries will work as expected, with the Content Editor being updated for the other[^100].
 - In the Boolean and Select widgets, you don’t have to update a value twice to re-enable the Save button after saving an entry[^139].
@@ -285,7 +285,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 ### Better data output
 
 - Keys in generated JSON/TOML/YAML content are always sorted by the order of configured fields, making Git commits clean and consistent[^86].
-- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output. Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string or an empty array, instead of nothing (`undefined`), regardless of the `required` option[^45][^46][^44].
+- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output. Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string or an empty array, instead of nothing (`undefined`), regardless of the `required` field option[^45][^46][^44].
   - In other words, in Sveltia CMS, `required: false` makes data input optional, but doesn’t make data output optional.
   - Note: If you have any data validation (type definition) that expects `undefined` values, you may need to revise it or the output from Sveitia CMS may break it.
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
@@ -322,11 +322,11 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can preview variable types without having to register a preview template[^42].
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
-  - Developers can set the default editor mode by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
+  - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
-    - Developers can use [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) with the Object widget just like the List widget.
+    - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) just like the List widget.
     - An optional Object field (`required: false`) can be manually added or removed with a checkbox[^88]. If unadded or removed, the required subfields won’t trigger validation errors[^16], and the field will be saved as `null`.
 - Relation
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
@@ -427,7 +427,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget instead.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
-- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any.
+- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any; we may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 
 ### Current limitations
 
@@ -440,7 +440,7 @@ These limitations are expected to be resolved before or shortly after GA:
 | Localization | The application UI is only available in English and Japanese at this time. |
 | Media Libraries | [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) are not yet supported. |
 | Workflow | [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/) and [Open Authoring](https://decapcms.org/docs/open-authoring/) are not yet supported and will be implemented after the 1.0 release. |
-| Collections | [Nested Collections](https://decapcms.org/docs/collection-nested/) (beta) are not yet supported and will be implemented after the 1.0 release. |
+| Collections | [Nested collections](https://decapcms.org/docs/collection-nested/) (beta) are not yet supported and will be implemented after the 1.0 release. |
 | Widgets | [Custom widgets](https://decapcms.org/docs/custom-widgets/) are not yet supported. See the table below for other limitations. |
 | Customizations | [Custom previews](https://decapcms.org/docs/customization/) and [event subscriptions](https://decapcms.org/docs/registering-events/) are not yet supported. |
 
@@ -456,7 +456,7 @@ These limitations are expected to be resolved before or shortly after GA:
 
 - The GitLab backend requires GitLab 16.3 or later.
 - We plan to provide partial compatibility with now-discontinued Static CMS, such as the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue).
-- Found a compatibility issue or other missing feature? Let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new).
+- Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new).
 
 ## Getting started
 
@@ -761,7 +761,7 @@ collections:
     label: Data Files
     files:
       - name: members
-        label: List of Members
+        label: Member List
         file: _data/members.yml
         fields:
           - name: members
@@ -917,7 +917,7 @@ img-src 'self' blob: data: https://*;
 
 ## Support & feedback
 
-While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of this GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
+While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
 
 Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements. Feel free to reach out!
 
@@ -942,12 +942,14 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### After the 1.0 release
 
+- Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and nested collections
 - Tackling more Netlify/Decap CMS issues, especially the [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some features are already implemented in Sveltia CMS
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - AI integrations for image generation and content writing
 - End-user documentation
 - Contributor documentation
 - Marketplace for custom widgets, etc.
+- Git Gateway alternative
 - and so much more!
 
 ## Related links
