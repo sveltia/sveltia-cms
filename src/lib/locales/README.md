@@ -5,7 +5,7 @@ Thank you for your interest in translating Sveltia CMS into your language! While
 - Most of the strings are unorganized/unpolished.
 - Some strings are difficult to translate without context.
 - Many strings, including invisible labels for screen readers, will be added before the 1.0 release as we implement more missing features.
-- We’ll migrate from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the [Fluent localization system](https://projectfluent.org/) to better handle singular/plural forms and even more complex grammars.
+- We’ll migrate from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-powered sveltia-i18n library to better handle singular/plural forms and even more complex grammars.
 - Japanese localization is still needed for the [maintainer](https://github.com/kyoshino)’s Japanese clients.
 
 If you’d like to localize the app, please [file an issue](https://github.com/sveltia/sveltia-cms/issues) so we can ping you when it’s ready!

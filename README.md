@@ -411,7 +411,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The application UI locale is automatically selected based on the preferred language set with the browser[^132]. Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
 - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container[^117].
-- We’ll soon be migrating from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the [Fluent localization system](https://projectfluent.org/) for natural-sounding translations in every locale.
+- We’ll soon be migrating from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to [MessageFormat 2](https://github.com/unicode-org/message-format-wg) for natural-sounding translations in every locale.
 
 ## Compatibility
 
@@ -932,7 +932,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) Runes migration
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Partial compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, specifically the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
-- Localization with the new [Fluent](https://projectfluent.org)-powered sveltia-i18n library
+- Localization with the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-powered sveltia-i18n library
 - Accessibility audit
 - Developer documentation (implementation guide)
 - Marketing site
