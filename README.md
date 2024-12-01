@@ -932,7 +932,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) Runes migration
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Partial compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, specifically the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
-- Localization with the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-powered sveltia-i18n library
+- Localization with the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-based sveltia-i18n library
 - Accessibility audit
 - Developer documentation (implementation guide)
 - Marketing site
