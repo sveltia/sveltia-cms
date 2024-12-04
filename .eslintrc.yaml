@@ -64,6 +64,8 @@ rules:
   no-void: off
   # https://github.com/sveltejs/eslint-plugin-svelte#white_check_mark-rules
   svelte/no-at-html-tags: off
+  # Ignore false errors
+  svelte/no-unused-svelte-ignore: off
   # https://svelte.dev/docs#component-format-script
   no-undef-init: off
   no-underscore-dangle: off
