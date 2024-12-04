@@ -115,7 +115,9 @@
       variant="tertiary"
       label={$_(dateOnly ? 'today' : 'now')}
       onclick={() => {
-        currentValue = getCurrentDateTime(fieldConfig);
+        currentValue = /** @type {string} */ (
+          getCurrentValue(getCurrentDateTime(fieldConfig), '', fieldConfig)
+        );
       }}
     />
   {/if}

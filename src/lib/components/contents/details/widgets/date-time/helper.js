@@ -53,30 +53,6 @@ export const getCurrentDateTime = (fieldConfig) => {
 };
 
 /**
- * Get the default value for a DateTime field.
- * @param {DateTimeField} fieldConfig - Field configuration.
- * @returns {string} Default value.
- * @todo Write tests for this.
- */
-export const getDefaultValue = (fieldConfig) => {
-  const { default: defaultValue } = fieldConfig;
-
-  if (typeof defaultValue !== 'string') {
-    return '';
-  }
-
-  // Decap CMS 3.3.0 changed the default value from the current date/time to blank, requiring
-  // `{{now}}` to use the current date/time.
-  // @see https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0
-  // @see https://github.com/decaporg/decap-website/commit/01e54d8392e368e5d7b9fec307f50af584b12c91
-  if (defaultValue === '{{now}}') {
-    return getCurrentDateTime(fieldConfig);
-  }
-
-  return defaultValue;
-};
-
-/**
  * Get the current value given the input value.
  * @param {string | undefined} inputValue - Value on the date/time input widget.
  * @param {string | undefined} currentValue - Value in the entry draft datastore.
@@ -122,6 +98,32 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
 
     return undefined;
   }
+};
+
+/**
+ * Get the default value for a DateTime field.
+ * @param {DateTimeField} fieldConfig - Field configuration.
+ * @returns {string} Default value.
+ * @todo Write tests for this.
+ */
+export const getDefaultValue = (fieldConfig) => {
+  const { default: defaultValue } = fieldConfig;
+
+  if (typeof defaultValue !== 'string') {
+    return '';
+  }
+
+  // Decap CMS 3.3.0 changed the default value from the current date/time to blank, requiring
+  // `{{now}}` to use the current date/time.
+  // @see https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0
+  // @see https://github.com/decaporg/decap-website/commit/01e54d8392e368e5d7b9fec307f50af584b12c91
+  if (defaultValue === '{{now}}') {
+    return /** @type {string} */ (
+      getCurrentValue(getCurrentDateTime(fieldConfig), '', fieldConfig)
+    );
+  }
+
+  return defaultValue;
 };
 
 /**
