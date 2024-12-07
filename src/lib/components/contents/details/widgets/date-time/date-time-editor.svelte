@@ -10,6 +10,7 @@
   import {
     getCurrentDateTime,
     getCurrentValue,
+    getDate,
     getInputValue,
     parseDateTimeConfig,
   } from '$lib/components/contents/details/widgets/date-time/helper';
@@ -80,7 +81,14 @@
     const _currentValue = getCurrentValue(inputValue, currentValue, fieldConfig);
 
     // Avoid a cycle dependency & infinite loop
-    if (_currentValue !== undefined && _currentValue !== currentValue) {
+    if (
+      _currentValue !== undefined &&
+      _currentValue !== currentValue &&
+      // Compare the actual date/time: if a user edits an existing entry in a different location
+      // than where it was originally written, `inputValue` and `_currentValue` may shift to the
+      // current time zone, but the epoch won’t change. Don’t update `currentValue` in that case.
+      Number(getDate(_currentValue, fieldConfig)) !== Number(getDate(currentValue, fieldConfig))
+    ) {
       currentValue = _currentValue;
     }
   };

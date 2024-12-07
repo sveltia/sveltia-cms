@@ -8,18 +8,52 @@ import moment from 'moment';
  */
 export const parseDateTimeConfig = (fieldConfig) => {
   const {
+    format,
     date_format: dateFormat = undefined,
     time_format: timeFormat = undefined,
     picker_utc: utc = false,
   } = fieldConfig;
 
   return {
+    format,
     dateFormat,
     timeFormat,
     dateOnly: timeFormat === false,
     timeOnly: dateFormat === false,
     utc,
   };
+};
+
+/**
+ * Get a `Date` object given the current value.
+ * @param {string | undefined} currentValue - Value in the entry draft datastore.
+ * @param {DateTimeField} fieldConfig - Field configuration.
+ * @returns {Date | undefined} Date.
+ * @todo Write tests for this.
+ */
+export const getDate = (currentValue, fieldConfig) => {
+  const { format, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+
+  if (!currentValue) {
+    return undefined;
+  }
+
+  try {
+    if (timeOnly) {
+      return new Date(new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`));
+    }
+
+    if (format) {
+      return (utc ? moment.utc : moment)(currentValue, format).toDate();
+    }
+
+    return new Date(currentValue);
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
+    return undefined;
+  }
 };
 
 /**
@@ -61,8 +95,7 @@ export const getCurrentDateTime = (fieldConfig) => {
  * @todo Write tests for this.
  */
 export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
-  const { format } = fieldConfig;
-  const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+  const { format, dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
   // Append seconds (and milliseconds) for data format & framework compatibility
   const timeSuffix = `:00${currentValue?.match(/\.000$/) ? '.000' : ''}`;
 
@@ -134,7 +167,6 @@ export const getDefaultValue = (fieldConfig) => {
  * @todo Write tests for this.
  */
 export const getInputValue = (currentValue, fieldConfig) => {
-  const { format } = fieldConfig;
   const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
 
   // If the default value is an empty string, the input will be blank by default
@@ -143,11 +175,11 @@ export const getInputValue = (currentValue, fieldConfig) => {
   }
 
   // If the current value is the standard format, return it as is
-  const [value] = dateOnly
-    ? (currentValue?.match(/^\d{4}-[01]\d-[0-3]\d\b/) ?? [])
+  const value = dateOnly
+    ? currentValue?.match(/^\d{4}-[01]\d-[0-3]\d\b/)?.[0]
     : timeOnly
-      ? (currentValue?.match(/^[0-2]\d:[0-5]\d\b/) ?? [])
-      : (currentValue?.match(/^\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d\b/) ?? []);
+      ? currentValue?.match(/^[0-2]\d:[0-5]\d\b/)?.[0]
+      : undefined;
 
   if (value) {
     return value;
@@ -155,7 +187,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
 
   try {
     const { year, month, day, hour, minute } = getDateTimeParts({
-      date: currentValue ? (utc ? moment.utc : moment)(currentValue, format).toDate() : new Date(),
+      date: currentValue ? getDate(currentValue, fieldConfig) : new Date(),
       timeZone: utc ? 'UTC' : undefined,
     });
 
@@ -176,38 +208,5 @@ export const getInputValue = (currentValue, fieldConfig) => {
     console.error(ex);
 
     return '';
-  }
-};
-
-/**
- * Get a `Date` object given the current value.
- * @param {string | undefined} currentValue - Value in the entry draft datastore.
- * @param {DateTimeField} fieldConfig - Field configuration.
- * @returns {Date | undefined} Date.
- * @todo Write tests for this.
- */
-export const getDate = (currentValue, fieldConfig) => {
-  const { format } = fieldConfig;
-  const { timeOnly, utc } = parseDateTimeConfig(fieldConfig);
-
-  if (!currentValue) {
-    return undefined;
-  }
-
-  try {
-    if (timeOnly) {
-      return new Date(new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`));
-    }
-
-    if (format) {
-      return (utc ? moment.utc : moment)(currentValue, format).toDate();
-    }
-
-    return new Date(currentValue);
-  } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
-
-    return undefined;
   }
 };

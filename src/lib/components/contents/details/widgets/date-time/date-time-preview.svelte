@@ -55,12 +55,13 @@
             ...dateFormatOptions,
             ...timeFormatOptions,
             timeZone: utc ? 'UTC' : undefined,
+            timeZoneName: utc ? undefined : 'short',
           })}
         {/if}
       </time>
     {/if}
     {#if utc}
-      (UTC)
+      UTC
     {/if}
   </p>
 {/if}

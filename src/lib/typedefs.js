@@ -563,8 +563,11 @@
 
 /**
  * @typedef {object} DateTimeFieldNormalizedProps
- * @property {string | boolean | undefined} dateFormat - Same as `date_field`.
- * @property {string | boolean | undefined} timeFormat - Same as `time_format`.
+ * @property {string | undefined} format - Same as {@link DateTimeFieldProps.format}.
+ * @property {string | boolean | undefined} dateFormat - Same as
+ * {@link DateTimeFieldProps.date_format}.
+ * @property {string | boolean | undefined} timeFormat - Same as
+ * {@link DateTimeFieldProps.time_format}.
  * @property {boolean} dateOnly - Whether the field is date only.
  * @property {boolean} timeOnly - Whether the field is time only.
  * @property {boolean} utc - Whether the field’s picker is UTC.
