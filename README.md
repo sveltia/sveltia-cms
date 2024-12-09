@@ -454,7 +454,8 @@ These limitations are expected to be resolved before or shortly after GA:
 
 ### Other notes
 
-- Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
+- Make sure you’re using the latest stable version of a web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not supported, although they may still work. The [local workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
+- Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and it’s served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
 - We plan to provide partial compatibility with now-discontinued Static CMS, such as the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue).
 - Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new).
