@@ -37,10 +37,13 @@ export const siteConfigError = writable();
 
 /**
  * Fetch the YAML site configuration file and return it as JSON.
- * @returns {Promise<SiteConfig>} Configuration.
+ * @param {object} [options] - Options.
+ * @param {boolean} [options.ignoreError] - Whether to ignore a fetch error.
+ * @returns {Promise<any>} Configuration. Can be an empty object if the `ignoreError` option is
+ * `true` and the config file is missing.
  * @throws {Error} When fetching or parsing has failed.
  */
-const fetchSiteConfig = async () => {
+const fetchSiteConfig = async ({ ignoreError = false } = {}) => {
   const {
     // Depending on the server or framework configuration, the trailing slash may be removed from
     // the CMS `/admin/` URL. In that case, fetch the config file from a root-relative URL instead
@@ -61,6 +64,10 @@ const fetchSiteConfig = async () => {
   const { ok, status } = response;
 
   if (!ok) {
+    if (ignoreError) {
+      return {};
+    }
+
     throw new Error(get(_)('config.error.fetch_failed'), {
       cause: new Error(get(_)('config.error.fetch_failed_not_ok', { values: { status } })),
     });
@@ -132,9 +139,6 @@ export const initSiteConfig = async (manualConfig = {}) => {
   siteConfig.set(undefined);
   siteConfigError.set(undefined);
 
-  /** @type {SiteConfig} */
-  let config;
-
   try {
     // Not a config error but `getHash` below and some other features require a secure context
     if (!window.isSecureContext) {
@@ -145,17 +149,21 @@ export const initSiteConfig = async (manualConfig = {}) => {
       throw new Error(get(_)('config.error.parse_failed'));
     }
 
-    if (manualConfig?.load_config_file === false) {
-      config = manualConfig;
-    } else {
-      config = await fetchSiteConfig();
+    /** @type {any} */
+    let tempConfig;
 
-      if (Object.entries(manualConfig).length) {
-        config = merge(config, manualConfig);
-      }
+    if (manualConfig?.load_config_file === false) {
+      tempConfig = manualConfig;
+    } else if (Object.entries(manualConfig).length) {
+      tempConfig = merge(await fetchSiteConfig({ ignoreError: true }), manualConfig);
+    } else {
+      tempConfig = await fetchSiteConfig();
     }
 
-    validate(config);
+    validate(tempConfig);
+
+    /** @type {SiteConfig} */
+    const config = tempConfig;
 
     // Set the site URL for development and production if undefined. See also `/src/app.svelte`
     config.site_url ||= DEV ? siteURL : window.location.origin;
