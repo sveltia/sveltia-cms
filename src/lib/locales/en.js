@@ -493,6 +493,7 @@ export const strings = {
   // Configuration
   config: {
     error: {
+      no_secure_context: 'Sveltia CMS only works with HTTPS or localhost URLs.',
       fetch_failed: 'The configuration file could not be retrieved.',
       fetch_failed_not_ok: 'HTTP response returned with status {status}.',
       parse_failed: 'The configuration file could not be parsed.',

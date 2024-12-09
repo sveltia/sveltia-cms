@@ -496,6 +496,7 @@ export const strings = {
   // Configuration
   config: {
     error: {
+      no_secure_context: 'Sveltia CMS は HTTPS またはローカルホスト URL のみで動作します。',
       fetch_failed: '設定ファイルを読み込めませんでした。',
       fetch_failed_not_ok: 'HTTP レスポンスがステータス {status} で返されました。',
       parse_failed: '設定ファイルを解析できませんでした。',

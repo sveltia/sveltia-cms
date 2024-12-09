@@ -136,6 +136,11 @@ export const initSiteConfig = async (manualConfig = {}) => {
   let config;
 
   try {
+    // Not a config error but `getHash` below and some other features require a secure context
+    if (!window.isSecureContext) {
+      throw new Error(get(_)('config.error.no_secure_context'));
+    }
+
     if (manualConfig && !isObject(manualConfig)) {
       throw new Error(get(_)('config.error.parse_failed'));
     }
