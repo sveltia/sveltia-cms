@@ -205,7 +205,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
-    - File collections support multiple files/folders i18n structures[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections as before.
+    - File collections support multiple files/folders i18n structures[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
     - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales[^7][^68]. The `i18n` configuration can normally be used for the subfields.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
   - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
@@ -411,7 +411,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The application UI locale is automatically selected based on the preferred language set with the browser[^132]. Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
 - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container[^117].
-- We’ll soon be migrating from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to [MessageFormat 2](https://github.com/unicode-org/message-format-wg) for natural-sounding translations in every locale.
+- We are migrating from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-based sveltia-i18n library for natural-sounding translations in every locale.
 
 ## Compatibility
 
@@ -448,13 +448,13 @@ These limitations are expected to be resolved before or shortly after GA:
 | --- | --- |
 | [Code](https://decapcms.org/docs/widgets/#code) | Not yet supported. |
 | [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
-| [File](https://decapcms.org/docs/widgets/#file)/[Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
+| [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | [Map](https://decapcms.org/docs/widgets/#map) | Not yet supported. |
 | [Markdown](https://decapcms.org/docs/widgets/#markdown) | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
 
 ### Other notes
 
-- Make sure you’re using the latest stable version of a web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not supported, although they may still work. The [local workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
+- Make sure you’re using the latest stable version of a web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and it’s served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
 - We plan to provide partial compatibility with now-discontinued Static CMS, such as the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue).
@@ -573,7 +573,7 @@ Keep in mind that, as with Netlify/Decap CMS, the local repository support in Sv
 
 Also, at this point, you have to reload the CMS to see the latest content after retrieving remote updates. This manual work will hopefully be unnecessary once the proposed `FileSystemObserver` API, which is being [implemented in Chromium](https://issues.chromium.org/issues/40105284) behind a flag, becomes available.
 
-If you have migrated from Netlify/Decap CMS and are happy with the local workflow of Sveltia CMS, you can remove the `local_backend` property from your configuration and uninstall the proxy server. If you have configured a custom port number with the `.env` file, you can remove it as well.
+If you have migrated from Netlify/Decap CMS and are happy with the local repository workflow of Sveltia CMS, you can remove the `local_backend` property from your configuration and uninstall the proxy server. If you have configured a custom port number with the `.env` file, you can remove it as well.
 
 ### Enabling local development in Brave
 
@@ -934,7 +934,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) Runes migration
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Partial compatibility with Static CMS, a now-discontinued community fork of Netlify CMS, specifically the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue)[^123]
-- Localization with the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-based sveltia-i18n library
+- [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
 - Accessibility audit
 - Developer documentation (implementation guide)
 - Marketing site
