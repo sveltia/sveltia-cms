@@ -117,8 +117,9 @@ export const normalizeSlug = (string) => {
   if (encoding === 'ascii') {
     slug = slug.replaceAll(/[^\w-~]/g, ' ');
   } else {
-    // Allow Unicode letters and numbers @see https://stackoverflow.com/q/280712
-    slug = slug.replaceAll(/[^\p{L}\p{N}]/gu, ' ');
+    // Disallow space, control, delimiter, reserved, unwise characters
+    // @see https://stackoverflow.com/q/1547899
+    slug = slug.replaceAll(/[\p{Z}\p{C}!"#$&'()*+,/:;<=>?@[\]^`{|}]/gu, ' ');
   }
 
   // Make the string lowercase; replace all the spaces with replacers (hyphens by default)
