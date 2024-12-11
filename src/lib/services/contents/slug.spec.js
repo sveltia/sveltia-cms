@@ -96,7 +96,7 @@ describe('Test fillSlugTemplate()', () => {
       }),
     ).toEqual(
       // cspell:disable-next-line
-      'lorem-ipsum-dolor-sit-amet-consectetur-a',
+      'lorem-ipsum-dolor-sit-amet-consectetur-a…',
     );
   });
 });
