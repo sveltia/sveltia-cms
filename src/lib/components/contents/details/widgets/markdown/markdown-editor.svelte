@@ -96,13 +96,14 @@
   $: setInputValue(typeof currentValue === 'string' ? currentValue : '');
   $: setCurrentValue(inputValue ?? '');
 
-  /** @type {EditorComponent[]} */
   $: components = editorComponents
     .map((name) => {
       const componentDef = registeredComponents.find((c) => c.id === name) ?? getComponentDef(name);
 
       if (componentDef) {
-        return new EditorComponent(componentDef);
+        return /** @type {import('@sveltia/ui').TextEditorComponent} */ (
+          new EditorComponent(componentDef)
+        );
       }
 
       return undefined;

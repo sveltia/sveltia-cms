@@ -62,6 +62,7 @@
   bind:this={wrapper}
   contenteditable="false"
   tabindex="0"
+  aria-label={label}
   on:keydown={(event) => {
     if (
       !(/** @type {HTMLElement} */ (event.target)?.matches('button, input, textarea')) &&
@@ -75,8 +76,8 @@
     }
   }}
 >
-  <header>
-    <h3>{label}</h3>
+  <header role="none">
+    <h3 role="none">{label}</h3>
     <Button
       size="small"
       iconic

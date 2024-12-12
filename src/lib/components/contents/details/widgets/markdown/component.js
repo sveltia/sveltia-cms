@@ -7,6 +7,14 @@ import { get } from 'svelte/store';
 import Component from './component.svelte';
 
 /**
+ * @typedef {object} CustomNodeFeatures
+ * @property {any} node - Lexical node class implementation.
+ * @property {(props?: Record<string, any>) => import('lexical').LexicalNode} createNode - Function
+ * to create a new node instance.
+ * @property {import('@lexical/markdown').Transformer} transformer - Node transformer.
+ */
+
+/**
  * Escape some Markdown characters in the given object’s property values.
  * @param {Record<string, any>} props - Object containing original strings.
  * @returns {Record<string, string>} Object containing escaped strings.
@@ -70,13 +78,12 @@ export const getComponentDef = (name) => {
 };
 
 /**
- * Get the {@link CustomNode} class and related features.
+ * Get the {@link CustomNode} class and related features for Lexical.
  * @param {EditorComponentConfiguration} componentDef - Component definition.
- * @returns {{ CustomNode: any, createNode: (props?: Record<string, any>) =>
- * import('lexical').LexicalNode, transformer: import('@lexical/markdown').Transformer }} The
- * {@link CustomNode} class, a method to create a new node, and the transformer definition.
+ * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
+ * the transformer definition.
  */
-const getCustomNodeClass = ({ id, label, fields, pattern, fromBlock, toBlock, toPreview }) => {
+const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock, toPreview }) => {
   const tagName = toPreview({}).match(/\w+/)?.[0] ?? id;
 
   /**
@@ -259,7 +266,7 @@ const getCustomNodeClass = ({ id, label, fields, pattern, fromBlock, toBlock, to
   /**
    * Create a new {@link CustomNode} instance.
    * @param {Record<string, any>} [props] - Component properties.
-   * @returns {CustomNode} - New node.
+   * @returns {CustomNode} New node.
    */
   const createNode = (props) =>
     new CustomNode(props ?? Object.fromEntries(fields.map(({ name }) => [name, ''])));
@@ -269,7 +276,7 @@ const getCustomNodeClass = ({ id, label, fields, pattern, fromBlock, toBlock, to
    * @param {import("lexical").LexicalNode | null | undefined} node - Node.
    * @returns {boolean} Result.
    */
-  const isCustomNode = (node) => node instanceof CustomNode;
+  const isCustomNode = (node) => node instanceof CustomNode && node.getType() === id;
 
   /**
    * Implement a Markdown transformer for {@link CustomNode}.
@@ -303,16 +310,15 @@ const getCustomNodeClass = ({ id, label, fields, pattern, fromBlock, toBlock, to
     type: 'element',
   };
 
-  return { CustomNode, createNode, transformer };
+  return { node: CustomNode, createNode, transformer };
 };
 
 /**
  * Cache the class and related features to avoid a Lexical error saying “Type ... In node CustomNode
  * does not match registered node CustomNode with the same type”.
- * @type {Map<string, { CustomNode: any, createNode: (props?: Record<string, any>) =>
- * import('lexical').LexicalNode, transformer: import('@lexical/markdown').Transformer }>}
+ * @type {Map<string, CustomNodeFeatures>}
  */
-const classCache = new Map();
+const featureCache = new Map();
 
 /**
  * Text editor component implementation.
@@ -323,19 +329,14 @@ export class EditorComponent {
    * @param {EditorComponentConfiguration} componentDef - Component definition.
    */
   constructor(componentDef) {
-    const { id, label, icon } = componentDef;
-    const cache = classCache.get(id);
-    const { CustomNode, createNode, transformer } = cache ?? getCustomNodeClass(componentDef);
+    const { id } = componentDef;
+    const cache = featureCache.get(id);
+    const features = cache ?? getCustomNodeFeatures(componentDef);
 
     if (!cache) {
-      classCache.set(id, { CustomNode, createNode, transformer });
+      featureCache.set(id, features);
     }
 
-    this.id = id;
-    this.label = label;
-    this.icon = icon;
-    this.node = CustomNode;
-    this.createNode = createNode;
-    this.transformer = transformer;
+    Object.assign(this, { ...componentDef, ...features });
   }
 }

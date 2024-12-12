@@ -574,7 +574,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
    * @param {FieldKeyPath} args.keyPath - Field key path.
    * @param {FlattenedEntryContent} args.content - Localized content.
    */
-  const replaceBlobURLs = async ({ blobURL, index, keyPath, content }) => {
+  const replaceBlobURL = async ({ blobURL, index, keyPath, content }) => {
     const file = files[blobURL];
 
     if (!file) {
@@ -660,7 +660,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           if (blobMatches.length) {
             await Promise.all(
               blobMatches.map(({ 0: blobURL, index }) =>
-                replaceBlobURLs({ blobURL, index, keyPath, content }),
+                replaceBlobURL({ blobURL, index, keyPath, content }),
               ),
             );
           }
