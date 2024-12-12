@@ -1,13 +1,12 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
-import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import { hasRootListField } from '$lib/components/contents/details/widgets/list/helper';
 import { getCollection } from '$lib/services/contents';
 import { getEntryTitleFromContent } from '$lib/services/contents/entry';
 import { parseEntryFile } from '$lib/services/contents/file/parse';
-import { normalizeSlug } from '$lib/services/contents/slug';
+import { fillSlugTemplate, normalizeSlug } from '$lib/services/contents/slug';
 
 /**
  * Determine the slug for the given entry content.
@@ -29,6 +28,7 @@ const getSlug = (collectionName, filePath, content) => {
 
   const {
     identifier_field: identifierField = 'title',
+    slug: slugTemplate = `{{${identifierField}}}`,
     _file: { subPath: pathTemplate },
   } = /** @type {EntryCollection} */ (collection);
 
@@ -37,19 +37,14 @@ const getSlug = (collectionName, filePath, content) => {
     return filePath;
   }
 
-  if (pathTemplate.includes('{{slug}}')) {
-    const [, slug] =
-      filePath.match(
-        new RegExp(`^${escapeRegExp(pathTemplate).replace('\\{\\{slug\\}\\}', '(.+)')}$`),
-      ) ?? [];
+  const slug = fillSlugTemplate(slugTemplate, { collection, content: flatten(content) });
 
-    if (slug) {
-      return slug;
-    }
+  if (slug) {
+    return slug;
   }
 
-  // We can’t determine the slug from the file path. Let’s fallback using the content
-  return normalizeSlug(getEntryTitleFromContent(content, { identifierField }));
+  // We can’t determine the slug from the file path. Let’s fallback using the content or filename
+  return normalizeSlug(getEntryTitleFromContent(content, { identifierField }) || filePath);
 };
 
 /**
