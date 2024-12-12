@@ -322,6 +322,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can preview variable types without having to register a preview template[^42].
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
+  - The built-in `image` component can be inserted with a single click.
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
 - Object
@@ -450,7 +451,7 @@ These limitations are expected to be resolved before or shortly after GA:
 | [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
 | [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | [Map](https://decapcms.org/docs/widgets/#map) | Not yet supported. |
-| [Markdown](https://decapcms.org/docs/widgets/#markdown) | Editor components, including built-in `image` and `code-block` as well as custom components, are not yet supported. |
+| [Markdown](https://decapcms.org/docs/widgets/#markdown) | The built-in `code-block` component and custom components are not yet supported. |
 
 ### Other notes
 
