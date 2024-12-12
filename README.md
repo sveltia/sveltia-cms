@@ -236,10 +236,14 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - `icon`: [Choose a custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
     - `divider`: [Add dividers to the collection list](#adding-dividers-to-the-collection-list).
     - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list[^130]. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
+  - Enhancements to the entry `filter` option for folder collections:
+    - Boolean `value` works as expected[^93].
+    - `value` accepts `null` to match an undefined field value.
+    - `value` accepts an array to provide multiple possible values[^151].
+    - `pattern` can be used instead of `value` to provide a regular expression, just like the `view_filters` collection option[^153].
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
   - Markdown is supported in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
-  - A folder collection `filter` supports multiple possible values by using an array for the `value`[^151].
   - Multiple [summary string transformations](https://decapcms.org/docs/summary-strings/) can be chained like `{{title | upper | truncate(20)}}`.
 - Entry slugs
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
@@ -252,7 +256,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Entry slugs are [localizable](#localizing-entry-slugs)[^80].
 - Entry listing
   - The collection list displays the number of items in each collection.
-  - A folder collection `filter` with a boolean value works as expected[^93].
   - Sorting entries by a DateTime field works as expected[^110].
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
@@ -1271,3 +1274,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^151]: Netlify/Decap CMS [#7328](https://github.com/decaporg/decap-cms/issues/7328)
 
 [^152]: Netlify/Decap CMS [#2491](https://github.com/decaporg/decap-cms/issues/2491)
+
+[^153]: Netlify/Decap CMS [#7347](https://github.com/decaporg/decap-cms/issues/7347)
