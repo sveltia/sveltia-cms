@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@lexical/markdown':
+        specifier: ^0.21.0
+        version: 0.21.0
       '@sindresorhus/transliterate':
         specifier: ^1.6.0
         version: 1.6.0
@@ -29,6 +32,9 @@ importers:
       isomorphic-dompurify:
         specifier: ^2.19.0
         version: 2.19.0
+      lexical:
+        specifier: ^0.21.0
+        version: 0.21.0
       marked:
         specifier: ^15.0.3
         version: 15.0.3

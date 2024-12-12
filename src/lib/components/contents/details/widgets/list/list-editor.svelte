@@ -173,7 +173,7 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   * @param {(arg: { valueList: any[], fileList: any[], expanderStateList: boolean[] }) =>
+   * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) =>
    * void} manipulate - See {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
@@ -191,7 +191,7 @@
    * @see https://decapcms.org/docs/variable-type-widgets/
    */
   const addItem = (typeName) => {
-    updateComplexList(({ valueList, fileList, expanderStateList }) => {
+    updateComplexList(({ valueList, expanderStateList }) => {
       const subFields = typeName
         ? (types?.find(({ name }) => name === typeName)?.fields ?? [])
         : (fields ?? (field ? [field] : []));
@@ -204,7 +204,6 @@
       }
 
       valueList.splice(index, 0, hasSingleSubField && field ? newItem[field.name] : newItem);
-      fileList.splice(index, 0, hasSingleSubField && field ? null : {});
       expanderStateList.splice(index, 0, true);
     });
   };
@@ -214,9 +213,8 @@
    * @param {number} index - Target index.
    */
   const removeItem = (index) => {
-    updateComplexList(({ valueList, fileList, expanderStateList }) => {
+    updateComplexList(({ valueList, expanderStateList }) => {
       valueList.splice(index, 1);
-      fileList.splice(index, 1);
       expanderStateList.splice(index, 1);
     });
   };
@@ -226,9 +224,8 @@
    * @param {number} index - Target index.
    */
   const moveUpItem = (index) => {
-    updateComplexList(({ valueList, fileList, expanderStateList }) => {
+    updateComplexList(({ valueList, expanderStateList }) => {
       [valueList[index], valueList[index - 1]] = [valueList[index - 1], valueList[index]];
-      [fileList[index], fileList[index - 1]] = [fileList[index - 1], fileList[index]];
       [expanderStateList[index], expanderStateList[index - 1]] = [
         expanderStateList[index - 1],
         expanderStateList[index],
@@ -241,9 +238,8 @@
    * @param {number} index - Target index.
    */
   const moveDownItem = (index) => {
-    updateComplexList(({ valueList, fileList, expanderStateList }) => {
+    updateComplexList(({ valueList, expanderStateList }) => {
       [valueList[index], valueList[index + 1]] = [valueList[index + 1], valueList[index]];
-      [fileList[index], fileList[index + 1]] = [fileList[index + 1], fileList[index]];
       [expanderStateList[index], expanderStateList[index + 1]] = [
         expanderStateList[index + 1],
         expanderStateList[index],

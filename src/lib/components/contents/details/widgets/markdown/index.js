@@ -48,3 +48,14 @@ export const buttonNameMap = {
   'numbered-list': 'numbered-list',
   quote: 'blockquote',
 };
+
+/**
+ * The default `editor_components` property options.
+ */
+export const defaultComponents = ['image'];
+
+/**
+ * Custom components registered using `CMS.registerEditorComponent`.
+ * @type {EditorComponentConfiguration[]}
+ */
+export const registeredComponents = [];

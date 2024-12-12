@@ -100,9 +100,13 @@
   $: setInputValue(typeof currentValue === 'string' ? currentValue : '');
   $: setCurrentValue(inputValue ?? '');
 
-  const { extraHint } = getContext('field-editor');
+  const { extraHint } = getContext('field-editor') ?? {};
 
-  $extraHint = CharacterCounter;
+  $: {
+    if (extraHint) {
+      $extraHint = CharacterCounter;
+    }
+  }
 </script>
 
 <TextInput

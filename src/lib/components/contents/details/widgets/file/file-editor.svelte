@@ -23,10 +23,12 @@
   /**
    * @type {LocaleCode}
    */
+  // svelte-ignore unused-export-let
   export let locale;
   /**
    * @type {FieldKeyPath}
    */
+  // svelte-ignore unused-export-let
   export let keyPath;
   /**
    * @type {string}
@@ -57,6 +59,10 @@
    * @type {boolean}
    */
   export let invalid = false;
+  /**
+   * @type {boolean}
+   */
+  export let inEditorComponent = false;
 
   /**
    * @type {Asset | undefined}
@@ -141,7 +147,7 @@
         // Set a temporary blob URL, which will be later replaced with the actual file path
         currentValue = URL.createObjectURL(file);
         // Cache the file itself for later upload
-        /** @type {EntryDraft} */ ($entryDraft).files[locale][keyPath] = file;
+        /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = file;
       }
     }
 
@@ -161,7 +167,7 @@
   const updateProps = async () => {
     // Restore `file` after a draft backup is restored
     if (currentValue?.startsWith('blob:') && $entryDraft) {
-      file = $entryDraft.files[locale][keyPath];
+      file = $entryDraft.files[currentValue];
     }
 
     if (currentValue) {
@@ -173,6 +179,10 @@
           currentValue && kind
             ? await getMediaFieldURL(currentValue, entry, { thumbnail: true })
             : undefined;
+      } else if (isImageWidget && currentValue.match(/^https?:/)) {
+        asset = undefined;
+        kind = 'image';
+        src = currentValue;
       } else {
         asset = getAssetByPath(currentValue, { entry, collection });
         kind = undefined;
@@ -245,16 +255,18 @@
               showSelectAssetsDialog = true;
             }}
           />
-          <Button
-            disabled={readonly}
-            variant="tertiary"
-            label={$_('remove')}
-            aria-label={$_(`remove_${widgetName}`)}
-            aria-controls="{fieldId}-value"
-            onclick={() => {
-              resetSelection();
-            }}
-          />
+          {#if !inEditorComponent}
+            <Button
+              disabled={readonly}
+              variant="tertiary"
+              label={$_('remove')}
+              aria-label={$_(`remove_${widgetName}`)}
+              aria-controls="{fieldId}-value"
+              onclick={() => {
+                resetSelection();
+              }}
+            />
+          {/if}
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
@@ -97,9 +98,7 @@ export const saveBackup = async (draft) => {
       currentValues: /** @type {Record<LocaleCode, FlattenedEntryContent>} */ (
         toRaw(currentValues)
       ),
-      files: /** @type {Record<LocaleCode, FlattenedEntryFileList>} */ (
-        Object.fromEntries(Object.entries(files).map(([locale, _files]) => [locale, { ..._files }]))
-      ),
+      files,
     };
 
     await backupDB?.put(backup);
@@ -144,12 +143,20 @@ export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
         draft.currentLocales = currentLocales;
         Object.entries(draft.currentValues).forEach(([locale, _currentValues]) => {
           Object.assign(_currentValues, currentValues[locale]);
-        });
-        Object.entries(draft.files).forEach(([locale, _files]) => {
-          Object.assign(_files, files[locale]);
-          Object.entries(files[locale]).forEach(([keyPath, value]) => {
-            if (value instanceof File) {
-              draft.currentValues[locale][keyPath] = URL.createObjectURL(value);
+
+          Object.entries(_currentValues).forEach(([keyPath, value]) => {
+            if (typeof value === 'string') {
+              [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
+                const file = files[blobURL];
+
+                if (file instanceof File) {
+                  // Regenerate a blob URL
+                  const newURL = URL.createObjectURL(file);
+
+                  _currentValues[keyPath] = value.replaceAll(blobURL, newURL);
+                  draft.files[newURL] = file;
+                }
+              });
             }
           });
         });

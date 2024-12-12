@@ -476,6 +476,12 @@ export const strings = {
   youtube_video_player: 'YouTube 動画プレーヤー',
   today: '今日',
   now: '現在時刻',
+  editor_components: {
+    image: '画像',
+    src: 'ソース',
+    alt: '代替テキスト',
+    title: 'タイトル',
+  },
 
   // Content preview
   boolean: {

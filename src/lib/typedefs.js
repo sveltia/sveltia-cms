@@ -837,9 +837,8 @@
  */
 
 /**
- * Flattened entry file list object, where key is a key path, but value will be a file to be
- * uploaded.
- * @typedef {Record<FieldKeyPath, File>} FlattenedEntryFileList
+ * Flattened entry file list object, where key is a uuid, and value is be a file to be uploaded.
+ * @typedef {Record<string, File>} EntryFileMap
  */
 
 /**
@@ -875,8 +874,7 @@
  * value is a flattened object containing all the original field values.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
  * is a flattened, proxified object containing all the current field values while editing.
- * @property {Record<LocaleCode, FlattenedEntryFileList>} files - Files to be uploaded, value is a
- * proxified object.
+ * @property {EntryFileMap} files - Files to be uploaded.
  * @property {Record<LocaleCode, FlattenedEntryValidityState>} validities - Key is a locale code,
  * value is a flattened object containing validation results of all the current field values while
  * editing.
@@ -895,7 +893,7 @@
  * @property {LocaleStateMap} currentLocales - Current locale state.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
  * is a flattened object containing all the current field values while editing.
- * @property {Record<LocaleCode, FlattenedEntryFileList>} files - Files to be uploaded.
+ * @property {EntryFileMap} files - Files to be uploaded.
  */
 
 /**
@@ -1098,6 +1096,24 @@
  * @property {string} extension - File extension.
  * @property {FileParser} parser - Parser method.
  * @property {FileFormatter} formatter - Formatter method.
+ */
+
+/**
+ * Custom editor component configuration.
+ * @typedef {object} EditorComponentConfiguration
+ * @property {string} id - Component name.
+ * @property {string} label - UI label.
+ * @property {string} [icon] - Material Symbols icon name.
+ * @property {{ name: string, label: string, widget: string }[]} fields - Fields to be displayed on
+ * the component.
+ * @property {RegExp} pattern - Regular expression to search a block from Markdown document.
+ * @property {(match: string[]) => { [key: string]: any }} fromBlock - Function to convert the
+ * matching result to field properties.
+ * @property {(props: { [key: string]: any }) => string} toBlock - Function to convert field
+ * properties to Markdown content.
+ * @property {(props: { [key: string]: any }) => string} toPreview - Function to convert field
+ * properties to field preview.
+ * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
 
 /**

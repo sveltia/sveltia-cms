@@ -3,6 +3,7 @@
 /* eslint-disable no-continue */
 
 import { generateUUID, getHash } from '@sveltia/utils/crypto';
+import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
@@ -566,6 +567,60 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   };
 
   /**
+   * Replace a blob URL with the final path, and add the file to the changeset.
+   * @param {object} args - Arguments.
+   * @param {string} args.blobURL - Blob URL.
+   * @param {number} args.index - Matched index.
+   * @param {FieldKeyPath} args.keyPath - Field key path.
+   * @param {FlattenedEntryContent} args.content - Localized content.
+   */
+  const replaceBlobURLs = async ({ blobURL, index, keyPath, content }) => {
+    const file = files[blobURL];
+
+    if (!file) {
+      return;
+    }
+
+    const sha = await getHash(file);
+    const dupFile = savingAssets.find((f) => f.sha === sha);
+    const useSubFolder = !!publicAssetFolder && publicAssetFolder !== '/';
+    let assetName = '';
+
+    // Check if the file has already been added for other field or locale
+    if (dupFile) {
+      assetName = dupFile.name;
+    } else {
+      assetName = renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
+
+      const assetPath = internalAssetFolder ? `${internalAssetFolder}/${assetName}` : assetName;
+
+      assetNamesInSameFolder.push(assetName);
+      changes.push({ action: 'create', path: assetPath, data: file });
+
+      savingAssets.push({
+        ...savingAssetProps,
+        blobURL: URL.createObjectURL(file),
+        name: assetName,
+        path: assetPath,
+        sha,
+        size: file.size,
+        kind: getAssetKind(assetName),
+      });
+    }
+
+    content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(
+      blobURL,
+      (_match, /** @type {number} */ offset) => {
+        if (offset === index) {
+          return useSubFolder ? `${publicAssetFolder}/${assetName}` : assetName;
+        }
+
+        return _match;
+      },
+    );
+  };
+
+  /**
    * @type {LocalizedEntryMap}
    */
   const localizedEntryMap = Object.fromEntries(
@@ -598,42 +653,16 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
           // Remove leading & trailing whitespace
           content[keyPath] = value.trim();
 
-          // Replace a blob URL with the final path, and add the file to the changeset
-          if (value.startsWith('blob:')) {
-            const file = files[locale][keyPath];
-            const sha = await getHash(file);
-            const dupFile = savingAssets.find((f) => f.sha === sha);
-            const useSubFolder = !!publicAssetFolder && publicAssetFolder !== '/';
+          const blobMatches = [
+            .../** @type {string} */ (content[keyPath]).matchAll(getBlobRegex('g')),
+          ];
 
-            // Check if the file has already been added for other field or locale
-            if (dupFile) {
-              content[keyPath] = useSubFolder
-                ? `${publicAssetFolder}/${dupFile.name}`
-                : dupFile.name;
-
-              continue;
-            }
-
-            const assetName = renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
-
-            const assetPath = internalAssetFolder
-              ? `${internalAssetFolder}/${assetName}`
-              : assetName;
-
-            assetNamesInSameFolder.push(assetName);
-            changes.push({ action: 'create', path: assetPath, data: file });
-
-            savingAssets.push({
-              ...savingAssetProps,
-              blobURL: URL.createObjectURL(file),
-              name: assetName,
-              path: assetPath,
-              sha,
-              size: file.size,
-              kind: getAssetKind(assetName),
-            });
-
-            content[keyPath] = useSubFolder ? `${publicAssetFolder}/${assetName}` : assetName;
+          if (blobMatches.length) {
+            await Promise.all(
+              blobMatches.map(({ 0: blobURL, index }) =>
+                replaceBlobURLs({ blobURL, index, keyPath, content }),
+              ),
+            );
           }
         }
 

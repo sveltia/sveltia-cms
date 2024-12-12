@@ -5,12 +5,19 @@
 -->
 <script>
   import { TextEditor } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import {
     buttonNameMap,
     defaultButtons,
+    defaultComponents,
     defaultModes,
     modeNameMap,
+    registeredComponents,
   } from '$lib/components/contents/details/widgets/markdown';
+  import {
+    EditorComponent,
+    getComponentDef,
+  } from '$lib/components/contents/details/widgets/markdown/component';
 
   /**
    * @type {LocaleCode}
@@ -51,10 +58,13 @@
    */
   export let invalid = false;
 
+  const allComponents = [...defaultComponents, ...registeredComponents.map((c) => c.id)];
+
   $: ({
     // Widget-specific options
     modes = [...defaultModes],
     buttons = [...defaultButtons],
+    editor_components: editorComponents = [...allComponents],
     minimal = false,
   } = fieldConfig);
 
@@ -85,22 +95,38 @@
 
   $: setInputValue(typeof currentValue === 'string' ? currentValue : '');
   $: setCurrentValue(inputValue ?? '');
+
+  /** @type {EditorComponent[]} */
+  $: components = editorComponents
+    .map((name) => {
+      const componentDef = registeredComponents.find((c) => c.id === name) ?? getComponentDef(name);
+
+      if (componentDef) {
+        return new EditorComponent(componentDef);
+      }
+
+      return undefined;
+    })
+    .filter((component) => !!component);
 </script>
 
 <div role="none" class="wrapper" class:minimal>
-  <TextEditor
-    lang={locale}
-    modes={modes.map((name) => modeNameMap[name]).filter(Boolean)}
-    buttons={buttons.map((name) => buttonNameMap[name]).filter(Boolean)}
-    bind:value={inputValue}
-    flex
-    {readonly}
-    {required}
-    {invalid}
-    aria-labelledby="{fieldId}-label"
-    aria-errormessage="{fieldId}-error"
-    autoResize={true}
-  />
+  {#await sleep(0) then}
+    <TextEditor
+      lang={locale}
+      modes={modes.map((name) => modeNameMap[name]).filter(Boolean)}
+      buttons={buttons.map((name) => buttonNameMap[name]).filter(Boolean)}
+      {components}
+      bind:value={inputValue}
+      flex
+      {readonly}
+      {required}
+      {invalid}
+      aria-labelledby="{fieldId}-label"
+      aria-errormessage="{fieldId}-error"
+      autoResize={true}
+    />
+  {/await}
 </div>
 
 <style lang="scss">

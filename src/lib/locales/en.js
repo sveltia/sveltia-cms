@@ -473,6 +473,12 @@ export const strings = {
   youtube_video_player: 'YouTube video player',
   today: 'Today',
   now: 'Now',
+  editor_components: {
+    image: 'Image',
+    src: 'Source',
+    alt: 'Alt Text',
+    title: 'Title',
+  },
 
   // Content preview
   boolean: {

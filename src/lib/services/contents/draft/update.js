@@ -54,7 +54,7 @@ const getItemList = (obj, keyPath) => {
  * Update the value in a list field.
  * @param {LocaleCode} locale - Target locale.
  * @param {FieldKeyPath} keyPath - Dot-notated field name.
- * @param {(arg: { valueList: any[], fileList: any[], expanderStateList: boolean[] }) =>
+ * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) =>
  * void } manipulate - A function to manipulate the list, which takes one object argument containing
  * the value list, file list and view state list. The typical usage is `list.splice()`.
  */
@@ -63,13 +63,12 @@ export const updateListField = (locale, keyPath, manipulate) => {
   const { collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const [valueList, valueListRemainder] = getItemList(draft.currentValues[locale], keyPath);
-  const [fileList, fileListRemainder] = getItemList(draft.files[locale], keyPath);
 
   const [expanderStateList, expanderStateListRemainder] =
     // Manipulation should only happen once with the default locale
     locale === defaultLocale ? getItemList(draft.expanderStates._, keyPath) : [[], []];
 
-  manipulate({ valueList, fileList, expanderStateList });
+  manipulate({ valueList, expanderStateList });
 
   i18nAutoDupEnabled.set(false);
 
@@ -77,10 +76,6 @@ export const updateListField = (locale, keyPath, manipulate) => {
     updateObject(_draft.currentValues[locale], {
       ...flatten({ [keyPath]: valueList }),
       ...valueListRemainder,
-    });
-    updateObject(_draft.files[locale], {
-      ...flatten({ [keyPath]: fileList }),
-      ...fileListRemainder,
     });
 
     if (locale === defaultLocale) {
@@ -100,16 +95,13 @@ export const updateListField = (locale, keyPath, manipulate) => {
  * Populate the given localized content with values from the default locale if the corresponding
  * field’s i18n configuration is `duplicate`.
  * @param {FlattenedEntryContent} content - Original content.
- * @param {object} [options] - Options.
- * @param {'currentValues' | 'files'} [options.prop] - Property name in the {@link entryDraft} store
- * that contains a locale/Proxy map.
  * @returns {FlattenedEntryContent} Updated content.
  */
-export const copyDefaultLocaleValues = (content, { prop = 'currentValues' } = {}) => {
+export const copyDefaultLocaleValues = (content) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collectionName, fileName, collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
-  const defaultLocaleValues = draft[prop][defaultLocale];
+  const defaultLocaleValues = draft.currentValues[defaultLocale];
   const keys = unique([...Object.keys(content), ...Object.keys(defaultLocaleValues)]);
   const newContent = /** @type {FlattenedEntryContent} */ ({});
 
@@ -135,11 +127,8 @@ export const toggleLocale = (locale) => {
 
     // Initialize the content for the locale
     if (enabled && !currentValues[locale]) {
-      const { collection, collectionName, collectionFile, fileName, originalValues, files } =
-        _draft;
-
-      const { fields = [], _i18n } = collectionFile ?? collection;
-      const { defaultLocale } = _i18n;
+      const { collection, collectionName, collectionFile, fileName, originalValues } = _draft;
+      const { fields = [] } = collectionFile ?? collection;
       const newContent = getDefaultValues(fields, locale);
 
       return {
@@ -152,20 +141,6 @@ export const toggleLocale = (locale) => {
             draft: { collectionName, fileName },
             locale,
             target: copyDefaultLocaleValues(newContent),
-          }),
-        },
-        files: {
-          ...files,
-          [locale]: createProxy({
-            draft: { collectionName, fileName },
-            prop: 'files',
-            locale,
-            target: copyDefaultLocaleValues(
-              Object.fromEntries(Object.keys(files[defaultLocale]).map((key) => [key, undefined])),
-              { prop: 'files' },
-            ),
-            // eslint-disable-next-line jsdoc/require-jsdoc
-            getValueMap: () => /** @type {EntryDraft} */ (get(entryDraft)).currentValues[locale],
           }),
         },
       };

@@ -212,8 +212,6 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
  * strategy is “duplicate.”.
  * @param {object} args - Arguments.
  * @param {EntryDraft | any} args.draft - Entry draft.
- * @param {'currentValues' | 'files'} [args.prop] - Property name in the {@link entryDraft} store
- * that contains a locale/Proxy map.
  * @param {string} args.locale - Source locale.
  * @param {object} [args.target] - Target object.
  * @param {() => FlattenedEntryContent} [args.getValueMap] - Optional function to get an object
@@ -223,7 +221,6 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
  */
 export const createProxy = ({
   draft: { collectionName, fileName },
-  prop: entryDraftProp = 'currentValues',
   locale: sourceLocale,
   target = {},
   getValueMap = undefined,
@@ -262,15 +259,13 @@ export const createProxy = ({
         return true;
       }
 
-      if (entryDraftProp === 'currentValues') {
-        const validity = get(entryDraft)?.validities?.[sourceLocale]?.[keyPath];
+      const validity = get(entryDraft)?.validities?.[sourceLocale]?.[keyPath];
 
-        // Update validity in real time if validation has already been performed
-        if (validity) {
-          // @todo Perform all the field validations, not just `valueMissing` for string fields
-          if (typeof value === 'string' && fieldConfig.required !== false) {
-            validity.valueMissing = !value;
-          }
+      // Update validity in real time if validation has already been performed
+      if (validity) {
+        // @todo Perform all the field validations, not just `valueMissing` for string fields
+        if (typeof value === 'string' && fieldConfig.required !== false) {
+          validity.valueMissing = !value;
         }
       }
 
@@ -280,25 +275,27 @@ export const createProxy = ({
         fieldConfig.i18n === 'duplicate' &&
         sourceLocale === defaultLocale
       ) {
-        Object.entries(
-          /** @type {Record<string, any>} */ (get(entryDraft))[entryDraftProp],
-        ).forEach(([targetLocale, content]) => {
-          // Don’t duplicate the value if the parent object doesn’t exist
-          if (keyPath.includes('.')) {
-            const [, parentKeyPath] = keyPath.match(/(.+)\.[^.]+$/) ?? [];
+        Object.entries(/** @type {Record<string, any>} */ (get(entryDraft)).currentValues).forEach(
+          ([targetLocale, content]) => {
+            // Don’t duplicate the value if the parent object doesn’t exist
+            if (keyPath.includes('.')) {
+              const [, parentKeyPath] = keyPath.match(/(.+)\.[^.]+$/) ?? [];
 
-            if (
-              !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`)) &&
-              !getFieldConfig({ collectionName, fileName, valueMap, keyPath: parentKeyPath })
-            ) {
-              return;
+              if (
+                !Object.keys(content).some((_keyPath) =>
+                  _keyPath.startsWith(`${parentKeyPath}.`),
+                ) &&
+                !getFieldConfig({ collectionName, fileName, valueMap, keyPath: parentKeyPath })
+              ) {
+                return;
+              }
             }
-          }
 
-          if (targetLocale !== sourceLocale && content[keyPath] !== value) {
-            content[keyPath] = value;
-          }
-        });
+            if (targetLocale !== sourceLocale && content[keyPath] !== value) {
+              content[keyPath] = value;
+            }
+          },
+        );
       }
 
       return true;
@@ -360,18 +357,7 @@ export const createDraft = ({ collection, collectionFile, originalEntry = {}, dy
         }),
       ]),
     ),
-    files: Object.fromEntries(
-      enabledLocales.map((locale) => [
-        locale,
-        createProxy({
-          draft: { collectionName, fileName },
-          prop: 'files',
-          locale,
-          // eslint-disable-next-line jsdoc/require-jsdoc
-          getValueMap: () => /** @type {EntryDraft} */ (get(entryDraft)).currentValues[locale],
-        }),
-      ]),
-    ),
+    files: {},
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     // Any locale-agnostic view states will be put under the `_` key
     expanderStates: { _: {} },
