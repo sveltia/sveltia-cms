@@ -207,6 +207,9 @@ export const getEntriesByCollection = (collectionName) => {
 
   const filterField = filter?.field;
 
+  const filterPattern =
+    typeof filter?.pattern === 'string' ? new RegExp(filter.pattern) : undefined;
+
   const filterValues =
     filter?.value === undefined ? [] : Array.isArray(filter.value) ? filter.value : [filter.value];
 
@@ -219,9 +222,13 @@ export const getEntriesByCollection = (collectionName) => {
       return true;
     }
 
-    return filterValues.includes(
-      getPropertyValue({ entry, locale, collectionName, key: filterField }) ?? null,
-    );
+    const value = getPropertyValue({ entry, locale, collectionName, key: filterField }) ?? null;
+
+    if (filterPattern) {
+      return filterPattern.test(value);
+    }
+
+    return filterValues.includes(value);
   });
 };
 
