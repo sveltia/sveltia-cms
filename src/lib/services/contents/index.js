@@ -220,7 +220,7 @@ export const getEntriesByCollection = (collectionName) => {
     }
 
     return filterValues.includes(
-      getPropertyValue({ entry, locale, collectionName, key: filterField }),
+      getPropertyValue({ entry, locale, collectionName, key: filterField }) ?? null,
     );
   });
 };

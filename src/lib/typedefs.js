@@ -373,7 +373,8 @@
  * @property {string} [public_folder] - Public media folder path for an entry collection.
  * @property {object} [filter] - Filter for an entry collection.
  * @property {string} filter.field - Field name.
- * @property {any | any[]} filter.value - Field value. Multiple values can be defined with an array.
+ * @property {any | any[]} filter.value - Field value. `null` can be used to match an undefined
+ * field. Multiple values can be defined with an array.
  * @property {object} [nested] - Nested collection config for an entry collection.
  * @property {boolean} [hide] - Whether to hide the collection in the UI.
  * @property {boolean} [create] - Whether to allow creating items in an entry collection.
