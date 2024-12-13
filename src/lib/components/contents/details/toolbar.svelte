@@ -51,6 +51,7 @@
     originalValues = {},
     currentValues = {},
     validities = {},
+    expanderStates,
   } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
 
   $: ({
@@ -101,7 +102,7 @@
         }
 
         // Reset the draft
-        createDraft({ collection, collectionFile, originalEntry: savedEntry });
+        createDraft({ collection, collectionFile, originalEntry: savedEntry, expanderStates });
       }
     } catch (/** @type {any} */ ex) {
       if (ex.message === 'validation_failed') {

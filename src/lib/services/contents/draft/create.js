@@ -311,8 +311,16 @@ export const createProxy = ({
  * @param {any} [args.originalEntry] - Entry to be edited, or a partial {@link Entry} object.
  * @param {Record<string, string>} [args.dynamicValues] - Dynamic default values for a new entry
  * passed through URL parameters.
+ * @param {Record<string, FlattenedEntryExpanderState>} [args.expanderStates] - Expander UI state.
+ * Can be set when resetting an entry draft.
  */
-export const createDraft = ({ collection, collectionFile, originalEntry = {}, dynamicValues }) => {
+export const createDraft = ({
+  collection,
+  collectionFile,
+  originalEntry = {},
+  dynamicValues,
+  expanderStates,
+}) => {
   const collectionName = collection.name;
   const fileName = collectionFile?.name;
   const { id, slug, locales } = originalEntry;
@@ -360,7 +368,7 @@ export const createDraft = ({ collection, collectionFile, originalEntry = {}, dy
     files: {},
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     // Any locale-agnostic view states will be put under the `_` key
-    expanderStates: { _: {} },
+    expanderStates: expanderStates ?? { _: {} },
   });
 
   restoreBackupIfNeeded(collectionName, slug);
