@@ -85,7 +85,7 @@ Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022, discontinued in September 2024
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor, with a Netlify agency partner taking ownership
+- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor, with a Netlify agency partner taking ownership, mostly inactive
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and miscellaneous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the [hundreds of improvements](#differentiators) we have already made.
 
@@ -107,8 +107,8 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 140+ of them, or 250+ including duplicates, have been effectively solved in Sveltia CMS
-  - Target: 150 issues by GA, 250 or all relevant and fixable issues in a future release
+  - So far, 140+ of them, or 255+ including duplicates, have been effectively solved in Sveltia CMS
+  - Target: 250 or all relevant and fixable issues in a future release
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
 - Responding to feedback from [@kyoshino](https://github.com/kyoshino)’s clients and regular users
@@ -118,7 +118,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 ## Differentiators
 
-We are working hard to create a **significantly better alternative to Netlify CMS and Decap CMS** by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
+We are working hard to create a **tremendously better alternative to Netlify CMS and Decap CMS** by improving everything. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Better UX
 
@@ -925,7 +925,7 @@ img-src 'self' blob: data: https://*;
 
 While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
 
-Looking to build a website with Sveltia CMS? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your requirements. Feel free to reach out!
+Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
 
 ## Contributions
 
