@@ -2,7 +2,7 @@ import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { getFieldConfig } from '$lib/services/contents/entry';
-import { getEntriesByCollection } from '$lib/services/contents';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
 /**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.
@@ -15,7 +15,7 @@ const normalizeFieldName = (fieldName) =>
 /**
  * @type {Map<string, { label: string, value: any }[]>}
  */
-const optionCache = new Map();
+const optionCacheMap = new Map();
 
 /**
  * Get options for a Relation field.
@@ -26,7 +26,7 @@ const optionCache = new Map();
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
   const cacheKey = JSON.stringify({ locale, fieldConfig, refEntries });
-  const cache = optionCache.get(cacheKey);
+  const cache = optionCacheMap.get(cacheKey);
 
   if (cache) {
     return cache;
@@ -196,7 +196,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     .flat(1)
     .sort((a, b) => compare(a.label, b.label));
 
-  optionCache.set(cacheKey, options);
+  optionCacheMap.set(cacheKey, options);
 
   return options;
 };

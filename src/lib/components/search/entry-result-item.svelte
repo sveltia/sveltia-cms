@@ -2,7 +2,8 @@
   import { GridCell, GridRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
+  import { getCollectionsByEntry } from '$lib/services/contents/collection';
+  import { getFilesByEntry } from '$lib/services/contents/collection/files';
   import { getEntryThumbnail, getEntryTitle } from '$lib/services/contents/entry';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 

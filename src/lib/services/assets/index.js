@@ -6,13 +6,10 @@ import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
-import {
-  getCollection,
-  getCollectionsByEntry,
-  getEntriesByAssetURL,
-  getFilesByEntry,
-} from '$lib/services/contents';
-import { fillSlugTemplate } from '$lib/services/contents/slug';
+import { getCollection, getCollectionsByEntry } from '$lib/services/contents/collection';
+import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
+import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
 import { createPath, resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 

@@ -4,7 +4,7 @@ import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount } from 'svelte';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import Component from './component.svelte';
+import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';
 
 /**
  * @typedef {object} CustomNodeFeatures
@@ -318,7 +318,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
  * does not match registered node CustomNode with the same type”.
  * @type {Map<string, CustomNodeFeatures>}
  */
-const featureCache = new Map();
+const featureCacheMap = new Map();
 
 /**
  * Text editor component implementation.
@@ -330,11 +330,11 @@ export class EditorComponent {
    */
   constructor(componentDef) {
     const { id } = componentDef;
-    const cache = featureCache.get(id);
+    const cache = featureCacheMap.get(id);
     const features = cache ?? getCustomNodeFeatures(componentDef);
 
     if (!cache) {
-      featureCache.set(id, features);
+      featureCacheMap.set(id, features);
     }
 
     Object.assign(this, { ...componentDef, ...features });

@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { goto, selectedPageName } from '$lib/services/app/navigation';
   import { selectedAssetFolder } from '$lib/services/assets';
-  import { selectedCollection } from '$lib/services/contents';
+  import { selectedCollection } from '$lib/services/contents/collection';
 
   $: pages = [
     {

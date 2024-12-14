@@ -1,6 +1,8 @@
 import { derived, writable } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
-import { allEntries, getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
+import { allEntries } from '$lib/services/contents';
+import { getCollectionsByEntry } from '$lib/services/contents/collection';
+import { getFilesByEntry } from '$lib/services/contents/collection/files';
 
 /**
  * @type {import('svelte/store').Writable<string>}

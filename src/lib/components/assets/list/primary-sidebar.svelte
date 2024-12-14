@@ -10,7 +10,7 @@
     selectedAssetFolder,
   } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
-  import { getCollection } from '$lib/services/contents';
+  import { getCollection } from '$lib/services/contents/collection';
 
   $: folders = [
     {

@@ -4,7 +4,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 /**
  * @type {Map<string, any | any[]>}
  */
-const labelCache = new Map();
+const labelCacheMap = new Map();
 
 /**
  * Get the display value for an option.
@@ -16,7 +16,7 @@ const labelCache = new Map();
  */
 export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
   const cacheKey = JSON.stringify({ fieldConfig, valueMap, keyPath });
-  const cache = labelCache.get(cacheKey);
+  const cache = labelCacheMap.get(cacheKey);
 
   if (cache) {
     return cache;
@@ -41,7 +41,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
 
     const labels = hasLabels ? values.map(getLabel) : values;
 
-    labelCache.set(cacheKey, labels);
+    labelCacheMap.set(cacheKey, labels);
 
     return labels;
   }
@@ -49,7 +49,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
   const value = valueMap[keyPath];
   const label = hasLabels ? getLabel(value) : value;
 
-  labelCache.set(cacheKey, label);
+  labelCacheMap.set(cacheKey, label);
 
   return label;
 };

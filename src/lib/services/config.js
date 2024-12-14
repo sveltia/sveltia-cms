@@ -7,7 +7,8 @@ import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
 import { prefs } from '$lib/services/prefs';
 import { getI18nConfig } from '$lib/services/contents/i18n';
-import { allEntryFolders, getCollection, selectedCollection } from '$lib/services/contents';
+import { getCollection, selectedCollection } from '$lib/services/contents/collection';
+import { allEntryFolders } from '$lib/services/contents';
 import { allBackendServices } from '$lib/services/backends';
 import { allAssetFolders } from '$lib/services/assets';
 

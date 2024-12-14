@@ -20,7 +20,7 @@
   import { goBack, goto } from '$lib/services/app/navigation';
   import { backendName } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
-  import { deleteEntries } from '$lib/services/contents/data';
+  import { deleteEntries } from '$lib/services/contents/collection/data';
   import { entryDraft } from '$lib/services/contents/draft';
   import { createDraft, duplicateDraft } from '$lib/services/contents/draft/create';
   import { copyFromLocaleToast, entryEditorSettings } from '$lib/services/contents/draft/editor';

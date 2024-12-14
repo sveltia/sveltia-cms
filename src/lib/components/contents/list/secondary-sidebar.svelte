@@ -5,8 +5,8 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { allAssets, uploadingAssets } from '$lib/services/assets';
-  import { selectedCollection } from '$lib/services/contents';
-  import { currentView } from '$lib/services/contents/view';
+  import { selectedCollection } from '$lib/services/contents/collection';
+  import { currentView } from '$lib/services/contents/collection/view';
 
   $: ({ internalPath, entryRelative } =
     $selectedCollection?._assetFolder ?? /** @type {CollectionAssetFolder} */ ({}));

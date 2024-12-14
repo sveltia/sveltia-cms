@@ -7,8 +7,8 @@
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { selectedCollection } from '$lib/services/contents';
-  import { currentView, entryGroups, listedEntries } from '$lib/services/contents/view';
+  import { selectedCollection } from '$lib/services/contents/collection';
+  import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
 
   $: collection = (() => /** @type {EntryCollection | undefined} */ ($selectedCollection))();
   $: viewType = $currentView.type;

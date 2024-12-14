@@ -13,7 +13,7 @@
     getDate,
     getInputValue,
     parseDateTimeConfig,
-  } from '$lib/components/contents/details/widgets/date-time/helper';
+  } from '$lib/services/contents/widgets/date-time';
 
   /**
    * @type {LocaleCode}

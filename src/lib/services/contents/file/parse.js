@@ -4,7 +4,7 @@ import * as TOML from 'smol-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file';
-import { getCollection } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
 
 /**
  * Parse a JSON document using the built-in method.

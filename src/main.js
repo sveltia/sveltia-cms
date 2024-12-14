@@ -1,6 +1,6 @@
 import { mount } from 'svelte';
-import { registeredComponents } from '$lib/components/contents/details/widgets/markdown';
 import { customFileFormats } from '$lib/services/contents/file';
+import { registeredComponents } from '$lib/services/contents/widgets/markdown';
 import App from './app.svelte';
 
 const knownFuncNames = [

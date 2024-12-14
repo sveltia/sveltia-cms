@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { siteConfig } from '$lib/services/config';
+import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
 import { defaultI18nConfig } from '$lib/services/contents/i18n';
-import { fillSlugTemplate } from '$lib/services/contents/slug';
 
 describe('Test fillSlugTemplate()', () => {
   /** @type {Collection} */

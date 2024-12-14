@@ -4,9 +4,10 @@
   @see https://decapcms.org/docs/widgets/#relation
 -->
 <script>
-  import { getOptions } from '$lib/components/contents/details/widgets/relation/helper';
   import SelectEditor from '$lib/components/contents/details/widgets/select/select-editor.svelte';
-  import { getEntriesByCollection, getFile } from '$lib/services/contents';
+  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+  import { getFile } from '$lib/services/contents/collection/files';
+  import { getOptions } from '$lib/services/contents/widgets/relation';
 
   /**
    * @type {LocaleCode}

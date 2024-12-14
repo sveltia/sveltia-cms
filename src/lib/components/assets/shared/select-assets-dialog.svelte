@@ -9,7 +9,7 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssetFolders, allAssets, getCollectionsByAsset } from '$lib/services/assets';
-  import { selectedCollection } from '$lib/services/contents';
+  import { selectedCollection } from '$lib/services/contents/collection';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
   import {
     allCloudStorageServices,

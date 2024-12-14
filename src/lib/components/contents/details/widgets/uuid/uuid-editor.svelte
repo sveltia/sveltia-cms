@@ -6,9 +6,9 @@
 <script>
   import { TextInput } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { getDefaultValue } from '$lib/components/contents/details/widgets/uuid/helper';
   import { entryDraft } from '$lib/services/contents/draft';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { getDefaultValue } from '$lib/services/contents/widgets/uuid';
 
   /**
    * @type {LocaleCode}

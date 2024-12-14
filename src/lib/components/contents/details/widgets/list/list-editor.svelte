@@ -12,7 +12,6 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
-  import { formatSummary } from '$lib/components/contents/details/widgets/list/helper';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -20,6 +19,7 @@
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { updateListField } from '$lib/services/contents/draft/update';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { formatSummary } from '$lib/services/contents/widgets/list';
 
   /**
    * @type {LocaleCode}

@@ -4,21 +4,18 @@ import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
-import { prefs } from '$lib/services/prefs';
+import { backend } from '$lib/services/backends';
+import { allEntries } from '$lib/services/contents';
+import { selectedCollection } from '$lib/services/contents/collection';
+import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
+import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import {
   getEntryTitleFromContent,
   getFieldConfig,
   getPropertyValue,
 } from '$lib/services/contents/entry';
-import {
-  allEntries,
-  getEntriesByCollection,
-  getFilesByEntry,
-  selectedCollection,
-  selectedEntries,
-} from '$lib/services/contents';
-import { backend } from '$lib/services/backends';
-import { getDate } from '$lib/components/contents/details/widgets/date-time/helper';
+import { getDate } from '$lib/services/contents/widgets/date-time';
+import { prefs } from '$lib/services/prefs';
 
 /**
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields

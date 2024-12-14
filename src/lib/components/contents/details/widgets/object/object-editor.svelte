@@ -13,7 +13,6 @@
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
-  import { formatSummary } from '$lib/components/contents/details/widgets/object/helper';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/create';
@@ -21,6 +20,7 @@
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
   import { getFieldConfig } from '$lib/services/contents/entry';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { formatSummary } from '$lib/services/contents/widgets/object';
 
   /**
    * @type {LocaleCode}

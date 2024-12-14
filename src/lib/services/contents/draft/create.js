@@ -1,13 +1,13 @@
 import { stripTags } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
-import { getDefaultValue as getDefaultDateTimeValue } from '$lib/components/contents/details/widgets/date-time/helper';
-import { getDefaultValue as getDefaultHiddenValue } from '$lib/components/contents/details/widgets/hidden/helper';
-import { getDefaultValue as getDefaultUuidValue } from '$lib/components/contents/details/widgets/uuid/helper';
-import { getCollection } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry';
+import { getDefaultValue as getDefaultDateTimeValue } from '$lib/services/contents/widgets/date-time';
+import { getDefaultValue as getDefaultHiddenValue } from '$lib/services/contents/widgets/hidden';
+import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/widgets/uuid';
 
 /**
  * Parse the given dynamic default value.

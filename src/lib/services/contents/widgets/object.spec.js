@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
-import { formatSummary } from '$lib/components/contents/details/widgets/object/helper';
+import { formatSummary } from '$lib/services/contents/widgets/object';
 
 describe('Test formatSummary()', () => {
   const valueMap = {

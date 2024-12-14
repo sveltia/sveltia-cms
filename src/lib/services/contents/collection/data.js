@@ -1,7 +1,8 @@
 import { get, writable } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
-import { allEntries, selectedCollection } from '$lib/services/contents';
+import { allEntries } from '$lib/services/contents';
+import { selectedCollection } from '$lib/services/contents/collection';
 
 /**
  * @type {import('svelte/store').Writable<UpdatesToastState>}

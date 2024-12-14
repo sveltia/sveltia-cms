@@ -6,8 +6,6 @@ import { parseInline } from 'marked';
 import moment from 'moment';
 import { parseEntities } from 'parse-entities';
 import { get } from 'svelte/store';
-import { getReferencedOptionLabel } from '$lib/components/contents/details/widgets/relation/helper';
-import { getOptionLabel } from '$lib/components/contents/details/widgets/select/helper';
 import {
   allAssets,
   getAssetByPath,
@@ -16,14 +14,17 @@ import {
 } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
-import { getCollection } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
+import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
+import { applyTransformations } from '$lib/services/contents/entry/transformations';
 import { getListFormatter } from '$lib/services/contents/i18n';
-import { applyTransformations, fillSlugTemplate } from '$lib/services/contents/slug';
+import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation';
+import { getOptionLabel } from '$lib/services/contents/widgets/select';
 
 /**
  * @type {Map<string, Field | undefined>}
  */
-const fieldConfigCache = new Map();
+const fieldConfigCacheMap = new Map();
 
 /**
  * Get a field’s config object that matches the given field name (key path).
@@ -42,7 +43,7 @@ export const getFieldConfig = ({
   keyPath,
 }) => {
   const cacheKey = JSON.stringify({ collectionName, fileName, valueMap, keyPath });
-  const cache = fieldConfigCache.get(cacheKey);
+  const cache = fieldConfigCacheMap.get(cacheKey);
 
   if (cache) {
     return cache;
@@ -55,7 +56,7 @@ export const getFieldConfig = ({
     : undefined;
 
   if (!collection || (fileName && !collectionFile)) {
-    fieldConfigCache.set(cacheKey, undefined);
+    fieldConfigCacheMap.set(cacheKey, undefined);
 
     return undefined;
   }
@@ -103,7 +104,7 @@ export const getFieldConfig = ({
     }
   });
 
-  fieldConfigCache.set(cacheKey, field);
+  fieldConfigCacheMap.set(cacheKey, field);
 
   return field;
 };

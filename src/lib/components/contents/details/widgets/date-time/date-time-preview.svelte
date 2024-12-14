@@ -4,11 +4,8 @@
   @see https://decapcms.org/docs/widgets/#datetime
 -->
 <script>
-  import {
-    getDate,
-    parseDateTimeConfig,
-  } from '$lib/components/contents/details/widgets/date-time/helper';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { getDate, parseDateTimeConfig } from '$lib/services/contents/widgets/date-time';
   import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
 
   /**

@@ -6,7 +6,8 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getAssetDetails, isMediaKind } from '$lib/services/assets';
-  import { getCollectionsByEntry, getFilesByEntry } from '$lib/services/contents';
+  import { getCollectionsByEntry } from '$lib/services/contents/collection';
+  import { getFilesByEntry } from '$lib/services/contents/collection/files';
   import { getEntryTitle } from '$lib/services/contents/entry';
   import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
   import { formatSize } from '$lib/services/utils/file';

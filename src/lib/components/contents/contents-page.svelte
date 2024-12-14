@@ -12,12 +12,13 @@
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
   import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
-  import { getCollection, getFile, selectedCollection } from '$lib/services/contents';
-  import { contentUpdatesToast } from '$lib/services/contents/data';
+  import { getCollection, selectedCollection } from '$lib/services/contents/collection';
+  import { contentUpdatesToast } from '$lib/services/contents/collection/data';
+  import { getFile } from '$lib/services/contents/collection/files';
+  import { listedEntries } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
   import { getEntryTitle } from '$lib/services/contents/entry';
-  import { listedEntries } from '$lib/services/contents/view';
 
   /**
    * Navigate to the content list or content details page given the URL hash.

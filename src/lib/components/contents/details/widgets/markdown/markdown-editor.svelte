@@ -7,17 +7,17 @@
   import { TextEditor } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import {
+    EditorComponent,
+    getComponentDef,
+  } from '$lib/services/contents/widgets/markdown/component';
+  import {
     buttonNameMap,
     defaultButtons,
     defaultComponents,
     defaultModes,
     modeNameMap,
     registeredComponents,
-  } from '$lib/components/contents/details/widgets/markdown';
-  import {
-    EditorComponent,
-    getComponentDef,
-  } from '$lib/components/contents/details/widgets/markdown/component';
+  } from '$lib/services/contents/widgets/markdown/index';
 
   /**
    * @type {LocaleCode}

@@ -6,8 +6,14 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { selectedCollection, selectedEntries } from '$lib/services/contents';
-  import { currentView, entryGroups, listedEntries, sortFields } from '$lib/services/contents/view';
+  import { selectedCollection } from '$lib/services/contents/collection';
+  import { selectedEntries } from '$lib/services/contents/collection/entries';
+  import {
+    currentView,
+    entryGroups,
+    listedEntries,
+    sortFields,
+  } from '$lib/services/contents/collection/view';
 
   $: ({ name: collectionName, _thumbnailFieldName } =
     $selectedCollection?._type === 'entry'

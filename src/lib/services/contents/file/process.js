@@ -2,11 +2,11 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { flatten } from 'flat';
-import { hasRootListField } from '$lib/components/contents/details/widgets/list/helper';
-import { getCollection } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
 import { getEntryTitleFromContent } from '$lib/services/contents/entry';
+import { fillSlugTemplate, normalizeSlug } from '$lib/services/contents/entry/slug';
 import { parseEntryFile } from '$lib/services/contents/file/parse';
-import { fillSlugTemplate, normalizeSlug } from '$lib/services/contents/slug';
+import { hasRootListField } from '$lib/services/contents/widgets/list';
 
 /**
  * Determine the slug for the given entry content.

@@ -2,7 +2,7 @@
   import { SearchBar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
-  import { selectedCollection } from '$lib/services/contents';
+  import { selectedCollection } from '$lib/services/contents/collection';
   import { searchTerms } from '$lib/services/search';
 
   /**

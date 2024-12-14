@@ -1,10 +1,11 @@
 <script>
   import { ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { selectedCollection, selectedEntries } from '$lib/services/contents';
-  import { deleteEntries } from '$lib/services/contents/data';
+  import { selectedCollection } from '$lib/services/contents/collection';
+  import { deleteEntries } from '$lib/services/contents/collection/data';
+  import { selectedEntries } from '$lib/services/contents/collection/entries';
+  import { listedEntries } from '$lib/services/contents/collection/view';
   import { getAssociatedAssets } from '$lib/services/contents/entry';
-  import { listedEntries } from '$lib/services/contents/view';
 
   export let open = false;
 

@@ -3,9 +3,10 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
-  import { selectedCollection, selectedEntries } from '$lib/services/contents';
-  import { goto } from '$lib/services/app/navigation';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
+  import { goto } from '$lib/services/app/navigation';
+  import { selectedCollection } from '$lib/services/contents/collection';
+  import { selectedEntries } from '$lib/services/contents/collection/entries';
 
   let showDeleteDialog = false;
 
