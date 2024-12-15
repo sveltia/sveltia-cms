@@ -12,6 +12,8 @@
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection } from '$lib/services/contents/collection';
 
+  $: numberFormatter = Intl.NumberFormat($appLocale ?? undefined);
+
   $: folders = [
     {
       collectionName: '*',
@@ -96,7 +98,7 @@
                   { values: { count } },
                 )})"
               >
-                {count}
+                {numberFormatter.format(count)}
               </span>
             {/await}
           {/key}

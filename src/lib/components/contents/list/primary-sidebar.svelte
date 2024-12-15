@@ -1,13 +1,14 @@
 <script>
   import { Divider, Icon, Listbox, Option } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { _ } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
   import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
+  $: numberFormatter = Intl.NumberFormat($appLocale ?? undefined);
   $: collections = $siteConfig?.collections.filter(({ hide }) => !hide) ?? [];
 </script>
 
@@ -38,7 +39,7 @@
                     { values: { count } },
                   )})"
                 >
-                  {count}
+                  {numberFormatter.format(count)}
                 </span>
               {/await}
             {/key}
