@@ -6,7 +6,7 @@ Since Sveltia CMS is still in beta, we expect various problems. Please [report a
 
 ## Code contributions
 
-Due to limited review resources and the ongoing Svelte 5 Runes migration, pull requests will not be accepted for the time being, except for trivial changes. Please file issues instead. We plan to create contributor documents after the 1.0 release.
+Due to limited review resources and the ongoing technical upgrades, pull requests will not be accepted for the time being, except for trivial changes. Please file issues instead. We plan to create contributor documents after the 1.0 release.
 
 ## Localizations
 
