@@ -2,9 +2,10 @@
   import { GridCell, GridRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { getCollectionsByEntry } from '$lib/services/contents/collection';
   import { getFilesByEntry } from '$lib/services/contents/collection/files';
-  import { getEntryThumbnail, getEntryTitle } from '$lib/services/contents/entry';
+  import { getAssociatedCollections } from '$lib/services/contents/entry';
+  import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
+  import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
@@ -45,14 +46,14 @@
         {#if collectionFile}
           {collectionFile.label || collectionFile.name}
         {:else}
-          {@html getEntryTitle(collection, entry, { useTemplate: true, allowMarkdown: true })}
+          {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
         {/if}
       </GridCell>
     </GridRow>
   {/if}
 {/snippet}
 
-{#each getCollectionsByEntry(entry) as collection (collection.name)}
+{#each getAssociatedCollections(entry) as collection (collection.name)}
   {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
     {@render resultRow({ collection, collectionFile })}
   {:else}

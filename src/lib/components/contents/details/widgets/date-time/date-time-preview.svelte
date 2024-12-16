@@ -5,7 +5,7 @@
 -->
 <script>
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
-  import { getDate, parseDateTimeConfig } from '$lib/services/contents/widgets/date-time';
+  import { getDate, parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
   import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
 
   /**

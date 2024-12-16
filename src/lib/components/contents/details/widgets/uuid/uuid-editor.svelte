@@ -8,7 +8,7 @@
   import { onMount } from 'svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
-  import { getDefaultValue } from '$lib/services/contents/widgets/uuid';
+  import { getDefaultValue } from '$lib/services/contents/widgets/uuid/helper';
 
   /**
    * @type {LocaleCode}

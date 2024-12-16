@@ -6,9 +6,10 @@ import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
-import { getCollection, getCollectionsByEntry } from '$lib/services/contents/collection';
+import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
 import { createPath, resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
@@ -318,7 +319,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
       return get(allAssets).find((asset) => asset.path === resolvedPath);
     };
 
-    const assets = getCollectionsByEntry(entry).map((_collection) => {
+    const assets = getAssociatedCollections(entry).map((_collection) => {
       const collectionFiles = getFilesByEntry(_collection, entry);
 
       if (collectionFiles.length) {
@@ -368,7 +369,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
   }
 
   if (entry && !collection) {
-    [collection] = getCollectionsByEntry(entry);
+    [collection] = getAssociatedCollections(entry);
   }
 
   if (entry && collection && !!internalPath.match(/{{.+?}}/)) {

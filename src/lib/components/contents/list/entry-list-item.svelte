@@ -4,7 +4,8 @@
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
-  import { getEntryThumbnail, getEntryTitle } from '$lib/services/contents/entry';
+  import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
+  import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
   /**
    * @type {EntryCollection}
@@ -70,7 +71,7 @@
   {/if}
   <GridCell class="title">
     <span role="none">
-      {@html getEntryTitle(collection, entry, { useTemplate: true, allowMarkdown: true })}
+      {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
     </span>
   </GridCell>
 </GridRow>

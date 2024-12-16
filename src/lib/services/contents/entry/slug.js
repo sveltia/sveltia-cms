@@ -5,7 +5,8 @@ import { truncate } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getEntryTitleFromContent, getFieldConfig } from '$lib/services/contents/entry';
+import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { applyTransformations } from '$lib/services/contents/entry/transformations';
 import { renameIfNeeded } from '$lib/services/utils/file';
 
@@ -134,7 +135,7 @@ export const fillSlugTemplate = (
     if (tag.startsWith('fields.')) {
       value = valueMap[tag.replace(/^fields\./, '')];
     } else if (tag === 'slug') {
-      value = getEntryTitleFromContent(valueMap, { identifierField });
+      value = getEntrySummaryFromContent(valueMap, { identifierField });
     } else {
       value = valueMap[tag];
     }

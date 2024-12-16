@@ -1,7 +1,7 @@
 import { flatten } from 'flat';
 import { describe, expect, test } from 'vitest';
 import { siteConfig } from '$lib/services/config';
-import { getOptions } from '$lib/services/contents/widgets/relation';
+import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
 describe('Test getOptions()', () => {
   const locale = '_default';

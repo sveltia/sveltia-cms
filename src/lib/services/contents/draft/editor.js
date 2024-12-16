@@ -3,7 +3,7 @@ import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { entryDraft } from '$lib/services/contents/draft';
-import { getFieldConfig } from '$lib/services/contents/entry';
+import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
  * @type {import('svelte/store').Writable<boolean>}

@@ -1,8 +1,8 @@
 import { derived, writable } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { allEntries } from '$lib/services/contents';
-import { getCollectionsByEntry } from '$lib/services/contents/collection';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 /**
  * @type {import('svelte/store').Writable<string>}
@@ -44,7 +44,7 @@ export const searchResults = derived(
       }
 
       return _allEntries.filter((entry) =>
-        getCollectionsByEntry(entry).some(
+        getAssociatedCollections(entry).some(
           (collection) =>
             hasMatch(collection.label || collection.name) ||
             getFilesByEntry(collection, entry).some((file) => hasMatch(file.label || file.name)) ||

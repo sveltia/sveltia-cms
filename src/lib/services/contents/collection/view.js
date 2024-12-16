@@ -9,12 +9,9 @@ import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
-import {
-  getEntryTitleFromContent,
-  getFieldConfig,
-  getPropertyValue,
-} from '$lib/services/contents/entry';
-import { getDate } from '$lib/services/contents/widgets/date-time';
+import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/fields';
+import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
+import { getDate } from '$lib/services/contents/widgets/date-time/helper';
 import { prefs } from '$lib/services/prefs';
 
 /**
@@ -59,7 +56,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
      * @returns {string} Determined title.
      */
     const getTitle = ({ locales, slug }) =>
-      getEntryTitleFromContent(flatten(locales?.[locale]?.content ?? {})) || slug;
+      getEntrySummaryFromContent(flatten(locales?.[locale]?.content ?? {})) || slug;
 
     return _entries.sort((a, b) => getTitle(a).localeCompare(getTitle(b)));
   }

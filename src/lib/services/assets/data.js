@@ -15,10 +15,10 @@ import {
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { getCollectionsByEntry } from '$lib/services/contents/collection';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { createSavingEntryData } from '$lib/services/contents/draft/save';
+import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**
@@ -167,7 +167,7 @@ export const moveAssets = async (action, movingAssets) => {
           const { locales, slug } = entry;
 
           await Promise.all(
-            getCollectionsByEntry(entry).map(async (collection) => {
+            getAssociatedCollections(entry).map(async (collection) => {
               const originalLocales = Object.fromEntries(
                 Object.keys(locales).map((locale) => [locale, true]),
               );

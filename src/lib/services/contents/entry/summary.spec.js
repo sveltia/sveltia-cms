@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { getEntryTitle } from '$lib/services/contents/entry';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
-describe('Test getEntryTitle()', () => {
+describe('Test getEntrySummary()', () => {
   /** @type {Collection} */
   const collection = {
     name: 'pages-tags',
@@ -47,13 +47,13 @@ describe('Test getEntryTitle()', () => {
   };
 
   /**
-   * Wrapper for {@link getEntryTitle}.
+   * Wrapper for {@link getEntrySummary}.
    * @param {string} summary - Summary string template.
    * @param {object} [options] - Options.
    * @returns {string} Formatted summary.
    */
   const format = (summary, options = {}) =>
-    getEntryTitle({ ...collection, summary }, entry, {
+    getEntrySummary({ ...collection, summary }, entry, {
       locale: 'de',
       useTemplate: true,
       ...options,

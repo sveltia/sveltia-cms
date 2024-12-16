@@ -2,7 +2,6 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { allAssetFolders } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
-import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getFileConfig } from '$lib/services/contents/file';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 
@@ -87,14 +86,3 @@ export const getCollection = (name) => {
 
   return collection;
 };
-
-/**
- * Get a list of collections the given entry belongs to. One entry can theoretically appear in
- * multiple collections depending on the configuration, so that the result is an array.
- * @param {Entry} entry - Entry.
- * @returns {Collection[]} Collections.
- */
-export const getCollectionsByEntry = (entry) =>
-  getEntryFoldersByPath(Object.values(entry.locales)[0].path)
-    .map(({ collectionName }) => getCollection(collectionName))
-    .filter((collection) => !!collection);

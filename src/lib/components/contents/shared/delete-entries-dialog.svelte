@@ -5,7 +5,7 @@
   import { deleteEntries } from '$lib/services/contents/collection/data';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
-  import { getAssociatedAssets } from '$lib/services/contents/entry';
+  import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
 
   export let open = false;
 

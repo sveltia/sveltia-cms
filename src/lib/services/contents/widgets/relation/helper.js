@@ -1,7 +1,7 @@
 import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
-import { getFieldConfig } from '$lib/services/contents/entry';
+import { getFieldConfig } from '$lib/services/contents/entry/fields';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
 /**

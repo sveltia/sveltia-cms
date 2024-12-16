@@ -6,9 +6,9 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getAssetDetails, isMediaKind } from '$lib/services/assets';
-  import { getCollectionsByEntry } from '$lib/services/contents/collection';
   import { getFilesByEntry } from '$lib/services/contents/collection/files';
-  import { getEntryTitle } from '$lib/services/contents/entry';
+  import { getAssociatedCollections } from '$lib/services/contents/entry';
+  import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media';
@@ -154,7 +154,7 @@
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as entry (entry.sha)}
       {@const { slug } = entry}
-      {#each getCollectionsByEntry(entry) as collection (collection.name)}
+      {#each getAssociatedCollections(entry) as collection (collection.name)}
         {@const collectionLabel = collection.label || collection.name}
         {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
           {@render usedEntryLink({
@@ -166,7 +166,7 @@
           {@render usedEntryLink({
             link: `/collections/${collection.name}/entries/${slug}`,
             collectionLabel,
-            entryLabel: getEntryTitle(collection, entry, { useTemplate: true }),
+            entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
           })}
         {/each}
       {/each}

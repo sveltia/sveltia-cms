@@ -1,6 +1,6 @@
 import { truncate } from '@sveltia/utils/string';
 import moment from 'moment';
-import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time';
+import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 
 /**
  * Apply a string transformation to the value.

@@ -8,7 +8,7 @@ import {
   copyFromLocaleToast,
   translatorApiKeyDialogState,
 } from '$lib/services/contents/draft/editor';
-import { getFieldConfig } from '$lib/services/contents/entry';
+import { getFieldConfig } from '$lib/services/contents/entry/fields';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/prefs';
 

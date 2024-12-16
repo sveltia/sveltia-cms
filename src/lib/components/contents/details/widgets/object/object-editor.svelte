@@ -18,9 +18,9 @@
   import { getDefaultValues } from '$lib/services/contents/draft/create';
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
-  import { getFieldConfig } from '$lib/services/contents/entry';
+  import { getFieldConfig } from '$lib/services/contents/entry/fields';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
-  import { formatSummary } from '$lib/services/contents/widgets/object';
+  import { formatSummary } from '$lib/services/contents/widgets/object/helper';
 
   /**
    * @type {LocaleCode}

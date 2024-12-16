@@ -7,7 +7,7 @@
   import SelectEditor from '$lib/components/contents/details/widgets/select/select-editor.svelte';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { getFile } from '$lib/services/contents/collection/files';
-  import { getOptions } from '$lib/services/contents/widgets/relation';
+  import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
    * @type {LocaleCode}

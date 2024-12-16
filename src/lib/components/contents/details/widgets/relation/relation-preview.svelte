@@ -7,7 +7,7 @@
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { getFile } from '$lib/services/contents/collection/files';
   import { getListFormatter } from '$lib/services/contents/i18n';
-  import { getOptions } from '$lib/services/contents/widgets/relation';
+  import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
    * @type {LocaleCode}

@@ -26,11 +26,9 @@
   import { copyFromLocaleToast, entryEditorSettings } from '$lib/services/contents/draft/editor';
   import { saveEntry } from '$lib/services/contents/draft/save';
   import { revertChanges } from '$lib/services/contents/draft/update';
-  import {
-    getAssociatedAssets,
-    getEntryPreviewURL,
-    getEntryTitle,
-  } from '$lib/services/contents/entry';
+  import { getEntryPreviewURL } from '$lib/services/contents/entry';
+  import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
+  import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { prefs } from '$lib/services/prefs';
 
@@ -143,7 +141,7 @@
             entry: collectionFile
               ? collectionFile.label || collectionFile.name
               : originalEntry
-                ? getEntryTitle(collection, originalEntry)
+                ? getEntrySummary(collection, originalEntry)
                 : '',
           },
         })}

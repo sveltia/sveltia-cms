@@ -19,7 +19,7 @@
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { updateListField } from '$lib/services/contents/draft/update';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
-  import { formatSummary } from '$lib/services/contents/widgets/list';
+  import { formatSummary } from '$lib/services/contents/widgets/list/helper';
 
   /**
    * @type {LocaleCode}

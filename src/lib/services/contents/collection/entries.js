@@ -2,9 +2,10 @@ import { get, writable } from 'svelte/store';
 import { getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { getCollection, getCollectionsByEntry } from '$lib/services/contents/collection';
+import { getCollection } from '$lib/services/contents/collection';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
-import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry';
+import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/fields';
 
 /**
  * Regular expression to match `![alt](src "title")`.
@@ -43,7 +44,7 @@ export const getEntriesByCollection = (collectionName) => {
     filter?.value === undefined ? [] : Array.isArray(filter.value) ? filter.value : [filter.value];
 
   return get(allEntries).filter((entry) => {
-    if (!getCollectionsByEntry(entry).some(({ name }) => name === collectionName)) {
+    if (!getAssociatedCollections(entry).some(({ name }) => name === collectionName)) {
       return false;
     }
 
@@ -79,7 +80,7 @@ export const getEntriesByAssetURL = async (
   const results = await Promise.all(
     entries.map(async (entry) => {
       const { locales } = entry;
-      const collections = getCollectionsByEntry(entry);
+      const collections = getAssociatedCollections(entry);
 
       const _results = await Promise.all(
         Object.values(locales).map(async ({ content }) => {

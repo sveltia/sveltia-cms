@@ -6,7 +6,7 @@
 <script>
   import { TextInput } from '@sveltia/ui';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getFieldDisplayValue } from '$lib/services/contents/entry';
+  import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**

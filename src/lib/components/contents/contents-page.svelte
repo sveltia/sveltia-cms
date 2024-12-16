@@ -18,7 +18,7 @@
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
-  import { getEntryTitle } from '$lib/services/contents/entry';
+  import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
   /**
    * Navigate to the content list or content details page given the URL hash.
@@ -122,7 +122,7 @@
           $announcedPageStatus = $_('editing_x_collection_entry', {
             values: {
               collection: collectionLabel,
-              entry: getEntryTitle($selectedCollection, originalEntry),
+              entry: getEntrySummary($selectedCollection, originalEntry),
             },
           });
         }

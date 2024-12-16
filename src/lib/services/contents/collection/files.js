@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { allEntries } from '$lib/services/contents';
-import { getCollectionsByEntry } from '$lib/services/contents/collection';
+import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 /**
  * Get a file collection’s file configurations that matches the given entry. One file can
@@ -34,7 +34,7 @@ export const getFilesByEntry = (collection, entry) => {
  */
 export const getFile = (collectionName, fileName) =>
   get(allEntries).find((entry) =>
-    getCollectionsByEntry(entry).some(
+    getAssociatedCollections(entry).some(
       (collection) =>
         collection.name === collectionName &&
         getFilesByEntry(collection, entry).some((file) => file.name === fileName),

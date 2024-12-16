@@ -1,8 +1,8 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
-import { getFieldConfig } from '$lib/services/contents/entry';
-import { validateStringField } from '$lib/services/contents/widgets/string';
+import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 
 /**
  * Validate the current entry draft, update the validity for all the fields, and return the final

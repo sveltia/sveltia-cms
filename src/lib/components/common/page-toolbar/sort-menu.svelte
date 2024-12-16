@@ -1,7 +1,7 @@
 <script>
   import { Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { getFieldConfig } from '$lib/services/contents/entry';
+  import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
   export let label = '';
   export let disabled = false;

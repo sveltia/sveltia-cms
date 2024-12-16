@@ -1,13 +1,13 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
-import { formatSummary } from '$lib/services/contents/widgets/list';
+import { formatSummary } from '$lib/services/contents/widgets/object/helper';
 
-describe('Test formatSummary() — multiple fields', () => {
+describe('Test formatSummary()', () => {
   const valueMap = {
-    'images.0.src': 'hello.jpg',
-    'images.0.alt': 'hello',
-    'images.0.featured': true,
-    'images.0.date': '2024-01-01',
+    'images.src': 'hello.jpg',
+    'images.alt': 'hello',
+    'images.featured': true,
+    'images.date': '2024-01-01',
   };
 
   const baseArgs = {
@@ -29,7 +29,7 @@ describe('Test formatSummary() — multiple fields', () => {
           fields: [
             {
               name: 'images',
-              widget: 'list',
+              widget: 'object',
               fields: [
                 { name: 'title', widget: 'string' },
                 { name: 'src', widget: 'image' },
@@ -48,13 +48,13 @@ describe('Test formatSummary() — multiple fields', () => {
     expect(
       formatSummary({
         ...baseArgs,
-        valueMap: { 'images.0.title': '', ...valueMap },
+        valueMap: { 'images.title': '', ...valueMap },
       }),
     ).toEqual('hello.jpg');
     expect(
       formatSummary({
         ...baseArgs,
-        valueMap: { 'images.0.title': 'Hello World', ...valueMap },
+        valueMap: { 'images.title': 'Hello World', ...valueMap },
       }),
     ).toEqual('Hello World');
   });
@@ -63,28 +63,28 @@ describe('Test formatSummary() — multiple fields', () => {
     expect(
       formatSummary({
         ...baseArgs,
-        valueMap: { 'images.0.title': '', ...valueMap },
+        valueMap: { 'images.title': '', ...valueMap },
         summaryTemplate: '{{fields.alt}}',
       }),
     ).toEqual('hello');
     expect(
       formatSummary({
         ...baseArgs,
-        valueMap: { 'images.0.title': 'Hello World', ...valueMap },
+        valueMap: { 'images.title': 'Hello World', ...valueMap },
         summaryTemplate: '{{fields.alt}}',
       }),
     ).toEqual('hello');
     expect(
       formatSummary({
         ...baseArgs,
-        valueMap: { 'images.0.title': 'Hello World', ...valueMap },
+        valueMap: { 'images.title': 'Hello World', ...valueMap },
         summaryTemplate: '{{fields.src}}',
       }),
     ).toEqual('hello.jpg');
     expect(
       formatSummary({
         ...baseArgs,
-        valueMap: { 'images.0.title': 'Hello World', ...valueMap },
+        valueMap: { 'images.title': 'Hello World', ...valueMap },
         summaryTemplate: '{{fields.name}}',
       }),
     ).toEqual('');
@@ -119,77 +119,5 @@ describe('Test formatSummary() — multiple fields', () => {
         summaryTemplate: "{{fields.date | date('MMM YYYY')}}",
       }),
     ).toEqual('Jan 2024');
-  });
-});
-
-describe('Test formatSummary() — single field', () => {
-  const baseArgs = {
-    collectionName: 'posts',
-    keyPath: 'images',
-    locale: 'en',
-    hasSingleSubField: true,
-    index: 0,
-  };
-
-  vi.mock('$lib/services/config', () => ({
-    siteConfig: writable({
-      backend: { name: 'github' },
-      media_folder: 'static/uploads',
-      collections: [
-        {
-          name: 'posts',
-          folder: 'content/posts',
-          fields: [
-            {
-              name: 'images',
-              widget: 'list',
-              field: { name: 'src', widget: 'image' },
-            },
-          ],
-        },
-      ],
-    }),
-  }));
-
-  test('without template', () => {
-    expect(
-      formatSummary({
-        ...baseArgs,
-        valueMap: { 'images.0': 'hello.jpg' },
-      }),
-    ).toEqual('hello.jpg');
-    expect(
-      formatSummary({
-        ...baseArgs,
-        valueMap: { 'images.0': '' },
-      }),
-    ).toEqual('');
-  });
-
-  test('with template', () => {
-    expect(
-      formatSummary({
-        ...baseArgs,
-        valueMap: { 'images.0': 'hello.jpg' },
-        summaryTemplate: '{{fields.src}}',
-      }),
-    ).toEqual('hello.jpg');
-    expect(
-      formatSummary({
-        ...baseArgs,
-        valueMap: { 'images.0': 'hello.jpg' },
-        summaryTemplate: '{{fields.alt}}',
-      }),
-    ).toEqual('');
-  });
-
-  test('with template + transformations', () => {
-    expect(
-      formatSummary({
-        ...baseArgs,
-        valueMap: { 'images.0': 'hello.jpg' },
-        summaryTemplate: '{{fields.src | upper | truncate(5)}}',
-      }),
-    ).toEqual('HELLO…');
   });
 });

@@ -1,4 +1,4 @@
-import { getFieldDisplayValue } from '$lib/services/contents/entry';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
  * Format the summary template of an Object field.
