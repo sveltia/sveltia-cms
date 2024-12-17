@@ -1,8 +1,8 @@
 <script>
   import { GridCell, GridRow } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import EmptyState from '$lib/components/common/empty-state.svelte';
+  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -16,8 +16,8 @@
       aria-label={$_('files')}
       aria-rowcount={$selectedCollection.files.length}
     >
-      {#each $selectedCollection.files as { name, label } (name)}
-        {#await sleep(0) then}
+      <InfiniteScroll items={$selectedCollection.files} itemKey="name">
+        {#snippet renderItem(/** @type {RawCollectionFile} */ { name, label })}
           <GridRow
             onclick={() => {
               goto(`/collections/${$selectedCollection?.name}/entries/${name}`);
@@ -27,8 +27,8 @@
               {label || name}
             </GridCell>
           </GridRow>
-        {/await}
-      {/each}
+        {/snippet}
+      </InfiniteScroll>
     </ListingGrid>
   {:else}
     <EmptyState>

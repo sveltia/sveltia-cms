@@ -1,8 +1,8 @@
 <script>
   import { Button, GridBody, Icon } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import EmptyState from '$lib/components/common/empty-state.svelte';
+  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
@@ -28,15 +28,16 @@
         {#each $entryGroups as { name, entries } (name)}
           <!-- @todo Implement custom table column option that can replace summary template -->
           <GridBody label={name !== '*' ? name : undefined}>
-            {#each entries as entry (entry.id)}
-              {#await sleep(0) then}
-                {@const { locales } = entry}
-                {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
-                {#if content}
-                  <EntryListItem {collection} {entry} {viewType} />
-                {/if}
-              {/await}
-            {/each}
+            <InfiniteScroll
+              items={entries.filter(
+                ({ locales }) => !!(locales[defaultLocale] ?? Object.values(locales)[0])?.content,
+              )}
+              itemKey="id"
+            >
+              {#snippet renderItem(/** @type {Entry} */ entry)}
+                <EntryListItem {collection} {entry} {viewType} />
+              {/snippet}
+            </InfiniteScroll>
           </GridBody>
         {/each}
       </ListingGrid>

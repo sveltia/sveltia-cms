@@ -1,7 +1,7 @@
 <script>
   import { Group } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
+  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import AssetResultItem from '$lib/components/search/asset-result-item.svelte';
   import EntryResultItem from '$lib/components/search/entry-result-item.svelte';
@@ -23,11 +23,11 @@
             aria-rowcount={$searchResults.entries.length}
           >
             {#key $searchTerms}
-              {#each $searchResults.entries as entry (entry.id)}
-                {#await sleep(0) then}
+              <InfiniteScroll items={$searchResults.entries} itemKey="id">
+                {#snippet renderItem(/** @type {Entry} */ entry)}
                   <EntryResultItem {entry} />
-                {/await}
-              {/each}
+                {/snippet}
+              </InfiniteScroll>
             {/key}
           </ListingGrid>
         {:else}
@@ -45,11 +45,11 @@
             aria-rowcount={$searchResults.assets.length}
           >
             {#key $searchTerms}
-              {#each $searchResults.assets as asset (asset.path)}
-                {#await sleep(0) then}
+              <InfiniteScroll items={$searchResults.assets} itemKey="path">
+                {#snippet renderItem(/** @type {Asset} */ asset)}
                   <AssetResultItem {asset} />
-                {/await}
-              {/each}
+                {/snippet}
+              </InfiniteScroll>
             {/key}
           </ListingGrid>
         {:else}

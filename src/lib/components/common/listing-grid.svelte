@@ -4,6 +4,7 @@
 -->
 <script>
   import { Grid } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
 
   /**
    * View type.
@@ -13,9 +14,11 @@
 </script>
 
 <div role="none" class="{viewType}-view">
-  <Grid multiple clickToSelect={false} {...$$restProps}>
-    <slot />
-  </Grid>
+  {#await sleep(0) then}
+    <Grid multiple clickToSelect={false} {...$$restProps}>
+      <slot />
+    </Grid>
+  {/await}
 </div>
 
 <style lang="scss">
