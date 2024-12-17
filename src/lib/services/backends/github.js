@@ -226,6 +226,30 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
 const signOut = async () => void 0;
 
 /**
+ * Check if the user has access to the current repository.
+ * @throws {Error} If the user is not a collaborator of the repository.
+ * @see https://docs.github.com/en/rest/collaborators/collaborators#check-if-a-user-is-a-repository-collaborator
+ */
+const checkRepositoryAccess = async () => {
+  const { owner, repo } = repository;
+  const userName = /** @type {string} */ (get(user)?.login);
+
+  const { ok } = /** @type {Response} */ (
+    await fetchAPI(
+      `/repos/${owner}/${repo}/collaborators/${encodeURIComponent(userName)}`,
+      { headers: { Accept: 'application/json' } },
+      { responseType: 'raw' },
+    )
+  );
+
+  if (!ok) {
+    throw new Error('Not a collaborator of the repository', {
+      cause: new Error(get(_)('repository_no_access', { values: { repo } })),
+    });
+  }
+};
+
+/**
  * Fetch the repository’s default branch name, which is typically `master` or `main`.
  * @returns {Promise<string>} Branch name.
  * @throws {Error} When the repository could not be found, or when the repository is empty.
@@ -451,30 +475,6 @@ const fetchFileContents = async (fetchingFiles) => {
       return [path, data];
     }),
   );
-};
-
-/**
- * Check if the user has access to the current repository.
- * @throws {Error} If the user is not a collaborator of the repository.
- * @see https://docs.github.com/en/rest/collaborators/collaborators#check-if-a-user-is-a-repository-collaborator
- */
-const checkRepositoryAccess = async () => {
-  const { owner, repo } = repository;
-  const userName = /** @type {string} */ (get(user)?.login);
-
-  const { ok } = /** @type {Response} */ (
-    await fetchAPI(
-      `/repos/${owner}/${repo}/collaborators/${encodeURIComponent(userName)}`,
-      { headers: { Accept: 'application/json' } },
-      { responseType: 'raw' },
-    )
-  );
-
-  if (!ok) {
-    throw new Error('Not a collaborator of the repository', {
-      cause: new Error(get(_)('repository_no_access', { values: { repo } })),
-    });
-  }
 };
 
 /**
