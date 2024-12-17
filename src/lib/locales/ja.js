@@ -127,7 +127,7 @@ export const strings = {
     minor_incident:
       '{service} で軽微な障害が発生しています。ワークフローに潜在的な影響が及ぶ可能性があります。',
     major_incident:
-      '{service} で重大な障害が発生しています。状況が改善されるまで待った方が良いでしょう。',
+      '{service} で重大な障害が発生しています。状況が改善されるまで待った方が良いかもしれません。',
   },
 
   // Library
