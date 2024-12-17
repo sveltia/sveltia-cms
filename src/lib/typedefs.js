@@ -6,6 +6,7 @@
  * @typedef {object} User
  * @property {string} backendName - Backend name, e.g. `github`.
  * @property {string} [token] - Backend OAuth token.
+ * @property {number} [id] - User ID.
  * @property {string} [name] - User display name.
  * @property {string} [login] - User account name.
  * @property {string} [email] - User email.

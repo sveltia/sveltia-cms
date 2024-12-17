@@ -79,6 +79,7 @@ export const strings = {
     TOKEN_REQUEST_FAILED: 'アクセストークンを要求できませんでした。後で再度お試しください。',
     MALFORMED_RESPONSE: 'サーバーから不正なデータが返されました。後で再度お試しください。',
   },
+  repository_no_access: 'あなたは「{repo}」レポジトリへのアクセス権がありません。',
   repository_not_found: '「{repo}」レポジトリは存在しません。',
   repository_empty: '「{repo}」レポジトリにはブランチがありません。',
   branch_not_found: '「{repo}」レポジトリに「{branch}」ブランチは存在しません。',

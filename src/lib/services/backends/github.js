@@ -199,6 +199,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     }));
 
   const {
+    id,
     name,
     login,
     email,
@@ -209,6 +210,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
   return {
     backendName,
     token,
+    id,
     name,
     login,
     email,
@@ -452,10 +454,36 @@ const fetchFileContents = async (fetchingFiles) => {
 };
 
 /**
+ * Check if the user has access to the current repository.
+ * @throws {Error} If the user is not a collaborator of the repository.
+ * @see https://docs.github.com/en/rest/collaborators/collaborators#check-if-a-user-is-a-repository-collaborator
+ */
+const checkRepositoryAccess = async () => {
+  const { owner, repo } = repository;
+  const userName = /** @type {string} */ (get(user)?.login);
+
+  const { ok } = /** @type {Response} */ (
+    await fetchAPI(
+      `/repos/${owner}/${repo}/collaborators/${encodeURIComponent(userName)}`,
+      { headers: { Accept: 'application/json' } },
+      { responseType: 'raw' },
+    )
+  );
+
+  if (!ok) {
+    throw new Error('Not a collaborator of the repository', {
+      cause: new Error(get(_)('repository_no_access', { values: { repo } })),
+    });
+  }
+};
+
+/**
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
  */
 const fetchFiles = async () => {
+  await checkRepositoryAccess();
+
   await fetchAndParseFiles({
     repository,
     fetchDefaultBranchName,

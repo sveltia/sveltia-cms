@@ -79,6 +79,7 @@ export const strings = {
     TOKEN_REQUEST_FAILED: 'Failed to request an access token. Please try again later.',
     MALFORMED_RESPONSE: 'Server responded with malformed data. Please try again later.',
   },
+  repository_no_access: 'You don’t have access to the “{repo}” repository.',
   repository_not_found: 'The “{repo}” repository doesn’t exist.',
   repository_empty: 'The “{repo}” repository has no branches.',
   branch_not_found: 'The “{repo}” repository doesn’t have the “{branch}” branch.',

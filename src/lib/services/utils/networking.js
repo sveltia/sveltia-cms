@@ -34,6 +34,10 @@ export const sendRequest = async (url, init = {}, { responseType = 'json' } = {}
     throw new Error('Failed to send the request', { cause: ex });
   }
 
+  if (responseType === 'raw') {
+    return response;
+  }
+
   const { ok, status } = response;
 
   if (!ok) {
@@ -70,10 +74,6 @@ export const sendRequest = async (url, init = {}, { responseType = 'json' } = {}
     }
 
     throw new Error('Server responded with an error', { cause: { status, message } });
-  }
-
-  if (responseType === 'raw') {
-    return response;
   }
 
   try {

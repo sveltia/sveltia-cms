@@ -234,6 +234,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
   }
 
   const {
+    id,
     name,
     username: login,
     email,
@@ -244,6 +245,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
   return {
     backendName,
     token,
+    id,
     name,
     login,
     email,
@@ -561,10 +563,36 @@ const fetchFileContents = async (fetchingFiles) => {
 };
 
 /**
+ * Check if the user has access to the current repository.
+ * @throws {Error} If the user is not a collaborator of the repository.
+ * @see https://docs.gitlab.com/ee/api/members.html#get-a-member-of-a-group-or-project-including-inherited-and-invited-members
+ */
+const checkRepositoryAccess = async () => {
+  const { owner, repo } = repository;
+  const userId = /** @type {number} */ (get(user)?.id);
+
+  const { ok } = /** @type {Response} */ (
+    await fetchAPI(
+      `/projects/${encodeURIComponent(`${owner}/${repo}`)}/members/all/${userId}`,
+      { headers: { Accept: 'application/json' } },
+      { responseType: 'raw' },
+    )
+  );
+
+  if (!ok) {
+    throw new Error('Not a collaborator of the repository', {
+      cause: new Error(get(_)('repository_no_access', { values: { repo } })),
+    });
+  }
+};
+
+/**
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
  */
 const fetchFiles = async () => {
+  await checkRepositoryAccess();
+
   await fetchAndParseFiles({
     repository,
     fetchDefaultBranchName,
