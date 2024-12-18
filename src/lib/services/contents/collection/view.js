@@ -1,7 +1,6 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
-import { flatten } from 'flat';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
@@ -10,7 +9,7 @@ import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/fields';
-import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
 import { prefs } from '$lib/services/prefs';
 
@@ -50,15 +49,13 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
   } = collection;
 
   if (key === undefined) {
-    /**
-     * Determine the given entry’s title.
-     * @param {Entry} entry - Entry.
-     * @returns {string} Determined title.
-     */
-    const getTitle = ({ locales, slug }) =>
-      getEntrySummaryFromContent(flatten(locales?.[locale]?.content ?? {})) || slug;
+    const options = { useTemplate: true, allowMarkdown: true };
 
-    return _entries.sort((a, b) => getTitle(a).localeCompare(getTitle(b)));
+    return _entries.sort((a, b) =>
+      getEntrySummary(collection, a, options).localeCompare(
+        getEntrySummary(collection, b, options),
+      ),
+    );
   }
 
   const type =
