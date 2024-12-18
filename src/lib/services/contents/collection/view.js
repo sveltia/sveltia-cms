@@ -370,7 +370,12 @@ const initSettings = async ({ repository }) => {
       console.info('selectedCollection', collection);
     }
 
-    const { name: collectionName, identifier_field: customIdField, fields = [] } = collection;
+    const {
+      name: collectionName,
+      identifier_field: customIdField,
+      fields = [],
+      sortable_fields: customSortableFields = [],
+    } = collection;
 
     // This only works for entry collections
     if (!fields.length) {
@@ -386,7 +391,10 @@ const initSettings = async ({ repository }) => {
         // Every entry collection should have at least the `title` (or `name`) field, or the
         // `identifier_field` property.
         // @see https://decapcms.org/docs/configuration-options/#identifier_field
-        key: customIdField || fields.find((f) => defaultSortableFields.includes(f.name))?.name,
+        key:
+          fields.find((f) => customSortableFields.includes(f.name))?.name ??
+          customIdField ??
+          fields.find((f) => defaultSortableFields.includes(f.name))?.name,
         order: 'ascending',
       },
     };
