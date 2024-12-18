@@ -3,6 +3,7 @@ import { allAssets } from '$lib/services/assets';
 import { allEntries } from '$lib/services/contents';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 /**
  * @type {import('svelte/store').Writable<string>}
@@ -24,8 +25,7 @@ export const normalize = (value) =>
 /**
  * Hold search results for the current search terms.
  * @type {import('svelte/store').Readable<{ entries: Entry[], assets: Asset[] }>}
- * @todo Make this smarter (prioritize titles; count the number of appearance; split words;
- * search relation fields; add snippets).
+ * @todo Search relation fields.
  */
 export const searchResults = derived(
   [allEntries, allAssets, searchTerms],
@@ -43,18 +43,40 @@ export const searchResults = derived(
         return [];
       }
 
-      return _allEntries.filter((entry) =>
-        getAssociatedCollections(entry).some(
-          (collection) =>
-            hasMatch(collection.label || collection.name) ||
-            getFilesByEntry(collection, entry).some((file) => hasMatch(file.label || file.name)) ||
-            Object.values(entry.locales).some(({ content }) =>
-              Object.values(content).some(
+      return _allEntries
+        .map((entry) => {
+          // Count the number of matches, weighting the collection name and title
+          let points = 0;
+
+          getAssociatedCollections(entry).forEach((collection) => {
+            if (hasMatch(collection.label || collection.name)) {
+              points += 10;
+            }
+
+            if (
+              hasMatch(
+                getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true }),
+              )
+            ) {
+              points += 10;
+            }
+
+            points += getFilesByEntry(collection, entry).filter((file) =>
+              hasMatch(file.label || file.name),
+            ).length;
+
+            Object.values(entry.locales).forEach(({ content }) => {
+              points += Object.values(content).filter(
                 (value) => typeof value === 'string' && !!value && hasMatch(value),
-              ),
-            ),
-        ),
-      );
+              ).length;
+            });
+          });
+
+          return { entry, points };
+        })
+        .filter(({ points }) => points > 0)
+        .sort((a, b) => b.points - a.points)
+        .map((result) => result.entry);
     })();
 
     const assets = (() => {
