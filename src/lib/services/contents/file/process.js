@@ -1,50 +1,36 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
+import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
-import { getCollection } from '$lib/services/contents/collection';
-import { fillSlugTemplate, normalizeSlug } from '$lib/services/contents/entry/slug';
-import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
-import { parseEntryFile } from '$lib/services/contents/file/parse';
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
+import { parseEntryFile } from '$lib/services/contents/file/parse';
+import { getCollection } from '$lib/services/contents/collection';
 
 /**
  * Determine the slug for the given entry content.
- * @param {string} collectionName - Collection name.
- * @param {string} filePath - File path without the collection folder and extension. It’s a slug in
- * most cases, but it may be a path containing slash(es) when the Folder Collections Path is
- * configured.
- * @param {RawEntryContent} content - Entry content.
+ * @param {object} args - Arguments.
+ * @param {string} args.subPath - File path without the collection folder, locale and extension.
+ * It’s a slug in most cases, but it may be a path containing slash(es) when the Folder Collections
+ * Path is configured.
+ * @param {string | undefined} args.subPathTemplate - Collection’s `subPath` configuration.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
  */
-const getSlug = (collectionName, filePath, content) => {
-  const collection = getCollection(collectionName);
+const getSlug = ({ subPath, subPathTemplate }) => {
+  if (subPathTemplate?.includes('{{slug}}')) {
+    const [, slug] =
+      subPath.match(
+        new RegExp(`^${escapeRegExp(subPathTemplate).replace('\\{\\{slug\\}\\}', '(.+)')}$`),
+      ) ?? [];
 
-  if (!collection) {
-    return '';
+    if (slug) {
+      return slug;
+    }
   }
 
-  const {
-    identifier_field: identifierField = 'title',
-    slug: slugTemplate = `{{${identifierField}}}`,
-    _file: { subPath: pathTemplate },
-  } = /** @type {EntryCollection} */ (collection);
-
-  if (!pathTemplate) {
-    // It’s a slug
-    return filePath;
-  }
-
-  const slug = fillSlugTemplate(slugTemplate, { collection, content: flatten(content) });
-
-  if (slug) {
-    return slug;
-  }
-
-  // We can’t determine the slug from the file path. Let’s fallback using the content or filename
-  return normalizeSlug(getEntrySummaryFromContent(content, { identifierField }) || filePath);
+  return subPath;
 };
 
 /**
@@ -89,7 +75,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
   const {
     fields = [],
-    _file: { fullPathRegEx, subPath, extension },
+    _file: { fullPathRegEx, subPath: subPathTemplate, extension },
     _i18n: {
       i18nEnabled,
       locales,
@@ -133,45 +119,51 @@ const prepareEntry = async ({ file, entries, errors }) => {
   // `_index.en.md` are also excluded.
   if (
     getPathInfo(path).basename.match(/^_index(?:\..+)?\.md$/) &&
-    !(subPath?.split('/').pop() === '_index' && extension === 'md') &&
+    !(subPathTemplate?.split('/').pop() === '_index' && extension === 'md') &&
     !fileName
   ) {
     return;
   }
 
   /** @type {string | undefined} */
-  let filePath = undefined;
+  let subPath = undefined;
   /** @type {LocaleCode | undefined} */
   let locale = undefined;
 
   if (fileName) {
     if (i18nMultiFile || i18nMultiFolder) {
-      [locale, filePath] =
+      [locale, subPath] =
         Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === path) ?? [];
     } else {
-      filePath = path;
+      subPath = path;
     }
   } else {
-    ({ filePath, locale } = path.match(/** @type {RegExp} */ (fullPathRegEx))?.groups ?? {});
+    ({ subPath, locale } = path.match(/** @type {RegExp} */ (fullPathRegEx))?.groups ?? {});
   }
 
-  if (!filePath) {
+  if (!subPath) {
     return;
   }
 
   /** @type {Entry} */
-  const entry = { id: '', slug: '', sha, locales: {}, ...meta };
+  const entry = {
+    id: '',
+    sha,
+    slug: '',
+    subPath,
+    locales: {},
+    ...meta,
+  };
 
   if (!i18nEnabled) {
-    const slug = fileName || getSlug(collectionName, filePath, rawContent);
+    const slug = fileName || getSlug({ subPath, subPathTemplate });
 
     entry.slug = slug;
     entry.locales._default = { slug, path, sha, content: flatten(rawContent) };
   }
 
   if (i18nSingleFile) {
-    const content = rawContent[defaultLocale] ?? Object.values(rawContent)[0];
-    const slug = fileName || getSlug(collectionName, filePath, content);
+    const slug = fileName || getSlug({ subPath, subPathTemplate });
 
     entry.slug = slug;
     entry.locales = Object.fromEntries(
@@ -186,7 +178,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
       return;
     }
 
-    const slug = fileName || getSlug(collectionName, filePath, rawContent);
+    const slug = fileName || getSlug({ subPath, subPathTemplate });
     const localizedEntry = { slug, path, sha, content: flatten(rawContent) };
     // Support a canonical slug to link localized files
     const canonicalSlug = rawContent[canonicalSlugKey];
@@ -200,8 +192,9 @@ const prepareEntry = async ({ file, entries, errors }) => {
       existingEntry.locales[locale] = localizedEntry;
 
       if (locale === defaultLocale) {
-        existingEntry.slug = slug;
         existingEntry.sha = sha;
+        existingEntry.slug = slug;
+        existingEntry.subPath = subPath;
       }
 
       return;

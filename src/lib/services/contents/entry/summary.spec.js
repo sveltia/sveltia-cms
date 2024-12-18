@@ -31,6 +31,7 @@ describe('Test getEntrySummary()', () => {
     id: '',
     sha: '',
     slug: 'net',
+    subPath: 'net/index',
     locales: {
       de: {
         ...localizedEntryProps,

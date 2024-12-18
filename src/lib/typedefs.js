@@ -815,6 +815,8 @@
  * it can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
  * @property {string} slug - The slug of the default locale.
+ * @property {string} subPath - File name for a file collection, or file path without an extension
+ * for an entry collection. Same as `slug` in most cases.
  * @property {LocalizedEntryMap} locales - Localized entry map.
  * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
  * @property {Date} [commitDate] - Commit date for a Git backend.

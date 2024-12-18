@@ -20,19 +20,22 @@
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
+  const routeRegex =
+    /^\/collections\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries))?(?:\/(?<subPath>.+?))?$/;
+
   /**
    * Navigate to the content list or content details page given the URL hash.
    * @todo Show Not Found page.
    */
   const navigate = () => {
     const { path, params } = parseLocation();
-    const match = path.match(/^\/collections\/([^/]+)(?:\/(new|entries))?(?:\/(.+?))?$/);
+    const match = path.match(routeRegex);
 
-    if (!match) {
+    if (!match?.groups) {
       return; // Not Found
     }
 
-    const [, _collectionName, _state, _slug] = match;
+    const { _collectionName, routeType, subPath } = match.groups;
     /**
      * @type {Collection | undefined}
      */
@@ -55,7 +58,7 @@
       ? /** @type {FileCollection} */ ($selectedCollection)._fileMap
       : undefined;
 
-    if (!_state) {
+    if (!routeType) {
       const count = $listedEntries.length;
 
       $announcedPageStatus = $_(
@@ -74,9 +77,9 @@
 
     if (_fileMap) {
       // File collection
-      if (_state === 'entries' && _slug) {
-        const originalEntry = getFile(collectionName, _slug);
-        const collectionFile = _fileMap[_slug];
+      if (routeType === 'entries' && subPath) {
+        const originalEntry = getFile(collectionName, subPath);
+        const collectionFile = _fileMap[subPath];
 
         if (originalEntry) {
           createDraft({ collection, collectionFile, originalEntry });
@@ -103,7 +106,7 @@
       }
     } else {
       // Folder collection
-      if (_state === 'new' && !_slug && create) {
+      if (routeType === 'new' && !subPath && create) {
         createDraft({ collection, dynamicValues: params });
 
         $announcedPageStatus = $_('creating_x_collection_entry', {
@@ -113,8 +116,8 @@
         });
       }
 
-      if (_state === 'entries' && _slug) {
-        const originalEntry = $listedEntries.find(({ slug }) => slug === _slug);
+      if (routeType === 'entries' && subPath) {
+        const originalEntry = $listedEntries.find((entry) => entry.subPath === subPath);
 
         if (originalEntry) {
           createDraft({ collection, originalEntry });

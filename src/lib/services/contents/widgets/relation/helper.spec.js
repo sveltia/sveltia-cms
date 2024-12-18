@@ -14,6 +14,7 @@ describe('Test getOptions()', () => {
       id: '',
       sha: '',
       slug: 'melvin-lucas',
+      subPath: 'melvin-lucas',
       locales: {
         _default: {
           ...localizedEntryProps,
@@ -33,6 +34,7 @@ describe('Test getOptions()', () => {
       id: '',
       sha: '',
       slug: 'elsie-mcbride',
+      subPath: 'elsie-mcbride',
       locales: {
         _default: {
           ...localizedEntryProps,
@@ -52,6 +54,7 @@ describe('Test getOptions()', () => {
       id: '',
       sha: '',
       slug: 'maxine-field',
+      subPath: 'maxine-field',
       locales: {
         _default: {
           ...localizedEntryProps,
@@ -191,7 +194,8 @@ describe('Test getOptions()', () => {
       {
         id: '',
         sha: 'e5498c0c3d4592aaa18905e58bdf1cafa5b659c6',
-        slug: '',
+        slug: 'cities',
+        subPath: 'cities',
         locales: {
           _default: {
             ...localizedEntryProps,
@@ -249,7 +253,8 @@ describe('Test getOptions()', () => {
       {
         id: '',
         sha: '',
-        slug: '',
+        slug: 'about',
+        subPath: 'about',
         locales: {
           _default: {
             ...localizedEntryProps,
@@ -266,7 +271,8 @@ describe('Test getOptions()', () => {
       {
         id: '',
         sha: '',
-        slug: '',
+        slug: 'projects',
+        subPath: 'projects',
         locales: {
           _default: {
             ...localizedEntryProps,
@@ -372,12 +378,13 @@ describe('Test getOptions()', () => {
       search_fields: ['title', 'category'],
     };
 
+    /** @type {Entry[]} */
     const entries = [
       {
         id: '',
         sha: '',
         slug: 'ragdoll',
-        collectionName: 'posts',
+        subPath: 'ragdoll',
         locales: {
           en: {
             ...localizedEntryProps,
@@ -389,7 +396,7 @@ describe('Test getOptions()', () => {
         id: '',
         sha: '',
         slug: 'persian',
-        collectionName: 'posts',
+        subPath: 'persian',
         locales: {
           en: {
             ...localizedEntryProps,
@@ -401,7 +408,7 @@ describe('Test getOptions()', () => {
         id: '',
         sha: '',
         slug: 'bulldog',
-        collectionName: 'posts',
+        subPath: 'bulldog',
         locales: {
           en: {
             ...localizedEntryProps,
@@ -413,7 +420,7 @@ describe('Test getOptions()', () => {
         id: '',
         sha: '',
         slug: 'poodle',
-        collectionName: 'posts',
+        subPath: 'poodle',
         locales: {
           en: {
             ...localizedEntryProps,

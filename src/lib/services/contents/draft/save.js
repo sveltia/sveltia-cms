@@ -340,8 +340,14 @@ export const createSavingEntryData = async ({
    */
   const savingEntry = {
     id: originalEntry?.id ?? generateUUID(),
-    slug: defaultLocaleSlug,
     sha: '', // Populated later
+    slug: defaultLocaleSlug,
+    subPath:
+      originalEntry?.subPath ??
+      (_file.fullPathRegEx
+        ? (localizedEntryMap[defaultLocale].path.match(_file.fullPathRegEx)?.groups?.subPath ??
+          defaultLocaleSlug)
+        : defaultLocaleSlug),
     locales: Object.fromEntries(
       Object.entries(localizedEntryMap).filter(([, { content }]) => !!content),
     ),

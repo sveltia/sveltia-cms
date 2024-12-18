@@ -101,8 +101,8 @@ const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    */
   const filePathMatcher = subPath
-    ? `(?<filePath>${subPath.replace(/\//g, '\\/').replace(/{{.+?}}/g, '[^/]+')})`
-    : '(?<filePath>.+)';
+    ? `(?<subPath>${subPath.replace(/\//g, '\\/').replace(/{{.+?}}/g, '[^/]+')})`
+    : '(?<subPath>.+)';
 
   const localeMatcher = `(?<locale>${locales.join('|')})`;
 

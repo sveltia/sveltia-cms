@@ -47,7 +47,7 @@
     updateSelection(/** @type {CustomEvent} */ (event).detail.selected);
   }}
   onclick={() => {
-    goto(`/collections/${collection.name}/entries/${entry.slug}`);
+    goto(`/collections/${collection.name}/entries/${entry.subPath}`);
   }}
 >
   <GridCell class="checkbox">
