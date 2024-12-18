@@ -93,7 +93,7 @@
       } else {
         if (isNew) {
           // Update the URL
-          goto(`/collections/${collectionName}/entries/${savedEntry.slug}`, {
+          goto(`/collections/${collectionName}/entries/${savedEntry.subPath}`, {
             replaceState: true,
             notifyChange: false,
           });

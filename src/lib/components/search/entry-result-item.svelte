@@ -13,7 +13,7 @@
    */
   export let entry;
 
-  $: ({ slug, locales } = entry);
+  $: ({ locales, subPath } = entry);
 </script>
 
 {#snippet resultRow(
@@ -27,7 +27,7 @@
   {#if content}
     <GridRow
       onclick={() => {
-        goto(`/collections/${collection?.name}/entries/${collectionFile?.name || slug}`);
+        goto(`/collections/${collection?.name}/entries/${collectionFile?.name || subPath}`);
       }}
     >
       <GridCell class="image">

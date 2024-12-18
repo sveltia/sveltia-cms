@@ -153,7 +153,6 @@
   <section>
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as entry (entry.sha)}
-      {@const { slug } = entry}
       {#each getAssociatedCollections(entry) as collection (collection.name)}
         {@const collectionLabel = collection.label || collection.name}
         {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
@@ -164,7 +163,7 @@
           })}
         {:else}
           {@render usedEntryLink({
-            link: `/collections/${collection.name}/entries/${slug}`,
+            link: `/collections/${collection.name}/entries/${entry.subPath}`,
             collectionLabel,
             entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
           })}
