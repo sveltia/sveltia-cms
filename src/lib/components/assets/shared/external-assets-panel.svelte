@@ -5,13 +5,13 @@
 -->
 <script>
   import { Button, Option, PasswordInput, TextInput } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import DOMPurify from 'isomorphic-dompurify';
   import { createEventDispatcher, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
+  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
   import { prefs } from '$lib/services/prefs';
 
@@ -177,14 +177,14 @@
         }
       }}
     >
-      {#each searchResults as { id, previewURL, description, kind: _kind } (id)}
-        {#await sleep(0) then}
+      <InfiniteScroll items={searchResults} itemKey="id">
+        {#snippet renderItem({ id, previewURL, description, kind: _kind })}
           <Option label="" value={id}>
             <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
             <span role="none" class="name">{description}</span>
           </Option>
-        {/await}
-      {/each}
+        {/snippet}
+      </InfiniteScroll>
     </SimpleImageGrid>
   {/if}
 {:else if hasConfig}

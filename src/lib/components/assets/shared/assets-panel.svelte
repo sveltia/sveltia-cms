@@ -1,13 +1,13 @@
 <script>
   import { Option } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import DOMPurify from 'isomorphic-dompurify';
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { normalize } from '$lib/services/search';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
-  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
+  import EmptyState from '$lib/components/common/empty-state.svelte';
+  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
+  import { normalize } from '$lib/services/search';
 
   const dispatch = createEventDispatcher();
 
@@ -51,8 +51,8 @@
         });
       }}
     >
-      {#each filteredAssets as asset (asset.path)}
-        {#await sleep(0) then}
+      <InfiniteScroll items={filteredAssets} itemKey="path">
+        {#snippet renderItem(asset)}
           {@const { sha, kind, name } = asset}
           <Option label="" value={sha}>
             <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
@@ -63,8 +63,8 @@
               })}
             </span>
           </Option>
-        {/await}
-      {/each}
+        {/snippet}
+      </InfiniteScroll>
     </SimpleImageGrid>
   </div>
 {:else}
