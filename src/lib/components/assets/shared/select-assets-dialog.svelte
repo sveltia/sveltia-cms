@@ -8,7 +8,7 @@
   import InternalAssetsPanel from '$lib/components/assets/shared/internal-assets-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { allAssetFolders, allAssets, getCollectionsByAsset } from '$lib/services/assets';
+  import { allAssets, globalAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
   import {
@@ -46,10 +46,10 @@
     ? 'entry-assets'
     : showCollectionAssets
       ? 'collection-assets'
-      : 'all-assets';
+      : 'uncategorized-assets';
   $: showUploader = libraryName === 'upload';
   $: entryDirName = entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined;
-  $: isLocalLibrary = ['all-assets', 'collection-assets', 'entry-assets'].includes(libraryName);
+  $: isLocalLibrary = libraryName.endsWith('-assets');
   $: isEnabledMediaService =
     (Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName]) ||
     (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]);
@@ -135,9 +135,9 @@
           />
         {/if}
         <Option
-          name="all-assets"
-          label={$_('all_assets')}
-          selected={libraryName === 'all-assets'}
+          name="uncategorized-assets"
+          label={$_('uncategorized')}
+          selected={libraryName === 'uncategorized-assets'}
         />
       </OptionGroup>
       <OptionGroup label={$_('assets_dialog.location.local')}>
@@ -181,19 +181,12 @@
           {showUploader}
           {searchTerms}
         />
-      {:else if libraryName === 'all-assets' || showUploader}
+      {:else if libraryName === 'uncategorized-assets' || showUploader}
         <InternalAssetsPanel
           {kind}
           assets={$allAssets.filter(
             (asset) =>
-              (!kind || kind === asset.kind) &&
-              // Hide assets stored in an entry-relative path, since these files are only used
-              // for the associated entry
-              !$allAssetFolders.find((folder) =>
-                getCollectionsByAsset(asset).some(
-                  (collection) => collection.name === folder.collectionName,
-                ),
-              )?.entryRelative,
+              (!kind || kind === asset.kind) && asset.folder === $globalAssetFolder?.internalPath,
           )}
           bind:selectedAsset
           {showUploader}
