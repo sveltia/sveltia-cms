@@ -1,14 +1,17 @@
 <script>
   import { Dialog, Table, TableCell, TableRow } from '@sveltia/ui';
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   /**
    * Whether to open the dialog.
    */
   export let open = false;
-
-  const dispatch = createEventDispatcher();
+  /**
+   * Custom `close` event handler.
+   * @type {(() => void) | undefined}
+   */
+  export let onClose = undefined;
 
   const shortcuts = [
     { feature: 'view_content_library', keys: 'Alt+1' },
@@ -34,8 +37,8 @@
   showOk={false}
   showCancel={false}
   showClose={true}
-  onClose={(event) => {
-    dispatch('close', event.detail);
+  onClose={() => {
+    onClose?.();
   }}
 >
   <div role="none" class="wrapper">

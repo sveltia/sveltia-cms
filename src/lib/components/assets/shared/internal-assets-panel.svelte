@@ -29,7 +29,7 @@
   accept={kind === 'image' ? 'image/*' : undefined}
   showUploadButton={showUploader}
   showFilePreview={true}
-  on:select={({ detail: { files } }) => {
+  onSelect={({ files }) => {
     selectedAsset = files.length ? { file: files[0] } : null;
   }}
 >
@@ -40,8 +40,8 @@
       {searchTerms}
       gridId="select-assets-grid"
       checkerboard={true}
-      on:select={({ detail }) => {
-        selectedAsset = detail;
+      onSelect={({ asset }) => {
+        selectedAsset = { asset };
       }}
     />
   {/if}

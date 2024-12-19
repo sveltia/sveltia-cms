@@ -1,6 +1,5 @@
 <script>
   import { Alert, Dialog, Icon, Tab, TabList, Toast } from '@sveltia/ui';
-  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AccessibilityPanel from '$lib/components/prefs/panels/accessibility-panel.svelte';
   import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
@@ -13,12 +12,15 @@
    * Whether to open the dialog.
    */
   export let open = false;
+  /**
+   * Custom `close` event handler.
+   * @type {(() => void) | undefined}
+   */
+  export let onClose = undefined;
 
   let selectedPanel = 'appearance';
   let toastMessage = '';
   let showToast = false;
-
-  const dispatch = createEventDispatcher();
 
   const panels = [
     { key: 'appearance', icon: 'palette', component: AppearancePanel },
@@ -36,8 +38,8 @@
   showOk={false}
   showCancel={false}
   showClose={true}
-  onClose={(event) => {
-    dispatch('close', event.detail);
+  onClose={() => {
+    onClose?.();
   }}
 >
   <div role="none" class="wrapper">
@@ -60,7 +62,7 @@
     {#each panels as { key, component } (key)}
       <svelte:component
         this={component}
-        on:change={({ detail: { message } }) => {
+        onChange={({ message }) => {
           toastMessage = message;
           showToast = true;
         }}

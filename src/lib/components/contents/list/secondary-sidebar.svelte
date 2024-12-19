@@ -24,13 +24,13 @@
     <DropZone
       disabled={uploadDisabled}
       multiple={true}
-      on:select={({ detail: { files } }) => {
+      onSelect={({ files }) => {
         $uploadingAssets = { folder: internalPath, files };
       }}
     >
       <AssetsPanel
         assets={$allAssets.filter(({ folder }) => internalPath === folder)}
-        on:select={({ detail: { asset } }) => {
+        onSelect={({ asset }) => {
           goto(`/assets/${asset.path}`);
         }}
       />

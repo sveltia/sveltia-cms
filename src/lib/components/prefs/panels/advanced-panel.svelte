@@ -1,9 +1,14 @@
 <script>
   import { Switch, TabPanel, TextInput } from '@sveltia/ui';
-  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { prefs } from '$lib/services/prefs';
   import { siteConfig } from '$lib/services/config';
+  import { prefs } from '$lib/services/prefs';
+
+  /**
+   * Custom `change` event handler.
+   * @type {((detail: { message: string }) => void) | undefined}
+   */
+  export let onChange = undefined;
 
   $: ({ backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
     $siteConfig ?? /** @type {SiteConfig} */ ({}));
@@ -15,8 +20,6 @@
       $prefs.devModeEnabled = devModeEnabled;
     }
   }
-
-  const dispatch = createEventDispatcher();
 </script>
 
 <TabPanel id="prefs-tab-advanced">
@@ -34,7 +37,7 @@
           flex
           label={$_('prefs.advanced.deploy_hook.field_label')}
           onchange={() => {
-            dispatch('change', {
+            onChange?.({
               message: $_(
                 $prefs.deployHookURL
                   ? 'prefs.advanced.deploy_hook.url_saved'

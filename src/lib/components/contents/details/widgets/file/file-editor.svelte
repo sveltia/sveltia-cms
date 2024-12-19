@@ -207,7 +207,7 @@
   bind:this={dropZone}
   disabled={readonly}
   accept={isImageWidget ? 'image/*' : undefined}
-  on:select={({ detail: { files } }) => {
+  onSelect={({ files }) => {
     if (files.length) {
       onAssetSelect({ file: files[0] });
     }
@@ -302,8 +302,8 @@
   {canEnterURL}
   {entry}
   bind:open={showSelectAssetsDialog}
-  on:select={({ detail }) => {
-    onAssetSelect(detail);
+  onSelect={({ asset: selectedAsset }) => {
+    onAssetSelect(selectedAsset);
   }}
 />
 

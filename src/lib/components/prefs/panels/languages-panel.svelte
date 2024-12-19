@@ -1,14 +1,17 @@
 <script>
   import { Option, Select, TabPanel, TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
-  import { createEventDispatcher } from 'svelte';
   import { _, locale as appLocale, locales as appLocales } from 'svelte-i18n';
   import { siteConfig } from '$lib/services/config';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { allTranslationServices } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/prefs';
 
-  const dispatch = createEventDispatcher();
+  /**
+   * Custom `change` event handler.
+   * @type {((detail: { message: string }) => void) | undefined}
+   */
+  export let onChange = undefined;
 </script>
 
 <TabPanel id="prefs-tab-languages">
@@ -60,8 +63,8 @@
               aria-label={$_('prefs.languages.translator.field_label', {
                 values: { service: serviceLabel },
               })}
-              onChange={() => {
-                dispatch('change', {
+              onchange={() => {
+                onChange?.({
                   message: $_(
                     $prefs.apiKeys?.[serviceId]
                       ? 'prefs.changes.api_key_saved'

@@ -6,7 +6,7 @@
 <script>
   import { Button, Option, PasswordInput, TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
@@ -32,6 +32,11 @@
    * @type {string | undefined}
    */
   export let gridId = undefined;
+  /**
+   * Custom `select` event handler.
+   * @type {((detail: SelectedAsset) => void) | undefined}
+   */
+  export let onSelect = undefined;
 
   $: ({
     serviceType = 'stock_photos',
@@ -47,7 +52,6 @@
     search,
   } = serviceProps);
 
-  const dispatch = createEventDispatcher();
   const input = { userName: '', password: '' };
   let hasConfig = true;
   let hasAuthInfo = false;
@@ -94,7 +98,7 @@
     const { downloadURL, fileName, credit } = asset;
 
     if (hotlinking) {
-      dispatch('select', { url: downloadURL, credit });
+      onSelect?.({ url: downloadURL, credit });
 
       return;
     }
@@ -110,7 +114,7 @@
       const blob = await response.blob();
       const file = new File([blob], fileName, { type: blob.type });
 
-      dispatch('select', { file, credit });
+      onSelect?.({ file, credit });
     } catch (/** @type {any} */ ex) {
       error = 'image_fetch_failed';
       // eslint-disable-next-line no-console
@@ -168,8 +172,7 @@
     <SimpleImageGrid
       {gridId}
       viewType={$selectAssetsView?.type}
-      on:change={(event) => {
-        const { value } = /** @type {CustomEvent} */ (event).detail;
+      onChange={({ value }) => {
         const asset = searchResults?.find(({ id }) => id === value);
 
         if (asset) {

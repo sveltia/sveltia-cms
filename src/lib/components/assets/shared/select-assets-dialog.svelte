@@ -2,7 +2,7 @@
   import { Dialog, Listbox, Option, OptionGroup, SearchBar, TextInput } from '@sveltia/ui';
   import { generateUUID } from '@sveltia/utils/crypto';
   import { getPathInfo } from '@sveltia/utils/file';
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import ExternalAssetsPanel from '$lib/components/assets/shared/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/shared/internal-assets-panel.svelte';
@@ -26,8 +26,12 @@
   export let canEnterURL = true;
   /** @type {Entry | undefined} */
   export let entry;
+  /**
+   * Custom `select` event handler.
+   * @type {((detail: { asset: SelectedAsset }) => void) | undefined}
+   */
+  export let onSelect = undefined;
 
-  const dispatch = createEventDispatcher();
   const title = kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file');
   let elementIdPrefix = '';
   /**
@@ -79,7 +83,7 @@
   okDisabled={!selectedAsset}
   bind:open
   onOk={() => {
-    dispatch('select', selectedAsset);
+    onSelect?.({ asset: /** @type {SelectedAsset} */ (selectedAsset) });
   }}
 >
   {#snippet headerExtra()}
@@ -216,7 +220,7 @@
             {searchTerms}
             {serviceProps}
             gridId="select-assets-grid"
-            on:select={({ detail }) => {
+            onSelect={(detail) => {
               selectedAsset = detail;
             }}
           />
@@ -229,7 +233,7 @@
             {searchTerms}
             {serviceProps}
             gridId="select-assets-grid"
-            on:select={({ detail }) => {
+            onSelect={(detail) => {
               selectedAsset = detail;
             }}
           />

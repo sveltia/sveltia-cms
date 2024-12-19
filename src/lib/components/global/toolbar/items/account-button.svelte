@@ -86,7 +86,12 @@
   </MenuButton>
 </div>
 
-<PrefsDialog bind:open={showPrefsDialog} on:close={() => menuButton.focus()} />
+<PrefsDialog
+  bind:open={showPrefsDialog}
+  onClose={() => {
+    menuButton.focus();
+  }}
+/>
 
 <style lang="scss">
   .wrapper {

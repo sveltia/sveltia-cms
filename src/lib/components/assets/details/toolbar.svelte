@@ -35,7 +35,7 @@
     {assets}
     buttonDescription={$_('delete_asset')}
     dialogDescription={$_('confirm_deleting_this_asset')}
-    on:delete={() => {
+    onDelete={() => {
       goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
     }}
   />

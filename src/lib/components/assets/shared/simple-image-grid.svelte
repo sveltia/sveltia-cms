@@ -1,6 +1,5 @@
 <script>
   import { Listbox } from '@sveltia/ui';
-  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   export let viewType = 'grid';
@@ -13,8 +12,11 @@
    * Whether to show the file name or title under the image while in grid view.
    */
   export let showTitle = false;
-
-  const dispatch = createEventDispatcher();
+  /**
+   * Custom `change` event handler.
+   * @type {((detail: { value: string }) => void) | undefined}
+   */
+  export let onChange = undefined;
 </script>
 
 <div role="none" class="wrapper" class:show-title={showTitle}>
@@ -23,7 +25,7 @@
     class={viewType}
     aria-label={$_('assets_dialog.available_images')}
     onChange={(event) => {
-      dispatch('change', event.detail);
+      onChange?.(event.detail);
     }}
   >
     <slot />

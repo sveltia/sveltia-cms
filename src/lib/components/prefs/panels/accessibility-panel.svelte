@@ -3,6 +3,13 @@
   import { _ } from 'svelte-i18n';
   import { prefs } from '$lib/services/prefs';
 
+  /**
+   * Custom `change` event handler.
+   * @type {((detail: { message: string }) => void) | undefined}
+   */
+  // svelte-ignore export_let_unused
+  export let onChange = undefined;
+
   $: underlineLinks = $prefs.underlineLinks ?? true;
 
   $: {

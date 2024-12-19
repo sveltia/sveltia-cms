@@ -1,15 +1,12 @@
 <script>
   import { Option } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
-  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import { normalize } from '$lib/services/search';
-
-  const dispatch = createEventDispatcher();
 
   /**
    * @type {Asset[]}
@@ -33,6 +30,11 @@
    * @type {boolean}
    */
   export let checkerboard = false;
+  /**
+   * Custom `select` event handler.
+   * @type {((detail: { asset: Asset }) => void) | undefined}
+   */
+  export let onSelect = undefined;
 
   $: filteredAssets = searchTerms
     ? assets.filter(({ name }) => normalize(name).includes(searchTerms))
@@ -45,10 +47,8 @@
       {gridId}
       {viewType}
       showTitle={true}
-      on:change={(event) => {
-        dispatch('select', {
-          asset: assets.find(({ sha }) => sha === /** @type {CustomEvent} */ (event).detail.value),
-        });
+      onChange={({ value }) => {
+        onSelect?.({ asset: /** @type {Asset} */ (assets.find(({ sha }) => sha === value)) });
       }}
     >
       <InfiniteScroll items={filteredAssets} itemKey="path">

@@ -65,7 +65,7 @@
       showUploadButton={true}
       {accept}
       {multiple}
-      on:select={({ detail: { files } }) => {
+      onSelect={({ files }) => {
         onSelect(files);
       }}
     />
@@ -75,7 +75,7 @@
     bind:this={filePicker}
     {accept}
     {multiple}
-    on:select={({ detail: { files } }) => {
+    onSelect={({ files }) => {
       onSelect(files);
     }}
   />

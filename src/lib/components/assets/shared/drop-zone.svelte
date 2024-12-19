@@ -1,7 +1,6 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
   import { scanFiles } from '@sveltia/utils/file';
-  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
@@ -14,8 +13,12 @@
   export let multiple = false;
   export let showUploadButton = false;
   export let showFilePreview = false;
+  /**
+   * Custom `select` event handler.
+   * @type {((detail: { files: File[] }) => void) | undefined}
+   */
+  export let onSelect = undefined;
 
-  const dispatch = createEventDispatcher();
   let dragging = false;
   let typeMismatch = false;
   /**
@@ -45,11 +48,13 @@
    * Cache the selected files, and notify the list.
    * @param {File[]} allFiles - Files.
    */
-  const onSelect = (allFiles) => {
+  const updateFileList = (allFiles) => {
     files = multiple ? allFiles : allFiles.slice(0, 1);
   };
 
-  $: dispatch('select', { files });
+  $: {
+    onSelect?.({ files });
+  }
 </script>
 
 <div
@@ -88,7 +93,7 @@
     const filteredFileList = await scanFiles(dataTransfer, { accept });
 
     if (filteredFileList.length) {
-      onSelect(filteredFileList);
+      updateFileList(filteredFileList);
     } else {
       typeMismatch = true;
     }
@@ -142,8 +147,8 @@
   {accept}
   {multiple}
   bind:this={filePicker}
-  on:select={({ detail }) => {
-    onSelect(detail.files);
+  onSelect={({ files: _files }) => {
+    updateFileList(_files);
   }}
 />
 

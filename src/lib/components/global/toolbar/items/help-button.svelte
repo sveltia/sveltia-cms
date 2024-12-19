@@ -90,7 +90,12 @@
   </MenuButton>
 </div>
 
-<ShortcutsDialog bind:open={showShortcutsDialog} on:close={() => menuButton.focus()} />
+<ShortcutsDialog
+  bind:open={showShortcutsDialog}
+  onClose={() => {
+    menuButton.focus();
+  }}
+/>
 
 <style lang="scss">
   .wrapper {
