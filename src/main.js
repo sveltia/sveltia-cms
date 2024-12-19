@@ -76,10 +76,7 @@ const init = async ({ config = {} } = {}) => {
  * @see https://decapcms.org/docs/custom-formatters/
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
-  customFileFormats.update((formats) => ({
-    ...formats,
-    [name]: { extension, parser: fromFile, formatter: toFile },
-  }));
+  customFileFormats[name] = { extension, parser: fromFile, formatter: toFile };
 };
 
 /**

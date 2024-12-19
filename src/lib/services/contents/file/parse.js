@@ -1,7 +1,6 @@
 import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import * as TOML from 'smol-toml';
-import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file';
 import { getCollection } from '$lib/services/contents/collection';
@@ -72,7 +71,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
   const format = _format === 'frontmatter' ? detectFrontMatterFormat(text) : _format;
-  const customParser = get(customFileFormats)[format]?.parser;
+  const customParser = customFileFormats[format]?.parser;
 
   if (customParser) {
     return customParser(text);

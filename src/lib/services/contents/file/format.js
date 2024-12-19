@@ -1,5 +1,4 @@
 import * as TOML from 'smol-toml';
-import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { customFileFormats } from '$lib/services/contents/file';
 
@@ -41,7 +40,7 @@ const formatYAML = (obj, { yamlQuote = false } = {}) =>
  */
 export const formatEntryFile = async ({ content, _file }) => {
   const { format, fmDelimiters, yamlQuote = false } = _file;
-  const customFormatter = get(customFileFormats)[format]?.formatter;
+  const customFormatter = customFileFormats[format]?.formatter;
 
   if (customFormatter) {
     return `${(await customFormatter(content)).trim()}\n`;

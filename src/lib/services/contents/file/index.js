@@ -1,11 +1,10 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
-import { get, writable } from 'svelte/store';
 
 /**
- * @type {import('svelte/store').Writable<Record<string, CustomFileFormat>>}
+ * @type {Record<string, CustomFileFormat>}
  */
-export const customFileFormats = writable({});
+export const customFileFormats = {};
 
 /**
  * Detect a file extension from the given entry file configuration.
@@ -17,7 +16,7 @@ export const customFileFormats = writable({});
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
 const detectFileExtension = ({ extension, format, path }) => {
-  const customExtension = format ? get(customFileFormats)[format]?.extension : undefined;
+  const customExtension = format ? customFileFormats[format]?.extension : undefined;
 
   if (customExtension) {
     return customExtension;
