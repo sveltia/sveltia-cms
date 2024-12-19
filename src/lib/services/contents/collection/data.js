@@ -5,14 +5,21 @@ import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 
 /**
+ * @type {UpdatesToastState}
+ */
+export const updatesToastDefaultState = {
+  saved: false,
+  moved: false,
+  renamed: false,
+  deleted: false,
+  published: false,
+  count: 1,
+};
+
+/**
  * @type {import('svelte/store').Writable<UpdatesToastState>}
  */
-export const contentUpdatesToast = writable({
-  saved: false,
-  published: false,
-  deleted: false,
-  count: 1,
-});
+export const contentUpdatesToast = writable({ ...updatesToastDefaultState });
 
 /**
  * Delete entries by slugs.
@@ -54,8 +61,7 @@ export const deleteEntries = async (ids, assetPaths = []) => {
   allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));
 
   contentUpdatesToast.set({
-    saved: false,
-    published: false,
+    ...updatesToastDefaultState,
     deleted: true,
     count: ids.length,
   });

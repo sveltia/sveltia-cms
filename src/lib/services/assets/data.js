@@ -15,6 +15,7 @@ import {
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { updatesToastDefaultState } from '$lib/services/contents/collection/data';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { createSavingEntryData } from '$lib/services/contents/draft/save';
@@ -24,14 +25,7 @@ import { renameIfNeeded } from '$lib/services/utils/file';
 /**
  * @type {import('svelte/store').Writable<UpdatesToastState>}
  */
-export const assetUpdatesToast = writable({
-  count: 1,
-  saved: false,
-  moved: false,
-  renamed: false,
-  deleted: false,
-  published: false,
-});
+export const assetUpdatesToast = writable({ ...updatesToastDefaultState });
 
 /**
  * Upload/save the given assets to the backend.
@@ -109,9 +103,10 @@ export const saveAssets = async (uploadingAssets, options) => {
     get(siteConfig) ?? /** @type {SiteConfig} */ ({});
 
   assetUpdatesToast.set({
-    count: files.length,
+    ...updatesToastDefaultState,
     saved: true,
     published: !isLocal && autoDeployEnabled === true,
+    count: files.length,
   });
 };
 
@@ -248,9 +243,10 @@ export const moveAssets = async (action, movingAssets) => {
   }
 
   assetUpdatesToast.set({
-    count: movingAssets.length,
+    ...updatesToastDefaultState,
     moved: action === 'move',
     renamed: action === 'rename',
+    count: movingAssets.length,
   });
 };
 
@@ -267,5 +263,10 @@ export const deleteAssets = async (assets) => {
   );
 
   allAssets.update((_allAssets) => _allAssets.filter((asset) => !assets.includes(asset)));
-  assetUpdatesToast.set({ deleted: true, count: assets.length });
+
+  assetUpdatesToast.set({
+    ...updatesToastDefaultState,
+    deleted: true,
+    count: assets.length,
+  });
 };

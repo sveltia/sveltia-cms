@@ -13,7 +13,10 @@ import { allAssetFolders, allAssets, getAssetKind, getAssetsByDirName } from '$l
 import { backend, backendName, isLastCommitPublished } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { contentUpdatesToast } from '$lib/services/contents/collection/data';
+import {
+  contentUpdatesToast,
+  updatesToastDefaultState,
+} from '$lib/services/contents/collection/data';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
@@ -721,9 +724,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     !isLocal && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
 
   contentUpdatesToast.set({
+    ...updatesToastDefaultState,
     saved: true,
     published,
-    deleted: false,
     count: 1,
   });
 

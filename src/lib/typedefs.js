@@ -924,11 +924,11 @@
  * Toast notification state for content/asset updates.
  * @typedef {object} UpdatesToastState
  * @property {number} count - The number of items.
- * @property {boolean} [saved] - Whether the items have been created or updated.
- * @property {boolean} [moved] - Whether the items have been moved.
- * @property {boolean} [renamed] - Whether the items have been renamed.
- * @property {boolean} [deleted] - Whether the items have been deleted.
- * @property {boolean} [published] - Whether the items have been published. This is `true` only when
+ * @property {boolean} saved - Whether the items have been created or updated.
+ * @property {boolean} moved - Whether the items have been moved.
+ * @property {boolean} renamed - Whether the items have been renamed.
+ * @property {boolean} deleted - Whether the items have been deleted.
+ * @property {boolean} published - Whether the items have been published. This is `true` only when
  * automatic deployments are enabled and triggered.
  */
 
