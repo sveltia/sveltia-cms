@@ -52,7 +52,7 @@
       }}
     >
       <InfiniteScroll items={filteredAssets} itemKey="path">
-        {#snippet renderItem(asset)}
+        {#snippet renderItem(/** @type {Asset} */ asset)}
           {@const { sha, kind, name } = asset}
           <Option label="" value={sha}>
             <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
