@@ -48,7 +48,7 @@ export const getEntrySummaryFromContent = (
   // Find a header in Markdown, excluding an anchor suffix
   // https://vitepress.dev/guide/markdown#custom-anchors
   if (useBody && typeof content.body === 'string') {
-    return content.body.match(/^#+\s+(.+?)(?:\s+\{#.+?\})?\s*$/m)?.[1] ?? '';
+    return content.body.match(/^#+\s+(?<header>.+?)(?:\s+\{#.+?\})?\s*$/m)?.groups?.header ?? '';
   }
 
   return '';

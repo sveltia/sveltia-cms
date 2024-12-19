@@ -35,13 +35,15 @@
     $showAssetOverlay = false;
 
     const { path } = parseLocation();
-    const [, _pageName] = path.match(`^\\/(${Object.keys(pages).join('|')})\\b`) ?? [];
 
-    if (!_pageName) {
+    const { pageName } =
+      path.match(`^\\/(?<pageName>${Object.keys(pages).join('|')})\\b`)?.groups ?? {};
+
+    if (!pageName) {
       // Redirect any invalid page to the contents page
       window.location.replace(`#/collections/${$selectedCollection?.name}`);
-    } else if ($selectedPageName !== _pageName) {
-      $selectedPageName = _pageName;
+    } else if ($selectedPageName !== pageName) {
+      $selectedPageName = pageName;
     }
   };
 

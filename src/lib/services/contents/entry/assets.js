@@ -49,7 +49,7 @@ export const getAssociatedAssets = ({ entry, collectionName, relative = false })
         Object.entries(content).map(([keyPath, value]) => {
           if (
             typeof value === 'string' &&
-            (relative ? !value.match(/^[/@]/) : true) &&
+            (relative ? !/^[/@]/.test(value) : true) &&
             ['image', 'file'].includes(
               getFieldConfig({ collectionName, keyPath })?.widget ?? 'string',
             )

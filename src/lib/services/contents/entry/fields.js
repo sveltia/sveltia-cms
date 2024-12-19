@@ -56,7 +56,7 @@ export const getFieldConfig = ({
     if (index === 0) {
       field = fields.find(({ name }) => name === key);
     } else if (field) {
-      const isNumericKey = key.match(/^\d+$/);
+      const isNumericKey = /^\d+$/.test(key);
       const keyPathArraySub = keyPathArray.slice(0, index);
 
       const {

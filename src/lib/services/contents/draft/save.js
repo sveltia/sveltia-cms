@@ -46,7 +46,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
       ? /** @type {EntryCollection} */ (collection)._file.subPath
       : undefined;
 
-  const subPathFirstPart = subPath?.match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
+  const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
   const isMultiFolders = structure === 'multiple_folders';
   const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];
 
@@ -70,7 +70,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
       ),
     ),
     publicAssetFolder:
-      !isMultiFolders && publicPath.match(/^\.?$/)
+      !isMultiFolders && /^\.?$/.test(publicPath)
         ? // Dot-only public path is a special case; the final path stored as the field value will
           // be `./image.png` rather than `image.png`
           publicPath
@@ -251,7 +251,7 @@ const finalizeContent = ({
     if (
       isTomlOutput &&
       typeof value === 'string' &&
-      value.match(fullDateTimeRegEx) &&
+      fullDateTimeRegEx.test(value) &&
       getFieldConfig({ collectionName, fileName, valueMap, keyPath: key })?.widget === 'datetime'
     ) {
       try {
@@ -280,7 +280,7 @@ const finalizeContent = ({
       );
 
       Object.keys(unsortedMap)
-        .filter((_keyPath) => _keyPath.match(regex))
+        .filter((_keyPath) => regex.test(_keyPath))
         .sort(([a, b]) => compare(a, b))
         .forEach(copyProperty);
     }

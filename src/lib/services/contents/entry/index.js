@@ -43,7 +43,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
   /** @type {Record<string, string> | undefined} */
   let dateTimeParts;
 
-  if (pathTemplate.match(/{{(?:year|month|day|hour|minute|second)}}/g)) {
+  if (/{{(?:year|month|day|hour|minute|second)}}/g.test(pathTemplate)) {
     const fieldConfig = dateFieldName
       ? fields?.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
       : fields?.find(({ widget }) => widget === 'datetime');

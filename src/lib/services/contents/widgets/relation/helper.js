@@ -10,7 +10,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
  * @returns {string} Bracketed field name, e.g. `{{name.first}}`.
  */
 const normalizeFieldName = (fieldName) =>
-  fieldName.match(/{{.+?}}/) ? fieldName : `{{${fieldName}}}`;
+  /{{.+?}}/.test(fieldName) ? fieldName : `{{${fieldName}}}`;
 
 /**
  * @type {Map<string, { label: string, value: any }[]>}
@@ -119,7 +119,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
             const valueMap = unflatten(
               Object.fromEntries(
-                Object.entries(content).filter(([keyPath]) => !!keyPath.match(regex)),
+                Object.entries(content).filter(([keyPath]) => regex.test(keyPath)),
               ),
             );
 

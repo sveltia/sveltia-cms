@@ -154,8 +154,8 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
   if (field === 'fileType') {
     return assets.filter(({ path }) =>
       pattern === 'other'
-        ? !Object.values(assetExtensions).some((regex) => path.match(regex))
-        : path.match(assetExtensions[/** @type {string} */ (pattern)]),
+        ? !Object.values(assetExtensions).some((regex) => regex.test(path))
+        : assetExtensions[/** @type {string} */ (pattern)].test(path),
     );
   }
 
@@ -165,7 +165,7 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
     const value = /** @type {Record<string, any>} */ (asset)[field];
 
     if (regex) {
-      return String(value ?? '').match(regex);
+      return regex.test(String(value ?? ''));
     }
 
     return value === pattern;

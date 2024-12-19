@@ -4,6 +4,9 @@ import { entryDraft } from '$lib/services/contents/draft';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 
+// cspell:disable-next-line
+const fullRegexPattern = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
+
 /**
  * Validate the current entry draft, update the validity for all the fields, and return the final
  * results as a boolean. Mimic the native `ValidityState` API.
@@ -63,7 +66,7 @@ export const validateEntry = () => {
       }
 
       // Validate a list itself before the items
-      if (!['select', 'relation'].includes(widgetName) && keyPath.match(/\.\d+$/)) {
+      if (!['select', 'relation'].includes(widgetName) && /\.\d+$/.test(keyPath)) {
         const listKeyPath = keyPath.replace(/\.\d+$/, '');
 
         if (!(listKeyPath in validities[locale])) {
@@ -107,7 +110,7 @@ export const validateEntry = () => {
           Array.isArray(value) && value.length
             ? value
             : (valueEntries
-                .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
+                .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
                 .map(([, savedValue]) => savedValue)
                 .filter((val) => val !== undefined) ?? []);
 
@@ -137,10 +140,11 @@ export const validateEntry = () => {
 
         if (Array.isArray(validation) && typeof validation[0] === 'string') {
           // Parse the regex to support simple pattern, e.g `.{12,}`, and complete expression, e.g.
-          // `/^.{0,280}$/s` // cspell:disable-next-line
-          const [, pattern, flags] = validation[0].match(/^\/?(.+?)(?:\/([dgimsuvy]*))?$/) || [];
+          // `/^.{0,280}$/s`
+          const { pattern, flags } = validation[0].match(fullRegexPattern)?.groups ?? {};
+          const regex = new RegExp(pattern, flags);
 
-          if (pattern && !String(value).match(new RegExp(pattern, flags))) {
+          if (pattern && !regex.test(String(value))) {
             patternMismatch = true;
           }
         }

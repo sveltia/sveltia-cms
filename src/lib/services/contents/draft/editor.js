@@ -89,15 +89,16 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
   keyPath.split('.').forEach((_keyPart, index, arr) => {
     const _keyPath = arr.slice(0, index + 1).join('.');
     const config = getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath });
+    const endingWithNumber = /\.\d+$/.test(_keyPath);
 
     if (config?.widget === 'object') {
-      if (_keyPath.match(/\.\d+$/)) {
+      if (endingWithNumber) {
         keys.add(_keyPath);
       }
 
       keys.add(`${_keyPath}#`);
     } else if (config?.widget === 'list') {
-      keys.add(_keyPath.match(/\.\d+$/) ? _keyPath : `${_keyPath}#`);
+      keys.add(endingWithNumber ? _keyPath : `${_keyPath}#`);
     } else if (index > 0) {
       const parentKeyPath = arr.slice(0, index).join('.');
 

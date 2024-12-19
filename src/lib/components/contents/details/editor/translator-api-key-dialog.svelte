@@ -29,7 +29,7 @@
   oninput={(event) => {
     const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
 
-    if (apiKeyPattern && _value.match(apiKeyPattern)) {
+    if (apiKeyPattern?.test(_value)) {
       $prefs.apiKeys ??= {};
       $prefs.apiKeys[serviceId] = _value;
       $translatorApiKeyDialogState.show = false;

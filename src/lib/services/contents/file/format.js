@@ -48,7 +48,7 @@ export const formatEntryFile = async ({ content, _file }) => {
   }
 
   try {
-    if (format.match(/^ya?ml$/)) {
+    if (/^ya?ml$/.test(format)) {
       return `${formatYAML(content, { yamlQuote })}\n`;
     }
 
@@ -66,7 +66,7 @@ export const formatEntryFile = async ({ content, _file }) => {
     return '';
   }
 
-  if (format.match(/^(?:(?:yaml|toml|json)-)?frontmatter$/)) {
+  if (/^(?:(?:yaml|toml|json)-)?frontmatter$/.test(format)) {
     const [sd, ed] = fmDelimiters ?? ['---', '---'];
     const body = typeof content.body === 'string' ? content.body : '';
 

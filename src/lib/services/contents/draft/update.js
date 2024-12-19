@@ -41,12 +41,12 @@ const getItemList = (obj, keyPath) => {
   const regex = new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`);
 
   const filtered = Object.entries(obj)
-    .filter(([k]) => k.match(regex))
+    .filter(([k]) => regex.test(k))
     .map(([k, v]) => [k.replace(regex, '_'), v]);
 
   return [
     unflatten(Object.fromEntries(filtered))._ ?? [],
-    Object.fromEntries(Object.entries(obj).filter(([k]) => !k.match(regex))),
+    Object.fromEntries(Object.entries(obj).filter(([k]) => !regex.test(k))),
   ];
 };
 

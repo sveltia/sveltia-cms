@@ -207,7 +207,7 @@ const getAllFiles = async () => {
       }
 
       const path = (await _rootDirHandle?.resolve(handle))?.join('/') ?? '';
-      const hasMatchingPath = scanningPathsRegEx.some((re) => path.match(re));
+      const hasMatchingPath = scanningPathsRegEx.some((regex) => regex.test(path));
 
       if (handle.kind === 'file') {
         if (!hasMatchingPath) {
@@ -231,7 +231,7 @@ const getAllFiles = async () => {
       if (handle.kind === 'directory') {
         const regex = getRegEx(path);
 
-        if (!hasMatchingPath && !scanningPaths.some((p) => p.match(regex))) {
+        if (!hasMatchingPath && !scanningPaths.some((p) => regex.test(p))) {
           continue;
         }
 
@@ -336,7 +336,8 @@ const commitChanges = async (changes) =>
         }
 
         if (action === 'delete') {
-          const [, dirPath, fileName] = stripSlashes(path).match(/(.+)\/([^/]+)$/) ?? [];
+          const { dirname, basename: fileName } = getPathInfo(stripSlashes(path));
+          const dirPath = /** @type {string} */ (dirname);
           const dirPathArray = dirPath.split('/');
           let dirHandle = /** @type {FileSystemDirectoryHandle} */ (await getHandleByPath(dirPath));
 

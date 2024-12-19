@@ -95,13 +95,13 @@
   // Multiple values are flattened in the value map object
   $: currentValue = isList
     ? Object.entries(currentValues[locale])
-        .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
+        .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
         .map(([, val]) => val)
         .filter((val) => val !== undefined)
     : currentValues[locale][keyPath];
   $: originalValue = isList
     ? Object.entries(originalValues[locale])
-        .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
+        .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
         .map(([, val]) => val)
         .filter((val) => val !== undefined)
     : originalValues[locale][keyPath];

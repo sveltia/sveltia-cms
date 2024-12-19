@@ -2,6 +2,11 @@ import { truncate } from '@sveltia/utils/string';
 import moment from 'moment';
 import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 
+const dateRegex = /^date\('(?<format>.*?)'\)$/;
+const defaultRegex = /^default\('?(?<defaultValue>.*?)'?\)$/;
+const ternaryRegex = /^ternary\('?(?<truthyValue>.*?)'?,\s*'?(?<falsyValue>.*?)'?\)$/;
+const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'?(?<ellipsis>.*?)'?)?\)$/;
+
 /**
  * Apply a string transformation to the value.
  * @param {object} args - Arguments.
@@ -22,10 +27,10 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
     return slugPartStr.toLowerCase();
   }
 
-  const dateTransformer = transformation.match(/^date\('(.*?)'\)$/);
+  const dateTransformer = transformation.match(dateRegex);
 
-  if (dateTransformer) {
-    const [, format] = dateTransformer;
+  if (dateTransformer?.groups) {
+    const { format } = dateTransformer.groups;
     const { dateOnly, utc } = parseDateTimeConfig(/** @type {DateTimeField} */ (fieldConfig ?? {}));
 
     return (
@@ -37,26 +42,26 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
     ).format(format);
   }
 
-  const defaultTransformer = transformation.match(/^default\('?(.*?)'?\)$/);
+  const defaultTransformer = transformation.match(defaultRegex);
 
-  if (defaultTransformer) {
-    const [, defaultValue] = defaultTransformer;
+  if (defaultTransformer?.groups) {
+    const { defaultValue } = defaultTransformer.groups;
 
     return value ? slugPartStr : defaultValue;
   }
 
-  const ternaryTransformer = transformation.match(/^ternary\('?(.*?)'?,\s*'?(.*?)'?\)$/);
+  const ternaryTransformer = transformation.match(ternaryRegex);
 
-  if (ternaryTransformer) {
-    const [, truthyValue, falsyValue] = ternaryTransformer;
+  if (ternaryTransformer?.groups) {
+    const { truthyValue, falsyValue } = ternaryTransformer.groups;
 
     return value ? truthyValue : falsyValue;
   }
 
-  const truncateTransformer = transformation.match(/^truncate\((\d+)(?:,\s*'?(.*?)'?)?\)$/);
+  const truncateTransformer = transformation.match(truncateRegex);
 
-  if (truncateTransformer) {
-    const [, max, ellipsis = '…'] = truncateTransformer;
+  if (truncateTransformer?.groups) {
+    const { max, ellipsis = '…' } = truncateTransformer.groups;
 
     return truncate(slugPartStr, Number(max), { ellipsis });
   }

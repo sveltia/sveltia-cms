@@ -147,7 +147,7 @@ export const canEditAsset = (asset) => {
  */
 export const getAssetKind = (name) =>
   /** @type {AssetKind} */ (
-    Object.entries(assetExtensions).find(([, regex]) => name.match(regex))?.[0] ?? 'other'
+    Object.entries(assetExtensions).find(([, regex]) => regex.test(name))?.[0] ?? 'other'
   );
 
 /**
@@ -264,7 +264,7 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) =>
         `^${internalPath.replace(/{{.+?}}/g, '.+?')}${internalPath && matchSubFolders ? '\\b' : '$'}`,
       );
 
-      return !!(getPathInfo(path).dirname ?? '').match(regex);
+      return regex.test(getPathInfo(path).dirname ?? '');
     })
     .sort((a, b) => b.internalPath?.localeCompare(a.internalPath ?? '') ?? 0);
 };
@@ -292,7 +292,7 @@ export const getCollectionsByAsset = (asset) =>
 export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
   // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
   // considered as an absolute path.
-  if (!savedPath.match(/^[/@]/)) {
+  if (!/^[/@]/.test(savedPath)) {
     if (!entry) {
       return undefined;
     }
@@ -313,7 +313,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
         return undefined;
       }
 
-      const [, entryFolder] = entryFilePath.match(/(.+?)(?:\/[^/]+)?$/) ?? [];
+      const { entryFolder } = entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)?.groups ?? {};
       const resolvedPath = resolvePath(`${entryFolder}/${savedPath}`);
 
       return get(allAssets).find((asset) => asset.path === resolvedPath);
@@ -372,7 +372,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     [collection] = getAssociatedCollections(entry);
   }
 
-  if (entry && collection && !!internalPath.match(/{{.+?}}/)) {
+  if (entry && collection && /{{.+?}}/.test(internalPath)) {
     const { content, path } = entry.locales[collection._i18n.defaultLocale];
 
     internalPath = fillSlugTemplate(internalPath, {
@@ -465,7 +465,7 @@ export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {})
     return undefined;
   }
 
-  if (value.match(/^(?:https?|data|blob):/)) {
+  if (/^(?:https?|data|blob):/.test(value)) {
     return value;
   }
 

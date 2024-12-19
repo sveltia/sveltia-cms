@@ -279,7 +279,7 @@ export const createProxy = ({
           ([targetLocale, content]) => {
             // Don’t duplicate the value if the parent object doesn’t exist
             if (keyPath.includes('.')) {
-              const [, parentKeyPath] = keyPath.match(/(.+)\.[^.]+$/) ?? [];
+              const { path: parentKeyPath } = keyPath.match(/(?<path>.+)\.[^.]+$/)?.groups ?? {};
 
               if (
                 !Object.keys(content).some((_keyPath) =>

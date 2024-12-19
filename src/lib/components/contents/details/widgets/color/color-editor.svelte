@@ -56,6 +56,8 @@
   } = fieldConfig);
 
   const id = generateElementId('color');
+  const rgbRegex = /^#[0-9a-f]{6}$/;
+  const rgbaRegex = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/;
   let inputValue = '';
   let inputAlphaValue = 255;
 
@@ -67,8 +69,8 @@
       return;
     }
 
-    const [, newValue, newAlphaHexValue] =
-      currentValue.match(/(^#[0-9a-f]{6})([0-9a-f]{2})?$/) ?? [];
+    const { rgb: newValue, a: newAlphaHexValue = 'ff' } =
+      currentValue.match(rgbaRegex)?.groups ?? {};
 
     // Avoid a cycle dependency & infinite loop
     if (newValue && inputValue !== newValue) {
@@ -76,7 +78,7 @@
     }
 
     if (newValue && enableAlpha) {
-      const newAlphaIntValue = Number.parseInt(`0x${newAlphaHexValue ?? 'ff'}`, 16);
+      const newAlphaIntValue = Number.parseInt(`0x${newAlphaHexValue}`, 16);
 
       // Avoid a cycle dependency & infinite loop
       if (inputAlphaValue !== newAlphaIntValue) {
@@ -89,7 +91,7 @@
    * Update {@link currentValue} based on {@link inputValue} and {@link inputAlphaValue}.
    */
   const setCurrentValue = () => {
-    let newValue = inputValue.match(/^#[0-9a-f]{6}$/) ? inputValue : '';
+    let newValue = rgbRegex.test(inputValue) ? inputValue : '';
 
     if (newValue && enableAlpha) {
       newValue += inputAlphaValue.toString(16).padStart(2, '0');

@@ -233,7 +233,7 @@ const getSortFieldLabel = (collection, key) => {
     return key
       .split('.')
       .map((_key, index, arr) => {
-        if (_key.match(/^\d+$/)) {
+        if (/^\d+$/.test(_key)) {
           return undefined;
         }
 

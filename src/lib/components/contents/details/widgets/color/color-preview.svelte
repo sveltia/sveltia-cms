@@ -35,9 +35,10 @@
    */
   const hexToInt = (hex) => Number.parseInt(`0x${hex}`, 16);
 
+  const rgbaRegex = /^#(?<r>[0-9a-f]{2})(?<g>[0-9a-f]{2})(?<b>[0-9a-f]{2})(?<a>[0-9a-f]{2})?$/;
+
   $: rgb = (() => {
-    const [, r, g, b, a] =
-      currentValue?.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/) ?? [];
+    const { r, g, b, a } = currentValue?.match(rgbaRegex)?.groups ?? {};
 
     return r
       ? `rgb(${hexToInt(r)} ${hexToInt(g)} ${hexToInt(b)}` +

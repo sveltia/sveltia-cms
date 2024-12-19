@@ -41,7 +41,7 @@
   // Multiple values are flattened in the value map object
   $: currentValue = isList
     ? Object.entries(valueMap)
-        .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
+        .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
         .map(([, val]) => val)
         .filter((val) => val !== undefined)
     : valueMap[keyPath];

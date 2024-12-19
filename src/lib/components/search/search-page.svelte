@@ -6,12 +6,14 @@
   import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
   import { searchResults, searchTerms } from '$lib/services/search';
 
+  const routeRegex = /^\/search\/(?<terms>.+)$/;
+
   /**
    * Navigate to the search page given the URL hash.
    */
   const navigate = () => {
     const { path } = parseLocation();
-    const [, terms] = path.match(/^\/search\/(.+)$/) ?? [];
+    const { terms } = path.match(routeRegex)?.groups ?? {};
 
     if (terms && terms !== $searchTerms) {
       $searchTerms = terms;

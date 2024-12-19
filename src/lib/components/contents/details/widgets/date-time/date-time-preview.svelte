@@ -29,6 +29,9 @@
   $: ({ dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig));
   $: date = getDate(currentValue, fieldConfig);
   $: canonicalLocale = getCanonicalLocale(locale);
+
+  const dateRegex = /^\d{4}-[01]\d-[0-3]\d$/;
+  const timeSuffixRegex = /T00:00(?::00)?(?:\.000)?Z$/;
 </script>
 
 {#if date}
@@ -42,8 +45,8 @@
             ...dateFormatOptions,
             timeZone:
               utc ||
-              (dateOnly && !!currentValue?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
-              (dateOnly && !!currentValue?.match(/T00:00(?::00)?(?:\.000)?Z$/))
+              (dateOnly && !!currentValue?.match(dateRegex)) ||
+              (dateOnly && !!currentValue?.match(timeSuffixRegex))
                 ? 'UTC'
                 : undefined,
           })}

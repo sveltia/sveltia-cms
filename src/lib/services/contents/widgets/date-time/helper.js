@@ -97,7 +97,7 @@ export const getCurrentDateTime = (fieldConfig) => {
 export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
   const { format, dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
   // Append seconds (and milliseconds) for data format & framework compatibility
-  const timeSuffix = `:00${currentValue?.match(/\.000$/) ? '.000' : ''}`;
+  const timeSuffix = `:00${currentValue?.endsWith('.000') ? '.000' : ''}`;
 
   if (inputValue === '') {
     return '';
@@ -176,9 +176,9 @@ export const getInputValue = (currentValue, fieldConfig) => {
 
   // If the current value is the standard format, return it as is
   const value = dateOnly
-    ? currentValue?.match(/^\d{4}-[01]\d-[0-3]\d\b/)?.[0]
+    ? currentValue?.match(/^(?<date>\d{4}-[01]\d-[0-3]\d)\b/)?.groups?.date
     : timeOnly
-      ? currentValue?.match(/^[0-2]\d:[0-5]\d\b/)?.[0]
+      ? currentValue?.match(/^(?<time>[0-2]\d:[0-5]\d)\b/)?.groups?.time
       : undefined;
 
   if (value) {

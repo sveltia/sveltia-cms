@@ -48,7 +48,7 @@
     unflatten(
       Object.fromEntries(
         Object.entries($entryDraft?.currentValues[locale] ?? {})
-          .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
+          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([_keyPath, value]) => [
             _keyPath.replace(new RegExp(`^${escapeRegExp(keyPath)}`), fieldName),
             value,

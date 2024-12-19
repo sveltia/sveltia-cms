@@ -21,11 +21,12 @@
   $: repositoryName = $siteConfig?.backend?.repo?.split('/')?.[1];
 
   onMount(() => {
+    const { hostname } = window.location;
+
     // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
     // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
     isLocalHost =
-      !!window.location.hostname.match(/^(?:.+\.)?localhost$/) ||
-      window.location.hostname === '127.0.0.1';
+      hostname === '127.0.0.1' || hostname === 'localhost' || hostname.endsWith('.localhost');
     isLocalBackendSupported = 'showDirectoryPicker' in window;
     isBrave = navigator.userAgentData?.brands.some(({ brand }) => brand === 'Brave') ?? false;
 

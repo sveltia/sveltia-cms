@@ -179,7 +179,7 @@
           currentValue && kind
             ? await getMediaFieldURL(currentValue, entry, { thumbnail: true })
             : undefined;
-      } else if (isImageWidget && currentValue.match(/^https?:/)) {
+      } else if (isImageWidget && /^https?:/.test(currentValue)) {
         asset = undefined;
         kind = 'image';
         src = currentValue;

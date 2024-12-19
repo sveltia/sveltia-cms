@@ -113,7 +113,7 @@ const validate = (config) => {
     );
   }
 
-  if (typeof config.backend.repo !== 'string' || !config.backend.repo.match(/(.+)\/([^/]+)$/)) {
+  if (typeof config.backend.repo !== 'string' || !/(.+)\/([^/]+)$/.test(config.backend.repo)) {
     throw new Error(get(_)('config.error.no_repository'));
   }
 

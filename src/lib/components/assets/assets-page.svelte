@@ -24,7 +24,8 @@
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
 
-  let path = '';
+  const routeRegex =
+    /^\/assets(?:\/(?<folderPath>[/\-\w]+))?(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?$/;
 
   $: selectedAssetFolderLabel = getFolderLabelByPath($selectedAssetFolder?.internalPath);
 
@@ -33,14 +34,14 @@
    * @todo Show Not Found page.
    */
   const navigate = async () => {
-    ({ path } = parseLocation());
+    const { path } = parseLocation();
+    const match = path.match(routeRegex);
 
-    const [match, folderPath, fileName] =
-      path.match(/^\/assets(?:\/([/\-\w]+))?(?:\/([^/]+\.[A-Za-z0-9]+))?$/) ?? [];
-
-    if (!match) {
+    if (!match?.groups) {
       return;
     }
+
+    const { folderPath, fileName } = match.groups;
 
     if (!folderPath) {
       $selectedAssetFolder = undefined;

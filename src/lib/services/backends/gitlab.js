@@ -162,7 +162,9 @@ const getRepositoryInfo = () => {
    * @see https://docs.gitlab.com/ee/user/namespace/
    * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/80055
    */
-  const [, owner, repo] = /** @type {string} */ (projectPath).match(/(.+)\/([^/]+)$/) ?? [];
+  const { owner, repo } =
+    /** @type {string} */ (projectPath).match(/(?<owner>.+)\/(?<repo>[^/]+)$/)?.groups ?? {};
+
   const origin = apiRoot ? new URL(apiRoot).origin : 'https://gitlab.com';
 
   return Object.assign(repository, {

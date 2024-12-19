@@ -224,7 +224,7 @@
           oninput={(event) => {
             const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
 
-            if (apiKeyPattern && _value.match(apiKeyPattern)) {
+            if (apiKeyPattern?.test(_value)) {
               apiKey = _value;
               hasAuthInfo = true;
               $prefs.apiKeys ??= {};

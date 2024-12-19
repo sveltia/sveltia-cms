@@ -65,7 +65,9 @@ const authorize = async ({ backendName, authURL }) => {
       }
 
       // Second message
-      const [, , resultStr] = data.match(`^authorization:${provider}:(success|error):(.+)`) ?? [];
+      const { result: resultStr } =
+        data.match(`^authorization:${provider}:(success|error):(?<result>.+)`)?.groups ?? {};
+
       /** @type {{ token?: string, error?: string, errorCode?: string }} */
       let result;
 

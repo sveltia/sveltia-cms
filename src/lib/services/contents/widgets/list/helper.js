@@ -44,7 +44,7 @@ export const formatSummary = ({
 
     const item = Object.fromEntries(
       Object.entries(valueMap)
-        .filter(([key]) => key.match(prefixRegex))
+        .filter(([key]) => prefixRegex.test(key))
         .map(([key, value]) => [key.replace(prefixRegex, ''), value]),
     );
 

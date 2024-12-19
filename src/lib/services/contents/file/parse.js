@@ -79,7 +79,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
   }
 
   try {
-    if (format.match(/^ya?ml$/)) {
+    if (/^ya?ml$/.test(format)) {
       return parseYAML(text);
     }
 
@@ -91,7 +91,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
       return parseJSON(text);
     }
 
-    if (format.match(/^(?:yaml|toml|json)-frontmatter$/)) {
+    if (/^(?:yaml|toml|json)-frontmatter$/.test(format)) {
       const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
         ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
         : fmDelimiters) ?? ['---', '---'];

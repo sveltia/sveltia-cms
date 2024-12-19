@@ -1,4 +1,5 @@
 import { initLocales } from '@sveltia/ui';
+import { getPathInfo } from '@sveltia/utils/file';
 import { addMessages, getLocaleFromNavigator } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import { prefs } from '$lib/services/prefs';
@@ -15,7 +16,7 @@ export const initAppLocale = () => {
   const modules = import.meta.glob('$lib/locales/*.js', { eager: true });
 
   Object.entries(modules).forEach(([path, { strings }]) => {
-    const [, locale] = path.match(/([a-zA-Z-]+)\.js/) ?? [];
+    const locale = getPathInfo(path).filename;
 
     addMessages(locale, /** @type {any} */ (strings));
   });

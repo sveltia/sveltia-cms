@@ -118,7 +118,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
   // collection’s `path` ends with `_index` and the extension is `md`. Localized index files like
   // `_index.en.md` are also excluded.
   if (
-    getPathInfo(path).basename.match(/^_index(?:\..+)?\.md$/) &&
+    /^_index(?:\..+)?\.md$/.test(getPathInfo(path).basename) &&
     !(subPathTemplate?.split('/').pop() === '_index' && extension === 'md') &&
     !fileName
   ) {

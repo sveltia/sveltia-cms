@@ -95,7 +95,7 @@
     unflatten(
       Object.fromEntries(
         Object.entries(valueMap)
-          .filter(([_keyPath]) => _keyPath.match(keyPathRegex))
+          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([_keyPath, value]) => [
             _keyPath.replace(new RegExp(`^${escapeRegExp(keyPath)}`), fieldName),
             value,
@@ -138,7 +138,7 @@
     const currentValueStr = currentValue.join(', ');
 
     // Avoid a cycle dependency & infinite loop
-    if (!inputValue.match(/,\s*$/) && inputValue.trim() !== currentValueStr) {
+    if (!/,\s*$/.test(inputValue) && inputValue.trim() !== currentValueStr) {
       inputValue = currentValueStr;
     }
   };
