@@ -81,10 +81,10 @@
       role="none"
       class="content"
       bind:this={thisPaneContentArea}
-      on:wheel|capture={() => {
+      onwheelcapture={() => {
         syncScrollPosition();
       }}
-      on:touchmove={() => {
+      ontouchmove={() => {
         syncScrollPosition();
       }}
     >

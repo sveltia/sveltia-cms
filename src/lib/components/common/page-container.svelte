@@ -3,17 +3,27 @@
   import { hasOverlay } from '$lib/services/app/navigation';
 
   /**
-   * CSS class name on the button.
+   * @typedef {object} Props
+   * @property {string} [class] - CSS class name on the button.
+   * @property {import('svelte').Snippet} [primarySidebar] - Primary sidebar content.
+   * @property {import('svelte').Snippet} [main] - Main content.
    */
-  let className = '';
 
-  export { className as class };
+  /** @type {Props & Record<string, any>} */
+  let {
+    /* eslint-disable prefer-const */
+    class: className = '',
+    primarySidebar = undefined,
+    main = undefined,
+    ...rest
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <div role="none" id="page-container" class="outer" inert={$hasOverlay}>
-  <Group class="browser {className}" {...$$restProps}>
-    <slot name="primary_sidebar" />
-    <slot name="main" />
+  <Group class="browser {className}" {...rest}>
+    {@render primarySidebar?.()}
+    {@render main?.()}
   </Group>
 </div>
 

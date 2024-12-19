@@ -7,16 +7,25 @@
   import { sleep } from '@sveltia/utils/misc';
 
   /**
-   * View type.
-   * @type {ViewType}
+   * @typedef {object} Props
+   * @property {ViewType} viewType - View type.
+   * @property {import('svelte').Snippet} [children] - Slot content.
    */
-  export let viewType;
+
+  /** @type {Props & Record<string, any>} */
+  let {
+    /* eslint-disable prefer-const */
+    viewType,
+    children = undefined,
+    ...rest
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <div role="none" class="{viewType}-view">
   {#await sleep(0) then}
-    <Grid multiple clickToSelect={false} {...$$restProps}>
-      <slot />
+    <Grid multiple clickToSelect={false} {...rest}>
+      {@render children?.()}
     </Grid>
   {/await}
 </div>

@@ -48,7 +48,7 @@
 </script>
 
 <svelte:window
-  on:hashchange={() => {
+  onhashchange={() => {
     navigate();
   }}
 />
@@ -57,5 +57,7 @@
   class="content"
   aria-label={$_('search_results_for_x', { values: { terms: $searchTerms } })}
 >
-  <SearchResults slot="main" />
+  {#snippet main()}
+    <SearchResults />
+  {/snippet}
 </PageContainer>

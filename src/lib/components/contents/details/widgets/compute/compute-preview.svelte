@@ -23,4 +23,4 @@
   export let currentValue;
 </script>
 
-<p lang={locale} dir="auto">{currentValue ?? ''}</p>
+<p lang={locale} dir="auto">{currentValue}</p>

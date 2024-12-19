@@ -14,6 +14,11 @@
   export let showUploadButton = false;
   export let showFilePreview = false;
   /**
+   * Slot content.
+   * @type {import('svelte').Snippet | undefined}
+   */
+  export let children = undefined;
+  /**
    * Custom `select` event handler.
    * @type {((detail: { files: File[] }) => void) | undefined}
    */
@@ -60,37 +65,45 @@
 <div
   role="none"
   class="drop-target"
-  on:dragover|preventDefault={({ dataTransfer }) => {
-    if (disabled) {
+  ondragover={(event) => {
+    event.preventDefault();
+
+    if (disabled || !event.dataTransfer) {
       return;
     }
 
-    /** @type {DataTransfer} */ (dataTransfer).dropEffect = 'copy';
+    event.dataTransfer.dropEffect = 'copy';
     dragging = true;
     typeMismatch = false;
   }}
-  on:dragleave|preventDefault={() => {
+  ondragleave={(event) => {
+    event.preventDefault();
+
     if (disabled) {
       return;
     }
 
     dragging = false;
   }}
-  on:dragend|preventDefault={() => {
+  ondragend={(event) => {
+    event.preventDefault();
+
     if (disabled) {
       return;
     }
 
     dragging = false;
   }}
-  on:drop|preventDefault={async ({ dataTransfer }) => {
-    if (disabled || !dataTransfer) {
+  ondrop={async (event) => {
+    event.preventDefault();
+
+    if (disabled || !event.dataTransfer) {
       return;
     }
 
     dragging = false;
 
-    const filteredFileList = await scanFiles(dataTransfer, { accept });
+    const filteredFileList = await scanFiles(event.dataTransfer, { accept });
 
     if (filteredFileList.length) {
       updateFileList(filteredFileList);
@@ -131,7 +144,7 @@
       {/if}
     </div>
   {:else}
-    <slot />
+    {@render children?.()}
   {/if}
   {#if dragging}
     <div role="none" class="drop-indicator">

@@ -53,7 +53,7 @@
 </script>
 
 <svelte:window
-  on:hashchange={() => {
+  onhashchange={() => {
     selectPage();
   }}
 />

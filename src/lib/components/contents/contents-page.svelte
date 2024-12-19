@@ -139,32 +139,40 @@
 </script>
 
 <svelte:window
-  on:hashchange={() => {
+  onhashchange={() => {
     navigate();
   }}
 />
 
 <PageContainer class="content" aria-label={$_('content_library')}>
-  <PrimarySidebar slot="primary_sidebar" />
-  <Group
-    slot="main"
-    id="collection-container"
-    class="main"
-    aria-label={$_('x_collection', {
-      values: { collection: $selectedCollection?.label || $selectedCollection?.name },
-    })}
-    aria-description={$selectedCollection?.description}
-  >
-    <PageContainerMainArea>
-      <PrimaryToolbar slot="primary_toolbar" />
-      <SecondaryToolbar slot="secondary_toolbar" />
-      <svelte:component
-        this={$selectedCollection?.files ? FileList : EntryList}
-        slot="main_content"
-      />
-      <SecondarySidebar slot="secondary_sidebar" />
-    </PageContainerMainArea>
-  </Group>
+  {#snippet primarySidebar()}
+    <PrimarySidebar />
+  {/snippet}
+  {#snippet main()}
+    <Group
+      id="collection-container"
+      class="main"
+      aria-label={$_('x_collection', {
+        values: { collection: $selectedCollection?.label || $selectedCollection?.name },
+      })}
+      aria-description={$selectedCollection?.description}
+    >
+      <PageContainerMainArea>
+        {#snippet primaryToolbar()}
+          <PrimaryToolbar />
+        {/snippet}
+        {#snippet secondaryToolbar()}
+          <SecondaryToolbar />
+        {/snippet}
+        {#snippet mainContent()}
+          <svelte:component this={$selectedCollection?.files ? FileList : EntryList} />
+        {/snippet}
+        {#snippet secondarySidebar()}
+          <SecondarySidebar />
+        {/snippet}
+      </PageContainerMainArea>
+    </Group>
+  {/snippet}
 </PageContainer>
 
 <ContentDetailsOverlay />

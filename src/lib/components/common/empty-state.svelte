@@ -1,5 +1,19 @@
+<script>
+  /**
+   * @typedef {object} Props
+   * @property {import('svelte').Snippet} [children] - Slot content.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    children = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+</script>
+
 <div role="none" class="empty">
-  <slot />
+  {@render children?.()}
 </div>
 
 <style lang="scss">

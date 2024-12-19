@@ -55,7 +55,7 @@
   }
 </script>
 
-<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
   role="group"
   class="wrapper"
@@ -63,7 +63,7 @@
   contenteditable="false"
   tabindex="0"
   aria-label={label}
-  on:keydown={(event) => {
+  onkeydown={(event) => {
     if (
       !(/** @type {HTMLElement} */ (event.target)?.matches('button, input, textarea')) &&
       event.key !== 'Tab'

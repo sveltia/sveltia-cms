@@ -219,7 +219,7 @@
         {#if validity.patternMismatch}
           <div role="none">
             <Icon name="error" />
-            {pattern?.[1] ?? ''}
+            {pattern?.[1]}
           </div>
         {/if}
         {#if validity.typeMismatch}

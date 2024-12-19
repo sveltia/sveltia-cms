@@ -61,7 +61,7 @@
 </svelte:head>
 
 <svelte:body
-  on:mousedown={(event) => {
+  onmousedown={(event) => {
     // Open external links in a new browser tab, internal links in the same tab
     if (
       /** @type {?HTMLElement} */ (event?.target)?.matches('a') &&

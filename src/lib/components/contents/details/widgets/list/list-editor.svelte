@@ -352,35 +352,33 @@
               removeItem(index);
             }}
           >
-            <svelte:fragment slot="middle">
-              <Button
-                size="small"
-                iconic
-                disabled={isDuplicateField || index === 0}
-                aria-label={$_('move_up')}
-                onclick={() => {
-                  moveUpItem(index);
-                }}
-              >
-                {#snippet startIcon()}
-                  <Icon name="arrow_upward" />
-                {/snippet}
-              </Button>
-              <Spacer />
-              <Button
-                iconic
-                size="small"
-                disabled={isDuplicateField || index === items.length - 1}
-                aria-label={$_('move_down')}
-                onclick={() => {
-                  moveDownItem(index);
-                }}
-              >
-                {#snippet startIcon()}
-                  <Icon name="arrow_downward" />
-                {/snippet}
-              </Button>
-            </svelte:fragment>
+            <Button
+              size="small"
+              iconic
+              disabled={isDuplicateField || index === 0}
+              aria-label={$_('move_up')}
+              onclick={() => {
+                moveUpItem(index);
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name="arrow_upward" />
+              {/snippet}
+            </Button>
+            <Spacer />
+            <Button
+              iconic
+              size="small"
+              disabled={isDuplicateField || index === items.length - 1}
+              aria-label={$_('move_down')}
+              onclick={() => {
+                moveDownItem(index);
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name="arrow_downward" />
+              {/snippet}
+            </Button>
           </ObjectHeader>
           <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
             {#if expanded}

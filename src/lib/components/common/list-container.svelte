@@ -3,11 +3,24 @@
 -->
 <script>
   import { Group } from '@sveltia/ui';
+
+  /**
+   * @typedef {object} Props
+   * @property {import('svelte').Snippet} [children] - Slot content.
+   */
+
+  /** @type {Props & Record<string, any>} */
+  let {
+    /* eslint-disable prefer-const */
+    children = undefined,
+    ...rest
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <div role="none" class="list-container">
-  <Group {...$$restProps}>
-    <slot />
+  <Group {...rest}>
+    {@render children?.()}
   </Group>
 </div>
 

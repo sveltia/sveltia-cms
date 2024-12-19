@@ -1,10 +1,30 @@
-<slot name="primary_toolbar" />
+<script>
+  /**
+   * @typedef {object} Props
+   * @property {import('svelte').Snippet} [primaryToolbar] - Primary toolbar content.
+   * @property {import('svelte').Snippet} [secondaryToolbar] - Secondary toolbar content.
+   * @property {import('svelte').Snippet} [mainContent] - Main content.
+   * @property {import('svelte').Snippet} [secondarySidebar] - Secondary sidebar content.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    primaryToolbar = undefined,
+    secondaryToolbar = undefined,
+    mainContent = undefined,
+    secondarySidebar = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+</script>
+
+{@render primaryToolbar?.()}
 <div role="none" class="main-inner">
   <div role="none" class="main-inner-main">
-    <slot name="secondary_toolbar" />
-    <slot name="main_content" />
+    {@render secondaryToolbar?.()}
+    {@render mainContent?.()}
   </div>
-  <slot name="secondary_sidebar" />
+  {@render secondarySidebar?.()}
 </div>
 
 <style lang="scss">

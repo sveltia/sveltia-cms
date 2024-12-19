@@ -2,21 +2,26 @@
   import { Listbox } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
-  export let viewType = 'grid';
   /**
-   * The `id` attribute of the inner listbox.
-   * @type {string | undefined}
+   * @typedef {object} Props
+   * @property {string} [viewType] - View type.
+   * @property {string} [gridId] - The `id` attribute of the inner listbox.
+   * @property {boolean} [showTitle] - Whether to show the file name or title under the image while
+   * in grid view.
+   * @property {(detail: { value: string }) => void} [onChange] - Custom `change` event handler.
+   * @property {import('svelte').Snippet} [children] - Slot content.
    */
-  export let gridId = undefined;
-  /**
-   * Whether to show the file name or title under the image while in grid view.
-   */
-  export let showTitle = false;
-  /**
-   * Custom `change` event handler.
-   * @type {((detail: { value: string }) => void) | undefined}
-   */
-  export let onChange = undefined;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    viewType = 'grid',
+    gridId = undefined,
+    showTitle = false,
+    onChange = undefined,
+    children = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <div role="none" class="wrapper" class:show-title={showTitle}>
@@ -28,7 +33,7 @@
       onChange?.(event.detail);
     }}
   >
-    <slot />
+    {@render children?.()}
   </Listbox>
 </div>
 

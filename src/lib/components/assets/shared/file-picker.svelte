@@ -29,10 +29,12 @@
   {accept}
   {multiple}
   bind:this={filePicker}
-  on:change={({ target }) => {
+  onchange={({ target }) => {
     const files = [.../** @type {FileList} */ (/** @type {HTMLInputElement} */ (target).files)];
 
     onSelect?.({ files, file: files[0] });
   }}
-  on:cancel|stopPropagation
+  oncancel={(event) => {
+    event.stopPropagation();
+  }}
 />

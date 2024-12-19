@@ -149,7 +149,7 @@
 
 <div
   role="none"
-  class="preview {variant ?? ''}"
+  class="preview {variant}"
   class:cover
   class:checkerboard
   class:dissolve
@@ -160,7 +160,7 @@
   {:else if isImage}
     <img {loading} {src} {alt} {...$$restProps} bind:this={mediaElement} />
   {:else if kind === 'video'}
-    <!-- svelte-ignore a11y-media-has-caption -->
+    <!-- svelte-ignore a11y_media_has_caption -->
     <video
       {src}
       controls={controls || undefined}
@@ -181,7 +181,7 @@
     <div role="none" class="blur">
       <div role="none" class="overlay"></div>
       {#if kind === 'video'}
-        <!-- svelte-ignore a11y-media-has-caption -->
+        <!-- svelte-ignore a11y_media_has_caption -->
         <video {src} playsinline></video>
       {:else}
         <img {loading} {src} alt="" />
@@ -237,7 +237,7 @@
         backdrop-filter: blur(32px) brightness(0.8);
       }
 
-      :is(img, video) {
+      :is(:global(img, video)) {
         width: 100%;
         height: 100%;
         z-index: -2;
@@ -249,25 +249,25 @@
     &.cover {
       padding: 0;
 
-      & > :is(img, video) {
+      & > :is(:global(img, video)) {
         flex: auto;
       }
     }
 
-    & > :is(img, video) {
+    & > :is(:global(img, video)) {
       flex: 0;
       max-width: 100%;
       max-height: 100%;
     }
 
     &.dissolve {
-      :is(img, video) {
+      :is(:global(img, video)) {
         opacity: 0;
         transition: opacity 250ms;
       }
 
       &.loaded {
-        :is(img, video) {
+        :is(:global(img, video)) {
           opacity: 1;
         }
       }
@@ -291,7 +291,7 @@
     }
   }
 
-  :is(img, video) {
+  :is(:global(img, video)) {
     object-fit: contain;
 
     &:not([src]) {

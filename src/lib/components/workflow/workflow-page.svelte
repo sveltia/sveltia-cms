@@ -5,7 +5,7 @@
 </script>
 
 <PageContainer class="content" aria-label={$_('editorial_workflow')}>
-  <svelte:fragment slot="main">
+  {#snippet main()}
     <div role="none" class="columns">
       <Group class="column" aria-labelledby="draft-column-title">
         <header role="none">
@@ -23,7 +23,7 @@
         </header>
       </Group>
     </div>
-  </svelte:fragment>
+  {/snippet}
 </PageContainer>
 
 <style lang="scss">

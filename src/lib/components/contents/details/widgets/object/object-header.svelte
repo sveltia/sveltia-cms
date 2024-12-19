@@ -30,6 +30,11 @@
    * @type {() => void}
    */
   export let remove;
+  /**
+   * Slot content.
+   * @type {import('svelte').Snippet | undefined}
+   */
+  export let children = undefined;
 </script>
 
 <div role="none" class="header">
@@ -54,7 +59,7 @@
     </Button>
   </div>
   <div role="none">
-    <slot name="middle" />
+    {@render children?.()}
   </div>
   <div role="none">
     {#if removeButtonVisible}

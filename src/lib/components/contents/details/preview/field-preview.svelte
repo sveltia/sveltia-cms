@@ -80,20 +80,20 @@
 </script>
 
 {#if widgetName !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
-  <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-  <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <section
     role="group"
     data-widget={widgetName}
     data-key-path={keyPath}
     tabindex="0"
-    on:keydown={(event) => {
+    onkeydown={(event) => {
       if (event.key === 'Enter') {
         event.stopPropagation();
         highlightEditorField();
       }
     }}
-    on:click={(event) => {
+    onclick={(event) => {
       event.stopPropagation();
       highlightEditorField();
     }}
