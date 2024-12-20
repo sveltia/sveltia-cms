@@ -1,3 +1,4 @@
+import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { describe, expect, test } from 'vitest';
 import { siteConfig } from '$lib/services/config';
 import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
@@ -42,6 +43,16 @@ describe('Test fillSlugTemplate()', () => {
     expect(fillSlugTemplate('{{title}}', { collection, content: { title } })).toEqual(
       // cspell:disable-next-line
       'lorem-ipsum-dolor-sit-amet-consectetur-adipiscing',
+    );
+  });
+
+  test('date/time', () => {
+    // The time zone should be UTC, not local
+    const { year, month, day, hour, minute, second } = getDateTimeParts({ timeZone: 'UTC' });
+    const template = '{{year}}-{{month}}-{{day}}-{{hour}}-{{minute}}-{{second}}';
+
+    expect(fillSlugTemplate(template, { collection, content: {} })).toEqual(
+      `${year}-${month}-${day}-${hour}-${minute}-${second}`,
     );
   });
 

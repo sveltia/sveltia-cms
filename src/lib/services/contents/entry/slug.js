@@ -66,7 +66,7 @@ export const fillSlugTemplate = (
     currentSlug,
     entryFilePath,
     locale,
-    dateTimeParts = getDateTimeParts(),
+    dateTimeParts = getDateTimeParts({ timeZone: 'UTC' }),
   },
 ) => {
   const {
