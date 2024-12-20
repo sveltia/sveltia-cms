@@ -4,19 +4,28 @@
   import { prefs } from '$lib/services/prefs';
 
   /**
-   * Custom `change` event handler.
-   * @type {((detail: { message: string }) => void) | undefined}
+   * @typedef {object} Props
+   * @property {(detail: { message: string }) => void} [onChange] - Custom `change` event handler.
    */
-  // svelte-ignore export_let_unused
-  export let onChange = undefined;
 
-  $: underlineLinks = $prefs.underlineLinks ?? true;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const, no-unused-vars */
+    onChange = undefined,
+    /* eslint-enable prefer-const, no-unused-vars */
+  } = $props();
 
-  $: {
+  let underlineLinks = $state(true);
+
+  $effect(() => {
+    underlineLinks = $prefs.underlineLinks ?? true;
+  });
+
+  $effect(() => {
     if ($prefs.underlineLinks !== underlineLinks) {
       $prefs.underlineLinks = underlineLinks;
     }
-  }
+  });
 </script>
 
 <TabPanel id="prefs-tab-accessibility">

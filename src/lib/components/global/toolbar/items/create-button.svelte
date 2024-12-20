@@ -6,9 +6,11 @@
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
 
-  $: folderCollections = ($siteConfig?.collections ?? []).filter(
-    ({ folder, create = false, hide = false, divider = false }) =>
-      typeof folder === 'string' && create && !hide && !divider,
+  const folderCollections = $derived(
+    ($siteConfig?.collections ?? []).filter(
+      ({ folder, create = false, hide = false, divider = false }) =>
+        typeof folder === 'string' && create && !hide && !divider,
+    ),
   );
 </script>
 

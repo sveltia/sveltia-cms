@@ -2,15 +2,25 @@
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
-  export let disabled = false;
   /**
-   * @type {import('svelte/store').Writable<EntryListView | AssetListView | SelectAssetsView>}
+   * @typedef {object} Props
+   * @property {boolean} [disabled] - Whether to disable the buttons.
+   * @property {import('svelte/store').Writable<EntryListView | AssetListView |
+   * SelectAssetsView>} currentView - Current view details.
    */
-  export let currentView;
+
+  /** @type {Props & Record<string, any>} */
+  let {
+    /* eslint-disable prefer-const */
+    disabled = false,
+    currentView,
+    ...rest
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <div role="none" class="wrapper">
-  <SelectButtonGroup {disabled} aria-label={$_('switch_view')} {...$$restProps}>
+  <SelectButtonGroup {disabled} aria-label={$_('switch_view')} {...rest}>
     <SelectButton
       {disabled}
       selected={$currentView.type !== 'grid'}

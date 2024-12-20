@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script>
   import { Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';

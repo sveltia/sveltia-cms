@@ -4,11 +4,16 @@
   import { prefs } from '$lib/services/prefs';
 
   /**
-   * Custom `change` event handler.
-   * @type {((detail: { message: string }) => void) | undefined}
+   * @typedef {object} Props
+   * @property {(detail: { message: string }) => void} [onChange] - Custom `change` event handler.
    */
-  // svelte-ignore export_let_unused
-  export let onChange = undefined;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const, no-unused-vars */
+    onChange = undefined,
+    /* eslint-enable prefer-const, no-unused-vars */
+  } = $props();
 </script>
 
 <TabPanel id="prefs-tab-appearance">

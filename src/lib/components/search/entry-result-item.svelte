@@ -9,11 +9,18 @@
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
-   * @type {Entry}
+   * @typedef {object} Props
+   * @property {Entry} entry - Single entry.
    */
-  export let entry;
 
-  $: ({ locales, subPath } = entry);
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    entry,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { locales, subPath } = $derived(entry);
 </script>
 
 {#snippet resultRow(

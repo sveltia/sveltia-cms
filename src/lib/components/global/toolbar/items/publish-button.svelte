@@ -5,18 +5,20 @@
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/prefs';
 
-  $: ({ backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
-    $siteConfig ?? /** @type {SiteConfig} */ ({}));
-  $: ({ deployHookURL } = $prefs);
-  $: ({ triggerDeployment } = $backend ?? /** @type {BackendService} */ ({}));
-  $: showButton = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
-  $: canPublish =
-    (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished;
+  const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } = $derived(
+    $siteConfig ?? /** @type {SiteConfig} */ ({}),
+  );
+  const { deployHookURL } = $derived($prefs);
+  const { triggerDeployment } = $derived($backend ?? /** @type {BackendService} */ ({}));
+  const showButton = $derived($backendName !== 'local' && typeof autoDeployEnabled === 'boolean');
+  const canPublish = $derived(
+    (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished,
+  );
 
   /** @type {'info' | 'error'} */
-  let toastStatus = 'info';
+  let toastStatus = $state('info');
   /** @type {boolean} */
-  let showToast = false;
+  let showToast = $state(false);
 
   /**
    * Trigger a manual deployment on the CI/CD provider.

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script>
   import { _ } from 'svelte-i18n';
   import YAML from 'yaml';

@@ -6,11 +6,18 @@
   import { getFolderLabelByPath } from '$lib/services/assets/view';
 
   /**
-   * @type {Asset}
+   * @typedef {object} Props
+   * @property {Asset} asset - Single asset.
    */
-  export let asset;
 
-  $: ({ path, name, folder, kind } = asset);
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    asset,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { path, name, folder, kind } = $derived(asset);
 </script>
 
 <GridRow

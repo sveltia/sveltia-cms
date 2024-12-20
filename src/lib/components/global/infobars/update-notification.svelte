@@ -8,7 +8,8 @@
   const cacheTimeout = 10 * 60 * 1000; // 10 min
   let interval = 0;
   let timeout = 0;
-  let updateAvailable = false;
+
+  let updateAvailable = $state(false);
 
   /**
    * Check for a new version of the application. If an update is available, wait 10 minutes before

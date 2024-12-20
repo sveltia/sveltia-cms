@@ -2,22 +2,33 @@
   import { Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
-  export let label = '';
-  export let disabled = false;
   /**
-   * @type {import('svelte/store').Writable<EntryListView | AssetListView>}
+   * @typedef {object} Props
+   * @property {import('svelte/store').Writable<EntryListView | AssetListView>} currentView -
+   * Current view details.
+   * @property {string} aria-controls - The `aria-controls` attribute for the menu.
+   * @property {string} [label] - Menu button label.
+   * @property {boolean} [disabled] - Whether to disable the button.
+   * @property {string} [noneLabel] - Label to be displayed on the None item.
+   * @property {ViewFilter[]} [groups] - Group conditions.
    */
-  export let currentView;
-  export let noneLabel = '';
-  /**
-   * @type {ViewFilter[]}
-   */
-  export let groups = [];
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    currentView,
+    'aria-controls': ariaControls,
+    label = '',
+    disabled = false,
+    noneLabel = '',
+    groups = [],
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <MenuButton variant="ghost" label={label || $_('group')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={$_('grouping_options')} aria-controls={$$restProps['aria-controls']}>
+    <Menu aria-label={$_('grouping_options')} aria-controls={ariaControls}>
       <MenuItemRadio
         label={noneLabel || $_('sort_keys.none')}
         checked={!$currentView.group}

@@ -5,9 +5,9 @@
   import { version } from '$lib/services/app';
   import { prefs } from '$lib/services/prefs';
 
-  /** @type {any} */
-  let menuButton;
-  let showShortcutsDialog = false;
+  /** @type {MenuButton | undefined} */
+  let menuButton = $state();
+  let showShortcutsDialog = $state(false);
 </script>
 
 <div role="none" class="wrapper">
@@ -93,7 +93,7 @@
 <ShortcutsDialog
   bind:open={showShortcutsDialog}
   onClose={() => {
-    menuButton.focus();
+    menuButton?.focus();
   }}
 />
 

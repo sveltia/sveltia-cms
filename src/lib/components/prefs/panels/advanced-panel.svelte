@@ -5,21 +5,32 @@
   import { prefs } from '$lib/services/prefs';
 
   /**
-   * Custom `change` event handler.
-   * @type {((detail: { message: string }) => void) | undefined}
+   * @typedef {object} Props
+   * @property {(detail: { message: string }) => void} [onChange] - Custom `change` event handler.
    */
-  export let onChange = undefined;
 
-  $: ({ backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
-    $siteConfig ?? /** @type {SiteConfig} */ ({}));
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    onChange = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: devModeEnabled = $prefs.devModeEnabled ?? false;
+  const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } = $derived(
+    $siteConfig ?? /** @type {SiteConfig} */ ({}),
+  );
 
-  $: {
+  let devModeEnabled = $state(false);
+
+  $effect(() => {
+    devModeEnabled = $prefs.devModeEnabled ?? false;
+  });
+
+  $effect(() => {
     if ($prefs.devModeEnabled !== devModeEnabled) {
       $prefs.devModeEnabled = devModeEnabled;
     }
-  }
+  });
 </script>
 
 <TabPanel id="prefs-tab-advanced">

@@ -23,21 +23,17 @@
     }
   };
 
-  /**
-   * @type {HTMLElement}
-   */
-  let wrapper;
-  /**
-   * @type {any}
-   */
-  let searchBar;
+  /** @type {HTMLElement | undefined} */
+  let wrapper = $state();
+  /** @type {any | undefined} */
+  let searchBar = $state();
 
-  $: {
+  $effect(() => {
     // Restore search terms when the page is reloaded
     if (searchBar && $searchTerms !== searchBar?.value) {
       searchBar.value = $searchTerms;
     }
-  }
+  });
 </script>
 
 <div role="none" class="wrapper" bind:this={wrapper}>

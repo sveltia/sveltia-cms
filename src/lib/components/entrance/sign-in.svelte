@@ -12,13 +12,15 @@
   import { siteConfig } from '$lib/services/config';
   import { allBackendServices } from '$lib/services/backends';
 
-  $: isLocalHost = false;
-  $: isLocalBackendSupported = false;
-  $: isBrave = false;
-  $: configuredBackendName = $siteConfig?.backend?.name;
-  // svelte-ignore reactive_declaration_non_reactive_property
-  $: configuredBackend = configuredBackendName ? allBackendServices[configuredBackendName] : null;
-  $: repositoryName = $siteConfig?.backend?.repo?.split('/')?.[1];
+  let isLocalHost = $state(false);
+  let isLocalBackendSupported = $state(false);
+  let isBrave = $state(false);
+
+  const configuredBackendName = $derived($siteConfig?.backend?.name);
+  const configuredBackend = $derived(
+    configuredBackendName ? allBackendServices[configuredBackendName] : null,
+  );
+  const repositoryName = $derived($siteConfig?.backend?.repo?.split('/')?.[1]);
 
   onMount(() => {
     const { hostname } = window.location;

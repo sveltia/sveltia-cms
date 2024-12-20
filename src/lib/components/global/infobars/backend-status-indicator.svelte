@@ -6,10 +6,11 @@
   import { backend } from '$lib/services/backends';
 
   const interval = 5 * 60 * 1000; // 5 minutes
-  let mounted = false;
   let timer = 0;
+
+  let mounted = $state(false);
   /** @type {BackendServiceStatus} */
-  let status = 'none';
+  let status = $state('none');
 
   /**
    * Check if an update is available.
@@ -64,12 +65,12 @@
     };
   });
 
-  $: {
+  $effect(() => {
     void mounted;
     void $backend;
     void $siteConfig;
     init();
-  }
+  });
 </script>
 
 {#if ['minor', 'major'].includes(status)}

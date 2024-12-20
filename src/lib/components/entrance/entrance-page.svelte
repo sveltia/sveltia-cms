@@ -12,7 +12,9 @@
   import { prefs, prefsError } from '$lib/services/prefs';
   import { signInError, unauthenticated, user } from '$lib/services/user';
 
-  $: $announcedPageStatus = $_('welcome_to_sveltia_cms');
+  $effect(() => {
+    $announcedPageStatus = $_('welcome_to_sveltia_cms');
+  });
 </script>
 
 <div role="none" class="container" inert={$user && $dataLoaded}>

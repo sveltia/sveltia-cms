@@ -3,20 +3,28 @@
   import { _ } from 'svelte-i18n';
   import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
-  export let label = '';
-  export let disabled = false;
   /**
-   * @type {import('svelte/store').Writable<EntryListView | AssetListView>}
+   * @typedef {object} Props
+   * @property {import('svelte/store').Writable<EntryListView | AssetListView>} currentView -
+   * Current view details.
+   * @property {string} aria-controls - The `aria-controls` attribute for the menu.
+   * @property {string} [label] - Menu button label.
+   * @property {boolean} [disabled] - Whether to disable the button.
+   * @property {{ label: string, key: string }[]} [fields] - Sorting fields.
+   * @property {string | undefined} [collectionName] - Current collection name.
    */
-  export let currentView;
-  /**
-   * @type {{ label: string, key: string }[]}
-   */
-  export let fields = [];
-  /**
-   * @type {string | undefined}
-   */
-  export let collectionName = undefined;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    currentView,
+    'aria-controls': ariaControls,
+    label = '',
+    disabled = false,
+    fields = [],
+    collectionName = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 
   /** @type {SortOrder[]} */
   const sortOrders = ['ascending', 'descending'];
@@ -25,7 +33,7 @@
 
 <MenuButton variant="ghost" label={label || $_('sort')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={$_('sorting_options')} aria-controls={$$restProps['aria-controls']}>
+    <Menu aria-label={$_('sorting_options')} aria-controls={ariaControls}>
       {#each fields as { key, label: _label } (key)}
         {#each sortOrders as order (order)}
           <MenuItemRadio

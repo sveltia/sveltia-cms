@@ -8,10 +8,16 @@
   import { prefs } from '$lib/services/prefs';
 
   /**
-   * Custom `change` event handler.
-   * @type {((detail: { message: string }) => void) | undefined}
+   * @typedef {object} Props
+   * @property {(detail: { message: string }) => void} [onChange] - Custom `change` event handler.
    */
-  export let onChange = undefined;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    onChange = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <TabPanel id="prefs-tab-languages">

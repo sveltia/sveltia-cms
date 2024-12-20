@@ -2,29 +2,35 @@
   import { Menu, MenuButton, MenuItemCheckbox, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
-  export let label = '';
-  export let disabled = false;
   /**
-   * @type {boolean}
+   * @typedef {object} Props
+   * @property {import('svelte/store').Writable<EntryListView | AssetListView>} currentView -
+   * Current view details.
+   * @property {string} aria-controls - The `aria-controls` attribute for the menu.
+   * @property {string} [label] - Menu button label.
+   * @property {boolean} [disabled] - Whether to disable the button.
+   * @property {boolean} [multiple] - Whether to allow selecting multiple filter conditions.
+   * @property {string} [noneLabel] - Label to be displayed on the None item.
+   * @property {ViewFilter[]} [filters] - Filter conditions.
    */
-  export let multiple = false;
-  /**
-   * @type {string}
-   */
-  export let noneLabel = '';
-  /**
-   * @type {import('svelte/store').Writable<EntryListView | AssetListView>}
-   */
-  export let currentView;
-  /**
-   * @type {ViewFilter[]}
-   */
-  export let filters = [];
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    currentView,
+    'aria-controls': ariaControls,
+    label = '',
+    disabled = false,
+    multiple = false,
+    noneLabel = '',
+    filters = [],
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <MenuButton variant="ghost" label={label || $_('filter')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={$_('filtering_options')} aria-controls={$$restProps['aria-controls']}>
+    <Menu aria-label={$_('filtering_options')} aria-controls={ariaControls}>
       {#if multiple}
         {#each filters as { label: _label, field, pattern }}
           {@const index = ($currentView.filters || []).findIndex(

@@ -16,10 +16,16 @@
   import { user } from '$lib/services/user';
 
   /**
-   * Configuration specified with manual initialization.
-   * @type {object | undefined}
+   * @typedef {object} Props
+   * @property {object | undefined} config - Configuration specified with manual initialization.
    */
-  export let config;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    config,
+    /* eslint-enable prefer-const */
+  } = $props();
 
   onMount(() => {
     initAppLocale();

@@ -5,7 +5,7 @@
   import { selectedAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
 
-  $: pages = [
+  const pages = $derived([
     {
       key: 'collections',
       label: $_('contents'),
@@ -30,7 +30,7 @@
     //   icon: 'settings',
     //   link: '/config',
     // },
-  ];
+  ]);
 </script>
 
 <div role="none" class="wrapper">

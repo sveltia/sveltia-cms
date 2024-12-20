@@ -7,12 +7,12 @@
   import { prefs } from '$lib/services/prefs';
   import { signOut, user } from '$lib/services/user';
 
-  /** @type {any} */
-  let menuButton;
-  let showPrefsDialog = false;
+  /** @type {MenuButton | undefined} */
+  let menuButton = $state();
+  let showPrefsDialog = $state(false);
 
-  $: hasAvatar = !!$user?.avatarURL;
-  $: isLocal = $backendName === 'local';
+  const hasAvatar = $derived(!!$user?.avatarURL);
+  const isLocal = $derived($backendName === 'local');
 </script>
 
 <div role="none" class="wrapper">
@@ -89,7 +89,7 @@
 <PrefsDialog
   bind:open={showPrefsDialog}
   onClose={() => {
-    menuButton.focus();
+    menuButton?.focus();
   }}
 />
 

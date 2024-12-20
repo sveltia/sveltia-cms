@@ -3,18 +3,23 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @type {(Entry | Asset)[]}
+   * @typedef {object} Props
+   * @property {(Entry | Asset)[]} allItems - All available items.
+   * @property {import('svelte/store').Writable<(Entry | Asset)[]>} selectedItems - Selected items.
    */
-  export let allItems;
-  /**
-   * @type {import('svelte/store').Writable<(Entry | Asset)[]>}
-   */
-  export let selectedItems;
 
-  $: totalCount = allItems.length;
-  $: selectedCount = $selectedItems.length;
-  $: anySelected = !!selectedCount;
-  $: allSelected = anySelected && selectedCount === totalCount;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    allItems,
+    selectedItems,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const totalCount = $derived(allItems.length);
+  const selectedCount = $derived($selectedItems.length);
+  const anySelected = $derived(!!selectedCount);
+  const allSelected = $derived(anySelected && selectedCount === totalCount);
 </script>
 
 <div role="none" class="wrapper">
@@ -23,7 +28,8 @@
     aria-label={$_('select_all')}
     checked={anySelected && !allSelected ? 'mixed' : anySelected}
     onChange={() => {
-      $selectedItems = allSelected ? [] : [...allItems];
+      // Use `set` because assignment doesn’t work with Runes
+      selectedItems.set(allSelected ? [] : [...allItems]);
     }}
   />
   {#if anySelected}

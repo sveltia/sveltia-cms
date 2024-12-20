@@ -9,18 +9,22 @@
   import MediaPanel from '$lib/components/prefs/panels/media-panel.svelte';
 
   /**
-   * Whether to open the dialog.
+   * @typedef {object} Props
+   * @property {boolean} [open] - Whether to open the dialog.
+   * @property {(() => void) | undefined} [onClose] - Custom `close` event handler.
    */
-  export let open = false;
-  /**
-   * Custom `close` event handler.
-   * @type {(() => void) | undefined}
-   */
-  export let onClose = undefined;
 
-  let selectedPanel = 'appearance';
-  let toastMessage = '';
-  let showToast = false;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    open = $bindable(false),
+    onClose = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  let selectedPanel = $state('appearance');
+  let toastMessage = $state('');
+  let showToast = $state(false);
 
   const panels = [
     { key: 'appearance', icon: 'palette', component: AppearancePanel },
@@ -59,9 +63,8 @@
         </Tab>
       {/each}
     </TabList>
-    {#each panels as { key, component } (key)}
-      <svelte:component
-        this={component}
+    {#each panels as { key, component: Panel } (key)}
+      <Panel
         onChange={({ message }) => {
           toastMessage = message;
           showToast = true;

@@ -4,14 +4,18 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * Whether to open the dialog.
+   * @typedef {object} Props
+   * @property {boolean} [open] - Whether to open the dialog.
+   * @property {() => void} [onClose] - Custom `close` event handler.
    */
-  export let open = false;
-  /**
-   * Custom `close` event handler.
-   * @type {(() => void) | undefined}
-   */
-  export let onClose = undefined;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    open = $bindable(false),
+    onClose = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 
   const shortcuts = [
     { feature: 'view_content_library', keys: 'Alt+1' },
@@ -22,7 +26,7 @@
     { feature: 'cancel_editing', keys: 'Escape' },
   ];
 
-  let accel = 'Ctrl';
+  let accel = $state('Ctrl');
 
   onMount(() => {
     if (navigator.userAgentData?.platform === 'macOS' || navigator.platform.startsWith('Mac')) {
