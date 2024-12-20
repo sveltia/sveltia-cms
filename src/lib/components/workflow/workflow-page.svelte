@@ -51,6 +51,10 @@
       padding: 0 16px;
       height: 40px;
       background-color: var(--sui-tertiary-background-color);
+
+      h3 {
+        font-size: var(--sui-font-size-x-large);
+      }
     }
   }
 </style>

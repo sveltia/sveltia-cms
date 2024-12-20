@@ -104,6 +104,7 @@
       flex: none;
       margin: 0 0 8px;
       color: var(--sui-secondary-foreground-color);
+      font-size: var(--sui-font-size-large);
 
       & + div {
         overflow: auto;
