@@ -5,7 +5,7 @@
   import { _, locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { getAssetDetails, isMediaKind } from '$lib/services/assets';
+  import { defaultAssetDetails, getAssetDetails, isMediaKind } from '$lib/services/assets';
   import { getFilesByEntry } from '$lib/services/contents/collection/files';
   import { getAssociatedCollections } from '$lib/services/contents/entry';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -14,57 +14,38 @@
   import { formatDuration } from '$lib/services/utils/media';
 
   /**
-   * @type {Asset}
+   * @typedef {object} Props
+   * @property {Asset} asset - Asset.
+   * @property {boolean} [showPreview] - Whether to show the media preview.
    */
-  export let asset;
 
-  /**
-   * Whether to show the media preview.
-   */
-  export let showPreview = false;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    asset,
+    showPreview = false,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: ({ path, size, kind, commitAuthor, commitDate } = asset);
-  $: ({ extension = '' } = getPathInfo(path));
-  $: canPreview = isMediaKind(kind) || path.endsWith('.pdf');
+  /** @type {AssetDetails} */
+  let details = $state({ ...defaultAssetDetails });
 
-  /**
-   * @type {string | undefined}
-   */
-  let publicURL = undefined;
-  /**
-   * @type {string | undefined}
-   */
-  let repoBlobURL = undefined;
-  /**
-   * @type {{ width: number, height: number } | undefined}
-   */
-  let dimensions = undefined;
-  /**
-   * @type {number | undefined}
-   */
-  let duration = undefined;
-  /**
-   * @type {Entry[]}
-   */
-  let usedEntries = [];
+  const { path, size, kind, commitAuthor, commitDate } = $derived(asset);
+  const { publicURL, repoBlobURL, dimensions, duration, usedEntries } = $derived(details);
+  const { extension = '' } = $derived(getPathInfo(path));
+  const canPreview = $derived(isMediaKind(kind) || path.endsWith('.pdf'));
 
   /**
    * Update the properties above.
    */
   const updateProps = async () => {
-    ({
-      publicURL = undefined,
-      repoBlobURL = undefined,
-      dimensions = undefined,
-      duration = undefined,
-      usedEntries = [],
-    } = asset ? await getAssetDetails(asset) : {});
+    details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
   };
 
-  $: {
+  $effect(() => {
     void asset;
     updateProps();
-  }
+  });
 </script>
 
 {#snippet usedEntryLink(

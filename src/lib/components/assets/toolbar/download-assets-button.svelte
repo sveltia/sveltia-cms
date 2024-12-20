@@ -6,14 +6,18 @@
   import { getAssetBlob } from '$lib/services/assets';
 
   /**
-   * @type {Asset[]}
+   * @typedef {object} Props
+   * @property {Asset[]} [assets] - Selected assets.
    */
-  export let assets = [];
 
-  /**
-   * @type {boolean}
-   */
-  let showToast = false;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    assets = [],
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  let showToast = $state(false);
 
   /**
    * Download the assets.

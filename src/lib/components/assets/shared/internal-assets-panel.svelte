@@ -1,27 +1,39 @@
 <script>
+  import { untrack } from 'svelte';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
 
-  /** @type {AssetKind | undefined} */
-  export let kind;
-  /** @type {Asset[]} */
-  export let assets = [];
-  /** @type {SelectedAsset | null} */
-  export let selectedAsset = null;
-  /** @type {boolean} */
-  export let showUploader = false;
-  /** @type {string} */
-  export let searchTerms = '';
+  /**
+   * @typedef {object} Props
+   * @property {AssetKind} [kind] - Asset kind.
+   * @property {Asset[]} [assets] - Asset list.
+   * @property {SelectedAsset | null} [selectedAsset] - Selected asset.
+   * @property {boolean} [showUploader] - Whether to show the uploader.
+   * @property {string} [searchTerms] - Search terms for filtering assets.
+   */
 
-  /** @type {DropZone} */
-  let dropZone;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    kind,
+    assets = [],
+    selectedAsset = $bindable(null),
+    showUploader = false,
+    searchTerms = '',
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: {
-    if (dropZone && !selectedAsset) {
-      dropZone.reset();
+  /** @type {DropZone | undefined} */
+  let dropZone = $state();
+
+  $effect(() => {
+    if (!selectedAsset) {
+      untrack(() => {
+        dropZone?.reset();
+      });
     }
-  }
+  });
 </script>
 
 <DropZone

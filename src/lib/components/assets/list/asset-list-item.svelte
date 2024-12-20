@@ -6,15 +6,20 @@
   import { listedAssets } from '$lib/services/assets/view';
 
   /**
-   * @type {Asset}
+   * @typedef {object} Props
+   * @property {Asset} asset - Asset.
+   * @property {ViewType} viewType - View type.
    */
-  export let asset;
-  /**
-   * @type {ViewType}
-   */
-  export let viewType;
 
-  $: ({ name, kind } = asset);
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    asset,
+    viewType,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { name, kind } = $derived(asset);
 
   /**
    * Update the asset selection.

@@ -4,19 +4,16 @@
   import { editingAsset, getAssetBlob, showAssetOverlay } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
 
-  /** @type {Asset | undefined} */
-  $: asset = $editingAsset;
-
-  /** @type {boolean} */
-  let open = false;
+  const asset = $derived($editingAsset);
+  let open = $state(false);
   /** @type {Blob | undefined} */
-  let blob = undefined;
+  let blob = $state();
   /** @type {string | undefined} */
-  let originalValue = undefined;
+  let originalValue = $state();
   /** @type {string | undefined} */
-  let currentValue = undefined;
+  let currentValue = $state();
   /** @type {boolean | 'mixed'} */
-  let wrap = false;
+  let wrap = $state(false);
 
   /**
    * Initialize the state.
@@ -54,17 +51,17 @@
     }
   };
 
-  $: {
+  $effect(() => {
     if (asset && blob === undefined) {
       initState();
     }
-  }
+  });
 
-  $: {
+  $effect(() => {
     if (!$showAssetOverlay) {
       open = false;
     }
-  }
+  });
 </script>
 
 <Dialog

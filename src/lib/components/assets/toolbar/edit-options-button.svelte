@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import {
     canEditAsset,
+    defaultAssetDetails,
     editingAsset,
     getAssetDetails,
     renamingAsset,
@@ -13,32 +14,33 @@
   import { prefs } from '$lib/services/prefs';
 
   /**
-   * @type {Asset | undefined}
+   * @typedef {object} Props
+   * @property {Asset} [asset] - Selected asset.
    */
-  export let asset;
 
-  /**
-   * @type {string | undefined}
-   */
-  let publicURL = undefined;
-  /**
-   * @type {string | undefined}
-   */
-  let repoBlobURL = undefined;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    asset,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  /** @type {AssetDetails} */
+  let details = $state({ ...defaultAssetDetails });
+
+  const { publicURL, repoBlobURL } = $derived(details);
 
   /**
    * Update the properties above.
    */
   const updateProps = async () => {
-    ({ publicURL = undefined, repoBlobURL = undefined } = asset
-      ? await getAssetDetails(asset)
-      : {});
+    details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
   };
 
-  $: {
+  $effect(() => {
     void asset;
     updateProps();
-  }
+  });
 </script>
 
 <MenuButton

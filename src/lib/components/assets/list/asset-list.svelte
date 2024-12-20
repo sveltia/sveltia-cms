@@ -10,9 +10,9 @@
   import { globalAssetFolder, selectedAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
 
-  $: viewType = $currentView.type;
+  const viewType = $derived($currentView.type);
   // Can’t upload assets if collection assets are saved at entry-relative paths
-  $: uploadDisabled = !!$selectedAssetFolder?.entryRelative;
+  const uploadDisabled = $derived(!!$selectedAssetFolder?.entryRelative);
 </script>
 
 <ListContainer aria-label={$_('asset_list')}>

@@ -13,12 +13,14 @@
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { canDragDrop } from '$lib/services/utils/file';
 
-  /** @type {FilePicker} */
-  let filePicker;
+  /** @type {FilePicker | undefined} */
+  let filePicker = $state();
 
-  $: ({ originalAsset } = $uploadingAssets);
-  $: multiple = !originalAsset;
-  $: accept = originalAsset ? (mime.getType(originalAsset.name) ?? undefined) : undefined;
+  const { originalAsset } = $derived($uploadingAssets);
+  const multiple = $derived(!originalAsset);
+  const accept = $derived(
+    originalAsset ? (mime.getType(originalAsset.name) ?? undefined) : undefined,
+  );
 
   /**
    * Update the asset list, which will show the confirmation dialog.
@@ -39,18 +41,18 @@
     $showUploadAssetsDialog = false;
   };
 
-  $: {
+  $effect(() => {
     // Open the file picker directly if drag & drop is not supported (on mobile)
-    if (!canDragDrop() && filePicker && $showUploadAssetsDialog) {
-      filePicker.open();
+    if (!canDragDrop() && $showUploadAssetsDialog) {
+      filePicker?.open();
     }
-  }
+  });
 
-  $: {
+  $effect(() => {
     if (!$showAssetOverlay) {
       $showUploadAssetsDialog = false;
     }
-  }
+  });
 </script>
 
 {#if canDragDrop()}

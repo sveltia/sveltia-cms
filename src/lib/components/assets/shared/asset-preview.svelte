@@ -4,73 +4,51 @@
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets';
 
   /**
-   * Asset type.
-   * @type {AssetKind}
+   * @typedef {object} Props
+   * @property {AssetKind} kind - Asset type.
+   * @property {'lazy' | 'eager'} [loading] - Loading method.
+   * @property {Asset} [asset] - Asset.
+   * @property {string} [src] - Source URL.
+   * @property {'tile' | 'icon'} [variant] - Style variant.
+   * @property {boolean} [blurBackground] - Whether to show a blurred background (like Slack’s media
+   * overlay).
+   * @property {boolean} [cover] - Whether to use `object-fit: cover`.
+   * @property {boolean} [checkerboard] - Whether to show a checkerboard background below a
+   * transparent image.
+   * @property {boolean} [dissolve] - Whether to add a short dissolve transition (fade-in effect) to
+   * the image/video when it’s first loaded to avoid a sudden appearance.
+   * @property {string} [alt] - Alt text for the image.
+   * @property {boolean} [controls] - Whether to show controls for audio/video. If this is `false`
+   * and {@link kind} is `audio`, an icon will be displayed instead.
    */
-  export let kind;
-  /**
-   * Loading method.
-   * @type {'lazy' | 'eager'}
-   */
-  export let loading = 'lazy';
-  /**
-   * Asset.
-   * @type {Asset | undefined}
-   */
-  export let asset = undefined;
-  /**
-   * Source URL.
-   * @type {string | undefined}
-   */
-  export let src = undefined;
-  /**
-   * Style variant.
-   * @type {'tile' | 'icon' | undefined}
-   */
-  export let variant = undefined;
-  /**
-   * Whether to show a blurred background (like Slack’s media overlay).
-   * @type {boolean}
-   */
-  export let blurBackground = false;
-  /**
-   * Whether to use `object-fit: cover`.
-   * @type {boolean}
-   */
-  export let cover = false;
-  /**
-   * Whether to show a checkerboard background below a transparent image.
-   * @type {boolean}
-   */
-  export let checkerboard = false;
-  /**
-   * Whether to add a short dissolve transition (fade-in effect) to the image/video when it’s first
-   * loaded to avoid a sudden appearance.
-   * @type {boolean}
-   */
-  export let dissolve = true;
-  /**
-   * Alt text for the image.
-   * @type {string}
-   */
-  export let alt = '';
-  /**
-   * Whether to show controls for audio/video. If this is `false` and {@link kind} is `audio`, an
-   * icon will be displayed instead.
-   * @type {boolean}
-   */
-  export let controls = false;
 
-  /**
-   * @type {HTMLImageElement | HTMLMediaElement}
-   */
-  let mediaElement;
+  /** @type {Props & Record<string, any>} */
+  let {
+    /* eslint-disable prefer-const */
+    kind,
+    loading = 'lazy',
+    asset = undefined,
+    src = $bindable(undefined),
+    variant = undefined,
+    blurBackground = false,
+    cover = false,
+    checkerboard = false,
+    dissolve = true,
+    alt = '',
+    controls = false,
+    ...rest
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  /** @type {HTMLImageElement | HTMLMediaElement | undefined} */
+  let mediaElement = $state();
+  let hasError = $state(false);
+  let loaded = $state(false);
+
+  const isThumbnail = $derived(!!asset && !!variant);
+  const isImage = $derived(isThumbnail || kind === 'image' || asset?.name.endsWith('.pdf'));
+
   let updatingSrc = false;
-  let hasError = false;
-  let loaded = false;
-
-  $: isThumbnail = !!asset && !!variant;
-  $: isImage = isThumbnail || kind === 'image' || asset?.name.endsWith('.pdf');
 
   /**
    * Update the {@link src} property.
@@ -96,12 +74,6 @@
     updatingSrc = false;
   };
 
-  $: {
-    void mediaElement;
-    void asset;
-    updateSrc();
-  }
-
   /**
    * Update the {@link loaded} state when the media is loaded.
    */
@@ -117,7 +89,7 @@
     ) {
       // Not loaded yet; wait until it’s ready
       await new Promise((resolve) => {
-        mediaElement.addEventListener(
+        mediaElement?.addEventListener(
           isImage ? 'load' : 'loadedmetadata',
           () => {
             resolve(void 0);
@@ -140,11 +112,17 @@
     }
   };
 
-  $: {
+  $effect(() => {
+    void mediaElement;
+    void asset;
+    updateSrc();
+  });
+
+  $effect(() => {
     void mediaElement;
     void src;
     checkLoaded();
-  }
+  });
 </script>
 
 <div
@@ -158,19 +136,14 @@
   {#if hasError}
     <Icon name="draft" />
   {:else if isImage}
-    <img {loading} {src} {alt} {...$$restProps} bind:this={mediaElement} />
+    <img {loading} {src} {alt} {...rest} bind:this={mediaElement} />
   {:else if kind === 'video'}
     <!-- svelte-ignore a11y_media_has_caption -->
-    <video
-      {src}
-      controls={controls || undefined}
-      playsinline
-      {...$$restProps}
-      bind:this={mediaElement}
+    <video {src} controls={controls || undefined} playsinline {...rest} bind:this={mediaElement}
     ></video>
   {:else if kind === 'audio'}
     {#if controls}
-      <audio {src} controls playsinline {...$$restProps} bind:this={mediaElement}></audio>
+      <audio {src} controls playsinline {...rest} bind:this={mediaElement}></audio>
     {:else}
       <Icon name="audio_file" />
     {/if}

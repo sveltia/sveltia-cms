@@ -4,24 +4,24 @@
   import { deleteAssets } from '$lib/services/assets/data';
 
   /**
-   * @type {Asset[]}
+   * @typedef {object} Props
+   * @property {Asset[]} [assets] - Selected assets.
+   * @property {string} [buttonDescription] - The `aria-label` attribute on the button.
+   * @property {string} [dialogDescription] - Description to be displayed on the dialog.
+   * @property {(() => void) | undefined} [onDelete] - Custom `delete` event handler.
    */
-  export let assets = [];
-  /**
-   * @type {string}
-   */
-  export let buttonDescription = '';
-  /**
-   * @type {string}
-   */
-  export let dialogDescription = '';
-  /**
-   * Custom `delete` event handler.
-   * @type {(() => void) | undefined}
-   */
-  export let onDelete = undefined;
 
-  let showDialog = false;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    assets = [],
+    buttonDescription = '',
+    dialogDescription = '',
+    onDelete = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  let showDialog = $state(false);
 </script>
 
 <Button

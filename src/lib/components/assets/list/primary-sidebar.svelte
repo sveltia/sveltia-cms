@@ -12,9 +12,9 @@
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection } from '$lib/services/contents/collection';
 
-  $: numberFormatter = Intl.NumberFormat($appLocale ?? undefined);
+  const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
 
-  $: folders = [
+  const folders = $derived([
     {
       collectionName: '*',
       internalPath: undefined,
@@ -22,7 +22,7 @@
       entryRelative: false,
     },
     ...$allAssetFolders,
-  ];
+  ]);
 </script>
 
 <div role="none" class="primary-sidebar">

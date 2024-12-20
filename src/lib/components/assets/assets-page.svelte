@@ -27,7 +27,9 @@
   const routeRegex =
     /^\/assets(?:\/(?<folderPath>[/\-\w]+))?(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?$/;
 
-  $: selectedAssetFolderLabel = getFolderLabelByPath($selectedAssetFolder?.internalPath);
+  const selectedAssetFolderLabel = $derived(
+    getFolderLabelByPath($selectedAssetFolder?.internalPath),
+  );
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.

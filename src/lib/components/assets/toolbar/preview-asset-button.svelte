@@ -5,9 +5,16 @@
   import { canPreviewAsset } from '$lib/services/assets';
 
   /**
-   * @type {Asset | undefined}
+   * @typedef {object} Props
+   * @property {Asset} [asset] - Selected asset.
    */
-  export let asset;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    asset,
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <Button

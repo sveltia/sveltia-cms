@@ -3,7 +3,7 @@
   import { isTextFileType } from '@sveltia/utils/file';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
-  import { onMount, tick } from 'svelte';
+  import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { getAssetBlob, isMediaKind, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
   import EmptyState from '$lib/components/common/empty-state.svelte';
@@ -11,36 +11,16 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
 
-  /**
-   * A reference to the wrapper element.
-   * @type {HTMLElement}
-   */
-  let wrapper;
-  /**
-   * A reference to the group element.
-   * @type {HTMLElement}
-   */
-  let group;
-  /**
-   * @type {boolean}
-   */
-  let hiding = false;
-  /**
-   * @type {boolean}
-   */
-  let hidden = true;
-  /**
-   * @type {Blob | undefined}
-   */
-  let blob;
+  /** @type {HTMLElement | undefined} */
+  let wrapper = $state();
+  /** @type {HTMLElement | undefined} */
+  let group = undefined;
+  let hiding = $state(false);
+  let hidden = $state(true);
+  /** @type {Blob | undefined} */
+  let blob = $state();
 
-  $: ({ kind, blobURL, name } = $overlaidAsset || /** @type {Asset} */ ({}));
-
-  $: (async () => {
-    if ($overlaidAsset) {
-      blob = await getAssetBlob($overlaidAsset);
-    }
-  })();
+  const { kind, blobURL, name } = $derived($overlaidAsset ?? /** @type {Asset} */ ({}));
 
   /**
    * Move focus to the wrapper once the overlay is loaded.
@@ -49,22 +29,34 @@
     // Wait until `inert` is updated
     await tick();
 
-    group.tabIndex = 0;
-    group.focus();
+    if (group) {
+      group.tabIndex = 0;
+      group.focus();
+    }
   };
 
-  onMount(() => {
-    group = /** @type {HTMLElement} */ (wrapper.querySelector('[role="group"]'));
-
-    group.addEventListener('transitionend', () => {
-      if (!$showAssetOverlay) {
-        hiding = false;
-        hidden = true;
-      }
-    });
+  $effect(() => {
+    if ($overlaidAsset) {
+      (async () => {
+        blob = await getAssetBlob($overlaidAsset);
+      })();
+    }
   });
 
-  $: {
+  $effect(() => {
+    if (wrapper && !group) {
+      group = /** @type {HTMLElement} */ (wrapper.querySelector('[role="group"]'));
+
+      group.addEventListener('transitionend', () => {
+        if (!$showAssetOverlay) {
+          hiding = false;
+          hidden = true;
+        }
+      });
+    }
+  });
+
+  $effect(() => {
     if (wrapper) {
       if ($showAssetOverlay) {
         hiding = false;
@@ -74,7 +66,7 @@
         hiding = true;
       }
     }
-  }
+  });
 </script>
 
 <div

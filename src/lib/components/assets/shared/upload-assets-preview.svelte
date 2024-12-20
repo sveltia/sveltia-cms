@@ -6,9 +6,16 @@
   import Image from '$lib/components/common/image.svelte';
 
   /**
-   * @type {File[]}
+   * @typedef {object} Props
+   * @property {File[]} [files] - File list.
    */
-  export let files = [];
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    files = $bindable([]),
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <div role="none" class="files">
@@ -39,7 +46,7 @@
         onclick={(event) => {
           event.stopPropagation();
           files.splice(index, 1);
-          files = files;
+          files = [...files];
         }}
       >
         <Icon name="close" />

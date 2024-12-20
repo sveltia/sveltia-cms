@@ -8,7 +8,7 @@
   import { goBack } from '$lib/services/app/navigation';
   import { overlaidAsset, selectedAssetFolder } from '$lib/services/assets';
 
-  $: assets = $overlaidAsset ? [$overlaidAsset] : [];
+  const assets = $derived($overlaidAsset ? [$overlaidAsset] : []);
 </script>
 
 <Toolbar variant="primary" aria-label={$_('primary')}>

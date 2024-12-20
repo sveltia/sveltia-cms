@@ -16,29 +16,26 @@
   import { prefs } from '$lib/services/prefs';
 
   /**
-   * @type {AssetKind}
+   * @typedef {object} Props
+   * @property {AssetKind} [kind] - Asset kind.
+   * @property {string} [searchTerms] - Search terms for filtering assets.
+   * @property {MediaLibraryService} serviceProps - Media library service details.
+   * @property {string} [gridId] - The `id` attribute of the inner listbox.
+   * @property {(detail: SelectedAsset) => void} [onSelect] - Custom `select` event handler.
    */
-  export let kind = 'image';
-  /**
-   * @type {string}
-   */
-  export let searchTerms = '';
-  /**
-   * @type {MediaLibraryService}
-   */
-  export let serviceProps;
-  /**
-   * The `id` attribute of the inner listbox.
-   * @type {string | undefined}
-   */
-  export let gridId = undefined;
-  /**
-   * Custom `select` event handler.
-   * @type {((detail: SelectedAsset) => void) | undefined}
-   */
-  export let onSelect = undefined;
 
-  $: ({
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    kind = 'image',
+    searchTerms = '',
+    serviceProps,
+    gridId = undefined,
+    onSelect = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     serviceType = 'stock_photos',
     serviceId = '',
     serviceLabel = '',
@@ -50,27 +47,22 @@
     init,
     signIn,
     search,
-  } = serviceProps);
+  } = $derived(serviceProps);
 
-  const input = { userName: '', password: '' };
-  let hasConfig = true;
-  let hasAuthInfo = false;
-  let apiKey = '';
-  let userName = '';
-  let password = '';
+  const input = $state({ userName: '', password: '' });
+  let hasConfig = $state(true);
+  let hasAuthInfo = $state(false);
+  let apiKey = $state('');
+  let userName = $state('');
+  let password = $state('');
+  /** @type {'initial' | 'requested' | 'success' | 'error'} */
+  let authState = $state('initial');
+  /** @type {ExternalAsset[] | null} */
+  let searchResults = $state(null);
+  /** @type {string | undefined} */
+  let error = $state();
+
   let debounceTimer = 0;
-  /**
-   * @type {'initial' | 'requested' | 'success' | 'error'}
-   */
-  let authState = 'initial';
-  /**
-   * @type {ExternalAsset[] | null}
-   */
-  let searchResults = null;
-  /**
-   * @type {string | undefined}
-   */
-  let error;
 
   /**
    * Search assets.
@@ -122,16 +114,6 @@
     }
   };
 
-  $: {
-    void searchTerms;
-    window.clearTimeout(debounceTimer);
-    debounceTimer = window.setTimeout(() => {
-      if (hasAuthInfo) {
-        searchAssets(searchTerms);
-      }
-    }, 1000);
-  }
-
   onMount(() => {
     (async () => {
       if (typeof init === 'function') {
@@ -152,6 +134,16 @@
         searchAssets();
       }
     })();
+  });
+
+  $effect(() => {
+    void searchTerms;
+    window.clearTimeout(debounceTimer);
+    debounceTimer = window.setTimeout(() => {
+      if (hasAuthInfo) {
+        searchAssets(searchTerms);
+      }
+    }, 1000);
   });
 </script>
 

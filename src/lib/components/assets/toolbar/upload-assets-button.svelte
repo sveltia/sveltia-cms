@@ -5,7 +5,7 @@
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
 
   // Can’t upload assets if collection assets are saved at entry-relative paths
-  $: uploadDisabled = !!$selectedAssetFolder?.entryRelative;
+  const uploadDisabled = $derived(!!$selectedAssetFolder?.entryRelative);
 </script>
 
 <Button

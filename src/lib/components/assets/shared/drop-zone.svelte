@@ -6,40 +6,41 @@
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
 
   /**
-   * @type {string | undefined}
+   * @typedef {object} Props
+   * @property {string} [accept] - The `accept` attribute for the `<input type="file">`.
+   * @property {boolean} [disabled] - Whether to disable new file selection.
+   * @property {boolean} [multiple] - Whether to accept multiple files.
+   * @property {boolean} [showUploadButton] - Whether to show the upload button.
+   * @property {boolean} [showFilePreview] - Whether to show file preview after files are selected.
+   * @property {(detail: { files: File[] }) => void} [onSelect] - Custom `select` event handler.
+   * @property {import('svelte').Snippet} [children] - Slot content.
    */
-  export let accept = undefined;
-  export let disabled = false;
-  export let multiple = false;
-  export let showUploadButton = false;
-  export let showFilePreview = false;
-  /**
-   * Slot content.
-   * @type {import('svelte').Snippet | undefined}
-   */
-  export let children = undefined;
-  /**
-   * Custom `select` event handler.
-   * @type {((detail: { files: File[] }) => void) | undefined}
-   */
-  export let onSelect = undefined;
 
-  let dragging = false;
-  let typeMismatch = false;
-  /**
-   * @type {FilePicker}
-   */
-  let filePicker;
-  /**
-   * @type {File[]}
-   */
-  let files = [];
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    accept = undefined,
+    disabled = false,
+    multiple = false,
+    showUploadButton = false,
+    showFilePreview = false,
+    onSelect = undefined,
+    children = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  let dragging = $state(false);
+  let typeMismatch = $state(false);
+  /** @type {FilePicker | undefined} */
+  let filePicker = $state();
+  /** @type {File[]}  */
+  let files = $state([]);
 
   /**
    * Open the file picker to let the user choose file(s).
    */
   export const openFilePicker = () => {
-    filePicker.open();
+    filePicker?.open();
   };
 
   /**
@@ -47,6 +48,7 @@
    */
   export const reset = () => {
     files = [];
+    onSelect?.({ files });
   };
 
   /**
@@ -55,11 +57,8 @@
    */
   const updateFileList = (allFiles) => {
     files = multiple ? allFiles : allFiles.slice(0, 1);
-  };
-
-  $: {
     onSelect?.({ files });
-  }
+  };
 </script>
 
 <div

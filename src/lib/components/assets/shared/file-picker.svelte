@@ -1,19 +1,23 @@
 <script>
   /**
-   * @type {HTMLInputElement}
+   * @typedef {object} Props
+   * @property {string} [accept] - The `accept` attribute for the `<input type="file">`.
+   * @property {boolean} [multiple] - Whether to accept multiple files.
+   * @property {(detail: { files: File[], file: File }) => void} [onSelect] - Custom `select` event
+   * handler. Since `multiple` could be false, we pass both `file` and `files` with the arguments.
    */
-  let filePicker;
 
-  /**
-   * @type {string | undefined}
-   */
-  export let accept = undefined;
-  export let multiple = false;
-  /**
-   * Custom `select` event handler.
-   * @type {((detail: { files: File[], file: File }) => void) | undefined}
-   */
-  export let onSelect = undefined;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    accept = undefined,
+    multiple = false,
+    onSelect = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  /** @type {HTMLInputElement | undefined} */
+  let filePicker = $state();
 
   /**
    * Show the browser’s file picker dialog.

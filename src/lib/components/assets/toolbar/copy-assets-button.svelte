@@ -6,32 +6,30 @@
   import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
 
   /**
-   * @type {Asset[]}
+   * @typedef {object} Props
+   * @property {Asset[]} [assets] - Selected assets.
    */
-  export let assets = [];
 
-  /**
-   * @type {AssetDetails[]}
-   */
-  let assetsDetails = [];
-  /**
-   * @type {Blob | undefined}
-   */
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    assets = [],
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  /** @type {AssetDetails[]} */
+  let assetsDetailList = $state([]);
+  let canCopyFileData = $state(false);
+  /** @type {{ show: boolean, text: string, status: 'success' | 'error' }} */
+  const toast = $state({ show: false, text: '', status: 'success' });
+
+  const singleAsset = $derived(assets.length === 1);
+  const publicURLs = $derived(
+    assetsDetailList.filter(({ publicURL }) => !!publicURL).map(({ publicURL }) => publicURL),
+  );
+
+  /** @type {Blob | undefined} */
   let assetBlob = undefined;
-  /**
-   * @type {boolean}
-   */
-  let canCopyFileData = false;
-  /**
-   * @type {{ show: boolean, text: string, status: 'success' | 'error' }}
-   */
-  const toast = { show: false, text: '', status: 'success' };
-
-  $: singleAsset = assets.length === 1;
-
-  $: publicURLs = assetsDetails
-    .filter(({ publicURL }) => !!publicURL)
-    .map(({ publicURL }) => publicURL);
 
   /**
    * Check if the file data can be copied to clipboard. Since OSes usually support only one item,
@@ -118,10 +116,12 @@
     }
   };
 
-  $: (async () => {
-    assetsDetails = await Promise.all(assets.map(getAssetDetails));
-    canCopyFileData = await checkCanCopyFileData();
-  })();
+  $effect(() => {
+    (async () => {
+      assetsDetailList = await Promise.all(assets.map(getAssetDetails));
+      canCopyFileData = await checkCanCopyFileData();
+    })();
+  });
 </script>
 
 <MenuButton

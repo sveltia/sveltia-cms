@@ -481,6 +481,15 @@ export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {})
   );
 };
 
+/** @type {AssetDetails} */
+export const defaultAssetDetails = {
+  publicURL: undefined,
+  repoBlobURL: undefined,
+  dimensions: undefined,
+  duration: undefined,
+  usedEntries: [],
+};
+
 /**
  * Get the given asset’s extra info.
  * @param {Asset} asset - Asset.

@@ -11,32 +11,35 @@
     showAssetOverlay,
   } from '$lib/services/assets';
 
-  /** @type {Asset | undefined} */
-  $: asset = $renamingAsset;
-
   const componentId = generateUUID('short');
 
-  /** @type {boolean} */
-  let open = false;
-  /** @type {string | undefined} */
-  let dirname = '';
-  /** @type {string} */
-  let filename = '';
-  /** @type {string | undefined} */
-  let extension = '';
-  /** @type {string} */
-  let newName = '';
+  let open = $state(false);
+  /** @type {{ dirname?: string, filename: string, extension?: string }} */
+  let pathInfo = $state({ filename: '' });
+  let newName = $state('');
   /** @type {string[]} */
-  let otherNames = [];
+  let otherNames = $state([]);
   /** @type {Entry[]} */
-  let usedEntries = [];
+  let usedEntries = $state([]);
+
+  const asset = $derived($renamingAsset);
+  const { dirname, filename, extension } = $derived(pathInfo);
+
+  const error = $derived.by(() => {
+    if (!newName.trim()) return 'empty';
+    if (newName.includes('/')) return 'character';
+    if (otherNames.includes(`${newName}${extension ? `.${extension}` : ''}`)) return 'duplicate';
+    return undefined;
+  });
+
+  const invalid = $derived(!!error);
 
   /**
    * Initialize the state.
    */
   const initState = async () => {
     if (asset) {
-      ({ dirname, filename, extension } = getPathInfo(asset.path));
+      pathInfo = getPathInfo(asset.path);
       newName = filename;
       otherNames = getAssetsByDirName(/** @type {string} */ (dirname))
         .map((a) => a.name)
@@ -46,28 +49,18 @@
     }
   };
 
-  $: {
+  $effect(() => {
     if (asset) {
       initState();
     }
-  }
+  });
 
-  $: {
+  $effect(() => {
     if (!$showAssetOverlay) {
       open = false;
       $renamingAsset = undefined;
     }
-  }
-
-  $: error = (() => {
-    if (!newName.trim()) return 'empty';
-    if (newName.includes('/')) return 'character';
-    if (otherNames.includes(`${newName}${extension ? `.${extension}` : ''}`)) return 'duplicate';
-
-    return undefined;
-  })();
-
-  $: invalid = !!error;
+  });
 </script>
 
 <Dialog

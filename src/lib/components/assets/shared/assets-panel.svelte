@@ -9,36 +9,31 @@
   import { normalize } from '$lib/services/search';
 
   /**
-   * @type {Asset[]}
+   * @typedef {object} Props
+   * @property {Asset[]} [assets] - Asset list.
+   * @property {ViewType} [viewType] - View type.
+   * @property {string} [searchTerms] - Search terms for filtering assets.
+   * @property {string} [gridId] - The `id` attribute of the inner listbox.
+   * @property {boolean} [checkerboard] - Whether to show a checkerboard background below a
+   * transparent image.
+   * @property {(detail: { asset: Asset }) => void} [onSelect] - Custom `select` event handler.
    */
-  export let assets = [];
-  /**
-   * @type {ViewType}
-   */
-  export let viewType = 'grid';
-  /**
-   * @type {string}
-   */
-  export let searchTerms = '';
-  /**
-   * The `id` attribute of the inner listbox.
-   * @type {string | undefined}
-   */
-  export let gridId = undefined;
-  /**
-   * Whether to show a checkerboard background below a transparent image.
-   * @type {boolean}
-   */
-  export let checkerboard = false;
-  /**
-   * Custom `select` event handler.
-   * @type {((detail: { asset: Asset }) => void) | undefined}
-   */
-  export let onSelect = undefined;
 
-  $: filteredAssets = searchTerms
-    ? assets.filter(({ name }) => normalize(name).includes(searchTerms))
-    : assets;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    assets = [],
+    viewType = 'grid',
+    searchTerms = '',
+    gridId = undefined,
+    checkerboard = false,
+    onSelect = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const filteredAssets = $derived(
+    searchTerms ? assets.filter(({ name }) => normalize(name).includes(searchTerms)) : assets,
+  );
 </script>
 
 {#if filteredAssets.length}

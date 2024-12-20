@@ -18,61 +18,76 @@
   import { prefs } from '$lib/services/prefs';
   import { normalize } from '$lib/services/search';
 
-  export let open = false;
   /**
-   * @type {AssetKind | undefined}
+   * @typedef {object} Props
+   * @property {boolean} [open] - Whether to open the dialog.
+   * @property {AssetKind | undefined} [kind] - Asset kind.
+   * @property {boolean} [canEnterURL] - Whether to allow entering a URL.
+   * @property {Entry} [entry] - Associated entry.
+   * @property {(detail: { asset: SelectedAsset }) => void} [onSelect] - Custom `select` event
+   * handler.
    */
-  export let kind;
-  export let canEnterURL = true;
-  /** @type {Entry | undefined} */
-  export let entry;
-  /**
-   * Custom `select` event handler.
-   * @type {((detail: { asset: SelectedAsset }) => void) | undefined}
-   */
-  export let onSelect = undefined;
 
-  const title = kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file');
-  let elementIdPrefix = '';
-  /**
-   * @type {SelectedAsset | null}
-   */
-  let selectedAsset = null;
-  let enteredURL = '';
-  let rawSearchTerms = '';
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    open = $bindable(false),
+    kind,
+    canEnterURL = true,
+    entry,
+    onSelect = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: searchTerms = normalize(rawSearchTerms);
-  $: ({ internalPath = '', entryRelative = false } =
-    $selectedCollection?._assetFolder ?? /** @type {any} */ ({}));
-  $: showCollectionAssets = !!internalPath && !entryRelative;
-  $: showEntryAssets = !!entry && entryRelative;
-  $: libraryName = showEntryAssets
-    ? 'entry-assets'
-    : showCollectionAssets
-      ? 'collection-assets'
-      : 'uncategorized-assets';
-  $: showUploader = libraryName === 'upload';
-  $: entryDirName = entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined;
-  $: isLocalLibrary = libraryName.endsWith('-assets');
-  $: isEnabledMediaService =
+  let elementIdPrefix = $state('');
+  /** @type {SelectedAsset | null} */
+  let selectedAsset = $state(null);
+  let enteredURL = $state('');
+  let rawSearchTerms = $state('');
+  let libraryName = $state('uncategorized-assets');
+
+  const title = $derived(
+    kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file'),
+  );
+  const searchTerms = $derived(normalize(rawSearchTerms));
+  const { internalPath = '', entryRelative = false } = $derived(
+    $selectedCollection?._assetFolder ?? /** @type {any} */ ({}),
+  );
+  const showCollectionAssets = $derived(!!internalPath && !entryRelative);
+  const showEntryAssets = $derived(!!entry && entryRelative);
+  const showUploader = $derived(libraryName === 'upload');
+  const entryDirName = $derived(
+    entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined,
+  );
+  const isLocalLibrary = $derived(libraryName.endsWith('-assets'));
+  const isEnabledMediaService = $derived(
     (Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName]) ||
-    (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]);
+      (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]),
+  );
 
-  $: {
+  onMount(() => {
+    elementIdPrefix = `library-${generateUUID('short')}`;
+  });
+
+  $effect(() => {
+    libraryName = showEntryAssets
+      ? 'entry-assets'
+      : showCollectionAssets
+        ? 'collection-assets'
+        : 'uncategorized-assets';
+  });
+
+  $effect(() => {
     if (open) {
       // Reset values
       enteredURL = '';
     }
-  }
+  });
 
-  $: {
+  $effect(() => {
     if (!$showContentOverlay) {
       open = false;
     }
-  }
-
-  onMount(() => {
-    elementIdPrefix = `library-${generateUUID('short')}`;
   });
 </script>
 

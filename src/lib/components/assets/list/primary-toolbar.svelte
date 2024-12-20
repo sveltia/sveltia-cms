@@ -10,7 +10,11 @@
   import { focusedAsset, selectedAssetFolder, selectedAssets } from '$lib/services/assets';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
 
-  $: assets = $selectedAssets.length ? $selectedAssets : $focusedAsset ? [$focusedAsset] : [];
+  const assets = $derived.by(() => {
+    if ($selectedAssets.length) return $selectedAssets;
+    if ($focusedAsset) return [$focusedAsset];
+    return [];
+  });
 </script>
 
 <Toolbar variant="primary" aria-label={$_('folder')}>

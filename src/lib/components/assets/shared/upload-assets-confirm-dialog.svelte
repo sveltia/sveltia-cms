@@ -6,14 +6,21 @@
   import { saveAssets } from '$lib/services/assets/data';
   import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
 
-  $: ({ files, folder, originalAsset } = $uploadingAssets);
+  const { files, folder, originalAsset } = $derived($uploadingAssets);
 
-  $: {
+  /** @type {File[]} */
+  let uploadingFiles = $state([]);
+
+  $effect(() => {
+    uploadingFiles = [...files];
+  });
+
+  $effect(() => {
     if (!$showAssetOverlay) {
       // Close the dialog
       $uploadingAssets = { folder: undefined, files: [] };
     }
-  }
+  });
 </script>
 
 <!-- @todo Confirm to replace an old image if a file with the same same exists. -->
@@ -38,13 +45,13 @@
         },
       })}
     {:else}
-      {$_(files.length === 1 ? 'confirm_uploading_file' : 'confirm_uploading_files', {
+      {$_(uploadingFiles.length === 1 ? 'confirm_uploading_file' : 'confirm_uploading_files', {
         values: {
-          count: files.length,
+          count: uploadingFiles.length,
           folder: `/${folder}`,
         },
       })}
     {/if}
   </div>
-  <UploadAssetsPreview bind:files />
+  <UploadAssetsPreview bind:files={uploadingFiles} />
 </ConfirmationDialog>

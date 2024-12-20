@@ -8,8 +8,8 @@
   import { assetKinds, selectedAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
 
-  $: hasListedAssets = !!$listedAssets.length;
-  $: hasMultipleAssets = $listedAssets.length > 1;
+  const hasListedAssets = $derived(!!$listedAssets.length);
+  const hasMultipleAssets = $derived($listedAssets.length > 1);
 </script>
 
 <Toolbar variant="secondary" aria-label={$_('asset_list')}>
