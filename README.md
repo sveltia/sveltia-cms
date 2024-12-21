@@ -175,7 +175,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 
 ### Better security
 
-- Avoids vulnerabilities in dependencies through constant updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, while the number of high severity vulnerabilities in Netlify/Decap CMS are unpatched[^33].
+- Avoids vulnerabilities in dependencies through constant updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities are unpatched[^33].
 - We have enabled [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/).
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration[^108].
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
@@ -965,8 +965,9 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### As seen on
 
-- [Made with Svelte](https://madewithsvelte.com/sveltia-cms)
 - [LogRocket Blog](https://blog.logrocket.com/9-best-git-based-cms-platforms/)
+- [Jamstack.org](https://jamstack.org/headless-cms/sveltia-cms/)
+- [Made with Svelte](https://madewithsvelte.com/sveltia-cms)
 
 ## Disclaimer
 
