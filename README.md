@@ -110,7 +110,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 140+ of them, or 255+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 250 or all relevant and fixable issues in a future release
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
-  - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new) if you have any specific issues you’d like to see solved!
+  - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
 - Responding to feedback from [@kyoshino](https://github.com/kyoshino)’s clients and regular users
 - Implementing our own enhancement ideas for every part of the product
 - Making the code clean and maintainable
@@ -464,7 +464,7 @@ These limitations are expected to be resolved before or shortly after GA:
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and it’s served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
 - We plan to provide partial compatibility with now-discontinued Static CMS, such as the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue).
-- Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new).
+- Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug).
 
 ## Getting started
 
