@@ -968,6 +968,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - [LogRocket Blog](https://blog.logrocket.com/9-best-git-based-cms-platforms/)
 - [Jamstack.org](https://jamstack.org/headless-cms/sveltia-cms/)
 - [Made with Svelte](https://madewithsvelte.com/sveltia-cms)
+- [Hugo](https://gohugo.io/tools/front-ends/)
 
 ## Disclaimer
 
