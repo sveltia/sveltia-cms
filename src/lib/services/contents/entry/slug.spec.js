@@ -47,13 +47,14 @@ describe('Test fillSlugTemplate()', () => {
   });
 
   test('date/time', () => {
-    // The time zone should be UTC, not local
-    const { year, month, day, hour, minute, second } = getDateTimeParts({ timeZone: 'UTC' });
     const template = '{{year}}-{{month}}-{{day}}-{{hour}}-{{minute}}-{{second}}';
+    const dateTimeParts = getDateTimeParts({ timeZone: 'UTC' });
+    const { year, month, day, hour, minute, second } = dateTimeParts;
+    const result = `${year}-${month}-${day}-${hour}-${minute}-${second}`;
 
-    expect(fillSlugTemplate(template, { collection, content: {} })).toEqual(
-      `${year}-${month}-${day}-${hour}-${minute}-${second}`,
-    );
+    // The time zone should always be UTC, not local, with or without the `dateTimeParts` option
+    expect(fillSlugTemplate(template, { collection, content: {} })).toEqual(result);
+    expect(fillSlugTemplate(template, { collection, content: {}, dateTimeParts })).toEqual(result);
   });
 
   test('random ID fallback', () => {
