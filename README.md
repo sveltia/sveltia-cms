@@ -427,7 +427,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We may implement a high-performance Git Gateway alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We plan to develop a high-performance Git Gateway alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **The Netlify Identity widget will not be supported**, as it’s not useful without Git Gateway. We may be able to support it in the future if a Git Gateway alternative is created.
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
@@ -951,6 +951,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and nested collections
 - Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are already implemented in Sveltia CMS
 - Exploring compatibility with Static CMS, a now-discontinued community fork of Netlify CMS (Note: The [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue) will be supported prior to the 1.0 release[^123])
+- More integration options: stock photos, cloud storage providers, translators, maps, analytics
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - AI integrations for image generation and content writing
 - End-user documentation
@@ -966,9 +967,9 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### As seen on
 
 - [LogRocket Blog – 9 best Git-based CMS platforms for your next project](https://blog.logrocket.com/9-best-git-based-cms-platforms/)
-- [Jamstack.org – Headless CMS](https://jamstack.org/headless-cms/sveltia-cms/)
-- [Made with Svelte](https://madewithsvelte.com/sveltia-cms)
+- [Jamstack – Headless CMS](https://jamstack.org/headless-cms/)
 - [Hugo – Front-end interfaces](https://gohugo.io/tools/front-ends/)
+- [Made with Svelte](https://madewithsvelte.com/sveltia-cms)
 
 ## Disclaimer
 
