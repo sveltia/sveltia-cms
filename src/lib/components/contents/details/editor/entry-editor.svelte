@@ -4,13 +4,19 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {LocaleCode} locale - Current pane’s locale.
    */
-  export let locale;
 
-  $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: fields = collectionFile?.fields ?? collection?.fields ?? [];
+  const { collection, collectionFile } = $derived($entryDraft ?? /** @type {EntryDraft} */ ({}));
+  const fields = $derived(collectionFile?.fields ?? collection?.fields ?? []);
 </script>
 
 {#each fields as fieldConfig (fieldConfig.name)}

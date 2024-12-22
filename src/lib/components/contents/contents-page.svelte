@@ -23,6 +23,8 @@
   const routeRegex =
     /^\/collections\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries))?(?:\/(?<subPath>.+?))?$/;
 
+  const MainContent = $derived($selectedCollection?.files ? FileList : EntryList);
+
   /**
    * Navigate to the content list or content details page given the URL hash.
    * @todo Show Not Found page.
@@ -165,7 +167,7 @@
           <SecondaryToolbar />
         {/snippet}
         {#snippet mainContent()}
-          <svelte:component this={$selectedCollection?.files ? FileList : EntryList} />
+          <MainContent />
         {/snippet}
         {#snippet secondarySidebar()}
           <SecondarySidebar />

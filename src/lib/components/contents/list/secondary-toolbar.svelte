@@ -15,12 +15,13 @@
     sortFields,
   } from '$lib/services/contents/collection/view';
 
-  $: ({ name: collectionName, _thumbnailFieldName } =
+  const { name: collectionName, _thumbnailFieldName } = $derived(
     $selectedCollection?._type === 'entry'
       ? /** @type {EntryCollection} */ ($selectedCollection)
-      : /** @type {EntryCollection} */ ({}));
-  $: hasListedEntries = !!$listedEntries.length;
-  $: hasMultipleEntries = $listedEntries.length > 1;
+      : /** @type {EntryCollection} */ ({}),
+  );
+  const hasListedEntries = $derived(!!$listedEntries.length);
+  const hasMultipleEntries = $derived($listedEntries.length > 1);
 </script>
 
 {#if $selectedCollection?._type === 'entry'}

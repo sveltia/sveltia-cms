@@ -32,49 +32,54 @@
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { prefs } from '$lib/services/prefs';
 
-  let showValidationToast = false;
-  let showDeleteDialog = false;
-  let showErrorDialog = false;
-  let saving = false;
+  let showValidationToast = $state(false);
+  let showDeleteDialog = $state(false);
+  let showErrorDialog = $state(false);
+  let saving = $state(false);
   /** @type {any} */
-  let menuButton;
+  let menuButton = $state();
 
-  $: ({
+  const {
     isNew,
     collection,
     collectionFile,
     originalEntry,
     originalLocales = {},
-    currentLocales = {},
     originalValues = {},
-    currentValues = {},
-    validities = {},
-    expanderStates,
-  } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-
-  $: ({
+  } = $derived($entryDraft ?? /** @type {EntryDraft} */ ({}));
+  const {
     editor: { preview: showPreviewPane = true } = {},
     backend: { automatic_deployments: autoDeployEnabled = undefined } = {},
-  } = $siteConfig ?? /** @type {SiteConfig} */ ({}));
-  $: showSaveOptions = $backendName !== 'local' && typeof autoDeployEnabled === 'boolean';
-  $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: collectionName = collection?.name;
-  $: collectionLabel = collection?.label || collectionName;
-  $: collectionLabelSingular = collection?.label_singular || collectionLabel;
-  $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
-  $: modified =
-    isNew || !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
-  $: errorCount = Object.values(validities ?? {})
-    .map((validity) => Object.values(validity).map(({ valid }) => !valid))
-    .flat(1)
-    .filter(Boolean).length;
-  $: associatedAssets =
+  } = $derived($siteConfig ?? /** @type {SiteConfig} */ ({}));
+  const showSaveOptions = $derived(
+    $backendName !== 'local' && typeof autoDeployEnabled === 'boolean',
+  );
+  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  const collectionName = $derived(collection?.name);
+  const collectionLabel = $derived(collection?.label || collectionName);
+  const collectionLabelSingular = $derived(collection?.label_singular || collectionLabel);
+  const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
+  const modified = $derived(
+    isNew ||
+      !equal(originalLocales, $entryDraft?.currentLocales) ||
+      !equal(originalValues, $entryDraft?.currentValues),
+  );
+  const errorCount = $derived(
+    Object.values($entryDraft?.validities ?? {})
+      .map((validity) => Object.values(validity).map(({ valid }) => !valid))
+      .flat(1)
+      .filter(Boolean).length,
+  );
+  const associatedAssets = $derived(
     !!originalEntry && !!collection._assetFolder?.entryRelative
       ? getAssociatedAssets({ entry: originalEntry, collectionName, relative: true })
-      : [];
-  $: previewURL = originalEntry
-    ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
-    : undefined;
+      : [],
+  );
+  const previewURL = $derived(
+    originalEntry
+      ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
+      : undefined,
+  );
 
   /**
    * Save the entry draft.
@@ -100,7 +105,12 @@
         }
 
         // Reset the draft
-        createDraft({ collection, collectionFile, originalEntry: savedEntry, expanderStates });
+        createDraft({
+          collection,
+          collectionFile,
+          originalEntry: savedEntry,
+          expanderStates: $entryDraft?.expanderStates,
+        });
       }
     } catch (/** @type {any} */ ex) {
       if (ex.message === 'validation_failed') {
@@ -202,7 +212,7 @@
         <MenuItemCheckbox
           label={$_('sync_scrolling')}
           checked={$entryEditorSettings?.syncScrolling}
-          disabled={!canPreview && Object.keys(currentValues).length === 1}
+          disabled={!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1}
           onChange={() => {
             entryEditorSettings.update((view = {}) => ({
               ...view,

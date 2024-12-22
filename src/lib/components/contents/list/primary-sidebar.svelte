@@ -8,8 +8,8 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
-  $: numberFormatter = Intl.NumberFormat($appLocale ?? undefined);
-  $: collections = $siteConfig?.collections.filter(({ hide }) => !hide) ?? [];
+  const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
+  const collections = $derived($siteConfig?.collections.filter(({ hide }) => !hide) ?? []);
 </script>
 
 <div role="none" class="primary-sidebar">

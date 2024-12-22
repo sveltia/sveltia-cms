@@ -8,17 +8,20 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
   /**
-   * @type {EntryCollection}
+   * @typedef {object} Props
+   * @property {EntryCollection} collection - Selected collection.
+   * @property {Entry} entry - Entry.
+   * @property {ViewType} viewType - View type.
    */
-  export let collection;
-  /**
-   * @type {Entry}
-   */
-  export let entry;
-  /**
-   * @type {ViewType}
-   */
-  export let viewType;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    collection,
+    entry,
+    viewType,
+    /* eslint-enable prefer-const */
+  } = $props();
 
   /**
    * Update the entry selection.

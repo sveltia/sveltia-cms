@@ -9,16 +9,17 @@
   import { translator } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/prefs';
 
-  $: ({ serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } =
-    $translator ?? /** @type {TranslationService} */ ({}));
+  const { serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived(
+    $translator ?? /** @type {TranslationService} */ ({}),
+  );
 
-  $: {
+  $effect(() => {
     if (!$showContentOverlay && $translatorApiKeyDialogState.show) {
       // Close the dialog when the Content Editor is closed
       $translatorApiKeyDialogState.show = false;
       $translatorApiKeyDialogState.resolve?.();
     }
-  }
+  });
 </script>
 
 <PromptDialog

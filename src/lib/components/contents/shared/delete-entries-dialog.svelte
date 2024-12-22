@@ -7,20 +7,29 @@
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
 
-  export let open = false;
+  /**
+   * @typedef {object} Props
+   * @property {boolean} [open] - Whether the dialog is open.
+   */
 
-  $: associatedAssets =
-    !!$selectedEntries.length && !!$selectedCollection?._assetFolder?.entryRelative
-      ? $selectedEntries
-          .map((entry) =>
-            getAssociatedAssets({
-              entry,
-              collectionName: $selectedCollection.name,
-              relative: true,
-            }),
-          )
-          .flat(1)
-      : [];
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    open = $bindable(false),
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const associatedAssets = $derived.by(() => {
+    if (!!$selectedEntries.length && !!$selectedCollection?._assetFolder?.entryRelative) {
+      const collectionName = $selectedCollection.name;
+
+      return $selectedEntries
+        .map((entry) => getAssociatedAssets({ entry, collectionName, relative: true }))
+        .flat(1);
+    }
+
+    return [];
+  });
 </script>
 
 <ConfirmationDialog

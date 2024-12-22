@@ -6,45 +6,52 @@
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {LocaleCode} locale - Current pane’s locale.
+   * @property {FieldKeyPath} keyPath - Field key path.
+   * @property {Field} fieldConfig - Field configuration.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {Field}
-   */
-  export let fieldConfig;
 
-  $: ({
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldConfig,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     name: fieldName,
     label = '',
     widget: widgetName = 'string',
     preview = true,
     i18n = false,
-  } = fieldConfig);
-  $: hasMultiple = ['relation', 'select'].includes(widgetName);
-  $: multiple = hasMultiple
-    ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
-    : undefined;
-  $: isList = widgetName === 'list' || (hasMultiple && multiple);
-  $: ({ collectionName, fileName, collection, collectionFile, currentValues } =
-    $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: valueMap = currentValues[locale];
-  $: ({ i18nEnabled, defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
-  $: canDuplicate = i18nEnabled && i18n === 'duplicate';
-  $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
-
+  } = $derived(fieldConfig);
+  const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
+  const multiple = $derived(
+    hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
+  );
+  const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
+  const { collectionName, fileName, collection, collectionFile } = $derived(
+    $entryDraft ?? /** @type {EntryDraft} */ ({}),
+  );
+  const valueMap = $derived($entryDraft?.currentValues[locale] ?? {});
+  const { i18nEnabled, defaultLocale } = $derived(
+    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
+  );
+  const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
+  const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
+  const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
   // Multiple values are flattened in the value map object
-  $: currentValue = isList
-    ? Object.entries(valueMap)
-        .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-        .map(([, val]) => val)
-        .filter((val) => val !== undefined)
-    : valueMap[keyPath];
+  const currentValue = $derived(
+    isList
+      ? Object.entries(valueMap)
+          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
+          .map(([, val]) => val)
+          .filter((val) => val !== undefined)
+      : valueMap[keyPath],
+  );
 
   /**
    * Called whenever the preview field is clicked. Highlight the corresponding editor field by

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script>
   import { GridCell, GridRow } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';

@@ -7,24 +7,24 @@
   import { translator } from '$lib/services/integrations/translators';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {LocaleCode} locale - Current pane’s locale.
+   * @property {LocaleCode[]} otherLocales - Other locales.
+   * @property {FieldKeyPath} [keyPath] - Field key path.
+   * @property {boolean} [translate] - Whether to translate the field.
    */
-  export let locale;
-  /**
-   * @type {LocaleCode[]}
-   */
-  export let otherLocales;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath = '';
-  /**
-   * @type {boolean}
-   */
-  export let translate = false;
 
-  $: ({ currentLocales = {}, currentValues = {} } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ getSourceLanguage, getTargetLanguage } = $translator);
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    otherLocales,
+    keyPath = '',
+    translate = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { getSourceLanguage, getTargetLanguage } = $derived($translator);
 </script>
 
 {#each otherLocales as otherLocale}
@@ -32,12 +32,13 @@
     label={$_(translate ? 'translate_from_x' : 'copy_from_x', {
       values: { locale: getLocaleLabel(otherLocale) },
     })}
-    disabled={!currentLocales[locale] ||
-      !currentLocales[otherLocale] ||
-      (keyPath && !currentValues[otherLocale][keyPath]) ||
+    disabled={!$entryDraft?.currentLocales[locale] ||
+      !$entryDraft?.currentLocales[otherLocale] ||
+      (keyPath && !$entryDraft?.currentValues[otherLocale][keyPath]) ||
       (!translate &&
         keyPath &&
-        currentValues[otherLocale][keyPath] === currentValues[locale][keyPath]) ||
+        $entryDraft?.currentValues[otherLocale][keyPath] ===
+          $entryDraft?.currentValues[locale][keyPath]) ||
       (translate && (!getSourceLanguage(locale) || !getTargetLanguage(otherLocale)))}
     onclick={() => {
       copyFromLocale(otherLocale, locale, { keyPath, translate });

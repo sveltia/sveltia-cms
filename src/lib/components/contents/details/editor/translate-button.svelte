@@ -8,25 +8,27 @@
   import { translator } from '$lib/services/integrations/translators';
 
   /**
-   * @type {'medium' | 'small'}
+   * @typedef {object} Props
+   * @property {'medium' | 'small'} [size] - Button size.
+   * @property {LocaleCode} locale - Current pane’s locale.
+   * @property {LocaleCode[]} otherLocales - Other locales.
+   * @property {FieldKeyPath} [keyPath] - Field key path.
    */
-  export let size = 'medium';
-  /**
-   * @type {LocaleCode}
-   */
-  export let locale;
-  /**
-   * @type {LocaleCode[]}
-   */
-  export let otherLocales;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath = '';
 
-  $: ({ currentLocales = {} } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ getSourceLanguage, getTargetLanguage } = $translator ?? {});
-  $: sourceDisabled = !currentLocales[locale] || !getSourceLanguage(locale);
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    size = 'medium',
+    locale,
+    otherLocales,
+    keyPath = '',
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { getSourceLanguage, getTargetLanguage } = $derived($translator ?? {});
+  const sourceDisabled = $derived(
+    !$entryDraft?.currentLocales[locale] || !getSourceLanguage(locale),
+  );
 </script>
 
 {#if otherLocales.length === 1}
@@ -40,7 +42,9 @@
     popupPosition="bottom-right"
     aria-label={label}
     title={label}
-    disabled={sourceDisabled || !currentLocales[otherLocale] || !getTargetLanguage(otherLocale)}
+    disabled={sourceDisabled ||
+      !$entryDraft?.currentLocales[otherLocale] ||
+      !getTargetLanguage(otherLocale)}
     onclick={() => {
       copyFromLocale(otherLocale, locale, { keyPath, translate: true });
     }}

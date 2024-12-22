@@ -25,45 +25,51 @@
   import { prefs } from '$lib/services/prefs';
 
   /**
-   * The wrapper element’s `id` attribute.
-   * @type {string}
+   * @typedef {object} Props
+   * @property {string} id - The wrapper element’s `id` attribute.
+   * @property {import('svelte/store').Writable<?EntryEditorPane>} thisPane - This pane’s mode and
+   * locale.
+   * @property {import('svelte/store').Writable<?EntryEditorPane>} [thatPane] - Another pane’s mode
+   * and locale.
    */
-  export let id;
-  /**
-   * This pane’s locale and mode.
-   * @type {import('svelte/store').Writable<?EntryEditorPane>}
-   */
-  export let thisPane;
-  /**
-   * @type {import('svelte/store').Writable<?EntryEditorPane>}
-   */
-  export let thatPane = writable(null);
 
-  $: ({ editor: { preview: showPreviewPane = true } = {} } =
-    $siteConfig ?? /** @type {SiteConfig} */ ({}));
-  $: ({
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    id,
+    thisPane,
+    thatPane = writable(null),
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { editor: { preview: showPreviewPane = true } = {} } = $derived(
+    $siteConfig ?? /** @type {SiteConfig} */ ({}),
+  );
+  const {
     collection,
     collectionFile,
     originalEntry,
-    currentLocales = {},
-    currentValues = {},
     originalValues = {},
-    validities = {},
-  } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ i18nEnabled, saveAllLocales, locales, defaultLocale } =
-    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: isLocaleEnabled = currentLocales[$thisPane?.locale ?? ''];
-  $: isOnlyLocale = Object.values(currentLocales).filter((enabled) => enabled).length === 1;
-  $: otherLocales = i18nEnabled ? locales.filter((l) => l !== $thisPane?.locale) : [];
-  $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
-  $: canCopy = !!otherLocales.length;
-  $: canRevert =
+  } = $derived($entryDraft ?? /** @type {EntryDraft} */ ({}));
+  const { i18nEnabled, saveAllLocales, locales, defaultLocale } = $derived(
+    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
+  );
+  const isLocaleEnabled = $derived($entryDraft?.currentLocales[$thisPane?.locale ?? '']);
+  const isOnlyLocale = $derived(
+    Object.values($entryDraft?.currentLocales ?? {}).filter((enabled) => enabled).length === 1,
+  );
+  const otherLocales = $derived(i18nEnabled ? locales.filter((l) => l !== $thisPane?.locale) : []);
+  const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
+  const canCopy = $derived(!!otherLocales.length);
+  const canRevert = $derived(
     $thisPane?.locale &&
-    !equal(currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]);
-  $: previewURL =
+      !equal($entryDraft?.currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]),
+  );
+  const previewURL = $derived(
     originalEntry && $thisPane?.locale
       ? getEntryPreviewURL(originalEntry, $thisPane?.locale, collection, collectionFile)
-      : undefined;
+      : undefined,
+  );
 </script>
 
 <div role="none" {id} class="header">
@@ -76,7 +82,9 @@
       >
         {#each locales as locale}
           {@const localeLabel = getLocaleLabel(locale)}
-          {@const invalid = Object.values(validities[locale]).some(({ valid }) => !valid)}
+          {@const invalid = Object.values($entryDraft?.validities[locale] ?? {}).some(
+            ({ valid }) => !valid,
+          )}
           {#if !($thatPane?.mode === 'edit' && $thatPane?.locale === locale)}
             <SelectButton
               selected={$thisPane?.mode === 'edit' && $thisPane?.locale === locale}
@@ -145,7 +153,7 @@
                 label={$_(
                   isLocaleEnabled
                     ? 'disable_x_locale'
-                    : currentValues[$thisPane.locale]
+                    : $entryDraft?.currentValues[$thisPane.locale]
                       ? 'reenable_x_locale'
                       : 'enable_x_locale',
                   { values: { locale: localeLabel } },

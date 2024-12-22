@@ -10,9 +10,9 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
 
-  $: collection = (() => /** @type {EntryCollection | undefined} */ ($selectedCollection))();
-  $: viewType = $currentView.type;
-  $: allEntries = $entryGroups.map(({ entries }) => entries).flat(1);
+  const collection = $derived(/** @type {EntryCollection | undefined} */ ($selectedCollection));
+  const viewType = $derived($currentView.type);
+  const allEntries = $derived($entryGroups.map(({ entries }) => entries).flat(1));
 </script>
 
 <ListContainer aria-label={collection?.files ? $_('file_list') : $_('entry_list')}>

@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { entryParseErrors } from '$lib/services/contents';
 
-  let showParseErrorToast = !!$entryParseErrors.length;
+  let showParseErrorToast = $state(!!$entryParseErrors.length);
 </script>
 
 <Toast bind:show={showParseErrorToast}>

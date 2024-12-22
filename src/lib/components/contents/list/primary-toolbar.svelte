@@ -8,7 +8,7 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
 
-  let showDeleteDialog = false;
+  let showDeleteDialog = $state(false);
 
   /**
    * Parse the given string as Markdown and sanitize the result to only allow certain tags.
@@ -21,15 +21,15 @@
       ALLOWED_ATTR: ['href'],
     });
 
-  $: ({
+  const {
     name,
     label,
     description,
     files,
     create = false,
     delete: canDelete = true,
-  } = $selectedCollection ?? /** @type {Collection} */ ({}));
-  $: collectionLabel = label || name;
+  } = $derived($selectedCollection ?? /** @type {Collection} */ ({}));
+  const collectionLabel = $derived(label || name);
 </script>
 
 {#if $selectedCollection}

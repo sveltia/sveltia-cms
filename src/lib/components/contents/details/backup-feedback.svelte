@@ -4,26 +4,28 @@
   import { backupToastState, restoreDialogState } from '$lib/services/contents/draft/backup';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
 
-  $: now = new Date();
-  $: ({ resolve, timestamp } = $restoreDialogState);
-  $: sameYear = now.getUTCFullYear() === timestamp?.getUTCFullYear();
-  $: sameMonth = sameYear && now.getUTCMonth() === timestamp?.getUTCMonth();
-  $: sameDay = sameMonth && now.getUTCDate() === timestamp?.getUTCDate();
-  $: datetime = timestamp?.toLocaleString($appLocale ?? undefined, {
-    year: sameYear ? undefined : 'numeric',
-    month: sameDay ? undefined : 'short',
-    day: sameDay ? undefined : 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-  });
+  const now = $derived(new Date());
+  const { resolve, timestamp } = $derived($restoreDialogState);
+  const sameYear = $derived(now.getUTCFullYear() === timestamp?.getUTCFullYear());
+  const sameMonth = $derived(sameYear && now.getUTCMonth() === timestamp?.getUTCMonth());
+  const sameDay = $derived(sameMonth && now.getUTCDate() === timestamp?.getUTCDate());
+  const datetime = $derived(
+    timestamp?.toLocaleString($appLocale ?? undefined, {
+      year: sameYear ? undefined : 'numeric',
+      month: sameDay ? undefined : 'short',
+      day: sameDay ? undefined : 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+    }),
+  );
 
-  $: {
+  $effect(() => {
     if (!$showContentOverlay && $restoreDialogState.show) {
       // Close the dialog when the Content Editor is closed
       $restoreDialogState.show = false;
       resolve?.();
     }
-  }
+  });
 </script>
 
 <ConfirmationDialog

@@ -16,17 +16,20 @@
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {LocaleCode} locale - Current pane’s locale.
+   * @property {FieldKeyPath} keyPath - Field key path.
+   * @property {Field} fieldConfig - Field configuration.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {Field}
-   */
-  export let fieldConfig;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldConfig,
+    /* eslint-enable prefer-const */
+  } = $props();
 
   const fieldId = generateElementId('field');
 
@@ -46,7 +49,7 @@
 
   setContext('field-editor', { extraHint });
 
-  $: ({
+  const {
     name: fieldName,
     label = '',
     comment = '',
@@ -55,61 +58,78 @@
     required = true,
     i18n = false,
     pattern = /** @type {string[]} */ ([]),
-  } = fieldConfig);
-  // @ts-ignore
-  $: ({ field: subField, fields: subFields, types } = /** @type {ListField} */ (fieldConfig));
-  $: hasSubFields = !!subField || !!subFields || !!types;
-  // @ts-ignore
-  $: ({ min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
-    fieldConfig
-  ));
-  $: type =
+  } = $derived(fieldConfig);
+  const {
+    field: subField,
+    fields: subFields,
+    types,
+  } = /** @type {ListField} */ ($derived(fieldConfig));
+  const hasSubFields = $derived(!!subField || !!subFields || !!types);
+  const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
+    $derived(fieldConfig)
+  );
+  const type = $derived(
     // prettier-ignore
-    widgetName === 'string' ? (/** @type {StringField} */ (fieldConfig).type ?? 'text') : undefined;
-  $: allowPrefix = ['string'].includes(widgetName);
-  $: prefix = allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined;
-  $: suffix = allowPrefix ? /** @type {StringField} */ (fieldConfig).suffix : undefined;
-  $: allowExtraLabels = ['boolean', 'number', 'string'].includes(widgetName);
-  $: beforeInputLabel = allowExtraLabels
-    ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).before_input
-    : undefined;
-  $: afterInputLabel = allowExtraLabels
-    ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).after_input
-    : undefined;
-  $: hasExtraLabels = !!(prefix || suffix || beforeInputLabel || afterInputLabel);
-  $: hasMultiple = ['relation', 'select'].includes(widgetName);
-  $: multiple = hasMultiple
-    ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple
-    : undefined;
-  $: isList = widgetName === 'list' || (hasMultiple && multiple);
-  $: ({ collection, collectionFile, originalValues, currentValues, validities } =
-    $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ i18nEnabled, locales, defaultLocale } =
-    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: otherLocales = i18nEnabled ? locales.filter((l) => l !== locale) : [];
-  $: canTranslate = i18nEnabled && (i18n === true || i18n === 'translate');
-  $: canDuplicate = i18nEnabled && i18n === 'duplicate';
-  $: canEdit = locale === defaultLocale || canTranslate || canDuplicate;
-  $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
-
+    widgetName === 'string' ? (/** @type {StringField} */ (fieldConfig).type ?? 'text') : undefined,
+  );
+  const allowPrefix = $derived(['string'].includes(widgetName));
+  const prefix = $derived(
+    allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined,
+  );
+  const suffix = $derived(
+    allowPrefix ? /** @type {StringField} */ (fieldConfig).suffix : undefined,
+  );
+  const allowExtraLabels = $derived(['boolean', 'number', 'string'].includes(widgetName));
+  const beforeInputLabel = $derived(
+    allowExtraLabels
+      ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).before_input
+      : undefined,
+  );
+  const afterInputLabel = $derived(
+    allowExtraLabels
+      ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).after_input
+      : undefined,
+  );
+  const hasExtraLabels = $derived(!!(prefix || suffix || beforeInputLabel || afterInputLabel));
+  const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
+  const multiple = $derived(
+    hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
+  );
+  const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
+  const { collection, collectionFile, originalValues } = $derived(
+    $entryDraft ?? /** @type {EntryDraft} */ ({}),
+  );
+  const { i18nEnabled, locales, defaultLocale } = $derived(
+    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
+  );
+  const otherLocales = $derived(i18nEnabled ? locales.filter((l) => l !== locale) : []);
+  const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
+  const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
+  const canEdit = $derived(locale === defaultLocale || canTranslate || canDuplicate);
+  const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
   // Multiple values are flattened in the value map object
-  $: currentValue = isList
-    ? Object.entries(currentValues[locale])
-        .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-        .map(([, val]) => val)
-        .filter((val) => val !== undefined)
-    : currentValues[locale][keyPath];
-  $: originalValue = isList
-    ? Object.entries(originalValues[locale])
-        .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-        .map(([, val]) => val)
-        .filter((val) => val !== undefined)
-    : originalValues[locale][keyPath];
-  $: validity = validities[locale][keyPath];
-
-  $: fieldLabel = label || fieldName;
-  $: readonly = (i18n === 'duplicate' && locale !== defaultLocale) || widgetName === 'compute';
-  $: invalid = validity?.valid === false;
+  const currentValue = $derived(
+    isList
+      ? Object.entries($entryDraft?.currentValues[locale] ?? {})
+          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
+          .map(([, val]) => val)
+          .filter((val) => val !== undefined)
+      : $entryDraft?.currentValues[locale][keyPath],
+  );
+  const originalValue = $derived(
+    isList
+      ? Object.entries(originalValues[locale])
+          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
+          .map(([, val]) => val)
+          .filter((val) => val !== undefined)
+      : originalValues[locale][keyPath],
+  );
+  const validity = $derived($entryDraft?.validities[locale][keyPath]);
+  const fieldLabel = $derived(label || fieldName);
+  const readonly = $derived(
+    (i18n === 'duplicate' && locale !== defaultLocale) || widgetName === 'compute',
+  );
+  const invalid = $derived(validity?.valid === false);
 </script>
 
 {#if $entryDraft && canEdit && widgetName !== 'hidden'}
@@ -274,11 +294,12 @@
       {/if}
     </div>
     {#if !readonly && (hint || $extraHint)}
+      {@const ExtraHint = $extraHint}
       <div role="none" class="footer">
         {#if hint}
           <p class="hint">{@html sanitize(hint)}</p>
         {/if}
-        <svelte:component this={$extraHint} {fieldConfig} {currentValue} />
+        <ExtraHint {fieldConfig} {currentValue} />
       </div>
     {/if}
   </section>

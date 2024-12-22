@@ -10,28 +10,29 @@
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
-   * The wrapper element’s `id` attribute.
-   * @type {string}
+   * @typedef {object} Props
+   * @property {string} id - The wrapper element’s `id` attribute.
+   * @property {import('svelte/store').Writable<EntryEditorPane | null>} thisPane - This pane’s mode
+   * and locale.
+   * @property {HTMLElement} [thisPaneContentArea] - This pane’s content area.
+   * @property {HTMLElement} [thatPaneContentArea] - Another pane’s content area.
    */
-  export let id;
-  /**
-   * @type {import('svelte/store').Writable<EntryEditorPane | null>}
-   */
-  export let thisPane;
-  /**
-   * @type {HTMLElement | undefined}
-   */
-  export let thisPaneContentArea;
-  /**
-   * @type {HTMLElement | undefined}
-   */
-  export let thatPaneContentArea;
 
-  $: ({ syncScrolling } = $entryEditorSettings ?? {});
-  $: ({ currentLocales = {}, currentValues = {} } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: ({ locale, mode } = $thisPane ?? /** @type {EntryEditorPane} */ ({}));
-  $: hasContent = !!currentValues[locale];
-  $: labelOptions = { values: { locale: getLocaleLabel(locale) } };
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    id,
+    thisPane,
+    thisPaneContentArea = $bindable(),
+    thatPaneContentArea = $bindable(),
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { syncScrolling } = $derived($entryEditorSettings ?? {});
+  const { locale, mode } = $derived($thisPane ?? /** @type {EntryEditorPane} */ ({}));
+  const hasContent = $derived(!!$entryDraft?.currentValues[locale]);
+  const labelOptions = $derived({ values: { locale: getLocaleLabel(locale) } });
+  const MainContent = $derived(mode === 'preview' ? EntryPreview : EntryEditor);
 
   /**
    * Sync the scroll position with the other edit/preview pane.
@@ -68,15 +69,15 @@
     });
   };
 
-  $: {
+  $effect(() => {
     if (thisPaneContentArea) {
       thisPaneContentArea.scrollTop = 0;
     }
-  }
+  });
 </script>
 
 <div role="none" {id} class="wrapper">
-  {#if currentLocales[locale]}
+  {#if $entryDraft?.currentLocales[locale]}
     <div
       role="none"
       class="content"
@@ -88,7 +89,7 @@
         syncScrollPosition();
       }}
     >
-      <svelte:component this={mode === 'preview' ? EntryPreview : EntryEditor} {locale} />
+      <MainContent {locale} />
     </div>
   {:else if mode === 'edit'}
     <EmptyState>

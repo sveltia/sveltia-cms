@@ -22,39 +22,38 @@
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
+   * A reference to the group element.
    * @type {HTMLElement | undefined}
    */
-  let leftPaneContentArea;
-  /**
-   * @type {HTMLElement | undefined}
-   */
-  let rightPaneContentArea;
-  /**
-   * @type {boolean}
-   */
+  let group = undefined;
   let restoring = false;
 
-  $: ({ editor: { preview: showPreviewPane = true } = {} } =
-    $siteConfig ?? /** @type {SiteConfig} */ ({}));
-  $: ({ collection, collectionFile, originalEntry } =
-    $entryDraft ?? /** @type {EntryDraft} */ ({}));
-  $: entryId =
-    originalEntry?.id ?? [collection?.name ?? '-', collectionFile?.name ?? '-'].join('/');
-  $: ({ showPreview } = $entryEditorSettings ?? {});
-  $: ({ i18nEnabled, locales, defaultLocale } =
-    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: canPreview = (collectionFile ?? collection)?.editor?.preview ?? showPreviewPane;
-  $: paneStateKey = collectionFile?.name
-    ? [collection?.name, collectionFile.name].join('|')
-    : collection?.name;
+  let hiding = $state(false);
+  let hidden = $state(true);
+  /** @type {HTMLElement | undefined} */
+  let wrapper = $state();
+  /** @type {HTMLElement | undefined} */
+  let leftPaneContentArea = $state();
+  /** @type {HTMLElement | undefined} */
+  let rightPaneContentArea = $state();
 
-  $: {
-    if (paneStateKey) {
-      // Reset the editor panes
-      $editorLeftPane = null;
-      $editorRightPane = null;
-    }
-  }
+  const { editor: { preview: showPreviewPane = true } = {} } = $derived(
+    $siteConfig ?? /** @type {SiteConfig} */ ({}),
+  );
+  const { collection, collectionFile, originalEntry } = $derived(
+    $entryDraft ?? /** @type {EntryDraft} */ ({}),
+  );
+  const entryId = $derived(
+    originalEntry?.id ?? [collection?.name ?? '-', collectionFile?.name ?? '-'].join('/'),
+  );
+  const { showPreview } = $derived($entryEditorSettings ?? {});
+  const { i18nEnabled, locales, defaultLocale } = $derived(
+    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
+  );
+  const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
+  const paneStateKey = $derived(
+    collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
+  );
 
   /**
    * Restore the pane state from IndexedDB.
@@ -108,12 +107,6 @@
     }
   };
 
-  $: {
-    void showPreview;
-    void canPreview;
-    switchPanes();
-  }
-
   /**
    * Save the pane state to IndexedDB.
    */
@@ -131,31 +124,6 @@
     }));
   };
 
-  $: {
-    void $editorLeftPane;
-    void $editorRightPane;
-    savePanes();
-  }
-
-  /**
-   * A reference to the wrapper element.
-   * @type {HTMLElement}
-   */
-  let wrapper;
-  /**
-   * A reference to the group element.
-   * @type {HTMLElement}
-   */
-  let group;
-  /**
-   * @type {boolean}
-   */
-  let hiding = false;
-  /**
-   * @type {boolean}
-   */
-  let hidden = true;
-
   /**
    * Move focus to the wrapper once the overlay is loaded.
    */
@@ -163,12 +131,14 @@
     // Wait until `inert` is updated
     await tick();
 
-    group.tabIndex = 0;
-    group.focus();
+    if (group) {
+      group.tabIndex = 0;
+      group.focus();
+    }
   };
 
   onMount(() => {
-    group = /** @type {HTMLElement} */ (wrapper.querySelector('[role="group"]'));
+    group = /** @type {HTMLElement} */ (wrapper?.querySelector('[role="group"]'));
 
     group.addEventListener('transitionend', () => {
       if (!$showContentOverlay) {
@@ -179,7 +149,27 @@
     });
   });
 
-  $: {
+  $effect(() => {
+    if (paneStateKey) {
+      // Reset the editor panes
+      $editorLeftPane = null;
+      $editorRightPane = null;
+    }
+  });
+
+  $effect(() => {
+    void showPreview;
+    void canPreview;
+    switchPanes();
+  });
+
+  $effect(() => {
+    void $editorLeftPane;
+    void $editorRightPane;
+    savePanes();
+  });
+
+  $effect(() => {
     if (wrapper) {
       if (!$showContentOverlay) {
         hiding = true;
@@ -192,7 +182,7 @@
         resetBackupToastState();
       }
     }
-  }
+  });
 </script>
 
 <div
