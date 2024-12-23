@@ -124,7 +124,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
-- The maintainer tries to be as responsive as possible. While there are no guarantees, the typical turnaround time for bug fixes is less than 6 hours.
+- The maintainer tries to be as responsive as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 6 hours.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - We develop [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned shortly after the 1.0 release.
@@ -583,7 +583,7 @@ If you have migrated from Netlify/Decap CMS and are happy with the local reposit
 
 ### Enabling local development in Brave
 
-In the Brave browser, you must enable the File System Access API with an experiment flag to take advantage of local development.
+In the Brave browser, you must enable the File System Access API with an experiment flag to take advantage of the [local repository workflow](#working-with-a-local-git-repository).
 
 1. Open `brave://flags/#file-system-access-api` in a new browser tab.
 1. Click Default (Disabled) next to File System Access API and select Enabled.
