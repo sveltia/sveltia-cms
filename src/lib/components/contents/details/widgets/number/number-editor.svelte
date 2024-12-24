@@ -4,7 +4,7 @@
   @see https://decapcms.org/docs/widgets/#number
 -->
 <script>
-  import { NumberInput } from '@sveltia/ui';
+  import { NumberInput, TextInput } from '@sveltia/ui';
 
   /**
    * @type {LocaleCode}
@@ -54,37 +54,47 @@
     step = 1,
   } = fieldConfig);
 
-  /**
-   * @type {string}
-   */
-  let inputValue = '';
+  $: isNumeric = valueType === 'int' || valueType === 'float';
+
+  /** @type {number | undefined} */
+  let numInputValue;
+  /** @type {string} */
+  let strInputValue = '';
 
   /**
-   * Update {@link inputValue} based on {@link currentValue}.
+   * Update {@link numInputValue} or {@link strInputValue} based on {@link currentValue}.
    */
   const setInputValue = () => {
     // Avoid a cycle dependency & infinite loop
-    if (currentValue !== undefined && inputValue !== String(currentValue)) {
-      inputValue = String(currentValue);
+    if (currentValue !== undefined) {
+      if (isNumeric && numInputValue !== currentValue) {
+        const value = Number(currentValue);
+
+        numInputValue = !Number.isNaN(value) ? value : undefined;
+      }
+
+      if (!isNumeric && strInputValue !== currentValue) {
+        strInputValue = String(currentValue);
+      }
     }
   };
 
   /**
-   * Update {@link currentValue} based on {@link inputValue}. Cast the value according to the
-   * `value_type` configuration.
+   * Update {@link currentValue} based on {@link numInputValue} or {@link strInputValue}. Cast the
+   * value according to the `value_type` configuration.
    */
   const setCurrentValue = () => {
     let newValue;
 
     if (valueType === 'int') {
-      newValue = Number.parseInt(inputValue, 10);
+      newValue = Number.parseInt(isNumeric ? String(numInputValue) : strInputValue, 10);
     } else if (valueType === 'float') {
-      newValue = Number.parseFloat(inputValue);
+      newValue = Number.parseFloat(isNumeric ? String(numInputValue) : strInputValue);
     } else {
-      newValue = inputValue;
+      newValue = strInputValue;
     }
 
-    if ((valueType === 'int' || valueType === 'float') && Number.isNaN(newValue)) {
+    if (isNumeric && Number.isNaN(newValue)) {
       newValue = '';
     }
 
@@ -100,19 +110,35 @@
   }
 
   $: {
-    void inputValue;
+    void strInputValue;
+    setCurrentValue();
+  }
+
+  $: {
+    void numInputValue;
     setCurrentValue();
   }
 </script>
 
-<NumberInput
-  bind:value={inputValue}
-  {min}
-  {max}
-  {step}
-  {readonly}
-  {required}
-  {invalid}
-  aria-labelledby="{fieldId}-label"
-  aria-errormessage="{fieldId}-error"
-/>
+{#if isNumeric}
+  <NumberInput
+    bind:value={numInputValue}
+    {min}
+    {max}
+    {step}
+    {readonly}
+    {required}
+    {invalid}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
+  />
+{:else}
+  <TextInput
+    bind:value={strInputValue}
+    {readonly}
+    {required}
+    {invalid}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
+  />
+{/if}

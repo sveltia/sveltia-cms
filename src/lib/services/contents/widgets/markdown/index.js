@@ -29,6 +29,7 @@ export const defaultButtons = [
   'bulleted-list',
   'numbered-list',
   'quote',
+  'code-block', // Temporary
 ];
 
 /**
@@ -50,6 +51,7 @@ export const buttonNameMap = {
   'bulleted-list': 'bulleted-list',
   'numbered-list': 'numbered-list',
   quote: 'blockquote',
+  'code-block': 'code-block', // Temporary
 };
 
 /**

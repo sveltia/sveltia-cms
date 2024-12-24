@@ -435,7 +435,7 @@
     :global(input[type='date'][aria-invalid='true']),
     :global(input[type='datetime-local'][aria-invalid='true']),
     :global(input[type='time'][aria-invalid='true']) {
-      border-color: var(--sui-error-foreground-color);
+      border-color: var(--sui-error-border-color);
     }
   }
 
