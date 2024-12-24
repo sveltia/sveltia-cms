@@ -34,11 +34,11 @@
     })}
     disabled={!$entryDraft?.currentLocales[locale] ||
       !$entryDraft?.currentLocales[otherLocale] ||
-      (keyPath && !$entryDraft?.currentValues[otherLocale][keyPath]) ||
+      (keyPath && !$state.snapshot($entryDraft?.currentValues[otherLocale])[keyPath]) ||
       (!translate &&
         keyPath &&
-        $entryDraft?.currentValues[otherLocale][keyPath] ===
-          $entryDraft?.currentValues[locale][keyPath]) ||
+        $state.snapshot($entryDraft?.currentValues[otherLocale])[keyPath] ===
+          $state.snapshot($entryDraft?.currentValues[locale])[keyPath]) ||
       (translate && (!getSourceLanguage(locale) || !getTargetLanguage(otherLocale)))}
     onclick={() => {
       copyFromLocale(otherLocale, locale, { keyPath, translate });

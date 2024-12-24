@@ -61,8 +61,8 @@
   const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
   const modified = $derived(
     isNew ||
-      !equal(originalLocales, $entryDraft?.currentLocales) ||
-      !equal(originalValues, $entryDraft?.currentValues),
+      !equal(originalLocales, $state.snapshot($entryDraft?.currentLocales)) ||
+      !equal(originalValues, $state.snapshot($entryDraft?.currentValues)),
   );
   const errorCount = $derived(
     Object.values($entryDraft?.validities ?? {})

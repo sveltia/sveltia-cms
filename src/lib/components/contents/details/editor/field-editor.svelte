@@ -110,11 +110,11 @@
   // Multiple values are flattened in the value map object
   const currentValue = $derived(
     isList
-      ? Object.entries($entryDraft?.currentValues[locale] ?? {})
+      ? Object.entries($state.snapshot($entryDraft?.currentValues[locale] ?? {}))
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([, val]) => val)
           .filter((val) => val !== undefined)
-      : $entryDraft?.currentValues[locale][keyPath],
+      : $state.snapshot($entryDraft?.currentValues[locale])?.[keyPath],
   );
   const originalValue = $derived(
     isList

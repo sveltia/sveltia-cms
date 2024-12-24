@@ -36,7 +36,7 @@
   const { collectionName, fileName, collection, collectionFile } = $derived(
     $entryDraft ?? /** @type {EntryDraft} */ ({}),
   );
-  const valueMap = $derived($entryDraft?.currentValues[locale] ?? {});
+  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale] ?? {}));
   const { i18nEnabled, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );

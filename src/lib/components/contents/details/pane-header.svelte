@@ -63,7 +63,10 @@
   const canCopy = $derived(!!otherLocales.length);
   const canRevert = $derived(
     $thisPane?.locale &&
-      !equal($entryDraft?.currentValues[$thisPane?.locale], originalValues[$thisPane?.locale]),
+      !equal(
+        $state.snapshot($entryDraft?.currentValues[$thisPane?.locale]),
+        originalValues[$thisPane?.locale],
+      ),
   );
   const previewURL = $derived(
     originalEntry && $thisPane?.locale
@@ -153,7 +156,7 @@
                 label={$_(
                   isLocaleEnabled
                     ? 'disable_x_locale'
-                    : $entryDraft?.currentValues[$thisPane.locale]
+                    : $state.snapshot($entryDraft?.currentValues[$thisPane.locale])
                       ? 'reenable_x_locale'
                       : 'enable_x_locale',
                   { values: { locale: localeLabel } },
