@@ -68,9 +68,15 @@
     // Avoid a cycle dependency & infinite loop
     if (currentValue !== undefined) {
       if (isNumeric && numInputValue !== currentValue) {
-        const value = Number(currentValue);
+        if (typeof currentValue === 'number') {
+          numInputValue = currentValue;
+        } else if (typeof currentValue === 'string') {
+          const value = currentValue.trim() ? Number(currentValue) : NaN;
 
-        numInputValue = !Number.isNaN(value) ? value : undefined;
+          numInputValue = !Number.isNaN(value) ? value : undefined;
+        } else {
+          numInputValue = undefined;
+        }
       }
 
       if (!isNumeric && strInputValue !== currentValue) {
