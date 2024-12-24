@@ -301,12 +301,18 @@ siteConfig.subscribe((config) => {
           mediaFolder.startsWith('/') || mediaFolder.startsWith(globalMediaFolder)
         );
 
+        let publicPath = stripSlashes(
+          (publicFolder ?? mediaFolder).replace('{{public_folder}}', globalPublicFolder).trim(),
+        );
+
+        // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
+        // setting) or starting with `@` (framework-specific)
+        publicPath = publicPath === '' || publicPath.match(/^[.@]/) ? publicPath : `/${publicPath}`;
+
         return {
           collectionName,
           internalPath: stripSlashes(entryRelative ? (collectionFolder ?? '') : mediaFolder),
-          publicPath: `/${stripSlashes(
-            (publicFolder ?? mediaFolder).replace('{{public_folder}}', globalPublicFolder),
-          )}`,
+          publicPath,
           entryRelative,
         };
       })
