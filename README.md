@@ -928,6 +928,8 @@ img-src 'self' blob: data: https://*;
 
 While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
 
+As described in the [Motivation](#motivation) and [Getting Started](#getting-started) sections, Sveltia CMS is built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are migrating from one of these products. We are happy to help you migrate, but we cannot help you set up Sveltia CMS from scratch through our free support channels.
+
 Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
 
 ## Contributions
