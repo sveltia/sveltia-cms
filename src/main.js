@@ -72,7 +72,8 @@ const init = async ({ config = {} } = {}) => {
  * Register a custom entry file format.
  * @param {string} name - Format name.
  * @param {string} extension - File extension.
- * @param {{ fromFile: FileParser, toFile: FileFormatter }} methods - Parser and formatter methods.
+ * @param {{ fromFile?: FileParser, toFile?: FileFormatter }} methods - Parser and/or formatter
+ * methods.
  * @see https://decapcms.org/docs/custom-formatters/
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile }) => {

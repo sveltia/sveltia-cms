@@ -1102,8 +1102,8 @@
  * Custom file format definition.
  * @typedef {object} CustomFileFormat
  * @property {string} extension - File extension.
- * @property {FileParser} parser - Parser method.
- * @property {FileFormatter} formatter - Formatter method.
+ * @property {FileParser} [parser] - Parser method.
+ * @property {FileFormatter} [formatter] - Formatter method.
  */
 
 /**
