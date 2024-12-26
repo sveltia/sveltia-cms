@@ -39,7 +39,8 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Better localization](#better-localization)
 - [Compatibility](#compatibility)
   - [Features not to be implemented](#features-not-to-be-implemented)
-  - [Current limitations](#current-limitations)
+  - [Features to be implemented before GA](#features-to-be-implemented-before-ga)
+  - [Features to be implemented after GA](#features-to-be-implemented-after-ga)
   - [Other notes](#other-notes)
 - [Getting started](#getting-started)
   - [New users](#new-users)
@@ -435,9 +436,9 @@ However, 100% feature parity is not planned, and some features are still missing
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any; we may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 
-### Current limitations
+### Features to be implemented before GA
 
-These limitations are expected to be resolved before or shortly after GA:
+These limitations are expected to be resolved before the 1.0 release:
 
 | Feature | Status in Sveltia CMS |
 | --- | --- |
@@ -445,8 +446,6 @@ These limitations are expected to be resolved before or shortly after GA:
 | Configuration | Comprehensive config validation is not yet implemented. |
 | Localization | The application UI is only available in English and Japanese at this time. |
 | Media Libraries | [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) are not yet supported. |
-| Workflow | [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/) and [Open Authoring](https://decapcms.org/docs/open-authoring/) are not yet supported and will be implemented after the 1.0 release. |
-| Collections | [Nested collections](https://decapcms.org/docs/collection-nested/) (beta) are not yet supported and will be implemented after the 1.0 release. |
 | Widgets | [Custom widgets](https://decapcms.org/docs/custom-widgets/) are not yet supported. See the table below for other limitations. |
 | Customizations | [Custom previews](https://decapcms.org/docs/customization/) and [event subscriptions](https://decapcms.org/docs/registering-events/) are not yet supported. |
 
@@ -457,6 +456,14 @@ These limitations are expected to be resolved before or shortly after GA:
 | [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | [Map](https://decapcms.org/docs/widgets/#map) | Not yet supported. |
 | [Markdown](https://decapcms.org/docs/widgets/#markdown) | The built-in `code-block` component and custom components are not yet supported. |
+
+### Features to be implemented after GA
+
+Due to the complexity, the following features are planned for after the 1.0 release. We know Netlify/Decap CMS has a number of issues with these advanced features and we want to implement them the right way.
+
+- [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/)
+- [Open Authoring](https://decapcms.org/docs/open-authoring/)
+- [Nested Collections](https://decapcms.org/docs/collection-nested/)
 
 ### Other notes
 
