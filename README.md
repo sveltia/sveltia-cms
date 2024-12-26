@@ -427,8 +427,8 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. We plan to develop a high-performance Git Gateway alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
-- **The Netlify Identity widget will not be supported**, as it’s not useful without Git Gateway. We may be able to support it in the future if a Git Gateway alternative is created.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained; we plan to develop a high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
+- **Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway. The [widget](https://github.com/netlify/netlify-identity-widget) has been unmaintained for years, and Netlify no longer officially supports it [according to a Netlify customer](https://github.com/sveltia/sveltia-cms/discussions/284). We plan to develop an alternative solution in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget instead.
@@ -521,7 +521,7 @@ Once you have migrated from the Git Gateway and Netlify Identity combo, you can 
 -<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 ```
 
-If you want to stay with Netlify Identity, unfortunately you can’t migrate to Sveltia CMS right now. We plan to develop a high-performance Git Gateway alternative with Netlify Identity support in the future.
+If you want to stay with Netlify Identity, unfortunately you can’t migrate to Sveltia CMS right now. We plan to develop an alternative to Git Gateway and Netlify Identity Widget in the future.
 
 ### Installing with npm
 
