@@ -543,6 +543,7 @@
 /**
  * Compute field properties.
  * @typedef {object} ComputeFieldProps
+ * @property {string} [default] - Default value. Unused.
  * @property {string} value - Value template, like `posts-{{fields.slug}}`.
  */
 
@@ -773,6 +774,7 @@
 /**
  * UUID field properties.
  * @typedef {object} UuidFieldProps
+ * @property {string} [default] - Default value. Unused.
  * @property {string} [prefix] - A string to be prepended to the value. Default: an empty string.
  * @property {boolean} [use_b32_encoding] - Whether to encode the value with Base32. Default:
  * `false`.
@@ -787,8 +789,9 @@
 
 /**
  * Any supported {@link Entry} field.
- * @typedef {BooleanField | ColorField | DateTimeField | FileField | ListField | MarkdownField |
- * NumberField | ObjectField | RelationField | SelectField | StringField | TextField} Field
+ * @typedef {BooleanField | ColorField | ComputeField | DateTimeField | FileField | ListField |
+ * MarkdownField | NumberField | ObjectField | RelationField | SelectField | StringField | TextField
+ * | UuidField} Field
  */
 
 /**
