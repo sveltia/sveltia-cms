@@ -378,6 +378,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Compute
   - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets[^104]. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
   - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
+- KeyValue
+  - Coming soon!
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
@@ -935,9 +937,9 @@ img-src 'self' blob: data: https://*;
 
 While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
 
-As described in the [Motivation](#motivation) and [Getting Started](#getting-started) sections, Sveltia CMS is built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are migrating from one of these products. We are happy to help you migrate, but we cannot help you set up Sveltia CMS from scratch through our free support channels.
+As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are migrating from the other product. We are happy to help you migrate, but unfortunately we cannot help you set up Sveltia CMS from scratch through our free support channels.
 
-Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
+Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out today!
 
 ## Contributions
 
