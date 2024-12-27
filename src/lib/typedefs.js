@@ -490,7 +490,9 @@
  * @property {string} [label] - Field label.
  * @property {string} [comment] - Field description.
  * @property {string} [widget] - Widget name.
- * @property {boolean} [required] - Whether to require input.
+ * @property {boolean | LocaleCode[]} [required] - Whether to require user input for the field. If
+ * i18n is enabled and the field doesn’t require input for every locale, a subset of locales can be
+ * passed as an array.
  * @property {string[]} [pattern] - Validation format.
  * @property {string} [hint] - Value hint to be displayed below the input.
  * @property {boolean} [preview] - Whether to show the preview of the field. Default: `true`.

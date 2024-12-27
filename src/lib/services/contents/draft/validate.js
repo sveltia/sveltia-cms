@@ -1,7 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 
 // cspell:disable-next-line
@@ -53,12 +53,8 @@ export const validateEntry = () => {
         return;
       }
 
-      const {
-        widget: widgetName = 'string',
-        required = true,
-        i18n = false,
-        pattern: validation,
-      } = fieldConfig;
+      const { widget: widgetName = 'string', i18n = false, pattern: validation } = fieldConfig;
+      const required = isFieldRequired({ fieldConfig, locale });
 
       // Skip validation on non-editable fields
       if (

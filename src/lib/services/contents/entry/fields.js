@@ -94,6 +94,16 @@ export const getFieldConfig = ({
 };
 
 /**
+ * Check if the field requires user input.
+ * @param {object} args - Arguments.
+ * @param {Field} args.fieldConfig - Field configuration.
+ * @param {LocaleCode} args.locale - Current pane’s locale.
+ * @returns {boolean} Result.
+ */
+export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
+  Array.isArray(required) ? required.includes(locale) : !!required;
+
+/**
  * Get a field’s display value that matches the given field name (key path).
  * @param {object} args - Arguments.
  * @param {string} args.collectionName - Collection name.

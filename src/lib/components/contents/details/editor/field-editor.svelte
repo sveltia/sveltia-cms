@@ -9,6 +9,7 @@
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { isFieldRequired } from '$lib/services/contents/entry/fields';
   import { revertChanges } from '$lib/services/contents/draft/update';
   import { entryDraft } from '$lib/services/contents/draft';
   import { editors } from '$lib/components/contents/details/widgets';
@@ -55,10 +56,10 @@
     comment = '',
     hint = '',
     widget: widgetName = 'string',
-    required = true,
     i18n = false,
     pattern = /** @type {string[]} */ ([]),
   } = $derived(fieldConfig);
+  const required = $derived(isFieldRequired({ fieldConfig, locale }));
   const {
     field: subField,
     fields: subFields,

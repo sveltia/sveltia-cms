@@ -4,7 +4,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getDefaultValue as getDefaultHiddenValue } from '$lib/services/contents/widgets/hidden/helper';
 import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/widgets/uuid/helper';
@@ -113,7 +113,8 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
       return;
     }
 
-    const { widget: widgetName = 'string', default: defaultValue, required = true } = fieldConfig;
+    const { widget: widgetName = 'string', default: defaultValue } = fieldConfig;
+    const required = isFieldRequired({ fieldConfig, locale });
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widgetName === 'list') {
@@ -264,7 +265,7 @@ export const createProxy = ({
       // Update validity in real time if validation has already been performed
       if (validity) {
         // @todo Perform all the field validations, not just `valueMissing` for string fields
-        if (typeof value === 'string' && fieldConfig.required !== false) {
+        if (typeof value === 'string' && isFieldRequired({ fieldConfig, locale: sourceLocale })) {
           validity.valueMissing = !value;
         }
       }
