@@ -61,7 +61,10 @@ export const validateEntry = () => {
       } = fieldConfig;
 
       // Skip validation on non-editable fields
-      if (locale !== defaultLocale && (!i18nEnabled || i18n === false || i18n === 'duplicate')) {
+      if (
+        locale !== defaultLocale &&
+        (!i18nEnabled || i18n === false || i18n === 'none' || i18n === 'duplicate')
+      ) {
         return;
       }
 

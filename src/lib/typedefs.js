@@ -494,7 +494,7 @@
  * @property {string[]} [pattern] - Validation format.
  * @property {string} [hint] - Value hint to be displayed below the input.
  * @property {boolean} [preview] - Whether to show the preview of the field. Default: `true`.
- * @property {boolean | 'translate' | 'duplicate'} [i18n] - I18n configuration.
+ * @property {boolean | 'translate' | 'duplicate' | 'none'} [i18n] - I18n configuration.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets/#common-widget-options
  */
