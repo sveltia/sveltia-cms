@@ -16,7 +16,7 @@
   /** @type {boolean} */
   export let readonly = false;
   /** @type {boolean} */
-  export let required = false;
+  export let required = true;
   /** @type {boolean} */
   export let invalid = false;
   /** @type {{ label: string, value: string, searchValue?: string }[]} */

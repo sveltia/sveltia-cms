@@ -15,13 +15,13 @@
   /** @type {boolean} */
   export let readonly = false;
   /** @type {boolean} */
-  export let required = false;
+  export let required = true;
   /** @type {boolean} */
   export let invalid = false;
   /** @type {{ label: string, value: string, searchValue?: string }[]} */
   export let options;
 
-  $: ({ required = true, dropdown_threshold = 5 } = fieldConfig);
+  $: ({ dropdown_threshold = 5 } = fieldConfig);
 
   $: {
     // Allow to deselect an option if the field is optional

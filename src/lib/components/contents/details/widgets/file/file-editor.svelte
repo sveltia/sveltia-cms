@@ -54,7 +54,7 @@
   /**
    * @type {boolean}
    */
-  export let required = false;
+  export let required = true;
   /**
    * @type {boolean}
    */
