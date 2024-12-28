@@ -108,7 +108,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 140+ of them, or 255+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 145+ of them, or 255+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 250 or all relevant and fixable issues in a future release
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
@@ -116,7 +116,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Implementing our own enhancement ideas for every part of the product
 - Making the code clean and maintainable
 
-![140 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20241104.webp)<br>
+![145 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20241228.webp)<br>
 
 ## Differentiators
 
@@ -210,6 +210,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
     - File collections support multiple files/folders i18n structures[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
     - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales[^7][^68]. The `i18n` configuration can normally be used for the subfields.
+  - The `required` field option accepts an array of locale names in addition to a boolean, making the field required for a subset of locales when i18n support is enabled. For example, if only English is required, you can write `required: [en]`. An empty array is equivalent to `required: false`.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
   - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
@@ -379,7 +380,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets[^104]. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
   - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
 - KeyValue
-  - Coming soon!
+  - The new `keyvalue` (dictionary) widget allows users to add arbitrary key-value pairs to a field[^123].
+  - The implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), a now-defunct community fork of Netlify CMS.
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
@@ -472,7 +474,7 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 - Make sure you’re using the latest stable version of a web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and it’s served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
-- We plan to provide partial compatibility with now-discontinued Static CMS, such as the [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue).
+- We plan to provide partial compatibility with now-discontinued Static CMS. The KeyValue widget is already implemented.
 - Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug).
 
 ## Getting started
@@ -962,7 +964,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 - Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and nested collections
 - Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are already implemented in Sveltia CMS
-- Exploring compatibility with Static CMS, a now-discontinued community fork of Netlify CMS (Note: The [KeyValue widget](https://staticjscms.netlify.app/docs/widget-keyvalue) will be supported prior to the 1.0 release[^123])
+- Exploring compatibility with Static CMS, a now-discontinued community fork of Netlify CMS (The KeyValue widget is already implemented)
 - More integration options: stock photos, cloud storage providers, translators, maps, analytics
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - AI integrations for image generation and content writing
