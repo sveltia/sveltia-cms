@@ -488,7 +488,7 @@ export const strings = {
     key: 'キー',
     value: '値',
     action: 'アクション',
-    empty_key: 'キーはー必須です。',
+    empty_key: 'キーは必須です。',
     duplicate_key: 'キーが重複しています。',
   },
 
