@@ -381,7 +381,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
 - KeyValue (Dictionary)
   - The new `keyvalue` widget allows users to add arbitrary key-value pairs to a field[^123].
-  - The implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), but we provide a more intuitive UI. You can press Enter to move focus or add a new row, and the preview is displayed in a clean table.
+  - The implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), but we provide a more intuitive UI. You can press Enter to move focus or add a new row while editing, and the preview is displayed in a clean table.
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
