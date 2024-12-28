@@ -379,8 +379,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Compute
   - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets[^104]. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
   - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
-- KeyValue
-  - The new `keyvalue` (dictionary) widget allows users to add arbitrary key-value pairs to a field[^123].
+- KeyValue (Dictionary)
+  - The new `keyvalue` widget allows users to add arbitrary key-value pairs to a field[^123].
   - The implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), a now-defunct community fork of Netlify CMS.
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
@@ -964,7 +964,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 - Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and nested collections
 - Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are already implemented in Sveltia CMS
-- Exploring compatibility with Static CMS, a now-discontinued community fork of Netlify CMS (The KeyValue widget is already implemented)
+- Exploring further compatibility with Static CMS, a now-defunct community fork of Netlify CMS
 - More integration options: stock photos, cloud storage providers, translators, maps, analytics
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - AI integrations for image generation and content writing
