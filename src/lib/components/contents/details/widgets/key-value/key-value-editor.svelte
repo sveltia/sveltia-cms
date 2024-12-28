@@ -169,32 +169,41 @@
     <tbody>
       {#each pairs as pair, index}
         <tr bind:this={rowElements[index]}>
-          <td>
+          <td class="key">
             <TextInput
               {readonly}
               flex
               bind:value={pair[0]}
               invalid={!!validations[index]}
+              aria-label={keyLabel}
               aria-errormessage={validations[index] ? `${fieldId}-kv-error` : undefined}
               oninput={() => {
                 edited[index] = true;
               }}
+              onkeydown={(event) => {
+                // Move focus with Enter key
+                if (event.key === 'Enter' && !event.isComposing) {
+                  /** @type {HTMLInputElement} */ (
+                    rowElements[index].querySelector('td.value input')
+                  )?.focus();
+                }
+              }}
             />
           </td>
-          <td>
+          <td class="value">
             <TextInput
               {readonly}
               flex
               bind:value={pair[1]}
+              aria-label={valueLabel}
               onkeydown={(event) => {
-                // Add new pair with Enter key
-                if (
-                  !event.isComposing &&
-                  event.key === 'Enter' &&
-                  index === pairs.length - 1 &&
-                  pairs.length < max
-                ) {
-                  addPair();
+                // Move focus or add a new pair with Enter key
+                if (event.key === 'Enter' && !event.isComposing) {
+                  if (index < pairs.length - 1) {
+                    rowElements[index + 1].querySelector('input')?.focus();
+                  } else if (pairs.length < max) {
+                    addPair();
+                  }
                 }
               }}
             />
