@@ -29,6 +29,7 @@ export const strings = {
   saving: '保存中…',
   rename: '名前を変更',
   replace: '差し替え',
+  add: '追加',
   remove: '削除',
   remove_x: '{name} を削除',
   clear: 'クリア',
@@ -482,6 +483,13 @@ export const strings = {
     src: 'ソース',
     alt: '代替テキスト',
     title: 'タイトル',
+  },
+  key_value: {
+    key: 'キー',
+    value: '値',
+    action: 'アクション',
+    empty_key: 'キーはー必須です。',
+    duplicate_key: 'キーが重複しています。',
   },
 
   // Content preview

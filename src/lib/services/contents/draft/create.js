@@ -7,6 +7,7 @@ import { showDuplicateToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getDefaultValue as getDefaultHiddenValue } from '$lib/services/contents/widgets/hidden/helper';
+import { getDefaultValue as getDefaultKvValue } from '$lib/services/contents/widgets/key-value/helper';
 import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/widgets/uuid/helper';
 
 /**
@@ -195,6 +196,16 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
       return;
     }
 
+    if (widgetName === 'keyvalue') {
+      Object.entries(getDefaultKvValue(/** @type {KeyValueField} */ (fieldConfig))).forEach(
+        ([key, val]) => {
+          newContent[`${keyPath}.${key}`] = String(val);
+        },
+      );
+
+      return;
+    }
+
     newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
   };
 
@@ -280,7 +291,7 @@ export const createProxy = ({
           ([targetLocale, content]) => {
             // Don’t duplicate the value if the parent object doesn’t exist
             if (keyPath.includes('.')) {
-              const { path: parentKeyPath } = keyPath.match(/(?<path>.+)\.[^.]+$/)?.groups ?? {};
+              const { path: parentKeyPath } = keyPath.match(/(?<path>.+?)\.[^.]*$/)?.groups ?? {};
 
               if (
                 !Object.keys(content).some((_keyPath) =>

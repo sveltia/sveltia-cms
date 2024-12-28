@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
+  import { Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
   import { generateElementId } from '@sveltia/utils/element';
   import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
@@ -13,6 +13,7 @@
   import { revertChanges } from '$lib/services/contents/draft/update';
   import { entryDraft } from '$lib/services/contents/draft';
   import { editors } from '$lib/components/contents/details/widgets';
+  import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
 
@@ -95,6 +96,9 @@
   const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
   const multiple = $derived(
     hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
+  );
+  const canAddMultiValue = $derived(
+    (widgetName === 'list' && hasSubFields) || multiple || widgetName === 'keyvalue',
   );
   const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
   const { collection, collectionFile, originalValues } = $derived(
@@ -183,74 +187,47 @@
     {#if !readonly && comment}
       <p class="comment">{@html sanitize(comment)}</p>
     {/if}
-    <div role="alert" id="{fieldId}-error" class="validation" aria-live="polite">
-      {#if validity?.valid === false}
+    {#if validity?.valid === false}
+      <ValidationError id="{fieldId}-error">
         {#if validity.valueMissing}
-          <div role="none">
-            <Icon name="error" />
-            {$_('validation.value_missing')}
-          </div>
+          {$_('validation.value_missing')}
         {/if}
         {#if validity.tooShort}
           {@const { minlength } = (() => /** @type {StringField | TextField} */ (fieldConfig))()}
-          <div role="none">
-            <Icon name="error" />
-            {$_(minlength === 1 ? 'validation.too_short.one' : 'validation.too_short.many', {
-              values: { min: minlength },
-            })}
-          </div>
+          {$_(minlength === 1 ? 'validation.too_short.one' : 'validation.too_short.many', {
+            values: { min: minlength },
+          })}
         {/if}
         {#if validity.tooLong}
           {@const { maxlength } = (() => /** @type {StringField | TextField} */ (fieldConfig))()}
-          <div role="none">
-            <Icon name="error" />
-            {$_(maxlength === 1 ? 'validation.too_long.one' : 'validation.too_long.many', {
-              values: { max: maxlength },
-            })}
-          </div>
+          {$_(maxlength === 1 ? 'validation.too_long.one' : 'validation.too_long.many', {
+            values: { max: maxlength },
+          })}
         {/if}
         {#if validity.rangeUnderflow}
-          <div role="none">
-            <Icon name="error" />
-            {#if (widgetName === 'list' && hasSubFields) || multiple}
-              {$_(`validation.range_underflow.add_${min === 1 ? 'one' : 'many'}`, {
-                values: { min },
-              })}
-            {:else}
-              {$_(`validation.range_underflow.select_${min === 1 ? 'one' : 'many'}`, {
-                values: { min },
-              })}
-            {/if}
-          </div>
+          {@const quantity = min === 1 ? 'one' : 'many'}
+          {#if canAddMultiValue}
+            {$_(`validation.range_underflow.add_${quantity}`, { values: { min } })}
+          {:else}
+            {$_(`validation.range_underflow.select_${quantity}`, { values: { min } })}
+          {/if}
         {/if}
         {#if validity.rangeOverflow}
-          <div role="none">
-            <Icon name="error" />
-            {#if (widgetName === 'list' && hasSubFields) || multiple}
-              {$_(`validation.range_overflow.add_${max === 1 ? 'one' : 'many'}`, {
-                values: { max },
-              })}
-            {:else}
-              {$_(`validation.range_overflow.select_${max === 1 ? 'one' : 'many'}`, {
-                values: { max },
-              })}
-            {/if}
-          </div>
+          {@const quantity = max === 1 ? 'one' : 'many'}
+          {#if canAddMultiValue}
+            {$_(`validation.range_overflow.add_${quantity}`, { values: { max } })}
+          {:else}
+            {$_(`validation.range_overflow.select_${quantity}`, { values: { max } })}
+          {/if}
         {/if}
         {#if validity.patternMismatch}
-          <div role="none">
-            <Icon name="error" />
-            {pattern?.[1]}
-          </div>
+          {pattern?.[1]}
         {/if}
         {#if validity.typeMismatch}
-          <div role="none">
-            <Icon name="error" />
-            {$_(`validation.type_mismatch.${type}`)}
-          </div>
+          {$_(`validation.type_mismatch.${type}`)}
         {/if}
-      {/if}
-    </div>
+      </ValidationError>
+    {/if}
     <div role="none" class="widget-wrapper" class:has-extra-labels={hasExtraLabels}>
       {#if !(widgetName in editors)}
         <div role="none">{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
@@ -360,23 +337,6 @@
       margin: 2px 0 0 2px;
       color: var(--sui-error-foreground-color);
       font-size: var(--sui-font-size-large);
-    }
-  }
-
-  .validation {
-    color: var(--sui-error-foreground-color);
-    font-size: var(--sui-font-size-small);
-
-    div {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin: 4px 0;
-
-      :global(.icon) {
-        flex: none;
-        font-size: 16px; /* !hardcoded */
-      }
     }
   }
 

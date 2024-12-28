@@ -2,6 +2,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 
 // cspell:disable-next-line
@@ -97,7 +98,7 @@ export const validateEntry = () => {
       let typeMismatch = false;
 
       if (widgetName === 'list') {
-        // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.n`,
+        // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.N`,
         // we should validate only once against all these values
         if (keyPath in validities[locale]) {
           return;
@@ -128,7 +129,38 @@ export const validateEntry = () => {
         }
       }
 
-      if (!['object', 'list', 'hidden', 'compute'].includes(widgetName)) {
+      if (widgetName === 'keyvalue') {
+        // Given that values for a KeyValue field are flatten into `field.key1`, `field.key2` ...
+        // `field.keyN`, we should validate only once against all these values. The key can be
+        // empty, so use `.*` in the regex instead of `.+`
+        const _keyPath = /** @type {string} */ (keyPath.match(/(.+?)(?:\.[^.]*)?$/)?.[1]);
+
+        const parentFieldConfig = getFieldConfig({
+          collectionName: collection.name,
+          fileName,
+          valueMap,
+          keyPath: _keyPath,
+        });
+
+        if (_keyPath in validities[locale] || parentFieldConfig?.widget !== 'keyvalue') {
+          return;
+        }
+
+        keyPath = _keyPath;
+
+        const _entryDraft = /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft);
+        const pairs = getPairs({ entryDraft: _entryDraft, keyPath: _keyPath, locale });
+
+        if (required && !pairs.length) {
+          valueMissing = true;
+        } else if (typeof min === 'number' && pairs.length < min) {
+          rangeUnderflow = true;
+        } else if (typeof max === 'number' && pairs.length > max) {
+          rangeOverflow = true;
+        }
+      }
+
+      if (!['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(widgetName)) {
         if (typeof value === 'string') {
           value = value.trim();
         }

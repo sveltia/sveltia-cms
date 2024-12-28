@@ -613,6 +613,22 @@
  */
 
 /**
+ * KeyValue field properties.
+ * @typedef {object} KeyValueFieldProps
+ * @property {Record<string, string>} [default] - Default key-value pairs.
+ * @property {string} [key_label] - Label for the key column.
+ * @property {string} [value_label] - Label for the value column.
+ * @property {number} [min] - Minimum number of items.
+ * @property {number} [max] - Maximum number of items.
+ * @see https://staticjscms.netlify.app/docs/widget-keyvalue
+ */
+
+/**
+ * KeyValue field definition.
+ * @typedef {CommonFieldProps & KeyValueFieldProps} KeyValueField
+ */
+
+/**
  * List field properties.
  * @typedef {object} ListFieldProps
  * @property {string[] | Record<string, any>[] | Record<string, any>} [default] - Default value.
@@ -791,9 +807,9 @@
 
 /**
  * Any supported {@link Entry} field.
- * @typedef {BooleanField | ColorField | ComputeField | DateTimeField | FileField | ListField |
- * MarkdownField | NumberField | ObjectField | RelationField | SelectField | StringField | TextField
- * | UuidField} Field
+ * @typedef {BooleanField | ColorField | ComputeField | DateTimeField | FileField | KeyValueField |
+ * ListField | MarkdownField | NumberField | ObjectField | RelationField | SelectField | StringField
+ * | TextField | UuidField} Field
  */
 
 /**

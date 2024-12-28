@@ -29,6 +29,7 @@ export const strings = {
   saving: 'Saving…',
   rename: 'Rename',
   replace: 'Replace',
+  add: 'Add',
   remove: 'Remove',
   remove_x: 'Remove {name}',
   clear: 'Clear',
@@ -479,6 +480,13 @@ export const strings = {
     src: 'Source',
     alt: 'Alt Text',
     title: 'Title',
+  },
+  key_value: {
+    key: 'Key',
+    value: 'Value',
+    action: 'Action',
+    empty_key: 'Key is required.',
+    duplicate_key: 'Key must be unique.',
   },
 
   // Content preview

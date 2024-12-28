@@ -40,6 +40,7 @@ words:
   - indexeddb
   - infobars
   - jsdoc
+  - keyvalue
   - kyoshino
   - mdwn
   - mkdn

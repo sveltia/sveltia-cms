@@ -8,6 +8,8 @@ import DateTimeEditor from '$lib/components/contents/details/widgets/date-time/d
 import DateTimePreview from '$lib/components/contents/details/widgets/date-time/date-time-preview.svelte';
 import FileEditor from '$lib/components/contents/details/widgets/file/file-editor.svelte';
 import FilePreview from '$lib/components/contents/details/widgets/file/file-preview.svelte';
+import KeyValueEditor from '$lib/components/contents/details/widgets/key-value/key-value-editor.svelte';
+import KeyValuePreview from '$lib/components/contents/details/widgets/key-value/key-value-preview.svelte';
 import ListEditor from '$lib/components/contents/details/widgets/list/list-editor.svelte';
 import ListPreview from '$lib/components/contents/details/widgets/list/list-preview.svelte';
 import MarkdownEditor from '$lib/components/contents/details/widgets/markdown/markdown-editor.svelte';
@@ -37,6 +39,7 @@ export const editors = {
   datetime: DateTimeEditor,
   file: FileEditor,
   image: FileEditor, // alias
+  keyvalue: KeyValueEditor,
   list: ListEditor,
   markdown: MarkdownEditor,
   number: NumberEditor,
@@ -57,6 +60,7 @@ export const previews = {
   datetime: DateTimePreview,
   file: FilePreview,
   image: FilePreview, // alias
+  keyvalue: KeyValuePreview,
   list: ListPreview,
   markdown: MarkdownPreview,
   number: NumberPreview,
