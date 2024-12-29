@@ -226,7 +226,7 @@ const createKeyPathList = (fields) => {
  * @param {FlattenedEntryContent} args.valueMap - Flattened entry content.
  * @param {string} [args.canonicalSlugKey] - Property name of a canonical slug.
  * @param {boolean} [args.isTomlOutput] - Whether the output it TOML format.
- * @returns {FlattenedEntryContent} Flattened entry content sorted by fields.
+ * @returns {RawEntryContent} Unflattened entry content sorted by fields.
  */
 const finalizeContent = ({
   collectionName,
@@ -281,19 +281,17 @@ const finalizeContent = ({
     if (keyPath in unsortedMap) {
       copyProperty(keyPath, widget);
     } else if (widget === 'keyvalue') {
-      const filteredProps = Object.entries(unsortedMap).filter(([_keyPath]) =>
-        _keyPath.startsWith(`${keyPath}.`),
-      );
+      // Work around a bug in the flat library where numeric property keys used for KeyValue fields
+      // trigger a wrong conversion to an array instead of an object
+      // @see https://github.com/hughsk/flat/issues/103
+      sortedMap[keyPath] = {};
 
-      // Collect key-value pairs and reassign `value` with a single object
-      sortedMap[keyPath] = Object.fromEntries(
-        filteredProps.map(([_keyPath, _value]) => [_keyPath.replace(`${keyPath}.`, ''), _value]),
-      );
-
-      // Remove individual key-value pairs
-      filteredProps.forEach(([_keyPath]) => {
-        delete unsortedMap[_keyPath];
-      });
+      // Copy key-value pairs
+      Object.entries(unsortedMap)
+        .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))
+        .forEach(([_keyPath]) => {
+          copyProperty(_keyPath);
+        });
     } else {
       const regex = new RegExp(
         `^${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')}$`,
@@ -315,70 +313,7 @@ const finalizeContent = ({
       copyProperty(key);
     });
 
-  return sortedMap;
-};
-
-/**
- * Get a property value from an object located at the given key path.
- * @param {Record<string, any>} obj - Object.
- * @param {string[]} keyPathArray - Property key path.
- * @returns {any} Property value.
- */
-const getValue = (obj, keyPathArray) => keyPathArray.reduce((_obj, key) => _obj[key], obj);
-
-/**
- * Set a property value to an object located at the given key path.
- * @param {Record<string, any>} obj - Object.
- * @param {string[]} keyPathArray - Property key path.
- * @param {any} value - Property value.
- * @see https://stackoverflow.com/q/6393943
- */
-const setValue = (obj, keyPathArray, value) => {
-  if (keyPathArray.length === 1) {
-    obj[keyPathArray[0]] = value;
-  }
-
-  if (keyPathArray.length > 0) {
-    setValue(obj[keyPathArray[0]], keyPathArray.slice(1), value);
-  }
-};
-
-/**
- * Work around a bug in the `flat` library mainly affecting KeyValue fields, where an object with
- * numeric keys is incorrectly converted to an array.
- * @param {object} args - Arguments.
- * @param {string} args.collectionName - Collection name.
- * @param {string} [args.fileName] - File name.
- * @param {FlattenedEntryContent} args.valueMap - Flattened content.
- * @returns {RawEntryContent} Fixed unflattened content.
- * @see https://github.com/hughsk/flat/issues/103
- * @see https://github.com/hughsk/flat#object
- */
-const fixKeyValueFields = ({ collectionName, fileName, valueMap }) => {
-  /** @type {Record<string, any>} */
-  const content = unflatten(valueMap);
-  /** @type {Record<string, any>} */
-  const contentObj = unflatten(valueMap, { object: true });
-  /** @type {string[]} */
-  const processedPaths = [];
-
-  Object.entries(valueMap).forEach(([keyPath]) => {
-    if (processedPaths.includes(keyPath)) {
-      return;
-    }
-
-    const { widget } = getFieldConfig({ collectionName, fileName, valueMap, keyPath }) ?? {};
-
-    if (widget === 'keyvalue') {
-      const keyPathArray = keyPath.split('.');
-
-      // Replace a wrong array with proper key-value pairs
-      setValue(content, keyPathArray, getValue(contentObj, keyPathArray));
-      processedPaths.push(keyPath);
-    }
-  });
-
-  return content;
+  return unflatten(sortedMap);
 };
 
 /**
@@ -451,7 +386,7 @@ export const createSavingEntryData = async ({
    * @returns {RawEntryContent} Modified and unflattened content.
    */
   const serializeContent = (valueMap) => {
-    let content = finalizeContent({
+    const content = finalizeContent({
       collectionName,
       fileName,
       fields,
@@ -460,15 +395,9 @@ export const createSavingEntryData = async ({
       isTomlOutput,
     });
 
-    content = fixKeyValueFields({
-      collectionName,
-      fileName,
-      valueMap: content,
-    });
-
     // Handle a special case: top-level list field
     if (_hasRootListField) {
-      content = content[fields[0].name] ?? [];
+      return content[fields[0].name] ?? [];
     }
 
     return content;
