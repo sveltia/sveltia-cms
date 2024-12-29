@@ -210,7 +210,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
     - File collections support multiple files/folders i18n structures[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
     - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales[^7][^68]. The `i18n` configuration can normally be used for the subfields.
-  - The `required` field option accepts an array of locale names in addition to a boolean, making the field required for a subset of locales when i18n support is enabled. For example, if only English is required, you could write `required: [en]`. An empty array is equivalent to `required: false`.
+  - The `required` field option accepts an array of locale codes in addition to a boolean, making the field required for a subset of locales when i18n support is enabled. For example, if only English is required, you could write `required: [en]`. An empty array is equivalent to `required: false`.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
   - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
@@ -380,7 +380,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets[^104]. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
   - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
 - KeyValue (Dictionary)
-  - The new `keyvalue` widget allows users to add arbitrary key-value pairs to a field[^123].
+  - The new `keyvalue` widget allows users to add arbitrary key-value string pairs to a field[^123].
   - The implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), but we provide a more intuitive UI. You can press Enter to move focus or add a new row while editing, and the preview is displayed in a clean table.
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
