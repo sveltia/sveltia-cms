@@ -1,7 +1,3 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-continue */
-
 import { generateUUID, getHash } from '@sveltia/utils/crypto';
 import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
@@ -30,11 +26,39 @@ import { fullDateTimeRegEx } from '$lib/services/utils/date';
 import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/file';
 
 /**
+ * Entry slug variants.
+ * @typedef {object} EntrySlugVariants
+ * @property {string} defaultLocaleSlug - Default locale’s entry slug.
+ * @property {Record<LocaleCode, string> | undefined} localizedSlugs - Localized slug map.
+ * @property {string | undefined} canonicalSlug - Canonical slug.
+ */
+
+/**
+ * Paths for entry assets.
+ * @typedef {object} EntryAssetFolderPaths
+ * @property {string} internalBaseAssetFolder - Collection-defined path.
+ * @property {string} internalAssetFolder - May contain a sub path when assets are entry-relative.
+ * @property {string} publicAssetFolder - Collection-defined public path.
+ */
+
+/**
+ * Properties for a saving asset.
+ * @typedef {object} SavingAssetProps
+ * @property {string} collectionName - Collection name.
+ * @property {string} [text] - Raw text for a plaintext file, like HTML or Markdown.
+ * @property {string} folder - Path of a collection-specific folder that contains the file or global
+ * media folder.
+ */
+
+/**
+ * Properties for a saving asset.
+ * @typedef {SavingAssetProps & RepositoryFileMetadata} SavingAsset
+ */
+
+/**
  * Get the internal/public asset path configuration for the entry assets.
  * @param {FillSlugTemplateOptions} fillSlugOptions - Options for {@link fillSlugTemplate}.
- * @returns {{ internalBaseAssetFolder: string, internalAssetFolder: string, publicAssetFolder:
- * string }} Determined paths. `internalBaseAssetFolder` is the collection-defined path, while
- * `internalAssetFolder` may contain a sub path when the asset is entry-relative.
+ * @returns {EntryAssetFolderPaths} Determined paths.
  */
 export const getEntryAssetFolderPaths = (fillSlugOptions) => {
   const { collection } = fillSlugOptions;
@@ -98,13 +122,14 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
 /**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and folder collections path.
- * @param {EntryDraft} draft - Entry draft.
- * @param {LocaleCode} locale - Locale code.
- * @param {string} slug - Entry slug.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @param {LocaleCode} args.locale - Locale code.
+ * @param {string} args.slug - Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
  * @see https://decapcms.org/docs/i18n/
  */
-const createEntryPath = (draft, locale, slug) => {
+const createEntryPath = ({ draft, locale, slug }) => {
   const { collection, collectionFile, originalEntry, currentValues } = draft;
 
   if (collectionFile) {
@@ -115,10 +140,12 @@ const createEntryPath = (draft, locale, slug) => {
     return originalEntry.locales[locale].path;
   }
 
+  const _collection = /** @type {EntryCollection} */ (collection);
+
   const {
     _file: { basePath, subPath, extension },
     _i18n: { defaultLocale, structure },
-  } = /** @type {EntryCollection} */ (collection);
+  } = _collection;
 
   /**
    * Support folder collections path.
@@ -126,8 +153,7 @@ const createEntryPath = (draft, locale, slug) => {
    */
   const path = subPath
     ? fillSlugTemplate(subPath, {
-        // eslint-disable-next-line object-shorthand
-        collection: /** @type {EntryCollection} */ (collection),
+        collection: _collection,
         locale,
         content: currentValues[defaultLocale],
         currentSlug: slug,
@@ -144,6 +170,68 @@ const createEntryPath = (draft, locale, slug) => {
 };
 
 /**
+ * Parse a field to generate a sorted key path list.
+ * @param {object} args - Arguments.
+ * @param {Field} args.field - Single field.
+ * @param {FieldKeyPath} args.keyPath - Key path of the field.
+ * @param {FieldKeyPath[]} args.keyPathList - Key path list.
+ */
+const parseField = ({ field, keyPath, keyPathList }) => {
+  const { widget } = field;
+  const isList = widget === 'list';
+
+  keyPathList.push(keyPath);
+
+  if (isList || widget === 'object') {
+    const {
+      fields: subFields,
+      types,
+      typeKey = 'type',
+    } = /** @type {ListField | ObjectField} */ (field);
+
+    if (subFields) {
+      subFields.forEach((subField) => {
+        parseField({
+          field: subField,
+          keyPath: isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,
+          keyPathList,
+        });
+      });
+    } else if (types) {
+      keyPathList.push(isList ? `${keyPath}.*.${typeKey}` : `${keyPath}.${typeKey}`);
+
+      types.forEach((type) => {
+        type.fields.forEach((subField) => {
+          parseField({
+            field: subField,
+            keyPath: isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,
+            keyPathList,
+          });
+        });
+      });
+    } else if (isList) {
+      const { field: subField } = /** @type {ListField} */ (field);
+
+      if (subField) {
+        parseField({
+          field: subField,
+          keyPath: `${keyPath}.*`,
+          keyPathList,
+        });
+      } else {
+        keyPathList.push(`${keyPath}.*`);
+      }
+    }
+  }
+
+  if (widget === 'select' || widget === 'relation') {
+    const { multiple = false } = /** @type {SelectField | RelationField} */ (field);
+
+    keyPathList.push(multiple ? `${keyPath}.*` : keyPath);
+  }
+};
+
+/**
  * Create a list of field names (flattened key path list) from the configured collection fields.
  * @param {Field[]} fields - Field list of a collection or a file.
  * @returns {FieldKeyPath[]} Sorted key path list. List items are keyed with `*`.
@@ -151,75 +239,57 @@ const createEntryPath = (draft, locale, slug) => {
  */
 const createKeyPathList = (fields) => {
   /** @type {FieldKeyPath[]} */
-  const list = [];
-
-  /**
-   * Parse a field to generate a sorted key path list.
-   * @param {Field} field - Single field.
-   * @param {FieldKeyPath} keyPath - Key path of the field.
-   */
-  const parseField = (field, keyPath) => {
-    const { widget } = field;
-    const isList = widget === 'list';
-
-    list.push(keyPath);
-
-    if (isList || widget === 'object') {
-      const {
-        fields: subFields,
-        types,
-        typeKey = 'type',
-      } = /** @type {ListField | ObjectField} */ (field);
-
-      if (subFields) {
-        subFields.forEach((subField) => {
-          parseField(
-            subField,
-            isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,
-          );
-        });
-      } else if (types) {
-        list.push(isList ? `${keyPath}.*.${typeKey}` : `${keyPath}.${typeKey}`);
-
-        types.forEach((type) => {
-          type.fields.forEach((subField) => {
-            parseField(
-              subField,
-              isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,
-            );
-          });
-        });
-      } else if (isList) {
-        const { field: subField } = /** @type {ListField} */ (field);
-
-        if (subField) {
-          parseField(subField, `${keyPath}.*`);
-        } else {
-          list.push(`${keyPath}.*`);
-        }
-      }
-    }
-
-    if (widget === 'select' || widget === 'relation') {
-      const { multiple = false } = /** @type {SelectField | RelationField} */ (field);
-
-      list.push(multiple ? `${keyPath}.*` : keyPath);
-    }
-  };
+  const keyPathList = [];
 
   // Iterate over the top-level fields first
   fields.forEach((field) => {
-    parseField(field, field.name);
+    parseField({
+      field,
+      keyPath: field.name,
+      keyPathList,
+    });
   });
 
-  return list;
+  return keyPathList;
+};
+
+/**
+ * Move a property name/value from a unsorted property map to a sorted property map.
+ * @param {object} args - Arguments.
+ * @param {string} args.key - Property name.
+ * @param {Field} [args.field] - Associated field.
+ * @param {FlattenedEntryContent} args.unsortedMap - Unsorted property map.
+ * @param {FlattenedEntryContent} args.sortedMap - Sorted property map.
+ * @param {boolean} args.isTomlOutput - Whether the output it TOML format.
+ */
+const copyProperty = ({ key, field, unsortedMap, sortedMap, isTomlOutput }) => {
+  let value = unsortedMap[key];
+
+  // Use native date for TOML
+  // @see https://github.com/squirrelchat/smol-toml?tab=readme-ov-file#dates
+  // @see https://toml.io/en/v1.0.0#offset-date-time
+  if (
+    isTomlOutput &&
+    typeof value === 'string' &&
+    fullDateTimeRegEx.test(value) &&
+    field?.widget === 'datetime'
+  ) {
+    try {
+      value = new TomlDate(value);
+    } catch {
+      //
+    }
+  }
+
+  sortedMap[key] = value;
+  delete unsortedMap[key];
 };
 
 /**
  * Finalize the content by sorting the entry draft content’s object properties by the order of the
  * configured collection fields. The result can be formatted as expected with `JSON.stringify()`, as
  * the built-in method uses insertion order for string key ordering.
- * @param {object} args - Options.
+ * @param {object} args - Arguments.
  * @param {string} args.collectionName - Collection name.
  * @param {string} [args.fileName] - File name.
  * @param {Field[]} args.fields - Field list of a collection or a file.
@@ -240,47 +310,20 @@ const finalizeContent = ({
   const unsortedMap = toRaw(valueMap);
   /** @type {FlattenedEntryContent} */
   const sortedMap = {};
-
-  /**
-   * Move a property name/value from {@link unsortedMap} to {@link sortedMap}.
-   * @param {string} key - Property name.
-   * @param {string} [widget] - Widget type.
-   */
-  const copyProperty = (key, widget) => {
-    let value = unsortedMap[key];
-
-    // Use native date for TOML
-    // @see https://github.com/squirrelchat/smol-toml?tab=readme-ov-file#dates
-    // @see https://toml.io/en/v1.0.0#offset-date-time
-    if (
-      isTomlOutput &&
-      typeof value === 'string' &&
-      fullDateTimeRegEx.test(value) &&
-      widget === 'datetime'
-    ) {
-      try {
-        value = new TomlDate(value);
-      } catch {
-        //
-      }
-    }
-
-    sortedMap[key] = value;
-    delete unsortedMap[key];
-  };
+  const copyArgs = { unsortedMap, sortedMap, isTomlOutput };
 
   // Add the slug first
   if (canonicalSlugKey && canonicalSlugKey in unsortedMap) {
-    copyProperty(canonicalSlugKey);
+    copyProperty({ key: canonicalSlugKey, ...copyArgs });
   }
 
   // Move the listed properties to a new object
   createKeyPathList(fields).forEach((keyPath) => {
-    const { widget } = getFieldConfig({ collectionName, fileName, valueMap, keyPath }) ?? {};
+    const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
 
     if (keyPath in unsortedMap) {
-      copyProperty(keyPath, widget);
-    } else if (widget === 'keyvalue') {
+      copyProperty({ key: keyPath, field, ...copyArgs });
+    } else if (field?.widget === 'keyvalue') {
       // Work around a bug in the flat library where numeric property keys used for KeyValue fields
       // trigger a wrong conversion to an array instead of an object
       // @see https://github.com/hughsk/flat/issues/103
@@ -290,7 +333,7 @@ const finalizeContent = ({
       Object.entries(unsortedMap)
         .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))
         .forEach(([_keyPath]) => {
-          copyProperty(_keyPath);
+          copyProperty({ key: _keyPath, field, ...copyArgs });
         });
     } else {
       const regex = new RegExp(
@@ -300,8 +343,8 @@ const finalizeContent = ({
       Object.keys(unsortedMap)
         .filter((_keyPath) => regex.test(_keyPath))
         .sort(([a, b]) => compare(a, b))
-        .forEach((key) => {
-          copyProperty(key, widget);
+        .forEach((_keyPath) => {
+          copyProperty({ key: _keyPath, field, ...copyArgs });
         });
     }
   });
@@ -310,56 +353,411 @@ const finalizeContent = ({
   Object.keys(unsortedMap)
     .sort(([a, b]) => compare(a, b))
     .forEach((key) => {
-      copyProperty(key);
+      copyProperty({ key, ...copyArgs });
     });
 
   return unflatten(sortedMap);
 };
 
 /**
- * Create saving entry data.
+ * Serialize the content for the output.
  * @param {object} args - Arguments.
- * @param {boolean} args.isNew - `true` if it’s a new entry draft in an entry collection.
- * @param {Collection} args.collection - Collection details.
- * @param {Entry} [args.originalEntry] - Original entry if the entry draft is not new.
- * @param {CollectionFile} [args.collectionFile] - File details. File collection only.
- * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
- * @param {LocaleStateMap} args.originalLocales - Locale state map when the draft is created.
- * @param {LocaleStateMap} args.currentLocales - Current locale state.
- * @param {LocalizedEntryMap} args.localizedEntryMap - Localized entry map.
- * @returns {Promise<{ savingEntry: Entry, changes: FileChange[] }>} Saving entry and file changes.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @param {FlattenedEntryContent} args.valueMap - Original content.
+ * @returns {RawEntryContent} Modified and unflattened content.
  */
-export const createSavingEntryData = async ({
-  isNew,
-  collection,
-  collectionFile,
-  originalEntry,
-  defaultLocaleSlug,
-  originalLocales,
-  currentLocales,
-  localizedEntryMap,
-}) => {
-  const { name: collectionName } = collection;
-  const fileName = collectionFile?.name;
+const serializeContent = ({ draft, valueMap }) => {
+  const { collection, collectionFile } = draft;
 
   const {
     fields = [],
     _file,
     _i18n: {
-      i18nEnabled,
-      locales,
-      defaultLocale,
-      structure,
       canonicalSlug: { key: canonicalSlugKey },
     },
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
-  const isTomlOutput = ['toml', 'toml-frontmatter'].includes(_file.format);
-  const _hasRootListField = hasRootListField(fields);
+  const content = finalizeContent({
+    collectionName: collection.name,
+    fileName: collectionFile?.name,
+    fields,
+    valueMap,
+    canonicalSlugKey,
+    isTomlOutput: ['toml', 'toml-frontmatter'].includes(_file.format),
+  });
+
+  // Handle a special case: top-level list field
+  if (hasRootListField(fields)) {
+    return content[fields[0].name] ?? [];
+  }
+
+  return content;
+};
+
+/**
+ * Get the localized slug map. This only applies when the i18n structure is multiple files or
+ * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
+ * @returns {Record<LocaleCode, string> | undefined} Localized slug map.
+ */
+const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
+  const { collection, currentLocales, collectionFile, currentValues } = draft;
+
+  const {
+    identifier_field: identifierField = 'title',
+    slug: slugTemplate = `{{${identifierField}}}`,
+  } = collection;
+
+  const {
+    _i18n: { defaultLocale, structure },
+  } = collectionFile ?? collection;
 
   /**
-   * @type {Entry}
+   * List of key paths that the value will be localized.
    */
+  const localizingKeyPaths = [...slugTemplate.matchAll(/{{(?:fields\.)?(.+?)( \| localize)?}}/g)]
+    .filter(([, , localize]) => !!localize)
+    .map(([, keyPath]) => keyPath);
+
+  if (structure === 'single_file' || !localizingKeyPaths.length) {
+    return undefined;
+  }
+
+  const _collection = /** @type {EntryCollection} */ (collection);
+
+  return Object.fromEntries(
+    Object.entries(currentLocales)
+      .filter(([, enabled]) => enabled)
+      .map(([locale]) => [
+        locale,
+        locale === defaultLocale
+          ? defaultLocaleSlug
+          : fillSlugTemplate(slugTemplate, {
+              collection: _collection,
+              locale,
+              content: {
+                // Merge the default locale content and localized content
+                ...currentValues[defaultLocale],
+                ...Object.fromEntries(
+                  localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale][keyPath]]),
+                ),
+              },
+            }),
+      ]),
+  );
+};
+
+/**
+ * Get the canonical slug to be added to the content of each file when the slug is localized. It
+ * helps Sveltia CMS and some frameworks to link localized files. The default property name is
+ * `translationKey` used in Hugo’s multilingual support, and the default value is the default
+ * locale’s slug.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
+ * @param {Record<LocaleCode, string> | undefined} args.localizedSlugs - Localized slug map.
+ * @param {FillSlugTemplateOptions} args.fillSlugOptions - Arguments for {@link fillSlugTemplate}.
+ * @returns {string | undefined} Canonical slug.
+ * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
+ * @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
+ */
+const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOptions }) => {
+  if (!localizedSlugs) {
+    return undefined;
+  }
+
+  const { collection, collectionFile } = draft;
+
+  const {
+    _i18n: {
+      canonicalSlug: { value: canonicalSlugTemplate },
+    },
+  } = collectionFile ?? collection;
+
+  if (canonicalSlugTemplate === '{{slug}}') {
+    return defaultLocaleSlug;
+  }
+
+  return fillSlugTemplate(canonicalSlugTemplate, {
+    ...fillSlugOptions,
+    currentSlug: defaultLocaleSlug,
+  });
+};
+
+/**
+ * Get base options for {@link fillSlugTemplate}.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @returns {FillSlugTemplateOptions} Options.
+ */
+const getFillSlugOptions = ({ draft }) => {
+  const { collection, collectionFile, currentValues } = draft;
+
+  const {
+    _i18n: { defaultLocale },
+  } = collectionFile ?? collection;
+
+  return {
+    // eslint-disable-next-line object-shorthand
+    collection: /** @type {EntryCollection} */ (collection),
+    content: currentValues[defaultLocale],
+  };
+};
+
+/**
+ * Determine entry slugs.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @returns {EntrySlugVariants} Slugs.
+ */
+export const getSlugs = ({ draft }) => {
+  const { collection, originalEntry, fileName } = draft;
+
+  const {
+    identifier_field: identifierField = 'title',
+    slug: slugTemplate = `{{${identifierField}}}`,
+  } = collection;
+
+  const fillSlugOptions = getFillSlugOptions({ draft });
+
+  const defaultLocaleSlug =
+    fileName ?? originalEntry?.slug ?? fillSlugTemplate(slugTemplate, fillSlugOptions);
+
+  const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug });
+
+  const canonicalSlug = getCanonicalSlug({
+    draft,
+    defaultLocaleSlug,
+    localizedSlugs,
+    fillSlugOptions,
+  });
+
+  return { defaultLocaleSlug, localizedSlugs, canonicalSlug };
+};
+
+/**
+ * Get base arguments for {@link replaceBlobURL}.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
+ * @returns {{ assetFolderPaths: EntryAssetFolderPaths, assetNamesInSameFolder: string[],
+ * savingAssetProps: SavingAsset }} Arguments.
+ */
+const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
+  const { collection, collectionName, collectionFile } = draft;
+  const fillSlugOptions = getFillSlugOptions({ draft });
+
+  const {
+    _i18n: { defaultLocale },
+  } = collectionFile ?? collection;
+
+  const assetFolderPaths = getEntryAssetFolderPaths({
+    ...fillSlugOptions,
+    type: 'media_folder',
+    currentSlug: defaultLocaleSlug,
+    entryFilePath: createEntryPath({ draft, locale: defaultLocale, slug: defaultLocaleSlug }),
+  });
+
+  const { internalBaseAssetFolder, internalAssetFolder } = assetFolderPaths;
+
+  const assetNamesInSameFolder = getAssetsByDirName(internalAssetFolder).map((a) =>
+    a.name.normalize(),
+  );
+
+  const { email, name } = /** @type {User} */ (get(user));
+
+  /** @type {SavingAsset} */
+  const savingAssetProps = {
+    text: undefined,
+    collectionName,
+    folder: internalBaseAssetFolder,
+    commitAuthor: email ? /** @type {CommitAuthor} */ ({ name, email }) : undefined,
+    commitDate: new Date(), // Use the current datetime
+  };
+
+  return { assetFolderPaths, assetNamesInSameFolder, savingAssetProps };
+};
+
+/**
+ * Replace a blob URL with the final path, and add the file to the changeset.
+ * @param {object} args - Arguments.
+ * @param {string} args.blobURL - Blob URL.
+ * @param {number} args.index - Matched index.
+ * @param {FieldKeyPath} args.keyPath - Field key path.
+ * @param {FlattenedEntryContent} args.content - Localized content.
+ * @param {FileChange[]} args.changes - Changeset.
+ * @param {EntryFileMap} args.files - Files to be uploaded.
+ * @param {Asset[]} args.savingAssets - List of assets to be saved.
+ * @param {SavingAsset} args.savingAssetProps - Base properties for assets to be saved.
+ * @param {string[]} args.assetNamesInSameFolder - Name of assets stored in the same folder as the
+ * target asset folder.
+ * @param {EntryAssetFolderPaths} args.assetFolderPaths - Path configuration for the entry assets.
+ */
+const replaceBlobURL = async ({
+  blobURL,
+  index,
+  keyPath,
+  content,
+  changes,
+  files,
+  savingAssets,
+  savingAssetProps,
+  assetNamesInSameFolder,
+  assetFolderPaths: { internalAssetFolder, publicAssetFolder },
+}) => {
+  const file = files[blobURL];
+
+  if (!file) {
+    return;
+  }
+
+  const sha = await getHash(file);
+  const dupFile = savingAssets.find((f) => f.sha === sha);
+  const useSubFolder = !!publicAssetFolder && publicAssetFolder !== '/';
+  let assetName = '';
+
+  // Check if the file has already been added for other field or locale
+  if (dupFile) {
+    assetName = dupFile.name;
+  } else {
+    assetName = renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
+
+    const assetPath = internalAssetFolder ? `${internalAssetFolder}/${assetName}` : assetName;
+
+    assetNamesInSameFolder.push(assetName);
+    changes.push({ action: 'create', path: assetPath, data: file });
+
+    savingAssets.push({
+      ...savingAssetProps,
+      blobURL: URL.createObjectURL(file),
+      name: assetName,
+      path: assetPath,
+      sha,
+      size: file.size,
+      kind: getAssetKind(assetName),
+    });
+  }
+
+  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(
+    blobURL,
+    (_match, /** @type {number} */ offset) => {
+      if (offset === index) {
+        return useSubFolder ? `${publicAssetFolder}/${assetName}` : assetName;
+      }
+
+      return _match;
+    },
+  );
+};
+
+/**
+ * Create base saving entry data.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @param {EntrySlugVariants} args.slugs - Entry slugs.
+ * @returns {Promise<{ localizedEntryMap: LocalizedEntryMap, changes: FileChange[], savingAssets:
+ * Asset[] }>} Localized entry map, file changeset and asset list.
+ */
+const createBaseSavingEntryData = async ({
+  draft,
+  slugs: { defaultLocaleSlug, canonicalSlug, localizedSlugs },
+}) => {
+  const { collection, currentLocales, collectionFile, currentValues, files } = draft;
+
+  const {
+    _i18n: {
+      canonicalSlug: { key: canonicalSlugKey },
+    },
+  } = collectionFile ?? collection;
+
+  /** @type {FileChange[]} */
+  const changes = [];
+  /** @type {Asset[]} */
+  const savingAssets = [];
+
+  const replaceBlobArgs = {
+    files,
+    changes,
+    savingAssets,
+    ...getReplaceBlobArgs({ draft, defaultLocaleSlug }),
+  };
+
+  const localizedEntryMap = Object.fromEntries(
+    await Promise.all(
+      Object.entries(currentValues).map(async ([locale, content]) => {
+        const localizedSlug = localizedSlugs?.[locale];
+        const slug = localizedSlug ?? defaultLocaleSlug;
+        const path = createEntryPath({ draft, locale, slug });
+
+        if (!currentLocales[locale]) {
+          return [locale, { path }];
+        }
+
+        // Add the canonical slug if it doesn’t exist in the content
+        if (!content[canonicalSlugKey] && canonicalSlug) {
+          content[canonicalSlugKey] = canonicalSlug;
+        }
+
+        // Normalize data
+        await Promise.all(
+          Object.entries(content).map(async ([keyPath, value]) => {
+            if (value === undefined) {
+              delete content[keyPath];
+
+              return;
+            }
+
+            if (typeof value !== 'string') {
+              return;
+            }
+
+            // Remove leading & trailing whitespace
+            content[keyPath] = value.trim();
+
+            // Replace blob URLs in File/Image fields with asset paths
+            await Promise.all(
+              [...value.matchAll(getBlobRegex('g'))].map(({ 0: blobURL, index }) =>
+                replaceBlobURL({ blobURL, index, keyPath, content, ...replaceBlobArgs }),
+              ),
+            );
+          }),
+        );
+
+        return [locale, { slug, path, sha: '', content: toRaw(content) }];
+      }),
+    ),
+  );
+
+  return { localizedEntryMap, changes, savingAssets };
+};
+
+/**
+ * Create saving entry data.
+ * @param {object} args - Arguments.
+ * @param {EntryDraft} args.draft - Entry draft.
+ * @param {EntrySlugVariants} args.slugs - Entry slugs.
+ * @returns {Promise<{ savingEntry: Entry, savingAssets: Asset[], changes: FileChange[] }>} Saving
+ * entry, assets and file changes.
+ */
+export const createSavingEntryData = async ({ draft, slugs }) => {
+  const { collection, isNew, originalLocales, currentLocales, originalEntry, collectionFile } =
+    draft;
+
+  const { defaultLocaleSlug } = slugs;
+
+  const {
+    _file,
+    _i18n: { i18nEnabled, locales, defaultLocale, structure },
+  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+
+  const { localizedEntryMap, changes, savingAssets } = await createBaseSavingEntryData({
+    draft,
+    slugs,
+  });
+
+  /** @type {Entry} */
   const savingEntry = {
     id: originalEntry?.id ?? generateUUID(),
     sha: '', // Populated later
@@ -375,34 +773,6 @@ export const createSavingEntryData = async ({
     ),
   };
 
-  /**
-   * @type {FileChange[]}
-   */
-  const changes = [];
-
-  /**
-   * Serialize the content for the output.
-   * @param {FlattenedEntryContent} valueMap - Original content.
-   * @returns {RawEntryContent} Modified and unflattened content.
-   */
-  const serializeContent = (valueMap) => {
-    const content = finalizeContent({
-      collectionName,
-      fileName,
-      fields,
-      valueMap,
-      canonicalSlugKey,
-      isTomlOutput,
-    });
-
-    // Handle a special case: top-level list field
-    if (_hasRootListField) {
-      return content[fields[0].name] ?? [];
-    }
-
-    return content;
-  };
-
   if (!i18nEnabled || structure === 'single_file') {
     const localizedEntry = savingEntry.locales[defaultLocale];
     const { slug, path, content } = localizedEntry;
@@ -413,10 +783,10 @@ export const createSavingEntryData = async ({
         ? Object.fromEntries(
             Object.entries(savingEntry.locales).map(([locale, le]) => [
               locale,
-              serializeContent(le.content),
+              serializeContent({ draft, valueMap: le.content }),
             ]),
           )
-        : serializeContent(content),
+        : serializeContent({ draft, valueMap: content }),
       _file,
     });
 
@@ -430,7 +800,11 @@ export const createSavingEntryData = async ({
 
         if (currentLocales[locale]) {
           const action = isNew || !originalLocales[locale] ? 'create' : 'update';
-          const data = await formatEntryFile({ content: serializeContent(content), _file });
+
+          const data = await formatEntryFile({
+            content: serializeContent({ draft, valueMap: content }),
+            _file,
+          });
 
           changes.push({ action, slug, path, data });
           localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
@@ -445,7 +819,7 @@ export const createSavingEntryData = async ({
 
   savingEntry.sha = savingEntry.locales[defaultLocale].sha;
 
-  return { savingEntry, changes };
+  return { savingEntry, savingAssets, changes };
 };
 
 /**
@@ -457,19 +831,7 @@ export const createSavingEntryData = async ({
  */
 export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-
-  const {
-    collection,
-    isNew,
-    originalLocales,
-    currentLocales,
-    originalEntry,
-    collectionName,
-    collectionFile,
-    fileName,
-    currentValues,
-    files,
-  } = draft;
+  const { collection, isNew, collectionName, fileName, currentValues } = draft;
 
   if (!validateEntry()) {
     expandInvalidFields({ collectionName, fileName, currentValues });
@@ -477,238 +839,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     throw new Error('validation_failed');
   }
 
-  const _user = /** @type {User} */ (get(user));
-
-  const {
-    identifier_field: identifierField = 'title',
-    slug: slugTemplate = `{{${identifierField}}}`,
-  } = collection;
-
-  const {
-    _i18n: {
-      defaultLocale,
-      structure,
-      canonicalSlug: { key: canonicalSlugKey, value: canonicalSlugTemplate },
-    },
-  } = collectionFile ?? collection;
-
-  const fillSlugOptions = {
-    // eslint-disable-next-line object-shorthand
-    collection: /** @type {EntryCollection} */ (collection),
-    content: currentValues[defaultLocale],
-  };
-
-  /**
-   * The slug of the default locale.
-   */
-  const defaultLocaleSlug =
-    fileName ?? originalEntry?.slug ?? fillSlugTemplate(slugTemplate, fillSlugOptions);
-
-  /**
-   * List of key paths that the value will be localized.
-   */
-  const localizingKeyPaths = [...slugTemplate.matchAll(/{{(?:fields\.)?(.+?)( \| localize)?}}/g)]
-    .filter(([, , localize]) => !!localize)
-    .map(([, keyPath]) => keyPath);
-
-  /**
-   * Localized slug map. This only applies when the i18n structure is multiple files or folders, and
-   * the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
-   */
-  const localizedSlugs =
-    structure === 'single_file' || !localizingKeyPaths.length
-      ? undefined
-      : Object.fromEntries(
-          Object.entries(currentLocales)
-            .filter(([, enabled]) => enabled)
-            .map(([locale]) => [
-              locale,
-              locale === defaultLocale
-                ? defaultLocaleSlug
-                : fillSlugTemplate(slugTemplate, {
-                    // eslint-disable-next-line object-shorthand
-                    collection: /** @type {EntryCollection} */ (collection),
-                    locale,
-                    content: {
-                      // Merge the default locale content and localized content
-                      ...currentValues[defaultLocale],
-                      ...Object.fromEntries(
-                        localizingKeyPaths.map((keyPath) => [
-                          keyPath,
-                          currentValues[locale][keyPath],
-                        ]),
-                      ),
-                    },
-                  }),
-            ]),
-        );
-
-  /**
-   * A canonical slug to be added to the content of each file when the slug is localized. It helps
-   * Sveltia CMS and some frameworks to link localized files. The default property name is
-   * `translationKey` used in Hugo’s multilingual support, and the default value is the default
-   * locale’s slug.
-   * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
-   * @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
-   */
-  const canonicalSlug = !localizedSlugs
-    ? undefined
-    : canonicalSlugTemplate === '{{slug}}'
-      ? defaultLocaleSlug
-      : fillSlugTemplate(canonicalSlugTemplate, {
-          ...fillSlugOptions,
-          currentSlug: defaultLocaleSlug,
-        });
-
-  const { internalBaseAssetFolder, internalAssetFolder, publicAssetFolder } =
-    getEntryAssetFolderPaths({
-      ...fillSlugOptions,
-      type: 'media_folder',
-      currentSlug: defaultLocaleSlug,
-      entryFilePath: createEntryPath(draft, defaultLocale, defaultLocaleSlug),
-    });
-
-  const assetNamesInSameFolder = getAssetsByDirName(internalAssetFolder).map((a) =>
-    a.name.normalize(),
-  );
-
-  /**
-   * @type {FileChange[]}
-   */
-  const changes = [];
-  /**
-   * @type {Asset[]}
-   */
-  const savingAssets = [];
-
-  const savingAssetProps = {
-    /** @type {string | undefined} */
-    text: undefined,
-    collectionName,
-    folder: internalBaseAssetFolder,
-    commitAuthor: _user.email
-      ? /** @type {CommitAuthor} */ ({ name: _user.name, email: _user.email })
-      : undefined,
-    commitDate: new Date(), // Use the current datetime
-  };
-
-  /**
-   * Replace a blob URL with the final path, and add the file to the changeset.
-   * @param {object} args - Arguments.
-   * @param {string} args.blobURL - Blob URL.
-   * @param {number} args.index - Matched index.
-   * @param {FieldKeyPath} args.keyPath - Field key path.
-   * @param {FlattenedEntryContent} args.content - Localized content.
-   */
-  const replaceBlobURL = async ({ blobURL, index, keyPath, content }) => {
-    const file = files[blobURL];
-
-    if (!file) {
-      return;
-    }
-
-    const sha = await getHash(file);
-    const dupFile = savingAssets.find((f) => f.sha === sha);
-    const useSubFolder = !!publicAssetFolder && publicAssetFolder !== '/';
-    let assetName = '';
-
-    // Check if the file has already been added for other field or locale
-    if (dupFile) {
-      assetName = dupFile.name;
-    } else {
-      assetName = renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
-
-      const assetPath = internalAssetFolder ? `${internalAssetFolder}/${assetName}` : assetName;
-
-      assetNamesInSameFolder.push(assetName);
-      changes.push({ action: 'create', path: assetPath, data: file });
-
-      savingAssets.push({
-        ...savingAssetProps,
-        blobURL: URL.createObjectURL(file),
-        name: assetName,
-        path: assetPath,
-        sha,
-        size: file.size,
-        kind: getAssetKind(assetName),
-      });
-    }
-
-    content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(
-      blobURL,
-      (_match, /** @type {number} */ offset) => {
-        if (offset === index) {
-          return useSubFolder ? `${publicAssetFolder}/${assetName}` : assetName;
-        }
-
-        return _match;
-      },
-    );
-  };
-
-  /**
-   * @type {LocalizedEntryMap}
-   */
-  const localizedEntryMap = Object.fromEntries(
-    await Promise.all(
-      Object.entries(currentValues).map(async ([locale, content]) => {
-        const localizedSlug = localizedSlugs?.[locale];
-        const slug = localizedSlug ?? defaultLocaleSlug;
-        const path = createEntryPath(draft, locale, slug);
-
-        if (!currentLocales[locale]) {
-          return [locale, { path }];
-        }
-
-        // Add the canonical slug if it doesn’t exist in the content
-        if (!content[canonicalSlugKey] && canonicalSlug) {
-          content[canonicalSlugKey] = canonicalSlug;
-        }
-
-        // Normalize data
-        for (const [keyPath, value] of Object.entries(content)) {
-          if (value === undefined) {
-            delete content[keyPath];
-            continue;
-          }
-
-          if (typeof value !== 'string') {
-            continue;
-          }
-
-          // Remove leading & trailing whitespace
-          content[keyPath] = value.trim();
-
-          const blobMatches = [
-            .../** @type {string} */ (content[keyPath]).matchAll(getBlobRegex('g')),
-          ];
-
-          if (blobMatches.length) {
-            await Promise.all(
-              blobMatches.map(({ 0: blobURL, index }) =>
-                replaceBlobURL({ blobURL, index, keyPath, content }),
-              ),
-            );
-          }
-        }
-
-        return [locale, { slug, path, sha: '', content: toRaw(content) }];
-      }),
-    ),
-  );
-
-  const { savingEntry, changes: savingEntryChanges } = await createSavingEntryData({
-    isNew,
-    collection,
-    collectionFile,
-    originalEntry,
-    defaultLocaleSlug,
-    localizedEntryMap,
-    currentLocales,
-    originalLocales,
-  });
-
-  changes.push(...savingEntryChanges);
+  const slugs = getSlugs({ draft });
+  const { defaultLocaleSlug } = slugs;
+  const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
 
   try {
     await /** @type {BackendService} */ (get(backend)).commitChanges(changes, {

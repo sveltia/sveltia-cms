@@ -18,7 +18,7 @@ import { allEntries } from '$lib/services/contents';
 import { updatesToastDefaultState } from '$lib/services/contents/collection/data';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
-import { createSavingEntryData } from '$lib/services/contents/draft/save';
+import { createSavingEntryData, getSlugs } from '$lib/services/contents/draft/save';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { renameIfNeeded } from '$lib/services/utils/file';
 
@@ -159,32 +159,47 @@ export const moveAssets = async (action, movingAssets) => {
 
       await Promise.all(
         updatedEntries.map(async (entry) => {
-          const { locales, slug } = entry;
+          const { locales } = entry;
+
+          const currentLocales = Object.fromEntries(
+            Object.entries(locales).map(([locale]) => [locale, true]),
+          );
+
+          const currentValues = Object.fromEntries(
+            Object.entries(locales).map(([locale, { content }]) => [locale, content]),
+          );
+
+          const draftProps = {
+            isNew: false,
+            originalEntry: entry,
+            originalLocales: currentLocales,
+            currentLocales,
+            originalValues: currentValues,
+            currentValues,
+            files: {},
+            validities: {},
+            expanderStates: {},
+          };
 
           await Promise.all(
             getAssociatedCollections(entry).map(async (collection) => {
-              const originalLocales = Object.fromEntries(
-                Object.keys(locales).map((locale) => [locale, true]),
-              );
-
-              const savingDataProps = {
-                isNew: false,
-                collection,
-                originalEntry: entry,
-                defaultLocaleSlug: slug,
-                originalLocales,
-                currentLocales: originalLocales,
-                localizedEntryMap: locales,
-              };
-
               /**
                * Add saving entry data to the stack.
                * @param {CollectionFile} [collectionFile] - File. File collection only.
                */
               const addSavingEntryData = async (collectionFile) => {
-                const { savingEntry, changes: savingEntryChanges } = await createSavingEntryData({
-                  ...savingDataProps,
+                /** @type {EntryDraft} */
+                const draft = {
+                  ...draftProps,
+                  collection,
+                  collectionName: collection.name,
                   collectionFile,
+                  fileName: collectionFile?.name,
+                };
+
+                const { savingEntry, changes: savingEntryChanges } = await createSavingEntryData({
+                  draft,
+                  slugs: getSlugs({ draft }),
                 });
 
                 savingEntries.push(savingEntry);

@@ -828,8 +828,8 @@
  */
 
 /**
- * Entry item.
- * @typedef {object} Entry
+ * Entry properties.
+ * @typedef {object} EntryProps
  * @property {string} id - Unique entry ID mainly used on the cross-collection search page, where
  * the `sha`, `slug` or `fileName` property may duplicate.
  * @property {string} sha - SHA-1 hash from one of the locales. It serves as the ID of an entry, so
@@ -839,8 +839,11 @@
  * @property {string} subPath - File name for a file collection, or file path without an extension
  * for an entry collection. Same as `slug` in most cases.
  * @property {LocalizedEntryMap} locales - Localized entry map.
- * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
- * @property {Date} [commitDate] - Commit date for a Git backend.
+ */
+
+/**
+ * Entry item.
+ * @typedef {EntryProps & RepositoryFileMetadata} Entry
  */
 
 /**
@@ -969,8 +972,8 @@
  */
 
 /**
- * Asset item.
- * @typedef {object} Asset
+ * Asset properties.
+ * @typedef {object} AssetProps
  * @property {File} [file] - File object. Local backend only.
  * @property {string} [blobURL] - Blob URL for the asset. It’s a temporary URL for a remote file
  * being fetched or a local file being uploaded. Or `undefined` if the URL is not generated yet.
@@ -982,8 +985,11 @@
  * @property {string} [text] - Raw text for a plaintext file, like HTML or Markdown.
  * @property {string} folder - Path of a collection-specific folder that contains the file or global
  * media folder.
- * @property {CommitAuthor} [commitAuthor] - Git committer info for a Git backend.
- * @property {Date} [commitDate] - Commit date for a Git backend.
+ */
+
+/**
+ * Asset item.
+ * @typedef {AssetProps & RepositoryFileMetadata} Asset
  */
 
 /**
