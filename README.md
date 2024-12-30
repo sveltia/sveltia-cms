@@ -301,7 +301,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML[^147].
 - Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes[^9][^155].
-  - Note: the `yaml_quote: true` collection option added v0.5.10 is now deprecated and will be removed in v1.0.
+  - Note: the `yaml_quote` collection option added v0.5.10 is now deprecated and will be removed in v1.0.
 
 ### Better widgets
 
@@ -335,7 +335,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
 - Number
-  - If the `value_type` option is `int` or `float`, the `required` option is `false`, and the value is not entered, it will be saved as `null` instead of an empty string[^157].
+  - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` (or `undefined` if the `omit_empty_optional_fields` option is `true`) instead of an empty string[^157]. If `value_type` is something else, the data type remains string.
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
     - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) just like the List widget.
