@@ -296,6 +296,7 @@ export const copyProperty = ({
     omitEmptyOptionalFields &&
     field &&
     !isFieldRequired({ fieldConfig: field, locale }) &&
+    !Object.keys(unsortedMap).some((_key) => _key.startsWith(`${key}.`)) &&
     (!value ||
       (Array.isArray(value) && !value.length) ||
       (isObject(value) && !Object.keys(value).length))

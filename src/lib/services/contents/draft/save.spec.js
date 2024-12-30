@@ -236,15 +236,30 @@ describe('Test getEntryAssetFolderPaths()', () => {
 });
 
 describe('Test copyProperty()', () => {
+  /** @type {Field[]} */
+  const fields = [
+    { name: 'title', widget: 'string', required: true },
+    { name: 'description', widget: 'string', required: false },
+    { name: 'image', widget: 'image', required: false },
+    { name: 'hidden', widget: 'boolean', required: false },
+    { name: 'threshold', widget: 'number', required: false },
+    { name: 'organizers', widget: 'list', required: false },
+    { name: 'program', widget: 'object', required: false },
+    { name: 'address', widget: 'object', required: false },
+    { name: 'variables', widget: 'keyvalue', required: false },
+  ];
+
+  /** @type {FlattenedEntryContent} */
   const content = {
     title: 'My Post',
     description: '',
     image: '',
     hidden: false,
-    threshold: undefined,
+    threshold: null,
     organizers: [],
     program: null,
     address: {},
+    variables: {},
   };
 
   /**
@@ -254,62 +269,26 @@ describe('Test copyProperty()', () => {
    * is done in `finalizeContent`.
    */
   const copy = (omitEmptyOptionalFields = false) => {
+    /** @type {FlattenedEntryContent} */
     const sortedMap = {};
+
+    /** @type {FlattenedEntryContent} */
+    const unsortedMap = {
+      ...structuredClone(content),
+      'variables.foo': 'foo',
+      'variables.bar': 'bar',
+    };
 
     const args = {
       locale: 'en',
-      unsortedMap: structuredClone(content),
+      unsortedMap,
       sortedMap,
       isTomlOutput: false,
       omitEmptyOptionalFields,
     };
 
-    copyProperty({
-      ...args,
-      key: 'title',
-      field: { name: 'title', widget: 'string', required: true },
-    });
-
-    copyProperty({
-      ...args,
-      key: 'description',
-      field: { name: 'description', widget: 'string', required: false },
-    });
-
-    copyProperty({
-      ...args,
-      key: 'image',
-      field: { name: 'image', widget: 'image', required: false },
-    });
-
-    copyProperty({
-      ...args,
-      key: 'hidden',
-      field: { name: 'hidden', widget: 'boolean', required: false },
-    });
-
-    copyProperty({
-      ...args,
-      key: 'threshold',
-      field: { name: 'threshold', widget: 'number', required: false },
-    });
-
-    copyProperty({
-      ...args,
-      key: 'organizers',
-      field: { name: 'organizers', widget: 'list', required: false },
-    });
-
-    copyProperty({
-      ...args,
-      key: 'program',
-      field: { name: 'program', widget: 'object', required: false },
-    });
-
-    copyProperty({
-      ...args,
-      key: 'address',
-      field: { name: 'address', widget: 'object', required: false },
+    fields.forEach((field) => {
+      copyProperty({ ...args, key: field.name, field });
     });
 
     return sortedMap;
@@ -324,6 +303,7 @@ describe('Test copyProperty()', () => {
   });
 
   test('omit option enabled', () => {
-    expect(copy(true)).toEqual({ title: 'My Post' });
+    // Here `variables.X` are not included but that’s fine; it’s done is `finalizeContent`
+    expect(copy(true)).toEqual({ title: 'My Post', variables: {} });
   });
 });
