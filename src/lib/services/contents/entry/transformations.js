@@ -2,10 +2,10 @@ import { truncate } from '@sveltia/utils/string';
 import moment from 'moment';
 import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 
-const dateRegex = /^date\('(?<format>.*?)'\)$/;
-const defaultRegex = /^default\('?(?<defaultValue>.*?)'?\)$/;
-const ternaryRegex = /^ternary\('?(?<truthyValue>.*?)'?,\s*'?(?<falsyValue>.*?)'?\)$/;
-const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'?(?<ellipsis>.*?)'?)?\)$/;
+const dateRegex = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
+const defaultRegex = /^default\('?(?<defaultValue>.+?)'?\)$/;
+const ternaryRegex = /^ternary\('?(?<truthyValue>.+?)'?,\s*'?(?<falsyValue>.+?)'?\)$/;
+const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
 
 /**
  * Apply a string transformation to the value.
@@ -30,16 +30,16 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
   const dateTransformer = transformation.match(dateRegex);
 
   if (dateTransformer?.groups) {
-    const { format } = dateTransformer.groups;
+    const { format, timeZone } = dateTransformer.groups;
     const { dateOnly, utc } = parseDateTimeConfig(/** @type {DateTimeField} */ (fieldConfig ?? {}));
 
-    return (
+    const useUTC =
+      timeZone === 'utc' ||
       utc ||
       (dateOnly && !!slugPartStr?.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
-      (dateOnly && !!slugPartStr.match(/T00:00(?::00)?(?:\.000)?Z$/))
-        ? moment.utc(slugPartStr)
-        : moment(slugPartStr)
-    ).format(format);
+      (dateOnly && !!slugPartStr.match(/T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z$/));
+
+    return (useUTC ? moment.utc : moment)(slugPartStr).format(format);
   }
 
   const defaultTransformer = transformation.match(defaultRegex);
