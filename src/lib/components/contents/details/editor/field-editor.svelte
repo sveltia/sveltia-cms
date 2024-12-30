@@ -72,7 +72,11 @@
   );
   const type = $derived(
     // prettier-ignore
-    widgetName === 'string' ? (/** @type {StringField} */ (fieldConfig).type ?? 'text') : undefined,
+    widgetName === 'string'
+      ? /** @type {StringField} */ (fieldConfig).type ?? 'text'
+      : widgetName === 'number'
+        ? 'number'
+        : undefined,
   );
   const allowPrefix = $derived(['string'].includes(widgetName));
   const prefix = $derived(
@@ -206,7 +210,9 @@
         {/if}
         {#if validity.rangeUnderflow}
           {@const quantity = min === 1 ? 'one' : 'many'}
-          {#if canAddMultiValue}
+          {#if widgetName === 'number'}
+            {$_('validation.range_underflow.number', { values: { min } })}
+          {:else if canAddMultiValue}
             {$_(`validation.range_underflow.add_${quantity}`, { values: { min } })}
           {:else}
             {$_(`validation.range_underflow.select_${quantity}`, { values: { min } })}
@@ -214,7 +220,9 @@
         {/if}
         {#if validity.rangeOverflow}
           {@const quantity = max === 1 ? 'one' : 'many'}
-          {#if canAddMultiValue}
+          {#if widgetName === 'number'}
+            {$_('validation.range_overflow.number', { values: { max } })}
+          {:else if canAddMultiValue}
             {$_(`validation.range_overflow.add_${quantity}`, { values: { max } })}
           {:else}
             {$_(`validation.range_overflow.select_${quantity}`, { values: { max } })}

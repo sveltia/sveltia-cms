@@ -165,7 +165,10 @@ export const validateEntry = () => {
           value = value.trim();
         }
 
-        if (required && (value === undefined || value === '' || (multiple && !value.length))) {
+        if (
+          required &&
+          (value === undefined || value === null || value === '' || (multiple && !value.length))
+        ) {
           valueMissing = true;
         }
 
@@ -204,6 +207,22 @@ export const validateEntry = () => {
           // `me@example` valid but it’s not valid in the real world
           if (type === 'email' && !typeMismatch && !value.split('@')[1]?.includes('.')) {
             typeMismatch = true;
+          }
+        }
+
+        if (widgetName === 'number') {
+          const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
+
+          if (typeof min === 'number' && Number(value) < min) {
+            rangeUnderflow = true;
+          } else if (typeof max === 'number' && Number(value) > max) {
+            rangeOverflow = true;
+          }
+
+          if (valueType === 'int' || valueType === 'float') {
+            if (typeof value !== 'number' && !(required && value === null)) {
+              typeMismatch = true;
+            }
           }
         }
       }

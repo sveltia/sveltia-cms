@@ -365,12 +365,14 @@ export const strings = {
   validation: {
     value_missing: 'This field is required.',
     range_underflow: {
+      number: 'Value must be greater than or equal to {min}.',
       select_many: 'You have to select at least {min} items.',
       select_one: 'You have to select at least {min} item.',
       add_many: 'You have to add at least {min} items.',
       add_one: 'You have to add at least {min} item.',
     },
     range_overflow: {
+      number: 'Value must be less than or equal to {max}.',
       select_many: 'You cannot select more than {max} items.',
       select_one: 'You cannot select more than {max} item.',
       add_many: 'You cannot add more than {max} items.',
@@ -385,6 +387,7 @@ export const strings = {
       many: 'You cannot enter more than {max} characters.',
     },
     type_mismatch: {
+      number: 'Please enter a number.',
       email: 'Please enter a valid email.',
       url: 'Please enter a valid URL.',
     },
