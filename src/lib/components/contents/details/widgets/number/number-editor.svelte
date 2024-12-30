@@ -30,7 +30,7 @@
    */
   export let fieldConfig;
   /**
-   * @type {string | number}
+   * @type {string | number | null}
    */
   export let currentValue;
   /**
@@ -92,16 +92,20 @@
   const setCurrentValue = () => {
     let newValue;
 
-    if (valueType === 'int') {
-      newValue = Number.parseInt(isNumeric ? String(numInputValue) : strInputValue, 10);
-    } else if (valueType === 'float') {
-      newValue = Number.parseFloat(isNumeric ? String(numInputValue) : strInputValue);
+    if (isNumeric) {
+      if (numInputValue === undefined) {
+        newValue = NaN;
+      } else if (valueType === 'int') {
+        newValue = Number.parseInt(isNumeric ? String(numInputValue) : strInputValue, 10);
+      } else {
+        newValue = Number.parseFloat(isNumeric ? String(numInputValue) : strInputValue);
+      }
     } else {
       newValue = strInputValue;
     }
 
     if (isNumeric && Number.isNaN(newValue)) {
-      newValue = '';
+      newValue = null;
     }
 
     // Avoid a cycle dependency & infinite loop
