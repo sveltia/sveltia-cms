@@ -63,6 +63,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Disabling non-default locale content](#disabling-non-default-locale-content)
   - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
+  - [Controlling data output](#controlling-data-output)
   - [Disabling automatic deployments](#disabling-automatic-deployments)
   - [Setting up Content Security Policy](#setting-up-content-security-policy)
 - [Support \& feedback](#support--feedback)
@@ -108,7 +109,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 145+ of them, or 255+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 145+ of them, or 265+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 250 or all relevant and fixable issues in a future release (Yes, you read it right)
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
@@ -292,14 +293,15 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 ### Better data output
 
 - Keys in generated JSON/TOML/YAML content are always sorted by the order of configured fields, making Git commits clean and consistent[^86].
-- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output. Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string or an empty array, instead of nothing (`undefined`), regardless of the `required` field option[^45][^46][^44].
+- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output. Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string, an empty array or `null`, instead of nothing (`undefined`), regardless of the `required` field option[^45][^46][^44][^154][^157].
   - In other words, in Sveltia CMS, `required: false` makes data input optional, but doesn’t make data output optional.
-  - Note: If you have any data validation (type definition) that expects `undefined` values, you may need to revise it or the output from Sveitia CMS may break it.
+  - To omit empty optional fields from data output, use `omit_empty_optional_fields: true` in the [data output options](#controlling-data-output). This is useful if you have data type validations that expect `undefined`[^156].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
-- String values in YAML files can be quoted with the new `yaml_quote: true` option for a collection, mainly for framework compatibility[^9].
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML[^147].
+- Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes[^9][^155].
+  - Note: the `yaml_quote: true` collection option added v0.5.10 is now deprecated and will be removed in v1.0.
 
 ### Better widgets
 
@@ -332,6 +334,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The built-in `image` editor component can be inserted with a single click.
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
+- Number
+  - If the `value_type` option is `int` or `float`, the `required` option is `false`, and the value is not entered, it will be saved as `null` instead of an empty string[^157].
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
     - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) just like the List widget.
@@ -797,6 +801,21 @@ collections:
 ```
 
 Note: The `root` option is ignored if the collection or collection file contains multiple fields. You can still have subfields under the List field.
+
+### Controlling data output
+
+Sveltia CMS supports some data output options, including JSON/YAML formatting preferences, in the configuration file. The default options are listed below:
+
+```yaml
+output:
+  omit_empty_optional_fields: false # or true
+  json:
+    indent_style: space # or tab
+    indent_size: 2
+  yaml:
+    quote: none # or single or double
+    indent_size: 2
+```
 
 ### Disabling automatic deployments
 
@@ -1294,3 +1313,11 @@ This software is provided “as is” without any express or implied warranty. W
 [^152]: Netlify/Decap CMS [#2491](https://github.com/decaporg/decap-cms/issues/2491)
 
 [^153]: Netlify/Decap CMS [#7347](https://github.com/decaporg/decap-cms/issues/7347)
+
+[^154]: Netlify/Decap CMS [#1449](https://github.com/decaporg/decap-cms/issues/1988), [#1449](https://github.com/decaporg/decap-cms/issues/1988)
+
+[^155]: Netlify/Decap CMS [#5870](https://github.com/decaporg/decap-cms/issues/5870)
+
+[^156]: Netlify/Decap CMS [#995](https://github.com/decaporg/decap-cms/issues/995), [#2017](https://github.com/decaporg/decap-cms/issues/2017), [#7120](https://github.com/decaporg/decap-cms/issues/7120), [#7186](https://github.com/decaporg/decap-cms/issues/7186)
+
+[^157]: Netlify/Decap CMS [#2007](https://github.com/decaporg/decap-cms/issues/2007), [#2848](https://github.com/decaporg/decap-cms/issues/2848)
