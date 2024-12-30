@@ -63,12 +63,15 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
   if (widgetName === 'number') {
     const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
-    newContent[keyPath] =
-      valueType === 'int'
-        ? Number.parseInt(value, 10)
-        : valueType === 'float'
-          ? Number.parseFloat(value)
-          : value;
+    if (valueType === 'int' || valueType === 'float') {
+      const val = valueType === 'int' ? Number.parseInt(value, 10) : Number.parseFloat(value);
+
+      if (!Number.isNaN(val)) {
+        newContent[keyPath] = val;
+      }
+    } else {
+      newContent[keyPath] = value;
+    }
 
     return;
   }
