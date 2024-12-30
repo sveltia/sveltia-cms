@@ -113,7 +113,8 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Target: 250 or all relevant and fixable issues in a future release (Yes, you read it right)
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
-- Responding to feedback from [@kyoshino](https://github.com/kyoshino)’s clients and regular users
+- Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
+- Responding to feedback from the maintainer’s clients
 - Implementing our own enhancement ideas for every part of the product
 - Making the code clean and maintainable
 
@@ -986,7 +987,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### After the 1.0 release
 
-- Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and nested collections
+- Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and Nested Collections
 - Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are already implemented in Sveltia CMS
 - Exploring further compatibility with Static CMS
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools
