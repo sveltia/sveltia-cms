@@ -293,7 +293,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 ### Better data output
 
 - Keys in generated JSON/TOML/YAML content are always sorted by the order of configured fields, making Git commits clean and consistent[^86].
-- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output. Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string, an empty array or `null`, instead of nothing (`undefined`), regardless of the `required` field option[^45][^46][^44][^154][^157].
+- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output[^154]. Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string, an empty array or `null`, instead of nothing (`undefined`), regardless of the `required` field option[^45][^46][^44][^157].
   - In other words, in Sveltia CMS, `required: false` makes data input optional, but doesn’t make data output optional.
   - To omit empty optional fields from data output, use `omit_empty_optional_fields: true` in the [data output options](#controlling-data-output). This is useful if you have data type validations that expect `undefined`[^156].
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
@@ -1314,7 +1314,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^153]: Netlify/Decap CMS [#7347](https://github.com/decaporg/decap-cms/issues/7347)
 
-[^154]: Netlify/Decap CMS [#1449](https://github.com/decaporg/decap-cms/issues/1988), [#1449](https://github.com/decaporg/decap-cms/issues/1988)
+[^154]: Netlify/Decap CMS [#1449](https://github.com/decaporg/decap-cms/issues/1449), [#1988](https://github.com/decaporg/decap-cms/issues/1988)
 
 [^155]: Netlify/Decap CMS [#5870](https://github.com/decaporg/decap-cms/issues/5870)
 
