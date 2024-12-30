@@ -251,7 +251,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
       - The `slug` collection option[^29]
       - The `summary` field option for the List and Object widgets
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
-    - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the slug, e.g. `{{date | date('YYYY-MM-DD_HHmm', 'utc')}}`.
+    - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the entry slug, e.g. `{{date | date('YYYY-MM-DD_HHmm', 'utc')}}`. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/278#issuecomment-2565313420))
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
   - Markdown is supported in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
