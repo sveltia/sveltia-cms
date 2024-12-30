@@ -301,7 +301,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML[^147].
 - Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes[^9][^155].
-  - Note: the `yaml_quote` collection option added v0.5.10 is now deprecated and will be removed in v1.0.
+  - The `yaml_quote` collection option added in [v0.5.10](https://github.com/sveltia/sveltia-cms/releases/tag/v0.5.10) is now deprecated and will be removed in v1.0 in favour of the new option. `yaml_quote: true` is equivalent to `quote: double`.
 
 ### Better widgets
 
