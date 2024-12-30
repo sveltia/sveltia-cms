@@ -246,10 +246,15 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - `value` accepts `null` to match an undefined field value.
     - `value` accepts an array to provide multiple possible values[^151].
     - `pattern` can be used instead of `value` to provide a regular expression, just like the `view_filters` collection option[^153].
+  - Enhancements to [summary string transformations](https://decapcms.org/docs/summary-strings/):
+    - Transformations can be used in more places than just the collection `summary`:
+      - The `slug` collection option[^29]
+      - The `summary` field option for the List and Object widgets
+    - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
+    - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the slug, e.g. `{{date | date('YYYY-MM-DD_HHmm', 'utc')}}`.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
   - Markdown is supported in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
-  - Multiple [summary string transformations](https://decapcms.org/docs/summary-strings/) can be chained like `{{title | upper | truncate(20)}}`.
 - Entry slugs
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values[^133].
