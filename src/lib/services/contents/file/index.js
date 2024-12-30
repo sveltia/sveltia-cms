@@ -148,6 +148,12 @@ export const getFrontMatterDelimiters = ({ format, delimiter }) => {
 };
 
 /**
+ * Whether the deprecated `yaml_quote` collection option is warned.
+ * @todo Remove the option prior to the 1.0 release.
+ */
+let yamlQuoteWarnedOnce = false;
+
+/**
  * Get the normalized entry file configuration for the given collection or collection file.
  * @param {object} args - Arguments.
  * @param {RawCollection} args.rawCollection - Developer-defined collection.
@@ -162,7 +168,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     extension: _extension,
     format: _format,
     frontmatter_delimiter: delimiter,
-    yaml_quote: yamlQuote = false,
+    yaml_quote: yamlQuote,
   } = rawCollection;
 
   const isEntryCollection = typeof folder === 'string';
@@ -170,6 +176,16 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   const extension = detectFileExtension({ format: _format, extension: _extension, path: filePath });
   const format = detectFileFormat({ format: _format, extension });
   const basePath = isEntryCollection ? stripSlashes(folder) : undefined;
+
+  if (yamlQuote !== undefined && !yamlQuoteWarnedOnce) {
+    yamlQuoteWarnedOnce = true;
+    // eslint-disable-next-line no-console
+    console.warn(
+      'The yaml_quote collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
+        'Use the global output.yaml.quote option instead. ' +
+        'https://github.com/sveltia/sveltia-cms#controlling-data-output',
+    );
+  }
 
   return {
     extension,
@@ -184,6 +200,6 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
       ? stripSlashes(filePath).replace('{{locale}}', _i18n.defaultLocale)
       : undefined,
     fmDelimiters: getFrontMatterDelimiters({ format, delimiter }),
-    yamlQuote,
+    yamlQuote: !!yamlQuote,
   };
 };

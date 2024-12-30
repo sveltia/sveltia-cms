@@ -1,33 +1,68 @@
 import * as TOML from 'smol-toml';
+import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { customFileFormats } from '$lib/services/contents/file';
+import { siteConfig } from '$lib/services/config';
 
 /**
  * Format the given object as a JSON document using the built-in method.
  * @param {any} obj - Object to be formatted.
+ * @param {JsonFormatOptions} [options] - Options.
  * @returns {string} Formatted document.
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  */
-const formatJSON = (obj) => JSON.stringify(obj, null, 2).trim();
+export const formatJSON = (obj, options = get(siteConfig)?.output?.json ?? {}) => {
+  const {
+    indent_style: indentStyle = 'space',
+    indent_size: indentSize = indentStyle === 'tab' ? 1 : 2,
+  } = options;
+
+  return JSON.stringify(
+    obj,
+    null,
+    indentStyle === 'tab' ? '\t'.repeat(indentSize) : indentSize,
+  ).trim();
+};
+
 /**
  * Format the given object as a TOML document using a library.
  * @param {any} obj - Object to be formatted.
  * @returns {string} Formatted document.
+ * @see https://github.com/squirrelchat/smol-toml
  */
-const formatTOML = (obj) => TOML.stringify(obj).trim();
+export const formatTOML = (obj) => TOML.stringify(obj).trim();
 
 /**
  * Format the given object as a YAML document using a library.
  * @param {any} obj - Object to be formatted.
- * @param {object} [options] - Options.
- * @param {boolean} [options.yamlQuote] - Quote option.
+ * @param {YamlFormatOptions} [options] - Options.
+ * @param {object} [legacyOptions] - Deprecated collection-level options.
+ * @param {boolean} [legacyOptions.quote] - Quote option.
  * @returns {string} Formatted document.
+ * @see https://eemeli.org/yaml/#tostring-options
+ * @todo Remove `collectionOptions` prior to the 1.0 release.
  */
-const formatYAML = (obj, { yamlQuote = false } = {}) =>
-  YAML.stringify(obj, null, {
+export const formatYAML = (
+  obj,
+  options = get(siteConfig)?.output?.yaml ?? {},
+  legacyOptions = {},
+) => {
+  const { indent_size: indent = 2, quote = 'none' } = options;
+  const { quote: legacyQuote = false } = legacyOptions;
+
+  return YAML.stringify(obj, null, {
+    indent,
     lineWidth: 0,
     defaultKeyType: 'PLAIN',
-    defaultStringType: yamlQuote ? 'QUOTE_DOUBLE' : 'PLAIN',
+    defaultStringType:
+      legacyQuote || quote === 'double'
+        ? 'QUOTE_DOUBLE'
+        : quote === 'single'
+          ? 'QUOTE_SINGLE'
+          : 'PLAIN',
+    singleQuote: !(legacyQuote || quote === 'double'),
   }).trim();
+};
 
 /**
  * Format raw entry content.
@@ -48,7 +83,7 @@ export const formatEntryFile = async ({ content, _file }) => {
 
   try {
     if (/^ya?ml$/.test(format)) {
-      return `${formatYAML(content, { yamlQuote })}\n`;
+      return `${formatYAML(content, undefined, { quote: yamlQuote })}\n`;
     }
 
     if (format === 'toml') {
@@ -78,7 +113,7 @@ export const formatEntryFile = async ({ content, _file }) => {
 
     try {
       if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-        return `${sd}\n${formatYAML(content, { yamlQuote })}\n${ed}\n${body}\n`;
+        return `${sd}\n${formatYAML(content, undefined, { quote: yamlQuote })}\n${ed}\n${body}\n`;
       }
 
       if (format === 'toml-frontmatter') {

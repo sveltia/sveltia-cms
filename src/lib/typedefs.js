@@ -227,7 +227,8 @@
  * i18n structure into account. Folder collection only.
  * @property {string} [fullPath] - File path of the default locale. File collection only.
  * @property {[string, string]} [fmDelimiters] - Front matter delimiters.
- * @property {boolean} [yamlQuote] - YAML quote configuration.
+ * @property {boolean} [yamlQuote] - YAML quote configuration. DEPRECATED in favor of the global
+ * YAML format options.
  */
 
 /**
@@ -345,7 +346,30 @@
  * Default: `true`.
  * @property {'simple' | 'editorial_workflow'} [publish_mode] - Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] - Whether to show site preview links.
+ * @property {OutputOptions} [output] - Data output options.
  * @see https://decapcms.org/docs/configuration-options/
+ */
+
+/**
+ * Data output options.
+ * @typedef {object} OutputOptions
+ * @property {JsonFormatOptions} [json] - JSON format options.
+ * @property {YamlFormatOptions} [yaml] - YAML format options.
+ */
+
+/**
+ * JSON format options.
+ * @typedef {object} JsonFormatOptions
+ * @property {'space' | 'tab'} [indent_style] - Indent style. Default: 'space'.
+ * @property {number} [indent_size] - Indent size. Default: 2.
+ */
+
+/**
+ * YAML format options.
+ * @typedef {object} YamlFormatOptions
+ * @property {number} [indent_size] - Indent size. Default: 2.
+ * @property {'none' | 'double' | 'single'} [quote] - String value’s default quote type. Default:
+ * 'none'.
  */
 
 /**
@@ -387,7 +411,8 @@
  * @property {string | string[]} [frontmatter_delimiter] - Delimiters used for the front matter
  * format.
  * @property {boolean} [yaml_quote] - Whether to double-quote all the strings values if the YAML
- * format is used for file output. Default: `false`.
+ * format is used for file output. Default: `false`. DEPRECATED in favor of the global YAML format
+ * options.
  * @property {string} [slug] - Item slug template for an entry collection.
  * @property {number} [slug_length] - The maximum number of characters allowed for an entry slug. An
  * option suggested in https://github.com/decaporg/decap-cms/issues/6987.
