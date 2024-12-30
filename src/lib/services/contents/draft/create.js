@@ -1,3 +1,4 @@
+import { isObject } from '@sveltia/utils/object';
 import { stripTags } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { getCollection } from '$lib/services/contents/collection';
@@ -80,6 +81,22 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
 
       return;
     }
+  }
+
+  if (widgetName === 'keyvalue') {
+    try {
+      const parsed = JSON.parse(value);
+
+      if (isObject(parsed)) {
+        Object.entries(/** @type {Record<string, string>} */ (parsed)).forEach(([key, val]) => {
+          newContent[`${keyPath}.${key}`] = val;
+        });
+      }
+    } catch {
+      //
+    }
+
+    return;
   }
 
   // Just use the string as is
