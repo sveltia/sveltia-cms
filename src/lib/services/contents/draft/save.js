@@ -1,6 +1,6 @@
 import { generateUUID, getHash } from '@sveltia/utils/crypto';
 import { getBlobRegex } from '@sveltia/utils/file';
-import { toRaw } from '@sveltia/utils/object';
+import { isObject, toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
@@ -17,7 +17,7 @@ import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
 import { validateEntry } from '$lib/services/contents/draft/validate';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
@@ -258,11 +258,22 @@ const createKeyPathList = (fields) => {
  * @param {object} args - Arguments.
  * @param {string} args.key - Property name.
  * @param {Field} [args.field] - Associated field.
+ * @param {LocaleCode} args.locale - Locale code.
  * @param {FlattenedEntryContent} args.unsortedMap - Unsorted property map.
  * @param {FlattenedEntryContent} args.sortedMap - Sorted property map.
  * @param {boolean} args.isTomlOutput - Whether the output it TOML format.
+ * @param {boolean} args.omitEmptyOptionalFields - Whether to prevent fields with `required: false`
+ * and an empty value from being included in the data output.
  */
-const copyProperty = ({ key, field, unsortedMap, sortedMap, isTomlOutput }) => {
+export const copyProperty = ({
+  key,
+  field,
+  locale,
+  unsortedMap,
+  sortedMap,
+  isTomlOutput,
+  omitEmptyOptionalFields,
+}) => {
   let value = unsortedMap[key];
 
   // Use native date for TOML
@@ -281,7 +292,19 @@ const copyProperty = ({ key, field, unsortedMap, sortedMap, isTomlOutput }) => {
     }
   }
 
-  sortedMap[key] = value;
+  if (
+    omitEmptyOptionalFields &&
+    field &&
+    !isFieldRequired({ fieldConfig: field, locale }) &&
+    (!value ||
+      (Array.isArray(value) && !value.length) ||
+      (isObject(value) && !Object.keys(value).length))
+  ) {
+    // Omit the empty value
+  } else {
+    sortedMap[key] = value;
+  }
+
   delete unsortedMap[key];
 };
 
@@ -293,6 +316,7 @@ const copyProperty = ({ key, field, unsortedMap, sortedMap, isTomlOutput }) => {
  * @param {string} args.collectionName - Collection name.
  * @param {string} [args.fileName] - File name.
  * @param {Field[]} args.fields - Field list of a collection or a file.
+ * @param {LocaleCode} args.locale - Locale code.
  * @param {FlattenedEntryContent} args.valueMap - Flattened entry content.
  * @param {string} [args.canonicalSlugKey] - Property name of a canonical slug.
  * @param {boolean} [args.isTomlOutput] - Whether the output it TOML format.
@@ -302,6 +326,7 @@ const finalizeContent = ({
   collectionName,
   fileName,
   fields,
+  locale,
   valueMap,
   canonicalSlugKey,
   isTomlOutput = false,
@@ -310,7 +335,11 @@ const finalizeContent = ({
   const unsortedMap = toRaw(valueMap);
   /** @type {FlattenedEntryContent} */
   const sortedMap = {};
-  const copyArgs = { unsortedMap, sortedMap, isTomlOutput };
+
+  const { omit_empty_optional_fields: omitEmptyOptionalFields = false } =
+    get(siteConfig)?.output ?? {};
+
+  const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };
 
   // Add the slug first
   if (canonicalSlugKey && canonicalSlugKey in unsortedMap) {
@@ -363,10 +392,11 @@ const finalizeContent = ({
  * Serialize the content for the output.
  * @param {object} args - Arguments.
  * @param {EntryDraft} args.draft - Entry draft.
+ * @param {LocaleCode} args.locale - Locale code.
  * @param {FlattenedEntryContent} args.valueMap - Original content.
  * @returns {RawEntryContent} Modified and unflattened content.
  */
-const serializeContent = ({ draft, valueMap }) => {
+const serializeContent = ({ draft, locale, valueMap }) => {
   const { collection, collectionFile } = draft;
 
   const {
@@ -381,6 +411,7 @@ const serializeContent = ({ draft, valueMap }) => {
     collectionName: collection.name,
     fileName: collectionFile?.name,
     fields,
+    locale,
     valueMap,
     canonicalSlugKey,
     isTomlOutput: ['toml', 'toml-frontmatter'].includes(_file.format),
@@ -783,10 +814,10 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
         ? Object.fromEntries(
             Object.entries(savingEntry.locales).map(([locale, le]) => [
               locale,
-              serializeContent({ draft, valueMap: le.content }),
+              serializeContent({ draft, locale, valueMap: le.content }),
             ]),
           )
-        : serializeContent({ draft, valueMap: content }),
+        : serializeContent({ draft, locale: '_default', valueMap: content }),
       _file,
     });
 
@@ -802,7 +833,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
           const action = isNew || !originalLocales[locale] ? 'create' : 'update';
 
           const data = await formatEntryFile({
-            content: serializeContent({ draft, valueMap: content }),
+            content: serializeContent({ draft, locale, valueMap: content }),
             _file,
           });
 

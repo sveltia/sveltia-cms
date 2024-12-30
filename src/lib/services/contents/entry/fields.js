@@ -94,7 +94,8 @@ export const getFieldConfig = ({
 };
 
 /**
- * Check if the field requires user input.
+ * Check if the field requires data input (and data output if the `omit_empty_optional_fields`
+ * option is `true`).
  * @param {object} args - Arguments.
  * @param {Field} args.fieldConfig - Field configuration.
  * @param {LocaleCode} args.locale - Current pane’s locale.

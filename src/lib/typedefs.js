@@ -353,6 +353,8 @@
 /**
  * Data output options.
  * @typedef {object} OutputOptions
+ * @property {boolean} [omit_empty_optional_fields] - Whether to prevent fields with
+ * `required: false` and an empty value from being included in the data output. Default: false.
  * @property {JsonFormatOptions} [json] - JSON format options.
  * @property {YamlFormatOptions} [yaml] - YAML format options.
  */
@@ -515,9 +517,9 @@
  * @property {string} [label] - Field label.
  * @property {string} [comment] - Field description.
  * @property {string} [widget] - Widget name.
- * @property {boolean | LocaleCode[]} [required] - Whether to require user input for the field. If
- * i18n is enabled and the field doesn’t require input for every locale, a subset of locales can be
- * passed as an array.
+ * @property {boolean | LocaleCode[]} [required] - Whether to require data input (and data output if
+ * the `omit_empty_optional_fields` option is `true`) for the field. If i18n is enabled and the
+ * field doesn’t require input for every locale, a subset of locales can be passed as an array.
  * @property {string[]} [pattern] - Validation format.
  * @property {string} [hint] - Value hint to be displayed below the input.
  * @property {boolean} [preview] - Whether to show the preview of the field. Default: `true`.

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getEntryAssetFolderPaths } from '$lib/services/contents/draft/save';
+import { copyProperty, getEntryAssetFolderPaths } from '$lib/services/contents/draft/save';
 
 describe('Test getEntryAssetFolderPaths()', () => {
   const currentSlug = 'foo';
@@ -232,5 +232,98 @@ describe('Test getEntryAssetFolderPaths()', () => {
       internalAssetFolder: 'static/uploads/blog',
       publicAssetFolder: '/uploads/blog',
     });
+  });
+});
+
+describe('Test copyProperty()', () => {
+  const content = {
+    title: 'My Post',
+    description: '',
+    image: '',
+    hidden: false,
+    threshold: undefined,
+    organizers: [],
+    program: null,
+    address: {},
+  };
+
+  /**
+   * Wrapper for {@link copyProperty}.
+   * @param {boolean} [omitEmptyOptionalFields] - The omit option.
+   * @returns {FlattenedEntryContent} Copied content. Note: It’s not sorted here because sorting
+   * is done in `finalizeContent`.
+   */
+  const copy = (omitEmptyOptionalFields = false) => {
+    const sortedMap = {};
+
+    const args = {
+      locale: 'en',
+      unsortedMap: structuredClone(content),
+      sortedMap,
+      isTomlOutput: false,
+      omitEmptyOptionalFields,
+    };
+
+    copyProperty({
+      ...args,
+      key: 'title',
+      field: { name: 'title', widget: 'string', required: true },
+    });
+
+    copyProperty({
+      ...args,
+      key: 'description',
+      field: { name: 'description', widget: 'string', required: false },
+    });
+
+    copyProperty({
+      ...args,
+      key: 'image',
+      field: { name: 'image', widget: 'image', required: false },
+    });
+
+    copyProperty({
+      ...args,
+      key: 'hidden',
+      field: { name: 'hidden', widget: 'boolean', required: false },
+    });
+
+    copyProperty({
+      ...args,
+      key: 'threshold',
+      field: { name: 'threshold', widget: 'number', required: false },
+    });
+
+    copyProperty({
+      ...args,
+      key: 'organizers',
+      field: { name: 'organizers', widget: 'list', required: false },
+    });
+
+    copyProperty({
+      ...args,
+      key: 'program',
+      field: { name: 'program', widget: 'object', required: false },
+    });
+
+    copyProperty({
+      ...args,
+      key: 'address',
+      field: { name: 'address', widget: 'object', required: false },
+    });
+
+    return sortedMap;
+  };
+
+  test('omit option unspecified', () => {
+    expect(copy()).toEqual(content);
+  });
+
+  test('omit option disabled', () => {
+    expect(copy(false)).toEqual(content);
+  });
+
+  test('omit option enabled', () => {
+    expect(copy(true)).toEqual({ title: 'My Post' });
   });
 });
