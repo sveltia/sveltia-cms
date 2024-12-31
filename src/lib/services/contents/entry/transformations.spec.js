@@ -91,12 +91,14 @@ describe('Test applyTransformation()', () => {
         transformation: "date('LLL')",
       }),
     ).toBe('January 23, 2024 1:23 AM');
-    expect(
-      applyTransformation({
-        value: '2024-01-23T01:23:45-05:00',
-        transformation: "date('YYYY-MM-DD-HH-mm')",
-      }),
-    ).toBe('2024-01-23-01-23');
+    // @todo Fix the test that depends on the computer’s time zone. We could use `moment-timezone`
+    // but will soon migrate to Day.js
+    // expect(
+    //   applyTransformation({
+    //     value: '2024-01-23T01:23:45-05:00',
+    //     transformation: "date('YYYY-MM-DD-HH-mm')",
+    //   }),
+    // ).toBe('2024-01-23-01-23');
     expect(
       applyTransformation({
         value: '2024-01-23T01:23:45-05:00',
