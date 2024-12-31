@@ -41,6 +41,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Features not to be implemented](#features-not-to-be-implemented)
   - [Features to be implemented before GA](#features-to-be-implemented-before-ga)
   - [Features to be implemented after GA](#features-to-be-implemented-after-ga)
+  - [Compatibility with Static CMS](#compatibility-with-static-cms)
   - [Other notes](#other-notes)
 - [Getting started](#getting-started)
   - [New users](#new-users)
@@ -112,6 +113,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 145+ of them, or 265+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 250 or all relevant and fixable issues in a future release (Yes, you read it right)
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
+  - Most of the [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS, the others are expected to be solved in 2025
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Responding to feedback from the maintainer’s clients
@@ -139,7 +141,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
-- Small footprint: The bundle size is less than 500 KB when minified and brotlied, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet. That’s the power of Svelte + Vite.
+- Small footprint: The bundle size is less than 500 KB when minified and brotlied, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet, but rather implemented many new features. That’s the power of Svelte + Vite.
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is in progress.
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
@@ -274,6 +276,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A single file can be used for more than one item in a file collection[^127].
 - User interface
   - The collection list displays the number of items in each collection.
+  - Users can select multiple entries and delete them at once.
   - In an entry summary, basic Markdown syntax used in the title, including bold, italic and code, are parsed as Markdown. HTML character references (entities) are also parsed properly[^69].
   - If you update an entry field that appears in the collection’s `summary`, such as `title`, the entry list displays an updated summary after you save the entry.
   - If entries don’t have an Image field for thumbnails, the entry list will only be displayed in list view, because it doesn’t make sense to show grid view[^143].
@@ -308,7 +311,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML[^147].
 - Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes[^9][^155].
-  - The `yaml_quote` collection option added in [v0.5.10](https://github.com/sveltia/sveltia-cms/releases/tag/v0.5.10) is now deprecated and will be removed in v1.0.0. `yaml_quote: true` is equivalent to `quote: double` for the new `yaml` option.
+  - The `yaml_quote` collection option added in [v0.5.10](https://github.com/sveltia/sveltia-cms/releases/tag/v0.5.10) is now deprecated and will be removed in v1.0.0. `yaml_quote: true` is equivalent to `quote: double` in the new YAML format options.
 
 ### Better widgets
 
@@ -342,7 +345,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
 - Number
-  - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` (or `undefined` if the `omit_empty_optional_fields` option is `true`) instead of an empty string[^157]. If `value_type` is something else, the data type remains string.
+  - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string[^157]. If `value_type` is anything else, the data type will remain a string.
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
     - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) just like the List widget.
@@ -394,7 +397,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The new `keyvalue` widget allows users to add arbitrary key-value string pairs to a field[^123].
   - The implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), but we provide a more intuitive UI. You can press Enter to move focus or add a new row while editing, and the preview is displayed in a clean table.
 - UUID
-  - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS also supports the proposed `uuid` widget with the following properties[^12]:
+  - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
     - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
     - `read_only`: Whether to make the field read-only. Default: `true`.
@@ -443,8 +446,8 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained; we plan to develop a high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
-- **Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway. The [widget](https://github.com/netlify/netlify-identity-widget) has been unmaintained for years, and Netlify no longer officially supports it [according to a Netlify customer](https://github.com/sveltia/sveltia-cms/discussions/284). We plan to develop an alternative solution in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned; we plan to develop a high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
+- **Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway. The [widget](https://github.com/netlify/netlify-identity-widget) has been unmaintained for years, and Netlify no longer officially supports it [according to a Netlify customer](https://github.com/sveltia/sveltia-cms/discussions/284). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget instead.
@@ -480,13 +483,21 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
 - [Nested Collections](https://decapcms.org/docs/collection-nested/)
 
+### Compatibility with Static CMS
+
+We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. We’ll update this README with more details as our development progresses.
+
+- The KeyValue widget is already implemented in Sveltia CMS.
+- The UUID widget is also implemented, but with different options.
+- The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
+- `CMS.registerIcon()` won’t be supported, as Sveltia CMS includes Material Symbols for [custom collection icons](#using-a-custom-icon-for-a-collection).
+
 ### Other notes
 
 - Make sure you’re using the latest stable version of a web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and it’s served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
-- We plan to provide partial compatibility with now-discontinued Static CMS. The KeyValue widget is already implemented.
-- Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug).
+- Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked!
 
 ## Getting started
 
@@ -579,7 +590,7 @@ If you get an “Authentication Aborted” error when trying to sign in to GitHu
 
 Sveltia CMS has simplified the local repository workflow by removing the need for additional configuration (the `local_backend` property) and a proxy server (`netlify-cms-proxy-server` or `decap-server`), thanks to the [File System Access API](https://developer.chrome.com/articles/file-system-access/) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
-Basically there are only two differences from Netlify/Decap CMS: you don’t need to run the proxy server, and you need to select your project folder in the browser instead. Here are the detailed steps:
+Here are the workflow steps and tips:
 
 1. Make sure you have configured the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend.
    - Please note that the Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition. If you haven’t determined your repository name yet, just use a tentative name.
@@ -815,7 +826,7 @@ Sveltia CMS supports some [data output](#better-data-output) options, including 
 
 ```yaml
 output:
-  omit_empty_optional_fields: false # or true
+  omit_empty_optional_fields: false
   json:
     indent_style: space # or tab
     indent_size: 2
@@ -990,7 +1001,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 - Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and Nested Collections
 - Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are already implemented in Sveltia CMS
-- Exploring further compatibility with Static CMS
+- Exploring further [compatibility with Static CMS](#compatibility-with-static-cms)
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools
 - AI integrations for image generation and content writing
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
@@ -998,6 +1009,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - Contributor documentation
 - Marketplace for custom widgets, etc.
 - Git Gateway alternative
+- VS Code extension for `config.yml` schema validation
 - and so much more!
 
 ## Related links
