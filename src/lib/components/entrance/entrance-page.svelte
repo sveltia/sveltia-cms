@@ -9,8 +9,9 @@
   import { inAuthPopup } from '$lib/services/backends/shared/auth';
   import { siteConfig, siteConfigError } from '$lib/services/config';
   import { dataLoaded, dataLoadedProgress } from '$lib/services/contents';
-  import { prefs, prefsError } from '$lib/services/prefs';
-  import { signInError, unauthenticated, user } from '$lib/services/user';
+  import { user } from '$lib/services/user';
+  import { signInError, unauthenticated } from '$lib/services/user/auth';
+  import { prefs, prefsError } from '$lib/services/user/prefs';
 
   $effect(() => {
     $announcedPageStatus = $_('welcome_to_sveltia_cms');

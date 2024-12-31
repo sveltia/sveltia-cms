@@ -2,28 +2,10 @@ import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
-import { dataLoaded } from '$lib/services/contents';
-import { siteConfig } from '$lib/services/config';
 import { backend, backendName } from '$lib/services/backends';
-
-/**
- * @type {import('svelte/store').Writable<User | null | undefined>}
- */
-export const user = writable();
-
-user.subscribe((_user) => {
-  (async () => {
-    try {
-      if (_user) {
-        await LocalStorage.set('sveltia-cms.user', _user);
-      } else if (_user === null) {
-        await LocalStorage.delete('sveltia-cms.user');
-      }
-    } catch {
-      //
-    }
-  })();
-});
+import { siteConfig } from '$lib/services/config';
+import { dataLoaded } from '$lib/services/contents';
+import { user } from '$lib/services/user';
 
 /**
  * @type {import('svelte/store').Writable<{ message: string, canRetry: boolean }>}

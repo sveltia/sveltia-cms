@@ -5,7 +5,7 @@
   import { siteConfig } from '$lib/services/config';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { allTranslationServices } from '$lib/services/integrations/translators';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   /**
    * @typedef {object} Props

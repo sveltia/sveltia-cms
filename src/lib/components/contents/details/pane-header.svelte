@@ -22,7 +22,7 @@
   import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   /**
    * @typedef {object} Props

@@ -7,7 +7,7 @@
     translatorApiKeyDialogState,
   } from '$lib/services/contents/draft/editor';
   import { translator } from '$lib/services/integrations/translators';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   const { serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived(
     $translator ?? /** @type {TranslationService} */ ({}),

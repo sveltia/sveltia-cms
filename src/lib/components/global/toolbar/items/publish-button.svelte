@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { backend, backendName, isLastCommitPublished } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } = $derived(
     $siteConfig ?? /** @type {SiteConfig} */ ({}),

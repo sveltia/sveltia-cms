@@ -5,7 +5,7 @@ import merge from 'deepmerge';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 import YAML from 'yaml';
-import { prefs } from '$lib/services/prefs';
+import { prefs } from '$lib/services/user/prefs';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { allEntryFolders } from '$lib/services/contents';

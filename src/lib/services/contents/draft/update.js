@@ -10,7 +10,7 @@ import {
 } from '$lib/services/contents/draft/editor';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 import { translator } from '$lib/services/integrations/translators';
-import { prefs } from '$lib/services/prefs';
+import { prefs } from '$lib/services/user/prefs';
 
 /**
  * Update a flatten object with new properties by adding, updating and deleting properties.

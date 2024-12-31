@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import { prefs } from '$lib/services/prefs';
+import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @type {import('svelte/store').Writable<EntryDraft | null | undefined>}

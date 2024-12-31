@@ -13,7 +13,7 @@
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   /**
    * @typedef {object} Props

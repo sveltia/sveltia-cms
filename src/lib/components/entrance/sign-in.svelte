@@ -8,7 +8,7 @@
     signInError,
     signInManually,
     unauthenticated,
-  } from '$lib/services/user';
+  } from '$lib/services/user/auth';
   import { siteConfig } from '$lib/services/config';
   import { allBackendServices } from '$lib/services/backends';
 

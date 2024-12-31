@@ -30,7 +30,7 @@
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   let showValidationToast = $state(false);
   let showDeleteDialog = $state(false);

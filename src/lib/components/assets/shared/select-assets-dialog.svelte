@@ -15,8 +15,8 @@
     allCloudStorageServices,
     allStockPhotoServices,
   } from '$lib/services/integrations/media-libraries';
-  import { prefs } from '$lib/services/prefs';
   import { normalize } from '$lib/services/search';
+  import { prefs } from '$lib/services/user/prefs';
 
   /**
    * @typedef {object} Props

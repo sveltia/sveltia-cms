@@ -1,7 +1,7 @@
 <script>
   import { SelectButton, SelectButtonGroup, TabPanel } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   /**
    * @typedef {object} Props

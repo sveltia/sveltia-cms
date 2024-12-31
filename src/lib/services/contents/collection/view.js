@@ -11,7 +11,7 @@ import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
-import { prefs } from '$lib/services/prefs';
+import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields

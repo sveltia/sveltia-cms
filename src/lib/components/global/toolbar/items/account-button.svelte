@@ -4,8 +4,9 @@
   import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
   import { goto, openProductionSite } from '$lib/services/app/navigation';
   import { backend, backendName } from '$lib/services/backends';
-  import { prefs } from '$lib/services/prefs';
-  import { signOut, user } from '$lib/services/user';
+  import { user } from '$lib/services/user';
+  import { signOut } from '$lib/services/user/auth';
+  import { prefs } from '$lib/services/user/prefs';
 
   /** @type {MenuButton | undefined} */
   let menuButton = $state();

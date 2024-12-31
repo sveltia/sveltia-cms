@@ -11,7 +11,7 @@
   } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   /**
    * @typedef {object} Props

@@ -3,7 +3,7 @@ import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
-import { prefs } from '$lib/services/prefs';
+import { prefs } from '$lib/services/user/prefs';
 import { siteConfig } from '$lib/services/config';
 import { backend } from '$lib/services/backends';
 import {

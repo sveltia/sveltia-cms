@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import ShortcutsDialog from '$lib/components/keyboard-shortcuts/shortcuts-dialog.svelte';
   import { version } from '$lib/services/app';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   /** @type {MenuButton | undefined} */
   let menuButton = $state();

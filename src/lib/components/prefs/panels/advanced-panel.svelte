@@ -2,7 +2,7 @@
   import { Switch, TabPanel, TextInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { siteConfig } from '$lib/services/config';
-  import { prefs } from '$lib/services/prefs';
+  import { prefs } from '$lib/services/user/prefs';
 
   /**
    * @typedef {object} Props
