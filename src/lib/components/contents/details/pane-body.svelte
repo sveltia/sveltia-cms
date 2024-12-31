@@ -69,26 +69,22 @@
     });
   };
 
+  /** @type {AddEventListenerOptions} */
+  const eventOptions = { capture: true, passive: true };
+
   $effect(() => {
     if (thisPaneContentArea) {
       thisPaneContentArea.scrollTop = 0;
+      // Add event listeners manually to use passive mode
+      thisPaneContentArea.addEventListener('wheel', syncScrollPosition, eventOptions);
+      thisPaneContentArea.addEventListener('touchmove', syncScrollPosition, eventOptions);
     }
   });
 </script>
 
 <div role="none" {id} class="wrapper">
   {#if $entryDraft?.currentLocales[locale]}
-    <div
-      role="none"
-      class="content"
-      bind:this={thisPaneContentArea}
-      onwheelcapture={() => {
-        syncScrollPosition();
-      }}
-      ontouchmove={() => {
-        syncScrollPosition();
-      }}
-    >
+    <div role="none" class="content" bind:this={thisPaneContentArea}>
       <MainContent {locale} />
     </div>
   {:else if mode === 'edit'}
