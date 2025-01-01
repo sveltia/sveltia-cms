@@ -359,7 +359,7 @@ const fetchLastCommit = async () => {
     });
   }
 
-  const { lastCommit } = result.project.repository?.tree ?? {};
+  const { lastCommit } = result.project.repository.tree ?? {};
 
   if (!lastCommit) {
     throw new Error('Failed to retrieve the last commit hash.', {

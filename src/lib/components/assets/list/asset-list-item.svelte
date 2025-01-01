@@ -54,7 +54,7 @@
   }}
   ondblclick={() => {
     if ($focusedAsset && canPreviewAsset($focusedAsset)) {
-      goto(`/assets/${$focusedAsset?.path}`);
+      goto(`/assets/${$focusedAsset.path}`);
     }
   }}
 >

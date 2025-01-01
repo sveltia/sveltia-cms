@@ -33,12 +33,12 @@
       values: { locale: getLocaleLabel(otherLocale) },
     })}
     disabled={!$entryDraft?.currentLocales[locale] ||
-      !$entryDraft?.currentLocales[otherLocale] ||
-      (keyPath && !$state.snapshot($entryDraft?.currentValues[otherLocale])[keyPath]) ||
+      !$entryDraft.currentLocales[otherLocale] ||
+      (keyPath && !$state.snapshot($entryDraft.currentValues[otherLocale])[keyPath]) ||
       (!translate &&
         keyPath &&
-        $state.snapshot($entryDraft?.currentValues[otherLocale])[keyPath] ===
-          $state.snapshot($entryDraft?.currentValues[locale])[keyPath]) ||
+        $state.snapshot($entryDraft.currentValues[otherLocale])[keyPath] ===
+          $state.snapshot($entryDraft.currentValues[locale])[keyPath]) ||
       (translate && (!getSourceLanguage(locale) || !getTargetLanguage(otherLocale)))}
     onclick={() => {
       copyFromLocale(otherLocale, locale, { keyPath, translate });

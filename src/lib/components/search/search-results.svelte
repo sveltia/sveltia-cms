@@ -18,7 +18,7 @@
     <Group aria-labelledby="search-results-entries">
       <h3 role="none" id="search-results-entries">{$_('entries')}</h3>
       <div role="none">
-        {#if $searchResults?.entries?.length}
+        {#if $searchResults.entries.length}
           <ListingGrid
             viewType="list"
             aria-label={$_('entries')}
@@ -40,7 +40,7 @@
     <Group aria-labelledby="search-results-assets">
       <h3 role="none" id="search-results-assets">{$_('assets')}</h3>
       <div role="none">
-        {#if $searchResults?.assets?.length}
+        {#if $searchResults.assets.length}
           <ListingGrid
             viewType="list"
             aria-label={$_('assets')}

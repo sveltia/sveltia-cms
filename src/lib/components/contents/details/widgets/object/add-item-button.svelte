@@ -30,8 +30,9 @@
     types,
   } = fieldConfig);
 
-  $: ({ label_singular: labelSingular, max } =
-    widgetType === 'list' ? /** @type {ListField} */ (fieldConfig) : /** @type {ListField} */ ({}));
+  $: listField = widgetType === 'list' ? /** @type {ListField} */ (fieldConfig) : undefined;
+  $: labelSingular = listField?.label_singular ?? '';
+  $: max = listField?.max ?? undefined;
   $: label = $_('add_x', { values: { name: labelSingular || labelPlural || fieldName } });
   $: _disabled = disabled || (typeof max === 'number' && items.length === max);
 </script>

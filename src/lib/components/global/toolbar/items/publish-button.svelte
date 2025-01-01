@@ -5,11 +5,9 @@
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/user/prefs';
 
-  const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } = $derived(
-    $siteConfig ?? /** @type {SiteConfig} */ ({}),
-  );
+  const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const { deployHookURL } = $derived($prefs);
-  const { triggerDeployment } = $derived($backend ?? /** @type {BackendService} */ ({}));
+  const triggerDeployment = $derived($backend?.triggerDeployment);
   const showButton = $derived($backendName !== 'local' && typeof autoDeployEnabled === 'boolean');
   const canPublish = $derived(
     (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished,

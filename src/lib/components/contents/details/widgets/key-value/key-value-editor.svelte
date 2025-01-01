@@ -114,7 +114,9 @@
     edited = [...edited, false];
 
     window.requestAnimationFrame(() => {
-      rowElements[pairs.length - 1].querySelector('input')?.focus();
+      /** @type {HTMLInputElement} */ (
+        rowElements[pairs.length - 1].querySelector('input')
+      ).focus();
     });
   };
 
@@ -185,7 +187,7 @@
                 if (event.key === 'Enter' && !event.isComposing) {
                   /** @type {HTMLInputElement} */ (
                     rowElements[index].querySelector('td.value input')
-                  )?.focus();
+                  ).focus();
                 }
               }}
             />
@@ -200,7 +202,9 @@
                 // Move focus or add a new pair with Enter key
                 if (event.key === 'Enter' && !event.isComposing) {
                   if (index < pairs.length - 1) {
-                    rowElements[index + 1].querySelector('input')?.focus();
+                    /** @type {HTMLInputElement} */ (
+                      rowElements[index + 1].querySelector('input')
+                    ).focus();
                   } else if (pairs.length < max) {
                     addPair();
                   }

@@ -204,7 +204,7 @@ const groupEntries = (
     .sort(({ name: aKey }, { name: bKey }) => compare(aKey, bKey));
 
   // Keep the descending order if already sorted, especially on the date field
-  if (sortCondition?.key === field && sortCondition?.order === 'descending') {
+  if (sortCondition?.key === field && sortCondition.order === 'descending') {
     sortedGroups.reverse();
   }
 
@@ -321,11 +321,11 @@ export const entryGroups = derived(
     } else {
       entries = sortEntries(entries, collection, _currentView.sort);
 
-      if (_currentView?.filters) {
+      if (_currentView.filters) {
         entries = filterEntries(entries, collection, _currentView.filters);
       }
 
-      const groups = groupEntries(entries, collection, _currentView?.group);
+      const groups = groupEntries(entries, collection, _currentView.group);
 
       if (!equal(get(entryGroups), groups)) {
         set(groups);

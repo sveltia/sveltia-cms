@@ -31,10 +31,10 @@ export const getI18nConfig = (collection, file) => {
   /** @type {RawI18nConfig | undefined} */
   let config;
 
-  if (isObject(_siteConfig?.i18n)) {
+  if (isObject(_siteConfig.i18n)) {
     config = /** @type {RawI18nConfig} */ (_siteConfig.i18n);
 
-    if (collection?.i18n) {
+    if (collection.i18n) {
       if (isObject(collection.i18n)) {
         Object.assign(config, collection.i18n);
       }

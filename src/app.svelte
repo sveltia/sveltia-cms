@@ -70,7 +70,7 @@
   onmousedown={(event) => {
     // Open external links in a new browser tab, internal links in the same tab
     if (
-      /** @type {?HTMLElement} */ (event?.target)?.matches('a') &&
+      /** @type {?HTMLElement} */ (event.target)?.matches('a') &&
       /** @type {HTMLAnchorElement} */ (event.target).origin !== window.location.origin
     ) {
       /** @type {HTMLAnchorElement} */ (event.target).target = '_blank';

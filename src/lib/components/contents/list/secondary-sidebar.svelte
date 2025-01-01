@@ -8,9 +8,8 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView } from '$lib/services/contents/collection/view';
 
-  const { internalPath, entryRelative } = $derived(
-    $selectedCollection?._assetFolder ?? /** @type {CollectionAssetFolder} */ ({}),
-  );
+  const internalPath = $derived($selectedCollection?._assetFolder?.internalPath);
+  const entryRelative = $derived($selectedCollection?._assetFolder?.entryRelative);
   // Can’t upload assets if collection assets are saved at entry-relative paths
   const uploadDisabled = $derived(!!entryRelative);
 </script>

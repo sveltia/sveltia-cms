@@ -49,7 +49,8 @@
    */
   export let invalid = false;
 
-  $: ({ collection, collectionFile } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: collection = $entryDraft?.collection;
+  $: collectionFile = $entryDraft?.collectionFile;
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
 
   // Generate the default value here instead of in `create.js` because `getDefaultValues()` doesn’t

@@ -45,7 +45,7 @@
                 : order,
               { values: { label: _label } },
             )}
-            checked={$currentView.sort?.key === key && $currentView.sort?.order === order}
+            checked={$currentView.sort?.key === key && $currentView.sort.order === order}
             onSelect={() => {
               currentView.update((view) => ({ ...view, sort: { key, order } }));
             }}

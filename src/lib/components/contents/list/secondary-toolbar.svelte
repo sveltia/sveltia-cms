@@ -15,16 +15,18 @@
     sortFields,
   } from '$lib/services/contents/collection/view';
 
-  const { name: collectionName, _thumbnailFieldName } = $derived(
+  const entryCollection = $derived(
     $selectedCollection?._type === 'entry'
       ? /** @type {EntryCollection} */ ($selectedCollection)
-      : /** @type {EntryCollection} */ ({}),
+      : undefined,
   );
+  const collectionName = $derived(entryCollection?.name);
+  const _thumbnailFieldName = $derived(entryCollection?._thumbnailFieldName);
   const hasListedEntries = $derived(!!$listedEntries.length);
   const hasMultipleEntries = $derived($listedEntries.length > 1);
 </script>
 
-{#if $selectedCollection?._type === 'entry'}
+{#if entryCollection}
   <Toolbar variant="secondary" aria-label={$_('entry_list')}>
     <ItemSelector
       allItems={$entryGroups.map(({ entries }) => entries).flat(1)}
@@ -38,20 +40,20 @@
       {collectionName}
       aria-controls="entry-list"
     />
-    {#if $selectedCollection.view_filters?.length}
+    {#if entryCollection.view_filters?.length}
       <FilterMenu
         disabled={!hasMultipleEntries}
         {currentView}
-        filters={$selectedCollection.view_filters}
+        filters={entryCollection.view_filters}
         multiple={true}
         aria-controls="entry-list"
       />
     {/if}
-    {#if $selectedCollection.view_groups?.length}
+    {#if entryCollection.view_groups?.length}
       <GroupMenu
         disabled={!hasMultipleEntries}
         {currentView}
-        groups={$selectedCollection.view_groups}
+        groups={entryCollection.view_groups}
         aria-controls="entry-list"
       />
     {/if}
@@ -64,7 +66,7 @@
     <Button
       variant="ghost"
       iconic
-      disabled={!hasListedEntries || !$selectedCollection._assetFolder}
+      disabled={!hasListedEntries || !entryCollection._assetFolder}
       pressed={!!$currentView.showMedia}
       aria-controls="collection-assets"
       aria-expanded={$currentView.showMedia}

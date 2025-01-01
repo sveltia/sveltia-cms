@@ -16,9 +16,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } = $derived(
-    $siteConfig ?? /** @type {SiteConfig} */ ({}),
-  );
+  const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
 
   let devModeEnabled = $state(false);
 

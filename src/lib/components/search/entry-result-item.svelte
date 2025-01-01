@@ -29,12 +29,12 @@
     collectionFile,
   },
 )}
-  {@const { defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig}
+  {@const { defaultLocale } = (collectionFile ?? collection)._i18n ?? defaultI18nConfig}
   {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
   {#if content}
     <GridRow
       onclick={() => {
-        goto(`/collections/${collection?.name}/entries/${collectionFile?.name || subPath}`);
+        goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`);
       }}
     >
       <GridCell class="image">
@@ -47,7 +47,7 @@
         {/if}
       </GridCell>
       <GridCell class="collection">
-        {collection?.label || collection?.name}
+        {collection.label || collection.name}
       </GridCell>
       <GridCell class="title">
         {#if collectionFile}

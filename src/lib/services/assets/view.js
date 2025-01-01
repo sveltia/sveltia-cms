@@ -25,7 +25,7 @@ export const showUploadAssetsDialog = writable(false);
 export const showUploadAssetsConfirmDialog = derived(
   [uploadingAssets],
   ([_uploadingAssets], set) => {
-    set(!!_uploadingAssets.files?.length);
+    set(!!_uploadingAssets.files.length);
   },
 );
 
@@ -281,10 +281,10 @@ export const assetGroups = derived(
      */
     let assets = [..._listedAssets];
 
-    assets = sortAssets(assets, _currentView?.sort);
-    assets = filterAssets(assets, _currentView?.filter);
+    assets = sortAssets(assets, _currentView.sort);
+    assets = filterAssets(assets, _currentView.filter);
 
-    const groups = groupAssets(assets, _currentView?.group);
+    const groups = groupAssets(assets, _currentView.group);
 
     if (!equal(get(assetGroups), groups)) {
       set(groups);

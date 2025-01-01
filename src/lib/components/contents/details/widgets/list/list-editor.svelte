@@ -82,8 +82,12 @@
   $: hasVariableTypes = Array.isArray(types);
   $: hasSubFields = hasSingleSubField || hasMultiSubFields || hasVariableTypes;
   $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
-  $: ({ collectionName, fileName, collection, collectionFile, currentValues, expanderStates } =
-    $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: collection = $entryDraft?.collection;
+  $: collectionName = $entryDraft?.collectionName ?? '';
+  $: collectionFile = $entryDraft?.collectionFile;
+  $: fileName = $entryDraft?.fileName;
+  $: currentValues = $entryDraft?.currentValues ?? {};
+  $: expanderStates = $entryDraft?.expanderStates;
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: isDuplicateField = locale !== defaultLocale && i18n === 'duplicate';
   $: valueMap = currentValues[locale];
@@ -106,7 +110,7 @@
   $: itemExpanderStates = items.map((_item, index) => {
     const key = `${keyPath}.${index}`;
 
-    return [key, expanderStates._[key] ?? true];
+    return [key, expanderStates?._[key] ?? true];
   });
 
   let mounted = false;

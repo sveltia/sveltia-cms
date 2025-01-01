@@ -42,15 +42,11 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { editor: { preview: showPreviewPane = true } = {} } = $derived(
-    $siteConfig ?? /** @type {SiteConfig} */ ({}),
-  );
-  const {
-    collection,
-    collectionFile,
-    originalEntry,
-    originalValues = {},
-  } = $derived($entryDraft ?? /** @type {EntryDraft} */ ({}));
+  const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
+  const collection = $derived($entryDraft?.collection);
+  const collectionFile = $derived($entryDraft?.collectionFile);
+  const originalEntry = $derived($entryDraft?.originalEntry);
+  const originalValues = $derived($entryDraft?.originalValues ?? {});
   const { i18nEnabled, saveAllLocales, locales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );
@@ -64,13 +60,13 @@
   const canRevert = $derived(
     $thisPane?.locale &&
       !equal(
-        $state.snapshot($entryDraft?.currentValues[$thisPane?.locale]),
-        originalValues[$thisPane?.locale],
+        $state.snapshot($entryDraft?.currentValues[$thisPane.locale]),
+        originalValues[$thisPane.locale],
       ),
   );
   const previewURL = $derived(
-    originalEntry && $thisPane?.locale
-      ? getEntryPreviewURL(originalEntry, $thisPane?.locale, collection, collectionFile)
+    collection && originalEntry && $thisPane?.locale
+      ? getEntryPreviewURL(originalEntry, $thisPane.locale, collection, collectionFile)
       : undefined,
   );
 </script>
@@ -88,9 +84,9 @@
           {@const invalid = Object.values($entryDraft?.validities[locale] ?? {}).some(
             ({ valid }) => !valid,
           )}
-          {#if !($thatPane?.mode === 'edit' && $thatPane?.locale === locale)}
+          {#if !($thatPane?.mode === 'edit' && $thatPane.locale === locale)}
             <SelectButton
-              selected={$thisPane?.mode === 'edit' && $thisPane?.locale === locale}
+              selected={$thisPane?.mode === 'edit' && $thisPane.locale === locale}
               variant="tertiary"
               size="small"
               class={invalid ? 'error' : ''}
@@ -128,9 +124,9 @@
     {/if}
     <Spacer flex />
     {#if $thisPane?.mode === 'edit'}
-      {@const localeLabel = getLocaleLabel($thisPane?.locale)}
+      {@const localeLabel = getLocaleLabel($thisPane.locale)}
       {#if canCopy}
-        <TranslateButton locale={$thisPane?.locale} {otherLocales} />
+        <TranslateButton locale={$thisPane.locale} {otherLocales} />
       {/if}
       <MenuButton
         variant="ghost"

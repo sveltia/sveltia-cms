@@ -43,7 +43,7 @@
      */
     const collection = _collectionName ? getCollection(_collectionName) : undefined;
 
-    if (collection && !collection.hide && $selectedCollection?.name !== collection?.name) {
+    if (collection && !collection.hide && $selectedCollection?.name !== collection.name) {
       $selectedCollection = collection;
     }
 

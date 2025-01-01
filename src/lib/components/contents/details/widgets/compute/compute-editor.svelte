@@ -52,7 +52,9 @@
     value: valueTemplate = '',
   } = fieldConfig);
 
-  $: ({ collectionName, fileName, currentValues } = $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: collectionName = $entryDraft?.collectionName ?? '';
+  $: fileName = $entryDraft?.fileName;
+  $: currentValues = $entryDraft?.currentValues ?? {};
   $: valueMap = currentValues[locale];
   $: listFormatter = getListFormatter(locale);
 

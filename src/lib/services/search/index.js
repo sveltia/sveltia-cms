@@ -39,7 +39,7 @@ export const searchResults = derived(
     const hasMatch = (label) => normalize(label).includes(terms);
 
     const entries = (() => {
-      if (!_allEntries?.length || !terms) {
+      if (!_allEntries.length || !terms) {
         return [];
       }
 
@@ -80,7 +80,7 @@ export const searchResults = derived(
     })();
 
     const assets = (() => {
-      if (!_allAssets?.length || !terms) {
+      if (!_allAssets.length || !terms) {
         return [];
       }
 

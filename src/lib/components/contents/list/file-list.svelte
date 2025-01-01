@@ -22,7 +22,7 @@
         {#snippet renderItem(/** @type {RawCollectionFile} */ { name, label })}
           <GridRow
             onclick={() => {
-              goto(`/collections/${$selectedCollection?.name}/entries/${name}`);
+              goto(`/collections/${$selectedCollection.name}/entries/${name}`);
             }}
           >
             <GridCell class="title">

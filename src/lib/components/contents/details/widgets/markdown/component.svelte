@@ -65,7 +65,7 @@
   aria-label={label}
   onkeydown={(event) => {
     if (
-      !(/** @type {HTMLElement} */ (event.target)?.matches('button, input, textarea')) &&
+      !(/** @type {HTMLElement} */ (event.target).matches('button, input, textarea')) &&
       event.key !== 'Tab'
     ) {
       event.preventDefault();

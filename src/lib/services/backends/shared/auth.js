@@ -77,15 +77,15 @@ const authorize = async ({ backendName, authURL }) => {
         result = { error: 'Malformed data' };
       }
 
-      if (typeof result?.token === 'string') {
+      if (typeof result.token === 'string') {
         resolve(result.token);
       } else {
         reject(
           new Error('Authentication failed', {
             cause: new Error(
-              result?.errorCode
-                ? get(_)(`sign_in_error.${result.errorCode}`, { default: result?.error })
-                : result?.error,
+              result.errorCode
+                ? get(_)(`sign_in_error.${result.errorCode}`, { default: result.error })
+                : result.error,
             ),
           }),
         );

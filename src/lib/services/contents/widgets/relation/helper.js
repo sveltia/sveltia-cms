@@ -80,7 +80,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
   const options = refEntries
     .map((refEntry) => {
       // Fall back to the default locale if needed
-      const { content } = refEntry?.locales[locale] ?? refEntry?.locales._default ?? {};
+      const { content } = refEntry.locales[locale] ?? refEntry.locales._default ?? {};
 
       return {
         refEntry,

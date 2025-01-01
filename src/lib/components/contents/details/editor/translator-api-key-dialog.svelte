@@ -9,9 +9,7 @@
   import { translator } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/user/prefs';
 
-  const { serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived(
-    $translator ?? /** @type {TranslationService} */ ({}),
-  );
+  const { serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived($translator);
 
   $effect(() => {
     if (!$showContentOverlay && $translatorApiKeyDialogState.show) {

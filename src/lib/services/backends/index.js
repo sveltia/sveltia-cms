@@ -25,7 +25,7 @@ export const backend = derived([backendName], ([name], _set, update) => {
     const newService = name ? allBackendServices[name] : undefined;
 
     if (newService && newService !== currentService) {
-      newService?.init();
+      newService.init();
     }
 
     return newService;

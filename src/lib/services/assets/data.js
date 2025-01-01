@@ -98,9 +98,7 @@ export const saveAssets = async (uploadingAssets, options) => {
   }
 
   const isLocal = get(backendName) === 'local';
-
-  const { backend: { automatic_deployments: autoDeployEnabled = undefined } = {} } =
-    get(siteConfig) ?? /** @type {SiteConfig} */ ({});
+  const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
 
   assetUpdatesToast.set({
     ...updatesToastDefaultState,

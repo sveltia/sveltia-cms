@@ -107,7 +107,7 @@
     loaded = true;
 
     // Revoke the thumbnail blob URL
-    if (asset && isThumbnail && src?.startsWith('blob:')) {
+    if (asset && isThumbnail && src.startsWith('blob:')) {
       URL.revokeObjectURL(src);
     }
   };

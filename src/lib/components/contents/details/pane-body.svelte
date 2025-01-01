@@ -29,9 +29,10 @@
   } = $props();
 
   const { syncScrolling } = $derived($entryEditorSettings ?? {});
-  const { locale, mode } = $derived($thisPane ?? /** @type {EntryEditorPane} */ ({}));
-  const hasContent = $derived(!!$state.snapshot($entryDraft?.currentValues[locale]));
-  const labelOptions = $derived({ values: { locale: getLocaleLabel(locale) } });
+  const locale = $derived($thisPane?.locale);
+  const mode = $derived($thisPane?.mode);
+  const hasContent = $derived(!!locale && !!$state.snapshot($entryDraft?.currentValues[locale]));
+  const labelOptions = $derived({ values: { locale: locale ? getLocaleLabel(locale) : '' } });
   const MainContent = $derived(mode === 'preview' ? EntryPreview : EntryEditor);
 
   /**
@@ -83,7 +84,7 @@
 </script>
 
 <div role="none" {id} class="wrapper">
-  {#if $entryDraft?.currentLocales[locale]}
+  {#if locale && $entryDraft?.currentLocales[locale]}
     <div role="none" class="content" bind:this={thisPaneContentArea}>
       <MainContent {locale} />
     </div>
@@ -96,7 +97,9 @@
         variant="tertiary"
         label={$_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
         onclick={() => {
-          toggleLocale(locale);
+          if (locale) {
+            toggleLocale(locale);
+          }
         }}
       />
     </EmptyState>

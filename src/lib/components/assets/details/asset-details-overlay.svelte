@@ -20,7 +20,9 @@
   /** @type {Blob | undefined} */
   let blob = $state();
 
-  const { kind, blobURL, name } = $derived($overlaidAsset ?? /** @type {Asset} */ ({}));
+  const kind = $derived($overlaidAsset?.kind);
+  const blobURL = $derived($overlaidAsset?.blobURL);
+  const name = $derived($overlaidAsset?.name);
 
   /**
    * Move focus to the wrapper once the overlay is loaded.
@@ -82,7 +84,7 @@
       <Toolbar />
       <div role="none" class="row">
         <div role="none" class="preview">
-          {#if isMediaKind(kind)}
+          {#if kind && isMediaKind(kind)}
             <AssetPreview
               {kind}
               asset={$overlaidAsset}
@@ -95,7 +97,7 @@
             <iframe src={blobURL} title={name}></iframe>
           {:else if blob?.type && isTextFileType(blob.type)}
             {#await $overlaidAsset?.text ?? blob.text() then text}
-              {#if name.endsWith('.md')}
+              {#if name?.endsWith('.md')}
                 {#await marked.parse(text, { breaks: true, async: true }) then rawHTML}
                   <div role="figure" class="markdown">
                     {@html DOMPurify.sanitize(rawHTML)}

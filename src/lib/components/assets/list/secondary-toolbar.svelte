@@ -35,14 +35,14 @@
     variant="ghost"
     iconic
     disabled={!hasListedAssets}
-    pressed={!!$currentView?.showInfo}
+    pressed={!!$currentView.showInfo}
     aria-controls="asset-info"
-    aria-expanded={!!$currentView?.showInfo}
-    aria-label={$_($currentView?.showInfo ? 'hide_info' : 'show_info')}
+    aria-expanded={!!$currentView.showInfo}
+    aria-label={$_($currentView.showInfo ? 'hide_info' : 'show_info')}
     onclick={() => {
       currentView.update((view) => ({
         ...view,
-        showInfo: !$currentView?.showInfo,
+        showInfo: !$currentView.showInfo,
       }));
     }}
   >

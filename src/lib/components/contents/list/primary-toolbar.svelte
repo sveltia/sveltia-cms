@@ -21,15 +21,13 @@
       ALLOWED_ATTR: ['href'],
     });
 
-  const {
-    name,
-    label,
-    description,
-    files,
-    create = false,
-    delete: canDelete = true,
-  } = $derived($selectedCollection ?? /** @type {Collection} */ ({}));
-  const collectionLabel = $derived(label || name);
+  const name = $derived($selectedCollection?.name);
+  const label = $derived($selectedCollection?.label);
+  const description = $derived($selectedCollection?.description);
+  const files = $derived($selectedCollection?.files);
+  const canCreate = $derived($selectedCollection?.create ?? false);
+  const canDelete = $derived($selectedCollection?.delete ?? true);
+  const collectionLabel = $derived(label || name || '');
 </script>
 
 {#if $selectedCollection}
@@ -51,7 +49,7 @@
       />
       <Button
         variant="primary"
-        disabled={!create}
+        disabled={!canCreate}
         label={$_('create')}
         aria-label={$_('create_new_entry')}
         keyShortcuts="Accel+E"

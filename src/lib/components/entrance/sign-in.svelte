@@ -46,7 +46,7 @@
   {:else}
     <Button
       variant="primary"
-      label={$_('sign_in_with_x', { values: { service: configuredBackend?.label } })}
+      label={$_('sign_in_with_x', { values: { service: configuredBackend.label } })}
       onclick={async () => {
         await signInManually(/** @type {string} */ (configuredBackendName));
       }}

@@ -53,7 +53,7 @@
           disabled={!collection.create}
           label={$_('create_new_entry')}
           onclick={() => {
-            goto(`/collections/${collection?.name}/new`);
+            goto(`/collections/${collection.name}/new`);
           }}
         >
           {#snippet startIcon()}

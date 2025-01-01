@@ -12,7 +12,7 @@
 <Group
   id="asset-info"
   class="secondary-sidebar"
-  hidden={!$currentView?.showInfo}
+  hidden={!$currentView.showInfo}
   aria-label={$_('asset_info')}
 >
   {#if $focusedAsset}

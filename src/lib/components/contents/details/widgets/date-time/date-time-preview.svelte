@@ -22,7 +22,7 @@
    */
   export let fieldConfig;
   /**
-   * @type {string}
+   * @type {string | undefined}
    */
   export let currentValue;
 

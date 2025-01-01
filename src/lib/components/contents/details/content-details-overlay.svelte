@@ -37,12 +37,10 @@
   /** @type {HTMLElement | undefined} */
   let rightPaneContentArea = $state();
 
-  const { editor: { preview: showPreviewPane = true } = {} } = $derived(
-    $siteConfig ?? /** @type {SiteConfig} */ ({}),
-  );
-  const { collection, collectionFile, originalEntry } = $derived(
-    $entryDraft ?? /** @type {EntryDraft} */ ({}),
-  );
+  const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
+  const collection = $derived($entryDraft?.collection);
+  const collectionFile = $derived($entryDraft?.collectionFile);
+  const originalEntry = $derived($entryDraft?.originalEntry);
   const entryId = $derived(
     originalEntry?.id ?? [collection?.name ?? '-', collectionFile?.name ?? '-'].join('/'),
   );
@@ -61,15 +59,15 @@
    */
   const restorePanes = async () => {
     const [_editorLeftPane, _editorRightPane] =
-      $entryEditorSettings?.paneStates?.[paneStateKey] ?? [];
+      $entryEditorSettings?.paneStates?.[paneStateKey ?? ''] ?? [];
 
     if (
       !_editorLeftPane ||
       !_editorRightPane ||
-      (!!_editorLeftPane?.locale && !locales.includes(_editorLeftPane.locale)) ||
-      (!!_editorRightPane?.locale && !locales.includes(_editorRightPane.locale)) ||
+      (!!_editorLeftPane.locale && !locales.includes(_editorLeftPane.locale)) ||
+      (!!_editorRightPane.locale && !locales.includes(_editorRightPane.locale)) ||
       ((!showPreview || !canPreview) &&
-        (_editorLeftPane?.mode === 'preview' || _editorRightPane?.mode === 'preview'))
+        (_editorLeftPane.mode === 'preview' || _editorRightPane.mode === 'preview'))
     ) {
       return false;
     }
@@ -103,7 +101,7 @@
 
       $editorRightPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;
     } else {
-      $editorRightPane = { mode: 'preview', locale: $editorLeftPane?.locale };
+      $editorRightPane = { mode: 'preview', locale: $editorLeftPane.locale };
     }
   };
 
@@ -111,7 +109,7 @@
    * Save the pane state to IndexedDB.
    */
   const savePanes = () => {
-    if (!collection || restoring || !$editorLeftPane || !$editorRightPane) {
+    if (!collection || restoring || !$editorLeftPane || !$editorRightPane || !paneStateKey) {
       return;
     }
 

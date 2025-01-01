@@ -39,18 +39,14 @@
   /** @type {any} */
   let menuButton = $state();
 
-  const {
-    isNew,
-    collection,
-    collectionFile,
-    originalEntry,
-    originalLocales = {},
-    originalValues = {},
-  } = $derived($entryDraft ?? /** @type {EntryDraft} */ ({}));
-  const {
-    editor: { preview: showPreviewPane = true } = {},
-    backend: { automatic_deployments: autoDeployEnabled = undefined } = {},
-  } = $derived($siteConfig ?? /** @type {SiteConfig} */ ({}));
+  const isNew = $derived($entryDraft?.isNew);
+  const collection = $derived($entryDraft?.collection);
+  const collectionFile = $derived($entryDraft?.collectionFile);
+  const originalEntry = $derived($entryDraft?.originalEntry);
+  const originalLocales = $derived($entryDraft?.originalLocales ?? {});
+  const originalValues = $derived($entryDraft?.originalValues ?? {});
+  const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
+  const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const showSaveOptions = $derived(
     $backendName !== 'local' && typeof autoDeployEnabled === 'boolean',
   );
@@ -71,12 +67,12 @@
       .filter(Boolean).length,
   );
   const associatedAssets = $derived(
-    !!originalEntry && !!collection._assetFolder?.entryRelative
+    collectionName && originalEntry && !!collection?._assetFolder?.entryRelative
       ? getAssociatedAssets({ entry: originalEntry, collectionName, relative: true })
       : [],
   );
   const previewURL = $derived(
-    originalEntry
+    collection && originalEntry
       ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
       : undefined,
   );
@@ -88,6 +84,10 @@
    */
   const save = async ({ skipCI = undefined } = {}) => {
     saving = true;
+
+    if (!collection) {
+      return;
+    }
 
     try {
       const savedEntry = await saveEntry({ skipCI });
@@ -150,7 +150,7 @@
             collection: collectionLabel,
             entry: collectionFile
               ? collectionFile.label || collectionFile.name
-              : originalEntry
+              : collection && originalEntry
                 ? getEntrySummary(collection, originalEntry)
                 : '',
           },

@@ -43,7 +43,7 @@
       newName = filename;
       otherNames = getAssetsByDirName(/** @type {string} */ (dirname))
         .map((a) => a.name)
-        .filter((n) => n !== asset?.name);
+        .filter((n) => n !== asset.name);
       ({ usedEntries } = await getAssetDetails(asset));
       open = true;
     }

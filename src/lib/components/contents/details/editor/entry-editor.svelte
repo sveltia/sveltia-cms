@@ -15,7 +15,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { collection, collectionFile } = $derived($entryDraft ?? /** @type {EntryDraft} */ ({}));
+  const collection = $derived($entryDraft?.collection);
+  const collectionFile = $derived($entryDraft?.collectionFile);
   const fields = $derived(collectionFile?.fields ?? collection?.fields ?? []);
 </script>
 

@@ -105,9 +105,9 @@
     (widgetName === 'list' && hasSubFields) || multiple || widgetName === 'keyvalue',
   );
   const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
-  const { collection, collectionFile, originalValues } = $derived(
-    $entryDraft ?? /** @type {EntryDraft} */ ({}),
-  );
+  const collection = $derived($entryDraft?.collection);
+  const collectionFile = $derived($entryDraft?.collectionFile);
+  const originalValues = $derived($entryDraft?.originalValues);
   const { i18nEnabled, locales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );
@@ -127,11 +127,11 @@
   );
   const originalValue = $derived(
     isList
-      ? Object.entries(originalValues[locale])
+      ? Object.entries(originalValues?.[locale] ?? {})
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([, val]) => val)
           .filter((val) => val !== undefined)
-      : originalValues[locale][keyPath],
+      : originalValues?.[locale][keyPath],
   );
   const validity = $derived($entryDraft?.validities[locale][keyPath]);
   const fieldLabel = $derived(label || fieldName);
@@ -229,7 +229,7 @@
           {/if}
         {/if}
         {#if validity.patternMismatch}
-          {pattern?.[1]}
+          {pattern[1]}
         {/if}
         {#if validity.typeMismatch}
           {$_(`validation.type_mismatch.${type}`)}

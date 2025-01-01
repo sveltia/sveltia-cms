@@ -74,8 +74,12 @@
     typeKey = 'type',
   } = fieldConfig);
 
-  $: ({ collectionName, fileName, collection, collectionFile, currentValues, expanderStates } =
-    $entryDraft ?? /** @type {EntryDraft} */ ({}));
+  $: collection = $entryDraft?.collection;
+  $: collectionName = $entryDraft?.collectionName ?? '';
+  $: collectionFile = $entryDraft?.collectionFile;
+  $: fileName = $entryDraft?.fileName;
+  $: currentValues = $entryDraft?.currentValues ?? {};
+  $: expanderStates = $entryDraft?.expanderStates ?? {};
   $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   $: valueMap = currentValues[locale];
   $: hasValues = Object.entries(valueMap).some(

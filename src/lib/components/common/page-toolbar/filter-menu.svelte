@@ -69,7 +69,7 @@
           <MenuItemRadio
             label={_label}
             checked={$currentView.filter?.field === field &&
-              $currentView.filter?.pattern === pattern}
+              $currentView.filter.pattern === pattern}
             onSelect={() => {
               currentView.update((view) => ({
                 ...view,
