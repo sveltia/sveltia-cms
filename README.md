@@ -113,11 +113,11 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 145+ of them, or 265+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 250 or all relevant and fixable issues in a future release (Yes, you read it right)
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
-  - Most of the [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS, the others are expected to be solved in 2025
+  - Most of the [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
-- Responding to feedback from the maintainer’s clients
 - Implementing our own enhancement ideas for every part of the product
+- Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
 ![145 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20241228.webp)<br>
@@ -704,7 +704,7 @@ If you have upgraded to DeepL API Pro, provide your new Authentication Key:
 
 1. Click the Account button in the upper right corner, then click Settings.
 1. Select the Language tab.
-1. Paste your key to the DeepL API Authentication Key field.
+1. Replace your free API key with the new paid API key in the DeepL API Authentication Key field.
 1. Close the Settings dialog.
 
 ### Localizing entry slugs
