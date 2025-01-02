@@ -12,6 +12,10 @@ Due to limited review resources and the ongoing technical upgrades across the co
 
 As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
+## Discussions
+
+Sometimes developers and users ask questions in our [discussion forum](https://github.com/sveltia/sveltia-cms/discussions/categories/q-a). If you know the answer, feel free to participate by leaving a comment.
+
 ## Donations
 
 Tips are always welcome! The project hasn’t set up a sponsorship program, but maintainer [@kyoshino](https://github.com/kyoshino) has a [PayPal account](https://paypal.me/kohei).

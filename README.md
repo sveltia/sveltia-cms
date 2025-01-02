@@ -111,9 +111,9 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 150+ of them, or 270+ including duplicates, have been effectively solved in Sveltia CMS
-  - Target: 250 or all relevant and fixable issues in a future release (Yes, you read it right)
+  - Target: 250 or all relevant, fixable and worthwhile issues in a future release
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
-  - Most of the [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
+  - Most of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Implementing our own enhancement ideas for every part of the product
@@ -146,6 +146,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 - Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
+- Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern File System Access API to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
 - Uses caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
@@ -153,9 +154,8 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 
 ### Better productivity
 
-- Developers can [work with a local Git repository](#working-with-a-local-git-repository) without any extra configuration or proxy server[^26].
-  - In addition to a streamlined workflow, it offers improved performance by reading and writing files natively through the browser rather than using a slow, ad hoc REST API.
-  - It also avoids a number of issues, including dependency corruptions[^158], the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
+- Developers can [work with a local Git repository](#working-with-a-local-git-repository) without any additional configuration or proxy server, resulting in a streamlined workflow and improved performance[^26].
+  - It also avoids a number of issues, including potential dependency corruption[^158], a 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
   - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
 - Provides a smoother user experience in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
@@ -478,7 +478,7 @@ These limitations are expected to be resolved before the 1.0 release:
 
 ### Features to be implemented after GA
 
-Due to the complexity, the following features are planned for after the 1.0 release. We know Netlify/Decap CMS has a number of issues with these advanced features and we want to implement them the right way.
+Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with these advanced features and we want to implement them the right way.
 
 - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
@@ -486,9 +486,9 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 
 ### Compatibility with Static CMS
 
-We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. We’ll update this README with more details as our development progresses.
+We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. This README will be updated with more details as our development progresses.
 
-- The KeyValue widget is already implemented in Sveltia CMS.
+- The KeyValue widget is implemented in Sveltia CMS with the same options.
 - The UUID widget is also implemented, but with different options.
 - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
 - `CMS.registerIcon()` won’t be supported, as Sveltia CMS includes Material Symbols for [custom collection icons](#using-a-custom-icon-for-a-collection).
@@ -977,13 +977,13 @@ img-src 'self' blob: data: https://*;
 
 While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
 
-As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are migrating from the other product. We are happy to help you migrate, but unfortunately we cannot help you set up Sveltia CMS from scratch through our free support channels.
+As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are migrating from the other product. We are happy to help you migrate, but we cannot help you set up Sveltia CMS from scratch through our free support channels.
 
-Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out today!
+Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
 
 ## Contributions
 
-See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md).
+See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md). Bug reports are highly encouraged!
 
 ## Roadmap
 
