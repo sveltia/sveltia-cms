@@ -244,7 +244,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Provides some new options, including:
     - `icon`: [Choose a custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
     - `divider`: [Add dividers to the collection list](#adding-dividers-to-the-collection-list).
-    - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list[^130]. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
+    - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list, like `thumbnail: featuredImage`[^130]. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
   - Enhancements to the entry `filter` option for folder collections:
     - Boolean `value` works as expected[^93].
     - `value` accepts `null` to match an undefined field value.
