@@ -110,7 +110,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 145+ of them, or 265+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 150+ of them, or 270+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 250 or all relevant and fixable issues in a future release (Yes, you read it right)
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Most of the [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
@@ -120,7 +120,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![145 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20241228.webp)<br>
+![150 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20250101.webp)<br>
 
 ## Differentiators
 
@@ -155,7 +155,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 
 - Developers can [work with a local Git repository](#working-with-a-local-git-repository) without any extra configuration or proxy server[^26].
   - In addition to a streamlined workflow, it offers improved performance by reading and writing files natively through the browser rather than using a slow, ad hoc REST API.
-  - It also avoids a number of issues, including the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
+  - It also avoids a number of issues, including dependency corruptions[^158], the 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
   - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
 - Provides a smoother user experience in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
@@ -181,6 +181,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 ### Better security
 
 - Avoids vulnerabilities in dependencies through constant updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities are unpatched[^33].
+- Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface[^158].
 - We have enabled [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/).
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration[^108].
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
@@ -450,7 +451,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - **Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway. The [widget](https://github.com/netlify/netlify-identity-widget) has been unmaintained for years, and Netlify no longer officially supports it [according to a Netlify customer](https://github.com/sveltia/sveltia-cms/discussions/284). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
-- The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget instead.
+- The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget with the `time_format: false` option instead.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any; we may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 
@@ -1179,9 +1180,9 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^76]: Netlify/Decap CMS [#4738](https://github.com/decaporg/decap-cms/issues/4738)
 
-[^77]: Netlify/Decap CMS [#3415](https://github.com/decaporg/decap-cms/issues/3415), [#6565](https://github.com/decaporg/decap-cms/issues/6565)
+[^77]: Netlify/Decap CMS [#3415](https://github.com/decaporg/decap-cms/issues/3415), [#6563](https://github.com/decaporg/decap-cms/issues/6563)
 
-[^78]: Netlify/Decap CMS [#2294](https://github.com/decaporg/decap-cms/issues/2294), [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363)
+[^78]: Netlify/Decap CMS [#2294](https://github.com/decaporg/decap-cms/issues/2294), [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363), [#5806](https://github.com/decaporg/decap-cms/issues/5806)
 
 [^79]: Netlify/Decap CMS [#5726](https://github.com/decaporg/decap-cms/issues/5726)
 
@@ -1245,7 +1246,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^109]: Netlify/Decap CMS [#7197](https://github.com/decaporg/decap-cms/issues/7197)
 
-[^110]: Netlify/Decap CMS [#4637](https://github.com/decaporg/decap-cms/issues/4637)
+[^110]: Netlify/Decap CMS [#4637](https://github.com/decaporg/decap-cms/issues/4637), [#5198](https://github.com/decaporg/decap-cms/issues/5198)
 
 [^111]: Netlify/Decap CMS [#7190](https://github.com/decaporg/decap-cms/issues/7190), [#7218](https://github.com/decaporg/decap-cms/issues/7218)
 
@@ -1340,3 +1341,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^156]: Netlify/Decap CMS [#995](https://github.com/decaporg/decap-cms/issues/995), [#2017](https://github.com/decaporg/decap-cms/issues/2017), [#7120](https://github.com/decaporg/decap-cms/issues/7120), [#7186](https://github.com/decaporg/decap-cms/issues/7186)
 
 [^157]: Netlify/Decap CMS [#2007](https://github.com/decaporg/decap-cms/issues/2007), [#2848](https://github.com/decaporg/decap-cms/issues/2848)
+
+[^158]: Netlify/Decap CMS [#6107](https://github.com/decaporg/decap-cms/issues/6107)
