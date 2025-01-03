@@ -110,7 +110,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 150+ of them, or 270+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 150+ of them, or 280+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 250 or all relevant, fixable and worthwhile issues in a future release
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Most of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
@@ -279,7 +279,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The collection list displays the number of items in each collection.
   - Users can select multiple entries and delete them at once.
   - In an entry summary, basic Markdown syntax used in the title, including bold, italic and code, are parsed as Markdown. HTML character references (entities) are also parsed properly[^69].
-  - If you update an entry field that appears in the collection’s `summary`, such as `title`, the entry list displays an updated summary after you save the entry.
+  - If you update an entry field that appears in the collection’s `summary`, such as `title`, the entry list displays an updated summary after you save the entry[^159].
   - If entries don’t have an Image field for thumbnails, the entry list will only be displayed in list view, because it doesn’t make sense to show grid view[^143].
   - Assets stored in a [collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
   - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
@@ -344,6 +344,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
   - The built-in `image` editor component can be inserted with a single click.
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
+  - A combination of bold and italic doesn’t create a confusing 3-asterisk markup[^160]. In our editor, bold is 2 asterisks and italic is an underscore.
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string[^157]. If `value_type` is anything else, the data type will remain a string.
@@ -447,7 +448,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned; we plan to develop a high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway. The [widget](https://github.com/netlify/netlify-identity-widget) has been unmaintained for years, and Netlify no longer officially supports it [according to a Netlify customer](https://github.com/sveltia/sveltia-cms/discussions/284). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
@@ -1040,7 +1041,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^6]: Netlify/Decap CMS [#3240](https://github.com/decaporg/decap-cms/issues/3240)
 
-[^7]: Netlify/Decap CMS [#4386](https://github.com/decaporg/decap-cms/issues/4386)
+[^7]: Netlify/Decap CMS [#4386](https://github.com/decaporg/decap-cms/issues/4386), [#4888](https://github.com/decaporg/decap-cms/issues/4888)
 
 [^8]: Netlify/Decap CMS [#2579](https://github.com/decaporg/decap-cms/issues/2579)
 
@@ -1060,7 +1061,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^16]: Netlify/Decap CMS [#2103](https://github.com/decaporg/decap-cms/issues/2103), [#7302](https://github.com/decaporg/decap-cms/discussions/7302)
 
-[^17]: Netlify/Decap CMS [#1333](https://github.com/decaporg/decap-cms/issues/1333)
+[^17]: Netlify/Decap CMS [#1333](https://github.com/decaporg/decap-cms/issues/1333), [#4216](https://github.com/decaporg/decap-cms/issues/4216)
 
 [^18]: Netlify/Decap CMS [#441](https://github.com/decaporg/decap-cms/issues/441)
 
@@ -1092,9 +1093,9 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^32]: Netlify/Decap CMS [#302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549)
 
-[^33]: Netlify/Decap CMS [#542](https://github.com/decaporg/decap-cms/issues/542), [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295)
+[^33]: Netlify/Decap CMS [#542](https://github.com/decaporg/decap-cms/issues/542), [#4532](https://github.com/decaporg/decap-cms/issues/4532) [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295)
 
-[^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138), [#5932](https://github.com/decaporg/decap-cms/discussions/5932)
+[^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138), [#2343](https://github.com/decaporg/decap-cms/issues/2343), [#4367](https://github.com/decaporg/decap-cms/issues/4367), [#5932](https://github.com/decaporg/decap-cms/discussions/5932)
 
 [^35]: Netlify/Decap CMS [#7086](https://github.com/decaporg/decap-cms/issues/7086)
 
@@ -1180,9 +1181,9 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^76]: Netlify/Decap CMS [#4738](https://github.com/decaporg/decap-cms/issues/4738)
 
-[^77]: Netlify/Decap CMS [#3415](https://github.com/decaporg/decap-cms/issues/3415), [#6563](https://github.com/decaporg/decap-cms/issues/6563)
+[^77]: Netlify/Decap CMS [#2009](https://github.com/decaporg/decap-cms/issues/2009), [#3415](https://github.com/decaporg/decap-cms/issues/3415), [#3952](https://github.com/decaporg/decap-cms/issues/3952), [#6563](https://github.com/decaporg/decap-cms/issues/6563)
 
-[^78]: Netlify/Decap CMS [#2294](https://github.com/decaporg/decap-cms/issues/2294), [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363), [#5806](https://github.com/decaporg/decap-cms/issues/5806)
+[^78]: Netlify/Decap CMS [#2294](https://github.com/decaporg/decap-cms/issues/2294), [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363), [#4520](https://github.com/decaporg/decap-cms/issues/4520) [#5806](https://github.com/decaporg/decap-cms/issues/5806)
 
 [^79]: Netlify/Decap CMS [#5726](https://github.com/decaporg/decap-cms/issues/5726)
 
@@ -1198,7 +1199,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^85]: Netlify/Decap CMS [#5055](https://github.com/decaporg/decap-cms/issues/5055), [#5470](https://github.com/decaporg/decap-cms/issues/5470), [#6989](https://github.com/decaporg/decap-cms/issues/6989)
 
-[^86]: Netlify/Decap CMS [#5253](https://github.com/decaporg/decap-cms/issues/5253), [#6759](https://github.com/decaporg/decap-cms/issues/6759), [#6901](https://github.com/decaporg/decap-cms/issues/6901)
+[^86]: Netlify/Decap CMS [#3557](https://github.com/decaporg/decap-cms/issues/3557), [#5253](https://github.com/decaporg/decap-cms/issues/5253), [#6759](https://github.com/decaporg/decap-cms/issues/6759), [#6901](https://github.com/decaporg/decap-cms/issues/6901)
 
 [^87]: Netlify/Decap CMS [#5280](https://github.com/decaporg/decap-cms/issues/5280)
 
@@ -1343,3 +1344,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^157]: Netlify/Decap CMS [#2007](https://github.com/decaporg/decap-cms/issues/2007), [#2848](https://github.com/decaporg/decap-cms/issues/2848)
 
 [^158]: Netlify/Decap CMS [#6107](https://github.com/decaporg/decap-cms/issues/6107)
+
+[^159]: Netlify/Decap CMS [#3796](https://github.com/decaporg/decap-cms/issues/3796)
+
+[^160]: Netlify/Decap CMS [#3291](https://github.com/decaporg/decap-cms/issues/3291)
