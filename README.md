@@ -111,7 +111,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 150+ of them, or 300+ including duplicates, have been effectively solved in Sveltia CMS
-  - Target: 250 or all relevant, fixable and worthwhile issues in a future release
+  - Target: 250 or all relevant, fixable and worthwhile issues in the future; 500 including duplicates
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Most of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
   - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
@@ -1136,7 +1136,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^53]: Netlify/Decap CMS [#512](https://github.com/decaporg/decap-cms/issues/512), [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6707](https://github.com/decaporg/decap-cms/issues/6707)
 
-[^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#1559](https://github.com/decaporg/decap-cms/issues/1559), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#4837](https://github.com/decaporg/decap-cms/issues/4837), [#6287](https://github.com/decaporg/decap-cms/issues/6287), [#6826](https://github.com/decaporg/decap-cms/issues/6826) — Decap 3.0 updated the Slate editor in an attempt to fix the problems, but the IME issues remain unresolved when using a mobile/tablet browser.
+[^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#1559](https://github.com/decaporg/decap-cms/issues/1559), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#4837](https://github.com/decaporg/decap-cms/issues/4837), [#6287](https://github.com/decaporg/decap-cms/issues/6287), [#6826](https://github.com/decaporg/decap-cms/issues/6826) — Decap CMS 3.0 updated the Slate editor in an attempt to fix the problems, but the IME issues remain unresolved when using a mobile/tablet browser.
 
 [^55]: Netlify/Decap CMS [#4480](https://github.com/decaporg/decap-cms/issues/4480), [#5122](https://github.com/decaporg/decap-cms/issues/5122), [#6353](https://github.com/decaporg/decap-cms/issues/6353)
 
