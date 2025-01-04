@@ -4,7 +4,7 @@ import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/he
 
 const dateRegex = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
 const defaultRegex = /^default\('?(?<defaultValue>.+?)'?\)$/;
-const ternaryRegex = /^ternary\('?(?<truthyValue>.+?)'?,\s*'?(?<falsyValue>.+?)'?\)$/;
+const ternaryRegex = /^ternary\('?(?<truthyValue>.*?)'?,\s*'?(?<falsyValue>.*?)'?\)$/;
 const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
 
 /**

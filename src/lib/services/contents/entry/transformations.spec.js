@@ -45,6 +45,18 @@ describe('Test applyTransformation()', () => {
         transformation: "ternary('Published', 'Draft')",
       }),
     ).toBe('Draft');
+    expect(
+      applyTransformation({
+        value: true,
+        transformation: "ternary('', 'Draft')",
+      }),
+    ).toBe('');
+    expect(
+      applyTransformation({
+        value: false,
+        transformation: "ternary('Published', '')",
+      }),
+    ).toBe('');
   });
 
   test('truncate', () => {
