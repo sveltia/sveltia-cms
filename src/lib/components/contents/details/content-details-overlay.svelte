@@ -62,6 +62,7 @@
       $entryEditorSettings?.paneStates?.[paneStateKey ?? ''] ?? [];
 
     if (
+      restoring ||
       !_editorLeftPane ||
       !_editorRightPane ||
       (!!_editorLeftPane.locale && !locales.includes(_editorLeftPane.locale)) ||
