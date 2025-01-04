@@ -1,8 +1,9 @@
 import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.
@@ -136,7 +137,6 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           });
 
           const keyPath = fieldName.replace(/^fields\./, '');
-          const value = content[keyPath];
 
           // Resolve the displayed value for a nested relation field
           if (_fieldConfig?.widget === 'relation') {
@@ -152,7 +152,18 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             ];
           }
 
-          return [fieldName, value ?? ''];
+          let label = content[keyPath];
+
+          if (label === undefined) {
+            // Fallback to the default locale
+            const { defaultLocale } = getCollection(fieldConfig.collection)?._i18n ?? {};
+
+            if (defaultLocale) {
+              label = refEntry.locales[defaultLocale].content[keyPath];
+            }
+          }
+
+          return [fieldName, label ?? ''];
         }),
       );
 
