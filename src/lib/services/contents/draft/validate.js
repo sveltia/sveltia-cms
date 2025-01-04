@@ -213,14 +213,14 @@ export const validateEntry = () => {
         if (widgetName === 'number') {
           const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
-          if (typeof min === 'number' && Number(value) < min) {
+          if (typeof min === 'number' && value !== null && Number(value) < min) {
             rangeUnderflow = true;
-          } else if (typeof max === 'number' && Number(value) > max) {
+          } else if (typeof max === 'number' && value !== null && Number(value) > max) {
             rangeOverflow = true;
           }
 
           if (valueType === 'int' || valueType === 'float') {
-            if (typeof value !== 'number' && !(required && value === null)) {
+            if (required && value === null) {
               typeMismatch = true;
             }
           }
