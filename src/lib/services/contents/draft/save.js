@@ -201,7 +201,7 @@ const parseField = ({ field, keyPath, keyPathList }) => {
       keyPathList.push(isList ? `${keyPath}.*.${typeKey}` : `${keyPath}.${typeKey}`);
 
       types.forEach((type) => {
-        type.fields.forEach((subField) => {
+        type.fields?.forEach((subField) => {
           parseField({
             field: subField,
             keyPath: isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,

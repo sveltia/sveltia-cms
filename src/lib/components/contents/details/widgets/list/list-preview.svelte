@@ -66,19 +66,21 @@
     {@const subFields = subFieldName
       ? (types?.find(({ name }) => name === subFieldName)?.fields ?? [])
       : (fields ?? (field ? [field] : []))}
-    <section class="subsection" bind:this={wrappers[index]}>
-      {#await waitForVisibility(wrappers[index]) then}
-        {#each subFields as subField (subField.name)}
-          {#await sleep(0) then}
-            <FieldPreview
-              keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
-              {locale}
-              fieldConfig={subField}
-            />
-          {/await}
-        {/each}
-      {/await}
-    </section>
+    {#if subFields.length}
+      <section class="subsection" bind:this={wrappers[index]}>
+        {#await waitForVisibility(wrappers[index]) then}
+          {#each subFields as subField (subField.name)}
+            {#await sleep(0) then}
+              <FieldPreview
+                keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
+                {locale}
+                fieldConfig={subField}
+              />
+            {/await}
+          {/each}
+        {/await}
+      </section>
+    {/if}
   {/each}
 {:else if Array.isArray(currentValue) && currentValue.length}
   <p lang={locale} dir="auto">{listFormatter.format(currentValue)}</p>

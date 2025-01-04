@@ -15,7 +15,7 @@
    */
   export let expanded;
   /**
-   * @type {() => void}
+   * @type {(() => void) | undefined}
    */
   export let toggleExpanded;
   /**
@@ -41,11 +41,12 @@
   <div role="none">
     <Button
       size="small"
+      disabled={!toggleExpanded}
       aria-label={expanded ? $_('collapse') : $_('expand')}
       aria-expanded={expanded}
       aria-controls={controlId}
       onclick={() => {
-        toggleExpanded();
+        toggleExpanded?.();
       }}
     >
       {#snippet startIcon()}

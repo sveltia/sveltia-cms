@@ -535,7 +535,7 @@
  * @property {string} name - Type name.
  * @property {string} [widget] - Widget type. `object` only.
  * @property {string} [summary] - Template of the label to be displayed on the collapsed UI.
- * @property {Field[]} fields - Nested fields.
+ * @property {Field[]} [fields] - Nested fields.
  * @see https://decapcms.org/docs/variable-type-widgets/
  */
 

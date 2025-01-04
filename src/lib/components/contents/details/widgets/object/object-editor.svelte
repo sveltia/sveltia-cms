@@ -221,9 +221,9 @@
         label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
         controlId="object-{widgetId}-item-list"
         expanded={parentExpanded}
-        toggleExpanded={() => {
-          syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
-        }}
+        toggleExpanded={typeConfig?.fields?.length
+          ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
+          : undefined}
         removeButtonVisible={hasVariableTypes}
         removeButtonDisabled={addButtonDisabled}
         remove={() => {

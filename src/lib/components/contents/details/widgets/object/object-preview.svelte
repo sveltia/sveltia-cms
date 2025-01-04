@@ -48,7 +48,7 @@
   $: subFields = (hasVariableTypes ? typeConfig?.fields : fields) ?? [];
 </script>
 
-{#if hasValues}
+{#if hasValues && subFields.length}
   <section class="subsection" bind:this={wrapper}>
     {#await waitForVisibility(wrapper) then}
       {#each subFields as subField (subField.name)}
