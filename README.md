@@ -341,6 +341,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - An optional List field won’t populate an item by default when the subfield has the `default` value[^162].
   - Users can enter spaces in a simple text-based List field[^50].
   - Users can preview variable types without having to register a preview template[^42].
+  - It’s possible to omit `fields` in a variable type object[^163]. In that case only the `typeKey` (default: `type`) is saved in the output.
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
   - The built-in `image` editor component can be inserted with a single click.
@@ -1082,7 +1083,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^26]: Netlify/Decap CMS [#3285](https://github.com/decaporg/decap-cms/issues/3285), [#7030](https://github.com/decaporg/decap-cms/issues/7030), [#7067](https://github.com/decaporg/decap-cms/issues/7067), [#7217](https://github.com/decaporg/decap-cms/issues/7217)
 
-[^27]: Netlify/Decap CMS [#4564](https://github.com/decaporg/decap-cms/issues/4564) [#5617](https://github.com/decaporg/decap-cms/issues/5617), [#5815](https://github.com/decaporg/decap-cms/issues/5815)
+[^27]: Netlify/Decap CMS [#4564](https://github.com/decaporg/decap-cms/issues/4564), [#5617](https://github.com/decaporg/decap-cms/issues/5617), [#5815](https://github.com/decaporg/decap-cms/issues/5815)
 
 [^28]: Netlify/Decap CMS [#2677](https://github.com/decaporg/decap-cms/pull/2677), [#6836](https://github.com/decaporg/decap-cms/pull/6836)
 
@@ -1094,7 +1095,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^32]: Netlify/Decap CMS [#302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549)
 
-[^33]: Netlify/Decap CMS [#542](https://github.com/decaporg/decap-cms/issues/542), [#4532](https://github.com/decaporg/decap-cms/issues/4532) [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295)
+[^33]: Netlify/Decap CMS [#542](https://github.com/decaporg/decap-cms/issues/542), [#4532](https://github.com/decaporg/decap-cms/issues/4532), [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295)
 
 [^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138), [#2343](https://github.com/decaporg/decap-cms/issues/2343), [#4367](https://github.com/decaporg/decap-cms/issues/4367), [#5932](https://github.com/decaporg/decap-cms/discussions/5932)
 
@@ -1184,7 +1185,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^77]: Netlify/Decap CMS [#2009](https://github.com/decaporg/decap-cms/issues/2009), [#2293](https://github.com/decaporg/decap-cms/issues/2293), [#3415](https://github.com/decaporg/decap-cms/issues/3415), [#3952](https://github.com/decaporg/decap-cms/issues/3952), [#6563](https://github.com/decaporg/decap-cms/issues/6563)
 
-[^78]: Netlify/Decap CMS [#2294](https://github.com/decaporg/decap-cms/issues/2294), [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363), [#4520](https://github.com/decaporg/decap-cms/issues/4520) [#5806](https://github.com/decaporg/decap-cms/issues/5806)
+[^78]: Netlify/Decap CMS [#2294](https://github.com/decaporg/decap-cms/issues/2294), [#3046](https://github.com/decaporg/decap-cms/issues/3046), [#4363](https://github.com/decaporg/decap-cms/issues/4363), [#4520](https://github.com/decaporg/decap-cms/issues/4520), [#5806](https://github.com/decaporg/decap-cms/issues/5806)
 
 [^79]: Netlify/Decap CMS [#5726](https://github.com/decaporg/decap-cms/issues/5726)
 
@@ -1353,3 +1354,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^161]: Netlify/Decap CMS [#1274](https://github.com/decaporg/decap-cms/issues/1274)
 
 [^162]: Netlify/Decap CMS [#2380](https://github.com/decaporg/decap-cms/issues/2380)
+
+[^163]: Netlify/Decap CMS [#7322](https://github.com/decaporg/decap-cms/issues/7322)
