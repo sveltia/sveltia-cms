@@ -92,6 +92,7 @@
           margin: 12px 8px 0;
           height: 40px;
           line-height: 1.5;
+          word-break: break-all;
         }
       }
     }
