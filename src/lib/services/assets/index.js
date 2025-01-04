@@ -342,17 +342,14 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     return exactMatch;
   }
 
-  const { dirname: publicPath, basename: fileName } = getPathInfo(savedPath);
-
-  if (!publicPath) {
-    return undefined;
-  }
+  const { dirname: publicPath = '', basename: fileName } = getPathInfo(savedPath);
 
   // eslint-disable-next-line prefer-const
-  let { internalPath, collectionName } =
-    get(allAssetFolders).findLast((folder) =>
-      publicPath.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
-    ) ?? {};
+  let { internalPath, collectionName } = !publicPath
+    ? get(allAssetFolders)[0] // Global asset folder
+    : (get(allAssetFolders).findLast((folder) =>
+        publicPath.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
+      ) ?? {});
 
   if (internalPath === undefined) {
     return undefined;
@@ -434,7 +431,7 @@ export const getAssetPublicURL = (
     return undefined;
   }
 
-  const path = asset.path.replace(asset.folder, publicPath ?? '');
+  const path = asset.path.replace(asset.folder, publicPath === '/' ? '' : (publicPath ?? ''));
 
   // Path starting with `@`, etc. cannot be linked
   if (!path.startsWith('/') && !allowSpecial) {
@@ -445,7 +442,7 @@ export const getAssetPublicURL = (
     return path;
   }
 
-  const baseURL = get(siteConfig)?.site_url ?? '';
+  const baseURL = stripSlashes(get(siteConfig)?.site_url ?? '');
 
   return `${baseURL}${path}`;
 };

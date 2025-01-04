@@ -647,7 +647,6 @@ const replaceBlobURL = async ({
 
   const sha = await getHash(file);
   const dupFile = savingAssets.find((f) => f.sha === sha);
-  const useSubFolder = !!publicAssetFolder && publicAssetFolder !== '/';
   let assetName = '';
 
   // Check if the file has already been added for other field or locale
@@ -676,7 +675,11 @@ const replaceBlobURL = async ({
     blobURL,
     (_match, /** @type {number} */ offset) => {
       if (offset === index) {
-        return useSubFolder ? `${publicAssetFolder}/${assetName}` : assetName;
+        if (publicAssetFolder) {
+          return `${publicAssetFolder === '/' ? '' : publicAssetFolder}/${assetName}`;
+        }
+
+        return assetName;
       }
 
       return _match;
