@@ -144,28 +144,5 @@
     :global(img) {
       max-height: 800px !important;
     }
-
-    :global(.subsection) {
-      border-width: 2px 2px 0;
-      border-style: solid;
-      border-color: var(--sui-secondary-border-color);
-      padding: 8px 16px;
-
-      :global(.title) {
-        font-size: inherit;
-        font-weight: var(--sui-font-weight-normal);
-      }
-    }
-
-    :global(.subsection:first-of-type) {
-      border-top-right-radius: var(--sui-control-medium-border-radius);
-      border-top-left-radius: var(--sui-control-medium-border-radius);
-    }
-
-    :global(.subsection:last-of-type) {
-      border-bottom: 2px solid var(--sui-secondary-border-color);
-      border-bottom-right-radius: var(--sui-control-medium-border-radius);
-      border-bottom-left-radius: var(--sui-control-medium-border-radius);
-    }
   }
 </style>

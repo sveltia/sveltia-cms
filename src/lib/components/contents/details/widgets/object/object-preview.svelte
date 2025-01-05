@@ -4,9 +4,9 @@
   @see https://decapcms.org/docs/widgets/#object
 -->
 <script>
-  import { waitForVisibility } from '@sveltia/utils/element';
   import { sleep } from '@sveltia/utils/misc';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+  import Subsection from '$lib/components/contents/details/widgets/object/subsection.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
@@ -27,9 +27,6 @@
   // svelte-ignore unused-export-let
   export let currentValue;
 
-  /** @type {HTMLElement | undefined} */
-  let wrapper;
-
   $: ({
     // Widget-specific options
     fields,
@@ -45,21 +42,20 @@
   $: typeConfig = hasVariableTypes
     ? types?.find(({ name }) => name === valueMap[typeKeyPath])
     : undefined;
+  $: label = typeConfig ? typeConfig.label || typeConfig.name : undefined;
   $: subFields = (hasVariableTypes ? typeConfig?.fields : fields) ?? [];
 </script>
 
-{#if hasValues && subFields.length}
-  <section class="subsection" bind:this={wrapper}>
-    {#await waitForVisibility(wrapper) then}
-      {#each subFields as subField (subField.name)}
-        {#await sleep(0) then}
-          <FieldPreview
-            keyPath={[keyPath, subField.name].join('.')}
-            {locale}
-            fieldConfig={subField}
-          />
-        {/await}
-      {/each}
-    {/await}
-  </section>
+{#if hasValues}
+  <Subsection {label}>
+    {#each subFields as subField (subField.name)}
+      {#await sleep(0) then}
+        <FieldPreview
+          keyPath={[keyPath, subField.name].join('.')}
+          {locale}
+          fieldConfig={subField}
+        />
+      {/await}
+    {/each}
+  </Subsection>
 {/if}
