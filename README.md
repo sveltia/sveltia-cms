@@ -335,7 +335,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list) using the new `root` option[^148].
   - The `min` and `max` options can be used separately. You don’t need to specify both to use either option[^145].
   - The Add Item button appears at the bottom of the list when the `add_to_top` option is not `true`, so you don’t have to scroll up each time to add new items.
-  - Users can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once.
+  - Users can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once[^164].
   - A required List field with no subfield or value is marked as invalid[^43].
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing[^44].
   - An optional List field won’t populate an item by default when the subfield has the `default` value[^162].
@@ -1356,3 +1356,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^162]: Netlify/Decap CMS [#2380](https://github.com/decaporg/decap-cms/issues/2380)
 
 [^163]: Netlify/Decap CMS [#7322](https://github.com/decaporg/decap-cms/issues/7322)
+
+[^164]: Netlify/Decap CMS [#756](https://github.com/decaporg/decap-cms/issues/756) — The Expand All and Collapse All buttons cannot be found in the current version of Decap CMS.
