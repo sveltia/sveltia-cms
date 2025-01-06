@@ -140,7 +140,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
      */
     static importJSON(serializedNode) {
       // eslint-disable-next-line no-use-before-define
-      return createNode(serializedNode);
+      return createNode().updateFromJSON(serializedNode);
     }
 
     /**
