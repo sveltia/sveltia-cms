@@ -456,6 +456,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget with the `time_format: false` option instead.
+- The Code widget’s theme and keymap settings won’t be supported, and some languages may be dropped, as we use Lexical’s [Prism](https://prismjs.com/)-powered code block functionality instead of [CodeMirror](https://codemirror.net/). In general, it’s much easier to use a full-featured code editor like VS Code, locally or [online](https://vscode.dev/), to create a snippet and paste it into the CMS.
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any; we may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 
@@ -475,7 +476,7 @@ These limitations are expected to be resolved before the 1.0 release:
 | Widget | Status in Sveltia CMS |
 | --- | --- |
 | [Code](https://decapcms.org/docs/widgets/#code) | Not yet supported. |
-| [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
+| [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
 | [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | [Map](https://decapcms.org/docs/widgets/#map) | Not yet supported. |
 | [Markdown](https://decapcms.org/docs/widgets/#markdown) | The built-in `code-block` component and custom components are not yet supported. |
@@ -492,7 +493,7 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 
 We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. This README will be updated with more details as our development progresses.
 
-- Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc., but Sveltia CMS follows Netlify/Decap CMS, so you should check your configuration carefully.
+- Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc., but Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
 - The KeyValue widget is implemented in Sveltia CMS with the same options.
 - The UUID widget is also implemented, but with different options.
 - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
@@ -500,7 +501,7 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 
 ### Other notes
 
-- Make sure you’re using the latest stable version of a web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
+- Make sure you’re using the latest stable version of a web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not officially supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and it’s served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
 - Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked!
