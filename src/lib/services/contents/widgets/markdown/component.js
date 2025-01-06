@@ -69,7 +69,8 @@ export const getComponentDef = (name) => {
       toPreview: (props) => {
         const { src, alt, title } = escapeAllChars(props);
 
-        return src ? `<img src="${src}" alt="${alt}" title="${title}">` : '';
+        // Return `<img>` even if `src` is empty to make sure the `tagName` below works
+        return `<img src="${src}" alt="${alt}" title="${title}">`;
       },
     },
   });
