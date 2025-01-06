@@ -82,6 +82,8 @@ Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stal
 
 To achieve radical improvements in UX, performance, i18n and other areas, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
+We loved the concept of Netlify CMS — a single page app served from a CDN, plus a single YAML config file — and wanted to revive it, modernize it, and take it to the next level.
+
 ### Our advantage
 
 Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
@@ -113,9 +115,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 155+ of them, or 300+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 250 or all relevant, fixable and worthwhile issues in the future; 500 including duplicates
   - Note: Issues include both feature requests and bug reports; we also track their [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
-  - See the footnotes linked from the [Differentiators](#differentiators) section for all the issues we have covered
   - Most of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
-  - [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=enhancement) if you have any specific issues you’d like to see solved!
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Implementing our own enhancement ideas for every part of the product
 - Responding to requests from the maintainer’s clients
@@ -492,6 +492,7 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 
 We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. This README will be updated with more details as our development progresses.
 
+- Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc., but Sveltia CMS follows Netlify/Decap CMS, so you should check your configuration carefully.
 - The KeyValue widget is implemented in Sveltia CMS with the same options.
 - The UUID widget is also implemented, but with different options.
 - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
@@ -709,7 +710,7 @@ If you have upgraded to DeepL API Pro, provide your new Authentication Key:
 
 1. Click the Account button in the upper right corner, then click Settings.
 1. Select the Language tab.
-1. Replace your free API key with the new paid API key in the DeepL API Authentication Key field.
+1. Replace your free API key ending with `:fx` with the new paid API key in the DeepL API Authentication Key field.
 1. Close the Settings dialog.
 
 ### Localizing entry slugs
@@ -981,7 +982,7 @@ img-src 'self' blob: data: https://*;
 
 While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
 
-As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are migrating from the other product or Static CMS. We are happy to help you migrate, but we cannot help you set up Sveltia CMS from scratch through our free support channels.
+As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are migrating from the other product or Static CMS. We are happy to help you migrate, but **we cannot help you set up Sveltia CMS from scratch** through our free support channels.
 
 Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
 
@@ -1005,7 +1006,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### After the 1.0 release
 
 - Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and Nested Collections
-- Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18] and config editor[^10] — Some [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are already implemented in Sveltia CMS
+- Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18], config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring further [compatibility with Static CMS](#compatibility-with-static-cms)
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools
 - AI integrations for image generation and content writing
