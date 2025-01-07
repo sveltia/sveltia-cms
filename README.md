@@ -88,7 +88,7 @@ We loved the concept of Netlify CMS — a single page app served from a CDN, plu
 
 Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
-- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022, discontinued in September 2024
+- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — made great improvements, but discontinued in September 2024
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly inactive
 
@@ -456,9 +456,9 @@ However, 100% feature parity is not planned, and some features are still missing
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget with the `time_format: false` option instead.
-- The Code widget’s theme and keymap settings won’t be supported, and some languages may be dropped, as we use Lexical’s [Prism](https://prismjs.com/)-powered code block functionality instead of [CodeMirror](https://codemirror.net/). In general, it’s much easier to use a full-featured code editor like VS Code, locally or [online](https://vscode.dev/), to create a snippet and paste it into the CMS.
+- The theme and keymap inline settings of the Code widget will not be supported, and some minor languages may be dropped, as we use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/).
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
-- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any; we may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
+- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 
 ### Features to be implemented before GA
 
@@ -493,11 +493,12 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 
 We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. This README will be updated with more details as our development progresses.
 
-- Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc., but Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
+- Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
 - The KeyValue widget is implemented in Sveltia CMS with the same options.
 - The UUID widget is also implemented, but with different options.
 - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
-- `CMS.registerIcon()` won’t be supported, as Sveltia CMS includes Material Symbols for [custom collection icons](#using-a-custom-icon-for-a-collection).
+- The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS soon. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
+- `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
 
 ### Other notes
 
