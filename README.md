@@ -31,6 +31,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Better i18n support](#better-i18n-support)
   - [Better collections](#better-collections)
   - [Better content editing](#better-content-editing)
+  - [Better content preview](#better-content-preview)
   - [Better data output](#better-data-output)
   - [Better widgets](#better-widgets)
     - [New widgets](#new-widgets)
@@ -115,7 +116,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 155+ of them, or 305+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 300 or all relevant, fixable and worthwhile issues in the future; 500 including duplicates
   - Note: Issues include feature requests, bug reports, [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
-  - Most of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
+  - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Implementing our own enhancement ideas for every part of the product
 - Responding to requests from the maintainer’s clients
@@ -149,7 +150,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern File System Access API to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
-- Uses caching and lazy loading techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
+- Uses caching, lazy loading and infinite scrolling techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
 - No typing lag on input widgets, especially within nested lists and objects[^77].
 
@@ -224,7 +225,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://en.wikipedia.org/wiki/Transliteration)[^99].
   - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`[^101].
 - User interface
-  - Eliminates UI confusion: The preview pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
+  - Eliminates UI confusion: The Preview pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list.
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
@@ -291,16 +292,21 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Required fields, not optional fields, are marked for efficient data entry.
 - Users can revert changes to all fields or a specific field.
 - If you revert changes and there are no unsaved changes, the Save button is disabled as expected[^118].
-- The preview of a specific field can be hidden with `preview: false`[^126].
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
-- When you click on a field in the preview pane, the corresponding field in the edit pane is highlighted[^41]. It will be automatically expanded if collapsed.
-- The preview pane displays all fields, including each label, making it easier to see which fields are populated.
-- Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
-- The preview pane won’t cause a scrolling issue[^136].
 - A full regular expression, including flags, can be used for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
 - A long validation error message is displayed in full, without being hidden behind the field label[^59].
 - Any links to other entries will work as expected, with the Content Editor being updated for the other[^100].
 - In the Boolean and Select widgets, you don’t have to update a value twice to re-enable the Save button after saving an entry[^139].
+
+### Better content preview
+
+- The Preview pane comes with a minimal default style[^168]. It looks nice without a custom preview style or template.
+- The Preview pane displays all fields, including each label, making it easier to see which fields are populated.
+- When you click on a field in the Preview pane, the corresponding field in the Edit pane is highlighted[^41]. It will be automatically expanded if collapsed.
+- The Preview pane won’t cause a scrolling issue[^136].
+- Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
+- The preview of a specific field can be hidden with `preview: false`[^126].
+- [See below](#better-widgets) for widget-specific enhancements, including support for variable types[^42] and YouTube videos.
 
 ### Better data output
 
@@ -312,7 +318,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML[^147].
-- Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes[^9][^155].
+- Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation[^155] and quotes[^9].
   - The `yaml_quote` collection option added in [v0.5.10](https://github.com/sveltia/sveltia-cms/releases/tag/v0.5.10) is now deprecated and will be removed in v1.0.0. `yaml_quote: true` is equivalent to `quote: double` in the new YAML format options.
 
 ### Better widgets
@@ -350,7 +356,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The built-in `image` component can be inserted with a single click.
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
   - Code in a code block in the editor can be copied as expected[^165].
-  - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
+  - Line breaks are rendered as line breaks in the Preview pane according to GitHub Flavored Markdown (GFM).
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string[^157]. If `value_type` is anything else, the data type will remain a string.
 - Object
@@ -361,14 +367,14 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
   - `slug` can be used for `value_field` to show all available options instead of just one in some situations[^91].
   - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`[^94].
-  - `display_fields` is displayed in the preview pane instead of `value_field`.
+  - `display_fields` is displayed in the Preview pane instead of `value_field`.
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
   - A new item created in a referenced collection is immediately available in the options[^138].
 - Select
   - It’s possible to select an option with value `0`[^56].
-  - `label` is displayed in the preview pane instead of `value`.
+  - `label` is displayed in the Preview pane instead of `value`.
 - String
-  - When a YouTube video URL is entered in a String field, it appears as an embedded video in the preview pane. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
+  - When a YouTube video URL is entered in a String field, it appears as an embedded video in the Preview pane. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - When a regular URL is entered in a String field, it appears as a link that can be opened in a new browser tab.
   - Supports the `type` option that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string options, which automatically prepend and/or append the developer-defined value to the user-input value.
@@ -382,7 +388,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More stock photo providers will be added in the future.
   - Users can also simply drag and drop a file onto a File/Image field to attach it without having to open the Select File dialog.
-  - Large images automatically fit in the preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
+  - Large images automatically fit in the Preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
   - If the `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path[^140]. Other dynamic template tags such as `{{filename}}` will also be populated as expected[^141].
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
@@ -501,6 +507,7 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
 - The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS soon. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
 - `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
+- The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `save_all_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
 
 ### Other notes
 
@@ -1010,15 +1017,15 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### After the 1.0 release
 
 - Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and Nested Collections
-- Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], roles[^23], mobile optimization[^18], config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
-- Exploring further [compatibility with Static CMS](#compatibility-with-static-cms)
+- Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], mobile optimization[^18], config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+- Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles[^23], commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
+- Considering further [compatibility with Static CMS](#compatibility-with-static-cms)
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools
 - AI integrations for image generation and content writing
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - End-user documentation
 - Contributor documentation
 - Marketplace for custom widgets, etc.
-- Git Gateway and Netlify Identity Widget alternative
 - VS Code extension for `config.yml` schema validation
 - and so much more!
 
@@ -1366,3 +1373,9 @@ This software is provided “as is” without any express or implied warranty. W
 [^164]: Netlify/Decap CMS [#756](https://github.com/decaporg/decap-cms/issues/756) — The Expand All and Collapse All buttons cannot be found in the current version of Decap CMS.
 
 [^165]: Netlify/Decap CMS [#7143](https://github.com/decaporg/decap-cms/issues/7143)
+
+[^166]: Netlify/Decap CMS [#277](https://github.com/decaporg/decap-cms/issues/277)
+
+[^167]: Netlify/Decap CMS [#263](https://github.com/decaporg/decap-cms/issues/263)
+
+[^168]: Netlify/Decap CMS [#1948](https://github.com/decaporg/decap-cms/issues/1948)
