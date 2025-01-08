@@ -82,13 +82,13 @@ Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stal
 
 To achieve radical improvements in UX, performance, i18n and other areas, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
-We loved the concept of Netlify CMS — a single page app served from a CDN, plus a single YAML config file — and wanted to revive it, modernize it, and take it to the next level.
+We loved the concept of Netlify CMS — a single page app served from a CDN, plus a single YAML config file — and we wanted to revive it, modernize it, and take it to the next level.
 
 ### Our advantage
 
 Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
 
-- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — made great improvements, but discontinued in September 2024
+- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after doing a great job
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly inactive
 
@@ -112,7 +112,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 155+ of them, or 300+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 155+ of them, or 305+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 300 or all relevant, fixable and worthwhile issues in the future; 500 including duplicates
   - Note: Issues include feature requests, bug reports, [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Most of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table — Some are already implemented in Sveltia CMS
@@ -348,6 +348,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The built-in `image` editor component can be inserted with a single click.
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup[^160]. In our editor, bold is 2 asterisks and italic is an underscore.
+  - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
+  - Code in a code block in the editor can be copied as expected[^165].
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string[^157]. If `value_type` is anything else, the data type will remain a string.
@@ -400,7 +402,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
 - KeyValue (Dictionary)
   - The new `keyvalue` widget allows users to add arbitrary key-value string pairs to a field[^123].
-  - The implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), but we provide a more intuitive UI. You can press Enter to move focus or add a new row while editing, and the preview is displayed in a clean table.
+  - While the implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), we provide a more intuitive UI. You can press Enter to move focus or add a new row while editing, and the preview is displayed in a clean table.
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS supports the proposed `uuid` widget with the following properties[^12]:
     - `prefix`: A string to be prepended to the value. Default: an empty string.
@@ -475,11 +477,11 @@ These limitations are expected to be resolved before the 1.0 release:
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
-| [Code](https://decapcms.org/docs/widgets/#code) | Not yet supported. |
+| [Code](https://decapcms.org/docs/widgets/#code) | Coming soon. |
 | [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
 | [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
-| [Map](https://decapcms.org/docs/widgets/#map) | Not yet supported. |
-| [Markdown](https://decapcms.org/docs/widgets/#markdown) | The built-in `code-block` component and custom components are not yet supported. |
+| [Map](https://decapcms.org/docs/widgets/#map) | Coming soon. |
+| [Markdown](https://decapcms.org/docs/widgets/#markdown) | Custom components are not yet supported. There is no language selection and syntax highlighting yet in the built-in `code-block` component. |
 
 ### Features to be implemented after GA
 
@@ -1362,3 +1364,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^163]: Netlify/Decap CMS [#7322](https://github.com/decaporg/decap-cms/issues/7322)
 
 [^164]: Netlify/Decap CMS [#756](https://github.com/decaporg/decap-cms/issues/756) — The Expand All and Collapse All buttons cannot be found in the current version of Decap CMS.
+
+[^165]: Netlify/Decap CMS [#7143](https://github.com/decaporg/decap-cms/issues/7143)
