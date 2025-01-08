@@ -86,7 +86,7 @@ We loved the concept of Netlify CMS — a single page app served from a CDN, plu
 
 ### Our advantage
 
-Due to its unfortunate abandonment, Netlify CMS spawned 3 successors:
+Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successors:
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after doing a great job
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
@@ -345,9 +345,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to omit `fields` in a variable type object[^163]. In that case only the `typeKey` (default: `type`) is saved in the output.
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
-  - The built-in `image` editor component can be inserted with a single click.
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup[^160]. In our editor, bold is 2 asterisks and italic is an underscore.
+  - The built-in `image` component can be inserted with a single click.
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
   - Code in a code block in the editor can be copied as expected[^165].
   - Line breaks are rendered as line breaks in the preview pane according to GitHub Flavored Markdown (GFM).
@@ -504,10 +504,10 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 
 ### Other notes
 
-- Make sure you’re using the latest stable version of a web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not officially supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
-- Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and it’s served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
+- Make sure you’re using the latest stable version of a modern web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not officially supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
+- Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
-- Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked!
+- Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
 ## Getting started
 
@@ -1018,7 +1018,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - End-user documentation
 - Contributor documentation
 - Marketplace for custom widgets, etc.
-- Git Gateway alternative
+- Git Gateway and Netlify Identity Widget alternative
 - VS Code extension for `config.yml` schema validation
 - and so much more!
 
