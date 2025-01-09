@@ -442,7 +442,7 @@ export const getAssetPublicURL = (
     return path;
   }
 
-  const baseURL = stripSlashes(get(siteConfig)?.site_url ?? '');
+  const baseURL = get(siteConfig)?._baseURL;
 
   return `${baseURL}${path}`;
 };

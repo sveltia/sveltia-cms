@@ -74,8 +74,8 @@ export const getEntriesByAssetURL = async (
   url,
   { entries = get(allEntries), newURL = '' } = {},
 ) => {
-  const siteURL = get(siteConfig)?.site_url;
-  const assetURL = siteURL && !url.startsWith('blob:') ? url.replace(siteURL, '') : url;
+  const baseURL = get(siteConfig)?._baseURL;
+  const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
 
   const results = await Promise.all(
     entries.map(async (entry) => {

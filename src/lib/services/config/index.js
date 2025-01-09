@@ -1,6 +1,6 @@
 import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
-import { compare, stripSlashes } from '@sveltia/utils/string';
+import { compare, isURL, stripSlashes } from '@sveltia/utils/string';
 import merge from 'deepmerge';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
@@ -22,7 +22,7 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  * Next.js. You probably need to define the `Access-Control-Allow-Origin: *` HTTP response header
  * with the dev server’s middleware, or loading the CMS config file may fail due to a CORS error.
  */
-export const siteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
+export const devSiteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
 /**
  * @type {import('svelte/store').Writable<SiteConfig | undefined>}
  */
@@ -166,8 +166,9 @@ export const initSiteConfig = async (manualConfig = {}) => {
     /** @type {SiteConfig} */
     const config = tempConfig;
 
-    // Set the site URL for development and production if undefined. See also `/src/app.svelte`
-    config.site_url ||= DEV ? siteURL : window.location.origin;
+    // Set the site URL for development or production. See also `/src/app.svelte`
+    config._siteURL = config.site_url?.trim() || (DEV ? devSiteURL : window.location.origin);
+    config._baseURL = isURL(config._siteURL) ? new URL(config._siteURL).origin : '';
 
     // Handle root collection folder variants, particularly for VitePress
     config.collections.forEach((collection) => {

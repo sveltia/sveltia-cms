@@ -27,7 +27,7 @@ export const getAssociatedCollections = (entry) =>
  * @returns {string | undefined} URL on the live site.
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
-  const { show_preview_links: showLinks = true, site_url: baseURL } = get(siteConfig) ?? {};
+  const { show_preview_links: showLinks = true, _baseURL: baseURL } = get(siteConfig) ?? {};
   const { slug, path: entryFilePath, content } = entry.locales[locale] ?? {};
 
   const {

@@ -11,7 +11,7 @@
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
-  import { initSiteConfig, siteConfig, siteURL } from '$lib/services/config';
+  import { devSiteURL, initSiteConfig, siteConfig } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user';
 
@@ -61,8 +61,8 @@
       type={logoURL ? (mime.getType(logoURL) ?? undefined) : 'image/svg+xml'}
     />
   {/if}
-  {#if siteURL}
-    <link href="{siteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
+  {#if devSiteURL}
+    <link href="{devSiteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
   {/if}
 </svelte:head>
 

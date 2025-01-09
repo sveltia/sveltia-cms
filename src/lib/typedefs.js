@@ -347,6 +347,8 @@
  * @property {'simple' | 'editorial_workflow'} [publish_mode] - Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] - Whether to show site preview links.
  * @property {OutputOptions} [output] - Data output options.
+ * @property {string} _siteURL - `site_url` or the current `location.origin` if it’s not set.
+ * @property {string} _baseURL - The base/origin of `_siteURL`.
  * @see https://decapcms.org/docs/configuration-options/
  */
 
