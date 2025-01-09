@@ -342,13 +342,13 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     return exactMatch;
   }
 
-  const { dirname: publicPath = '', basename: fileName } = getPathInfo(savedPath);
+  const { dirname: dirName = '', basename: fileName } = getPathInfo(savedPath);
 
   // eslint-disable-next-line prefer-const
-  let { internalPath, collectionName } = !publicPath
+  let { collectionName, internalPath, publicPath } = !dirName
     ? get(allAssetFolders)[0] // Global asset folder
     : (get(allAssetFolders).findLast((folder) =>
-        publicPath.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
+        dirName.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
       ) ?? {});
 
   if (internalPath === undefined) {
@@ -357,7 +357,11 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
   // Find a global/uncategorized asset
   if (!collectionName) {
-    const fullPath = savedPath.replace(new RegExp(`^${escapeRegExp(publicPath)}`), internalPath);
+    const fullPath = savedPath.replace(
+      new RegExp(`^${escapeRegExp(publicPath || dirName)}`),
+      internalPath,
+    );
+
     const globalAsset = get(allAssets).find((asset) => asset.path === fullPath);
 
     if (globalAsset) {
@@ -385,7 +389,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
   const _publicPath = collection?._assetFolder?.publicPath;
 
   const subPath = _publicPath
-    ? stripSlashes(publicPath.replace(new RegExp(`^${escapeRegExp(_publicPath)}`), ''))
+    ? stripSlashes(dirName.replace(new RegExp(`^${escapeRegExp(_publicPath)}`), ''))
     : '';
 
   const fullPath = createPath([internalPath, subPath, fileName]);
