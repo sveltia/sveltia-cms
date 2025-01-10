@@ -669,11 +669,11 @@ const replaceBlobURL = async ({
     });
   }
 
-  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, () =>
-    publicAssetFolder
-      ? `${publicAssetFolder === '/' ? '' : publicAssetFolder}/${assetName}`
-      : assetName,
-  );
+  const publicURL = publicAssetFolder
+    ? `${publicAssetFolder === '/' ? '' : publicAssetFolder}/${assetName}`
+    : assetName;
+
+  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL);
 };
 
 /**
