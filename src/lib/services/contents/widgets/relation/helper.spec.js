@@ -81,6 +81,8 @@ describe('Test getOptions()', () => {
       { name: 'pages', fields: [] },
       { name: 'relation_files', fields: [] },
     ],
+    _siteURL: '',
+    _baseURL: '',
   });
 
   // https://decapcms.org/docs/widgets/#relation

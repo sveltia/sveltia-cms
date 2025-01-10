@@ -3,7 +3,12 @@ import { siteConfig } from '$lib/services/config';
 import { defaultI18nConfig, getCanonicalLocale, getI18nConfig } from '$lib/services/contents/i18n';
 
 describe('Test getI18nConfig()', () => {
-  const mediaFolder = 'static/images/uploads';
+  const siteConfigBase = {
+    backend: { name: 'github' },
+    media_folder: 'static/images/uploads',
+    _siteURL: '',
+    _baseURL: '',
+  };
 
   /** @type {RawCollection} */
   const collectionWithoutI18n = {
@@ -70,8 +75,7 @@ describe('Test getI18nConfig()', () => {
 
   test('no i18n defined at top-level or collection-level', () => {
     siteConfig.set({
-      backend: { name: 'github' },
-      media_folder: mediaFolder,
+      ...siteConfigBase,
       collections: [collectionWithoutI18n],
     });
 
@@ -86,8 +90,7 @@ describe('Test getI18nConfig()', () => {
 
   test('no i18n defined at collection-level', () => {
     siteConfig.set({
-      backend: { name: 'github' },
-      media_folder: mediaFolder,
+      ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -107,8 +110,7 @@ describe('Test getI18nConfig()', () => {
 
   test('config with locales, no structure, no default_locale', () => {
     siteConfig.set({
-      backend: { name: 'github' },
-      media_folder: mediaFolder,
+      ...siteConfigBase,
       i18n: {
         locales: ['en', 'fr'],
       },
@@ -145,8 +147,7 @@ describe('Test getI18nConfig()', () => {
 
   test('config with locales, structure and default_locale', () => {
     siteConfig.set({
-      backend: { name: 'github' },
-      media_folder: mediaFolder,
+      ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -191,8 +192,7 @@ describe('Test getI18nConfig()', () => {
 
   test('partial config override at collection-level', () => {
     siteConfig.set({
-      backend: { name: 'github' },
-      media_folder: mediaFolder,
+      ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -213,8 +213,7 @@ describe('Test getI18nConfig()', () => {
 
   test('complete config override at collection-level', () => {
     siteConfig.set({
-      backend: { name: 'github' },
-      media_folder: mediaFolder,
+      ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -235,8 +234,7 @@ describe('Test getI18nConfig()', () => {
 
   test('partial config override at file-level', () => {
     siteConfig.set({
-      backend: { name: 'github' },
-      media_folder: mediaFolder,
+      ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -283,8 +281,7 @@ describe('Test getI18nConfig()', () => {
 
   test('complete config override at file-level', () => {
     siteConfig.set({
-      backend: { name: 'github' },
-      media_folder: mediaFolder,
+      ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],

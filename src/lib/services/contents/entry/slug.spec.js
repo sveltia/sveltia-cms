@@ -22,6 +22,8 @@ describe('Test fillSlugTemplate()', () => {
     backend: { name: 'github' },
     media_folder: 'static/images/uploads',
     collections: [collection],
+    _siteURL: '',
+    _baseURL: '',
   });
 
   test('short slug', () => {
