@@ -616,7 +616,6 @@ const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
  * Replace a blob URL with the final path, and add the file to the changeset.
  * @param {object} args - Arguments.
  * @param {string} args.blobURL - Blob URL.
- * @param {number} args.index - Matched index.
  * @param {FieldKeyPath} args.keyPath - Field key path.
  * @param {FlattenedEntryContent} args.content - Localized content.
  * @param {FileChange[]} args.changes - Changeset.
@@ -629,7 +628,6 @@ const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
  */
 const replaceBlobURL = async ({
   blobURL,
-  index,
   keyPath,
   content,
   changes,
@@ -671,19 +669,10 @@ const replaceBlobURL = async ({
     });
   }
 
-  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(
-    blobURL,
-    (_match, /** @type {number} */ offset) => {
-      if (offset === index) {
-        if (publicAssetFolder) {
-          return `${publicAssetFolder === '/' ? '' : publicAssetFolder}/${assetName}`;
-        }
-
-        return assetName;
-      }
-
-      return _match;
-    },
+  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, () =>
+    publicAssetFolder
+      ? `${publicAssetFolder === '/' ? '' : publicAssetFolder}/${assetName}`
+      : assetName,
   );
 };
 
@@ -753,8 +742,8 @@ const createBaseSavingEntryData = async ({
 
             // Replace blob URLs in File/Image fields with asset paths
             await Promise.all(
-              [...value.matchAll(getBlobRegex('g'))].map(({ 0: blobURL, index }) =>
-                replaceBlobURL({ blobURL, index, keyPath, content, ...replaceBlobArgs }),
+              [...value.matchAll(getBlobRegex('g'))].map(([blobURL]) =>
+                replaceBlobURL({ blobURL, keyPath, content, ...replaceBlobArgs }),
               ),
             );
           }),
