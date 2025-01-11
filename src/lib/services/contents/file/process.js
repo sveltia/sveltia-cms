@@ -41,7 +41,7 @@ const getSlug = ({ subPath, subPathTemplate }) => {
  * @param {Error[]} args.errors - List of parse errors.
  */
 const prepareEntry = async ({ file, entries, errors }) => {
-  /** @type {any} */
+  /** @type {Record<string, any> | undefined} */
   let rawContent;
 
   try {
@@ -178,12 +178,16 @@ const prepareEntry = async ({ file, entries, errors }) => {
       return;
     }
 
-    const slug = fileName || getSlug({ subPath, subPathTemplate });
-    const localizedEntry = { slug, path, sha, content: flatten(rawContent) };
     // Support a canonical slug to link localized files
-    const canonicalSlug = rawContent[canonicalSlugKey];
+    const canonicalSlug =
+      canonicalSlugKey && typeof rawContent[canonicalSlugKey] === 'string'
+        ? rawContent[canonicalSlugKey]
+        : undefined;
+
+    const slug = canonicalSlug || fileName || getSlug({ subPath, subPathTemplate });
+    const localizedEntry = { slug, path, sha, content: flatten(rawContent) };
     // Use a temporary ID to locate all the localized files for the entry
-    const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
+    const tempId = `${collectionName}/${slug}`;
     // Check if the entry has already been added for another locale
     const existingEntry = entries.find((e) => e.id === tempId);
 
