@@ -177,6 +177,65 @@ describe('Test getOptions()', () => {
     ]);
   });
 
+  test('nested fields, single entry', () => {
+    const config = {
+      name: 'author',
+      label: 'Author',
+      widget: 'relation',
+      collection: 'authors',
+      value_field: 'name.first',
+      display_fields: ['twitterHandle', 'followerCount'],
+      search_fields: ['name.first', 'twitterHandle'],
+    };
+
+    const entries = memberEntries.slice(0, 1);
+
+    expect(getOptions(locale, config, entries)).toEqual([
+      {
+        label: 'MelvinLucas 123',
+        value: 'Melvin',
+        searchValue: 'Melvin MelvinLucas',
+      },
+    ]);
+
+    expect(
+      getOptions(
+        locale,
+        {
+          ...config,
+          value_field: '{{slug}}',
+          display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
+        },
+        entries,
+      ),
+    ).toEqual([
+      {
+        label: 'Melvin Lucas (@MelvinLucas)',
+        value: 'melvin-lucas',
+        searchValue: 'Melvin MelvinLucas',
+      },
+    ]);
+
+    // In-field slug
+    expect(
+      getOptions(
+        locale,
+        {
+          ...config,
+          value_field: '{{fields.slug}}',
+          display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
+        },
+        entries,
+      ),
+    ).toEqual([
+      {
+        label: 'Melvin Lucas (@MelvinLucas)',
+        value: 'member-melvin-lucas',
+        searchValue: 'Melvin MelvinLucas',
+      },
+    ]);
+  });
+
   // Referencing a file collection list field example
   // https://decapcms.org/docs/widgets/#relation
   test('nested fields with wildcard matching, file collection', () => {
@@ -236,6 +295,55 @@ describe('Test getOptions()', () => {
       { value: 'YYZ', label: 'Toronto (YYZ)', searchValue: 'Toronto YYZ' },
       { value: 'YVR', label: 'Vancouver (YVR)', searchValue: 'Vancouver YVR' },
     ]);
+  });
+
+  test('nested fields with wildcard matching, file collection, single item', () => {
+    const config = {
+      label: 'City',
+      name: 'city',
+      widget: 'relation',
+      collection: 'relation_files',
+      file: 'cities',
+      search_fields: ['cities.*.name'],
+      display_fields: ['cities.*.name'],
+      value_field: 'cities.*.id',
+    };
+
+    /** @type {Entry[]} */
+    const entries = [
+      {
+        id: '',
+        sha: 'e5498c0c3d4592aaa18905e58bdf1cafa5b659c6',
+        slug: 'cities',
+        subPath: 'cities',
+        locales: {
+          _default: {
+            ...localizedEntryProps,
+            content: flatten({
+              cities: [{ id: 'YYZ', name: 'Toronto' }],
+            }),
+            path: 'src/lib/data/pages/cities.json',
+            sha: 'e5498c0c3d4592aaa18905e58bdf1cafa5b659c6',
+          },
+        },
+      },
+    ];
+
+    expect(getOptions(locale, config, entries)).toEqual([
+      { value: 'YYZ', label: 'Toronto', searchValue: 'Toronto' },
+    ]);
+
+    expect(
+      getOptions(
+        locale,
+        {
+          ...config,
+          search_fields: ['cities.*.name', 'cities.*.id'],
+          display_fields: ['{{cities.*.name}} ({{cities.*.id}})'],
+        },
+        entries,
+      ),
+    ).toEqual([{ value: 'YYZ', label: 'Toronto (YYZ)', searchValue: 'Toronto YYZ' }]);
   });
 
   // https://github.com/sveltia/sveltia-cms/issues/13
@@ -348,6 +456,87 @@ describe('Test getOptions()', () => {
     ]);
   });
 
+  test('nested fields with wildcard matching, entry collection, single entry', () => {
+    const config = {
+      name: 'section',
+      label: 'Section',
+      widget: 'relation',
+      collection: 'pages',
+      value_field: 'sections.*.id',
+      display_fields: ['sections.*.name'],
+      search_fields: ['sections.*.name'],
+    };
+
+    /** @type {Entry[]} */
+    const entries = [
+      {
+        id: '',
+        sha: '',
+        slug: 'about',
+        subPath: 'about',
+        locales: {
+          _default: {
+            ...localizedEntryProps,
+            content: flatten({
+              route: '/about',
+              sections: [
+                { id: 'team', name: 'Team' },
+                { id: 'contact', name: 'Contact' },
+              ],
+            }),
+          },
+        },
+      },
+    ];
+
+    expect(getOptions(locale, config, entries)).toEqual([
+      { label: 'Contact', value: 'contact', searchValue: 'Contact' },
+      { label: 'Team', value: 'team', searchValue: 'Team' },
+    ]);
+
+    expect(
+      getOptions(locale, { ...config, display_fields: ['route', 'sections.*.name'] }, entries),
+    ).toEqual([
+      { label: '/about Contact', value: 'contact', searchValue: 'Contact' },
+      { label: '/about Team', value: 'team', searchValue: 'Team' },
+    ]);
+
+    expect(
+      getOptions(
+        locale,
+        { ...config, display_fields: ['{{route}}: {{sections.*.name}} ({{sections.*.id}})'] },
+        entries,
+      ),
+    ).toEqual([
+      { label: '/about: Contact (contact)', value: 'contact', searchValue: 'Contact' },
+      { label: '/about: Team (team)', value: 'team', searchValue: 'Team' },
+    ]);
+
+    // Value field variant
+    expect(
+      getOptions(
+        locale,
+        {
+          ...config,
+          display_fields: ['{{route}} {{sections.*.id}}'],
+          value_field: '{{route}}#{{sections.*.id}}',
+        },
+        entries,
+      ),
+    ).toEqual([
+      { label: '/about contact', value: '/about#contact', searchValue: 'Contact' },
+      { label: '/about team', value: '/about#team', searchValue: 'Team' },
+    ]);
+
+    // Invalid
+    expect(
+      getOptions(locale, { ...config, display_fields: ['sections.*.label'] }, entries),
+    ).toEqual([
+      { label: '{{sections.*.label}}', value: 'team', searchValue: 'Team' },
+      { label: '{{sections.*.label}}', value: 'contact', searchValue: 'Contact' },
+    ]);
+  });
+
   // https://github.com/sveltia/sveltia-cms/issues/106
   test('default locale fallback', () => {
     const config = {
@@ -365,6 +554,24 @@ describe('Test getOptions()', () => {
     expect(getOptions('en', config, entries)).toEqual([
       { label: 'ElsieMcbride 234', value: 'Elsie', searchValue: 'Elsie ElsieMcbride' },
       { label: 'MaxineField 345', value: 'Maxine', searchValue: 'Maxine MaxineField' },
+      { label: 'MelvinLucas 123', value: 'Melvin', searchValue: 'Melvin MelvinLucas' },
+    ]);
+  });
+
+  test('default locale fallback, single entry', () => {
+    const config = {
+      name: 'author',
+      label: 'Author',
+      widget: 'relation',
+      collection: 'authors',
+      value_field: 'name.first',
+      display_fields: ['twitterHandle', 'followerCount'],
+      search_fields: ['name.first', 'twitterHandle'],
+    };
+
+    const entries = memberEntries.slice(0, 1);
+
+    expect(getOptions('en', config, entries)).toEqual([
       { label: 'MelvinLucas 123', value: 'Melvin', searchValue: 'Melvin MelvinLucas' },
     ]);
   });
@@ -483,5 +690,76 @@ describe('Test getOptions()', () => {
       { label: 'Persian', value: 'persian', searchValue: 'Persian cats' },
       { label: 'Poodle', value: 'poodle', searchValue: 'Poodle dogs' },
     ]);
+  });
+
+  test('entry filters, single entry', () => {
+    const config = {
+      name: 'posts',
+      label: 'Posts',
+      widget: 'relation',
+      collection: 'posts',
+      value_field: '{{slug}}',
+      display_fields: ['title'],
+      search_fields: ['title', 'category'],
+    };
+
+    /** @type {Entry[]} */
+    const entries = [
+      {
+        id: '',
+        sha: '',
+        slug: 'ragdoll',
+        subPath: 'ragdoll',
+        locales: {
+          en: {
+            ...localizedEntryProps,
+            content: { category: 'cats', draft: true, title: 'Ragdoll' },
+          },
+        },
+      },
+    ];
+
+    expect(getOptions('en', config, entries)).toEqual([
+      { label: 'Ragdoll', value: 'ragdoll', searchValue: 'Ragdoll cats' },
+    ]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [{ field: 'draft', values: [true] }],
+        },
+        entries,
+      ),
+    ).toEqual([{ label: 'Ragdoll', value: 'ragdoll', searchValue: 'Ragdoll cats' }]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [
+            { field: 'draft', values: [true] },
+            { field: 'category', values: ['cats'] },
+          ],
+        },
+        entries,
+      ),
+    ).toEqual([{ label: 'Ragdoll', value: 'ragdoll', searchValue: 'Ragdoll cats' }]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [
+            { field: 'draft', values: [false] },
+            { field: 'category', values: ['cats', 'dogs'] },
+          ],
+        },
+        entries,
+      ),
+    ).toEqual([]);
   });
 });

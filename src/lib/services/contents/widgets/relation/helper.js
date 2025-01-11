@@ -183,7 +183,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           value.forEach((valueMap, index) => {
             Object.entries(valueMap).forEach(([k, v]) => {
               labels.forEach((_label, labelIndex) => {
-                if (index % labelIndex === 0) {
+                if ((index === 0 && labelIndex === 0) || index % labelIndex === 0) {
                   labels[index] = labels[index].replaceAll(`{{${key}.${k}}}`, v);
                   values[index] = values[index].replaceAll(`{{${key}.${k}}}`, v);
                   searchValues[index] = searchValues[index].replaceAll(`{{${key}.${k}}}`, v);
