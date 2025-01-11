@@ -1,8 +1,10 @@
 # Contributing to Sveltia CMS
 
+Sveltia CMS is still in its early stages, but there are ways to get involved!
+
 ## Bug reports
 
-Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug) so we can make it better for everyone.
+Since Sveltia CMS is still in beta, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug) so we can make the product better for everyone.
 
 ## Code contributions
 

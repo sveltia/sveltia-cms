@@ -4,6 +4,8 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 The free, open source alternative to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
 
+Welcome to the only Netlify CMS successor you can bank on!
+
 ![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
 
 ![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2-20240507.webp)<br>
@@ -305,7 +307,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - When you click on a field in the Preview pane, the corresponding field in the Edit pane is highlighted[^41]. It will be automatically expanded if collapsed.
 - The Preview pane won’t cause a scrolling issue[^136].
 - Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
-- The preview of a specific field can be hidden with `preview: false`[^126].
+- Developers can hide the preview of a specific field using a new field option: `preview: false`[^126].
 - [See below](#better-widgets) for widget-specific enhancements, including support for variable types[^42] and YouTube videos.
 
 ### Better data output
@@ -397,7 +399,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
   - If a dropdown list has options with long wrapping labels, they won’t overlap with the next option[^83].
-  - When there are 5 or fewer options, the UI switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61]. This number can be changed with the `dropdown_threshold` option for the `relation` and `select` widgets.
+  - When there are 5 or fewer options, the UI automatically switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61]. This number can be changed with the `dropdown_threshold` option for the `relation` and `select` widgets.
 - String and Text
   - Supports the `minlength` and `maxlength` options, which allow developers to specify the minimum and maximum number of characters required for input without having to write a custom regular expression with the `pattern` option. A character counter is available when one of the options is given, and a user-friendly validation error is displayed if the condition is not met.
 
@@ -703,6 +705,8 @@ In Sveltia CMS, those collection media folders are displayed prominently for eas
 - Create a new entry: `Ctrl+E` (Windows/Linux) or `Command+E` (macOS)
 - Save an entry: `Ctrl+S` (Windows/Linux) or `Command+S` (macOS)
 - Cancel entry editing: `Escape`
+
+Standard keyboard shortcuts are also available in the Markdown editor, including `Ctrl+B`/`Command+B` for bold text, `Ctrl+I`/`Command+I` for italics, and `Tab` to indent a list item.
 
 ### Using DeepL to translate entry fields
 
@@ -1016,7 +1020,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### After the 1.0 release
 
-- Implementing the remaining Netlify/Decap CMS features: Editorial Workflow, Open Authoring and Nested Collections
+- Implementing the [remaining Netlify/Decap CMS features](#features-to-be-implemented-after-ga)
 - Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], mobile optimization[^18], config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles[^23], commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - Considering further [compatibility with Static CMS](#compatibility-with-static-cms)
