@@ -481,7 +481,7 @@ These limitations are expected to be resolved before the 1.0 release:
 | Localization | The application UI is only available in English and Japanese at this time. |
 | Media Libraries | [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) are not yet supported. |
 | Widgets | [Custom widgets](https://decapcms.org/docs/custom-widgets/) are not yet supported. See the table below for other limitations. |
-| Customizations | [Custom previews](https://decapcms.org/docs/customization/) and [event subscriptions](https://decapcms.org/docs/registering-events/) are not yet supported. |
+| Customization | [Custom previews](https://decapcms.org/docs/customization/) and [event subscriptions](https://decapcms.org/docs/registering-events/) are not yet supported. |
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
@@ -489,7 +489,7 @@ These limitations are expected to be resolved before the 1.0 release:
 | [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
 | [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | [Map](https://decapcms.org/docs/widgets/#map) | Coming soon. |
-| [Markdown](https://decapcms.org/docs/widgets/#markdown) | Custom components are not yet supported. There is no language selection and syntax highlighting yet in the built-in `code-block` component. |
+| [Markdown](https://decapcms.org/docs/widgets/#markdown) | Custom components are not yet supported. There is no language selection yet in the built-in `code-block` component. |
 
 ### Features to be implemented after GA
 
@@ -503,14 +503,20 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 
 We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. This README will be updated with more details as our development progresses.
 
-- Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
-- The KeyValue widget is implemented in Sveltia CMS with the same options.
-- The UUID widget is also implemented, but with different options.
-- The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
-- The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS soon. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
-- Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented soon. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
-- `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
-- The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `save_all_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
+- Configuration options
+  - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
+  - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented soon. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
+  - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
+  - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the `yaml` library options directly for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
+- I18n support
+  - The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `save_all_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
+- Widgets
+  - The KeyValue widget is implemented in Sveltia CMS with the same options.
+  - The UUID widget is also implemented, but with different options.
+  - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
+  - The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS soon. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
+- Customization
+  - `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
 
 ### Other notes
 
