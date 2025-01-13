@@ -173,7 +173,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 ### Better accessibility
 
 - Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys[^17][^67].
-- Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver. An announcement is read out when you open another page.
+- Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver. An announcement is read out when you navigate to another page.
 - The rich text editor is built with [Lexical](https://lexical.dev/), which is said to follow accessibility best practices. The [Dragon NaturallySpeaking support](https://lexical.dev/docs/packages/lexical-dragon) is enabled.
 - Ensures sufficient contrast between the foreground text and background colours.
 - Enabled and disabled buttons can be clearly distinguished[^105].
@@ -1047,6 +1047,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### As seen on
 
 - [LogRocket Blog – 9 best Git-based CMS platforms for your next project](https://blog.logrocket.com/9-best-git-based-cms-platforms/)
+- [Gittech – Awesome 25+ Github Repositories for Your Next Project](https://dev.to/gittech/awesome-25-github-repositories-for-your-next-project-33d7)
 - [Jamstack – Headless CMS](https://jamstack.org/headless-cms/)
 - [Hugo – Front-end interfaces](https://gohugo.io/tools/front-ends/)
 - [Made with Svelte](https://madewithsvelte.com/sveltia-cms)
