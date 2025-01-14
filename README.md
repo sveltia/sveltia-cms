@@ -503,6 +503,7 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 
 - Configuration options
   - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
+  - The `default` option for sortable fields, view filters and view groups will be implemented in Sveltia CMS soon. ([#304](https://github.com/sveltia/sveltia-cms/issues/304))
   - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented soon. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the `yaml` library options directly for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
