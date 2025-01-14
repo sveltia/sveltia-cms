@@ -4,14 +4,14 @@ import { generateUUID } from '@sveltia/utils/crypto';
  * Get the default value for a Hidden field.
  * @param {HiddenField} fieldConfig - Field configuration.
  * @param {LocaleCode} locale - Locale code.
- * @returns {string} Default value.
+ * @returns {any} Default value.
  * @todo Write tests for this.
  */
 export const getDefaultValue = (fieldConfig, locale) => {
   const { default: defaultValue } = fieldConfig;
 
   if (typeof defaultValue !== 'string') {
-    return '';
+    return defaultValue;
   }
 
   return defaultValue.replaceAll(/{{(.+?)}}/g, (_match, tag) => {

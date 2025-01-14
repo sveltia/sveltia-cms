@@ -632,7 +632,7 @@
 /**
  * Hidden field properties.
  * @typedef {object} HiddenFieldProps
- * @property {string} [default] - Default value.
+ * @property {any} [default] - Default value.
  * @see https://decapcms.org/docs/widgets/#hidden
  */
 
