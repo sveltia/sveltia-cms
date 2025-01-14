@@ -4,8 +4,6 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 The free, open source alternative to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
 
-Welcome to the only Netlify CMS successor you can bank on!
-
 ![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
 
 ![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2-20240507.webp)<br>
@@ -128,12 +126,12 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 ## Differentiators
 
-We are working hard to create a **tremendously better alternative to Netlify CMS and Decap CMS** by improving everything. Here’s what makes Sveltia CMS different. Look how damn serious we are!
+We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of small and large improvements we have made. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Better UX
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
-- The maintainer tries to be as responsive as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 6 hours.
+- The maintainer tries to be as responsive as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - We develop [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned shortly after the 1.0 release.
@@ -147,7 +145,7 @@ We are working hard to create a **tremendously better alternative to Netlify CMS
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
 - Small footprint: The bundle size is less than 500 KB when minified and brotlied, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet, but rather implemented many new features. That’s the power of Svelte + Vite.
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is in progress.
-- Sveltia CMS is free of technical debt and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- Sveltia CMS is free of technical debt (except for Moment.js, which will soon be replaced by Day.js) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern File System Access API to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
@@ -1047,7 +1045,6 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### As seen on
 
 - [LogRocket Blog – 9 best Git-based CMS platforms for your next project](https://blog.logrocket.com/9-best-git-based-cms-platforms/)
-- [Gittech – Awesome 25+ Github Repositories for Your Next Project](https://dev.to/gittech/awesome-25-github-repositories-for-your-next-project-33d7)
 - [Jamstack – Headless CMS](https://jamstack.org/headless-cms/)
 - [Hugo – Front-end interfaces](https://gohugo.io/tools/front-ends/)
 - [Made with Svelte](https://madewithsvelte.com/sveltia-cms)
