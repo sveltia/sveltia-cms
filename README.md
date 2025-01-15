@@ -113,9 +113,9 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 155+ of them, or 305+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 160+ of them, or 305+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 300 or all relevant, fixable and worthwhile issues in the future; 500 including duplicates
-  - Note: Issues include feature requests, bug reports, [stale issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
+  - Note: Issues include feature requests, bug reports, [“closed as stale” issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Implementing our own enhancement ideas for every part of the product
@@ -143,7 +143,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 ### Better performance
 
 - Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
-- Small footprint: The bundle size is less than 500 KB when minified and brotlied, which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.8 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet, but rather implemented many new features. That’s the power of Svelte + Vite.
+- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet, but rather implemented many new features. That’s the power of Svelte + Vite.
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is in progress.
 - Sveltia CMS is free of technical debt (except for Moment.js, which will soon be replaced by Day.js) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
@@ -239,6 +239,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Raises a validation error instead of failing silently if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
   - Fields in non-default locales are validated as expected[^13].
   - No internal error is thrown when changing the locale[^103].
+  - Duplicating an entry duplicates all locale content, not just the default locale[^170].
 
 ### Better collections
 
@@ -350,7 +351,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can preview variable types without having to register a preview template[^42].
   - It’s possible to omit `fields` in a variable type object[^163]. In that case only the `typeKey` (default: `type`) is saved in the output.
 - Markdown
-  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
+  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], text input difficulties with IME[^54], and an extra line break when pasting[^169].
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup[^160]. In our editor, bold is 2 asterisks and italic is an underscore.
   - The built-in `image` component can be inserted with a single click.
@@ -503,7 +504,7 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 
 - Configuration options
   - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
-  - The `default` option for sortable fields, view filters and view groups will be implemented in Sveltia CMS soon. ([#304](https://github.com/sveltia/sveltia-cms/issues/304))
+  - The `default` option for sortable fields will be implemented in Sveltia CMS soon. ([#304](https://github.com/sveltia/sveltia-cms/issues/304))
   - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented soon. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the `yaml` library options directly for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
@@ -1016,6 +1017,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### Before the 1.0 release
 
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
+- Tackling some more Netlify/Decap CMS issues
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
 - Accessibility audit
 - Developer documentation (implementation guide)
@@ -1027,7 +1029,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### After the 1.0 release
 
 - Implementing the [remaining Netlify/Decap CMS features](#features-to-be-implemented-after-ga)
-- Tackling more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], mobile optimization[^18], config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+- Tackling even more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], mobile optimization[^18], config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles[^23], commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - Considering further [compatibility with Static CMS](#compatibility-with-static-cms)
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools
@@ -1389,3 +1391,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^167]: Netlify/Decap CMS [#263](https://github.com/decaporg/decap-cms/issues/263)
 
 [^168]: Netlify/Decap CMS [#1948](https://github.com/decaporg/decap-cms/issues/1948)
+
+[^169]: Netlify/Decap CMS [#7364](https://github.com/decaporg/decap-cms/issues/7364)
+
+[^170]: Netlify/Decap CMS [#7371](https://github.com/decaporg/decap-cms/issues/7371)
