@@ -100,7 +100,7 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 ### Our goals
 
 - Making Sveltia CMS a viable, definitive successor to Netlify CMS
-- Empowering small businesses and individuals who need a simple, free, yet powerful CMS solution
+- Empowering small businesses and individuals who need a simple, free, yet powerful, high-quality CMS solution
 - Emerging as the leading open source offering in the Git-based CMS market
 - Extending its capabilities as digital asset management (DAM) software
 - Showcasing the power of Svelte and UX engineering
@@ -351,7 +351,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can preview variable types without having to register a preview template[^42].
   - It’s possible to omit `fields` in a variable type object[^163]. In that case only the `typeKey` (default: `type`) is saved in the output.
 - Markdown
-  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], backslash injections[^53], dropdown visibility[^70], text input difficulties with IME[^54], and an extra line break when pasting[^169].
+  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], an extra line break when pasting[^169], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup[^160]. In our editor, bold is 2 asterisks and italic is an underscore.
   - The built-in `image` component can be inserted with a single click.
