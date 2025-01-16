@@ -82,7 +82,9 @@
       size="small"
       iconic
       aria-label={$_('remove')}
-      onclick={() => {
+      onclick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
         onChange(new CustomEvent('remove'));
       }}
     >
@@ -124,8 +126,10 @@
 
 <style lang="scss">
   .wrapper {
+    display: inline-block; // Cancel underline if the component is within a link
     border: 1px solid var(--sui-secondary-border-color);
     border-radius: 4px;
+    color: var(--sui-secondary-foreground-color); // Reset color within a link
     background-color: var(--sui-primary-background-color);
     white-space: normal;
     -webkit-user-select: none;
