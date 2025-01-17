@@ -377,6 +377,18 @@
  */
 
 /**
+ * A collection’s advanced sortable fields definition, which is compatible with Static CMS.
+ * @typedef {object} CustomSortableFields
+ * @property {string[]} fields - A list of sortable field names.
+ * @property {object} [default] - Default sort settings.
+ * @property {string} default.field - A field name to be sorted by default.
+ * @property {'ascending' | 'descending' | 'Ascending' | 'Descending' | 'None'} [default.direction]
+ * - Default sort direction. Title case values are supported for Static CMS compatibility. However,
+ * `None` is not supported, considered as `ascending`.
+ * @see https://staticjscms.netlify.app/docs/collection-overview#sortable-fields
+ */
+
+/**
  * View filter.
  * @typedef {object} ViewFilter
  * @property {string} label - Label.
@@ -421,7 +433,7 @@
  * @property {number} [slug_length] - The maximum number of characters allowed for an entry slug. An
  * option suggested in https://github.com/decaporg/decap-cms/issues/6987.
  * @property {string} [summary] - Item summary template for an entry collection.
- * @property {string[]} [sortable_fields] - Custom sorting fields.
+ * @property {string[] | CustomSortableFields} [sortable_fields] - Custom sortable fields.
  * @property {ViewFilter[]} [view_filters] - Predefined view filters.
  * @property {ViewFilter[]} [view_groups] - Predefined view groups.
  * @property {RawI18nConfig | boolean} [i18n] - I18n configuration.

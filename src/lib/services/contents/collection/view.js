@@ -1,3 +1,5 @@
+import { unique } from '@sveltia/utils/array';
+import { isObject } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
@@ -218,8 +220,68 @@ const groupEntries = (
 const entryListSettings = writable();
 
 /**
+ * Get sortable fields for the given collection.
+ * @param {EntryCollection} collection - Collection.
+ * @returns {{ fields: string[], default: SortingConditions }} A list of sortable fields and default
+ * sort conditions.
+ */
+export const getSortableFields = (collection) => {
+  const {
+    name: collectionName,
+    identifier_field: customIdField,
+    sortable_fields: customSortableFields,
+  } = collection;
+
+  /** @type {string[]} */
+  let fields = [];
+  /** @type {string | undefined} */
+  let defaultKey;
+  /** @type {SortOrder | undefined} */
+  let defaultOrder;
+
+  if (customSortableFields) {
+    if (Array.isArray(customSortableFields)) {
+      fields = customSortableFields;
+    }
+
+    if (isObject(customSortableFields)) {
+      const def = /** @type {CustomSortableFields} */ (customSortableFields);
+
+      if (Array.isArray(def.fields)) {
+        fields = def.fields;
+      }
+
+      if (def.default && isObject(def.default)) {
+        defaultKey = def.default.field;
+        defaultOrder = ['descending', 'Descending'].includes(def.default.direction ?? '')
+          ? 'descending'
+          : 'ascending';
+      }
+    }
+  } else {
+    fields = [...defaultSortableFields];
+
+    if (customIdField) {
+      fields.unshift(customIdField);
+      defaultKey = customIdField;
+    }
+  }
+
+  // Make sure the fields exist
+  fields = unique(fields).filter((keyPath) => !!getFieldConfig({ collectionName, keyPath }));
+
+  return {
+    fields,
+    default: {
+      key: defaultKey ?? fields[0],
+      order: defaultOrder ?? 'ascending',
+    },
+  };
+};
+
+/**
  * Get a field’s label by key.
- * @param {Collection} collection - Collection.
+ * @param {EntryCollection} collection - Collection.
  * @param {FieldKeyPath | string} key - Field key path or one of other entry metadata property keys:
  * `slug`, `commit_author` and `commit_date`.
  * @returns {string} Label. For a nested field, it would be something like `Name – English`.
@@ -254,38 +316,31 @@ const getSortFieldLabel = (collection, key) => {
  */
 export const sortFields = derived(
   [selectedCollection, allEntries, appLocale],
-  ([_collection, _allEntries], set) => {
-    const {
-      name: collectionName = '',
-      files,
-      sortable_fields: customSortableFields,
-    } = _collection ?? {};
-
+  ([collection, _allEntries], set) => {
     // Disable sorting for file collections
-    if (files) {
+    if (!collection?.folder) {
       set([]);
 
       return;
     }
 
-    const _sortFields = (
-      Array.isArray(customSortableFields) ? customSortableFields : defaultSortableFields
-    ).filter((keyPath) => !!getFieldConfig({ collectionName, keyPath }));
+    const _collection = /** @type {EntryCollection} */ (collection);
+    const { fields, default: defaultSort } = getSortableFields(_collection);
+    const view = get(entryListSettings)?.[_collection.name] ?? { type: 'list', sort: defaultSort };
 
-    if (_allEntries.every((entry) => !!entry.commitAuthor) && !_sortFields.includes('author')) {
-      _sortFields.push('commit_author');
+    if (_allEntries.every((entry) => !!entry.commitAuthor) && !fields.includes('author')) {
+      fields.push('commit_author');
     }
 
-    if (_allEntries.every((entry) => !!entry.commitDate) && !_sortFields.includes('date')) {
-      _sortFields.push('commit_date');
+    if (_allEntries.every((entry) => !!entry.commitDate) && !fields.includes('date')) {
+      fields.push('commit_date');
     }
 
-    set(
-      _sortFields.map((key) => ({
-        key,
-        label: _collection ? getSortFieldLabel(_collection, key) : '',
-      })),
-    );
+    set(fields.map((key) => ({ key, label: getSortFieldLabel(_collection, key) })));
+
+    if (!equal(view, get(currentView))) {
+      currentView.set(view);
+    }
   },
 );
 /**
@@ -357,52 +412,6 @@ const initSettings = async ({ repository }) => {
     })();
   });
 
-  selectedCollection.subscribe((collection) => {
-    if (!collection) {
-      return;
-    }
-
-    if (get(prefs).devModeEnabled) {
-      // eslint-disable-next-line no-console
-      console.info('selectedCollection', collection);
-    }
-
-    const {
-      name: collectionName,
-      identifier_field: customIdField,
-      fields = [],
-      sortable_fields: customSortableFields = [],
-    } = collection;
-
-    // This only works for entry collections
-    if (!fields.length) {
-      return;
-    }
-
-    /**
-     * @type {EntryListView}
-     */
-    const defaultView = {
-      type: 'list',
-      sort: {
-        // Every entry collection should have at least the `title` (or `name`) field, or the
-        // `identifier_field` property.
-        // @see https://decapcms.org/docs/configuration-options/#identifier_field
-        key:
-          fields.find((f) => customSortableFields.includes(f.name))?.name ??
-          customIdField ??
-          fields.find((f) => defaultSortableFields.includes(f.name))?.name,
-        order: 'ascending',
-      },
-    };
-
-    const view = get(entryListSettings)?.[collectionName] ?? defaultView;
-
-    if (!equal(view, get(currentView))) {
-      currentView.set(view);
-    }
-  });
-
   currentView.subscribe((view) => {
     const { name } = get(selectedCollection) ?? {};
     const savedView = get(entryListSettings)?.[name ?? ''] ?? {};
@@ -425,5 +434,12 @@ listedEntries.subscribe((entries) => {
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('listedEntries', entries);
+  }
+});
+
+selectedCollection.subscribe((collection) => {
+  if (collection && get(prefs).devModeEnabled) {
+    // eslint-disable-next-line no-console
+    console.info('selectedCollection', collection);
   }
 });
