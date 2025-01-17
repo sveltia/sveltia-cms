@@ -76,7 +76,7 @@
       max-height: 100%;
     }
 
-    :global(:is(a)) {
+    :global(:is(a:has(img))) {
       display: inline-block;
 
       :global(:is(img)) {

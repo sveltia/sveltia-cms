@@ -82,9 +82,7 @@
       size="small"
       iconic
       aria-label={$_('remove')}
-      onclick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
+      onclick={() => {
         onChange(new CustomEvent('remove'));
       }}
     >
@@ -103,7 +101,8 @@
           data-widget={widget}
           data-key-path="{keyPath}:{name}"
           onkeydowncapture={(event) => {
-            event.stopPropagation(); // Allow Ctrl+A to select text
+            // Allow to select all in any `TextInput` within the component below using Ctrl+A
+            event.stopPropagation();
           }}
         >
           <header role="none">

@@ -61,7 +61,7 @@ export const getComponentDef = (name) => {
           widget: 'string',
         },
       ],
-      pattern: /\[?!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)(\]\((?<link>.*?)\))?/,
+      pattern: /\[?!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)(?:\]\((?<link>.*?)\))?/,
       // eslint-disable-next-line jsdoc/require-jsdoc
       toBlock: (props) => {
         const { src, alt, title, link } = escapeAllChars(props);

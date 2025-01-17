@@ -1169,8 +1169,8 @@
  * the component.
  * @property {RegExp} pattern - Regular expression to search a block from Markdown document.
  * @property {(match: RegExpMatchArray) => { [key: string]: any }} [fromBlock] - Function to convert
- * the matching result to field properties. This can be omitted when the `pattern` regex contains
- * named capturing group(s).
+ * the matching result to field properties. This can be omitted if the `pattern` regex contains
+ * named capturing group(s) that will be passed directly to the internal `createNode` method.
  * @property {(props: { [key: string]: any }) => string} toBlock - Function to convert field
  * properties to Markdown content.
  * @property {(props: { [key: string]: any }) => string} toPreview - Function to convert field
