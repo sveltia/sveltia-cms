@@ -1,6 +1,8 @@
-import { describe, expect, test } from 'vitest';
-import { siteConfig } from '$lib/services/config';
+import { writable } from 'svelte/store';
+import { describe, expect, test, vi } from 'vitest';
 import { defaultI18nConfig, getCanonicalLocale, getI18nConfig } from '$lib/services/contents/i18n';
+
+vi.mock('$lib/services/config');
 
 describe('Test getI18nConfig()', () => {
   const siteConfigBase = {
@@ -73,8 +75,9 @@ describe('Test getI18nConfig()', () => {
 
   const canonicalSlug = { key: 'translationKey', value: '{{slug}}' };
 
-  test('no i18n defined at top-level or collection-level', () => {
-    siteConfig.set({
+  test('no i18n defined at top-level or collection-level', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
       ...siteConfigBase,
       collections: [collectionWithoutI18n],
     });
@@ -88,8 +91,9 @@ describe('Test getI18nConfig()', () => {
     );
   });
 
-  test('no i18n defined at collection-level', () => {
-    siteConfig.set({
+  test('no i18n defined at collection-level', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
       ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
@@ -108,8 +112,9 @@ describe('Test getI18nConfig()', () => {
     );
   });
 
-  test('config with locales, no structure, no default_locale', () => {
-    siteConfig.set({
+  test('config with locales, no structure, no default_locale', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
       ...siteConfigBase,
       i18n: {
         locales: ['en', 'fr'],
@@ -145,8 +150,9 @@ describe('Test getI18nConfig()', () => {
     });
   });
 
-  test('config with locales, structure and default_locale', () => {
-    siteConfig.set({
+  test('config with locales, structure and default_locale', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
       ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
@@ -190,8 +196,9 @@ describe('Test getI18nConfig()', () => {
     );
   });
 
-  test('partial config override at collection-level', () => {
-    siteConfig.set({
+  test('partial config override at collection-level', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
       ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
@@ -211,8 +218,9 @@ describe('Test getI18nConfig()', () => {
     });
   });
 
-  test('complete config override at collection-level', () => {
-    siteConfig.set({
+  test('complete config override at collection-level', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
       ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
@@ -232,8 +240,9 @@ describe('Test getI18nConfig()', () => {
     });
   });
 
-  test('partial config override at file-level', () => {
-    siteConfig.set({
+  test('partial config override at file-level', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
       ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
@@ -279,8 +288,9 @@ describe('Test getI18nConfig()', () => {
     });
   });
 
-  test('complete config override at file-level', () => {
-    siteConfig.set({
+  test('complete config override at file-level', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
       ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',

@@ -1,9 +1,11 @@
 import { flatten } from 'flat';
-import { describe, expect, test } from 'vitest';
-import { siteConfig } from '$lib/services/config';
+import { writable } from 'svelte/store';
+import { describe, expect, test, vi } from 'vitest';
 import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
-describe('Test getOptions()', () => {
+vi.mock('$lib/services/config');
+
+describe('Test getOptions()', async () => {
   const locale = '_default';
   /** @type {LocalizedEntry} */
   const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
@@ -72,7 +74,8 @@ describe('Test getOptions()', () => {
     },
   ];
 
-  siteConfig.set({
+  // @ts-ignore
+  (await import('$lib/services/config')).siteConfig = writable({
     backend: { name: 'github' },
     media_folder: 'static/assets/uploads',
     public_folder: '/assets/uploads',

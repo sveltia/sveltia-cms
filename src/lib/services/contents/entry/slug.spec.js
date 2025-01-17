@@ -1,10 +1,12 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { describe, expect, test } from 'vitest';
-import { siteConfig } from '$lib/services/config';
-import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
+import { writable } from 'svelte/store';
+import { describe, expect, test, vi } from 'vitest';
 import { defaultI18nConfig } from '$lib/services/contents/i18n';
+import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
 
-describe('Test fillSlugTemplate()', () => {
+vi.mock('$lib/services/config');
+
+describe('Test fillSlugTemplate()', async () => {
   /** @type {Collection} */
   const collection = {
     name: 'posts',
@@ -18,7 +20,8 @@ describe('Test fillSlugTemplate()', () => {
     slug_length: 50,
   };
 
-  siteConfig.set({
+  // @ts-ignore
+  (await import('$lib/services/config')).siteConfig = writable({
     backend: { name: 'github' },
     media_folder: 'static/images/uploads',
     collections: [collection],

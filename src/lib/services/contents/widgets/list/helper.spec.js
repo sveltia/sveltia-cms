@@ -2,7 +2,9 @@ import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 import { formatSummary } from '$lib/services/contents/widgets/list/helper';
 
-describe('Test formatSummary() — multiple fields', () => {
+vi.mock('$lib/services/config');
+
+describe('Test formatSummary() — multiple fields', async () => {
   const valueMap = {
     'images.0.src': 'hello.jpg',
     'images.0.alt': 'hello',
@@ -18,31 +20,30 @@ describe('Test formatSummary() — multiple fields', () => {
     index: 0,
   };
 
-  vi.mock('$lib/services/config', () => ({
-    siteConfig: writable({
-      backend: { name: 'github' },
-      media_folder: 'static/uploads',
-      collections: [
-        {
-          name: 'posts',
-          folder: 'content/posts',
-          fields: [
-            {
-              name: 'images',
-              widget: 'list',
-              fields: [
-                { name: 'title', widget: 'string' },
-                { name: 'src', widget: 'image' },
-                { name: 'alt', widget: 'string' },
-                { name: 'featured', widget: 'boolean' },
-                { name: 'date', widget: 'date', picker_utc: true, time_format: false },
-              ],
-            },
-          ],
-        },
-      ],
-    }),
-  }));
+  // @ts-ignore
+  (await import('$lib/services/config')).siteConfig = writable({
+    backend: { name: 'github' },
+    media_folder: 'static/uploads',
+    collections: [
+      {
+        name: 'posts',
+        folder: 'content/posts',
+        fields: [
+          {
+            name: 'images',
+            widget: 'list',
+            fields: [
+              { name: 'title', widget: 'string' },
+              { name: 'src', widget: 'image' },
+              { name: 'alt', widget: 'string' },
+              { name: 'featured', widget: 'boolean' },
+              { name: 'date', widget: 'date', picker_utc: true, time_format: false },
+            ],
+          },
+        ],
+      },
+    ],
+  });
 
   test('without template', () => {
     expect(
@@ -122,7 +123,7 @@ describe('Test formatSummary() — multiple fields', () => {
   });
 });
 
-describe('Test formatSummary() — single field', () => {
+describe('Test formatSummary() — single field', async () => {
   const baseArgs = {
     collectionName: 'posts',
     keyPath: 'images',
@@ -131,25 +132,24 @@ describe('Test formatSummary() — single field', () => {
     index: 0,
   };
 
-  vi.mock('$lib/services/config', () => ({
-    siteConfig: writable({
-      backend: { name: 'github' },
-      media_folder: 'static/uploads',
-      collections: [
-        {
-          name: 'posts',
-          folder: 'content/posts',
-          fields: [
-            {
-              name: 'images',
-              widget: 'list',
-              field: { name: 'src', widget: 'image' },
-            },
-          ],
-        },
-      ],
-    }),
-  }));
+  // @ts-ignore
+  (await import('$lib/services/config')).siteConfig = writable({
+    backend: { name: 'github' },
+    media_folder: 'static/uploads',
+    collections: [
+      {
+        name: 'posts',
+        folder: 'content/posts',
+        fields: [
+          {
+            name: 'images',
+            widget: 'list',
+            field: { name: 'src', widget: 'image' },
+          },
+        ],
+      },
+    ],
+  });
 
   test('without template', () => {
     expect(
