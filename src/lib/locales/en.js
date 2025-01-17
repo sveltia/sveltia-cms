@@ -483,6 +483,7 @@ export const strings = {
     src: 'Source',
     alt: 'Alt Text',
     title: 'Title',
+    link: 'Link',
   },
   key_value: {
     key: 'Key',

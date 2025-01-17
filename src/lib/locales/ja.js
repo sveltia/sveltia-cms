@@ -483,6 +483,7 @@ export const strings = {
     src: 'ソース',
     alt: '代替テキスト',
     title: 'タイトル',
+    link: 'リンク',
   },
   key_value: {
     key: 'キー',

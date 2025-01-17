@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
 import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
-import { flushSync, mount } from 'svelte';
+import { flushSync, mount, tick } from 'svelte';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';
@@ -55,22 +55,32 @@ export const getComponentDef = (name) => {
           label: get(_)('editor_components.title'),
           widget: 'string',
         },
+        {
+          name: 'link',
+          label: get(_)('editor_components.link'),
+          widget: 'string',
+        },
       ],
-      pattern: /!\[(.*?)\]\((.*?)(?: "(.*?)")?\)/,
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      fromBlock: ([, alt, src, title]) => ({ src, alt, title }),
+      pattern: /\[?!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)(\]\((?<link>.*?)\))?/,
       // eslint-disable-next-line jsdoc/require-jsdoc
       toBlock: (props) => {
-        const { src, alt, title } = escapeAllChars(props);
+        const { src, alt, title, link } = escapeAllChars(props);
 
-        return src ? `![${alt}](${src}${title ? ` "${title}"` : ''})` : '';
+        if (!src) {
+          return '';
+        }
+
+        const img = `![${alt}](${src}${title ? ` "${title}"` : ''})`;
+
+        return link ? `[${img}](${link})` : img;
       },
       // eslint-disable-next-line jsdoc/require-jsdoc
       toPreview: (props) => {
-        const { src, alt, title } = escapeAllChars(props);
-
+        const { src, alt, title, link } = escapeAllChars(props);
         // Return `<img>` even if `src` is empty to make sure the `tagName` below works
-        return `<img src="${src}" alt="${alt}" title="${title}">`;
+        const img = `<img src="${src}" alt="${alt}" title="${title}">`;
+
+        return link ? `<a href="${link}">${img}</a>` : img;
       },
     },
   });
@@ -122,7 +132,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
      * @returns {boolean} Result.
      */
     isInline() {
-      return false;
+      return true;
     }
 
     /**
@@ -170,7 +180,9 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
        * Custom `Change` event handler.
        * @param {CustomEvent} event - `Change` event.
        */
-      const onChange = ({ type, detail }) => {
+      const onChange = async ({ type, detail }) => {
+        await tick();
+
         editor ??= getNearestEditorFromDOMNode(wrapper);
 
         editor?.update(() => {
@@ -220,9 +232,9 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
      * @returns {import('lexical').DOMConversionMap} Conversion map.
      */
     static importDOM() {
-      return {
+      const conversionMap = {
         /**
-         * Conversion map.
+         * Conversion map item.
          * @returns {import('lexical').DOMConversion} Conversion.
          */
         [tagName]: () => ({
@@ -242,9 +254,44 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
               ),
             ),
           }),
-          priority: 0,
+          priority: 3,
         }),
       };
+
+      if (id === 'image') {
+        // Add extra conversion for the built-in image component to support linked images
+        Object.assign(conversionMap, {
+          /**
+           * Conversion map item.
+           * @param {Node} node - Target node.
+           * @returns {import('lexical').DOMConversion | null} Conversion.
+           */
+          a: (node) => {
+            if (node.firstChild?.nodeName.toLowerCase() === 'img') {
+              const { href: link } = /** @type {HTMLAnchorElement} */ (node);
+              const { src, alt, title } = /** @type {HTMLImageElement} */ (node.firstChild);
+
+              return {
+                /**
+                 * Conversion.
+                 * @returns {import('lexical').DOMConversionOutput} Output.
+                 */
+                conversion: () => ({
+                  // eslint-disable-next-line no-use-before-define
+                  node: createNode({ src, alt, title, link }),
+                  // eslint-disable-next-line jsdoc/require-jsdoc
+                  after: () => [],
+                }),
+                priority: 4,
+              };
+            }
+
+            return null;
+          },
+        });
+      }
+
+      return conversionMap;
     }
 
     /**
@@ -281,7 +328,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
   /**
    * Implement a Markdown transformer for {@link CustomNode}.
-   * @type {import('@lexical/markdown').ElementTransformer}
+   * @type {import('@lexical/markdown').TextMatchTransformer}
    * @see https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/plugins/MarkdownTransformers/index.ts#L75-L97
    */
   const transformer = {
@@ -298,17 +345,20 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
       return null;
     },
+    importRegExp: pattern,
     regExp: pattern,
     /**
      * Replace the current text node with a new {@link CustomNode}.
-     * @param {import("lexical").ElementNode} parentNode - Parent node.
-     * @param {import('lexical').LexicalNode[]} _children - Child nodes.
+     * @param {import("lexical").TextNode} textNode - Parent node.
      * @param {string[]} match - Matching result.
      */
-    replace: (parentNode, _children, match) => {
-      parentNode.replace(createNode(fromBlock(match)));
+    replace: (textNode, match) => {
+      const matchArray = /** @type {RegExpMatchArray} */ (match);
+      const props = fromBlock?.(matchArray) ?? matchArray.groups ?? {};
+
+      textNode.replace(createNode(props));
     },
-    type: 'element',
+    type: 'text-match',
   };
 
   return { node: CustomNode, createNode, transformer };

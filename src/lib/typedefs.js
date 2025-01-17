@@ -1168,8 +1168,9 @@
  * @property {{ name: string, label: string, widget: string }[]} fields - Fields to be displayed on
  * the component.
  * @property {RegExp} pattern - Regular expression to search a block from Markdown document.
- * @property {(match: string[]) => { [key: string]: any }} fromBlock - Function to convert the
- * matching result to field properties.
+ * @property {(match: RegExpMatchArray) => { [key: string]: any }} [fromBlock] - Function to convert
+ * the matching result to field properties. This can be omitted when the `pattern` regex contains
+ * named capturing group(s).
  * @property {(props: { [key: string]: any }) => string} toBlock - Function to convert field
  * properties to Markdown content.
  * @property {(props: { [key: string]: any }) => string} toPreview - Function to convert field

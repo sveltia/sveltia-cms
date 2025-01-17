@@ -102,6 +102,9 @@
           aria-label={$_('x_field', { values: { field: fieldLabel } })}
           data-widget={widget}
           data-key-path="{keyPath}:{name}"
+          onkeydowncapture={(event) => {
+            event.stopPropagation(); // Allow Ctrl+A to select text
+          }}
         >
           <header role="none">
             <h4 role="none">{fieldLabel}</h4>
@@ -129,6 +132,7 @@
     display: inline-block; // Cancel underline if the component is within a link
     border: 1px solid var(--sui-secondary-border-color);
     border-radius: 4px;
+    width: 100%;
     color: var(--sui-secondary-foreground-color); // Reset color within a link
     background-color: var(--sui-primary-background-color);
     white-space: normal;
@@ -137,14 +141,6 @@
 
     &:focus {
       outline-color: var(--sui-primary-accent-color-translucent);
-    }
-
-    &:not(:first-child) {
-      margin-top: var(--sui-paragraph-margin);
-    }
-
-    &:not(:last-child) {
-      margin-bottom: var(--sui-paragraph-margin);
     }
 
     & > header {

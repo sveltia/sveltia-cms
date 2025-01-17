@@ -75,5 +75,13 @@
       max-width: 100%;
       max-height: 100%;
     }
+
+    :global(:is(a)) {
+      display: inline-block;
+
+      :global(:is(img)) {
+        pointer-events: none;
+      }
+    }
   }
 </style>
