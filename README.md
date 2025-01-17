@@ -81,7 +81,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
 
 Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stalled for more than six months. [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances without much effort, mainly to get better internationalization (i18n) support.
 
-To achieve radical improvements in UX, performance, i18n and other areas, it was decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
+To achieve radical improvements in UX, performance, i18n and other areas, it was ultimately decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
 We loved the concept of Netlify CMS — a single page app served from a CDN, plus a single YAML config file — and we wanted to revive it, modernize it, and take it to the next level.
 
@@ -135,21 +135,21 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 - The maintainer tries to be as responsive as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
 - Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
 - We develop [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
-- Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned shortly after the 1.0 release.
-- Made with Svelte, not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common React application crashes[^113][^129]. Best of all, Svelte offers great performance.
+- Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
+- Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common React application crashes[^113][^129]. Best of all, Svelte offers great performance.
 - The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
 
 ### Better performance
 
-- Built completely from scratch with Svelte instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
-- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet, but rather added many new features. That’s the power of Svelte + Vite.
+- Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
+- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet, but rather added many new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is underway.
-- Sveltia CMS is free of technical debt (except for Moment.js, which will soon be replaced by Day.js) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- Sveltia CMS is free of technical debt (except for the Moment.js dependency, which will soon be replaced by Day.js) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
-- Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern File System Access API to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
+- Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/articles/file-system-access/) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
 - Uses caching, lazy loading and infinite scrolling techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
@@ -212,7 +212,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 
 ### Better i18n support
 
-Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect best-in-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for Mozilla and currently lives in a [multicultural city](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
+Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect best-in-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for [Mozilla](https://www.mozilla.org/) and currently lives in [one of the most multicultural cities in the world](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
 
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
@@ -420,7 +420,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 ### Better asset management
 
 - A completely new, full-fledged Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents[^96].
-  - Navigate between the global media folder and collection media folders[^6].
+  - Navigate between the global media folder and [collection media folders](#using-a-custom-media-folder-for-a-collection)[^6].
   - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - Copy the public URL[^74], file path, text data or image data of a selected asset to clipboard. The file path starts with `/` as expected[^48].
   - Edit plain text assets, including SVG images.
