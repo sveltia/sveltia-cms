@@ -59,6 +59,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Using a custom icon for a collection](#using-a-custom-icon-for-a-collection)
   - [Adding dividers to the collection list](#adding-dividers-to-the-collection-list)
   - [Using a custom media folder for a collection](#using-a-custom-media-folder-for-a-collection)
+  - [Specifying default sort field and direction](#specifying-default-sort-field-and-direction)
   - [Using keyboard shortcuts](#using-keyboard-shortcuts)
   - [Using DeepL to translate entry fields](#using-deepl-to-translate-entry-fields)
   - [Localizing entry slugs](#localizing-entry-slugs)
@@ -114,7 +115,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 160+ of them, or 305+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 160+ of them, or 310+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 300 or all relevant, fixable and worthwhile issues in the future; 500 including duplicates
   - Note: Issues include feature requests, bug reports, [“closed as stale” issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
@@ -123,7 +124,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![300 Netlify/Decap CMS Issues Solved in Sveltia CMS (Including Duplicates)](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-2025010304.webp)<br>
+![310 Netlify/Decap CMS Issues Solved in Sveltia CMS (Including Duplicates)](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1-20250117.webp)<br>
 
 ## Differentiators
 
@@ -248,7 +249,11 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Provides some new options, including:
     - `icon`: [Choose a custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
     - `divider`: [Add dividers to the collection list](#adding-dividers-to-the-collection-list).
-    - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list, like `thumbnail: featuredImage`[^130]. A nested field can be specified using dot notation, e.g. `images.0.src`. If undefined, the `name` of the first image field is used.
+    - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list, like `thumbnail: featuredImage`[^130].
+      - A nested field can be specified using dot notation, e.g. `heroImage.src`.
+      - A wildcard in the field name is also supported, e.g. `images.*.src`.
+      - Multiple field names can be specified as an array for fallback purpose, e.g. `[thumbnail, cover]`.
+      - If this option is omitted, any non-nested, non-empty Image or File field will be used[^173].
   - Enhancements to the entry `filter` option for folder collections:
     - Boolean `value` works as expected[^93].
     - `value` accepts `null` to match an undefined field value.
@@ -273,6 +278,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget[^137].
   - Entry slugs are [localizable](#localizing-entry-slugs)[^80].
 - Entry listing
+  - [Default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified[^172].
   - Sorting entries by a DateTime field works as expected[^110].
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
@@ -356,6 +362,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup[^160]. In our editor, bold is 2 asterisks and italic is an underscore.
   - The built-in `image` component can be inserted with a single click.
+  - The built-in `image` component allows users to add, edit or remove a link set on an image[^171].
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
   - Code in a code block in the editor can be copied as expected[^165].
   - Line breaks are rendered as line breaks in the Preview pane according to GitHub Flavored Markdown (GFM).
@@ -505,7 +512,7 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 
 - Configuration options
   - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
-  - The `default` option for sortable fields will be implemented in Sveltia CMS soon. ([#304](https://github.com/sveltia/sveltia-cms/issues/304))
+  - The `default` option for sortable fields is [implemented in Sveltia CMS](#specifying-default-sort-field-and-direction).
   - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented soon. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the `yaml` library options directly for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
@@ -704,6 +711,24 @@ Rather, if you’d like to add all the media files for a collection in one singl
 ```
 
 In Sveltia CMS, those collection media folders are displayed prominently for easier asset management. We recommend setting `media_folder` and `public_folder` for each collection if it contains one or more File/Image fields.
+
+### Specifying default sort field and direction
+
+Sveltia CMS has extended the `sortable_fields` collection option to allow developers to define the field name and direction to be used for sorting entries by default. Our implementation is compatible with Static CMS. This is especially useful if you want to sort entries by date from new to old:
+
+```yaml
+collections:
+  - name: posts
+    sortable_fields:
+      fields: ['title', 'published_date', 'author']
+      default:
+        field: published_date
+        direction: descending # or ascending
+```
+
+For backward compatibility with [Netlify/Decap CMS](https://decapcms.org/docs/configuration-options/#sortable_fields), `sortable_fields` with a field list (an array) will continue to work.
+
+For backward compatibility with [Static CMS](https://staticjscms.netlify.app/docs/collection-overview#sortable-fields), the `direction` option accepts title case values: `Ascending` and `Descending`. However, `None` is not supported and has the same effect as `ascending`.
 
 ### Using keyboard shortcuts
 
@@ -1396,3 +1421,9 @@ This software is provided “as is” without any express or implied warranty. W
 [^169]: Netlify/Decap CMS [#7364](https://github.com/decaporg/decap-cms/issues/7364)
 
 [^170]: Netlify/Decap CMS [#7371](https://github.com/decaporg/decap-cms/issues/7371)
+
+[^171]: Netlify/Decap CMS [#4754](https://github.com/decaporg/decap-cms/issues/4754)
+
+[^172]: Netlify/Decap CMS [#3715](https://github.com/decaporg/decap-cms/issues/3715)
+
+[^173]: Netlify/Decap CMS [#3715](https://github.com/decaporg/decap-cms/issues/5317)
