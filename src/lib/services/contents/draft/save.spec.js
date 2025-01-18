@@ -5,9 +5,10 @@ describe('Test getEntryAssetFolderPaths()', () => {
   const currentSlug = 'foo';
 
   const collectionBase = {
-    _type: /** @type {CollectionType} */ ('entry'),
     name: 'blog',
     folder: 'src/content/blog',
+    _type: /** @type {CollectionType} */ ('entry'),
+    _thumbnailFieldNames: [],
   };
 
   const i18nBaseConfig = {

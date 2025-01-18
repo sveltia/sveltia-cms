@@ -10,6 +10,7 @@ describe('Test fillSlugTemplate()', async () => {
   /** @type {Collection} */
   const collection = {
     name: 'posts',
+    slug_length: 50,
     _type: 'entry',
     _file: {
       extension: 'md',
@@ -17,7 +18,7 @@ describe('Test fillSlugTemplate()', async () => {
       basePath: 'content/posts',
     },
     _i18n: defaultI18nConfig,
-    slug_length: 50,
+    _thumbnailFieldNames: [],
   };
 
   // @ts-ignore

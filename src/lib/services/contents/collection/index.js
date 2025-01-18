@@ -16,6 +16,37 @@ export const selectedCollection = writable();
 const collectionCacheMap = new Map();
 
 /**
+ * Get a list of field key paths to be used to find an entry thumbnail.
+ * @param {RawCollection} rawCollection - Raw collection definition.
+ * @returns {FieldKeyPath[]} Key path list.
+ */
+const getThumbnailFieldNames = (rawCollection) => {
+  const { folder, fields, thumbnail } = rawCollection;
+
+  if (!folder) {
+    return [];
+  }
+
+  if (typeof thumbnail === 'string') {
+    return [thumbnail];
+  }
+
+  // Support multiple field names
+  if (Array.isArray(thumbnail)) {
+    return thumbnail;
+  }
+
+  // Collect the names of all non-nested Image/File fields for inference
+  if (fields?.length) {
+    return fields
+      .filter(({ widget = 'string' }) => ['image', 'file'].includes(widget))
+      .map(({ name }) => name);
+  }
+
+  return [];
+};
+
+/**
  * Get a collection by name.
  * @param {string} name - Collection name.
  * @returns {Collection | undefined} Collection, including some extra, normalized properties.
@@ -38,7 +69,7 @@ export const getCollection = (name) => {
     return undefined;
   }
 
-  const { fields, thumbnail, folder, files } = rawCollection;
+  const { folder, files } = rawCollection;
 
   // Normalize folder/file paths by removing leading/trailing slashes
   if (isEntryCollection) {
@@ -59,15 +90,13 @@ export const getCollection = (name) => {
 
   /** @type {Collection} */
   const collection = isEntryCollection
-    ? {
+    ? /** @type {EntryCollection} */ ({
         ...collectionBase,
         _type: /** @type {CollectionType} */ ('entry'),
         _file: getFileConfig({ rawCollection, _i18n }),
-        _thumbnailFieldName: rawCollection.folder
-          ? (thumbnail ?? fields?.find(({ widget }) => widget === 'image')?.name)
-          : undefined,
-      }
-    : {
+        _thumbnailFieldNames: getThumbnailFieldNames(rawCollection),
+      })
+    : /** @type {FileCollection} */ ({
         ...collectionBase,
         _type: /** @type {CollectionType} */ ('file'),
         _fileMap: /** @type {RawCollectionFile[]} */ (files)?.length
@@ -80,7 +109,7 @@ export const getCollection = (name) => {
               }),
             )
           : {},
-      };
+      });
 
   collectionCacheMap.set(name, collection);
 

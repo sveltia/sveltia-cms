@@ -1,4 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
+import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import {
   allAssets,
@@ -18,14 +19,41 @@ import { getFieldConfig } from '$lib/services/contents/entry/fields';
 export const getEntryThumbnail = async (collection, entry) => {
   const {
     _i18n: { defaultLocale },
-    _thumbnailFieldName,
+    _thumbnailFieldNames,
   } = collection;
 
   const { locales } = entry;
   const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {};
 
-  if (content && _thumbnailFieldName) {
-    return getMediaFieldURL(content[_thumbnailFieldName], entry, { thumbnail: true });
+  if (!content) {
+    return undefined;
+  }
+
+  /** @type {FieldKeyPath[]} */
+  const keyPathList = _thumbnailFieldNames
+    .map((name) => {
+      // Support a wildcard in the key path, e.g. `images.*.src`
+      if (name.includes('*')) {
+        const regex = new RegExp(`^${escapeRegExp(name).replace('\\*', '.+')}$`);
+
+        return Object.keys(content).filter((keyPath) => regex.test(keyPath));
+      }
+
+      return name;
+    })
+    .flat(1);
+
+  // Cannot use `Promise.all` or `Promise.any` here because we need the first available URL
+  // eslint-disable-next-line no-restricted-syntax
+  for (const keyPath of keyPathList) {
+    const url = content[keyPath]
+      ? // eslint-disable-next-line no-await-in-loop
+        await getMediaFieldURL(content[keyPath], entry, { thumbnail: true })
+      : undefined;
+
+    if (url) {
+      return url;
+    }
   }
 
   return undefined;

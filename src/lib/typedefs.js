@@ -445,9 +445,11 @@
  * @property {boolean} [divider] - A special option to make this collection a divider UI in the
  * primary sidebar’s collection list. Other options will be ignored, but you may still need a random
  * `name` and an empty `files` list to avoid a config file validation error in VS Code.
- * @property {FieldKeyPath} [thumbnail] - Key path to an entry thumbnail displayed on the entry
- * list. A nested field can be specified using dot notation, e.g. `images.0.src`. If omitted, the
- * `name` of the first image field is used.
+ * @property {FieldKeyPath | FieldKeyPath[]} [thumbnail] - A field key path to be used to find an
+ * entry thumbnail displayed on the entry list. A nested field can be specified using dot notation,
+ * e.g. `heroImage.src`. A wildcard in the key path is also supported, e.g. `images.*.src`. Multiple
+ * key paths can be specified as an array for fallback purpose. If this option is omitted, the
+ * `name` of any non-nested, non-empty field using the Image or File widget is used.
  * @see https://decapcms.org/docs/configuration-options/#collections
  */
 
@@ -469,8 +471,8 @@
  * Extra properties for an entry collection.
  * @typedef {object} EntryCollectionExtraProps
  * @property {FileConfig} _file - Entry file configuration.
- * @property {FieldKeyPath} [_thumbnailFieldName] - Key path to an entry thumbnail. The `thumbnail`
- * option or the first image field name.
+ * @property {FieldKeyPath[]} _thumbnailFieldNames - A list of field key paths to be used to find an
+ * entry thumbnail. See {@link RawCollection.thumbnail} for details.
  */
 
 /**

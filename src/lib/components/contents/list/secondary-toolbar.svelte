@@ -21,7 +21,7 @@
       : undefined,
   );
   const collectionName = $derived(entryCollection?.name);
-  const _thumbnailFieldName = $derived(entryCollection?._thumbnailFieldName);
+  const thumbnailFieldNames = $derived(entryCollection?._thumbnailFieldNames ?? []);
   const hasListedEntries = $derived(!!$listedEntries.length);
   const hasMultipleEntries = $derived($listedEntries.length > 1);
 </script>
@@ -58,7 +58,7 @@
       />
     {/if}
     <ViewSwitcher
-      disabled={!hasListedEntries || !_thumbnailFieldName}
+      disabled={!hasListedEntries || !thumbnailFieldNames.length}
       {currentView}
       aria-controls="entry-list"
     />

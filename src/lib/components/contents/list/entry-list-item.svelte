@@ -63,7 +63,7 @@
       }}
     />
   </GridCell>
-  {#if collection._thumbnailFieldName}
+  {#if collection._thumbnailFieldNames.length}
     <GridCell class="image">
       {#await getEntryThumbnail(collection, entry) then src}
         {#if src}

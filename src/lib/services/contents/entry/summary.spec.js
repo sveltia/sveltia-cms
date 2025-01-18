@@ -6,6 +6,7 @@ describe('Test getEntrySummary()', () => {
   const collection = {
     name: 'pages-tags',
     folder: 'content/tags',
+    slug_length: 50,
     _type: 'entry',
     _file: {
       extension: 'md',
@@ -20,7 +21,7 @@ describe('Test getEntrySummary()', () => {
       structure: 'multiple_files',
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     },
-    slug_length: 50,
+    _thumbnailFieldNames: [],
   };
 
   /** @type {LocalizedEntry} */

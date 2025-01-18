@@ -21,6 +21,7 @@ describe('Test getSortableFields()', async () => {
       extension: 'json',
       format: 'json',
     },
+    _thumbnailFieldNames: [],
     fields: [
       { name: 'title', widget: 'string' },
       { name: 'id', widget: 'string' },
