@@ -511,7 +511,7 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. This README will be updated with more details as our development progresses.
 
 - Configuration options
-  - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to sortable fields, view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
+  - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
   - The `default` option for sortable fields is [implemented in Sveltia CMS](#specifying-default-sort-field-and-direction).
   - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented soon. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
@@ -720,10 +720,10 @@ Sveltia CMS has extended the `sortable_fields` collection option to allow develo
 collections:
   - name: posts
     sortable_fields:
-      fields: ['title', 'published_date', 'author']
+      fields: [title, published_date, author]
       default:
         field: published_date
-        direction: descending # or ascending
+        direction: descending # default: ascending
 ```
 
 For backward compatibility with [Netlify/Decap CMS](https://decapcms.org/docs/configuration-options/#sortable_fields), `sortable_fields` with a field list (an array) will continue to work.
@@ -942,7 +942,7 @@ script-src 'self' https://unpkg.com;
 connect-src 'self' blob: data: https://unpkg.com;
 ```
 
-(UNPKG is used not only to download the CMS script bundle, but also to check for the latest version and retrieve additional dependencies such as [PDF.js](https://github.com/mozilla/pdf.js))
+(UNPKG is used not only to download the CMS script bundle, but also to check for the latest version and retrieve additional dependencies such as [PDF.js](https://github.com/mozilla/pdf.js) and [Prism](https://prismjs.com/) language definitions)
 
 Then, add the following origins depending on your Git backend and enabled integrations.
 
@@ -1060,6 +1060,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - Considering further [compatibility with Static CMS](#compatibility-with-static-cms)
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools
 - AI integrations for image generation and content writing
+- Search enhancements
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - End-user documentation
 - Contributor documentation
