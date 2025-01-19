@@ -134,80 +134,80 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - The maintainer tries to be as responsive as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
-- Offers a modern, intuitive user interface, including an immersive dark mode[^2], inspired in part by the Netlify CMS v3 prototype[^1].
+- Offers a modern, intuitive user interface, including an immersive dark mode,[^2] inspired in part by the Netlify CMS v3 prototype.[^1]
 - We develop [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
-- Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common React application crashes[^113][^129]. Best of all, Svelte offers great performance.
+- Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
-- Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available[^31]. Then update to the latest version with a single click[^66].
+- Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
 
 ### Better performance
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
-- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB)[^57][^64], even though we haven’t implemented some features yet, but rather added many new features. That’s the power of Svelte + [Vite](https://vite.dev/).
+- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB),[^57][^64] even though we haven’t implemented some features yet, but rather added many new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is underway.
 - Sveltia CMS is free of technical debt (except for the Moment.js dependency, which will soon be replaced by Day.js) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
-- Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets[^14].
+- Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/articles/file-system-access/) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
 - Uses caching, lazy loading and infinite scrolling techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
-- Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS[^39].
-- No typing lag on input widgets, especially within nested lists and objects[^77].
+- Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS.[^39]
+- No typing lag on input widgets, especially within nested lists and objects.[^77]
 
 ### Better productivity
 
-- Developers can [work with a local Git repository](#working-with-a-local-git-repository) without any additional configuration or proxy server, resulting in a streamlined workflow and improved performance[^26].
-  - It also avoids a number of issues, including potential dependency corruption[^158], a 30 MB file size limit[^51], an unknown error with `publish_mode`[^75], and an unused `logo_url`[^49].
+- Developers can [work with a local Git repository](#working-with-a-local-git-repository) without any additional configuration or proxy server, resulting in a streamlined workflow and improved performance.[^26]
+  - It also avoids a number of issues, including potential dependency corruption,[^158] a 30 MB file size limit,[^51] an unknown error with `publish_mode`,[^75] and an unused `logo_url`.[^49]
   - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
 - Provides a smoother user experience in the Content Editor:
-  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed[^106]. The backup can then be reliably restored without unexpected overwriting[^85].
+  - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed.[^106] The backup can then be reliably restored without unexpected overwriting.[^85]
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry. Or just hit the `Ctrl+S` (Windows/Linux) or `Command+S` (macOS) key to save your time.
   - The editor closes automatically when an entry is saved. This behaviour can be changed in the application settings.
-- Uploading files can be done with drag and drop[^20].
-- Users can upload multiple files at once to the Asset Library[^5].
+- Uploading files can be done with drag and drop.[^20]
+- Users can upload multiple files at once to the Asset Library.[^5]
 - Users can delete multiple entries and assets at once.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
 
 ### Better accessibility
 
-- Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys[^17][^67].
+- Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys.[^17][^67]
 - Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver. An announcement is read out when you navigate to another page.
 - The rich text editor is built with [Lexical](https://lexical.dev/), which is said to follow accessibility best practices. The [Dragon NaturallySpeaking support](https://lexical.dev/docs/packages/lexical-dragon) is enabled.
 - Ensures sufficient contrast between the foreground text and background colours.
-- Enabled and disabled buttons can be clearly distinguished[^105].
+- Enabled and disabled buttons can be clearly distinguished.[^105]
 - Links are underlined by default to make them easier to recognize. This behaviour can be changed in the Accessibility Settings if you prefer.
 - Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings. Support for [high contrast mode](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) will be added later.
-- Browser console logs for developers are readable in either light or dark mode[^116].
+- Browser console logs for developers are readable in either light or dark mode.[^116]
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
 
 ### Better security
 
-- Avoids vulnerabilities in dependencies through constant updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities are unpatched[^33].
-- Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface[^158].
+- Avoids vulnerabilities in dependencies through constant updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities are unpatched.[^33]
+- Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158]
 - We have enabled [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/).
-- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration[^108].
-- The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive[^34].
+- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration.[^108]
+- The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive.[^34]
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 - Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
-- GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification)[^144].
+- GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
 
 ### Better configuration
 
-- Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error[^107].
-- Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections[^60].
+- Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
+- Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 
 ### Better backend support
 
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
-- The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`[^95][^27].
-- It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once[^24].
+- The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`.[^95][^27]
+- It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once.[^24]
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
-- Users won’t get a 404 Not Found error when you sign in to the GitLab backend[^115].
+- Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
 
@@ -217,170 +217,170 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
-    - File collections support multiple files/folders i18n structures[^87]. To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
-    - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales[^7][^68]. The `i18n` configuration can normally be used for the subfields.
+    - File collections support multiple files/folders i18n structures.[^87] To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
+    - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales.[^7][^68] The `i18n` configuration can normally be used for the subfields.
   - The `required` field option accepts an array of locale codes in addition to a boolean, making the field required for a subset of locales when i18n support is enabled. For example, if only English is required, you could write `required: [en]`. An empty array is equivalent to `required: false`.
-  - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure[^21].
-  - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language[^63].
+  - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure.[^21]
+  - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language.[^63]
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
-  - It’s possible to [localize entry slugs](#localizing-entry-slugs) while linking the localized files[^80], thanks to the support for Hugo’s `translationKey`[^81].
-  - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://en.wikipedia.org/wiki/Transliteration)[^99].
-  - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`[^101].
+  - It’s possible to [localize entry slugs](#localizing-entry-slugs) while linking the localized files,[^80] thanks to the support for Hugo’s `translationKey`.[^81]
+  - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://en.wikipedia.org/wiki/Transliteration).[^99]
+  - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`.[^101]
 - User interface
   - Eliminates UI confusion: The Preview pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list.
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
   - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click. More translation services will be added in the future.
-  - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian[^146].
-  - It’s possible to [disable non-default locale content](#disabling-non-default-locale-content)[^15].
+  - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian.[^146]
+  - It’s possible to [disable non-default locale content](#disabling-non-default-locale-content).[^15]
   - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
-  - Boolean fields are updated in real time between locales like other widgets to avoid confusion[^35].
-  - Relation fields with i18n enabled won’t trigger a change in the content draft status when you start editing an existing entry[^84].
-  - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget[^54].
-  - Raises a validation error instead of failing silently if the `single_file` structure is used and a required field is not filled in any of the locales[^55].
-  - Fields in non-default locales are validated as expected[^13].
-  - No internal error is thrown when changing the locale[^103].
-  - Duplicating an entry duplicates all locale content, not just the default locale[^170].
+  - Boolean fields are updated in real time between locales like other widgets to avoid confusion.[^35]
+  - Relation fields with i18n enabled won’t trigger a change in the content draft status when you start editing an existing entry.[^84]
+  - Solves problems with Chinese, Japanese and Korean (CJK) [IME](https://en.wikipedia.org/wiki/Input_method) text input in the rich text editor for the Markdown widget.[^54]
+  - Raises a validation error instead of failing silently if the `single_file` structure is used and a required field is not filled in any of the locales.[^55]
+  - Fields in non-default locales are validated as expected.[^13]
+  - No internal error is thrown when changing the locale.[^103]
+  - Duplicating an entry duplicates all locale content, not just the default locale.[^170]
 
 ### Better collections
 
 - Configuration
   - Provides some new options, including:
-    - `icon`: [Choose a custom icon for each collection](#using-a-custom-icon-for-a-collection)[^3].
+    - `icon`: [Choose a custom icon for each collection](#using-a-custom-icon-for-a-collection).[^3]
     - `divider`: [Add dividers to the collection list](#adding-dividers-to-the-collection-list).
-    - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list, like `thumbnail: featuredImage`[^130].
+    - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list, like `thumbnail: featuredImage`.[^130]
       - A nested field can be specified using dot notation, e.g. `heroImage.src`.
       - A wildcard in the field name is also supported, e.g. `images.*.src`.
       - Multiple field names can be specified as an array for fallback purpose, e.g. `[thumbnail, cover]`.
-      - If this option is omitted, any non-nested, non-empty Image or File field will be used[^173].
+      - If this option is omitted, any non-nested, non-empty Image or File field will be used.[^173]
   - Enhancements to the entry `filter` option for folder collections:
-    - Boolean `value` works as expected[^93].
+    - Boolean `value` works as expected.[^93]
     - `value` accepts `null` to match an undefined field value.
-    - `value` accepts an array to provide multiple possible values[^151].
-    - `pattern` can be used instead of `value` to provide a regular expression, just like the `view_filters` collection option[^153].
+    - `value` accepts an array to provide multiple possible values.[^151]
+    - `pattern` can be used instead of `value` to provide a regular expression, just like the `view_filters` collection option.[^153]
   - Enhancements to [summary string transformations](https://decapcms.org/docs/summary-strings/):
     - Transformations can be used in more places than just the collection `summary`:
       - The `slug` collection option[^29]
       - The `summary` field option for the List and Object widgets
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
     - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the entry slug, e.g. `{{date | date('YYYYMMDD-HHmm', 'utc')}}`. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/278#issuecomment-2565313420))
-  - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`[^62].
-  - Markdown is supported in the `description` collection option[^79]. Bold, italic, strikethrough, code and links are allowed.
+  - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
+  - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
 - Entry slugs
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
-  - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values[^133].
+  - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values.[^133]
   - If a collection only has the Markdown `body` field, an entry slug will be generated from a header in the `body`, if exists. This supports a typical VitePress setup.
-  - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags[^29].
-  - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed[^52].
-  - The maximum number of characters for an entry slug can be set with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms[^25].
-  - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget[^137].
-  - Entry slugs are [localizable](#localizing-entry-slugs)[^80].
+  - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags.[^29]
+  - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed.[^52]
+  - The maximum number of characters for an entry slug can be set with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms.[^25]
+  - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget.[^137]
+  - Entry slugs are [localizable](#localizing-entry-slugs).[^80]
 - Entry listing
-  - [Default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified[^172].
-  - Sorting entries by a DateTime field works as expected[^110].
+  - [Default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
+  - Sorting entries by a DateTime field works as expected.[^110]
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
-  - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`[^120]. You can still manage these files as part of a file collection if necessary.
-  - A console error won’t be thrown when a collection doesn’t have the `title` field[^152]. In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug, so the summary will never be an empty[^161]. This supports a typical VitePress setup.
-  - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console[^121].
-  - A single file can be used for more than one item in a file collection[^127].
+  - Hugo’s special `_index.md` files, including localized ones like `_index.en.md`, are ignored in folder collections unless the `path` option is configured to end with `_index` and the `extension` is `md`.[^120] You can still manage these files as part of a file collection if necessary.
+  - A console error won’t be thrown when a collection doesn’t have the `title` field.[^152] In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug, so the summary will never be an empty.[^161] This supports a typical VitePress setup.
+  - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console.[^121]
+  - A single file can be used for more than one item in a file collection.[^127]
 - User interface
   - The collection list displays the number of items in each collection.
   - Users can select multiple entries and delete them at once.
-  - In an entry summary, basic Markdown syntax used in the title, including bold, italic and code, are parsed as Markdown. HTML character references (entities) are also parsed properly[^69].
-  - If you update an entry field that appears in the collection’s `summary`, such as `title`, the entry list displays an updated summary after you save the entry[^159].
-  - If entries don’t have an Image field for thumbnails, the entry list will only be displayed in list view, because it doesn’t make sense to show grid view[^143].
+  - In an entry summary, basic Markdown syntax used in the title, including bold, italic and code, are parsed as Markdown. HTML character references (entities) are also parsed properly.[^69]
+  - If you update an entry field that appears in the collection’s `summary`, such as `title`, the entry list displays an updated summary after you save the entry.[^159]
+  - If entries don’t have an Image field for thumbnails, the entry list will only be displayed in list view, because it doesn’t make sense to show grid view.[^143]
   - Assets stored in a [collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
-  - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless[^89].
+  - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless.[^89]
   - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
 
 ### Better content editing
 
 - Required fields, not optional fields, are marked for efficient data entry.
 - Users can revert changes to all fields or a specific field.
-- If you revert changes and there are no unsaved changes, the Save button is disabled as expected[^118].
-- Fields with validation errors are automatically expanded if they are part of nested, collapsed objects[^40].
-- A full regular expression, including flags, can be used for the widget `pattern` option[^82]. For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
-- A long validation error message is displayed in full, without being hidden behind the field label[^59].
-- Any links to other entries will work as expected, with the Content Editor being updated for the other[^100].
-- In the Boolean and Select widgets, you don’t have to update a value twice to re-enable the Save button after saving an entry[^139].
+- If you revert changes and there are no unsaved changes, the Save button is disabled as expected.[^118]
+- Fields with validation errors are automatically expanded if they are part of nested, collapsed objects.[^40]
+- A full regular expression, including flags, can be used for the widget `pattern` option.[^82] For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
+- A long validation error message is displayed in full, without being hidden behind the field label.[^59]
+- Any links to other entries will work as expected, with the Content Editor being updated for the other.[^100]
+- In the Boolean and Select widgets, you don’t have to update a value twice to re-enable the Save button after saving an entry.[^139]
 
 ### Better content preview
 
-- The Preview pane comes with a minimal default style[^168]. It looks nice without a custom preview style or template.
+- The Preview pane comes with a minimal default style.[^168] It looks nice without a custom preview style or template.
 - The Preview pane displays all fields, including each label, making it easier to see which fields are populated.
-- When you click on a field in the Preview pane, the corresponding field in the Edit pane is highlighted[^41]. It will be automatically expanded if collapsed.
-- The Preview pane won’t cause a scrolling issue[^136].
-- Provides better scroll synchronization between the panes when editing or previewing an entry[^92].
-- Developers can hide the preview of a specific field using a new field option: `preview: false`[^126].
+- When you click on a field in the Preview pane, the corresponding field in the Edit pane is highlighted.[^41] It will be automatically expanded if collapsed.
+- The Preview pane won’t cause a scrolling issue.[^136]
+- Provides better scroll synchronization between the panes when editing or previewing an entry.[^92]
+- Developers can hide the preview of a specific field using a new field option: `preview: false`.[^126]
 - [See below](#better-widgets) for widget-specific enhancements, including support for variable types[^42] and YouTube videos.
 
 ### Better data output
 
-- Keys in generated JSON/TOML/YAML content are always sorted by the order of configured fields, making Git commits clean and consistent[^86].
-- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output[^154]. Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string, an empty array or `null`, instead of nothing (`undefined`), regardless of the `required` field option[^45][^46][^44][^157].
+- Keys in generated JSON/TOML/YAML content are always sorted by the order of configured fields, making Git commits clean and consistent.[^86]
+- Netlify/Decap CMS often, but not always, omits optional and empty fields from the output.[^154] Sveltia CMS aims at complete and consistent data output — it always saves proper values, such as an empty string, an empty array or `null`, instead of nothing (`undefined`), regardless of the `required` field option.[^45][^46][^44][^157]
   - In other words, in Sveltia CMS, `required: false` makes data input optional, but doesn’t make data output optional.
-  - To omit empty optional fields from data output, use `omit_empty_optional_fields: true` in the [data output options](#controlling-data-output). This is useful if you have data type validations that expect `undefined`[^156].
-- JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file[^11].
-- Leading and trailing spaces in text-type field values are automatically removed when you save an entry[^37].
-- YAML string folding (maximum line width) is disabled, mainly for framework compatibility[^119].
-- DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML[^147].
-- Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation[^155] and quotes[^9].
+  - To omit empty optional fields from data output, use `omit_empty_optional_fields: true` in the [data output options](#controlling-data-output). This is useful if you have data type validations that expect `undefined`.[^156]
+- JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file.[^11]
+- Leading and trailing spaces in text-type field values are automatically removed when you save an entry.[^37]
+- YAML string folding (maximum line width) is disabled, mainly for framework compatibility.[^119]
+- DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML.[^147]
+- Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes.[^155][^9]
   - The `yaml_quote` collection option added in [v0.5.10](https://github.com/sveltia/sveltia-cms/releases/tag/v0.5.10) is now deprecated and will be removed in v1.0.0. `yaml_quote: true` is equivalent to `quote: double` in the new YAML format options.
 
 ### Better widgets
 
 - Boolean
-  - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error[^45].
-  - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing[^46].
+  - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error.[^45]
+  - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing.[^46]
 - Color
-  - The widget doesn’t cause scrolling issues[^128].
+  - The widget doesn’t cause scrolling issues.[^128]
   - The preview shows both the RGB(A) hex value and the `rgb()` function notation.
 - DateTime
-  - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry[^90].
-  - User’s local time is not saved in UTC unless the `picker_utc` option is `true`[^150].
+  - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry.[^90]
+  - User’s local time is not saved in UTC unless the `picker_utc` option is `true`.[^150]
 - Hidden
   - The `default` value supports the following template tags:
-    - `{{locale}}`: The current locale code[^101].
-    - `{{datetime}}`: The current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format)[^102].
-    - `{{uuid}}`, `{{uuid_short}}` and `{{uuid_shorter}}`: A random UUID or its shorter version, just like the [slug template tags](#using-a-random-id-for-an-entry-slug)[^12].
-  - The `default` value is saved when you create a file collection item, not just a folder collection item[^78].
+    - `{{locale}}`: The current locale code.[^101]
+    - `{{datetime}}`: The current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format).[^102]
+    - `{{uuid}}`, `{{uuid_short}}` and `{{uuid_shorter}}`: A random UUID or its shorter version, just like the [slug template tags](#using-a-random-id-for-an-entry-slug).[^12]
+  - The `default` value is saved when you create a file collection item, not just a folder collection item.[^78]
 - List
-  - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list) using the new `root` option[^148].
-  - The `min` and `max` options can be used separately. You don’t need to specify both to use either option[^145].
+  - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list) using the new `root` option.[^148]
+  - The `min` and `max` options can be used separately. You don’t need to specify both to use either option.[^145]
   - The Add Item button appears at the bottom of the list when the `add_to_top` option is not `true`, so you don’t have to scroll up each time to add new items.
-  - Users can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once[^164].
-  - A required List field with no subfield or value is marked as invalid[^43].
-  - An optional List field with no subfield or value is saved as an empty array, rather than nothing[^44].
-  - An optional List field won’t populate an item by default when the subfield has the `default` value[^162].
-  - Users can enter spaces in a simple text-based List field[^50].
-  - Users can preview variable types without having to register a preview template[^42].
-  - It’s possible to omit `fields` in a variable type object[^163]. In that case only the `typeKey` (default: `type`) is saved in the output.
+  - Users can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once.[^164]
+  - A required List field with no subfield or value is marked as invalid.[^43]
+  - An optional List field with no subfield or value is saved as an empty array, rather than nothing.[^44]
+  - An optional List field won’t populate an item by default when the subfield has the `default` value.[^162]
+  - Users can enter spaces in a simple text-based List field.[^50]
+  - Users can preview variable types without having to register a preview template.[^42]
+  - It’s possible to omit `fields` in a variable type object.[^163] In that case only the `typeKey` (default: `type`) is saved in the output.
 - Markdown
-  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes[^71][^72][^73][^111], lost formatting when pasting[^124], an extra line break when pasting[^169], backslash injections[^53], dropdown visibility[^70], and text input difficulties with IME[^54].
-  - The default editor mode can be set by changing the order of the `modes` option[^58]. If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
-  - A combination of bold and italic doesn’t create a confusing 3-asterisk markup[^160]. In our editor, bold is 2 asterisks and italic is an underscore.
+  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
+  - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
+  - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
   - The built-in `image` component can be inserted with a single click.
-  - The built-in `image` component allows users to add, edit or remove a link set on an image[^171].
+  - The built-in `image` component allows users to add, edit or remove a link on an image.[^171]
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
-  - Code in a code block in the editor can be copied as expected[^165].
+  - Code in a code block in the editor can be copied as expected.[^165]
   - Line breaks are rendered as line breaks in the Preview pane according to GitHub Flavored Markdown (GFM).
 - Number
-  - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string[^157]. If `value_type` is anything else, the data type will remain a string.
+  - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
     - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) just like the List widget.
-    - An optional Object field (`required: false`) can be manually added or removed with a checkbox[^88]. If unadded or removed, the required subfields won’t trigger validation errors[^16], and the field will be saved as `null`.
+    - An optional Object field (`required: false`) can be manually added or removed with a checkbox.[^88] If unadded or removed, the required subfields won’t trigger validation errors,[^16] and the field will be saved as `null`.
 - Relation
-  - Field options are displayed with no additional API requests[^14]. The confusing `options_length` option, which defaults to 20, is therefore ignored[^76].
-  - `slug` can be used for `value_field` to show all available options instead of just one in some situations[^91].
-  - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`[^94].
+  - Field options are displayed with no additional API requests.[^14] The confusing `options_length` option, which defaults to 20, is therefore ignored.[^76]
+  - `slug` can be used for `value_field` to show all available options instead of just one in some situations.[^91]
+  - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`.[^94]
   - `display_fields` is displayed in the Preview pane instead of `value_field`.
   - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
-  - A new item created in a referenced collection is immediately available in the options[^138].
+  - A new item created in a referenced collection is immediately available in the options.[^138]
 - Select
-  - It’s possible to select an option with value `0`[^56].
+  - It’s possible to select an option with value `0`.[^56]
   - `label` is displayed in the Preview pane instead of `value`.
 - String
   - When a YouTube video URL is entered in a String field, it appears as an embedded video in the Preview pane. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
@@ -388,76 +388,76 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Supports the `type` option that accepts `url` or `email` as a value, which will validate the value as a URL or email.
   - Supports the `prefix` and `suffix` string options, which automatically prepend and/or append the developer-defined value to the user-input value.
 - Boolean, Number and String
-  - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI[^28]. Markdown is supported in the value.
+  - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI.[^28] Markdown is supported in the value.
     - Compatibility note: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively, which have different meaning in Sveltia CMS.
 - File and Image
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
-    - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab[^19].
-    - A new asset can be uploaded by dragging & dropping it into the dialog[^20].
+    - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab.[^19]
+    - A new asset can be uploaded by dragging & dropping it into the dialog.[^20]
     - A URL can also be entered in the dialog.
-    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo[^8]. More stock photo providers will be added in the future.
+    - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo.[^8] More stock photo providers will be added in the future.
   - Users can also simply drag and drop a file onto a File/Image field to attach it without having to open the Select File dialog.
   - Large images automatically fit in the Preview pane instead of being displayed at their original size, which can easily exceed the width of the pane.
-  - If the `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path[^140]. Other dynamic template tags such as `{{filename}}` will also be populated as expected[^141].
+  - If the `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path.[^140] Other dynamic template tags such as `{{filename}}` will also be populated as expected.[^141]
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
   - The `summary` template tags support [transformations](https://decapcms.org/docs/summary-strings/), e.g. `{{fields.date | date('YYYY-MM-DD')}}`.
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
-  - If a dropdown list has options with long wrapping labels, they won’t overlap with the next option[^83].
-  - When there are 5 or fewer options, the UI automatically switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry[^61]. This number can be changed with the `dropdown_threshold` option for the `relation` and `select` widgets.
+  - If a dropdown list has options with long wrapping labels, they won’t overlap with the next option.[^83]
+  - When there are 5 or fewer options, the UI automatically switches from a dropdown list to radio buttons (single-select) or checkboxes (multi-select) for faster data entry.[^61] This number can be changed with the `dropdown_threshold` option for the `relation` and `select` widgets.
 - String and Text
   - Supports the `minlength` and `maxlength` options, which allow developers to specify the minimum and maximum number of characters required for input without having to write a custom regular expression with the `pattern` option. A character counter is available when one of the options is given, and a user-friendly validation error is displayed if the condition is not met.
 
 #### New widgets
 
 - Compute
-  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets[^104]. Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
+  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets.[^104] Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
   - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
 - KeyValue (Dictionary)
-  - The new `keyvalue` widget allows users to add arbitrary key-value string pairs to a field[^123].
+  - The new `keyvalue` widget allows users to add arbitrary key-value string pairs to a field.[^123]
   - While the implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), we provide a more intuitive UI. You can press Enter to move focus or add a new row while editing, and the preview is displayed in a clean table.
 - UUID
-  - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS supports the proposed `uuid` widget with the following properties[^12]:
+  - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS supports the proposed `uuid` widget with the following properties:[^12]
     - `prefix`: A string to be prepended to the value. Default: an empty string.
     - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
     - `read_only`: Whether to make the field read-only. Default: `true`.
 
 ### Better asset management
 
-- A completely new, full-fledged Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents[^96].
-  - Navigate between the global media folder and [collection media folders](#using-a-custom-media-folder-for-a-collection)[^6].
+- A completely new, full-fledged Asset Library, built separately from the image selection dialog, makes it easy to manage all of your files, including images, videos and documents.[^96]
+  - Navigate between the global media folder and [collection media folders](#using-a-custom-media-folder-for-a-collection).[^6]
   - Preview image, audio, video, text and PDF files. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
-  - Copy the public URL[^74], file path, text data or image data of a selected asset to clipboard. The file path starts with `/` as expected[^48].
+  - Copy the public URL,[^74] file path, text data or image data of a selected asset to clipboard. The file path starts with `/` as expected.[^48]
   - Edit plain text assets, including SVG images.
   - Rename existing assets. If the asset is used in any entries, the File/Image fields will be automatically updated with a new file path.
   - Replace existing assets.
   - Download one or more selected assets at once.
   - Delete one or more selected assets at once.
-  - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library[^5].
+  - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library.[^5]
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
-- PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for[^38].
-- Assets stored in an entry-relative media folder are displayed in the Asset Library[^142].
-- These entry-relative assets are automatically deleted when the associated entry is deleted because these are not available for other entries[^22]. When you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
-- Hidden files (dot files) don’t appear in the Asset Library[^47].
+- PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for.[^38]
+- Assets stored in an entry-relative media folder are displayed in the Asset Library.[^142]
+- These entry-relative assets are automatically deleted when the associated entry is deleted because these are not available for other entries.[^22] When you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
+- Hidden files (dot files) don’t appear in the Asset Library.[^47]
 - Users can add assets using the Quick Add button in the upper right corner of the application.
-- Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens[^97].
-- No fatal application crash when uploading assets[^112].
+- Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens.[^97]
+- No fatal application crash when uploading assets.[^112]
 
 ### Better customization
 
-- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists[^109].
-- A custom logo defined with the `logo_url` property is displayed on the global application header and the browser tab (favicon)[^134]. A smaller logo is also correctly positioned on the authentication page[^135].
-- `CMS.registerCustomFormat()` supports async parser/formatter functions[^149].
+- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
+- A custom logo defined with the `logo_url` property is displayed on the global application header and the browser tab (favicon).[^134] A smaller logo is also correctly positioned on the authentication page.[^135]
+- `CMS.registerCustomFormat()` supports async parser/formatter functions.[^149]
 
 ### Better localization
 
-- The application UI locale is automatically selected based on the preferred language set with the browser[^132]. Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
-- The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized[^98].
-- Long menu item labels, especially in non-English locales, don’t overflow the dropdown container[^117].
+- The application UI locale is automatically selected based on the preferred language set with the browser.[^132] Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
+- The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized.[^98]
+- Long menu item labels, especially in non-English locales, don’t overflow the dropdown container.[^117]
 - We are migrating from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-based sveltia-i18n library for natural-sounding translations in every locale.
 
 ## Compatibility
@@ -643,7 +643,7 @@ Here are the workflow steps and tips:
 1. Use `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/) to see if the produced changes look good.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
-Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the future, we’ll figure out if there’s a way to do this in a browser, because the proxy server actually has the undocumented, experimental `git` mode that creates commits to a local repository[^131].
+Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the future, we’ll figure out if there’s a way to commit in a browser, because the proxy server actually has the undocumented, experimental `git` mode that creates commits to a local repository.[^131]
 
 You will also need to reload the CMS after making changes to the configuration file or retrieving remote updates. This manual work will hopefully be unnecessary once the proposed `FileSystemObserver` API, which is being [implemented in Chromium](https://issues.chromium.org/issues/40105284) behind a flag, becomes available.
 
@@ -693,7 +693,7 @@ collections:
 
 ### Using a custom media folder for a collection
 
-This is actually not new in Sveltia CMS but rather an undocumented feature in Netlify/Decap CMS[^4]. You can specify media and public folders for each collection that override the [global media folder](https://decapcms.org/docs/configuration-options/#media-and-public-folders). Well, it’s [documented](https://decapcms.org/docs/collection-folder/#media-and-public-folder), but that’s probably not what you want.
+This is actually not new in Sveltia CMS but rather an undocumented feature in Netlify/Decap CMS.[^4] You can specify media and public folders for each collection that override the [global media folder](https://decapcms.org/docs/configuration-options/#media-and-public-folders). Well, it’s [documented](https://decapcms.org/docs/collection-folder/#media-and-public-folder), but that’s probably not what you want.
 
 Rather, if you’d like to add all the media files for a collection in one single folder, specify both `media_folder` and `public_folder` instead of leaving them empty. The trick is to use an **absolute path** for `media_folder` like the example below. You can try this with Netlify/Decap CMS first if you prefer.
 
@@ -1055,8 +1055,8 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### After the 1.0 release
 
 - Implementing the [remaining Netlify/Decap CMS features](#features-to-be-implemented-after-ga)
-- Tackling even more Netlify/Decap CMS issues, including MDX support[^122], manual entry sorting[^125], mobile optimization[^18], config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
-- Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles[^23], commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
+- Tackling even more Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] mobile optimization,[^18] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+- Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - Considering further [compatibility with Static CMS](#compatibility-with-static-cms)
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools
 - AI integrations for image generation and content writing
