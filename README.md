@@ -369,7 +369,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
-  - Sveltia CMS offers two ways to have conditional fields in a collection[^30]:
+  - Sveltia CMS offers two ways to have conditional fields in a collection:[^30]
     - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` option) just like the List widget.
     - An optional Object field (`required: false`) can be manually added or removed with a checkbox.[^88] If unadded or removed, the required subfields won’t trigger validation errors,[^16] and the field will be saved as `null`.
 - Relation
@@ -1058,7 +1058,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - Tackling even more Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] mobile optimization,[^18] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - Considering further [compatibility with Static CMS](#compatibility-with-static-cms)
-- More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools
+- More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation and content writing
 - Search enhancements
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
