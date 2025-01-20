@@ -35,6 +35,7 @@
   let showValidationToast = $state(false);
   let showDeleteDialog = $state(false);
   let showErrorDialog = $state(false);
+  let errorMessage = $state('');
   let saving = $state(false);
   /** @type {any} */
   let menuButton = $state();
@@ -115,8 +116,12 @@
     } catch (/** @type {any} */ ex) {
       if (ex.message === 'validation_failed') {
         showValidationToast = true;
+      } else if (ex.message === 'saving_failed') {
+        showErrorDialog = true;
+        errorMessage = ex.cause?.message ?? ex.message ?? $_('unexpected_error');
       } else {
         showErrorDialog = true;
+        errorMessage = '';
         // eslint-disable-next-line no-console
         console.error(ex);
       }
@@ -317,4 +322,20 @@
   }}
 >
   {$_('saving_entry.error.description')}
+  {#if errorMessage}
+    <div class="error">
+      {errorMessage}
+    </div>
+  {/if}
 </AlertDialog>
+
+<style lang="scss">
+  .error {
+    margin-top: 8px;
+    border-radius: var(--sui-control-medium-border-radius);
+    padding: 12px;
+    background-color: var(--sui-secondary-background-color);
+    font-size: var(--sui-font-size-default);
+    line-height: 1.5;
+  }
+</style>

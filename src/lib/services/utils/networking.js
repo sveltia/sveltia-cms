@@ -38,43 +38,8 @@ export const sendRequest = async (url, init = {}, { responseType = 'json' } = {}
     return response;
   }
 
-  const { ok, status } = response;
-
-  if (!ok) {
-    /** @type {any} */
-    let result;
-    let message = '';
-
-    try {
-      result = await response.json();
-    } catch {
-      //
-    }
-
-    if (isObject(result)) {
-      if (typeof result.error === 'string') {
-        message = result.error;
-      }
-
-      if (typeof result.message === 'string') {
-        // Typical REST
-        message = result.message;
-      }
-
-      if (Array.isArray(result.errors)) {
-        if (typeof result.errors[0] === 'string') {
-          message = result.errors.join(', ');
-        }
-
-        if (isObject(result.errors[0]) && typeof result.errors[0].message === 'string') {
-          // Typical GraphQL
-          message = /** @type {any[]} */ (result.errors).map((e) => e.message).join(', ');
-        }
-      }
-    }
-
-    throw new Error('Server responded with an error', { cause: { status, message } });
-  }
+  /** @type {any} */
+  let result;
 
   try {
     if (responseType === 'blob') {
@@ -85,8 +50,44 @@ export const sendRequest = async (url, init = {}, { responseType = 'json' } = {}
       return response.text();
     }
 
-    return response.json();
+    result = await response.json();
   } catch (ex) {
     throw new Error('Failed to parse the response', { cause: ex });
   }
+
+  const { ok, status } = response;
+
+  // Return the parsed result for a successful response, but a GraphQL error is typically returned
+  // with 200 OK so we need to check the content for the `errors` key
+  if (ok && !(url.endsWith('/graphql') && isObject(result) && result.errors)) {
+    return result;
+  }
+
+  if (!isObject(result)) {
+    throw new Error('Server responded with an error', { cause: { status } });
+  }
+
+  let message = '';
+
+  if (typeof result.error === 'string') {
+    message = result.error;
+  }
+
+  // Typical REST
+  if (typeof result.message === 'string') {
+    message = result.message;
+  }
+
+  if (Array.isArray(result.errors)) {
+    if (typeof result.errors[0] === 'string') {
+      message = result.errors.join(', ');
+    }
+
+    // Typical GraphQL
+    if (isObject(result.errors[0]) && typeof result.errors[0].message === 'string') {
+      message = /** @type {any[]} */ (result.errors).map((e) => e.message).join(', ');
+    }
+  }
+
+  throw new Error('Server responded with an error', { cause: { status, message } });
 };

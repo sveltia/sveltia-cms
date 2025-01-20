@@ -875,9 +875,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     });
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
-    console.error(ex);
+    console.error(ex.cause ?? ex);
 
-    throw new Error('saving_failed', { cause: ex });
+    throw new Error('saving_failed', { cause: ex.cause ?? ex });
   }
 
   const savingAssetsPaths = savingAssets.map((a) => a.path);
