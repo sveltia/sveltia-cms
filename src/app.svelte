@@ -53,6 +53,7 @@
 
 <svelte:head>
   <meta name="referrer" content="same-origin" />
+  <meta name="robots" content="noindex" />
   {#if $siteConfig}
     {@const logoURL = $siteConfig.logo_url}
     <link
