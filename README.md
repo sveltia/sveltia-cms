@@ -357,7 +357,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - An optional List field won’t populate an item by default when the subfield has the `default` value.[^162]
   - Users can enter spaces in a simple text-based List field.[^50]
   - Users can preview variable types without having to register a preview template.[^42]
-  - It’s possible to omit `fields` in a variable type object.[^163] In that case only the `typeKey` (default: `type`) is saved in the output.
+  - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
@@ -469,7 +469,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway. The [widget](https://github.com/netlify/netlify-identity-widget) has been unmaintained for years, and Netlify no longer officially supports it [according to a Netlify customer](https://github.com/sveltia/sveltia-cms/discussions/284). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
@@ -486,7 +486,7 @@ These limitations are expected to be resolved before the 1.0 release scheduled f
 | --- | --- |
 | Backends | The [Test backend](https://decapcms.org/docs/test-backend/) needed for our demo site is not yet added. We’ll see if [Azure DevOps](https://decapcms.org/docs/azure-backend/) can also be supported. |
 | Configuration | Comprehensive config validation is not yet implemented. |
-| Localization | The application UI is only available in English and Japanese at this time. |
+| Localization | The application UI is only available in English and Japanese at this time. Want to be a localizer? See [this README](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md). |
 | Media Libraries | [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) are not yet supported. |
 | Widgets | [Custom widgets](https://decapcms.org/docs/custom-widgets/) are not yet supported. See the table below for other limitations. |
 | Customization | [Custom previews](https://decapcms.org/docs/customization/) and [event subscriptions](https://decapcms.org/docs/registering-events/) are not yet supported. |
@@ -538,7 +538,7 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 
 ### New users
 
-Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Make sure you choose the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend (and ignore the Choosing a Backend page). Then migrate to Sveltia CMS as described below.
+Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Make sure you choose the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend (and skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page). Then migrate to Sveltia CMS as described below.
 
 As the product evolves, we’ll implement a built-in configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
 
@@ -628,7 +628,7 @@ Sveltia CMS has simplified the local repository workflow by removing the need fo
 Here are the workflow steps and tips:
 
 1. Make sure you have configured the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend.
-   - Please note that the Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition. If you haven’t determined your repository name yet, just use a tentative name.
+   - The Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition. If you haven’t determined your repository name yet, just use a tentative name.
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Open `http://localhost:[port]/admin/index.html` with Chrome or Edge.
    - The port number varies by framework. Check the terminal output from the previous step.
@@ -644,7 +644,7 @@ Here are the workflow steps and tips:
 1. Use `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/) to see if the produced changes look good.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
-Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the future, we’ll figure out if there’s a way to commit in a browser, because the proxy server actually has the undocumented, experimental `git` mode that creates commits to a local repository.[^131]
+Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the future, we’ll figure out if there’s a way to commit in a browser, because the proxy server actually has the undocumented, experimental `git` mode that creates commits to a local repository.[^131] ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/31))
 
 You will also need to reload the CMS after making changes to the configuration file or retrieving remote updates. This manual work will hopefully be unnecessary once the proposed `FileSystemObserver` API, which is being [implemented in Chromium](https://issues.chromium.org/issues/40105284) behind a flag, becomes available.
 
@@ -715,7 +715,7 @@ In Sveltia CMS, those collection media folders are displayed prominently for eas
 
 ### Specifying default sort field and direction
 
-Sveltia CMS has extended the `sortable_fields` collection option to allow developers to define the field name and direction to be used for sorting entries by default. Our implementation is compatible with Static CMS. This is especially useful if you want to sort entries by date from new to old:
+Sveltia CMS has extended the `sortable_fields` collection option to allow developers to define the field name and direction to be used for sorting entries by default. Our implementation is compatible with Static CMS. This is especially useful if you want to show entries sorted by date from new to old:
 
 ```yaml
 collections:
