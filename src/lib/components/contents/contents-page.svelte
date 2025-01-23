@@ -43,9 +43,10 @@
      */
     const collection = _collectionName ? getCollection(_collectionName) : undefined;
 
-    if (collection && !collection.hide && $selectedCollection?.name !== collection.name) {
-      $selectedCollection = collection;
-    }
+    $selectedCollection =
+      collection && !collection.hide && $selectedCollection?.name !== collection.name
+        ? collection
+        : undefined;
 
     if (!collection || !$selectedCollection) {
       $announcedPageStatus = $_('collection_not_found');
