@@ -26,7 +26,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Better productivity](#better-productivity)
   - [Better accessibility](#better-accessibility)
   - [Better security](#better-security)
-  - [Better configuration](#better-configuration)
+  - [Better installation](#better-installation)
   - [Better backend support](#better-backend-support)
   - [Better i18n support](#better-i18n-support)
   - [Better collections](#better-collections)
@@ -194,9 +194,10 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 - Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
 - GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
 
-### Better configuration
+### Better installation
 
-- Some servers and frameworks remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
+- Sveltia CMS automatically adds the [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) to HTML to prevent the admin page from being indexed by search engines. Developers are still recommended to manually add `<meta name="robots" content="noindex" />` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.[^174]
+- Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 
 ### Better backend support
@@ -1439,3 +1440,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^172]: Netlify/Decap CMS [#3715](https://github.com/decaporg/decap-cms/issues/3715)
 
 [^173]: Netlify/Decap CMS [#3715](https://github.com/decaporg/decap-cms/issues/5317)
+
+[^174]: Netlify/Decap CMS [#6616](https://github.com/decaporg/decap-cms/issues/6616)
