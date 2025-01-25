@@ -196,7 +196,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 
 ### Better installation
 
-- Sveltia CMS automatically adds the [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) to HTML to prevent the admin page from being indexed by search engines. Developers are still recommended to manually add `<meta name="robots" content="noindex" />` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.[^174]
+- Sveltia CMS automatically adds the [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) to HTML to prevent the admin page from being indexed by search engines. Developers are still encouraged to manually add `<meta name="robots" content="noindex">` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.[^174]
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 
@@ -878,7 +878,7 @@ Note: The `root` option is ignored if the collection or collection file contains
 
 ### Controlling data output
 
-Sveltia CMS supports some [data output](#better-data-output) options, including JSON/YAML formatting preferences, in the configuration file. The default options are listed below:
+Sveltia CMS supports some [data output](#better-data-output) options, including JSON/YAML formatting preferences, at the root level of the configuration file. The default options are listed below:
 
 ```yaml
 output:
