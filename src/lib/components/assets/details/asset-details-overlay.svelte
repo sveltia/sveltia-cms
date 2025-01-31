@@ -173,6 +173,10 @@
           white-space: pre-wrap;
         }
       }
+
+      :global(.detail) {
+        background-color: var(--sui-primary-background-color);
+      }
     }
   }
 </style>

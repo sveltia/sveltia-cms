@@ -105,7 +105,7 @@
 
           :global(.name) {
             flex: none;
-            padding: 4px;
+            padding: 4px 8px 12px;
             width: 100%;
             min-height: calc(var(--sui-font-size-default) * 3);
             color: var(--sui-secondary-foreground-color);

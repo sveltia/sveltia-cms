@@ -161,9 +161,8 @@
     flex: none;
     overflow-x: hidden;
     overflow-y: auto;
-    width: 320px;
     padding: 16px;
-    background-color: var(--sui-primary-background-color);
+    width: 320px;
 
     .preview {
       overflow: hidden;

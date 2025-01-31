@@ -45,9 +45,12 @@
       overflow: auto;
       box-sizing: content-box;
       border-top-left-radius: 16px;
-      padding: 8px;
       width: 320px;
       background-color: var(--sui-secondary-background-color);
+
+      :global([role='listbox']) {
+        padding: 12px;
+      }
     }
   }
 </style>

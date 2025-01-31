@@ -170,8 +170,8 @@
       :global(.grid-cell.image:empty::before) {
         display: block;
         border-radius: var(--sui-control-medium-border-radius);
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         background-color: var(--sui-secondary-background-color);
         content: '';
       }
@@ -190,7 +190,7 @@
       }
 
       :global([role='gridcell'].checkbox) {
-        width: 16px;
+        width: 44px;
       }
 
       :global([role='gridcell'].title) {
@@ -199,9 +199,8 @@
       }
 
       :global([role='gridcell'].image) {
-        box-sizing: content-box;
         padding: 0 8px;
-        width: 32px;
+        width: 48px;
       }
     }
   }
