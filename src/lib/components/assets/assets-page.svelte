@@ -112,7 +112,9 @@
           <PrimaryToolbar />
         {/snippet}
         {#snippet secondaryToolbar()}
-          <SecondaryToolbar />
+          {#if $listedAssets.length}
+            <SecondaryToolbar />
+          {/if}
         {/snippet}
         {#snippet mainContent()}
           <AssetList />

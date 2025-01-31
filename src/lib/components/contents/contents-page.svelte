@@ -166,7 +166,9 @@
           <PrimaryToolbar />
         {/snippet}
         {#snippet secondaryToolbar()}
-          <SecondaryToolbar />
+          {#if $selectedCollection?._type === 'entry' && $listedEntries.length}
+            <SecondaryToolbar />
+          {/if}
         {/snippet}
         {#snippet mainContent()}
           <MainContent />
