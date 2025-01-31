@@ -4,15 +4,15 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 The free, open source alternative to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
 
-![Screenshot: Open Source Git-based Headless CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1-20240507.webp)<br>
+![Screenshot: Git-based Headless CMS Made Right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250131)<br>
 
-![Screenshot: Fast and Lightweight; Modern UX with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2-20240507.webp)<br>
+![Screenshot: Fast and Lightweight; Modern UX/UI with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2.webp?20250131)<br>
 
-![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3-20240507.webp)<br>
+![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250131)<br>
 
-![Screenshot: All-New Asset Library; First Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4-20240507.webp)<br>
+![Screenshot: Full Fledged Asset Library; First Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250131)<br>
 
-![Screenshot: Works with Remote (GitHub, GitLab) and Local Repositories; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5-20240507.webp)<br>
+![Screenshot: GitHub, GitLab; Streamlined Local Repository Workflow; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250131)<br>
 
 ## Table of contents
 
@@ -268,6 +268,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
       - The `summary` field option for the List and Object widgets
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
     - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the entry slug, e.g. `{{date | date('YYYYMMDD-HHmm', 'utc')}}`. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/278#issuecomment-2565313420))
+    - The `date` transformation returns an empty string if an invalid date is given.[^176]
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
@@ -1446,3 +1447,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^174]: Netlify/Decap CMS [#6616](https://github.com/decaporg/decap-cms/issues/6616)
 
 [^175]: Netlify/Decap CMS [#7380](https://github.com/decaporg/decap-cms/issues/7380)
+
+[^176]: Netlify/Decap CMS [#6427](https://github.com/decaporg/decap-cms/issues/6427)
