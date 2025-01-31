@@ -2,6 +2,7 @@
   import { SearchBar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
+  import { siteConfig } from '$lib/services/config';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { searchTerms } from '$lib/services/search';
 
@@ -19,7 +20,7 @@
     if (terms) {
       goto(`/search/${terms}`, { replaceState: searching });
     } else if (hadTerms && searching) {
-      goBack(`/collections/${$selectedCollection?.name}`);
+      goBack(`/collections/${$selectedCollection?.name ?? $siteConfig?.collections[0].name}`);
     }
   };
 

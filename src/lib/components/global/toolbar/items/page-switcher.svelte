@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { goto, selectedPageName } from '$lib/services/app/navigation';
   import { selectedAssetFolder } from '$lib/services/assets';
+  import { siteConfig } from '$lib/services/config';
   import { selectedCollection } from '$lib/services/contents/collection';
 
   const pages = $derived([
@@ -10,7 +11,7 @@
       key: 'collections',
       label: $_('contents'),
       icon: 'library_books',
-      link: `/collections/${$selectedCollection?.name}`,
+      link: `/collections/${$selectedCollection?.name ?? $siteConfig?.collections[0].name}`,
     },
     {
       key: 'assets',
