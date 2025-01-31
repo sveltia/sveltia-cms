@@ -39,7 +39,13 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
       (dateOnly && !!slugPartStr.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
       (dateOnly && !!slugPartStr.match(/T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z$/));
 
-    return (useUTC ? moment.utc : moment)(slugPartStr).format(format);
+    const date = (useUTC ? moment.utc : moment)(slugPartStr);
+
+    if (date.isValid()) {
+      return date.format(format);
+    }
+
+    return '';
   }
 
   const defaultTransformer = transformation.match(defaultRegex);

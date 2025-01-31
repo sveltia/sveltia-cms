@@ -131,5 +131,12 @@ describe('Test applyTransformation()', () => {
         fieldConfig: { name: 'date', widget: 'datetime', time_format: false },
       }),
     ).toBe('January 23, 2024 12:00 AM');
+    // Invalid date
+    expect(
+      applyTransformation({
+        value: '',
+        transformation: "date('LL')",
+      }),
+    ).toBe('');
   });
 });
