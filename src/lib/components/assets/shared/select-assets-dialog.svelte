@@ -50,8 +50,8 @@
     kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file'),
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
-  const internalPath = $derived($selectedCollection?._assetFolder ?? '');
-  const entryRelative = $derived($selectedCollection?._assetFolder ?? false);
+  const internalPath = $derived($selectedCollection?._assetFolder?.internalPath ?? '');
+  const entryRelative = $derived($selectedCollection?._assetFolder?.entryRelative ?? false);
   const showCollectionAssets = $derived(!!internalPath && !entryRelative);
   const showEntryAssets = $derived(!!entry && entryRelative);
   const showUploader = $derived(libraryName === 'upload');
