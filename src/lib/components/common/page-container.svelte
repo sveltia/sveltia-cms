@@ -60,9 +60,6 @@
       flex: none;
       width: 240px;
       overflow-y: auto;
-      background-color: var(--sui-tertiary-background-color);
-      border-width: 0 1px 0 0;
-      border-color: var(--sui-primary-border-color);
 
       :global([role='radiogroup']) {
         width: 100%;
@@ -139,18 +136,11 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      border-top-left-radius: 16px;
+      background-color: var(--sui-primary-background-color);
 
       :global(.primary.global[role='toolbar']) {
         justify-content: center;
-      }
-
-      :global(.primary:not(.global)[role='toolbar']) {
-        background-color: var(--sui-tertiary-background-color);
-      }
-
-      :global(.secondary[role='toolbar']) {
-        border-width: 0 0 1px;
-        border-color: var(--sui-primary-border-color);
       }
     }
   }

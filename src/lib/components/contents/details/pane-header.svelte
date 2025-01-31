@@ -198,7 +198,6 @@
 <style lang="scss">
   .header {
     flex: none !important;
-    background-color: var(--sui-tertiary-background-color);
 
     & > :global([role='toolbar']) {
       margin-right: auto;

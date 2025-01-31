@@ -120,6 +120,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    background-color: var(--sui-secondary-background-color);
   }
 
   [role='status'] {

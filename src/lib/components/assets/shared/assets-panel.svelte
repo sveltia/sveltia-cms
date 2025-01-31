@@ -72,5 +72,9 @@
   .grid-wrapper {
     overflow-y: auto;
     height: 100%;
+
+    :global([role='listbox']) {
+      background-color: transparent;
+    }
   }
 </style>

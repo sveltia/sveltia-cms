@@ -41,8 +41,6 @@
     }
 
     & > :global(.toolbar) {
-      border-width: 0 0 1px 0 !important;
-
       :global(.buttons) {
         flex: auto;
         display: flex;

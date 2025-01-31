@@ -41,7 +41,7 @@
 
 <style lang="scss">
   .subsection {
-    margin: 8px auto;
+    margin: 16px auto;
     border: 2px solid var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
 
@@ -57,7 +57,7 @@
     height: 24px;
     padding-inline: 8px;
     color: var(--sui-secondary-foreground-color);
-    background-color: var(--sui-selected-background-color);
+    background-color: var(--sui-secondary-border-color);
     font-size: var(--sui-font-size-small);
     font-weight: var(--sui-font-weight-bold);
   }

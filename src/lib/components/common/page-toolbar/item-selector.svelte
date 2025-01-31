@@ -44,7 +44,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    margin-inline: 8px;
+    margin-inline: 20px;
   }
 
   span {

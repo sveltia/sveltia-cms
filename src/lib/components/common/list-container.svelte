@@ -43,11 +43,11 @@
       }
 
       :global(.grid-view) {
-        padding: 4px;
+        padding: 16px;
       }
 
       :global(.list-view) {
-        padding: 12px;
+        padding: 8px 16px;
       }
     }
   }

@@ -137,7 +137,7 @@
       z-index: 100;
       display: flex;
       flex-direction: column;
-      background-color: var(--sui-primary-background-color);
+      background-color: var(--sui-secondary-background-color);
       transition: filter 250ms;
     }
 
@@ -153,7 +153,6 @@
       .preview {
         flex: auto;
         overflow: hidden;
-        border-right: 1px solid var(--sui-primary-border-color);
 
         iframe,
         pre,

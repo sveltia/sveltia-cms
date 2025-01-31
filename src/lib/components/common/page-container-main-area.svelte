@@ -44,8 +44,10 @@
       flex: none;
       overflow: auto;
       box-sizing: content-box;
+      border-top-left-radius: 16px;
+      padding: 8px;
       width: 320px;
-      border-left: 1px solid var(--sui-primary-border-color);
+      background-color: var(--sui-secondary-background-color);
     }
   }
 </style>

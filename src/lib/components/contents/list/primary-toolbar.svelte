@@ -68,10 +68,6 @@
 <DeleteEntriesDialog bind:open={showDeleteDialog} />
 
 <style lang="scss">
-  h2 {
-    flex: none !important;
-  }
-
   .description {
     flex: auto;
     font-size: var(--sui-font-size-small);

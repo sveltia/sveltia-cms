@@ -86,7 +86,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background-color: var(--sui-selected-background-color);
+    background-color: var(--sui-secondary-border-color);
 
     & > div {
       display: flex;

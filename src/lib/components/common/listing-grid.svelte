@@ -45,6 +45,7 @@
     :global(.grid-body) {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(var(--grid-size, 200px), 1fr));
+      gap: 16px;
       border-width: 0;
     }
 
@@ -71,14 +72,12 @@
       }
 
       :global(.grid-cell.image:empty) {
-        border-radius: var(--sui-control-medium-border-radius);
-        background-color: var(--sui-secondary-background-color);
         aspect-ratio: 1 / 1;
       }
 
       :global(.checkbox) {
         position: absolute;
-        inset: 8px auto auto 8px;
+        inset: 4px auto auto 4px;
         z-index: 2;
       }
 
@@ -89,7 +88,7 @@
           -webkit-line-clamp: 2;
           line-clamp: 2;
           overflow: hidden;
-          margin: 12px 8px 0;
+          margin: 12px;
           height: 40px;
           line-height: 1.5;
           word-break: break-all;
@@ -98,8 +97,8 @@
     }
 
     :global([role='row'][tabindex]) {
-      border-radius: var(--sui-control-medium-border-radius);
-      padding: 8px;
+      border-radius: var(--sui-control-large-border-radius);
+      background-color: var(--sui-secondary-background-color);
       cursor: pointer;
       transition: background-color 200ms;
 
@@ -148,6 +147,10 @@
         background-color: var(--sui-hover-background-color);
       }
 
+      :global([role='rowheader']) {
+        border-width: 0;
+      }
+
       :global([role='gridcell']) {
         vertical-align: middle;
         overflow: hidden;
@@ -167,14 +170,10 @@
       :global(.grid-cell.image:empty::before) {
         display: block;
         border-radius: var(--sui-control-medium-border-radius);
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         background-color: var(--sui-secondary-background-color);
         content: '';
-      }
-
-      :global([role='gridcell']:first-child) {
-        padding-left: 16px;
       }
 
       :global([role='gridcell']:last-child) {
@@ -201,9 +200,8 @@
 
       :global([role='gridcell'].image) {
         box-sizing: content-box;
-        padding: 8px;
-        width: 40px;
-        height: 40px;
+        padding: 0 8px;
+        width: 32px;
       }
     }
   }

@@ -54,5 +54,6 @@
 <style lang="scss">
   .wrapper {
     display: contents;
+    --sui-textbox-border-width: 0;
   }
 </style>

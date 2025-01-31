@@ -163,11 +163,13 @@
     overflow-y: auto;
     width: 320px;
     padding: 16px;
+    background-color: var(--sui-primary-background-color);
 
     .preview {
       overflow: hidden;
       margin: 0 0 16px;
-      border-radius: var(--sui-control-medium-border-radius);
+      border-radius: var(--sui-control-large-border-radius);
+      background-color: var(--sui-content-background-color);
       aspect-ratio: 1 / 1;
     }
 

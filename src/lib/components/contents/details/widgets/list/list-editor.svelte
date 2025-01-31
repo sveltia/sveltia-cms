@@ -446,7 +446,7 @@
   }
 
   .item {
-    margin: 8px 0;
+    margin: 16px 0;
     border-width: 2px;
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);

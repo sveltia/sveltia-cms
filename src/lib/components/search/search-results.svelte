@@ -72,8 +72,6 @@
   header {
     display: flex;
     align-items: center;
-    border-width: 0 0 1px 0;
-    border-color: var(--sui-primary-border-color);
     padding: 0 16px;
     height: 40px;
     background-color: var(--sui-tertiary-background-color);

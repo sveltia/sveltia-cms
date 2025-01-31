@@ -270,7 +270,7 @@
       z-index: 100;
       display: flex;
       flex-direction: column;
-      background-color: var(--sui-primary-background-color);
+      background-color: var(--sui-secondary-background-color);
       transition: filter 250ms;
     }
 
@@ -282,17 +282,15 @@
       flex: auto;
       overflow: hidden;
       display: flex;
+      gap: 4px;
+      background-color: var(--sui-secondary-background-color); // same as toolbar
 
       & > :global(div) {
         display: flex;
         flex-direction: column;
         min-width: 480px;
+        background-color: var(--sui-primary-background-color);
         transition: all 500ms;
-      }
-
-      & > :global(div:first-child:not(:last-child)) {
-        border-width: 0 1px 0 0;
-        border-color: var(--sui-primary-border-color);
       }
 
       & > :global([data-mode='edit']) {

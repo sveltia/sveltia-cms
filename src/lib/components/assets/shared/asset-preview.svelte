@@ -177,7 +177,6 @@
       border-style: solid;
       border-color: transparent;
       padding: var(--tile-padding, 8px);
-      background-color: var(--sui-secondary-background-color);
 
       :global(.sui.icon) {
         font-size: 48px;
@@ -185,8 +184,8 @@
     }
 
     &.icon {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
     }
 
     &.tile,
