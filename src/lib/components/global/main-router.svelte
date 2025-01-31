@@ -12,6 +12,7 @@
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { showAssetOverlay } from '$lib/services/assets';
+  import { siteConfig } from '$lib/services/config';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
 
@@ -43,7 +44,9 @@
 
     if (!pageName) {
       // Redirect any invalid page to the contents page
-      window.location.replace(`#/collections/${$selectedCollection?.name}`);
+      window.location.replace(
+        `#/collections/${$selectedCollection?.name ?? $siteConfig?.collections[0].name}`,
+      );
     } else if ($selectedPageName !== pageName) {
       $selectedPageName = pageName;
     }

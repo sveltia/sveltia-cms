@@ -326,7 +326,9 @@ export const sortFields = derived(
 
     const _collection = /** @type {EntryCollection} */ (collection);
     const { fields, default: defaultSort } = getSortableFields(_collection);
-    const view = get(entryListSettings)?.[_collection.name] ?? { type: 'list', sort: defaultSort };
+    const view = get(entryListSettings)?.[_collection.name] ?? { type: 'list' };
+
+    view.sort ??= defaultSort;
 
     if (_allEntries.every((entry) => !!entry.commitAuthor) && !fields.includes('author')) {
       fields.push('commit_author');
