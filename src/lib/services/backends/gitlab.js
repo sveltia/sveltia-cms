@@ -564,12 +564,13 @@ const fetchFileContents = async (fetchingFiles) => {
 
       if (commit) {
         const {
-          author: { id, username },
+          author,
           authorName,
           authorEmail,
           committedDate,
         } = commit;
 
+        const { id, username } = author ?? {};
         const idMatcher = id?.match(/\d+/);
 
         data.meta = {
