@@ -126,6 +126,7 @@ importers:
       vitest:
         specifier: ^3.0.4
         version: 3.0.4(@types/node@22.12.0)(jsdom@26.0.0)(sass@1.83.4)(yaml@2.7.0)
+    publishDirectory: package
 
 packages:
 
