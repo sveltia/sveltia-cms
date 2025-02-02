@@ -116,7 +116,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 165+ of them, or 315+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 165+ of them, or 325+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 300 or all relevant, fixable and worthwhile issues in the future; 500 including duplicates
   - Note: Issues include feature requests, bug reports, [“closed as stale” issues](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) and [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
@@ -125,7 +125,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![315 Netlify/Decap CMS Issues Solved in Sveltia CMS (Including Duplicates)](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250129)<br>
+![325 Netlify/Decap CMS Issues Solved in Sveltia CMS (Including Duplicates)](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250202)<br>
 
 ## Differentiators
 
@@ -196,7 +196,8 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 
 ### Better installation
 
-- Sveltia CMS won’t cause peer dependency conflicts due to legacy third-party React libraries.[^175] In fact, we build the app with [Svelte](https://svelte.dev/) and [our own UI library](https://github.com/sveltia/sveltia-ui) to reduce dependencies.
+- Sveltia CMS is built with [Svelte](https://svelte.dev/), and we only publish compiled vanilla JavaScript bundles, so there are no React compatibility issues that might prevent developers from upgrading your application.[^177] We haven’t actually integrated React for custom widgets and other features yet, but anyway, no dependencies are installed when you [install the app with npm](#installing-with-npm).
+- Sveltia CMS also won’t cause peer dependency conflicts due to legacy third-party React libraries.[^175] We build the app using Svelte and [our own UI library](https://github.com/sveltia/sveltia-ui) to reduce dependencies.
 - The [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) is automatically added to HTML to prevent the admin page from being indexed by search engines.[^174] Developers are still encouraged to manually add `<meta name="robots" content="noindex">` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
@@ -1446,6 +1447,8 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^174]: Netlify/Decap CMS [#6616](https://github.com/decaporg/decap-cms/issues/6616)
 
-[^175]: Netlify/Decap CMS [#7380](https://github.com/decaporg/decap-cms/issues/7380)
+[^175]: Netlify/Decap CMS [#5376](https://github.com/decaporg/decap-cms/issues/5376), [#7380](https://github.com/decaporg/decap-cms/issues/7380)
 
 [^176]: Netlify/Decap CMS [#6427](https://github.com/decaporg/decap-cms/issues/6427)
+
+[^177]: Netlify/Decap CMS [#2673](https://github.com/decaporg/decap-cms/issues/2673), [#5315](https://github.com/decaporg/decap-cms/issues/5315), [#6499](https://github.com/decaporg/decap-cms/issues/6499), [#6544](https://github.com/decaporg/decap-cms/issues/6544), [#6551](https://github.com/decaporg/decap-cms/issues/6551), [#6679](https://github.com/decaporg/decap-cms/issues/6679), [#6773](https://github.com/decaporg/decap-cms/issues/6773), [#6883](https://github.com/decaporg/decap-cms/issues/6883), [#7363](https://github.com/decaporg/decap-cms/discussions/7363), [#7365](https://github.com/decaporg/decap-cms/issues/7365),
