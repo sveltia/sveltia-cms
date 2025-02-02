@@ -125,7 +125,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![325 Netlify/Decap CMS Issues Solved in Sveltia CMS (Including Duplicates)](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250202)<br>
+![165 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?2025020215)<br>
 
 ## Differentiators
 
