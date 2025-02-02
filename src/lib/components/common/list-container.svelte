@@ -38,16 +38,9 @@
 
       :global(:is(.grid-view, .list-view)) {
         display: block;
+        padding: 0 16px 16px;
         height: 100%;
         overflow-y: auto;
-      }
-
-      :global(.grid-view) {
-        padding: 16px;
-      }
-
-      :global(.list-view) {
-        padding: 8px 16px;
       }
     }
   }

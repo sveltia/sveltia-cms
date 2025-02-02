@@ -176,7 +176,7 @@
       border-width: 1px;
       border-style: solid;
       border-color: transparent;
-      padding: var(--tile-padding, 8px);
+      padding: var(--tile-padding, 12px);
 
       :global(.sui.icon) {
         font-size: 48px;
@@ -184,14 +184,14 @@
     }
 
     &.icon {
-      width: 32px;
-      height: 32px;
+      border-radius: var(--sui-control-medium-border-radius);
+      width: var(--icon-size, 32px);
+      height: var(--icon-size, 32px);
     }
 
     &.tile,
     &.icon {
       overflow: hidden;
-      border-radius: var(--sui-control-medium-border-radius);
       aspect-ratio: 1 / 1;
     }
 

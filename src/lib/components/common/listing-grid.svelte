@@ -56,17 +56,6 @@
       height: auto;
       text-align: left;
 
-      &:focus-visible {
-        outline-color: transparent;
-
-        :global(.preview) {
-          outline-offset: -2px;
-          outline-width: 2px !important;
-          outline-style: solid;
-          outline-color: var(--sui-primary-accent-color-light);
-        }
-      }
-
       :global(.grid-cell) {
         display: block;
       }
@@ -111,6 +100,8 @@
   }
 
   .list-view {
+    --icon-size: 36px;
+
     :global([role='grid']) {
       :global(.row-group) {
         :global(.row-group-caption + .grid-row) {
@@ -127,16 +118,8 @@
       }
 
       :global([role='row']) {
-        outline-offset: -2px;
-        outline-width: 2px !important;
-        outline-style: solid;
-        outline-color: transparent;
         transition-property: background-color, outline-color;
         transition-duration: 200ms;
-
-        &:focus {
-          outline-color: var(--sui-primary-accent-color-light);
-        }
       }
 
       :global([role='row'][tabindex]) {
@@ -152,14 +135,18 @@
       }
 
       :global([role='gridcell']) {
-        vertical-align: middle;
         overflow: hidden;
-        text-overflow: ellipsis;
+        padding: 0 16px 0 0;
         height: 40px;
-        padding: 0 8px;
         max-width: 100%;
         color: var(--sui-secondary-foreground-color);
         white-space: nowrap;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+
+        &:first-child {
+          padding-left: 16px;
+        }
 
         :global(.label) {
           overflow: hidden;
@@ -170,14 +157,10 @@
       :global(.grid-cell.image:empty::before) {
         display: block;
         border-radius: var(--sui-control-medium-border-radius);
-        width: 32px;
-        height: 32px;
+        width: var(--icon-size);
+        height: var(--icon-size);
         background-color: var(--sui-secondary-background-color);
         content: '';
-      }
-
-      :global([role='gridcell']:last-child) {
-        padding-right: 16px;
       }
 
       :global([role='row'] [role='gridcell']) {
@@ -190,6 +173,7 @@
       }
 
       :global([role='gridcell'].checkbox) {
+        padding-left: 8px;
         width: 44px;
       }
 
@@ -199,7 +183,6 @@
       }
 
       :global([role='gridcell'].image) {
-        padding: 0 8px;
         width: 48px;
       }
     }
