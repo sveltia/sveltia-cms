@@ -493,7 +493,7 @@ const fetchFileContents = async (fetchingFiles) => {
 
   /**
    * @type {{
-   * author: { id?: string, username?: string },
+   * author: { id?: string, username?: string } | null,
    * authorName: string, authorEmail: string, committedDate: string
    * }[]}
    */
@@ -508,7 +508,7 @@ const fetchFileContents = async (fetchingFiles) => {
       const result = //
         /**
          * @type {{ project: { repository: { [tree_index: string]: { lastCommit: {
-         * author: { id?: string, username?: string },
+         * author: { id?: string, username?: string } | null,
          * authorName: string, authorEmail: string, committedDate: string
          * } } } } } }}
          */ (
@@ -563,13 +563,8 @@ const fetchFileContents = async (fetchingFiles) => {
       };
 
       if (commit) {
-        const {
-          author: { id, username },
-          authorName,
-          authorEmail,
-          committedDate,
-        } = commit;
-
+        const { author, authorName, authorEmail, committedDate } = commit;
+        const { id, username } = author ?? {};
         const idMatcher = id?.match(/\d+/);
 
         data.meta = {
