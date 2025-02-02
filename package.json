@@ -8,7 +8,8 @@
     "url": "github:sveltia/sveltia-cms"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "dev": "vite",

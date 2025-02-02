@@ -1,4 +1,5 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { cp, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { sveltePreprocess } from 'svelte-preprocess';
 import { defineConfig } from 'vite';
@@ -33,6 +34,7 @@ export default defineConfig({
       // https://stackoverflow.com/q/71500190
       preserveEntrySignatures: 'strict',
     },
+    outDir: 'package/dist',
   },
   // https://esbuild.github.io/api/#legal-comments
   esbuild: { legalComments: 'eof' },
@@ -41,5 +43,25 @@ export default defineConfig({
       emitCss: false,
       preprocess: sveltePreprocess(),
     }),
+    {
+      name: 'copy-package-files',
+      closeBundle: {
+        async: true,
+        sequential: true,
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        handler: async () => {
+          const packageJson = JSON.parse(await readFile('package.json'));
+
+          // Remove unnecessary properties as we only publish compiled bundles
+          delete packageJson.dependencies;
+          delete packageJson.devDependencies;
+          delete packageJson.scripts;
+
+          await writeFile('package/package.json', JSON.stringify(packageJson, null, 2));
+          await cp('LICENSE.txt', 'package/LICENSE.txt');
+          await cp('README.md', 'package/README.md');
+        },
+      },
+    },
   ],
 });

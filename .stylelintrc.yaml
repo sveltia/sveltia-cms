@@ -2,7 +2,7 @@ extends:
   - stylelint-config-recommended-scss
 ignoreFiles:
   - node_modules/**
-  - dist/**
+  - package/**
 customSyntax: postcss-html
 rules:
   no-descending-specificity: null

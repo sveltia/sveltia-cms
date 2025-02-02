@@ -1,4 +1,4 @@
-/dist
+/package
 /.vite
 node_modules
 *.log

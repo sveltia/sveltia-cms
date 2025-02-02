@@ -30,6 +30,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Build & publish the app
-        run: npm publish --provenance --access public
+        run: pnpm publish package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

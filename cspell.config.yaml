@@ -16,7 +16,7 @@ useGitignore: true
 ignorePaths:
   - pnpm-lock.yaml
   - data/**/*.json
-  - dist/**
+  - package/**
 words:
   - astrolicious
   - astros
