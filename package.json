@@ -8,6 +8,7 @@
     "url": "github:sveltia/sveltia-cms"
   },
   "publishConfig": {
+    "directory": "package",
     "access": "public",
     "provenance": true
   },
