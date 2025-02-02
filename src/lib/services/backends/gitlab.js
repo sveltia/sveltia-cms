@@ -434,6 +434,20 @@ const fetchFileList = async () => {
 };
 
 /**
+ * @typedef {object} GitLabUserInfo
+ * @property {string} [id] - GitLab user ID.
+ * @property {string} [username] - GitLab user username.
+ */
+
+/**
+ * @typedef {object} GitLabCommit
+ * @property {?GitLabUserInfo} author - Commit author’s GitLab user info.
+ * @property {string} authorName - Commit author’s full name.
+ * @property {string} authorEmail - Commit author’s email.
+ * @property {string} committedDate - Committed date.
+ */
+
+/**
  * Fetch the metadata of entry/asset files as well as text file contents.
  * @param {(BaseEntryListItem | BaseAssetListItem)[]} fetchingFiles - Base entry/asset list items.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
@@ -491,12 +505,7 @@ const fetchFileContents = async (fetchingFiles) => {
 
   dataLoadedProgress.set(undefined);
 
-  /**
-   * @type {{
-   * author: { id?: string, username?: string } | null,
-   * authorName: string, authorEmail: string, committedDate: string
-   * }[]}
-   */
+  /** @type {GitLabCommit[]} */
   const commits = [];
 
   // Fetch commit info only when there aren’t many files, because it’s costly
@@ -507,10 +516,9 @@ const fetchFileContents = async (fetchingFiles) => {
     for (;;) {
       const result = //
         /**
-         * @type {{ project: { repository: { [tree_index: string]: { lastCommit: {
-         * author: { id?: string, username?: string } | null,
-         * authorName: string, authorEmail: string, committedDate: string
-         * } } } } } }}
+         * @type {{ project: { repository: { [tree_index: string]: {
+         * lastCommit: GitLabCommit
+         * } } } } }}
          */ (
           await fetchGraphQL(
             `
