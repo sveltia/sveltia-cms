@@ -95,7 +95,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly inactive
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and numerous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right one, as proven by the [hundreds of improvements](#differentiators) we have already made.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and numerous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right and inevitable one, as proven by the [hundreds of improvements](#differentiators) we have already made.
 
 While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other Netlify CMS successors. We hope that, especially with the [robust i18n support](#better-i18n-support), our product will eventually become an attractive choice for anyone looking for a free headless CMS.
 
@@ -197,7 +197,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 ### Better installation
 
 - Sveltia CMS is built with [Svelte](https://svelte.dev/), and we only publish compiled vanilla JavaScript bundles, so there are no React compatibility issues that might prevent developers from upgrading a project.[^177] We haven’t actually integrated React for custom widgets and other features yet, but anyway, no dependencies will be installed when you [install the app with npm](#installing-with-npm).
-- Sveltia CMS also won’t cause peer dependency conflicts due to legacy third-party React UI libraries.[^175] We build the app using [our own Svelte UI library](https://github.com/sveltia/sveltia-ui) to reduce dependencies.
+- Sveltia CMS also won’t cause peer dependency conflicts due to legacy third-party React UI libraries.[^175] We build the app using [our own Svelte UI library](https://github.com/sveltia/sveltia-ui) to reduce reliance on third-party dependencies.
 - The [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) is automatically added to HTML to prevent the admin page from being indexed by search engines.[^174] Developers are still encouraged to manually add `<meta name="robots" content="noindex">` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
@@ -505,7 +505,7 @@ These limitations are expected to be resolved before the 1.0 release scheduled f
 
 ### Features to be implemented after GA
 
-Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with these advanced features and we want to implement them the right way.
+Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with these collaboration and beta features and we want to implement them the right way.
 
 - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
@@ -1043,7 +1043,9 @@ Now you can see the application version under the Help menu, next to the Account
 
 ## Support & feedback
 
-While we don’t have dedicated developer/user support resources, [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) and [feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=general) are welcome on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. We also have a [Discord channel](https://discord.gg/5hwCGqup5b) for casual chat.
+While we don’t have dedicated developer/user support resources, you can post [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. [Feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=ideas) is also welcome, but please check the [Compatibility](#compatibility) and [Roadmap](#roadmap) sections of this README before starting a new discussion — your idea may already be covered.
+
+Hop on [our Discord server](https://discord.gg/5hwCGqup5b) for casual chat.
 
 As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are migrating from the other product or Static CMS. We are happy to help you migrate, but **we cannot help you set up Sveltia CMS from scratch** through our free support channels.
 
