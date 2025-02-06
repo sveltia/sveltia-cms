@@ -8,7 +8,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
 
 ![Screenshot: Fast and Lightweight; Modern UX/UI with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2.webp?20250131)<br>
 
-![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250131)<br>
+![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250206)<br>
 
 ![Screenshot: Full Fledged Asset Library; First Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250131)<br>
 
