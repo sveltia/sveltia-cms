@@ -135,10 +135,11 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - The maintainer tries to be as responsive as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
-- Offers a modern, intuitive user interface, including an immersive dark mode,[^2] inspired in part by the Netlify CMS v3 prototype.[^1]
-- We develop [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
+- Offers a modern, intuitive user interface that utilizes the full viewport, inspired in part by the Netlify CMS v3 prototype.[^1][^178]
+- Immersive dark mode is available.[^2] By default, the UI theme follows the user’s system preference.
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common React application crashes.[^113][^129] Best of all, Svelte offers great performance.
+- We develop [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
 - The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
@@ -314,6 +315,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 ### Better content preview
 
 - The Preview pane comes with a minimal default style.[^168] It looks nice without a custom preview style or template.
+- For better performance, the Preview pane doesn’t use an `<iframe>`.[^179]
 - The Preview pane displays all fields, including each label, making it easier to see which fields are populated.
 - When you click on a field in the Preview pane, the corresponding field in the Edit pane is highlighted.[^41] It will be automatically expanded if collapsed.
 - The Preview pane won’t cause a scrolling issue.[^136]
@@ -1454,3 +1456,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^176]: Netlify/Decap CMS [#6427](https://github.com/decaporg/decap-cms/issues/6427)
 
 [^177]: Netlify/Decap CMS [#2673](https://github.com/decaporg/decap-cms/issues/2673), [#5315](https://github.com/decaporg/decap-cms/issues/5315), [#6499](https://github.com/decaporg/decap-cms/issues/6499), [#6544](https://github.com/decaporg/decap-cms/issues/6544), [#6551](https://github.com/decaporg/decap-cms/issues/6551), [#6679](https://github.com/decaporg/decap-cms/issues/6679), [#6773](https://github.com/decaporg/decap-cms/issues/6773), [#6883](https://github.com/decaporg/decap-cms/issues/6883), [#7363](https://github.com/decaporg/decap-cms/discussions/7363), [#7365](https://github.com/decaporg/decap-cms/issues/7365) — This problem occurs every time a new major version of React is released.
+
+[^178]: Netlify/Decap CMS [#2536](https://github.com/decaporg/decap-cms/issues/2536)
+
+[^179]: Netlify/Decap CMS [#1891](https://github.com/decaporg/decap-cms/issues/1891)
