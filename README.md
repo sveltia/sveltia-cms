@@ -129,7 +129,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 ## Differentiators
 
-We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of small and large improvements we have made. Here’s what makes Sveltia CMS different. Look how serious we are!
+We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of improvements we have made, from the small to the large. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Better UX
 
@@ -149,7 +149,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
 - Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB),[^57][^64] even though we haven’t implemented some features yet, but rather added many new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is underway.
-- Sveltia CMS is free of technical debt (except for the Moment.js dependency, which will soon be replaced by Day.js) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- Sveltia CMS is free of technical debt (except for the Moment.js dependency, which will be replaced by Day.js before GA) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/articles/file-system-access/) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
@@ -499,15 +499,15 @@ These limitations are expected to be resolved before the 1.0 release scheduled f
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
-| [Code](https://decapcms.org/docs/widgets/#code) | Coming soon. |
+| [Code](https://decapcms.org/docs/widgets/#code) | Not yet implemented. |
 | [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
 | [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
-| [Map](https://decapcms.org/docs/widgets/#map) | Coming soon. |
+| [Map](https://decapcms.org/docs/widgets/#map) | Not yet implemented. |
 | [Markdown](https://decapcms.org/docs/widgets/#markdown) | Custom components are not yet supported. There is no language selector yet in the built-in `code-block` component. |
 
 ### Features to be implemented after GA
 
-Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with these collaboration and beta features and we want to implement them the right way.
+Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with these collaboration and beta features — we want to implement them the right way.
 
 - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
@@ -520,7 +520,7 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 - Configuration options
   - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
   - The `default` option for sortable fields is [implemented in Sveltia CMS](#specifying-default-sort-field-and-direction).
-  - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented soon. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
+  - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented before GA. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the `yaml` library options directly for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
 - I18n support
@@ -528,8 +528,8 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 - Widgets
   - The KeyValue widget is implemented in Sveltia CMS with the same options.
   - The UUID widget is also implemented, but with different options.
-  - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
-  - The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS soon. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
+  - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input`, respectively, in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
+  - The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS before GA. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
 - Customization
   - `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
 
