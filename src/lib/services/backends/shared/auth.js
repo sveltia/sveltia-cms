@@ -110,6 +110,17 @@ const authorize = async ({ backendName, authURL }) => {
  * @returns {Promise<string>} Auth token.
  */
 export const initServerSideAuth = async ({ backendName, siteDomain, authURL, scope }) => {
+  try {
+    // `siteDomain` may contain non-ASCII characters. When authenticating with Netlify, such
+    // internationalized domain names (IDNs) must be written in Punycode. Use `URL` for conversion,
+    // e.g `日本語.jp` -> `xn--wgv71a119e.jp`
+    if (new URL(authURL).hostname === 'https://api.netlify.com') {
+      siteDomain = new URL(`https://${siteDomain}`).hostname;
+    }
+  } catch {
+    //
+  }
+
   const params = new URLSearchParams({
     provider: backendName,
     site_id: siteDomain,
