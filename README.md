@@ -116,7 +116,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 165+ of them, or 330+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 170+ of them, or 335+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 200 by GA; 300, or 500 including duplicates, in the future (yes, you read that right)
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without a real solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
@@ -125,7 +125,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![165 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?2025020215)<br>
+![170 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250210)<br>
 
 ## Differentiators
 
@@ -311,6 +311,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - A long validation error message is displayed in full, without being hidden behind the field label.[^59]
 - Any links to other entries will work as expected, with the Content Editor being updated for the other.[^100]
 - In the Boolean and Select widgets, you don’t have to update a value twice to re-enable the Save button after saving an entry.[^139]
+- `data` can be used as a field name without causing an error when saving the entry.[^180]
 
 ### Better content preview
 
@@ -1459,3 +1460,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^178]: Netlify/Decap CMS [#2536](https://github.com/decaporg/decap-cms/issues/2536)
 
 [^179]: Netlify/Decap CMS [#1891](https://github.com/decaporg/decap-cms/issues/1891)
+
+[^180]: Netlify/Decap CMS [#7399](https://github.com/decaporg/decap-cms/issues/7399)
