@@ -336,12 +336,16 @@ const commitChanges = async (changes) =>
         }
 
         if (action === 'delete') {
-          const { dirname, basename: fileName } = getPathInfo(stripSlashes(path));
-          const dirPath = /** @type {string} */ (dirname);
-          const dirPathArray = dirPath.split('/');
+          const { dirname: dirPath = '', basename: fileName } = getPathInfo(stripSlashes(path));
           let dirHandle = /** @type {FileSystemDirectoryHandle} */ (await getHandleByPath(dirPath));
 
           await dirHandle.removeEntry(fileName);
+
+          if (!dirPath) {
+            return null;
+          }
+
+          const dirPathArray = dirPath.split('/');
 
           // Delete an empty enclosing folder recursively
           for (;;) {
