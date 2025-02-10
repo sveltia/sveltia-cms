@@ -330,7 +330,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - In other words, in Sveltia CMS, `required: false` makes data input optional, but doesn’t make data output optional.
   - To omit empty optional fields from data output, use `omit_empty_optional_fields: true` in the [data output options](#controlling-data-output). This is useful if you have data type validations that expect `undefined`.[^156]
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file.[^11]
-- Leading and trailing spaces in text-type field values are automatically removed when you save an entry.[^37]
+- Leading/trailing whitespaces in text-type field values are automatically removed when you save an entry.[^37]
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility.[^119]
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML.[^147]
 - Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes.[^155][^9]
@@ -1175,7 +1175,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^36]: Netlify/Decap CMS [#6325](https://github.com/decaporg/decap-cms/issues/6325)
 
-[^37]: Netlify/Decap CMS [#1481](https://github.com/decaporg/decap-cms/issues/1481)
+[^37]: Netlify/Decap CMS [#1481](https://github.com/decaporg/decap-cms/issues/1481), [#7398](https://github.com/decaporg/decap-cms/issues/7398)
 
 [^38]: Netlify/Decap CMS [#1984](https://github.com/decaporg/decap-cms/issues/1984)
 
