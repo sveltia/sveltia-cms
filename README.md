@@ -117,8 +117,8 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 165+ of them, or 330+ including duplicates, have been effectively solved in Sveltia CMS
-  - Target: 200 by GA; 300, or 500 including duplicates, in the future
-  - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without a fundamental solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions)
+  - Target: 200 by GA; 300, or 500 including duplicates, in the future (yes, you read that right)
+  - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without a real solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Implementing our own enhancement ideas for every part of the product
@@ -135,11 +135,11 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 
 - Created and maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - The maintainer tries to be as responsive as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
-- Offers a modern, intuitive user interface that utilizes the full viewport, inspired in part by the Netlify CMS v3 prototype.[^1][^178]
+- Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1]
 - Immersive dark mode is available.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common React application crashes.[^113][^129] Best of all, Svelte offers great performance.
-- We develop [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
+- We build [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
 - The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
@@ -147,7 +147,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 ### Better performance
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
-- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB),[^57][^64] even though we haven’t implemented some features yet, but rather added many new features. That’s the power of Svelte + [Vite](https://vite.dev/).
+- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though we haven’t implemented some features yet, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is underway.
 - Sveltia CMS is free of technical debt (except for the Moment.js dependency, which will be replaced by Day.js before GA) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
@@ -197,7 +197,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 
 ### Better installation
 
-- Sveltia CMS is built with [Svelte](https://svelte.dev/), and we only publish compiled vanilla JavaScript bundles, so there are no React compatibility issues that might prevent developers from upgrading a project.[^177] We haven’t actually integrated React for custom widgets and other features yet, but anyway, no dependencies will be installed when you [install the app with npm](#installing-with-npm).
+- Sveltia CMS is built with [Svelte](https://svelte.dev/), and we only publish compiled vanilla JavaScript bundles, so there are no React compatibility issues that might prevent developers from upgrading a project for many months.[^177] We haven’t actually integrated React for custom widgets and other features yet, but anyway, no dependencies will be installed when you [install the app with npm](#installing-with-npm).
 - Sveltia CMS also won’t cause peer dependency conflicts due to legacy third-party React UI libraries.[^175] We build the app using [our own Svelte UI library](https://github.com/sveltia/sveltia-ui) to reduce reliance on third-party dependencies.
 - The [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) is automatically added to HTML to prevent the admin page from being indexed by search engines.[^174] Developers are still encouraged to manually add `<meta name="robots" content="noindex">` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
@@ -528,7 +528,7 @@ We plan to provide partial compatibility with [Static CMS](https://github.com/St
 - Widgets
   - The KeyValue widget is implemented in Sveltia CMS with the same options.
   - The UUID widget is also implemented, but with different options.
-  - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input`, respectively, in Sveltia CMS. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
+  - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS, respectively. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
   - The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS before GA. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
 - Customization
   - `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
@@ -1075,7 +1075,6 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - Implementing the [remaining Netlify/Decap CMS features](#features-to-be-implemented-after-ga)
 - Tackling even more Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] mobile optimization,[^18] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
-- Considering further [compatibility with Static CMS](#compatibility-with-static-cms)
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation and content writing
 - Search enhancements
@@ -1451,7 +1450,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^174]: Netlify/Decap CMS [#6616](https://github.com/decaporg/decap-cms/issues/6616)
 
-[^175]: Netlify/Decap CMS [#5376](https://github.com/decaporg/decap-cms/issues/5376), [#7380](https://github.com/decaporg/decap-cms/issues/7380)
+[^175]: Netlify/Decap CMS [#5376](https://github.com/decaporg/decap-cms/issues/5376), [#7203](https://github.com/decaporg/decap-cms/issues/7203), [#7380](https://github.com/decaporg/decap-cms/issues/7380)
 
 [^176]: Netlify/Decap CMS [#6427](https://github.com/decaporg/decap-cms/issues/6427)
 
