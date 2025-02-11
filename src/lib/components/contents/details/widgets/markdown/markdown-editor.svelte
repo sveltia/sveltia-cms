@@ -6,6 +6,11 @@
 <script>
   import { TextEditor } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
+  import { untrack } from 'svelte';
+  import {
+    EditorComponent,
+    getComponentDef,
+  } from '$lib/services/contents/widgets/markdown/component';
   import {
     buttonNameMap,
     defaultButtons,
@@ -14,70 +19,60 @@
     modeNameMap,
     registeredComponents,
   } from '$lib/services/contents/widgets/markdown';
-  import {
-    EditorComponent,
-    getComponentDef,
-  } from '$lib/services/contents/widgets/markdown/component';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {MarkdownField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {MarkdownField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
+
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  let inputValue = $state('');
 
   const allComponents = [...defaultComponents, ...registeredComponents.map((c) => c.id)];
 
-  $: ({
+  const {
     // Widget-specific options
     modes = [...defaultModes],
     buttons = [...defaultButtons],
     editor_components: editorComponents = [...allComponents],
     minimal = false,
-  } = fieldConfig);
+  } = $derived(fieldConfig);
+  const components = $derived(
+    editorComponents
+      .map((name) => {
+        const componentDef =
+          registeredComponents.find((c) => c.id === name) ?? getComponentDef(name);
 
-  /**
-   * @type {string}
-   */
-  let inputValue = '';
+        if (componentDef) {
+          return /** @type {import('@sveltia/ui').TextEditorComponent} */ (
+            new EditorComponent(componentDef)
+          );
+        }
+
+        return undefined;
+      })
+      .filter((component) => !!component),
+  );
 
   /**
    * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
-   * @param {string} newValue - New value to be set.
    */
-  const setInputValue = (newValue) => {
+  const setInputValue = () => {
+    const newValue = typeof currentValue === 'string' ? currentValue : '';
+
     if (inputValue !== newValue) {
       inputValue = newValue;
     }
@@ -85,30 +80,30 @@
 
   /**
    * Update {@link currentValue} based on {@link inputValue} while avoiding a cycle dependency.
-   * @param {string} newValue - New value to be set.
    */
-  const setCurrentValue = (newValue) => {
+  const setCurrentValue = () => {
+    const newValue = inputValue;
+
     if (currentValue !== newValue) {
       currentValue = newValue;
     }
   };
 
-  $: setInputValue(typeof currentValue === 'string' ? currentValue : '');
-  $: setCurrentValue(inputValue ?? '');
+  $effect(() => {
+    void currentValue;
 
-  $: components = editorComponents
-    .map((name) => {
-      const componentDef = registeredComponents.find((c) => c.id === name) ?? getComponentDef(name);
+    untrack(() => {
+      setInputValue();
+    });
+  });
 
-      if (componentDef) {
-        return /** @type {import('@sveltia/ui').TextEditorComponent} */ (
-          new EditorComponent(componentDef)
-        );
-      }
+  $effect(() => {
+    void inputValue;
 
-      return undefined;
-    })
-    .filter((component) => !!component);
+    untrack(() => {
+      setCurrentValue();
+    });
+  });
 </script>
 
 <div role="none" class="wrapper" class:minimal>

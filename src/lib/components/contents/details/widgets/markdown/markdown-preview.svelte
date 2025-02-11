@@ -11,30 +11,22 @@
   import { getMediaFieldURL } from '$lib/services/assets';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {MarkdownField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {MarkdownField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
 
-  $: ({
-    // Widget-specific options
-    sanitize_preview: sanitize = false,
-  } = fieldConfig);
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  marked.use(markedBidi());
+  let rawHTML = $state('');
+
+  const { sanitize_preview: sanitize = false } = $derived(fieldConfig);
 
   /** @type {import("marked").MarkedOptions} */
   const markedOptions = {
@@ -52,11 +44,13 @@
     },
   };
 
-  let rawHTML = '';
+  marked.use(markedBidi());
 
-  $: (async () => {
-    rawHTML = await marked.parse(currentValue ?? '', markedOptions);
-  })();
+  $effect(() => {
+    (async () => {
+      rawHTML = await marked.parse(currentValue ?? '', markedOptions);
+    })();
+  });
 </script>
 
 <div role="none">

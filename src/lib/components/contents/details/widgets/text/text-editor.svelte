@@ -5,59 +5,37 @@
 -->
 <script>
   import { TextArea } from '@sveltia/ui';
-  import { getContext } from 'svelte';
+  import { getContext, untrack } from 'svelte';
   import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {TextField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {TextField}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  /**
-   * @type {string}
-   */
-  let inputValue = '';
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    fieldId,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  let inputValue = $state('');
+
+  const { extraHint } = getContext('field-editor') ?? {};
 
   /**
    * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
-   * @param {string} newValue - New value to be set.
    */
-  const setInputValue = (newValue) => {
+  const setInputValue = () => {
+    const newValue = typeof currentValue === 'string' ? currentValue : '';
+
     if (inputValue !== newValue) {
       inputValue = newValue;
     }
@@ -65,24 +43,36 @@
 
   /**
    * Update {@link currentValue} based on {@link inputValue} while avoiding a cycle dependency.
-   * @param {string} newValue - New value to be set.
    */
-  const setCurrentValue = (newValue) => {
+  const setCurrentValue = () => {
+    const newValue = inputValue;
+
     if (currentValue !== newValue) {
       currentValue = newValue;
     }
   };
 
-  $: setInputValue(typeof currentValue === 'string' ? currentValue : '');
-  $: setCurrentValue(inputValue ?? '');
+  $effect(() => {
+    void currentValue;
 
-  const { extraHint } = getContext('field-editor') ?? {};
+    untrack(() => {
+      setInputValue();
+    });
+  });
 
-  $: {
+  $effect(() => {
+    void inputValue;
+
+    untrack(() => {
+      setCurrentValue();
+    });
+  });
+
+  $effect(() => {
     if (extraHint) {
       $extraHint = CharacterCounter;
     }
-  }
+  });
 </script>
 
 <TextArea

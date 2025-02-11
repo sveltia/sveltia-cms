@@ -11,47 +11,27 @@
   import { getDefaultValue } from '$lib/services/contents/widgets/uuid/helper';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {UuidField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {UuidField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  $: collection = $entryDraft?.collection;
-  $: collectionFile = $entryDraft?.collectionFile;
-  $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const collection = $derived($entryDraft?.collection);
+  const collectionFile = $derived($entryDraft?.collectionFile);
+  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
 
   // Generate the default value here instead of in `create.js` because `getDefaultValues()` doesn’t
   // i18n-duplicate the value

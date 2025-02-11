@@ -4,23 +4,18 @@
 -->
 <script>
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {StringField} fieldConfig - Field configuration.
+   * @property {string | number} [currentValue] - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {StringField}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldConfig;
-  /**
-   * @type {string | number}
-   */
-  export let currentValue;
+
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <p lang={locale} dir="auto">{currentValue}</p>

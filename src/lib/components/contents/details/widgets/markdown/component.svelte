@@ -1,37 +1,39 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
   import { generateElementId } from '@sveltia/utils/element';
-  import { onMount } from 'svelte';
+  import equal from 'fast-deep-equal';
+  import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { editors } from '$lib/components/contents/details/widgets';
 
   /**
-   * Field label.
-   * @type {string}
+   * @typedef {object} Props
+   * @property {string} label - Field label.
+   * @property {Field[]} fields - Subfield definitions.
+   * @property {Record<string, any>} values - Value map.
+   * @property {(event: CustomEvent) => void} [onChange] - Custom `change` event handler.
    */
-  export let label;
-  /**
-   * Subfield definitions.
-   * @type {Field[]}
-   */
-  export let fields;
-  /**
-   * Value map.
-   * @type {Record<string, any>}
-   */
-  export let values;
-  /**
-   * Custom `change` event handler.
-   * @type {(event: CustomEvent) => void}
-   */
-  export let onChange = () => undefined;
 
-  const supportedWidgets = ['image', 'string'];
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    label,
+    fields,
+    values = {},
+    onChange = () => undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 
   /** @type {HTMLElement | undefined} */
-  let wrapper;
-  let locale = '';
-  let keyPath = '';
+  let wrapper = $state();
+  /** @type {LocaleCode} */
+  let locale = $state('');
+  /** @type {FieldKeyPath} */
+  let keyPath = $state('');
+  /** @type {Record<string, any>} */
+  let inputValues = $state({});
+
+  const supportedWidgets = ['image', 'string'];
 
   /**
    * Get the wrapper element.
@@ -50,9 +52,25 @@
     });
   });
 
-  $: {
-    onChange(new CustomEvent('update', { detail: values }));
-  }
+  $effect(() => {
+    void values;
+
+    untrack(() => {
+      if (!equal(values, $state.snapshot(inputValues))) {
+        inputValues = values;
+      }
+    });
+  });
+
+  $effect(() => {
+    const _inputValues = $state.snapshot(inputValues);
+
+    untrack(() => {
+      if (!equal(values, _inputValues)) {
+        onChange(new CustomEvent('update', { detail: _inputValues }));
+      }
+    });
+  });
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -94,6 +112,7 @@
   {#if locale && keyPath}
     {#each fields as { name, label: fieldLabel, widget } (name)}
       {#if widget && supportedWidgets.includes(widget)}
+        {@const SvelteComponent = editors[widget]}
         <section
           role="group"
           class="field"
@@ -109,15 +128,14 @@
             <h4 role="none">{fieldLabel}</h4>
           </header>
           <div role="none" class="widget-wrapper">
-            <svelte:component
-              this={editors[widget]}
+            <SvelteComponent
               {locale}
               keyPath="{keyPath}:{name}"
               fieldId={generateElementId('field')}
               fieldLabel={fieldLabel ?? name}
               fieldConfig={{ name, widget }}
               inEditorComponent={true}
-              bind:currentValue={values[name]}
+              bind:currentValue={inputValues[name]}
             />
           </div>
         </section>

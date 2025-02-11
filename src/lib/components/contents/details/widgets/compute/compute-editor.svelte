@@ -5,58 +5,36 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
+  import { untrack } from 'svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {ComputeField} fieldConfig - Field configuration.
+   * @property {string | number} [currentValue] - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {ComputeField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string | number}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  $: ({
-    // Widget-specific options
-    value: valueTemplate = '',
-  } = fieldConfig);
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: collectionName = $entryDraft?.collectionName ?? '';
-  $: fileName = $entryDraft?.fileName;
-  $: currentValues = $entryDraft?.currentValues ?? {};
-  $: valueMap = currentValues[locale];
-  $: listFormatter = getListFormatter(locale);
+  const { value: valueTemplate = '' } = $derived(fieldConfig);
+  const collectionName = $derived($entryDraft?.collectionName ?? '');
+  const fileName = $derived($entryDraft?.fileName);
+  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const listFormatter = $derived(getListFormatter(locale));
 
   /**
    * Get a list index found in the `keyPath`.
@@ -72,7 +50,7 @@
   /**
    * Update {@link currentValue} based on the current values.
    */
-  const updateCurrentValue = () => {
+  const setCurrentValue = () => {
     // Check if the `keyPath` is valid, otherwise a list item containing this compute field cannot
     // be removed due to the `currentValue` update below
     if (!Object.keys(valueMap).includes(keyPath)) {
@@ -111,10 +89,13 @@
     }
   };
 
-  $: {
+  $effect(() => {
     void valueMap;
-    updateCurrentValue();
-  }
+
+    untrack(() => {
+      setCurrentValue();
+    });
+  });
 </script>
 
 <TextInput

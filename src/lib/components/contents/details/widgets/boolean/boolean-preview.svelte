@@ -7,24 +7,17 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {BooleanField} fieldConfig - Field configuration.
+   * @property {boolean} [currentValue] - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {BooleanField}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldConfig;
-  /**
-   * @type {boolean}
-   */
-  export let currentValue = false;
+
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    currentValue = false,
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 {#if typeof currentValue === 'boolean'}

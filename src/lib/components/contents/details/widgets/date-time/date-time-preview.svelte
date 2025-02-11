@@ -9,26 +9,23 @@
   import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {DateTimeField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {DateTimeField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string | undefined}
-   */
-  export let currentValue;
 
-  $: ({ dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig));
-  $: date = getDate(currentValue, fieldConfig);
-  $: canonicalLocale = getCanonicalLocale(locale);
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { dateOnly, timeOnly, utc } = $derived(parseDateTimeConfig(fieldConfig));
+  const date = $derived(getDate(currentValue, fieldConfig));
+  const canonicalLocale = $derived(getCanonicalLocale(locale));
 
   const dateRegex = /^\d{4}-[01]\d-[0-3]\d$/;
   const timeSuffixRegex = /T00:00(?::00)?(?:\.000)?Z$/;

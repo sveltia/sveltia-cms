@@ -5,20 +5,22 @@
   import { getYouTubeEmbedURL } from '$lib/services/utils/media';
 
   /**
-   * @type {string}
+   * @typedef {object} Props
+   * @property {string} url - Video URL.
    */
-  export let url;
 
-  /**
-   * @type {HTMLElement | undefined}
-   */
-  let wrapper;
-  /**
-   * @type {boolean}
-   */
-  let embeddable = true;
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    url,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: embedURL = getYouTubeEmbedURL(url);
+  /** @type {HTMLElement | undefined} */
+  let wrapper = $state();
+  let embeddable = $state(true);
+
+  const embedURL = $derived(getYouTubeEmbedURL(url));
 
   onMount(() => {
     // Hide the iframe if CSP is violated

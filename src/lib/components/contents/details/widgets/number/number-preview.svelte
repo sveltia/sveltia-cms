@@ -7,30 +7,23 @@
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {NumberField} fieldConfig - Field configuration.
+   * @property {string | number | null} [currentValue] - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {NumberField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string | number | null}
-   */
-  export let currentValue;
 
-  $: ({
-    // Widget-specific options
-    value_type: valueType = 'int',
-  } = fieldConfig);
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: canonicalLocale = getCanonicalLocale(locale);
-  $: numberFormatter = Intl.NumberFormat(canonicalLocale);
+  const { value_type: valueType = 'int' } = $derived(fieldConfig);
+  const canonicalLocale = $derived(getCanonicalLocale(locale));
+  const numberFormatter = $derived(Intl.NumberFormat(canonicalLocale));
 </script>
 
 {#if currentValue !== undefined && currentValue !== null && currentValue !== ''}

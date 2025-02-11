@@ -9,28 +9,21 @@
   import { isYouTubeVideoURL } from '$lib/services/utils/media';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {StringField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {StringField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
 
-  $: ({
-    name: fieldName,
-    // Widget-specific options
-    type = 'text',
-  } = fieldConfig);
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { name: fieldName, type = 'text' } = $derived(fieldConfig);
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}

@@ -3,16 +3,23 @@
   import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 
   /**
-   * @type {StringField | TextField}
+   * @typedef {object} Props
+   * @property {StringField | TextField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
 
-  $: ({ minlength, maxlength } = fieldConfig);
-  $: ({ count, hasMin, hasMax, invalid } = validateStringField(fieldConfig, currentValue));
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { minlength, maxlength } = $derived(fieldConfig);
+  const { count, hasMin, hasMax, invalid } = $derived(
+    validateStringField(fieldConfig, currentValue),
+  );
 </script>
 
 {#if hasMin || hasMax}

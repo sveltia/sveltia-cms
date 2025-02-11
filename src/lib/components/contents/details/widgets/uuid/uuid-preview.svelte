@@ -5,24 +5,17 @@
 -->
 <script>
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {TextField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {TextField}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
+
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}

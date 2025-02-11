@@ -1174,6 +1174,27 @@
  */
 
 /**
+ * Common properties to be passed to a field widget’s editor component.
+ * @typedef {object} WidgetEditorProps
+ * @property {LocaleCode} locale - Current pane’s locale.
+ * @property {FieldKeyPath} keyPath - Field key path.
+ * @property {string} fieldId - Field ID.
+ * @property {string} fieldLabel - Field label.
+ * @property {boolean} [required] - Whether to mark the field required.
+ * @property {boolean} [readonly] - Whether to mark the field read-only.
+ * @property {boolean} [invalid] - Whether to mark the field invalid.
+ * @property {boolean} [inEditorComponent] - Whether the widget is used in the Markdown widget’s
+ * editor component.
+ */
+
+/**
+ * Common properties to be passed to a field widget’s preview component.
+ * @typedef {object} WidgetPreviewProps
+ * @property {LocaleCode} locale - Current pane’s locale.
+ * @property {FieldKeyPath} keyPath - Field key path.
+ */
+
+/**
  * Custom editor component configuration.
  * @typedef {object} EditorComponentConfiguration
  * @property {string} id - Component name.

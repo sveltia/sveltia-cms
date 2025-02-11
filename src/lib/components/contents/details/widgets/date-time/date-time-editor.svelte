@@ -6,6 +6,7 @@
 -->
 <script>
   import { Button } from '@sveltia/ui';
+  import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import {
     getCurrentDateTime,
@@ -16,51 +17,26 @@
   } from '$lib/services/contents/widgets/date-time/helper';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {DateTimeField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {DateTimeField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  $: ({ dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig));
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  /**
-   * @type {string}
-   */
-  let inputValue;
+  let inputValue = $state('');
+
+  const { dateOnly, timeOnly, utc } = $derived(parseDateTimeConfig(fieldConfig));
 
   /**
    * Update {@link inputValue} based on {@link currentValue}.
@@ -93,15 +69,21 @@
     }
   };
 
-  $: {
+  $effect(() => {
     void currentValue;
-    setInputValue();
-  }
 
-  $: {
+    untrack(() => {
+      setInputValue();
+    });
+  });
+
+  $effect(() => {
     void inputValue;
-    setCurrentValue();
-  }
+
+    untrack(() => {
+      setCurrentValue();
+    });
+  });
 </script>
 
 <div role="none">

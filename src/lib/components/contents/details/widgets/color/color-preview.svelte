@@ -5,28 +5,20 @@
 -->
 <script>
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {ColorField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {ColorField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string | undefined}
-   */
-  export let currentValue;
 
-  $: ({
-    // Widget-specific options
-    enableAlpha = false,
-  } = fieldConfig);
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { enableAlpha = false } = $derived(fieldConfig);
 
   /**
    * Cast the given hex value to integer.
@@ -37,14 +29,14 @@
 
   const rgbaRegex = /^#(?<r>[0-9a-f]{2})(?<g>[0-9a-f]{2})(?<b>[0-9a-f]{2})(?<a>[0-9a-f]{2})?$/;
 
-  $: rgb = (() => {
+  const rgb = $derived.by(() => {
     const { r, g, b, a } = currentValue?.match(rgbaRegex)?.groups ?? {};
 
     return r
       ? `rgb(${hexToInt(r)} ${hexToInt(g)} ${hexToInt(b)}` +
           `${enableAlpha && a ? ` / ${Math.round((hexToInt(a) / 255) * 100)}%` : ''})`
       : '';
-  })();
+  });
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}

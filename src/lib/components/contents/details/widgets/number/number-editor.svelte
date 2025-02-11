@@ -5,61 +5,32 @@
 -->
 <script>
   import { NumberInput, TextInput } from '@sveltia/ui';
+  import { untrack } from 'svelte';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {NumberField} fieldConfig - Field configuration.
+   * @property {string | number | null} [currentValue] - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {NumberField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string | number | null}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  $: ({
-    // Widget-specific options
-    value_type: valueType = 'int',
-    min,
-    max,
-    step = 1,
-  } = fieldConfig);
-
-  $: isNumeric = valueType === 'int' || valueType === 'float';
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
 
   /** @type {number | undefined} */
-  let numInputValue;
-  /** @type {string} */
-  let strInputValue = '';
+  let numInputValue = $state();
+  let strInputValue = $state('');
+
+  const { value_type: valueType = 'int', min, max, step = 1 } = $derived(fieldConfig);
+  const isNumeric = $derived(valueType === 'int' || valueType === 'float');
 
   /**
    * Update {@link numInputValue} or {@link strInputValue} based on {@link currentValue}.
@@ -114,20 +85,29 @@
     }
   };
 
-  $: {
+  $effect(() => {
     void currentValue;
-    setInputValue();
-  }
 
-  $: {
+    untrack(() => {
+      setInputValue();
+    });
+  });
+
+  $effect(() => {
     void strInputValue;
-    setCurrentValue();
-  }
 
-  $: {
+    untrack(() => {
+      setCurrentValue();
+    });
+  });
+
+  $effect(() => {
     void numInputValue;
-    setCurrentValue();
-  }
+
+    untrack(() => {
+      setCurrentValue();
+    });
+  });
 </script>
 
 {#if isNumeric}

@@ -7,59 +7,35 @@
 <script>
   import { Button, Slider, TextInput } from '@sveltia/ui';
   import { generateElementId } from '@sveltia/utils/element';
+  import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {ColorField} fieldConfig - Field configuration.
+   * @property {string} [currentValue] - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {ColorField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  $: ({
-    // Widget-specific options
-    allowInput = false,
-    enableAlpha = false,
-  } = fieldConfig);
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(''),
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  let inputValue = $state('');
+  let inputAlphaValue = $state(255);
+
+  const { allowInput = false, enableAlpha = false } = $derived(fieldConfig);
 
   const id = generateElementId('color');
   const rgbRegex = /^#[0-9a-f]{6}$/;
   const rgbaRegex = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/;
-  let inputValue = '';
-  let inputAlphaValue = 255;
 
   /**
    * Update {@link inputValue} and {@link inputAlphaValue} based on {@link currentValue}.
@@ -103,16 +79,22 @@
     }
   };
 
-  $: {
+  $effect(() => {
     void currentValue;
-    setInputValue();
-  }
 
-  $: {
+    untrack(() => {
+      setInputValue();
+    });
+  });
+
+  $effect(() => {
     void inputValue;
     void inputAlphaValue;
-    setCurrentValue();
-  }
+
+    untrack(() => {
+      setCurrentValue();
+    });
+  });
 </script>
 
 <div role="none">
