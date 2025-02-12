@@ -29,7 +29,6 @@ export const defaultButtons = [
   'bulleted-list',
   'numbered-list',
   'quote',
-  'code-block', // Temporary
 ];
 
 /**
@@ -51,16 +50,16 @@ export const buttonNameMap = {
   'bulleted-list': 'bulleted-list',
   'numbered-list': 'numbered-list',
   quote: 'blockquote',
-  'code-block': 'code-block', // Temporary
+  'code-block': 'code-block',
 };
 
 /**
  * The default `editor_components` property options.
  */
-export const defaultComponents = ['image'];
+export const defaultComponents = ['code-block', 'image'];
 
 /**
  * Custom components registered using `CMS.registerEditorComponent`.
- * @type {EditorComponentConfiguration[]}
+ * @type {Record<string, EditorComponentDefinition>}
  */
-export const registeredComponents = [];
+export const customComponents = {};

@@ -1,6 +1,6 @@
 import { mount } from 'svelte';
 import { customFileFormats } from '$lib/services/contents/file';
-import { registeredComponents } from '$lib/services/contents/widgets/markdown';
+import { customComponents } from '$lib/services/contents/widgets/markdown';
 import App from './app.svelte';
 
 const knownFuncNames = [
@@ -82,12 +82,12 @@ const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
 
 /**
  * Register a custom component.
- * @param {EditorComponentConfiguration} definition - Component definition.
+ * @param {EditorComponentDefinition} definition - Component definition.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
 // eslint-disable-next-line no-unused-vars
 const registerEditorComponent = (definition) => {
-  registeredComponents.push(definition);
+  customComponents[definition.id] = definition;
 };
 
 const CMS = new Proxy(

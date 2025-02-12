@@ -13,11 +13,11 @@
   } from '$lib/services/contents/widgets/markdown/component';
   import {
     buttonNameMap,
+    customComponents,
     defaultButtons,
     defaultComponents,
     defaultModes,
     modeNameMap,
-    registeredComponents,
   } from '$lib/services/contents/widgets/markdown';
 
   /**
@@ -41,30 +41,35 @@
 
   let inputValue = $state('');
 
-  const allComponents = [...defaultComponents, ...registeredComponents.map((c) => c.id)];
-
   const {
     // Widget-specific options
-    modes = [...defaultModes],
-    buttons = [...defaultButtons],
-    editor_components: editorComponents = [...allComponents],
+    modes: _modes = [...defaultModes],
+    buttons: _buttons = [...defaultButtons],
+    editor_components: _editorComponents = [...defaultComponents],
     minimal = false,
   } = $derived(fieldConfig);
+  const modes = $derived(_modes.map((name) => modeNameMap[name]).filter(Boolean));
+  const buttons = $derived(
+    [
+      ..._buttons,
+      // Include `code-block` implemented as a block type
+      ...(_editorComponents.includes('code-block') ? ['code-block'] : []),
+    ]
+      .map((name) => buttonNameMap[name])
+      .filter(Boolean),
+  );
   const components = $derived(
-    editorComponents
-      .map((name) => {
-        const componentDef =
-          registeredComponents.find((c) => c.id === name) ?? getComponentDef(name);
-
-        if (componentDef) {
-          return /** @type {import('@sveltia/ui').TextEditorComponent} */ (
-            new EditorComponent(componentDef)
-          );
-        }
-
-        return undefined;
-      })
-      .filter((component) => !!component),
+    /** @type {import('@sveltia/ui').TextEditorComponent[]} */ (
+      [
+        ..._editorComponents
+          .map((name) =>
+            // Exclude `code-block` implemented as a block type, as well as custom components
+            name === 'code-block' || name in customComponents ? undefined : getComponentDef(name),
+          )
+          .filter((definition) => !!definition),
+        ...Object.values(customComponents),
+      ].map((definition) => new EditorComponent(definition))
+    ),
   );
 
   /**
@@ -110,8 +115,8 @@
   {#await sleep(0) then}
     <TextEditor
       lang={locale}
-      modes={modes.map((name) => modeNameMap[name]).filter(Boolean)}
-      buttons={buttons.map((name) => buttonNameMap[name]).filter(Boolean)}
+      {modes}
+      {buttons}
       {components}
       bind:value={inputValue}
       flex

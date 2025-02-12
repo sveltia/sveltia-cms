@@ -1196,7 +1196,7 @@
 
 /**
  * Custom editor component configuration.
- * @typedef {object} EditorComponentConfiguration
+ * @typedef {object} EditorComponentDefinition
  * @property {string} id - Component name.
  * @property {string} label - UI label.
  * @property {string} [icon] - Material Symbols icon name.
