@@ -5,6 +5,7 @@ import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { getDefaultValue as getDefaultCodeValue } from '$lib/services/contents/widgets/code/helper';
 import { getDefaultValue as getDefaultDateTimeValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getDefaultValue as getDefaultHiddenValue } from '$lib/services/contents/widgets/hidden/helper';
 import { getDefaultValue as getDefaultKvValue } from '$lib/services/contents/widgets/key-value/helper';
@@ -167,6 +168,16 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
 
     if (widgetName === 'boolean') {
       newContent[keyPath] = typeof defaultValue === 'boolean' ? defaultValue : false;
+
+      return;
+    }
+
+    if (widgetName === 'code') {
+      Object.assign(
+        newContent,
+        // eslint-disable-next-line object-shorthand
+        getDefaultCodeValue({ fieldConfig: /** @type {CodeField} */ (fieldConfig), keyPath }),
+      );
 
       return;
     }

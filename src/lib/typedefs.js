@@ -572,6 +572,22 @@
  */
 
 /**
+ * Code field properties.
+ * @typedef {object} CodeFieldProps
+ * @property {string | { code: string, lang: string }} [default] - Default value.
+ * @property {string} [default_language] - Default language to be selected.
+ * @property {boolean} [allow_language_selection] - Whether to show the language switcher. Note: The
+ * Decap CMS document says it defaults to `false` but it’s actually `true`.
+ * @property {boolean} [output_code_only] - Whether to output code snippet only.
+ * @property {{ code: string, lang: string }} [keys] - Output property names.
+ */
+
+/**
+ * Code field definition.
+ * @typedef {CommonFieldProps & CodeFieldProps} CodeField
+ */
+
+/**
  * Color field properties.
  * @typedef {object} ColorFieldProps
  * @property {string} [default] - Default value.

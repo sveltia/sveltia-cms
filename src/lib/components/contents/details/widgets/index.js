@@ -1,5 +1,7 @@
 import BooleanEditor from '$lib/components/contents/details/widgets/boolean/boolean-editor.svelte';
 import BooleanPreview from '$lib/components/contents/details/widgets/boolean/boolean-preview.svelte';
+import CodeEditor from '$lib/components/contents/details/widgets/code/code-editor.svelte';
+import CodePreview from '$lib/components/contents/details/widgets/code/code-preview.svelte';
 import ColorEditor from '$lib/components/contents/details/widgets/color/color-editor.svelte';
 import ColorPreview from '$lib/components/contents/details/widgets/color/color-preview.svelte';
 import ComputeEditor from '$lib/components/contents/details/widgets/compute/compute-editor.svelte';
@@ -34,6 +36,7 @@ import UuidPreview from '$lib/components/contents/details/widgets/uuid/uuid-prev
  */
 export const editors = {
   boolean: BooleanEditor,
+  code: CodeEditor,
   color: ColorEditor,
   compute: ComputeEditor,
   datetime: DateTimeEditor,
@@ -55,6 +58,7 @@ export const editors = {
  */
 export const previews = {
   boolean: BooleanPreview,
+  code: CodePreview,
   color: ColorPreview,
   compute: ComputePreview,
   datetime: DateTimePreview,

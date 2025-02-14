@@ -161,6 +161,28 @@ export const validateEntry = () => {
       }
 
       if (!['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(widgetName)) {
+        if (widgetName === 'code') {
+          const {
+            output_code_only: outputCodeOnly = false,
+            keys: outputKeys = { code: 'code', lang: 'lang' },
+          } = /** @type {CodeField} */ (fieldConfig);
+
+          const _keyPath =
+            keyPath.match(`(.+)\\.(?:${outputKeys.code}|${outputKeys.lang})$`)?.[1] ?? '';
+
+          if (_keyPath) {
+            keyPath = _keyPath;
+          }
+
+          if (keyPath in validities[locale]) {
+            return;
+          }
+
+          if (!outputCodeOnly) {
+            value = valueMap[`${keyPath}.${outputKeys.code}`];
+          }
+        }
+
         if (typeof value === 'string') {
           value = value.trim();
         }
