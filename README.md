@@ -342,6 +342,10 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Boolean
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error.[^45]
   - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing.[^46]
+- Code
+  - The language switcher always appears in the user interface, so it’s easy to spot and change the selected language.
+  - More than 300 languages are available, thanks to [Prism](https://prismjs.com/)’s extensive language support.
+  - Code fields under a List field work as expected, saving both code and language.[^181]
 - Color
   - The widget doesn’t cause scrolling issues.[^128]
   - The preview shows both the RGB(A) hex value and the `rgb()` function notation.
@@ -481,7 +485,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
 - The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget with the `time_format: false` option instead.
-- The theme and keymap inline settings of the Code widget will not be supported, and some minor languages may be dropped, as we use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/).
+- The theme and keymap inline settings of the Code widget will not be supported, and some languages are dropped, as we use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/).
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 
@@ -500,11 +504,10 @@ These limitations are expected to be resolved before the 1.0 release scheduled f
 
 | Widget | Status in Sveltia CMS |
 | --- | --- |
-| [Code](https://decapcms.org/docs/widgets/#code) | Not yet implemented. |
 | [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
 | [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
 | [Map](https://decapcms.org/docs/widgets/#map) | Not yet implemented. |
-| [Markdown](https://decapcms.org/docs/widgets/#markdown) | Custom components are not yet supported. There is no language selector yet in the built-in `code-block` component. |
+| [Markdown](https://decapcms.org/docs/widgets/#markdown) | Custom components are not yet supported. |
 
 ### Features to be implemented after GA
 
@@ -1462,3 +1465,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^179]: Netlify/Decap CMS [#1891](https://github.com/decaporg/decap-cms/issues/1891)
 
 [^180]: Netlify/Decap CMS [#7399](https://github.com/decaporg/decap-cms/issues/7399)
+
+[^181]: Netlify/Decap CMS [#6254](https://github.com/decaporg/decap-cms/issues/6254)
