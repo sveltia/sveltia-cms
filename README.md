@@ -147,7 +147,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 ### Better performance
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
-- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.7 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though we haven’t implemented some features yet, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
+- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.9 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though we haven’t implemented some features yet, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is underway.
 - Sveltia CMS is free of technical debt (except for the Moment.js dependency, which will be replaced by Day.js before GA) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
@@ -343,8 +343,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error.[^45]
   - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing.[^46]
 - Code
-  - The language switcher always appears in the user interface, so it’s easy to spot and change the selected language.
   - More than 300 languages are available, thanks to [Prism](https://prismjs.com/)’s extensive language support.
+  - The language switcher always appears in the user interface, so it’s easy to spot and change the selected language.
   - Code fields under a List field work as expected, saving both code and language.[^181]
 - Color
   - The widget doesn’t cause scrolling issues.[^128]
