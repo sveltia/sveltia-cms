@@ -42,7 +42,8 @@ const getItemList = (obj, keyPath) => {
 
   const filtered = Object.entries(obj)
     .filter(([k]) => regex.test(k))
-    .map(([k, v]) => [k.replace(regex, '_'), v]);
+    .map(([k, v]) => [k.replace(regex, '_'), v])
+    .sort();
 
   return [
     unflatten(Object.fromEntries(filtered))._ ?? [],
