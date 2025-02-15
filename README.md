@@ -92,7 +92,7 @@ We loved the concept of Netlify CMS — turning a Git repository into a database
 Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successors:
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after doing a great job
-- **Sveltia CMS**: a total reboot, started in November 2022, first appeared on GitHub in March 2023
+- **Sveltia CMS**: not a fork but a total reboot, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly inactive
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and numerous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right and inevitable one, as proven by the [hundreds of improvements](#differentiators) we have already made.
@@ -149,7 +149,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
 - Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.9 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though we haven’t implemented some features yet, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size. A full migration to the Runes reactivity API is underway.
-- Sveltia CMS is free of technical debt (except for the Moment.js dependency, which will be replaced by Day.js before GA) and [virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- [No virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/articles/file-system-access/) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
@@ -497,7 +497,7 @@ These limitations are expected to be resolved before the 1.0 release scheduled f
 | --- | --- |
 | Backends | The [Test backend](https://decapcms.org/docs/test-backend/) needed for our demo site is not yet added. We’ll see if [Azure DevOps](https://decapcms.org/docs/azure-backend/) can also be supported. |
 | Configuration | Comprehensive config validation is not yet implemented. |
-| Localization | The application UI is only available in English and Japanese at this time. Want to be a localizer? See [this README](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md). |
+| Localization | The application UI is only available in English and Japanese at this time. |
 | Media Libraries | [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) are not yet supported. |
 | Widgets | [Custom widgets](https://decapcms.org/docs/custom-widgets/) are not yet supported. See the table below for other limitations. |
 | Customization | [Custom previews](https://decapcms.org/docs/customization/) and [event subscriptions](https://decapcms.org/docs/registering-events/) are not yet supported. |
@@ -519,7 +519,7 @@ Due to the complexity, the following features are planned for after the 1.0 rele
 
 ### Compatibility with Static CMS
 
-We plan to provide partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. This README will be updated with more details as our development progresses.
+Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. This README will be updated as our development progresses.
 
 - Configuration options
   - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
