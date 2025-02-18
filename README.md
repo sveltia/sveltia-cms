@@ -224,6 +224,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
     - File collections support multiple files/folders i18n structures.[^87] To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
     - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales.[^7][^68] The `i18n` configuration can normally be used for the subfields.
+  - The new `multiple_folders_i18n_root` i18n structure allows to have locale folders below the project root: `<locale>/<folder>/<slug>.<extension>`. [^182]
   - The `required` field option accepts an array of locale codes in addition to a boolean, making the field required for a subset of locales when i18n support is enabled. For example, if only English is required, you could write `required: [en]`. An empty array is equivalent to `required: false`.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure.[^21]
   - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language.[^63]
@@ -836,12 +837,24 @@ You can disable output of content in selected non-default locales by adding the 
 
 With the following configuration, you can disable the French and/or German translation while writing in English.
 
-```diff
- i18n:
-   structure: multiple_files
-   locales: [en, fr, de]
-   default_locale: en
-+  save_all_locales: false
+```yaml
+i18n:
+  structure: multiple_files
+  locales: [en, fr, de]
+  default_locale: en
+  save_all_locales: false # default: true
+```
+
+Alternatively, developers can specify locales to be enabled by default when users create a new entry draft, using the new `initial_locales` option, which accepts a locale list, `default` (default locale only) or `all` (all locales). When this option is used, `save_all_locales` will be `false`.
+
+The following example disables German by default, but users can manually enable German if needed. Note that the default locale, in this case English, is always enabled.
+
+```yaml
+i18n:
+  structure: multiple_files
+  locales: [en, fr, de]
+  default_locale: en
+  initial_locales: [en, fr]
 ```
 
 ### Using a random ID for an entry slug
@@ -1467,3 +1480,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^180]: Netlify/Decap CMS [#7399](https://github.com/decaporg/decap-cms/issues/7399)
 
 [^181]: Netlify/Decap CMS [#6254](https://github.com/decaporg/decap-cms/issues/6254)
+
+[^182]: Netlify/Decap CMS [#4416](https://github.com/decaporg/decap-cms/issues/4416)
