@@ -123,7 +123,7 @@ export const copyDefaultLocaleValues = (content) => {
  */
 export const toggleLocale = (locale) => {
   /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-    const { currentLocales, currentValues } = _draft;
+    const { currentLocales, currentValues, validities } = _draft;
     const enabled = !currentLocales[locale];
 
     // Initialize the content for the locale
@@ -150,6 +150,7 @@ export const toggleLocale = (locale) => {
     return {
       ..._draft,
       currentLocales: { ...currentLocales, [locale]: enabled },
+      validities: { ...validities, [locale]: {} },
     };
   });
 };
