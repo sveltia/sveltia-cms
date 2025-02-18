@@ -1,24 +1,13 @@
 <script>
-  import {
-    Divider,
-    Icon,
-    Menu,
-    MenuButton,
-    MenuItem,
-    SelectButton,
-    SelectButtonGroup,
-    Spacer,
-    Toolbar,
-  } from '@sveltia/ui';
+  import { Divider, Menu, MenuButton, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
+  import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import { backend } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { entryEditorSettings } from '$lib/services/contents/draft/editor';
   import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
@@ -42,7 +31,6 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
@@ -55,7 +43,6 @@
     Object.values($entryDraft?.currentLocales ?? {}).filter((enabled) => enabled).length === 1,
   );
   const otherLocales = $derived(i18nEnabled ? locales.filter((l) => l !== $thisPane?.locale) : []);
-  const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
   const canCopy = $derived(!!otherLocales.length);
   const canRevert = $derived(
     $thisPane?.locale &&
@@ -74,51 +61,7 @@
 <div role="none" {id} class="header">
   <Toolbar variant="secondary" aria-label={$_('secondary')}>
     {#if i18nEnabled}
-      <!-- @todo Use a dropdown list when there are 5+ locales. -->
-      <SelectButtonGroup
-        aria-label={$_('switch_locale')}
-        aria-controls={id.replace('-header', '-body')}
-      >
-        {#each locales as locale}
-          {@const localeLabel = getLocaleLabel(locale)}
-          {@const invalid = Object.values($entryDraft?.validities[locale] ?? {}).some(
-            ({ valid }) => !valid,
-          )}
-          {#if !($thatPane?.mode === 'edit' && $thatPane.locale === locale)}
-            <SelectButton
-              selected={$thisPane?.mode === 'edit' && $thisPane.locale === locale}
-              variant="tertiary"
-              size="small"
-              class={invalid ? 'error' : ''}
-              label={localeLabel}
-              onSelect={() => {
-                $thisPane = { mode: 'edit', locale };
-
-                if ($thatPane?.mode === 'preview') {
-                  $thatPane = { mode: 'preview', locale };
-                }
-              }}
-            >
-              {#snippet endIcon()}
-                {#if invalid}
-                  <Icon name="error" aria-label={$_('locale_content_errors')} />
-                {/if}
-              {/snippet}
-            </SelectButton>
-          {/if}
-        {/each}
-        {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings?.showPreview}
-          <SelectButton
-            selected={$thisPane?.mode === 'preview'}
-            variant="tertiary"
-            size="small"
-            label={$_('preview')}
-            onSelect={() => {
-              $thisPane = { mode: 'preview', locale: $thatPane?.locale ?? '' };
-            }}
-          />
-        {/if}
-      </SelectButtonGroup>
+      <LocaleSwitcher {id} {thisPane} {thatPane} />
     {:else}
       <h3 role="none">{$thisPane?.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
     {/if}
@@ -207,10 +150,6 @@
       :global(h3) {
         margin: 0 8px;
         font-size: var(--sui-font-size-default);
-      }
-
-      :global(button.error) {
-        color: var(--sui-error-foreground-color);
       }
     }
   }
