@@ -226,7 +226,7 @@ siteConfig.subscribe((config) => {
             fileName: file.name,
             filePathMap: path.includes('{{locale}}')
               ? Object.fromEntries(
-                  getI18nConfig(collection, file).locales.map((locale) => [
+                  getI18nConfig(collection, file).allLocales.map((locale) => [
                     locale,
                     path.replace('{{locale}}', locale),
                   ]),

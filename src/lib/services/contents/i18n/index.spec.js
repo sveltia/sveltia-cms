@@ -125,7 +125,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
-      locales: ['en', 'fr'],
+      allLocales: ['en', 'fr'],
+      initialLocales: ['en', 'fr'],
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
@@ -134,7 +135,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
-      locales: ['en', 'fr'],
+      allLocales: ['en', 'fr'],
+      initialLocales: ['en', 'fr'],
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
@@ -143,7 +145,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: false,
-      locales: ['_default'],
+      allLocales: ['_default'],
+      initialLocales: ['_default'],
       defaultLocale: '_default',
       saveAllLocales: true,
       canonicalSlug,
@@ -165,7 +168,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithI18n)).toEqual({
       structure: 'multiple_folders',
       i18nEnabled: true,
-      locales: ['en', 'de', 'fr'],
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
@@ -174,7 +178,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
       structure: 'single_file', // Always single
       i18nEnabled: true,
-      locales: ['en', 'de', 'fr'],
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
@@ -183,7 +188,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: false,
-      locales: ['_default'],
+      allLocales: ['_default'],
+      initialLocales: ['_default'],
       defaultLocale: '_default',
       saveAllLocales: true,
       canonicalSlug,
@@ -202,7 +208,8 @@ describe('Test getI18nConfig()', () => {
       ...siteConfigBase,
       i18n: {
         structure: 'multiple_folders',
-        locales: ['en', 'de', 'fr'],
+        allLocales: ['en', 'de', 'fr'],
+        initialLocales: ['en', 'de', 'fr'],
         default_locale: 'fr',
       },
       collections: [collectionWithPartialI18nOverride],
@@ -211,7 +218,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithPartialI18nOverride)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
-      locales: ['fr'],
+      allLocales: ['fr'],
+      initialLocales: ['fr'],
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
@@ -233,7 +241,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithCompleteI18nOverride)).toEqual({
       structure: 'multiple_folders',
       i18nEnabled: true,
-      locales: ['es'],
+      allLocales: ['es'],
+      initialLocales: ['es'],
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
@@ -255,7 +264,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithI18n, collectionFileWithPartialI18nOverride)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
-      locales: ['de'],
+      allLocales: ['de'],
+      initialLocales: ['de'],
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
@@ -270,7 +280,8 @@ describe('Test getI18nConfig()', () => {
     ).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
-      locales: ['de'],
+      allLocales: ['de'],
+      initialLocales: ['de'],
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
@@ -281,7 +292,8 @@ describe('Test getI18nConfig()', () => {
     ).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
-      locales: ['de'],
+      allLocales: ['de'],
+      initialLocales: ['de'],
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
@@ -303,7 +315,8 @@ describe('Test getI18nConfig()', () => {
     expect(getI18nConfig(collectionWithI18n, collectionFileWithCompleteI18nOverride)).toEqual({
       structure: 'single_file', // Always single
       i18nEnabled: true,
-      locales: ['es'],
+      allLocales: ['es'],
+      initialLocales: ['es'],
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
@@ -318,7 +331,8 @@ describe('Test getI18nConfig()', () => {
     ).toEqual({
       structure: 'single_file', // Always single
       i18nEnabled: true,
-      locales: ['es'],
+      allLocales: ['es'],
+      initialLocales: ['es'],
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
@@ -329,9 +343,120 @@ describe('Test getI18nConfig()', () => {
     ).toEqual({
       structure: 'single_file', // Always single
       i18nEnabled: true,
-      locales: ['es'],
+      allLocales: ['es'],
+      initialLocales: ['es'],
       defaultLocale: 'es',
       saveAllLocales: true,
+      canonicalSlug,
+    });
+  });
+
+  test('config with `save_all_locales: false`', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        locales: ['en', 'de', 'fr'],
+        save_all_locales: false,
+      },
+      collections: [collectionWithI18n],
+    });
+
+    expect(getI18nConfig(collectionWithI18n)).toEqual({
+      structure: 'single_file',
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: false,
+      canonicalSlug,
+    });
+  });
+
+  test('config with initial locales', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        locales: ['en', 'de', 'fr'],
+        initial_locales: ['en', 'de'],
+      },
+      collections: [collectionWithI18n],
+    });
+
+    expect(getI18nConfig(collectionWithI18n)).toEqual({
+      structure: 'single_file',
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de'],
+      defaultLocale: 'en',
+      saveAllLocales: false,
+      canonicalSlug,
+    });
+  });
+
+  test('config with initial locales with all locales', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        locales: ['en', 'de', 'fr'],
+        initial_locales: 'all',
+      },
+      collections: [collectionWithI18n],
+    });
+
+    expect(getI18nConfig(collectionWithI18n)).toEqual({
+      structure: 'single_file',
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: false,
+      canonicalSlug,
+    });
+  });
+
+  test('config with initial locales with default locale', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        locales: ['en', 'de', 'fr'],
+        initial_locales: 'default',
+      },
+      collections: [collectionWithI18n],
+    });
+
+    expect(getI18nConfig(collectionWithI18n)).toEqual({
+      structure: 'single_file',
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en'],
+      defaultLocale: 'en',
+      saveAllLocales: false,
+      canonicalSlug,
+    });
+  });
+
+  test('config with initial locales without default locale', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        locales: ['en', 'de', 'fr'],
+        initial_locales: ['de'],
+      },
+      collections: [collectionWithI18n],
+    });
+
+    expect(getI18nConfig(collectionWithI18n)).toEqual({
+      structure: 'single_file',
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de'], // `en` should be included because it’s default
+      defaultLocale: 'en',
+      saveAllLocales: false,
       canonicalSlug,
     });
   });

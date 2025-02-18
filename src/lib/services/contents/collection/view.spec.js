@@ -12,7 +12,8 @@ describe('Test getSortableFields()', async () => {
     folder: 'content/posts',
     _i18n: {
       i18nEnabled: false,
-      locales: ['_default'],
+      allLocales: ['_default'],
+      initialLocales: ['_default'],
       defaultLocale: '_default',
       structure: 'single_file',
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },

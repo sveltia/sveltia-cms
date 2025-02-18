@@ -33,7 +33,8 @@ describe('Test getFileConfig()', () => {
   /** @type {I18nConfig} */
   const i18nDisabled = {
     i18nEnabled: false,
-    locales: ['_default'],
+    allLocales: ['_default'],
+    initialLocales: ['_default'],
     defaultLocale: '_default',
     structure: 'single_file',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
@@ -42,7 +43,8 @@ describe('Test getFileConfig()', () => {
   /** @type {I18nConfig} */
   const i18nSingleFile = {
     i18nEnabled: false,
-    locales: ['en', 'fr'],
+    allLocales: ['en', 'fr'],
+    initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
     structure: 'single_file',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
@@ -51,7 +53,8 @@ describe('Test getFileConfig()', () => {
   /** @type {I18nConfig} */
   const i18nMultiFile = {
     i18nEnabled: true,
-    locales: ['en', 'fr'],
+    allLocales: ['en', 'fr'],
+    initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
     structure: 'multiple_files',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
@@ -60,7 +63,8 @@ describe('Test getFileConfig()', () => {
   /** @type {I18nConfig} */
   const i18nMultiFolder = {
     i18nEnabled: true,
-    locales: ['en', 'fr'],
+    allLocales: ['en', 'fr'],
+    initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
     structure: 'multiple_folders',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },

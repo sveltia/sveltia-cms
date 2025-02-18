@@ -89,7 +89,7 @@ const detectFileFormat = ({ extension, format }) => {
  * @returns {RegExp} Regular expression.
  */
 const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
-  const { i18nEnabled, structure, locales } = _i18n;
+  const { i18nEnabled, structure, allLocales } = _i18n;
   const i18nMultiFile = i18nEnabled && structure === 'multiple_files';
   const i18nMultiFolder = i18nEnabled && structure === 'multiple_folders';
 
@@ -103,7 +103,7 @@ const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
     ? `(?<subPath>${subPath.replace(/\//g, '\\/').replace(/{{.+?}}/g, '[^/]+')})`
     : '(?<subPath>.+)';
 
-  const localeMatcher = `(?<locale>${locales.join('|')})`;
+  const localeMatcher = `(?<locale>${allLocales.join('|')})`;
 
   return new RegExp(
     `${basePath ? `^${escapeRegExp(basePath)}\\/` : '^'}` +

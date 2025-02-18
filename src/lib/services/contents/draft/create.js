@@ -352,14 +352,14 @@ export const createDraft = ({
   const { id, slug, locales } = originalEntry;
   const isNew = id === undefined;
   const { fields = [], _i18n } = collectionFile ?? collection;
-  const { locales: allLocales } = _i18n;
+  const { allLocales, initialLocales } = _i18n;
 
   const enabledLocales = isNew
-    ? allLocales
+    ? initialLocales
     : allLocales.filter((locale) => !!locales?.[locale]?.content);
 
   const originalLocales = Object.fromEntries(
-    allLocales.map((locale) => [locale, isNew || enabledLocales.includes(locale)]),
+    allLocales.map((locale) => [locale, enabledLocales.includes(locale)]),
   );
 
   /** @type {Record<LocaleCode, FlattenedEntryContent>} */

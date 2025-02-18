@@ -270,7 +270,9 @@
  * Global or Collection’s unparsed i18n configuration.
  * @typedef {object} RawI18nConfig
  * @property {I18nFileStructure} [structure] - File structure.
- * @property {LocaleCode[]} locales - List of locales.
+ * @property {LocaleCode[]} locales - List of all available locales.
+ * @property {LocaleCode[] | 'all' | 'default'} [initial_locales] - Locales to be enabled when
+ * creating a new entry draft.
  * @property {LocaleCode} [default_locale] - Default locale.
  * @property {boolean} [save_all_locales] - Whether to save collection entries in all the locales.
  * If `false`, editors will be able to disable the output of non-default locales through the UI. An
@@ -289,7 +291,9 @@
  * @property {boolean} i18nEnabled - Whether i18n is enabled for the collection or collection file.
  * @property {boolean} [saveAllLocales] - Whether to save the entries in all the locales. If
  * `false`, editors will be able to disable the output of non-default locales through the UI.
- * @property {LocaleCode[]} locales - List of locales, or `['_default']` if i18n is not enabled.
+ * @property {LocaleCode[]} allLocales - List of all available locales, or `['_default']` if i18n is
+ * not enabled.
+ * @property {LocaleCode[]} initialLocales - Locales to be enabled when creating a new entry draft.
  * @property {LocaleCode} defaultLocale - Default locale, or `_default` if i18n is not enabled.
  * @property {I18nFileStructure} structure - File structure.
  * @property {{ key: string, value: string }} canonicalSlug - See `canonical_slug` above.

@@ -45,7 +45,7 @@
     originalEntry?.id ?? [collection?.name ?? '-', collectionFile?.name ?? '-'].join('/'),
   );
   const { showPreview } = $derived($entryEditorSettings ?? {});
-  const { i18nEnabled, locales, defaultLocale } = $derived(
+  const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );
   const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
@@ -65,8 +65,8 @@
       restoring ||
       !_editorLeftPane ||
       !_editorRightPane ||
-      (!!_editorLeftPane.locale && !locales.includes(_editorLeftPane.locale)) ||
-      (!!_editorRightPane.locale && !locales.includes(_editorRightPane.locale)) ||
+      (!!_editorLeftPane.locale && !allLocales.includes(_editorLeftPane.locale)) ||
+      (!!_editorRightPane.locale && !allLocales.includes(_editorRightPane.locale)) ||
       ((!showPreview || !canPreview) &&
         (_editorLeftPane.mode === 'preview' || _editorRightPane.mode === 'preview'))
     ) {
@@ -98,7 +98,9 @@
     $editorLeftPane = { mode: 'edit', locale: $editorLeftPane?.locale ?? defaultLocale };
 
     if (!showPreview || !canPreview) {
-      const otherLocales = i18nEnabled ? locales.filter((l) => l !== $editorLeftPane?.locale) : [];
+      const otherLocales = i18nEnabled
+        ? allLocales.filter((l) => l !== $editorLeftPane?.locale)
+        : [];
 
       $editorRightPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;
     } else {

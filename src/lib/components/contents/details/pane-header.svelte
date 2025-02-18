@@ -35,14 +35,16 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
   const originalValues = $derived($entryDraft?.originalValues ?? {});
-  const { i18nEnabled, saveAllLocales, locales, defaultLocale } = $derived(
+  const { i18nEnabled, saveAllLocales, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );
   const isLocaleEnabled = $derived($entryDraft?.currentLocales[$thisPane?.locale ?? '']);
   const isOnlyLocale = $derived(
     Object.values($entryDraft?.currentLocales ?? {}).filter((enabled) => enabled).length === 1,
   );
-  const otherLocales = $derived(i18nEnabled ? locales.filter((l) => l !== $thisPane?.locale) : []);
+  const otherLocales = $derived(
+    i18nEnabled ? allLocales.filter((l) => l !== $thisPane?.locale) : [],
+  );
   const canCopy = $derived(!!otherLocales.length);
   const canRevert = $derived(
     $thisPane?.locale &&

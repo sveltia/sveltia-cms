@@ -78,7 +78,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
     _file: { fullPathRegEx, subPath: subPathTemplate, extension },
     _i18n: {
       i18nEnabled,
-      locales,
+      allLocales,
       defaultLocale,
       structure,
       canonicalSlug: { key: canonicalSlugKey },
@@ -167,7 +167,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
     entry.slug = slug;
     entry.locales = Object.fromEntries(
-      locales
+      allLocales
         .filter((_locale) => _locale in rawContent)
         .map((_locale) => [_locale, { slug, path, sha, content: flatten(rawContent[_locale]) }]),
     );

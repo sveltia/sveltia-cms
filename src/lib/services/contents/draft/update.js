@@ -283,7 +283,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
   const { collection, collectionFile, fileName, currentValues, originalValues } =
     /** @type {EntryDraft} */ (get(entryDraft));
 
-  const { locales: allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
+  const { allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
   const locales = locale ? [locale] : allLocales;
 
   /**

@@ -773,7 +773,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
 
   const {
     _file,
-    _i18n: { i18nEnabled, locales, defaultLocale, structure },
+    _i18n: { i18nEnabled, allLocales, defaultLocale, structure },
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
   const { localizedEntryMap, changes, savingAssets } = await createBaseSavingEntryData({
@@ -818,7 +818,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
   } else {
     await Promise.all(
-      locales.map(async (locale) => {
+      allLocales.map(async (locale) => {
         const localizedEntry = savingEntry.locales[locale];
         const { slug, path, content } = localizedEntry ?? {};
 

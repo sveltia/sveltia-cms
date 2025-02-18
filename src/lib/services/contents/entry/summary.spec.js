@@ -16,7 +16,8 @@ describe('Test getEntrySummary()', () => {
     _i18n: {
       i18nEnabled: true,
       saveAllLocales: true,
-      locales: ['en', 'de'],
+      allLocales: ['en', 'de'],
+      initialLocales: ['en', 'de'],
       defaultLocale: 'de',
       structure: 'multiple_files',
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },

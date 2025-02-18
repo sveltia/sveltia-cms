@@ -10,7 +10,8 @@ import { siteConfig } from '$lib/services/config';
 export const defaultI18nConfig = {
   i18nEnabled: false,
   saveAllLocales: true,
-  locales: ['_default'],
+  allLocales: ['_default'],
+  initialLocales: ['_default'],
   defaultLocale: '_default',
   structure: 'single_file',
   canonicalSlug: {
@@ -54,32 +55,55 @@ export const getI18nConfig = (collection, file) => {
   }
 
   const {
-    structure = 'single_file',
-    locales = [],
-    default_locale: defaultLocale = undefined,
-    save_all_locales: saveAllLocales = true,
+    structure: _structure = 'single_file',
+    locales: _locales = [],
+    default_locale: _defaultLocale = undefined,
+    initial_locales: _initialLocales = undefined,
+    save_all_locales: _saveAllLocales = true,
     canonical_slug: {
       key: canonicalSlugKey = 'translationKey',
       value: canonicalSlugTemplate = '{{slug}}',
     } = {},
   } = /** @type {RawI18nConfig} */ (config ?? {});
 
-  const i18nEnabled = !!locales.length;
+  const i18nEnabled = !!_locales.length;
+  const allLocales = i18nEnabled ? _locales : ['_default'];
+
+  const saveAllLocales = i18nEnabled
+    ? _saveAllLocales === true && _initialLocales === undefined
+    : true;
+
+  const defaultLocale = !i18nEnabled
+    ? '_default'
+    : _defaultLocale && allLocales.includes(_defaultLocale)
+      ? _defaultLocale
+      : allLocales[0];
+
+  const initialLocales =
+    _initialLocales === 'all'
+      ? allLocales
+      : _initialLocales === 'default'
+        ? [defaultLocale]
+        : allLocales.filter(
+            (locale) =>
+              // Default locale cannot be disabled
+              locale === defaultLocale ||
+              (Array.isArray(_initialLocales) ? _initialLocales.includes(locale) : true),
+          );
+
+  const structure = !file
+    ? _structure
+    : file.file.includes('{{locale}}')
+      ? 'multiple_files'
+      : 'single_file';
 
   return {
     i18nEnabled,
     saveAllLocales,
-    locales: i18nEnabled ? locales : ['_default'],
-    defaultLocale: !i18nEnabled
-      ? '_default'
-      : defaultLocale && locales.includes(defaultLocale)
-        ? defaultLocale
-        : locales[0],
-    structure: !file
-      ? structure
-      : file.file.includes('{{locale}}')
-        ? 'multiple_files'
-        : 'single_file',
+    allLocales,
+    defaultLocale,
+    initialLocales,
+    structure,
     canonicalSlug: {
       key: canonicalSlugKey,
       value: canonicalSlugTemplate,

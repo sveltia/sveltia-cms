@@ -108,10 +108,10 @@
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalValues = $derived($entryDraft?.originalValues);
-  const { i18nEnabled, locales, defaultLocale } = $derived(
+  const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );
-  const otherLocales = $derived(i18nEnabled ? locales.filter((l) => l !== locale) : []);
+  const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
   const canEdit = $derived(locale === defaultLocale || canTranslate || canDuplicate);

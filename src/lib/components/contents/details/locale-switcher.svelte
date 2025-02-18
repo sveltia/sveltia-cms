@@ -28,9 +28,9 @@
   const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
-  const { locales } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   const listedLocales = $derived(
-    locales.filter((locale) => !($thatPane?.mode === 'edit' && $thatPane.locale === locale)),
+    allLocales.filter((locale) => !($thatPane?.mode === 'edit' && $thatPane.locale === locale)),
   );
   const hasAnyError = $derived(
     Object.entries($entryDraft?.validities ?? {}).some(
@@ -40,7 +40,7 @@
     ),
   );
   const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
-  const useDropDown = $derived(locales.length >= 5);
+  const useDropDown = $derived(allLocales.length >= 5);
   const SelectComponent = $derived(useDropDown ? Select : SelectButtonGroup);
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);
   const variant = $derived(useDropDown ? undefined : 'tertiary');

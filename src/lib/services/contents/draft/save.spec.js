@@ -13,7 +13,8 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
   const i18nBaseConfig = {
     i18nEnabled: true,
-    locales: ['en'],
+    allLocales: ['en'],
+    initialLocales: ['en'],
     defaultLocale: 'en',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };

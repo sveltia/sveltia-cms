@@ -88,15 +88,15 @@
         if (originalEntry) {
           createDraft({ collection, collectionFile, originalEntry });
         } else {
-          const { locales } = collectionFile._i18n;
-
           // File is not yet created
           createDraft({
             collection,
             collectionFile,
             originalEntry: {
               slug: collectionFile.name,
-              locales: Object.fromEntries(locales.map((_locale) => [_locale, {}])),
+              locales: Object.fromEntries(
+                collectionFile._i18n.initialLocales.map((_locale) => [_locale, {}]),
+              ),
             },
           });
         }
