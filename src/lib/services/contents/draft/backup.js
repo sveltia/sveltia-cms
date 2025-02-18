@@ -3,6 +3,7 @@ import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
+import { createProxy } from '$lib/services/contents/draft/create';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { siteConfigVersion } from '$lib/services/config';
 import { backend } from '$lib/services/backends';
@@ -113,10 +114,12 @@ export const saveBackup = async (draft) => {
 
 /**
  * Check if a draft backup is available, and restore it if requested by the user.
- * @param {string} collectionName - Collection name.
- * @param {string} [slug] - Entry slug. Existing entry only.
+ * @param {object} args - Arguments.
+ * @param {string} args.collectionName - Collection name.
+ * @param {string} [args.fileName] - Collection file name.
+ * @param {string} [args.slug] - Entry slug. Existing entry only.
  */
-export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
+export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '' }) => {
   const backup = await getBackup(collectionName, slug);
 
   if (!backup) {
@@ -141,10 +144,9 @@ export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
     entryDraft.update((draft) => {
       if (draft) {
         draft.currentLocales = currentLocales;
-        Object.entries(draft.currentValues).forEach(([locale, _currentValues]) => {
-          Object.assign(_currentValues, currentValues[locale]);
 
-          Object.entries(_currentValues).forEach(([keyPath, value]) => {
+        Object.entries(currentValues).forEach(([locale, valueMap]) => {
+          Object.entries(valueMap).forEach(([keyPath, value]) => {
             if (typeof value === 'string') {
               [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
                 const file = files[blobURL];
@@ -153,12 +155,26 @@ export const restoreBackupIfNeeded = async (collectionName, slug = '') => {
                   // Regenerate a blob URL
                   const newURL = URL.createObjectURL(file);
 
-                  _currentValues[keyPath] = value.replaceAll(blobURL, newURL);
+                  valueMap[keyPath] = value.replaceAll(blobURL, newURL);
                   draft.files[newURL] = file;
                 }
               });
             }
           });
+
+          if (draft.currentValues[locale]) {
+            Object.assign(draft.currentValues[locale], valueMap);
+          } else {
+            draft.currentValues[locale] = createProxy({
+              draft: { collectionName, fileName },
+              locale,
+              target: structuredClone(valueMap),
+            });
+          }
+
+          if (!draft.originalValues[locale]) {
+            draft.originalValues[locale] = {};
+          }
         });
       }
 

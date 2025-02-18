@@ -397,7 +397,7 @@ export const createDraft = ({
     expanderStates: expanderStates ?? { _: {} },
   });
 
-  restoreBackupIfNeeded(collectionName, slug);
+  restoreBackupIfNeeded({ collectionName, fileName, slug });
 };
 
 /**
