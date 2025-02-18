@@ -22,6 +22,8 @@ describe('Test getEntryAssetFolderPaths()', () => {
   /** @type {I18nConfig} */
   const i18nMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders' };
   /** @type {I18nConfig} */
+  const i18nRootMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders_i18n_root' };
+  /** @type {I18nConfig} */
   const i18nMultiFile = { ...i18nBaseConfig, structure: 'multiple_files' };
   /** @type {I18nConfig} */
   const i18nSingleFile = { ...i18nBaseConfig, structure: 'single_file' };
@@ -66,6 +68,38 @@ describe('Test getEntryAssetFolderPaths()', () => {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nMultiFolder,
+      _assetFolder: relativeAssetFolder,
+    };
+
+    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'src/content/blog',
+      internalAssetFolder: 'src/content/blog/foo',
+      publicAssetFolder: '../../foo',
+    });
+  });
+
+  test('simple path, multiple folders at root, entry relative', () => {
+    /** @type {Collection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nRootMultiFolder,
+      _assetFolder: relativeAssetFolder,
+    };
+
+    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'src/content/blog',
+      internalAssetFolder: 'src/content/blog/foo',
+      publicAssetFolder: '../foo',
+    });
+  });
+
+  test('nested path, multiple folders at root, entry relative', () => {
+    /** @type {Collection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}/index' },
+      _i18n: i18nRootMultiFolder,
       _assetFolder: relativeAssetFolder,
     };
 
@@ -162,6 +196,38 @@ describe('Test getEntryAssetFolderPaths()', () => {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nMultiFolder,
+      _assetFolder: absoluteAssetFolder,
+    };
+
+    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog',
+      internalAssetFolder: 'static/uploads/blog',
+      publicAssetFolder: '/uploads/blog',
+    });
+  });
+
+  test('simple path, multiple folders at root, entry absolute', () => {
+    /** @type {Collection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nRootMultiFolder,
+      _assetFolder: absoluteAssetFolder,
+    };
+
+    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog',
+      internalAssetFolder: 'static/uploads/blog',
+      publicAssetFolder: '/uploads/blog',
+    });
+  });
+
+  test('nested path, multiple folders at root, entry absolute', () => {
+    /** @type {Collection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}/index' },
+      _i18n: i18nRootMultiFolder,
       _assetFolder: absoluteAssetFolder,
     };
 

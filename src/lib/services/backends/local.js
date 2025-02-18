@@ -181,8 +181,8 @@ const getAllFiles = async () => {
 
   const scanningPaths = [
     ...get(allEntryFolders)
-      .map(({ filePathMap, folderPath }) =>
-        filePathMap ? Object.values(filePathMap) : [folderPath],
+      .map(({ filePathMap, folderPathMap }) =>
+        filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
       )
       .flat(1),
     ...get(allAssetFolders).map(({ internalPath }) => internalPath),

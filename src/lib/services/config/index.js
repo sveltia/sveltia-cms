@@ -208,10 +208,24 @@ siteConfig.subscribe((config) => {
   const _allEntryFolders = [
     ...collections
       .filter(({ folder, hide, divider }) => typeof folder === 'string' && !hide && !divider)
-      .map(({ name: collectionName, folder }) => ({
-        collectionName,
-        folderPath: stripSlashes(/** @type {string} */ (folder)),
-      }))
+      .map((collection) => {
+        const { name: collectionName, folder } = collection;
+        const folderPath = stripSlashes(/** @type {string} */ (folder));
+        const { i18nEnabled, structure, allLocales } = getI18nConfig(collection);
+        const i18nRootMultiFolder = i18nEnabled && structure === 'multiple_folders_i18n_root';
+
+        return {
+          collectionName,
+          folderPath,
+          folderPathMap: Object.fromEntries(
+            allLocales.map((locale) => [
+              locale,
+              i18nRootMultiFolder ? `${locale}/${folderPath}` : folderPath,
+            ]),
+          ),
+        };
+      })
+      .flat(1)
       .sort((a, b) => compare(a.folderPath ?? '', b.folderPath ?? '')),
     ...collections
       .filter(({ files, hide, divider }) => Array.isArray(files) && !hide && !divider)

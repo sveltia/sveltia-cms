@@ -88,6 +88,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
   const i18nSingleFile = i18nEnabled && structure === 'single_file';
   const i18nMultiFile = i18nEnabled && structure === 'multiple_files';
   const i18nMultiFolder = i18nEnabled && structure === 'multiple_folders';
+  const i18nRootMultiFolder = i18nEnabled && structure === 'multiple_folders_i18n_root';
 
   // Handle a special case: top-level list field
   if (hasRootListField(fields)) {
@@ -131,7 +132,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
   let locale = undefined;
 
   if (fileName) {
-    if (i18nMultiFile || i18nMultiFolder) {
+    if (i18nMultiFile || i18nMultiFolder || i18nRootMultiFolder) {
       [locale, subPath] =
         Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === path) ?? [];
     } else {
@@ -173,7 +174,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
     );
   }
 
-  if (i18nMultiFile || i18nMultiFolder) {
+  if (i18nMultiFile || i18nMultiFolder || i18nRootMultiFolder) {
     if (!locale) {
       return;
     }

@@ -74,7 +74,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
       : undefined;
 
   const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
-  const isMultiFolders = structure === 'multiple_folders';
+  const isMultiFolders = ['multiple_folders', 'multiple_folders_i18n_root'].includes(structure);
   const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];
 
   if (!entryRelative) {
@@ -162,6 +162,7 @@ const createEntryPath = ({ draft, locale, slug }) => {
 
   const pathOptions = {
     multiple_folders: `${basePath}/${locale}/${path}.${extension}`,
+    multiple_folders_i18n_root: `${locale}/${basePath}/${path}.${extension}`,
     multiple_files: `${basePath}/${path}.${locale}.${extension}`,
     single_file: `${basePath}/${path}.${extension}`,
   };

@@ -92,6 +92,7 @@ const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
   const { i18nEnabled, structure, allLocales } = _i18n;
   const i18nMultiFile = i18nEnabled && structure === 'multiple_files';
   const i18nMultiFolder = i18nEnabled && structure === 'multiple_folders';
+  const i18nRootMultiFolder = i18nEnabled && structure === 'multiple_folders_i18n_root';
 
   /**
    * The path pattern in the middle, which should match the filename (without extension),
@@ -105,13 +106,19 @@ const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
 
   const localeMatcher = `(?<locale>${allLocales.join('|')})`;
 
-  return new RegExp(
-    `${basePath ? `^${escapeRegExp(basePath)}\\/` : '^'}` +
-      `${i18nMultiFolder ? `${localeMatcher}\\/` : ''}` +
-      `${filePathMatcher}` +
-      `${i18nMultiFile ? `\\.${localeMatcher}` : ''}` +
-      `\\.${detectFileExtension({ format, extension })}$`,
-  );
+  const pattern = [
+    '^',
+    i18nRootMultiFolder ? `${localeMatcher}\\/` : '',
+    basePath ? `${escapeRegExp(basePath)}\\/` : '',
+    i18nMultiFolder ? `${localeMatcher}\\/` : '',
+    filePathMatcher,
+    i18nMultiFile ? `\\.${localeMatcher}` : '',
+    '\\.',
+    detectFileExtension({ format, extension }),
+    '$',
+  ].join('');
+
+  return new RegExp(pattern);
 };
 
 /**

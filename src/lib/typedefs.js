@@ -162,7 +162,8 @@
 
 /**
  * Internationalization (i18n) file structure type.
- * @typedef {'single_file' | 'multiple_files' | 'multiple_folders'} I18nFileStructure
+ * @typedef {'single_file' | 'multiple_files' | 'multiple_folders' | 'multiple_folders_i18n_root' }
+ * I18nFileStructure
  */
 
 /**
@@ -239,6 +240,9 @@
  * @property {Record<LocaleCode, string>} [filePathMap] - File path map. The key is a locale, and
  * the value is the corresponding file path. File collection only.
  * @property {string} [folderPath] - Folder path. Entry collection only.
+ * @property {Record<LocaleCode, string>} [folderPathMap] - Folder path map. Entry collection only.
+ * Paths in `folderPathMap` are prefixed with a locale if the `multiple_folders_i18n_root` i18n
+ * structure is used, while `folderPath` is a bare collection `folder` path.
  */
 
 /**

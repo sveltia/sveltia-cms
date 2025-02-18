@@ -70,6 +70,16 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
+  /** @type {I18nConfig} */
+  const i18nRootMultiFolder = {
+    i18nEnabled: true,
+    allLocales: ['en', 'fr'],
+    initialLocales: ['en', 'fr'],
+    defaultLocale: 'en',
+    structure: 'multiple_folders_i18n_root',
+    canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+  };
+
   test('entry collection without i18n', () => {
     expect(
       getFileConfig({
@@ -456,6 +466,104 @@ describe('Test getFileConfig()', () => {
       basePath: 'content/posts',
       subPath: undefined,
       fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>.+)\.json$/,
+      fullPath: undefined,
+      fmDelimiters: undefined,
+      yamlQuote: false,
+    });
+  });
+
+  test('entry collection with multi-folder-at-root i18n', () => {
+    expect(
+      getFileConfig({
+        rawCollection: {
+          ...rawFolderCollection,
+        },
+        _i18n: i18nRootMultiFolder,
+      }),
+    ).toEqual({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      subPath: undefined,
+      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>.+)\.md$/,
+      fullPath: undefined,
+      fmDelimiters: undefined,
+      yamlQuote: false,
+    });
+
+    expect(
+      getFileConfig({
+        rawCollection: {
+          ...rawFolderCollection,
+          path: '{{slug}}/index',
+        },
+        _i18n: i18nRootMultiFolder,
+      }),
+    ).toEqual({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      subPath: '{{slug}}/index',
+      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+\/index)\.md$/,
+      fullPath: undefined,
+      fmDelimiters: undefined,
+      yamlQuote: false,
+    });
+
+    expect(
+      getFileConfig({
+        rawCollection: {
+          ...rawFolderCollection,
+          path: '{{slug}}/index',
+          format: 'yaml-frontmatter',
+        },
+        _i18n: i18nRootMultiFolder,
+      }),
+    ).toEqual({
+      extension: 'md',
+      format: 'yaml-frontmatter',
+      basePath: 'content/posts',
+      subPath: '{{slug}}/index',
+      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+\/index)\.md$/,
+      fullPath: undefined,
+      fmDelimiters: ['---', '---'],
+      yamlQuote: false,
+    });
+
+    expect(
+      getFileConfig({
+        rawCollection: {
+          ...rawFolderCollection,
+          extension: 'yml',
+          yaml_quote: true,
+        },
+        _i18n: i18nRootMultiFolder,
+      }),
+    ).toEqual({
+      extension: 'yml',
+      format: 'yaml',
+      basePath: 'content/posts',
+      subPath: undefined,
+      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>.+)\.yml$/,
+      fullPath: undefined,
+      fmDelimiters: undefined,
+      yamlQuote: true,
+    });
+
+    expect(
+      getFileConfig({
+        rawCollection: {
+          ...rawFolderCollection,
+          extension: 'json',
+        },
+        _i18n: i18nRootMultiFolder,
+      }),
+    ).toEqual({
+      extension: 'json',
+      format: 'json',
+      basePath: 'content/posts',
+      subPath: undefined,
+      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>.+)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
