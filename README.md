@@ -847,7 +847,7 @@ i18n:
 
 Alternatively, developers can specify locales to be enabled by default when users create a new entry draft, using the new `initial_locales` option, which accepts a locale list, `default` (default locale only) or `all` (all locales). When this option is used, `save_all_locales` will be `false`.
 
-The following example disables German by default, but users can manually enable German if needed. Note that the default locale, in this case English, is always enabled.
+The following example disables German by default, but users can manually enable it if needed. Note that the default locale, in this case English, is always enabled.
 
 ```yaml
 i18n:
