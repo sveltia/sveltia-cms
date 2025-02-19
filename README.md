@@ -218,7 +218,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the hundreds of
 
 ### Better i18n support
 
-Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect best-in-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for [Mozilla](https://www.mozilla.org/) and currently lives in [one of the most multicultural cities in the world](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
+Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect best-in-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for [Mozilla](https://www.mozilla.org/) and currently lives in the [most diverse city in the world](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
 
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
