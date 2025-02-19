@@ -2,6 +2,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
 
+import { unique } from '@sveltia/utils/array';
 import { getHash } from '@sveltia/utils/crypto';
 import { getPathInfo, readAsText } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
@@ -179,14 +180,17 @@ const getAllFiles = async () => {
   /** @type {{ file: File, path: string }[]} */
   const availableFileList = [];
 
-  const scanningPaths = [
-    ...get(allEntryFolders)
-      .map(({ filePathMap, folderPathMap }) =>
-        filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
-      )
-      .flat(1),
-    ...get(allAssetFolders).map(({ internalPath }) => internalPath),
-  ].map((path) => stripSlashes(path ?? ''));
+  /** @type {string[]} */
+  const scanningPaths = unique(
+    [
+      ...get(allEntryFolders)
+        .map(({ filePathMap, folderPathMap }) =>
+          filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
+        )
+        .flat(1),
+      ...get(allAssetFolders).map(({ internalPath }) => internalPath),
+    ].map((path) => stripSlashes(path ?? '')),
+  );
 
   /**
    * Get a regular expression to match the given path.
