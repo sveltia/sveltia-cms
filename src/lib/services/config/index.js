@@ -225,7 +225,6 @@ siteConfig.subscribe((config) => {
           ),
         };
       })
-      .flat(1)
       .sort((a, b) => compare(a.folderPath ?? '', b.folderPath ?? '')),
     ...collections
       .filter(({ files, hide, divider }) => Array.isArray(files) && !hide && !divider)
