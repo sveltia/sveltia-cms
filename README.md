@@ -234,7 +234,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`.[^101]
 - User interface
   - Eliminates UI confusion: The Preview pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
-  - Users can easily switch between locales while editing by clicking a button instead of a dropdown list.
+  - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
   - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click. More translation services will be added in the future.
