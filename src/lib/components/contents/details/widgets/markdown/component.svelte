@@ -31,7 +31,7 @@
   /** @type {FieldKeyPath} */
   let keyPath = $state('');
   /** @type {Record<string, any>} */
-  let inputValues = $state({});
+  const inputValues = $state({});
 
   const supportedWidgets = ['image', 'string'];
 
@@ -57,7 +57,7 @@
 
     untrack(() => {
       if (!equal(values, $state.snapshot(inputValues))) {
-        inputValues = values;
+        Object.assign(inputValues, values);
       }
     });
   });
