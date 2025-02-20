@@ -707,7 +707,7 @@ collections:
 
 This is actually not new in Sveltia CMS but rather an undocumented feature in Netlify/Decap CMS.[^4] You can specify media and public folders for each collection that override the [global media folder](https://decapcms.org/docs/configuration-options/#media-and-public-folders). Well, it’s [documented](https://decapcms.org/docs/collection-folder/#media-and-public-folder), but that’s probably not what you want.
 
-Rather, if you’d like to add all the media files for a collection in one single folder, specify both `media_folder` and `public_folder` instead of leaving them empty. The trick is to use an **absolute path** for `media_folder` like the example below. You can try this with Netlify/Decap CMS first if you prefer.
+Rather, if you’d like to add all the media files for a collection in one single folder, specify both `media_folder` and `public_folder` instead of leaving them empty. The trick is to use a **project relative path** starting with a `/` for `media_folder` like the example below. You can try this with Netlify/Decap CMS first if you prefer.
 
 ```diff
  media_folder: static/media
