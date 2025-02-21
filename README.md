@@ -399,7 +399,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - When a YouTube video URL is entered in a String field, it appears as an embedded video in the Preview pane. Check your site’s [CSP](#setting-up-content-security-policy) if the preview doesn’t work.
   - When a regular URL is entered in a String field, it appears as a link that can be opened in a new browser tab.
   - Supports the `type` option that accepts `url` or `email` as a value, which will validate the value as a URL or email.
-  - Supports the `prefix` and `suffix` string options, which automatically prepend and/or append the developer-defined value to the user-input value.
+  - Supports the `prefix` and `suffix` string options, which automatically prepend and/or append the developer-defined value to the user-input value, if it’s not empty.
 - Boolean, Number and String
   - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI.[^28] Markdown is supported in the value.
     - Compatibility note: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively, which have different meaning in Sveltia CMS.
