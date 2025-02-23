@@ -198,6 +198,7 @@
           bind:selectedAsset
           {showUploader}
           {searchTerms}
+          basePath={internalPath}
         />
       {:else if libraryName === 'uncategorized-assets' || showUploader}
         <InternalAssetsPanel

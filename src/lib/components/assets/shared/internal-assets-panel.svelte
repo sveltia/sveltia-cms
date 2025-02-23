@@ -11,6 +11,7 @@
    * @property {SelectedAsset | null} [selectedAsset] - Selected asset.
    * @property {boolean} [showUploader] - Whether to show the uploader.
    * @property {string} [searchTerms] - Search terms for filtering assets.
+   * @property {string} [basePath] - Path to an asset folder, if any folder is selected.
    */
 
   /** @type {Props} */
@@ -21,6 +22,7 @@
     selectedAsset = $bindable(null),
     showUploader = false,
     searchTerms = '',
+    basePath = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -50,6 +52,7 @@
       assets={assets.sort((a, b) => a.name.localeCompare(b.name))}
       viewType={$selectAssetsView?.type}
       {searchTerms}
+      {basePath}
       gridId="select-assets-grid"
       checkerboard={true}
       onSelect={({ asset }) => {
