@@ -51,16 +51,16 @@
       {viewType}
       showTitle={true}
       onChange={({ value }) => {
-        onSelect?.({ asset: /** @type {Asset} */ (assets.find(({ sha }) => sha === value)) });
+        onSelect?.({ asset: /** @type {Asset} */ (assets.find(({ path }) => path === value)) });
       }}
     >
       <InfiniteScroll items={filteredAssets} itemKey="path">
         {#snippet renderItem(/** @type {Asset} */ asset)}
-          {@const { sha, kind, name, path } = asset}
+          {@const { kind, name, path } = asset}
           <!-- Show asset path relative to the base folder, or just file name -->
           {@const relPath = basePath ? stripSlashes(path.replace(basePath, '')) : name}
           {@const pathArray = relPath.split('/')}
-          <Option label="" value={sha}>
+          <Option label="" value={path}>
             <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
             <span role="none" class="name">
               {#each pathArray as segment, index}
