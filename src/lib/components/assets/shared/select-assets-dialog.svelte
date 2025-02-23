@@ -210,6 +210,7 @@
           bind:selectedAsset
           {showUploader}
           {searchTerms}
+          basePath={$globalAssetFolder?.internalPath}
         />
       {/if}
       {#if canEnterURL && libraryName === 'enter-url'}
