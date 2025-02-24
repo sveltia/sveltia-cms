@@ -365,12 +365,13 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The `min` and `max` options can be used separately. You don’t need to specify both to use either option.[^145]
   - The Add Item button appears at the bottom of the list when the `add_to_top` option is not `true`, so you don’t have to scroll up each time to add new items.
   - Users can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once.[^164]
-  - A required List field with no subfield or value is marked as invalid.[^43]
+  - A required List field with no subfield or value is marked as invalid.[^43] No need to set the `min` and `max` options for the `required` option to work.
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing.[^44]
   - An optional List field won’t populate an item by default when the subfield has the `default` value.[^162]
   - Users can enter spaces in a simple text-based List field.[^50]
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
+  - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
@@ -490,6 +491,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - The theme and keymap inline settings of the Code widget will not be supported, and some languages are dropped, as we use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/).
 - Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
+- An absolute URL for the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option will not be supported, as such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 
 ### Features to be implemented before GA
 
@@ -1483,3 +1485,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^181]: Netlify/Decap CMS [#6254](https://github.com/decaporg/decap-cms/issues/6254)
 
 [^182]: Netlify/Decap CMS [#4416](https://github.com/decaporg/decap-cms/issues/4416)
+
+[^183]: Netlify/Decap CMS [#1275](https://github.com/decaporg/decap-cms/issues/1275)
