@@ -290,9 +290,11 @@ export const getCollectionsByAsset = (asset) =>
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
+  const decodedPath = decodeURI(savedPath);
+
   // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
   // considered as an absolute path.
-  if (!/^[/@]/.test(savedPath)) {
+  if (!/^[/@]/.test(decodedPath)) {
     if (!entry) {
       return undefined;
     }
@@ -314,7 +316,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
       }
 
       const { entryFolder } = entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)?.groups ?? {};
-      const resolvedPath = resolvePath(`${entryFolder}/${savedPath}`);
+      const resolvedPath = resolvePath(`${entryFolder}/${decodedPath}`);
 
       return get(allAssets).find((asset) => asset.path === resolvedPath);
     };
@@ -332,17 +334,17 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     return (
       assets.flat(1).filter(Boolean)[0] ??
       // Fall back to exact match at the root folder
-      get(allAssets).find((asset) => asset.path === savedPath)
+      get(allAssets).find((asset) => asset.path === decodedPath)
     );
   }
 
-  const exactMatch = get(allAssets).find((asset) => asset.path === stripSlashes(savedPath));
+  const exactMatch = get(allAssets).find((asset) => asset.path === stripSlashes(decodedPath));
 
   if (exactMatch) {
     return exactMatch;
   }
 
-  const { dirname: dirName = '', basename: fileName } = getPathInfo(savedPath);
+  const { dirname: dirName = '', basename: fileName } = getPathInfo(decodedPath);
 
   // eslint-disable-next-line prefer-const
   let { collectionName, internalPath, publicPath } = !dirName
@@ -357,7 +359,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
   // Find a global/uncategorized asset
   if (!collectionName) {
-    const fullPath = savedPath.replace(
+    const fullPath = decodedPath.replace(
       new RegExp(`^${escapeRegExp(publicPath || dirName)}`),
       internalPath,
     );
@@ -436,19 +438,20 @@ export const getAssetPublicURL = (
   }
 
   const path = asset.path.replace(asset.folder, publicPath === '/' ? '' : (publicPath ?? ''));
+  const encodedPath = encodeURI(path);
 
   // Path starting with `@`, etc. cannot be linked
-  if (!path.startsWith('/') && !allowSpecial) {
+  if (!encodedPath.startsWith('/') && !allowSpecial) {
     return undefined;
   }
 
   if (pathOnly) {
-    return path;
+    return encodedPath;
   }
 
   const baseURL = get(siteConfig)?._baseURL;
 
-  return `${baseURL}${path}`;
+  return `${baseURL}${encodedPath}`;
 };
 
 /**

@@ -238,9 +238,9 @@
             aria-errormessage="{fieldId}-error"
           >
             {#if file}
-              {file.name.normalize()}
+              {decodeURI(file.name.normalize())}
             {:else if !currentValue.startsWith('blob:')}
-              {currentValue}
+              {decodeURI(currentValue)}
             {/if}
           </div>
         {/if}
