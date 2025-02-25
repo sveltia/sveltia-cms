@@ -28,6 +28,7 @@ export const strings = {
   save: '保存',
   saving: '保存中…',
   rename: '名前を変更',
+  update: '更新',
   replace: '差し替え',
   add: '追加',
   remove: '削除',
@@ -347,6 +348,13 @@ export const strings = {
   translate_from_x: '{locale} から翻訳',
   revert_changes: '変更を取り消す',
   revert_all_changes: 'すべての変更を取り消す',
+  edit_slug: 'スラッグを編集',
+  edit_slug_warning:
+    'スラッグを変更すると、エントリーへの内部・外部リンクが壊れる可能性があります。現在のところ、Sveltia CMS は Relation ウィジェットで作成された参照を更新しないため、そのような参照は他のリンクとともに手動で更新する必要があります。',
+  edit_slug_error: {
+    empty: 'スラッグは空白にはできません。',
+    duplicate: 'このスラッグは他のエントリーに使われています。',
+  },
   required: '必須',
   editor: {
     translation: {

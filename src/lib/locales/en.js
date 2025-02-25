@@ -28,6 +28,7 @@ export const strings = {
   save: 'Save',
   saving: 'Saving…',
   rename: 'Rename',
+  update: 'Update',
   replace: 'Replace',
   add: 'Add',
   remove: 'Remove',
@@ -344,6 +345,13 @@ export const strings = {
   translate_from_x: 'Translate from {locale}',
   revert_changes: 'Revert Changes',
   revert_all_changes: 'Revert All Changes',
+  edit_slug: 'Edit Slug',
+  edit_slug_warning:
+    'Changing the slug may break internal and external links to the entry. Currently, Sveltia CMS does not update references created with the Relation widget, so you’ll need to manually update such references along with other links.',
+  edit_slug_error: {
+    empty: 'The slug cannot be empty.',
+    duplicate: 'This slug is used for another entry.',
+  },
   required: 'Required',
   editor: {
     translation: {

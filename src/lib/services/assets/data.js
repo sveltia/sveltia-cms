@@ -163,6 +163,10 @@ export const moveAssets = async (action, movingAssets) => {
             Object.entries(locales).map(([locale]) => [locale, true]),
           );
 
+          const currentSlugs = Object.fromEntries(
+            Object.entries(locales).map(([locale, { slug }]) => [locale, slug]),
+          );
+
           const currentValues = Object.fromEntries(
             Object.entries(locales).map(([locale, { content }]) => [locale, content]),
           );
@@ -172,6 +176,8 @@ export const moveAssets = async (action, movingAssets) => {
             originalEntry: entry,
             originalLocales: currentLocales,
             currentLocales,
+            originalSlugs: currentSlugs,
+            currentSlugs,
             originalValues: currentValues,
             currentValues,
             files: {},

@@ -185,10 +185,10 @@ const prepareEntry = async ({ file, entries, errors }) => {
         ? rawContent[canonicalSlugKey]
         : undefined;
 
-    const slug = canonicalSlug || fileName || getSlug({ subPath, subPathTemplate });
+    const slug = fileName || getSlug({ subPath, subPathTemplate });
     const localizedEntry = { slug, path, sha, content: flatten(rawContent) };
     // Use a temporary ID to locate all the localized files for the entry
-    const tempId = `${collectionName}/${slug}`;
+    const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
     // Check if the entry has already been added for another locale
     const existingEntry = entries.find((e) => e.id === tempId);
 

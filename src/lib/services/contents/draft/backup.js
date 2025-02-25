@@ -1,12 +1,11 @@
 import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
-import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
-import { createProxy } from '$lib/services/contents/draft/create';
-import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
-import { siteConfigVersion } from '$lib/services/config';
 import { backend } from '$lib/services/backends';
+import { siteConfigVersion } from '$lib/services/config';
+import { entryDraft, entryDraftModified, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { createProxy } from '$lib/services/contents/draft/create';
 
 /**
  * @type {number | NodeJS.Timeout}
@@ -78,17 +77,15 @@ export const saveBackup = async (draft) => {
   const {
     collectionName,
     originalEntry,
-    originalLocales = {},
     currentLocales = {},
-    originalValues = {},
+    currentSlugs = {},
     currentValues = {},
     files,
   } = draft;
 
   const slug = originalEntry?.slug || '';
-  const modified = !equal(originalLocales, currentLocales) || !equal(originalValues, currentValues);
 
-  if (modified) {
+  if (get(entryDraftModified)) {
     /** @type {EntryDraftBackup} */
     const backup = {
       timestamp: new Date(),
@@ -96,6 +93,7 @@ export const saveBackup = async (draft) => {
       collectionName,
       slug,
       currentLocales,
+      currentSlugs: /** @type {Record<LocaleCode, string>} */ (toRaw(currentSlugs)),
       currentValues: /** @type {Record<LocaleCode, FlattenedEntryContent>} */ (
         toRaw(currentValues)
       ),
@@ -126,7 +124,7 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
     return;
   }
 
-  const { timestamp, currentLocales, currentValues, files } = backup;
+  const { timestamp, currentLocales, currentSlugs, currentValues, files } = backup;
 
   /** @type {boolean | undefined} */
   const doRestore = await new Promise((resolve) => {
@@ -144,6 +142,7 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
     entryDraft.update((draft) => {
       if (draft) {
         draft.currentLocales = currentLocales;
+        draft.currentSlugs = currentSlugs;
 
         Object.entries(currentValues).forEach(([locale, valueMap]) => {
           Object.entries(valueMap).forEach(([keyPath, value]) => {

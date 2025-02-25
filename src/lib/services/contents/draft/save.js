@@ -136,7 +136,7 @@ const createEntryPath = ({ draft, locale, slug }) => {
     return collectionFile.file.replace('{{locale}}', locale);
   }
 
-  if (originalEntry?.locales[locale]) {
+  if (originalEntry?.locales[locale].slug === slug) {
     return originalEntry.locales[locale].path;
   }
 
@@ -436,7 +436,7 @@ const serializeContent = ({ draft, locale, valueMap }) => {
  * @returns {Record<LocaleCode, string> | undefined} Localized slug map.
  */
 const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
-  const { collection, currentLocales, collectionFile, currentValues } = draft;
+  const { collection, collectionFile, currentLocales, currentSlugs, currentValues } = draft;
 
   const {
     identifier_field: identifierField = 'title',
@@ -467,7 +467,9 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
         locale,
         locale === defaultLocale
           ? defaultLocaleSlug
-          : fillSlugTemplate(slugTemplate, {
+          : (currentSlugs?.[locale] ??
+            currentSlugs?._ ??
+            fillSlugTemplate(slugTemplate, {
               collection: _collection,
               locale,
               content: {
@@ -477,7 +479,7 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
                   localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale][keyPath]]),
                 ),
               },
-            }),
+            })),
       ]),
   );
 };
@@ -546,17 +548,24 @@ const getFillSlugOptions = ({ draft }) => {
  * @returns {EntrySlugVariants} Slugs.
  */
 export const getSlugs = ({ draft }) => {
-  const { collection, originalEntry, fileName } = draft;
+  const { collection, collectionFile, fileName, currentSlugs } = draft;
 
   const {
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
   } = collection;
 
+  const {
+    _i18n: { defaultLocale },
+  } = collectionFile ?? collection;
+
   const fillSlugOptions = getFillSlugOptions({ draft });
 
   const defaultLocaleSlug =
-    fileName ?? originalEntry?.slug ?? fillSlugTemplate(slugTemplate, fillSlugOptions);
+    fileName ??
+    currentSlugs?.[defaultLocale] ??
+    currentSlugs?._ ??
+    fillSlugTemplate(slugTemplate, fillSlugOptions);
 
   const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug });
 
@@ -722,10 +731,8 @@ const createBaseSavingEntryData = async ({
           return [locale, { path }];
         }
 
-        // Add the canonical slug if it doesn’t exist in the content
-        if (!content[canonicalSlugKey] && canonicalSlug) {
-          content[canonicalSlugKey] = canonicalSlug;
-        }
+        // Add the canonical slug
+        content[canonicalSlugKey] = canonicalSlug;
 
         // Normalize data
         await Promise.all(
@@ -769,8 +776,15 @@ const createBaseSavingEntryData = async ({
  * entry, assets and file changes.
  */
 export const createSavingEntryData = async ({ draft, slugs }) => {
-  const { collection, isNew, originalLocales, currentLocales, originalEntry, collectionFile } =
-    draft;
+  const {
+    collection,
+    isNew,
+    originalLocales,
+    currentLocales,
+    originalSlugs,
+    originalEntry,
+    collectionFile,
+  } = draft;
 
   const { defaultLocaleSlug } = slugs;
 
@@ -789,12 +803,10 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     id: originalEntry?.id ?? generateUUID(),
     sha: '', // Populated later
     slug: defaultLocaleSlug,
-    subPath:
-      originalEntry?.subPath ??
-      (_file.fullPathRegEx
-        ? (localizedEntryMap[defaultLocale].path.match(_file.fullPathRegEx)?.groups?.subPath ??
-          defaultLocaleSlug)
-        : defaultLocaleSlug),
+    subPath: _file.fullPathRegEx
+      ? (localizedEntryMap[defaultLocale].path.match(_file.fullPathRegEx)?.groups?.subPath ??
+        defaultLocaleSlug)
+      : defaultLocaleSlug,
     locales: Object.fromEntries(
       Object.entries(localizedEntryMap).filter(([, { content }]) => !!content),
     ),
@@ -803,7 +815,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
   if (!i18nEnabled || structure === 'single_file') {
     const localizedEntry = savingEntry.locales[defaultLocale];
     const { slug, path, content } = localizedEntry;
-    const action = isNew ? 'create' : 'update';
+    const renamed = !isNew && (originalSlugs?.[defaultLocale] ?? originalSlugs?._) !== slug;
 
     const data = await formatEntryFile({
       content: i18nEnabled
@@ -817,7 +829,14 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       _file,
     });
 
-    changes.push({ action, slug, path, data });
+    changes.push({
+      action: isNew ? 'create' : renamed ? 'move' : 'update',
+      slug,
+      path,
+      previousPath: renamed ? originalEntry?.locales[defaultLocale].path : undefined,
+      data,
+    });
+
     localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
   } else {
     await Promise.all(
@@ -826,14 +845,24 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
         const { slug, path, content } = localizedEntry ?? {};
 
         if (currentLocales[locale]) {
-          const action = isNew || !originalLocales[locale] ? 'create' : 'update';
+          const renamed =
+            !isNew &&
+            originalLocales[locale] &&
+            (originalSlugs?.[locale] ?? originalSlugs?._) !== slug;
 
           const data = await formatEntryFile({
             content: serializeContent({ draft, locale, valueMap: content }),
             _file,
           });
 
-          changes.push({ action, slug, path, data });
+          changes.push({
+            action: isNew || !originalLocales[locale] ? 'create' : renamed ? 'move' : 'update',
+            slug,
+            path,
+            previousPath: renamed ? originalEntry?.locales[locale].path : undefined,
+            data,
+          });
+
           localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
         } else if (originalLocales[locale]) {
           changes.push({ action: 'delete', slug, path });

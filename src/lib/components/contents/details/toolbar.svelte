@@ -15,13 +15,13 @@
     Toast,
     Toolbar,
   } from '@sveltia/ui';
-  import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
+  import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
   import { backendName } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/collection/data';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft, duplicateDraft } from '$lib/services/contents/draft/create';
   import { copyFromLocaleToast, entryEditorSettings } from '$lib/services/contents/draft/editor';
   import { saveEntry } from '$lib/services/contents/draft/save';
@@ -33,6 +33,7 @@
   import { prefs } from '$lib/services/user/prefs';
 
   let showValidationToast = $state(false);
+  let showEditSlugDialog = $state(false);
   let showDeleteDialog = $state(false);
   let showErrorDialog = $state(false);
   let errorMessage = $state('');
@@ -40,12 +41,10 @@
   /** @type {any} */
   let menuButton = $state();
 
-  const isNew = $derived($entryDraft?.isNew);
+  const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
-  const originalLocales = $derived($entryDraft?.originalLocales ?? {});
-  const originalValues = $derived($entryDraft?.originalValues ?? {});
   const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const showSaveOptions = $derived(
@@ -56,11 +55,7 @@
   const collectionLabel = $derived(collection?.label || collectionName);
   const collectionLabelSingular = $derived(collection?.label_singular || collectionLabel);
   const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
-  const modified = $derived(
-    isNew ||
-      !equal(originalLocales, $state.snapshot($entryDraft?.currentLocales)) ||
-      !equal(originalValues, $state.snapshot($entryDraft?.currentValues)),
-  );
+  const modified = $derived(isNew || $entryDraftModified);
   const errorCount = $derived(
     Object.values($entryDraft?.validities ?? {})
       .map((validity) => Object.values(validity).map(({ valid }) => !valid))
@@ -227,6 +222,13 @@
         />
         <Divider />
         <MenuItem
+          label={$_('edit_slug')}
+          disabled={!!collectionFile || isNew || collection?.delete === false}
+          onclick={() => {
+            showEditSlugDialog = true;
+          }}
+        />
+        <MenuItem
           label={$_('revert_all_changes')}
           disabled={!modified}
           onclick={() => {
@@ -287,6 +289,8 @@
     })}
   </Alert>
 </Toast>
+
+<EditSlugDialog bind:open={showEditSlugDialog} />
 
 <ConfirmationDialog
   bind:open={showDeleteDialog}

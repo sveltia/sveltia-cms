@@ -352,7 +352,13 @@ export const createDraft = ({
   const { id, slug, locales } = originalEntry;
   const isNew = id === undefined;
   const { fields = [], _i18n } = collectionFile ?? collection;
-  const { allLocales, initialLocales } = _i18n;
+
+  const {
+    allLocales,
+    initialLocales,
+    defaultLocale,
+    canonicalSlug: { key: canonicalSlugKey = 'translationKey' },
+  } = _i18n;
 
   const enabledLocales = isNew
     ? initialLocales
@@ -361,6 +367,12 @@ export const createDraft = ({
   const originalLocales = Object.fromEntries(
     allLocales.map((locale) => [locale, enabledLocales.includes(locale)]),
   );
+
+  const originalSlugs = isNew
+    ? {}
+    : canonicalSlugKey in (locales?.[defaultLocale]?.content ?? {})
+      ? Object.fromEntries(allLocales.map((locale) => [locale, locales?.[locale].slug]))
+      : { _: locales?.[defaultLocale].slug };
 
   /** @type {Record<LocaleCode, FlattenedEntryContent>} */
   const originalValues = Object.fromEntries(
@@ -380,6 +392,8 @@ export const createDraft = ({
     originalEntry: isNew ? undefined : originalEntry,
     originalLocales,
     currentLocales: structuredClone(originalLocales),
+    originalSlugs,
+    currentSlugs: structuredClone(originalSlugs),
     originalValues,
     currentValues: Object.fromEntries(
       enabledLocales.map((locale) => [

@@ -966,6 +966,10 @@
  * @property {Entry} [originalEntry] - Original entry or `undefined` if it’s a new entry draft.
  * @property {LocaleStateMap} originalLocales - Original locale state at the time of draft creation.
  * @property {LocaleStateMap} currentLocales - Current locale state.
+ * @property {Record<LocaleCode, string | undefined>} originalSlugs - Key is a locale code, value is
+ * the original slug.
+ * @property {Record<LocaleCode, string | undefined>} currentSlugs - Key is a locale code, value is
+ * the current slug.
  * @property {Record<LocaleCode, FlattenedEntryContent>} originalValues - Key is a locale code,
  * value is a flattened object containing all the original field values.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
@@ -987,6 +991,8 @@
  * @property {string} collectionName - Collection name.
  * @property {string} slug - Entry slug. An empty string for a new entry.
  * @property {LocaleStateMap} currentLocales - Current locale state.
+ * @property {Record<LocaleCode, string | undefined>} currentSlugs - Key is a locale code, value is
+ * the current slug.
  * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
  * is a flattened object containing all the current field values while editing.
  * @property {EntryFileMap} files - Files to be uploaded.
