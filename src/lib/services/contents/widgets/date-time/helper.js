@@ -116,12 +116,12 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
       return (utc ? moment.utc : moment)(inputValue).format(format);
     }
 
-    if (utc) {
-      return new Date(inputValue).toISOString();
-    }
-
     if (dateOnly) {
       return inputValue;
+    }
+
+    if (utc) {
+      return `${inputValue}:00.000Z`;
     }
 
     return `${inputValue}${timeSuffix}`;

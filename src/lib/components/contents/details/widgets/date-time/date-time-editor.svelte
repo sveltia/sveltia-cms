@@ -105,9 +105,9 @@
       variant="tertiary"
       label={$_(dateOnly ? 'today' : 'now')}
       onclick={() => {
-        currentValue = /** @type {string} */ (
-          getCurrentValue(getCurrentDateTime(fieldConfig), '', fieldConfig)
-        );
+        const dt = getCurrentDateTime(fieldConfig);
+
+        inputValue = utc ? dt.replace(/:00\.000Z$/, '') : dt;
       }}
     />
   {/if}
