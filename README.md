@@ -285,6 +285,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The maximum number of characters for an entry slug can be set with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms.[^25]
   - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget.[^137]
   - Entry slugs are [localizable](#localizing-entry-slugs).[^80]
+  - Users can edit entry slugs via the 3-dot menu in the Content Editor.[^184]
 - Entry listing
   - [Default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
   - Sorting entries by a DateTime field works as expected.[^110]
@@ -1487,3 +1488,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^182]: Netlify/Decap CMS [#4416](https://github.com/decaporg/decap-cms/issues/4416)
 
 [^183]: Netlify/Decap CMS [#1275](https://github.com/decaporg/decap-cms/issues/1275)
+
+[^184]: Netlify/Decap CMS [#377](https://github.com/decaporg/decap-cms/issues/377)
