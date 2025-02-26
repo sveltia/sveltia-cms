@@ -117,7 +117,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - We even work proactively to adopt changes suggested in their [pull requests](https://github.com/decaporg/decap-cms/pulls)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 170+ of them, or 335+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 175+ of them, or 340+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 200 by GA; 300, or 500 including duplicates, in the future (yes, you read that right)
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without a real solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
@@ -126,7 +126,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![170 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250210)<br>
+![175 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250226)<br>
 
 ## Differentiators
 
@@ -255,12 +255,13 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Configuration
   - Provides some new options, including:
     - `icon`: [Choose a custom icon for each collection](#using-a-custom-icon-for-a-collection).[^3]
-    - `divider`: [Add dividers to the collection list](#adding-dividers-to-the-collection-list).
     - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list, like `thumbnail: featuredImage`.[^130]
       - A nested field can be specified using dot notation, e.g. `heroImage.src`.
       - A wildcard in the field name is also supported, e.g. `images.*.src`.
       - Multiple field names can be specified as an array for fallback purpose, e.g. `[thumbnail, cover]`.
       - If this option is omitted, any non-nested, non-empty Image or File field will be used.[^173]
+    - `limit`: Specify the maximum number of entries that can be created in a folder collection.[^185]
+    - `divider`: [Add dividers to the collection list](#adding-dividers-to-the-collection-list).
   - Enhancements to the entry `filter` option for folder collections:
     - Boolean `value` works as expected.[^93]
     - `value` accepts `null` to match an undefined field value.
@@ -1490,3 +1491,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^183]: Netlify/Decap CMS [#1275](https://github.com/decaporg/decap-cms/issues/1275)
 
 [^184]: Netlify/Decap CMS [#377](https://github.com/decaporg/decap-cms/issues/377)
+
+[^185]: Netlify/Decap CMS [#6203](https://github.com/decaporg/decap-cms/issues/6203), [#7417](https://github.com/decaporg/decap-cms/issues/7417)
