@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
+  import { Button, Icon, Infobar, Spacer, Toolbar } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
@@ -7,6 +7,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
+  import { listedEntries } from '$lib/services/contents/collection/view';
 
   let showDeleteDialog = $state(false);
 
@@ -27,6 +28,8 @@
   const files = $derived($selectedCollection?.files);
   const canCreate = $derived($selectedCollection?.create ?? false);
   const canDelete = $derived($selectedCollection?.delete ?? true);
+  const limit = $derived($selectedCollection?.limit ?? Infinity);
+  const createDisabled = $derived(!canCreate || $listedEntries.length >= limit);
   const collectionLabel = $derived(label || name || '');
 </script>
 
@@ -49,7 +52,7 @@
       />
       <Button
         variant="primary"
-        disabled={!canCreate}
+        disabled={createDisabled}
         label={$_('create')}
         aria-label={$_('create_new_entry')}
         keyShortcuts="Accel+E"
@@ -63,6 +66,19 @@
       </Button>
     {/if}
   </Toolbar>
+  {#if createDisabled}
+    <Infobar
+      dismissible={false}
+      --sui-infobar-border-width="1px 0"
+      --sui-infobar-message-justify-content="center"
+    >
+      {#if !canCreate}
+        {$_('creating_entries_disabled_by_admin')}
+      {:else}
+        {$_('creating_entries_disabled_by_limit', { values: { limit } })}
+      {/if}
+    </Infobar>
+  {/if}
 {/if}
 
 <DeleteEntriesDialog bind:open={showDeleteDialog} />

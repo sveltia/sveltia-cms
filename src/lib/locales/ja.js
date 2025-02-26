@@ -190,6 +190,11 @@ export const strings = {
   asset_folders: 'アセットフォルダー',
   all_assets: 'すべてのアセット',
   uncategorized: '未分類',
+  creating_entries_disabled_by_admin:
+    'このコレクションへの新しいエントリーの作成は、管理者によって無効化されています。',
+  creating_entries_disabled_by_limit:
+    'このコレクションは最大の {limit} エントリーに達したため、新しいエントリーを作成することはできません。',
+  back_to_collection: 'コレクションへ戻る',
   search_results_for_x: '「{terms}」の検索結果',
   viewing_search_results:
     '「{terms}」の検索結果を表示しています。{entries} と {assets} が見つかりました。',

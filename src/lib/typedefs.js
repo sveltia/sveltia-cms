@@ -458,6 +458,8 @@
  * e.g. `heroImage.src`. A wildcard in the key path is also supported, e.g. `images.*.src`. Multiple
  * key paths can be specified as an array for fallback purpose. If this option is omitted, the
  * `name` of any non-nested, non-empty field using the Image or File widget is used.
+ * @property {number} [limit] - The maximum number of entries that can be created in the entry
+ * collection.
  * @see https://decapcms.org/docs/configuration-options/#collections
  */
 

@@ -5,11 +5,12 @@
   import { goto } from '$lib/services/app/navigation';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
+  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
-  const folderCollections = $derived(
+  const entryCollections = $derived(
     ($siteConfig?.collections ?? []).filter(
-      ({ folder, create = false, hide = false, divider = false }) =>
-        typeof folder === 'string' && create && !hide && !divider,
+      ({ folder, hide = false, divider = false }) =>
+        typeof folder === 'string' && !hide && !divider,
     ),
   );
 </script>
@@ -25,10 +26,18 @@
   {/snippet}
   {#snippet popup()}
     <Menu aria-label={$_('create_entry_or_assets')}>
-      {#if folderCollections.length}
-        {#each folderCollections as { name, label, label_singular: labelSingular } (name)}
+      {#if entryCollections.length}
+        {#each entryCollections as collection (collection.name)}
+          {@const {
+            name,
+            label,
+            label_singular: labelSingular,
+            create = false,
+            limit = Infinity,
+          } = collection}
           <MenuItem
             label={labelSingular || label || name}
+            disabled={!create || getEntriesByCollection(name).length >= limit}
             onclick={() => {
               goto(`/collections/${name}/new`);
             }}

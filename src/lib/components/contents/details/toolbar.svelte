@@ -32,6 +32,18 @@
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
   import { prefs } from '$lib/services/user/prefs';
 
+  /**
+   * @typedef {object} Props
+   * @property {boolean} [disabled] - Whether to disable controls other than the Back button.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    disabled = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
   let showValidationToast = $state(false);
   let showEditSlugDialog = $state(false);
   let showDeleteDialog = $state(false);
@@ -159,7 +171,7 @@
     </strong>
   </h2>
   <Spacer flex />
-  {#if previewURL}
+  {#if !disabled && previewURL}
     <Button
       variant="tertiary"
       label={$_('view_on_live_site')}
@@ -168,7 +180,7 @@
       }}
     />
   {/if}
-  {#if !collectionFile && !isNew}
+  {#if !disabled && !collectionFile && !isNew}
     <Button
       variant="ghost"
       label={$_('duplicate')}
@@ -190,6 +202,7 @@
     />
   {/if}
   <MenuButton
+    {disabled}
     variant="ghost"
     iconic
     popupPosition="bottom-right"
@@ -242,7 +255,7 @@
     <SplitButton
       variant="primary"
       label={$_(saving ? 'saving' : 'save')}
-      disabled={!modified || saving}
+      disabled={disabled || !modified || saving}
       keyShortcuts="Accel+S"
       onclick={() => {
         save();
@@ -264,7 +277,7 @@
     <Button
       variant="primary"
       label={$_(saving ? 'saving' : 'save')}
-      disabled={!modified || saving}
+      disabled={disabled || !modified || saving}
       keyShortcuts="Accel+S"
       onclick={() => {
         save();

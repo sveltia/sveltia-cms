@@ -190,6 +190,11 @@ export const strings = {
   asset_folders: 'Asset Folders',
   all_assets: 'All Assets',
   uncategorized: 'Uncategorized',
+  creating_entries_disabled_by_admin:
+    'Creating new entries in this collection is disabled by the administrator.',
+  creating_entries_disabled_by_limit:
+    'You cannot add new entries to this collection because it has reached its limit of {limit} entries.',
+  back_to_collection: 'Back to Collection',
   search_results_for_x: 'Search Results for “{terms}”',
   viewing_search_results:
     'You’re now viewing search results for “{terms}”. We’ve found {entries} and {assets}.',

@@ -1,12 +1,15 @@
 <script>
-  import { Alert, Group, Toast } from '@sveltia/ui';
+  import { Alert, Button, Group, Toast } from '@sveltia/ui';
   import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import EmptyState from '$lib/components/common/empty-state.svelte';
   import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
+  import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
+  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
   import {
     resetBackupToastState,
@@ -38,6 +41,7 @@
   let rightPaneContentArea = $state();
 
   const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
+  const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
@@ -51,6 +55,11 @@
   const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
   const paneStateKey = $derived(
     collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
+  );
+  const canCreate = $derived(collection?.create ?? false);
+  const limit = $derived(collection?.limit ?? Infinity);
+  const createDisabled = $derived(
+    isNew && (!canCreate || getEntriesByCollection(collection?.name ?? '').length >= limit),
   );
 
   /**
@@ -196,56 +205,78 @@
 >
   <Group class="content-editor" aria-label={$_('content_editor')}>
     {#key entryId}
-      <Toolbar />
-      <div role="none" class="cols">
-        {#if collection}
-          {#if $editorLeftPane}
-            {@const { locale, mode } = $editorLeftPane}
-            <Group
-              class="pane"
-              aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-                values: { locale: getLocaleLabel(locale) },
-              })}
-              data-locale={locale}
-              data-mode={mode}
+      <Toolbar disabled={createDisabled} />
+      {#if createDisabled}
+        <EmptyState>
+          <div role="none">
+            {#if !canCreate}
+              {$_('creating_entries_disabled_by_admin')}
+            {:else}
+              {$_('creating_entries_disabled_by_limit', { values: { limit } })}
+            {/if}
+          </div>
+          <div role="none">
+            <Button
+              variant="primary"
+              onclick={() => {
+                goto(`/collection/${collection?.name}`, { replaceState: true });
+              }}
             >
-              <PaneHeader
-                id="left-pane-header"
-                thisPane={editorLeftPane}
-                thatPane={editorRightPane}
-              />
-              <PaneBody
-                id="left-pane-body"
-                thisPane={editorLeftPane}
-                bind:thisPaneContentArea={leftPaneContentArea}
-                thatPaneContentArea={rightPaneContentArea}
-              />
-            </Group>
+              {$_('back_to_collection')}
+            </Button>
+          </div>
+        </EmptyState>
+      {:else}
+        <div role="none" class="cols">
+          {#if collection}
+            {#if $editorLeftPane}
+              {@const { locale, mode } = $editorLeftPane}
+              <Group
+                class="pane"
+                aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+                  values: { locale: getLocaleLabel(locale) },
+                })}
+                data-locale={locale}
+                data-mode={mode}
+              >
+                <PaneHeader
+                  id="left-pane-header"
+                  thisPane={editorLeftPane}
+                  thatPane={editorRightPane}
+                />
+                <PaneBody
+                  id="left-pane-body"
+                  thisPane={editorLeftPane}
+                  bind:thisPaneContentArea={leftPaneContentArea}
+                  thatPaneContentArea={rightPaneContentArea}
+                />
+              </Group>
+            {/if}
+            {#if $editorRightPane}
+              {@const { locale, mode } = $editorRightPane}
+              <Group
+                aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+                  values: { locale: getLocaleLabel(locale) },
+                })}
+                data-locale={locale}
+                data-mode={mode}
+              >
+                <PaneHeader
+                  id="right-pane-header"
+                  thisPane={editorRightPane}
+                  thatPane={editorLeftPane}
+                />
+                <PaneBody
+                  id="right-pane-body"
+                  thisPane={editorRightPane}
+                  bind:thisPaneContentArea={rightPaneContentArea}
+                  thatPaneContentArea={leftPaneContentArea}
+                />
+              </Group>
+            {/if}
           {/if}
-          {#if $editorRightPane}
-            {@const { locale, mode } = $editorRightPane}
-            <Group
-              aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-                values: { locale: getLocaleLabel(locale) },
-              })}
-              data-locale={locale}
-              data-mode={mode}
-            >
-              <PaneHeader
-                id="right-pane-header"
-                thisPane={editorRightPane}
-                thatPane={editorLeftPane}
-              />
-              <PaneBody
-                id="right-pane-body"
-                thisPane={editorRightPane}
-                bind:thisPaneContentArea={rightPaneContentArea}
-                thatPaneContentArea={leftPaneContentArea}
-              />
-            </Group>
-          {/if}
-        {/if}
-      </div>
+        </div>
+      {/if}
     {/key}
   </Group>
 </div>

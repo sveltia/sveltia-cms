@@ -55,7 +55,7 @@
       return; // Not Found
     }
 
-    const { name: collectionName, label, create, files } = $selectedCollection;
+    const { name: collectionName, label, files } = $selectedCollection;
     const collectionLabel = label || collectionName;
 
     const _fileMap = files
@@ -110,7 +110,7 @@
       }
     } else {
       // Folder collection
-      if (routeType === 'new' && !subPath && create) {
+      if (routeType === 'new' && !subPath) {
         createDraft({ collection, dynamicValues: params });
 
         $announcedPageStatus = $_('creating_x_collection_entry', {
