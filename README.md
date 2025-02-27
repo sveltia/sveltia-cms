@@ -328,9 +328,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Preview Pane comes with a minimal default style.[^168] It looks nice without a custom preview style or template.
 - For better performance, the Preview Pane doesn’t use an `<iframe>`.[^179]
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
-- Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed. This is equivalent to the misleading visual editing feature introduced in [Decap 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but you don’t need to enable it with the `editor.visualEditing` collection option.
+- Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed. This is equivalent to the misleading visual editing feature introduced in [Decap 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but it’s enabled by default; you don’t need to use the `editor.visualEditing` collection option.
 - The Preview Pane doesn’t cause a scrolling issue.[^136]
-- The Preview Pane doesn’t completely crash with a Minified React error.[^186]
+- The Preview Pane doesn’t crash with a Minified React error.[^186]
 - Provides better scroll synchronization between the panes when editing or previewing an entry.[^92]
 - Developers can hide the preview of a specific field using a new field option: `preview: false`.[^126]
 - [See below](#better-widgets) for widget-specific enhancements, including support for variable types[^42] and YouTube videos.
