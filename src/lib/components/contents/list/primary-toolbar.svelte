@@ -25,11 +25,13 @@
   const name = $derived($selectedCollection?.name);
   const label = $derived($selectedCollection?.label);
   const description = $derived($selectedCollection?.description);
-  const files = $derived($selectedCollection?.files);
+  const isEntryCollection = $derived($selectedCollection?._type === 'entry');
   const canCreate = $derived($selectedCollection?.create ?? false);
   const canDelete = $derived($selectedCollection?.delete ?? true);
   const limit = $derived($selectedCollection?.limit ?? Infinity);
-  const createDisabled = $derived(!canCreate || $listedEntries.length >= limit);
+  const createDisabled = $derived(
+    isEntryCollection && (!canCreate || $listedEntries.length >= limit),
+  );
   const collectionLabel = $derived(label || name || '');
 </script>
 
@@ -38,7 +40,7 @@
     <h2 role="none">{collectionLabel}</h2>
     <div role="none" class="description">{@html sanitize(description || '')}</div>
     <Spacer flex />
-    {#if !files}
+    {#if isEntryCollection}
       <Button
         variant="ghost"
         label={$_('delete')}
