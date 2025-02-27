@@ -56,8 +56,8 @@
 
   /**
    * Called whenever the preview field is clicked. Highlight the corresponding editor field by
-   * expanding the parent list/object(s), moving the element into the viewport, and blinking it.
-   * Then move focus to any control within the field, like a text input or button.
+   * expanding the parent list/object(s), moving the element into the viewport, and focus any
+   * control within the field, such as a text input or button.
    */
   const highlightEditorField = () => {
     syncExpanderStates(
@@ -77,12 +77,6 @@
         } else {
           targetField.scrollIntoView();
         }
-
-        targetField.classList.add('highlight');
-
-        window.setTimeout(() => {
-          targetField.classList.remove('highlight');
-        }, 1500);
 
         const widgetWrapper = targetField.querySelector('.widget-wrapper');
 

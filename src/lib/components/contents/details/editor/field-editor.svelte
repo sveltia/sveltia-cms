@@ -292,12 +292,6 @@
 {/if}
 
 <style lang="scss">
-  @keyframes highlight {
-    50% {
-      opacity: 0.2;
-    }
-  }
-
   section {
     padding: 16px;
 
@@ -310,22 +304,6 @@
       margin-right: auto;
       margin-left: auto;
       max-width: 768px;
-    }
-
-    &:global(.highlight) {
-      @media (prefers-reduced-motion) {
-        outline-width: 4px !important;
-        outline-color: var(--sui-primary-accent-color-translucent);
-        outline-offset: -4px;
-      }
-    }
-
-    &:global(.highlight > *) {
-      animation: highlight 750ms 2;
-
-      @media (prefers-reduced-motion) {
-        animation: none;
-      }
     }
   }
 
