@@ -191,8 +191,8 @@ export const fillSlugTemplate = (
 
   return renameIfNeeded(
     slug,
-    getEntriesByCollection(collectionName).map((e) =>
-      locale ? (e.locales[locale]?.slug ?? e.slug) : e.slug,
-    ),
+    getEntriesByCollection(collectionName)
+      .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
+      .filter(Boolean),
   );
 };

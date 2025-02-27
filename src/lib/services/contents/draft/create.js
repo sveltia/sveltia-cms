@@ -371,7 +371,7 @@ export const createDraft = ({
   const originalSlugs = isNew
     ? {}
     : canonicalSlugKey in (locales?.[defaultLocale]?.content ?? {})
-      ? Object.fromEntries(allLocales.map((locale) => [locale, locales?.[locale].slug]))
+      ? Object.fromEntries(allLocales.map((locale) => [locale, locales?.[locale]?.slug]))
       : { _: locales?.[defaultLocale].slug };
 
   /** @type {Record<LocaleCode, FlattenedEntryContent>} */
@@ -379,7 +379,7 @@ export const createDraft = ({
     enabledLocales.map((locale) =>
       isNew
         ? [locale, getDefaultValues(fields, locale, dynamicValues)]
-        : [locale, structuredClone(locales?.[locale].content)],
+        : [locale, structuredClone(locales?.[locale]?.content)],
     ),
   );
 

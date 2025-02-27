@@ -136,7 +136,7 @@ const createEntryPath = ({ draft, locale, slug }) => {
     return collectionFile.file.replace('{{locale}}', locale);
   }
 
-  if (originalEntry?.locales[locale].slug === slug) {
+  if (originalEntry?.locales[locale]?.slug === slug) {
     return originalEntry.locales[locale].path;
   }
 
@@ -461,10 +461,8 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
   const _collection = /** @type {EntryCollection} */ (collection);
 
   return Object.fromEntries(
-    Object.entries(currentLocales)
-      .filter(([, enabled]) => enabled)
-      .map(([locale]) => [
-        locale,
+    Object.entries(currentLocales).map(([locale]) => {
+      const slug =
         locale === defaultLocale
           ? defaultLocaleSlug
           : (currentSlugs?.[locale] ??
@@ -476,11 +474,13 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
                 // Merge the default locale content and localized content
                 ...currentValues[defaultLocale],
                 ...Object.fromEntries(
-                  localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale][keyPath]]),
+                  localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
                 ),
               },
-            })),
-      ]),
+            }));
+
+      return [locale, slug];
+    }),
   );
 };
 
@@ -807,9 +807,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       ? (localizedEntryMap[defaultLocale].path.match(_file.fullPathRegEx)?.groups?.subPath ??
         defaultLocaleSlug)
       : defaultLocaleSlug,
-    locales: Object.fromEntries(
-      Object.entries(localizedEntryMap).filter(([, { content }]) => !!content),
-    ),
+    locales: Object.fromEntries(Object.entries(localizedEntryMap)),
   };
 
   if (!i18nEnabled || structure === 'single_file') {
@@ -859,12 +857,12 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
             action: isNew || !originalLocales[locale] ? 'create' : renamed ? 'move' : 'update',
             slug,
             path,
-            previousPath: renamed ? originalEntry?.locales[locale].path : undefined,
+            previousPath: renamed ? originalEntry?.locales[locale]?.path : undefined,
             data,
           });
 
           localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
-        } else if (originalLocales[locale]) {
+        } else if (!isNew && originalLocales[locale]) {
           changes.push({ action: 'delete', slug, path });
         }
 

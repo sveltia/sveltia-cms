@@ -131,7 +131,7 @@
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([, val]) => val)
           .filter((val) => val !== undefined)
-      : originalValues?.[locale][keyPath],
+      : originalValues?.[locale]?.[keyPath],
   );
   const validity = $derived($entryDraft?.validities[locale][keyPath]);
   const fieldLabel = $derived(label || fieldName);
