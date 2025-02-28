@@ -103,6 +103,7 @@ export const copyDefaultLocaleValues = (content) => {
   const { collectionName, fileName, collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const defaultLocaleValues = draft.currentValues[defaultLocale];
+  /** @type {string[]} */
   const keys = unique([...Object.keys(content), ...Object.keys(defaultLocaleValues)]);
   const newContent = /** @type {FlattenedEntryContent} */ ({});
 
@@ -112,6 +113,16 @@ export const copyDefaultLocaleValues = (content) => {
 
     newContent[keyPath] =
       (canDuplicate ? defaultLocaleValues[keyPath] : undefined) ?? content[keyPath];
+
+    // Remove unnecessary `null` from parent, which is used for an optional or variable types object
+    // (search “enable validation” in the codebase for these cases)
+    if (keyPath.includes('.')) {
+      const parentKeyPath = keyPath.split('.').slice(0, -1).join('.');
+
+      if (newContent[parentKeyPath] === null) {
+        delete newContent[parentKeyPath];
+      }
+    }
   });
 
   return newContent;
