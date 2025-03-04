@@ -532,12 +532,22 @@ export const strings = {
       parse_failed: '設定ファイルを解析できませんでした。',
       parse_failed_invalid_object: '設定ファイルが有効な JavaScript オブジェクトではありません。',
       no_collection: '設定ファイル内でコレクションが定義されていません。',
-      no_backend: '設定ファイル内でバックエンドが定義されていません。',
+      missing_backend: '設定ファイル内でバックエンドが定義されていません。',
+      missing_backend_name: '設定ファイル内でバックエンド名が定義されていません。',
       unsupported_backend: '設定されている「{name}」バックエンドは非対応です。',
-      no_repository: '設定ファイル内でレポジトリが定義されていません。',
+      missing_repository: '設定ファイル内でレポジトリが定義されていません。',
+      invalid_repository:
+        '設定されているレポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。',
       oauth_implicit_flow: '設定されている認証方式 (暗黙的フロー) は非対応です。',
       oauth_no_app_id: '設定ファイル内で OAuth アプリケーション ID が定義されていません。',
-      no_media_folder: '設定ファイル内でメディアフォルダーが定義されていません。',
+      missing_media_folder: '設定ファイル内でメディアフォルダーが定義されていません。',
+      invalid_media_folder:
+        '設定されているメディアフォルダーが正しくありません。この設定は文字列でなければなりません。',
+      invalid_public_folder:
+        '設定されているパブリックフォルダーが正しくありません。この設定は文字列でなければなりません。',
+      public_folder_relative_path:
+        '設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。',
+      public_folder_absolute_url: 'パブリックフォルダーオプションの絶対 URL は非対応です。',
       unexpected: '設定ファイルを検証中に予期せぬ問題が発生しました。',
       try_again: '問題を解決してから再度お試しください。',
     },

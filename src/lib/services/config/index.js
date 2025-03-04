@@ -102,8 +102,12 @@ const validate = (config) => {
     throw new Error(get(_)('config.error.no_collection'));
   }
 
-  if (!config.backend?.name) {
-    throw new Error(get(_)('config.error.no_backend'));
+  if (!config.backend) {
+    throw new Error(get(_)('config.error.missing_backend'));
+  }
+
+  if (!config.backend.name) {
+    throw new Error(get(_)('config.error.missing_backend_name'));
   }
 
   if (!(config.backend.name in allBackendServices)) {
@@ -112,8 +116,12 @@ const validate = (config) => {
     );
   }
 
+  if (config.backend.repo === undefined) {
+    throw new Error(get(_)('config.error.missing_repository'));
+  }
+
   if (typeof config.backend.repo !== 'string' || !/(.+)\/([^/]+)$/.test(config.backend.repo)) {
-    throw new Error(get(_)('config.error.no_repository'));
+    throw new Error(get(_)('config.error.invalid_repository'));
   }
 
   if (config.backend.auth_type === 'implicit') {
@@ -124,8 +132,26 @@ const validate = (config) => {
     throw new Error(get(_)('config.error.oauth_no_app_id'));
   }
 
+  if (config.media_folder === undefined) {
+    throw new Error(get(_)('config.error.missing_media_folder'));
+  }
+
   if (typeof config.media_folder !== 'string') {
-    throw new Error(get(_)('config.error.no_media_folder'));
+    throw new Error(get(_)('config.error.invalid_media_folder'));
+  }
+
+  if (config.public_folder !== undefined) {
+    if (typeof config.public_folder !== 'string') {
+      throw new Error(get(_)('config.error.invalid_public_folder'));
+    }
+
+    if (/^\.{1,2}\//.test(config.public_folder)) {
+      throw new Error(get(_)('config.error.public_folder_relative_path'));
+    }
+
+    if (/^https?:/.test(config.public_folder)) {
+      throw new Error(get(_)('config.error.public_folder_absolute_url'));
+    }
   }
 };
 
