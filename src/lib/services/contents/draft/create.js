@@ -470,6 +470,8 @@ export const duplicateDraft = () => {
     ...draft,
     isNew: true,
     originalEntry: undefined,
+    originalSlugs: {},
+    currentSlugs: {},
   });
 
   showDuplicateToast.set(true);
