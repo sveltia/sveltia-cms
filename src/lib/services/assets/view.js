@@ -9,7 +9,7 @@ import { backend } from '$lib/services/backends';
 import {
   allAssetFolders,
   allAssets,
-  assetExtensions,
+  getAssetKind,
   selectedAssetFolder,
   selectedAssets,
   uploadingAssets,
@@ -152,11 +152,7 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
   }
 
   if (field === 'fileType') {
-    return assets.filter(({ path }) =>
-      pattern === 'other'
-        ? !Object.values(assetExtensions).some((regex) => regex.test(path))
-        : assetExtensions[/** @type {string} */ (pattern)].test(path),
-    );
+    return assets.filter(({ path }) => getAssetKind(path) === pattern);
   }
 
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;

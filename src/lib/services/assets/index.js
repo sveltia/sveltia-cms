@@ -17,16 +17,10 @@ import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/m
 export const mediaKinds = ['image', 'video', 'audio'];
 export const assetKinds = [...mediaKinds, 'document', 'other'];
 /**
- * Common file extension regex list that can be used for filtering.
- * @type {Record<string, RegExp>}
+ * Regular expression that matches common document file extensions.
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
  */
-export const assetExtensions = {
-  image: /\.(?:avif|bmp|gif|ico|jpe?g|png|svg|tiff?|webp)$/i,
-  video: /\.(?:avi|mp4|mpeg|ogv|ts|webm|3gp|3g2)$/i,
-  audio: /\.(?:aac|midi?|mp3|opus|wav|weba)$/i,
-  document: /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/i,
-};
+export const documentExtensions = /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/i;
 /**
  * @type {import('svelte/store').Writable<Asset[]>}
  */
@@ -147,7 +141,8 @@ export const canEditAsset = (asset) => {
  */
 export const getAssetKind = (name) =>
   /** @type {AssetKind} */ (
-    Object.entries(assetExtensions).find(([, regex]) => regex.test(name))?.[0] ?? 'other'
+    mime.getType(name)?.match(/^(?<type>image|audio|video)\//)?.groups?.type ??
+      (documentExtensions.test(name) ? 'document' : 'other')
   );
 
 /**
