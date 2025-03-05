@@ -441,6 +441,16 @@ export const duplicateDraft = () => {
       }
 
       if (fieldConfig?.widget === 'hidden') {
+        // The value could be array; normalize the key path, e.g. `tags.0` -> `tags`
+        if (Array.isArray(fieldConfig.default) && keyPath.match(/\.\d+$/)) {
+          delete valueMap[keyPath];
+          keyPath = keyPath.replace(/\.\d+$/, '');
+
+          if (keyPath in valueMap) {
+            return;
+          }
+        }
+
         if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
           valueMap[keyPath] = getDefaultHiddenValue(
             /** @type {HiddenField} */ (fieldConfig),
