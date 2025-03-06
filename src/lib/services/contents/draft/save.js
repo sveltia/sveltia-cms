@@ -1,5 +1,5 @@
 import { generateUUID, getHash } from '@sveltia/utils/crypto';
-import { getBlobRegex } from '@sveltia/utils/file';
+import { encodeFilePath, getBlobRegex } from '@sveltia/utils/file';
 import { isObject, toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
@@ -679,11 +679,12 @@ const replaceBlobURL = async ({
     });
   }
 
-  const publicURL = encodeURI(
+  // Encode the path, e.g. a space -> `%20`, but the `@` prefix is an exception
+  const publicURL = encodeFilePath(
     publicAssetFolder
       ? `${publicAssetFolder === '/' ? '' : publicAssetFolder}/${assetName}`
       : assetName,
-  );
+  ).replace(/^%40/, '@');
 
   content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL);
 };

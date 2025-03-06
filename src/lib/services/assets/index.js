@@ -1,4 +1,4 @@
-import { getPathInfo, isTextFileType } from '@sveltia/utils/file';
+import { decodeFilePath, encodeFilePath, getPathInfo, isTextFileType } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
@@ -285,7 +285,7 @@ export const getCollectionsByAsset = (asset) =>
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
-  const decodedPath = decodeURI(savedPath);
+  const decodedPath = decodeFilePath(savedPath);
 
   // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
   // considered as an absolute path.
@@ -433,7 +433,8 @@ export const getAssetPublicURL = (
   }
 
   const path = asset.path.replace(asset.folder, publicPath === '/' ? '' : (publicPath ?? ''));
-  const encodedPath = encodeURI(path);
+  // Encode the path, e.g. a space -> `%20`, but the `@` prefix is an exception
+  const encodedPath = encodeFilePath(path).replace(/^%40/, '@');
 
   // Path starting with `@`, etc. cannot be linked
   if (!encodedPath.startsWith('/') && !allowSpecial) {
