@@ -13,45 +13,44 @@
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {ListField} fieldConfig - Field configuration.
+   * @property {string[] | undefined} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {ListField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string[]}
-   */
-  export let currentValue;
 
-  $: ({
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     name: fieldName,
     // Widget-specific options
     field,
     fields,
     types,
     typeKey = 'type',
-  } = fieldConfig);
-  $: hasSubFields = !!(field ?? fields ?? types);
-  $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
-  $: listFormatter = getListFormatter(locale);
-
-  $: items =
+  } = $derived(fieldConfig);
+  const hasSubFields = $derived(!!(field ?? fields ?? types));
+  const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`));
+  const listFormatter = $derived(getListFormatter(locale));
+  const items = $derived(
     unflatten(
       Object.fromEntries(
-        Object.entries($entryDraft?.currentValues[locale] ?? {})
+        Object.entries($state.snapshot($entryDraft?.currentValues[locale]) ?? {})
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([_keyPath, value]) => [
             _keyPath.replace(new RegExp(`^${escapeRegExp(keyPath)}`), fieldName),
             value,
           ]),
       ),
-    )[fieldName] ?? [];
+    )[fieldName] ?? [],
+  );
 </script>
 
 {#if hasSubFields}

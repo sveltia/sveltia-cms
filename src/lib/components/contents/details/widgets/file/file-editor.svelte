@@ -21,92 +21,55 @@
   import { canDragDrop, formatSize } from '$lib/services/utils/file';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {FileField} fieldConfig - Field configuration.
+   * @property {string | undefined} currentValue - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {FileField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string | undefined}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
-  /**
-   * @type {boolean}
-   */
-  export let inEditorComponent = false;
 
-  /**
-   * @type {Asset | undefined}
-   */
-  let asset;
-  /**
-   * @type {File | undefined}
-   */
-  let file;
-  /**
-   * @type {string | undefined}
-   */
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    inEditorComponent = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  /** @type {string | undefined} */
   let url;
-  /**
-   * @type {AssetKind | undefined}
-   */
-  let kind;
-  /**
-   * @type {string | undefined}
-   */
-  let src;
-  /**
-   * @type {string | undefined}
-   */
+  /** @type {string | undefined} */
   let credit;
-  let showSelectAssetsDialog = false;
-  let showSizeLimitDialog = false;
-  let showPhotoCreditDialog = false;
-  let photoCredit = '';
 
-  /** @type {DropZone} */
-  let dropZone;
+  /** @type {Asset | undefined} */
+  let asset = $state();
+  /** @type {File | undefined} */
+  let file = $state();
+  /** @type {AssetKind | undefined} */
+  let kind = $state();
+  /** @type {string | undefined} */
+  let src = $state();
+  let showSelectAssetsDialog = $state(false);
+  let showSizeLimitDialog = $state(false);
+  let showPhotoCreditDialog = $state(false);
+  let photoCredit = $state('');
+  /** @type {DropZone | undefined} */
+  let dropZone = $state();
 
-  $: ({
+  const {
     widget: widgetName,
     // Widget-specific options
     choose_url: canEnterURL = true,
     media_library: {
       config: { max_file_size: maxFileSize = /** @type {number | undefined} */ (undefined) } = {},
     } = {},
-  } = fieldConfig);
-  $: isImageWidget = widgetName === 'image';
-  $: collection = $entryDraft?.collection;
-  $: entry = $entryDraft?.originalEntry;
+  } = $derived(fieldConfig);
+  const isImageWidget = $derived(widgetName === 'image');
+  const collection = $derived($entryDraft?.collection);
+  const entry = $derived($entryDraft?.originalEntry);
 
   /**
    * Reset the current selection.
@@ -197,10 +160,10 @@
     }
   };
 
-  $: {
+  $effect(() => {
     void currentValue;
     updateProps();
-  }
+  });
 </script>
 
 <DropZone

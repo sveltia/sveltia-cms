@@ -10,55 +10,51 @@
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {RelationField} fieldConfig - Field configuration.
+   * @property {string | string[] | undefined} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {RelationField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string | string[]}
-   */
-  export let currentValue;
 
-  $: ({
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     // Widget-specific options
     collection: collectionName,
     file: fileName,
     multiple = false,
     value_field: valueField,
-  } = fieldConfig);
+  } = $derived(fieldConfig);
+  const listFormatter = $derived(getListFormatter(locale));
+  const refEntries = $derived(
+    fileName
+      ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
+      : getEntriesByCollection(collectionName),
+  );
+  const options = $derived(getOptions(locale, fieldConfig, refEntries));
+  const refValues = $derived(
+    (multiple ? /** @type {string[]} */ (currentValue) : /** @type {string[]} */ ([currentValue]))
+      .filter((value) => value !== undefined)
+      .map((value) => {
+        const label = options.find((option) => option.value === value)?.label;
 
-  $: refEntries = fileName
-    ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
-    : getEntriesByCollection(collectionName);
-  $: options = getOptions(locale, fieldConfig, refEntries);
+        if (label && label !== value) {
+          if (['slug', '{{slug}}', '{{fields.slug}}'].includes(valueField)) {
+            return label;
+          }
 
-  $: refValues = (
-    multiple ? /** @type {string[]} */ (currentValue) : /** @type {string[]} */ ([currentValue])
-  )
-    .filter((value) => value !== undefined)
-    .map((value) => {
-      const label = options.find((option) => option.value === value)?.label;
-
-      if (label && label !== value) {
-        if (['slug', '{{slug}}', '{{fields.slug}}'].includes(valueField)) {
-          return label;
+          return `${label} (${value})`;
         }
 
-        return `${label} (${value})`;
-      }
-
-      return value;
-    });
-
-  $: listFormatter = getListFormatter(locale);
+        return value;
+      }),
+  );
 </script>
 
 {#if refValues.length}

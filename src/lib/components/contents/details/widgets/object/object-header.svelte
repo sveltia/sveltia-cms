@@ -3,38 +3,30 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @type {string}
+   * @typedef {object} Props
+   * @property {string} [label] - Item label.
+   * @property {string} controlId - `aria-controls` ID.
+   * @property {boolean} expanded - Whether the item is expanded.
+   * @property {() => void} [toggleExpanded] - Function to toggle the item.
+   * @property {boolean} [removeButtonVisible] - Whether to display the remove button.
+   * @property {boolean} [removeButtonDisabled] - Whether to disable the remove button.
+   * @property {() => void} remove - Function to remove the item.
+   * @property {import('svelte').Snippet | undefined} [children] - Slot content.
    */
-  export let label = '';
-  /**
-   * @type {string}
-   */
-  export let controlId;
-  /**
-   * @type {boolean}
-   */
-  export let expanded;
-  /**
-   * @type {(() => void) | undefined}
-   */
-  export let toggleExpanded;
-  /**
-   * @type {boolean}
-   */
-  export let removeButtonVisible = false;
-  /**
-   * @type {boolean}
-   */
-  export let removeButtonDisabled = false;
-  /**
-   * @type {() => void}
-   */
-  export let remove;
-  /**
-   * Slot content.
-   * @type {import('svelte').Snippet | undefined}
-   */
-  export let children = undefined;
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    label = '',
+    controlId,
+    expanded,
+    toggleExpanded,
+    removeButtonVisible = false,
+    removeButtonDisabled = false,
+    remove,
+    children = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <div role="none" class="header">

@@ -3,38 +3,39 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @type {boolean}
+   * @typedef {object} Props
+   * @property {boolean} [disabled] - Whether to disable the button.
+   * @property {ListField | ObjectField} fieldConfig - Field configuration.
+   * @property {object[]} [items] - List items. `<ListEditor>` only.
+   * @property {(typeName?: string) => void} [addItem] - Function to add a new item.
    */
-  export let disabled = false;
-  /**
-   * @type {ListField | ObjectField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {object[]}
-   */
-  export let items = [];
-  /**
-   * Function to add a new item.
-   * @param {string} [typeName] - Variable type name.
-   */
-  export let addItem = (typeName) => {
-    void typeName;
-  };
 
-  $: ({
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    disabled = false,
+    fieldConfig,
+    items = [],
+    addItem = () => undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     widget: widgetType,
     name: fieldName,
     label: labelPlural,
     // Widget-specific options
     types,
-  } = fieldConfig);
-
-  $: listField = widgetType === 'list' ? /** @type {ListField} */ (fieldConfig) : undefined;
-  $: labelSingular = listField?.label_singular ?? '';
-  $: max = listField?.max ?? undefined;
-  $: label = $_('add_x', { values: { name: labelSingular || labelPlural || fieldName } });
-  $: _disabled = disabled || (typeof max === 'number' && items.length === max);
+  } = $derived(fieldConfig);
+  const listField = $derived(
+    widgetType === 'list' ? /** @type {ListField} */ (fieldConfig) : undefined,
+  );
+  const labelSingular = $derived(listField?.label_singular ?? '');
+  const max = $derived(listField?.max ?? undefined);
+  const label = $derived(
+    $_('add_x', { values: { name: labelSingular || labelPlural || fieldName } }),
+  );
+  const _disabled = $derived(disabled || (typeof max === 'number' && items.length === max));
 </script>
 
 {#if Array.isArray(types)}

@@ -10,40 +10,39 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {ObjectField} fieldConfig - Field configuration.
+   * @property {object | undefined} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {ObjectField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {object}
-   */
-  // svelte-ignore unused-export-let
-  export let currentValue;
 
-  $: ({
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldConfig,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     // Widget-specific options
     fields,
     types,
     typeKey = 'type',
-  } = fieldConfig);
-  $: valueMap = $entryDraft?.currentValues[locale] ?? {};
-  $: hasValues = Object.entries(valueMap).some(
-    ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && !!value,
+  } = $derived(fieldConfig);
+  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const hasValues = $derived(
+    Object.entries(valueMap).some(
+      ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && !!value,
+    ),
   );
-  $: hasVariableTypes = Array.isArray(types);
-  $: typeKeyPath = `${keyPath}.${typeKey}`;
-  $: typeConfig = hasVariableTypes
-    ? types?.find(({ name }) => name === valueMap[typeKeyPath])
-    : undefined;
-  $: label = typeConfig ? typeConfig.label || typeConfig.name : undefined;
-  $: subFields = (hasVariableTypes ? typeConfig?.fields : fields) ?? [];
+  const hasVariableTypes = $derived(Array.isArray(types));
+  const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
+  const typeConfig = $derived(
+    hasVariableTypes ? types?.find(({ name }) => name === valueMap[typeKeyPath]) : undefined,
+  );
+  const label = $derived(typeConfig ? typeConfig.label || typeConfig.name : undefined);
+  const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
 </script>
 
 {#if hasValues}

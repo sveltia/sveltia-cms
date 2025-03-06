@@ -5,7 +5,6 @@
 -->
 <script>
   import { Checkbox, Group } from '@sveltia/ui';
-  import { generateUUID } from '@sveltia/utils/crypto';
   import { waitForVisibility } from '@sveltia/utils/element';
   import { sleep } from '@sveltia/utils/misc';
   import { toRaw } from '@sveltia/utils/object';
@@ -23,47 +22,28 @@
   import { formatSummary } from '$lib/services/contents/widgets/object/helper';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {ObjectField} fieldConfig - Field configuration.
+   * @property {object | undefined} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  export let fieldLabel;
-  /**
-   * @type {ObjectField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {object}
-   */
-  // svelte-ignore unused-export-let
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  // svelte-ignore unused-export-let
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  // svelte-ignore unused-export-let
-  export let invalid = false;
 
-  $: ({
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldLabel,
+    fieldConfig,
+    required = true,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const widgetId = $props.id();
+
+  /** @type {HTMLElement | undefined} */
+  let wrapper = $state();
+
+  const {
     name: fieldName,
     i18n = false,
     // Widget-specific options
@@ -72,47 +52,35 @@
     fields,
     types,
     typeKey = 'type',
-  } = fieldConfig);
-
-  $: collection = $entryDraft?.collection;
-  $: collectionName = $entryDraft?.collectionName ?? '';
-  $: collectionFile = $entryDraft?.collectionFile;
-  $: fileName = $entryDraft?.fileName;
-  $: currentValues = $entryDraft?.currentValues ?? {};
-  $: expanderStates = $entryDraft?.expanderStates ?? {};
-  $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: valueMap = currentValues[locale];
-  $: hasValues = Object.entries(valueMap).some(
-    ([_keyPath, value]) =>
-      !!_keyPath.startsWith(`${keyPath}.`) &&
-      (value !== null ||
-        getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath })?.widget ===
-          'object'),
+  } = $derived(fieldConfig);
+  const collection = $derived($entryDraft?.collection);
+  const collectionName = $derived($entryDraft?.collectionName ?? '');
+  const collectionFile = $derived($entryDraft?.collectionFile);
+  const fileName = $derived($entryDraft?.fileName);
+  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const hasValues = $derived(
+    Object.entries(valueMap).some(
+      ([_keyPath, value]) =>
+        !!_keyPath.startsWith(`${keyPath}.`) &&
+        (value !== null ||
+          getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath })?.widget ===
+            'object'),
+    ),
   );
-  $: canEdit = locale === defaultLocale || i18n !== false;
-  $: parentExpandedKeyPath = `${keyPath}#`;
-  $: parentExpanded = expanderStates?._[parentExpandedKeyPath] ?? true;
-  $: hasVariableTypes = Array.isArray(types);
-  $: typeKeyPath = `${keyPath}.${typeKey}`;
-  $: typeConfig = hasVariableTypes
-    ? types?.find(({ name }) => name === valueMap[typeKeyPath])
-    : undefined;
-  $: subFields = (hasVariableTypes ? typeConfig?.fields : fields) ?? [];
-  $: summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary;
-  $: addButtonDisabled = locale !== defaultLocale && i18n === 'duplicate';
-
-  let widgetId = '';
-  /** @type {HTMLElement | undefined} */
-  let wrapper;
-
-  onMount(() => {
-    widgetId = generateUUID('short');
-
-    // Initialize the expander state
-    syncExpanderStates({
-      [parentExpandedKeyPath]: expanderStates?._[parentExpandedKeyPath] ?? !collapsed,
-    });
-  });
+  const canEdit = $derived(locale === defaultLocale || i18n !== false);
+  const parentExpandedKeyPath = $derived(`${keyPath}#`);
+  const parentExpanded = $derived(
+    $state.snapshot($entryDraft?.expanderStates?._[parentExpandedKeyPath]) ?? true,
+  );
+  const hasVariableTypes = $derived(Array.isArray(types));
+  const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
+  const typeConfig = $derived(
+    hasVariableTypes ? types?.find(({ name }) => name === valueMap[typeKeyPath]) : undefined,
+  );
+  const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
+  const summaryTemplate = $derived(hasVariableTypes ? typeConfig?.summary || summary : summary);
+  const addButtonDisabled = $derived(locale !== defaultLocale && i18n === 'duplicate');
 
   /**
    * Add the object’s subfields to the entry draft with the default values populated.
@@ -193,6 +161,14 @@
       locale,
       summaryTemplate,
     });
+
+  onMount(() => {
+    // Initialize the expander state
+    syncExpanderStates({
+      [parentExpandedKeyPath]:
+        $state.snapshot($entryDraft?.expanderStates?._[parentExpandedKeyPath]) ?? !collapsed,
+    });
+  });
 </script>
 
 {#if !required}

@@ -5,11 +5,10 @@
 -->
 <script>
   import { Button, Group, Icon, Spacer, TextInput } from '@sveltia/ui';
-  import { generateUUID } from '@sveltia/utils/crypto';
   import { sleep } from '@sveltia/utils/misc';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
@@ -22,44 +21,31 @@
   import { formatSummary } from '$lib/services/contents/widgets/list/helper';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {ListField} fieldConfig - Field configuration.
+   * @property {string[]} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {ListField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string[]}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  $: ({
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldId,
+    fieldConfig,
+    currentValue,
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const widgetId = $props.id();
+
+  let mounted = $state(false);
+  let inputValue = $state('');
+
+  const {
     name: fieldName,
     label,
     i18n,
@@ -76,26 +62,25 @@
     add_to_top: addToTop = false,
     types,
     typeKey = 'type',
-  } = fieldConfig);
-  $: hasSingleSubField = !!field;
-  $: hasMultiSubFields = Array.isArray(fields);
-  $: hasVariableTypes = Array.isArray(types);
-  $: hasSubFields = hasSingleSubField || hasMultiSubFields || hasVariableTypes;
-  $: keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`);
-  $: collection = $entryDraft?.collection;
-  $: collectionName = $entryDraft?.collectionName ?? '';
-  $: collectionFile = $entryDraft?.collectionFile;
-  $: fileName = $entryDraft?.fileName;
-  $: currentValues = $entryDraft?.currentValues ?? {};
-  $: expanderStates = $entryDraft?.expanderStates;
-  $: ({ defaultLocale } = (collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
-  $: isDuplicateField = locale !== defaultLocale && i18n === 'duplicate';
-  $: valueMap = currentValues[locale];
-  $: parentExpandedKeyPath = `${keyPath}#`;
-  $: parentExpanded = expanderStates?._[parentExpandedKeyPath] ?? true;
-
+  } = $derived(fieldConfig);
+  const hasSingleSubField = $derived(!!field);
+  const hasMultiSubFields = $derived(Array.isArray(fields));
+  const hasVariableTypes = $derived(Array.isArray(types));
+  const hasSubFields = $derived(hasSingleSubField || hasMultiSubFields || hasVariableTypes);
+  const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`));
+  const collection = $derived($entryDraft?.collection);
+  const collectionName = $derived($entryDraft?.collectionName ?? '');
+  const collectionFile = $derived($entryDraft?.collectionFile);
+  const fileName = $derived($entryDraft?.fileName);
+  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
+  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const parentExpandedKeyPath = $derived(`${keyPath}#`);
+  const parentExpanded = $derived(
+    $state.snapshot($entryDraft?.expanderStates?._[parentExpandedKeyPath]) ?? true,
+  );
   /** @type {Record<string, any>[]} */
-  $: items =
+  const items = $derived(
     unflatten(
       Object.fromEntries(
         Object.entries(valueMap)
@@ -105,41 +90,22 @@
             value,
           ]),
       ),
-    )[fieldName] ?? [];
+    )[fieldName] ?? [],
+  );
+  const itemExpanderStates = $derived(
+    items.map((_item, index) => {
+      const key = `${keyPath}.${index}`;
 
-  $: itemExpanderStates = items.map((_item, index) => {
-    const key = `${keyPath}.${index}`;
-
-    return [key, expanderStates?._[key] ?? true];
-  });
-
-  let mounted = false;
-  let widgetId = '';
-  let inputValue = '';
-
-  onMount(() => {
-    mounted = true;
-    widgetId = generateUUID('short');
-
-    // Initialize the expander state
-    syncExpanderStates({
-      [parentExpandedKeyPath]: !minimizeCollapsed,
-      ...Object.fromEntries(
-        items.map((__, index) => {
-          const key = `${keyPath}.${index}`;
-
-          return [key, expanderStates?._[key] ?? !collapsed];
-        }),
-      ),
-    });
-  });
+      return [key, $state.snapshot($entryDraft?.expanderStates?._[key]) ?? true];
+    }),
+  );
 
   /**
    * Update {@link inputValue} when {@link currentValue} is reverted. This also cleans up the input
    * field value by removing extra spaces or commas.
    */
   const setInputValue = () => {
-    const currentValueStr = currentValue.join(', ');
+    const currentValueStr = currentValue?.join(', ') ?? '';
 
     // Avoid a cycle dependency & infinite loop
     if (!/,\s*$/.test(inputValue) && inputValue.trim() !== currentValueStr) {
@@ -251,13 +217,6 @@
     });
   };
 
-  $: {
-    if (mounted && !hasSubFields) {
-      void currentValue;
-      setInputValue();
-    }
-  }
-
   /**
    * Format the summary template.
    * @param {number} index - List index.
@@ -275,6 +234,32 @@
       hasSingleSubField,
       index,
     });
+
+  onMount(() => {
+    mounted = true;
+
+    // Initialize the expander state
+    syncExpanderStates({
+      [parentExpandedKeyPath]: !minimizeCollapsed,
+      ...Object.fromEntries(
+        items.map((__, index) => {
+          const key = `${keyPath}.${index}`;
+
+          return [key, $state.snapshot($entryDraft?.expanderStates?._[key]) ?? !collapsed];
+        }),
+      ),
+    });
+  });
+
+  $effect(() => {
+    if (mounted && !hasSubFields) {
+      void currentValue;
+
+      untrack(() => {
+        setInputValue();
+      });
+    }
+  });
 </script>
 
 <Group aria-labelledby="list-{widgetId}-summary">
@@ -333,7 +318,7 @@
     >
       {#each items as item, index}
         {@const expandedKeyPath = `${keyPath}.${index}`}
-        {@const expanded = expanderStates?._[expandedKeyPath] ?? true}
+        {@const expanded = $entryDraft?.expanderStates?._[expandedKeyPath] ?? true}
         {@const typeConfig = hasVariableTypes
           ? types?.find(({ name }) => name === item[typeKey])
           : undefined}

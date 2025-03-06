@@ -5,36 +5,36 @@
 -->
 <script>
   import equal from 'fast-deep-equal';
+  import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { entryDraft } from '$lib/services/contents/draft';
   import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
+  import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {KeyValueField} fieldConfig - Field configuration.
+   * @property {Record<string, string> | undefined} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {KeyValueField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let currentValue;
 
-  $: ({
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldConfig,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     // Widget-specific options
-    key_label: keyLabel = $_('key_value.key'),
-    value_label: valueLabel = $_('key_value.value'),
-  } = fieldConfig);
+    key_label: _keyLabel,
+    value_label: _valueLabel,
+  } = $derived(fieldConfig);
+  const keyLabel = $derived(_keyLabel || $_('key_value.key'));
+  const valueLabel = $derived(_valueLabel || $_('key_value.value'));
 
   /** @type {[string, string][]}  */
-  let pairs = [];
+  let pairs = $state([]);
 
   /**
    * Update the key-value {@link pairs} whenever the draft store is updated.
@@ -48,12 +48,15 @@
     }
   };
 
-  $: {
+  $effect(() => {
     if ($entryDraft) {
-      void $entryDraft.currentValues[locale];
-      updatePairs();
+      void $state.snapshot($entryDraft.currentValues[locale]);
+
+      untrack(() => {
+        updatePairs();
+      });
     }
-  }
+  });
 </script>
 
 {#if pairs.length}

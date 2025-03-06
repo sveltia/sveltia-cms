@@ -10,33 +10,22 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {FileField} fieldConfig - Field configuration.
+   * @property {string | undefined} currentValue - Field value.
    */
-  // svelte-ignore unused-export-let
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {FileField}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldConfig;
-  /**
-   * @type {string | undefined}
-   */
-  export let currentValue;
 
-  /**
-   * @type {AssetKind | null | undefined}
-   */
-  let kind;
-  /**
-   * @type {string | undefined}
-   */
-  let src;
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  /** @type {AssetKind | undefined} */
+  let kind = $state();
+  /** @type {string | undefined} */
+  let src = $state();
 
   /**
    * Update a couple of properties when {@link currentValue} is updated.
@@ -49,10 +38,10 @@
         : undefined;
   };
 
-  $: {
+  $effect(() => {
     void currentValue;
     updateProps();
-  }
+  });
 </script>
 
 {#if kind && src}

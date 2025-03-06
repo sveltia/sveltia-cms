@@ -10,52 +10,37 @@
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {RelationField} fieldConfig - Field configuration.
+   * @property {string | string[] | undefined} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  export let fieldLabel;
-  /**
-   * @type {RelationField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string}
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  $: ({
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldId,
+    fieldLabel,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     // Widget-specific options
     collection: collectionName,
     file: fileName,
-  } = fieldConfig);
-
-  $: refEntries = fileName
-    ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
-    : getEntriesByCollection(collectionName);
-  $: options = getOptions(locale, fieldConfig, refEntries);
+  } = $derived(fieldConfig);
+  const refEntries = $derived(
+    fileName
+      ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
+      : getEntriesByCollection(collectionName),
+  );
+  const options = $derived(getOptions(locale, fieldConfig, refEntries));
 </script>
 
 <div role="none" class="wrapper">

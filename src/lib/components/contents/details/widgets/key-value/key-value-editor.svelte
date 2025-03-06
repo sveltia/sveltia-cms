@@ -6,72 +6,51 @@
 <script>
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
+  import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
   import {
     getPairs,
     savePairs,
     validatePairs,
   } from '$lib/services/contents/widgets/key-value/helper';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {KeyValueField} fieldConfig - Field configuration.
+   * @property {Record<string, string> | undefined} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {KeyValueField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {Record<string, string>}
-   */
-  // svelte-ignore unused-export-let
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  // svelte-ignore unused-export-let
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  // svelte-ignore unused-export-let
-  export let invalid = false;
 
-  $: ({
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldId,
+    fieldConfig,
+    readonly = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     i18n = false,
     // Widget-specific options
-    key_label: keyLabel = $_('key_value.key'),
-    value_label: valueLabel = $_('key_value.value'),
+    key_label: _keyLabel,
+    value_label: _valueLabel,
     max = Infinity,
-  } = fieldConfig);
+  } = $derived(fieldConfig);
+  const keyLabel = $derived(_keyLabel || $_('key_value.key'));
+  const valueLabel = $derived(_valueLabel || $_('key_value.value'));
 
   /** @type {[string, string][]} */
-  let pairs = [];
+  const pairs = $state([]);
   /** @type {HTMLTableRowElement[]} */
-  const rowElements = [];
+  const rowElements = $state([]);
   /** @type {boolean[]} */
-  let edited = [];
+  const edited = $state([]);
   /** @type {('empty' | 'duplicate' | undefined)[]} */
-  let validations = [];
+  let validations = $state([]);
 
   /**
    * Update the {@link pairs} whenever the current values are changed.
@@ -85,8 +64,8 @@
     const updatedPairs = getPairs({ entryDraft: _entryDraft, keyPath, locale });
 
     if (!equal(pairs, updatedPairs)) {
-      pairs = updatedPairs;
-      edited = updatedPairs.map(() => false);
+      pairs.splice(0, Infinity, ...updatedPairs);
+      edited.splice(0, Infinity, ...updatedPairs.map(() => false));
     }
 
     if (!pairs.length && $entryDraft.currentValues[locale][keyPath] !== null) {
@@ -110,8 +89,8 @@
       }
     });
 
-    pairs = [...pairs, ['', '']];
-    edited = [...edited, false];
+    pairs.push(['', '']);
+    edited.push(false);
 
     window.requestAnimationFrame(() => {
       /** @type {HTMLInputElement} */ (
@@ -126,9 +105,7 @@
    */
   const removePair = (index) => {
     pairs.splice(index, 1);
-    pairs = [...pairs];
     edited.splice(index, 1);
-    edited = [...edited];
   };
 
   /**
@@ -146,15 +123,21 @@
     savePairs({ entryDraft: _entryDraft, fieldConfig, keyPath, locale, pairs });
   };
 
-  $: {
-    void $entryDraft?.currentValues[locale];
-    updatePairs();
-  }
+  $effect(() => {
+    void $state.snapshot($entryDraft?.currentValues[locale]);
 
-  $: {
-    void pairs;
-    updateStore();
-  }
+    untrack(() => {
+      updatePairs();
+    });
+  });
+
+  $effect(() => {
+    void $state.snapshot(pairs);
+
+    untrack(() => {
+      updateStore();
+    });
+  });
 </script>
 
 {#if pairs.length}

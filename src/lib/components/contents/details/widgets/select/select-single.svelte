@@ -2,36 +2,35 @@
   import { Option, Radio, RadioGroup, Select } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
-  /** @type {LocaleCode} */ // svelte-ignore unused-export-let
-  export let locale;
-  /** @type {FieldKeyPath} */ // svelte-ignore unused-export-let
-  export let keyPath;
-  /** @type {string} */
-  export let fieldId;
-  /** @type {SelectField} */
-  export let fieldConfig;
-  /** @type {string} */
-  export let currentValue;
-  /** @type {boolean} */
-  export let readonly = false;
-  /** @type {boolean} */
-  export let required = true;
-  /** @type {boolean} */
-  export let invalid = false;
-  /** @type {{ label: string, value: string, searchValue?: string }[]} */
-  export let options;
+  /**
+   * @typedef {object} Props
+   * @property {string} currentValue - Field value.
+   */
 
-  $: ({ dropdown_threshold = 5 } = fieldConfig);
+  /** @type {SelectFieldSelectorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    options,
+    /* eslint-enable prefer-const */
+  } = $props();
 
-  $: {
+  const { dropdown_threshold: dropdownThreshold = 5 } = $derived(fieldConfig);
+
+  $effect(() => {
     // Allow to deselect an option if the field is optional
     if (!required && !options.some(({ value }) => value === '')) {
       options.unshift({ label: $_('unselected_option'), value: '', searchValue: '' });
     }
-  }
+  });
 </script>
 
-{#if options.length > dropdown_threshold}
+{#if options.length > dropdownThreshold}
   <Select
     bind:value={currentValue}
     {readonly}

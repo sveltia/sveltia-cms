@@ -1227,6 +1227,27 @@
  */
 
 /**
+ * Select/Relation field editor’s selector properties.
+ * @typedef {object} SelectFieldSelectorProps
+ * @property {LocaleCode} locale - Current pane’s locale.
+ * @property {FieldKeyPath} keyPath - Field key path.
+ * @property {string} fieldId - Field ID.
+ * @property {SelectField} fieldConfig - Field configuration.
+ * @property {boolean} [required] - Whether to mark the field required.
+ * @property {boolean} [readonly] - Whether to mark the field read-only.
+ * @property {boolean} [invalid] - Whether to mark the field invalid.
+ * @property {SelectFieldSelectorOption[]} options - Selector options.
+ */
+
+/**
+ * Select/Relation field editor’s selector option.
+ * @typedef {object} SelectFieldSelectorOption
+ * @property {string} label - Option label.
+ * @property {string} value - Option value.
+ * @property {string} [searchValue] - Option value specifically for filtering.
+ */
+
+/**
  * Custom editor component configuration.
  * @typedef {object} EditorComponentDefinition
  * @property {string} id - Component name.

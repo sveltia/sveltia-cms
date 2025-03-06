@@ -8,26 +8,23 @@
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {SelectField} fieldConfig - Field configuration.
+   * @property {string | string[] | undefined} currentValue - Field value.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  // svelte-ignore unused-export-let
-  export let keyPath;
-  /**
-   * @type {SelectField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {string | string[]}
-   */
-  export let currentValue;
 
-  $: ({ options, multiple } = fieldConfig);
-  $: hasLabels = isObjectArray(options);
-  $: listFormatter = getListFormatter(locale);
+  /** @type {WidgetPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    fieldConfig,
+    currentValue,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { options, multiple } = $derived(fieldConfig);
+  const hasLabels = $derived(isObjectArray(options));
+  const listFormatter = $derived(getListFormatter(locale));
 
   /**
    * Get the display label by value.

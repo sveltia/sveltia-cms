@@ -10,72 +10,45 @@
   import SelectSingle from '$lib/components/contents/details/widgets/select/select-single.svelte';
 
   /**
-   * @type {LocaleCode}
+   * @typedef {object} Props
+   * @property {SelectField} fieldConfig - Field configuration.
+   * @property {any} currentValue - Field value.
+   * @property {boolean} [sortOptions] - Whether to sort the options by label.
    */
-  export let locale;
-  /**
-   * @type {FieldKeyPath}
-   */
-  export let keyPath;
-  /**
-   * @type {string}
-   */
-  export let fieldId;
-  /**
-   * @type {string}
-   */
-  // svelte-ignore unused-export-let
-  export let fieldLabel;
-  /**
-   * @type {SelectField}
-   */
-  export let fieldConfig;
-  /**
-   * @type {any} // string | string[]
-   */
-  export let currentValue;
-  /**
-   * @type {boolean}
-   */
-  export let sortOptions = false;
-  /**
-   * @type {boolean}
-   */
-  export let readonly = false;
-  /**
-   * @type {boolean}
-   */
-  export let required = true;
-  /**
-   * @type {boolean}
-   */
-  export let invalid = false;
 
-  $: ({
+  /** @type {WidgetEditorProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldId,
+    fieldConfig,
+    currentValue = $bindable(),
+    required = true,
+    readonly = false,
+    invalid = false,
+    sortOptions = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const {
     // Widget-specific options
     options: fieldOptions,
     multiple,
-  } = fieldConfig);
-
-  /**
-   * @type {{ label: string, value: string, searchValue?: string }[]}
-   */
-  $: options = (() => {
-    const _options =
-      /** @type {{ label: string, value: string, searchValue?: string }[] | string[]} */ (
-        fieldOptions
-      ).map((option) =>
-        isObject(option) ? /** @type {any} */ (option) : { label: option, value: option },
-      );
+  } = $derived(fieldConfig);
+  const Select = $derived(multiple ? SelectMultiple : SelectSingle);
+  /** @type {SelectFieldSelectorOption[]} */
+  const options = $derived.by(() => {
+    const _options = fieldOptions.map((option) =>
+      isObject(option) ? /** @type {any} */ (option) : { label: option, value: option },
+    );
 
     if (sortOptions) {
       _options.sort((a, b) => compare(a.label, b.label));
     }
 
     return _options;
-  })();
-
-  $: Select = multiple ? SelectMultiple : SelectSingle;
+  });
 </script>
 
 {#key JSON.stringify(options)}
