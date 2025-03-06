@@ -10,7 +10,7 @@
   /**
    * @typedef {object} Props
    * @property {NumberField} fieldConfig - Field configuration.
-   * @property {string | number | null} [currentValue] - Field value.
+   * @property {string | number | null | undefined} currentValue - Field value.
    */
 
   /** @type {WidgetEditorProps & Props} */

@@ -9,7 +9,7 @@
   /**
    * @typedef {object} Props
    * @property {BooleanField} fieldConfig - Field configuration.
-   * @property {boolean | 'mixed'} [currentValue] - Field value.
+   * @property {boolean | 'mixed' | undefined} currentValue - Field value.
    */
 
   /** @type {WidgetEditorProps & Props} */

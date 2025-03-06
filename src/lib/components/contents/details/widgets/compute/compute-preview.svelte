@@ -6,7 +6,7 @@
   /**
    * @typedef {object} Props
    * @property {StringField} fieldConfig - Field configuration.
-   * @property {string | number} [currentValue] - Field value.
+   * @property {string | number | undefined} currentValue - Field value.
    */
 
   /** @type {WidgetPreviewProps & Props} */

@@ -13,7 +13,7 @@
   /**
    * @typedef {object} Props
    * @property {ComputeField} fieldConfig - Field configuration.
-   * @property {string | number} [currentValue] - Field value.
+   * @property {string | number | undefined} currentValue - Field value.
    */
 
   /** @type {WidgetEditorProps & Props} */

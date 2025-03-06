@@ -1,5 +1,3 @@
-<svelte:options runes={true} />
-
 <script>
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';

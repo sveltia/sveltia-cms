@@ -6,14 +6,13 @@
 -->
 <script>
   import { Button, Slider, TextInput } from '@sveltia/ui';
-  import { generateElementId } from '@sveltia/utils/element';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   /**
    * @typedef {object} Props
    * @property {ColorField} fieldConfig - Field configuration.
-   * @property {string} [currentValue] - Field value.
+   * @property {string | undefined} currentValue - Field value.
    */
 
   /** @type {WidgetEditorProps & Props} */
@@ -33,7 +32,7 @@
 
   const { allowInput = false, enableAlpha = false } = $derived(fieldConfig);
 
-  const id = generateElementId('color');
+  const id = $props.id();
   const rgbRegex = /^#[0-9a-f]{6}$/;
   const rgbaRegex = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/;
 

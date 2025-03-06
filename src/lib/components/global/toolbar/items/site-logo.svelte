@@ -1,5 +1,3 @@
-<svelte:options runes={true} />
-
 <script>
   import { Button } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';

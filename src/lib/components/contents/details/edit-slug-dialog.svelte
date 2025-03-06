@@ -1,11 +1,10 @@
 <script>
   import { Alert, Dialog, TextInput } from '@sveltia/ui';
-  import { generateUUID } from '@sveltia/utils/crypto';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
-  import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { entryDraft } from '$lib/services/contents/draft';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
    * @typedef {object} Props
@@ -29,7 +28,7 @@
   /** @type {Record<LocaleCode, false | 'empty' | 'duplicate'>} */
   const validations = $state({});
 
-  const componentId = generateUUID('short');
+  const componentId = $props.id();
 
   /**
    * Initialize the properties.

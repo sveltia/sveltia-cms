@@ -1,6 +1,5 @@
 <script>
   import { Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
-  import { generateElementId } from '@sveltia/utils/element';
   import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
@@ -8,14 +7,14 @@
   import { setContext } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
-  import { defaultI18nConfig } from '$lib/services/contents/i18n';
-  import { isFieldRequired } from '$lib/services/contents/entry/fields';
-  import { revertChanges } from '$lib/services/contents/draft/update';
-  import { entryDraft } from '$lib/services/contents/draft';
-  import { editors } from '$lib/components/contents/details/widgets';
-  import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
-  import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
+  import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
+  import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
+  import { editors } from '$lib/components/contents/details/widgets';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import { revertChanges } from '$lib/services/contents/draft/update';
+  import { isFieldRequired } from '$lib/services/contents/entry/fields';
+  import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
    * @typedef {object} Props
@@ -33,7 +32,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const fieldId = generateElementId('field');
+  const fieldId = $props.id();
 
   /**
    * Parse the given string as Markdown and sanitize the result to only allow certain tags.

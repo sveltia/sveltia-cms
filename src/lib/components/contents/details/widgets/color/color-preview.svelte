@@ -7,7 +7,7 @@
   /**
    * @typedef {object} Props
    * @property {ColorField} fieldConfig - Field configuration.
-   * @property {string} [currentValue] - Field value.
+   * @property {string | undefined} currentValue - Field value.
    */
 
   /** @type {WidgetPreviewProps & Props} */

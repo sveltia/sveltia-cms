@@ -1,5 +1,5 @@
 <script>
-  import { generateElementId, waitForVisibility } from '@sveltia/utils/element';
+  import { waitForVisibility } from '@sveltia/utils/element';
 
   /**
    * @typedef {object} Props
@@ -15,7 +15,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const sectionId = generateElementId('section');
+  const sectionId = $props.id();
   const headerId = `${sectionId}-header`;
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();

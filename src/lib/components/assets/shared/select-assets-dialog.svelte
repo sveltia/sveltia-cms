@@ -1,8 +1,6 @@
 <script>
   import { Dialog, Listbox, Option, OptionGroup, SearchBar, TextInput } from '@sveltia/ui';
-  import { generateUUID } from '@sveltia/utils/crypto';
   import { getPathInfo } from '@sveltia/utils/file';
-  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import ExternalAssetsPanel from '$lib/components/assets/shared/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/shared/internal-assets-panel.svelte';
@@ -39,7 +37,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  let elementIdPrefix = $state('');
+  const elementIdPrefix = $props.id();
+
   /** @type {SelectedAsset | null} */
   let selectedAsset = $state(null);
   let enteredURL = $state('');
@@ -63,10 +62,6 @@
     (Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName]) ||
       (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]),
   );
-
-  onMount(() => {
-    elementIdPrefix = `library-${generateUUID('short')}`;
-  });
 
   $effect(() => {
     libraryName = showEntryAssets

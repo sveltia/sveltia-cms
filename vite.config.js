@@ -42,6 +42,9 @@ export default defineConfig({
     svelte({
       emitCss: false,
       preprocess: sveltePreprocess(),
+      compilerOptions: {
+        runes: true,
+      },
     }),
     {
       name: 'copy-package-files',

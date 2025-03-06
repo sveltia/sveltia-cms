@@ -19,7 +19,7 @@
   /**
    * @typedef {object} Props
    * @property {DateTimeField} fieldConfig - Field configuration.
-   * @property {string} [currentValue] - Field value.
+   * @property {string | undefined} currentValue - Field value.
    */
 
   /** @type {WidgetEditorProps & Props} */

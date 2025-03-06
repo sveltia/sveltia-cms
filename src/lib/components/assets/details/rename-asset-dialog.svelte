@@ -1,6 +1,5 @@
 <script>
   import { Dialog, TextInput } from '@sveltia/ui';
-  import { generateUUID } from '@sveltia/utils/crypto';
   import { getPathInfo } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
   import { moveAssets } from '$lib/services/assets/data';
@@ -11,7 +10,7 @@
     showAssetOverlay,
   } from '$lib/services/assets';
 
-  const componentId = generateUUID('short');
+  const componentId = $props.id();
 
   let open = $state(false);
   /** @type {{ dirname?: string, filename: string, extension?: string }} */

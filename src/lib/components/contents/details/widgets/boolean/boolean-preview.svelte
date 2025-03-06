@@ -9,7 +9,7 @@
   /**
    * @typedef {object} Props
    * @property {BooleanField} fieldConfig - Field configuration.
-   * @property {boolean} [currentValue] - Field value.
+   * @property {boolean | undefined} currentValue - Field value.
    */
 
   /** @type {WidgetPreviewProps & Props} */
