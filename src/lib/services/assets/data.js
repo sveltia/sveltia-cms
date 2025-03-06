@@ -20,7 +20,7 @@ import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries'
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { createSavingEntryData, getSlugs } from '$lib/services/contents/draft/save';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
-import { renameIfNeeded } from '$lib/services/utils/file';
+import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
 
 /**
  * @type {import('svelte/store').Writable<UpdatesToastState>}
@@ -41,7 +41,7 @@ export const saveAssets = async (uploadingAssets, options) => {
 
   const savingFileList = files.map((file) => {
     const name =
-      originalAsset?.name ?? renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
+      originalAsset?.name ?? renameIfNeeded(sanitizeFileName(file.name), assetNamesInSameFolder);
 
     if (!assetNamesInSameFolder.includes(name)) {
       assetNamesInSameFolder.push(name);

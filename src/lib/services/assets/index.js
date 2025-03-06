@@ -1,4 +1,4 @@
-import { decodeFilePath, encodeFilePath, getPathInfo, isTextFileType } from '@sveltia/utils/file';
+import { getPathInfo, isTextFileType } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
@@ -11,7 +11,7 @@ import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries'
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
-import { createPath, resolvePath } from '$lib/services/utils/file';
+import { createPath, decodeFilePath, encodeFilePath, resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 
 export const mediaKinds = ['image', 'video', 'audio'];
@@ -433,8 +433,7 @@ export const getAssetPublicURL = (
   }
 
   const path = asset.path.replace(asset.folder, publicPath === '/' ? '' : (publicPath ?? ''));
-  // Encode the path, e.g. a space -> `%20`, but the `@` prefix is an exception
-  const encodedPath = encodeFilePath(path).replace(/^%40/, '@');
+  const encodedPath = encodeFilePath(path);
 
   // Path starting with `@`, etc. cannot be linked
   if (!encodedPath.startsWith('/') && !allowSpecial) {

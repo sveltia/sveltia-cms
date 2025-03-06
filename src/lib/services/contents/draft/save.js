@@ -1,5 +1,5 @@
 import { generateUUID, getHash } from '@sveltia/utils/crypto';
-import { encodeFilePath, getBlobRegex } from '@sveltia/utils/file';
+import { getBlobRegex } from '@sveltia/utils/file';
 import { isObject, toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
@@ -23,7 +23,13 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
 import { user } from '$lib/services/user';
 import { fullDateTimeRegEx } from '$lib/services/utils/date';
-import { createPath, renameIfNeeded, resolvePath } from '$lib/services/utils/file';
+import {
+  createPath,
+  encodeFilePath,
+  renameIfNeeded,
+  resolvePath,
+  sanitizeFileName,
+} from '$lib/services/utils/file';
 
 /**
  * Entry slug variants.
@@ -661,7 +667,7 @@ const replaceBlobURL = async ({
   if (dupFile) {
     assetName = dupFile.name;
   } else {
-    assetName = renameIfNeeded(file.name.normalize(), assetNamesInSameFolder);
+    assetName = renameIfNeeded(sanitizeFileName(file.name), assetNamesInSameFolder);
 
     const assetPath = internalAssetFolder ? `${internalAssetFolder}/${assetName}` : assetName;
 
@@ -679,12 +685,11 @@ const replaceBlobURL = async ({
     });
   }
 
-  // Encode the path, e.g. a space -> `%20`, but the `@` prefix is an exception
   const publicURL = encodeFilePath(
     publicAssetFolder
       ? `${publicAssetFolder === '/' ? '' : publicAssetFolder}/${assetName}`
       : assetName,
-  ).replace(/^%40/, '@');
+  );
 
   content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL);
 };

@@ -1,7 +1,44 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
+import sanitize from 'sanitize-filename';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
+
+/**
+ * Encode the given (partial) file path or file name. Since {@link encodeURIComponent} encodes
+ * slashes, we need to split and join. The `@` prefix is an exception; it shouldn’t be encoded.
+ * @param {string} path - Original path.
+ * @returns {string} Encoded path.
+ */
+export const encodeFilePath = (path) => {
+  const hasAtPrefix = path.startsWith('@');
+
+  if (hasAtPrefix) {
+    path = path.slice(1);
+  }
+
+  path = path.split('/').map(encodeURIComponent).join('/');
+
+  if (hasAtPrefix) {
+    return `@${path}`;
+  }
+
+  return path;
+};
+
+/**
+ * Encode the given (partial) file path or file name. We can use {@link decodeURIComponent} as is.
+ * @param {string} path - Original path.
+ * @returns {string} Decoded path.
+ */
+export const decodeFilePath = (path) => decodeURIComponent(path);
+
+/**
+ * Sanitize the given file name for upload.
+ * @param {string} name - Original name.
+ * @returns {string} Normalized name.
+ */
+export const sanitizeFileName = (name) => sanitize(name.normalize());
 
 /**
  * Check if the user’s browsing environment supports drag & drop operation. Assume drag & drop is
