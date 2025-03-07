@@ -505,10 +505,10 @@ However, 100% feature parity is not planned, and some features are still missing
 ### Features to be implemented before GA
 
 - Comprehensive site config validation
-- [Azure](https://decapcms.org/docs/azure-backend/) backend (Note: It may not be implemented for performance reasons)
-- [Test](https://decapcms.org/docs/test-backend/) backend
+- [Azure backend](https://decapcms.org/docs/azure-backend/) (Note: It may not be implemented for performance reasons)
+- [Test backend](https://decapcms.org/docs/test-backend/)
 - [DateTime](https://decapcms.org/docs/widgets/#datetime) widget: The `date_format` and `time_format` options with Moment.js tokens (Note: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour — We’ll follow these changes where it makes sense)
-- [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets: Field-specific media folders (beta) and media library options other than `media_library.config.max_file_size` for the default media library
+- [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets: Field-specific media folders and media library options other than `media_library.config.max_file_size` for the default media library
 - [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries
 - [Custom widgets and custom editor components](https://decapcms.org/docs/custom-widgets/)
