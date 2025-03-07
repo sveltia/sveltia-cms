@@ -46,7 +46,6 @@
         onclick={(event) => {
           event.stopPropagation();
           files.splice(index, 1);
-          files = [...files];
         }}
       >
         <Icon name="close" />

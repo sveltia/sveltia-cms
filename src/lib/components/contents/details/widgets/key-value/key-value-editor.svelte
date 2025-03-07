@@ -44,11 +44,11 @@
   const valueLabel = $derived(_valueLabel || $_('key_value.value'));
 
   /** @type {[string, string][]} */
-  const pairs = $state([]);
+  let pairs = $state([]);
   /** @type {HTMLTableRowElement[]} */
   const rowElements = $state([]);
   /** @type {boolean[]} */
-  const edited = $state([]);
+  let edited = $state([]);
   /** @type {('empty' | 'duplicate' | undefined)[]} */
   let validations = $state([]);
 
@@ -64,8 +64,8 @@
     const updatedPairs = getPairs({ entryDraft: _entryDraft, keyPath, locale });
 
     if (!equal(pairs, updatedPairs)) {
-      pairs.splice(0, Infinity, ...updatedPairs);
-      edited.splice(0, Infinity, ...updatedPairs.map(() => false));
+      pairs = [...updatedPairs];
+      edited = updatedPairs.map(() => false);
     }
 
     if (!pairs.length && $entryDraft.currentValues[locale][keyPath] !== null) {
