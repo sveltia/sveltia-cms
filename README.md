@@ -492,35 +492,29 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **The Bitbucket, Gitea/Forgejo and Git Gateway backends will not be supported** for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
-- **Netlify Identity Widget will not be supported**, as it’s not useful without Git Gateway, and Netlify Identity itself is now [officially deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
-- The deprecated client-side implicit grant for the GitLab backend will not be supported, as it has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
-- The deprecated Netlify Large Media service will not be supported. Consider other storage providers.
-- The deprecated Date widget will not be supported, as it has already been removed from Decap CMS 3.0. Use the DateTime widget with the `time_format: false` option instead.
-- The theme and keymap inline settings of the Code widget will not be supported, and some languages are dropped, as we use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/).
-- Remark plugins will not be supported, as they are not compatible with our Lexical-based rich text editor.
-- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object will not be implemented. This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
-- An absolute URL for the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option will not be supported, as such configuration is not recommended, as stated in the Netlify/Decap CMS document.
+- **The Bitbucket, Gitea/Forgejo and Git Gateway backends**: For performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
+- **Netlify Identity Widget**: It’s not useful without Git Gateway, and Netlify Identity itself is now [officially deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
+- The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
+- The deprecated Netlify Large Media service: Consider other storage providers.
+- The deprecated Date widget: It has already been removed from Decap CMS 3.0. Use the DateTime widget with the `time_format: false` option instead.
+- The theme and keymap inline settings of the Code widget plus some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/).
+- Remark plugins: They are not compatible with our Lexical-based rich text editor.
+- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
+- An absolute URL for the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 
 ### Features to be implemented before GA
 
-These limitations are expected to be resolved before the 1.0 release scheduled for early 2025:
-
-| Feature | Status in Sveltia CMS |
-| --- | --- |
-| Backends | The [Test backend](https://decapcms.org/docs/test-backend/) needed for our demo site is not yet added. We’ll see if [Azure DevOps](https://decapcms.org/docs/azure-backend/) can also be supported. |
-| Configuration | Comprehensive config validation is not yet implemented. |
-| Localization | The application UI is only available in English and Japanese at this time. |
-| Media Libraries | [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) are not yet supported. |
-| Widgets | [Custom widgets](https://decapcms.org/docs/custom-widgets/) are not yet supported. See the table below for other limitations. |
-| Customization | [Custom previews](https://decapcms.org/docs/customization/) and [event subscriptions](https://decapcms.org/docs/registering-events/) are not yet supported. |
-
-| Widget | Status in Sveltia CMS |
-| --- | --- |
-| [DateTime](https://decapcms.org/docs/widgets/#datetime) | The `date_format` and `time_format` options with Moment.js tokens are not yet supported. Note that [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour; we’ll follow these changes where it makes sense. |
-| [File](https://decapcms.org/docs/widgets/#file) / [Image](https://decapcms.org/docs/widgets/#image) | Field-specific media folders (beta) and media library options are not yet supported other than `media_library.config.max_file_size` for the default media library. |
-| [Map](https://decapcms.org/docs/widgets/#map) | Not yet implemented. |
-| [Markdown](https://decapcms.org/docs/widgets/#markdown) | Custom components are not yet supported. |
+- Comprehensive site config validation
+- [Azure](https://decapcms.org/docs/azure-backend/) backend (Note: It may not be implemented for performance reasons)
+- [Test](https://decapcms.org/docs/test-backend/) backend
+- [DateTime](https://decapcms.org/docs/widgets/#datetime) widget: The `date_format` and `time_format` options with Moment.js tokens (Note: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made other changes to the widget behaviour — We’ll follow these changes where it makes sense)
+- [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets: Field-specific media folders (beta) and media library options other than `media_library.config.max_file_size` for the default media library
+- [Map](https://decapcms.org/docs/widgets/#map) widget
+- [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries
+- [Custom widgets and custom editor components](https://decapcms.org/docs/custom-widgets/)
+- [Custom previews](https://decapcms.org/docs/customization/)
+- [Event subscriptions](https://decapcms.org/docs/registering-events/)
+- Localization other than English and Japanese
 
 ### Features to be implemented after GA
 
