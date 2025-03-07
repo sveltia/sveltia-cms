@@ -123,7 +123,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widgetName === 'list') {
-      const { fields: subFields } = /** @type {ListField} */ (fieldConfig);
+      const { fields: subFields, types } = /** @type {ListField} */ (fieldConfig);
 
       if (!isArray) {
         newContent[keyPath] = [];
@@ -131,7 +131,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
         return;
       }
 
-      if (subFields) {
+      if (subFields || types) {
         defaultValue.forEach((items, index) => {
           Object.entries(items).forEach(([key, val]) => {
             newContent[[keyPath, index, key].join('.')] = val;
