@@ -16,7 +16,7 @@ const fullRegexPattern = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
  * @todo Rewrite this to better support list and object fields.
  */
 export const validateEntry = () => {
-  const { collection, collectionFile, fileName, currentLocales, currentValues, validities } =
+  const { collection, collectionFile, fileName, currentLocales, currentValues, files, validities } =
     /** @type {EntryDraft} */ (get(entryDraft));
 
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
@@ -181,6 +181,15 @@ export const validateEntry = () => {
           if (!outputCodeOnly) {
             value = valueMap[`${keyPath}.${outputKeys.code}`];
           }
+        }
+
+        if (
+          ['file', 'image'].includes(widgetName) &&
+          typeof value === 'string' &&
+          value.startsWith('blob:')
+        ) {
+          // The stored `value` is a blob URL; get the original file name
+          value = files[value]?.name;
         }
 
         if (typeof value === 'string') {
