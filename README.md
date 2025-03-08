@@ -113,7 +113,7 @@ Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities that require considerable effort:
 
-- Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
+- Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
   - We even proactively adopt changes suggested in their [pull requests](https://github.com/decaporg/decap-cms/pulls) that may sit in the review queue for a long time
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
@@ -503,7 +503,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Current limitations
 
-These features will be implemented before the 1.0 release scheduled for early 2025:
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release scheduled for early 2025.
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
@@ -516,7 +516,7 @@ These features will be implemented before the 1.0 release scheduled for early 20
 - [Custom previews](https://decapcms.org/docs/customization/)
 - [Event subscriptions](https://decapcms.org/docs/registering-events/)
 
-Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with these collaboration and beta features — we want to implement them the right way.
+Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with the collaboration and beta features — we want to implement them the right way.
 
 - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
@@ -1081,7 +1081,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### Before the 1.0 release
 
-- Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
+- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling some more Netlify/Decap CMS issues
 - Accessibility audit
 - Developer documentation (implementation guide)
