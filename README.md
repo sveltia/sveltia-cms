@@ -113,7 +113,7 @@ Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities that require considerable effort:
 
-- Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
+- Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
   - We even proactively adopt changes suggested in their [pull requests](https://github.com/decaporg/decap-cms/pulls) that may sit in the review queue for a long time
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
@@ -507,8 +507,7 @@ These features will be implemented before the 1.0 release scheduled for early 20
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
-- [Azure backend](https://decapcms.org/docs/azure-backend/) (It may be omitted for performance reasons)
-- [Test backend](https://decapcms.org/docs/test-backend/)
+- [Azure](https://decapcms.org/docs/azure-backend/) and [Test](https://decapcms.org/docs/test-backend/) backends (Azure may not be supported for performance reasons)
 - [DateTime](https://decapcms.org/docs/widgets/#datetime) widget: The `date_format` and `time_format` options with Moment.js tokens (Note: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made some additional updates — We’ll follow these changes where it makes sense)
 - [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets: Field-specific media folders and media library options other than `max_file_size` for the default media library
 - [Map](https://decapcms.org/docs/widgets/#map) widget
