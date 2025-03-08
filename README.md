@@ -41,8 +41,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Better localization](#better-localization)
 - [Compatibility](#compatibility)
   - [Features not to be implemented](#features-not-to-be-implemented)
-  - [Features to be implemented before GA](#features-to-be-implemented-before-ga)
-  - [Features to be implemented after GA](#features-to-be-implemented-after-ga)
+  - [Current limitations](#current-limitations)
   - [Compatibility with Static CMS](#compatibility-with-static-cms)
   - [Other notes](#other-notes)
 - [Getting started](#getting-started)
@@ -502,7 +501,9 @@ However, 100% feature parity is not planned, and some features are still missing
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - An absolute URL for the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 
-### Features to be implemented before GA
+### Current limitations
+
+These features will be implemented before the 1.0 release scheduled for early 2025:
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
@@ -515,8 +516,6 @@ However, 100% feature parity is not planned, and some features are still missing
 - [Custom widgets and custom editor components](https://decapcms.org/docs/custom-widgets/)
 - [Custom previews](https://decapcms.org/docs/customization/)
 - [Event subscriptions](https://decapcms.org/docs/registering-events/)
-
-### Features to be implemented after GA
 
 Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with these collaboration and beta features — we want to implement them the right way.
 
@@ -1083,7 +1082,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### Before the 1.0 release
 
-- Enhanced [compatibility with Netlify/Decap CMS](#features-to-be-implemented-before-ga)
+- Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues
 - Accessibility audit
 - Developer documentation (implementation guide)
@@ -1093,7 +1092,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### After the 1.0 release
 
-- Implementing the [remaining Netlify/Decap CMS features](#features-to-be-implemented-after-ga)
+- Implementing the [remaining Netlify/Decap CMS features](#current-limitations)
 - Tackling even more Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] mobile optimization,[^18] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
