@@ -56,7 +56,7 @@
   "dependencies": {
     "@lexical/markdown": "^0.27.1",
     "@sindresorhus/transliterate": "^1.6.0",
-    "@sveltia/ui": "^0.25.4",
+    "@sveltia/ui": "^0.25.5",
     "@sveltia/utils": "^0.7.0",
     "deepmerge": "^4.3.1",
     "fast-deep-equal": "^3.1.3",
