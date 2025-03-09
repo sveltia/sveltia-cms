@@ -18,8 +18,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@sveltia/ui':
-        specifier: ^0.25.3
-        version: 0.25.3(svelte@5.22.6)
+        specifier: ^0.25.4
+        version: 0.25.4(svelte@5.22.6)
       '@sveltia/utils':
         specifier: ^0.7.0
         version: 0.7.0
@@ -140,8 +140,8 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@asamuzakjp/css-color@2.8.3':
-    resolution: {integrity: sha512-GIc76d9UI1hCvOATjZPyHFmE5qhRccp3/zGfMPapK3jBi+yocEzp6BBB0UnfRYP9NP4FANqUZYb0hnfs3TM3hw==}
+  '@asamuzakjp/css-color@3.1.1':
+    resolution: {integrity: sha512-hpRD68SV2OMcZCsrbdkccTw5FXjNDLo5OuqSHyHZfwweGsDWZwDJ2+gONyNAbazZclobMirACLw0lk8WVxIqxA==}
 
   '@babel/code-frame@7.26.2':
     resolution: {integrity: sha512-RJlIHRueQgwWitWgF8OdFYGZX328Ax5BCemNGlqHfplnRT9ESi8JkFlvaVYbS+UubVY6dpv87Fs2u5M29iNFVQ==}
@@ -894,8 +894,8 @@ packages:
       svelte: ^5.0.0
       vite: ^6.0.0
 
-  '@sveltia/ui@0.25.3':
-    resolution: {integrity: sha512-seT3Pglm6dBwZENdorPkhFOcpCcfRLkC/E99J6+VrtyOuq/wLjA4VqVtBGGTuaG5M2pnIwwEIK0f/8dmePoTjA==}
+  '@sveltia/ui@0.25.4':
+    resolution: {integrity: sha512-5ol1I7QJgBeOmDULy52rNRKVzOraZ9M9lq/wHoVCcO8F4fdddZHqc90TvZwo8xylkXiMxYrNR9NC0vv9oU6UiA==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -1233,8 +1233,8 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
-  cssstyle@4.2.1:
-    resolution: {integrity: sha512-9+vem03dMXG7gDmZ62uqmRiMRNtinIZ9ZyuF6BdxzfOD+FdN5hretzynkn0ReS2DO2GSw76RWHs0UmJPI2zUjw==}
+  cssstyle@4.3.0:
+    resolution: {integrity: sha512-6r0NiY0xizYqfBvWp1G7WXJ06/bZyrk7Dc6PHql82C/pKGUTKu4yAX4Y8JPamb1ob9nBKuxWzCGTRuGwU3yxJQ==}
     engines: {node: '>=18'}
 
   d@1.0.2:
@@ -2978,7 +2978,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.8
       '@jridgewell/trace-mapping': 0.3.25
 
-  '@asamuzakjp/css-color@2.8.3':
+  '@asamuzakjp/css-color@3.1.1':
     dependencies:
       '@csstools/css-calc': 2.1.2(@csstools/css-parser-algorithms@3.0.4(@csstools/css-tokenizer@3.0.3))(@csstools/css-tokenizer@3.0.3)
       '@csstools/css-color-parser': 3.0.8(@csstools/css-parser-algorithms@3.0.4(@csstools/css-tokenizer@3.0.3))(@csstools/css-tokenizer@3.0.3)
@@ -3640,7 +3640,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.25.3(svelte@5.22.6)':
+  '@sveltia/ui@0.25.4(svelte@5.22.6)':
     dependencies:
       '@lexical/code': 0.27.1
       '@lexical/dragon': 0.27.1
@@ -4054,9 +4054,9 @@ snapshots:
 
   cssesc@3.0.0: {}
 
-  cssstyle@4.2.1:
+  cssstyle@4.3.0:
     dependencies:
-      '@asamuzakjp/css-color': 2.8.3
+      '@asamuzakjp/css-color': 3.1.1
       rrweb-cssom: 0.8.0
 
   d@1.0.2:
@@ -4964,7 +4964,7 @@ snapshots:
 
   jsdom@26.0.0:
     dependencies:
-      cssstyle: 4.2.1
+      cssstyle: 4.3.0
       data-urls: 5.0.0
       decimal.js: 10.5.0
       form-data: 4.0.2
