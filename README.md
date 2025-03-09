@@ -904,9 +904,9 @@ Note: The `root` option is ignored if the collection or collection file contains
 
 ### Changing the input type of a DateTime field
 
-It may be worth mentioning this topic here because the current [Decap CMS doc about the DateTime widget](https://decapcms.org/docs/widgets/#datetime) is unclear. By default, a DateTime field lets users pick both date and time, but developers can change the input type.
+It may be worth mentioning this topic here because the current [Decap CMS doc about the DateTime widget](https://decapcms.org/docs/widgets/#datetime) is unclear. By default, a DateTime field lets users pick both [date and time](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local), but developers can change the input type if needed.
 
-Use `time_format: false` to hide the time picker and make it date only:
+Use `time_format: false` to hide the time picker and make it [date only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date):
 
 ```yaml
 - label: Start Date
@@ -915,7 +915,7 @@ Use `time_format: false` to hide the time picker and make it date only:
   time_format: false
 ```
 
-Use `date_format: false` to hide the date picker and make it time only:
+Use `date_format: false` to hide the date picker and make it [time only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time):
 
 ```yaml
 - label: Start Time
@@ -924,7 +924,7 @@ Use `date_format: false` to hide the date picker and make it time only:
   date_format: false
 ```
 
-We understand that this configuration may be a bit confusing, but it’s necessary to maintain backward compatibility with the Netlify CMS. We plan to improve the widget options and introduce new input types: month and week.
+We understand that this configuration may be a bit confusing, but it’s necessary to maintain backward compatibility with Netlify CMS. We plan to improve the widget options and introduce new input types: [month](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/month) and [week](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/week).
 
 ### Controlling data output
 
