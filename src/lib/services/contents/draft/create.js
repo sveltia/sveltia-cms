@@ -317,6 +317,16 @@ export const createProxy = ({
               }
             }
 
+            // Support special case for the Relation field: if the `value_field` option is something
+            // like `{{locale}}/{{slug}}`, replace the source locale in the value with target locale
+            if (fieldConfig.widget === 'relation') {
+              const { value_field: valueField } = /** @type {RelationField} */ (fieldConfig);
+
+              if (valueField.startsWith('{{locale}}/')) {
+                value = value.replace(new RegExp(`^${sourceLocale}/`), `${targetLocale}/`);
+              }
+            }
+
             if (targetLocale !== sourceLocale && content[keyPath] !== value) {
               content[keyPath] = value;
             }

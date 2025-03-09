@@ -765,4 +765,122 @@ describe('Test getOptions()', async () => {
       ),
     ).toEqual([]);
   });
+
+  test('entry filters, single entry, localized value', () => {
+    const config = {
+      name: 'posts',
+      label: 'Posts',
+      widget: 'relation',
+      collection: 'posts',
+      value_field: '{{locale}}/{{slug}}',
+      display_fields: ['title'],
+      search_fields: ['title', 'category'],
+    };
+
+    /** @type {Entry[]} */
+    const entries = [
+      {
+        id: '',
+        sha: '',
+        slug: 'bulldog',
+        subPath: 'bulldog',
+        locales: {
+          en: {
+            ...localizedEntryProps,
+            content: { category: 'dogs', draft: true, title: 'Bulldog' },
+          },
+          ja: {
+            ...localizedEntryProps,
+            content: { category: 'dogs', draft: true, title: 'ブルドッグ' },
+          },
+        },
+      },
+    ];
+
+    expect(getOptions('en', config, entries)).toEqual([
+      { label: 'Bulldog', value: 'en/bulldog', searchValue: 'Bulldog dogs' },
+    ]);
+
+    expect(getOptions('ja', config, entries)).toEqual([
+      { label: 'ブルドッグ', value: 'ja/bulldog', searchValue: 'ブルドッグ dogs' },
+    ]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [{ field: 'draft', values: [true] }],
+        },
+        entries,
+      ),
+    ).toEqual([{ label: 'Bulldog', value: 'en/bulldog', searchValue: 'Bulldog dogs' }]);
+
+    expect(
+      getOptions(
+        'ja',
+        {
+          ...config,
+          filters: [{ field: 'draft', values: [true] }],
+        },
+        entries,
+      ),
+    ).toEqual([{ label: 'ブルドッグ', value: 'ja/bulldog', searchValue: 'ブルドッグ dogs' }]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [
+            { field: 'draft', values: [true] },
+            { field: 'category', values: ['dogs'] },
+          ],
+        },
+        entries,
+      ),
+    ).toEqual([{ label: 'Bulldog', value: 'en/bulldog', searchValue: 'Bulldog dogs' }]);
+
+    expect(
+      getOptions(
+        'ja',
+        {
+          ...config,
+          filters: [
+            { field: 'draft', values: [true] },
+            { field: 'category', values: ['dogs'] },
+          ],
+        },
+        entries,
+      ),
+    ).toEqual([{ label: 'ブルドッグ', value: 'ja/bulldog', searchValue: 'ブルドッグ dogs' }]);
+
+    expect(
+      getOptions(
+        'en',
+        {
+          ...config,
+          filters: [
+            { field: 'draft', values: [false] },
+            { field: 'category', values: ['en/cats', 'en/dogs'] },
+          ],
+        },
+        entries,
+      ),
+    ).toEqual([]);
+
+    expect(
+      getOptions(
+        'ja',
+        {
+          ...config,
+          filters: [
+            { field: 'draft', values: [false] },
+            { field: 'category', values: ['ja/cats', 'ja/dogs'] },
+          ],
+        },
+        entries,
+      ),
+    ).toEqual([]);
+  });
 });

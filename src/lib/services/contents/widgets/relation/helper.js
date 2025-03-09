@@ -39,6 +39,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example 'cities.*.id'
    * @example '{{cities.*.id}}'
    * @example '{{slug}}'
+   * @example '{{locale}}/{{slug}}'
    * @example '{{fields.slug}}'
    */
   // @ts-ignore Netlify/Decap CMS supports camelcase field name
@@ -129,6 +130,10 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
           if (fieldName === 'slug') {
             return [fieldName, refEntry.slug];
+          }
+
+          if (fieldName === 'locale') {
+            return [fieldName, locale];
           }
 
           const _fieldConfig = getFieldConfig({
