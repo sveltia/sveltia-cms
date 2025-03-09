@@ -239,7 +239,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to [localize entry slugs](#localizing-entry-slugs) while linking the localized files,[^80] thanks to the support for Hugo’s `translationKey`.[^81]
   - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://en.wikipedia.org/wiki/Transliteration).[^99]
   - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`.[^101]
-  - The `value_field` Relation option can contain a locale prefix like `{{locale}}/{{slug}}`, which will be replaced with the current locale. It’s intended to support i18n in Astro. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/302#discussioncomment-12005868))
+  - The `value_field` Relation field option can contain a locale prefix like `{{locale}}/{{slug}}`, which will be replaced with the current locale. It’s intended to support i18n in Astro. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/302))
 - User interface
   - Eliminates UI confusion: The Preview Pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
