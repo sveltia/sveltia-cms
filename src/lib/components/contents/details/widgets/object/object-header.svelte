@@ -8,10 +8,8 @@
    * @property {string} controlId - `aria-controls` ID.
    * @property {boolean} expanded - Whether the item is expanded.
    * @property {() => void} [toggleExpanded] - Function to toggle the item.
-   * @property {boolean} [removeButtonVisible] - Whether to display the remove button.
-   * @property {boolean} [removeButtonDisabled] - Whether to disable the remove button.
-   * @property {() => void} remove - Function to remove the item.
-   * @property {import('svelte').Snippet | undefined} [children] - Slot content.
+   * @property {import('svelte').Snippet | undefined} [centerContent] - Center slot content.
+   * @property {import('svelte').Snippet | undefined} [endContent] - End slot content.
    */
 
   /** @type {Props} */
@@ -21,10 +19,8 @@
     controlId,
     expanded,
     toggleExpanded,
-    removeButtonVisible = false,
-    removeButtonDisabled = false,
-    remove,
-    children = undefined,
+    centerContent = undefined,
+    endContent = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 </script>
@@ -52,24 +48,10 @@
     </Button>
   </div>
   <div role="none">
-    {@render children?.()}
+    {@render centerContent?.()}
   </div>
   <div role="none">
-    {#if removeButtonVisible}
-      <Button
-        size="small"
-        iconic
-        disabled={removeButtonDisabled}
-        aria-label={$_('remove_this_item')}
-        onclick={() => {
-          remove();
-        }}
-      >
-        {#snippet startIcon()}
-          <Icon name="close" />
-        {/snippet}
-      </Button>
-    {/if}
+    {@render endContent?.()}
   </div>
 </div>
 

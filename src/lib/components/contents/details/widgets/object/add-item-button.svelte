@@ -7,7 +7,7 @@
    * @property {boolean} [disabled] - Whether to disable the button.
    * @property {ListField | ObjectField} fieldConfig - Field configuration.
    * @property {object[]} [items] - List items. `<ListEditor>` only.
-   * @property {(typeName?: string) => void} [addItem] - Function to add a new item.
+   * @property {(args?: { type?: string }) => void} [addItem] - Function to add a new item.
    */
 
   /** @type {Props} */
@@ -40,13 +40,14 @@
 
 {#if Array.isArray(types)}
   <MenuButton variant="tertiary" {label} disabled={_disabled}>
-    {#snippet endIcon()}
+    {#snippet startIcon()}
       <Icon name="add" />
     {/snippet}
+    {#snippet endIcon()}{/snippet}
     {#snippet popup()}
       <Menu aria-label={$_('select_list_type')}>
         {#each types as { name, label: itemLabel } (name)}
-          <MenuItem label={itemLabel || name} onclick={() => addItem(name)} />
+          <MenuItem label={itemLabel || name} onclick={() => addItem({ type: name })} />
         {/each}
       </Menu>
     {/snippet}

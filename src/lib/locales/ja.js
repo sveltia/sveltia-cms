@@ -439,6 +439,8 @@ export const strings = {
   move_up: '上へ移動',
   move_down: '下へ移動',
   add_x: '{name} を追加',
+  add_item_above: '上にアイテムを追加',
+  add_item_below: '下にアイテムを追加',
   select_list_type: 'リストタイプを選択',
   opacity: '透明度',
   unselected_option: '(なし)',

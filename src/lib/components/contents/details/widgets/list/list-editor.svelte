@@ -4,7 +4,17 @@
   @see https://decapcms.org/docs/widgets/#list
 -->
 <script>
-  import { Button, Group, Icon, Spacer, TextInput } from '@sveltia/ui';
+  import {
+    Button,
+    Divider,
+    Group,
+    Icon,
+    Menu,
+    MenuButton,
+    MenuItem,
+    Spacer,
+    TextInput,
+  } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
@@ -57,8 +67,7 @@
     label_singular: labelSingular,
     field,
     fields,
-    // max,
-    // min,
+    max = Infinity,
     add_to_top: addToTop = false,
     types,
     typeKey = 'type',
@@ -99,6 +108,7 @@
       return [key, $state.snapshot($entryDraft?.expanderStates?._[key]) ?? true];
     }),
   );
+  const hasMaxItems = $derived(items.length >= max);
 
   /**
    * Update {@link inputValue} when {@link currentValue} is reverted. This also cleans up the input
@@ -156,21 +166,26 @@
 
   /**
    * Add a new subfield to the list.
-   * @param {string} [typeName] - Variable type name. If the field doesn’t have variable types, it
+   * @param {object} [args] - Arguments.
+   * @param {number} [args.index] - List index where a new item will be inserted.
+   * @param {number} [args.dupIndex] - List index of an item to be duplicated.
+   * @param {string} [args.type] - Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
    * @see https://decapcms.org/docs/variable-type-widgets/
    */
-  const addItem = (typeName) => {
+  const addItem = ({ index = addToTop ? 0 : items.length, dupIndex, type } = {}) => {
     updateComplexList(({ valueList, expanderStateList }) => {
-      const subFields = typeName
-        ? (types?.find(({ name }) => name === typeName)?.fields ?? [])
+      const subFields = type
+        ? (types?.find(({ name }) => name === type)?.fields ?? [])
         : (fields ?? (field ? [field] : []));
 
-      const index = addToTop ? 0 : valueList.length;
-      const newItem = unflatten(getDefaultValues(subFields, locale));
+      const newItem =
+        typeof dupIndex === 'number'
+          ? structuredClone(valueList[dupIndex])
+          : unflatten(getDefaultValues(subFields, locale));
 
-      if (typeName) {
-        newItem[typeKey] = typeName;
+      if (type) {
+        newItem[typeKey] = type;
       }
 
       valueList.splice(index, 0, hasSingleSubField && field ? newItem[field.name] : newItem);
@@ -335,39 +350,89 @@
             toggleExpanded={subFields.length
               ? () => syncExpanderStates({ [expandedKeyPath]: !expanded })
               : undefined}
-            removeButtonVisible={true}
-            removeButtonDisabled={isDuplicateField}
-            remove={() => {
-              removeItem(index);
-            }}
           >
-            <Button
-              size="small"
-              iconic
-              disabled={isDuplicateField || index === 0}
-              aria-label={$_('move_up')}
-              onclick={() => {
-                moveUpItem(index);
-              }}
-            >
-              {#snippet startIcon()}
-                <Icon name="arrow_upward" />
-              {/snippet}
-            </Button>
-            <Spacer />
-            <Button
-              iconic
-              size="small"
-              disabled={isDuplicateField || index === items.length - 1}
-              aria-label={$_('move_down')}
-              onclick={() => {
-                moveDownItem(index);
-              }}
-            >
-              {#snippet startIcon()}
-                <Icon name="arrow_downward" />
-              {/snippet}
-            </Button>
+            {#snippet centerContent()}
+              <Button
+                size="small"
+                iconic
+                disabled={isDuplicateField || index === 0}
+                aria-label={$_('move_up')}
+                onclick={() => moveUpItem(index)}
+              >
+                {#snippet startIcon()}
+                  <Icon name="arrow_upward" />
+                {/snippet}
+              </Button>
+              <Spacer />
+              <Button
+                iconic
+                size="small"
+                disabled={isDuplicateField || index === items.length - 1}
+                aria-label={$_('move_down')}
+                onclick={() => moveDownItem(index)}
+              >
+                {#snippet startIcon()}
+                  <Icon name="arrow_downward" />
+                {/snippet}
+              </Button>
+            {/snippet}
+            {#snippet endContent()}
+              <MenuButton
+                variant="ghost"
+                size="small"
+                iconic
+                popupPosition="bottom-right"
+                aria-label={$_('list_item_options')}
+                disabled={isDuplicateField}
+              >
+                {#snippet popup()}
+                  <Menu aria-label={$_('translation_options')}>
+                    <MenuItem
+                      label={$_('duplicate')}
+                      disabled={hasMaxItems}
+                      onclick={() => addItem({ index: index + 1, dupIndex: index })}
+                    />
+                    {#if hasVariableTypes}
+                      <MenuItem label={$_('add_item_above')} disabled={hasMaxItems}>
+                        <!-- eslint-disable-next-line no-shadow -->
+                        {#snippet items()}
+                          {#each types ?? [] as { name, label: itemLabel } (name)}
+                            <MenuItem
+                              label={itemLabel || name}
+                              onclick={() => addItem({ index, type: name })}
+                            />
+                          {/each}
+                        {/snippet}
+                      </MenuItem>
+                      <MenuItem label={$_('add_item_below')} disabled={hasMaxItems}>
+                        <!-- eslint-disable-next-line no-shadow -->
+                        {#snippet items()}
+                          {#each types ?? [] as { name, label: itemLabel } (name)}
+                            <MenuItem
+                              label={itemLabel || name}
+                              onclick={() => addItem({ index: index + 1, type: name })}
+                            />
+                          {/each}
+                        {/snippet}
+                      </MenuItem>
+                    {:else}
+                      <MenuItem
+                        label={$_('add_item_above')}
+                        disabled={hasMaxItems}
+                        onclick={() => addItem({ index })}
+                      />
+                      <MenuItem
+                        label={$_('add_item_below')}
+                        disabled={hasMaxItems}
+                        onclick={() => addItem({ index: index + 1 })}
+                      />
+                    {/if}
+                    <Divider />
+                    <MenuItem label={$_('remove')} onclick={() => removeItem(index)} />
+                  </Menu>
+                {/snippet}
+              </MenuButton>
+            {/snippet}
           </ObjectHeader>
           <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
             {#if expanded}

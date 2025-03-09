@@ -439,6 +439,8 @@ export const strings = {
   move_up: 'Move Up',
   move_down: 'Move Down',
   add_x: 'Add {name}',
+  add_item_above: 'Add Item Above',
+  add_item_below: 'Add Item Below',
   select_list_type: 'Select List Type',
   opacity: 'Opacity',
   unselected_option: '(None)',

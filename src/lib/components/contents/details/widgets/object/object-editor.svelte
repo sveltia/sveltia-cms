@@ -4,7 +4,7 @@
   @see https://decapcms.org/docs/widgets/#object
 -->
 <script>
-  import { Checkbox, Group } from '@sveltia/ui';
+  import { Button, Checkbox, Group, Icon } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
   import { sleep } from '@sveltia/utils/misc';
   import { toRaw } from '@sveltia/utils/object';
@@ -84,17 +84,18 @@
 
   /**
    * Add the object’s subfields to the entry draft with the default values populated.
-   * @param {string} [typeName] - Variable type name. If the field doesn’t have variable types, it
+   * @param {object} [args] - Arguments.
+   * @param {string} [args.type] - Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
    */
-  const addFields = async (typeName) => {
+  const addFields = async ({ type } = {}) => {
     // Avoid triggering the Proxy’s i18n duplication strategy for descendant fields
     $i18nAutoDupEnabled = false;
 
-    if (typeName) {
+    if (type) {
       Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
         if (_locale === locale || i18n === 'duplicate') {
-          /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][typeKeyPath] = typeName;
+          /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][typeKeyPath] = type;
         }
       });
 
@@ -200,12 +201,25 @@
         toggleExpanded={subFields.length
           ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
           : undefined}
-        removeButtonVisible={hasVariableTypes}
-        removeButtonDisabled={addButtonDisabled}
-        remove={() => {
-          removeFields();
-        }}
-      />
+      >
+        {#snippet endContent()}
+          {#if hasVariableTypes}
+            <Button
+              size="small"
+              iconic
+              disabled={addButtonDisabled}
+              aria-label={$_('remove')}
+              onclick={() => {
+                removeFields();
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name="close" />
+              {/snippet}
+            </Button>
+          {/if}
+        {/snippet}
+      </ObjectHeader>
       <div role="none" class="item-list" id="object-{widgetId}-item-list" bind:this={wrapper}>
         {#await waitForVisibility(wrapper) then}
           {#if parentExpanded}
