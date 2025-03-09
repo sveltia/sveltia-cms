@@ -66,6 +66,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Disabling non-default locale content](#disabling-non-default-locale-content)
   - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
+  - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
   - [Controlling data output](#controlling-data-output)
   - [Disabling automatic deployments](#disabling-automatic-deployments)
   - [Setting up Content Security Policy](#setting-up-content-security-policy)
@@ -495,7 +496,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and Netlify Identity itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service: Consider other storage providers.
-- The deprecated Date widget: It has already been removed from Decap CMS 3.0. Use the DateTime widget with the `time_format: false` option instead.
+- The deprecated Date widget: It has already been removed from Decap CMS 3.0. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
 - The theme and keymap inline settings of the Code widget plus some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/).
 - Remark plugins: Not compatible with our Lexical-based rich text editor.
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
@@ -900,6 +901,30 @@ collections:
 ```
 
 Note: The `root` option is ignored if the collection or collection file contains multiple fields. You can still have subfields under the List field.
+
+### Changing the input type of a DateTime field
+
+It may be worth mentioning this topic here because the current [Decap CMS doc about the DateTime widget](https://decapcms.org/docs/widgets/#datetime) is unclear. By default, a DateTime field lets users pick both date and time, but developers can change the input type.
+
+Use `time_format: false` to hide the time picker and make it date only:
+
+```yaml
+- label: Start Date
+  name: startDate
+  widget: datetime
+  time_format: false
+```
+
+Use `date_format: false` to hide the date picker and make it time only:
+
+```yaml
+- label: Start Time
+  name: startTime
+  widget: datetime
+  date_format: false
+```
+
+We understand that this configuration may be a bit confusing, but it’s necessary to maintain backward compatibility with the Netlify CMS. We plan to improve the widget options and introduce new input types: month and week.
 
 ### Controlling data output
 
