@@ -239,6 +239,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to [localize entry slugs](#localizing-entry-slugs) while linking the localized files,[^80] thanks to the support for Hugo’s `translationKey`.[^81]
   - When the `clean_accents` option is enabled for [entry slugs](https://decapcms.org/docs/configuration-options/#slug-type), certain characters, such as German umlauts, will be [transliterated](https://en.wikipedia.org/wiki/Transliteration).[^99]
   - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`.[^101]
+  - The `value_field` Relation option can contain a locale prefix like `{{locale}}/{{slug}}`, which will be replaced with the current locale. It’s intended to support i18n in Astro. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/302#discussioncomment-12005868))
 - User interface
   - Eliminates UI confusion: The Preview Pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
@@ -373,6 +374,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list) using the new `root` option.[^148]
   - The `min` and `max` options can be used separately. You don’t need to specify both to use either option.[^145]
   - The Add Item button appears at the bottom of the list when the `add_to_top` option is not `true`, so you don’t have to scroll up each time to add new items.
+  - A list item comes with a menu that allows users to duplicate the item, insert a new item above/below it, or remove it.[^187]
   - Users can expand or collapse the entire list, while the Expand All and Collapse All buttons allow you to expand or collapse all items in the list at once.[^164]
   - A required List field with no subfield or value is marked as invalid.[^43] No need to set the `min` and `max` options for the `required` option to work.
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing.[^44]
@@ -437,8 +439,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 #### New widgets
 
 - Compute
-  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets.[^104] Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}` ([example](https://github.com/sveltia/sveltia-cms/issues/111)).
-  - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item ([example](https://github.com/sveltia/sveltia-cms/issues/172)).
+  - The experimental `compute` widget allows to reference the value of other fields in the same collection, similar to the `summary` property for the List and Object widgets.[^104] Use the `value` property to define the value template, e.g. `posts-{{fields.slug}}`. ([Example](https://github.com/sveltia/sveltia-cms/issues/111))
+  - The `value` property also supports a value of `{{index}}`, which can hold the index of a list item. ([Example](https://github.com/sveltia/sveltia-cms/issues/172))
 - KeyValue (Dictionary)
   - The new `keyvalue` widget allows users to add arbitrary key-value string pairs to a field.[^123]
   - While the implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), we provide a more intuitive UI. You can press Enter to move focus or add a new row while editing, and the preview is displayed in a clean table.
@@ -1517,3 +1519,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^185]: Netlify/Decap CMS [#6203](https://github.com/decaporg/decap-cms/issues/6203), [#7417](https://github.com/decaporg/decap-cms/issues/7417)
 
 [^186]: Netlify/Decap CMS [#7379](https://github.com/decaporg/decap-cms/issues/7379)
+
+[^187]: Netlify/Decap CMS [#1244](https://github.com/decaporg/decap-cms/issues/1244)
