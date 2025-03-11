@@ -19,8 +19,6 @@ export const parseDateTimeConfig = (fieldConfig) => {
 
   return {
     format: format || [dateFormatStr, timeFormatStr].join(' ').trim() || undefined,
-    dateFormat,
-    timeFormat,
     dateOnly: timeFormat === false,
     timeOnly: dateFormat === false,
     utc,
