@@ -93,6 +93,7 @@ words:
   - webformat
   - whitespaces
   - xslx
+  - yacosta
   - zanhk
 overrides:
   - language: en-gb
