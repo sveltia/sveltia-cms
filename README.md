@@ -120,7 +120,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 175+ of them, or 345+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 200 by GA; 300, or 500 including duplicates, in the future (yes, you read that right)
-  - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without a real solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions)
+  - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Most of the bugs, including annoying crashes, are already solved
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
@@ -503,6 +503,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - Remark plugins: Not compatible with our Lexical-based rich text editor.
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - An absolute URL for the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
+- Some date/time format tokens: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and Sveltia CMS will follow suit soon. Since [Moment.js tokens](https://momentjs.com/docs/#/displaying/format/) and [Day.js tokens](https://day.js.org/docs/en/display/format) are not 100% compatible, this could be a breaking change in certain cases.
 
 ### Current limitations
 
@@ -511,8 +512,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
 - [Azure](https://decapcms.org/docs/azure-backend/) and [Test](https://decapcms.org/docs/test-backend/) backends (Azure may not be supported for performance reasons)
-- [DateTime](https://decapcms.org/docs/widgets/#datetime) widget: The `date_format` and `time_format` options with Moment.js tokens (Note: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced [Moment.js](https://momentjs.com/) with [Day.js](https://day.js.org/), and [Decap CMS 3.3.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0) made some additional updates — We’ll follow these changes where it makes sense)
-- [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets: Field-specific media folders and media library options other than `max_file_size` for the default media library
+- Field-specific media folders and media library options for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets other than `max_file_size` for the default media library
 - [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries
 - [Custom widgets and custom editor components](https://decapcms.org/docs/custom-widgets/)
@@ -538,6 +538,7 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 - I18n support
   - The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `save_all_locales` or `initial_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
 - Widgets
+  - The date/time format options for the DateTime widget may be incompatible since Static CMS [switched to date-fns](https://staticjscms.netlify.app/docs/decap-migration-guide#dates) while Sveltia CMS continues to use Moment.js (and will soon switch to Day.js). Update your formats accordingly.
   - The KeyValue widget is implemented in Sveltia CMS with the same options.
   - The UUID widget is also implemented, but with different options.
   - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS, respectively. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
