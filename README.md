@@ -110,7 +110,7 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 
 ## Development status
 
-Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in **early 2025**, in time for the 10th anniversary of Netlify CMS development. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in mid-2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities that require considerable effort:
 
@@ -507,7 +507,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Current limitations
 
-These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release scheduled for early 2025.
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release.
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
@@ -519,7 +519,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Custom previews](https://decapcms.org/docs/customization/)
 - [Event subscriptions](https://decapcms.org/docs/registering-events/)
 
-Due to the complexity, the following features are planned for after the 1.0 release. Netlify/Decap CMS has a number of open issues with the collaboration and beta features — we want to implement them the right way.
+Due to the complexity, the following features will be added after the 1.0 release. Netlify/Decap CMS has a number of open issues with the collaboration and beta features — we want to implement them the right way.
 
 - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
