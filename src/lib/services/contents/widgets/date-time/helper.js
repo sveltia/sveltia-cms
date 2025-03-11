@@ -14,8 +14,11 @@ export const parseDateTimeConfig = (fieldConfig) => {
     picker_utc: utc = false,
   } = fieldConfig;
 
+  const dateFormatStr = typeof dateFormat === 'string' ? dateFormat : '';
+  const timeFormatStr = typeof timeFormat === 'string' ? timeFormat : '';
+
   return {
-    format,
+    format: format || [dateFormatStr, timeFormatStr].join(' ').trim() || undefined,
     dateFormat,
     timeFormat,
     dateOnly: timeFormat === false,
