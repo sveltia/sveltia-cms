@@ -6,12 +6,15 @@
 -->
 <script>
   import { AlertDialog, Button, ConfirmationDialog, Icon, TextArea } from '@sveltia/ui';
+  import { getHash } from '@sveltia/utils/crypto';
   import DOMPurify from 'isomorphic-dompurify';
+  import { flushSync } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import SelectAssetsDialog from '$lib/components/assets/shared/select-assets-dialog.svelte';
   import {
+    allAssets,
     getAssetByPath,
     getAssetPublicURL,
     getMediaFieldURL,
@@ -75,12 +78,14 @@
    * Reset the current selection.
    */
   const resetSelection = () => {
-    currentValue = '';
-    asset = undefined;
-    file = undefined;
-    url = undefined;
-    credit = undefined;
     dropZone?.reset();
+
+    // This will reset `file`, `asset`, `kind` and `src` via `updateProps`
+    currentValue = '';
+
+    // Force running `updateProps` first, otherwise `file`, `asset`, etc. will be  `undefined` while
+    // `await`ing a Promise in `onAssetSelect`
+    flushSync();
   };
 
   /**
@@ -92,14 +97,16 @@
 
     ({ asset, file, url, credit } = selectedAsset);
 
-    if (asset) {
-      currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true, entry });
-    }
-
     if (file) {
-      // Check the max file size
-      // @see https://decapcms.org/docs/widgets/#image
-      if (
+      const hash = await getHash(file);
+      const existingAsset = $allAssets.find((a) => a.sha === hash);
+
+      if (existingAsset) {
+        // If the selected file has already been uploaded, use the existing asset instead of
+        // uploading the same file twice
+        asset = existingAsset;
+        file = undefined;
+      } else if (
         isImageWidget &&
         maxFileSize !== undefined &&
         Number.isInteger(maxFileSize) &&
@@ -112,6 +119,10 @@
         // Cache the file itself for later upload
         /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = file;
       }
+    }
+
+    if (asset) {
+      currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true, entry });
     }
 
     if (url) {
