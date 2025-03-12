@@ -40,7 +40,7 @@ export const formatTOML = (obj) => TOML.stringify(obj).trim();
  * @param {boolean} [legacyOptions.quote] - Quote option.
  * @returns {string} Formatted document.
  * @see https://eemeli.org/yaml/#tostring-options
- * @todo Remove `collectionOptions` prior to the 1.0 release.
+ * @todo Remove `legacyOptions` prior to the 1.0 release.
  */
 export const formatYAML = (
   obj,

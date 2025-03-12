@@ -638,7 +638,10 @@
 
 /**
  * @typedef {object} DateTimeFieldNormalizedProps
- * @property {string | undefined} format - Same as {@link DateTimeFieldProps.format}.
+ * @property {string | undefined} format - Same as {@link DateTimeFieldProps.format}. If it’s
+ * missing, {@link DateTimeFieldProps.date_format} and {@link DateTimeFieldProps.time_format} will
+ * be used instead. If these options are also missing, the value will be `undefined`, which makes
+ * the output standard ISO 8601 format.
  * @property {boolean} dateOnly - Whether the field is date only.
  * @property {boolean} timeOnly - Whether the field is time only.
  * @property {boolean} utc - Whether the field’s picker is UTC.

@@ -31,7 +31,6 @@ const escapeAllChars = (props) =>
  * Get a component definition. This has to be a function due to localized labels.
  * @param {string} name - Component name.
  * @returns {EditorComponentDefinition | undefined} Definition.
- * @todo Add support for `code-block`.
  */
 export const getComponentDef = (name) => {
   const definitions = /** @type {Record<string, EditorComponentDefinition>} */ ({
