@@ -669,7 +669,7 @@ Here are the workflow steps and tips:
 
 Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the future, we’ll figure out if there’s a way to commit in a browser, because the proxy server actually has the undocumented, experimental `git` mode that creates commits to a local repository.[^131] ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/31))
 
-You will also need to reload the CMS after making changes to the configuration file or retrieving remote updates. This manual work will hopefully be unnecessary once the proposed `FileSystemObserver` API, which is being [implemented in Chromium](https://issues.chromium.org/issues/40105284) behind a flag, becomes available.
+You will also need to reload the CMS after making changes to the configuration file or retrieving remote updates. We plan to eliminate this manual work with the newly available [File System Observer API](https://developer.chrome.com/blog/file-system-observer).
 
 If you have migrated from Netlify/Decap CMS and are happy with the local repository workflow of Sveltia CMS, you can remove the `local_backend` property from your configuration and uninstall the proxy server. If you have configured a custom port number with the `.env` file, you can remove it as well.
 
