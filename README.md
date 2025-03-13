@@ -118,8 +118,8 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - We even proactively adopt changes suggested in their [pull requests](https://github.com/decaporg/decap-cms/pulls) that may sit in the review queue for a long time
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 175+ of them, or 345+ including duplicates, have been effectively solved in Sveltia CMS
-  - Target: 200 by GA; 300, or 500 including duplicates, in the future (yes, you read that right)
+  - So far, 175+ of them, or 360+ including duplicates, have been effectively solved in Sveltia CMS
+  - Target: 200 by GA; 300, or 600 including duplicates, in the future (yes, you read that right)
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Most of the bugs, including annoying crashes, are already solved
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
@@ -151,7 +151,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 ### Better performance
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast. The compiled code is vanilla JavaScript — you can use it with any framework or static site generator (SSG) that can load static data files during the build process.
-- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.9 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though we haven’t implemented some features yet, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
+- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.9 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though we haven’t implemented [some features](#current-limitations) yet, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size.
 - [No virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
@@ -913,7 +913,7 @@ Note: The `root` option is ignored if the collection or collection file contains
 
 It may be worth mentioning this topic here because the current [Decap CMS doc about the DateTime widget](https://decapcms.org/docs/widgets/#datetime) is unclear. By default, a DateTime field lets users pick both [date and time](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local), but developers can change the input type if needed.
 
-Use `time_format: false` to hide the time picker and make it [date only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date):
+Use `time_format: false` to hide the time picker and make the input [date only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date):
 
 ```yaml
 - label: Start Date
@@ -922,7 +922,7 @@ Use `time_format: false` to hide the time picker and make it [date only](https:/
   time_format: false
 ```
 
-Use `date_format: false` to hide the date picker and make it [time only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time):
+Use `date_format: false` to hide the date picker and make the input [time only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time):
 
 ```yaml
 - label: Start Time
@@ -1515,7 +1515,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^181]: Netlify/Decap CMS [#6254](https://github.com/decaporg/decap-cms/issues/6254)
 
-[^182]: Netlify/Decap CMS [#4416](https://github.com/decaporg/decap-cms/issues/4416)
+[^182]: Netlify/Decap CMS [#4416](https://github.com/decaporg/decap-cms/issues/4416), [#7400](https://github.com/decaporg/decap-cms/pull/7400)
 
 [^183]: Netlify/Decap CMS [#1275](https://github.com/decaporg/decap-cms/issues/1275)
 
@@ -1523,6 +1523,6 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^185]: Netlify/Decap CMS [#6203](https://github.com/decaporg/decap-cms/issues/6203), [#7417](https://github.com/decaporg/decap-cms/issues/7417)
 
-[^186]: Netlify/Decap CMS [#7379](https://github.com/decaporg/decap-cms/issues/7379)
+[^186]: Netlify/Decap CMS [#3454](https://github.com/decaporg/decap-cms/issues/3454), [#3585](https://github.com/decaporg/decap-cms/issues/3585), [#3651](https://github.com/decaporg/decap-cms/issues/3651), [#3885](https://github.com/decaporg/decap-cms/issues/3885), [#3962](https://github.com/decaporg/decap-cms/issues/3962), [#4037](https://github.com/decaporg/decap-cms/issues/4037), [#4143](https://github.com/decaporg/decap-cms/issues/4143), [#6585](https://github.com/decaporg/decap-cms/issues/6585), [#6664](https://github.com/decaporg/decap-cms/issues/6664), [#6665](https://github.com/decaporg/decap-cms/issues/6665), [#6739](https://github.com/decaporg/decap-cms/issues/6739), [#7243](https://github.com/decaporg/decap-cms/issues/7243), [#7379](https://github.com/decaporg/decap-cms/issues/7379)
 
 [^187]: Netlify/Decap CMS [#1244](https://github.com/decaporg/decap-cms/issues/1244)
