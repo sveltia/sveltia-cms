@@ -138,6 +138,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
           const _fieldConfig = getFieldConfig({
             collectionName: fieldConfig.collection,
+            fileName: fieldConfig.file,
             keyPath: fieldName,
           });
 
