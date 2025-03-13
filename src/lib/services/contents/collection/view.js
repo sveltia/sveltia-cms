@@ -187,11 +187,12 @@ const groupEntries = (
   entries.forEach((entry) => {
     const value = getPropertyValue({ entry, locale, collectionName, key: field });
 
-    if (value === undefined) {
-      return;
-    }
-
-    const key = regex ? (String(value).match(regex)?.[0] ?? otherKey) : String(value);
+    const key =
+      value === undefined
+        ? otherKey
+        : regex
+          ? (String(value).match(regex)?.[0] ?? otherKey)
+          : String(value);
 
     if (!(key in groups)) {
       groups[key] = [];
