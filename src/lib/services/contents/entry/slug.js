@@ -7,7 +7,7 @@ import { siteConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
-import { applyTransformations } from '$lib/services/contents/entry/transformations';
+import { applyTransformations, defaultRegex } from '$lib/services/contents/entry/transformations';
 import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**
@@ -154,7 +154,7 @@ export const fillSlugTemplate = (
     let hasDefaultTransformation = false;
 
     transformations.forEach((tf, index) => {
-      const { defaultValue } = tf.match(/^default\('?(?<defaultValue>.+?)'?\)$/)?.groups ?? {};
+      const { defaultValue } = tf.match(defaultRegex)?.groups ?? {};
 
       if (defaultValue !== undefined) {
         hasDefaultTransformation = true;

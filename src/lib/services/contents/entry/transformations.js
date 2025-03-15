@@ -2,10 +2,10 @@ import { truncate } from '@sveltia/utils/string';
 import moment from 'moment';
 import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 
-const dateRegex = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
-const defaultRegex = /^default\('?(?<defaultValue>.+?)'?\)$/;
-const ternaryRegex = /^ternary\('?(?<truthyValue>.*?)'?,\s*'?(?<falsyValue>.*?)'?\)$/;
-const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
+export const dateRegex = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
+export const defaultRegex = /^default\('(?<defaultValue>.+?)'\)$/;
+export const ternaryRegex = /^ternary\('(?<truthyValue>.*?)',\s*'(?<falsyValue>.*?)'\)$/;
+export const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
 
 /**
  * Apply a string transformation to the value.
