@@ -151,9 +151,26 @@ export const fillSlugTemplate = (
   const replace = (placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
     let value = replaceSub(tag);
+    let hasDefaultTransformation = false;
 
-    if (value === undefined) {
-      // Use a random ID as a fallback
+    transformations.forEach((tf, index) => {
+      const { defaultValue } = tf.match(/^default\('?(?<defaultValue>.+?)'?\)$/)?.groups ?? {};
+
+      if (defaultValue !== undefined) {
+        hasDefaultTransformation = true;
+
+        // Support a template tag for the `default` transformation like
+        // `{{fields.slug | default('{{fields.title}}')}}`
+        const { innerTag } = defaultValue.match(/^{{(?<innerTag>.+?)}}$/)?.groups ?? {};
+
+        if (innerTag !== undefined) {
+          transformations[index] = `default('${replaceSub(innerTag) ?? ''}')`;
+        }
+      }
+    });
+
+    // Fall back with a random ID unless the `default` transformation is defined
+    if (value === undefined && !hasDefaultTransformation) {
       return generateUUID('short');
     }
 
@@ -177,7 +194,9 @@ export const fillSlugTemplate = (
     return generateUUID('short');
   };
 
-  let slug = template.replace(/{{(.+?)}}/g, (_match, tag) => replace(tag)).trim();
+  // Use a negative lookahead assertion to support a template tag for the `default` transformation
+  // like `{{fields.slug | default('{{fields.title}}')}}`
+  let slug = template.replace(/{{(.+?)}}(?!'\))/g, (_match, tag) => replace(tag)).trim();
 
   // Truncate a long slug if needed
   if (typeof slugMaxLength === 'number') {

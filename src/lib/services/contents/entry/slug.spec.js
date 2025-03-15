@@ -91,6 +91,13 @@ describe('Test fillSlugTemplate()', async () => {
     ).toEqual('world');
 
     expect(
+      fillSlugTemplate("{{fields.title | default('{{fields.slug}}')}}", {
+        collection,
+        content: { title: '', slug: 'example' },
+      }),
+    ).toEqual('example');
+
+    expect(
       fillSlugTemplate("{{draft | ternary('Draft', 'Public')}}", {
         collection,
         content: { draft: true },
