@@ -276,11 +276,12 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - `pattern` can be used instead of `value` to provide a regular expression, just like the `view_filters` collection option.[^153]
   - Enhancements to [summary string transformations](https://decapcms.org/docs/summary-strings/):
     - Transformations can be used in more places than just the collection `summary`:
-      - The `slug` collection option[^29]
+      - The `slug` and `preview_path` collection options[^29]
       - The `summary` field option for the List and Object widgets
-    - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
+    - The `default` transformation accepts a template tag like `{{fields.slug | default('{{fields.title}}')}}`, making it possible to fall back to a different field value. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/345))
     - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the entry slug, e.g. `{{date | date('YYYYMMDD-HHmm', 'utc')}}`. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/278#issuecomment-2565313420))
     - The `date` transformation returns an empty string if an invalid date is given.[^176]
+    - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
