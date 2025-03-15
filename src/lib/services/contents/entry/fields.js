@@ -1,6 +1,6 @@
 import { escapeRegExp } from '@sveltia/utils/string';
+import { applyTransformations } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
-import { applyTransformations } from '$lib/services/contents/entry/transformations';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';

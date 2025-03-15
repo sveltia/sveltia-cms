@@ -5,12 +5,12 @@ import { flatten } from 'flat';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
+import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
-import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
 import { createPath, decodeFilePath, encodeFilePath, resolvePath } from '$lib/services/utils/file';
 import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
 

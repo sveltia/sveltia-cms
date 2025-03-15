@@ -3,11 +3,11 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
+import { applyTransformations, defaultRegex } from '$lib/services/common/transformations';
 import { siteConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
-import { applyTransformations, defaultRegex } from '$lib/services/contents/entry/transformations';
 import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**

@@ -2,7 +2,7 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 import { defaultI18nConfig } from '$lib/services/contents/i18n';
-import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
+import { fillSlugTemplate } from '$lib/services/common/slug';
 
 vi.mock('$lib/services/config');
 

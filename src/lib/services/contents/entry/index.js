@@ -2,10 +2,10 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
 import { get } from 'svelte/store';
 import { backend } from '$lib/services/backends';
+import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
-import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
 
 /**
  * Get a list of collections the given entry belongs to. One entry can theoretically appear in

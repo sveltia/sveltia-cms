@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { applyTransformation } from '$lib/services/contents/entry/transformations';
+import { applyTransformation } from '$lib/services/common/transformations';
 
 describe('Test applyTransformation()', () => {
   test('upper/lower', () => {

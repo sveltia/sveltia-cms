@@ -3,8 +3,8 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
-import { applyTransformations } from '$lib/services/contents/entry/transformations';
 import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { applyTransformations } from '$lib/services/common/transformations';
 
 /**
  * Parse the given entry summary as Markdown and sanitize HTML with a few exceptions if the Markdown

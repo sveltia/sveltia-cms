@@ -7,6 +7,7 @@ import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
 import { allAssetFolders, allAssets, getAssetKind, getAssetsByDirName } from '$lib/services/assets';
 import { backend, backendName, isLastCommitPublished } from '$lib/services/backends';
+import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import {
@@ -18,7 +19,6 @@ import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
-import { fillSlugTemplate } from '$lib/services/contents/entry/slug';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
 import { user } from '$lib/services/user';
