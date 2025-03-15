@@ -4,7 +4,7 @@ import { isURL } from '@sveltia/utils/string';
  * PDF.js distribution URL. We don’t bundle this because most users probably don’t have PDF files.
  * @see https://github.com/mozilla/pdf.js
  */
-const pdfjsDistURL = 'https://unpkg.com/pdfjs-dist/build';
+const pdfjsDistURL = 'https://unpkg.com/pdfjs-dist';
 /**
  * Placeholder for the PDF.js module.
  * @type {{ getDocument: Function, GlobalWorkerOptions: { workerSrc: string } }}
@@ -193,8 +193,8 @@ export const renderPDF = async (
   if (!pdfjs) {
     try {
       // eslint-disable-next-line jsdoc/no-bad-blocks
-      pdfjs = await import(/* @vite-ignore */ `${pdfjsDistURL}/pdf.min.mjs`);
-      pdfjs.GlobalWorkerOptions.workerSrc = `${pdfjsDistURL}/pdf.worker.min.mjs`;
+      pdfjs = await import(/* @vite-ignore */ `${pdfjsDistURL}/build/pdf.min.mjs`);
+      pdfjs.GlobalWorkerOptions.workerSrc = `${pdfjsDistURL}/build/pdf.worker.min.mjs`;
     } catch {
       throw new Error('Failed to load PDF.js library');
     }
@@ -209,6 +209,10 @@ export const renderPDF = async (
       url: blobURL,
       isEvalSupported: false,
       disableAutoFetch: true,
+      cMapUrl: `${pdfjsDistURL}/cmaps/`,
+      iccUrl: `${pdfjsDistURL}/iccs/`,
+      standardFontDataUrl: `${pdfjsDistURL}/standard_fonts/`,
+      wasmUrl: `${pdfjsDistURL}/wasm/`,
     }).promise;
 
     const pdfPage = await pdfDocument.getPage(1);

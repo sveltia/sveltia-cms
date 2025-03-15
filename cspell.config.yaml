@@ -23,6 +23,7 @@ words:
   - brotlied
   - camelcase
   - Cloudinary
+  - cmaps
   - CVEs
   - danurbanowicz
   - Decap
@@ -36,6 +37,7 @@ words:
   - hotlinking
   - hugolify
   - iarna
+  - iccs
   - IIFE
   - indexeddb
   - infobar
