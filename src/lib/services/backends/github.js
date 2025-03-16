@@ -3,19 +3,38 @@ import { sleep } from '@sveltia/utils/misc';
 import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
 import { _ } from 'svelte-i18n';
-import { get } from 'svelte/store';
+import { derived, get } from 'svelte/store';
 import { initServerSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';
+import { prefs } from '$lib/services/user/prefs';
 import { sendRequest } from '$lib/services/utils/networking';
 
 const backendName = 'github';
 const label = 'GitHub';
 const statusDashboardURL = 'https://www.githubstatus.com/';
 const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
+const apiRootDefault = 'https://api.github.com';
+
+/**
+ * @type {import('svelte/store').Readable<{ isSelfHosted: boolean, origin: string, rest: string,
+ * graphql: string }>}
+ */
+const apiConfig = derived([siteConfig], ([config], set) => {
+  const apiRoot = config?.backend.api_root ?? apiRootDefault;
+  const isSelfHosted = apiRoot !== apiRootDefault;
+  const { origin } = new URL(apiRoot);
+
+  set({
+    isSelfHosted,
+    origin,
+    rest: isSelfHosted ? `${origin}/api/v3` : origin,
+    graphql: isSelfHosted ? `${origin}/api` : origin,
+  });
+});
 
 /**
  * @type {RepositoryInfo}
@@ -94,20 +113,7 @@ const fetchAPI = async (
   init = {},
   { token = /** @type {User} */ (get(user)).token, responseType = 'json' } = {},
 ) => {
-  let { api_root: apiRoot } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
-
-  if (apiRoot) {
-    // Enterprise Server (self-hosted)
-    apiRoot = `${new URL(apiRoot).origin}/api`;
-
-    if (path !== '/graphql') {
-      // REST API v3
-      apiRoot = `${apiRoot}/v3`;
-    }
-  } else {
-    // Enterprise Cloud or regular GitHub
-    apiRoot = 'https://api.github.com';
-  }
+  const apiRoot = get(apiConfig)[path === '/graphql' ? 'graphql' : 'rest'];
 
   init.headers = new Headers(init.headers);
   init.headers.set('Authorization', `token ${token}`);
@@ -142,14 +148,9 @@ const fetchGraphQL = async (query, variables = {}) => {
  * @returns {RepositoryInfo} Repository info.
  */
 const getRepositoryInfo = () => {
-  const {
-    repo: projectPath,
-    branch,
-    api_root: apiRoot, // GitHub Enterprise only; API server = web server
-  } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
-
+  const { repo: projectPath, branch } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+  const { origin, isSelfHosted } = get(apiConfig);
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-  const origin = apiRoot ? new URL(apiRoot).origin : 'https://github.com';
 
   return Object.assign(repository, {
     service: backendName,
@@ -159,6 +160,7 @@ const getRepositoryInfo = () => {
     branch,
     baseURL: `${origin}/${owner}/${repo}`,
     databaseName: `${backendName}:${owner}/${repo}`,
+    isSelfHosted,
   });
 };
 
@@ -166,7 +168,12 @@ const getRepositoryInfo = () => {
  * Initialize the GitHub backend.
  */
 const init = () => {
-  getRepositoryInfo();
+  const repositoryInfo = getRepositoryInfo();
+
+  if (get(prefs).devModeEnabled) {
+    // eslint-disable-next-line no-console
+    console.info('repositoryInfo', repositoryInfo);
+  }
 };
 
 /**

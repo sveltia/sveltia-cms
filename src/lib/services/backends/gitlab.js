@@ -3,7 +3,7 @@
 import { getBase64 } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
-import { get } from 'svelte/store';
+import { derived, get } from 'svelte/store';
 import {
   handleClientSideAuthPopup,
   initClientSideAuth,
@@ -14,12 +14,31 @@ import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
 import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';
+import { prefs } from '$lib/services/user/prefs';
 import { sendRequest } from '$lib/services/utils/networking';
 
 const backendName = 'gitlab';
 const label = 'GitLab';
 const statusDashboardURL = 'https://status.gitlab.com/';
 const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
+const apiRootDefault = 'https://gitlab.com/api/v4';
+
+/**
+ * @type {import('svelte/store').Readable<{ origin: string, rest: string, graphql: string,
+ * isSelfHosted: boolean }>}
+ */
+const apiConfig = derived([siteConfig], ([config], set) => {
+  const apiRoot = config?.backend.api_root ?? apiRootDefault;
+  const isSelfHosted = apiRoot !== apiRootDefault;
+  const { origin } = new URL(apiRoot);
+
+  set({
+    origin,
+    rest: `${origin}/api/v4`,
+    graphql: `${origin}/api`,
+    isSelfHosted,
+  });
+});
 
 /**
  * @type {RepositoryInfo}
@@ -102,19 +121,7 @@ const fetchAPI = async (
   init = {},
   { token = /** @type {string} */ (get(user)?.token), responseType = 'json' } = {},
 ) => {
-  let { api_root: apiRoot } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
-
-  if (apiRoot) {
-    // Self-hosted
-    apiRoot = `${new URL(apiRoot).origin}/api`;
-  } else {
-    apiRoot = 'https://gitlab.com/api';
-  }
-
-  if (path !== '/graphql') {
-    // REST API v4
-    apiRoot = `${apiRoot}/v4`;
-  }
+  const apiRoot = get(apiConfig)[path === '/graphql' ? 'graphql' : 'rest'];
 
   init.headers = new Headers(init.headers);
   init.headers.set('Authorization', `Bearer ${token}`);
@@ -149,11 +156,8 @@ const fetchGraphQL = async (query, variables = {}) => {
  * @returns {RepositoryInfo} Repository info.
  */
 const getRepositoryInfo = () => {
-  const {
-    repo: projectPath,
-    branch,
-    api_root: apiRoot, // Self-hosted only
-  } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+  const { repo: projectPath, branch } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+  const { origin, isSelfHosted } = get(apiConfig);
 
   /**
    * In GitLab terminology, an owner is called a namespace, and a repository is called a project. A
@@ -165,8 +169,6 @@ const getRepositoryInfo = () => {
   const { owner, repo } =
     /** @type {string} */ (projectPath).match(/(?<owner>.+)\/(?<repo>[^/]+)$/)?.groups ?? {};
 
-  const origin = apiRoot ? new URL(apiRoot).origin : 'https://gitlab.com';
-
   return Object.assign(repository, {
     service: backendName,
     label,
@@ -175,6 +177,7 @@ const getRepositoryInfo = () => {
     branch,
     baseURL: `${origin}/${owner}/${repo}`,
     databaseName: `${backendName}:${owner}/${repo}`,
+    isSelfHosted,
   });
 };
 
@@ -182,7 +185,12 @@ const getRepositoryInfo = () => {
  * Initialize the GitLab backend.
  */
 const init = () => {
-  getRepositoryInfo();
+  const repositoryInfo = getRepositoryInfo();
+
+  if (get(prefs).devModeEnabled) {
+    // eslint-disable-next-line no-console
+    console.info('repositoryInfo', repositoryInfo);
+  }
 };
 
 /**

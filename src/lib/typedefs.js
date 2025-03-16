@@ -44,6 +44,8 @@
  * as `baseURL` when the default branch is used. Git backends only.
  * @property {string} [blobBaseURL] - Repository’s blob base URL with a branch name. Git backends
  * only.
+ * @property {boolean} [isSelfHosted] - Whether the repository is on a GitHub Enterprise Server or
+ * self-hosted GitLab instance.
  */
 
 /**

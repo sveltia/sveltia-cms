@@ -48,7 +48,7 @@
   const init = () => {
     if (mounted) {
       // Cannot get the status of the local backend or a self-hosted Git instance
-      if ($backend?.checkStatus && !$siteConfig?.backend.api_root) {
+      if ($backend?.checkStatus && !$backend.repository?.isSelfHosted) {
         startChecking();
       } else {
         stopChecking();
