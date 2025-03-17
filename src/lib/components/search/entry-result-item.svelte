@@ -9,15 +9,24 @@
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
+   * @import {
+   * Entry,
+   * EntryCollection,
+   * NormalizedCollection,
+   * NormalizedCollectionFile,
+   * } from '$lib/typedefs/private';.
+   */
+
+  /**
    * @typedef {object} RowArgs
-   * @property {import('$lib/typedefs/private').NormalizedCollection} collection Collection.
-   * @property {import('$lib/typedefs/private').NormalizedCollectionFile} [collectionFile]
+   * @property {NormalizedCollection} collection Collection.
+   * @property {NormalizedCollectionFile} [collectionFile]
    * Collection file. File collection only.
    */
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Entry} entry Single entry.
+   * @property {Entry} entry Single entry.
    */
 
   /** @type {Props} */
@@ -41,10 +50,7 @@
     >
       <GridCell class="image">
         {#if collection._type === 'entry'}
-          {#await getEntryThumbnail(//
-            /**
-             * @type {import('$lib/typedefs/private').EntryCollection}
-             */ (collection), entry) then src}
+          {#await getEntryThumbnail(/** @type {EntryCollection} */ (collection), entry) then src}
             {#if src}
               <Image {src} variant="icon" cover />
             {/if}

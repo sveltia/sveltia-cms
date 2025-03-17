@@ -3,14 +3,18 @@ import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
+/**
+ * @import { Entry, LocalizedEntry } from '$lib/typedefs/private';
+ */
+
 vi.mock('$lib/services/config');
 
 describe('Test getOptions()', async () => {
   const locale = '_default';
-  /** @type {import('$lib/typedefs/private').LocalizedEntry} */
+  /** @type {LocalizedEntry} */
   const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
 
-  /** @type {import('$lib/typedefs/private').Entry[]} */
+  /** @type {Entry[]} */
   const memberEntries = [
     {
       id: '',
@@ -253,7 +257,7 @@ describe('Test getOptions()', async () => {
       value_field: 'cities.*.id',
     };
 
-    /** @type {import('$lib/typedefs/private').Entry[]} */
+    /** @type {Entry[]} */
     const entries = [
       {
         id: '',
@@ -312,7 +316,7 @@ describe('Test getOptions()', async () => {
       value_field: 'cities.*.id',
     };
 
-    /** @type {import('$lib/typedefs/private').Entry[]} */
+    /** @type {Entry[]} */
     const entries = [
       {
         id: '',
@@ -361,7 +365,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['sections.*.name'],
     };
 
-    /** @type {import('$lib/typedefs/private').Entry[]} */
+    /** @type {Entry[]} */
     const entries = [
       {
         id: '',
@@ -470,7 +474,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['sections.*.name'],
     };
 
-    /** @type {import('$lib/typedefs/private').Entry[]} */
+    /** @type {Entry[]} */
     const entries = [
       {
         id: '',
@@ -590,7 +594,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['title', 'category'],
     };
 
-    /** @type {import('$lib/typedefs/private').Entry[]} */
+    /** @type {Entry[]} */
     const entries = [
       {
         id: '',
@@ -706,7 +710,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['title', 'category'],
     };
 
-    /** @type {import('$lib/typedefs/private').Entry[]} */
+    /** @type {Entry[]} */
     const entries = [
       {
         id: '',
@@ -777,7 +781,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['title', 'category'],
     };
 
-    /** @type {import('$lib/typedefs/private').Entry[]} */
+    /** @type {Entry[]} */
     const entries = [
       {
         id: '',

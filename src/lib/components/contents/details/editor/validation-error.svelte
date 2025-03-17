@@ -2,9 +2,13 @@
   import { Icon } from '@sveltia/ui';
 
   /**
+   * @import { Snippet } from 'svelte';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {string} id Alert ID referenced by `aria-errormessage`.
-   * @property {import('svelte').Snippet} children Slot content.
+   * @property {Snippet} children Slot content.
    */
 
   /** @type {Props} */

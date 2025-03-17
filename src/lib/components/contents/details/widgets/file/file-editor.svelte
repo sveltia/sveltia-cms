@@ -24,12 +24,23 @@
   import { canDragDrop, formatSize } from '$lib/services/utils/file';
 
   /**
+   * @import {
+   * Asset,
+   * AssetKind,
+   * EntryDraft,
+   * SelectedAsset,
+   * WidgetEditorProps,
+   * } from '$lib/typedefs/private';
+   * @import { FileField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').FileField} fieldConfig Field configuration.
+   * @property {FileField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,
@@ -47,11 +58,11 @@
   /** @type {string | undefined} */
   let credit;
 
-  /** @type {import('$lib/typedefs/private').Asset | undefined} */
+  /** @type {Asset | undefined} */
   let asset = $state();
   /** @type {File | undefined} */
   let file = $state();
-  /** @type {import('$lib/typedefs/private').AssetKind | undefined} */
+  /** @type {AssetKind | undefined} */
   let kind = $state();
   /** @type {string | undefined} */
   let src = $state();
@@ -90,7 +101,7 @@
 
   /**
    * Handle selected asset.
-   * @param {import('$lib/typedefs/private').SelectedAsset} selectedAsset Selected asset details.
+   * @param {SelectedAsset} selectedAsset Selected asset details.
    */
   const onAssetSelect = async (selectedAsset) => {
     resetSelection();
@@ -117,9 +128,7 @@
         // Set a temporary blob URL, which will be later replaced with the actual file path
         currentValue = URL.createObjectURL(file);
         // Cache the file itself for later upload
-        /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).files[
-          currentValue
-        ] = file;
+        /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = file;
       }
     }
 

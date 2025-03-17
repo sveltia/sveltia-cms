@@ -3,16 +3,25 @@ import { allEntries } from '$lib/services/contents';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 /**
+ * @import {
+ * Entry,
+ * FileCollection,
+ * NormalizedCollection,
+ * NormalizedCollectionFile,
+ * } from '$lib/typedefs/private';
+ */
+
+/**
  * Get a file collection’s file configurations that matches the given entry. One file can
  * theoretically appear in multiple collections files depending on the configuration, so that the
  * result is an array.
- * @param {import('$lib/typedefs/private').NormalizedCollection} collection Collection.
- * @param {import('$lib/typedefs/private').Entry} entry Entry.
- * @returns {import('$lib/typedefs/private').NormalizedCollectionFile[]} Collection files.
+ * @param {NormalizedCollection} collection Collection.
+ * @param {Entry} entry Entry.
+ * @returns {NormalizedCollectionFile[]} Collection files.
  */
 export const getFilesByEntry = (collection, entry) => {
   const _fileMap = collection.files
-    ? /** @type {import('$lib/typedefs/private').FileCollection} */ (collection)._fileMap
+    ? /** @type {FileCollection} */ (collection)._fileMap
     : undefined;
 
   if (!_fileMap) {
@@ -29,7 +38,7 @@ export const getFilesByEntry = (collection, entry) => {
  * Get a file collection entry that matches the given collection name and file name.
  * @param {string} collectionName Collection name.
  * @param {string} fileName File name.
- * @returns {import('$lib/typedefs/private').Entry | undefined} File.
+ * @returns {Entry | undefined} File.
  * @see https://decapcms.org/docs/collection-types/#file-collections
  */
 export const getFile = (collectionName, fileName) =>

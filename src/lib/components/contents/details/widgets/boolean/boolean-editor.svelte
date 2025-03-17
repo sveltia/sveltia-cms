@@ -7,12 +7,17 @@
   import { Switch } from '@sveltia/ui';
 
   /**
+   * @import { WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { BooleanField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').BooleanField} fieldConfig Field configuration.
+   * @property {BooleanField} fieldConfig Field configuration.
    * @property {boolean | 'mixed' | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

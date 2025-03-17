@@ -20,6 +20,10 @@
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
+  /**
+   * @import { FileCollection, NormalizedCollection } from '$lib/typedefs/private';
+   */
+
   const routeRegex =
     /^\/collections\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries))?(?:\/(?<subPath>.+?))?$/;
 
@@ -39,7 +43,7 @@
 
     const { _collectionName, routeType, subPath } = match.groups;
     /**
-     * @type {import('$lib/typedefs/private').NormalizedCollection | undefined}
+     * @type {NormalizedCollection | undefined}
      */
     const collection = _collectionName ? getCollection(_collectionName) : undefined;
 
@@ -59,7 +63,7 @@
     const collectionLabel = label || collectionName;
 
     const _fileMap = files
-      ? /** @type {import('$lib/typedefs/private').FileCollection} */ ($selectedCollection)._fileMap
+      ? /** @type {FileCollection} */ ($selectedCollection)._fileMap
       : undefined;
 
     if (!routeType) {

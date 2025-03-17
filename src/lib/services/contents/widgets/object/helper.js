@@ -1,13 +1,18 @@
 import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
+ * @import { FlattenedEntryContent, LocaleCode } from '$lib/typedefs/private';
+ * @import { FieldKeyPath } from '$lib/typedefs/public';
+ */
+
+/**
  * Format the summary template of an Object field.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
- * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Field key path.
- * @param {import('$lib/typedefs/private').FlattenedEntryContent} args.valueMap Entry content.
- * @param {import('$lib/typedefs/private').LocaleCode} args.locale Locale code.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {FlattenedEntryContent} args.valueMap Entry content.
+ * @param {LocaleCode} args.locale Locale code.
  * @param {string} [args.summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
  * @returns {string} Formatted summary.
  */

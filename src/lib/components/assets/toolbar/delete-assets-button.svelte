@@ -4,8 +4,12 @@
   import { deleteAssets } from '$lib/services/assets/data';
 
   /**
+   * @import { Asset } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Asset[]} [assets] Selected assets.
+   * @property {Asset[]} [assets] Selected assets.
    * @property {string} [buttonDescription] The `aria-label` attribute on the button.
    * @property {string} [dialogDescription] Description to be displayed on the dialog.
    * @property {(() => void) | undefined} [onDelete] Custom `delete` event handler.

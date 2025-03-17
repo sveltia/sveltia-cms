@@ -9,12 +9,17 @@
   import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
 
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { DateTimeField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').DateTimeField} fieldConfig Field configuration.
+   * @property {DateTimeField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

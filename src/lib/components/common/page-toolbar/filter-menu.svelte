@@ -3,15 +3,20 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @import { Writable } from 'svelte/store';
+   * @import { AssetListView, EntryListView } from '$lib/typedefs/private';
+   * @import { ViewFilter } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('svelte/store').Writable<import('$lib/typedefs/private').EntryListView |
-   * import('$lib/typedefs/private').AssetListView>} currentView Current view details.
+   * @property {Writable<EntryListView | AssetListView>} currentView Current view details.
    * @property {string} aria-controls The `aria-controls` attribute for the menu.
    * @property {string} [label] Menu button label.
    * @property {boolean} [disabled] Whether to disable the button.
    * @property {boolean} [multiple] Whether to allow selecting multiple filter conditions.
    * @property {string} [noneLabel] Label to be displayed on the None item.
-   * @property {import('$lib/typedefs/public').ViewFilter[]} [filters] Filter conditions.
+   * @property {ViewFilter[]} [filters] Filter conditions.
    */
 
   /** @type {Props} */

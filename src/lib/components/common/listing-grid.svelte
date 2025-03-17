@@ -7,9 +7,14 @@
   import { sleep } from '@sveltia/utils/misc';
 
   /**
+   * @import { Snippet } from 'svelte';
+   * @import { ViewType } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').ViewType} viewType View type.
-   * @property {import('svelte').Snippet} [children] Slot content.
+   * @property {ViewType} viewType View type.
+   * @property {Snippet} [children] Slot content.
    */
 
   /** @type {Props & Record<string, any>} */

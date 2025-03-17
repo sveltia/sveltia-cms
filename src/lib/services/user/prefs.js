@@ -3,14 +3,19 @@ import equal from 'fast-deep-equal';
 import { locale as appLocale, locales as appLocales } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 
+/**
+ * @import { Writable } from 'svelte/store';
+ * @import { Preferences } from '$lib/typedefs/private';
+ */
+
 const storageKey = 'sveltia-cms.prefs';
 
 /**
- * @type {import('svelte/store').Writable<{ type: string } | undefined>}
+ * @type {Writable<{ type: string } | undefined>}
  */
 export const prefsError = writable();
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').Preferences>}
+ * @type {Writable<Preferences>}
  */
 export const prefs = writable({}, (set) => {
   prefsError.set(undefined);

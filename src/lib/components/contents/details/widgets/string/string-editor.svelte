@@ -9,12 +9,17 @@
   import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
 
   /**
+   * @import { WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { StringField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').StringField} fieldConfig Field configuration.
+   * @property {StringField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

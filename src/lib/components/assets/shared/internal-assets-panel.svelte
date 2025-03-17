@@ -5,11 +5,14 @@
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
 
   /**
+   * @import { Asset, AssetKind, SelectedAsset } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').AssetKind} [kind] Asset kind.
-   * @property {import('$lib/typedefs/private').Asset[]} [assets] Asset list.
-   * @property {import('$lib/typedefs/private').SelectedAsset | null} [selectedAsset] Selected
-   * asset.
+   * @property {AssetKind} [kind] Asset kind.
+   * @property {Asset[]} [assets] Asset list.
+   * @property {SelectedAsset | null} [selectedAsset] Selected asset.
    * @property {boolean} [showUploader] Whether to show the uploader.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.

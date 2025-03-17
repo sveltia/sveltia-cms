@@ -1,8 +1,12 @@
 import { generateRandomId, generateUUID } from '@sveltia/utils/crypto';
 
 /**
+ * @import { UuidField } from '$lib/typedefs/public';
+ */
+
+/**
  * Get the default value for a UUID field.
- * @param {import('$lib/typedefs/public').UuidField} fieldConfig Field configuration.
+ * @param {UuidField} fieldConfig Field configuration.
  * @returns {string} Default value.
  * @todo Write tests for this.
  */

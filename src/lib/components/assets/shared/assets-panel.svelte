@@ -10,16 +10,19 @@
   import { normalize } from '$lib/services/search';
 
   /**
+   * @import { Asset, ViewType } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Asset[]} [assets] Asset list.
-   * @property {import('$lib/typedefs/private').ViewType} [viewType] View type.
+   * @property {Asset[]} [assets] Asset list.
+   * @property {ViewType} [viewType] View type.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
    * @property {boolean} [checkerboard] Whether to show a checkerboard background below a
    * transparent image.
-   * @property {(detail: { asset: import('$lib/typedefs/private').Asset }) => void} [onSelect]
-   * Custom `select` event handler.
+   * @property {(detail: { asset: Asset }) => void} [onSelect] Custom `select` event handler.
    */
 
   /** @type {Props} */
@@ -53,14 +56,12 @@
       showTitle={true}
       onChange={({ value }) => {
         onSelect?.({
-          asset: /** @type {import('$lib/typedefs/private').Asset} */ (
-            assets.find(({ path }) => path === value)
-          ),
+          asset: /** @type {Asset} */ (assets.find(({ path }) => path === value)),
         });
       }}
     >
       <InfiniteScroll items={filteredAssets} itemKey="path">
-        {#snippet renderItem(/** @type {import('$lib/typedefs/private').Asset} */ asset)}
+        {#snippet renderItem(/** @type {Asset} */ asset)}
           {@const { kind, name, path } = asset}
           <!-- Show asset path relative to the base folder, or just file name -->
           {@const relPath = basePath ? stripSlashes(path.replace(basePath, '')) : name}

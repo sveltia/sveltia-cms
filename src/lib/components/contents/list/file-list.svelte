@@ -7,6 +7,10 @@
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
+
+  /**
+   * @import { CollectionFile } from '$lib/typedefs/public';
+   */
 </script>
 
 <ListContainer aria-label={$_('file_list')}>
@@ -17,9 +21,7 @@
       aria-rowcount={$selectedCollection.files.length}
     >
       <InfiniteScroll items={$selectedCollection.files} itemKey="name">
-        {#snippet renderItem(
-          /** @type {import('$lib/typedefs/public').CollectionFile} */ { name, label },
-        )}
+        {#snippet renderItem(/** @type {CollectionFile} */ { name, label })}
           <GridRow
             onclick={() => {
               goto(`/collections/${$selectedCollection.name}/entries/${name}`);

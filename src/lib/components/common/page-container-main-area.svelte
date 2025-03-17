@@ -1,10 +1,14 @@
 <script>
   /**
+   * @import { Snippet } from 'svelte';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('svelte').Snippet} [primaryToolbar] Primary toolbar content.
-   * @property {import('svelte').Snippet} [secondaryToolbar] Secondary toolbar content.
-   * @property {import('svelte').Snippet} [mainContent] Main content.
-   * @property {import('svelte').Snippet} [secondarySidebar] Secondary sidebar content.
+   * @property {Snippet} [primaryToolbar] Primary toolbar content.
+   * @property {Snippet} [secondaryToolbar] Secondary toolbar content.
+   * @property {Snippet} [mainContent] Main content.
+   * @property {Snippet} [secondarySidebar] Secondary sidebar content.
    */
 
   /** @type {Props} */

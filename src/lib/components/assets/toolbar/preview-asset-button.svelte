@@ -5,8 +5,12 @@
   import { canPreviewAsset } from '$lib/services/assets';
 
   /**
+   * @import { Asset } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Asset} [asset] Selected asset.
+   * @property {Asset} [asset] Selected asset.
    */
 
   /** @type {Props} */

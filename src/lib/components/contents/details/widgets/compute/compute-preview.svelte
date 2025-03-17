@@ -4,12 +4,17 @@
 -->
 <script>
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { StringField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').StringField} fieldConfig Field configuration.
+   * @property {StringField} fieldConfig Field configuration.
    * @property {string | number | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

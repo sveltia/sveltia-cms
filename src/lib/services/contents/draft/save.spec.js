@@ -1,13 +1,23 @@
 import { describe, expect, test } from 'vitest';
 import { copyProperty, getEntryAssetFolderPaths } from '$lib/services/contents/draft/save';
 
+/**
+ * @import {
+ * CollectionType,
+ * FlattenedEntryContent,
+ * NormalizedCollection,
+ * NormalizedI18nConfig,
+ * } from '$lib/typedefs/private';
+ * @import { Field, FileFormat } from '$lib/typedefs/public';
+ */
+
 describe('Test getEntryAssetFolderPaths()', () => {
   const currentSlug = 'foo';
 
   const collectionBase = {
     name: 'blog',
     folder: 'src/content/blog',
-    _type: /** @type {import('$lib/typedefs/private').CollectionType} */ ('entry'),
+    _type: /** @type {CollectionType} */ ('entry'),
     _thumbnailFieldNames: [],
   };
 
@@ -19,18 +29,18 @@ describe('Test getEntryAssetFolderPaths()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {import('$lib/typedefs/private').NormalizedI18nConfig} */
+  /** @type {NormalizedI18nConfig} */
   const i18nMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders' };
-  /** @type {import('$lib/typedefs/private').NormalizedI18nConfig} */
+  /** @type {NormalizedI18nConfig} */
   const i18nRootMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders_i18n_root' };
-  /** @type {import('$lib/typedefs/private').NormalizedI18nConfig} */
+  /** @type {NormalizedI18nConfig} */
   const i18nMultiFile = { ...i18nBaseConfig, structure: 'multiple_files' };
-  /** @type {import('$lib/typedefs/private').NormalizedI18nConfig} */
+  /** @type {NormalizedI18nConfig} */
   const i18nSingleFile = { ...i18nBaseConfig, structure: 'single_file' };
 
   const _file = {
     extension: 'md',
-    format: /** @type {import('$lib/typedefs/public').FileFormat} */ ('yaml-frontmatter'),
+    format: /** @type {FileFormat} */ ('yaml-frontmatter'),
     basePath: 'src/content/blog',
   };
 
@@ -47,7 +57,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   };
 
   test('simple path, multiple folders, entry relative', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -63,7 +73,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders, entry relative', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -79,7 +89,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders at root, entry relative', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -95,7 +105,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders at root, entry relative', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -111,7 +121,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple files, entry relative', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -127,7 +137,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple files, entry relative', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -143,7 +153,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, single file, entry relative', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -159,7 +169,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, single file, entry relative', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -175,7 +185,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders, entry absolute', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -191,7 +201,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders, entry absolute', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -207,7 +217,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders at root, entry absolute', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -223,7 +233,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders at root, entry absolute', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -239,7 +249,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple files, entry absolute', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -255,7 +265,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple files, entry absolute', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -271,7 +281,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, single file, entry absolute', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -287,7 +297,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, single file, entry absolute', () => {
-    /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+    /** @type {NormalizedCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -304,7 +314,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
 });
 
 describe('Test copyProperty()', () => {
-  /** @type {import('$lib/typedefs/public').Field[]} */
+  /** @type {Field[]} */
   const fields = [
     { name: 'title', widget: 'string', required: true },
     { name: 'description', widget: 'string', required: false },
@@ -317,7 +327,7 @@ describe('Test copyProperty()', () => {
     { name: 'variables', widget: 'keyvalue', required: false },
   ];
 
-  /** @type {import('$lib/typedefs/private').FlattenedEntryContent} */
+  /** @type {FlattenedEntryContent} */
   const content = {
     title: 'My Post',
     description: '',
@@ -333,14 +343,14 @@ describe('Test copyProperty()', () => {
   /**
    * Wrapper for {@link copyProperty}.
    * @param {boolean} [omitEmptyOptionalFields] The omit option.
-   * @returns {import('$lib/typedefs/private').FlattenedEntryContent} Copied content. Note: It’s
-   * not sorted here because sorting is done in `finalizeContent`.
+   * @returns {FlattenedEntryContent} Copied content. Note: It’s not sorted here because sorting is
+   * done in `finalizeContent`.
    */
   const copy = (omitEmptyOptionalFields = false) => {
-    /** @type {import('$lib/typedefs/private').FlattenedEntryContent} */
+    /** @type {FlattenedEntryContent} */
     const sortedMap = {};
 
-    /** @type {import('$lib/typedefs/private').FlattenedEntryContent} */
+    /** @type {FlattenedEntryContent} */
     const unsortedMap = {
       ...structuredClone(content),
       'variables.foo': 'foo',

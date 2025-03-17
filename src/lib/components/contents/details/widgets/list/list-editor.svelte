@@ -31,12 +31,17 @@
   import { formatSummary } from '$lib/services/contents/widgets/list/helper';
 
   /**
+   * @import { EntryDraft, WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { ListField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').ListField} fieldConfig Field configuration.
+   * @property {ListField} fieldConfig Field configuration.
    * @property {string[]} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -146,9 +151,7 @@
       });
 
       normalizedValue.forEach((val, index) => {
-        /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).currentValues[
-          _locale
-        ][`${keyPath}.${index}`] = val;
+        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][`${keyPath}.${index}`] = val;
       });
     });
   };

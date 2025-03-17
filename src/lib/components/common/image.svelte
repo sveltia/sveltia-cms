@@ -2,9 +2,13 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
 
   /**
+   * @import { Asset } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {'lazy' | 'eager'} [loading] Loading method.
-   * @property {import('$lib/typedefs/private').Asset} [asset] Asset.
+   * @property {Asset} [asset] Asset.
    * @property {string} [src] Source URL.
    * @property {'tile' | 'icon'} [variant] Style variant.
    * @property {boolean} [blurBackground] Whether to show a blurred background (like Slack’s media

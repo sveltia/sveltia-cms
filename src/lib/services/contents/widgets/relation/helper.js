@@ -6,6 +6,11 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
+ * @import { Entry, FlattenedEntryContent, LocaleCode } from '$lib/typedefs/private';
+ * @import { FieldKeyPath, RelationField } from '$lib/typedefs/public';
+ */
+
+/**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.
  * @param {string} fieldName Field name e.g. `{{name.first}}` or `name.first`.
  * @returns {string} Bracketed field name, e.g. `{{name.first}}`.
@@ -20,9 +25,9 @@ const optionCacheMap = new Map();
 
 /**
  * Get options for a Relation field.
- * @param {import('$lib/typedefs/private').LocaleCode} locale Current locale.
- * @param {import('$lib/typedefs/public').RelationField} fieldConfig Field configuration.
- * @param {import('$lib/typedefs/private').Entry[]} refEntries Referenced entries.
+ * @param {LocaleCode} locale Current locale.
+ * @param {RelationField} fieldConfig Field configuration.
+ * @param {Entry[]} refEntries Referenced entries.
  * @returns {{ label: string, value: any }[]} Options.
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
@@ -150,9 +155,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
               fieldName,
               // eslint-disable-next-line no-use-before-define
               getReferencedOptionLabel({
-                fieldConfig: /** @type {import('$lib/typedefs/public').RelationField} */ (
-                  _fieldConfig
-                ),
+                fieldConfig: /** @type {RelationField} */ (_fieldConfig),
                 valueMap: content,
                 keyPath,
                 locale,
@@ -223,12 +226,10 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 /**
  * Resolve the display value(s) for a relation field.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs/public').RelationField} args.fieldConfig Field configuration.
- * @param {import('$lib/typedefs/private').FlattenedEntryContent} args.valueMap Object holding
- * current entry values.
- * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Field key path, e.g.
- * `author.name`.
- * @param {import('$lib/typedefs/private').LocaleCode} args.locale Locale.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
+ * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
+ * @param {LocaleCode} args.locale Locale.
  * @returns {any | any[]} Resolved field value(s).
  * @todo Write tests for this.
  */

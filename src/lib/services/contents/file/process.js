@@ -8,6 +8,16 @@ import { parseEntryFile } from '$lib/services/contents/file/parse';
 import { getCollection } from '$lib/services/contents/collection';
 
 /**
+ * @import {
+ * BaseEntryListItem,
+ * Entry,
+ * EntryCollection,
+ * FileCollection,
+ * LocaleCode,
+ * } from '$lib/typedefs/private';
+ */
+
+/**
  * Determine the slug for the given entry content.
  * @param {object} args Arguments.
  * @param {string} args.subPath File path without the collection folder, locale and extension. It’s
@@ -36,8 +46,8 @@ const getSlug = ({ subPath, subPathTemplate }) => {
 /**
  * Prepare a new entry by processing the given file info and raw content.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs/private').BaseEntryListItem} args.file Entry file list item.
- * @param {import('$lib/typedefs/private').Entry[]} args.entries List of prepared entries.
+ * @param {BaseEntryListItem} args.file Entry file list item.
+ * @param {Entry[]} args.entries List of prepared entries.
  * @param {Error[]} args.errors List of parse errors.
  */
 const prepareEntry = async ({ file, entries, errors }) => {
@@ -66,7 +76,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
   const collection = getCollection(collectionName);
 
   const collectionFile = fileName
-    ? /** @type {import('$lib/typedefs/private').FileCollection} */ (collection)?._fileMap[fileName]
+    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
     : undefined;
 
   if (!collection || (fileName && !collectionFile)) {
@@ -83,7 +93,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
       structure,
       canonicalSlug: { key: canonicalSlugKey },
     },
-  } = collectionFile ?? /** @type {import('$lib/typedefs/private').EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
   const i18nSingleFile = i18nEnabled && structure === 'single_file';
   const i18nMultiFile = i18nEnabled && structure === 'multiple_files';
@@ -128,7 +138,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
   /** @type {string | undefined} */
   let subPath = undefined;
-  /** @type {import('$lib/typedefs/private').LocaleCode | undefined} */
+  /** @type {LocaleCode | undefined} */
   let locale = undefined;
 
   if (fileName) {
@@ -146,7 +156,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
     return;
   }
 
-  /** @type {import('$lib/typedefs/private').Entry} */
+  /** @type {Entry} */
   const entry = {
     id: '',
     sha,
@@ -219,12 +229,11 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
 /**
  * Parse the given entry files to create a complete, serialized entry list.
- * @param {import('$lib/typedefs/private').BaseEntryListItem[]} entryFiles Entry file list.
- * @returns {Promise<{ entries: import('$lib/typedefs/private').Entry[], errors: Error[] }>} Entry
- * list and error list.
+ * @param {BaseEntryListItem[]} entryFiles Entry file list.
+ * @returns {Promise<{ entries: Entry[], errors: Error[] }>} Entry list and error list.
  */
 export const prepareEntries = async (entryFiles) => {
-  /** @type {import('$lib/typedefs/private').Entry[]} */
+  /** @type {Entry[]} */
   const entries = [];
   /** @type {Error[]} */
   const errors = [];

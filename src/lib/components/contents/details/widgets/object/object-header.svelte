@@ -3,13 +3,17 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @import { Snippet } from 'svelte';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {string} [label] Item label.
    * @property {string} controlId `aria-controls` ID.
    * @property {boolean} expanded Whether the item is expanded.
    * @property {() => void} [toggleExpanded] Function to toggle the item.
-   * @property {import('svelte').Snippet | undefined} [centerContent] Center slot content.
-   * @property {import('svelte').Snippet | undefined} [endContent] End slot content.
+   * @property {Snippet | undefined} [centerContent] Center slot content.
+   * @property {Snippet | undefined} [endContent] End slot content.
    */
 
   /** @type {Props} */

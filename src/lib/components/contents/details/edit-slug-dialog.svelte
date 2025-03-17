@@ -7,6 +7,10 @@
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
+   * @import { EntryDraft, LocaleCode } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {boolean} [open] Whether the dialog is open.
    */
@@ -23,9 +27,9 @@
 
   /** @type {string[]} */
   let otherSlugs = $state([]);
-  /** @type {Record<import('$lib/typedefs/private').LocaleCode, string>} */
+  /** @type {Record<LocaleCode, string>} */
   const updatedSlugs = $state({});
-  /** @type {Record<import('$lib/typedefs/private').LocaleCode, false | 'empty' | 'duplicate'>} */
+  /** @type {Record<LocaleCode, false | 'empty' | 'duplicate'>} */
   const validations = $state({});
 
   const componentId = $props.id();
@@ -59,8 +63,7 @@
   okDisabled={equal(currentSlugs, updatedSlugs) ||
     Object.values(validations).some((invalid) => invalid !== false)}
   onOk={() => {
-    /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).currentSlugs =
-      updatedSlugs;
+    /** @type {EntryDraft} */ ($entryDraft).currentSlugs = updatedSlugs;
   }}
 >
   <Alert status="warning">

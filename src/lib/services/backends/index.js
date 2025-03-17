@@ -4,8 +4,13 @@ import gitlab from '$lib/services/backends/gitlab';
 import local from '$lib/services/backends/local';
 
 /**
+ * @import { Readable, Writable } from 'svelte/store';
+ * @import { BackendService } from '$lib/typedefs/private';
+ */
+
+/**
  * List of all the supported backend services.
- * @type {Record<string, import('$lib/typedefs/private').BackendService>}
+ * @type {Record<string, BackendService>}
  * @see https://decapcms.org/docs/backends-overview/
  */
 export const allBackendServices = {
@@ -14,12 +19,11 @@ export const allBackendServices = {
   local,
 };
 /**
- * @type {import('svelte/store').Writable<string | undefined>}
+ * @type {Writable<string | undefined>}
  */
 export const backendName = writable();
 /**
- * @type {import('svelte/store').Readable<import('$lib/typedefs/private').BackendService |
- * undefined>}
+ * @type {Readable<BackendService | undefined>}
  */
 export const backend = derived([backendName], ([name], _set, update) => {
   update((currentService) => {
@@ -34,6 +38,6 @@ export const backend = derived([backendName], ([name], _set, update) => {
 });
 
 /**
- * @type {import('svelte/store').Writable<boolean>}
+ * @type {Writable<boolean>}
  */
 export const isLastCommitPublished = writable(true);

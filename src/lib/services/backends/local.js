@@ -16,15 +16,28 @@ import { siteConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 
+/**
+ * @import { Writable } from 'svelte/store';
+ * @import {
+ * BackendService,
+ * BaseFileListItem,
+ * FileChange,
+ * NormalizedSiteConfig,
+ * RepositoryInfo,
+ * SignInOptions,
+ * User,
+ * } from '$lib/typedefs/private';
+ */
+
 const backendName = 'local';
 const label = 'Local Repository';
 /**
- * @type {import('$lib/typedefs/private').RepositoryInfo | undefined}
+ * @type {RepositoryInfo | undefined}
  */
 let remoteRepository = undefined;
 
 /**
- * @type {import('$lib/typedefs/private').RepositoryInfo}
+ * @type {RepositoryInfo}
  */
 const repository = new Proxy(/** @type {any} */ ({}), {
   /**
@@ -38,7 +51,7 @@ const repository = new Proxy(/** @type {any} */ ({}), {
 });
 
 /**
- * @type {import('svelte/store').Writable<?FileSystemDirectoryHandle>}
+ * @type {Writable<?FileSystemDirectoryHandle>}
  */
 const rootDirHandle = writable(null);
 const rootDirHandleKey = 'root_dir_handle';
@@ -110,9 +123,7 @@ const discardDirHandle = async () => {
  * Initialize the backend.
  */
 const init = () => {
-  const { name: service } = /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (
-    get(siteConfig)
-  ).backend;
+  const { name: service } = /** @type {NormalizedSiteConfig} */ (get(siteConfig)).backend;
 
   remoteRepository = allBackendServices[service]?.getRepositoryInfo?.();
 
@@ -124,9 +135,9 @@ const init = () => {
 /**
  * Sign in with the local Git repository. There is no actual sign-in; just show the directory picker
  * to get the handle, so we can read/write files.
- * @param {import('$lib/typedefs/private').SignInOptions} options Options.
- * @returns {Promise<import('$lib/typedefs/private').User>} User info. Since we don’t have any
- * details for the local user, just return the backend name.
+ * @param {SignInOptions} options Options.
+ * @returns {Promise<User>} User info. Since we don’t have any details for the local user, just
+ * return the backend name.
  * @throws {Error} When the directory handle could not be acquired.
  */
 const signIn = async ({ auto = false }) => {
@@ -175,7 +186,7 @@ const getHandleByPath = async (path) => {
 
 /**
  * Retrieve all files under the static directory.
- * @returns {Promise<import('$lib/typedefs/private').BaseFileListItem[]>} File list.
+ * @returns {Promise<BaseFileListItem[]>} File list.
  */
 const getAllFiles = async () => {
   const _rootDirHandle = get(rootDirHandle);
@@ -300,7 +311,7 @@ const fetchFiles = async () => {
 
 /**
  * Save entries or assets locally.
- * @param {import('$lib/typedefs/private').FileChange[]} changes File changes to be saved.
+ * @param {FileChange[]} changes File changes to be saved.
  * @returns {Promise<(?File)[]>} - Created or updated files, if available.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry
@@ -385,7 +396,7 @@ const commitChanges = async (changes) =>
   );
 
 /**
- * @type {import('$lib/typedefs/private').BackendService}
+ * @type {BackendService}
  */
 export default {
   name: backendName,

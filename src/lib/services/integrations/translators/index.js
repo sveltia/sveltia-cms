@@ -2,13 +2,18 @@ import { writable } from 'svelte/store';
 import deepl from './deepl';
 
 /**
+ * @import { Writable } from 'svelte/store';
+ * @import { TranslationService } from '$lib/typedefs/private';
+ */
+
+/**
  * List of all the supported translation services.
- * @type {Record<string, import('$lib/typedefs/private').TranslationService>}
+ * @type {Record<string, TranslationService>}
  */
 export const allTranslationServices = {
   deepl,
 };
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').TranslationService>}
+ * @type {Writable<TranslationService>}
  */
 export const translator = writable(deepl);

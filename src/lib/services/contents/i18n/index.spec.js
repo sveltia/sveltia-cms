@@ -2,6 +2,10 @@ import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 import { defaultI18nConfig, getCanonicalLocale, getI18nConfig } from '$lib/services/contents/i18n';
 
+/**
+ * @import { Collection, CollectionFile } from '$lib/typedefs/public';
+ */
+
 vi.mock('$lib/services/config');
 
 describe('Test getI18nConfig()', () => {
@@ -12,19 +16,19 @@ describe('Test getI18nConfig()', () => {
     _baseURL: '',
   };
 
-  /** @type {import('$lib/typedefs/public').Collection} */
+  /** @type {Collection} */
   const collectionWithoutI18n = {
     name: 'posts',
     fields: [],
   };
 
-  /** @type {import('$lib/typedefs/public').Collection} */
+  /** @type {Collection} */
   const collectionWithI18n = {
     ...collectionWithoutI18n,
     i18n: true,
   };
 
-  /** @type {import('$lib/typedefs/public').Collection} */
+  /** @type {Collection} */
   const collectionWithPartialI18nOverride = {
     name: 'posts',
     i18n: {
@@ -33,7 +37,7 @@ describe('Test getI18nConfig()', () => {
     },
   };
 
-  /** @type {import('$lib/typedefs/public').Collection} */
+  /** @type {Collection} */
   const collectionWithCompleteI18nOverride = {
     name: 'posts',
     i18n: {
@@ -42,20 +46,20 @@ describe('Test getI18nConfig()', () => {
     },
   };
 
-  /** @type {import('$lib/typedefs/public').CollectionFile} */
+  /** @type {CollectionFile} */
   const collectionFileWithoutI18n = {
     name: 'home',
     file: 'data/home.json',
     fields: [],
   };
 
-  /** @type {import('$lib/typedefs/public').CollectionFile} */
+  /** @type {CollectionFile} */
   const collectionFileWithI18n = {
     ...collectionFileWithoutI18n,
     i18n: true,
   };
 
-  /** @type {import('$lib/typedefs/public').CollectionFile} */
+  /** @type {CollectionFile} */
   const collectionFileWithPartialI18nOverride = {
     ...collectionFileWithoutI18n,
     i18n: {
@@ -64,7 +68,7 @@ describe('Test getI18nConfig()', () => {
     },
   };
 
-  /** @type {import('$lib/typedefs/public').CollectionFile} */
+  /** @type {CollectionFile} */
   const collectionFileWithCompleteI18nOverride = {
     ...collectionFileWithoutI18n,
     i18n: {

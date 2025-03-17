@@ -8,10 +8,14 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
   /**
+   * @import { Entry, EntryCollection, ViewType } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').EntryCollection} collection Selected collection.
-   * @property {import('$lib/typedefs/private').Entry} entry Entry.
-   * @property {import('$lib/typedefs/private').ViewType} viewType View type.
+   * @property {EntryCollection} collection Selected collection.
+   * @property {Entry} entry Entry.
+   * @property {ViewType} viewType View type.
    */
 
   /** @type {Props} */

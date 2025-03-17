@@ -11,12 +11,17 @@
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
+   * @import { WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { ComputeField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').ComputeField} fieldConfig Field configuration.
+   * @property {ComputeField} fieldConfig Field configuration.
    * @property {string | number | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

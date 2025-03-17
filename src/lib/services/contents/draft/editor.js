@@ -6,26 +6,40 @@ import { entryDraft } from '$lib/services/contents/draft';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
- * @type {import('svelte/store').Writable<boolean>}
+ * @import { Writable } from 'svelte/store';
+ * @import {
+ * BackendService,
+ * EntryEditorPane,
+ * EntryEditorView,
+ * FlattenedEntryContent,
+ * LocaleCode,
+ * LocaleContentMap,
+ * SelectAssetsView,
+ * } from '$lib/typedefs/private';
+ * @import { FieldKeyPath, ObjectField, ListField } from '$lib/typedefs/public';
+ */
+
+/**
+ * @type {Writable<boolean>}
  */
 export const showContentOverlay = writable(false);
 /**
- * @type {import('svelte/store').Writable<boolean>}
+ * @type {Writable<boolean>}
  */
 export const showDuplicateToast = writable(false);
 /**
- * @type {import('svelte/store').Writable<{ show: boolean, multiple: boolean, resolve?: Function }>}
+ * @type {Writable<{ show: boolean, multiple: boolean, resolve?: Function }>}
  */
 export const translatorApiKeyDialogState = writable({ show: false, multiple: false });
 /**
  * Copy/translation toast state.
- * @type {import('svelte/store').Writable<{
+ * @type {Writable<{
  * id: number | undefined,
  * show: boolean,
  * status: 'info' | 'success' | 'error',
  * message: string | undefined,
  * count: number,
- * sourceLocale: import('$lib/typedefs/private').LocaleCode | undefined,
+ * sourceLocale: LocaleCode | undefined,
  * }>}
  */
 export const copyFromLocaleToast = writable({
@@ -37,29 +51,26 @@ export const copyFromLocaleToast = writable({
   sourceLocale: undefined,
 });
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryEditorPane | null>}
+ * @type {Writable<?EntryEditorPane>}
  */
 export const editorLeftPane = writable(null);
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryEditorPane | null>}
+ * @type {Writable<?EntryEditorPane>}
  */
 export const editorRightPane = writable(null);
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryEditorView |
- * undefined>}
+ * @type {Writable<EntryEditorView | undefined>}
  */
 export const entryEditorSettings = writable();
 /**
  * View settings for the Select Assets dialog.
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').SelectAssetsView |
- * undefined>}
+ * @type {Writable<SelectAssetsView | undefined>}
  */
 export const selectAssetsView = writable();
 
 /**
  * Sync the field object/list expander states between locales.
- * @param {Record<import('$lib/typedefs/public').FieldKeyPath, boolean>} stateMap Map of key path
- * and state.
+ * @param {Record<FieldKeyPath, boolean>} stateMap Map of key path and state.
  */
 export const syncExpanderStates = (stateMap) => {
   entryDraft.update((_draft) => {
@@ -81,10 +92,8 @@ export const syncExpanderStates = (stateMap) => {
  * @param {object} args Partial arguments for {@link getFieldConfig}.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
- * @param {import('$lib/typedefs/private').FlattenedEntryContent} args.valueMap Object holding
- * current entry values.
- * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Key path, e.g.
- * `testimonials.0.authors.2.foo`.
+ * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
+ * @param {FieldKeyPath} args.keyPath Key path, e.g. `testimonials.0.authors.2.foo`.
  * @returns {string[]} Keys, e.g. `['testimonials', 'testimonials.0', 'testimonials.0.authors',
  * 'testimonials.0.authors.2', 'testimonials.0.authors.2.foo']`.
  */
@@ -114,17 +123,11 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
         keyPath: parentKeyPath,
       });
 
-      if (
-        parentConfig?.widget === 'object' &&
-        /** @type {import('$lib/typedefs/public').ObjectField} */ (parentConfig).fields
-      ) {
+      if (parentConfig?.widget === 'object' && /** @type {ObjectField} */ (parentConfig).fields) {
         keys.add(`${parentKeyPath}.${parentConfig.name}#`);
       }
 
-      if (
-        parentConfig?.widget === 'list' &&
-        /** @type {import('$lib/typedefs/public').ListField} */ (parentConfig).field
-      ) {
+      if (parentConfig?.widget === 'list' && /** @type {ListField} */ (parentConfig).field) {
         keys.add(_keyPath);
       }
     }
@@ -138,10 +141,10 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
  * @param {object} args Partial arguments for {@link getFieldConfig}.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
- * @param {import('$lib/typedefs/private').LocaleContentMap} args.currentValues Field values.
+ * @param {LocaleContentMap} args.currentValues Field values.
  */
 export const expandInvalidFields = ({ collectionName, fileName, currentValues }) => {
-  /** @type {Record<import('$lib/typedefs/public').FieldKeyPath, boolean>} */
+  /** @type {Record<FieldKeyPath, boolean>} */
   const stateMap = {};
 
   Object.entries(get(entryDraft)?.validities ?? {}).forEach(([locale, validities]) => {
@@ -164,7 +167,7 @@ export const expandInvalidFields = ({ collectionName, fileName, currentValues })
 
 /**
  * Initialize {@link entryEditorSettings}, {@link selectAssetsView} and relevant subscribers.
- * @param {import('$lib/typedefs/private').BackendService} _backend Backend service.
+ * @param {BackendService} _backend Backend service.
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};

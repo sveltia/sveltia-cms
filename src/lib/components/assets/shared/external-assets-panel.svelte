@@ -16,13 +16,22 @@
   import { prefs } from '$lib/services/user/prefs';
 
   /**
+   * @import {
+   * AssetKind,
+   * ExternalAsset,
+   * MediaLibraryService,
+   * SelectedAsset,
+   * } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').AssetKind} [kind] Asset kind.
+   * @property {AssetKind} [kind] Asset kind.
    * @property {string} [searchTerms] Search terms for filtering assets.
-   * @property {import('$lib/typedefs/private').MediaLibraryService} serviceProps Media library
+   * @property {MediaLibraryService} serviceProps Media library
    * service details.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
-   * @property {(detail: import('$lib/typedefs/private').SelectedAsset) => void} [onSelect] Custom
+   * @property {(detail: SelectedAsset) => void} [onSelect] Custom
    * `select` event handler.
    */
 
@@ -59,7 +68,7 @@
   let password = $state('');
   /** @type {'initial' | 'requested' | 'success' | 'error'} */
   let authState = $state('initial');
-  /** @type {import('$lib/typedefs/private').ExternalAsset[] | null} */
+  /** @type {ExternalAsset[] | null} */
   let searchResults = $state(null);
   /** @type {string | undefined} */
   let error = $state();
@@ -85,7 +94,7 @@
   /**
    * Download the selected asset, if needed, and notify the file and credit. If hotlinking is
    * required by the service, just notify the URL instead of downloading the file.
-   * @param {import('$lib/typedefs/private').ExternalAsset} asset Selected asset.
+   * @param {ExternalAsset} asset Selected asset.
    * @todo Support video files.
    */
   const selectAsset = async (asset) => {
@@ -175,7 +184,7 @@
       }}
     >
       <InfiniteScroll items={searchResults} itemKey="id">
-        {#snippet renderItem(/** @type {import('$lib/typedefs/private').ExternalAsset} */ asset)}
+        {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
           {@const { id, previewURL, description, kind: _kind } = asset}
           <Option label="" value={id}>
             <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />

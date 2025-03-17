@@ -1,3 +1,7 @@
+/**
+ * @import { TranslationService } from '$lib/typedefs/private';
+ */
+
 const serviceId = 'deepl';
 const serviceLabel = 'DeepL';
 const developerURL = 'https://www.deepl.com/pro-api';
@@ -177,7 +181,7 @@ const translate = async (texts, { sourceLocale, targetLocale, apiKey }) => {
 };
 
 /**
- * @type {import('$lib/typedefs/private').TranslationService}
+ * @type {TranslationService}
  */
 export default {
   serviceId,

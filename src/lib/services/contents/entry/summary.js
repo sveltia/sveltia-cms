@@ -7,6 +7,17 @@ import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/ent
 import { applyTransformations } from '$lib/services/common/transformations';
 
 /**
+ * @import {
+ * Entry,
+ * EntryCollection,
+ * FlattenedEntryContent,
+ * LocaleCode,
+ * NormalizedCollection,
+ * RawEntryContent,
+ * } from '$lib/typedefs/private';
+ */
+
+/**
  * Parse the given entry summary as Markdown and sanitize HTML with a few exceptions if the Markdown
  * option is enabled. Also, parse HTML character references (entities).
  * @param {string} str Original string.
@@ -26,8 +37,7 @@ const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
  * Determine an entry summary from the given content. Fields other than `title` should be defined
  * with the `identifier_field` collection option as per the Netlify/Decap CMS document. We also look
  * for the `name` and `label` properties as well as a header in the Markdown `body` as a fallback.
- * @param {import('$lib/typedefs/private').FlattenedEntryContent |
- * import('$lib/typedefs/private').RawEntryContent } content Content.
+ * @param {FlattenedEntryContent | RawEntryContent} content Content.
  * @param {object} options Options.
  * @param {string} [options.identifierField] Field name to identify the title.
  * @param {boolean} [options.useBody] Whether to fall back to a header in the Markdown `body`.
@@ -58,11 +68,10 @@ export const getEntrySummaryFromContent = (
 /**
  * Get the given entry’s summary that can be displayed in the entry list and other places. Format it
  * with the summary template if necessary, or simply use the `title` or similar field in the entry.
- * @param {import('$lib/typedefs/private').NormalizedCollection} collection Entry’s collection.
- * @param {import('$lib/typedefs/private').Entry} entry Entry.
+ * @param {NormalizedCollection} collection Entry’s collection.
+ * @param {Entry} entry Entry.
  * @param {object} [options] Options.
- * @param {import('$lib/typedefs/private').LocaleCode} [options.locale] Target locale. The default
- * locale is used if omitted.
+ * @param {LocaleCode} [options.locale] Target locale. The default locale is used if omitted.
  * @param {boolean} [options.useTemplate] Whether to use the collection’s `summary` template if
  * available.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
@@ -83,7 +92,7 @@ export const getEntrySummary = (
 
   const basePath =
     collection._type === 'entry'
-      ? /** @type {import('$lib/typedefs/private').EntryCollection} */ (collection)._file.basePath
+      ? /** @type {EntryCollection} */ (collection)._file.basePath
       : undefined;
 
   const { locales, slug, commitDate, commitAuthor } = entry;

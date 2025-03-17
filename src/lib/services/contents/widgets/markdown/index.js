@@ -1,4 +1,8 @@
 /**
+ * @import { EditorComponentDefinition } from '$lib/typedefs/public';
+ */
+
+/**
  * The default `modes` property options.
  */
 export const defaultModes = ['rich_text', 'raw'];
@@ -60,6 +64,6 @@ export const defaultComponents = ['code-block', 'image'];
 
 /**
  * Custom components registered using `CMS.registerEditorComponent`.
- * @type {Record<string, import('$lib/typedefs/public').EditorComponentDefinition>}
+ * @type {Record<string, EditorComponentDefinition>}
  */
 export const customComponents = {};

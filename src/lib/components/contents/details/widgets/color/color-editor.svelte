@@ -10,12 +10,17 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @import { WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { ColorField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').ColorField} fieldConfig Field configuration.
+   * @property {ColorField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

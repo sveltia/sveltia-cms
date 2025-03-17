@@ -4,22 +4,27 @@ import { siteConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/draft/editor';
 
 /**
+ * @import { Readable, Writable } from 'svelte/store';
+ * @import { NormalizedSiteConfig } from '$lib/typedefs/private';
+ */
+
+/**
  * Whether the app has an overlay. Some elements have to be `inert` while an overlay is displayed.
  * We cannot use the `<Modal>` component for these overlays because it will make everything inert,
  * including the toast notifications and announced page title.
- * @type {import('svelte/store').Readable<boolean>}
+ * @type {Readable<boolean>}
  */
 export const hasOverlay = derived(
   [showContentOverlay, showAssetOverlay],
   ([_showContentOverlay, _showAssetOverlay]) => _showContentOverlay || _showAssetOverlay,
 );
 /**
- * @type {import('svelte/store').Writable<string>}
+ * @type {Writable<string>}
  */
 export const selectedPageName = writable('');
 /**
  * Page status to be announced by screen readers.
- * @type {import('svelte/store').Writable<string>}
+ * @type {Writable<string>}
  */
 export const announcedPageStatus = writable('');
 
@@ -80,8 +85,9 @@ export const goBack = (path, options = {}) => {
  * Open the production site in a new browser tab.
  */
 export const openProductionSite = () => {
-  const { display_url: displayURL, _siteURL: siteURL } =
-    /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig));
+  const { display_url: displayURL, _siteURL: siteURL } = /** @type {NormalizedSiteConfig} */ (
+    get(siteConfig)
+  );
 
   window.open(displayURL || siteURL || '/', '_blank');
 };

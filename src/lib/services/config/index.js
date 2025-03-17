@@ -11,6 +11,16 @@ import { allEntryFolders } from '$lib/services/contents';
 import { allBackendServices } from '$lib/services/backends';
 import { allAssetFolders } from '$lib/services/assets';
 
+/**
+ * @import { Writable } from 'svelte/store';
+ * @import { SiteConfig } from '$lib/typedefs/public'
+ * @import {
+ * CollectionAssetFolder,
+ * CollectionEntryFolder,
+ * NormalizedSiteConfig,
+ * } from '$lib/typedefs/private';
+ */
+
 const { DEV, VITE_SITE_URL } = import.meta.env;
 
 /**
@@ -23,16 +33,15 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  */
 export const devSiteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').NormalizedSiteConfig |
- * undefined>}
+ * @type {Writable<NormalizedSiteConfig | undefined>}
  */
 export const siteConfig = writable();
 /**
- * @type {import('svelte/store').Writable<string | undefined>}
+ * @type {Writable<string | undefined>}
  */
 export const siteConfigVersion = writable();
 /**
- * @type {import('svelte/store').Writable<{ message: string } | undefined>}
+ * @type {Writable<{ message: string } | undefined>}
  */
 export const siteConfigError = writable();
 
@@ -87,7 +96,7 @@ const fetchSiteConfig = async ({ ignoreError = false } = {}) => {
 
 /**
  * Validate the site configuration file.
- * @param {import('$lib/typedefs/public').SiteConfig} config Raw config object.
+ * @param {SiteConfig} config Raw config object.
  * @throws {Error} If there is an error in the config.
  * @see https://decapcms.org/docs/configuration-options/
  * @todo Add more validations.
@@ -159,8 +168,7 @@ const validate = (config) => {
 /**
  * Initialize the site configuration state by loading the YAML file and optionally merge the object
  * with one specified with `CMS.init()`.
- * @param {import('$lib/typedefs/public').SiteConfig} [manualConfig] Raw configuration specified
- * with manual initialization.
+ * @param {SiteConfig} [manualConfig] Raw configuration specified with manual initialization.
  * @todo Normalize configuration object.
  */
 export const initSiteConfig = async (manualConfig) => {
@@ -192,7 +200,7 @@ export const initSiteConfig = async (manualConfig) => {
 
     validate(tempConfig);
 
-    /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */
+    /** @type {NormalizedSiteConfig} */
     const config = tempConfig;
 
     // Set the site URL for development or production. See also `/src/lib/components/app.svelte`
@@ -234,7 +242,7 @@ siteConfig.subscribe((config) => {
     collections,
   } = config;
 
-  /** @type {import('$lib/typedefs/private').CollectionEntryFolder[]} */
+  /** @type {CollectionEntryFolder[]} */
   const _allEntryFolders = [
     ...collections
       .filter(({ folder, hide, divider }) => typeof folder === 'string' && !hide && !divider)
@@ -291,7 +299,7 @@ siteConfig.subscribe((config) => {
     ? `/${stripSlashes(_globalPublicFolder)}`.replace(/^\/@/, '@')
     : `/${globalMediaFolder}`;
 
-  /** @type {import('$lib/typedefs/private').CollectionAssetFolder} */
+  /** @type {CollectionAssetFolder} */
   const globalAssetFolder = {
     collectionName: undefined,
     internalPath: globalMediaFolder,
@@ -303,66 +311,64 @@ siteConfig.subscribe((config) => {
    * Folder Collections Media and Public Folder.
    * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
    */
-  const collectionAssetFolders =
-    /** @type {import('$lib/typedefs/private').CollectionAssetFolder[]} */ (
-      collections
-        .filter(
-          ({ hide, divider, media_folder: mediaFolder, path: entryPath }) =>
-            // Show the asset folder if `media_folder` or `path` is defined, even if the collection
-            // is hidden with the `hide` option
-            (!hide || !!mediaFolder || !!entryPath) && !divider,
-        )
-        .map((collection) => {
-          const {
-            name: collectionName,
-            // e.g. `content/posts`
-            folder: collectionFolder,
-            // e.g. `{{slug}}/index`
-            path: entryPath,
-            // e.g. `` (an empty string), `{{public_folder}}`, etc. or absolute path
-            public_folder: publicFolder,
-          } = collection;
+  const collectionAssetFolders = /** @type {CollectionAssetFolder[]} */ (
+    collections
+      .filter(
+        ({ hide, divider, media_folder: mediaFolder, path: entryPath }) =>
+          // Show the asset folder if `media_folder` or `path` is defined, even if the collection is
+          // hidden with the `hide` option
+          (!hide || !!mediaFolder || !!entryPath) && !divider,
+      )
+      .map((collection) => {
+        const {
+          name: collectionName,
+          // e.g. `content/posts`
+          folder: collectionFolder,
+          // e.g. `{{slug}}/index`
+          path: entryPath,
+          // e.g. `` (an empty string), `{{public_folder}}`, etc. or absolute path
+          public_folder: publicFolder,
+        } = collection;
 
-          let {
-            // relative path, e.g. `` (an empty string), `./` (same as an empty string),
-            // `{{media_folder}}/posts`, etc. or absolute path, e.g. `/static/images/posts`, etc.
-            media_folder: mediaFolder,
-          } = collection;
+        let {
+          // relative path, e.g. `` (an empty string), `./` (same as an empty string),
+          // `{{media_folder}}/posts`, etc. or absolute path, e.g. `/static/images/posts`, etc.
+          media_folder: mediaFolder,
+        } = collection;
 
-          if (mediaFolder === undefined) {
-            if (entryPath === undefined) {
-              return null;
-            }
-
-            // When specifying a `path` on an entry collection, `media_folder` defaults to an empty
-            // string
-            mediaFolder = '';
+        if (mediaFolder === undefined) {
+          if (entryPath === undefined) {
+            return null;
           }
 
-          mediaFolder = mediaFolder.replace('{{media_folder}}', globalMediaFolder);
+          // When specifying a `path` on an entry collection, `media_folder` defaults to an empty
+          // string
+          mediaFolder = '';
+        }
 
-          const entryRelative = !(
-            mediaFolder.startsWith('/') || mediaFolder.startsWith(globalMediaFolder)
-          );
+        mediaFolder = mediaFolder.replace('{{media_folder}}', globalMediaFolder);
 
-          let publicPath = stripSlashes(
-            (publicFolder ?? mediaFolder).replace('{{public_folder}}', globalPublicFolder).trim(),
-          );
+        const entryRelative = !(
+          mediaFolder.startsWith('/') || mediaFolder.startsWith(globalMediaFolder)
+        );
 
-          // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
-          // setting) or starting with `@` (framework-specific)
-          publicPath =
-            publicPath === '' || publicPath.match(/^[.@]/) ? publicPath : `/${publicPath}`;
+        let publicPath = stripSlashes(
+          (publicFolder ?? mediaFolder).replace('{{public_folder}}', globalPublicFolder).trim(),
+        );
 
-          return {
-            collectionName,
-            internalPath: stripSlashes(entryRelative ? (collectionFolder ?? '') : mediaFolder),
-            publicPath,
-            entryRelative,
-          };
-        })
-        .filter(Boolean)
-    ).sort((a, b) => compare(a.internalPath, b.internalPath));
+        // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
+        // setting) or starting with `@` (framework-specific)
+        publicPath = publicPath === '' || publicPath.match(/^[.@]/) ? publicPath : `/${publicPath}`;
+
+        return {
+          collectionName,
+          internalPath: stripSlashes(entryRelative ? (collectionFolder ?? '') : mediaFolder),
+          publicPath,
+          entryRelative,
+        };
+      })
+      .filter(Boolean)
+  ).sort((a, b) => compare(a.internalPath, b.internalPath));
 
   const _allAssetFolders = [globalAssetFolder, ...collectionAssetFolders];
 

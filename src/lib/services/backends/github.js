@@ -13,6 +13,24 @@ import { user } from '$lib/services/user';
 import { prefs } from '$lib/services/user/prefs';
 import { sendRequest } from '$lib/services/utils/networking';
 
+/**
+ * @import {
+ * Asset,
+ * BackendService,
+ * BackendServiceStatus,
+ * BaseAssetListItem,
+ * BaseEntryListItem,
+ * BaseFileListItem,
+ * CommitChangesOptions,
+ * FileChange,
+ * NormalizedSiteConfig,
+ * RepositoryContentsMap,
+ * RepositoryInfo,
+ * SignInOptions,
+ * User,
+ * } from '$lib/typedefs/private';
+ */
+
 const backendName = 'github';
 const label = 'GitHub';
 const statusDashboardURL = 'https://www.githubstatus.com/';
@@ -43,7 +61,7 @@ siteConfig?.subscribe((config) => {
 });
 
 /**
- * @type {import('$lib/typedefs/private').RepositoryInfo}
+ * @type {RepositoryInfo}
  */
 const repository = new Proxy(/** @type {any} */ ({}), {
   /**
@@ -73,7 +91,7 @@ const repository = new Proxy(/** @type {any} */ ({}), {
 
 /**
  * Check the GitHub service status.
- * @returns {Promise<import('$lib/typedefs/private').BackendServiceStatus>} Current status.
+ * @returns {Promise<BackendServiceStatus>} Current status.
  * @see https://www.githubstatus.com/api
  */
 const checkStatus = async () => {
@@ -117,10 +135,7 @@ const checkStatus = async () => {
 const fetchAPI = async (
   path,
   init = {},
-  {
-    token = /** @type {import('$lib/typedefs/private').User} */ (get(user)).token,
-    responseType = 'json',
-  } = {},
+  { token = /** @type {User} */ (get(user)).token, responseType = 'json' } = {},
 ) => {
   const apiRoot = apiConfig[path === '/graphql' ? 'graphql' : 'rest'];
 
@@ -154,11 +169,11 @@ const fetchGraphQL = async (query, variables = {}) => {
 
 /**
  * Get the configured repository’s basic information.
- * @returns {import('$lib/typedefs/private').RepositoryInfo} Repository info.
+ * @returns {RepositoryInfo} Repository info.
  */
 const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } =
-    /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig)).backend;
+  const { repo: projectPath, branch } = /** @type {NormalizedSiteConfig} */ (get(siteConfig))
+    .backend;
 
   const { origin: apiOrigin, isSelfHosted } = apiConfig;
   const origin = isSelfHosted ? apiOrigin : 'https://github.com';
@@ -190,9 +205,8 @@ const init = () => {
 
 /**
  * Retrieve the repository configuration and sign in with GitHub REST API.
- * @param {import('$lib/typedefs/private').SignInOptions} options Options.
- * @returns {Promise<import('$lib/typedefs/private').User | void>} User info, or nothing when the
- * sign-in flow cannot be started.
+ * @param {SignInOptions} options Options.
+ * @returns {Promise<User | void>} User info, or nothing when the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
  * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
  */
@@ -207,7 +221,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     site_domain: siteDomain = hostname,
     base_url: baseURL = 'https://api.netlify.com',
     auth_endpoint: path = 'auth',
-  } = /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig)).backend;
+  } = /** @type {NormalizedSiteConfig} */ (get(siteConfig)).backend;
 
   const token =
     cachedToken ||
@@ -357,7 +371,7 @@ const fetchLastCommit = async () => {
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
- * @returns {Promise<import('$lib/typedefs/private').BaseFileListItem[]>} File list.
+ * @returns {Promise<BaseFileListItem[]>} File list.
  */
 const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
@@ -374,9 +388,8 @@ const fetchFileList = async (lastHash) => {
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.
- * @param {(import('$lib/typedefs/private').BaseEntryListItem |
- * import('$lib/typedefs/private').BaseAssetListItem)[]} fetchingFiles Base entry/asset list items.
- * @returns {Promise<import('$lib/typedefs/private').RepositoryContentsMap>} Fetched contents map.
+ * @param {(BaseEntryListItem | BaseAssetListItem)[]} fetchingFiles Base entry/asset list items.
+ * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
@@ -516,7 +529,7 @@ const fetchFiles = async () => {
 
 /**
  * Fetch an asset as a Blob via the API.
- * @param {import('$lib/typedefs/private').Asset} asset Asset to retrieve the file content.
+ * @param {Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
  * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
  */
@@ -542,8 +555,8 @@ const fetchBlob = async (asset) => {
 
 /**
  * Save entries or assets remotely.
- * @param {import('$lib/typedefs/private').FileChange[]} changes File changes to be saved.
- * @param {import('$lib/typedefs/private').CommitChangesOptions} options Commit options.
+ * @param {FileChange[]} changes File changes to be saved.
+ * @param {CommitChangesOptions} options Commit options.
  * @returns {Promise<string>} Commit URL.
  * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
  * @see https://docs.github.com/en/graphql/reference/mutations#createcommitonbranch
@@ -613,7 +626,7 @@ const triggerDeployment = async () => {
 };
 
 /**
- * @type {import('$lib/typedefs/private').BackendService}
+ * @type {BackendService}
  */
 export default {
   name: backendName,

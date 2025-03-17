@@ -8,9 +8,13 @@ export const ternaryRegex = /^ternary\('(?<truthyValue>.*?)',\s*'(?<falsyValue>.
 export const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
 
 /**
+ * @import { DateTimeField, Field } from '$lib/typedefs/public';
+ */
+
+/**
  * Apply a string transformation to the value.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs/public').Field} [args.fieldConfig] Field configuration.
+ * @param {Field} [args.fieldConfig] Field configuration.
  * @param {any} args.value Original value.
  * @param {string} args.transformation Transformation, e.g `upper`, `truncate(10)`.
  * @returns {string} Transformed value.
@@ -31,10 +35,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
 
   if (dateTransformer?.groups) {
     const { format, timeZone } = dateTransformer.groups;
-
-    const { dateOnly, utc } = parseDateTimeConfig(
-      /** @type {import('$lib/typedefs/public').DateTimeField} */ (fieldConfig ?? {}),
-    );
+    const { dateOnly, utc } = parseDateTimeConfig(/** @type {DateTimeField} */ (fieldConfig ?? {}));
 
     const useUTC =
       timeZone === 'utc' ||
@@ -81,7 +82,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
 /**
  * Apply string transformations to the value.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs/public').Field} [args.fieldConfig] Field configuration.
+ * @param {Field} [args.fieldConfig] Field configuration.
  * @param {any} args.value Original value.
  * @param {string[]} args.transformations List of transformations.
  * @returns {string} Transformed value.

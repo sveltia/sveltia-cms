@@ -3,11 +3,14 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @import { Writable } from 'svelte/store';
+   * @import { Asset, Entry } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {(import('$lib/typedefs/private').Entry |
-   * import('$lib/typedefs/private').Asset)[]} allItems All available items.
-   * @property {import('svelte/store').Writable<(import('$lib/typedefs/private').Entry |
-   * import('$lib/typedefs/private').Asset)[]>} selectedItems Selected items.
+   * @property {(Entry | Asset)[]} allItems All available items.
+   * @property {Writable<(Entry | Asset)[]>} selectedItems Selected items.
    */
 
   /** @type {Props} */

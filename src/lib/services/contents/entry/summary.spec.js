@@ -1,8 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
+/**
+ * @import { Entry, LocalizedEntry, NormalizedCollection } from '$lib/typedefs/private';
+ */
+
 describe('Test getEntrySummary()', () => {
-  /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+  /** @type {NormalizedCollection} */
   const collection = {
     name: 'pages-tags',
     folder: 'content/tags',
@@ -25,10 +29,10 @@ describe('Test getEntrySummary()', () => {
     _thumbnailFieldNames: [],
   };
 
-  /** @type {import('$lib/typedefs/private').LocalizedEntry} */
+  /** @type {LocalizedEntry} */
   const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
 
-  /** @type {import('$lib/typedefs/private').Entry} */
+  /** @type {Entry} */
   const entry = {
     id: '',
     sha: '',

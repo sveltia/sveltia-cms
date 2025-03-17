@@ -4,8 +4,18 @@ import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 
 /**
+ * @import { LocaleCode, NormalizedI18nConfig, NormalizedSiteConfig } from '$lib/typedefs/private';
+ * @import {
+ * Collection,
+ * CollectionFile,
+ * I18nConfig,
+ * StandardLocaleCode,
+ * } from '$lib/typedefs/public';
+ */
+
+/**
  * The default, normalized i18n configuration with no locales defined.
- * @type {import('$lib/typedefs/private').NormalizedI18nConfig}
+ * @type {NormalizedI18nConfig}
  */
 export const defaultI18nConfig = {
   i18nEnabled: false,
@@ -22,22 +32,18 @@ export const defaultI18nConfig = {
 
 /**
  * Get the normalized i18n configuration for the given collection or collection file.
- * @param {import('$lib/typedefs/public').Collection} collection Developer-defined collection.
- * @param {import('$lib/typedefs/public').CollectionFile} [file] Developer-defined collection
- * file.
- * @returns {import('$lib/typedefs/private').NormalizedI18nConfig} Config.
+ * @param {Collection} collection Developer-defined collection.
+ * @param {CollectionFile} [file] Developer-defined collection file.
+ * @returns {NormalizedI18nConfig} Config.
  * @see https://decapcms.org/docs/i18n/
  */
 export const getI18nConfig = (collection, file) => {
-  const _siteConfig = /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (
-    get(siteConfig)
-  );
-
-  /** @type {import('$lib/typedefs/public').I18nConfig | undefined} */
+  const _siteConfig = /** @type {NormalizedSiteConfig} */ (get(siteConfig));
+  /** @type {I18nConfig | undefined} */
   let config;
 
   if (isObject(_siteConfig.i18n)) {
-    config = /** @type {import('$lib/typedefs/public').I18nConfig} */ (_siteConfig.i18n);
+    config = /** @type {I18nConfig} */ (_siteConfig.i18n);
 
     if (collection.i18n) {
       if (isObject(collection.i18n)) {
@@ -68,7 +74,7 @@ export const getI18nConfig = (collection, file) => {
       key: canonicalSlugKey = 'translationKey',
       value: canonicalSlugTemplate = '{{slug}}',
     } = {},
-  } = /** @type {import('$lib/typedefs/public').I18nConfig} */ (config ?? {});
+  } = /** @type {I18nConfig} */ (config ?? {});
 
   const i18nEnabled = !!_locales.length;
   const allLocales = i18nEnabled ? _locales : ['_default'];
@@ -117,9 +123,8 @@ export const getI18nConfig = (collection, file) => {
 
 /**
  * Get the canonical locale of the given locale that can be used for various `Intl` methods.
- * @param {import('$lib/typedefs/private').LocaleCode} locale Locale.
- * @returns {import('$lib/typedefs/public').StandardLocaleCode | undefined} Locale or `undefined`
- * if not determined.
+ * @param {LocaleCode} locale Locale.
+ * @returns {StandardLocaleCode | undefined} Locale or `undefined` if not determined.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument
  */
 export const getCanonicalLocale = (locale) => {
@@ -138,7 +143,7 @@ export const getCanonicalLocale = (locale) => {
 
 /**
  * Translate the given locale code in the application UI locale.
- * @param {import('$lib/typedefs/private').LocaleCode} locale Locale code like `en`.
+ * @param {LocaleCode} locale Locale code like `en`.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
  * locale code as is.
  */
@@ -165,7 +170,7 @@ export const getLocaleLabel = (locale) => {
 
 /**
  * Get a simple list formatter.
- * @param {import('$lib/typedefs/private').LocaleCode} locale Locale code.
+ * @param {LocaleCode} locale Locale code.
  * @param {Partial<Intl.ListFormatOptions>} options Format options.
  * @returns {Intl.ListFormat} Formatter.
  */

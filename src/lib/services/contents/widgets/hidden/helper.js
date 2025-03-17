@@ -1,9 +1,14 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
 /**
+ * @import { LocaleCode } from '$lib/typedefs/private';
+ * @import { HiddenField } from '$lib/typedefs/public';
+ */
+
+/**
  * Get the default value for a Hidden field.
- * @param {import('$lib/typedefs/public').HiddenField} fieldConfig Field configuration.
- * @param {import('$lib/typedefs/private').LocaleCode} locale Locale code.
+ * @param {HiddenField} fieldConfig Field configuration.
+ * @param {LocaleCode} locale Locale code.
  * @returns {any} Default value.
  * @todo Write tests for this.
  */

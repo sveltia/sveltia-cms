@@ -2,10 +2,14 @@ import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 import { getSortableFields } from '$lib/services/contents/collection/view';
 
+/**
+ * @import { EntryCollection } from '$lib/typedefs/private';
+ */
+
 vi.mock('$lib/services/config');
 
 describe('Test getSortableFields()', async () => {
-  /** @type {import('$lib/typedefs/private').EntryCollection} */
+  /** @type {EntryCollection} */
   const collectionBase = {
     name: 'posts',
     _type: 'entry',

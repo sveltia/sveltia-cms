@@ -3,11 +3,15 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @import { SelectFieldSelectorProps } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {string} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').SelectFieldSelectorProps & Props} */
+  /** @type {SelectFieldSelectorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

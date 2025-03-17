@@ -4,11 +4,15 @@
   import { updateListField } from '$lib/services/contents/draft/update';
 
   /**
+   * @import { SelectFieldSelectorProps } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {string[]} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').SelectFieldSelectorProps & Props} */
+  /** @type {SelectFieldSelectorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

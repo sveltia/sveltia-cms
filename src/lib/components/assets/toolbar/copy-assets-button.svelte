@@ -6,8 +6,12 @@
   import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
 
   /**
+   * @import { Asset, AssetDetails } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Asset[]} [assets] Selected assets.
+   * @property {Asset[]} [assets] Selected assets.
    */
 
   /** @type {Props} */
@@ -17,7 +21,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {import('$lib/typedefs/private').AssetDetails[]} */
+  /** @type {AssetDetails[]} */
   let assetsDetailList = $state([]);
   let canCopyFileData = $state(false);
   /** @type {{ show: boolean, text: string, status: 'success' | 'error' }} */

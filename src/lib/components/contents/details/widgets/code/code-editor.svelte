@@ -9,12 +9,17 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
+   * @import { WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { CodeField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').CodeField} fieldConfig Field configuration.
+   * @property {CodeField} fieldConfig Field configuration.
    * @property {string | {} | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

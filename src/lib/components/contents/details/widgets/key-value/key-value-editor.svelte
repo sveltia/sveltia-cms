@@ -17,12 +17,18 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
 
   /**
+   * @import { Writable } from 'svelte/store';
+   * @import { EntryDraft, WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { KeyValueField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').KeyValueField} fieldConfig Field configuration.
+   * @property {KeyValueField} fieldConfig Field configuration.
    * @property {Record<string, string> | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -60,11 +66,7 @@
       return;
     }
 
-    const _entryDraft =
-      /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
-        entryDraft
-      );
-
+    const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
     const updatedPairs = getPairs({ entryDraft: _entryDraft, keyPath, locale });
 
     if (!equal(pairs, updatedPairs)) {
@@ -122,10 +124,7 @@
       return;
     }
 
-    const _entryDraft =
-      /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
-        entryDraft
-      );
+    const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
 
     savePairs({ entryDraft: _entryDraft, fieldConfig, keyPath, locale, pairs });
   };

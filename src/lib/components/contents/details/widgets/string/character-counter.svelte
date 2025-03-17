@@ -3,9 +3,12 @@
   import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 
   /**
+   * @import { StringField, TextField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').StringField |
-   * import('$lib/typedefs/public').TextField} fieldConfig Field configuration.
+   * @property {StringField | TextField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 

@@ -15,9 +15,13 @@
     sortFields,
   } from '$lib/services/contents/collection/view';
 
+  /**
+   * @import { EntryCollection } from '$lib/typedefs/private';
+   */
+
   const entryCollection = $derived(
     $selectedCollection?._type === 'entry'
-      ? /** @type {import('$lib/typedefs/private').EntryCollection} */ ($selectedCollection)
+      ? /** @type {EntryCollection} */ ($selectedCollection)
       : undefined,
   );
   const collectionName = $derived(entryCollection?.name);

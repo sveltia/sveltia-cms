@@ -6,8 +6,12 @@
   import { getAssetBlob } from '$lib/services/assets';
 
   /**
+   * @import { Asset } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Asset[]} [assets] Selected assets.
+   * @property {Asset[]} [assets] Selected assets.
    */
 
   /** @type {Props} */

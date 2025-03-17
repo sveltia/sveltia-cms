@@ -11,12 +11,17 @@
   import { getDefaultValue } from '$lib/services/contents/widgets/uuid/helper';
 
   /**
+   * @import { WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { UuidField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').UuidField} fieldConfig Field configuration.
+   * @property {UuidField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

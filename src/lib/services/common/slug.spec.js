@@ -4,10 +4,14 @@ import { describe, expect, test, vi } from 'vitest';
 import { defaultI18nConfig } from '$lib/services/contents/i18n';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 
+/**
+ * @import { NormalizedCollection } from '$lib/typedefs/private';
+ */
+
 vi.mock('$lib/services/config');
 
 describe('Test fillSlugTemplate()', async () => {
-  /** @type {import('$lib/typedefs/private').NormalizedCollection} */
+  /** @type {NormalizedCollection} */
   const collection = {
     name: 'posts',
     slug_length: 50,

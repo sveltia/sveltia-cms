@@ -3,8 +3,12 @@ import { derived, get, writable } from 'svelte/store';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft | null |
- * undefined>}
+ * @import { Readable, Writable } from 'svelte/store';
+ * @import { EntryDraft } from '$lib/typedefs/private';
+ */
+
+/**
+ * @type {Writable<EntryDraft | null | undefined>}
  */
 export const entryDraft = writable();
 /**
@@ -15,7 +19,7 @@ export const i18nAutoDupEnabled = writable(true);
 
 /**
  * Whether the current {@link entryDraft} has been modified.
- * @type {import('svelte/store').Readable<boolean>}
+ * @type {Readable<boolean>}
  */
 export const entryDraftModified = derived([entryDraft], ([draft]) => {
   if (!draft) {

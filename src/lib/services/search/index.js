@@ -6,7 +6,12 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 /**
- * @type {import('svelte/store').Writable<string>}
+ * @import { Readable, Writable } from 'svelte/store';
+ * @import { Asset, Entry } from '$lib/typedefs/private';
+ */
+
+/**
+ * @type {Writable<string>}
  */
 export const searchTerms = writable('');
 
@@ -24,8 +29,7 @@ export const normalize = (value) =>
 
 /**
  * Hold search results for the current search terms.
- * @type {import('svelte/store').Readable<{ entries: import('$lib/typedefs/private').Entry[],
- * assets: import('$lib/typedefs/private').Asset[] }>}
+ * @type {Readable<{ entries: Entry[], assets: Asset[] }>}
  * @todo Search relation fields.
  */
 export const searchResults = derived(

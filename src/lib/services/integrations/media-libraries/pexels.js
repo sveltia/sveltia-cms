@@ -5,6 +5,10 @@ import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
 /**
+ * @import { ExternalAsset, MediaLibraryService } from '$lib/typedefs/private';
+ */
+
+/**
  * @see https://www.pexels.com/api/documentation/#photos-search__parameters__locale
  */
 const supportedLocales = [
@@ -45,7 +49,7 @@ const endpoint = 'https://api.pexels.com/v1';
  * @param {string} query Search query.
  * @param {object} options Options.
  * @param {string} options.apiKey API key.
- * @returns {Promise<import('$lib/typedefs/private').ExternalAsset[]>} Assets.
+ * @returns {Promise<ExternalAsset[]>} Assets.
  * @see https://www.pexels.com/api/documentation/
  * @todo Support video files.
  */
@@ -119,7 +123,7 @@ const search = async (query, { apiKey }) => {
 };
 
 /**
- * @type {import('$lib/typedefs/private').MediaLibraryService}
+ * @type {MediaLibraryService}
  */
 export default {
   serviceType: 'stock_photos',

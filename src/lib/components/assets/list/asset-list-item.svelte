@@ -6,9 +6,13 @@
   import { listedAssets } from '$lib/services/assets/view';
 
   /**
+   * @import { Asset, ViewType } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Asset} asset Asset.
-   * @property {import('$lib/typedefs/private').ViewType} viewType View type.
+   * @property {Asset} asset Asset.
+   * @property {ViewType} viewType View type.
    */
 
   /** @type {Props} */

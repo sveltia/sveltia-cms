@@ -4,14 +4,30 @@ import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount, tick } from 'svelte';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+
+/**
+ * @import {
+ * DOMConversion,
+ * DOMConversionMap,
+ * DOMConversionOutput,
+ * DOMExportOutput,
+ * LexicalEditor,
+ * LexicalNode,
+ * NodeKey,
+ * SerializedLexicalNode,
+ * } from 'lexical';
+ * @import { TextMatchTransformer, Transformer } from '@lexical/markdown';
+ * @import { EditorComponentDefinition } from '$lib/typedefs/public';
+ */
+
 import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';
 
 /**
  * @typedef {object} CustomNodeFeatures
  * @property {any} node Lexical node class implementation.
- * @property {(props?: Record<string, any>) => import('lexical').LexicalNode} createNode Function to
- * create a new node instance.
- * @property {import('@lexical/markdown').Transformer} transformer Node transformer.
+ * @property {(props?: Record<string, any>) => LexicalNode} createNode Function to create a new node
+ * instance.
+ * @property {Transformer} transformer Node transformer.
  */
 
 /**
@@ -30,10 +46,10 @@ const escapeAllChars = (props) =>
 /**
  * Get a component definition. This has to be a function due to localized labels.
  * @param {string} name Component name.
- * @returns {import('$lib/typedefs/public').EditorComponentDefinition | undefined} Definition.
+ * @returns {EditorComponentDefinition | undefined} Definition.
  */
 export const getComponentDef = (name) => {
-  /** @type {Record<string, import('$lib/typedefs/public').EditorComponentDefinition>} */
+  /** @type {Record<string, EditorComponentDefinition>} */
   const definitions = {
     image: {
       id: 'image',
@@ -90,8 +106,7 @@ export const getComponentDef = (name) => {
 
 /**
  * Get the {@link CustomNode} class and related features for Lexical.
- * @param {import('$lib/typedefs/public').EditorComponentDefinition} componentDef Component
- * definition.
+ * @param {EditorComponentDefinition} componentDef Component definition.
  * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
  */
@@ -113,7 +128,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
     /**
      * Create a new {@link CustomNode} instance.
      * @param {Record<string, any>} props Field properties.
-     * @param {import('lexical').NodeKey} [key] Node key.
+     * @param {NodeKey} [key] Node key.
      */
     constructor(props, key) {
       super(key);
@@ -147,7 +162,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
     /**
      * Import JSON.
-     * @param {import('lexical').SerializedLexicalNode} serializedNode Input.
+     * @param {SerializedLexicalNode} serializedNode Input.
      * @returns {CustomNode} New node.
      */
     static importJSON(serializedNode) {
@@ -157,7 +172,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
     /**
      * Export the node as JSON.
-     * @returns {import('lexical').SerializedLexicalNode} Output.
+     * @returns {SerializedLexicalNode} Output.
      */
     exportJSON() {
       return {
@@ -174,7 +189,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
     createDOM() {
       /** @type {HTMLElement} */
       let wrapper;
-      /** @type {import('lexical').LexicalEditor | null} */
+      /** @type {LexicalEditor | null} */
       let editor = null;
 
       /**
@@ -222,7 +237,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
     /**
      * Export the node as a DOM node.
-     * @returns {import('lexical').DOMExportOutput} Output.
+     * @returns {DOMExportOutput} Output.
      */
     exportDOM() {
       return { element: this.createDOM() };
@@ -230,19 +245,19 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
     /**
      * Import a DOM node.
-     * @returns {import('lexical').DOMConversionMap} Conversion map.
+     * @returns {DOMConversionMap} Conversion map.
      */
     static importDOM() {
       const conversionMap = {
         /**
          * Conversion map item.
-         * @returns {import('lexical').DOMConversion} Conversion.
+         * @returns {DOMConversion} Conversion.
          */
         [tagName]: () => ({
           /**
            * Conversion.
            * @param {HTMLElement} element Element.
-           * @returns {import('lexical').DOMConversionOutput} Output.
+           * @returns {DOMConversionOutput} Output.
            */
           conversion: (element) => ({
             // eslint-disable-next-line no-use-before-define
@@ -265,7 +280,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
           /**
            * Conversion map item.
            * @param {Node} node Target node.
-           * @returns {import('lexical').DOMConversion | null} Conversion.
+           * @returns {DOMConversion | null} Conversion.
            */
           a: (node) => {
             if (node.firstChild?.nodeName.toLowerCase() === 'img') {
@@ -275,7 +290,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
               return {
                 /**
                  * Conversion.
-                 * @returns {import('lexical').DOMConversionOutput} Output.
+                 * @returns {DOMConversionOutput} Output.
                  */
                 conversion: () => ({
                   // eslint-disable-next-line no-use-before-define
@@ -329,7 +344,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
   /**
    * Implement a Markdown transformer for {@link CustomNode}.
-   * @type {import('@lexical/markdown').TextMatchTransformer}
+   * @type {TextMatchTransformer}
    * @see https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/plugins/MarkdownTransformers/index.ts#L75-L97
    */
   const transformer = {
@@ -378,8 +393,7 @@ const featureCacheMap = new Map();
 export class EditorComponent {
   /**
    * Create an `EditorComponent` instance.
-   * @param {import('$lib/typedefs/public').EditorComponentDefinition} componentDef Component
-   * definition.
+   * @param {EditorComponentDefinition} componentDef Component definition.
    */
   constructor(componentDef) {
     const { id } = componentDef;

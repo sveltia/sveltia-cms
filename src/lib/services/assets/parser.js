@@ -2,9 +2,13 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { getAssetKind } from '$lib/services/assets';
 
 /**
+ * @import { Asset, BaseAssetListItem } from '$lib/typedefs/private';
+ */
+
+/**
  * Parse the given asset files to create a complete, serialized asset list.
- * @param {import('$lib/typedefs/private').BaseAssetListItem[]} assetFiles Asset file list.
- * @returns {import('$lib/typedefs/private').Asset[]} Asset list.
+ * @param {BaseAssetListItem[]} assetFiles Asset file list.
+ * @returns {Asset[]} Asset list.
  */
 export const parseAssetFiles = (assetFiles) =>
   assetFiles.map((assetInfo) => {
@@ -18,7 +22,7 @@ export const parseAssetFiles = (assetFiles) =>
       folder: { internalPath },
     } = assetInfo;
 
-    return /** @type {import('$lib/typedefs/private').Asset} */ ({
+    return /** @type {Asset} */ ({
       file,
       blobURL: undefined,
       path,

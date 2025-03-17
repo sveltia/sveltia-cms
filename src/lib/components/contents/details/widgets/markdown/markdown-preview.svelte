@@ -11,12 +11,17 @@
   import { getMediaFieldURL } from '$lib/services/assets';
 
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { MarkdownField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').MarkdownField} fieldConfig Field configuration.
+   * @property {MarkdownField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig,

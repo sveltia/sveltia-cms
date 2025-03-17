@@ -2,9 +2,13 @@
   import { waitForVisibility } from '@sveltia/utils/element';
 
   /**
+   * @import { Snippet } from 'svelte';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {string} [label] Subsection label.
-   * @property {import('svelte').Snippet} children Slot content.
+   * @property {Snippet} children Slot content.
    */
 
   /** @type {Props} */

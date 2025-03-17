@@ -10,6 +10,10 @@
   import { globalAssetFolder, selectedAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
 
+  /**
+   * @import { Asset } from '$lib/typedefs/private';
+   */
+
   const viewType = $derived($currentView.type);
   // Can’t upload assets if collection assets are saved at entry-relative paths
   const uploadDisabled = $derived(!!$selectedAssetFolder?.entryRelative);
@@ -36,7 +40,7 @@
         {#each Object.entries($assetGroups) as [name, assets] (name)}
           <GridBody label={name !== '*' ? name : undefined}>
             <InfiniteScroll items={assets} itemKey="path">
-              {#snippet renderItem(/** @type {import('$lib/typedefs/private').Asset} */ asset)}
+              {#snippet renderItem(/** @type {Asset} */ asset)}
                 {#key asset.sha}
                   <AssetListItem {asset} {viewType} />
                 {/key}

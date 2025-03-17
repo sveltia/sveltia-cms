@@ -2,32 +2,37 @@ import { get, writable } from 'svelte/store';
 import { getCollection } from '$lib/services/contents/collection';
 
 /**
- * @type {import('svelte/store').Writable<boolean>}
+ * @import { Writable } from 'svelte/store';
+ * @import { CollectionEntryFolder, Entry, EntryCollection } from '$lib/typedefs/private';
+ */
+
+/**
+ * @type {Writable<boolean>}
  */
 export const dataLoaded = writable(false);
 /**
- * @type {import('svelte/store').Writable<number | undefined>}
+ * @type {Writable<number | undefined>}
  */
 export const dataLoadedProgress = writable();
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').CollectionEntryFolder[]>}
+ * @type {Writable<CollectionEntryFolder[]>}
  */
 export const allEntryFolders = writable([]);
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').Entry[]>}
+ * @type {Writable<Entry[]>}
  */
 export const allEntries = writable([]);
 /**
- * @type {import('svelte/store').Writable<Error[]>}
+ * @type {Writable<Error[]>}
  */
 export const entryParseErrors = writable([]);
 
 /**
  * Get collection entry folders that match the given path.
  * @param {string} path Entry path.
- * @returns {import('$lib/typedefs/private').CollectionEntryFolder[]} Entry folders. Sometimes it’s
- * hard to find the right folder because multiple collections can have the same folder or partially
- * overlapping folder paths, but the first one is most likely what you need.
+ * @returns {CollectionEntryFolder[]} Entry folders. Sometimes it’s hard to find the right folder
+ * because multiple collections can have the same folder or partially overlapping folder paths, but
+ * the first one is most likely what you need.
  */
 export const getEntryFoldersByPath = (path) =>
   get(allEntryFolders)
@@ -36,7 +41,7 @@ export const getEntryFoldersByPath = (path) =>
         return Object.values(filePathMap).includes(path);
       }
 
-      return /** @type {import('$lib/typedefs/private').EntryCollection} */ (
+      return /** @type {EntryCollection} */ (
         getCollection(collectionName)
       )?._file?.fullPathRegEx?.test(path);
     })

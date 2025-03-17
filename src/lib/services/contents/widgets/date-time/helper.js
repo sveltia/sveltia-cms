@@ -2,9 +2,14 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
 
 /**
+ * @import { DateTimeFieldNormalizedProps } from '$lib/typedefs/private';
+ * @import { DateTimeField } from '$lib/typedefs/public';
+ */
+
+/**
  * Parse the DateTime field configuration and return as normalized format.
- * @param {import('$lib/typedefs/public').DateTimeField} fieldConfig Field config.
- * @returns {import('$lib/typedefs/private').DateTimeFieldNormalizedProps} Normalized properties.
+ * @param {DateTimeField} fieldConfig Field config.
+ * @returns {DateTimeFieldNormalizedProps} Normalized properties.
  */
 export const parseDateTimeConfig = (fieldConfig) => {
   const {
@@ -28,7 +33,7 @@ export const parseDateTimeConfig = (fieldConfig) => {
 /**
  * Get a `Date` object given the current value.
  * @param {string | undefined} currentValue Value in the entry draft datastore.
- * @param {import('$lib/typedefs/public').DateTimeField} fieldConfig Field configuration.
+ * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {Date | undefined} Date.
  * @todo Write tests for this.
  */
@@ -59,7 +64,7 @@ export const getDate = (currentValue, fieldConfig) => {
 
 /**
  * Get the current date/time.
- * @param {import('$lib/typedefs/public').DateTimeField} fieldConfig Field configuration.
+ * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {string} Current date/time in the ISO 8601 format.
  */
 export const getCurrentDateTime = (fieldConfig) => {
@@ -91,7 +96,7 @@ export const getCurrentDateTime = (fieldConfig) => {
  * Get the current value given the input value.
  * @param {string | undefined} inputValue Value on the date/time input widget.
  * @param {string | undefined} currentValue Value in the entry draft datastore.
- * @param {import('$lib/typedefs/public').DateTimeField} fieldConfig Field configuration.
+ * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {string | undefined} New value.
  * @todo Write tests for this.
  */
@@ -136,7 +141,7 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
 
 /**
  * Get the default value for a DateTime field.
- * @param {import('$lib/typedefs/public').DateTimeField} fieldConfig Field configuration.
+ * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {string} Default value.
  * @todo Write tests for this.
  */
@@ -163,7 +168,7 @@ export const getDefaultValue = (fieldConfig) => {
 /**
  * Get the input value given the current value.
  * @param {string | undefined} currentValue Value in the entry draft datastore.
- * @param {import('$lib/typedefs/public').DateTimeField} fieldConfig Field configuration.
+ * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {string | undefined} New value.
  * @todo Write tests for this.
  */

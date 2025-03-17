@@ -5,6 +5,20 @@ import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fi
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 
+/**
+ * @import { Writable } from 'svelte/store';
+ * @import { EntryDraft } from '$lib/typedefs/private';
+ * @import {
+ * CodeField,
+ * ListField,
+ * NumberField,
+ * RelationField,
+ * SelectField,
+ * StringField,
+ * TextField,
+ * } from '$lib/typedefs/public';
+ */
+
 // cspell:disable-next-line
 const fullRegexPattern = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
 
@@ -17,7 +31,7 @@ const fullRegexPattern = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
  */
 export const validateEntry = () => {
   const { collection, collectionFile, fileName, currentLocales, currentValues, files, validities } =
-    /** @type {import('$lib/typedefs/private').EntryDraft} */ (get(entryDraft));
+    /** @type {EntryDraft} */ (get(entryDraft));
 
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
   let validated = true;
@@ -74,9 +88,7 @@ export const validateEntry = () => {
         }
 
         if (widgetName === 'list') {
-          const { field, fields, types } = /** @type {import('$lib/typedefs/public').ListField} */ (
-            fieldConfig
-          );
+          const { field, fields, types } = /** @type {ListField} */ (fieldConfig);
 
           if (!field && !fields && !types) {
             // Simple list field
@@ -85,24 +97,11 @@ export const validateEntry = () => {
         }
       }
 
-      const {
-        multiple = false,
-      } = //
-        /**
-         * @type {import('$lib/typedefs/public').RelationField |
-         * import('$lib/typedefs/public').SelectField}
-         */ (fieldConfig);
+      const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
-      const {
-        min,
-        max,
-      } = //
-        /**
-         * @type {import('$lib/typedefs/public').ListField |
-         * import('$lib/typedefs/public').NumberField |
-         * import('$lib/typedefs/public').RelationField |
-         * import('$lib/typedefs/public').SelectField}
-         */ (fieldConfig);
+      const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
+        fieldConfig
+      );
 
       let valueMissing = false;
       let tooShort = false;
@@ -163,11 +162,7 @@ export const validateEntry = () => {
 
         keyPath = _keyPath;
 
-        const _entryDraft = //
-          /**
-           * @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>}
-           */ (entryDraft);
-
+        const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
         const pairs = getPairs({ entryDraft: _entryDraft, keyPath: _keyPath, locale });
 
         if (required && !pairs.length) {
@@ -184,7 +179,7 @@ export const validateEntry = () => {
           const {
             output_code_only: outputCodeOnly = false,
             keys: outputKeys = { code: 'code', lang: 'lang' },
-          } = /** @type {import('$lib/typedefs/public').CodeField} */ (fieldConfig);
+          } = /** @type {CodeField} */ (fieldConfig);
 
           const _keyPath =
             keyPath.match(`(.+)\\.(?:${outputKeys.code}|${outputKeys.lang})$`)?.[1] ?? '';
@@ -236,19 +231,14 @@ export const validateEntry = () => {
         // Check the number of characters
         if (['string', 'text'].includes(widgetName)) {
           ({ tooShort, tooLong } = validateStringField(
-            /**
-             * @type {import('$lib/typedefs/public').StringField |
-             * import('$lib/typedefs/public').TextField}
-             */ (fieldConfig),
+            /** @type {StringField | TextField} */ (fieldConfig),
             value,
           ));
         }
 
         // Check the URL or email with native form validation
         if (widgetName === 'string' && value) {
-          const { type = 'text' } = /** @type {import('$lib/typedefs/public').StringField} */ (
-            fieldConfig
-          );
+          const { type = 'text' } = /** @type {StringField} */ (fieldConfig);
 
           if (type !== 'text') {
             const inputElement = document.createElement('input');
@@ -266,8 +256,7 @@ export const validateEntry = () => {
         }
 
         if (widgetName === 'number') {
-          const { value_type: valueType = 'int' } =
-            /** @type {import('$lib/typedefs/public').NumberField} */ (fieldConfig);
+          const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
           if (typeof min === 'number' && value !== null && Number(value) < min) {
             rangeUnderflow = true;
@@ -316,12 +305,7 @@ export const validateEntry = () => {
     });
   });
 
-  /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
-    entryDraft
-  ).update((_draft) => ({
-    ..._draft,
-    validities,
-  }));
+  /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({ ..._draft, validities }));
 
   return validated;
 };

@@ -8,11 +8,15 @@ import { dataLoaded } from '$lib/services/contents';
 import { user } from '$lib/services/user';
 
 /**
- * @type {import('svelte/store').Writable<{ message: string, canRetry: boolean }>}
+ * @import { Writable } from 'svelte/store';
+ */
+
+/**
+ * @type {Writable<{ message: string, canRetry: boolean }>}
  */
 export const signInError = writable({ message: '', canRetry: false });
 /**
- * @type {import('svelte/store').Writable<boolean>}
+ * @type {Writable<boolean>}
  */
 export const unauthenticated = writable(true);
 

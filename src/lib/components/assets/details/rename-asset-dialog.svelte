@@ -10,6 +10,10 @@
     showAssetOverlay,
   } from '$lib/services/assets';
 
+  /**
+   * @import { Entry } from '$lib/typedefs/private';
+   */
+
   const componentId = $props.id();
 
   let open = $state(false);
@@ -18,7 +22,7 @@
   let newName = $state('');
   /** @type {string[]} */
   let otherNames = $state([]);
-  /** @type {import('$lib/typedefs/private').Entry[]} */
+  /** @type {Entry[]} */
   let usedEntries = $state([]);
 
   const asset = $derived($renamingAsset);

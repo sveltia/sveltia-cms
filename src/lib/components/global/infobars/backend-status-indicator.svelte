@@ -5,11 +5,15 @@
   import { siteConfig } from '$lib/services/config';
   import { backend } from '$lib/services/backends';
 
+  /**
+   * @import { BackendServiceStatus } from '$lib/typedefs/private';
+   */
+
   const interval = 5 * 60 * 1000; // 5 minutes
   let timer = 0;
 
   let mounted = $state(false);
-  /** @type {import('$lib/typedefs/private').BackendServiceStatus} */
+  /** @type {BackendServiceStatus} */
   let status = $state('none');
 
   /**

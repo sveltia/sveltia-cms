@@ -7,12 +7,17 @@
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { NumberField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').NumberField} fieldConfig Field configuration.
+   * @property {NumberField} fieldConfig Field configuration.
    * @property {string | number | null | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

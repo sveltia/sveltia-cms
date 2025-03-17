@@ -4,6 +4,10 @@
   import { editingAsset, getAssetBlob, showAssetOverlay } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
 
+  /**
+   * @import { Asset } from '$lib/typedefs/private';
+   */
+
   const asset = $derived($editingAsset);
   let open = $state(false);
   /** @type {Blob | undefined} */
@@ -19,7 +23,7 @@
    * Initialize the state.
    */
   const initState = async () => {
-    blob = await getAssetBlob(/** @type {import('$lib/typedefs/private').Asset} */ (asset));
+    blob = await getAssetBlob(/** @type {Asset} */ (asset));
     originalValue = await blob.text();
     currentValue = originalValue;
     open = true;

@@ -17,12 +17,17 @@
   import { prefs } from '$lib/services/user/prefs';
 
   /**
+   * @import { Writable } from 'svelte/store';
+   * @import { AssetKind, Entry, SelectedAsset, SelectAssetsView } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {boolean} [open] Whether to open the dialog.
-   * @property {import('$lib/typedefs/private').AssetKind | undefined} [kind] Asset kind.
+   * @property {AssetKind | undefined} [kind] Asset kind.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
-   * @property {import('$lib/typedefs/private').Entry} [entry] Associated entry.
-   * @property {(detail: { asset: import('$lib/typedefs/private').SelectedAsset }) => void
+   * @property {Entry} [entry] Associated entry.
+   * @property {(detail: { asset: SelectedAsset }) => void
    * } [onSelect] Custom `select` event handler.
    */
 
@@ -39,7 +44,7 @@
 
   const elementIdPrefix = $props.id();
 
-  /** @type {import('$lib/typedefs/private').SelectedAsset | null} */
+  /** @type {SelectedAsset | null} */
   let selectedAsset = $state(null);
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
@@ -93,7 +98,7 @@
   bind:open
   onOk={() => {
     onSelect?.({
-      asset: /** @type {import('$lib/typedefs/private').SelectedAsset} */ (selectedAsset),
+      asset: /** @type {SelectedAsset} */ (selectedAsset),
     });
   }}
 >
@@ -101,11 +106,7 @@
     {#if isLocalLibrary || isEnabledMediaService}
       {#if $selectAssetsView}
         <ViewSwitcher
-          currentView={(() =>
-            /**
-             * @type {import('svelte/store').Writable<import('$lib/typedefs/private').
-             * SelectAssetsView>}
-             */ (selectAssetsView))()}
+          currentView={(() => /** @type {Writable<SelectAssetsView>} */ (selectAssetsView))()}
           aria-controls="select-assets-grid"
         />
       {/if}

@@ -1,7 +1,11 @@
 <script>
   /**
+   * @import { Snippet } from 'svelte';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('svelte').Snippet} [children] Slot content.
+   * @property {Snippet} [children] Slot content.
    */
 
   /** @type {Props} */

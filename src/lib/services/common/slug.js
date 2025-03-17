@@ -11,6 +11,14 @@ import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary
 import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**
+ * @import {
+ * EntryCollection,
+ * FillSlugTemplateOptions,
+ * NormalizedSiteConfig,
+ * } from '$lib/typedefs/private';
+ */
+
+/**
  * Normalize the given string as a slug for a filename.
  * @param {string} string String to be normalized.
  * @returns {string} Slug.
@@ -23,7 +31,7 @@ export const normalizeSlug = (string) => {
       clean_accents: cleanAccents = false,
       sanitize_replacement: sanitizeReplacement = '-',
     } = {},
-  } = /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig)) ?? {};
+  } = /** @type {NormalizedSiteConfig} */ (get(siteConfig)) ?? {};
 
   let slug = string;
 
@@ -51,7 +59,7 @@ export const normalizeSlug = (string) => {
 /**
  * Fill the given slug template.
  * @param {string} template Template string literal containing tags like `{{title}}`.
- * @param {import('$lib/typedefs/private').FillSlugTemplateOptions} options Options.
+ * @param {FillSlugTemplateOptions} options Options.
  * @returns {string} Filled template that can be used for an entry slug, path, etc.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug
@@ -77,7 +85,7 @@ export const fillSlugTemplate = (
 
   const basePath =
     collection._type === 'entry'
-      ? /** @type {import('$lib/typedefs/private').EntryCollection} */ (collection)._file.basePath
+      ? /** @type {EntryCollection} */ (collection)._file.basePath
       : undefined;
 
   /**

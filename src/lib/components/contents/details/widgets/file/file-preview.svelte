@@ -10,19 +10,24 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
+   * @import { AssetKind, WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { FileField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').FileField} fieldConfig Field configuration.
+   * @property {FileField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue,
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {import('$lib/typedefs/private').AssetKind | undefined} */
+  /** @type {AssetKind | undefined} */
   let kind = $state();
   /** @type {string | undefined} */
   let src = $state();

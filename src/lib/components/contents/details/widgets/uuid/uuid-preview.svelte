@@ -5,12 +5,17 @@
 -->
 <script>
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { UuidField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').TextField} fieldConfig Field configuration.
+   * @property {UuidField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue,

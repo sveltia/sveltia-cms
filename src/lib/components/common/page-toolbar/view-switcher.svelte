@@ -3,11 +3,15 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @import { Writable } from 'svelte/store';
+   * @import { AssetListView, EntryListView, SelectAssetsView } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {boolean} [disabled] Whether to disable the buttons.
-   * @property {import('svelte/store').Writable<import('$lib/typedefs/private').EntryListView |
-   * import('$lib/typedefs/private').AssetListView |
-   * import('$lib/typedefs/private').SelectAssetsView>} currentView Current view details.
+   * @property {Writable<EntryListView | AssetListView | SelectAssetsView>} currentView Current view
+   * details.
    */
 
   /** @type {Props & Record<string, any>} */

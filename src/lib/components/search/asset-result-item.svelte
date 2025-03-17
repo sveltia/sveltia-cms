@@ -6,8 +6,12 @@
   import { getFolderLabelByPath } from '$lib/services/assets/view';
 
   /**
+   * @import { Asset } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Asset} asset Single asset.
+   * @property {Asset} asset Single asset.
    */
 
   /** @type {Props} */

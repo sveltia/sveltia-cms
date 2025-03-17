@@ -3,10 +3,13 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @import { ListField, ObjectField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {boolean} [disabled] Whether to disable the button.
-   * @property {import('$lib/typedefs/public').ListField |
-   * import('$lib/typedefs/public').ObjectField} fieldConfig Field configuration.
+   * @property {ListField | ObjectField} fieldConfig Field configuration.
    * @property {object[]} [items] List items. `<ListEditor>` only.
    * @property {(args?: { type?: string }) => void} [addItem] Function to add a new item.
    */
@@ -29,9 +32,7 @@
     types,
   } = $derived(fieldConfig);
   const listField = $derived(
-    widgetType === 'list'
-      ? /** @type {import('$lib/typedefs/public').ListField} */ (fieldConfig)
-      : undefined,
+    widgetType === 'list' ? /** @type {ListField} */ (fieldConfig) : undefined,
   );
   const labelSingular = $derived(listField?.label_singular ?? '');
   const max = $derived(listField?.max ?? undefined);

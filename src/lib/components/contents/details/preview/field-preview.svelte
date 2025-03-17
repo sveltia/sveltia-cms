@@ -6,10 +6,15 @@
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
+   * @import { LocaleCode } from '$lib/typedefs/private';
+   * @import { Field, FieldKeyPath, RelationField, SelectField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').LocaleCode} locale Current pane’s locale.
-   * @property {import('$lib/typedefs/public').FieldKeyPath} keyPath Field key path.
-   * @property {import('$lib/typedefs/public').Field} fieldConfig Field configuration.
+   * @property {LocaleCode} locale Current pane’s locale.
+   * @property {FieldKeyPath} keyPath Field key path.
+   * @property {Field} fieldConfig Field configuration.
    */
 
   /** @type {Props} */
@@ -30,12 +35,7 @@
   } = $derived(fieldConfig);
   const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
   const multiple = $derived(
-    hasMultiple
-      ? /**
-         * @type {import('$lib/typedefs/public').RelationField |
-         * import('$lib/typedefs/public').SelectField}
-         */ (fieldConfig).multiple
-      : undefined,
+    hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
   );
   const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
   const collection = $derived($entryDraft?.collection);

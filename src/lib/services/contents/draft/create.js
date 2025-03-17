@@ -12,13 +12,38 @@ import { getDefaultValue as getDefaultKvValue } from '$lib/services/contents/wid
 import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/widgets/uuid/helper';
 
 /**
+ * @import {
+ * EntryDraft,
+ * FileCollection,
+ * FlattenedEntryContent,
+ * LocaleCode,
+ * LocaleContentMap,
+ * LocaleExpanderMap,
+ * NormalizedCollection,
+ * NormalizedCollectionFile,
+ * } from '$lib/typedefs/private';
+ * @import {
+ * CodeField,
+ * DateTimeField,
+ * Field,
+ * FieldKeyPath,
+ * HiddenField,
+ * KeyValueField,
+ * ListField,
+ * NumberField,
+ * ObjectField,
+ * RelationField,
+ * SelectField,
+ * UuidField,
+ * } from '$lib/typedefs/public';
+ */
+
+/**
  * Parse the given dynamic default value.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs/public').Field} args.fieldConfig Field configuration.
- * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Field key path, e.g.
- * `author.name`.
- * @param {import('$lib/typedefs/private').FlattenedEntryContent} args.newContent An object holding
- * a content key-value map.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
+ * @param {FlattenedEntryContent} args.newContent An object holding a content key-value map.
  * @param {string} args.value Dynamic default value.
  * @see https://decapcms.org/docs/dynamic-default-values/
  * @todo Validate the value carefully before adding it to the content map.
@@ -44,12 +69,7 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
   }
 
   if (widgetName === 'list') {
-    const {
-      field: subField,
-      fields: subFields,
-      types,
-    } = /** @type {import('$lib/typedefs/public').ListField} */ (fieldConfig);
-
+    const { field: subField, fields: subFields, types } = /** @type {ListField} */ (fieldConfig);
     const hasSubFields = !!subField || !!subFields || !!types;
 
     // Handle simple list
@@ -68,8 +88,7 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
   }
 
   if (widgetName === 'number') {
-    const { value_type: valueType = 'int' } =
-      /** @type {import('$lib/typedefs/public').NumberField} */ (fieldConfig);
+    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
     if (valueType === 'int' || valueType === 'float') {
       const val = valueType === 'int' ? Number.parseInt(value, 10) : Number.parseFloat(value);
@@ -85,13 +104,7 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
   }
 
   if (widgetName === 'relation' || widgetName === 'select') {
-    const {
-      multiple = false,
-    } = //
-      /**
-       * @type {import('$lib/typedefs/public').RelationField |
-       * import('$lib/typedefs/public').SelectField}
-       */ (fieldConfig);
+    const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
     if (multiple) {
       fillList();
@@ -107,24 +120,23 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
 /**
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
- * @param {import('$lib/typedefs/public').Field[]} fields Field list of a collection.
- * @param {import('$lib/typedefs/private').LocaleCode} locale Locale.
+ * @param {Field[]} fields Field list of a collection.
+ * @param {LocaleCode} locale Locale.
  * @param {Record<string, string>} [dynamicValues] Dynamic default values.
- * @returns {import('$lib/typedefs/private').FlattenedEntryContent} Flattened entry content for
- * creating a new draft content or adding a new list item.
+ * @returns {FlattenedEntryContent} Flattened entry content for creating a new draft content or
+ * adding a new list item.
  * @todo Make this more diligent.
  */
 export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
-  /** @type {import('$lib/typedefs/private').FlattenedEntryContent} */
+  /** @type {FlattenedEntryContent} */
   const newContent = {};
 
   /**
    * Get the default value for the given field. Check if a dynamic default value is specified, then
    * look for the field configuration’s `default` property.
    * @param {object} args Arguments.
-   * @param {import('$lib/typedefs/public').Field} args.fieldConfig Field configuration.
-   * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Field key path, e.g.
-   * `author.name`.
+   * @param {Field} args.fieldConfig Field configuration.
+   * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
    */
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
     if (keyPath in dynamicValues) {
@@ -138,9 +150,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
 
     if (widgetName === 'list') {
-      const { fields: subFields, types } = /** @type {import('$lib/typedefs/public').ListField} */ (
-        fieldConfig
-      );
+      const { fields: subFields, types } = /** @type {ListField} */ (fieldConfig);
 
       if (!isArray) {
         newContent[keyPath] = [];
@@ -166,8 +176,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
     }
 
     if (widgetName === 'object') {
-      const { fields: subFields, types } =
-        /** @type {import('$lib/typedefs/public').ObjectField} */ (fieldConfig);
+      const { fields: subFields, types } = /** @type {ObjectField} */ (fieldConfig);
 
       if (!required || Array.isArray(types)) {
         // Enable validation
@@ -195,7 +204,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
         newContent,
         getDefaultCodeValue({
           // eslint-disable-next-line object-shorthand
-          fieldConfig: /** @type {import('$lib/typedefs/public').CodeField} */ (fieldConfig),
+          fieldConfig: /** @type {CodeField} */ (fieldConfig),
           keyPath,
         }),
       );
@@ -204,13 +213,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
     }
 
     if (widgetName === 'relation' || widgetName === 'select') {
-      const {
-        multiple = false,
-      } = //
-        /**
-         * @type {import('$lib/typedefs/public').RelationField |
-         * import('$lib/typedefs/public').SelectField}
-         */ (fieldConfig);
+      const { multiple = false } = /** @type {RelationField |  SelectField} */ (fieldConfig);
 
       if (multiple) {
         if (isArray) {
@@ -226,30 +229,23 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
     }
 
     if (widgetName === 'datetime') {
-      newContent[keyPath] = getDefaultDateTimeValue(
-        /** @type {import('$lib/typedefs/public').DateTimeField} */ (fieldConfig),
-      );
+      newContent[keyPath] = getDefaultDateTimeValue(/** @type {DateTimeField} */ (fieldConfig));
 
       return;
     }
 
     if (widgetName === 'hidden') {
-      newContent[keyPath] = getDefaultHiddenValue(
-        /** @type {import('$lib/typedefs/public').HiddenField} */ (fieldConfig),
-        locale,
-      );
+      newContent[keyPath] = getDefaultHiddenValue(/** @type {HiddenField} */ (fieldConfig), locale);
 
       return;
     }
 
     if (widgetName === 'keyvalue') {
-      Object.entries(
-        getDefaultKvValue(
-          /** @type {import('$lib/typedefs/public').KeyValueField} */ (fieldConfig),
-        ),
-      ).forEach(([key, val]) => {
-        newContent[`${keyPath}.${key}`] = String(val);
-      });
+      Object.entries(getDefaultKvValue(/** @type {KeyValueField} */ (fieldConfig))).forEach(
+        ([key, val]) => {
+          newContent[`${keyPath}.${key}`] = String(val);
+        },
+      );
 
       return;
     }
@@ -271,12 +267,12 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
  * Create a Proxy that automatically copies a field value to other locale if the field’s i18n
  * strategy is “duplicate.”.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs/private').EntryDraft | any} args.draft Entry draft.
+ * @param {EntryDraft | any} args.draft Entry draft.
  * @param {string} args.locale Source locale.
  * @param {object} [args.target] Target object.
- * @param {() => import('$lib/typedefs/private').FlattenedEntryContent} [args.getValueMap] Optional
- * function to get an object holding the current entry values. It will be used for the `valueMap`
- * argument of {@link getFieldConfig}. If omitted, the proxy target will be used instead.
+ * @param {() => FlattenedEntryContent} [args.getValueMap] Optional function to get an object
+ * holding the current entry values. It will be used for the `valueMap` argument of
+ * {@link getFieldConfig}. If omitted, the proxy target will be used instead.
  * @returns {any} Created proxy.
  */
 export const createProxy = ({
@@ -288,7 +284,7 @@ export const createProxy = ({
   const collection = getCollection(collectionName);
 
   const collectionFile = fileName
-    ? /** @type {import('$lib/typedefs/private').FileCollection} */ (collection)?._fileMap[fileName]
+    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
     : undefined;
 
   if (!collection || (fileName && !collectionFile)) {
@@ -302,7 +298,7 @@ export const createProxy = ({
 
   return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
-    set: (obj, /** @type {import('$lib/typedefs/public').FieldKeyPath} */ keyPath, value) => {
+    set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
       if (obj[keyPath] !== value) {
         obj[keyPath] = value;
       }
@@ -354,8 +350,7 @@ export const createProxy = ({
             // Support special case for the Relation field: if the `value_field` option is something
             // like `{{locale}}/{{slug}}`, replace the source locale in the value with target locale
             if (fieldConfig.widget === 'relation') {
-              const { value_field: valueField } =
-                /** @type {import('$lib/typedefs/public').RelationField} */ (fieldConfig);
+              const { value_field: valueField } = /** @type {RelationField} */ (fieldConfig);
 
               if (valueField.startsWith('{{locale}}/')) {
                 value = value.replace(new RegExp(`^${sourceLocale}/`), `${targetLocale}/`);
@@ -377,15 +372,13 @@ export const createProxy = ({
 /**
  * Create an entry draft.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs/private').NormalizedCollection} args.collection Collection that the
- * entry belongs to.
- * @param {import('$lib/typedefs/private').NormalizedCollectionFile} [args.collectionFile]
- * Collection file. File collection only.
+ * @param {NormalizedCollection} args.collection Collection that the entry belongs to.
+ * @param {NormalizedCollectionFile} [args.collectionFile] Collection file. File collection only.
  * @param {any} [args.originalEntry] Entry to be edited, or a partial {@link Entry} object.
  * @param {Record<string, string>} [args.dynamicValues] Dynamic default values for a new entry
  * passed through URL parameters.
- * @param {import('$lib/typedefs/private').LocaleExpanderMap} [args.expanderStates] Expander UI
- * state. Can be set when resetting an entry draft.
+ * @param {LocaleExpanderMap} [args.expanderStates] Expander UI state. Can be set when resetting an
+ * entry draft.
  */
 export const createDraft = ({
   collection,
@@ -421,7 +414,7 @@ export const createDraft = ({
       ? Object.fromEntries(allLocales.map((locale) => [locale, locales?.[locale]?.slug]))
       : { _: locales?.[defaultLocale].slug };
 
-  /** @type {import('$lib/typedefs/private').LocaleContentMap} */
+  /** @type {LocaleContentMap} */
   const originalValues = Object.fromEntries(
     enabledLocales.map((locale) =>
       isNew
@@ -465,7 +458,7 @@ export const createDraft = ({
  * Duplicate the current entry draft.
  */
 export const duplicateDraft = () => {
-  const draft = /** @type {import('$lib/typedefs/private').EntryDraft} */ (get(entryDraft));
+  const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collectionName, fileName, collection, collectionFile, currentValues, validities } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
 
@@ -483,9 +476,7 @@ export const duplicateDraft = () => {
 
       if (fieldConfig?.widget === 'uuid') {
         if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
-          valueMap[keyPath] = getDefaultUuidValue(
-            /** @type {import('$lib/typedefs/public').UuidField} */ (fieldConfig),
-          );
+          valueMap[keyPath] = getDefaultUuidValue(/** @type {UuidField} */ (fieldConfig));
         }
       }
 
@@ -502,7 +493,7 @@ export const duplicateDraft = () => {
 
         if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
           valueMap[keyPath] = getDefaultHiddenValue(
-            /** @type {import('$lib/typedefs/public').HiddenField} */ (fieldConfig),
+            /** @type {HiddenField} */ (fieldConfig),
             locale,
           );
         }

@@ -10,12 +10,17 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { ObjectField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').ObjectField} fieldConfig Field configuration.
+   * @property {ObjectField} fieldConfig Field configuration.
    * @property {object | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

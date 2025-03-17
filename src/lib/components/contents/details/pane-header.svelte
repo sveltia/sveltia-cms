@@ -14,12 +14,15 @@
   import { prefs } from '$lib/services/user/prefs';
 
   /**
+   * @import { Writable } from 'svelte/store';
+   * @import { EntryEditorPane } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {string} id The wrapper element’s `id` attribute.
-   * @property {import('svelte/store').Writable<import('$lib/typedefs/private').EntryEditorPane |
-   * null>} thisPane This pane’s mode and locale.
-   * @property {import('svelte/store').Writable<import('$lib/typedefs/private').EntryEditorPane |
-   * null>} [thatPane] Another pane’s mode and locale.
+   * @property {Writable<?EntryEditorPane>} thisPane This pane’s mode and locale.
+   * @property {Writable<?EntryEditorPane>} [thatPane] Another pane’s mode and locale.
    */
 
   /** @type {Props} */

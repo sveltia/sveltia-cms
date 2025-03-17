@@ -7,9 +7,14 @@
   import { editors } from '$lib/components/contents/details/widgets';
 
   /**
+   * @import { LocaleCode } from '$lib/typedefs/private';
+   * @import { Field, FieldKeyPath } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {string} label Field label.
-   * @property {import('$lib/typedefs/public').Field[]} fields Subfield definitions.
+   * @property {Field[]} fields Subfield definitions.
    * @property {Record<string, any>} values Value map.
    * @property {(event: CustomEvent) => void} [onChange] Custom `change` event handler.
    */
@@ -26,9 +31,9 @@
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
-  /** @type {import('$lib/typedefs/private').LocaleCode} */
+  /** @type {LocaleCode} */
   let locale = $state('');
-  /** @type {import('$lib/typedefs/public').FieldKeyPath} */
+  /** @type {FieldKeyPath} */
   let keyPath = $state('');
   /** @type {Record<string, any>} */
   const inputValues = $state({});

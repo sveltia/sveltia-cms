@@ -16,11 +16,24 @@ import {
 } from '$lib/services/assets';
 
 /**
+ * @import { Readable, Writable } from 'svelte/store';
+ * @import {
+ * Asset,
+ * AssetListView,
+ * BackendService,
+ * FilteringConditions,
+ * GroupingConditions,
+ * NormalizedSiteConfig,
+ * SortingConditions,
+ * } from '$lib/typedefs/private';
+ */
+
+/**
  * Whether to show the Upload Assets dialog.
  */
 export const showUploadAssetsDialog = writable(false);
 /**
- * @type {import('svelte/store').Readable<boolean>}
+ * @type {Readable<boolean>}
  */
 export const showUploadAssetsConfirmDialog = derived(
   [uploadingAssets],
@@ -56,8 +69,9 @@ export const getFolderLabelByCollection = (collectionName) => {
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 export const getFolderLabelByPath = (folderPath) => {
-  const { media_folder: defaultMediaFolder } =
-    /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig));
+  const { media_folder: defaultMediaFolder } = /** @type {NormalizedSiteConfig} */ (
+    get(siteConfig)
+  );
 
   if (!folderPath) {
     return getFolderLabelByCollection('*');
@@ -78,9 +92,9 @@ export const getFolderLabelByPath = (folderPath) => {
 
 /**
  * Sort the given assets.
- * @param {import('$lib/typedefs/private').Asset[]} assets Asset list.
- * @param {import('$lib/typedefs/private').SortingConditions} [conditions] Sorting conditions.
- * @returns {import('$lib/typedefs/private').Asset[]} Sorted asset list.
+ * @param {Asset[]} assets Asset list.
+ * @param {SortingConditions} [conditions] Sorting conditions.
+ * @returns {Asset[]} Sorted asset list.
  */
 const sortAssets = (assets, { key, order } = {}) => {
   if (!key || !order) {
@@ -96,7 +110,7 @@ const sortAssets = (assets, { key, order } = {}) => {
 
   /**
    * Get an asset’s property value.
-   * @param {import('$lib/typedefs/private').Asset} asset Asset.
+   * @param {Asset} asset Asset.
    * @returns {any} Value.
    */
   const getValue = (asset) => {
@@ -143,9 +157,9 @@ const sortAssets = (assets, { key, order } = {}) => {
 
 /**
  * Filter the given assets.
- * @param {import('$lib/typedefs/private').Asset[]} assets Asset list.
- * @param {import('$lib/typedefs/private').FilteringConditions} [conditions] Filtering conditions.
- * @returns {import('$lib/typedefs/private').Asset[]} Filtered asset list.
+ * @param {Asset[]} assets Asset list.
+ * @param {FilteringConditions} [conditions] Filtering conditions.
+ * @returns {Asset[]} Filtered asset list.
  */
 const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) => {
   if (!field) {
@@ -171,10 +185,10 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
 
 /**
  * Group the given assets.
- * @param {import('$lib/typedefs/private').Asset[]} assets Asset list.
- * @param {import('$lib/typedefs/private').GroupingConditions} [conditions] Grouping conditions.
- * @returns {Record<string, import('$lib/typedefs/private').Asset[]>} Grouped assets, where key is
- * a group label and value is an asset list.
+ * @param {Asset[]} assets Asset list.
+ * @param {GroupingConditions} [conditions] Grouping conditions.
+ * @returns {Record<string, Asset[]>} Grouped assets, where key is a group label and value is an
+ * asset list.
  */
 const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefined }) => {
   if (!field) {
@@ -182,7 +196,7 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
   }
 
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
-  /** @type {Record<string, import('$lib/typedefs/private').Asset[]>} */
+  /** @type {Record<string, Asset[]>} */
   const groups = {};
   const otherKey = get(_)('other');
 
@@ -212,7 +226,7 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
 
 /**
  * Default view settings for the selected asset collection.
- * @type {import('$lib/typedefs/private').AssetListView}
+ * @type {AssetListView}
  */
 const defaultView = {
   type: 'grid',
@@ -225,20 +239,19 @@ const defaultView = {
 
 /**
  * View settings for the selected asset collection.
- * @type {import('svelte/store').Writable<import('$lib/typedefs/private').AssetListView>}
+ * @type {Writable<AssetListView>}
  */
 export const currentView = writable({ type: 'grid', showInfo: true });
 
 /**
  * View settings for all the asset collection.
- * @type {import('svelte/store').Writable<Record<string,
- * import('$lib/typedefs/private').AssetListView> | undefined>}
+ * @type {Writable<Record<string, AssetListView> | undefined>}
  */
 const assetListSettings = writable();
 
 /**
  * List of sort fields for the selected asset collection.
- * @type {import('svelte/store').Readable<{ key: string, label: string }[]>}
+ * @type {Readable<{ key: string, label: string }[]>}
  */
 export const sortFields = derived([allAssets, appLocale], ([_allAssets], set) => {
   const _sortFields = ['name'];
@@ -255,7 +268,7 @@ export const sortFields = derived([allAssets, appLocale], ([_allAssets], set) =>
 });
 /**
  * List of all the assets for the selected asset collection.
- * @type {import('svelte/store').Readable<import('$lib/typedefs/private').Asset[]>}
+ * @type {Readable<Asset[]>}
  */
 export const listedAssets = derived(
   [allAssets, selectedAssetFolder],
@@ -269,14 +282,12 @@ export const listedAssets = derived(
 );
 /**
  * Sorted, filtered and grouped assets for the selected asset collection.
- * @type {import('svelte/store').Readable<Record<string, import('$lib/typedefs/private').Asset[]>>}
+ * @type {Readable<Record<string, Asset[]>>}
  */
 export const assetGroups = derived(
   [listedAssets, currentView],
   ([_listedAssets, _currentView], set) => {
-    /**
-     * @type {import('$lib/typedefs/private').Asset[]}
-     */
+    /** @type {Asset[]} */
     let assets = [..._listedAssets];
 
     assets = sortAssets(assets, _currentView.sort);
@@ -292,7 +303,7 @@ export const assetGroups = derived(
 
 /**
  * Initialize {@link assetListSettings} and relevant subscribers.
- * @param {import('$lib/typedefs/private').BackendService} _backend Backend service.
+ * @param {BackendService} _backend Backend service.
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};

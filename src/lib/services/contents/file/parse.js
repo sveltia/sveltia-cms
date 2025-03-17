@@ -6,6 +6,11 @@ import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/conte
 import { getCollection } from '$lib/services/contents/collection';
 
 /**
+ * @import { BaseEntryListItem, EntryCollection, FileCollection } from '$lib/typedefs/private';
+ * @import { FrontMatterFormat } from '$lib/typedefs/public';
+ */
+
+/**
  * Parse a JSON document using the built-in method.
  * @param {string} str JSON document.
  * @returns {any} Parsed object.
@@ -28,7 +33,7 @@ const parseYAML = (str) => YAML.parse(str);
 /**
  * Detect the Markdown front matter serialization format by checking a delimiter in the content.
  * @param {string} text File content.
- * @returns {import('$lib/typedefs/public').FrontMatterFormat} Determined format.
+ * @returns {FrontMatterFormat} Determined format.
  */
 const detectFrontMatterFormat = (text) => {
   if (text.startsWith('+++')) {
@@ -44,7 +49,7 @@ const detectFrontMatterFormat = (text) => {
 
 /**
  * Parse raw content with given file details.
- * @param {import('$lib/typedefs/private').BaseEntryListItem} entry Entry file list item.
+ * @param {BaseEntryListItem} entry Entry file list item.
  * @returns {Promise<any>} Parsed content.
  * @throws {Error} When the content could not be parsed.
  */
@@ -52,7 +57,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
   const collection = getCollection(collectionName);
 
   const collectionFile = fileName
-    ? /** @type {import('$lib/typedefs/private').FileCollection} */ (collection)?._fileMap[fileName]
+    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
     : undefined;
 
   if (!collection) {
@@ -68,7 +73,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
 
   const {
     _file: { format: _format, fmDelimiters },
-  } = collectionFile ?? /** @type {import('$lib/typedefs/private').EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
   const format = _format === 'frontmatter' ? detectFrontMatterFormat(text) : _format;
   const customParser = customFileFormats[format]?.parser;

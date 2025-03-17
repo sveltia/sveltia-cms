@@ -8,12 +8,17 @@
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { SelectField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').SelectField} fieldConfig Field configuration.
+   * @property {SelectField} fieldConfig Field configuration.
    * @property {string | string[] | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

@@ -3,8 +3,14 @@ import { get } from 'svelte/store';
 import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 /**
+ * @import { Writable } from 'svelte/store';
+ * @import { EntryDraft, LocaleCode } from '$lib/typedefs/private';
+ * @import { FieldKeyPath, KeyValueField } from '$lib/typedefs/public';
+ */
+
+/**
  * Get the default value for a KeyValue field.
- * @param {import('$lib/typedefs/public').KeyValueField} fieldConfig Field configuration.
+ * @param {KeyValueField} fieldConfig Field configuration.
  * @returns {Record<string, string>} Default value.
  */
 export const getDefaultValue = (fieldConfig) => {
@@ -24,10 +30,9 @@ export const getDefaultValue = (fieldConfig) => {
 /**
  * Get key-value pairs from the draft store.
  * @param {object} args Arguments.
- * @param {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>
- * } args.entryDraft Draft store.
- * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Field key path.
- * @param {import('$lib/typedefs/private').LocaleCode} args.locale Current pane’s locale.
+ * @param {Writable<EntryDraft>} args.entryDraft Draft store.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {LocaleCode} args.locale Current pane’s locale.
  * @returns {[string, string][]} Key-value pairs.
  */
 export const getPairs = ({ entryDraft, keyPath, locale }) =>
@@ -58,11 +63,10 @@ export const validatePairs = ({ pairs, edited }) =>
 /**
  * Save the key-value pairs to the draft store.
  * @param {object} args Arguments.
- * @param {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>
- *} args.entryDraft Draft store.
- * @param {import('$lib/typedefs/public').KeyValueField} args.fieldConfig Field configuration.
- * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Field key path.
- * @param {import('$lib/typedefs/private').LocaleCode} args.locale Current pane’s locale.
+ * @param {Writable<EntryDraft>} args.entryDraft Draft store.
+ * @param {KeyValueField} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {LocaleCode} args.locale Current pane’s locale.
  * @param {[string, string][]} args.pairs Key-value pairs.
  */
 export const savePairs = ({ entryDraft, keyPath, locale, fieldConfig, pairs }) => {

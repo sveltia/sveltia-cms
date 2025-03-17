@@ -6,6 +6,10 @@
   import AssetResultItem from '$lib/components/search/asset-result-item.svelte';
   import EntryResultItem from '$lib/components/search/entry-result-item.svelte';
   import { searchResults, searchTerms } from '$lib/services/search';
+
+  /**
+   * @import { Asset, Entry } from '$lib/typedefs/private';
+   */
 </script>
 
 <div role="none" class="wrapper">
@@ -24,7 +28,7 @@
           >
             {#key $searchTerms}
               <InfiniteScroll items={$searchResults.entries} itemKey="id">
-                {#snippet renderItem(/** @type {import('$lib/typedefs/private').Entry} */ entry)}
+                {#snippet renderItem(/** @type {Entry} */ entry)}
                   <EntryResultItem {entry} />
                 {/snippet}
               </InfiniteScroll>
@@ -46,7 +50,7 @@
           >
             {#key $searchTerms}
               <InfiniteScroll items={$searchResults.assets} itemKey="path">
-                {#snippet renderItem(/** @type {import('$lib/typedefs/private').Asset} */ asset)}
+                {#snippet renderItem(/** @type {Asset} */ asset)}
                   <AssetResultItem {asset} />
                 {/snippet}
               </InfiniteScroll>

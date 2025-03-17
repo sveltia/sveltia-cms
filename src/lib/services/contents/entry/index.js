@@ -8,10 +8,20 @@ import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 
 /**
+ * @import {
+ * Entry,
+ * LocaleCode,
+ * NormalizedCollection,
+ * NormalizedCollectionFile,
+ * } from '$lib/typedefs/private';
+ * @import { DateTimeField } from '$lib/typedefs/public';
+ */
+
+/**
  * Get a list of collections the given entry belongs to. One entry can theoretically appear in
  * multiple collections depending on the configuration, so that the result is an array.
- * @param {import('$lib/typedefs/private').Entry} entry Entry.
- * @returns {import('$lib/typedefs/private').NormalizedCollection[]} Collections.
+ * @param {Entry} entry Entry.
+ * @returns {NormalizedCollection[]} Collections.
  */
 export const getAssociatedCollections = (entry) =>
   getEntryFoldersByPath(Object.values(entry.locales)[0].path)
@@ -20,11 +30,10 @@ export const getAssociatedCollections = (entry) =>
 
 /**
  * Get the given entry file’s web-accessible URL on the live site.
- * @param {import('$lib/typedefs/private').Entry} entry Entry.
- * @param {import('$lib/typedefs/private').LocaleCode} locale Locale.
- * @param {import('$lib/typedefs/private').NormalizedCollection} collection Collection.
- * @param {import('$lib/typedefs/private').NormalizedCollectionFile} [collectionFile] Collection
- * file. File collection only.
+ * @param {Entry} entry Entry.
+ * @param {LocaleCode} locale Locale.
+ * @param {NormalizedCollection} collection Collection.
+ * @param {NormalizedCollectionFile} [collectionFile] Collection file. File collection only.
  * @returns {string | undefined} URL on the live site.
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
@@ -55,8 +64,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
       return undefined;
     }
 
-    const { format, picker_utc: utc = false } =
-      /** @type {import('$lib/typedefs/public').DateTimeField} */ (fieldConfig);
+    const { format, picker_utc: utc = false } = /** @type {DateTimeField} */ (fieldConfig);
 
     dateTimeParts = getDateTimeParts({
       date: (utc ? moment.utc : moment)(fieldValue, format).toDate(),
@@ -83,8 +91,8 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
 
 /**
  * Get the given entry file’s web-accessible URL on the repository.
- * @param {import('$lib/typedefs/private').Entry} entry Entry.
- * @param {import('$lib/typedefs/private').LocaleCode} locale Locale.
+ * @param {Entry} entry Entry.
+ * @param {LocaleCode} locale Locale.
  * @returns {string} URL on the repository.
  */
 export const getEntryRepoBlobURL = (entry, locale) =>

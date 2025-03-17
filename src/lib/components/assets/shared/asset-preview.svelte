@@ -4,10 +4,14 @@
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets';
 
   /**
+   * @import { Asset, AssetKind } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').AssetKind} kind Asset type.
+   * @property {AssetKind} kind Asset type.
    * @property {'lazy' | 'eager'} [loading] Loading method.
-   * @property {import('$lib/typedefs/private').Asset} [asset] Asset.
+   * @property {Asset} [asset] Asset.
    * @property {string} [src] Source URL.
    * @property {'tile' | 'icon'} [variant] Style variant.
    * @property {boolean} [blurBackground] Whether to show a blurred background (like Slack’s media

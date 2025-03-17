@@ -2,6 +2,10 @@ import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
 /**
+ * @import { ExternalAsset, MediaLibraryService } from '$lib/typedefs/private';
+ */
+
+/**
  * @see https://pixabay.com/api/docs/#api_search_images
  */
 const supportedLocales = [
@@ -40,7 +44,7 @@ const endpoint = 'https://pixabay.com/api';
  * @param {string} query Search query.
  * @param {object} options Options.
  * @param {string} options.apiKey API key.
- * @returns {Promise<import('$lib/typedefs/private').ExternalAsset[]>} Assets.
+ * @returns {Promise<ExternalAsset[]>} Assets.
  * @see https://pixabay.com/api/docs/
  * @todo Support video files.
  */
@@ -105,7 +109,7 @@ const search = async (query, { apiKey }) => {
 };
 
 /**
- * @type {import('$lib/typedefs/private').MediaLibraryService}
+ * @type {MediaLibraryService}
  */
 export default {
   serviceType: 'stock_photos',

@@ -3,6 +3,15 @@ import { siteConfig } from '$lib/services/config';
 import { user } from '$lib/services/user';
 
 /**
+ * @import {
+ * CommitChangesOptions,
+ * FileChange,
+ * NormalizedSiteConfig,
+ * User,
+ * } from '$lib/typedefs/private';
+ */
+
+/**
  * Default commit message templates.
  * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
  */
@@ -17,8 +26,8 @@ const defaultCommitMessages = {
 
 /**
  * Create a Git commit message.
- * @param {import('$lib/typedefs/private').FileChange[]} changes File changes to be saved.
- * @param {import('$lib/typedefs/private').CommitChangesOptions} options Commit options.
+ * @param {FileChange[]} changes File changes to be saved.
+ * @param {CommitChangesOptions} options Commit options.
  * @returns {string} Formatted message.
  */
 export const createCommitMessage = (
@@ -30,9 +39,9 @@ export const createCommitMessage = (
       commit_messages: customCommitMessages = {},
       automatic_deployments: autoDeployEnabled,
     },
-  } = /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig));
+  } = /** @type {NormalizedSiteConfig} */ (get(siteConfig));
 
-  const { login = '', name = '' } = /** @type {import('$lib/typedefs/private').User} */ (get(user));
+  const { login = '', name = '' } = /** @type {User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection?.label_singular || collection?.label || collection?.name || '';

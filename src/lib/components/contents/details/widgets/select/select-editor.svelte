@@ -10,13 +10,18 @@
   import SelectSingle from '$lib/components/contents/details/widgets/select/select-single.svelte';
 
   /**
+   * @import { SelectFieldSelectorOption, WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { SelectField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').SelectField} fieldConfig Field configuration.
+   * @property {SelectField} fieldConfig Field configuration.
    * @property {any} currentValue Field value.
    * @property {boolean} [sortOptions] Whether to sort the options by label.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -37,7 +42,7 @@
     multiple,
   } = $derived(fieldConfig);
   const Select = $derived(multiple ? SelectMultiple : SelectSingle);
-  /** @type {import('$lib/typedefs/private').SelectFieldSelectorOption[]} */
+  /** @type {SelectFieldSelectorOption[]} */
   const options = $derived.by(() => {
     const _options = fieldOptions.map((option) =>
       isObject(option) ? /** @type {any} */ (option) : { label: option, value: option },

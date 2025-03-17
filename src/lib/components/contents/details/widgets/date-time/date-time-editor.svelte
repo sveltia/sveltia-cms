@@ -17,12 +17,17 @@
   } from '$lib/services/contents/widgets/date-time/helper';
 
   /**
+   * @import { WidgetEditorProps } from '$lib/typedefs/private';
+   * @import { DateTimeField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').DateTimeField} fieldConfig Field configuration.
+   * @property {DateTimeField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
+  /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

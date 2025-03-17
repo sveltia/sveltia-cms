@@ -16,9 +16,12 @@
   import { user } from '$lib/services/user';
 
   /**
+   * @import { SiteConfig } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').SiteConfig} [config] Configuration specified with
-   * manual initialization.
+   * @property {SiteConfig} [config] Configuration specified with manual initialization.
    */
 
   /** @type {Props} */

@@ -13,12 +13,16 @@
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { ListField } from '$lib/typedefs/public';
+   */
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').ListField} fieldConfig Field configuration.
+   * @property {ListField} fieldConfig Field configuration.
    * @property {string[] | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

@@ -7,12 +7,17 @@
   import { _ } from 'svelte-i18n';
 
   /**
+   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { BooleanField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').BooleanField} fieldConfig Field configuration.
+   * @property {BooleanField} fieldConfig Field configuration.
    * @property {boolean | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue = false,

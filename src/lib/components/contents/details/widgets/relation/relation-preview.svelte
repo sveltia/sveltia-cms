@@ -10,12 +10,17 @@
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
+   * @import { Entry, WidgetPreviewProps } from '$lib/typedefs/private';
+   * @import { RelationField } from '$lib/typedefs/public';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/public').RelationField} fieldConfig Field configuration.
+   * @property {RelationField} fieldConfig Field configuration.
    * @property {string | string[] | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
+  /** @type {WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -34,9 +39,7 @@
   const listFormatter = $derived(getListFormatter(locale));
   const refEntries = $derived(
     fileName
-      ? /** @type {import('$lib/typedefs/private').Entry[]} */ (
-          [getFile(collectionName, fileName)].filter(Boolean)
-        )
+      ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
       : getEntriesByCollection(collectionName),
   );
   const options = $derived(getOptions(locale, fieldConfig, refEntries));

@@ -8,6 +8,16 @@ import { entryDraft, entryDraftModified, i18nAutoDupEnabled } from '$lib/service
 import { createProxy } from '$lib/services/contents/draft/create';
 
 /**
+ * @import { Writable } from 'svelte/store';
+ * @import {
+ * EntryDraft,
+ * EntryDraftBackup,
+ * LocaleContentMap,
+ * LocaleSlugMap,
+ * } from '$lib/typedefs/private';
+ */
+
+/**
  * @type {number | NodeJS.Timeout}
  */
 let backupTimeout = 0;
@@ -26,11 +36,11 @@ const backupToastDefaultState = {
 };
 
 /**
- * @type {import('svelte/store').Writable<{ show: boolean, timestamp?: Date, resolve?: Function }>}
+ * @type {Writable<{ show: boolean, timestamp?: Date, resolve?: Function }>}
  */
 export const restoreDialogState = writable({ show: false });
 /**
- * @type {import('svelte/store').Writable<{ saved: boolean, restored: boolean, deleted: boolean }>}
+ * @type {Writable<{ saved: boolean, restored: boolean, deleted: boolean }>}
  */
 export const backupToastState = writable({ ...backupToastDefaultState });
 
@@ -48,10 +58,10 @@ export const deleteBackup = async (collectionName, slug = '') => {
  * Get a draft backup stored in IndexedDB.
  * @param {string} collectionName Collection name.
  * @param {string} [slug] Entry slug. Existing entry only.
- * @returns {Promise<import('$lib/typedefs/private').EntryDraftBackup | null>} Backup.
+ * @returns {Promise<EntryDraftBackup | null>} Backup.
  */
 export const getBackup = async (collectionName, slug = '') => {
-  /** @type {import('$lib/typedefs/private').EntryDraftBackup | undefined} */
+  /** @type {EntryDraftBackup | undefined} */
   const backup = await backupDB?.get([collectionName, slug]);
 
   if (!backup) {
@@ -71,7 +81,7 @@ export const getBackup = async (collectionName, slug = '') => {
 
 /**
  * Backup the entry draft to IndexedDB.
- * @param {import('$lib/typedefs/private').EntryDraft} draft Draft.
+ * @param {EntryDraft} draft Draft.
  */
 export const saveBackup = async (draft) => {
   const {
@@ -86,19 +96,15 @@ export const saveBackup = async (draft) => {
   const slug = originalEntry?.slug || '';
 
   if (get(entryDraftModified)) {
-    /** @type {import('$lib/typedefs/private').EntryDraftBackup} */
+    /** @type {EntryDraftBackup} */
     const backup = {
       timestamp: new Date(),
       siteConfigVersion: /** @type {string} */ (get(siteConfigVersion)),
       collectionName,
       slug,
       currentLocales,
-      currentSlugs: /** @type {import('$lib/typedefs/private').LocaleSlugMap} */ (
-        toRaw(currentSlugs)
-      ),
-      currentValues: /** @type {import('$lib/typedefs/private').LocaleContentMap} */ (
-        toRaw(currentValues)
-      ),
+      currentSlugs: /** @type {LocaleSlugMap} */ (toRaw(currentSlugs)),
+      currentValues: /** @type {LocaleContentMap} */ (toRaw(currentValues)),
       files,
     };
 

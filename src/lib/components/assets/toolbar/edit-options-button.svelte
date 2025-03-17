@@ -14,8 +14,12 @@
   import { prefs } from '$lib/services/user/prefs';
 
   /**
+   * @import { Asset, AssetDetails } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs/private').Asset} [asset] Selected asset.
+   * @property {Asset} [asset] Selected asset.
    */
 
   /** @type {Props} */
@@ -25,7 +29,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {import('$lib/typedefs/private').AssetDetails} */
+  /** @type {AssetDetails} */
   let details = $state({ ...defaultAssetDetails });
 
   const { publicURL, repoBlobURL } = $derived(details);

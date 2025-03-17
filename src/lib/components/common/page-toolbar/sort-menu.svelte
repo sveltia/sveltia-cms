@@ -4,9 +4,13 @@
   import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
   /**
+   * @import { Writable } from 'svelte/store';
+   * @import { AssetListView, EntryListView, SortOrder } from '$lib/typedefs/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {import('svelte/store').Writable<import('$lib/typedefs/private').EntryListView |
-   * import('$lib/typedefs/private').AssetListView>} currentView Current view details.
+   * @property {Writable<EntryListView | AssetListView>} currentView Current view details.
    * @property {string} aria-controls The `aria-controls` attribute for the menu.
    * @property {string} [label] Menu button label.
    * @property {boolean} [disabled] Whether to disable the button.
@@ -26,7 +30,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {import('$lib/typedefs/private').SortOrder[]} */
+  /** @type {SortOrder[]} */
   const sortOrders = ['ascending', 'descending'];
   const dateFields = ['date', 'commit_date'];
 </script>
