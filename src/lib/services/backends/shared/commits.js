@@ -45,6 +45,7 @@ export const createCommitMessage = (
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection?.label_singular || collection?.label || collection?.name || '';
+  // @ts-ignore
   let message = customCommitMessages[commitType] || defaultCommitMessages[commitType] || '';
 
   if (['create', 'update', 'delete'].includes(commitType)) {

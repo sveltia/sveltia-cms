@@ -60,6 +60,7 @@
       // Include `code-block` implemented as a block type
       ...(_editorComponents.includes('code-block') ? ['code-block'] : []),
     ]
+      // @ts-ignore
       .map((name) => buttonNameMap[name])
       .filter(Boolean),
   );

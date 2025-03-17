@@ -8,7 +8,7 @@ import { siteConfig } from '$lib/services/config';
  * @import {
  * Collection,
  * CollectionFile,
- * I18nConfig,
+ * I18nOptions,
  * StandardLocaleCode,
  * } from '$lib/typedefs/public';
  */
@@ -39,11 +39,11 @@ export const defaultI18nConfig = {
  */
 export const getI18nConfig = (collection, file) => {
   const _siteConfig = /** @type {NormalizedSiteConfig} */ (get(siteConfig));
-  /** @type {I18nConfig | undefined} */
+  /** @type {I18nOptions | undefined} */
   let config;
 
   if (isObject(_siteConfig.i18n)) {
-    config = /** @type {I18nConfig} */ (_siteConfig.i18n);
+    config = /** @type {I18nOptions} */ (_siteConfig.i18n);
 
     if (collection.i18n) {
       if (isObject(collection.i18n)) {
@@ -74,7 +74,7 @@ export const getI18nConfig = (collection, file) => {
       key: canonicalSlugKey = 'translationKey',
       value: canonicalSlugTemplate = '{{slug}}',
     } = {},
-  } = /** @type {I18nConfig} */ (config ?? {});
+  } = /** @type {I18nOptions} */ (config ?? {});
 
   const i18nEnabled = !!_locales.length;
   const allLocales = i18nEnabled ? _locales : ['_default'];

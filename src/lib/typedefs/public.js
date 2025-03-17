@@ -1,24 +1,19 @@
 /**
- * Global site configuration.
+ * Site configuration.
  * @typedef {object} SiteConfig
  * @property {boolean} [load_config_file] Whether to load the `config.yml` file when using manual
  * initialization.
- * @property {Backend} backend Backend config.
+ * @property {BackendOptions} backend Backend config.
  * @property {string} [site_url] Site URL.
  * @property {string} [display_url] Site URL linked from the UI.
  * @property {string} [logo_url] Site logo URL.
  * @property {string} media_folder Global internal media folder path.
  * @property {string} [public_folder] Global public media folder path.
- * @property {MediaLibraryConfig} [media_library] Media library configuration.
- * @property {object} [slug] Slug options.
- * @property {'unicode' | 'ascii'} [slug.encoding] Encoding option.
- * @property {boolean} [slug.clean_accents] Whether to remove accents.
- * @property {string} [slug.sanitize_replacement] String to replace sanitized characters.
+ * @property {MediaLibraryOptions} [media_library] Media library configuration.
+ * @property {SlugOptions} [slug] Slug options.
  * @property {Collection[]} collections Collections.
- * @property {I18nConfig} [i18n] Global i18n configuration.
- * @property {object} [editor] Editor view configuration.
- * @property {boolean} editor.preview Whether to show the preview pane for all the collections.
- * Default: `true`.
+ * @property {I18nOptions} [i18n] Global i18n configuration.
+ * @property {EditorOptions} [editor] Editor view configuration.
  * @property {'simple' | 'editorial_workflow'} [publish_mode] Enable Editorial Workflow.
  * @property {boolean} [show_preview_links] Whether to show site preview links.
  * @property {OutputOptions} [output] Data output options.
@@ -27,8 +22,8 @@
 
 /**
  * Backend configuration.
- * @typedef {object} Backend
- * @property {string} name Backend name, e.g. `github`.
+ * @typedef {object} BackendOptions
+ * @property {BackendName} name Backend name.
  * @property {string} [repo] Git organization and repository name joined with `/`.
  * @property {string} [branch] Git branch name.
  * @property {string} [api_root] Git API endpoint.
@@ -37,20 +32,32 @@
  * @property {string} [auth_endpoint] OAuth URL path.
  * @property {'pkce' | 'implicit'} [auth_type] OAuth authentication method. GitLab only.
  * @property {string} [app_id] OAuth application ID. GitLab only.
- * @property {Record<string, string>} [commit_messages] Commit message map.
+ * @property {CommitMessages} [commit_messages] Commit message map.
  * @property {boolean} [automatic_deployments] Whether to enable or disable automatic deployments
  * with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `false`, the
  * `[skip ci]` prefix will be added to commit messages. Git backends only.
  */
 
 /**
+ * @typedef {object} CommitMessages
+ * @property {string} create Message for created entries.
+ * @property {string} update Message for updated entries.
+ * @property {string} delete Message for deleted entries.
+ * @property {string} uploadMedia Message for uploaded assets.
+ * @property {string} deleteMedia Message for deleted assets.
+ * @property {string} openAuthoring Message for open authoring.
+ */
+
+/**
+ * Supported backend name.
+ * @typedef {'github' | 'gitlab'} BackendName
+ */
+
+/**
  * Default or external media library configuration.
- * @typedef {object} MediaLibraryConfig
+ * @typedef {object} MediaLibraryOptions
  * @property {string} [name] External library name.
- * @property {object} [config] Config to be passed to the media library.
- * @property {number} [config.max_file_size] Maximum file size in bytes. The default media library
- * only.
- * @property {boolean} [config.multiple] Whether to allow selecting multiple files.
+ * @property {MediaLibraryConfig} [config] Config to be passed to the media library.
  * @property {boolean} [allow_multiple] Whether to force disabling multiple inputs in the external
  * media library.
  * @see https://decapcms.org/docs/widgets/#file
@@ -58,6 +65,30 @@
  * @see https://decapcms.org/docs/cloudinary/
  * @see https://decapcms.org/docs/uploadcare/
  * @see https://decapcms.org/docs/widgets/#image
+ */
+
+/**
+ * @typedef {object} DefaultMediaLibraryConfig
+ * @property {number} [max_file_size] Maximum file size in bytes. The default media library only.
+ */
+
+/**
+ * @typedef {DefaultMediaLibraryConfig} MediaLibraryConfig
+ */
+
+/**
+ * Slug options.
+ * @typedef {object} SlugOptions
+ * @property {'unicode' | 'ascii'} [encoding] Encoding option.
+ * @property {boolean} [clean_accents] Whether to remove accents.
+ * @property {string} [sanitize_replacement] String to replace sanitized characters.
+ */
+
+/**
+ * Editor options.
+ * @typedef {object} EditorOptions
+ * @property {boolean} preview Whether to show the preview pane for all the collections. Default:
+ * `true`.
  */
 
 /**
@@ -75,12 +106,7 @@
  * @property {string} [path] Subfolder path for an entry collection.
  * @property {string} [media_folder] Internal media folder path for an entry collection.
  * @property {string} [public_folder] Public media folder path for an entry collection.
- * @property {object} [filter] Filter for an entry collection.
- * @property {string} filter.field Field name.
- * @property {any | any[]} [filter.value] Field value. `null` can be used to match an undefined
- * field. Multiple values can be defined with an array.
- * @property {string} [filter.pattern] Regex matching pattern.
- * @property {object} [nested] Nested collection config for an entry collection.
+ * @property {CollectionFilter} [filter] Filter for an entry collection.
  * @property {boolean} [hide] Whether to hide the collection in the UI.
  * @property {boolean} [create] Whether to allow creating items in an entry collection.
  * @property {boolean} [delete] Whether to allow deleting items in an entry collection.
@@ -99,12 +125,10 @@
  * @property {string[] | CustomSortableFields} [sortable_fields] Custom sortable fields.
  * @property {ViewFilter[]} [view_filters] Predefined view filters.
  * @property {ViewFilter[]} [view_groups] Predefined view groups.
- * @property {I18nConfig | boolean} [i18n] I18n configuration.
+ * @property {I18nOptions | boolean} [i18n] I18n configuration.
  * @property {string} [preview_path] Preview URL template.
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
- * @property {object} [editor] Editor view configuration.
- * @property {boolean} editor.preview Whether to show the preview pane for the collection. Default:
- * `true`.
+ * @property {EditorOptions} [editor] Editor view configuration.
  * @property {boolean} [divider] A special option to make this collection a divider UI in the
  * primary sidebar’s collection list. Other options will be ignored, but you may still need a random
  * `name` and an empty `files` list to avoid a config file validation error in VS Code.
@@ -119,24 +143,30 @@
  */
 
 /**
+ * @typedef {object} CollectionFilter
+ * @property {string} field Field name.
+ * @property {any | any[]} [value] Field value. `null` can be used to match an undefined field.
+ * Multiple values can be defined with an array.
+ * @property {string} [pattern] Regex matching pattern.
+ */
+
+/**
  * A raw collection file defined in the configuration file.
  * @typedef {object} CollectionFile
  * @property {string} name File identifier.
  * @property {string} [label] File label.
  * @property {string} file File path.
  * @property {Field[]} fields Fields.
- * @property {I18nConfig | boolean} [i18n] I18n configuration.
+ * @property {I18nOptions | boolean} [i18n] I18n configuration.
  * @property {string} [preview_path] Preview URL template.
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
- * @property {object} [editor] Editor view configuration.
- * @property {boolean} editor.preview Whether to show the preview pane for the collection. Default:
- * `true`.
+ * @property {EditorOptions} [editor] Editor view configuration.
  * @see https://decapcms.org/docs/collection-types/#file-collections
  */
 
 /**
  * Global or Collection’s unparsed i18n configuration.
- * @typedef {object} I18nConfig
+ * @typedef {object} I18nOptions
  * @property {I18nFileStructure} [structure] File structure.
  * @property {StandardLocaleCode[]} locales List of all available locales.
  * @property {StandardLocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
@@ -168,7 +198,7 @@
  * @property {string} name Field name.
  * @property {string} [label] Field label.
  * @property {string} [comment] Field description.
- * @property {string} [widget] Widget name.
+ * @property {WidgetName | string} [widget] Widget name. Default: `string`.
  * @property {boolean | StandardLocaleCode[]} [required] Whether to require data input (and data
  * output if the `omit_empty_optional_fields` option is `true`) for the field. If i18n is enabled
  * and the field doesn’t require input for every locale, a subset of locales can be passed as an
@@ -176,9 +206,17 @@
  * @property {string[]} [pattern] Validation format.
  * @property {string} [hint] Value hint to be displayed below the input.
  * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
- * @property {boolean | 'translate' | 'duplicate' | 'none'} [i18n] I18n configuration.
+ * @property {boolean | 'translate' | 'none' | 'duplicate'} [i18n] I18n configuration. `translate`
+ * is an alias of `true`. `none` is an alias of `false`.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets/#common-widget-options
+ */
+
+/**
+ * Built-in widget name.
+ * @typedef {'boolean' | 'code' | 'color' | 'compute' | 'datetime' | 'file' | 'image' | 'hidden' |
+ * 'keyvalue' | 'list' | 'markdown' | 'number' | 'object' | 'relation' | 'select' | 'string' |
+ * 'text' | 'uuid'} WidgetName
  */
 
 /**
@@ -186,7 +224,7 @@
  * @typedef {object} VariableFieldType
  * @property {string} label Label to distinguish the different types.
  * @property {string} name Type name.
- * @property {string} [widget] Widget type. `object` only.
+ * @property {'object'} [widget] Widget type. `object` only.
  * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
  * @property {Field[]} [fields] Nested fields.
  * @see https://decapcms.org/docs/variable-type-widgets/
@@ -275,7 +313,7 @@
  * @property {boolean} [choose_url] Whether to hide the Insert from URL button.
  * @property {string} [media_folder] Internal media folder path for the field.
  * @property {string} [public_folder] Public media folder path for the field.
- * @property {MediaLibraryConfig} [media_library] Media library configuration.
+ * @property {MediaLibraryOptions} [media_library] Media library configuration.
  * @see https://decapcms.org/docs/widgets/#file
  */
 
@@ -350,11 +388,17 @@
  * @typedef {object} MarkdownFieldProps
  * @property {string} [default] Default value.
  * @property {boolean} [minimal] Whether to minimize the toolbar height.
- * @property {string[]} [buttons] Formatting button list.
+ * @property {MarkdownFieldButton[]} [buttons] Formatting button list.
  * @property {string[]} [editor_components] Editor button list.
- * @property {string[]} [modes] `raw` and/or `rich_text`.
+ * @property {('raw' | 'rich_text')[]} [modes] Editor mode(s).
  * @property {boolean} [sanitize_preview] Whether to sanitize the preview HTML.
  * @see https://decapcms.org/docs/widgets/#markdown
+ */
+
+/**
+ * @typedef {'bold' | 'italic' | 'code' | 'link' | 'heading-one' | 'heading-two' | 'heading-three' |
+ * 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' | 'numbered-list'
+ * } MarkdownFieldButton
  */
 
 /**
@@ -517,12 +561,16 @@
  * A collection’s advanced sortable fields definition, which is compatible with Static CMS.
  * @typedef {object} CustomSortableFields
  * @property {string[]} fields A list of sortable field names.
- * @property {object} [default] Default sort settings.
- * @property {string} default.field A field name to be sorted by default.
- * @property {'ascending' | 'descending' | 'Ascending' | 'Descending' | 'None'} [default.direction]
- * Default sort direction. Title case values are supported for Static CMS compatibility. However,
- * `None` is not supported, considered as `ascending`.
+ * @property {CustomSortableFieldsDefault} [default] Default sort settings.
  * @see https://staticjscms.netlify.app/docs/collection-overview#sortable-fields
+ */
+
+/**
+ * @typedef {object} CustomSortableFieldsDefault
+ * @property {string} field A field name to be sorted by default.
+ * @property {'ascending' | 'descending' | 'Ascending' | 'Descending' | 'None'} [direction] Default
+ * sort direction. Title case values are supported for Static CMS compatibility. However,
+ * `None` is not supported, considered as `ascending`.
  */
 
 /**
@@ -573,8 +621,7 @@
  * @property {string} id Component name.
  * @property {string} label UI label.
  * @property {string} [icon] Material Symbols icon name.
- * @property {{ name: string, label: string, widget: string }[]} fields Fields to be displayed on
- * the component.
+ * @property {Field[]} fields Fields to be displayed on the component.
  * @property {RegExp} pattern Regular expression to search a block from Markdown document.
  * @property {(match: RegExpMatchArray) => { [key: string]: any }} [fromBlock] Function to convert
  * the matching result to field properties. This can be omitted if the `pattern` regex contains

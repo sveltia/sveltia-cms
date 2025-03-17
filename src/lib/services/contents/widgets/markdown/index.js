@@ -1,5 +1,5 @@
 /**
- * @import { EditorComponentDefinition } from '$lib/typedefs/public';
+ * @import { EditorComponentDefinition, MarkdownFieldButton } from '$lib/typedefs/public';
  */
 
 /**
@@ -18,6 +18,7 @@ export const modeNameMap = {
 
 /**
  * The default `buttons` property options.
+ * @type {MarkdownFieldButton[]}
  */
 export const defaultButtons = [
   'bold',
@@ -37,7 +38,7 @@ export const defaultButtons = [
 
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
- * @type {Record<string, import("@sveltia/ui").TextEditorInlineType |
+ * @type {Record<MarkdownFieldButton | 'code-block', import("@sveltia/ui").TextEditorInlineType |
  * import("@sveltia/ui").TextEditorBlockType>}
  */
 export const buttonNameMap = {
