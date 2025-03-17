@@ -56,9 +56,8 @@ export const getFolderLabelByCollection = (collectionName) => {
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 export const getFolderLabelByPath = (folderPath) => {
-  const { media_folder: defaultMediaFolder } = /** @type {import('$lib/typedefs').SiteConfig} */ (
-    get(siteConfig)
-  );
+  const { media_folder: defaultMediaFolder } =
+    /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig));
 
   if (!folderPath) {
     return getFolderLabelByCollection('*');
@@ -79,9 +78,9 @@ export const getFolderLabelByPath = (folderPath) => {
 
 /**
  * Sort the given assets.
- * @param {import('$lib/typedefs').Asset[]} assets Asset list.
- * @param {import('$lib/typedefs').SortingConditions} [conditions] Sorting conditions.
- * @returns {import('$lib/typedefs').Asset[]} Sorted asset list.
+ * @param {import('$lib/typedefs/private').Asset[]} assets Asset list.
+ * @param {import('$lib/typedefs/private').SortingConditions} [conditions] Sorting conditions.
+ * @returns {import('$lib/typedefs/private').Asset[]} Sorted asset list.
  */
 const sortAssets = (assets, { key, order } = {}) => {
   if (!key || !order) {
@@ -97,7 +96,7 @@ const sortAssets = (assets, { key, order } = {}) => {
 
   /**
    * Get an asset’s property value.
-   * @param {import('$lib/typedefs').Asset} asset Asset.
+   * @param {import('$lib/typedefs/private').Asset} asset Asset.
    * @returns {any} Value.
    */
   const getValue = (asset) => {
@@ -144,9 +143,9 @@ const sortAssets = (assets, { key, order } = {}) => {
 
 /**
  * Filter the given assets.
- * @param {import('$lib/typedefs').Asset[]} assets Asset list.
- * @param {import('$lib/typedefs').FilteringConditions} [conditions] Filtering conditions.
- * @returns {import('$lib/typedefs').Asset[]} Filtered asset list.
+ * @param {import('$lib/typedefs/private').Asset[]} assets Asset list.
+ * @param {import('$lib/typedefs/private').FilteringConditions} [conditions] Filtering conditions.
+ * @returns {import('$lib/typedefs/private').Asset[]} Filtered asset list.
  */
 const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) => {
   if (!field) {
@@ -172,10 +171,10 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
 
 /**
  * Group the given assets.
- * @param {import('$lib/typedefs').Asset[]} assets Asset list.
- * @param {import('$lib/typedefs').GroupingConditions} [conditions] Grouping conditions.
- * @returns {Record<string, import('$lib/typedefs').Asset[]>} Grouped assets, where key is a group
- * label and value is an asset list.
+ * @param {import('$lib/typedefs/private').Asset[]} assets Asset list.
+ * @param {import('$lib/typedefs/private').GroupingConditions} [conditions] Grouping conditions.
+ * @returns {Record<string, import('$lib/typedefs/private').Asset[]>} Grouped assets, where key is
+ * a group label and value is an asset list.
  */
 const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefined }) => {
   if (!field) {
@@ -183,7 +182,7 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
   }
 
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
-  /** @type {Record<string, import('$lib/typedefs').Asset[]>} */
+  /** @type {Record<string, import('$lib/typedefs/private').Asset[]>} */
   const groups = {};
   const otherKey = get(_)('other');
 
@@ -213,7 +212,7 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
 
 /**
  * Default view settings for the selected asset collection.
- * @type {import('$lib/typedefs').AssetListView}
+ * @type {import('$lib/typedefs/private').AssetListView}
  */
 const defaultView = {
   type: 'grid',
@@ -226,14 +225,14 @@ const defaultView = {
 
 /**
  * View settings for the selected asset collection.
- * @type {import('svelte/store').Writable<import('$lib/typedefs').AssetListView>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs/private').AssetListView>}
  */
 export const currentView = writable({ type: 'grid', showInfo: true });
 
 /**
  * View settings for all the asset collection.
- * @type {import('svelte/store').Writable<Record<string, import('$lib/typedefs').AssetListView> |
- * undefined>}
+ * @type {import('svelte/store').Writable<Record<string,
+ * import('$lib/typedefs/private').AssetListView> | undefined>}
  */
 const assetListSettings = writable();
 
@@ -256,7 +255,7 @@ export const sortFields = derived([allAssets, appLocale], ([_allAssets], set) =>
 });
 /**
  * List of all the assets for the selected asset collection.
- * @type {import('svelte/store').Readable<import('$lib/typedefs').Asset[]>}
+ * @type {import('svelte/store').Readable<import('$lib/typedefs/private').Asset[]>}
  */
 export const listedAssets = derived(
   [allAssets, selectedAssetFolder],
@@ -270,13 +269,13 @@ export const listedAssets = derived(
 );
 /**
  * Sorted, filtered and grouped assets for the selected asset collection.
- * @type {import('svelte/store').Readable<Record<string, import('$lib/typedefs').Asset[]>>}
+ * @type {import('svelte/store').Readable<Record<string, import('$lib/typedefs/private').Asset[]>>}
  */
 export const assetGroups = derived(
   [listedAssets, currentView],
   ([_listedAssets, _currentView], set) => {
     /**
-     * @type {import('$lib/typedefs').Asset[]}
+     * @type {import('$lib/typedefs/private').Asset[]}
      */
     let assets = [..._listedAssets];
 
@@ -293,7 +292,7 @@ export const assetGroups = derived(
 
 /**
  * Initialize {@link assetListSettings} and relevant subscribers.
- * @param {import('$lib/typedefs').BackendService} _backend Backend service.
+ * @param {import('$lib/typedefs/private').BackendService} _backend Backend service.
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};

@@ -16,10 +16,10 @@
   /**
    * @typedef {object} Props
    * @property {string} id The wrapper element’s `id` attribute.
-   * @property {import('svelte/store').Writable<import('$lib/typedefs').EntryEditorPane | null>
-   * } thisPane This pane’s mode and locale.
-   * @property {import('svelte/store').Writable<import('$lib/typedefs').EntryEditorPane | null>
-   * } [thatPane] Another pane’s mode and locale.
+   * @property {import('svelte/store').Writable<import('$lib/typedefs/private').EntryEditorPane |
+   * null>} thisPane This pane’s mode and locale.
+   * @property {import('svelte/store').Writable<import('$lib/typedefs/private').EntryEditorPane |
+   * null>} [thatPane] Another pane’s mode and locale.
    */
 
   /** @type {Props} */

@@ -23,7 +23,7 @@ export const normalizeSlug = (string) => {
       clean_accents: cleanAccents = false,
       sanitize_replacement: sanitizeReplacement = '-',
     } = {},
-  } = /** @type {import('$lib/typedefs').SiteConfig} */ (get(siteConfig)) ?? {};
+  } = /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig)) ?? {};
 
   let slug = string;
 
@@ -51,7 +51,7 @@ export const normalizeSlug = (string) => {
 /**
  * Fill the given slug template.
  * @param {string} template Template string literal containing tags like `{{title}}`.
- * @param {import('$lib/typedefs').FillSlugTemplateOptions} options Options.
+ * @param {import('$lib/typedefs/private').FillSlugTemplateOptions} options Options.
  * @returns {string} Filled template that can be used for an entry slug, path, etc.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug
@@ -77,7 +77,7 @@ export const fillSlugTemplate = (
 
   const basePath =
     collection._type === 'entry'
-      ? /** @type {import('$lib/typedefs').EntryCollection} */ (collection)._file.basePath
+      ? /** @type {import('$lib/typedefs/private').EntryCollection} */ (collection)._file.basePath
       : undefined;
 
   /**

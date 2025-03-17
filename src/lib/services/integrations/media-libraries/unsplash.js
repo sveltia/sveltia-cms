@@ -127,7 +127,7 @@ const creditLinkParams = 'utm_source=sveltia-cms&utm_medium=referral';
  * @param {string} query Search query.
  * @param {object} options Options.
  * @param {string} options.apiKey API key.
- * @returns {Promise<import('$lib/typedefs').ExternalAsset[]>} Assets.
+ * @returns {Promise<import('$lib/typedefs/private').ExternalAsset[]>} Assets.
  * @see https://unsplash.com/documentation
  * @todo Support video files.
  */
@@ -211,7 +211,7 @@ const search = async (query, { apiKey }) => {
 };
 
 /**
- * @type {import('$lib/typedefs').MediaLibraryService}
+ * @type {import('$lib/typedefs/private').MediaLibraryService}
  */
 export default {
   serviceType: 'stock_photos',

@@ -9,7 +9,7 @@
   let timer = 0;
 
   let mounted = $state(false);
-  /** @type {import('$lib/typedefs').BackendServiceStatus} */
+  /** @type {import('$lib/typedefs/private').BackendServiceStatus} */
   let status = $state('none');
 
   /**

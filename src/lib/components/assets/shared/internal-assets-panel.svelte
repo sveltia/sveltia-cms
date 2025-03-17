@@ -6,9 +6,10 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').AssetKind} [kind] Asset kind.
-   * @property {import('$lib/typedefs').Asset[]} [assets] Asset list.
-   * @property {import('$lib/typedefs').SelectedAsset | null} [selectedAsset] Selected asset.
+   * @property {import('$lib/typedefs/private').AssetKind} [kind] Asset kind.
+   * @property {import('$lib/typedefs/private').Asset[]} [assets] Asset list.
+   * @property {import('$lib/typedefs/private').SelectedAsset | null} [selectedAsset] Selected
+   * asset.
    * @property {boolean} [showUploader] Whether to show the uploader.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.

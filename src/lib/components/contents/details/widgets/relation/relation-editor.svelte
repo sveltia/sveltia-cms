@@ -11,11 +11,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').RelationField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').RelationField} fieldConfig Field configuration.
    * @property {string | string[] | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -37,7 +37,7 @@
   } = $derived(fieldConfig);
   const refEntries = $derived(
     fileName
-      ? /** @type {import('$lib/typedefs').Entry[]} */ (
+      ? /** @type {import('$lib/typedefs/private').Entry[]} */ (
           [getFile(collectionName, fileName)].filter(Boolean)
         )
       : getEntriesByCollection(collectionName),

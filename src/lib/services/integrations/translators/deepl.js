@@ -177,7 +177,7 @@ const translate = async (texts, { sourceLocale, targetLocale, apiKey }) => {
 };
 
 /**
- * @type {import('$lib/typedefs').TranslationService}
+ * @type {import('$lib/typedefs/private').TranslationService}
  */
 export default {
   serviceId,

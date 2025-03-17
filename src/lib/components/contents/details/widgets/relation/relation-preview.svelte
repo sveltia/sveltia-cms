@@ -11,11 +11,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').RelationField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').RelationField} fieldConfig Field configuration.
    * @property {string | string[] | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -34,7 +34,7 @@
   const listFormatter = $derived(getListFormatter(locale));
   const refEntries = $derived(
     fileName
-      ? /** @type {import('$lib/typedefs').Entry[]} */ (
+      ? /** @type {import('$lib/typedefs/private').Entry[]} */ (
           [getFile(collectionName, fileName)].filter(Boolean)
         )
       : getEntriesByCollection(collectionName),

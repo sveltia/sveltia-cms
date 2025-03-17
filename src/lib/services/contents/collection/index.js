@@ -6,19 +6,20 @@ import { getFileConfig } from '$lib/services/contents/file';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
- * @type {import('svelte/store').Writable<import('$lib/typedefs').Collection | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs/private').NormalizedCollection |
+ * undefined>}
  */
 export const selectedCollection = writable();
 
 /**
- * @type {Map<string, import('$lib/typedefs').Collection | undefined>}
+ * @type {Map<string, import('$lib/typedefs/private').NormalizedCollection | undefined>}
  */
 const collectionCacheMap = new Map();
 
 /**
  * Get a list of field key paths to be used to find an entry thumbnail.
- * @param {import('$lib/typedefs').RawCollection} rawCollection Raw collection definition.
- * @returns {import('$lib/typedefs').FieldKeyPath[]} Key path list.
+ * @param {import('$lib/typedefs/public').Collection} rawCollection Raw collection definition.
+ * @returns {import('$lib/typedefs/public').FieldKeyPath[]} Key path list.
  */
 const getThumbnailFieldNames = (rawCollection) => {
   const { folder, fields, thumbnail } = rawCollection;
@@ -49,8 +50,8 @@ const getThumbnailFieldNames = (rawCollection) => {
 /**
  * Get a collection by name.
  * @param {string} name Collection name.
- * @returns {import('$lib/typedefs').Collection | undefined} Collection, including some extra,
- * normalized properties.
+ * @returns {import('$lib/typedefs/private').NormalizedCollection | undefined} Collection, including
+ * some extra, normalized properties.
  */
 export const getCollection = (name) => {
   const cache = collectionCacheMap.get(name);
@@ -76,7 +77,7 @@ export const getCollection = (name) => {
   if (isEntryCollection) {
     rawCollection.folder = stripSlashes(/** @type {string} */ (folder));
   } else {
-    /** @type {import('$lib/typedefs').RawCollectionFile[]} */ (files).forEach((f) => {
+    /** @type {import('$lib/typedefs/public').CollectionFile[]} */ (files).forEach((f) => {
       f.file = stripSlashes(f.file);
     });
   }
@@ -89,18 +90,18 @@ export const getCollection = (name) => {
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
   };
 
-  /** @type {import('$lib/typedefs').Collection} */
+  /** @type {import('$lib/typedefs/private').NormalizedCollection} */
   const collection = isEntryCollection
-    ? /** @type {import('$lib/typedefs').EntryCollection} */ ({
+    ? /** @type {import('$lib/typedefs/private').EntryCollection} */ ({
         ...collectionBase,
-        _type: /** @type {import('$lib/typedefs').CollectionType} */ ('entry'),
+        _type: /** @type {import('$lib/typedefs/private').CollectionType} */ ('entry'),
         _file: getFileConfig({ rawCollection, _i18n }),
         _thumbnailFieldNames: getThumbnailFieldNames(rawCollection),
       })
-    : /** @type {import('$lib/typedefs').FileCollection} */ ({
+    : /** @type {import('$lib/typedefs/private').FileCollection} */ ({
         ...collectionBase,
-        _type: /** @type {import('$lib/typedefs').CollectionType} */ ('file'),
-        _fileMap: /** @type {import('$lib/typedefs').RawCollectionFile[]} */ (files)?.length
+        _type: /** @type {import('$lib/typedefs/private').CollectionType} */ ('file'),
+        _fileMap: /** @type {import('$lib/typedefs/public').CollectionFile[]} */ (files)?.length
           ? Object.fromEntries(
               files.map((file) => {
                 const __i18n = getI18nConfig(rawCollection, file);

@@ -17,7 +17,7 @@
 
   const entryCollection = $derived(
     $selectedCollection?._type === 'entry'
-      ? /** @type {import('$lib/typedefs').EntryCollection} */ ($selectedCollection)
+      ? /** @type {import('$lib/typedefs/private').EntryCollection} */ ($selectedCollection)
       : undefined,
   );
   const collectionName = $derived(entryCollection?.name);

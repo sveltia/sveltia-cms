@@ -8,11 +8,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').BooleanField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').BooleanField} fieldConfig Field configuration.
    * @property {boolean | 'mixed' | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

@@ -18,7 +18,7 @@
   let newName = $state('');
   /** @type {string[]} */
   let otherNames = $state([]);
-  /** @type {import('$lib/typedefs').Entry[]} */
+  /** @type {import('$lib/typedefs/private').Entry[]} */
   let usedEntries = $state([]);
 
   const asset = $derived($renamingAsset);

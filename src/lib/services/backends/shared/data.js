@@ -12,14 +12,14 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 
 /**
  * @typedef {object} BaseFileList
- * @property {import('$lib/typedefs').BaseEntryListItem[]} entryFiles Entry file list.
- * @property {import('$lib/typedefs').BaseAssetListItem[]} assetFiles Asset file list.
- * @property {(import('$lib/typedefs').BaseEntryListItem |
- * import('$lib/typedefs').BaseAssetListItem)[]} allFiles Entry and asset file list.
+ * @property {import('$lib/typedefs/private').BaseEntryListItem[]} entryFiles Entry file list.
+ * @property {import('$lib/typedefs/private').BaseAssetListItem[]} assetFiles Asset file list.
+ * @property {(import('$lib/typedefs/private').BaseEntryListItem |
+ * import('$lib/typedefs/private').BaseAssetListItem)[]} allFiles Entry and asset file list.
  * @property {number} count Number of `allFiles`.
  */
 
-/** @type {import('$lib/typedefs').RepositoryInfo} */
+/** @type {import('$lib/typedefs/private').RepositoryInfo} */
 export const repositoryProps = {
   service: '',
   label: '',
@@ -31,13 +31,13 @@ export const repositoryProps = {
 /**
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
- * @param {import('$lib/typedefs').BaseFileListItem[]} files Unfiltered file list.
+ * @param {import('$lib/typedefs/private').BaseFileListItem[]} files Unfiltered file list.
  * @returns {BaseFileList} File list, including both entries and assets.
  */
 export const createFileList = (files) => {
-  /** @type {import('$lib/typedefs').BaseEntryListItem[]} */
+  /** @type {import('$lib/typedefs/private').BaseEntryListItem[]} */
   const entryFiles = [];
-  /** @type {import('$lib/typedefs').BaseAssetListItem[]} */
+  /** @type {import('$lib/typedefs/private').BaseAssetListItem[]} */
   const assetFiles = [];
 
   files.forEach((fileInfo) => {
@@ -65,17 +65,17 @@ export const createFileList = (files) => {
  * Fetch file list from a backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').RepositoryInfo} args.repository Repository info.
+ * @param {import('$lib/typedefs/private').RepositoryInfo} args.repository Repository info.
  * @param {() => Promise<string>} args.fetchDefaultBranchName Function to fetch the repository’s
  * default branch name.
  * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
  * the last commit’s SHA-1 hash and message.
- * @param {(lastHash: string) => Promise<import('$lib/typedefs').BaseFileListItem[]>
+ * @param {(lastHash: string) => Promise<import('$lib/typedefs/private').BaseFileListItem[]>
  * } args.fetchFileList Function to fetch the repository’s complete file list.
- * @param {(fetchingFiles: (import('$lib/typedefs').BaseEntryListItem |
- * import('$lib/typedefs').BaseAssetListItem)[]) =>
- * Promise<import('$lib/typedefs').RepositoryContentsMap>} args.fetchFileContents Function to fetch
- * the metadata of entry/asset files as well as text file contents.
+ * @param {(fetchingFiles: (import('$lib/typedefs/private').BaseEntryListItem |
+ * import('$lib/typedefs/private').BaseAssetListItem)[]) =>
+ * Promise<import('$lib/typedefs/private').RepositoryContentsMap>} args.fetchFileContents Function
+ * to fetch the metadata of entry/asset files as well as text file contents.
  */
 export const fetchAndParseFiles = async ({
   repository,

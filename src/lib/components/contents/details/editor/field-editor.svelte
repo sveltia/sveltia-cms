@@ -18,9 +18,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').LocaleCode} locale Current pane’s locale.
-   * @property {import('$lib/typedefs').FieldKeyPath} keyPath Field key path.
-   * @property {import('$lib/typedefs').Field} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/private').LocaleCode} locale Current pane’s locale.
+   * @property {import('$lib/typedefs/public').FieldKeyPath} keyPath Field key path.
+   * @property {import('$lib/typedefs/public').Field} fieldConfig Field configuration.
    */
 
   /** @type {Props} */
@@ -64,20 +64,20 @@
     field: subField,
     fields: subFields,
     types,
-  } = /** @type {import('$lib/typedefs').ListField} */ ($derived(fieldConfig));
+  } = /** @type {import('$lib/typedefs/public').ListField} */ ($derived(fieldConfig));
   const hasSubFields = $derived(!!subField || !!subFields || !!types);
   const {
     min,
     max,
   } = //
     /**
-     * @type {import('$lib/typedefs').ListField | import('$lib/typedefs').NumberField |
-     * import('$lib/typedefs').RelationField | import('$lib/typedefs').SelectField}
+     * @type {import('$lib/typedefs/public').ListField | import('$lib/typedefs/public').NumberField
+     * | import('$lib/typedefs/public').RelationField | import('$lib/typedefs/public').SelectField}
      */ ($derived(fieldConfig));
   const type = $derived(
     // prettier-ignore
     widgetName === 'string'
-      ? /** @type {import('$lib/typedefs').StringField} */ (fieldConfig).type ?? 'text'
+      ? /** @type {import('$lib/typedefs/public').StringField} */ (fieldConfig).type ?? 'text'
       : widgetName === 'number'
         ? 'number'
         : undefined,
@@ -85,28 +85,28 @@
   const allowPrefix = $derived(['string'].includes(widgetName));
   const prefix = $derived(
     allowPrefix
-      ? /** @type {import('$lib/typedefs').StringField} */ (fieldConfig).prefix
+      ? /** @type {import('$lib/typedefs/public').StringField} */ (fieldConfig).prefix
       : undefined,
   );
   const suffix = $derived(
     allowPrefix
-      ? /** @type {import('$lib/typedefs').StringField} */ (fieldConfig).suffix
+      ? /** @type {import('$lib/typedefs/public').StringField} */ (fieldConfig).suffix
       : undefined,
   );
   const allowExtraLabels = $derived(['boolean', 'number', 'string'].includes(widgetName));
   const beforeInputLabel = $derived(
     allowExtraLabels
       ? /**
-         * @type {import('$lib/typedefs').BooleanField | import('$lib/typedefs').NumberField |
-         * import('$lib/typedefs').StringField}
+         * @type {import('$lib/typedefs/public').BooleanField |
+         * import('$lib/typedefs/public').NumberField | import('$lib/typedefs/public').StringField}
          */ (fieldConfig).before_input
       : undefined,
   );
   const afterInputLabel = $derived(
     allowExtraLabels
       ? /**
-         * @type {import('$lib/typedefs').BooleanField | import('$lib/typedefs').NumberField |
-         * import('$lib/typedefs').StringField}
+         * @type {import('$lib/typedefs/public').BooleanField |
+         * import('$lib/typedefs/public').NumberField | import('$lib/typedefs/public').StringField}
          */ (fieldConfig).after_input
       : undefined,
   );
@@ -114,9 +114,10 @@
   const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
   const multiple = $derived(
     hasMultiple
-      ? /** @type {import('$lib/typedefs').RelationField | import('$lib/typedefs').SelectField} */ (
-          fieldConfig
-        ).multiple
+      ? /**
+         * @type {import('$lib/typedefs/public').RelationField |
+         * import('$lib/typedefs/public').SelectField}
+         */ (fieldConfig).multiple
       : undefined,
   );
   const canAddMultiValue = $derived(
@@ -216,18 +217,20 @@
         {/if}
         {#if validity.tooShort}
           {@const { minlength } = (() =>
-            /** @type {import('$lib/typedefs').StringField | import('$lib/typedefs').TextField} */ (
-              fieldConfig
-            ))()}
+            /**
+             * @type {import('$lib/typedefs/public').StringField |
+             * import('$lib/typedefs/public').TextField}
+             */ (fieldConfig))()}
           {$_(minlength === 1 ? 'validation.too_short.one' : 'validation.too_short.many', {
             values: { min: minlength },
           })}
         {/if}
         {#if validity.tooLong}
           {@const { maxlength } = (() =>
-            /** @type {import('$lib/typedefs').StringField | import('$lib/typedefs').TextField} */ (
-              fieldConfig
-            ))()}
+            /**
+             * @type {import('$lib/typedefs/public').StringField |
+             * import('$lib/typedefs/public').TextField}
+             */ (fieldConfig))()}
           {$_(maxlength === 1 ? 'validation.too_long.one' : 'validation.too_long.many', {
             values: { max: maxlength },
           })}

@@ -10,14 +10,14 @@
 
   /**
    * @typedef {object} RowArgs
-   * @property {import('$lib/typedefs').Collection} collection Collection.
-   * @property {import('$lib/typedefs').CollectionFile} [collectionFile] Collection file. File
-   * collection only.
+   * @property {import('$lib/typedefs/private').NormalizedCollection} collection Collection.
+   * @property {import('$lib/typedefs/private').NormalizedCollectionFile} [collectionFile]
+   * Collection file. File collection only.
    */
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').Entry} entry Single entry.
+   * @property {import('$lib/typedefs/private').Entry} entry Single entry.
    */
 
   /** @type {Props} */
@@ -42,7 +42,9 @@
       <GridCell class="image">
         {#if collection._type === 'entry'}
           {#await getEntryThumbnail(//
-            /** @type {import('$lib/typedefs').EntryCollection} */ (collection), entry) then src}
+            /**
+             * @type {import('$lib/typedefs/private').EntryCollection}
+             */ (collection), entry) then src}
             {#if src}
               <Image {src} variant="icon" cover />
             {/if}

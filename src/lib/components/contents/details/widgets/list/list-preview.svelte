@@ -14,11 +14,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').ListField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').ListField} fieldConfig Field configuration.
    * @property {string[] | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

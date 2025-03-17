@@ -8,7 +8,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').ViewType} viewType View type.
+   * @property {import('$lib/typedefs/private').ViewType} viewType View type.
    * @property {import('svelte').Snippet} [children] Slot content.
    */
 

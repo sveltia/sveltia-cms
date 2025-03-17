@@ -25,11 +25,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').FileField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').FileField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,
@@ -47,11 +47,11 @@
   /** @type {string | undefined} */
   let credit;
 
-  /** @type {import('$lib/typedefs').Asset | undefined} */
+  /** @type {import('$lib/typedefs/private').Asset | undefined} */
   let asset = $state();
   /** @type {File | undefined} */
   let file = $state();
-  /** @type {import('$lib/typedefs').AssetKind | undefined} */
+  /** @type {import('$lib/typedefs/private').AssetKind | undefined} */
   let kind = $state();
   /** @type {string | undefined} */
   let src = $state();
@@ -90,7 +90,7 @@
 
   /**
    * Handle selected asset.
-   * @param {import('$lib/typedefs').SelectedAsset} selectedAsset Selected asset details.
+   * @param {import('$lib/typedefs/private').SelectedAsset} selectedAsset Selected asset details.
    */
   const onAssetSelect = async (selectedAsset) => {
     resetSelection();
@@ -117,7 +117,9 @@
         // Set a temporary blob URL, which will be later replaced with the actual file path
         currentValue = URL.createObjectURL(file);
         // Cache the file itself for later upload
-        /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).files[currentValue] = file;
+        /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).files[
+          currentValue
+        ] = file;
       }
     }
 

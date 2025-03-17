@@ -5,7 +5,7 @@ import { getSortableFields } from '$lib/services/contents/collection/view';
 vi.mock('$lib/services/config');
 
 describe('Test getSortableFields()', async () => {
-  /** @type {import('$lib/typedefs').EntryCollection} */
+  /** @type {import('$lib/typedefs/private').EntryCollection} */
   const collectionBase = {
     name: 'posts',
     _type: 'entry',

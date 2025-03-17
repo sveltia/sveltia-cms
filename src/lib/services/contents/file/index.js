@@ -2,17 +2,18 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
 /**
- * @type {Record<string, import('$lib/typedefs').CustomFileFormat>}
+ * @type {Record<string, import('$lib/typedefs/private').CustomFileFormat>}
  */
 export const customFileFormats = {};
 
 /**
  * Detect a file extension from the given entry file configuration.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').FileExtension} [args.extension] Developer-defined file extension.
- * @param {import('$lib/typedefs').FileFormat} [args.format] Developer-defined file format.
+ * @param {import('$lib/typedefs/public').FileExtension} [args.extension] Developer-defined file
+ * extension.
+ * @param {import('$lib/typedefs/public').FileFormat} [args.format] Developer-defined file format.
  * @param {string} [args.path] File path, e.g. `about.json`.
- * @returns {import('$lib/typedefs').FileExtension} Determined extension.
+ * @returns {import('$lib/typedefs/public').FileExtension} Determined extension.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
 const detectFileExtension = ({ extension, format, path }) => {
@@ -48,9 +49,9 @@ const detectFileExtension = ({ extension, format, path }) => {
 /**
  * Detect a file format from the given entry file configuration.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').FileExtension} args.extension File extension.
- * @param {import('$lib/typedefs').FileFormat} [args.format] Developer-defined file format.
- * @returns {import('$lib/typedefs').FileFormat} Determined format.
+ * @param {import('$lib/typedefs/public').FileExtension} args.extension File extension.
+ * @param {import('$lib/typedefs/public').FileFormat} [args.format] Developer-defined file format.
+ * @returns {import('$lib/typedefs/public').FileFormat} Determined format.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
 const detectFileFormat = ({ extension, format }) => {
@@ -81,11 +82,11 @@ const detectFileFormat = ({ extension, format }) => {
  * Get a regular expression that matches the entry paths of the given entry collection, taking the
  * i18n structure into account.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').FileExtension} args.extension File extension.
- * @param {import('$lib/typedefs').FileFormat} args.format File format.
+ * @param {import('$lib/typedefs/public').FileExtension} args.extension File extension.
+ * @param {import('$lib/typedefs/public').FileFormat} args.format File format.
  * @param {string} args.basePath Normalized `folder` collection option.
  * @param {string} [args.subPath] Normalized `path` collection option.
- * @param {import('$lib/typedefs').I18nConfig} args._i18n I18n configuration.
+ * @param {import('$lib/typedefs/private').NormalizedI18nConfig} args._i18n I18n configuration.
  * @returns {RegExp} Regular expression.
  */
 const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
@@ -124,7 +125,7 @@ const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
 /**
  * Detect the front matter format’s delimiters from the given entry file configuration.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').FileFormat} args.format File format.
+ * @param {import('$lib/typedefs/public').FileFormat} args.format File format.
  * @param {string | string[]} [args.delimiter] Configured delimiter.
  * @returns {[string, string] | undefined} Start and end delimiters. If `undefined`, the parser
  * automatically detects the delimiters, while the formatter uses the YAML delimiters.
@@ -163,10 +164,12 @@ let yamlQuoteWarnedOnce = false;
 /**
  * Get the normalized entry file configuration for the given collection or collection file.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').RawCollection} args.rawCollection Developer-defined collection.
- * @param {import('$lib/typedefs').RawCollectionFile} [args.file] Developer-defined collection file.
- * @param {import('$lib/typedefs').I18nConfig} args._i18n I18n configuration.
- * @returns {import('$lib/typedefs').FileConfig} Entry file configuration.
+ * @param {import('$lib/typedefs/public').Collection} args.rawCollection Developer-defined
+ * collection.
+ * @param {import('$lib/typedefs/public').CollectionFile} [args.file] Developer-defined collection
+ * file.
+ * @param {import('$lib/typedefs/private').NormalizedI18nConfig} args._i18n I18n configuration.
+ * @returns {import('$lib/typedefs/private').FileConfig} Entry file configuration.
  */
 export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   const {

@@ -5,9 +5,9 @@
   /**
    * @typedef {object} Props
    * @property {boolean} [disabled] Whether to disable the buttons.
-   * @property {import('svelte/store').Writable<import('$lib/typedefs').EntryListView |
-   * import('$lib/typedefs').AssetListView | import('$lib/typedefs').SelectAssetsView>} currentView
-   * Current view details.
+   * @property {import('svelte/store').Writable<import('$lib/typedefs/private').EntryListView |
+   * import('$lib/typedefs/private').AssetListView |
+   * import('$lib/typedefs/private').SelectAssetsView>} currentView Current view details.
    */
 
   /** @type {Props & Record<string, any>} */

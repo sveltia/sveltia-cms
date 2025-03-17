@@ -81,7 +81,7 @@ export const goBack = (path, options = {}) => {
  */
 export const openProductionSite = () => {
   const { display_url: displayURL, _siteURL: siteURL } =
-    /** @type {import('$lib/typedefs').SiteConfig} */ (get(siteConfig));
+    /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig));
 
   window.open(displayURL || siteURL || '/', '_blank');
 };

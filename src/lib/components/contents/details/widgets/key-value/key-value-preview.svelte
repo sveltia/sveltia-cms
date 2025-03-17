@@ -12,11 +12,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').KeyValueField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').KeyValueField} fieldConfig Field configuration.
    * @property {Record<string, string> | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -41,7 +41,7 @@
    */
   const updatePairs = () => {
     const _entryDraft =
-      /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+      /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
         entryDraft
       );
 

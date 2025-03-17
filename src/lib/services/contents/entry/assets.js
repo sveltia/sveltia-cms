@@ -12,8 +12,8 @@ import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
  * Get the given entry’s thumbnail URL.
- * @param {import('$lib/typedefs').EntryCollection} collection Entry’s collection.
- * @param {import('$lib/typedefs').Entry} entry Entry.
+ * @param {import('$lib/typedefs/private').EntryCollection} collection Entry’s collection.
+ * @param {import('$lib/typedefs/private').Entry} entry Entry.
  * @returns {Promise<string | undefined>} URL.
  */
 export const getEntryThumbnail = async (collection, entry) => {
@@ -29,7 +29,7 @@ export const getEntryThumbnail = async (collection, entry) => {
     return undefined;
   }
 
-  /** @type {import('$lib/typedefs').FieldKeyPath[]} */
+  /** @type {import('$lib/typedefs/public').FieldKeyPath[]} */
   const keyPathList = _thumbnailFieldNames
     .map((name) => {
       // Support a wildcard in the key path, e.g. `images.*.src`
@@ -62,16 +62,16 @@ export const getEntryThumbnail = async (collection, entry) => {
 /**
  * Get a list of assets associated with the given entry.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').Entry} args.entry Entry.
+ * @param {import('$lib/typedefs/private').Entry} args.entry Entry.
  * @param {string} args.collectionName Name of a collection that the entry belongs to.
  * @param {boolean} [args.relative] Whether to only collect assets stored at a relative path.
- * @returns {import('$lib/typedefs').Asset[]} Assets.
+ * @returns {import('$lib/typedefs/private').Asset[]} Assets.
  */
 export const getAssociatedAssets = ({ entry, collectionName, relative = false }) => {
   const { locales } = entry;
   const collection = getCollection(collectionName);
 
-  const assets = /** @type {import('$lib/typedefs').Asset[]} */ (
+  const assets = /** @type {import('$lib/typedefs/private').Asset[]} */ (
     Object.values(locales)
       .map(({ content }) =>
         Object.entries(content).map(([keyPath, value]) => {

@@ -22,7 +22,7 @@ const defaultSortableFields = ['title', 'name', 'date', 'author', 'description']
 
 /**
  * View settings for the selected entry collection.
- * @type {import('svelte/store').Writable<import('$lib/typedefs').EntryListView>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryListView>}
  */
 export const currentView = writable({ type: 'list' });
 
@@ -36,10 +36,11 @@ const removeMarkdownChars = (str) => str.replace(/[_*`]+/g, '');
 
 /**
  * Sort the given entries.
- * @param {import('$lib/typedefs').Entry[]} entries Entry list.
- * @param {import('$lib/typedefs').Collection} collection Collection that the entries belong to.
- * @param {import('$lib/typedefs').SortingConditions} [conditions] Sorting conditions.
- * @returns {import('$lib/typedefs').Entry[]} Sorted entry list.
+ * @param {import('$lib/typedefs/private').Entry[]} entries Entry list.
+ * @param {import('$lib/typedefs/private').NormalizedCollection} collection Collection that the
+ * entries belong to.
+ * @param {import('$lib/typedefs/private').SortingConditions} [conditions] Sorting conditions.
+ * @returns {import('$lib/typedefs/private').Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
 const sortEntries = (entries, collection, { key, order } = {}) => {
@@ -75,7 +76,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
 
   const dateFieldConfig =
     fieldConfig?.widget === 'datetime'
-      ? /** @type {import('$lib/typedefs').DateTimeField} */ (fieldConfig)
+      ? /** @type {import('$lib/typedefs/public').DateTimeField} */ (fieldConfig)
       : undefined;
 
   _entries.sort((a, b) => {
@@ -115,11 +116,12 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
 
 /**
  * Filter the given entries.
- * @param {import('$lib/typedefs').Entry[]} entries Entry list.
- * @param {import('$lib/typedefs').Collection} collection Collection that the entries belong to.
- * @param {import('$lib/typedefs').FilteringConditions[]} filters One or more filtering
+ * @param {import('$lib/typedefs/private').Entry[]} entries Entry list.
+ * @param {import('$lib/typedefs/private').NormalizedCollection} collection Collection that the
+ * entries belong to.
+ * @param {import('$lib/typedefs/private').FilteringConditions[]} filters One or more filtering
  * conditions.
- * @returns {import('$lib/typedefs').Entry[]} Filtered entry list.
+ * @returns {import('$lib/typedefs/private').Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
 const filterEntries = (entries, collection, filters) => {
@@ -160,12 +162,13 @@ const filterEntries = (entries, collection, filters) => {
 
 /**
  * Group the given entries.
- * @param {import('$lib/typedefs').Entry[]} entries Entry list.
- * @param {import('$lib/typedefs').Collection} collection Collection that the entries belong to.
- * @param {import('$lib/typedefs').GroupingConditions} [conditions] Grouping conditions.
- * @returns {{ name: string, entries: import('$lib/typedefs').Entry[] }[]} Grouped entries, where
- * each group object contains a name and an entry list. When ungrouped, there will still be one
- * group object named `*`.
+ * @param {import('$lib/typedefs/private').Entry[]} entries Entry list.
+ * @param {import('$lib/typedefs/private').NormalizedCollection} collection Collection that the
+ * entries belong to.
+ * @param {import('$lib/typedefs/private').GroupingConditions} [conditions] Grouping conditions.
+ * @returns {{ name: string, entries: import('$lib/typedefs/private').Entry[] }[]} Grouped entries,
+ * where each group object contains a name and an entry list. When ungrouped, there will still be
+ * one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
 const groupEntries = (
@@ -184,7 +187,7 @@ const groupEntries = (
 
   const sortCondition = get(currentView).sort;
   const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
-  /** @type {Record<string, import('$lib/typedefs').Entry[]>} */
+  /** @type {Record<string, import('$lib/typedefs/private').Entry[]>} */
   const groups = {};
   const otherKey = get(_)('other');
 
@@ -220,16 +223,16 @@ const groupEntries = (
 
 /**
  * View settings for all the folder collections.
- * @type {import('svelte/store').Writable<Record<string, import('$lib/typedefs').EntryListView>
- * | undefined>}
+ * @type {import('svelte/store').Writable<Record<string,
+ * import('$lib/typedefs/private').EntryListView> | undefined>}
  */
 const entryListSettings = writable();
 
 /**
  * Get sortable fields for the given collection.
- * @param {import('$lib/typedefs').EntryCollection} collection Collection.
- * @returns {{ fields: string[], default: import('$lib/typedefs').SortingConditions }} A list of
- * sortable fields and default sort conditions.
+ * @param {import('$lib/typedefs/private').EntryCollection} collection Collection.
+ * @returns {{ fields: string[], default: import('$lib/typedefs/private').SortingConditions }} A
+ * list of sortable fields and default sort conditions.
  */
 export const getSortableFields = (collection) => {
   const {
@@ -242,7 +245,7 @@ export const getSortableFields = (collection) => {
   let fields = [];
   /** @type {string | undefined} */
   let defaultKey;
-  /** @type {import('$lib/typedefs').SortOrder | undefined} */
+  /** @type {import('$lib/typedefs/private').SortOrder | undefined} */
   let defaultOrder;
 
   if (customSortableFields) {
@@ -251,7 +254,7 @@ export const getSortableFields = (collection) => {
     }
 
     if (isObject(customSortableFields)) {
-      const def = /** @type {import('$lib/typedefs').CustomSortableFields} */ (
+      const def = /** @type {import('$lib/typedefs/public').CustomSortableFields} */ (
         customSortableFields
       );
 
@@ -289,9 +292,9 @@ export const getSortableFields = (collection) => {
 
 /**
  * Get a field’s label by key.
- * @param {import('$lib/typedefs').EntryCollection} collection Collection.
- * @param {import('$lib/typedefs').FieldKeyPath | string} key Field key path or one of other entry
- * metadata property keys: `slug`, `commit_author` and `commit_date`.
+ * @param {import('$lib/typedefs/private').EntryCollection} collection Collection.
+ * @param {import('$lib/typedefs/public').FieldKeyPath | string} key Field key path or one of other
+ * entry metadata property keys: `slug`, `commit_author` and `commit_date`.
  * @returns {string} Label. For a nested field, it would be something like `Name – English`.
  */
 const getSortFieldLabel = (collection, key) => {
@@ -332,7 +335,7 @@ export const sortFields = derived(
       return;
     }
 
-    const _collection = /** @type {import('$lib/typedefs').EntryCollection} */ (collection);
+    const _collection = /** @type {import('$lib/typedefs/private').EntryCollection} */ (collection);
     const { fields, default: defaultSort } = getSortableFields(_collection);
     const view = get(entryListSettings)?.[_collection.name] ?? { type: 'list' };
 
@@ -355,7 +358,7 @@ export const sortFields = derived(
 );
 /**
  * List of all the entries for the selected entry collection.
- * @type {import('svelte/store').Readable<import('$lib/typedefs').Entry[]>}
+ * @type {import('svelte/store').Readable<import('$lib/typedefs/private').Entry[]>}
  */
 export const listedEntries = derived(
   [allEntries, selectedCollection],
@@ -370,14 +373,17 @@ export const listedEntries = derived(
 /**
  * Sorted, filtered and grouped entries for the selected entry collection.
  * @type {import('svelte/store').Readable<{ name: string, entries:
- * import('$lib/typedefs').Entry[] }[]>}
+ * import('$lib/typedefs/private').Entry[] }[]>}
  */
 export const entryGroups = derived(
   [listedEntries, currentView],
   ([_listedEntries, _currentView], set) => {
-    const collection = /** @type {import('$lib/typedefs').Collection} */ (get(selectedCollection));
+    const collection = /** @type {import('$lib/typedefs/private').NormalizedCollection} */ (
+      get(selectedCollection)
+    );
+
     /**
-     * @type {import('$lib/typedefs').Entry[]}
+     * @type {import('$lib/typedefs/private').Entry[]}
      */
     let entries = [..._listedEntries];
 
@@ -402,7 +408,7 @@ export const entryGroups = derived(
 
 /**
  * Initialize {@link entryListSettings} and relevant subscribers.
- * @param {import('$lib/typedefs').BackendService} _backend Backend service.
+ * @param {import('$lib/typedefs/private').BackendService} _backend Backend service.
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};

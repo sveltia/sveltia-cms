@@ -24,8 +24,8 @@ export const normalize = (value) =>
 
 /**
  * Hold search results for the current search terms.
- * @type {import('svelte/store').Readable<{ entries: import('$lib/typedefs').Entry[],
- * assets: import('$lib/typedefs').Asset[] }>}
+ * @type {import('svelte/store').Readable<{ entries: import('$lib/typedefs/private').Entry[],
+ * assets: import('$lib/typedefs/private').Asset[] }>}
  * @todo Search relation fields.
  */
 export const searchResults = derived(

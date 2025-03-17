@@ -9,7 +9,7 @@
   /**
    * @typedef {object} Props
    * @property {string} label Field label.
-   * @property {import('$lib/typedefs').Field[]} fields Subfield definitions.
+   * @property {import('$lib/typedefs/public').Field[]} fields Subfield definitions.
    * @property {Record<string, any>} values Value map.
    * @property {(event: CustomEvent) => void} [onChange] Custom `change` event handler.
    */
@@ -26,9 +26,9 @@
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
-  /** @type {import('$lib/typedefs').LocaleCode} */
+  /** @type {import('$lib/typedefs/private').LocaleCode} */
   let locale = $state('');
-  /** @type {import('$lib/typedefs').FieldKeyPath} */
+  /** @type {import('$lib/typedefs/public').FieldKeyPath} */
   let keyPath = $state('');
   /** @type {Record<string, any>} */
   const inputValues = $state({});

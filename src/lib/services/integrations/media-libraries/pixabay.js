@@ -40,7 +40,7 @@ const endpoint = 'https://pixabay.com/api';
  * @param {string} query Search query.
  * @param {object} options Options.
  * @param {string} options.apiKey API key.
- * @returns {Promise<import('$lib/typedefs').ExternalAsset[]>} Assets.
+ * @returns {Promise<import('$lib/typedefs/private').ExternalAsset[]>} Assets.
  * @see https://pixabay.com/api/docs/
  * @todo Support video files.
  */
@@ -105,7 +105,7 @@ const search = async (query, { apiKey }) => {
 };
 
 /**
- * @type {import('$lib/typedefs').MediaLibraryService}
+ * @type {import('$lib/typedefs/private').MediaLibraryService}
  */
 export default {
   serviceType: 'stock_photos',

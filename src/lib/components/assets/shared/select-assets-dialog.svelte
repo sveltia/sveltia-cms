@@ -19,11 +19,11 @@
   /**
    * @typedef {object} Props
    * @property {boolean} [open] Whether to open the dialog.
-   * @property {import('$lib/typedefs').AssetKind | undefined} [kind] Asset kind.
+   * @property {import('$lib/typedefs/private').AssetKind | undefined} [kind] Asset kind.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
-   * @property {import('$lib/typedefs').Entry} [entry] Associated entry.
-   * @property {(detail: { asset: import('$lib/typedefs').SelectedAsset }) => void} [onSelect]
-   * Custom `select` event handler.
+   * @property {import('$lib/typedefs/private').Entry} [entry] Associated entry.
+   * @property {(detail: { asset: import('$lib/typedefs/private').SelectedAsset }) => void
+   * } [onSelect] Custom `select` event handler.
    */
 
   /** @type {Props} */
@@ -39,7 +39,7 @@
 
   const elementIdPrefix = $props.id();
 
-  /** @type {import('$lib/typedefs').SelectedAsset | null} */
+  /** @type {import('$lib/typedefs/private').SelectedAsset | null} */
   let selectedAsset = $state(null);
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
@@ -92,7 +92,9 @@
   okDisabled={!selectedAsset}
   bind:open
   onOk={() => {
-    onSelect?.({ asset: /** @type {import('$lib/typedefs').SelectedAsset} */ (selectedAsset) });
+    onSelect?.({
+      asset: /** @type {import('$lib/typedefs/private').SelectedAsset} */ (selectedAsset),
+    });
   }}
 >
   {#snippet headerExtra()}
@@ -101,7 +103,8 @@
         <ViewSwitcher
           currentView={(() =>
             /**
-             * @type {import('svelte/store').Writable<import('$lib/typedefs').SelectAssetsView>}
+             * @type {import('svelte/store').Writable<import('$lib/typedefs/private').
+             * SelectAssetsView>}
              */ (selectAssetsView))()}
           aria-controls="select-assets-grid"
         />

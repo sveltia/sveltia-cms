@@ -28,7 +28,7 @@ const parseYAML = (str) => YAML.parse(str);
 /**
  * Detect the Markdown front matter serialization format by checking a delimiter in the content.
  * @param {string} text File content.
- * @returns {import('$lib/typedefs').FrontMatterFormat} Determined format.
+ * @returns {import('$lib/typedefs/public').FrontMatterFormat} Determined format.
  */
 const detectFrontMatterFormat = (text) => {
   if (text.startsWith('+++')) {
@@ -44,7 +44,7 @@ const detectFrontMatterFormat = (text) => {
 
 /**
  * Parse raw content with given file details.
- * @param {import('$lib/typedefs').BaseEntryListItem} entry Entry file list item.
+ * @param {import('$lib/typedefs/private').BaseEntryListItem} entry Entry file list item.
  * @returns {Promise<any>} Parsed content.
  * @throws {Error} When the content could not be parsed.
  */
@@ -52,7 +52,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
   const collection = getCollection(collectionName);
 
   const collectionFile = fileName
-    ? /** @type {import('$lib/typedefs').FileCollection} */ (collection)?._fileMap[fileName]
+    ? /** @type {import('$lib/typedefs/private').FileCollection} */ (collection)?._fileMap[fileName]
     : undefined;
 
   if (!collection) {
@@ -68,7 +68,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
 
   const {
     _file: { format: _format, fmDelimiters },
-  } = collectionFile ?? /** @type {import('$lib/typedefs').EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {import('$lib/typedefs/private').EntryCollection} */ (collection);
 
   const format = _format === 'frontmatter' ? detectFrontMatterFormat(text) : _format;
   const customParser = customFileFormats[format]?.parser;

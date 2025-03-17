@@ -7,7 +7,7 @@ import { siteConfig } from '$lib/services/config';
 /**
  * Format the given object as a JSON document using the built-in method.
  * @param {any} obj Object to be formatted.
- * @param {import('$lib/typedefs').JsonFormatOptions} [options] Options.
+ * @param {import('$lib/typedefs/public').JsonFormatOptions} [options] Options.
  * @returns {string} Formatted document.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  */
@@ -35,7 +35,7 @@ export const formatTOML = (obj) => TOML.stringify(obj).trim();
 /**
  * Format the given object as a YAML document using a library.
  * @param {any} obj Object to be formatted.
- * @param {import('$lib/typedefs').YamlFormatOptions} [options] Options.
+ * @param {import('$lib/typedefs/public').YamlFormatOptions} [options] Options.
  * @param {object} [legacyOptions] Deprecated collection-level options.
  * @param {boolean} [legacyOptions.quote] Quote option.
  * @returns {string} Formatted document.
@@ -67,11 +67,12 @@ export const formatYAML = (
 /**
  * Format raw entry content.
  * @param {object} entry File entry.
- * @param {import('$lib/typedefs').RawEntryContent | Record<import('$lib/typedefs').LocaleCode,
- * import('$lib/typedefs').RawEntryContent>} entry.content Content object. Note that this method may
- * modify the `content` (the `body` property will be removed if exists) so it shouldn’t be a
- * reference to an existing object.
- * @param {import('$lib/typedefs').FileConfig} entry._file Entry file configuration.
+ * @param {import('$lib/typedefs/private').RawEntryContent |
+ * Record<import('$lib/typedefs/private').LocaleCode,
+ * import('$lib/typedefs/private').RawEntryContent>} entry.content Content object. Note that this
+ * method may modify the `content` (the `body` property will be removed if exists) so it shouldn’t
+ * be a reference to an existing object.
+ * @param {import('$lib/typedefs/private').FileConfig} entry._file Entry file configuration.
  * @returns {Promise<string>} Formatted string.
  */
 export const formatEntryFile = async ({ content, _file }) => {

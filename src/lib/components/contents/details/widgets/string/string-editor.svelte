@@ -10,11 +10,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').StringField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').StringField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

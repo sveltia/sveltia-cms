@@ -5,9 +5,9 @@ import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Field key path.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Entry content.
- * @param {import('$lib/typedefs').LocaleCode} args.locale Locale code.
+ * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Field key path.
+ * @param {import('$lib/typedefs/private').FlattenedEntryContent} args.valueMap Entry content.
+ * @param {import('$lib/typedefs/private').LocaleCode} args.locale Locale code.
  * @param {string} [args.summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
  * @returns {string} Formatted summary.
  */

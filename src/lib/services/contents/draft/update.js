@@ -34,7 +34,7 @@ const updateObject = (obj, newProps) => {
 /**
  * Traverse the given object by decoding dot-notated key path.
  * @param {any} obj Original object.
- * @param {import('$lib/typedefs').FieldKeyPath} keyPath Dot-notated field name.
+ * @param {import('$lib/typedefs/public').FieldKeyPath} keyPath Dot-notated field name.
  * @returns {[values: any, remainder: any]} Unflatten values and flatten remainder.
  */
 const getItemList = (obj, keyPath) => {
@@ -53,14 +53,14 @@ const getItemList = (obj, keyPath) => {
 
 /**
  * Update the value in a list field.
- * @param {import('$lib/typedefs').LocaleCode} locale Target locale.
- * @param {import('$lib/typedefs').FieldKeyPath} keyPath Dot-notated field name.
+ * @param {import('$lib/typedefs/private').LocaleCode} locale Target locale.
+ * @param {import('$lib/typedefs/public').FieldKeyPath} keyPath Dot-notated field name.
  * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) =>
  * void } manipulate A function to manipulate the list, which takes one object argument containing
  * the value list, file list and view state list. The typical usage is `list.splice()`.
  */
 export const updateListField = (locale, keyPath, manipulate) => {
-  const draft = /** @type {import('$lib/typedefs').EntryDraft} */ (get(entryDraft));
+  const draft = /** @type {import('$lib/typedefs/private').EntryDraft} */ (get(entryDraft));
   const { collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const [valueList, valueListRemainder] = getItemList(draft.currentValues[locale], keyPath);
@@ -73,7 +73,7 @@ export const updateListField = (locale, keyPath, manipulate) => {
 
   i18nAutoDupEnabled.set(false);
 
-  /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+  /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
     entryDraft
   ).update((_draft) => {
     updateObject(_draft.currentValues[locale], {
@@ -97,17 +97,17 @@ export const updateListField = (locale, keyPath, manipulate) => {
 /**
  * Populate the given localized content with values from the default locale if the corresponding
  * field’s i18n configuration is `duplicate`.
- * @param {import('$lib/typedefs').FlattenedEntryContent} content Original content.
- * @returns {import('$lib/typedefs').FlattenedEntryContent} Updated content.
+ * @param {import('$lib/typedefs/private').FlattenedEntryContent} content Original content.
+ * @returns {import('$lib/typedefs/private').FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = (content) => {
-  const draft = /** @type {import('$lib/typedefs').EntryDraft} */ (get(entryDraft));
+  const draft = /** @type {import('$lib/typedefs/private').EntryDraft} */ (get(entryDraft));
   const { collectionName, fileName, collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const defaultLocaleValues = draft.currentValues[defaultLocale];
   /** @type {string[]} */
   const keys = unique([...Object.keys(content), ...Object.keys(defaultLocaleValues)]);
-  const newContent = /** @type {import('$lib/typedefs').FlattenedEntryContent} */ ({});
+  const newContent = /** @type {import('$lib/typedefs/private').FlattenedEntryContent} */ ({});
 
   keys.forEach((keyPath) => {
     const canDuplicate =
@@ -132,10 +132,10 @@ export const copyDefaultLocaleValues = (content) => {
 
 /**
  * Enable or disable the given locale’s content output for the current entry draft.
- * @param {import('$lib/typedefs').LocaleCode} locale Locale.
+ * @param {import('$lib/typedefs/private').LocaleCode} locale Locale.
  */
 export const toggleLocale = (locale) => {
-  /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+  /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
     entryDraft
   ).update((_draft) => {
     const { currentLocales, currentValues, validities } = _draft;
@@ -172,12 +172,12 @@ export const toggleLocale = (locale) => {
 
 /**
  * Copy or translate field value(s) from another locale.
- * @param {import('$lib/typedefs').LocaleCode} sourceLocale Source locale, e.g. `en`.
- * @param {import('$lib/typedefs').LocaleCode} targetLocale Target locale, e.g. `ja`.
+ * @param {import('$lib/typedefs/private').LocaleCode} sourceLocale Source locale, e.g. `en`.
+ * @param {import('$lib/typedefs/private').LocaleCode} targetLocale Target locale, e.g. `ja`.
  * @param {object} [options] Options.
- * @param {import('$lib/typedefs').FieldKeyPath} [options.keyPath] Flattened (dot-notated) object
- * keys that will be used for searching the source values. Omit this if copying all the fields. If
- * the triggered widget is List or Object, this will likely match multiple fields.
+ * @param {import('$lib/typedefs/public').FieldKeyPath} [options.keyPath] Flattened (dot-notated)
+ * object keys that will be used for searching the source values. Omit this if copying all the
+ * fields. If the triggered widget is List or Object, this will likely match multiple fields.
  * @param {boolean} [options.translate] Whether to translate the copied text fields.
  */
 export const copyFromLocale = async (
@@ -186,7 +186,7 @@ export const copyFromLocale = async (
   { keyPath = '', translate = false } = {},
 ) => {
   const { collectionName, fileName, currentValues } =
-    /** @type {import('$lib/typedefs').EntryDraft} */ (get(entryDraft));
+    /** @type {import('$lib/typedefs/private').EntryDraft} */ (get(entryDraft));
 
   const valueMap = currentValues[sourceLocale];
 
@@ -202,8 +202,8 @@ export const copyFromLocale = async (
         !['markdown', 'text', 'string', 'list'].includes(field?.widget ?? 'string') ||
         // prettier-ignore
         (field?.widget === 'list' && (
-          /** @type {import('$lib/typedefs').ListField} */ (field).field ??
-          /** @type {import('$lib/typedefs').ListField} */ (field).fields)) ||
+          /** @type {import('$lib/typedefs/public').ListField} */ (field).field ??
+          /** @type {import('$lib/typedefs/public').ListField} */ (field).fields)) ||
         (!translate && sourceLocaleValue === targetLocaleValue) ||
         // Skip populated fields when translating all the fields
         (!keyPath && translate && !!targetLocaleValue)
@@ -284,7 +284,7 @@ export const copyFromLocale = async (
     updateToast('success', `copy.complete.${countType}`);
   }
 
-  /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+  /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
     entryDraft
   ).update((_draft) => ({
     ..._draft,
@@ -294,23 +294,24 @@ export const copyFromLocale = async (
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
- * @param {import('$lib/typedefs').LocaleCode} [locale] Target locale, e.g. `ja`. Can be empty if
- * reverting everything.
- * @param {import('$lib/typedefs').FieldKeyPath} [keyPath] Flattened (dot-notated) object keys that
- * will be used for searching the source values. Omit this if copying all the fields. If the
- * triggered widget is List or Object, this will likely match multiple fields.
+ * @param {import('$lib/typedefs/private').LocaleCode} [locale] Target locale, e.g. `ja`. Can be
+ * empty if reverting everything.
+ * @param {import('$lib/typedefs/public').FieldKeyPath} [keyPath] Flattened (dot-notated) object
+ * keys that will be used for searching the source values. Omit this if copying all the fields. If
+ * the triggered widget is List or Object, this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
   const { collection, collectionFile, fileName, currentValues, originalValues } =
-    /** @type {import('$lib/typedefs').EntryDraft} */ (get(entryDraft));
+    /** @type {import('$lib/typedefs/private').EntryDraft} */ (get(entryDraft));
 
   const { allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
   const locales = locale ? [locale] : allLocales;
 
   /**
    * Revert changes.
-   * @param {import('$lib/typedefs').LocaleCode} _locale Iterating locale.
-   * @param {import('$lib/typedefs').FlattenedEntryContent} valueMap Flattened entry content.
+   * @param {import('$lib/typedefs/private').LocaleCode} _locale Iterating locale.
+   * @param {import('$lib/typedefs/private').FlattenedEntryContent} valueMap Flattened entry
+   * content.
    * @param {boolean} reset Whether ro remove the current value.
    */
   const revert = (_locale, valueMap, reset = false) => {
@@ -341,7 +342,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
     revert(_locale, originalValues[_locale], false);
   });
 
-  /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+  /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
     entryDraft
   ).update((_draft) => ({
     ..._draft,

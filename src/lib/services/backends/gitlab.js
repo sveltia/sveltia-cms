@@ -47,7 +47,7 @@ siteConfig?.subscribe((config) => {
 });
 
 /**
- * @type {import('$lib/typedefs').RepositoryInfo}
+ * @type {import('$lib/typedefs/private').RepositoryInfo}
  */
 const repository = new Proxy(/** @type {any} */ ({}), {
   /**
@@ -77,7 +77,7 @@ const repository = new Proxy(/** @type {any} */ ({}), {
 
 /**
  * Check the GitLab service status.
- * @returns {Promise<import('$lib/typedefs').BackendServiceStatus>} Current status.
+ * @returns {Promise<import('$lib/typedefs/private').BackendServiceStatus>} Current status.
  * @see https://kb.status.io/developers/public-status-api/
  */
 const checkStatus = async () => {
@@ -159,12 +159,11 @@ const fetchGraphQL = async (query, variables = {}) => {
 
 /**
  * Get the configured repository’s basic information.
- * @returns {import('$lib/typedefs').RepositoryInfo} Repository info.
+ * @returns {import('$lib/typedefs/private').RepositoryInfo} Repository info.
  */
 const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } = /** @type {import('$lib/typedefs').SiteConfig} */ (
-    get(siteConfig)
-  ).backend;
+  const { repo: projectPath, branch } =
+    /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig)).backend;
 
   const { origin, isSelfHosted } = apiConfig;
 
@@ -204,9 +203,9 @@ const init = () => {
 
 /**
  * Retrieve the repository configuration and sign in with GitLab REST API.
- * @param {import('$lib/typedefs').SignInOptions} options Options.
- * @returns {Promise<import('$lib/typedefs').User | void>} User info, or nothing when finishing PKCE
- * auth flow in a popup or the sign-in flow cannot be started.
+ * @param {import('$lib/typedefs/private').SignInOptions} options Options.
+ * @returns {Promise<import('$lib/typedefs/private').User | void>} User info, or nothing when
+ * finishing PKCE auth flow in a popup or the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
  * @see https://docs.gitlab.com/ee/api/users.html#list-current-user
  */
@@ -219,7 +218,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     auth_endpoint: path = 'oauth/authorize',
     auth_type: authType,
     app_id: clientId = '',
-  } = /** @type {import('$lib/typedefs').SiteConfig} */ (get(siteConfig)).backend;
+  } = /** @type {import('$lib/typedefs/private').NormalizedSiteConfig} */ (get(siteConfig)).backend;
 
   const authURL = `${stripSlashes(baseURL)}/${stripSlashes(path)}`;
   const scope = 'api';
@@ -391,7 +390,7 @@ const fetchLastCommit = async () => {
 
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
- * @returns {Promise<import('$lib/typedefs').BaseFileListItem[]>} File list.
+ * @returns {Promise<import('$lib/typedefs/private').BaseFileListItem[]>} File list.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#repositorytree
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
@@ -466,9 +465,9 @@ const fetchFileList = async () => {
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.
- * @param {(import('$lib/typedefs').BaseEntryListItem | import('$lib/typedefs').BaseAssetListItem)[]
- * } fetchingFiles Base entry/asset list items.
- * @returns {Promise<import('$lib/typedefs').RepositoryContentsMap>} Fetched contents map.
+ * @param {(import('$lib/typedefs/private').BaseEntryListItem |
+ * import('$lib/typedefs/private').BaseAssetListItem)[]} fetchingFiles Base entry/asset list items.
+ * @returns {Promise<import('$lib/typedefs/private').RepositoryContentsMap>} Fetched contents map.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#tree
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
@@ -627,7 +626,7 @@ const fetchFiles = async () => {
 
 /**
  * Fetch an asset as a Blob via the API.
- * @param {import('$lib/typedefs').Asset} asset Asset to retrieve the file content.
+ * @param {import('$lib/typedefs/private').Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
  * @see https://docs.gitlab.com/ee/api/repository_files.html#get-raw-file-from-repository
  */
@@ -648,8 +647,8 @@ const fetchBlob = async (asset) => {
 /**
  * Save entries or assets remotely. Note that the `commitCreate` GraphQL mutation is broken and
  * images cannot be uploaded properly, so we use the REST API instead.
- * @param {import('$lib/typedefs').FileChange[]} changes File changes to be saved.
- * @param {import('$lib/typedefs').CommitChangesOptions} options Commit options.
+ * @param {import('$lib/typedefs/private').FileChange[]} changes File changes to be saved.
+ * @param {import('$lib/typedefs/private').CommitChangesOptions} options Commit options.
  * @returns {Promise<string>} Commit URL.
  * @see https://docs.gitlab.com/ee/api/commits.html#create-a-commit-with-multiple-files-and-actions
  * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/31102
@@ -682,7 +681,7 @@ const commitChanges = async (changes, options) => {
 };
 
 /**
- * @type {import('$lib/typedefs').BackendService}
+ * @type {import('$lib/typedefs/private').BackendService}
  */
 export default {
   name: backendName,

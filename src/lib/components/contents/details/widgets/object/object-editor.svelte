@@ -23,11 +23,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').ObjectField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').ObjectField} fieldConfig Field configuration.
    * @property {object | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -95,9 +95,9 @@
     if (type) {
       Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
         if (_locale === locale || i18n === 'duplicate') {
-          /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
-            typeKeyPath
-          ] = type;
+          /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).currentValues[
+            _locale
+          ][typeKeyPath] = type;
         }
       });
 
@@ -115,14 +115,15 @@
     Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
         // Apply the new values while keeping the Proxy
-        /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale] =
-          Object.assign(_valueMap, toRaw({ ...newValueMap, ..._valueMap }));
+        /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).currentValues[
+          _locale
+        ] = Object.assign(_valueMap, toRaw({ ...newValueMap, ..._valueMap }));
 
         // Disable validation
         delete (
-          /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
-            keyPath
-          ]
+          /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).currentValues[
+            _locale
+          ][keyPath]
         );
       }
     });
@@ -140,17 +141,17 @@
       if (_locale === locale || i18n === 'duplicate') {
         Object.keys(_valueMap).forEach((_keyPath) => {
           if (_keyPath.startsWith(`${keyPath}.`)) {
-            /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
-              _keyPath
-            ] = null;
+            /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).currentValues[
+              _locale
+            ][_keyPath] = null;
             delete $entryDraft?.currentValues[_locale][_keyPath];
           }
         });
 
         // Enable validation
-        /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
-          keyPath
-        ] = null;
+        /** @type {import('$lib/typedefs/private').EntryDraft} */ ($entryDraft).currentValues[
+          _locale
+        ][keyPath] = null;
       }
     });
 

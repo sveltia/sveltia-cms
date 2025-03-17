@@ -3,22 +3,22 @@ import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/ent
 
 /**
  * Check if the given fields contain a single List widget with the `root` option enabled.
- * @param {import('$lib/typedefs').Field[]} fields Field list.
+ * @param {import('$lib/typedefs/public').Field[]} fields Field list.
  * @returns {boolean} Result.
  */
 export const hasRootListField = (fields) =>
   fields.length === 1 &&
   fields[0].widget === 'list' &&
-  /** @type {import('$lib/typedefs').ListField} */ (fields[0]).root === true;
+  /** @type {import('$lib/typedefs/public').ListField} */ (fields[0]).root === true;
 
 /**
  * Format the summary template of a List field.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Field key path.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Entry content.
- * @param {import('$lib/typedefs').LocaleCode} args.locale Locale code.
+ * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Field key path.
+ * @param {import('$lib/typedefs/private').FlattenedEntryContent} args.valueMap Entry content.
+ * @param {import('$lib/typedefs/private').LocaleCode} args.locale Locale code.
  * @param {string} [args.summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
  * @param {boolean} args.hasSingleSubField Whether the field has a single `field` instead of
  * multiple `fields`.

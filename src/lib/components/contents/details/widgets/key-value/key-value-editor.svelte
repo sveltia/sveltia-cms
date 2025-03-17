@@ -18,11 +18,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').KeyValueField} fieldConfig Field configuration.
+   * @property {import('$lib/typedefs/public').KeyValueField} fieldConfig Field configuration.
    * @property {Record<string, string> | undefined} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs/private').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -61,7 +61,7 @@
     }
 
     const _entryDraft =
-      /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+      /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
         entryDraft
       );
 
@@ -123,7 +123,7 @@
     }
 
     const _entryDraft =
-      /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+      /** @type {import('svelte/store').Writable<import('$lib/typedefs/private').EntryDraft>} */ (
         entryDraft
       );
 

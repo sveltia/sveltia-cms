@@ -10,7 +10,7 @@ export const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\
 /**
  * Apply a string transformation to the value.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').Field} [args.fieldConfig] Field configuration.
+ * @param {import('$lib/typedefs/public').Field} [args.fieldConfig] Field configuration.
  * @param {any} args.value Original value.
  * @param {string} args.transformation Transformation, e.g `upper`, `truncate(10)`.
  * @returns {string} Transformed value.
@@ -33,7 +33,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
     const { format, timeZone } = dateTransformer.groups;
 
     const { dateOnly, utc } = parseDateTimeConfig(
-      /** @type {import('$lib/typedefs').DateTimeField} */ (fieldConfig ?? {}),
+      /** @type {import('$lib/typedefs/public').DateTimeField} */ (fieldConfig ?? {}),
     );
 
     const useUTC =
@@ -81,7 +81,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
 /**
  * Apply string transformations to the value.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').Field} [args.fieldConfig] Field configuration.
+ * @param {import('$lib/typedefs/public').Field} [args.fieldConfig] Field configuration.
  * @param {any} args.value Original value.
  * @param {string[]} args.transformations List of transformations.
  * @returns {string} Transformed value.

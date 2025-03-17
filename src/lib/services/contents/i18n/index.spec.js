@@ -12,19 +12,19 @@ describe('Test getI18nConfig()', () => {
     _baseURL: '',
   };
 
-  /** @type {import('$lib/typedefs').RawCollection} */
+  /** @type {import('$lib/typedefs/public').Collection} */
   const collectionWithoutI18n = {
     name: 'posts',
     fields: [],
   };
 
-  /** @type {import('$lib/typedefs').RawCollection} */
+  /** @type {import('$lib/typedefs/public').Collection} */
   const collectionWithI18n = {
     ...collectionWithoutI18n,
     i18n: true,
   };
 
-  /** @type {import('$lib/typedefs').RawCollection} */
+  /** @type {import('$lib/typedefs/public').Collection} */
   const collectionWithPartialI18nOverride = {
     name: 'posts',
     i18n: {
@@ -33,7 +33,7 @@ describe('Test getI18nConfig()', () => {
     },
   };
 
-  /** @type {import('$lib/typedefs').RawCollection} */
+  /** @type {import('$lib/typedefs/public').Collection} */
   const collectionWithCompleteI18nOverride = {
     name: 'posts',
     i18n: {
@@ -42,20 +42,20 @@ describe('Test getI18nConfig()', () => {
     },
   };
 
-  /** @type {import('$lib/typedefs').RawCollectionFile} */
+  /** @type {import('$lib/typedefs/public').CollectionFile} */
   const collectionFileWithoutI18n = {
     name: 'home',
     file: 'data/home.json',
     fields: [],
   };
 
-  /** @type {import('$lib/typedefs').RawCollectionFile} */
+  /** @type {import('$lib/typedefs/public').CollectionFile} */
   const collectionFileWithI18n = {
     ...collectionFileWithoutI18n,
     i18n: true,
   };
 
-  /** @type {import('$lib/typedefs').RawCollectionFile} */
+  /** @type {import('$lib/typedefs/public').CollectionFile} */
   const collectionFileWithPartialI18nOverride = {
     ...collectionFileWithoutI18n,
     i18n: {
@@ -64,7 +64,7 @@ describe('Test getI18nConfig()', () => {
     },
   };
 
-  /** @type {import('$lib/typedefs').RawCollectionFile} */
+  /** @type {import('$lib/typedefs/public').CollectionFile} */
   const collectionFileWithCompleteI18nOverride = {
     ...collectionFileWithoutI18n,
     i18n: {

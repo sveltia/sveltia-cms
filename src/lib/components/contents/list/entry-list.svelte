@@ -11,7 +11,9 @@
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
 
   const collection = $derived(
-    /** @type {import('$lib/typedefs').EntryCollection | undefined} */ ($selectedCollection),
+    /** @type {import('$lib/typedefs/private').EntryCollection | undefined} */ (
+      $selectedCollection
+    ),
   );
   const viewType = $derived($currentView.type);
   const allEntries = $derived($entryGroups.map(({ entries }) => entries).flat(1));
@@ -36,7 +38,7 @@
               )}
               itemKey="id"
             >
-              {#snippet renderItem(/** @type {import('$lib/typedefs').Entry} */ entry)}
+              {#snippet renderItem(/** @type {import('$lib/typedefs/private').Entry} */ entry)}
                 <EntryListItem {collection} {entry} {viewType} />
               {/snippet}
             </InfiniteScroll>

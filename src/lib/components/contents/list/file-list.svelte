@@ -18,7 +18,7 @@
     >
       <InfiniteScroll items={$selectedCollection.files} itemKey="name">
         {#snippet renderItem(
-          /** @type {import('$lib/typedefs').RawCollectionFile} */ { name, label },
+          /** @type {import('$lib/typedefs/public').CollectionFile} */ { name, label },
         )}
           <GridRow
             onclick={() => {

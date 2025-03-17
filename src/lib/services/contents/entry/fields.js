@@ -6,7 +6,7 @@ import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relatio
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 
 /**
- * @type {Map<string, import('$lib/typedefs').Field | undefined>}
+ * @type {Map<string, import('$lib/typedefs/public').Field | undefined>}
  */
 const fieldConfigCacheMap = new Map();
 
@@ -15,10 +15,10 @@ const fieldConfigCacheMap = new Map();
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name if the collection is a file collection.
- * @param {import('$lib/typedefs').FlattenedEntryContent} [args.valueMap] Object holding current
- * entry values. This is required when working with list/object widget variable types.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
- * @returns {import('$lib/typedefs').Field | undefined} Field configuration.
+ * @param {import('$lib/typedefs/private').FlattenedEntryContent} [args.valueMap] Object holding
+ * current entry values. This is required when working with list/object widget variable types.
+ * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
+ * @returns {import('$lib/typedefs/public').Field | undefined} Field configuration.
  */
 export const getFieldConfig = ({
   collectionName,
@@ -36,7 +36,7 @@ export const getFieldConfig = ({
   const collection = getCollection(collectionName);
 
   const collectionFile = fileName
-    ? /** @type {import('$lib/typedefs').FileCollection} */ (collection)?._fileMap[fileName]
+    ? /** @type {import('$lib/typedefs/private').FileCollection} */ (collection)?._fileMap[fileName]
     : undefined;
 
   if (!collection || (fileName && !collectionFile)) {
@@ -48,7 +48,7 @@ export const getFieldConfig = ({
   const { fields = [] } = collectionFile ?? collection;
   const keyPathArray = keyPath.split('.');
   /**
-   * @type {import('$lib/typedefs').Field | undefined}
+   * @type {import('$lib/typedefs/public').Field | undefined}
    */
   let field;
 
@@ -64,7 +64,7 @@ export const getFieldConfig = ({
         fields: subFields,
         types,
         typeKey = 'type',
-      } = /** @type {import('$lib/typedefs').ListField} */ (field);
+      } = /** @type {import('$lib/typedefs/public').ListField} */ (field);
 
       if (subField) {
         const subFieldName = isNumericKey ? keyPathArray[index + 1] : undefined;
@@ -97,8 +97,8 @@ export const getFieldConfig = ({
  * Check if the field requires data input (and data output if the `omit_empty_optional_fields`
  * option is `true`).
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').Field} args.fieldConfig Field configuration.
- * @param {import('$lib/typedefs').LocaleCode} args.locale Current pane’s locale.
+ * @param {import('$lib/typedefs/public').Field} args.fieldConfig Field configuration.
+ * @param {import('$lib/typedefs/private').LocaleCode} args.locale Current pane’s locale.
  * @returns {boolean} Result.
  */
 export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
@@ -109,10 +109,10 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Object holding current entry
- * values.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
- * @param {import('$lib/typedefs').LocaleCode} args.locale Locale.
+ * @param {import('$lib/typedefs/private').FlattenedEntryContent} args.valueMap Object holding
+ * current entry values.
+ * @param {import('$lib/typedefs/public').FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
+ * @param {import('$lib/typedefs/private').LocaleCode} args.locale Locale.
  * @param {string[]} [args.transformations] String transformations.
  * @returns {any | any[]} Resolved field value(s).
  */
@@ -130,7 +130,7 @@ export const getFieldDisplayValue = ({
   if (fieldConfig?.widget === 'relation') {
     value = getReferencedOptionLabel({
       // eslint-disable-next-line object-shorthand
-      fieldConfig: /** @type {import('$lib/typedefs').RelationField} */ (fieldConfig),
+      fieldConfig: /** @type {import('$lib/typedefs/public').RelationField} */ (fieldConfig),
       valueMap,
       keyPath,
       locale,
@@ -140,14 +140,14 @@ export const getFieldDisplayValue = ({
   if (fieldConfig?.widget === 'select') {
     value = getOptionLabel({
       // eslint-disable-next-line object-shorthand
-      fieldConfig: /** @type {import('$lib/typedefs').SelectField} */ (fieldConfig),
+      fieldConfig: /** @type {import('$lib/typedefs/public').SelectField} */ (fieldConfig),
       valueMap,
       keyPath,
     });
   }
 
   if (fieldConfig?.widget === 'list') {
-    const { fields, types } = /** @type {import('$lib/typedefs').ListField} */ (fieldConfig);
+    const { fields, types } = /** @type {import('$lib/typedefs/public').ListField} */ (fieldConfig);
 
     if (fields || types) {
       // Ignore
@@ -178,11 +178,11 @@ export const getFieldDisplayValue = ({
 /**
  * Get an entry’s field value by locale and key.
  * @param {object} args Arguments.
- * @param {import('$lib/typedefs').Entry} args.entry Entry.
- * @param {import('$lib/typedefs').LocaleCode} args.locale Locale code.
+ * @param {import('$lib/typedefs/private').Entry} args.entry Entry.
+ * @param {import('$lib/typedefs/private').LocaleCode} args.locale Locale code.
  * @param {string} args.collectionName Name of a collection that the entry belongs to.
- * @param {import('$lib/typedefs').FieldKeyPath | string} args.key Field key path or one of other
- * entry metadata property keys: `slug`, `commit_author` and `commit_date`.
+ * @param {import('$lib/typedefs/public').FieldKeyPath | string} args.key Field key path or one of
+ * other entry metadata property keys: `slug`, `commit_author` and `commit_date`.
  * @param {boolean} [args.resolveRef] Whether to resolve the referenced value if the target field is
  * a relation field.
  * @returns {any} Value.
@@ -215,7 +215,7 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
     if (fieldConfig?.widget === 'relation') {
       return getReferencedOptionLabel({
         // eslint-disable-next-line object-shorthand
-        fieldConfig: /** @type {import('$lib/typedefs').RelationField} */ (fieldConfig),
+        fieldConfig: /** @type {import('$lib/typedefs/public').RelationField} */ (fieldConfig),
         valueMap: content,
         keyPath: key,
         locale,

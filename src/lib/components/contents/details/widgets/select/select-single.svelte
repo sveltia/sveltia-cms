@@ -7,7 +7,7 @@
    * @property {string} currentValue Field value.
    */
 
-  /** @type {import('$lib/typedefs').SelectFieldSelectorProps & Props} */
+  /** @type {import('$lib/typedefs/private').SelectFieldSelectorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

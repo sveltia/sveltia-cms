@@ -3,8 +3,8 @@ import { getAssetKind } from '$lib/services/assets';
 
 /**
  * Parse the given asset files to create a complete, serialized asset list.
- * @param {import('$lib/typedefs').BaseAssetListItem[]} assetFiles Asset file list.
- * @returns {import('$lib/typedefs').Asset[]} Asset list.
+ * @param {import('$lib/typedefs/private').BaseAssetListItem[]} assetFiles Asset file list.
+ * @returns {import('$lib/typedefs/private').Asset[]} Asset list.
  */
 export const parseAssetFiles = (assetFiles) =>
   assetFiles.map((assetInfo) => {
@@ -18,7 +18,7 @@ export const parseAssetFiles = (assetFiles) =>
       folder: { internalPath },
     } = assetInfo;
 
-    return /** @type {import('$lib/typedefs').Asset} */ ({
+    return /** @type {import('$lib/typedefs/private').Asset} */ ({
       file,
       blobURL: undefined,
       path,
