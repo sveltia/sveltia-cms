@@ -3,7 +3,7 @@
 import { getBase64 } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
-import { derived, get } from 'svelte/store';
+import { get } from 'svelte/store';
 import {
   handleClientSideAuthPopup,
   initClientSideAuth,
@@ -24,15 +24,21 @@ const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc650
 const apiRootDefault = 'https://gitlab.com/api/v4';
 
 /**
- * @type {import('svelte/store').Readable<{ origin: string, rest: string, graphql: string,
- * isSelfHosted: boolean }>}
+ * @type {{ isSelfHosted: boolean, origin: string, rest: string, graphql: string }}
  */
-const apiConfig = derived([siteConfig], ([config], set) => {
+const apiConfig = {
+  isSelfHosted: false,
+  origin: '',
+  rest: '',
+  graphql: '',
+};
+
+siteConfig?.subscribe((config) => {
   const apiRoot = config?.backend.api_root ?? apiRootDefault;
   const isSelfHosted = apiRoot !== apiRootDefault;
   const { origin } = new URL(apiRoot);
 
-  set({
+  Object.assign(apiConfig, {
     origin,
     rest: `${origin}/api/v4`,
     graphql: `${origin}/api`,
@@ -121,7 +127,7 @@ const fetchAPI = async (
   init = {},
   { token = /** @type {string} */ (get(user)?.token), responseType = 'json' } = {},
 ) => {
-  const apiRoot = get(apiConfig)[path === '/graphql' ? 'graphql' : 'rest'];
+  const apiRoot = apiConfig[path === '/graphql' ? 'graphql' : 'rest'];
 
   init.headers = new Headers(init.headers);
   init.headers.set('Authorization', `Bearer ${token}`);
@@ -157,7 +163,7 @@ const fetchGraphQL = async (query, variables = {}) => {
  */
 const getRepositoryInfo = () => {
   const { repo: projectPath, branch } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
-  const { origin, isSelfHosted } = get(apiConfig);
+  const { origin, isSelfHosted } = apiConfig;
 
   /**
    * In GitLab terminology, an owner is called a namespace, and a repository is called a project. A

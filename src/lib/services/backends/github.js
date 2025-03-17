@@ -3,7 +3,7 @@ import { sleep } from '@sveltia/utils/misc';
 import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
 import { _ } from 'svelte-i18n';
-import { derived, get } from 'svelte/store';
+import { get } from 'svelte/store';
 import { initServerSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
@@ -20,15 +20,21 @@ const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
 const apiRootDefault = 'https://api.github.com';
 
 /**
- * @type {import('svelte/store').Readable<{ isSelfHosted: boolean, origin: string, rest: string,
- * graphql: string }>}
+ * @type {{ isSelfHosted: boolean, origin: string, rest: string, graphql: string }}
  */
-const apiConfig = derived([siteConfig], ([config], set) => {
+const apiConfig = {
+  isSelfHosted: false,
+  origin: '',
+  rest: '',
+  graphql: '',
+};
+
+siteConfig?.subscribe((config) => {
   const apiRoot = config?.backend.api_root ?? apiRootDefault;
   const isSelfHosted = apiRoot !== apiRootDefault;
   const { origin } = new URL(apiRoot);
 
-  set({
+  Object.assign(apiConfig, {
     isSelfHosted,
     origin,
     rest: isSelfHosted ? `${origin}/api/v3` : origin,
@@ -113,7 +119,7 @@ const fetchAPI = async (
   init = {},
   { token = /** @type {User} */ (get(user)).token, responseType = 'json' } = {},
 ) => {
-  const apiRoot = get(apiConfig)[path === '/graphql' ? 'graphql' : 'rest'];
+  const apiRoot = apiConfig[path === '/graphql' ? 'graphql' : 'rest'];
 
   init.headers = new Headers(init.headers);
   init.headers.set('Authorization', `token ${token}`);
@@ -149,7 +155,7 @@ const fetchGraphQL = async (query, variables = {}) => {
  */
 const getRepositoryInfo = () => {
   const { repo: projectPath, branch } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
-  const { origin, isSelfHosted } = get(apiConfig);
+  const { origin, isSelfHosted } = apiConfig;
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
 
   return Object.assign(repository, {
