@@ -124,9 +124,9 @@ const creditLinkParams = 'utm_source=sveltia-cms&utm_medium=referral';
 
 /**
  * Search images or fetch curated pictures if no query is given.
- * @param {string} query - Search query.
- * @param {object} options - Options.
- * @param {string} options.apiKey - API key.
+ * @param {string} query Search query.
+ * @param {object} options Options.
+ * @param {string} options.apiKey API key.
  * @returns {Promise<import('$lib/typedefs').ExternalAsset[]>} Assets.
  * @see https://unsplash.com/documentation
  * @todo Support video files.

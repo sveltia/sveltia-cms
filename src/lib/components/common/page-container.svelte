@@ -4,9 +4,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} [class] - CSS class name on the button.
-   * @property {import('svelte').Snippet} [primarySidebar] - Primary sidebar content.
-   * @property {import('svelte').Snippet} [main] - Main content.
+   * @property {string} [class] CSS class name on the button.
+   * @property {import('svelte').Snippet} [primarySidebar] Primary sidebar content.
+   * @property {import('svelte').Snippet} [main] Main content.
    */
 
   /** @type {Props & Record<string, any>} */

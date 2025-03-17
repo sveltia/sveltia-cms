@@ -9,10 +9,10 @@ export const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\
 
 /**
  * Apply a string transformation to the value.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').Field} [args.fieldConfig] - Field configuration.
- * @param {any} args.value - Original value.
- * @param {string} args.transformation - Transformation, e.g `upper`, `truncate(10)`.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').Field} [args.fieldConfig] Field configuration.
+ * @param {any} args.value Original value.
+ * @param {string} args.transformation Transformation, e.g `upper`, `truncate(10)`.
  * @returns {string} Transformed value.
  * @see https://decapcms.org/docs/summary-strings/
  */
@@ -80,10 +80,10 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
 
 /**
  * Apply string transformations to the value.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').Field} [args.fieldConfig] - Field configuration.
- * @param {any} args.value - Original value.
- * @param {string[]} args.transformations - List of transformations.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').Field} [args.fieldConfig] Field configuration.
+ * @param {any} args.value Original value.
+ * @param {string[]} args.transformations List of transformations.
  * @returns {string} Transformed value.
  */
 export const applyTransformations = ({ fieldConfig, value, transformations }) => {

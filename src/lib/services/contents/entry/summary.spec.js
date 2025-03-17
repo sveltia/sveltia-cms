@@ -51,8 +51,8 @@ describe('Test getEntrySummary()', () => {
 
   /**
    * Wrapper for {@link getEntrySummary}.
-   * @param {string} summary - Summary string template.
-   * @param {object} [options] - Options.
+   * @param {string} summary Summary string template.
+   * @param {object} [options] Options.
    * @returns {string} Formatted summary.
    */
   const format = (summary, options = {}) =>

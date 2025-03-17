@@ -18,9 +18,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').LocaleCode} locale - Current pane’s locale.
-   * @property {import('$lib/typedefs').FieldKeyPath} keyPath - Field key path.
-   * @property {import('$lib/typedefs').Field} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').LocaleCode} locale Current pane’s locale.
+   * @property {import('$lib/typedefs').FieldKeyPath} keyPath Field key path.
+   * @property {import('$lib/typedefs').Field} fieldConfig Field configuration.
    */
 
   /** @type {Props} */
@@ -36,7 +36,7 @@
 
   /**
    * Parse the given string as Markdown and sanitize the result to only allow certain tags.
-   * @param {string} str - Original string.
+   * @param {string} str Original string.
    * @returns {string} Sanitized string.
    */
   const sanitize = (str) =>

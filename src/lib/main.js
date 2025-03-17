@@ -42,8 +42,8 @@ let initialized = false;
 
 /**
  * Initialize the CMS, optionally with the given configuration.
- * @param {object} [options] - Options.
- * @param {import('./typedefs').SiteConfig} [options.config] - Configuration to be merged with the
+ * @param {object} [options] Options.
+ * @param {import('./typedefs').SiteConfig} [options.config] Configuration to be merged with the
  * default configuration.
  * @see https://decapcms.org/docs/manual-initialization/
  * @see https://decapcms.org/docs/custom-mounting/
@@ -71,10 +71,10 @@ const init = async ({ config } = {}) => {
 
 /**
  * Register a custom entry file format.
- * @param {string} name - Format name.
- * @param {string} extension - File extension.
+ * @param {string} name Format name.
+ * @param {string} extension File extension.
  * @param {{ fromFile?: import('./typedefs').FileParser, toFile?:
- * import('./typedefs').FileFormatter }} methods - Parser and/or formatter methods.
+ * import('./typedefs').FileFormatter }} methods Parser and/or formatter methods.
  * @see https://decapcms.org/docs/custom-formatters/
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
@@ -83,7 +83,7 @@ const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
 
 /**
  * Register a custom component.
- * @param {import('./typedefs').EditorComponentDefinition} definition - Component definition.
+ * @param {import('./typedefs').EditorComponentDefinition} definition Component definition.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
 // eslint-disable-next-line no-unused-vars

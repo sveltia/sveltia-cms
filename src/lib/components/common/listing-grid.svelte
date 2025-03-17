@@ -8,8 +8,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').ViewType} viewType - View type.
-   * @property {import('svelte').Snippet} [children] - Slot content.
+   * @property {import('$lib/typedefs').ViewType} viewType View type.
+   * @property {import('svelte').Snippet} [children] Slot content.
    */
 
   /** @type {Props & Record<string, any>} */

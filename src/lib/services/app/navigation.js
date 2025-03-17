@@ -25,7 +25,7 @@ export const announcedPageStatus = writable('');
 
 /**
  * Parse the URL and return the decoded result.
- * @param {Location} [loc] - URL. Omit this to use the current URL.
+ * @param {Location} [loc] URL. Omit this to use the current URL.
  * @returns {{ path: string, params: Record<string, string> }} Path and search params.
  */
 export const parseLocation = (loc = window.location) => {
@@ -40,12 +40,11 @@ export const parseLocation = (loc = window.location) => {
 /**
  * Navigate to a different URL or replace the current URL. This is similar to SvelteKit’s `goto`
  * method but assumes hash-based SPA routing.
- * @param {string} path - URL path. It will appear in th URL hash but omit the leading `#` sign
- * here.
- * @param {object} [options] - Options.
- * @param {object} [options.state] - History state to be included.
- * @param {boolean} [options.replaceState] - Whether to replace the history state.
- * @param {boolean} [options.notifyChange] - Whether to dispatch a `hashchange` event.
+ * @param {string} path URL path. It will appear in th URL hash but omit the leading `#` sign here.
+ * @param {object} [options] Options.
+ * @param {object} [options.state] History state to be included.
+ * @param {boolean} [options.replaceState] Whether to replace the history state.
+ * @param {boolean} [options.notifyChange] Whether to dispatch a `hashchange` event.
  */
 export const goto = (path, { state = {}, replaceState = false, notifyChange = true } = {}) => {
   const oldURL = window.location.hash;
@@ -66,8 +65,8 @@ export const goto = (path, { state = {}, replaceState = false, notifyChange = tr
 
 /**
  * Go back to the previous page if possible, or navigate to the given fallback URL.
- * @param {string} path - Fallback URL path.
- * @param {object} [options] - Options to be passed to {@link goto}.
+ * @param {string} path Fallback URL path.
+ * @param {object} [options] Options to be passed to {@link goto}.
  */
 export const goBack = (path, options = {}) => {
   if (window.history.state?.from) {

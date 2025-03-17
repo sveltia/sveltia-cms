@@ -15,8 +15,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').Asset} asset - Asset.
-   * @property {boolean} [showPreview] - Whether to show the media preview.
+   * @property {import('$lib/typedefs').Asset} asset Asset.
+   * @property {boolean} [showPreview] Whether to show the media preview.
    */
 
   /** @type {Props} */

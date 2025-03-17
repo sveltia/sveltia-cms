@@ -23,8 +23,8 @@ export const contentUpdatesToast = writable({ ...updatesToastDefaultState });
 
 /**
  * Delete entries by slugs.
- * @param {string[]} ids - List of entry IDs.
- * @param {string[]} [assetPaths] - List of associated asset paths.
+ * @param {string[]} ids List of entry IDs.
+ * @param {string[]} [assetPaths] List of associated asset paths.
  */
 export const deleteEntries = async (ids, assetPaths = []) => {
   const _allEntries = get(allEntries);

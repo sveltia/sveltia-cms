@@ -332,7 +332,7 @@ describe('Test copyProperty()', () => {
 
   /**
    * Wrapper for {@link copyProperty}.
-   * @param {boolean} [omitEmptyOptionalFields] - The omit option.
+   * @param {boolean} [omitEmptyOptionalFields] The omit option.
    * @returns {import('$lib/typedefs').FlattenedEntryContent} Copied content. Note: It’s not sorted
    * here because sorting is done in `finalizeContent`.
    */

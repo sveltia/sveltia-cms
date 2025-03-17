@@ -18,11 +18,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {boolean} [open] - Whether to open the dialog.
-   * @property {import('$lib/typedefs').AssetKind | undefined} [kind] - Asset kind.
-   * @property {boolean} [canEnterURL] - Whether to allow entering a URL.
-   * @property {import('$lib/typedefs').Entry} [entry] - Associated entry.
-   * @property {(detail: { asset: import('$lib/typedefs').SelectedAsset }) => void} [onSelect] -
+   * @property {boolean} [open] Whether to open the dialog.
+   * @property {import('$lib/typedefs').AssetKind | undefined} [kind] Asset kind.
+   * @property {boolean} [canEnterURL] Whether to allow entering a URL.
+   * @property {import('$lib/typedefs').Entry} [entry] Associated entry.
+   * @property {(detail: { asset: import('$lib/typedefs').SelectedAsset }) => void} [onSelect]
    * Custom `select` event handler.
    */
 

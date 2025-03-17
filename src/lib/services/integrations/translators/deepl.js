@@ -86,7 +86,7 @@ const targetLanguages = [
 
 /**
  * Get a supported source language that matches the given locale code.
- * @param {string} locale - Locale code.
+ * @param {string} locale Locale code.
  * @returns {string | undefined} Supported language.
  */
 const getSourceLanguage = (locale) => {
@@ -101,7 +101,7 @@ const getSourceLanguage = (locale) => {
 
 /**
  * Get a supported target language that matches the given locale code.
- * @param {string} locale - Locale code.
+ * @param {string} locale Locale code.
  * @returns {string | undefined} Supported language.
  */
 const getTargetLanguage = (locale) => {
@@ -133,11 +133,11 @@ const getTargetLanguage = (locale) => {
 /**
  * Translate the given text with DeepL API. Note that the API request uses the GET method, because
  * POST doesn’t work due to a CORS issue. Too long URL params may lead to an HTTP error.
- * @param {string[]} texts - Array of original texts.
- * @param {object} options - Options.
- * @param {string} options.sourceLocale - Source language.
- * @param {string} options.targetLocale - Target language.
- * @param {string} options.apiKey - API authentication key.
+ * @param {string[]} texts Array of original texts.
+ * @param {object} options Options.
+ * @param {string} options.sourceLocale Source language.
+ * @param {string} options.targetLocale Target language.
+ * @param {string} options.apiKey API authentication key.
  * @returns {Promise<string[]>} Translated strings in the original order.
  * @throws {Error} When the source or target locale is not supported.
  * @see https://developers.deepl.com/docs/api-reference/translate

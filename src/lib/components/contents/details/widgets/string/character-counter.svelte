@@ -5,8 +5,8 @@
   /**
    * @typedef {object} Props
    * @property {import('$lib/typedefs').StringField | import('$lib/typedefs').TextField} fieldConfig
-   * - Field configuration.
-   * @property {string | undefined} currentValue - Field value.
+   * Field configuration.
+   * @property {string | undefined} currentValue Field value.
    */
 
   /** @type {Props} */

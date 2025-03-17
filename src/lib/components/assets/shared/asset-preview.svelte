@@ -5,21 +5,21 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').AssetKind} kind - Asset type.
-   * @property {'lazy' | 'eager'} [loading] - Loading method.
-   * @property {import('$lib/typedefs').Asset} [asset] - Asset.
-   * @property {string} [src] - Source URL.
-   * @property {'tile' | 'icon'} [variant] - Style variant.
-   * @property {boolean} [blurBackground] - Whether to show a blurred background (like Slack’s media
+   * @property {import('$lib/typedefs').AssetKind} kind Asset type.
+   * @property {'lazy' | 'eager'} [loading] Loading method.
+   * @property {import('$lib/typedefs').Asset} [asset] Asset.
+   * @property {string} [src] Source URL.
+   * @property {'tile' | 'icon'} [variant] Style variant.
+   * @property {boolean} [blurBackground] Whether to show a blurred background (like Slack’s media
    * overlay).
-   * @property {boolean} [cover] - Whether to use `object-fit: cover`.
-   * @property {boolean} [checkerboard] - Whether to show a checkerboard background below a
+   * @property {boolean} [cover] Whether to use `object-fit: cover`.
+   * @property {boolean} [checkerboard] Whether to show a checkerboard background below a
    * transparent image.
-   * @property {boolean} [dissolve] - Whether to add a short dissolve transition (fade-in effect) to
+   * @property {boolean} [dissolve] Whether to add a short dissolve transition (fade-in effect) to
    * the image/video when it’s first loaded to avoid a sudden appearance.
-   * @property {string} [alt] - Alt text for the image.
-   * @property {boolean} [controls] - Whether to show controls for audio/video. If this is `false`
-   * and {@link kind} is `audio`, an icon will be displayed instead.
+   * @property {string} [alt] Alt text for the image.
+   * @property {boolean} [controls] Whether to show controls for audio/video. If this is `false` and
+   * {@link kind} is `audio`, an icon will be displayed instead.
    */
 
   /** @type {Props & Record<string, any>} */

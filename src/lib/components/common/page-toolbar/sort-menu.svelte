@@ -6,12 +6,12 @@
   /**
    * @typedef {object} Props
    * @property {import('svelte/store').Writable<import('$lib/typedefs').EntryListView |
-   * import('$lib/typedefs').AssetListView>} currentView - Current view details.
-   * @property {string} aria-controls - The `aria-controls` attribute for the menu.
-   * @property {string} [label] - Menu button label.
-   * @property {boolean} [disabled] - Whether to disable the button.
-   * @property {{ label: string, key: string }[]} [fields] - Sorting fields.
-   * @property {string | undefined} [collectionName] - Current collection name.
+   * import('$lib/typedefs').AssetListView>} currentView Current view details.
+   * @property {string} aria-controls The `aria-controls` attribute for the menu.
+   * @property {string} [label] Menu button label.
+   * @property {boolean} [disabled] Whether to disable the button.
+   * @property {{ label: string, key: string }[]} [fields] Sorting fields.
+   * @property {string | undefined} [collectionName] Current collection name.
    */
 
   /** @type {Props} */

@@ -17,13 +17,13 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').AssetKind} [kind] - Asset kind.
-   * @property {string} [searchTerms] - Search terms for filtering assets.
-   * @property {import('$lib/typedefs').MediaLibraryService} serviceProps - Media library service
+   * @property {import('$lib/typedefs').AssetKind} [kind] Asset kind.
+   * @property {string} [searchTerms] Search terms for filtering assets.
+   * @property {import('$lib/typedefs').MediaLibraryService} serviceProps Media library service
    * details.
-   * @property {string} [gridId] - The `id` attribute of the inner listbox.
-   * @property {(detail: import('$lib/typedefs').SelectedAsset) => void} [onSelect] - Custom
-   * `select` event handler.
+   * @property {string} [gridId] The `id` attribute of the inner listbox.
+   * @property {(detail: import('$lib/typedefs').SelectedAsset) => void} [onSelect] Custom `select`
+   * event handler.
    */
 
   /** @type {Props} */
@@ -68,7 +68,7 @@
 
   /**
    * Search assets.
-   * @param {string} [query] - Search query.
+   * @param {string} [query] Search query.
    */
   const searchAssets = async (query = '') => {
     searchResults = null;
@@ -85,7 +85,7 @@
   /**
    * Download the selected asset, if needed, and notify the file and credit. If hotlinking is
    * required by the service, just notify the URL instead of downloading the file.
-   * @param {import('$lib/typedefs').ExternalAsset} asset - Selected asset.
+   * @param {import('$lib/typedefs').ExternalAsset} asset Selected asset.
    * @todo Support video files.
    */
   const selectAsset = async (asset) => {

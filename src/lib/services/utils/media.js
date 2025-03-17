@@ -13,8 +13,8 @@ let pdfjs;
 
 /**
  * Get the metadata of an image, video or audio asset.
- * @param {string} src - Source URL.
- * @param {import('$lib/typedefs').AssetKind} kind - Media type: `image`, `video` or `audio`.
+ * @param {string} src Source URL.
+ * @param {import('$lib/typedefs').AssetKind} kind Media type: `image`, `video` or `audio`.
  * @returns {Promise<{
  * dimensions: { width: number, height: number } | undefined,
  * duration: number | undefined
@@ -54,17 +54,17 @@ export const getMediaMetadata = (src, kind) => {
 /**
  * Format the given duration in the `hh:mm:ss` format. Note that it assumes the duration is less
  * than 24 hours.
- * @param {number} duration - Duration in seconds.
+ * @param {number} duration Duration in seconds.
  * @returns {string} Formatted duration.
  */
 export const formatDuration = (duration) => new Date(duration * 1000).toISOString().substr(11, 8);
 
 /**
  * Resize a canvas based on the given dimension.
- * @param {HTMLCanvasElement | OffscreenCanvas} canvas - Canvas to be resized.
- * @param {number} width - Source image width.
- * @param {number} height - Source image height.
- * @param {number} [dimension] - Maximum width/height of the canvas.
+ * @param {HTMLCanvasElement | OffscreenCanvas} canvas Canvas to be resized.
+ * @param {number} width Source image width.
+ * @param {number} height Source image height.
+ * @param {number} [dimension] Maximum width/height of the canvas.
  * @returns {number} Scale.
  */
 const resizeCanvas = (canvas, width, height, dimension) => {
@@ -90,11 +90,11 @@ const resizeCanvas = (canvas, width, height, dimension) => {
 
 /**
  * Convert the given image file to another format.
- * @param {File | Blob} blob - Source file.
- * @param {object} [options] - Options.
- * @param {'jpeg' | 'png' | 'webp'} [options.format] - New image format. Default: PNG.
- * @param {number} [options.quality] - Image quality between 0 and 1.
- * @param {number} [options.dimension] - Maximum width/height of the image.
+ * @param {File | Blob} blob Source file.
+ * @param {object} [options] Options.
+ * @param {'jpeg' | 'png' | 'webp'} [options.format] New image format. Default: PNG.
+ * @param {number} [options.quality] Image quality between 0 and 1.
+ * @param {number} [options.dimension] Maximum width/height of the image.
  * @returns {Promise<Blob>} New image file.
  * @throws {Error} If the file is not an image.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
@@ -175,11 +175,11 @@ export const convertImage = async (
 
 /**
  * Create a thumbnail image of a PDF document using PDF.js.
- * @param {File | Blob} blob - Source file.
- * @param {object} [options] - Options.
- * @param {'jpeg' | 'png' | 'webp'} [options.format] - New image format. Default: PNG.
- * @param {number} [options.quality] - Image quality between 0 and 1.
- * @param {number} [options.dimension] - Maximum width/height of the image.
+ * @param {File | Blob} blob Source file.
+ * @param {object} [options] Options.
+ * @param {'jpeg' | 'png' | 'webp'} [options.format] New image format. Default: PNG.
+ * @param {number} [options.quality] Image quality between 0 and 1.
+ * @param {number} [options.dimension] Maximum width/height of the image.
  * @returns {Promise<Blob>} Thumbnail blob.
  * @throws {Error} When the rendering failed.
  * @see https://github.com/mozilla/pdf.js/blob/master/examples/webpack/main.mjs
@@ -235,7 +235,7 @@ export const renderPDF = async (
 
 /**
  * Check if the given string is a YouTube video URL.
- * @param {string} string - URL-like string.
+ * @param {string} string URL-like string.
  * @returns {boolean} Result.
  */
 export const isYouTubeVideoURL = (string) => {
@@ -263,7 +263,7 @@ export const isYouTubeVideoURL = (string) => {
 
 /**
  * Get an embeddable YouTube video URL from the given string.
- * @param {string} string - URL-like string.
+ * @param {string} string URL-like string.
  * @returns {string} URL with privacy-enhanced mode enabled.
  */
 export const getYouTubeEmbedURL = (string) => {

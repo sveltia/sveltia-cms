@@ -5,10 +5,10 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').Asset[]} [assets] - Selected assets.
-   * @property {string} [buttonDescription] - The `aria-label` attribute on the button.
-   * @property {string} [dialogDescription] - Description to be displayed on the dialog.
-   * @property {(() => void) | undefined} [onDelete] - Custom `delete` event handler.
+   * @property {import('$lib/typedefs').Asset[]} [assets] Selected assets.
+   * @property {string} [buttonDescription] The `aria-label` attribute on the button.
+   * @property {string} [dialogDescription] Description to be displayed on the dialog.
+   * @property {(() => void) | undefined} [onDelete] Custom `delete` event handler.
    */
 
   /** @type {Props} */

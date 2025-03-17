@@ -3,14 +3,14 @@
 
   /**
    * @typedef {object} Props
-   * @property {'lazy' | 'eager'} [loading] - Loading method.
-   * @property {import('$lib/typedefs').Asset} [asset] - Asset.
-   * @property {string} [src] - Source URL.
-   * @property {'tile' | 'icon'} [variant] - Style variant.
-   * @property {boolean} [blurBackground] - Whether to show a blurred background (like Slack’s media
+   * @property {'lazy' | 'eager'} [loading] Loading method.
+   * @property {import('$lib/typedefs').Asset} [asset] Asset.
+   * @property {string} [src] Source URL.
+   * @property {'tile' | 'icon'} [variant] Style variant.
+   * @property {boolean} [blurBackground] Whether to show a blurred background (like Slack’s media
    * overlay).
-   * @property {boolean} [cover] - Whether to use `object-fit: cover`.
-   * @property {boolean} [controls] - Show controls for the video.
+   * @property {boolean} [cover] Whether to use `object-fit: cover`.
+   * @property {boolean} [controls] Show controls for the video.
    */
 
   /** @type {Props & Record<string, any>} */

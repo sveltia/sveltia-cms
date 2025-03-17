@@ -7,8 +7,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').Asset} asset - Asset.
-   * @property {import('$lib/typedefs').ViewType} viewType - View type.
+   * @property {import('$lib/typedefs').Asset} asset Asset.
+   * @property {import('$lib/typedefs').ViewType} viewType View type.
    */
 
   /** @type {Props} */
@@ -23,7 +23,7 @@
 
   /**
    * Update the asset selection.
-   * @param {boolean} selected - Whether the current asset item is selected.
+   * @param {boolean} selected Whether the current asset item is selected.
    */
   const updateSelection = (selected) => {
     selectedAssets.update((assets) => {

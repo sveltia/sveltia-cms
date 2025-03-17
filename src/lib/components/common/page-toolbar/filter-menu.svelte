@@ -5,13 +5,13 @@
   /**
    * @typedef {object} Props
    * @property {import('svelte/store').Writable<import('$lib/typedefs').EntryListView |
-   * import('$lib/typedefs').AssetListView>} currentView - Current view details.
-   * @property {string} aria-controls - The `aria-controls` attribute for the menu.
-   * @property {string} [label] - Menu button label.
-   * @property {boolean} [disabled] - Whether to disable the button.
-   * @property {boolean} [multiple] - Whether to allow selecting multiple filter conditions.
-   * @property {string} [noneLabel] - Label to be displayed on the None item.
-   * @property {import('$lib/typedefs').ViewFilter[]} [filters] - Filter conditions.
+   * import('$lib/typedefs').AssetListView>} currentView Current view details.
+   * @property {string} aria-controls The `aria-controls` attribute for the menu.
+   * @property {string} [label] Menu button label.
+   * @property {boolean} [disabled] Whether to disable the button.
+   * @property {boolean} [multiple] Whether to allow selecting multiple filter conditions.
+   * @property {string} [noneLabel] Label to be displayed on the None item.
+   * @property {import('$lib/typedefs').ViewFilter[]} [filters] Filter conditions.
    */
 
   /** @type {Props} */

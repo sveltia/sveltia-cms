@@ -9,9 +9,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').EntryCollection} collection - Selected collection.
-   * @property {import('$lib/typedefs').Entry} entry - Entry.
-   * @property {import('$lib/typedefs').ViewType} viewType - View type.
+   * @property {import('$lib/typedefs').EntryCollection} collection Selected collection.
+   * @property {import('$lib/typedefs').Entry} entry Entry.
+   * @property {import('$lib/typedefs').ViewType} viewType View type.
    */
 
   /** @type {Props} */
@@ -25,7 +25,7 @@
 
   /**
    * Update the entry selection.
-   * @param {boolean} selected - Whether the current entry item is selected.
+   * @param {boolean} selected Whether the current entry item is selected.
    */
   const updateSelection = (selected) => {
     selectedEntries.update((entries) => {

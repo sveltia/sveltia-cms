@@ -29,8 +29,8 @@ export const assetUpdatesToast = writable({ ...updatesToastDefaultState });
 
 /**
  * Upload/save the given assets to the backend.
- * @param {import('$lib/typedefs').UploadingAssets} uploadingAssets - Assets to be uploaded.
- * @param {import('$lib/typedefs').CommitChangesOptions} options - Options for the backend handler.
+ * @param {import('$lib/typedefs').UploadingAssets} uploadingAssets Assets to be uploaded.
+ * @param {import('$lib/typedefs').CommitChangesOptions} options Options for the backend handler.
  */
 export const saveAssets = async (uploadingAssets, options) => {
   const { files, folder, originalAsset } = uploadingAssets;
@@ -112,8 +112,8 @@ export const saveAssets = async (uploadingAssets, options) => {
 
 /**
  * Move or rename assets while updating links in the entries.
- * @param {'move' | 'rename'} action - Action type.
- * @param {import('$lib/typedefs').MovingAsset[]} movingAssets - Assets to be moved/renamed.
+ * @param {'move' | 'rename'} action Action type.
+ * @param {import('$lib/typedefs').MovingAsset[]} movingAssets Assets to be moved/renamed.
  */
 export const moveAssets = async (action, movingAssets) => {
   const _allAssetFolders = get(allAssetFolders);
@@ -191,7 +191,7 @@ export const moveAssets = async (action, movingAssets) => {
             getAssociatedCollections(entry).map(async (collection) => {
               /**
                * Add saving entry data to the stack.
-               * @param {import('$lib/typedefs').CollectionFile} [collectionFile] - File. File
+               * @param {import('$lib/typedefs').CollectionFile} [collectionFile] File. File
                * collection only.
                */
               const addSavingEntryData = async (collectionFile) => {
@@ -274,7 +274,7 @@ export const moveAssets = async (action, movingAssets) => {
 
 /**
  * Delete the given assets.
- * @param {import('$lib/typedefs').Asset[]} assets - List of assets to be deleted.
+ * @param {import('$lib/typedefs').Asset[]} assets List of assets to be deleted.
  * @todo Update entries to remove these asset paths. If an asset is used for a required field, show
  * an error message and abort the operation.
  */

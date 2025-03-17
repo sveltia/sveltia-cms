@@ -34,26 +34,25 @@ import {
 /**
  * Entry slug variants.
  * @typedef {object} EntrySlugVariants
- * @property {string} defaultLocaleSlug - Default locale’s entry slug.
- * @property {import('$lib/typedefs').LocaleSlugMap | undefined} localizedSlugs - Localized slug
- * map.
- * @property {string | undefined} canonicalSlug - Canonical slug.
+ * @property {string} defaultLocaleSlug Default locale’s entry slug.
+ * @property {import('$lib/typedefs').LocaleSlugMap | undefined} localizedSlugs Localized slug map.
+ * @property {string | undefined} canonicalSlug Canonical slug.
  */
 
 /**
  * Paths for entry assets.
  * @typedef {object} EntryAssetFolderPaths
- * @property {string} internalBaseAssetFolder - Collection-defined path.
- * @property {string} internalAssetFolder - May contain a sub path when assets are entry-relative.
- * @property {string} publicAssetFolder - Collection-defined public path.
+ * @property {string} internalBaseAssetFolder Collection-defined path.
+ * @property {string} internalAssetFolder May contain a sub path when assets are entry-relative.
+ * @property {string} publicAssetFolder Collection-defined public path.
  */
 
 /**
  * Properties for a saving asset.
  * @typedef {object} SavingAssetProps
- * @property {string} collectionName - Collection name.
- * @property {string} [text] - Raw text for a plaintext file, like HTML or Markdown.
- * @property {string} folder - Path of a collection-specific folder that contains the file or global
+ * @property {string} collectionName Collection name.
+ * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
+ * @property {string} folder Path of a collection-specific folder that contains the file or global
  * media folder.
  */
 
@@ -64,7 +63,7 @@ import {
 
 /**
  * Get the internal/public asset path configuration for the entry assets.
- * @param {import('$lib/typedefs').FillSlugTemplateOptions} fillSlugOptions - Options for
+ * @param {import('$lib/typedefs').FillSlugTemplateOptions} fillSlugOptions Options for
  * {@link fillSlugTemplate}.
  * @returns {EntryAssetFolderPaths} Determined paths.
  */
@@ -130,10 +129,10 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
 /**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and folder collections path.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
- * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
- * @param {string} args.slug - Entry slug.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale Locale code.
+ * @param {string} args.slug Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
  * @see https://decapcms.org/docs/i18n/
  */
@@ -180,10 +179,10 @@ const createEntryPath = ({ draft, locale, slug }) => {
 
 /**
  * Parse a field to generate a sorted key path list.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').Field} args.field - Single field.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Key path of the field.
- * @param {import('$lib/typedefs').FieldKeyPath[]} args.keyPathList - Key path list.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').Field} args.field Single field.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Key path of the field.
+ * @param {import('$lib/typedefs').FieldKeyPath[]} args.keyPathList Key path list.
  */
 const parseField = ({ field, keyPath, keyPathList }) => {
   const { widget } = field;
@@ -247,7 +246,7 @@ const parseField = ({ field, keyPath, keyPathList }) => {
 
 /**
  * Create a list of field names (flattened key path list) from the configured collection fields.
- * @param {import('$lib/typedefs').Field[]} fields - Field list of a collection or a file.
+ * @param {import('$lib/typedefs').Field[]} fields Field list of a collection or a file.
  * @returns {import('$lib/typedefs').FieldKeyPath[]} Sorted key path list. List items are keyed with
  * `*`.
  * @example [`author.name`, `books.*.title`, `books.*.summary`, `publishDate`, `body`]
@@ -270,14 +269,14 @@ const createKeyPathList = (fields) => {
 
 /**
  * Move a property name/value from a unsorted property map to a sorted property map.
- * @param {object} args - Arguments.
- * @param {string} args.key - Property name.
- * @param {import('$lib/typedefs').Field} [args.field] - Associated field.
- * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.unsortedMap - Unsorted property map.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.sortedMap - Sorted property map.
- * @param {boolean} args.isTomlOutput - Whether the output it TOML format.
- * @param {boolean} args.omitEmptyOptionalFields - Whether to prevent fields with `required: false`
+ * @param {object} args Arguments.
+ * @param {string} args.key Property name.
+ * @param {import('$lib/typedefs').Field} [args.field] Associated field.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale Locale code.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.unsortedMap Unsorted property map.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.sortedMap Sorted property map.
+ * @param {boolean} args.isTomlOutput Whether the output it TOML format.
+ * @param {boolean} args.omitEmptyOptionalFields Whether to prevent fields with `required: false`
  * and an empty value from being included in the data output.
  */
 export const copyProperty = ({
@@ -328,14 +327,14 @@ export const copyProperty = ({
  * Finalize the content by sorting the entry draft content’s object properties by the order of the
  * configured collection fields. The result can be formatted as expected with `JSON.stringify()`, as
  * the built-in method uses insertion order for string key ordering.
- * @param {object} args - Arguments.
- * @param {string} args.collectionName - Collection name.
- * @param {string} [args.fileName] - File name.
- * @param {import('$lib/typedefs').Field[]} args.fields - Field list of a collection or a file.
- * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Flattened entry content.
- * @param {string} [args.canonicalSlugKey] - Property name of a canonical slug.
- * @param {boolean} [args.isTomlOutput] - Whether the output it TOML format.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] File name.
+ * @param {import('$lib/typedefs').Field[]} args.fields Field list of a collection or a file.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale Locale code.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Flattened entry content.
+ * @param {string} [args.canonicalSlugKey] Property name of a canonical slug.
+ * @param {boolean} [args.isTomlOutput] Whether the output it TOML format.
  * @returns {import('$lib/typedefs').RawEntryContent} Unflattened entry content sorted by fields.
  */
 const finalizeContent = ({
@@ -406,10 +405,10 @@ const finalizeContent = ({
 
 /**
  * Serialize the content for the output.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
- * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Original content.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale Locale code.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Original content.
  * @returns {import('$lib/typedefs').RawEntryContent} Modified and unflattened content.
  */
 const serializeContent = ({ draft, locale, valueMap }) => {
@@ -444,9 +443,9 @@ const serializeContent = ({ draft, locale, valueMap }) => {
 /**
  * Get the localized slug map. This only applies when the i18n structure is multiple files or
  * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
- * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
+ * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @returns {import('$lib/typedefs').LocaleSlugMap | undefined} Localized slug map.
  */
 const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
@@ -503,12 +502,12 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
  * helps Sveltia CMS and some frameworks to link localized files. The default property name is
  * `translationKey` used in Hugo’s multilingual support, and the default value is the default
  * locale’s slug.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
- * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
- * @param {import('$lib/typedefs').LocaleSlugMap | undefined} args.localizedSlugs - Localized slug
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
+ * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
+ * @param {import('$lib/typedefs').LocaleSlugMap | undefined} args.localizedSlugs Localized slug
  * map.
- * @param {import('$lib/typedefs').FillSlugTemplateOptions} args.fillSlugOptions - Arguments for
+ * @param {import('$lib/typedefs').FillSlugTemplateOptions} args.fillSlugOptions Arguments for
  * {@link fillSlugTemplate}.
  * @returns {string | undefined} Canonical slug.
  * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
@@ -539,8 +538,8 @@ const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOp
 
 /**
  * Get base options for {@link fillSlugTemplate}.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
  * @returns {import('$lib/typedefs').FillSlugTemplateOptions} Options.
  */
 const getFillSlugOptions = ({ draft }) => {
@@ -559,8 +558,8 @@ const getFillSlugOptions = ({ draft }) => {
 
 /**
  * Determine entry slugs.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
  * @returns {EntrySlugVariants} Slugs.
  */
 export const getSlugs = ({ draft }) => {
@@ -597,9 +596,9 @@ export const getSlugs = ({ draft }) => {
 
 /**
  * Get base arguments for {@link replaceBlobURL}.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
- * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
+ * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @returns {{ assetFolderPaths: EntryAssetFolderPaths, assetNamesInSameFolder: string[],
  * savingAssetProps: SavingAsset }} Arguments.
  */
@@ -642,17 +641,17 @@ const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
 
 /**
  * Replace a blob URL with the final path, and add the file to the changeset.
- * @param {object} args - Arguments.
- * @param {string} args.blobURL - Blob URL.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Field key path.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.content - Localized content.
- * @param {import('$lib/typedefs').FileChange[]} args.changes - Changeset.
- * @param {import('$lib/typedefs').EntryFileMap} args.files - Files to be uploaded.
- * @param {import('$lib/typedefs').Asset[]} args.savingAssets - List of assets to be saved.
- * @param {SavingAsset} args.savingAssetProps - Base properties for assets to be saved.
- * @param {string[]} args.assetNamesInSameFolder - Name of assets stored in the same folder as the
+ * @param {object} args Arguments.
+ * @param {string} args.blobURL Blob URL.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Field key path.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.content Localized content.
+ * @param {import('$lib/typedefs').FileChange[]} args.changes Changeset.
+ * @param {import('$lib/typedefs').EntryFileMap} args.files Files to be uploaded.
+ * @param {import('$lib/typedefs').Asset[]} args.savingAssets List of assets to be saved.
+ * @param {SavingAsset} args.savingAssetProps Base properties for assets to be saved.
+ * @param {string[]} args.assetNamesInSameFolder Name of assets stored in the same folder as the
  * target asset folder.
- * @param {EntryAssetFolderPaths} args.assetFolderPaths - Path configuration for the entry assets.
+ * @param {EntryAssetFolderPaths} args.assetFolderPaths Path configuration for the entry assets.
  */
 const replaceBlobURL = async ({
   blobURL,
@@ -708,9 +707,9 @@ const replaceBlobURL = async ({
 
 /**
  * Create base saving entry data.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
- * @param {EntrySlugVariants} args.slugs - Entry slugs.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
+ * @param {EntrySlugVariants} args.slugs Entry slugs.
  * @returns {Promise<{ localizedEntryMap: import('$lib/typedefs').LocalizedEntryMap, changes:
  * import('$lib/typedefs').FileChange[], savingAssets: import('$lib/typedefs').Asset[] }>} Localized
  * entry map, file changeset and asset list.
@@ -788,9 +787,9 @@ const createBaseSavingEntryData = async ({
 
 /**
  * Create saving entry data.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
- * @param {EntrySlugVariants} args.slugs - Entry slugs.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft Entry draft.
+ * @param {EntrySlugVariants} args.slugs Entry slugs.
  * @returns {Promise<{ savingEntry: import('$lib/typedefs').Entry,
  * savingAssets: import('$lib/typedefs').Asset[], changes: import('$lib/typedefs').FileChange[] }>}
  * Saving entry, assets and file changes.
@@ -898,8 +897,8 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
 
 /**
  * Save the entry draft.
- * @param {object} [options] - Options.
- * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
  * @returns {Promise<import('$lib/typedefs').Entry>} Saved entry.
  * @throws {Error} When the entry could not be validated or saved.
  */

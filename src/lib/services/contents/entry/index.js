@@ -10,7 +10,7 @@ import { getCollection } from '$lib/services/contents/collection';
 /**
  * Get a list of collections the given entry belongs to. One entry can theoretically appear in
  * multiple collections depending on the configuration, so that the result is an array.
- * @param {import('$lib/typedefs').Entry} entry - Entry.
+ * @param {import('$lib/typedefs').Entry} entry Entry.
  * @returns {import('$lib/typedefs').Collection[]} Collections.
  */
 export const getAssociatedCollections = (entry) =>
@@ -20,10 +20,10 @@ export const getAssociatedCollections = (entry) =>
 
 /**
  * Get the given entry file’s web-accessible URL on the live site.
- * @param {import('$lib/typedefs').Entry} entry - Entry.
- * @param {import('$lib/typedefs').LocaleCode} locale - Locale.
- * @param {import('$lib/typedefs').Collection} collection - Collection.
- * @param {import('$lib/typedefs').CollectionFile} [collectionFile] - Collection file. File
+ * @param {import('$lib/typedefs').Entry} entry Entry.
+ * @param {import('$lib/typedefs').LocaleCode} locale Locale.
+ * @param {import('$lib/typedefs').Collection} collection Collection.
+ * @param {import('$lib/typedefs').CollectionFile} [collectionFile] Collection file. File
  * collection only.
  * @returns {string | undefined} URL on the live site.
  */
@@ -83,8 +83,8 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
 
 /**
  * Get the given entry file’s web-accessible URL on the repository.
- * @param {import('$lib/typedefs').Entry} entry - Entry.
- * @param {import('$lib/typedefs').LocaleCode} locale - Locale.
+ * @param {import('$lib/typedefs').Entry} entry Entry.
+ * @param {import('$lib/typedefs').LocaleCode} locale Locale.
  * @returns {string} URL on the repository.
  */
 export const getEntryRepoBlobURL = (entry, locale) =>

@@ -12,7 +12,7 @@ import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**
  * Normalize the given string as a slug for a filename.
- * @param {string} string - String to be normalized.
+ * @param {string} string String to be normalized.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  */
@@ -50,8 +50,8 @@ export const normalizeSlug = (string) => {
 
 /**
  * Fill the given slug template.
- * @param {string} template - Template string literal containing tags like `{{title}}`.
- * @param {import('$lib/typedefs').FillSlugTemplateOptions} options - Options.
+ * @param {string} template Template string literal containing tags like `{{title}}`.
+ * @param {import('$lib/typedefs').FillSlugTemplateOptions} options Options.
  * @returns {string} Filled template that can be used for an entry slug, path, etc.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug
@@ -82,7 +82,7 @@ export const fillSlugTemplate = (
 
   /**
    * Replacer subroutine.
-   * @param {string} tag - Field name or one of special tags.
+   * @param {string} tag Field name or one of special tags.
    * @returns {any} Replaced value.
    */
   const replaceSub = (tag) => {
@@ -145,7 +145,7 @@ export const fillSlugTemplate = (
 
   /**
    * Replacer.
-   * @param {string} placeholder - Field name or one of special tags. May contain transformations.
+   * @param {string} placeholder Field name or one of special tags. May contain transformations.
    * @returns {string} Replaced string.
    */
   const replace = (placeholder) => {

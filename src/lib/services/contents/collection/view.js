@@ -29,16 +29,16 @@ export const currentView = writable({ type: 'list' });
 /**
  * Remove some Markdown syntax characters from the given string for proper sorting. This includes
  * bold, italic and code that might appear in the entry title.
- * @param {string} str - Original string.
+ * @param {string} str Original string.
  * @returns {string} Modified string.
  */
 const removeMarkdownChars = (str) => str.replace(/[_*`]+/g, '');
 
 /**
  * Sort the given entries.
- * @param {import('$lib/typedefs').Entry[]} entries - Entry list.
- * @param {import('$lib/typedefs').Collection} collection - Collection that the entries belong to.
- * @param {import('$lib/typedefs').SortingConditions} [conditions] - Sorting conditions.
+ * @param {import('$lib/typedefs').Entry[]} entries Entry list.
+ * @param {import('$lib/typedefs').Collection} collection Collection that the entries belong to.
+ * @param {import('$lib/typedefs').SortingConditions} [conditions] Sorting conditions.
  * @returns {import('$lib/typedefs').Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
@@ -115,9 +115,9 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
 
 /**
  * Filter the given entries.
- * @param {import('$lib/typedefs').Entry[]} entries - Entry list.
- * @param {import('$lib/typedefs').Collection} collection - Collection that the entries belong to.
- * @param {import('$lib/typedefs').FilteringConditions[]} filters - One or more filtering
+ * @param {import('$lib/typedefs').Entry[]} entries Entry list.
+ * @param {import('$lib/typedefs').Collection} collection Collection that the entries belong to.
+ * @param {import('$lib/typedefs').FilteringConditions[]} filters One or more filtering
  * conditions.
  * @returns {import('$lib/typedefs').Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
@@ -160,9 +160,9 @@ const filterEntries = (entries, collection, filters) => {
 
 /**
  * Group the given entries.
- * @param {import('$lib/typedefs').Entry[]} entries - Entry list.
- * @param {import('$lib/typedefs').Collection} collection - Collection that the entries belong to.
- * @param {import('$lib/typedefs').GroupingConditions} [conditions] - Grouping conditions.
+ * @param {import('$lib/typedefs').Entry[]} entries Entry list.
+ * @param {import('$lib/typedefs').Collection} collection Collection that the entries belong to.
+ * @param {import('$lib/typedefs').GroupingConditions} [conditions] Grouping conditions.
  * @returns {{ name: string, entries: import('$lib/typedefs').Entry[] }[]} Grouped entries, where
  * each group object contains a name and an entry list. When ungrouped, there will still be one
  * group object named `*`.
@@ -227,7 +227,7 @@ const entryListSettings = writable();
 
 /**
  * Get sortable fields for the given collection.
- * @param {import('$lib/typedefs').EntryCollection} collection - Collection.
+ * @param {import('$lib/typedefs').EntryCollection} collection Collection.
  * @returns {{ fields: string[], default: import('$lib/typedefs').SortingConditions }} A list of
  * sortable fields and default sort conditions.
  */
@@ -289,8 +289,8 @@ export const getSortableFields = (collection) => {
 
 /**
  * Get a field’s label by key.
- * @param {import('$lib/typedefs').EntryCollection} collection - Collection.
- * @param {import('$lib/typedefs').FieldKeyPath | string} key - Field key path or one of other entry
+ * @param {import('$lib/typedefs').EntryCollection} collection Collection.
+ * @param {import('$lib/typedefs').FieldKeyPath | string} key Field key path or one of other entry
  * metadata property keys: `slug`, `commit_author` and `commit_date`.
  * @returns {string} Label. For a nested field, it would be something like `Name – English`.
  */
@@ -402,7 +402,7 @@ export const entryGroups = derived(
 
 /**
  * Initialize {@link entryListSettings} and relevant subscribers.
- * @param {import('$lib/typedefs').BackendService} _backend - Backend service.
+ * @param {import('$lib/typedefs').BackendService} _backend Backend service.
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};

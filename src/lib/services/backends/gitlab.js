@@ -52,8 +52,8 @@ siteConfig?.subscribe((config) => {
 const repository = new Proxy(/** @type {any} */ ({}), {
   /**
    * Define the getter.
-   * @param {Record<string, any>} obj - Object itself.
-   * @param {string} key - Property name.
+   * @param {Record<string, any>} obj Object itself.
+   * @param {string} key Property name.
    * @returns {any} Property value.
    */
   get: (obj, key) => {
@@ -110,11 +110,11 @@ const checkStatus = async () => {
 
 /**
  * Send a request to GitLab REST/GraphQL API.
- * @param {string} path - Endpoint.
- * @param {{ method?: string, headers?: any, body?: any }} [init] - Request options.
- * @param {object} [options] - Other options.
- * @param {string} [options.token] - OAuth token.
- * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] - Response type. The default is
+ * @param {string} path Endpoint.
+ * @param {{ method?: string, headers?: any, body?: any }} [init] Request options.
+ * @param {object} [options] Other options.
+ * @param {string} [options.token] OAuth token.
+ * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response type. The default is
  *`json`, while `raw` returns a `Response` object as is.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
@@ -137,8 +137,8 @@ const fetchAPI = async (
 
 /**
  * Send a request to GitLab GraphQL API.
- * @param {string} query - Query string.
- * @param {object} [variables] - Any variable to be applied.
+ * @param {string} query Query string.
+ * @param {object} [variables] Any variable to be applied.
  * @returns {Promise<object>} Response data.
  */
 const fetchGraphQL = async (query, variables = {}) => {
@@ -204,7 +204,7 @@ const init = () => {
 
 /**
  * Retrieve the repository configuration and sign in with GitLab REST API.
- * @param {import('$lib/typedefs').SignInOptions} options - Options.
+ * @param {import('$lib/typedefs').SignInOptions} options Options.
  * @returns {Promise<import('$lib/typedefs').User | void>} User info, or nothing when finishing PKCE
  * auth flow in a popup or the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
@@ -452,22 +452,22 @@ const fetchFileList = async () => {
 
 /**
  * @typedef {object} GitLabUserInfo
- * @property {string} [id] - GitLab user ID.
- * @property {string} [username] - GitLab user username.
+ * @property {string} [id] GitLab user ID.
+ * @property {string} [username] GitLab user username.
  */
 
 /**
  * @typedef {object} GitLabCommit
- * @property {?GitLabUserInfo} author - Commit author’s GitLab user info.
- * @property {string} authorName - Commit author’s full name.
- * @property {string} authorEmail - Commit author’s email.
- * @property {string} committedDate - Committed date.
+ * @property {?GitLabUserInfo} author Commit author’s GitLab user info.
+ * @property {string} authorName Commit author’s full name.
+ * @property {string} authorEmail Commit author’s email.
+ * @property {string} committedDate Committed date.
  */
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.
  * @param {(import('$lib/typedefs').BaseEntryListItem | import('$lib/typedefs').BaseAssetListItem)[]
- * } fetchingFiles - Base entry/asset list items.
+ * } fetchingFiles Base entry/asset list items.
  * @returns {Promise<import('$lib/typedefs').RepositoryContentsMap>} Fetched contents map.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#tree
@@ -627,7 +627,7 @@ const fetchFiles = async () => {
 
 /**
  * Fetch an asset as a Blob via the API.
- * @param {import('$lib/typedefs').Asset} asset - Asset to retrieve the file content.
+ * @param {import('$lib/typedefs').Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
  * @see https://docs.gitlab.com/ee/api/repository_files.html#get-raw-file-from-repository
  */
@@ -648,8 +648,8 @@ const fetchBlob = async (asset) => {
 /**
  * Save entries or assets remotely. Note that the `commitCreate` GraphQL mutation is broken and
  * images cannot be uploaded properly, so we use the REST API instead.
- * @param {import('$lib/typedefs').FileChange[]} changes - File changes to be saved.
- * @param {import('$lib/typedefs').CommitChangesOptions} options - Commit options.
+ * @param {import('$lib/typedefs').FileChange[]} changes File changes to be saved.
+ * @param {import('$lib/typedefs').CommitChangesOptions} options Commit options.
  * @returns {Promise<string>} Commit URL.
  * @see https://docs.gitlab.com/ee/api/commits.html#create-a-commit-with-multiple-files-and-actions
  * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/31102

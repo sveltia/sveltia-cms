@@ -8,10 +8,10 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} label - Field label.
-   * @property {import('$lib/typedefs').Field[]} fields - Subfield definitions.
-   * @property {Record<string, any>} values - Value map.
-   * @property {(event: CustomEvent) => void} [onChange] - Custom `change` event handler.
+   * @property {string} label Field label.
+   * @property {import('$lib/typedefs').Field[]} fields Subfield definitions.
+   * @property {Record<string, any>} values Value map.
+   * @property {(event: CustomEvent) => void} [onChange] Custom `change` event handler.
    */
 
   /** @type {Props} */

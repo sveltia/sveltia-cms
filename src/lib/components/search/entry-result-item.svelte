@@ -10,14 +10,14 @@
 
   /**
    * @typedef {object} RowArgs
-   * @property {import('$lib/typedefs').Collection} collection - Collection.
-   * @property {import('$lib/typedefs').CollectionFile} [collectionFile] - Collection file. File
+   * @property {import('$lib/typedefs').Collection} collection Collection.
+   * @property {import('$lib/typedefs').CollectionFile} [collectionFile] Collection file. File
    * collection only.
    */
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').Entry} entry - Single entry.
+   * @property {import('$lib/typedefs').Entry} entry Single entry.
    */
 
   /** @type {Props} */

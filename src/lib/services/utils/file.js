@@ -7,7 +7,7 @@ import { get } from 'svelte/store';
 /**
  * Encode the given (partial) file path or file name. Since {@link encodeURIComponent} encodes
  * slashes, we need to split and join. The `@` prefix is an exception; it shouldn’t be encoded.
- * @param {string} path - Original path.
+ * @param {string} path Original path.
  * @returns {string} Encoded path.
  */
 export const encodeFilePath = (path) => {
@@ -28,14 +28,14 @@ export const encodeFilePath = (path) => {
 
 /**
  * Encode the given (partial) file path or file name. We can use {@link decodeURIComponent} as is.
- * @param {string} path - Original path.
+ * @param {string} path Original path.
  * @returns {string} Decoded path.
  */
 export const decodeFilePath = (path) => decodeURIComponent(path);
 
 /**
  * Sanitize the given file name for upload.
- * @param {string} name - Original name.
+ * @param {string} name Original name.
  * @returns {string} Normalized name.
  */
 export const sanitizeFileName = (name) => sanitize(name.normalize());
@@ -50,7 +50,7 @@ export const canDragDrop = () =>
 
 /**
  * Format the given file size in bytes, KB, MB, GB or TB.
- * @param {number} size - File size.
+ * @param {number} size File size.
  * @returns {string} Formatted size.
  */
 export const formatSize = (size) => {
@@ -85,8 +85,8 @@ export const formatSize = (size) => {
 /**
  * Check if the given file name or slug has duplicate(s) or its variant in the other names. If
  * found, rename it by prepending a number like `summer-beach-2.jpg`.
- * @param {string} name - Original name.
- * @param {string[]} otherNames - Other names (of files in the same folder).
+ * @param {string} name Original name.
+ * @param {string[]} otherNames Other names (of files in the same folder).
  * @returns {string} Determined name.
  */
 export const renameIfNeeded = (name, otherNames) => {
@@ -115,7 +115,7 @@ export const renameIfNeeded = (name, otherNames) => {
 
 /**
  * Join the given path segments while ignoring any falsy value.
- * @param {(string | null | undefined)[]} segments - List of path segments.
+ * @param {(string | null | undefined)[]} segments List of path segments.
  * @returns {string} Path.
  */
 export const createPath = (segments) => segments.filter(Boolean).join('/');
@@ -123,7 +123,7 @@ export const createPath = (segments) => segments.filter(Boolean).join('/');
 /**
  * Resolve the given file path. This processes only dot(s) in the middle of the path; leading dots
  * like `../../foo/image.jpg` will be untouched.
- * @param {string} path - Unresolved path, e.g. `foo/bar/baz/../../image.jpg`.
+ * @param {string} path Unresolved path, e.g. `foo/bar/baz/../../image.jpg`.
  * @returns {string} Resolved path, e.g. `foo/image.jpg`.
  */
 export const resolvePath = (path) => {

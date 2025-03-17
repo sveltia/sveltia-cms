@@ -4,10 +4,10 @@
 
   /**
    * @typedef {object} Props
-   * @property {(import('$lib/typedefs').Entry | import('$lib/typedefs').Asset)[]} allItems - All
+   * @property {(import('$lib/typedefs').Entry | import('$lib/typedefs').Asset)[]} allItems All
    * available items.
    * @property {import('svelte/store').Writable<(import('$lib/typedefs').Entry |
-   * import('$lib/typedefs').Asset)[]>} selectedItems - Selected items.
+   * import('$lib/typedefs').Asset)[]>} selectedItems Selected items.
    */
 
   /** @type {Props} */

@@ -4,7 +4,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} currentValue - Field value.
+   * @property {string} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').SelectFieldSelectorProps & Props} */

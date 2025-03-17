@@ -23,8 +23,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').ObjectField} fieldConfig - Field configuration.
-   * @property {object | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').ObjectField} fieldConfig Field configuration.
+   * @property {object | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
@@ -84,8 +84,8 @@
 
   /**
    * Add the object’s subfields to the entry draft with the default values populated.
-   * @param {object} [args] - Arguments.
-   * @param {string} [args.type] - Variable type name. If the field doesn’t have variable types, it
+   * @param {object} [args] Arguments.
+   * @param {string} [args.type] Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
    */
   const addFields = async ({ type } = {}) => {

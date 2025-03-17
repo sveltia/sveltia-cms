@@ -10,8 +10,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {boolean} [open] - Whether to open the dialog.
-   * @property {(() => void) | undefined} [onClose] - Custom `close` event handler.
+   * @property {boolean} [open] Whether to open the dialog.
+   * @property {(() => void) | undefined} [onClose] Custom `close` event handler.
    */
 
   /** @type {Props} */

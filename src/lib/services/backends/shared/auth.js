@@ -8,9 +8,9 @@ export const inAuthPopup = writable(false);
 /**
  * Authenticate with a Git service provider through Netlify Identity or other 3rd party OAuth client
  * specified with the configuration file.
- * @param {object} args - Arguments.
- * @param {string} args.backendName - Backend name, e.g. `github`.
- * @param {string} args.authURL - Authentication site URL.
+ * @param {object} args Arguments.
+ * @param {string} args.backendName Backend name, e.g. `github`.
+ * @param {string} args.authURL Authentication site URL.
  * @returns {Promise<string>} Auth token.
  * @throws {Error} When authentication failed or the popup window is closed before the auth process
  * is complete.
@@ -46,9 +46,9 @@ const authorize = async ({ backendName, authURL }) => {
 
     /**
      * Message event handler.
-     * @param {object} args - Arguments.
-     * @param {string} args.origin - Origin URL.
-     * @param {string} args.data - Passed data.
+     * @param {object} args Arguments.
+     * @param {string} args.origin Origin URL.
+     * @param {string} args.data Passed data.
      */
     const handler = ({ origin, data }) => {
       if (origin !== new URL(authURL).origin || typeof data !== 'string') {
@@ -102,11 +102,11 @@ const authorize = async ({ backendName, authURL }) => {
 
 /**
  * Initialize the server-side Authorization Code Flow.
- * @param {object} args - Arguments.
- * @param {string} args.backendName - Backend name, e.g. `github`.
- * @param {string} args.siteDomain - Domain of the site hosting the CMS.
- * @param {string} args.authURL - Authorization site URL.
- * @param {string} args.scope - Authorization scope.
+ * @param {object} args Arguments.
+ * @param {string} args.backendName Backend name, e.g. `github`.
+ * @param {string} args.siteDomain Domain of the site hosting the CMS.
+ * @param {string} args.authURL Authorization site URL.
+ * @param {string} args.scope Authorization scope.
  * @returns {Promise<string>} Auth token.
  */
 export const initServerSideAuth = async ({ backendName, siteDomain, authURL, scope }) => {
@@ -157,11 +157,11 @@ const createAuthSecrets = async () => {
 
 /**
  * Initialize the client-side Authorization Code Flow with PKCE.
- * @param {object} args - Arguments.
- * @param {string} args.backendName - Backend name, e.g. `gitlab`.
- * @param {string} args.clientId - OAuth application ID.
- * @param {string} args.authURL - Authorization site URL.
- * @param {string} args.scope - Authorization scope.
+ * @param {object} args Arguments.
+ * @param {string} args.backendName Backend name, e.g. `gitlab`.
+ * @param {string} args.clientId OAuth application ID.
+ * @param {string} args.authURL Authorization site URL.
+ * @param {string} args.scope Authorization scope.
  * @returns {Promise<string>} Auth token.
  * @see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-with-proof-key-for-code-exchange-pkce
  */
@@ -199,11 +199,11 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
 
 /**
  * Communicate with the window opener as part of {@link finishClientSideAuth}.
- * @param {object} args - Options.
- * @param {string} [args.provider] - Backend name, e,g. `github`.
- * @param {string} [args.token] - OAuth token.
- * @param {string} [args.error] - Error message when an OAuth token is not available.
- * @param {string} [args.errorCode] - Error code to be used to localize the error message in
+ * @param {object} args Options.
+ * @param {string} [args.provider] Backend name, e,g. `github`.
+ * @param {string} [args.token] OAuth token.
+ * @param {string} [args.error] Error message when an OAuth token is not available.
+ * @param {string} [args.errorCode] Error code to be used to localize the error message in
  * Sveltia CMS.
  */
 const sendMessage = ({ provider = 'unknown', token, error, errorCode }) => {
@@ -226,12 +226,12 @@ const sendMessage = ({ provider = 'unknown', token, error, errorCode }) => {
  * Complete the client-side Authorization Code Flow with PKCE by retrieving an access token and
  * passing it to the window opener. This code is to be called within the auth popup window and
  * basically does the same thing as the callback handler of Sveltia CMS Authenticator.
- * @param {object} args - Arguments.
- * @param {string} args.backendName - Backend name, e.g. `gitlab`.
- * @param {string} args.clientId - OAuth application ID.
- * @param {string} args.authURL - Authorization site URL.
- * @param {string} args.code - Authorization code.
- * @param {string} args.state - Authorization state, which is a CSRF token previously set.
+ * @param {object} args Arguments.
+ * @param {string} args.backendName Backend name, e.g. `gitlab`.
+ * @param {string} args.clientId OAuth application ID.
+ * @param {string} args.authURL Authorization site URL.
+ * @param {string} args.code Authorization code.
+ * @param {string} args.state Authorization state, which is a CSRF token previously set.
  * @returns {Promise<void>} None.
  * @see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-with-proof-key-for-code-exchange-pkce
  * @see https://github.com/sveltia/sveltia-cms-auth/blob/main/src/index.js
@@ -300,10 +300,10 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
 /**
  * Handle the client-side Authorization Code Flow with PKCE within the auth popup window. Redirect
  * to the authorization site or finish the flow after being redirected from the auth site.
- * @param {object} args - Arguments.
- * @param {string} args.backendName - Backend name, e.g. `gitlab`.
- * @param {string} args.clientId - OAuth application ID.
- * @param {string} args.authURL - Authorization site URL.
+ * @param {object} args Arguments.
+ * @param {string} args.backendName Backend name, e.g. `gitlab`.
+ * @param {string} args.clientId OAuth application ID.
+ * @param {string} args.authURL Authorization site URL.
  */
 export const handleClientSideAuthPopup = async ({ backendName, clientId, authURL }) => {
   inAuthPopup.set(true);

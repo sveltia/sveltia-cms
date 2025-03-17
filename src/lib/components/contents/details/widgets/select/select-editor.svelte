@@ -11,9 +11,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').SelectField} fieldConfig - Field configuration.
-   * @property {any} currentValue - Field value.
-   * @property {boolean} [sortOptions] - Whether to sort the options by label.
+   * @property {import('$lib/typedefs').SelectField} fieldConfig Field configuration.
+   * @property {any} currentValue Field value.
+   * @property {boolean} [sortOptions] Whether to sort the options by label.
    */
 
   /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */

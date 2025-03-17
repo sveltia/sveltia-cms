@@ -3,10 +3,10 @@ import { isObject } from '@sveltia/utils/object';
 /**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other
  * specified format, and handle errors gracefully.
- * @param {string} url - URL.
- * @param {RequestInit} [init] - Request options.
- * @param {object} [options] - Options.
- * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] - Response parser type. The
+ * @param {string} url URL.
+ * @param {RequestInit} [init] Request options.
+ * @param {object} [options] Options.
+ * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response parser type. The
  * default is `json`. Use `raw` to return a `Response` object as is.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.

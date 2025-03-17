@@ -56,7 +56,7 @@ export const selectAssetsView = writable();
 
 /**
  * Sync the field object/list expander states between locales.
- * @param {Record<import('$lib/typedefs').FieldKeyPath, boolean>} stateMap - Map of key path and
+ * @param {Record<import('$lib/typedefs').FieldKeyPath, boolean>} stateMap Map of key path and
  * state.
  */
 export const syncExpanderStates = (stateMap) => {
@@ -76,13 +76,13 @@ export const syncExpanderStates = (stateMap) => {
 /**
  * Get a list of keys for the expander states, given the key path. The returned keys could include
  * nested lists and objects.
- * @param {object} args - Partial arguments for {@link getFieldConfig}.
- * @param {string} args.collectionName - Collection name.
- * @param {string} [args.fileName] - File name.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Object holding current
- * entry values.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Key path,
- * e.g. `testimonials.0.authors.2.foo`.
+ * @param {object} args Partial arguments for {@link getFieldConfig}.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] File name.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Object holding current entry
+ * values.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Key path, e.g.
+ * `testimonials.0.authors.2.foo`.
  * @returns {string[]} Keys, e.g. `['testimonials', 'testimonials.0', 'testimonials.0.authors',
  * 'testimonials.0.authors.2', 'testimonials.0.authors.2.foo']`.
  */
@@ -133,10 +133,10 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
 
 /**
  * Expand any invalid fields, including the parent list/object(s).
- * @param {object} args - Partial arguments for {@link getFieldConfig}.
- * @param {string} args.collectionName - Collection name.
- * @param {string} [args.fileName] - File name.
- * @param {import('$lib/typedefs').LocaleContentMap} args.currentValues - Field values.
+ * @param {object} args Partial arguments for {@link getFieldConfig}.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] File name.
+ * @param {import('$lib/typedefs').LocaleContentMap} args.currentValues Field values.
  */
 export const expandInvalidFields = ({ collectionName, fileName, currentValues }) => {
   /** @type {Record<import('$lib/typedefs').FieldKeyPath, boolean>} */
@@ -162,7 +162,7 @@ export const expandInvalidFields = ({ collectionName, fileName, currentValues })
 
 /**
  * Initialize {@link entryEditorSettings}, {@link selectAssetsView} and relevant subscribers.
- * @param {import('$lib/typedefs').BackendService} _backend - Backend service.
+ * @param {import('$lib/typedefs').BackendService} _backend Backend service.
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};

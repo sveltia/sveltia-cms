@@ -4,11 +4,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {boolean} [disabled] - Whether to disable the button.
+   * @property {boolean} [disabled] Whether to disable the button.
    * @property {import('$lib/typedefs').ListField | import('$lib/typedefs').ObjectField} fieldConfig
-   * - Field configuration.
-   * @property {object[]} [items] - List items. `<ListEditor>` only.
-   * @property {(args?: { type?: string }) => void} [addItem] - Function to add a new item.
+   * Field configuration.
+   * @property {object[]} [items] List items. `<ListEditor>` only.
+   * @property {(args?: { type?: string }) => void} [addItem] Function to add a new item.
    */
 
   /** @type {Props} */

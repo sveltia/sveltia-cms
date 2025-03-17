@@ -7,27 +7,27 @@ import { getCollection } from '$lib/services/contents/collection';
 
 /**
  * Parse a JSON document using the built-in method.
- * @param {string} str - JSON document.
+ * @param {string} str JSON document.
  * @returns {any} Parsed object.
  */
 const parseJSON = (str) => JSON.parse(str);
 /**
  * Parse a TOML document using a library. The TOML parser returns date fields as `Date` objects, but
  * we need strings to match the JSON and YAML parsers, so we have to parse twice.
- * @param {string} str - TOML document.
+ * @param {string} str TOML document.
  * @returns {any} Parsed object.
  */
 const parseTOML = (str) => toRaw(TOML.parse(str));
 /**
  * Parse a YAML document using a library.
- * @param {string} str - YAML document.
+ * @param {string} str YAML document.
  * @returns {any} Parsed object.
  */
 const parseYAML = (str) => YAML.parse(str);
 
 /**
  * Detect the Markdown front matter serialization format by checking a delimiter in the content.
- * @param {string} text - File content.
+ * @param {string} text File content.
  * @returns {import('$lib/typedefs').FrontMatterFormat} Determined format.
  */
 const detectFrontMatterFormat = (text) => {
@@ -44,7 +44,7 @@ const detectFrontMatterFormat = (text) => {
 
 /**
  * Parse raw content with given file details.
- * @param {import('$lib/typedefs').BaseEntryListItem} entry - Entry file list item.
+ * @param {import('$lib/typedefs').BaseEntryListItem} entry Entry file list item.
  * @returns {Promise<any>} Parsed content.
  * @throws {Error} When the content could not be parsed.
  */

@@ -24,7 +24,7 @@ export const entryParseErrors = writable([]);
 
 /**
  * Get collection entry folders that match the given path.
- * @param {string} path - Entry path.
+ * @param {string} path Entry path.
  * @returns {import('$lib/typedefs').CollectionEntryFolder[]} Entry folders. Sometimes it’s hard to
  * find the right folder because multiple collections can have the same folder or partially
  * overlapping folder paths, but the first one is most likely what you need.

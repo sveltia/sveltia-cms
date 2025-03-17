@@ -17,7 +17,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').SiteConfig} [config] - Configuration specified with manual
+   * @property {import('$lib/typedefs').SiteConfig} [config] Configuration specified with manual
    * initialization.
    */
 

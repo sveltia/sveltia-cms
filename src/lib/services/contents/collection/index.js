@@ -17,7 +17,7 @@ const collectionCacheMap = new Map();
 
 /**
  * Get a list of field key paths to be used to find an entry thumbnail.
- * @param {import('$lib/typedefs').RawCollection} rawCollection - Raw collection definition.
+ * @param {import('$lib/typedefs').RawCollection} rawCollection Raw collection definition.
  * @returns {import('$lib/typedefs').FieldKeyPath[]} Key path list.
  */
 const getThumbnailFieldNames = (rawCollection) => {
@@ -48,7 +48,7 @@ const getThumbnailFieldNames = (rawCollection) => {
 
 /**
  * Get a collection by name.
- * @param {string} name - Collection name.
+ * @param {string} name Collection name.
  * @returns {import('$lib/typedefs').Collection | undefined} Collection, including some extra,
  * normalized properties.
  */

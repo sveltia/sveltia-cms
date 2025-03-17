@@ -12,8 +12,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').KeyValueField} fieldConfig - Field configuration.
-   * @property {Record<string, string> | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').KeyValueField} fieldConfig Field configuration.
+   * @property {Record<string, string> | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */

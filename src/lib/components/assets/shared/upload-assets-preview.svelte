@@ -7,7 +7,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {File[]} [files] - File list.
+   * @property {File[]} [files] File list.
    */
 
   /** @type {Props} */

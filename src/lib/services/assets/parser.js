@@ -3,7 +3,7 @@ import { getAssetKind } from '$lib/services/assets';
 
 /**
  * Parse the given asset files to create a complete, serialized asset list.
- * @param {import('$lib/typedefs').BaseAssetListItem[]} assetFiles - Asset file list.
+ * @param {import('$lib/typedefs').BaseAssetListItem[]} assetFiles Asset file list.
  * @returns {import('$lib/typedefs').Asset[]} Asset list.
  */
 export const parseAssetFiles = (assetFiles) =>

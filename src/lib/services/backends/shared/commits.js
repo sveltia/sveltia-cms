@@ -17,8 +17,8 @@ const defaultCommitMessages = {
 
 /**
  * Create a Git commit message.
- * @param {import('$lib/typedefs').FileChange[]} changes - File changes to be saved.
- * @param {import('$lib/typedefs').CommitChangesOptions} options - Commit options.
+ * @param {import('$lib/typedefs').FileChange[]} changes File changes to be saved.
+ * @param {import('$lib/typedefs').CommitChangesOptions} options Commit options.
  * @returns {string} Formatted message.
  */
 export const createCommitMessage = (

@@ -36,8 +36,8 @@ export const backupToastState = writable({ ...backupToastDefaultState });
 
 /**
  * Delete a draft stored in IndexedDB.
- * @param {string} collectionName - Collection name.
- * @param {string} [slug] - Entry slug. Existing entry only.
+ * @param {string} collectionName Collection name.
+ * @param {string} [slug] Entry slug. Existing entry only.
  * @returns {Promise<void>} Result.
  */
 export const deleteBackup = async (collectionName, slug = '') => {
@@ -46,8 +46,8 @@ export const deleteBackup = async (collectionName, slug = '') => {
 
 /**
  * Get a draft backup stored in IndexedDB.
- * @param {string} collectionName - Collection name.
- * @param {string} [slug] - Entry slug. Existing entry only.
+ * @param {string} collectionName Collection name.
+ * @param {string} [slug] Entry slug. Existing entry only.
  * @returns {Promise<import('$lib/typedefs').EntryDraftBackup | null>} Backup.
  */
 export const getBackup = async (collectionName, slug = '') => {
@@ -71,7 +71,7 @@ export const getBackup = async (collectionName, slug = '') => {
 
 /**
  * Backup the entry draft to IndexedDB.
- * @param {import('$lib/typedefs').EntryDraft} draft - Draft.
+ * @param {import('$lib/typedefs').EntryDraft} draft Draft.
  */
 export const saveBackup = async (draft) => {
   const {
@@ -110,10 +110,10 @@ export const saveBackup = async (draft) => {
 
 /**
  * Check if a draft backup is available, and restore it if requested by the user.
- * @param {object} args - Arguments.
- * @param {string} args.collectionName - Collection name.
- * @param {string} [args.fileName] - Collection file name.
- * @param {string} [args.slug] - Entry slug. Existing entry only.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name.
+ * @param {string} [args.slug] Entry slug. Existing entry only.
  */
 export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '' }) => {
   const backup = await getBackup(collectionName, slug);

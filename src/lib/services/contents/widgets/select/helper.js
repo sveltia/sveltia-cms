@@ -8,11 +8,11 @@ const labelCacheMap = new Map();
 
 /**
  * Get the display value for an option.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').SelectField} args.fieldConfig - Field configuration.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Object holding current
- * entry values.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Field key path, e.g. `author.name`.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').SelectField} args.fieldConfig Field configuration.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Object holding current entry
+ * values.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
  * @returns {any | any[]} Resolved field value(s).
  */
 export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
@@ -28,7 +28,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
 
   /**
    * Get the label by value.
-   * @param {any} _value - Stored value.
+   * @param {any} _value Stored value.
    * @returns {string} Label.
    */
   const getLabel = (_value) =>

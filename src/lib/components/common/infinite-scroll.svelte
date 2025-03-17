@@ -5,10 +5,10 @@
 <script>
   /**
    * @typedef {object} Props
-   * @property {any[]} items - Item list.
-   * @property {string} itemKey - Item key used for the `each` loop.
-   * @property {number} [itemChunkSize] - Number of items to be loaded at once.
-   * @property {import('svelte').Snippet<[any]>} renderItem - Snippet to render each item.
+   * @property {any[]} items Item list.
+   * @property {string} itemKey Item key used for the `each` loop.
+   * @property {number} [itemChunkSize] Number of items to be loaded at once.
+   * @property {import('svelte').Snippet<[any]>} renderItem Snippet to render each item.
    */
 
   /** @type {Props} */

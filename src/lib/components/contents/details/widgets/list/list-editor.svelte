@@ -32,8 +32,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').ListField} fieldConfig - Field configuration.
-   * @property {string[]} currentValue - Field value.
+   * @property {import('$lib/typedefs').ListField} fieldConfig Field configuration.
+   * @property {string[]} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
@@ -155,8 +155,8 @@
 
   /**
    * Update the value for the List widget with subfield(s).
-   * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) =>
-   * void} manipulate - See {@link updateListField}.
+   * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) => void} manipulate
+   * See {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
     Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
@@ -168,10 +168,10 @@
 
   /**
    * Add a new subfield to the list.
-   * @param {object} [args] - Arguments.
-   * @param {number} [args.index] - List index where a new item will be inserted.
-   * @param {number} [args.dupIndex] - List index of an item to be duplicated.
-   * @param {string} [args.type] - Variable type name. If the field doesn’t have variable types, it
+   * @param {object} [args] Arguments.
+   * @param {number} [args.index] List index where a new item will be inserted.
+   * @param {number} [args.dupIndex] List index of an item to be duplicated.
+   * @param {string} [args.type] Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
    * @see https://decapcms.org/docs/variable-type-widgets/
    */
@@ -197,7 +197,7 @@
 
   /**
    * Remove a subfield.
-   * @param {number} index - Target index.
+   * @param {number} index Target index.
    */
   const removeItem = (index) => {
     updateComplexList(({ valueList, expanderStateList }) => {
@@ -208,7 +208,7 @@
 
   /**
    * Swap a subfield with the previous one.
-   * @param {number} index - Target index.
+   * @param {number} index Target index.
    */
   const moveUpItem = (index) => {
     updateComplexList(({ valueList, expanderStateList }) => {
@@ -222,7 +222,7 @@
 
   /**
    * Swap a subfield with the next one.
-   * @param {number} index - Target index.
+   * @param {number} index Target index.
    */
   const moveDownItem = (index) => {
     updateComplexList(({ valueList, expanderStateList }) => {
@@ -236,8 +236,8 @@
 
   /**
    * Format the summary template.
-   * @param {number} index - List index.
-   * @param {string} [summaryTemplate] - Summary template, e.g. `{{fields.slug}}`.
+   * @param {number} index List index.
+   * @param {string} [summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
    * @returns {string} Formatted summary.
    */
   const _formatSummary = (index, summaryTemplate) =>

@@ -12,8 +12,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').ComputeField} fieldConfig - Field configuration.
-   * @property {string | number | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').ComputeField} fieldConfig Field configuration.
+   * @property {string | number | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */

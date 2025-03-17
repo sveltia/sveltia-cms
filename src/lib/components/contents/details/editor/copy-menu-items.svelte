@@ -8,10 +8,10 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').LocaleCode} locale - Current pane’s locale.
-   * @property {import('$lib/typedefs').LocaleCode[]} otherLocales - Other locales.
-   * @property {import('$lib/typedefs').FieldKeyPath} [keyPath] - Field key path.
-   * @property {boolean} [translate] - Whether to translate the field.
+   * @property {import('$lib/typedefs').LocaleCode} locale Current pane’s locale.
+   * @property {import('$lib/typedefs').LocaleCode[]} otherLocales Other locales.
+   * @property {import('$lib/typedefs').FieldKeyPath} [keyPath] Field key path.
+   * @property {boolean} [translate] Whether to translate the field.
    */
 
   /** @type {Props} */

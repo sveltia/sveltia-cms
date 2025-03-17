@@ -13,12 +13,12 @@ import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/w
 
 /**
  * Parse the given dynamic default value.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').Field} args.fieldConfig - Field configuration.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Field key path, e.g. `author.name`.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.newContent - An object holding a
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').Field} args.fieldConfig Field configuration.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.newContent An object holding a
  * content key-value map.
- * @param {string} args.value - Dynamic default value.
+ * @param {string} args.value Dynamic default value.
  * @see https://decapcms.org/docs/dynamic-default-values/
  * @todo Validate the value carefully before adding it to the content map.
  */
@@ -104,9 +104,9 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
 /**
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
- * @param {import('$lib/typedefs').Field[]} fields - Field list of a collection.
- * @param {import('$lib/typedefs').LocaleCode} locale - Locale.
- * @param {Record<string, string>} [dynamicValues] - Dynamic default values.
+ * @param {import('$lib/typedefs').Field[]} fields Field list of a collection.
+ * @param {import('$lib/typedefs').LocaleCode} locale Locale.
+ * @param {Record<string, string>} [dynamicValues] Dynamic default values.
  * @returns {import('$lib/typedefs').FlattenedEntryContent} Flattened entry content for creating a
  * new draft content or adding a new list item.
  * @todo Make this more diligent.
@@ -118,10 +118,9 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
   /**
    * Get the default value for the given field. Check if a dynamic default value is specified, then
    * look for the field configuration’s `default` property.
-   * @param {object} args - Arguments.
-   * @param {import('$lib/typedefs').Field} args.fieldConfig - Field configuration.
-   * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Field key path, e.g.
-   * `author.name`.
+   * @param {object} args Arguments.
+   * @param {import('$lib/typedefs').Field} args.fieldConfig Field configuration.
+   * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
    */
   const getDefaultValue = ({ fieldConfig, keyPath }) => {
     if (keyPath in dynamicValues) {
@@ -263,11 +262,11 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
 /**
  * Create a Proxy that automatically copies a field value to other locale if the field’s i18n
  * strategy is “duplicate.”.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').EntryDraft | any} args.draft - Entry draft.
- * @param {string} args.locale - Source locale.
- * @param {object} [args.target] - Target object.
- * @param {() => import('$lib/typedefs').FlattenedEntryContent} [args.getValueMap] - Optional
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').EntryDraft | any} args.draft Entry draft.
+ * @param {string} args.locale Source locale.
+ * @param {object} [args.target] Target object.
+ * @param {() => import('$lib/typedefs').FlattenedEntryContent} [args.getValueMap] Optional
  * function to get an object holding the current entry values. It will be used for the `valueMap`
  * argument of {@link getFieldConfig}. If omitted, the proxy target will be used instead.
  * @returns {any} Created proxy.
@@ -369,15 +368,14 @@ export const createProxy = ({
 
 /**
  * Create an entry draft.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').Collection} args.collection - Collection that the entry belongs
- * to.
- * @param {import('$lib/typedefs').CollectionFile} [args.collectionFile] - Collection file. File
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').Collection} args.collection Collection that the entry belongs to.
+ * @param {import('$lib/typedefs').CollectionFile} [args.collectionFile] Collection file. File
  * collection only.
- * @param {any} [args.originalEntry] - Entry to be edited, or a partial {@link Entry} object.
- * @param {Record<string, string>} [args.dynamicValues] - Dynamic default values for a new entry
+ * @param {any} [args.originalEntry] Entry to be edited, or a partial {@link Entry} object.
+ * @param {Record<string, string>} [args.dynamicValues] Dynamic default values for a new entry
  * passed through URL parameters.
- * @param {import('$lib/typedefs').LocaleExpanderMap} [args.expanderStates] - Expander UI state. Can
+ * @param {import('$lib/typedefs').LocaleExpanderMap} [args.expanderStates] Expander UI state. Can
  * be set when resetting an entry draft.
  */
 export const createDraft = ({

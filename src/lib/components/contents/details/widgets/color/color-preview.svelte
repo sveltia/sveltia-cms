@@ -6,8 +6,8 @@
 <script>
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').ColorField} fieldConfig - Field configuration.
-   * @property {string | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').ColorField} fieldConfig Field configuration.
+   * @property {string | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
@@ -22,7 +22,7 @@
 
   /**
    * Cast the given hex value to integer.
-   * @param {string} hex - Hex value.
+   * @param {string} hex Hex value.
    * @returns {number} Integer value.
    */
   const hexToInt = (hex) => Number.parseInt(`0x${hex}`, 16);

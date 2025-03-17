@@ -11,14 +11,14 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').Asset[]} [assets] - Asset list.
-   * @property {import('$lib/typedefs').ViewType} [viewType] - View type.
-   * @property {string} [searchTerms] - Search terms for filtering assets.
-   * @property {string} [basePath] - Path to an asset folder, if any folder is selected.
-   * @property {string} [gridId] - The `id` attribute of the inner listbox.
-   * @property {boolean} [checkerboard] - Whether to show a checkerboard background below a
+   * @property {import('$lib/typedefs').Asset[]} [assets] Asset list.
+   * @property {import('$lib/typedefs').ViewType} [viewType] View type.
+   * @property {string} [searchTerms] Search terms for filtering assets.
+   * @property {string} [basePath] Path to an asset folder, if any folder is selected.
+   * @property {string} [gridId] The `id` attribute of the inner listbox.
+   * @property {boolean} [checkerboard] Whether to show a checkerboard background below a
    * transparent image.
-   * @property {(detail: { asset: import('$lib/typedefs').Asset }) => void} [onSelect] - Custom
+   * @property {(detail: { asset: import('$lib/typedefs').Asset }) => void} [onSelect] Custom
    * `select` event handler.
    */
 

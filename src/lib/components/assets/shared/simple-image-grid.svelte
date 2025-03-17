@@ -4,12 +4,12 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} [viewType] - View type.
-   * @property {string} [gridId] - The `id` attribute of the inner listbox.
-   * @property {boolean} [showTitle] - Whether to show the file name or title under the image while
-   * in grid view.
-   * @property {(detail: { value: string }) => void} [onChange] - Custom `change` event handler.
-   * @property {import('svelte').Snippet} [children] - Slot content.
+   * @property {string} [viewType] View type.
+   * @property {string} [gridId] The `id` attribute of the inner listbox.
+   * @property {boolean} [showTitle] Whether to show the file name or title under the image while in
+   * grid view.
+   * @property {(detail: { value: string }) => void} [onChange] Custom `change` event handler.
+   * @property {import('svelte').Snippet} [children] Slot content.
    */
 
   /** @type {Props} */

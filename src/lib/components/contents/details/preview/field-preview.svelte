@@ -7,9 +7,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').LocaleCode} locale - Current pane’s locale.
-   * @property {import('$lib/typedefs').FieldKeyPath} keyPath - Field key path.
-   * @property {import('$lib/typedefs').Field} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').LocaleCode} locale Current pane’s locale.
+   * @property {import('$lib/typedefs').FieldKeyPath} keyPath Field key path.
+   * @property {import('$lib/typedefs').Field} fieldConfig Field configuration.
    */
 
   /** @type {Props} */

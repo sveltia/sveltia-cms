@@ -3,16 +3,16 @@
 
   /**
    * @typedef {object} Props
-   * @property {'lazy' | 'eager'} [loading] - Loading method.
-   * @property {import('$lib/typedefs').Asset} [asset] - Asset.
-   * @property {string} [src] - Source URL.
-   * @property {'tile' | 'icon'} [variant] - Style variant.
-   * @property {boolean} [blurBackground] - Whether to show a blurred background (like Slack’s media
+   * @property {'lazy' | 'eager'} [loading] Loading method.
+   * @property {import('$lib/typedefs').Asset} [asset] Asset.
+   * @property {string} [src] Source URL.
+   * @property {'tile' | 'icon'} [variant] Style variant.
+   * @property {boolean} [blurBackground] Whether to show a blurred background (like Slack’s media
    * overlay).
-   * @property {boolean} [cover] - Whether to use `object-fit: cover`.
-   * @property {boolean} [checkerboard] - Whether to show a checkerboard background below a
+   * @property {boolean} [cover] Whether to use `object-fit: cover`.
+   * @property {boolean} [checkerboard] Whether to show a checkerboard background below a
    * transparent image.
-   * @property {string} [alt] - Alt text for the image.
+   * @property {string} [alt] Alt text for the image.
    */
 
   /** @type {Props & Record<string, any>} */

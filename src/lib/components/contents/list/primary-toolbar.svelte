@@ -13,7 +13,7 @@
 
   /**
    * Parse the given string as Markdown and sanitize the result to only allow certain tags.
-   * @param {string} str - Original string.
+   * @param {string} str Original string.
    * @returns {string} Sanitized string.
    */
   const sanitize = (str) =>

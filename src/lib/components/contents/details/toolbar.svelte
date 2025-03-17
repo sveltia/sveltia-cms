@@ -34,7 +34,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {boolean} [disabled] - Whether to disable controls other than the Back button.
+   * @property {boolean} [disabled] Whether to disable controls other than the Back button.
    */
 
   /** @type {Props} */
@@ -87,8 +87,8 @@
 
   /**
    * Save the entry draft.
-   * @param {object} [options] - Options.
-   * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
+   * @param {object} [options] Options.
+   * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
    */
   const save = async ({ skipCI = undefined } = {}) => {
     saving = true;

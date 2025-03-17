@@ -5,8 +5,8 @@
 <script>
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').StringField} fieldConfig - Field configuration.
-   * @property {string | number | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').StringField} fieldConfig Field configuration.
+   * @property {string | number | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */

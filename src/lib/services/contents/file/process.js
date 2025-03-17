@@ -9,11 +9,11 @@ import { getCollection } from '$lib/services/contents/collection';
 
 /**
  * Determine the slug for the given entry content.
- * @param {object} args - Arguments.
- * @param {string} args.subPath - File path without the collection folder, locale and extension.
- * It’s a slug in most cases, but it may be a path containing slash(es) when the Folder Collections
- * Path is configured.
- * @param {string | undefined} args.subPathTemplate - Collection’s `subPath` configuration.
+ * @param {object} args Arguments.
+ * @param {string} args.subPath File path without the collection folder, locale and extension. It’s
+ * a slug in most cases, but it may be a path containing slash(es) when the Folder Collections Path
+ * is configured.
+ * @param {string | undefined} args.subPathTemplate Collection’s `subPath` configuration.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
@@ -35,10 +35,10 @@ const getSlug = ({ subPath, subPathTemplate }) => {
 
 /**
  * Prepare a new entry by processing the given file info and raw content.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').BaseEntryListItem} args.file - Entry file list item.
- * @param {import('$lib/typedefs').Entry[]} args.entries - List of prepared entries.
- * @param {Error[]} args.errors - List of parse errors.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').BaseEntryListItem} args.file Entry file list item.
+ * @param {import('$lib/typedefs').Entry[]} args.entries List of prepared entries.
+ * @param {Error[]} args.errors List of parse errors.
  */
 const prepareEntry = async ({ file, entries, errors }) => {
   /** @type {Record<string, any> | undefined} */
@@ -219,7 +219,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
 /**
  * Parse the given entry files to create a complete, serialized entry list.
- * @param {import('$lib/typedefs').BaseEntryListItem[]} entryFiles - Entry file list.
+ * @param {import('$lib/typedefs').BaseEntryListItem[]} entryFiles Entry file list.
  * @returns {Promise<{ entries: import('$lib/typedefs').Entry[], errors: Error[] }>} Entry list and
  * error list.
  */

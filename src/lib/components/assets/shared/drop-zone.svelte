@@ -7,13 +7,13 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} [accept] - The `accept` attribute for the `<input type="file">`.
-   * @property {boolean} [disabled] - Whether to disable new file selection.
-   * @property {boolean} [multiple] - Whether to accept multiple files.
-   * @property {boolean} [showUploadButton] - Whether to show the upload button.
-   * @property {boolean} [showFilePreview] - Whether to show file preview after files are selected.
-   * @property {(detail: { files: File[] }) => void} [onSelect] - Custom `select` event handler.
-   * @property {import('svelte').Snippet} [children] - Slot content.
+   * @property {string} [accept] The `accept` attribute for the `<input type="file">`.
+   * @property {boolean} [disabled] Whether to disable new file selection.
+   * @property {boolean} [multiple] Whether to accept multiple files.
+   * @property {boolean} [showUploadButton] Whether to show the upload button.
+   * @property {boolean} [showFilePreview] Whether to show file preview after files are selected.
+   * @property {(detail: { files: File[] }) => void} [onSelect] Custom `select` event handler.
+   * @property {import('svelte').Snippet} [children] Slot content.
    */
 
   /** @type {Props} */
@@ -53,7 +53,7 @@
 
   /**
    * Cache the selected files, and notify the list.
-   * @param {File[]} allFiles - Files.
+   * @param {File[]} allFiles Files.
    */
   const updateFileList = (allFiles) => {
     files = multiple ? allFiles : allFiles.slice(0, 1);

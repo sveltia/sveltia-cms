@@ -6,7 +6,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} url - Video URL.
+   * @property {string} url Video URL.
    */
 
   /** @type {Props} */

@@ -7,7 +7,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').Asset} asset - Single asset.
+   * @property {import('$lib/typedefs').Asset} asset Single asset.
    */
 
   /** @type {Props} */

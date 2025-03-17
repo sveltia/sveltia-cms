@@ -24,7 +24,7 @@
 
   /**
    * Update the asset list, which will show the confirmation dialog.
-   * @param {File[]} files - Selected files.
+   * @param {File[]} files Selected files.
    */
   const onSelect = (files) => {
     if (!files.length) {

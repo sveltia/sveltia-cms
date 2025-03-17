@@ -12,12 +12,12 @@ const fieldConfigCacheMap = new Map();
 
 /**
  * Get a field’s config object that matches the given field name (key path).
- * @param {object} args - Arguments.
- * @param {string} args.collectionName - Collection name.
- * @param {string} [args.fileName] - File name if the collection is a file collection.
- * @param {import('$lib/typedefs').FlattenedEntryContent} [args.valueMap] - Object holding current
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] File name if the collection is a file collection.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} [args.valueMap] Object holding current
  * entry values. This is required when working with list/object widget variable types.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Key path, e.g. `author.name`.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
  * @returns {import('$lib/typedefs').Field | undefined} Field configuration.
  */
 export const getFieldConfig = ({
@@ -96,9 +96,9 @@ export const getFieldConfig = ({
 /**
  * Check if the field requires data input (and data output if the `omit_empty_optional_fields`
  * option is `true`).
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').Field} args.fieldConfig - Field configuration.
- * @param {import('$lib/typedefs').LocaleCode} args.locale - Current pane’s locale.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').Field} args.fieldConfig Field configuration.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale Current pane’s locale.
  * @returns {boolean} Result.
  */
 export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
@@ -106,14 +106,14 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
 
 /**
  * Get a field’s display value that matches the given field name (key path).
- * @param {object} args - Arguments.
- * @param {string} args.collectionName - Collection name.
- * @param {string} [args.fileName] - File name.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Object holding current
- * entry values.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Key path, e.g. `author.name`.
- * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale.
- * @param {string[]} [args.transformations] - String transformations.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] File name.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Object holding current entry
+ * values.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale Locale.
+ * @param {string[]} [args.transformations] String transformations.
  * @returns {any | any[]} Resolved field value(s).
  */
 export const getFieldDisplayValue = ({
@@ -177,14 +177,14 @@ export const getFieldDisplayValue = ({
 
 /**
  * Get an entry’s field value by locale and key.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').Entry} args.entry - Entry.
- * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
- * @param {string} args.collectionName - Name of a collection that the entry belongs to.
- * @param {import('$lib/typedefs').FieldKeyPath | string} args.key - Field key path or one of other
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').Entry} args.entry Entry.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale Locale code.
+ * @param {string} args.collectionName Name of a collection that the entry belongs to.
+ * @param {import('$lib/typedefs').FieldKeyPath | string} args.key Field key path or one of other
  * entry metadata property keys: `slug`, `commit_author` and `commit_date`.
- * @param {boolean} [args.resolveRef] - Whether to resolve the referenced value if the target
- * field is a relation field.
+ * @param {boolean} [args.resolveRef] Whether to resolve the referenced value if the target field is
+ * a relation field.
  * @returns {any} Value.
  */
 export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRef = true }) => {

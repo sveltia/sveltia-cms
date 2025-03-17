@@ -18,7 +18,7 @@ export const unauthenticated = writable(true);
 
 /**
  * Log an authentication error on the UI and in the browser console.
- * @param {Error} ex - Exception.
+ * @param {Error} ex Exception.
  */
 const logError = (ex) => {
   let message =
@@ -103,7 +103,7 @@ export const signInAutomatically = async () => {
 
 /**
  * Sign in with the given backend.
- * @param {string} _backendName - Backend name to be used.
+ * @param {string} _backendName Backend name to be used.
  */
 export const signInManually = async (_backendName) => {
   backendName.set(_backendName);

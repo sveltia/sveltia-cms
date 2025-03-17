@@ -29,8 +29,8 @@ let remoteRepository = undefined;
 const repository = new Proxy(/** @type {any} */ ({}), {
   /**
    * Define the getter.
-   * @param {Record<string, any>} _obj - Object itself.
-   * @param {string} key - Property name.
+   * @param {Record<string, any>} _obj Object itself.
+   * @param {string} key Property name.
    * @returns {any} Property value.
    */
   // @ts-ignore
@@ -50,9 +50,9 @@ let rootDirHandleDB = undefined;
 /**
  * Get the project’s root directory handle so the app can read all the files under the directory.
  * The handle will be cached in IndexedDB for later use.
- * @param {object} [options] - Options.
- * @param {boolean} [options.forceReload] - Whether to force getting the handle.
- * @param {boolean} [options.showPicker] - Whether to show the directory picker.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.forceReload] Whether to force getting the handle.
+ * @param {boolean} [options.showPicker] Whether to show the directory picker.
  * @returns {Promise<FileSystemDirectoryHandle | null>} Directory handle.
  * @throws {Error | AbortError | NotFoundError} When the File System Access API is not supported by
  * the user’s browser, when the directory picker was dismissed, or when the selected directory is
@@ -123,7 +123,7 @@ const init = () => {
 /**
  * Sign in with the local Git repository. There is no actual sign-in; just show the directory picker
  * to get the handle, so we can read/write files.
- * @param {import('$lib/typedefs').SignInOptions} options - Options.
+ * @param {import('$lib/typedefs').SignInOptions} options Options.
  * @returns {Promise<import('$lib/typedefs').User>} User info. Since we don’t have any details for
  * the local user, just return the backend name.
  * @throws {Error} When the directory handle could not be acquired.
@@ -150,7 +150,7 @@ const signOut = async () => {
 
 /**
  * Get a file or directory handle at the given path.
- * @param {string} path - Path to the file/directory.
+ * @param {string} path Path to the file/directory.
  * @returns {Promise<FileSystemFileHandle | FileSystemDirectoryHandle>} Handle.
  */
 const getHandleByPath = async (path) => {
@@ -195,7 +195,7 @@ const getAllFiles = async () => {
 
   /**
    * Get a regular expression to match the given path.
-   * @param {string} path - Path.
+   * @param {string} path Path.
    * @returns {RegExp} RegEx.
    */
   const getRegEx = (path) => new RegExp(`^${escapeRegExp(path)}\\b`);
@@ -203,7 +203,7 @@ const getAllFiles = async () => {
 
   /**
    * Retrieve all the files under the given directory recursively.
-   * @param {FileSystemDirectoryHandle | any} dirHandle - Directory handle.
+   * @param {FileSystemDirectoryHandle | any} dirHandle Directory handle.
    */
   const iterate = async (dirHandle) => {
     for await (const [name, handle] of dirHandle.entries()) {
@@ -299,7 +299,7 @@ const fetchFiles = async () => {
 
 /**
  * Save entries or assets locally.
- * @param {import('$lib/typedefs').FileChange[]} changes - File changes to be saved.
+ * @param {import('$lib/typedefs').FileChange[]} changes File changes to be saved.
  * @returns {Promise<(?File)[]>} - Created or updated files, if available.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry

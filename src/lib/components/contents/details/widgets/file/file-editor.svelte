@@ -25,8 +25,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').FileField} fieldConfig - Field configuration.
-   * @property {string | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').FileField} fieldConfig Field configuration.
+   * @property {string | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
@@ -90,7 +90,7 @@
 
   /**
    * Handle selected asset.
-   * @param {import('$lib/typedefs').SelectedAsset} selectedAsset - Selected asset details.
+   * @param {import('$lib/typedefs').SelectedAsset} selectedAsset Selected asset details.
    */
   const onAssetSelect = async (selectedAsset) => {
     resetSelection();

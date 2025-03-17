@@ -8,15 +8,15 @@ import Component from '$lib/components/contents/details/widgets/markdown/compone
 
 /**
  * @typedef {object} CustomNodeFeatures
- * @property {any} node - Lexical node class implementation.
- * @property {(props?: Record<string, any>) => import('lexical').LexicalNode} createNode - Function
- * to create a new node instance.
- * @property {import('@lexical/markdown').Transformer} transformer - Node transformer.
+ * @property {any} node Lexical node class implementation.
+ * @property {(props?: Record<string, any>) => import('lexical').LexicalNode} createNode Function to
+ * create a new node instance.
+ * @property {import('@lexical/markdown').Transformer} transformer Node transformer.
  */
 
 /**
  * Escape some Markdown characters in the given object’s property values.
- * @param {Record<string, any>} props - Object containing original strings.
+ * @param {Record<string, any>} props Object containing original strings.
  * @returns {Record<string, string>} Object containing escaped strings.
  */
 const escapeAllChars = (props) =>
@@ -29,7 +29,7 @@ const escapeAllChars = (props) =>
 
 /**
  * Get a component definition. This has to be a function due to localized labels.
- * @param {string} name - Component name.
+ * @param {string} name Component name.
  * @returns {import('$lib/typedefs').EditorComponentDefinition | undefined} Definition.
  */
 export const getComponentDef = (name) => {
@@ -90,7 +90,7 @@ export const getComponentDef = (name) => {
 
 /**
  * Get the {@link CustomNode} class and related features for Lexical.
- * @param {import('$lib/typedefs').EditorComponentDefinition} componentDef - Component definition.
+ * @param {import('$lib/typedefs').EditorComponentDefinition} componentDef Component definition.
  * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
  */
@@ -111,8 +111,8 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
     /**
      * Create a new {@link CustomNode} instance.
-     * @param {Record<string, any>} props - Field properties.
-     * @param {import('lexical').NodeKey} [key] - Node key.
+     * @param {Record<string, any>} props Field properties.
+     * @param {import('lexical').NodeKey} [key] Node key.
      */
     constructor(props, key) {
       super(key);
@@ -137,7 +137,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
     /**
      * Clone the given node.
-     * @param {CustomNode} node - Node.
+     * @param {CustomNode} node Node.
      * @returns {CustomNode} New node.
      */
     static clone(node) {
@@ -146,7 +146,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
     /**
      * Import JSON.
-     * @param {import('lexical').SerializedLexicalNode} serializedNode - Input.
+     * @param {import('lexical').SerializedLexicalNode} serializedNode Input.
      * @returns {CustomNode} New node.
      */
     static importJSON(serializedNode) {
@@ -178,7 +178,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
       /**
        * Custom `Change` event handler.
-       * @param {CustomEvent} event - `Change` event.
+       * @param {CustomEvent} event `Change` event.
        */
       const onChange = async ({ type, detail }) => {
         await tick();
@@ -240,7 +240,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
         [tagName]: () => ({
           /**
            * Conversion.
-           * @param {HTMLElement} element - Element.
+           * @param {HTMLElement} element Element.
            * @returns {import('lexical').DOMConversionOutput} Output.
            */
           conversion: (element) => ({
@@ -263,7 +263,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
         Object.assign(conversionMap, {
           /**
            * Conversion map item.
-           * @param {Node} node - Target node.
+           * @param {Node} node Target node.
            * @returns {import('lexical').DOMConversion | null} Conversion.
            */
           a: (node) => {
@@ -313,7 +313,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
   /**
    * Create a new {@link CustomNode} instance.
-   * @param {Record<string, any>} [props] - Component properties.
+   * @param {Record<string, any>} [props] Component properties.
    * @returns {CustomNode} New node.
    */
   const createNode = (props) =>
@@ -321,7 +321,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
   /**
    * Whether the given node is an instance of {@link CustomNode}.
-   * @param {import("lexical").LexicalNode | null | undefined} node - Node.
+   * @param {import("lexical").LexicalNode | null | undefined} node Node.
    * @returns {boolean} Result.
    */
   const isCustomNode = (node) => node instanceof CustomNode && node.getType() === id;
@@ -335,7 +335,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
     dependencies: [CustomNode],
     /**
      * Convert the given node to Markdown.
-     * @param {import("lexical").LexicalNode} node - Node.
+     * @param {import("lexical").LexicalNode} node Node.
      * @returns {string | null} Markdown string.
      */
     export: (node) => {
@@ -349,8 +349,8 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
     regExp: pattern,
     /**
      * Replace the current text node with a new {@link CustomNode}.
-     * @param {import("lexical").TextNode} textNode - Parent node.
-     * @param {string[]} match - Matching result.
+     * @param {import("lexical").TextNode} textNode Parent node.
+     * @param {string[]} match Matching result.
      */
     replace: (textNode, match) => {
       const matchArray = /** @type {RegExpMatchArray} */ (match);
@@ -377,7 +377,7 @@ const featureCacheMap = new Map();
 export class EditorComponent {
   /**
    * Create an `EditorComponent` instance.
-   * @param {import('$lib/typedefs').EditorComponentDefinition} componentDef - Component definition.
+   * @param {import('$lib/typedefs').EditorComponentDefinition} componentDef Component definition.
    */
   constructor(componentDef) {
     const { id } = componentDef;

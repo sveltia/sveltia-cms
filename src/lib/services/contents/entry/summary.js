@@ -9,9 +9,9 @@ import { applyTransformations } from '$lib/services/common/transformations';
 /**
  * Parse the given entry summary as Markdown and sanitize HTML with a few exceptions if the Markdown
  * option is enabled. Also, parse HTML character references (entities).
- * @param {string} str - Original string.
- * @param {object} [options] - Options.
- * @param {boolean} [options.allowMarkdown] - Whether to allow Markdown and return HTML string.
+ * @param {string} str Original string.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @returns {string} Parsed string.
  */
 const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
@@ -27,10 +27,10 @@ const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
  * with the `identifier_field` collection option as per the Netlify/Decap CMS document. We also look
  * for the `name` and `label` properties as well as a header in the Markdown `body` as a fallback.
  * @param {import('$lib/typedefs').FlattenedEntryContent | import('$lib/typedefs').RawEntryContent
- * } content - Content.
- * @param {object} options - Options.
- * @param {string} [options.identifierField] - Field name to identify the title.
- * @param {boolean} [options.useBody] - Whether to fall back to a header in the Markdown `body`.
+ * } content Content.
+ * @param {object} options Options.
+ * @param {string} [options.identifierField] Field name to identify the title.
+ * @param {boolean} [options.useBody] Whether to fall back to a header in the Markdown `body`.
  * @returns {string} Entry summary. Can be an empty string if it cannot be determined.
  * @see https://decapcms.org/docs/configuration-options/#identifier_field
  */
@@ -58,14 +58,14 @@ export const getEntrySummaryFromContent = (
 /**
  * Get the given entry’s summary that can be displayed in the entry list and other places. Format it
  * with the summary template if necessary, or simply use the `title` or similar field in the entry.
- * @param {import('$lib/typedefs').Collection} collection - Entry’s collection.
- * @param {import('$lib/typedefs').Entry} entry - Entry.
- * @param {object} [options] - Options.
- * @param {import('$lib/typedefs').LocaleCode} [options.locale] - Target locale. The default locale
- * is used if omitted.
- * @param {boolean} [options.useTemplate] - Whether to use the collection’s `summary` template if
+ * @param {import('$lib/typedefs').Collection} collection Entry’s collection.
+ * @param {import('$lib/typedefs').Entry} entry Entry.
+ * @param {object} [options] Options.
+ * @param {import('$lib/typedefs').LocaleCode} [options.locale] Target locale. The default locale is
+ * used if omitted.
+ * @param {boolean} [options.useTemplate] Whether to use the collection’s `summary` template if
  * available.
- * @param {boolean} [options.allowMarkdown] - Whether to allow Markdown and return HTML string.
+ * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @returns {string} Formatted entry summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
  */
@@ -100,7 +100,7 @@ export const getEntrySummary = (
 
   /**
    * Replacer subroutine.
-   * @param {string} tag - Field name or one of special tags.
+   * @param {string} tag Field name or one of special tags.
    * @returns {any} Summary.
    */
   const replaceSub = (tag) => {
@@ -133,7 +133,7 @@ export const getEntrySummary = (
 
   /**
    * Replacer.
-   * @param {string} placeholder - Field name or one of special tags. May contain transformations.
+   * @param {string} placeholder Field name or one of special tags. May contain transformations.
    * @returns {string} Replaced string.
    */
   const replace = (placeholder) => {

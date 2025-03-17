@@ -18,8 +18,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').KeyValueField} fieldConfig - Field configuration.
-   * @property {Record<string, string> | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').KeyValueField} fieldConfig Field configuration.
+   * @property {Record<string, string> | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
@@ -105,7 +105,7 @@
 
   /**
    * Remove a pair from {@link pairs}.
-   * @param {number} index - Index in the {@link pairs} array.
+   * @param {number} index Index in the {@link pairs} array.
    */
   const removePair = (index) => {
     pairs.splice(index, 1);

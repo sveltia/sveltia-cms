@@ -13,7 +13,7 @@ export const searchTerms = writable('');
 /**
  * Normalize the given string for search value comparison. Since `transliterate` is slow, we only
  * apply basic normalization.
- * @param {string} value - Original value.
+ * @param {string} value Original value.
  * @returns {string} Normalized value.
  */
 export const normalize = (value) =>
@@ -34,7 +34,7 @@ export const searchResults = derived(
     const terms = _searchTerms ? normalize(_searchTerms) : '';
     /**
      * Check if the given label matches the search terms.
-     * @param {string} label - Label.
+     * @param {string} label Label.
      * @returns {boolean} Result.
      */
     const hasMatch = (label) => normalize(label).includes(terms);

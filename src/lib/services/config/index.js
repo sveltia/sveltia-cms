@@ -37,8 +37,8 @@ export const siteConfigError = writable();
 
 /**
  * Fetch the YAML site configuration file and return it as JSON.
- * @param {object} [options] - Options.
- * @param {boolean} [options.ignoreError] - Whether to ignore a fetch error.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.ignoreError] Whether to ignore a fetch error.
  * @returns {Promise<any>} Configuration. Can be an empty object if the `ignoreError` option is
  * `true` and the config file is missing.
  * @throws {Error} When fetching or parsing has failed.
@@ -86,7 +86,7 @@ const fetchSiteConfig = async ({ ignoreError = false } = {}) => {
 
 /**
  * Validate the site configuration file.
- * @param {import('$lib/typedefs').SiteConfig} config - Config object.
+ * @param {import('$lib/typedefs').SiteConfig} config Config object.
  * @throws {Error} If there is an error in the config.
  * @see https://decapcms.org/docs/configuration-options/
  * @todo Add more validations.
@@ -158,7 +158,7 @@ const validate = (config) => {
 /**
  * Initialize the site configuration state by loading the YAML file and optionally merge the object
  * with one specified with `CMS.init()`.
- * @param {import('$lib/typedefs').SiteConfig} [manualConfig] - Configuration specified with manual
+ * @param {import('$lib/typedefs').SiteConfig} [manualConfig] Configuration specified with manual
  * initialization.
  * @todo Normalize configuration object.
  */

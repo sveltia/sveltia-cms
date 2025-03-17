@@ -22,8 +22,8 @@ export const defaultI18nConfig = {
 
 /**
  * Get the normalized i18n configuration for the given collection or collection file.
- * @param {import('$lib/typedefs').RawCollection} collection - Developer-defined collection.
- * @param {import('$lib/typedefs').RawCollectionFile} [file] - Developer-defined collection file.
+ * @param {import('$lib/typedefs').RawCollection} collection Developer-defined collection.
+ * @param {import('$lib/typedefs').RawCollectionFile} [file] Developer-defined collection file.
  * @returns {import('$lib/typedefs').I18nConfig} Config.
  * @see https://decapcms.org/docs/i18n/
  */
@@ -113,7 +113,7 @@ export const getI18nConfig = (collection, file) => {
 
 /**
  * Get the canonical locale of the given locale that can be used for various `Intl` methods.
- * @param {import('$lib/typedefs').LocaleCode} locale - Locale.
+ * @param {import('$lib/typedefs').LocaleCode} locale Locale.
  * @returns {import('$lib/typedefs').StandardLocaleCode | undefined} Locale or `undefined` if not
  * determined.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument
@@ -134,7 +134,7 @@ export const getCanonicalLocale = (locale) => {
 
 /**
  * Translate the given locale code in the application UI locale.
- * @param {import('$lib/typedefs').LocaleCode} locale - Locale code like `en`.
+ * @param {import('$lib/typedefs').LocaleCode} locale Locale code like `en`.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
  * locale code as is.
  */
@@ -161,8 +161,8 @@ export const getLocaleLabel = (locale) => {
 
 /**
  * Get a simple list formatter.
- * @param {import('$lib/typedefs').LocaleCode} locale - Locale code.
- * @param {Partial<Intl.ListFormatOptions>} options - Format options.
+ * @param {import('$lib/typedefs').LocaleCode} locale Locale code.
+ * @param {Partial<Intl.ListFormatOptions>} options Format options.
  * @returns {Intl.ListFormat} Formatter.
  */
 export const getListFormatter = (locale, options = {}) =>

@@ -47,9 +47,9 @@ rules:
   jsdoc/require-description-complete-sentence: 1
   jsdoc/require-hyphen-before-param-description:
     - error
-    - always
+    - never
     - tags:
-        property: always
+        property: never
   jsdoc/require-throws: 1
   jsdoc/sort-tags: 1
   max-len:

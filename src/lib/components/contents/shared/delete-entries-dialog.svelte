@@ -9,7 +9,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {boolean} [open] - Whether the dialog is open.
+   * @property {boolean} [open] Whether the dialog is open.
    */
 
   /** @type {Props} */

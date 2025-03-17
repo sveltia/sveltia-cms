@@ -7,7 +7,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {(detail: { message: string }) => void} [onChange] - Custom `change` event handler.
+   * @property {(detail: { message: string }) => void} [onChange] Custom `change` event handler.
    */
 
   /** @type {Props} */

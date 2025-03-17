@@ -32,7 +32,7 @@ export const showUploadAssetsConfirmDialog = derived(
 /**
  * Get the label for the given collection. It can be a category name if the folder is a
  * collection-specific asset folder.
- * @param {string | undefined} collectionName - Collection name.
+ * @param {string | undefined} collectionName Collection name.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
@@ -51,7 +51,7 @@ export const getFolderLabelByCollection = (collectionName) => {
 /**
  * Get the label for the given folder path. It can be a category name if the folder is a
  * collection-specific asset folder.
- * @param {string | undefined} folderPath - Media folder path.
+ * @param {string | undefined} folderPath Media folder path.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
@@ -79,8 +79,8 @@ export const getFolderLabelByPath = (folderPath) => {
 
 /**
  * Sort the given assets.
- * @param {import('$lib/typedefs').Asset[]} assets - Asset list.
- * @param {import('$lib/typedefs').SortingConditions} [conditions] - Sorting conditions.
+ * @param {import('$lib/typedefs').Asset[]} assets Asset list.
+ * @param {import('$lib/typedefs').SortingConditions} [conditions] Sorting conditions.
  * @returns {import('$lib/typedefs').Asset[]} Sorted asset list.
  */
 const sortAssets = (assets, { key, order } = {}) => {
@@ -97,7 +97,7 @@ const sortAssets = (assets, { key, order } = {}) => {
 
   /**
    * Get an asset’s property value.
-   * @param {import('$lib/typedefs').Asset} asset - Asset.
+   * @param {import('$lib/typedefs').Asset} asset Asset.
    * @returns {any} Value.
    */
   const getValue = (asset) => {
@@ -144,8 +144,8 @@ const sortAssets = (assets, { key, order } = {}) => {
 
 /**
  * Filter the given assets.
- * @param {import('$lib/typedefs').Asset[]} assets - Asset list.
- * @param {import('$lib/typedefs').FilteringConditions} [conditions] - Filtering conditions.
+ * @param {import('$lib/typedefs').Asset[]} assets Asset list.
+ * @param {import('$lib/typedefs').FilteringConditions} [conditions] Filtering conditions.
  * @returns {import('$lib/typedefs').Asset[]} Filtered asset list.
  */
 const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) => {
@@ -172,8 +172,8 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
 
 /**
  * Group the given assets.
- * @param {import('$lib/typedefs').Asset[]} assets - Asset list.
- * @param {import('$lib/typedefs').GroupingConditions} [conditions] - Grouping conditions.
+ * @param {import('$lib/typedefs').Asset[]} assets Asset list.
+ * @param {import('$lib/typedefs').GroupingConditions} [conditions] Grouping conditions.
  * @returns {Record<string, import('$lib/typedefs').Asset[]>} Grouped assets, where key is a group
  * label and value is an asset list.
  */
@@ -293,7 +293,7 @@ export const assetGroups = derived(
 
 /**
  * Initialize {@link assetListSettings} and relevant subscribers.
- * @param {import('$lib/typedefs').BackendService} _backend - Backend service.
+ * @param {import('$lib/typedefs').BackendService} _backend Backend service.
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};

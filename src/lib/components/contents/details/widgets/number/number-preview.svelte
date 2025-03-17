@@ -8,8 +8,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').NumberField} fieldConfig - Field configuration.
-   * @property {string | number | null | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').NumberField} fieldConfig Field configuration.
+   * @property {string | number | null | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */

@@ -7,7 +7,7 @@ import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.
- * @param {string} fieldName - Field name e.g. `{{name.first}}` or `name.first`.
+ * @param {string} fieldName Field name e.g. `{{name.first}}` or `name.first`.
  * @returns {string} Bracketed field name, e.g. `{{name.first}}`.
  */
 const normalizeFieldName = (fieldName) =>
@@ -20,9 +20,9 @@ const optionCacheMap = new Map();
 
 /**
  * Get options for a Relation field.
- * @param {import('$lib/typedefs').LocaleCode} locale - Current locale.
- * @param {import('$lib/typedefs').RelationField} fieldConfig - Field configuration.
- * @param {import('$lib/typedefs').Entry[]} refEntries - Referenced entries.
+ * @param {import('$lib/typedefs').LocaleCode} locale Current locale.
+ * @param {import('$lib/typedefs').RelationField} fieldConfig Field configuration.
+ * @param {import('$lib/typedefs').Entry[]} refEntries Referenced entries.
  * @returns {{ label: string, value: any }[]} Options.
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
@@ -220,12 +220,12 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
 /**
  * Resolve the display value(s) for a relation field.
- * @param {object} args - Arguments.
- * @param {import('$lib/typedefs').RelationField} args.fieldConfig - Field configuration.
- * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Object holding current
- * entry values.
- * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Field key path, e.g. `author.name`.
- * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale.
+ * @param {object} args Arguments.
+ * @param {import('$lib/typedefs').RelationField} args.fieldConfig Field configuration.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap Object holding current entry
+ * values.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale Locale.
  * @returns {any | any[]} Resolved field value(s).
  * @todo Write tests for this.
  */
@@ -235,7 +235,7 @@ export const getReferencedOptionLabel = ({ fieldConfig, valueMap, keyPath, local
   const refOptions = getOptions(locale, fieldConfig, refEntries);
   /**
    * Get the label by value.
-   * @param {any} _value - Stored value.
+   * @param {any} _value Stored value.
    * @returns {string} Label.
    */
   const getLabel = (_value) => refOptions.find((o) => o.value === _value)?.label || _value;

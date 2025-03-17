@@ -9,8 +9,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').SelectField} fieldConfig - Field configuration.
-   * @property {string | string[] | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').SelectField} fieldConfig Field configuration.
+   * @property {string | string[] | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
@@ -28,7 +28,7 @@
 
   /**
    * Get the display label by value.
-   * @param {any} value - Value.
+   * @param {any} value Value.
    * @returns {string} Label.
    */
   const getLabel = (value) =>

@@ -7,7 +7,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').Asset[]} [assets] - Selected assets.
+   * @property {import('$lib/typedefs').Asset[]} [assets] Selected assets.
    */
 
   /** @type {Props} */
@@ -99,9 +99,9 @@
 
   /**
    * Execute a copy action.
-   * @param {Function} func - Copy function.
-   * @param {string} toastSingular - Singular toast label.
-   * @param {string} toastPlural - Plural toast label.
+   * @param {Function} func Copy function.
+   * @param {string} toastSingular Singular toast label.
+   * @param {string} toastPlural Plural toast label.
    */
   const doCopyAction = async (func, toastSingular, toastPlural) => {
     try {

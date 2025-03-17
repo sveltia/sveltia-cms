@@ -8,8 +8,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {import('$lib/typedefs').BooleanField} fieldConfig - Field configuration.
-   * @property {boolean | 'mixed' | undefined} currentValue - Field value.
+   * @property {import('$lib/typedefs').BooleanField} fieldConfig Field configuration.
+   * @property {boolean | 'mixed' | undefined} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */

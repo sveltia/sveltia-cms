@@ -3,8 +3,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} [label] - Subsection label.
-   * @property {import('svelte').Snippet} children - Slot content.
+   * @property {string} [label] Subsection label.
+   * @property {import('svelte').Snippet} children Slot content.
    */
 
   /** @type {Props} */

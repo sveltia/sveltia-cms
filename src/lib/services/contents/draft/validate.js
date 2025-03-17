@@ -39,8 +39,8 @@ export const validateEntry = () => {
 
     /**
      * Validate each field.
-     * @param {string} keyPath - Field key path.
-     * @param {any} value - Field value.
+     * @param {string} keyPath Field key path.
+     * @param {any} value Field value.
      */
     const validateField = (keyPath, value) => {
       const fieldConfig = getFieldConfig({
@@ -290,8 +290,8 @@ export const validateEntry = () => {
         {
           /**
            * Getter.
-           * @param {Record<string, boolean>} obj - Object itself.
-           * @param {string} prop - Property name.
+           * @param {Record<string, boolean>} obj Object itself.
+           * @param {string} prop Property name.
            * @returns {boolean | undefined} Property value.
            */
           get: (obj, prop) => (prop === 'valid' ? !Object.values(obj).some(Boolean) : obj[prop]),

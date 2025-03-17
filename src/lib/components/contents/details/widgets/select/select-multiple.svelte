@@ -5,7 +5,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {string[]} currentValue - Field value.
+   * @property {string[]} currentValue Field value.
    */
 
   /** @type {import('$lib/typedefs').SelectFieldSelectorProps & Props} */
@@ -27,8 +27,8 @@
 
   /**
    * Update the value for the list.
-   * @param {(arg: { valueList: any[], expanderStateList: any[] }) => void} manipulate -
-   * See {@link updateListField}.
+   * @param {(arg: { valueList: any[], expanderStateList: any[] }) => void} manipulate See
+   * {@link updateListField}.
    */
   const updateList = (manipulate) => {
     // Avoid an error while navigating pages
@@ -43,7 +43,7 @@
 
   /**
    * Add a value to the list.
-   * @param {string} value - Value to be added.
+   * @param {string} value Value to be added.
    */
   const addValue = (value) => {
     updateList(({ valueList }) => {
@@ -53,7 +53,7 @@
 
   /**
    * Remove a value from the list.
-   * @param {string} value - Value to be removed.
+   * @param {string} value Value to be removed.
    */
   const removeValue = (value) => {
     updateList(({ valueList }) => {

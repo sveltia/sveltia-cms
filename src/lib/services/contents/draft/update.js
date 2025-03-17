@@ -14,8 +14,8 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * Update a flatten object with new properties by adding, updating and deleting properties.
- * @param {Record<string, any>} obj - Original object.
- * @param {Record<string, any>} newProps - New properties.
+ * @param {Record<string, any>} obj Original object.
+ * @param {Record<string, any>} newProps New properties.
  */
 const updateObject = (obj, newProps) => {
   Object.entries(newProps).forEach(([key, value]) => {
@@ -33,8 +33,8 @@ const updateObject = (obj, newProps) => {
 
 /**
  * Traverse the given object by decoding dot-notated key path.
- * @param {any} obj - Original object.
- * @param {import('$lib/typedefs').FieldKeyPath} keyPath - Dot-notated field name.
+ * @param {any} obj Original object.
+ * @param {import('$lib/typedefs').FieldKeyPath} keyPath Dot-notated field name.
  * @returns {[values: any, remainder: any]} Unflatten values and flatten remainder.
  */
 const getItemList = (obj, keyPath) => {
@@ -53,10 +53,10 @@ const getItemList = (obj, keyPath) => {
 
 /**
  * Update the value in a list field.
- * @param {import('$lib/typedefs').LocaleCode} locale - Target locale.
- * @param {import('$lib/typedefs').FieldKeyPath} keyPath - Dot-notated field name.
+ * @param {import('$lib/typedefs').LocaleCode} locale Target locale.
+ * @param {import('$lib/typedefs').FieldKeyPath} keyPath Dot-notated field name.
  * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) =>
- * void } manipulate - A function to manipulate the list, which takes one object argument containing
+ * void } manipulate A function to manipulate the list, which takes one object argument containing
  * the value list, file list and view state list. The typical usage is `list.splice()`.
  */
 export const updateListField = (locale, keyPath, manipulate) => {
@@ -97,7 +97,7 @@ export const updateListField = (locale, keyPath, manipulate) => {
 /**
  * Populate the given localized content with values from the default locale if the corresponding
  * field’s i18n configuration is `duplicate`.
- * @param {import('$lib/typedefs').FlattenedEntryContent} content - Original content.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} content Original content.
  * @returns {import('$lib/typedefs').FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = (content) => {
@@ -132,7 +132,7 @@ export const copyDefaultLocaleValues = (content) => {
 
 /**
  * Enable or disable the given locale’s content output for the current entry draft.
- * @param {import('$lib/typedefs').LocaleCode} locale - Locale.
+ * @param {import('$lib/typedefs').LocaleCode} locale Locale.
  */
 export const toggleLocale = (locale) => {
   /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
@@ -172,13 +172,13 @@ export const toggleLocale = (locale) => {
 
 /**
  * Copy or translate field value(s) from another locale.
- * @param {import('$lib/typedefs').LocaleCode} sourceLocale - Source locale, e.g. `en`.
- * @param {import('$lib/typedefs').LocaleCode} targetLocale - Target locale, e.g. `ja`.
- * @param {object} [options] - Options.
- * @param {import('$lib/typedefs').FieldKeyPath} [options.keyPath] - Flattened (dot-notated) object
+ * @param {import('$lib/typedefs').LocaleCode} sourceLocale Source locale, e.g. `en`.
+ * @param {import('$lib/typedefs').LocaleCode} targetLocale Target locale, e.g. `ja`.
+ * @param {object} [options] Options.
+ * @param {import('$lib/typedefs').FieldKeyPath} [options.keyPath] Flattened (dot-notated) object
  * keys that will be used for searching the source values. Omit this if copying all the fields. If
  * the triggered widget is List or Object, this will likely match multiple fields.
- * @param {boolean} [options.translate] - Whether to translate the copied text fields.
+ * @param {boolean} [options.translate] Whether to translate the copied text fields.
  */
 export const copyFromLocale = async (
   sourceLocale,
@@ -221,8 +221,8 @@ export const copyFromLocale = async (
 
   /**
    * Update the toast notification.
-   * @param {'info' | 'success' | 'error'} status - Status.
-   * @param {string} message - Message key.
+   * @param {'info' | 'success' | 'error'} status Status.
+   * @param {string} message Message key.
    */
   const updateToast = (status, message) => {
     copyFromLocaleToast.set({
@@ -294,10 +294,10 @@ export const copyFromLocale = async (
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
- * @param {import('$lib/typedefs').LocaleCode} [locale] - Target locale, e.g. `ja`. Can be empty if
+ * @param {import('$lib/typedefs').LocaleCode} [locale] Target locale, e.g. `ja`. Can be empty if
  * reverting everything.
- * @param {import('$lib/typedefs').FieldKeyPath} [keyPath] - Flattened (dot-notated) object keys
- * that will be used for searching the source values. Omit this if copying all the fields. If the
+ * @param {import('$lib/typedefs').FieldKeyPath} [keyPath] Flattened (dot-notated) object keys that
+ * will be used for searching the source values. Omit this if copying all the fields. If the
  * triggered widget is List or Object, this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
@@ -309,9 +309,9 @@ export const revertChanges = (locale = '', keyPath = '') => {
 
   /**
    * Revert changes.
-   * @param {import('$lib/typedefs').LocaleCode} _locale - Iterating locale.
-   * @param {import('$lib/typedefs').FlattenedEntryContent} valueMap - Flattened entry content.
-   * @param {boolean} reset - Whether ro remove the current value.
+   * @param {import('$lib/typedefs').LocaleCode} _locale Iterating locale.
+   * @param {import('$lib/typedefs').FlattenedEntryContent} valueMap Flattened entry content.
+   * @param {boolean} reset Whether ro remove the current value.
    */
   const revert = (_locale, valueMap, reset = false) => {
     Object.entries(valueMap).forEach(([_keyPath, value]) => {
