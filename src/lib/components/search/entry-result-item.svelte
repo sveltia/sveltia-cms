@@ -20,8 +20,7 @@
   /**
    * @typedef {object} RowArgs
    * @property {NormalizedCollection} collection Collection.
-   * @property {NormalizedCollectionFile} [collectionFile]
-   * Collection file. File collection only.
+   * @property {NormalizedCollectionFile} [collectionFile] Collection file. File collection only.
    */
 
   /**

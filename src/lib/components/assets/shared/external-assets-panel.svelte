@@ -28,11 +28,9 @@
    * @typedef {object} Props
    * @property {AssetKind} [kind] Asset kind.
    * @property {string} [searchTerms] Search terms for filtering assets.
-   * @property {MediaLibraryService} serviceProps Media library
-   * service details.
+   * @property {MediaLibraryService} serviceProps Media library service details.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
-   * @property {(detail: SelectedAsset) => void} [onSelect] Custom
-   * `select` event handler.
+   * @property {(detail: SelectedAsset) => void} [onSelect] Custom `select` event handler.
    */
 
   /** @type {Props} */

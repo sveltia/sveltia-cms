@@ -10,9 +10,7 @@ import { prefs } from '$lib/services/user/prefs';
  * @see https://vitejs.dev/guide/features.html#glob-import
  */
 export const initAppLocale = () => {
-  /**
-   * @type {Record<string, { strings: object }>}
-   */
+  /** @type {Record<string, { strings: object }>} */
   const modules = import.meta.glob('$lib/locales/*.js', { eager: true });
 
   Object.entries(modules).forEach(([path, { strings }]) => {

@@ -1,9 +1,25 @@
 /* eslint-disable jsdoc/require-property */
 
 /**
+ * @import {
+ * Collection,
+ * CollectionFile,
+ * FieldKeyPath,
+ * FileExtension,
+ * FileFormat,
+ * FileFormatter,
+ * FileParser,
+ * I18nFileStructure,
+ * SelectField,
+ * SiteConfig,
+ * StandardLocaleCode,
+ * } from './public';
+ */
+
+/**
  * ISO 639-1 locale code or `_default` for the unspecified default content locale. And `_` is a
  * special one that can be used to hold locale-agnostic data.
- * @typedef {import("$lib/typedefs/public").StandardLocaleCode | '_default' | '_'} LocaleCode
+ * @typedef {StandardLocaleCode | '_default' | '_'} LocaleCode
  */
 
 /**
@@ -14,7 +30,7 @@
 
 /**
  * Site configuration for internal use.
- * @typedef {import("$lib/typedefs/public").SiteConfig & SiteConfigExtraProps} NormalizedSiteConfig
+ * @typedef {SiteConfig & SiteConfigExtraProps} NormalizedSiteConfig
  */
 
 /**
@@ -92,8 +108,8 @@
  * @property {string} name Service name, e.g. `github`.
  * @property {string} label Service label, e.g. `GitHub`.
  * @property {RepositoryInfo} [repository] Basic repository info. Git and local backends only.
- * @property {string} [statusDashboardURL] URL of status dashboard page of the service. Git
- * backends only.
+ * @property {string} [statusDashboardURL] URL of status dashboard page of the service. Git backends
+ * only.
  * @property {() => Promise<BackendServiceStatus>} [checkStatus] Function to check the backend
  * service’s status. Git backends only.
  * @property {() => RepositoryInfo} [getRepositoryInfo] Function to get the configured repository’s
@@ -159,8 +175,8 @@
 
 /**
  * Git commit type.
- * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia' |
- * 'openAuthoring'} CommitType
+ * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia' | 'openAuthoring'
+ * } CommitType
  */
 
 /**
@@ -205,8 +221,8 @@
 /**
  * Entry file configuration.
  * @typedef {object} FileConfig
- * @property {import("$lib/typedefs/public").FileExtension} extension File extension.
- * @property {import("$lib/typedefs/public").FileFormat} format File format.
+ * @property {FileExtension} extension File extension.
+ * @property {FileFormat} format File format.
  * @property {string} [basePath] Normalized `folder` collection option, relative to the project root
  * folder. Folder collection only.
  * @property {string} [subPath] Normalized `path` collection option, relative to `basePath`. Folder
@@ -261,13 +277,13 @@
  * Normalized i18n configuration of a collection or collection file.
  * @typedef {object} NormalizedI18nConfig
  * @property {boolean} i18nEnabled Whether i18n is enabled for the collection or collection file.
- * @property {boolean} [saveAllLocales] Whether to save the entries in all the locales. If
- * `false`, editors will be able to disable the output of non-default locales through the UI.
+ * @property {boolean} [saveAllLocales] Whether to save the entries in all the locales. If `false`,
+ * editors will be able to disable the output of non-default locales through the UI.
  * @property {LocaleCode[]} allLocales List of all available locales, or `['_default']` if i18n is
  * not enabled.
  * @property {LocaleCode[]} initialLocales Locales to be enabled when creating a new entry draft.
  * @property {LocaleCode} defaultLocale Default locale, or `_default` if i18n is not enabled.
- * @property {import("$lib/typedefs/public").I18nFileStructure} structure File structure.
+ * @property {I18nFileStructure} structure File structure.
  * @property {{ key: string, value: string }} canonicalSlug See `canonical_slug` above.
  */
 
@@ -289,14 +305,13 @@
  * Extra properties for an entry collection.
  * @typedef {object} EntryCollectionExtraProps
  * @property {FileConfig} _file Entry file configuration.
- * @property {import("$lib/typedefs/public").FieldKeyPath[]} _thumbnailFieldNames A list of field
- * key paths to be used to find an entry thumbnail. See {@link Collection.thumbnail} for details.
+ * @property {FieldKeyPath[]} _thumbnailFieldNames A list of field key paths to be used to find an
+ * entry thumbnail. See {@link Collection.thumbnail} for details.
  */
 
 /**
  * An entry collection definition.
- * @typedef {import("$lib/typedefs/public").Collection & CollectionExtraProps &
- * EntryCollectionExtraProps} EntryCollection
+ * @typedef {Collection & CollectionExtraProps & EntryCollectionExtraProps} EntryCollection
  */
 
 /**
@@ -308,8 +323,7 @@
 
 /**
  * A file collection definition.
- * @typedef {import("$lib/typedefs/public").Collection & CollectionExtraProps &
- * FileCollectionExtraProps} FileCollection
+ * @typedef {Collection & CollectionExtraProps & FileCollectionExtraProps} FileCollection
  */
 
 /**
@@ -327,8 +341,7 @@
 
 /**
  * A collection file definition.
- * @typedef {import("$lib/typedefs/public").CollectionFile & ExtraCollectionFileProps
- * } NormalizedCollectionFile
+ * @typedef {CollectionFile & ExtraCollectionFileProps} NormalizedCollectionFile
  */
 
 /**
@@ -372,8 +385,8 @@
 
 /**
  * Flattened {@link RawEntryContent} object.
- * @typedef {Record<import("$lib/typedefs/public").FieldKeyPath, any>} FlattenedEntryContent - where
- * key is a key path and value is the corresponding field value.
+ * @typedef {Record<FieldKeyPath, any>} FlattenedEntryContent - where key is a key path and value is
+ * the corresponding field value.
  * @see https://www.npmjs.com/package/flatten
  */
 
@@ -385,16 +398,14 @@
 /**
  * Flattened entry validity state object, where key is a key path, but value will be the value’s
  * validity, using the same properties as the native HTML5 constraint validation.
- * @typedef {Record<import("$lib/typedefs/public").FieldKeyPath, Record<string, boolean>>
- * } FlattenedEntryValidityState
+ * @typedef {Record<FieldKeyPath, Record<string, boolean>>} FlattenedEntryValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 
 /**
  * Flattened entry expander state object, where key is a key path, but value will be the field’s
  * expander UI state.
- * @typedef {Record<import("$lib/typedefs/public").FieldKeyPath, boolean>
- * } FlattenedEntryExpanderState
+ * @typedef {Record<FieldKeyPath, boolean>} FlattenedEntryExpanderState
  */
 
 /**
@@ -562,8 +573,8 @@
  * @property {File} [file] File selected from the user’s computer, or an image file downloaded from
  * a stock photo service.
  * @property {string} [url] URL from direct input or a hotlinking stock photo.
- * @property {string} [credit] Attribution HTML string for a stock photo, including the
- * photographer name/link and service name/link.
+ * @property {string} [credit] Attribution HTML string for a stock photo, including the photographer
+ * name/link and service name/link.
  */
 
 /**
@@ -630,9 +641,9 @@
  * @property {boolean} [showPreview] Whether to show the preview pane.
  * @property {boolean} [syncScrolling] Whether to sync the scrolling position between the editor and
  * preview panes.
- * @property {Record<string, [?EntryEditorPane, ?EntryEditorPane]>} [paneStates] Key is a
- * collection name (and a file name joined by `|`), value is the left and right pane states. The
- * state can be `null` if preview is disabled.
+ * @property {Record<string, [?EntryEditorPane, ?EntryEditorPane]>} [paneStates] Key is a collection
+ * name (and a file name joined by `|`), value is the left and right pane states. The state can be
+ * `null` if preview is disabled.
  * @property {SelectAssetsView} [selectAssetsView] View settings for the Select Assets dialog.
  */
 
@@ -651,15 +662,15 @@
  * Custom file format definition.
  * @typedef {object} CustomFileFormat
  * @property {string} extension File extension.
- * @property {import("$lib/typedefs/public").FileParser} [parser] Parser method.
- * @property {import("$lib/typedefs/public").FileFormatter} [formatter] Formatter method.
+ * @property {FileParser} [parser] Parser method.
+ * @property {FileFormatter} [formatter] Formatter method.
  */
 
 /**
  * Common properties to be passed to a field widget’s editor component.
  * @typedef {object} WidgetEditorProps
  * @property {LocaleCode} locale Current pane’s locale.
- * @property {import("$lib/typedefs/public").FieldKeyPath} keyPath Field key path.
+ * @property {FieldKeyPath} keyPath Field key path.
  * @property {string} fieldId Field ID.
  * @property {string} fieldLabel Field label.
  * @property {boolean} [required] Whether to mark the field required.
@@ -673,7 +684,7 @@
  * Common properties to be passed to a field widget’s preview component.
  * @typedef {object} WidgetPreviewProps
  * @property {LocaleCode} locale Current pane’s locale.
- * @property {import("$lib/typedefs/public").FieldKeyPath} keyPath Field key path.
+ * @property {FieldKeyPath} keyPath Field key path.
  */
 
 /**
@@ -691,9 +702,9 @@
  * Select/Relation field editor’s selector properties.
  * @typedef {object} SelectFieldSelectorProps
  * @property {LocaleCode} locale Current pane’s locale.
- * @property {import("$lib/typedefs/public").FieldKeyPath} keyPath Field key path.
+ * @property {FieldKeyPath} keyPath Field key path.
  * @property {string} fieldId Field ID.
- * @property {import("$lib/typedefs/public").SelectField} fieldConfig Field configuration.
+ * @property {SelectField} fieldConfig Field configuration.
  * @property {boolean} [required] Whether to mark the field required.
  * @property {boolean} [readonly] Whether to mark the field read-only.
  * @property {boolean} [invalid] Whether to mark the field invalid.

@@ -16,6 +16,7 @@
    * @import { WidgetPreviewProps } from '$lib/typedefs/private';
    * @import { ListField } from '$lib/typedefs/public';
    */
+
   /**
    * @typedef {object} Props
    * @property {ListField} fieldConfig Field configuration.

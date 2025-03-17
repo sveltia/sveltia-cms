@@ -77,9 +77,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
     throw new Error('unsupported');
   }
 
-  /**
-   * @type {FileSystemDirectoryHandle | null}
-   */
+  /** @type {FileSystemDirectoryHandle | null} */
   let handle = forceReload ? null : ((await rootDirHandleDB?.get(rootDirHandleKey)) ?? null);
 
   if (handle) {

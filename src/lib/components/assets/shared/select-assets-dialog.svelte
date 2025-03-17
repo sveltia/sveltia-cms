@@ -27,8 +27,8 @@
    * @property {AssetKind | undefined} [kind] Asset kind.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
    * @property {Entry} [entry] Associated entry.
-   * @property {(detail: { asset: SelectedAsset }) => void
-   * } [onSelect] Custom `select` event handler.
+   * @property {(detail: { asset: SelectedAsset }) => void} [onSelect] Custom `select` event
+   * handler.
    */
 
   /** @type {Props} */

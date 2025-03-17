@@ -25,14 +25,10 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /**
-   * @type {number}
-   */
+  /** @type {number} */
   let loadedItemSize = $state(itemChunkSize);
 
-  /**
-   * @type {HTMLElement | undefined}
-   */
+  /** @type {HTMLElement | undefined} */
   let spinner = $state(undefined);
 
   const loading = $derived(items.length > loadedItemSize);

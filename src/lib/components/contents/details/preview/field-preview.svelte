@@ -85,7 +85,7 @@
 
         const widgetWrapper = targetField.querySelector('.widget-wrapper');
 
-        /** @type {?HTMLElement} */ (
+        /** @type {HTMLElement | null} */ (
           widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
             widgetWrapper?.querySelector('input, textarea, button')
         )?.focus();

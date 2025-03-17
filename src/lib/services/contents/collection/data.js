@@ -41,12 +41,7 @@ export const deleteEntries = async (ids, assetPaths = []) => {
 
         if (locales) {
           return Object.values(locales).map(
-            ({ path }) =>
-              /** @type {FileChange} */ ({
-                action: 'delete',
-                slug,
-                path,
-              }),
+            ({ path }) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
           );
         }
 

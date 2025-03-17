@@ -222,8 +222,8 @@ const init = () => {
 /**
  * Retrieve the repository configuration and sign in with GitLab REST API.
  * @param {SignInOptions} options Options.
- * @returns {Promise<User | void>} User info, or nothing when
- * finishing PKCE auth flow in a popup or the sign-in flow cannot be started.
+ * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
+ * the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
  * @see https://docs.gitlab.com/ee/api/users.html#list-current-user
  */
@@ -475,7 +475,7 @@ const fetchFileList = async () => {
 
 /**
  * @typedef {object} GitLabCommit
- * @property {?GitLabUserInfo} author Commit author’s GitLab user info.
+ * @property {GitLabUserInfo | null} author Commit author’s GitLab user info.
  * @property {string} authorName Commit author’s full name.
  * @property {string} authorEmail Commit author’s email.
  * @property {string} committedDate Committed date.

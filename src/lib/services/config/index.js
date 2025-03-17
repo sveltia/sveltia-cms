@@ -60,7 +60,9 @@ const fetchSiteConfig = async ({ ignoreError = false } = {}) => {
     // of a regular relative URL to avoid 404 Not Found.
     href = window.location.pathname === '/admin' ? '/admin/config.yml' : './config.yml',
     type = 'application/yaml',
-  } = /** @type {?HTMLLinkElement} */ (document.querySelector('link[rel="cms-config-url"]')) ?? {};
+  } =
+    /** @type {HTMLLinkElement | null} */ (document.querySelector('link[rel="cms-config-url"]')) ??
+    {};
 
   /** @type {Response} */
   let response;

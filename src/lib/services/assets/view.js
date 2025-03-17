@@ -202,9 +202,7 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
 
   assets.forEach((asset) => {
     const value = /** @type {Record<string, any>} */ (asset)[field];
-    /**
-     * @type {string}
-     */
+    /** @type {string} */
     let key;
 
     if (regex) {

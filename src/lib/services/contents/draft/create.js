@@ -213,7 +213,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
     }
 
     if (widgetName === 'relation' || widgetName === 'select') {
-      const { multiple = false } = /** @type {RelationField |  SelectField} */ (fieldConfig);
+      const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
       if (multiple) {
         if (isArray) {

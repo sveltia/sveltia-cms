@@ -39,7 +39,7 @@
   // Fix the position of the custom mount element if needed
   // @see https://decapcms.org/docs/custom-mounting/
   onMount(() => {
-    const ncRoot = /** @type {?HTMLElement} */ (document.querySelector('#nc-root'));
+    const ncRoot = /** @type {HTMLElement | null} */ (document.querySelector('#nc-root'));
 
     if (!!ncRoot && window.getComputedStyle(ncRoot).position === 'static') {
       const { top, height } = ncRoot.getBoundingClientRect();
@@ -75,7 +75,7 @@
   onmousedown={(event) => {
     // Open external links in a new browser tab, internal links in the same tab
     if (
-      /** @type {?HTMLElement} */ (event.target)?.matches('a') &&
+      /** @type {HTMLElement | null} */ (event.target)?.matches('a') &&
       /** @type {HTMLAnchorElement} */ (event.target).origin !== window.location.origin
     ) {
       /** @type {HTMLAnchorElement} */ (event.target).target = '_blank';

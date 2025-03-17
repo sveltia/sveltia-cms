@@ -42,9 +42,7 @@
     }
 
     const { _collectionName, routeType, subPath } = match.groups;
-    /**
-     * @type {NormalizedCollection | undefined}
-     */
+    /** @type {NormalizedCollection | undefined} */
     const collection = _collectionName ? getCollection(_collectionName) : undefined;
 
     if (!collection || collection.hide) {

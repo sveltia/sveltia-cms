@@ -16,9 +16,7 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
 
-  /**
-   * @type {Record<string, any>}
-   */
+  /** @type {Record<string, any>} */
   export const pages = {
     collections: ContentsPage,
     assets: AssetsPage,
