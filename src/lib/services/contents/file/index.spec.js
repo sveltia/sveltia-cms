@@ -30,7 +30,7 @@ describe('Test getFileConfig()', () => {
     fields: [],
   };
 
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nDisabled = {
     i18nEnabled: false,
     allLocales: ['_default'],
@@ -40,7 +40,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nSingleFile = {
     i18nEnabled: false,
     allLocales: ['en', 'fr'],
@@ -50,7 +50,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nMultiFile = {
     i18nEnabled: true,
     allLocales: ['en', 'fr'],
@@ -60,7 +60,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nMultiFolder = {
     i18nEnabled: true,
     allLocales: ['en', 'fr'],
@@ -70,7 +70,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nRootMultiFolder = {
     i18nEnabled: true,
     allLocales: ['en', 'fr'],

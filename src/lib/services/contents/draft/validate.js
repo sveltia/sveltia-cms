@@ -17,7 +17,7 @@ const fullRegexPattern = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
  */
 export const validateEntry = () => {
   const { collection, collectionFile, fileName, currentLocales, currentValues, files, validities } =
-    /** @type {EntryDraft} */ (get(entryDraft));
+    /** @type {import('$lib/typedefs').EntryDraft} */ (get(entryDraft));
 
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
   let validated = true;
@@ -74,7 +74,9 @@ export const validateEntry = () => {
         }
 
         if (widgetName === 'list') {
-          const { field, fields, types } = /** @type {ListField} */ (fieldConfig);
+          const { field, fields, types } = /** @type {import('$lib/typedefs').ListField} */ (
+            fieldConfig
+          );
 
           if (!field && !fields && !types) {
             // Simple list field
@@ -83,11 +85,19 @@ export const validateEntry = () => {
         }
       }
 
-      const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
+      const { multiple = false } =
+        /** @type {import('$lib/typedefs').RelationField | import('$lib/typedefs').SelectField} */ (
+          fieldConfig
+        );
 
-      const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
-        fieldConfig
-      );
+      const {
+        min,
+        max,
+      } = //
+        /**
+         * @type {import('$lib/typedefs').ListField | import('$lib/typedefs').NumberField |
+         * import('$lib/typedefs').RelationField | import('$lib/typedefs').SelectField}
+         */ (fieldConfig);
 
       let valueMissing = false;
       let tooShort = false;
@@ -148,7 +158,11 @@ export const validateEntry = () => {
 
         keyPath = _keyPath;
 
-        const _entryDraft = /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft);
+        const _entryDraft =
+          /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+            entryDraft
+          );
+
         const pairs = getPairs({ entryDraft: _entryDraft, keyPath: _keyPath, locale });
 
         if (required && !pairs.length) {
@@ -165,7 +179,7 @@ export const validateEntry = () => {
           const {
             output_code_only: outputCodeOnly = false,
             keys: outputKeys = { code: 'code', lang: 'lang' },
-          } = /** @type {CodeField} */ (fieldConfig);
+          } = /** @type {import('$lib/typedefs').CodeField} */ (fieldConfig);
 
           const _keyPath =
             keyPath.match(`(.+)\\.(?:${outputKeys.code}|${outputKeys.lang})$`)?.[1] ?? '';
@@ -217,14 +231,18 @@ export const validateEntry = () => {
         // Check the number of characters
         if (['string', 'text'].includes(widgetName)) {
           ({ tooShort, tooLong } = validateStringField(
-            /** @type {StringField | TextField} */ (fieldConfig),
+            /** @type {import('$lib/typedefs').StringField | import('$lib/typedefs').TextField} */ (
+              fieldConfig
+            ),
             value,
           ));
         }
 
         // Check the URL or email with native form validation
         if (widgetName === 'string' && value) {
-          const { type = 'text' } = /** @type {StringField} */ (fieldConfig);
+          const { type = 'text' } = /** @type {import('$lib/typedefs').StringField} */ (
+            fieldConfig
+          );
 
           if (type !== 'text') {
             const inputElement = document.createElement('input');
@@ -242,7 +260,8 @@ export const validateEntry = () => {
         }
 
         if (widgetName === 'number') {
-          const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
+          const { value_type: valueType = 'int' } =
+            /** @type {import('$lib/typedefs').NumberField} */ (fieldConfig);
 
           if (typeof min === 'number' && value !== null && Number(value) < min) {
             rangeUnderflow = true;
@@ -291,7 +310,9 @@ export const validateEntry = () => {
     });
   });
 
-  /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
+  /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+    entryDraft
+  ).update((_draft) => ({
     ..._draft,
     validities,
   }));

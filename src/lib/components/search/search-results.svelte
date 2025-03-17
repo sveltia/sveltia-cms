@@ -24,7 +24,7 @@
           >
             {#key $searchTerms}
               <InfiniteScroll items={$searchResults.entries} itemKey="id">
-                {#snippet renderItem(/** @type {Entry} */ entry)}
+                {#snippet renderItem(/** @type {import('$lib/typedefs').Entry} */ entry)}
                   <EntryResultItem {entry} />
                 {/snippet}
               </InfiniteScroll>
@@ -46,7 +46,7 @@
           >
             {#key $searchTerms}
               <InfiniteScroll items={$searchResults.assets} itemKey="path">
-                {#snippet renderItem(/** @type {Asset} */ asset)}
+                {#snippet renderItem(/** @type {import('$lib/typedefs').Asset} */ asset)}
                   <AssetResultItem {asset} />
                 {/snippet}
               </InfiniteScroll>

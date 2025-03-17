@@ -9,11 +9,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {NumberField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').NumberField} fieldConfig - Field configuration.
    * @property {string | number | null | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

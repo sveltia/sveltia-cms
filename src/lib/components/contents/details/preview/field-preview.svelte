@@ -7,9 +7,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {LocaleCode} locale - Current pane’s locale.
-   * @property {FieldKeyPath} keyPath - Field key path.
-   * @property {Field} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').LocaleCode} locale - Current pane’s locale.
+   * @property {import('$lib/typedefs').FieldKeyPath} keyPath - Field key path.
+   * @property {import('$lib/typedefs').Field} fieldConfig - Field configuration.
    */
 
   /** @type {Props} */
@@ -30,7 +30,11 @@
   } = $derived(fieldConfig);
   const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
   const multiple = $derived(
-    hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
+    hasMultiple
+      ? /** @type {import('$lib/typedefs').RelationField | import('$lib/typedefs').SelectField} */ (
+          fieldConfig
+        ).multiple
+      : undefined,
   );
   const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
   const collection = $derived($entryDraft?.collection);

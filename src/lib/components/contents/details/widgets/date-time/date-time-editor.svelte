@@ -18,11 +18,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {DateTimeField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').DateTimeField} fieldConfig - Field configuration.
    * @property {string | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

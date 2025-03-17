@@ -11,11 +11,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {ColorField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').ColorField} fieldConfig - Field configuration.
    * @property {string | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

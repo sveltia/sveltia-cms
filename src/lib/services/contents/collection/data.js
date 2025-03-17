@@ -5,7 +5,7 @@ import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 
 /**
- * @type {UpdatesToastState}
+ * @type {import('$lib/typedefs').UpdatesToastState}
  */
 export const updatesToastDefaultState = {
   saved: false,
@@ -17,7 +17,7 @@ export const updatesToastDefaultState = {
 };
 
 /**
- * @type {import('svelte/store').Writable<UpdatesToastState>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').UpdatesToastState>}
  */
 export const contentUpdatesToast = writable({ ...updatesToastDefaultState });
 
@@ -29,14 +29,15 @@ export const contentUpdatesToast = writable({ ...updatesToastDefaultState });
 export const deleteEntries = async (ids, assetPaths = []) => {
   const _allEntries = get(allEntries);
 
-  const changes = /** @type {FileChange[]} */ (
+  const changes = /** @type {import('$lib/typedefs').FileChange[]} */ (
     ids
       .map((id) => {
         const { locales, slug } = _allEntries.find((e) => e.id === id) ?? {};
 
         if (locales) {
           return Object.values(locales).map(
-            ({ path }) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
+            ({ path }) =>
+              /** @type {import('$lib/typedefs').FileChange} */ ({ action: 'delete', slug, path }),
           );
         }
 
@@ -49,7 +50,9 @@ export const deleteEntries = async (ids, assetPaths = []) => {
 
   if (assetPaths.length) {
     changes.push(
-      ...assetPaths.map((path) => /** @type {FileChange} */ ({ action: 'delete', path })),
+      ...assetPaths.map(
+        (path) => /** @type {import('$lib/typedefs').FileChange} */ ({ action: 'delete', path }),
+      ),
     );
   }
 

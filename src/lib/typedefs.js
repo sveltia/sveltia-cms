@@ -959,6 +959,26 @@
  */
 
 /**
+ * Locale slug map.
+ * @typedef {Record<LocaleCode, string | undefined>} LocaleSlugMap
+ */
+
+/**
+ * Locale content map.
+ * @typedef {Record<LocaleCode, FlattenedEntryContent>} LocaleContentMap
+ */
+
+/**
+ * Locale validity map.
+ * @typedef {Record<LocaleCode, FlattenedEntryValidityState>} LocaleValidityMap
+ */
+
+/**
+ * Locale expander map.
+ * @typedef {Record<LocaleCode, FlattenedEntryExpanderState>} LocaleExpanderMap
+ */
+
+/**
  * Entry draft.
  * @typedef {object} EntryDraft
  * @property {boolean} isNew - `true` if it’s a new entry draft in an entry collection.
@@ -969,20 +989,17 @@
  * @property {Entry} [originalEntry] - Original entry or `undefined` if it’s a new entry draft.
  * @property {LocaleStateMap} originalLocales - Original locale state at the time of draft creation.
  * @property {LocaleStateMap} currentLocales - Current locale state.
- * @property {Record<LocaleCode, string | undefined>} originalSlugs - Key is a locale code, value is
- * the original slug.
- * @property {Record<LocaleCode, string | undefined>} currentSlugs - Key is a locale code, value is
- * the current slug.
- * @property {Record<LocaleCode, FlattenedEntryContent>} originalValues - Key is a locale code,
- * value is a flattened object containing all the original field values.
- * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
- * is a flattened, proxified object containing all the current field values while editing.
+ * @property {LocaleSlugMap} originalSlugs - Key is a locale code, value is the original slug.
+ * @property {LocaleSlugMap} currentSlugs - Key is a locale code, value is the current slug.
+ * @property {LocaleContentMap} originalValues - Key is a locale code, value is a flattened object
+ * containing all the original field values.
+ * @property {LocaleContentMap} currentValues - Key is a locale code, value is a flattened,
+ * proxified object containing all the current field values while editing.
  * @property {EntryFileMap} files - Files to be uploaded.
- * @property {Record<LocaleCode, FlattenedEntryValidityState>} validities - Key is a locale code,
- * value is a flattened object containing validation results of all the current field values while
- * editing.
- * @property {Record<LocaleCode, FlattenedEntryExpanderState>} expanderStates - Key is a locale
- * code, value is a flattened object containing the expander UI state.
+ * @property {LocaleValidityMap} validities - Key is a locale code, value is a flattened object
+ * containing validation results of all the current field values while editing.
+ * @property {LocaleExpanderMap} expanderStates - Key is a locale code, value is a flattened object
+ * containing the expander UI state.
  */
 
 /**
@@ -994,10 +1011,9 @@
  * @property {string} collectionName - Collection name.
  * @property {string} slug - Entry slug. An empty string for a new entry.
  * @property {LocaleStateMap} currentLocales - Current locale state.
- * @property {Record<LocaleCode, string | undefined>} currentSlugs - Key is a locale code, value is
- * the current slug.
- * @property {Record<LocaleCode, FlattenedEntryContent>} currentValues - Key is a locale code, value
- * is a flattened object containing all the current field values while editing.
+ * @property {LocaleSlugMap} currentSlugs - Key is a locale code, value is the current slug.
+ * @property {LocaleContentMap} currentValues - Key is a locale code, value is a flattened object
+ * containing all the current field values while editing.
  * @property {EntryFileMap} files - Files to be uploaded.
  */
 
@@ -1280,3 +1296,5 @@
  * @property {Record<string, string>} [dateTimeParts] - Map of date/time parts. Required if the
  * `type` is `preview_path`.
  */
+
+export {};

@@ -23,9 +23,9 @@
 
   /** @type {string[]} */
   let otherSlugs = $state([]);
-  /** @type {Record<LocaleCode, string>} */
+  /** @type {Record<import('$lib/typedefs').LocaleCode, string>} */
   const updatedSlugs = $state({});
-  /** @type {Record<LocaleCode, false | 'empty' | 'duplicate'>} */
+  /** @type {Record<import('$lib/typedefs').LocaleCode, false | 'empty' | 'duplicate'>} */
   const validations = $state({});
 
   const componentId = $props.id();
@@ -59,7 +59,7 @@
   okDisabled={equal(currentSlugs, updatedSlugs) ||
     Object.values(validations).some((invalid) => invalid !== false)}
   onOk={() => {
-    /** @type {EntryDraft} */ ($entryDraft).currentSlugs = updatedSlugs;
+    /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentSlugs = updatedSlugs;
   }}
 >
   <Alert status="warning">

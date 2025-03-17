@@ -10,9 +10,9 @@
   /**
    * @typedef {object} Props
    * @property {'medium' | 'small'} [size] - Button size.
-   * @property {LocaleCode} locale - Current pane’s locale.
-   * @property {LocaleCode[]} otherLocales - Other locales.
-   * @property {FieldKeyPath} [keyPath] - Field key path.
+   * @property {import('$lib/typedefs').LocaleCode} locale - Current pane’s locale.
+   * @property {import('$lib/typedefs').LocaleCode[]} otherLocales - Other locales.
+   * @property {import('$lib/typedefs').FieldKeyPath} [keyPath] - Field key path.
    */
 
   /** @type {Props} */

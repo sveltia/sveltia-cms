@@ -7,7 +7,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   const collectionBase = {
     name: 'blog',
     folder: 'src/content/blog',
-    _type: /** @type {CollectionType} */ ('entry'),
+    _type: /** @type {import('$lib/typedefs').CollectionType} */ ('entry'),
     _thumbnailFieldNames: [],
   };
 
@@ -19,18 +19,18 @@ describe('Test getEntryAssetFolderPaths()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders' };
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nRootMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders_i18n_root' };
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nMultiFile = { ...i18nBaseConfig, structure: 'multiple_files' };
-  /** @type {I18nConfig} */
+  /** @type {import('$lib/typedefs').I18nConfig} */
   const i18nSingleFile = { ...i18nBaseConfig, structure: 'single_file' };
 
   const _file = {
     extension: 'md',
-    format: /** @type {FileFormat} */ ('yaml-frontmatter'),
+    format: /** @type {import('$lib/typedefs').FileFormat} */ ('yaml-frontmatter'),
     basePath: 'src/content/blog',
   };
 
@@ -47,7 +47,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   };
 
   test('simple path, multiple folders, entry relative', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -63,7 +63,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders, entry relative', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -79,7 +79,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders at root, entry relative', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -95,7 +95,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders at root, entry relative', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -111,7 +111,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple files, entry relative', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -127,7 +127,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple files, entry relative', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -143,7 +143,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, single file, entry relative', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -159,7 +159,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, single file, entry relative', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -175,7 +175,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders, entry absolute', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -191,7 +191,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders, entry absolute', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -207,7 +207,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders at root, entry absolute', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -223,7 +223,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders at root, entry absolute', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -239,7 +239,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple files, entry absolute', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -255,7 +255,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple files, entry absolute', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -271,7 +271,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, single file, entry absolute', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -287,7 +287,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, single file, entry absolute', () => {
-    /** @type {Collection} */
+    /** @type {import('$lib/typedefs').Collection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -304,7 +304,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
 });
 
 describe('Test copyProperty()', () => {
-  /** @type {Field[]} */
+  /** @type {import('$lib/typedefs').Field[]} */
   const fields = [
     { name: 'title', widget: 'string', required: true },
     { name: 'description', widget: 'string', required: false },
@@ -317,7 +317,7 @@ describe('Test copyProperty()', () => {
     { name: 'variables', widget: 'keyvalue', required: false },
   ];
 
-  /** @type {FlattenedEntryContent} */
+  /** @type {import('$lib/typedefs').FlattenedEntryContent} */
   const content = {
     title: 'My Post',
     description: '',
@@ -333,14 +333,14 @@ describe('Test copyProperty()', () => {
   /**
    * Wrapper for {@link copyProperty}.
    * @param {boolean} [omitEmptyOptionalFields] - The omit option.
-   * @returns {FlattenedEntryContent} Copied content. Note: It’s not sorted here because sorting
-   * is done in `finalizeContent`.
+   * @returns {import('$lib/typedefs').FlattenedEntryContent} Copied content. Note: It’s not sorted
+   * here because sorting is done in `finalizeContent`.
    */
   const copy = (omitEmptyOptionalFields = false) => {
-    /** @type {FlattenedEntryContent} */
+    /** @type {import('$lib/typedefs').FlattenedEntryContent} */
     const sortedMap = {};
 
-    /** @type {FlattenedEntryContent} */
+    /** @type {import('$lib/typedefs').FlattenedEntryContent} */
     const unsortedMap = {
       ...structuredClone(content),
       'variables.foo': 'foo',

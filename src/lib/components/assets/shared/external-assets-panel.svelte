@@ -17,11 +17,13 @@
 
   /**
    * @typedef {object} Props
-   * @property {AssetKind} [kind] - Asset kind.
+   * @property {import('$lib/typedefs').AssetKind} [kind] - Asset kind.
    * @property {string} [searchTerms] - Search terms for filtering assets.
-   * @property {MediaLibraryService} serviceProps - Media library service details.
+   * @property {import('$lib/typedefs').MediaLibraryService} serviceProps - Media library service
+   * details.
    * @property {string} [gridId] - The `id` attribute of the inner listbox.
-   * @property {(detail: SelectedAsset) => void} [onSelect] - Custom `select` event handler.
+   * @property {(detail: import('$lib/typedefs').SelectedAsset) => void} [onSelect] - Custom
+   * `select` event handler.
    */
 
   /** @type {Props} */
@@ -57,7 +59,7 @@
   let password = $state('');
   /** @type {'initial' | 'requested' | 'success' | 'error'} */
   let authState = $state('initial');
-  /** @type {ExternalAsset[] | null} */
+  /** @type {import('$lib/typedefs').ExternalAsset[] | null} */
   let searchResults = $state(null);
   /** @type {string | undefined} */
   let error = $state();
@@ -83,7 +85,7 @@
   /**
    * Download the selected asset, if needed, and notify the file and credit. If hotlinking is
    * required by the service, just notify the URL instead of downloading the file.
-   * @param {ExternalAsset} asset - Selected asset.
+   * @param {import('$lib/typedefs').ExternalAsset} asset - Selected asset.
    * @todo Support video files.
    */
   const selectAsset = async (asset) => {
@@ -173,7 +175,7 @@
       }}
     >
       <InfiniteScroll items={searchResults} itemKey="id">
-        {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
+        {#snippet renderItem(/** @type {import('$lib/typedefs').ExternalAsset} */ asset)}
           {@const { id, previewURL, description, kind: _kind } = asset}
           <Option label="" value={id}>
             <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />

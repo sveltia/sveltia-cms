@@ -5,7 +5,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {LocaleCode} locale - Current pane’s locale.
+   * @property {import('$lib/typedefs').LocaleCode} locale - Current pane’s locale.
    */
 
   /** @type {Props} */

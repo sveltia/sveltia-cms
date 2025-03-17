@@ -4,7 +4,7 @@
   /**
    * @typedef {object} Props
    * @property {'lazy' | 'eager'} [loading] - Loading method.
-   * @property {Asset} [asset] - Asset.
+   * @property {import('$lib/typedefs').Asset} [asset] - Asset.
    * @property {string} [src] - Source URL.
    * @property {'tile' | 'icon'} [variant] - Style variant.
    * @property {boolean} [blurBackground] - Whether to show a blurred background (like Slack’s media

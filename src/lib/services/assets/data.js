@@ -23,14 +23,14 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
 
 /**
- * @type {import('svelte/store').Writable<UpdatesToastState>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').UpdatesToastState>}
  */
 export const assetUpdatesToast = writable({ ...updatesToastDefaultState });
 
 /**
  * Upload/save the given assets to the backend.
- * @param {UploadingAssets} uploadingAssets - Assets to be uploaded.
- * @param {CommitChangesOptions} options - Options for the backend handler.
+ * @param {import('$lib/typedefs').UploadingAssets} uploadingAssets - Assets to be uploaded.
+ * @param {import('$lib/typedefs').CommitChangesOptions} options - Options for the backend handler.
  */
 export const saveAssets = async (uploadingAssets, options) => {
   const { files, folder, originalAsset } = uploadingAssets;
@@ -48,7 +48,9 @@ export const saveAssets = async (uploadingAssets, options) => {
     }
 
     return {
-      action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
+      action: /** @type {import('$lib/typedefs').CommitAction} */ (
+        originalAsset ? 'update' : 'create'
+      ),
       name,
       path: [folder, name].join('/'),
       file,
@@ -61,12 +63,12 @@ export const saveAssets = async (uploadingAssets, options) => {
   );
 
   /**
-   * @type {Asset[]}
+   * @type {import('$lib/typedefs').Asset[]}
    */
   const newAssets = await Promise.all(
     savingFileList.map(
       async ({ name, path, file }) =>
-        /** @type {Asset} */ ({
+        /** @type {import('$lib/typedefs').Asset} */ ({
           blobURL: URL.createObjectURL(file),
           name,
           path,
@@ -111,15 +113,15 @@ export const saveAssets = async (uploadingAssets, options) => {
 /**
  * Move or rename assets while updating links in the entries.
  * @param {'move' | 'rename'} action - Action type.
- * @param {MovingAsset[]} movingAssets - Assets to be moved/renamed.
+ * @param {import('$lib/typedefs').MovingAsset[]} movingAssets - Assets to be moved/renamed.
  */
 export const moveAssets = async (action, movingAssets) => {
   const _allAssetFolders = get(allAssetFolders);
-  /** @type {FileChange[]} */
+  /** @type {import('$lib/typedefs').FileChange[]} */
   const changes = [];
-  /** @type {Entry[]} */
+  /** @type {import('$lib/typedefs').Entry[]} */
   const savingEntries = [];
-  /** @type {Asset[]} */
+  /** @type {import('$lib/typedefs').Asset[]} */
   const savingAssets = [];
 
   await Promise.all(
@@ -189,10 +191,11 @@ export const moveAssets = async (action, movingAssets) => {
             getAssociatedCollections(entry).map(async (collection) => {
               /**
                * Add saving entry data to the stack.
-               * @param {CollectionFile} [collectionFile] - File. File collection only.
+               * @param {import('$lib/typedefs').CollectionFile} [collectionFile] - File. File
+               * collection only.
                */
               const addSavingEntryData = async (collectionFile) => {
-                /** @type {EntryDraft} */
+                /** @type {import('$lib/typedefs').EntryDraft} */
                 const draft = {
                   ...draftProps,
                   collection,
@@ -271,7 +274,7 @@ export const moveAssets = async (action, movingAssets) => {
 
 /**
  * Delete the given assets.
- * @param {Asset[]} assets - List of assets to be deleted.
+ * @param {import('$lib/typedefs').Asset[]} assets - List of assets to be deleted.
  * @todo Update entries to remove these asset paths. If an asset is used for a required field, show
  * an error message and abort the operation.
  */

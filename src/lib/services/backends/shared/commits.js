@@ -17,8 +17,8 @@ const defaultCommitMessages = {
 
 /**
  * Create a Git commit message.
- * @param {FileChange[]} changes - File changes to be saved.
- * @param {CommitChangesOptions} options - Commit options.
+ * @param {import('$lib/typedefs').FileChange[]} changes - File changes to be saved.
+ * @param {import('$lib/typedefs').CommitChangesOptions} options - Commit options.
  * @returns {string} Formatted message.
  */
 export const createCommitMessage = (
@@ -30,9 +30,9 @@ export const createCommitMessage = (
       commit_messages: customCommitMessages = {},
       automatic_deployments: autoDeployEnabled,
     },
-  } = /** @type {SiteConfig} */ (get(siteConfig));
+  } = /** @type {import('$lib/typedefs').SiteConfig} */ (get(siteConfig));
 
-  const { login = '', name = '' } = /** @type {User} */ (get(user));
+  const { login = '', name = '' } = /** @type {import('$lib/typedefs').User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection?.label_singular || collection?.label || collection?.name || '';

@@ -3,7 +3,7 @@ import { derived, get, writable } from 'svelte/store';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
- * @type {import('svelte/store').Writable<EntryDraft | null | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft | null | undefined>}
  */
 export const entryDraft = writable();
 /**

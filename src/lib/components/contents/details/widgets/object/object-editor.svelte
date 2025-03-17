@@ -23,11 +23,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {ObjectField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').ObjectField} fieldConfig - Field configuration.
    * @property {object | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -95,7 +95,9 @@
     if (type) {
       Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
         if (_locale === locale || i18n === 'duplicate') {
-          /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][typeKeyPath] = type;
+          /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
+            typeKeyPath
+          ] = type;
         }
       });
 
@@ -113,13 +115,15 @@
     Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
         // Apply the new values while keeping the Proxy
-        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale] = Object.assign(
-          _valueMap,
-          toRaw({ ...newValueMap, ..._valueMap }),
-        );
+        /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale] =
+          Object.assign(_valueMap, toRaw({ ...newValueMap, ..._valueMap }));
 
         // Disable validation
-        delete (/** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][keyPath]);
+        delete (
+          /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
+            keyPath
+          ]
+        );
       }
     });
 
@@ -136,13 +140,17 @@
       if (_locale === locale || i18n === 'duplicate') {
         Object.keys(_valueMap).forEach((_keyPath) => {
           if (_keyPath.startsWith(`${keyPath}.`)) {
-            /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][_keyPath] = null;
+            /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
+              _keyPath
+            ] = null;
             delete $entryDraft?.currentValues[_locale][_keyPath];
           }
         });
 
         // Enable validation
-        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][keyPath] = null;
+        /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
+          keyPath
+        ] = null;
       }
     });
 

@@ -8,7 +8,7 @@
    * @property {string[]} currentValue - Field value.
    */
 
-  /** @type {SelectFieldSelectorProps & Props} */
+  /** @type {import('$lib/typedefs').SelectFieldSelectorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

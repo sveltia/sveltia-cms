@@ -30,10 +30,11 @@ const escapeAllChars = (props) =>
 /**
  * Get a component definition. This has to be a function due to localized labels.
  * @param {string} name - Component name.
- * @returns {EditorComponentDefinition | undefined} Definition.
+ * @returns {import('$lib/typedefs').EditorComponentDefinition | undefined} Definition.
  */
 export const getComponentDef = (name) => {
-  const definitions = /** @type {Record<string, EditorComponentDefinition>} */ ({
+  /** @type {Record<string, import('$lib/typedefs').EditorComponentDefinition>} */
+  const definitions = {
     image: {
       id: 'image',
       icon: 'image',
@@ -82,14 +83,14 @@ export const getComponentDef = (name) => {
         return link ? `<a href="${link}">${img}</a>` : img;
       },
     },
-  });
+  };
 
   return definitions[name];
 };
 
 /**
  * Get the {@link CustomNode} class and related features for Lexical.
- * @param {EditorComponentDefinition} componentDef - Component definition.
+ * @param {import('$lib/typedefs').EditorComponentDefinition} componentDef - Component definition.
  * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
  */
@@ -376,7 +377,7 @@ const featureCacheMap = new Map();
 export class EditorComponent {
   /**
    * Create an `EditorComponent` instance.
-   * @param {EditorComponentDefinition} componentDef - Component definition.
+   * @param {import('$lib/typedefs').EditorComponentDefinition} componentDef - Component definition.
    */
   constructor(componentDef) {
     const { id } = componentDef;

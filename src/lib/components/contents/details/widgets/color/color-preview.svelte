@@ -6,11 +6,11 @@
 <script>
   /**
    * @typedef {object} Props
-   * @property {ColorField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').ColorField} fieldConfig - Field configuration.
    * @property {string | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig,

@@ -10,11 +10,11 @@ export const dataLoaded = writable(false);
  */
 export const dataLoadedProgress = writable();
 /**
- * @type {import('svelte/store').Writable<CollectionEntryFolder[]>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').CollectionEntryFolder[]>}
  */
 export const allEntryFolders = writable([]);
 /**
- * @type {import('svelte/store').Writable<Entry[]>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Entry[]>}
  */
 export const allEntries = writable([]);
 /**
@@ -25,9 +25,9 @@ export const entryParseErrors = writable([]);
 /**
  * Get collection entry folders that match the given path.
  * @param {string} path - Entry path.
- * @returns {CollectionEntryFolder[]} Entry folders. Sometimes it’s hard to find the right folder
- * because multiple collections can have the same folder or partially overlapping folder paths, but
- * the first one is most likely what you need.
+ * @returns {import('$lib/typedefs').CollectionEntryFolder[]} Entry folders. Sometimes it’s hard to
+ * find the right folder because multiple collections can have the same folder or partially
+ * overlapping folder paths, but the first one is most likely what you need.
  */
 export const getEntryFoldersByPath = (path) =>
   get(allEntryFolders)
@@ -36,7 +36,7 @@ export const getEntryFoldersByPath = (path) =>
         return Object.values(filePathMap).includes(path);
       }
 
-      return /** @type {EntryCollection} */ (
+      return /** @type {import('$lib/typedefs').EntryCollection} */ (
         getCollection(collectionName)
       )?._file?.fullPathRegEx?.test(path);
     })

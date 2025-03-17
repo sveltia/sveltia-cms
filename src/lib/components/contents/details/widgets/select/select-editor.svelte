@@ -11,12 +11,12 @@
 
   /**
    * @typedef {object} Props
-   * @property {SelectField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').SelectField} fieldConfig - Field configuration.
    * @property {any} currentValue - Field value.
    * @property {boolean} [sortOptions] - Whether to sort the options by label.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -37,7 +37,7 @@
     multiple,
   } = $derived(fieldConfig);
   const Select = $derived(multiple ? SelectMultiple : SelectSingle);
-  /** @type {SelectFieldSelectorOption[]} */
+  /** @type {import('$lib/typedefs').SelectFieldSelectorOption[]} */
   const options = $derived.by(() => {
     const _options = fieldOptions.map((option) =>
       isObject(option) ? /** @type {any} */ (option) : { label: option, value: option },

@@ -8,11 +8,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {BooleanField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').BooleanField} fieldConfig - Field configuration.
    * @property {boolean | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue = false,

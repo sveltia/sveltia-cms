@@ -1,7 +1,7 @@
 import { mount } from 'svelte';
 import { customFileFormats } from '$lib/services/contents/file';
 import { customComponents } from '$lib/services/contents/widgets/markdown';
-import App from './app.svelte';
+import App from './components/app.svelte';
 
 const knownFuncNames = [
   'registerEditorComponent',
@@ -72,8 +72,8 @@ const init = async ({ config = {} } = {}) => {
  * Register a custom entry file format.
  * @param {string} name - Format name.
  * @param {string} extension - File extension.
- * @param {{ fromFile?: FileParser, toFile?: FileFormatter }} methods - Parser and/or formatter
- * methods.
+ * @param {{ fromFile?: import('./typedefs').FileParser, toFile?:
+ * import('./typedefs').FileFormatter }} methods - Parser and/or formatter methods.
  * @see https://decapcms.org/docs/custom-formatters/
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
@@ -82,7 +82,7 @@ const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
 
 /**
  * Register a custom component.
- * @param {EditorComponentDefinition} definition - Component definition.
+ * @param {import('./typedefs').EditorComponentDefinition} definition - Component definition.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
 // eslint-disable-next-line no-unused-vars

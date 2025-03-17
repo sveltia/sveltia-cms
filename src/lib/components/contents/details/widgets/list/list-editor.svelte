@@ -32,11 +32,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {ListField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').ListField} fieldConfig - Field configuration.
    * @property {string[]} currentValue - Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -146,7 +146,9 @@
       });
 
       normalizedValue.forEach((val, index) => {
-        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][`${keyPath}.${index}`] = val;
+        /** @type {import('$lib/typedefs').EntryDraft} */ ($entryDraft).currentValues[_locale][
+          `${keyPath}.${index}`
+        ] = val;
       });
     });
   };

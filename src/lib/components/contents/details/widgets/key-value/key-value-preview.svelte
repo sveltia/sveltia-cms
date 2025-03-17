@@ -12,11 +12,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {KeyValueField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').KeyValueField} fieldConfig - Field configuration.
    * @property {Record<string, string> | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -40,7 +40,11 @@
    * Update the key-value {@link pairs} whenever the draft store is updated.
    */
   const updatePairs = () => {
-    const _entryDraft = /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft);
+    const _entryDraft =
+      /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+        entryDraft
+      );
+
     const updatedPairs = getPairs({ entryDraft: _entryDraft, keyPath, locale });
 
     if (!equal(pairs, updatedPairs)) {

@@ -19,7 +19,7 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       // Output JavaScript only
-      input: 'src/main.js',
+      input: 'src/lib/main.js',
       output: [
         {
           entryFileNames: 'sveltia-cms.js',

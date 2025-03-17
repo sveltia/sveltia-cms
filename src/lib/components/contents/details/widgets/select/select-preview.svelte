@@ -9,11 +9,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {SelectField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').SelectField} fieldConfig - Field configuration.
    * @property {string | string[] | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

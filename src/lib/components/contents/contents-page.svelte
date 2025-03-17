@@ -39,7 +39,7 @@
 
     const { _collectionName, routeType, subPath } = match.groups;
     /**
-     * @type {Collection | undefined}
+     * @type {import('$lib/typedefs').Collection | undefined}
      */
     const collection = _collectionName ? getCollection(_collectionName) : undefined;
 
@@ -59,7 +59,7 @@
     const collectionLabel = label || collectionName;
 
     const _fileMap = files
-      ? /** @type {FileCollection} */ ($selectedCollection)._fileMap
+      ? /** @type {import('$lib/typedefs').FileCollection} */ ($selectedCollection)._fileMap
       : undefined;
 
     if (!routeType) {

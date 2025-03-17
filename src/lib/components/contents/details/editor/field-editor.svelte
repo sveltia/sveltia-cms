@@ -18,9 +18,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {LocaleCode} locale - Current pane’s locale.
-   * @property {FieldKeyPath} keyPath - Field key path.
-   * @property {Field} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').LocaleCode} locale - Current pane’s locale.
+   * @property {import('$lib/typedefs').FieldKeyPath} keyPath - Field key path.
+   * @property {import('$lib/typedefs').Field} fieldConfig - Field configuration.
    */
 
   /** @type {Props} */
@@ -64,41 +64,60 @@
     field: subField,
     fields: subFields,
     types,
-  } = /** @type {ListField} */ ($derived(fieldConfig));
+  } = /** @type {import('$lib/typedefs').ListField} */ ($derived(fieldConfig));
   const hasSubFields = $derived(!!subField || !!subFields || !!types);
-  const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
-    $derived(fieldConfig)
-  );
+  const {
+    min,
+    max,
+  } = //
+    /**
+     * @type {import('$lib/typedefs').ListField | import('$lib/typedefs').NumberField |
+     * import('$lib/typedefs').RelationField | import('$lib/typedefs').SelectField}
+     */ ($derived(fieldConfig));
   const type = $derived(
     // prettier-ignore
     widgetName === 'string'
-      ? /** @type {StringField} */ (fieldConfig).type ?? 'text'
+      ? /** @type {import('$lib/typedefs').StringField} */ (fieldConfig).type ?? 'text'
       : widgetName === 'number'
         ? 'number'
         : undefined,
   );
   const allowPrefix = $derived(['string'].includes(widgetName));
   const prefix = $derived(
-    allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined,
+    allowPrefix
+      ? /** @type {import('$lib/typedefs').StringField} */ (fieldConfig).prefix
+      : undefined,
   );
   const suffix = $derived(
-    allowPrefix ? /** @type {StringField} */ (fieldConfig).suffix : undefined,
+    allowPrefix
+      ? /** @type {import('$lib/typedefs').StringField} */ (fieldConfig).suffix
+      : undefined,
   );
   const allowExtraLabels = $derived(['boolean', 'number', 'string'].includes(widgetName));
   const beforeInputLabel = $derived(
     allowExtraLabels
-      ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).before_input
+      ? /**
+         * @type {import('$lib/typedefs').BooleanField | import('$lib/typedefs').NumberField |
+         * import('$lib/typedefs').StringField}
+         */ (fieldConfig).before_input
       : undefined,
   );
   const afterInputLabel = $derived(
     allowExtraLabels
-      ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).after_input
+      ? /**
+         * @type {import('$lib/typedefs').BooleanField | import('$lib/typedefs').NumberField |
+         * import('$lib/typedefs').StringField}
+         */ (fieldConfig).after_input
       : undefined,
   );
   const hasExtraLabels = $derived(!!(prefix || suffix || beforeInputLabel || afterInputLabel));
   const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
   const multiple = $derived(
-    hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
+    hasMultiple
+      ? /** @type {import('$lib/typedefs').RelationField | import('$lib/typedefs').SelectField} */ (
+          fieldConfig
+        ).multiple
+      : undefined,
   );
   const canAddMultiValue = $derived(
     (widgetName === 'list' && hasSubFields) || multiple || widgetName === 'keyvalue',
@@ -196,13 +215,19 @@
           {$_('validation.value_missing')}
         {/if}
         {#if validity.tooShort}
-          {@const { minlength } = (() => /** @type {StringField | TextField} */ (fieldConfig))()}
+          {@const { minlength } = (() =>
+            /** @type {import('$lib/typedefs').StringField | import('$lib/typedefs').TextField} */ (
+              fieldConfig
+            ))()}
           {$_(minlength === 1 ? 'validation.too_short.one' : 'validation.too_short.many', {
             values: { min: minlength },
           })}
         {/if}
         {#if validity.tooLong}
-          {@const { maxlength } = (() => /** @type {StringField | TextField} */ (fieldConfig))()}
+          {@const { maxlength } = (() =>
+            /** @type {import('$lib/typedefs').StringField | import('$lib/typedefs').TextField} */ (
+              fieldConfig
+            ))()}
           {$_(maxlength === 1 ? 'validation.too_long.one' : 'validation.too_long.many', {
             values: { max: maxlength },
           })}

@@ -6,11 +6,11 @@
 <script>
   /**
    * @typedef {object} Props
-   * @property {TextField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').TextField} fieldConfig - Field configuration.
    * @property {string | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue,

@@ -3,8 +3,8 @@ import { isObject } from '@sveltia/utils/object';
 /**
  * Get the default value for a Code field.
  * @param {object} args - Arguments.
- * @param {CodeField} args.fieldConfig - Field configuration.
- * @param {FieldKeyPath} args.keyPath - Field key path.
+ * @param {import('$lib/typedefs').CodeField} args.fieldConfig - Field configuration.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Field key path.
  * @returns {Record<string, any>} Default value.
  * @todo Write tests for this.
  */
@@ -16,7 +16,7 @@ export const getDefaultValue = ({ fieldConfig, keyPath }) => {
     default: defaultValue,
     output_code_only: outputCodeOnly = false,
     keys: outputKeys = { code: 'code', lang: 'lang' },
-  } = /** @type {CodeField} */ (fieldConfig);
+  } = /** @type {import('$lib/typedefs').CodeField} */ (fieldConfig);
 
   if (outputCodeOnly) {
     content[keyPath] = typeof defaultValue === 'string' ? defaultValue : '';

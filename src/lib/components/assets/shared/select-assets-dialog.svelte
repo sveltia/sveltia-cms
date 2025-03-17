@@ -19,11 +19,11 @@
   /**
    * @typedef {object} Props
    * @property {boolean} [open] - Whether to open the dialog.
-   * @property {AssetKind | undefined} [kind] - Asset kind.
+   * @property {import('$lib/typedefs').AssetKind | undefined} [kind] - Asset kind.
    * @property {boolean} [canEnterURL] - Whether to allow entering a URL.
-   * @property {Entry} [entry] - Associated entry.
-   * @property {(detail: { asset: SelectedAsset }) => void} [onSelect] - Custom `select` event
-   * handler.
+   * @property {import('$lib/typedefs').Entry} [entry] - Associated entry.
+   * @property {(detail: { asset: import('$lib/typedefs').SelectedAsset }) => void} [onSelect] -
+   * Custom `select` event handler.
    */
 
   /** @type {Props} */
@@ -39,7 +39,7 @@
 
   const elementIdPrefix = $props.id();
 
-  /** @type {SelectedAsset | null} */
+  /** @type {import('$lib/typedefs').SelectedAsset | null} */
   let selectedAsset = $state(null);
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
@@ -92,7 +92,7 @@
   okDisabled={!selectedAsset}
   bind:open
   onOk={() => {
-    onSelect?.({ asset: /** @type {SelectedAsset} */ (selectedAsset) });
+    onSelect?.({ asset: /** @type {import('$lib/typedefs').SelectedAsset} */ (selectedAsset) });
   }}
 >
   {#snippet headerExtra()}
@@ -100,7 +100,9 @@
       {#if $selectAssetsView}
         <ViewSwitcher
           currentView={(() =>
-            /** @type {import('svelte/store').Writable<SelectAssetsView>} */ (selectAssetsView))()}
+            /**
+             * @type {import('svelte/store').Writable<import('$lib/typedefs').SelectAssetsView>}
+             */ (selectAssetsView))()}
           aria-controls="select-assets-grid"
         />
       {/if}

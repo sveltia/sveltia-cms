@@ -23,7 +23,7 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  */
 export const devSiteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
 /**
- * @type {import('svelte/store').Writable<SiteConfig | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').SiteConfig | undefined>}
  */
 export const siteConfig = writable();
 /**
@@ -86,7 +86,7 @@ const fetchSiteConfig = async ({ ignoreError = false } = {}) => {
 
 /**
  * Validate the site configuration file.
- * @param {SiteConfig} config - Config object.
+ * @param {import('$lib/typedefs').SiteConfig} config - Config object.
  * @throws {Error} If there is an error in the config.
  * @see https://decapcms.org/docs/configuration-options/
  * @todo Add more validations.
@@ -188,10 +188,10 @@ export const initSiteConfig = async (manualConfig = {}) => {
 
     validate(tempConfig);
 
-    /** @type {SiteConfig} */
+    /** @type {import('$lib/typedefs').SiteConfig} */
     const config = tempConfig;
 
-    // Set the site URL for development or production. See also `/src/app.svelte`
+    // Set the site URL for development or production. See also `/src/lib/components/app.svelte`
     config._siteURL = config.site_url?.trim() || (DEV ? devSiteURL : window.location.origin);
     config._baseURL = isURL(config._siteURL) ? new URL(config._siteURL).origin : '';
 
@@ -230,7 +230,7 @@ siteConfig.subscribe((config) => {
     collections,
   } = config;
 
-  /** @type {CollectionEntryFolder[]} */
+  /** @type {import('$lib/typedefs').CollectionEntryFolder[]} */
   const _allEntryFolders = [
     ...collections
       .filter(({ folder, hide, divider }) => typeof folder === 'string' && !hide && !divider)
@@ -287,7 +287,7 @@ siteConfig.subscribe((config) => {
     ? `/${stripSlashes(_globalPublicFolder)}`.replace(/^\/@/, '@')
     : `/${globalMediaFolder}`;
 
-  /** @type {CollectionAssetFolder} */
+  /** @type {import('$lib/typedefs').CollectionAssetFolder} */
   const globalAssetFolder = {
     collectionName: undefined,
     internalPath: globalMediaFolder,
@@ -299,7 +299,7 @@ siteConfig.subscribe((config) => {
    * Folder Collections Media and Public Folder.
    * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
    */
-  const collectionAssetFolders = /** @type {CollectionAssetFolder[]} */ (
+  const collectionAssetFolders = /** @type {import('$lib/typedefs').CollectionAssetFolder[]} */ (
     collections
       .filter(
         ({ hide, divider, media_folder: mediaFolder, path: entryPath }) =>

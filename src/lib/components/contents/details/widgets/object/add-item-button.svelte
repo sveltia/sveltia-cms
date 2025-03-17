@@ -5,7 +5,8 @@
   /**
    * @typedef {object} Props
    * @property {boolean} [disabled] - Whether to disable the button.
-   * @property {ListField | ObjectField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').ListField | import('$lib/typedefs').ObjectField} fieldConfig
+   * - Field configuration.
    * @property {object[]} [items] - List items. `<ListEditor>` only.
    * @property {(args?: { type?: string }) => void} [addItem] - Function to add a new item.
    */
@@ -28,7 +29,9 @@
     types,
   } = $derived(fieldConfig);
   const listField = $derived(
-    widgetType === 'list' ? /** @type {ListField} */ (fieldConfig) : undefined,
+    widgetType === 'list'
+      ? /** @type {import('$lib/typedefs').ListField} */ (fieldConfig)
+      : undefined,
   );
   const labelSingular = $derived(listField?.label_singular ?? '');
   const max = $derived(listField?.max ?? undefined);

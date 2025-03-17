@@ -7,7 +7,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {Asset[]} [assets] - Selected assets.
+   * @property {import('$lib/typedefs').Asset[]} [assets] - Selected assets.
    */
 
   /** @type {Props} */

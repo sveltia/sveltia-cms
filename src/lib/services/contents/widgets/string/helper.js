@@ -1,6 +1,7 @@
 /**
  * Validate a String/Text field value against the field configuration.
- * @param {StringField | TextField} fieldConfig - Field configuration.
+ * @param {import('$lib/typedefs').StringField | import('$lib/typedefs').TextField} fieldConfig -
+ * Field configuration.
  * @param {string | undefined} value - Current value.
  * @returns {{ count: number, hasMin: boolean, hasMax: boolean, tooShort: boolean, tooLong: boolean,
  * invalid: boolean }} Result.

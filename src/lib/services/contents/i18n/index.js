@@ -5,7 +5,7 @@ import { siteConfig } from '$lib/services/config';
 
 /**
  * The default, normalized i18n configuration with no locales defined.
- * @type {I18nConfig}
+ * @type {import('$lib/typedefs').I18nConfig}
  */
 export const defaultI18nConfig = {
   i18nEnabled: false,
@@ -22,18 +22,18 @@ export const defaultI18nConfig = {
 
 /**
  * Get the normalized i18n configuration for the given collection or collection file.
- * @param {RawCollection} collection - Developer-defined collection.
- * @param {RawCollectionFile} [file] - Developer-defined collection file.
- * @returns {I18nConfig} Config.
+ * @param {import('$lib/typedefs').RawCollection} collection - Developer-defined collection.
+ * @param {import('$lib/typedefs').RawCollectionFile} [file] - Developer-defined collection file.
+ * @returns {import('$lib/typedefs').I18nConfig} Config.
  * @see https://decapcms.org/docs/i18n/
  */
 export const getI18nConfig = (collection, file) => {
-  const _siteConfig = /** @type {SiteConfig} */ (get(siteConfig));
-  /** @type {RawI18nConfig | undefined} */
+  const _siteConfig = /** @type {import('$lib/typedefs').SiteConfig} */ (get(siteConfig));
+  /** @type {import('$lib/typedefs').RawI18nConfig | undefined} */
   let config;
 
   if (isObject(_siteConfig.i18n)) {
-    config = /** @type {RawI18nConfig} */ (_siteConfig.i18n);
+    config = /** @type {import('$lib/typedefs').RawI18nConfig} */ (_siteConfig.i18n);
 
     if (collection.i18n) {
       if (isObject(collection.i18n)) {
@@ -64,7 +64,7 @@ export const getI18nConfig = (collection, file) => {
       key: canonicalSlugKey = 'translationKey',
       value: canonicalSlugTemplate = '{{slug}}',
     } = {},
-  } = /** @type {RawI18nConfig} */ (config ?? {});
+  } = /** @type {import('$lib/typedefs').RawI18nConfig} */ (config ?? {});
 
   const i18nEnabled = !!_locales.length;
   const allLocales = i18nEnabled ? _locales : ['_default'];
@@ -113,8 +113,9 @@ export const getI18nConfig = (collection, file) => {
 
 /**
  * Get the canonical locale of the given locale that can be used for various `Intl` methods.
- * @param {LocaleCode} locale - Locale.
- * @returns {StandardLocaleCode | undefined} Locale or `undefined` if not determined.
+ * @param {import('$lib/typedefs').LocaleCode} locale - Locale.
+ * @returns {import('$lib/typedefs').StandardLocaleCode | undefined} Locale or `undefined` if not
+ * determined.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument
  */
 export const getCanonicalLocale = (locale) => {
@@ -133,7 +134,7 @@ export const getCanonicalLocale = (locale) => {
 
 /**
  * Translate the given locale code in the application UI locale.
- * @param {LocaleCode} locale - Locale code like `en`.
+ * @param {import('$lib/typedefs').LocaleCode} locale - Locale code like `en`.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
  * locale code as is.
  */
@@ -160,7 +161,7 @@ export const getLocaleLabel = (locale) => {
 
 /**
  * Get a simple list formatter.
- * @param {LocaleCode} locale - Locale code.
+ * @param {import('$lib/typedefs').LocaleCode} locale - Locale code.
  * @param {Partial<Intl.ListFormatOptions>} options - Format options.
  * @returns {Intl.ListFormat} Formatter.
  */

@@ -13,14 +13,14 @@ import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/f
 const markdownImageRegEx = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
 
 /**
- * @type {import('svelte/store').Writable<Entry[]>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Entry[]>}
  */
 export const selectedEntries = writable([]);
 
 /**
  * Get entries by the given collection name, while applying a filer if needed.
  * @param {string} collectionName - Collection name.
- * @returns {Entry[]} Entries.
+ * @returns {import('$lib/typedefs').Entry[]} Entries.
  * @see https://decapcms.org/docs/collection-types#filtered-folder-collections
  */
 export const getEntriesByCollection = (collectionName) => {
@@ -66,9 +66,9 @@ export const getEntriesByCollection = (collectionName) => {
  * Find entries by an asset URL, and replace the URL if needed.
  * @param {string} url - Asset’s public or blob URL.
  * @param {object} [options] - Options.
- * @param {Entry[]} [options.entries] - Entries to be searched.
+ * @param {import('$lib/typedefs').Entry[]} [options.entries] - Entries to be searched.
  * @param {string} [options.newURL] - New URL to replace the found URL.
- * @returns {Promise<Entry[]>} Found (and replaced) entries.
+ * @returns {Promise<import('$lib/typedefs').Entry[]>} Found (and replaced) entries.
  */
 export const getEntriesByAssetURL = async (
   url,
@@ -94,7 +94,8 @@ export const getEntriesByAssetURL = async (
                 collections.map(async (collection) => {
                   /**
                    * Check if the field contains the asset.
-                   * @param {CollectionFile} [collectionFile] - File. File collection only.
+                   * @param {import('$lib/typedefs').CollectionFile} [collectionFile] - File. File
+                   * collection only.
                    * @returns {Promise<boolean>} Result.
                    */
                   const hasAsset = async (collectionFile) => {

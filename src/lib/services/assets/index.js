@@ -22,29 +22,31 @@ export const assetKinds = [...mediaKinds, 'document', 'other'];
  */
 export const documentExtensions = /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/i;
 /**
- * @type {import('svelte/store').Writable<Asset[]>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Asset[]>}
  */
 export const allAssets = writable([]);
 /**
- * @type {import('svelte/store').Writable<CollectionAssetFolder[]>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').CollectionAssetFolder[]>}
  */
 export const allAssetFolders = writable([]);
 /**
- * @type {import('svelte/store').Readable<CollectionAssetFolder | undefined>}
+ * @type {import('svelte/store').Readable<import('$lib/typedefs').CollectionAssetFolder |
+ * undefined>}
  */
 export const globalAssetFolder = derived([allAssetFolders], ([_allAssetFolders], set) => {
   set(_allAssetFolders.find(({ collectionName }) => !collectionName));
 });
 /**
- * @type {import('svelte/store').Writable<CollectionAssetFolder | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').CollectionAssetFolder |
+ * undefined>}
  */
 export const selectedAssetFolder = writable();
 /**
- * @type {import('svelte/store').Writable<Asset[]>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Asset[]>}
  */
 export const selectedAssets = writable([]);
 /**
- * @type {import('svelte/store').Writable<Asset | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Asset | undefined>}
  */
 export const focusedAsset = writable();
 /**
@@ -53,19 +55,19 @@ export const focusedAsset = writable();
 export const showAssetOverlay = writable(false);
 /**
  * Asset to be displayed in `<AssetDetailsOverlay>`.
- * @type {import('svelte/store').Writable<Asset | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Asset | undefined>}
  */
 export const overlaidAsset = writable();
 /**
- * @type {import('svelte/store').Writable<UploadingAssets>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').UploadingAssets>}
  */
 export const uploadingAssets = writable({ folder: undefined, files: [] });
 /**
- * @type {import('svelte/store').Writable<Asset | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Asset | undefined>}
  */
 export const editingAsset = writable();
 /**
- * @type {import('svelte/store').Writable<Asset | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Asset | undefined>}
  */
 export const renamingAsset = writable();
 
@@ -78,7 +80,7 @@ export const isMediaKind = (kind) => mediaKinds.includes(kind);
 
 /**
  * Whether the given asset is previewable.
- * @param {Asset} asset - Asset.
+ * @param {import('$lib/typedefs').Asset} asset - Asset.
  * @returns {boolean} Result.
  */
 export const canPreviewAsset = (asset) => {
@@ -90,7 +92,7 @@ export const canPreviewAsset = (asset) => {
 /**
  * Get the media type of the given blob or path.
  * @param {Blob | string} source - Blob, blob URL, or asset path.
- * @returns {Promise<AssetKind | undefined>} Kind.
+ * @returns {Promise<import('$lib/typedefs').AssetKind | undefined>} Kind.
  */
 export const getMediaKind = async (source) => {
   let mimeType = '';
@@ -116,7 +118,7 @@ export const getMediaKind = async (source) => {
   const [type, subType] = mimeType.split('/');
 
   if (isMediaKind(type) && !subType.startsWith('x-')) {
-    return /** @type {AssetKind} */ (type);
+    return /** @type {import('$lib/typedefs').AssetKind} */ (type);
   }
 
   return undefined;
@@ -124,7 +126,7 @@ export const getMediaKind = async (source) => {
 
 /**
  * Whether the given asset is editable.
- * @param {Asset} asset - Asset.
+ * @param {import('$lib/typedefs').Asset} asset - Asset.
  * @returns {boolean} Result.
  * @todo Support image editing.
  */
@@ -137,17 +139,17 @@ export const canEditAsset = (asset) => {
 /**
  * Determine the asset’s kind from the file extension.
  * @param {string} name - File name or path.
- * @returns {AssetKind} One of {@link assetKinds}.
+ * @returns {import('$lib/typedefs').AssetKind} One of {@link assetKinds}.
  */
 export const getAssetKind = (name) =>
-  /** @type {AssetKind} */ (
+  /** @type {import('$lib/typedefs').AssetKind} */ (
     mime.getType(name)?.match(/^(?<type>image|audio|video)\//)?.groups?.type ??
       (documentExtensions.test(name) ? 'document' : 'other')
   );
 
 /**
  * Get the blob for the given asset.
- * @param {Asset} asset - Asset.
+ * @param {import('$lib/typedefs').Asset} asset - Asset.
  * @returns {Promise<Blob>} Blob.
  */
 export const getAssetBlob = async (asset) => {
@@ -181,7 +183,7 @@ export const getAssetBlob = async (asset) => {
 
 /**
  * Get the blob URL for the given asset.
- * @param {Asset} asset - Asset.
+ * @param {import('$lib/typedefs').Asset} asset - Asset.
  * @returns {Promise<string | undefined>} URL or `undefined` if the blob is not available.
  */
 export const getAssetBlobURL = async (asset) => {
@@ -197,7 +199,7 @@ let thumbnailDB = undefined;
 
 /**
  * Get a thumbnail image for the given asset.
- * @param {Asset} asset - Asset.
+ * @param {import('$lib/typedefs').Asset} asset - Asset.
  * @returns {Promise<string | undefined>} Thumbnail blob URL.
  */
 export const getAssetThumbnailURL = async (asset) => {
@@ -236,7 +238,7 @@ export const getAssetThumbnailURL = async (asset) => {
  * @param {boolean} [options.matchSubFolders] - Whether to match assets stored in the subfolders of
  * a global/collection internal path. By default (`false`), for example, if the given `path` is
  * `images/products/image.jpg`, it matches the `images/products` folder but not `images`.
- * @returns {CollectionAssetFolder[]} Asset folders.
+ * @returns {import('$lib/typedefs').CollectionAssetFolder[]} Asset folders.
  */
 export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) => {
   const { filename } = getPathInfo(path);
@@ -266,8 +268,8 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) =>
 
 /**
  * Get a list of collections the given asset belongs to.
- * @param {Asset} asset - Asset.
- * @returns {Collection[]} Collections.
+ * @param {import('$lib/typedefs').Asset} asset - Asset.
+ * @returns {import('$lib/typedefs').Collection[]} Collections.
  */
 export const getCollectionsByAsset = (asset) =>
   getAssetFoldersByPath(asset.path, { matchSubFolders: true })
@@ -278,11 +280,11 @@ export const getCollectionsByAsset = (asset) =>
  * Get an asset by a public path typically stored as an image field value.
  * @param {string} savedPath - Saved absolute path or relative path.
  * @param {object} [options] - Options.
- * @param {Entry} [options.entry] - Associated entry to be used to help locale an asset from a
- * relative path. Can be `undefined` when editing a new draft.
- * @param {Collection} [options.collection] - Associated collection. Can be undefined, then it will
- * be automatically determined from the entry.
- * @returns {Asset | undefined} Corresponding asset.
+ * @param {import('$lib/typedefs').Entry} [options.entry] - Associated entry to be used to help
+ * locale an asset from a relative path. Can be `undefined` when editing a new draft.
+ * @param {import('$lib/typedefs').Collection} [options.collection] - Associated collection. Can be
+ * undefined, then it will be automatically determined from the entry.
+ * @returns {import('$lib/typedefs').Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
   const decodedPath = decodeFilePath(savedPath);
@@ -298,8 +300,9 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
     /**
      * Find an asset.
-     * @param {Collection | CollectionFile} input - Collection or single collection file.
-     * @returns {Asset | undefined} Found asset.
+     * @param {import('$lib/typedefs').Collection | import('$lib/typedefs').CollectionFile} input -
+     * Collection or single collection file.
+     * @returns {import('$lib/typedefs').Asset | undefined} Found asset.
      */
     const getAsset = ({ _i18n }) => {
       const { defaultLocale } = _i18n;
@@ -376,7 +379,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     internalPath = fillSlugTemplate(internalPath, {
       type: 'media_folder',
       // eslint-disable-next-line object-shorthand
-      collection: /** @type {EntryCollection} */ (collection),
+      collection: /** @type {import('$lib/typedefs').EntryCollection} */ (collection),
       content: flatten(content),
       currentSlug: entry.slug,
       entryFilePath: path,
@@ -396,14 +399,14 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
 /**
  * Get the public URL for the given asset.
- * @param {Asset} asset - Asset file, such as an image.
+ * @param {import('$lib/typedefs').Asset} asset - Asset file, such as an image.
  * @param {object} [options] - Options.
  * @param {boolean} [options.pathOnly] - Whether to use the absolute path starting with `/` instead
  * of the complete URL starting with `https`.
  * @param {boolean} [options.allowSpecial] - Whether to allow returning a special, unlinkable path
  * starting with `@`, etc.
- * @param {Entry} [options.entry] - Associated entry to be used to help locale an asset from a
- * relative path. Can be `undefined` when editing a new draft.
+ * @param {import('$lib/typedefs').Entry} [options.entry] - Associated entry to be used to help
+ * locale an asset from a relative path. Can be `undefined` when editing a new draft.
  * @returns {string | undefined} URL or `undefined` if it cannot be determined.
  */
 export const getAssetPublicURL = (
@@ -453,8 +456,8 @@ export const getAssetPublicURL = (
  * Get the blob or public URL from the given image/file entry field value.
  * @param {string} value - Saved field value. It can be an absolute path, entry-relative path, or a
  * complete/external URL.
- * @param {Entry} [entry] - Associated entry to be used to help locale an asset from a relative
- * path. Can be `undefined` when editing a new draft.
+ * @param {import('$lib/typedefs').Entry} [entry] - Associated entry to be used to help locale an
+ * asset from a relative path. Can be `undefined` when editing a new draft.
  * @param {object} [options] - Options.
  * @param {boolean} [options.thumbnail] - Whether to use a thumbnail of the image.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
@@ -480,7 +483,7 @@ export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {})
   );
 };
 
-/** @type {AssetDetails} */
+/** @type {import('$lib/typedefs').AssetDetails} */
 export const defaultAssetDetails = {
   publicURL: undefined,
   repoBlobURL: undefined,
@@ -491,8 +494,8 @@ export const defaultAssetDetails = {
 
 /**
  * Get the given asset’s extra info.
- * @param {Asset} asset - Asset.
- * @returns {Promise<AssetDetails>} Details.
+ * @param {import('$lib/typedefs').Asset} asset - Asset.
+ * @returns {Promise<import('$lib/typedefs').AssetDetails>} Details.
  */
 export const getAssetDetails = async (asset) => {
   const { kind, path } = asset;
@@ -519,14 +522,14 @@ export const getAssetDetails = async (asset) => {
 /**
  * Get a list of assets stored in the given collection defined folder.
  * @param {string} folder - Folder path.
- * @returns {Asset[]} Assets.
+ * @returns {import('$lib/typedefs').Asset[]} Assets.
  */
 export const getAssetsByFolder = (folder) => get(allAssets).filter((a) => a.folder === folder);
 
 /**
  * Get a list of assets stored in the given internal directory.
  * @param {string} dirname - Directory path.
- * @returns {Asset[]} Assets.
+ * @returns {import('$lib/typedefs').Asset[]} Assets.
  */
 export const getAssetsByDirName = (dirname) =>
   get(allAssets).filter((a) => getPathInfo(a.path).dirname === dirname);

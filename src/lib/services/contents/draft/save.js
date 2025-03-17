@@ -35,7 +35,8 @@ import {
  * Entry slug variants.
  * @typedef {object} EntrySlugVariants
  * @property {string} defaultLocaleSlug - Default locale’s entry slug.
- * @property {Record<LocaleCode, string> | undefined} localizedSlugs - Localized slug map.
+ * @property {import('$lib/typedefs').LocaleSlugMap | undefined} localizedSlugs - Localized slug
+ * map.
  * @property {string | undefined} canonicalSlug - Canonical slug.
  */
 
@@ -58,12 +59,13 @@ import {
 
 /**
  * Properties for a saving asset.
- * @typedef {SavingAssetProps & RepositoryFileMetadata} SavingAsset
+ * @typedef {SavingAssetProps & import('$lib/typedefs').RepositoryFileMetadata} SavingAsset
  */
 
 /**
  * Get the internal/public asset path configuration for the entry assets.
- * @param {FillSlugTemplateOptions} fillSlugOptions - Options for {@link fillSlugTemplate}.
+ * @param {import('$lib/typedefs').FillSlugTemplateOptions} fillSlugOptions - Options for
+ * {@link fillSlugTemplate}.
  * @returns {EntryAssetFolderPaths} Determined paths.
  */
 export const getEntryAssetFolderPaths = (fillSlugOptions) => {
@@ -76,7 +78,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
 
   const subPath =
     collection._type === 'entry'
-      ? /** @type {EntryCollection} */ (collection)._file.subPath
+      ? /** @type {import('$lib/typedefs').EntryCollection} */ (collection)._file.subPath
       : undefined;
 
   const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
@@ -129,8 +131,8 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and folder collections path.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
- * @param {LocaleCode} args.locale - Locale code.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
  * @param {string} args.slug - Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
  * @see https://decapcms.org/docs/i18n/
@@ -146,7 +148,7 @@ const createEntryPath = ({ draft, locale, slug }) => {
     return originalEntry.locales[locale].path;
   }
 
-  const _collection = /** @type {EntryCollection} */ (collection);
+  const _collection = /** @type {import('$lib/typedefs').EntryCollection} */ (collection);
 
   const {
     _file: { basePath, subPath, extension },
@@ -179,9 +181,9 @@ const createEntryPath = ({ draft, locale, slug }) => {
 /**
  * Parse a field to generate a sorted key path list.
  * @param {object} args - Arguments.
- * @param {Field} args.field - Single field.
- * @param {FieldKeyPath} args.keyPath - Key path of the field.
- * @param {FieldKeyPath[]} args.keyPathList - Key path list.
+ * @param {import('$lib/typedefs').Field} args.field - Single field.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Key path of the field.
+ * @param {import('$lib/typedefs').FieldKeyPath[]} args.keyPathList - Key path list.
  */
 const parseField = ({ field, keyPath, keyPathList }) => {
   const { widget } = field;
@@ -194,7 +196,9 @@ const parseField = ({ field, keyPath, keyPathList }) => {
       fields: subFields,
       types,
       typeKey = 'type',
-    } = /** @type {ListField | ObjectField} */ (field);
+    } = /** @type {import('$lib/typedefs').ListField | import('$lib/typedefs').ObjectField} */ (
+      field
+    );
 
     if (subFields) {
       subFields.forEach((subField) => {
@@ -217,7 +221,7 @@ const parseField = ({ field, keyPath, keyPathList }) => {
         });
       });
     } else if (isList) {
-      const { field: subField } = /** @type {ListField} */ (field);
+      const { field: subField } = /** @type {import('$lib/typedefs').ListField} */ (field);
 
       if (subField) {
         parseField({
@@ -232,7 +236,10 @@ const parseField = ({ field, keyPath, keyPathList }) => {
   }
 
   if (widget === 'select' || widget === 'relation') {
-    const { multiple = false } = /** @type {SelectField | RelationField} */ (field);
+    const { multiple = false } =
+      /** @type {import('$lib/typedefs').SelectField | import('$lib/typedefs').RelationField} */ (
+        field
+      );
 
     keyPathList.push(multiple ? `${keyPath}.*` : keyPath);
   }
@@ -240,12 +247,13 @@ const parseField = ({ field, keyPath, keyPathList }) => {
 
 /**
  * Create a list of field names (flattened key path list) from the configured collection fields.
- * @param {Field[]} fields - Field list of a collection or a file.
- * @returns {FieldKeyPath[]} Sorted key path list. List items are keyed with `*`.
+ * @param {import('$lib/typedefs').Field[]} fields - Field list of a collection or a file.
+ * @returns {import('$lib/typedefs').FieldKeyPath[]} Sorted key path list. List items are keyed with
+ * `*`.
  * @example [`author.name`, `books.*.title`, `books.*.summary`, `publishDate`, `body`]
  */
 const createKeyPathList = (fields) => {
-  /** @type {FieldKeyPath[]} */
+  /** @type {import('$lib/typedefs').FieldKeyPath[]} */
   const keyPathList = [];
 
   // Iterate over the top-level fields first
@@ -264,10 +272,10 @@ const createKeyPathList = (fields) => {
  * Move a property name/value from a unsorted property map to a sorted property map.
  * @param {object} args - Arguments.
  * @param {string} args.key - Property name.
- * @param {Field} [args.field] - Associated field.
- * @param {LocaleCode} args.locale - Locale code.
- * @param {FlattenedEntryContent} args.unsortedMap - Unsorted property map.
- * @param {FlattenedEntryContent} args.sortedMap - Sorted property map.
+ * @param {import('$lib/typedefs').Field} [args.field] - Associated field.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.unsortedMap - Unsorted property map.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.sortedMap - Sorted property map.
  * @param {boolean} args.isTomlOutput - Whether the output it TOML format.
  * @param {boolean} args.omitEmptyOptionalFields - Whether to prevent fields with `required: false`
  * and an empty value from being included in the data output.
@@ -323,12 +331,12 @@ export const copyProperty = ({
  * @param {object} args - Arguments.
  * @param {string} args.collectionName - Collection name.
  * @param {string} [args.fileName] - File name.
- * @param {Field[]} args.fields - Field list of a collection or a file.
- * @param {LocaleCode} args.locale - Locale code.
- * @param {FlattenedEntryContent} args.valueMap - Flattened entry content.
+ * @param {import('$lib/typedefs').Field[]} args.fields - Field list of a collection or a file.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Flattened entry content.
  * @param {string} [args.canonicalSlugKey] - Property name of a canonical slug.
  * @param {boolean} [args.isTomlOutput] - Whether the output it TOML format.
- * @returns {RawEntryContent} Unflattened entry content sorted by fields.
+ * @returns {import('$lib/typedefs').RawEntryContent} Unflattened entry content sorted by fields.
  */
 const finalizeContent = ({
   collectionName,
@@ -339,9 +347,9 @@ const finalizeContent = ({
   canonicalSlugKey,
   isTomlOutput = false,
 }) => {
-  /** @type {FlattenedEntryContent} */
+  /** @type {import('$lib/typedefs').FlattenedEntryContent} */
   const unsortedMap = toRaw(valueMap);
-  /** @type {FlattenedEntryContent} */
+  /** @type {import('$lib/typedefs').FlattenedEntryContent} */
   const sortedMap = {};
 
   const { omit_empty_optional_fields: omitEmptyOptionalFields = false } =
@@ -399,10 +407,10 @@ const finalizeContent = ({
 /**
  * Serialize the content for the output.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
- * @param {LocaleCode} args.locale - Locale code.
- * @param {FlattenedEntryContent} args.valueMap - Original content.
- * @returns {RawEntryContent} Modified and unflattened content.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale code.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Original content.
+ * @returns {import('$lib/typedefs').RawEntryContent} Modified and unflattened content.
  */
 const serializeContent = ({ draft, locale, valueMap }) => {
   const { collection, collectionFile } = draft;
@@ -413,7 +421,7 @@ const serializeContent = ({ draft, locale, valueMap }) => {
     _i18n: {
       canonicalSlug: { key: canonicalSlugKey },
     },
-  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {import('$lib/typedefs').EntryCollection} */ (collection);
 
   const content = finalizeContent({
     collectionName: collection.name,
@@ -437,9 +445,9 @@ const serializeContent = ({ draft, locale, valueMap }) => {
  * Get the localized slug map. This only applies when the i18n structure is multiple files or
  * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
  * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
- * @returns {Record<LocaleCode, string> | undefined} Localized slug map.
+ * @returns {import('$lib/typedefs').LocaleSlugMap | undefined} Localized slug map.
  */
 const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
   const { collection, collectionFile, currentLocales, currentSlugs, currentValues } = draft;
@@ -464,7 +472,7 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
     return undefined;
   }
 
-  const _collection = /** @type {EntryCollection} */ (collection);
+  const _collection = /** @type {import('$lib/typedefs').EntryCollection} */ (collection);
 
   return Object.fromEntries(
     Object.entries(currentLocales).map(([locale]) => {
@@ -496,10 +504,12 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
  * `translationKey` used in Hugo’s multilingual support, and the default value is the default
  * locale’s slug.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
  * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
- * @param {Record<LocaleCode, string> | undefined} args.localizedSlugs - Localized slug map.
- * @param {FillSlugTemplateOptions} args.fillSlugOptions - Arguments for {@link fillSlugTemplate}.
+ * @param {import('$lib/typedefs').LocaleSlugMap | undefined} args.localizedSlugs - Localized slug
+ * map.
+ * @param {import('$lib/typedefs').FillSlugTemplateOptions} args.fillSlugOptions - Arguments for
+ * {@link fillSlugTemplate}.
  * @returns {string | undefined} Canonical slug.
  * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
  * @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
@@ -530,8 +540,8 @@ const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOp
 /**
  * Get base options for {@link fillSlugTemplate}.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
- * @returns {FillSlugTemplateOptions} Options.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
+ * @returns {import('$lib/typedefs').FillSlugTemplateOptions} Options.
  */
 const getFillSlugOptions = ({ draft }) => {
   const { collection, collectionFile, currentValues } = draft;
@@ -542,7 +552,7 @@ const getFillSlugOptions = ({ draft }) => {
 
   return {
     // eslint-disable-next-line object-shorthand
-    collection: /** @type {EntryCollection} */ (collection),
+    collection: /** @type {import('$lib/typedefs').EntryCollection} */ (collection),
     content: currentValues[defaultLocale],
   };
 };
@@ -550,7 +560,7 @@ const getFillSlugOptions = ({ draft }) => {
 /**
  * Determine entry slugs.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
  * @returns {EntrySlugVariants} Slugs.
  */
 export const getSlugs = ({ draft }) => {
@@ -588,7 +598,7 @@ export const getSlugs = ({ draft }) => {
 /**
  * Get base arguments for {@link replaceBlobURL}.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
  * @param {string} args.defaultLocaleSlug - Default locale’s entry slug.
  * @returns {{ assetFolderPaths: EntryAssetFolderPaths, assetNamesInSameFolder: string[],
  * savingAssetProps: SavingAsset }} Arguments.
@@ -614,14 +624,16 @@ const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
     a.name.normalize(),
   );
 
-  const { email, name } = /** @type {User} */ (get(user));
+  const { email, name } = /** @type {import('$lib/typedefs').User} */ (get(user));
 
   /** @type {SavingAsset} */
   const savingAssetProps = {
     text: undefined,
     collectionName,
     folder: internalBaseAssetFolder,
-    commitAuthor: email ? /** @type {CommitAuthor} */ ({ name, email }) : undefined,
+    commitAuthor: email
+      ? /** @type {import('$lib/typedefs').CommitAuthor} */ ({ name, email })
+      : undefined,
     commitDate: new Date(), // Use the current datetime
   };
 
@@ -632,11 +644,11 @@ const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
  * Replace a blob URL with the final path, and add the file to the changeset.
  * @param {object} args - Arguments.
  * @param {string} args.blobURL - Blob URL.
- * @param {FieldKeyPath} args.keyPath - Field key path.
- * @param {FlattenedEntryContent} args.content - Localized content.
- * @param {FileChange[]} args.changes - Changeset.
- * @param {EntryFileMap} args.files - Files to be uploaded.
- * @param {Asset[]} args.savingAssets - List of assets to be saved.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Field key path.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.content - Localized content.
+ * @param {import('$lib/typedefs').FileChange[]} args.changes - Changeset.
+ * @param {import('$lib/typedefs').EntryFileMap} args.files - Files to be uploaded.
+ * @param {import('$lib/typedefs').Asset[]} args.savingAssets - List of assets to be saved.
  * @param {SavingAsset} args.savingAssetProps - Base properties for assets to be saved.
  * @param {string[]} args.assetNamesInSameFolder - Name of assets stored in the same folder as the
  * target asset folder.
@@ -697,10 +709,11 @@ const replaceBlobURL = async ({
 /**
  * Create base saving entry data.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
  * @param {EntrySlugVariants} args.slugs - Entry slugs.
- * @returns {Promise<{ localizedEntryMap: LocalizedEntryMap, changes: FileChange[], savingAssets:
- * Asset[] }>} Localized entry map, file changeset and asset list.
+ * @returns {Promise<{ localizedEntryMap: import('$lib/typedefs').LocalizedEntryMap, changes:
+ * import('$lib/typedefs').FileChange[], savingAssets: import('$lib/typedefs').Asset[] }>} Localized
+ * entry map, file changeset and asset list.
  */
 const createBaseSavingEntryData = async ({
   draft,
@@ -714,9 +727,9 @@ const createBaseSavingEntryData = async ({
     },
   } = collectionFile ?? collection;
 
-  /** @type {FileChange[]} */
+  /** @type {import('$lib/typedefs').FileChange[]} */
   const changes = [];
-  /** @type {Asset[]} */
+  /** @type {import('$lib/typedefs').Asset[]} */
   const savingAssets = [];
 
   const replaceBlobArgs = {
@@ -776,10 +789,11 @@ const createBaseSavingEntryData = async ({
 /**
  * Create saving entry data.
  * @param {object} args - Arguments.
- * @param {EntryDraft} args.draft - Entry draft.
+ * @param {import('$lib/typedefs').EntryDraft} args.draft - Entry draft.
  * @param {EntrySlugVariants} args.slugs - Entry slugs.
- * @returns {Promise<{ savingEntry: Entry, savingAssets: Asset[], changes: FileChange[] }>} Saving
- * entry, assets and file changes.
+ * @returns {Promise<{ savingEntry: import('$lib/typedefs').Entry,
+ * savingAssets: import('$lib/typedefs').Asset[], changes: import('$lib/typedefs').FileChange[] }>}
+ * Saving entry, assets and file changes.
  */
 export const createSavingEntryData = async ({ draft, slugs }) => {
   const {
@@ -797,14 +811,14 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
   const {
     _file,
     _i18n: { i18nEnabled, allLocales, defaultLocale, structure },
-  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {import('$lib/typedefs').EntryCollection} */ (collection);
 
   const { localizedEntryMap, changes, savingAssets } = await createBaseSavingEntryData({
     draft,
     slugs,
   });
 
-  /** @type {Entry} */
+  /** @type {import('$lib/typedefs').Entry} */
   const savingEntry = {
     id: originalEntry?.id ?? generateUUID(),
     sha: '', // Populated later
@@ -886,11 +900,11 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
  * Save the entry draft.
  * @param {object} [options] - Options.
  * @param {boolean} [options.skipCI] - Whether to disable automatic deployments for the change.
- * @returns {Promise<Entry>} Saved entry.
+ * @returns {Promise<import('$lib/typedefs').Entry>} Saved entry.
  * @throws {Error} When the entry could not be validated or saved.
  */
 export const saveEntry = async ({ skipCI = undefined } = {}) => {
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
+  const draft = /** @type {import('$lib/typedefs').EntryDraft} */ (get(entryDraft));
   const { collection, isNew, collectionName, fileName, currentValues } = draft;
 
   if (!validateEntry()) {
@@ -904,11 +918,14 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
 
   try {
-    await /** @type {BackendService} */ (get(backend)).commitChanges(changes, {
-      commitType: isNew ? 'create' : 'update',
-      collection,
-      skipCI,
-    });
+    await /** @type {import('$lib/typedefs').BackendService} */ (get(backend)).commitChanges(
+      changes,
+      {
+        commitType: isNew ? 'create' : 'update',
+        collection,
+        skipCI,
+      },
+    );
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex.cause ?? ex);

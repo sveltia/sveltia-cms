@@ -36,7 +36,7 @@
         {#each Object.entries($assetGroups) as [name, assets] (name)}
           <GridBody label={name !== '*' ? name : undefined}>
             <InfiniteScroll items={assets} itemKey="path">
-              {#snippet renderItem(/** @type {Asset} */ asset)}
+              {#snippet renderItem(/** @type {import('$lib/typedefs').Asset} */ asset)}
                 {#key asset.sha}
                   <AssetListItem {asset} {viewType} />
                 {/key}

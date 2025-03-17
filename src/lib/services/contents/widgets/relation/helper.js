@@ -20,9 +20,9 @@ const optionCacheMap = new Map();
 
 /**
  * Get options for a Relation field.
- * @param {LocaleCode} locale - Current locale.
- * @param {RelationField} fieldConfig - Field configuration.
- * @param {Entry[]} refEntries - Referenced entries.
+ * @param {import('$lib/typedefs').LocaleCode} locale - Current locale.
+ * @param {import('$lib/typedefs').RelationField} fieldConfig - Field configuration.
+ * @param {import('$lib/typedefs').Entry[]} refEntries - Referenced entries.
  * @returns {{ label: string, value: any }[]} Options.
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
@@ -150,7 +150,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
               fieldName,
               // eslint-disable-next-line no-use-before-define
               getReferencedOptionLabel({
-                fieldConfig: /** @type {RelationField} */ (_fieldConfig),
+                fieldConfig: /** @type {import('$lib/typedefs').RelationField} */ (_fieldConfig),
                 valueMap: content,
                 keyPath,
                 locale,
@@ -221,10 +221,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 /**
  * Resolve the display value(s) for a relation field.
  * @param {object} args - Arguments.
- * @param {RelationField} args.fieldConfig - Field configuration.
- * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
- * @param {FieldKeyPath} args.keyPath - Field key path, e.g. `author.name`.
- * @param {LocaleCode} args.locale - Locale.
+ * @param {import('$lib/typedefs').RelationField} args.fieldConfig - Field configuration.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Object holding current
+ * entry values.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Field key path, e.g. `author.name`.
+ * @param {import('$lib/typedefs').LocaleCode} args.locale - Locale.
  * @returns {any | any[]} Resolved field value(s).
  * @todo Write tests for this.
  */

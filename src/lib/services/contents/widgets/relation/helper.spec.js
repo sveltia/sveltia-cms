@@ -7,10 +7,10 @@ vi.mock('$lib/services/config');
 
 describe('Test getOptions()', async () => {
   const locale = '_default';
-  /** @type {LocalizedEntry} */
+  /** @type {import('$lib/typedefs').LocalizedEntry} */
   const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
 
-  /** @type {Entry[]} */
+  /** @type {import('$lib/typedefs').Entry[]} */
   const memberEntries = [
     {
       id: '',
@@ -253,7 +253,7 @@ describe('Test getOptions()', async () => {
       value_field: 'cities.*.id',
     };
 
-    /** @type {Entry[]} */
+    /** @type {import('$lib/typedefs').Entry[]} */
     const entries = [
       {
         id: '',
@@ -312,7 +312,7 @@ describe('Test getOptions()', async () => {
       value_field: 'cities.*.id',
     };
 
-    /** @type {Entry[]} */
+    /** @type {import('$lib/typedefs').Entry[]} */
     const entries = [
       {
         id: '',
@@ -361,7 +361,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['sections.*.name'],
     };
 
-    /** @type {Entry[]} */
+    /** @type {import('$lib/typedefs').Entry[]} */
     const entries = [
       {
         id: '',
@@ -470,7 +470,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['sections.*.name'],
     };
 
-    /** @type {Entry[]} */
+    /** @type {import('$lib/typedefs').Entry[]} */
     const entries = [
       {
         id: '',
@@ -590,7 +590,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['title', 'category'],
     };
 
-    /** @type {Entry[]} */
+    /** @type {import('$lib/typedefs').Entry[]} */
     const entries = [
       {
         id: '',
@@ -706,7 +706,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['title', 'category'],
     };
 
-    /** @type {Entry[]} */
+    /** @type {import('$lib/typedefs').Entry[]} */
     const entries = [
       {
         id: '',
@@ -777,7 +777,7 @@ describe('Test getOptions()', async () => {
       search_fields: ['title', 'category'],
     };
 
-    /** @type {Entry[]} */
+    /** @type {import('$lib/typedefs').Entry[]} */
     const entries = [
       {
         id: '',

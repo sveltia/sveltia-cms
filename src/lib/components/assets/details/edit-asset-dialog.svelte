@@ -19,7 +19,7 @@
    * Initialize the state.
    */
   const initState = async () => {
-    blob = await getAssetBlob(/** @type {Asset} */ (asset));
+    blob = await getAssetBlob(/** @type {import('$lib/typedefs').Asset} */ (asset));
     originalValue = await blob.text();
     currentValue = originalValue;
     open = true;

@@ -9,9 +9,9 @@
 
   /**
    * @typedef {object} Props
-   * @property {EntryCollection} collection - Selected collection.
-   * @property {Entry} entry - Entry.
-   * @property {ViewType} viewType - View type.
+   * @property {import('$lib/typedefs').EntryCollection} collection - Selected collection.
+   * @property {import('$lib/typedefs').Entry} entry - Entry.
+   * @property {import('$lib/typedefs').ViewType} viewType - View type.
    */
 
   /** @type {Props} */

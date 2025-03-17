@@ -11,18 +11,18 @@
 
   /**
    * @typedef {object} Props
-   * @property {FileField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').FileField} fieldConfig - Field configuration.
    * @property {string | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue,
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {AssetKind | undefined} */
+  /** @type {import('$lib/typedefs').AssetKind | undefined} */
   let kind = $state();
   /** @type {string | undefined} */
   let src = $state();

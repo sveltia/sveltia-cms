@@ -17,7 +17,9 @@
       aria-rowcount={$selectedCollection.files.length}
     >
       <InfiniteScroll items={$selectedCollection.files} itemKey="name">
-        {#snippet renderItem(/** @type {RawCollectionFile} */ { name, label })}
+        {#snippet renderItem(
+          /** @type {import('$lib/typedefs').RawCollectionFile} */ { name, label },
+        )}
           <GridRow
             onclick={() => {
               goto(`/collections/${$selectedCollection.name}/entries/${name}`);

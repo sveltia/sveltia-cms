@@ -14,7 +14,7 @@ let pdfjs;
 /**
  * Get the metadata of an image, video or audio asset.
  * @param {string} src - Source URL.
- * @param {AssetKind} kind - Media type: `image`, `video` or `audio`.
+ * @param {import('$lib/typedefs').AssetKind} kind - Media type: `image`, `video` or `audio`.
  * @returns {Promise<{
  * dimensions: { width: number, height: number } | undefined,
  * duration: number | undefined

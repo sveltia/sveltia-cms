@@ -19,12 +19,12 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 const backendName = 'local';
 const label = 'Local Repository';
 /**
- * @type {RepositoryInfo | undefined}
+ * @type {import('$lib/typedefs').RepositoryInfo | undefined}
  */
 let remoteRepository = undefined;
 
 /**
- * @type {RepositoryInfo}
+ * @type {import('$lib/typedefs').RepositoryInfo}
  */
 const repository = new Proxy(/** @type {any} */ ({}), {
   /**
@@ -110,7 +110,8 @@ const discardDirHandle = async () => {
  * Initialize the backend.
  */
 const init = () => {
-  const { name: service } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+  const { name: service } = /** @type {import('$lib/typedefs').SiteConfig} */ (get(siteConfig))
+    .backend;
 
   remoteRepository = allBackendServices[service]?.getRepositoryInfo?.();
 
@@ -122,9 +123,9 @@ const init = () => {
 /**
  * Sign in with the local Git repository. There is no actual sign-in; just show the directory picker
  * to get the handle, so we can read/write files.
- * @param {SignInOptions} options - Options.
- * @returns {Promise<User>} User info. Since we don’t have any details for the local user, just
- * return the backend name.
+ * @param {import('$lib/typedefs').SignInOptions} options - Options.
+ * @returns {Promise<import('$lib/typedefs').User>} User info. Since we don’t have any details for
+ * the local user, just return the backend name.
  * @throws {Error} When the directory handle could not be acquired.
  */
 const signIn = async ({ auto = false }) => {
@@ -173,7 +174,7 @@ const getHandleByPath = async (path) => {
 
 /**
  * Retrieve all files under the static directory.
- * @returns {Promise<BaseFileListItem[]>} File list.
+ * @returns {Promise<import('$lib/typedefs').BaseFileListItem[]>} File list.
  */
 const getAllFiles = async () => {
   const _rootDirHandle = get(rootDirHandle);
@@ -298,7 +299,7 @@ const fetchFiles = async () => {
 
 /**
  * Save entries or assets locally.
- * @param {FileChange[]} changes - File changes to be saved.
+ * @param {import('$lib/typedefs').FileChange[]} changes - File changes to be saved.
  * @returns {Promise<(?File)[]>} - Created or updated files, if available.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry
@@ -383,7 +384,7 @@ const commitChanges = async (changes) =>
   );
 
 /**
- * @type {BackendService}
+ * @type {import('$lib/typedefs').BackendService}
  */
 export default {
   name: backendName,

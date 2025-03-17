@@ -12,11 +12,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {ComputeField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').ComputeField} fieldConfig - Field configuration.
    * @property {string | number | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

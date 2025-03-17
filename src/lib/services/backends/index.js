@@ -5,7 +5,7 @@ import local from '$lib/services/backends/local';
 
 /**
  * List of all the supported backend services.
- * @type {Record<string, BackendService>}
+ * @type {Record<string, import('$lib/typedefs').BackendService>}
  * @see https://decapcms.org/docs/backends-overview/
  */
 export const allBackendServices = {
@@ -18,7 +18,7 @@ export const allBackendServices = {
  */
 export const backendName = writable();
 /**
- * @type {import('svelte/store').Readable<BackendService | undefined>}
+ * @type {import('svelte/store').Readable<import('$lib/typedefs').BackendService | undefined>}
  */
 export const backend = derived([backendName], ([name], _set, update) => {
   update((currentService) => {

@@ -7,7 +7,7 @@ import { fillSlugTemplate } from '$lib/services/common/slug';
 vi.mock('$lib/services/config');
 
 describe('Test fillSlugTemplate()', async () => {
-  /** @type {Collection} */
+  /** @type {import('$lib/typedefs').Collection} */
   const collection = {
     name: 'posts',
     slug_length: 50,

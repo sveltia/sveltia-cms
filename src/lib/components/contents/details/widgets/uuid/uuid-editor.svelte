@@ -12,11 +12,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {UuidField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').UuidField} fieldConfig - Field configuration.
    * @property {string | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

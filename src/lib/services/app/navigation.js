@@ -81,9 +81,8 @@ export const goBack = (path, options = {}) => {
  * Open the production site in a new browser tab.
  */
 export const openProductionSite = () => {
-  const { display_url: displayURL, _siteURL: siteURL } = /** @type {SiteConfig} */ (
-    get(siteConfig)
-  );
+  const { display_url: displayURL, _siteURL: siteURL } =
+    /** @type {import('$lib/typedefs').SiteConfig} */ (get(siteConfig));
 
   window.open(displayURL || siteURL || '/', '_blank');
 };

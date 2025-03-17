@@ -9,8 +9,15 @@
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
+   * @typedef {object} RowArgs
+   * @property {import('$lib/typedefs').Collection} collection - Collection.
+   * @property {import('$lib/typedefs').CollectionFile} [collectionFile] - Collection file. File
+   * collection only.
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {Entry} entry - Single entry.
+   * @property {import('$lib/typedefs').Entry} entry - Single entry.
    */
 
   /** @type {Props} */
@@ -23,12 +30,7 @@
   const { locales, subPath } = $derived(entry);
 </script>
 
-{#snippet resultRow(
-  /** @type {{ collection: Collection, collectionFile?: CollectionFile }} */ {
-    collection,
-    collectionFile,
-  },
-)}
+{#snippet resultRow(/** @type {RowArgs} */ { collection, collectionFile })}
   {@const { defaultLocale } = (collectionFile ?? collection)._i18n ?? defaultI18nConfig}
   {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
   {#if content}
@@ -39,7 +41,8 @@
     >
       <GridCell class="image">
         {#if collection._type === 'entry'}
-          {#await getEntryThumbnail(/** @type {EntryCollection} */ (collection), entry) then src}
+          {#await getEntryThumbnail(//
+            /** @type {import('$lib/typedefs').EntryCollection} */ (collection), entry) then src}
             {#if src}
               <Image {src} variant="icon" cover />
             {/if}

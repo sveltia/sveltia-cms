@@ -18,11 +18,11 @@
 
   /**
    * @typedef {object} Props
-   * @property {KeyValueField} fieldConfig - Field configuration.
+   * @property {import('$lib/typedefs').KeyValueField} fieldConfig - Field configuration.
    * @property {Record<string, string> | undefined} currentValue - Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {import('$lib/typedefs').WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -60,7 +60,11 @@
       return;
     }
 
-    const _entryDraft = /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft);
+    const _entryDraft =
+      /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+        entryDraft
+      );
+
     const updatedPairs = getPairs({ entryDraft: _entryDraft, keyPath, locale });
 
     if (!equal(pairs, updatedPairs)) {
@@ -118,7 +122,10 @@
       return;
     }
 
-    const _entryDraft = /** @type {import('svelte/store').Writable<EntryDraft>} */ (entryDraft);
+    const _entryDraft =
+      /** @type {import('svelte/store').Writable<import('$lib/typedefs').EntryDraft>} */ (
+        entryDraft
+      );
 
     savePairs({ entryDraft: _entryDraft, fieldConfig, keyPath, locale, pairs });
   };

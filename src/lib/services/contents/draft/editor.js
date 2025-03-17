@@ -25,7 +25,7 @@ export const translatorApiKeyDialogState = writable({ show: false, multiple: fal
  * status: 'info' | 'success' | 'error',
  * message: string | undefined,
  * count: number,
- * sourceLocale: LocaleCode | undefined,
+ * sourceLocale: import('$lib/typedefs').LocaleCode | undefined,
  * }>}
  */
 export const copyFromLocaleToast = writable({
@@ -37,26 +37,27 @@ export const copyFromLocaleToast = writable({
   sourceLocale: undefined,
 });
 /**
- * @type {import('svelte/store').Writable<?EntryEditorPane>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').EntryEditorPane | null>}
  */
 export const editorLeftPane = writable(null);
 /**
- * @type {import('svelte/store').Writable<?EntryEditorPane>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').EntryEditorPane | null>}
  */
 export const editorRightPane = writable(null);
 /**
- * @type {import('svelte/store').Writable<EntryEditorView | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').EntryEditorView | undefined>}
  */
 export const entryEditorSettings = writable();
 /**
  * View settings for the Select Assets dialog.
- * @type {import('svelte/store').Writable<SelectAssetsView | undefined>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').SelectAssetsView | undefined>}
  */
 export const selectAssetsView = writable();
 
 /**
  * Sync the field object/list expander states between locales.
- * @param {Record<FieldKeyPath, boolean>} stateMap - Map of key path and state.
+ * @param {Record<import('$lib/typedefs').FieldKeyPath, boolean>} stateMap - Map of key path and
+ * state.
  */
 export const syncExpanderStates = (stateMap) => {
   entryDraft.update((_draft) => {
@@ -78,8 +79,10 @@ export const syncExpanderStates = (stateMap) => {
  * @param {object} args - Partial arguments for {@link getFieldConfig}.
  * @param {string} args.collectionName - Collection name.
  * @param {string} [args.fileName] - File name.
- * @param {FlattenedEntryContent} args.valueMap - Object holding current entry values.
- * @param {FieldKeyPath} args.keyPath - Key path, e.g. `testimonials.0.authors.2.foo`.
+ * @param {import('$lib/typedefs').FlattenedEntryContent} args.valueMap - Object holding current
+ * entry values.
+ * @param {import('$lib/typedefs').FieldKeyPath} args.keyPath - Key path,
+ * e.g. `testimonials.0.authors.2.foo`.
  * @returns {string[]} Keys, e.g. `['testimonials', 'testimonials.0', 'testimonials.0.authors',
  * 'testimonials.0.authors.2', 'testimonials.0.authors.2.foo']`.
  */
@@ -109,11 +112,17 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
         keyPath: parentKeyPath,
       });
 
-      if (parentConfig?.widget === 'object' && /** @type {ObjectField} */ (parentConfig).fields) {
+      if (
+        parentConfig?.widget === 'object' &&
+        /** @type {import('$lib/typedefs').ObjectField} */ (parentConfig).fields
+      ) {
         keys.add(`${parentKeyPath}.${parentConfig.name}#`);
       }
 
-      if (parentConfig?.widget === 'list' && /** @type {ListField} */ (parentConfig).field) {
+      if (
+        parentConfig?.widget === 'list' &&
+        /** @type {import('$lib/typedefs').ListField} */ (parentConfig).field
+      ) {
         keys.add(_keyPath);
       }
     }
@@ -127,10 +136,10 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
  * @param {object} args - Partial arguments for {@link getFieldConfig}.
  * @param {string} args.collectionName - Collection name.
  * @param {string} [args.fileName] - File name.
- * @param {Record<LocaleCode, FlattenedEntryContent>} args.currentValues - Field values.
+ * @param {import('$lib/typedefs').LocaleContentMap} args.currentValues - Field values.
  */
 export const expandInvalidFields = ({ collectionName, fileName, currentValues }) => {
-  /** @type {Record<FieldKeyPath, boolean>} */
+  /** @type {Record<import('$lib/typedefs').FieldKeyPath, boolean>} */
   const stateMap = {};
 
   Object.entries(get(entryDraft)?.validities ?? {}).forEach(([locale, validities]) => {
@@ -153,7 +162,7 @@ export const expandInvalidFields = ({ collectionName, fileName, currentValues })
 
 /**
  * Initialize {@link entryEditorSettings}, {@link selectAssetsView} and relevant subscribers.
- * @param {BackendService} _backend - Backend service.
+ * @param {import('$lib/typedefs').BackendService} _backend - Backend service.
  */
 const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};

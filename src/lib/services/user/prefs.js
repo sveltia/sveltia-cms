@@ -10,7 +10,7 @@ const storageKey = 'sveltia-cms.prefs';
  */
 export const prefsError = writable();
 /**
- * @type {import('svelte/store').Writable<Preferences>}
+ * @type {import('svelte/store').Writable<import('$lib/typedefs').Preferences>}
  */
 export const prefs = writable({}, (set) => {
   prefsError.set(undefined);

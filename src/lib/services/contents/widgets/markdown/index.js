@@ -60,6 +60,6 @@ export const defaultComponents = ['code-block', 'image'];
 
 /**
  * Custom components registered using `CMS.registerEditorComponent`.
- * @type {Record<string, EditorComponentDefinition>}
+ * @type {Record<string, import('$lib/typedefs').EditorComponentDefinition>}
  */
 export const customComponents = {};

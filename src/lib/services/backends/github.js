@@ -43,7 +43,7 @@ siteConfig?.subscribe((config) => {
 });
 
 /**
- * @type {RepositoryInfo}
+ * @type {import('$lib/typedefs').RepositoryInfo}
  */
 const repository = new Proxy(/** @type {any} */ ({}), {
   /**
@@ -73,7 +73,7 @@ const repository = new Proxy(/** @type {any} */ ({}), {
 
 /**
  * Check the GitHub service status.
- * @returns {Promise<BackendServiceStatus>} Current status.
+ * @returns {Promise<import('$lib/typedefs').BackendServiceStatus>} Current status.
  * @see https://www.githubstatus.com/api
  */
 const checkStatus = async () => {
@@ -117,7 +117,10 @@ const checkStatus = async () => {
 const fetchAPI = async (
   path,
   init = {},
-  { token = /** @type {User} */ (get(user)).token, responseType = 'json' } = {},
+  {
+    token = /** @type {import('$lib/typedefs').User} */ (get(user)).token,
+    responseType = 'json',
+  } = {},
 ) => {
   const apiRoot = apiConfig[path === '/graphql' ? 'graphql' : 'rest'];
 
@@ -151,10 +154,13 @@ const fetchGraphQL = async (query, variables = {}) => {
 
 /**
  * Get the configured repository’s basic information.
- * @returns {RepositoryInfo} Repository info.
+ * @returns {import('$lib/typedefs').RepositoryInfo} Repository info.
  */
 const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+  const { repo: projectPath, branch } = /** @type {import('$lib/typedefs').SiteConfig} */ (
+    get(siteConfig)
+  ).backend;
+
   const { origin: apiOrigin, isSelfHosted } = apiConfig;
   const origin = isSelfHosted ? apiOrigin : 'https://github.com';
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
@@ -185,8 +191,9 @@ const init = () => {
 
 /**
  * Retrieve the repository configuration and sign in with GitHub REST API.
- * @param {SignInOptions} options - Options.
- * @returns {Promise<User | void>} User info, or nothing when the sign-in flow cannot be started.
+ * @param {import('$lib/typedefs').SignInOptions} options - Options.
+ * @returns {Promise<import('$lib/typedefs').User | void>} User info, or nothing when the sign-in
+ * flow cannot be started.
  * @throws {Error} When there was an authentication error.
  * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
  */
@@ -201,7 +208,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     site_domain: siteDomain = hostname,
     base_url: baseURL = 'https://api.netlify.com',
     auth_endpoint: path = 'auth',
-  } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
+  } = /** @type {import('$lib/typedefs').SiteConfig} */ (get(siteConfig)).backend;
 
   const token =
     cachedToken ||
@@ -351,7 +358,7 @@ const fetchLastCommit = async () => {
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
  * @param {string} [lastHash] - The last commit’s SHA-1 hash.
- * @returns {Promise<BaseFileListItem[]>} File list.
+ * @returns {Promise<import('$lib/typedefs').BaseFileListItem[]>} File list.
  */
 const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
@@ -368,8 +375,9 @@ const fetchFileList = async (lastHash) => {
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.
- * @param {(BaseEntryListItem | BaseAssetListItem)[]} fetchingFiles - Base entry/asset list items.
- * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
+ * @param {(import('$lib/typedefs').BaseEntryListItem | import('$lib/typedefs').BaseAssetListItem)[]
+ * } fetchingFiles - Base entry/asset list items.
+ * @returns {Promise<import('$lib/typedefs').RepositoryContentsMap>} Fetched contents map.
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
@@ -509,7 +517,7 @@ const fetchFiles = async () => {
 
 /**
  * Fetch an asset as a Blob via the API.
- * @param {Asset} asset - Asset to retrieve the file content.
+ * @param {import('$lib/typedefs').Asset} asset - Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
  * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
  */
@@ -535,8 +543,8 @@ const fetchBlob = async (asset) => {
 
 /**
  * Save entries or assets remotely.
- * @param {FileChange[]} changes - File changes to be saved.
- * @param {CommitChangesOptions} options - Commit options.
+ * @param {import('$lib/typedefs').FileChange[]} changes - File changes to be saved.
+ * @param {import('$lib/typedefs').CommitChangesOptions} options - Commit options.
  * @returns {Promise<string>} Commit URL.
  * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
  * @see https://docs.github.com/en/graphql/reference/mutations#createcommitonbranch
@@ -606,7 +614,7 @@ const triggerDeployment = async () => {
 };
 
 /**
- * @type {BackendService}
+ * @type {import('$lib/typedefs').BackendService}
  */
 export default {
   name: backendName,

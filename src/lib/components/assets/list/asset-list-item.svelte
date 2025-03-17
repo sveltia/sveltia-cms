@@ -7,8 +7,8 @@
 
   /**
    * @typedef {object} Props
-   * @property {Asset} asset - Asset.
-   * @property {ViewType} viewType - View type.
+   * @property {import('$lib/typedefs').Asset} asset - Asset.
+   * @property {import('$lib/typedefs').ViewType} viewType - View type.
    */
 
   /** @type {Props} */

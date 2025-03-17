@@ -48,10 +48,10 @@ export const deleteBackup = async (collectionName, slug = '') => {
  * Get a draft backup stored in IndexedDB.
  * @param {string} collectionName - Collection name.
  * @param {string} [slug] - Entry slug. Existing entry only.
- * @returns {Promise<?EntryDraftBackup>} Backup.
+ * @returns {Promise<import('$lib/typedefs').EntryDraftBackup | null>} Backup.
  */
 export const getBackup = async (collectionName, slug = '') => {
-  /** @type {EntryDraftBackup | undefined} */
+  /** @type {import('$lib/typedefs').EntryDraftBackup | undefined} */
   const backup = await backupDB?.get([collectionName, slug]);
 
   if (!backup) {
@@ -71,7 +71,7 @@ export const getBackup = async (collectionName, slug = '') => {
 
 /**
  * Backup the entry draft to IndexedDB.
- * @param {EntryDraft} draft - Draft.
+ * @param {import('$lib/typedefs').EntryDraft} draft - Draft.
  */
 export const saveBackup = async (draft) => {
   const {
@@ -86,17 +86,15 @@ export const saveBackup = async (draft) => {
   const slug = originalEntry?.slug || '';
 
   if (get(entryDraftModified)) {
-    /** @type {EntryDraftBackup} */
+    /** @type {import('$lib/typedefs').EntryDraftBackup} */
     const backup = {
       timestamp: new Date(),
       siteConfigVersion: /** @type {string} */ (get(siteConfigVersion)),
       collectionName,
       slug,
       currentLocales,
-      currentSlugs: /** @type {Record<LocaleCode, string>} */ (toRaw(currentSlugs)),
-      currentValues: /** @type {Record<LocaleCode, FlattenedEntryContent>} */ (
-        toRaw(currentValues)
-      ),
+      currentSlugs: /** @type {import('$lib/typedefs').LocaleSlugMap} */ (toRaw(currentSlugs)),
+      currentValues: /** @type {import('$lib/typedefs').LocaleContentMap} */ (toRaw(currentValues)),
       files,
     };
 

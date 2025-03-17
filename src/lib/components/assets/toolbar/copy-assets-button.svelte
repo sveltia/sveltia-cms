@@ -7,7 +7,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {Asset[]} [assets] - Selected assets.
+   * @property {import('$lib/typedefs').Asset[]} [assets] - Selected assets.
    */
 
   /** @type {Props} */
@@ -17,7 +17,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {AssetDetails[]} */
+  /** @type {import('$lib/typedefs').AssetDetails[]} */
   let assetsDetailList = $state([]);
   let canCopyFileData = $state(false);
   /** @type {{ show: boolean, text: string, status: 'success' | 'error' }} */
