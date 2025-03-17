@@ -325,6 +325,8 @@
 /**
  * Global site configuration.
  * @typedef {object} SiteConfig
+ * @property {boolean} [load_config_file] - Whether to load the `config.yml` file when using manual
+ * initialization.
  * @property {object} backend - Backend config.
  * @property {string} backend.name - Backend name, e.g. `github`.
  * @property {string} [backend.repo] - Git organization and repository name joined with `/`.

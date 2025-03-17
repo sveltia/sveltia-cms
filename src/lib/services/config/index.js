@@ -158,10 +158,11 @@ const validate = (config) => {
 /**
  * Initialize the site configuration state by loading the YAML file and optionally merge the object
  * with one specified with `CMS.init()`.
- * @param {any} [manualConfig] - Configuration specified with manual initialization.
+ * @param {import('$lib/typedefs').SiteConfig} [manualConfig] - Configuration specified with manual
+ * initialization.
  * @todo Normalize configuration object.
  */
-export const initSiteConfig = async (manualConfig = {}) => {
+export const initSiteConfig = async (manualConfig) => {
   siteConfig.set(undefined);
   siteConfigError.set(undefined);
 
@@ -171,17 +172,19 @@ export const initSiteConfig = async (manualConfig = {}) => {
       throw new Error(get(_)('config.error.no_secure_context'));
     }
 
-    if (manualConfig && !isObject(manualConfig)) {
-      throw new Error(get(_)('config.error.parse_failed'));
-    }
-
     /** @type {any} */
     let tempConfig;
 
-    if (manualConfig?.load_config_file === false) {
-      tempConfig = manualConfig;
-    } else if (Object.entries(manualConfig).length) {
-      tempConfig = merge(await fetchSiteConfig({ ignoreError: true }), manualConfig);
+    if (manualConfig) {
+      if (!isObject(manualConfig)) {
+        throw new Error(get(_)('config.error.parse_failed'));
+      }
+
+      if (manualConfig.load_config_file === false) {
+        tempConfig = manualConfig;
+      } else if (Object.entries(manualConfig).length) {
+        tempConfig = merge(await fetchSiteConfig({ ignoreError: true }), manualConfig);
+      }
     } else {
       tempConfig = await fetchSiteConfig();
     }

@@ -43,11 +43,12 @@ let initialized = false;
 /**
  * Initialize the CMS, optionally with the given configuration.
  * @param {object} [options] - Options.
- * @param {object} [options.config] - Configuration to be merged with the default configuration.
+ * @param {import('./typedefs').SiteConfig} [options.config] - Configuration to be merged with the
+ * default configuration.
  * @see https://decapcms.org/docs/manual-initialization/
  * @see https://decapcms.org/docs/custom-mounting/
  */
-const init = async ({ config = {} } = {}) => {
+const init = async ({ config } = {}) => {
   if (initialized) {
     return;
   }
@@ -97,14 +98,10 @@ const CMS = new Proxy(
     // registerEditorComponent,
   },
   {
-    /**
-     * Define the getter.
-     * @param {Record<string, Function>} obj - Object itself.
-     * @param {string} key - Property name.
-     * @returns {any} Property value.
-     */
-    get: (obj, key) => {
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    get: (obj, /** @type {string} */ key) => {
       if (key in obj) {
+        // @ts-ignore
         return obj[key];
       }
 
