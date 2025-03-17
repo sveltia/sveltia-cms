@@ -182,7 +182,7 @@ export const initSiteConfig = async (manualConfig) => {
 
       if (manualConfig.load_config_file === false) {
         tempConfig = manualConfig;
-      } else if (Object.entries(manualConfig).length) {
+      } else {
         tempConfig = merge(await fetchSiteConfig({ ignoreError: true }), manualConfig);
       }
     } else {
