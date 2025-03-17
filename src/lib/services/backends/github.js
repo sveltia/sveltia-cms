@@ -155,7 +155,8 @@ const fetchGraphQL = async (query, variables = {}) => {
  */
 const getRepositoryInfo = () => {
   const { repo: projectPath, branch } = /** @type {SiteConfig} */ (get(siteConfig)).backend;
-  const { origin, isSelfHosted } = apiConfig;
+  const { origin: apiOrigin, isSelfHosted } = apiConfig;
+  const origin = isSelfHosted ? apiOrigin : 'https://github.com';
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
 
   return Object.assign(repository, {
