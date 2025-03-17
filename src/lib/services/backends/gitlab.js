@@ -24,13 +24,13 @@ const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc650
 const apiRootDefault = 'https://gitlab.com/api/v4';
 
 /**
- * @type {{ isSelfHosted: boolean, origin: string, rest: string, graphql: string }}
+ * @type {{ origin: string, rest: string, graphql: string, isSelfHosted: boolean }}
  */
 const apiConfig = {
-  isSelfHosted: false,
   origin: '',
   rest: '',
   graphql: '',
+  isSelfHosted: false,
 };
 
 siteConfig?.subscribe((config) => {

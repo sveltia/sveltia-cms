@@ -20,13 +20,13 @@ const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
 const apiRootDefault = 'https://api.github.com';
 
 /**
- * @type {{ isSelfHosted: boolean, origin: string, rest: string, graphql: string }}
+ * @type {{ origin: string, rest: string, graphql: string, isSelfHosted: boolean }}
  */
 const apiConfig = {
-  isSelfHosted: false,
   origin: '',
   rest: '',
   graphql: '',
+  isSelfHosted: false,
 };
 
 siteConfig?.subscribe((config) => {
@@ -35,10 +35,10 @@ siteConfig?.subscribe((config) => {
   const { origin } = new URL(apiRoot);
 
   Object.assign(apiConfig, {
-    isSelfHosted,
     origin,
     rest: isSelfHosted ? `${origin}/api/v3` : origin,
     graphql: isSelfHosted ? `${origin}/api` : origin,
+    isSelfHosted,
   });
 });
 
