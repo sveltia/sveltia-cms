@@ -13,6 +13,8 @@ describe('Test getOptions()', async () => {
   const locale = '_default';
   /** @type {LocalizedEntry} */
   const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
+  /** @type {'relation'} */
+  const widget = 'relation';
 
   /** @type {Entry[]} */
   const memberEntries = [
@@ -99,7 +101,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'author',
       label: 'Author',
-      widget: 'relation',
+      widget,
       collection: 'authors',
       value_field: 'name.first',
       display_fields: ['twitterHandle', 'followerCount'],
@@ -188,7 +190,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'author',
       label: 'Author',
-      widget: 'relation',
+      widget,
       collection: 'authors',
       value_field: 'name.first',
       display_fields: ['twitterHandle', 'followerCount'],
@@ -249,7 +251,7 @@ describe('Test getOptions()', async () => {
     const config = {
       label: 'City',
       name: 'city',
-      widget: 'relation',
+      widget,
       collection: 'relation_files',
       file: 'cities',
       search_fields: ['cities.*.name'],
@@ -308,7 +310,7 @@ describe('Test getOptions()', async () => {
     const config = {
       label: 'City',
       name: 'city',
-      widget: 'relation',
+      widget,
       collection: 'relation_files',
       file: 'cities',
       search_fields: ['cities.*.name'],
@@ -358,7 +360,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'section',
       label: 'Section',
-      widget: 'relation',
+      widget,
       collection: 'pages',
       value_field: 'sections.*.id',
       display_fields: ['sections.*.name'],
@@ -467,7 +469,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'section',
       label: 'Section',
-      widget: 'relation',
+      widget,
       collection: 'pages',
       value_field: 'sections.*.id',
       display_fields: ['sections.*.name'],
@@ -549,7 +551,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'author',
       label: 'Author',
-      widget: 'relation',
+      widget,
       collection: 'authors',
       value_field: 'name.first',
       display_fields: ['twitterHandle', 'followerCount'],
@@ -569,7 +571,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'author',
       label: 'Author',
-      widget: 'relation',
+      widget,
       collection: 'authors',
       value_field: 'name.first',
       display_fields: ['twitterHandle', 'followerCount'],
@@ -587,7 +589,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'posts',
       label: 'Posts',
-      widget: 'relation',
+      widget,
       collection: 'posts',
       value_field: '{{slug}}',
       display_fields: ['title'],
@@ -703,7 +705,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'posts',
       label: 'Posts',
-      widget: 'relation',
+      widget,
       collection: 'posts',
       value_field: '{{slug}}',
       display_fields: ['title'],
@@ -774,7 +776,7 @@ describe('Test getOptions()', async () => {
     const config = {
       name: 'posts',
       label: 'Posts',
-      widget: 'relation',
+      widget,
       collection: 'posts',
       value_field: '{{locale}}/{{slug}}',
       display_fields: ['title'],

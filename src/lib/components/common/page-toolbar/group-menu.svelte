@@ -5,7 +5,7 @@
   /**
    * @import { Writable } from 'svelte/store';
    * @import { AssetListView, EntryListView } from '$lib/typedefs/private';
-   * @import { ViewFilter } from '$lib/typedefs/public';
+   * @import { ViewGroup } from '$lib/typedefs/public';
    */
 
   /**
@@ -15,7 +15,7 @@
    * @property {string} [label] Menu button label.
    * @property {boolean} [disabled] Whether to disable the button.
    * @property {string} [noneLabel] Label to be displayed on the None item.
-   * @property {ViewFilter[]} [groups] Group conditions.
+   * @property {ViewGroup[]} [groups] Group conditions.
    */
 
   /** @type {Props} */

@@ -11,7 +11,7 @@
 
   /**
    * @import { Entry, WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { RelationField } from '$lib/typedefs/public';
+   * @import { RelationField, SelectField } from '$lib/typedefs/public';
    */
 
   /**
@@ -45,7 +45,12 @@
       ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
       : getEntriesByCollection(collectionName),
   );
-  const options = $derived(getOptions(locale, fieldConfig, refEntries));
+  /** @type {SelectField} */
+  const selectFieldConfig = $derived({
+    ...fieldConfig,
+    widget: 'select',
+    options: getOptions(locale, fieldConfig, refEntries),
+  });
 </script>
 
 <div role="none" class="wrapper">
@@ -54,7 +59,7 @@
     {keyPath}
     {fieldId}
     {fieldLabel}
-    fieldConfig={{ ...fieldConfig, options }}
+    fieldConfig={selectFieldConfig}
     bind:currentValue
     {readonly}
     {required}

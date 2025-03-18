@@ -111,7 +111,10 @@ export const getComponentDef = (name) => {
  * the transformer definition.
  */
 const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock, toPreview }) => {
-  const tagName = toPreview({}).match(/\w+/)?.[0] ?? id;
+  const preview = toPreview({});
+
+  const tagName =
+    typeof preview === 'string' ? (preview.match(/\w+/)?.[0] ?? undefined) : undefined;
 
   /**
    * Genetic custom node.
@@ -248,12 +251,15 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
      * @returns {DOMConversionMap} Conversion map.
      */
     static importDOM() {
-      const conversionMap = {
+      /** @type {DOMConversionMap} */
+      const conversionMap = {};
+
+      if (tagName) {
         /**
          * Conversion map item.
          * @returns {DOMConversion} Conversion.
          */
-        [tagName]: () => ({
+        conversionMap[tagName] = () => ({
           /**
            * Conversion.
            * @param {HTMLElement} element Element.
@@ -271,8 +277,8 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
             ),
           }),
           priority: 3,
-        }),
-      };
+        });
+      }
 
       if (id === 'image') {
         // Add extra conversion for the built-in image component to support linked images

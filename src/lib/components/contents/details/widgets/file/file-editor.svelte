@@ -31,12 +31,12 @@
    * SelectedAsset,
    * WidgetEditorProps,
    * } from '$lib/typedefs/private';
-   * @import { FileField } from '$lib/typedefs/public';
+   * @import { FileField, ImageField } from '$lib/typedefs/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {FileField} fieldConfig Field configuration.
+   * @property {FileField | ImageField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
@@ -78,6 +78,7 @@
     // Widget-specific options
     choose_url: canEnterURL = true,
     media_library: {
+      // @ts-ignore
       config: { max_file_size: maxFileSize = /** @type {number | undefined} */ (undefined) } = {},
     } = {},
   } = $derived(fieldConfig);

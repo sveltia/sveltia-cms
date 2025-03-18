@@ -1,15 +1,22 @@
 /**
- * @import { EditorComponentDefinition, MarkdownFieldButton } from '$lib/typedefs/public';
+ * @import { TextEditorBlockType, TextEditorInlineType, TextEditorMode } from '@sveltia/ui';
+ * @import {
+ * EditorComponentDefinition,
+ * RichTextEditorButtonName,
+ * RichTextEditorComponentName,
+ * RichTextEditorMode,
+ * } from '$lib/typedefs/public';
  */
 
 /**
  * The default `modes` property options.
+ * @type {RichTextEditorMode[]}
  */
 export const defaultModes = ['rich_text', 'raw'];
 
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
- * @type {Record<string, import("@sveltia/ui").TextEditorMode>}
+ * @type {Record<RichTextEditorMode, TextEditorMode>}
  */
 export const modeNameMap = {
   rich_text: 'rich-text',
@@ -18,7 +25,7 @@ export const modeNameMap = {
 
 /**
  * The default `buttons` property options.
- * @type {MarkdownFieldButton[]}
+ * @type {RichTextEditorButtonName[]}
  */
 export const defaultButtons = [
   'bold',
@@ -38,8 +45,8 @@ export const defaultButtons = [
 
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
- * @type {Record<MarkdownFieldButton | 'code-block', import("@sveltia/ui").TextEditorInlineType |
- * import("@sveltia/ui").TextEditorBlockType>}
+ * @type {Record<RichTextEditorButtonName | 'code-block', TextEditorInlineType |
+ * TextEditorBlockType>}
  */
 export const buttonNameMap = {
   bold: 'bold',
@@ -60,6 +67,7 @@ export const buttonNameMap = {
 
 /**
  * The default `editor_components` property options.
+ * @type {RichTextEditorComponentName[]}
  */
 export const defaultComponents = ['code-block', 'image'];
 
