@@ -26,7 +26,7 @@ export const selectedEntries = writable([]);
  * Get entries by the given collection name, while applying a filer if needed.
  * @param {string} collectionName Collection name.
  * @returns {Entry[]} Entries.
- * @see https://decapcms.org/docs/collection-types#filtered-folder-collections
+ * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
  */
 export const getEntriesByCollection = (collectionName) => {
   const collection = getCollection(collectionName);

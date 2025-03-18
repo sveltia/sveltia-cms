@@ -39,7 +39,7 @@ export const getFilesByEntry = (collection, entry) => {
  * @param {string} collectionName Collection name.
  * @param {string} fileName File name.
  * @returns {Entry | undefined} File.
- * @see https://decapcms.org/docs/collection-types/#file-collections
+ * @see https://decapcms.org/docs/collection-file/
  */
 export const getFile = (collectionName, fileName) =>
   get(allEntries).find((entry) =>

@@ -161,7 +161,7 @@
  * @property {string} [preview_path] Preview URL template.
  * @property {string} [preview_path_date_field] Date field used for the preview URL template.
  * @property {EditorOptions} [editor] Editor view configuration.
- * @see https://decapcms.org/docs/collection-types/#file-collections
+ * @see https://decapcms.org/docs/collection-file/
  */
 
 /**
