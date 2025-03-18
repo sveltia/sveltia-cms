@@ -510,8 +510,8 @@ However, 100% feature parity is not planned, and some features are still missing
 - Some date/time format tokens: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with Day.js, and Sveltia CMS will follow suit soon. Since [Day.js tokens](https://day.js.org/docs/en/display/format) are not 100% compatible with [Moment.js tokens](https://momentjs.com/docs/#/displaying/format/), this could be a breaking change in certain cases.
 - The theme and keymap inline settings of the Code widget, along with support for some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/). Prism may be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575) in the future.
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
-- An absolute URL for the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
-- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `window.CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
+- Support for an absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
+- [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - Any other undocumented options/features.
 
 ### Current limitations
@@ -527,7 +527,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Custom widgets and custom editor components](https://decapcms.org/docs/custom-widgets/)
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
-- Type declaration for `CMS.init` and other methods ([#346](https://github.com/sveltia/sveltia-cms/issues/346))
+- Type declaration for `CMS.init()` and other methods ([#346](https://github.com/sveltia/sveltia-cms/issues/346))
 
 Due to the complexity, the following features will be added after the 1.0 release. Netlify/Decap CMS has a number of open issues with the collaboration and beta features — we want to implement them the right way.
 
