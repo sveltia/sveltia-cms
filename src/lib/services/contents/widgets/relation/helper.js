@@ -15,8 +15,18 @@ import { getFieldConfig } from '$lib/services/contents/entry/fields';
  * @param {string} fieldName Field name e.g. `{{name.first}}` or `name.first`.
  * @returns {string} Bracketed field name, e.g. `{{name.first}}`.
  */
-const normalizeFieldName = (fieldName) =>
-  /{{.+?}}/.test(fieldName) ? fieldName : `{{${fieldName}}}`;
+const normalizeFieldName = (fieldName) => {
+  if (/{{.+?}}/.test(fieldName)) {
+    return fieldName;
+  }
+
+  if (fieldName === 'slug') {
+    // Avoid confusion with `{{slug}}`, which is the entry slug, not the `slug` field
+    return '{{fields.slug}}';
+  }
+
+  return `{{${fieldName}}}`;
+};
 
 /**
  * @type {Map<string, { label: string, value: any }[]>}
@@ -43,9 +53,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example 'name.first'
    * @example 'cities.*.id'
    * @example '{{cities.*.id}}'
-   * @example '{{slug}}'
+   * @example 'slug' (`slug` field)
+   * @example '{{slug}}' (entry slug)
    * @example '{{locale}}/{{slug}}'
-   * @example '{{fields.slug}}'
+   * @example '{{fields.slug}}' (not mentioned in the Netlify/CMS doc but we support the `fields.`
+   * prefix for compatibility with other config options)
    */
   const valueField = fieldConfig.value_field;
   /**
@@ -96,7 +108,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       ({ hasContent, content }) =>
         hasContent && entryFilters.every(({ field, values }) => values.includes(content[field])),
     )
-    .map(({ refEntry, content }) => {
+    .map(({ refEntry: { slug, locales }, content }) => {
       /**
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
@@ -131,7 +143,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           }
 
           if (fieldName === 'slug') {
-            return [fieldName, refEntry.slug];
+            return [fieldName, slug];
           }
 
           if (fieldName === 'locale') {
@@ -156,7 +168,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
                 valueMap: content,
                 keyPath,
                 locale,
-              }) ?? '',
+              }) ?? slug,
             ];
           }
 
@@ -167,11 +179,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             const { defaultLocale } = getCollection(fieldConfig.collection)?._i18n ?? {};
 
             if (defaultLocale) {
-              label = refEntry.locales[defaultLocale].content[keyPath];
+              label = locales[defaultLocale].content[keyPath];
             }
           }
 
-          return [fieldName, label ?? ''];
+          return [fieldName, label ?? slug];
         }),
       );
 

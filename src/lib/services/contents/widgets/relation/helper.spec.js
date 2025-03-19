@@ -128,17 +128,12 @@ describe('Test getOptions()', async () => {
       },
     ]);
 
-    expect(
-      getOptions(
-        locale,
-        {
-          ...config,
-          value_field: '{{slug}}',
-          display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
-        },
-        entries,
-      ),
-    ).toEqual([
+    const slugTestConfig = {
+      ...config,
+      display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
+    };
+
+    expect(getOptions(locale, { ...slugTestConfig, value_field: '{{slug}}' }, entries)).toEqual([
       {
         label: 'Elsie Mcbride (@ElsieMcbride)',
         value: 'elsie-mcbride',
@@ -156,18 +151,7 @@ describe('Test getOptions()', async () => {
       },
     ]);
 
-    // In-field slug
-    expect(
-      getOptions(
-        locale,
-        {
-          ...config,
-          value_field: '{{fields.slug}}',
-          display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
-        },
-        entries,
-      ),
-    ).toEqual([
+    const inFieldSlugTestResults = [
       {
         label: 'Elsie Mcbride (@ElsieMcbride)',
         value: 'member-elsie-mcbride',
@@ -183,7 +167,17 @@ describe('Test getOptions()', async () => {
         value: 'member-melvin-lucas',
         searchValue: 'Melvin MelvinLucas',
       },
-    ]);
+    ];
+
+    // In-field slug
+    expect(getOptions(locale, { ...slugTestConfig, value_field: 'slug' }, entries)).toEqual(
+      inFieldSlugTestResults,
+    );
+
+    // In-field slug, with the explicit `fields.` prefix
+    expect(
+      getOptions(locale, { ...slugTestConfig, value_field: '{{fields.slug}}' }, entries),
+    ).toEqual(inFieldSlugTestResults);
   });
 
   test('nested fields, single entry', () => {
