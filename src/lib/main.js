@@ -1,25 +1,22 @@
 import { mount } from 'svelte';
 import { customFileFormats } from '$lib/services/contents/file';
-import { customComponents } from '$lib/services/contents/widgets/markdown';
 import App from './components/app.svelte';
 
 // Don’t use `$lib` in `from`, otherwise type declarations will not be exported
 /**
+ * @import { ComponentType } from 'react';
  * @import {
+ * AppEventListener,
+ * CustomPreviewTemplateProps,
+ * CustomWidgetControlProps,
+ * CustomWidgetPreviewProps,
+ * CustomWidgetSchema,
  * EditorComponentDefinition,
  * FileFormatter,
  * FileParser,
  * SiteConfig,
  * } from './typedefs/public';
  */
-
-const knownFuncNames = [
-  'registerEditorComponent',
-  'registerEventListener',
-  'registerPreviewStyle',
-  'registerPreviewTemplate',
-  'registerWidget',
-];
 
 const unsupportedFuncNames = [
   'getBackend',
@@ -95,16 +92,78 @@ const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
  * @param {EditorComponentDefinition} definition Component definition.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
-// eslint-disable-next-line no-unused-vars
 const registerEditorComponent = (definition) => {
-  customComponents[definition.id] = definition;
+  // eslint-disable-next-line no-console
+  console.error('Custom editor components are not yet supported in Sveltia CMS.');
+  void definition;
+
+  // customComponents[definition.id] = definition;
+};
+
+/**
+ * Register an event listener.
+ * @param {AppEventListener} eventListener Event listener.
+ * @see https://decapcms.org/docs/registering-events/
+ */
+const registerEventListener = (eventListener) => {
+  // eslint-disable-next-line no-console
+  console.error('Event hooks are not yet supported in Sveltia CMS.');
+  void eventListener;
+};
+
+/**
+ * Register a custom preview style.
+ * @param {string} fileOrStyle File path or raw CSS string.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.raw] Whether to use a CSS string.
+ * @see https://decapcms.org/docs/customization/#registerpreviewstyle
+ */
+const registerPreviewStyle = (fileOrStyle, { raw = false } = {}) => {
+  // eslint-disable-next-line no-console
+  console.error('Custom preview styles are not yet supported in Sveltia CMS.');
+  void fileOrStyle;
+  void raw;
+};
+
+/**
+ * Register a custom preview template.
+ * @param {string} name Template name.
+ * @param {ComponentType<CustomPreviewTemplateProps>} component React component.
+ * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
+ */
+const registerPreviewTemplate = (name, component) => {
+  // eslint-disable-next-line no-console
+  console.error('Custom preview templates are not yet supported in Sveltia CMS.');
+  void name;
+  void component;
+};
+
+/**
+ * Register a custom widget.
+ * @param {string} name Widget name.
+ * @param {ComponentType<CustomWidgetControlProps> | string} control Component for the edit pane.
+ * @param {ComponentType<CustomWidgetPreviewProps>} [preview] Component for the preview pane.
+ * @param {CustomWidgetSchema} [schema] Field schema.
+ * @see https://decapcms.org/docs/custom-widgets/
+ */
+const registerWidget = (name, control, preview, schema) => {
+  // eslint-disable-next-line no-console
+  console.error('Custom widgets are not yet supported in Sveltia CMS.');
+  void name;
+  void control;
+  void preview;
+  void schema;
 };
 
 const CMS = new Proxy(
   {
     init,
     registerCustomFormat,
-    // registerEditorComponent,
+    registerEditorComponent,
+    registerEventListener,
+    registerPreviewStyle,
+    registerPreviewTemplate,
+    registerWidget,
   },
   {
     // eslint-disable-next-line jsdoc/require-jsdoc
@@ -115,10 +174,6 @@ const CMS = new Proxy(
       }
 
       let message = '';
-
-      if (knownFuncNames.includes(key)) {
-        message = 'CMS.%s() is not yet supported in Sveltia CMS, but we plan to implement it soon.';
-      }
 
       if (unsupportedFuncNames.includes(key)) {
         message =

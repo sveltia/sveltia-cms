@@ -746,6 +746,16 @@
  */
 
 /**
+ * Entry file Parser.
+ * @typedef {(text: string) => any | Promise<any>} FileParser
+ */
+
+/**
+ * Entry file formatter.
+ * @typedef {(value: any) => string | Promise<string>} FileFormatter
+ */
+
+/**
  * Custom editor component configuration.
  * @typedef {object} EditorComponentDefinition
  * @property {string} id Component name.
@@ -764,13 +774,51 @@
  */
 
 /**
- * Entry file Parser.
- * @typedef {(text: string) => any | Promise<any>} FileParser
+ * Event listener properties.
+ * @typedef {object} AppEventListener
+ * @property {'prePublish' | 'postPublish' | 'preUnpublish' | 'postUnpublish' | 'preSave' |
+ * 'postSave'} name Event name.
+ * @property {(args: { entry: Record<string, any>, author: { login: string, name: string } }) => any
+ * } handler Event handler.
+ */
+
+/* eslint-disable jsdoc/require-property-description */
+
+/**
+ * @typedef {object} CustomPreviewTemplateProps
+ * @property {Record<string, any>} entry
+ * @property {(name: string) => any} widgetFor
+ * @property {(name: string) => any} widgetsFor
+ * @property {(name: string) => any} getAsset
+ * @property {(collectionName: string, slug?: string) => any} getCollection
+ * @property {Document} document
+ * @property {Window} window
  */
 
 /**
- * Entry file formatter.
- * @typedef {(value: any) => string | Promise<string>} FileFormatter
+ * @typedef {object} CustomWidgetControlProps
+ * @property {any} value
+ * @property {Record<string, any>} field
+ * @property {string} forID
+ * @property {string} classNameWrapper
+ * @property {(value: any) => void} onChange
  */
+
+/**
+ * @typedef {object} CustomWidgetPreviewProps
+ * @property {any} value
+ * @property {Record<string, any>} field
+ * @property {Record<string, any>} metadata
+ * @property {Record<string, any>} entry
+ * @property {(name: string) => any} getAsset
+ * @property {Record<string, any>} fieldsMetaData
+ */
+
+/**
+ * @typedef {object} CustomWidgetSchema
+ * @property {Record<string, any>} properties
+ */
+
+/* eslint-enable jsdoc/require-property-description */
 
 export {};
