@@ -56,8 +56,8 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example 'slug' (`slug` field)
    * @example '{{slug}}' (entry slug)
    * @example '{{locale}}/{{slug}}'
-   * @example '{{fields.slug}}' (not mentioned in the Netlify/CMS doc but we support the `fields.`
-   * prefix for compatibility with other config options)
+   * @example '{{fields.slug}}' (not mentioned in the Netlify/Decap CMS doc but Sveltia CMS supports
+   * the `fields.` prefix for compatibility with other config options)
    */
   const valueField = fieldConfig.value_field;
   /**
