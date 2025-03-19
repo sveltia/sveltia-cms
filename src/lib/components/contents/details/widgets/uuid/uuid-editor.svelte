@@ -11,8 +11,8 @@
   import { getDefaultValue } from '$lib/services/contents/widgets/uuid/helper';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { UuidField } from '$lib/typedefs/public';
+   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { UuidField } from '$lib/types/public';
    */
 
   /**

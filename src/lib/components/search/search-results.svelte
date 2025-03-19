@@ -8,7 +8,7 @@
   import { searchResults, searchTerms } from '$lib/services/search';
 
   /**
-   * @import { Asset, Entry } from '$lib/typedefs/private';
+   * @import { Asset, Entry } from '$lib/types/private';
    */
 </script>
 

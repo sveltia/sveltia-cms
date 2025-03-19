@@ -11,7 +11,7 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { EntryEditorPane } from '$lib/typedefs/private';
+   * @import { EntryEditorPane } from '$lib/types/private';
    */
 
   /**

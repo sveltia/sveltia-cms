@@ -9,8 +9,8 @@
   import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { DateTimeField } from '$lib/typedefs/public';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { DateTimeField } from '$lib/types/public';
    */
 
   /**

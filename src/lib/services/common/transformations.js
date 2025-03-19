@@ -2,14 +2,14 @@ import { truncate } from '@sveltia/utils/string';
 import moment from 'moment';
 import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 
+/**
+ * @import { DateTimeField, Field } from '$lib/types/public';
+ */
+
 export const dateRegex = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
 export const defaultRegex = /^default\('(?<defaultValue>.+?)'\)$/;
 export const ternaryRegex = /^ternary\('(?<truthyValue>.*?)',\s*'(?<falsyValue>.*?)'\)$/;
 export const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
-
-/**
- * @import { DateTimeField, Field } from '$lib/typedefs/public';
- */
 
 /**
  * Apply a string transformation to the value.

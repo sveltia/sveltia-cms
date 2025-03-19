@@ -25,7 +25,7 @@ import {
  * GroupingConditions,
  * NormalizedSiteConfig,
  * SortingConditions,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

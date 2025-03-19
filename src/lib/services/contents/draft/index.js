@@ -4,7 +4,7 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
- * @import { EntryDraft } from '$lib/typedefs/private';
+ * @import { EntryDraft } from '$lib/types/private';
  */
 
 /**

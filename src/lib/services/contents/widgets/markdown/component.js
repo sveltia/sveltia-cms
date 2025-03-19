@@ -17,7 +17,7 @@ import { get } from 'svelte/store';
  * SerializedLexicalNode,
  * } from 'lexical';
  * @import { TextMatchTransformer, Transformer } from '@lexical/markdown';
- * @import { EditorComponentDefinition } from '$lib/typedefs/public';
+ * @import { EditorComponentDefinition } from '$lib/types/public';
  */
 
 import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';

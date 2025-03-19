@@ -11,7 +11,7 @@
   } from '$lib/services/assets';
 
   /**
-   * @import { Entry } from '$lib/typedefs/private';
+   * @import { Entry } from '$lib/types/private';
    */
 
   const componentId = $props.id();

@@ -19,7 +19,7 @@
   /**
    * @import { Component } from 'svelte';
    * @import { Writable } from 'svelte/store';
-   * @import { LocaleCode } from '$lib/typedefs/private';
+   * @import { LocaleCode } from '$lib/types/private';
    * @import {
    * BooleanField,
    * Field,
@@ -30,7 +30,7 @@
    * SelectField,
    * StringField,
    * TextField,
-   * } from '$lib/typedefs/public';
+   * } from '$lib/types/public';
    */
 
   /**

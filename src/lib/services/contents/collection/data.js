@@ -6,7 +6,7 @@ import { selectedCollection } from '$lib/services/contents/collection';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { FileChange, UpdatesToastState } from '$lib/typedefs/private';
+ * @import { FileChange, UpdatesToastState } from '$lib/types/private';
  */
 
 /**

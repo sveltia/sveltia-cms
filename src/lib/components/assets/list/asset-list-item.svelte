@@ -6,7 +6,7 @@
   import { listedAssets } from '$lib/services/assets/view';
 
   /**
-   * @import { Asset, ViewType } from '$lib/typedefs/private';
+   * @import { Asset, ViewType } from '$lib/types/private';
    */
 
   /**

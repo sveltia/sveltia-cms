@@ -7,7 +7,7 @@ import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
- * @import { Asset, Entry } from '$lib/typedefs/private';
+ * @import { Asset, Entry } from '$lib/types/private';
  */
 
 /**

@@ -10,8 +10,8 @@
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
-   * @import { Entry, WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { RelationField, SelectField } from '$lib/typedefs/public';
+   * @import { Entry, WidgetEditorProps } from '$lib/types/private';
+   * @import { RelationField, SelectField } from '$lib/types/public';
    */
 
   /**

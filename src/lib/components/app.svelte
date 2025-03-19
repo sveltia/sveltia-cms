@@ -16,7 +16,7 @@
   import { user } from '$lib/services/user';
 
   /**
-   * @import { SiteConfig } from '$lib/typedefs/public';
+   * @import { SiteConfig } from '$lib/types/public';
    */
 
   /**

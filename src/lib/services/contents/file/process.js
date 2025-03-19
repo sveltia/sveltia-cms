@@ -14,7 +14,7 @@ import { getCollection } from '$lib/services/contents/collection';
  * EntryCollection,
  * FileCollection,
  * LocaleCode,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

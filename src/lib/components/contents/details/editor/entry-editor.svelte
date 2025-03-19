@@ -4,7 +4,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { LocaleCode } from '$lib/typedefs/private';
+   * @import { LocaleCode } from '$lib/types/private';
    */
 
   /**

@@ -3,7 +3,7 @@ import deepl from './deepl';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { TranslationService } from '$lib/typedefs/private';
+ * @import { TranslationService } from '$lib/types/private';
  */
 
 /**

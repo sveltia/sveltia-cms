@@ -3,7 +3,7 @@ import { writable } from 'svelte/store';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { User } from '$lib/typedefs/private';
+ * @import { User } from '$lib/types/private';
  */
 
 /**

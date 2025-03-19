@@ -1,8 +1,8 @@
 import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, LocaleCode } from '$lib/typedefs/private';
- * @import { FieldKeyPath } from '$lib/typedefs/public';
+ * @import { FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**

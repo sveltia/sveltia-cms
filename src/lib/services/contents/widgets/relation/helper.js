@@ -6,8 +6,8 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { Entry, FlattenedEntryContent, LocaleCode } from '$lib/typedefs/private';
- * @import { FieldKeyPath, RelationField } from '$lib/typedefs/public';
+ * @import { Entry, FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import { FieldKeyPath, RelationField } from '$lib/types/public';
  */
 
 /**

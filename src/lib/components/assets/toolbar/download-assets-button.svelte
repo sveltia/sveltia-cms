@@ -6,7 +6,7 @@
   import { getAssetBlob } from '$lib/services/assets';
 
   /**
-   * @import { Asset } from '$lib/typedefs/private';
+   * @import { Asset } from '$lib/types/private';
    */
 
   /**

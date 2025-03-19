@@ -10,8 +10,8 @@
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
-   * @import { Entry, WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { RelationField } from '$lib/typedefs/public';
+   * @import { Entry, WidgetPreviewProps } from '$lib/types/private';
+   * @import { RelationField } from '$lib/types/public';
    */
 
   /**

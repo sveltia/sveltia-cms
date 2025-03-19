@@ -7,7 +7,7 @@ import { validateStringField } from '$lib/services/contents/widgets/string/helpe
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft } from '$lib/typedefs/private';
+ * @import { EntryDraft } from '$lib/types/private';
  * @import {
  * CodeField,
  * ListField,
@@ -16,7 +16,7 @@ import { validateStringField } from '$lib/services/contents/widgets/string/helpe
  * SelectField,
  * StringField,
  * TextField,
- * } from '$lib/typedefs/public';
+ * } from '$lib/types/public';
  */
 
 // cspell:disable-next-line

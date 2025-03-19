@@ -13,8 +13,8 @@
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { ListField } from '$lib/typedefs/public';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { ListField } from '$lib/types/public';
    */
 
   /**

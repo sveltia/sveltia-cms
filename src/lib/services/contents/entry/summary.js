@@ -14,7 +14,7 @@ import { applyTransformations } from '$lib/services/common/transformations';
  * LocaleCode,
  * NormalizedCollection,
  * RawEntryContent,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

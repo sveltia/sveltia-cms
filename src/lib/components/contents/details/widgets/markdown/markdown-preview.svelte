@@ -11,8 +11,8 @@
   import { getMediaFieldURL } from '$lib/services/assets';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { MarkdownField } from '$lib/typedefs/public';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { MarkdownField } from '$lib/types/public';
    */
 
   /**

@@ -5,7 +5,7 @@ import { defaultI18nConfig } from '$lib/services/contents/i18n';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 
 /**
- * @import { NormalizedCollection } from '$lib/typedefs/private';
+ * @import { NormalizedCollection } from '$lib/types/private';
  */
 
 vi.mock('$lib/services/config');

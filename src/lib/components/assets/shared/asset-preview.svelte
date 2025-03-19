@@ -4,7 +4,7 @@
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets';
 
   /**
-   * @import { Asset, AssetKind } from '$lib/typedefs/private';
+   * @import { Asset, AssetKind } from '$lib/types/private';
    */
 
   /**

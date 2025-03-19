@@ -1,5 +1,5 @@
 /**
- * @import { StringField, TextField } from '$lib/typedefs/public';
+ * @import { StringField, TextField } from '$lib/types/public';
  */
 
 /**

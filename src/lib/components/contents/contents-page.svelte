@@ -21,7 +21,7 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
   /**
-   * @import { FileCollection, NormalizedCollection } from '$lib/typedefs/private';
+   * @import { FileCollection, NormalizedCollection } from '$lib/types/private';
    */
 
   const routeRegex =

@@ -3,7 +3,7 @@
   import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 
   /**
-   * @import { StringField, TextField } from '$lib/typedefs/public';
+   * @import { StringField, TextField } from '$lib/types/public';
    */
 
   /**

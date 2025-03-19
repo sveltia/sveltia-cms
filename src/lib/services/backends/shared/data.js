@@ -17,7 +17,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
  * BaseFileListItem,
  * RepositoryContentsMap,
  * RepositoryInfo,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

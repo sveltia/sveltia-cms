@@ -6,8 +6,8 @@ import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/conte
 import { getCollection } from '$lib/services/contents/collection';
 
 /**
- * @import { BaseEntryListItem, EntryCollection, FileCollection } from '$lib/typedefs/private';
- * @import { FrontMatterFormat } from '$lib/typedefs/public';
+ * @import { BaseEntryListItem, EntryCollection, FileCollection } from '$lib/types/private';
+ * @import { FrontMatterFormat } from '$lib/types/public';
  */
 
 /**

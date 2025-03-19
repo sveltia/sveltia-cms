@@ -21,8 +21,8 @@
   } from '$lib/services/contents/widgets/markdown';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { MarkdownField } from '$lib/typedefs/public';
+   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { MarkdownField } from '$lib/types/public';
    */
 
   /**

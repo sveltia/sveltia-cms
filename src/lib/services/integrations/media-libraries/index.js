@@ -3,7 +3,7 @@ import pixabay from './pixabay';
 import unsplash from './unsplash';
 
 /**
- * @import { MediaLibraryService } from '$lib/typedefs/private';
+ * @import { MediaLibraryService } from '$lib/types/private';
  */
 
 /**

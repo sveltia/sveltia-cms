@@ -13,12 +13,12 @@ import { allAssetFolders } from '$lib/services/assets';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { SiteConfig } from '$lib/typedefs/public'
+ * @import { SiteConfig } from '$lib/types/public'
  * @import {
  * CollectionAssetFolder,
  * CollectionEntryFolder,
  * NormalizedSiteConfig,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 const { DEV, VITE_SITE_URL } = import.meta.env;

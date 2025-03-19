@@ -35,7 +35,7 @@ import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
  * NormalizedCollectionFile,
  * UpdatesToastState,
  * UploadingAssets,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

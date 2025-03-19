@@ -1,7 +1,7 @@
 import { isURL } from '@sveltia/utils/string';
 
 /**
- * @import { AssetKind } from '$lib/typedefs/private';
+ * @import { AssetKind } from '$lib/types/private';
  */
 
 /**

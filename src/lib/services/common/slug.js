@@ -15,7 +15,7 @@ import { renameIfNeeded } from '$lib/services/utils/file';
  * EntryCollection,
  * FillSlugTemplateOptions,
  * NormalizedSiteConfig,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

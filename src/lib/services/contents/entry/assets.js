@@ -11,8 +11,8 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { Asset, Entry, EntryCollection } from '$lib/typedefs/private';
- * @import { FieldKeyPath } from '$lib/typedefs/public';
+ * @import { Asset, Entry, EntryCollection } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**

@@ -5,7 +5,7 @@ import { get, writable } from 'svelte/store';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { Preferences } from '$lib/typedefs/private';
+ * @import { Preferences } from '$lib/types/private';
  */
 
 const storageKey = 'sveltia-cms.prefs';

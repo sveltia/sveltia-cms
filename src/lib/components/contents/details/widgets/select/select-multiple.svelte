@@ -4,7 +4,7 @@
   import { updateListField } from '$lib/services/contents/draft/update';
 
   /**
-   * @import { SelectFieldSelectorProps } from '$lib/typedefs/private';
+   * @import { SelectFieldSelectorProps } from '$lib/types/private';
    */
 
   /**

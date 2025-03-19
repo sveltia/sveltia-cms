@@ -10,8 +10,8 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { ObjectField } from '$lib/typedefs/public';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { ObjectField } from '$lib/types/public';
    */
 
   /**

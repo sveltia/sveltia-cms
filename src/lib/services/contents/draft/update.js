@@ -14,8 +14,8 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, FlattenedEntryContent, LocaleCode } from '$lib/typedefs/private';
- * @import { FieldKeyPath, ListField } from '$lib/typedefs/public';
+ * @import { EntryDraft, FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import { FieldKeyPath, ListField } from '$lib/types/public';
  */
 
 /**

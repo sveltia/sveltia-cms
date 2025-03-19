@@ -21,7 +21,7 @@ import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/w
  * LocaleExpanderMap,
  * NormalizedCollection,
  * NormalizedCollectionFile,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  * @import {
  * CodeField,
  * DateTimeField,
@@ -35,7 +35,7 @@ import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/w
  * RelationField,
  * SelectField,
  * UuidField,
- * } from '$lib/typedefs/public';
+ * } from '$lib/types/public';
  */
 
 /**

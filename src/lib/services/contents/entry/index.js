@@ -13,8 +13,8 @@ import { getCollection } from '$lib/services/contents/collection';
  * LocaleCode,
  * NormalizedCollection,
  * NormalizedCollectionFile,
- * } from '$lib/typedefs/private';
- * @import { DateTimeField } from '$lib/typedefs/public';
+ * } from '$lib/types/private';
+ * @import { DateTimeField } from '$lib/types/public';
  */
 
 /**

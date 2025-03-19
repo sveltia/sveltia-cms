@@ -12,8 +12,8 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { EntryDraft, WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { KeyValueField } from '$lib/typedefs/public';
+   * @import { EntryDraft, WidgetPreviewProps } from '$lib/types/private';
+   * @import { KeyValueField } from '$lib/types/public';
    */
 
   /**

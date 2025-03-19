@@ -17,8 +17,8 @@
   } from '$lib/services/contents/widgets/date-time/helper';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { DateTimeField } from '$lib/typedefs/public';
+   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { DateTimeField } from '$lib/types/public';
    */
 
   /**

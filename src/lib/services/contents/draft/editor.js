@@ -15,8 +15,8 @@ import { getFieldConfig } from '$lib/services/contents/entry/fields';
  * LocaleCode,
  * LocaleContentMap,
  * SelectAssetsView,
- * } from '$lib/typedefs/private';
- * @import { FieldKeyPath, ObjectField, ListField } from '$lib/typedefs/public';
+ * } from '$lib/types/private';
+ * @import { FieldKeyPath, ObjectField, ListField } from '$lib/types/public';
  */
 
 /**

@@ -8,8 +8,8 @@
   import { untrack } from 'svelte';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { NumberField } from '$lib/typedefs/public';
+   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { NumberField } from '$lib/types/public';
    */
 
   /**

@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { getAssetKind } from '$lib/services/assets';
 
 /**
- * @import { Asset, BaseAssetListItem } from '$lib/typedefs/private';
+ * @import { Asset, BaseAssetListItem } from '$lib/types/private';
  */
 
 /**

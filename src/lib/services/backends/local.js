@@ -26,7 +26,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
  * RepositoryInfo,
  * SignInOptions,
  * User,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 const backendName = 'local';

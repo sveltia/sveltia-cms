@@ -9,7 +9,7 @@ import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/f
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { Entry, NormalizedCollectionFile } from '$lib/typedefs/private';
+ * @import { Entry, NormalizedCollectionFile } from '$lib/types/private';
  */
 
 /**

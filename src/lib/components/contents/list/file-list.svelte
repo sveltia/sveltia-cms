@@ -9,7 +9,7 @@
   import { selectedCollection } from '$lib/services/contents/collection';
 
   /**
-   * @import { CollectionFile } from '$lib/typedefs/public';
+   * @import { CollectionFile } from '$lib/types/public';
    */
 </script>
 

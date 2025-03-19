@@ -5,8 +5,8 @@ import { customFileFormats } from '$lib/services/contents/file';
 import { siteConfig } from '$lib/services/config';
 
 /**
- * @import { FileConfig, LocaleCode, RawEntryContent } from '$lib/typedefs/private';
- * @import { JsonFormatOptions, YamlFormatOptions } from '$lib/typedefs/public';
+ * @import { FileConfig, LocaleCode, RawEntryContent } from '$lib/types/private';
+ * @import { JsonFormatOptions, YamlFormatOptions } from '$lib/types/public';
  */
 
 /**

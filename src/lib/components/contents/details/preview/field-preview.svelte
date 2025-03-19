@@ -6,8 +6,8 @@
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
-   * @import { LocaleCode } from '$lib/typedefs/private';
-   * @import { Field, FieldKeyPath, RelationField, SelectField } from '$lib/typedefs/public';
+   * @import { LocaleCode } from '$lib/types/private';
+   * @import { Field, FieldKeyPath, RelationField, SelectField } from '$lib/types/public';
    */
 
   /**

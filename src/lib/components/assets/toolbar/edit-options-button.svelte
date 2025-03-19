@@ -14,7 +14,7 @@
   import { prefs } from '$lib/services/user/prefs';
 
   /**
-   * @import { Asset, AssetDetails } from '$lib/typedefs/private';
+   * @import { Asset, AssetDetails } from '$lib/types/private';
    */
 
   /**

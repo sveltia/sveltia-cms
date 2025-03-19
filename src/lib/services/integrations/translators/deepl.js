@@ -1,5 +1,5 @@
 /**
- * @import { TranslationService } from '$lib/typedefs/private';
+ * @import { TranslationService } from '$lib/types/private';
  */
 
 const serviceId = 'deepl';

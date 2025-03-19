@@ -8,7 +8,7 @@ import { user } from '$lib/services/user';
  * FileChange,
  * NormalizedSiteConfig,
  * User,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

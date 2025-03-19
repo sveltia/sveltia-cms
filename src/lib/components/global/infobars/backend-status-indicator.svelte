@@ -6,7 +6,7 @@
   import { backend } from '$lib/services/backends';
 
   /**
-   * @import { BackendServiceStatus } from '$lib/typedefs/private';
+   * @import { BackendServiceStatus } from '$lib/types/private';
    */
 
   const interval = 5 * 60 * 1000; // 5 minutes

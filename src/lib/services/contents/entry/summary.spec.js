@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 /**
- * @import { Entry, LocalizedEntry, NormalizedCollection } from '$lib/typedefs/private';
+ * @import { Entry, LocalizedEntry, NormalizedCollection } from '$lib/types/private';
  */
 
 describe('Test getEntrySummary()', () => {

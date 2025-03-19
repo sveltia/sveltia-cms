@@ -4,7 +4,7 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { Asset, Entry } from '$lib/typedefs/private';
+   * @import { Asset, Entry } from '$lib/types/private';
    */
 
   /**

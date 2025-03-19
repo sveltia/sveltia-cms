@@ -5,7 +5,7 @@
  * RichTextEditorButtonName,
  * RichTextEditorComponentName,
  * RichTextEditorMode,
- * } from '$lib/typedefs/public';
+ * } from '$lib/types/public';
  */
 
 /**

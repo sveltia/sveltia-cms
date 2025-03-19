@@ -30,8 +30,8 @@
    * EntryDraft,
    * SelectedAsset,
    * WidgetEditorProps,
-   * } from '$lib/typedefs/private';
-   * @import { FileField, ImageField } from '$lib/typedefs/public';
+   * } from '$lib/types/private';
+   * @import { FileField, ImageField } from '$lib/types/public';
    */
 
   /**

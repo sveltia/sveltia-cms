@@ -21,7 +21,7 @@
    * ExternalAsset,
    * MediaLibraryService,
    * SelectedAsset,
-   * } from '$lib/typedefs/private';
+   * } from '$lib/types/private';
    */
 
   /**

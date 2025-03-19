@@ -14,7 +14,7 @@
    * EntryCollection,
    * NormalizedCollection,
    * NormalizedCollectionFile,
-   * } from '$lib/typedefs/private';.
+   * } from '$lib/types/private';.
    */
 
   /**

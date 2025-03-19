@@ -12,8 +12,8 @@ import { getI18nConfig } from '$lib/services/contents/i18n';
  * EntryCollection,
  * FileCollection,
  * NormalizedCollection,
- * } from '$lib/typedefs/private';
- * @import { Collection, CollectionFile, FieldKeyPath } from '$lib/typedefs/public';
+ * } from '$lib/types/private';
+ * @import { Collection, CollectionFile, FieldKeyPath } from '$lib/types/public';
  */
 
 /**

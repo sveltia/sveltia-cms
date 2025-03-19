@@ -14,7 +14,7 @@ import { createProxy } from '$lib/services/contents/draft/create';
  * EntryDraftBackup,
  * LocaleContentMap,
  * LocaleSlugMap,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

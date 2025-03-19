@@ -1,8 +1,8 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
 /**
- * @import { LocaleCode } from '$lib/typedefs/private';
- * @import { HiddenField } from '$lib/typedefs/public';
+ * @import { LocaleCode } from '$lib/types/private';
+ * @import { HiddenField } from '$lib/types/public';
  */
 
 /**

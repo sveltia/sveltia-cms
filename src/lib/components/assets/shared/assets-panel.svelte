@@ -10,7 +10,7 @@
   import { normalize } from '$lib/services/search';
 
   /**
-   * @import { Asset, ViewType } from '$lib/typedefs/private';
+   * @import { Asset, ViewType } from '$lib/types/private';
    */
 
   /**

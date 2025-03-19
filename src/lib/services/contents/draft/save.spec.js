@@ -7,8 +7,8 @@ import { copyProperty, getEntryAssetFolderPaths } from '$lib/services/contents/d
  * FlattenedEntryContent,
  * NormalizedCollection,
  * NormalizedI18nConfig,
- * } from '$lib/typedefs/private';
- * @import { Field, FileFormat } from '$lib/typedefs/public';
+ * } from '$lib/types/private';
+ * @import { Field, FileFormat } from '$lib/types/public';
  */
 
 describe('Test getEntryAssetFolderPaths()', () => {

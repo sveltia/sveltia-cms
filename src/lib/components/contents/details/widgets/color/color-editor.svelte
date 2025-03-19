@@ -10,8 +10,8 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { ColorField } from '$lib/typedefs/public';
+   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { ColorField } from '$lib/types/public';
    */
 
   /**

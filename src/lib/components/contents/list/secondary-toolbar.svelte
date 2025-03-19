@@ -16,7 +16,7 @@
   } from '$lib/services/contents/collection/view';
 
   /**
-   * @import { EntryCollection } from '$lib/typedefs/private';
+   * @import { EntryCollection } from '$lib/types/private';
    */
 
   const entryCollection = $derived(

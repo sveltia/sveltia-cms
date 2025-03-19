@@ -10,8 +10,8 @@
   import SelectSingle from '$lib/components/contents/details/widgets/select/select-single.svelte';
 
   /**
-   * @import { SelectFieldSelectorOption, WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { SelectField } from '$lib/typedefs/public';
+   * @import { SelectFieldSelectorOption, WidgetEditorProps } from '$lib/types/private';
+   * @import { SelectField } from '$lib/types/public';
    */
 
   /**

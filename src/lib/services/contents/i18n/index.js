@@ -4,13 +4,8 @@ import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 
 /**
- * @import { LocaleCode, NormalizedI18nConfig, NormalizedSiteConfig } from '$lib/typedefs/private';
- * @import {
- * Collection,
- * CollectionFile,
- * I18nOptions,
- * StandardLocaleCode,
- * } from '$lib/typedefs/public';
+ * @import { LocaleCode, NormalizedI18nConfig, NormalizedSiteConfig } from '$lib/types/private';
+ * @import { Collection, CollectionFile, I18nOptions, StandardLocaleCode } from '$lib/types/public';
  */
 
 /**

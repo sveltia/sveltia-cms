@@ -14,7 +14,7 @@
   import { formatDuration } from '$lib/services/utils/media';
 
   /**
-   * @import { Asset, AssetDetails } from '$lib/typedefs/private';
+   * @import { Asset, AssetDetails } from '$lib/types/private';
    */
 
   /**

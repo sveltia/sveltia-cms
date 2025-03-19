@@ -5,7 +5,7 @@ import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
 /**
- * @import { ExternalAsset, MediaLibraryService } from '$lib/typedefs/private';
+ * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
  */
 
 /**

@@ -26,7 +26,7 @@ import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/m
  * NormalizedCollection,
  * NormalizedCollectionFile,
  * UploadingAssets,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 export const mediaKinds = ['image', 'video', 'audio'];

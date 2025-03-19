@@ -6,19 +6,8 @@ import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relatio
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 
 /**
- * @import {
- * Entry,
- * FileCollection,
- * FlattenedEntryContent,
- * LocaleCode,
- * } from '$lib/typedefs/private';
- * @import {
- * Field,
- * FieldKeyPath,
- * ListField,
- * RelationField,
- * SelectField,
- * } from '$lib/typedefs/public';
+ * @import { Entry, FileCollection, FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import { Field, FieldKeyPath, ListField, RelationField, SelectField } from '$lib/types/public';
  */
 
 /**

@@ -5,7 +5,7 @@
   import { saveAssets } from '$lib/services/assets/data';
 
   /**
-   * @import { Asset } from '$lib/typedefs/private';
+   * @import { Asset } from '$lib/types/private';
    */
 
   const asset = $derived($editingAsset);

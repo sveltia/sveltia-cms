@@ -5,7 +5,7 @@
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
 
   /**
-   * @import { Asset, AssetKind, SelectedAsset } from '$lib/typedefs/private';
+   * @import { Asset, AssetKind, SelectedAsset } from '$lib/types/private';
    */
 
   /**

@@ -4,8 +4,8 @@ import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, LocaleCode } from '$lib/typedefs/private';
- * @import { FieldKeyPath, KeyValueField } from '$lib/typedefs/public';
+ * @import { EntryDraft, LocaleCode } from '$lib/types/private';
+ * @import { FieldKeyPath, KeyValueField } from '$lib/types/public';
  */
 
 /**

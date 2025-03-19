@@ -5,7 +5,7 @@ import local from '$lib/services/backends/local';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
- * @import { BackendService } from '$lib/typedefs/private';
+ * @import { BackendService } from '$lib/types/private';
  */
 
 /**

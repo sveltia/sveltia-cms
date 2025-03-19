@@ -1,7 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 /**
- * @import { CodeField, FieldKeyPath } from '$lib/typedefs/public';
+ * @import { CodeField, FieldKeyPath } from '$lib/types/public';
  */
 
 /**

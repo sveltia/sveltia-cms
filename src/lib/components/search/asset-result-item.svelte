@@ -6,7 +6,7 @@
   import { getFolderLabelByPath } from '$lib/services/assets/view';
 
   /**
-   * @import { Asset } from '$lib/typedefs/private';
+   * @import { Asset } from '$lib/types/private';
    */
 
   /**

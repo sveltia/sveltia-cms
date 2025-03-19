@@ -7,8 +7,8 @@
   import { editors } from '$lib/components/contents/details/widgets';
 
   /**
-   * @import { LocaleCode } from '$lib/typedefs/private';
-   * @import { Field, FieldKeyPath } from '$lib/typedefs/public';
+   * @import { LocaleCode } from '$lib/types/private';
+   * @import { Field, FieldKeyPath } from '$lib/types/public';
    */
 
   /**

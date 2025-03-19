@@ -8,7 +8,7 @@
 
   /**
    * @import { Snippet } from 'svelte';
-   * @import { ViewType } from '$lib/typedefs/private';
+   * @import { ViewType } from '$lib/types/private';
    */
 
   /**

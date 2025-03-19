@@ -4,8 +4,8 @@
 -->
 <script>
   /**
-   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { StringField } from '$lib/typedefs/public';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { StringField } from '$lib/types/public';
    */
 
   /**

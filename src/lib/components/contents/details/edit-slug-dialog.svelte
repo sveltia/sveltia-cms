@@ -7,7 +7,7 @@
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
-   * @import { EntryDraft, LocaleCode } from '$lib/typedefs/private';
+   * @import { EntryDraft, LocaleCode } from '$lib/types/private';
    */
 
   /**

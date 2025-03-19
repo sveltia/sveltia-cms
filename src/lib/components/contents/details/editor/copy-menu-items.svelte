@@ -7,8 +7,8 @@
   import { translator } from '$lib/services/integrations/translators';
 
   /**
-   * @import { LocaleCode } from '$lib/typedefs/private';
-   * @import { FieldKeyPath } from '$lib/typedefs/public';
+   * @import { LocaleCode } from '$lib/types/private';
+   * @import { FieldKeyPath } from '$lib/types/public';
    */
 
   /**

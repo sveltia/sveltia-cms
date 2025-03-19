@@ -3,7 +3,7 @@ import { getCollection } from '$lib/services/contents/collection';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { CollectionEntryFolder, Entry, EntryCollection } from '$lib/typedefs/private';
+ * @import { CollectionEntryFolder, Entry, EntryCollection } from '$lib/types/private';
  */
 
 /**

@@ -2,8 +2,8 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
 
 /**
- * @import { DateTimeFieldNormalizedProps } from '$lib/typedefs/private';
- * @import { DateTimeField } from '$lib/typedefs/public';
+ * @import { DateTimeFieldNormalizedProps } from '$lib/types/private';
+ * @import { DateTimeField } from '$lib/types/public';
  */
 
 /**

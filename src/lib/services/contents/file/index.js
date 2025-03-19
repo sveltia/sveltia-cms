@@ -2,8 +2,8 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
 /**
- * @import { CustomFileFormat, FileConfig, NormalizedI18nConfig } from '$lib/typedefs/private';
- * @import { Collection, CollectionFile, FileExtension, FileFormat } from '$lib/typedefs/public';
+ * @import { CustomFileFormat, FileConfig, NormalizedI18nConfig } from '$lib/types/private';
+ * @import { Collection, CollectionFile, FileExtension, FileFormat } from '$lib/types/public';
  */
 
 /**

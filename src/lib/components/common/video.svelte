@@ -2,7 +2,7 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
 
   /**
-   * @import { Asset } from '$lib/typedefs/private';
+   * @import { Asset } from '$lib/types/private';
    */
 
   /**

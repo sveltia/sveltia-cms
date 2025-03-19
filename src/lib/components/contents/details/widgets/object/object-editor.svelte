@@ -22,8 +22,8 @@
   import { formatSummary } from '$lib/services/contents/widgets/object/helper';
 
   /**
-   * @import { EntryDraft, WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { ObjectField } from '$lib/typedefs/public';
+   * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
+   * @import { ObjectField } from '$lib/types/public';
    */
 
   /**

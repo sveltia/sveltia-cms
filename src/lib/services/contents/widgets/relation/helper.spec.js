@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
 /**
- * @import { Entry, LocalizedEntry } from '$lib/typedefs/private';
+ * @import { Entry, LocalizedEntry } from '$lib/types/private';
  */
 
 vi.mock('$lib/services/config');

@@ -7,8 +7,8 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { BooleanField } from '$lib/typedefs/public';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { BooleanField } from '$lib/types/public';
    */
 
   /**

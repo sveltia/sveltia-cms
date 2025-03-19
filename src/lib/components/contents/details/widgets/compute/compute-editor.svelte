@@ -11,8 +11,8 @@
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { ComputeField } from '$lib/typedefs/public';
+   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { ComputeField } from '$lib/types/public';
    */
 
   /**

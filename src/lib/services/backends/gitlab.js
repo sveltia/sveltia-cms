@@ -32,7 +32,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  * RepositoryInfo,
  * SignInOptions,
  * User,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 const backendName = 'gitlab';

@@ -11,7 +11,7 @@
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
 
   /**
-   * @import { Entry, EntryCollection } from '$lib/typedefs/private';
+   * @import { Entry, EntryCollection } from '$lib/types/private';
    */
 
   const collection = $derived(/** @type {EntryCollection | undefined} */ ($selectedCollection));

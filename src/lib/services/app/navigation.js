@@ -5,7 +5,7 @@ import { showContentOverlay } from '$lib/services/contents/draft/editor';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
- * @import { NormalizedSiteConfig } from '$lib/typedefs/private';
+ * @import { NormalizedSiteConfig } from '$lib/types/private';
  */
 
 /**

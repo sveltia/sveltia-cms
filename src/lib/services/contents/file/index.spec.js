@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { getFileConfig } from '$lib/services/contents/file';
 
 /**
- * @import { NormalizedI18nConfig } from '$lib/typedefs/private';
+ * @import { NormalizedI18nConfig } from '$lib/types/private';
  */
 
 describe('Test getFileConfig()', () => {

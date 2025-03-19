@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { defaultI18nConfig, getCanonicalLocale, getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
- * @import { Collection, CollectionFile } from '$lib/typedefs/public';
+ * @import { Collection, CollectionFile } from '$lib/types/public';
  */
 
 vi.mock('$lib/services/config');

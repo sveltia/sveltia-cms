@@ -7,8 +7,8 @@
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { NumberField } from '$lib/typedefs/public';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { NumberField } from '$lib/types/public';
    */
 
   /**

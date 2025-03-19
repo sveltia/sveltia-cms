@@ -7,8 +7,8 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { CodeField } from '$lib/typedefs/public';
+   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { CodeField } from '$lib/types/public';
    */
 
   /**

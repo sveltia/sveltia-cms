@@ -5,7 +5,7 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { AssetListView, EntryListView, SortOrder } from '$lib/typedefs/private';
+   * @import { AssetListView, EntryListView, SortOrder } from '$lib/types/private';
    */
 
   /**

@@ -8,7 +8,7 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * FileCollection,
  * NormalizedCollection,
  * NormalizedCollectionFile,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  */
 
 /**

@@ -2,8 +2,8 @@ import { isObjectArray } from '@sveltia/utils/array';
 import { escapeRegExp } from '@sveltia/utils/string';
 
 /**
- * @import { FlattenedEntryContent } from '$lib/typedefs/private';
- * @import { FieldKeyPath, SelectField } from '$lib/typedefs/public';
+ * @import { FlattenedEntryContent } from '$lib/types/private';
+ * @import { FieldKeyPath, SelectField } from '$lib/types/public';
  */
 
 /**

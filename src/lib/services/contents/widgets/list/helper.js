@@ -2,8 +2,8 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, LocaleCode } from '$lib/typedefs/private';
- * @import { Field, FieldKeyPath, ListField } from '$lib/typedefs/public';
+ * @import { FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import { Field, FieldKeyPath, ListField } from '$lib/types/public';
  */
 
 /**

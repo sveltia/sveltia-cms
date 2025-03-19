@@ -27,8 +27,8 @@ import { prefs } from '$lib/services/user/prefs';
  * NormalizedCollection,
  * SortingConditions,
  * SortOrder,
- * } from '$lib/typedefs/private';
- * @import { CustomSortableFields, DateTimeField, FieldKeyPath } from '$lib/typedefs/public';
+ * } from '$lib/types/private';
+ * @import { CustomSortableFields, DateTimeField, FieldKeyPath } from '$lib/types/public';
  */
 
 /**

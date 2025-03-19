@@ -49,7 +49,7 @@ import {
  * RawEntryContent,
  * RepositoryFileMetadata,
  * User,
- * } from '$lib/typedefs/private';
+ * } from '$lib/types/private';
  * @import {
  * Field,
  * FieldKeyPath,
@@ -57,7 +57,7 @@ import {
  * ObjectField,
  * RelationField,
  * SelectField,
- * } from '$lib/typedefs/public';
+ * } from '$lib/types/public';
  */
 
 /**

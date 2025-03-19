@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @import { ListField, ObjectField } from '$lib/typedefs/public';
+   * @import { ListField, ObjectField } from '$lib/types/public';
    */
 
   /**

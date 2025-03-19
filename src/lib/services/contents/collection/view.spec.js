@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { getSortableFields } from '$lib/services/contents/collection/view';
 
 /**
- * @import { EntryCollection } from '$lib/typedefs/private';
+ * @import { EntryCollection } from '$lib/types/private';
  */
 
 vi.mock('$lib/services/config');

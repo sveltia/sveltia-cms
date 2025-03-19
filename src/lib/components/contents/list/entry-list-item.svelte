@@ -8,7 +8,7 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
   /**
-   * @import { Entry, EntryCollection, ViewType } from '$lib/typedefs/private';
+   * @import { Entry, EntryCollection, ViewType } from '$lib/types/private';
    */
 
   /**

@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @import { SelectFieldSelectorProps } from '$lib/typedefs/private';
+   * @import { SelectFieldSelectorProps } from '$lib/types/private';
    */
 
   /**

@@ -5,8 +5,8 @@
 -->
 <script>
   /**
-   * @import { WidgetPreviewProps } from '$lib/typedefs/private';
-   * @import { ColorField } from '$lib/typedefs/public';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { ColorField } from '$lib/types/public';
    */
 
   /**

@@ -15,7 +15,7 @@ import App from './components/app.svelte';
  * FileFormatter,
  * FileParser,
  * SiteConfig,
- * } from './typedefs/public';
+ * } from './types/public';
  */
 
 const unsupportedFuncNames = [

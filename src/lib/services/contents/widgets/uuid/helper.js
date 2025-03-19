@@ -1,7 +1,7 @@
 import { generateRandomId, generateUUID } from '@sveltia/utils/crypto';
 
 /**
- * @import { UuidField } from '$lib/typedefs/public';
+ * @import { UuidField } from '$lib/types/public';
  */
 
 /**

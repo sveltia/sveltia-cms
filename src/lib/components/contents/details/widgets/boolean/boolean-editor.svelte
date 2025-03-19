@@ -7,8 +7,8 @@
   import { Switch } from '@sveltia/ui';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { BooleanField } from '$lib/typedefs/public';
+   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { BooleanField } from '$lib/types/public';
    */
 
   /**

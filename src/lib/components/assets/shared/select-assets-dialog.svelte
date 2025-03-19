@@ -18,7 +18,7 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { AssetKind, Entry, SelectedAsset, SelectAssetsView } from '$lib/typedefs/private';
+   * @import { AssetKind, Entry, SelectedAsset, SelectAssetsView } from '$lib/types/private';
    */
 
   /**

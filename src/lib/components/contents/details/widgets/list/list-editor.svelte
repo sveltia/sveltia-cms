@@ -31,8 +31,8 @@
   import { formatSummary } from '$lib/services/contents/widgets/list/helper';
 
   /**
-   * @import { EntryDraft, WidgetEditorProps } from '$lib/typedefs/private';
-   * @import { ListField } from '$lib/typedefs/public';
+   * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
+   * @import { ListField } from '$lib/types/public';
    */
 
   /**
