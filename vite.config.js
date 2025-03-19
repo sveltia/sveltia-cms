@@ -20,6 +20,7 @@ const copyPackageFiles = () => ({
 
       // Remove unnecessary properties as we only publish compiled bundles
       delete packageJson.dependencies;
+      delete packageJson.devDependencies;
       delete packageJson.scripts;
 
       // Add properties for distribution; paths are relative to `package`
