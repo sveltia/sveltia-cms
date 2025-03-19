@@ -73,16 +73,6 @@
     "smol-toml": "^1.3.1",
     "yaml": "^2.7.0"
   },
-  "files": [
-    "dist"
-  ],
-  "main": "./dist/sveltia-cms.mjs",
-  "module": "./dist/sveltia-cms.mjs",
-  "exports": {
-    ".": {
-      "import": "./dist/sveltia-cms.mjs"
-    }
-  },
   "pnpm": {
     "overrides": {
       "esbuild@<=0.24.2": ">=0.25.0"
