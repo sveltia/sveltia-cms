@@ -1,14 +1,29 @@
 import { isURL } from '@sveltia/utils/string';
+import { getUnpkgURL } from '$lib/services/app/dependencies';
 
 /**
  * @import { AssetKind } from '$lib/types/private';
  */
 
 /**
- * PDF.js distribution URL. We don’t bundle this because most users probably don’t have PDF files.
+ * PDF.js distribution URL. We don’t bundle the library due to the large size and multiple files.
+ * However, having it as a dependency in `package.json` allows us to include the latest version in
+ * the UNPKG URL, making it faster to load the script without waiting for a redirect.
  * @see https://github.com/mozilla/pdf.js
  */
-const pdfjsDistURL = 'https://unpkg.com/pdfjs-dist';
+const pdfjsDistURL = getUnpkgURL('pdfjs-dist');
+const pdfjsModuleURL = `${pdfjsDistURL}/build/pdf.min.mjs`;
+const pdfjsWorkerURL = `${pdfjsDistURL}/build/pdf.worker.min.mjs`;
+
+const pdfjsGetDocOptions = {
+  isEvalSupported: false,
+  disableAutoFetch: true,
+  cMapUrl: `${pdfjsDistURL}/cmaps/`,
+  iccUrl: `${pdfjsDistURL}/iccs/`,
+  standardFontDataUrl: `${pdfjsDistURL}/standard_fonts/`,
+  wasmUrl: `${pdfjsDistURL}/wasm/`,
+};
+
 /**
  * Placeholder for the PDF.js module.
  * @type {{ getDocument: Function, GlobalWorkerOptions: { workerSrc: string } }}
@@ -196,29 +211,19 @@ export const renderPDF = async (
   // Lazily load the PDF.js library
   if (!pdfjs) {
     try {
-      // eslint-disable-next-line jsdoc/no-bad-blocks
-      pdfjs = await import(/* @vite-ignore */ `${pdfjsDistURL}/build/pdf.min.mjs`);
-      pdfjs.GlobalWorkerOptions.workerSrc = `${pdfjsDistURL}/build/pdf.worker.min.mjs`;
+      pdfjs = await import(pdfjsModuleURL);
+      pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerURL;
     } catch {
       throw new Error('Failed to load PDF.js library');
     }
   }
 
-  const blobURL = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
   const canvas = new OffscreenCanvas(512, 512);
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
 
   try {
-    const pdfDocument = await pdfjs.getDocument({
-      url: blobURL,
-      isEvalSupported: false,
-      disableAutoFetch: true,
-      cMapUrl: `${pdfjsDistURL}/cmaps/`,
-      iccUrl: `${pdfjsDistURL}/iccs/`,
-      standardFontDataUrl: `${pdfjsDistURL}/standard_fonts/`,
-      wasmUrl: `${pdfjsDistURL}/wasm/`,
-    }).promise;
-
+    const pdfDocument = await pdfjs.getDocument({ ...pdfjsGetDocOptions, url }).promise;
     const pdfPage = await pdfDocument.getPage(1);
     const viewport = pdfPage.getViewport({ scale: 1 });
     const { width, height } = viewport;
@@ -229,7 +234,7 @@ export const renderPDF = async (
       viewport: scale === 1 ? viewport : pdfPage.getViewport({ scale }),
     }).promise;
 
-    URL.revokeObjectURL(blobURL);
+    URL.revokeObjectURL(url);
   } catch {
     throw new Error('Failed to render PDF');
   }
