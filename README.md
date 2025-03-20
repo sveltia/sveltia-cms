@@ -392,6 +392,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The built-in `image` component allows users to add, edit or remove a link on an image.[^171]
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
   - Code in a code block in the editor can be copied as expected.[^165]
+  - Language-annotated code block doesn’t report unsaved changes.[^189]
   - Line breaks are rendered as line breaks in the Preview Pane according to GitHub Flavored Markdown (GFM).
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
@@ -1539,3 +1540,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^187]: Netlify/Decap CMS [#1244](https://github.com/decaporg/decap-cms/issues/1244)
 
 [^188]: Netlify/Decap CMS [#7415](https://github.com/decaporg/decap-cms/issues/7415), [#7421](https://github.com/decaporg/decap-cms/issues/7421)
+
+[^189]: Netlify/Decap CMS [#7431](https://github.com/decaporg/decap-cms/issues/7431)
