@@ -506,6 +506,7 @@ However, 100% feature parity is not planned, and some features are still missing
   - Markdown widget: `editorComponents`
   - Number widget: `valueType`
   - Relation widget: `displayFields`, `searchFields`, `valueField`
+  - Note: Some other camel case options are not deprecated.
 - The deprecated Date widget: It has already been removed from Decap CMS 3.0. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
 - Some date/time format tokens: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with Day.js, and Sveltia CMS will follow suit soon. Since [Day.js tokens](https://day.js.org/docs/en/display/format) are not 100% compatible with [Moment.js tokens](https://momentjs.com/docs/#/displaying/format/), this could be a breaking change in certain cases.
 - The theme and keymap inline settings of the Code widget, along with support for some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/). Prism may be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575) in the future.
@@ -527,7 +528,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Custom widgets and custom editor components](https://decapcms.org/docs/custom-widgets/)
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
-- Type declaration for `CMS.init()` and other methods ([#346](https://github.com/sveltia/sveltia-cms/issues/346))
+- TypeScript support for `CMS.init()` and other methods ([#346](https://github.com/sveltia/sveltia-cms/issues/346))
 
 Due to the complexity, the following features will be added after the 1.0 release. Netlify/Decap CMS has a number of open issues with the collaboration and beta features — we want to implement them the right way.
 
