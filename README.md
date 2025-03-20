@@ -118,7 +118,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - We even proactively adopt changes suggested in their [pull requests](https://github.com/decaporg/decap-cms/pulls) that may sit in the review queue for a long time
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 175+ of them, or 360+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 175+ of them, or 365+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 200 by GA; 300, or 600 including duplicates, in the future (yes, you read that right)
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions)
   - Most of the bugs, including annoying crashes, are already solved
@@ -513,7 +513,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - Support for an absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
-- Any other undocumented options/features.
+- Any other undocumented options/features. Exceptions apply.
 
 ### Current limitations
 
