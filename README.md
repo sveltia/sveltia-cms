@@ -330,7 +330,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Preview Pane comes with a minimal default style.[^168] It looks nice without a custom preview style or template.
 - For better performance, the Preview Pane doesn’t use an `<iframe>`.[^179]
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
-- Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed. This is equivalent to the misleading visual editing feature introduced in [Decap 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but it’s enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option.
+- Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed. This is equivalent to the (misleading) visual editing feature introduced in [Decap 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option. Also, image previews are not broken in Sveltia CMS.[^188]
 - The Preview Pane doesn’t cause a scrolling issue.[^136]
 - The Preview Pane doesn’t crash with a Minified React error.[^186]
 - Provides better scroll synchronization between the panes when editing or previewing an entry.[^92]
@@ -1304,7 +1304,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^70]: Netlify/Decap CMS [#6482](https://github.com/decaporg/decap-cms/issues/6482)
 
-[^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7000](https://github.com/decaporg/decap-cms/issues/7000), [#7001](https://github.com/decaporg/decap-cms/issues/7001), [#7152](https://github.com/decaporg/decap-cms/issues/7152), [#7220](https://github.com/decaporg/decap-cms/issues/7220), [#7283](https://github.com/decaporg/decap-cms/issues/7283), [#7316](https://github.com/decaporg/decap-cms/issues/7316)
+[^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7000](https://github.com/decaporg/decap-cms/issues/7000), [#7001](https://github.com/decaporg/decap-cms/issues/7001), [#7152](https://github.com/decaporg/decap-cms/issues/7152), [#7220](https://github.com/decaporg/decap-cms/issues/7220), [#7283](https://github.com/decaporg/decap-cms/issues/7283), [#7316](https://github.com/decaporg/decap-cms/issues/7316), [#7429](https://github.com/decaporg/decap-cms/issues/7429)
 
 [^72]: Netlify/Decap CMS [#7047](https://github.com/decaporg/decap-cms/issues/7047)
 
@@ -1537,3 +1537,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^186]: Netlify/Decap CMS [#3454](https://github.com/decaporg/decap-cms/issues/3454), [#3585](https://github.com/decaporg/decap-cms/issues/3585), [#3651](https://github.com/decaporg/decap-cms/issues/3651), [#3885](https://github.com/decaporg/decap-cms/issues/3885), [#3962](https://github.com/decaporg/decap-cms/issues/3962), [#4037](https://github.com/decaporg/decap-cms/issues/4037), [#4143](https://github.com/decaporg/decap-cms/issues/4143), [#6585](https://github.com/decaporg/decap-cms/issues/6585), [#6664](https://github.com/decaporg/decap-cms/issues/6664), [#6665](https://github.com/decaporg/decap-cms/issues/6665), [#6739](https://github.com/decaporg/decap-cms/issues/6739), [#7243](https://github.com/decaporg/decap-cms/issues/7243), [#7379](https://github.com/decaporg/decap-cms/issues/7379)
 
 [^187]: Netlify/Decap CMS [#1244](https://github.com/decaporg/decap-cms/issues/1244)
+
+[^188]: Netlify/Decap CMS [#7415](https://github.com/decaporg/decap-cms/issues/7415), [#7421](https://github.com/decaporg/decap-cms/issues/7421)
