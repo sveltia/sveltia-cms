@@ -1,5 +1,3 @@
-/* eslint-disable jsdoc/require-property */
-
 /**
  * @import {
  * Collection,

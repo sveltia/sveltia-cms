@@ -2,7 +2,6 @@ import { mount } from 'svelte';
 import { customFileFormats } from '$lib/services/contents/file';
 import App from './components/app.svelte';
 
-// Don’t use `$lib` in `from`, otherwise type declarations will not be exported
 /**
  * @import { ComponentType } from 'react';
  * @import {
@@ -16,6 +15,7 @@ import App from './components/app.svelte';
  * FileParser,
  * SiteConfig,
  * } from './types/public';
+ * // Don’t use `$lib` in `from` above, or type declarations will not be exported
  */
 
 const unsupportedFuncNames = [
@@ -48,11 +48,11 @@ const compatibilityURL = 'https://github.com/sveltia/sveltia-cms#compatibility';
 let initialized = false;
 
 /**
- * Initialize the CMS, optionally with the given configuration.
+ * Initialize the CMS, optionally with the given site configuration.
  * @param {object} [options] Options.
- * @param {SiteConfig} [options.config] Configuration to be merged with the default configuration.
+ * @param {SiteConfig} [options.config] Configuration to be merged with `config.yml`. Include
+ * `load_config_file: false` to prevent the configuration file from being loaded.
  * @see https://decapcms.org/docs/manual-initialization/
- * @see https://decapcms.org/docs/custom-mounting/
  */
 const init = async ({ config } = {}) => {
   if (initialized) {
@@ -63,7 +63,7 @@ const init = async ({ config } = {}) => {
 
   if (document.readyState === 'loading' && !document.querySelector('#nc-root')) {
     // A custom mount element (`<div id="nc-root">`) could appear after the CMS `<script>`, so just
-    // wait until the page content is loaded
+    // wait until the page content is loaded. https://decapcms.org/docs/custom-mounting/
     await new Promise((resolve) => {
       window.addEventListener('DOMContentLoaded', () => resolve(undefined), { once: true });
     });
@@ -77,10 +77,11 @@ const init = async ({ config } = {}) => {
 
 /**
  * Register a custom entry file format.
- * @param {string} name Format name.
+ * @param {string} name Format name. This should match the `format` option of a collection where the
+ * custom format will be used..
  * @param {string} extension File extension.
  * @param {{ fromFile?: FileParser, toFile?: FileFormatter }} methods Parser and/or formatter
- * methods.
+ * methods. Async functions can be used.
  * @see https://decapcms.org/docs/custom-formatters/
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
@@ -113,15 +114,15 @@ const registerEventListener = (eventListener) => {
 
 /**
  * Register a custom preview style.
- * @param {string} fileOrStyle File path or raw CSS string.
+ * @param {string} style File path or raw CSS string.
  * @param {object} [options] Options.
  * @param {boolean} [options.raw] Whether to use a CSS string.
  * @see https://decapcms.org/docs/customization/#registerpreviewstyle
  */
-const registerPreviewStyle = (fileOrStyle, { raw = false } = {}) => {
+const registerPreviewStyle = (style, { raw = false } = {}) => {
   // eslint-disable-next-line no-console
   console.error('Custom preview styles are not yet supported in Sveltia CMS.');
-  void fileOrStyle;
+  void style;
   void raw;
 };
 
