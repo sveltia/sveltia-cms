@@ -28,7 +28,6 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
@@ -42,7 +41,7 @@
         Object.values(validityMap ?? {}).some(({ valid }) => !valid),
     ),
   );
-  const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
+  const canPreview = $derived(collection?.editor?.preview ?? $siteConfig?.editor?.preview ?? true);
   const useDropDown = $derived(allLocales.length >= 5);
   const SelectComponent = $derived(useDropDown ? Select : SelectButtonGroup);
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);

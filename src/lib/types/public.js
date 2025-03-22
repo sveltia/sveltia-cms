@@ -626,7 +626,6 @@
  * @property {I18nOptions | boolean} [i18n] I18n options.
  * @property {string} [preview_path] Preview URL template.
  * @property {FieldKeyPath} [preview_path_date_field] Date field used for the preview URL template.
- * @property {EditorOptions} [editor] Editor view options.
  * @see https://decapcms.org/docs/collection-file/
  */
 

@@ -40,7 +40,6 @@
   /** @type {HTMLElement | undefined} */
   let rightPaneContentArea = $state();
 
-  const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
   const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
@@ -52,7 +51,7 @@
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );
-  const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
+  const canPreview = $derived(collection?.editor?.preview ?? $siteConfig?.editor?.preview ?? true);
   const paneStateKey = $derived(
     collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
   );

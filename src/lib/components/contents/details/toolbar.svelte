@@ -57,7 +57,6 @@
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
-  const showPreviewPane = $derived($siteConfig?.editor?.preview ?? true);
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const showSaveOptions = $derived(
     $backendName !== 'local' && typeof autoDeployEnabled === 'boolean',
@@ -66,7 +65,7 @@
   const collectionName = $derived(collection?.name);
   const collectionLabel = $derived(collection?.label || collectionName);
   const collectionLabelSingular = $derived(collection?.label_singular || collectionLabel);
-  const canPreview = $derived((collectionFile ?? collection)?.editor?.preview ?? showPreviewPane);
+  const canPreview = $derived(collection?.editor?.preview ?? $siteConfig?.editor?.preview ?? true);
   const modified = $derived(isNew || $entryDraftModified);
   const errorCount = $derived(
     Object.values($entryDraft?.validities ?? {})
