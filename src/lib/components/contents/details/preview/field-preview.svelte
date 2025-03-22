@@ -6,13 +6,13 @@
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
 
   /**
-   * @import { LocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode } from '$lib/types/private';
    * @import { Field, FieldKeyPath, RelationField, SelectField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {LocaleCode} locale Current pane’s locale.
+   * @property {InternalLocaleCode} locale Current pane’s locale.
    * @property {FieldKeyPath} keyPath Field key path.
    * @property {Field} fieldConfig Field configuration.
    */

@@ -2,11 +2,11 @@ import { describe, expect, test } from 'vitest';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 /**
- * @import { Entry, LocalizedEntry, NormalizedCollection } from '$lib/types/private';
+ * @import { Entry, InternalCollection, LocalizedEntry } from '$lib/types/private';
  */
 
 describe('Test getEntrySummary()', () => {
-  /** @type {NormalizedCollection} */
+  /** @type {InternalCollection} */
   const collection = {
     name: 'pages-tags',
     folder: 'content/tags',

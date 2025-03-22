@@ -6,7 +6,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { Entry, FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import { Entry, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
  */
 
@@ -35,7 +35,7 @@ const optionCacheMap = new Map();
 
 /**
  * Get options for a Relation field.
- * @param {LocaleCode} locale Current locale.
+ * @param {InternalLocaleCode} locale Current locale.
  * @param {RelationField} fieldConfig Field configuration.
  * @param {Entry[]} refEntries Referenced entries.
  * @returns {{ label: string, value: any }[]} Options.
@@ -238,7 +238,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
- * @param {LocaleCode} args.locale Locale.
+ * @param {InternalLocaleCode} args.locale Locale.
  * @returns {any | any[]} Resolved field value(s).
  * @todo Write tests for this.
  */

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { getFileConfig } from '$lib/services/contents/file';
 
 /**
- * @import { NormalizedI18nConfig } from '$lib/types/private';
+ * @import { InternalI18nOptions } from '$lib/types/private';
  */
 
 describe('Test getFileConfig()', () => {
@@ -34,7 +34,7 @@ describe('Test getFileConfig()', () => {
     fields: [],
   };
 
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nDisabled = {
     i18nEnabled: false,
     allLocales: ['_default'],
@@ -44,7 +44,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nSingleFile = {
     i18nEnabled: false,
     allLocales: ['en', 'fr'],
@@ -54,7 +54,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nMultiFile = {
     i18nEnabled: true,
     allLocales: ['en', 'fr'],
@@ -64,7 +64,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nMultiFolder = {
     i18nEnabled: true,
     allLocales: ['en', 'fr'],
@@ -74,7 +74,7 @@ describe('Test getFileConfig()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nRootMultiFolder = {
     i18nEnabled: true,
     allLocales: ['en', 'fr'],

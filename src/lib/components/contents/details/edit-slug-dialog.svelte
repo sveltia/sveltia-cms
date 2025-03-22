@@ -7,7 +7,7 @@
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
-   * @import { EntryDraft, LocaleCode } from '$lib/types/private';
+   * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
    */
 
   /**
@@ -27,9 +27,9 @@
 
   /** @type {string[]} */
   let otherSlugs = $state([]);
-  /** @type {Record<LocaleCode, string>} */
+  /** @type {Record<InternalLocaleCode, string>} */
   const updatedSlugs = $state({});
-  /** @type {Record<LocaleCode, false | 'empty' | 'duplicate'>} */
+  /** @type {Record<InternalLocaleCode, false | 'empty' | 'duplicate'>} */
   const validations = $state({});
 
   const componentId = $props.id();

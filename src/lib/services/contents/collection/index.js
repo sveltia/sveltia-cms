@@ -11,18 +11,18 @@ import { getI18nConfig } from '$lib/services/contents/i18n';
  * CollectionType,
  * EntryCollection,
  * FileCollection,
- * NormalizedCollection,
+ * InternalCollection,
  * } from '$lib/types/private';
  * @import { Collection, CollectionFile, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
- * @type {Writable<NormalizedCollection | undefined>}
+ * @type {Writable<InternalCollection | undefined>}
  */
 export const selectedCollection = writable();
 
 /**
- * @type {Map<string, NormalizedCollection | undefined>}
+ * @type {Map<string, InternalCollection | undefined>}
  */
 const collectionCacheMap = new Map();
 
@@ -60,7 +60,7 @@ const getThumbnailFieldNames = (rawCollection) => {
 /**
  * Get a collection by name.
  * @param {string} name Collection name.
- * @returns {NormalizedCollection | undefined} Collection, including some extra, normalized
+ * @returns {InternalCollection | undefined} Collection, including some extra, normalized
  * properties.
  */
 export const getCollection = (name) => {
@@ -100,7 +100,7 @@ export const getCollection = (name) => {
     _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
   };
 
-  /** @type {NormalizedCollection} */
+  /** @type {InternalCollection} */
   const collection = isEntryCollection
     ? /** @type {EntryCollection} */ ({
         ...collectionBase,

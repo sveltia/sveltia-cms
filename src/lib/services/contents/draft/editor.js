@@ -12,7 +12,7 @@ import { getFieldConfig } from '$lib/services/contents/entry/fields';
  * EntryEditorPane,
  * EntryEditorView,
  * FlattenedEntryContent,
- * LocaleCode,
+ * InternalLocaleCode,
  * LocaleContentMap,
  * SelectAssetsView,
  * } from '$lib/types/private';
@@ -39,7 +39,7 @@ export const translatorApiKeyDialogState = writable({ show: false, multiple: fal
  * status: 'info' | 'success' | 'error',
  * message: string | undefined,
  * count: number,
- * sourceLocale: LocaleCode | undefined,
+ * sourceLocale: InternalLocaleCode | undefined,
  * }>}
  */
 export const copyFromLocaleToast = writable({

@@ -23,8 +23,8 @@ import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/m
  * CollectionAssetFolder,
  * Entry,
  * EntryCollection,
- * NormalizedCollection,
- * NormalizedCollectionFile,
+ * InternalCollection,
+ * InternalCollectionFile,
  * UploadingAssets,
  * } from '$lib/types/private';
  */
@@ -282,7 +282,7 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) =>
 /**
  * Get a list of collections the given asset belongs to.
  * @param {Asset} asset Asset.
- * @returns {NormalizedCollection[]} Collections.
+ * @returns {InternalCollection[]} Collections.
  */
 export const getCollectionsByAsset = (asset) =>
   getAssetFoldersByPath(asset.path, { matchSubFolders: true })
@@ -295,8 +295,8 @@ export const getCollectionsByAsset = (asset) =>
  * @param {object} [options] Options.
  * @param {Entry} [options.entry] Associated entry to be used to help locate an asset from a
  * relative path. Can be `undefined` when editing a new draft.
- * @param {NormalizedCollection} [options.collection] Associated collection. Can be undefined, then
- * it will be automatically determined from the entry.
+ * @param {InternalCollection} [options.collection] Associated collection. Can be undefined, then it
+ * will be automatically determined from the entry.
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
@@ -313,8 +313,8 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
     /**
      * Find an asset.
-     * @param {NormalizedCollection | NormalizedCollectionFile} input Collection or single
-     * collection file.
+     * @param {InternalCollection | InternalCollectionFile} input Collection or single collection
+     * file.
      * @returns {Asset | undefined} Found asset.
      */
     const getAsset = ({ _i18n }) => {

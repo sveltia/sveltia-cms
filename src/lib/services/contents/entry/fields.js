@@ -6,7 +6,12 @@ import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relatio
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 
 /**
- * @import { Entry, FileCollection, FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * FileCollection,
+ * FlattenedEntryContent,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
  * @import { Field, FieldKeyPath, ListField, RelationField, SelectField } from '$lib/types/public';
  */
 
@@ -101,7 +106,7 @@ export const getFieldConfig = ({
  * option is `true`).
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
- * @param {LocaleCode} args.locale Current pane’s locale.
+ * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @returns {boolean} Result.
  */
 export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
@@ -114,7 +119,7 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
  * @param {string} [args.fileName] File name.
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
- * @param {LocaleCode} args.locale Locale.
+ * @param {InternalLocaleCode} args.locale Locale.
  * @param {string[]} [args.transformations] String transformations.
  * @returns {any | any[]} Resolved field value(s).
  */
@@ -181,7 +186,7 @@ export const getFieldDisplayValue = ({
  * Get an entry’s field value by locale and key.
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
- * @param {LocaleCode} args.locale Locale code.
+ * @param {InternalLocaleCode} args.locale Locale code.
  * @param {string} args.collectionName Name of a collection that the entry belongs to.
  * @param {FieldKeyPath | string} args.key Field key path or one of other entry metadata property
  * keys: `slug`, `commit_author` and `commit_date`.

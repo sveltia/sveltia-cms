@@ -21,7 +21,7 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
   /**
-   * @import { FileCollection, NormalizedCollection } from '$lib/types/private';
+   * @import { FileCollection, InternalCollection } from '$lib/types/private';
    */
 
   const routeRegex =
@@ -42,7 +42,7 @@
     }
 
     const { _collectionName, routeType, subPath } = match.groups;
-    /** @type {NormalizedCollection | undefined} */
+    /** @type {InternalCollection | undefined} */
     const collection = _collectionName ? getCollection(_collectionName) : undefined;
 
     if (!collection || collection.hide) {

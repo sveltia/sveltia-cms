@@ -7,7 +7,7 @@
   import { editors } from '$lib/components/contents/details/widgets';
 
   /**
-   * @import { LocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode } from '$lib/types/private';
    * @import { Field, FieldKeyPath } from '$lib/types/public';
    */
 
@@ -31,7 +31,7 @@
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
-  /** @type {LocaleCode} */
+  /** @type {InternalLocaleCode} */
   let locale = $state('');
   /** @type {FieldKeyPath} */
   let keyPath = $state('');

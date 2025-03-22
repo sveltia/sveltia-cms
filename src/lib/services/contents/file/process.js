@@ -13,7 +13,7 @@ import { getCollection } from '$lib/services/contents/collection';
  * Entry,
  * EntryCollection,
  * FileCollection,
- * LocaleCode,
+ * InternalLocaleCode,
  * } from '$lib/types/private';
  */
 
@@ -138,7 +138,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
   /** @type {string | undefined} */
   let subPath = undefined;
-  /** @type {LocaleCode | undefined} */
+  /** @type {InternalLocaleCode | undefined} */
   let locale = undefined;
 
   if (fileName) {

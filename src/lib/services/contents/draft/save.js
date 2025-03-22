@@ -43,7 +43,7 @@ import {
  * FileChange,
  * FillSlugTemplateOptions,
  * FlattenedEntryContent,
- * LocaleCode,
+ * InternalLocaleCode,
  * LocaleSlugMap,
  * LocalizedEntryMap,
  * RawEntryContent,
@@ -159,7 +159,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
  * and folder collections path.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {LocaleCode} args.locale Locale code.
+ * @param {InternalLocaleCode} args.locale Locale code.
  * @param {string} args.slug Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
  * @see https://decapcms.org/docs/i18n/
@@ -294,7 +294,7 @@ const createKeyPathList = (fields) => {
  * @param {object} args Arguments.
  * @param {string} args.key Property name.
  * @param {Field} [args.field] Associated field.
- * @param {LocaleCode} args.locale Locale code.
+ * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.unsortedMap Unsorted property map.
  * @param {FlattenedEntryContent} args.sortedMap Sorted property map.
  * @param {boolean} args.isTomlOutput Whether the output it TOML format.
@@ -353,7 +353,7 @@ export const copyProperty = ({
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
  * @param {Field[]} args.fields Field list of a collection or a file.
- * @param {LocaleCode} args.locale Locale code.
+ * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
  * @param {string} [args.canonicalSlugKey] Property name of a canonical slug.
  * @param {boolean} [args.isTomlOutput] Whether the output it TOML format.
@@ -429,7 +429,7 @@ const finalizeContent = ({
  * Serialize the content for the output.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {LocaleCode} args.locale Locale code.
+ * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.valueMap Original content.
  * @returns {RawEntryContent} Modified and unflattened content.
  */

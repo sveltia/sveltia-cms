@@ -16,11 +16,11 @@ import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/w
  * EntryDraft,
  * FileCollection,
  * FlattenedEntryContent,
- * LocaleCode,
+ * InternalCollection,
+ * InternalCollectionFile,
+ * InternalLocaleCode,
  * LocaleContentMap,
  * LocaleExpanderMap,
- * NormalizedCollection,
- * NormalizedCollectionFile,
  * } from '$lib/types/private';
  * @import {
  * CodeField,
@@ -121,7 +121,7 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
  * @param {Field[]} fields Field list of a collection.
- * @param {LocaleCode} locale Locale.
+ * @param {InternalLocaleCode} locale Locale.
  * @param {Record<string, string>} [dynamicValues] Dynamic default values.
  * @returns {FlattenedEntryContent} Flattened entry content for creating a new draft content or
  * adding a new list item.
@@ -372,8 +372,8 @@ export const createProxy = ({
 /**
  * Create an entry draft.
  * @param {object} args Arguments.
- * @param {NormalizedCollection} args.collection Collection that the entry belongs to.
- * @param {NormalizedCollectionFile} [args.collectionFile] Collection file. File collection only.
+ * @param {InternalCollection} args.collection Collection that the entry belongs to.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
  * @param {any} [args.originalEntry] Entry to be edited, or a partial {@link Entry} object.
  * @param {Record<string, string>} [args.dynamicValues] Dynamic default values for a new entry
  * passed through URL parameters.

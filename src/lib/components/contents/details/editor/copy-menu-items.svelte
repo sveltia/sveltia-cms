@@ -7,14 +7,14 @@
   import { translator } from '$lib/services/integrations/translators';
 
   /**
-   * @import { LocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode } from '$lib/types/private';
    * @import { FieldKeyPath } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {LocaleCode} locale Current pane’s locale.
-   * @property {LocaleCode[]} otherLocales Other locales.
+   * @property {InternalLocaleCode} locale Current pane’s locale.
+   * @property {InternalLocaleCode[]} otherLocales Other locales.
    * @property {FieldKeyPath} [keyPath] Field key path.
    * @property {boolean} [translate] Whether to translate the field.
    */

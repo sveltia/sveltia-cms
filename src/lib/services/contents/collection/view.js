@@ -24,7 +24,7 @@ import { prefs } from '$lib/services/user/prefs';
  * EntryListView,
  * FilteringConditions,
  * GroupingConditions,
- * NormalizedCollection,
+ * InternalCollection,
  * SortingConditions,
  * SortOrder,
  * } from '$lib/types/private';
@@ -53,7 +53,7 @@ const removeMarkdownChars = (str) => str.replace(/[_*`]+/g, '');
 /**
  * Sort the given entries.
  * @param {Entry[]} entries Entry list.
- * @param {NormalizedCollection} collection Collection that the entries belong to.
+ * @param {InternalCollection} collection Collection that the entries belong to.
  * @param {SortingConditions} [conditions] Sorting conditions.
  * @returns {Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
@@ -130,7 +130,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
 /**
  * Filter the given entries.
  * @param {Entry[]} entries Entry list.
- * @param {NormalizedCollection} collection Collection that the entries belong to.
+ * @param {InternalCollection} collection Collection that the entries belong to.
  * @param {FilteringConditions[]} filters One or more filtering conditions.
  * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
@@ -174,7 +174,7 @@ const filterEntries = (entries, collection, filters) => {
 /**
  * Group the given entries.
  * @param {Entry[]} entries Entry list.
- * @param {NormalizedCollection} collection Collection that the entries belong to.
+ * @param {InternalCollection} collection Collection that the entries belong to.
  * @param {GroupingConditions} [conditions] Grouping conditions.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
@@ -383,7 +383,7 @@ export const listedEntries = derived(
 export const entryGroups = derived(
   [listedEntries, currentView],
   ([_listedEntries, _currentView], set) => {
-    const collection = /** @type {NormalizedCollection} */ (get(selectedCollection));
+    const collection = /** @type {InternalCollection} */ (get(selectedCollection));
     /** @type {Entry[]} */
     let entries = [..._listedEntries];
 

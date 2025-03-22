@@ -2,7 +2,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { Field, FieldKeyPath, ListField } from '$lib/types/public';
  */
 
@@ -23,7 +23,7 @@ export const hasRootListField = (fields) =>
  * @param {string} [args.fileName] File name.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {FlattenedEntryContent} args.valueMap Entry content.
- * @param {LocaleCode} args.locale Locale code.
+ * @param {InternalLocaleCode} args.locale Locale code.
  * @param {string} [args.summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
  * @param {boolean} args.hasSingleSubField Whether the field has a single `field` instead of
  * multiple `fields`.

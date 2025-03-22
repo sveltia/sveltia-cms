@@ -17,7 +17,7 @@ import { allAssetFolders } from '$lib/services/assets';
  * @import {
  * CollectionAssetFolder,
  * CollectionEntryFolder,
- * NormalizedSiteConfig,
+ * InternalSiteConfig,
  * } from '$lib/types/private';
  */
 
@@ -33,7 +33,7 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  */
 export const devSiteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
 /**
- * @type {Writable<NormalizedSiteConfig | undefined>}
+ * @type {Writable<InternalSiteConfig | undefined>}
  */
 export const siteConfig = writable();
 /**
@@ -202,7 +202,7 @@ export const initSiteConfig = async (manualConfig) => {
 
     validate(tempConfig);
 
-    /** @type {NormalizedSiteConfig} */
+    /** @type {InternalSiteConfig} */
     const config = tempConfig;
 
     // Set the site URL for development or production. See also `/src/lib/components/app.svelte`

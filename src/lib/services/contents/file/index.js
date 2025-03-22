@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
 /**
- * @import { CustomFileFormat, FileConfig, NormalizedI18nConfig } from '$lib/types/private';
+ * @import { CustomFileFormat, FileConfig, InternalI18nOptions } from '$lib/types/private';
  * @import { Collection, CollectionFile, FileExtension, FileFormat } from '$lib/types/public';
  */
 
@@ -90,7 +90,7 @@ const detectFileFormat = ({ extension, format }) => {
  * @param {FileFormat} args.format File format.
  * @param {string} args.basePath Normalized `folder` collection option.
  * @param {string} [args.subPath] Normalized `path` collection option.
- * @param {NormalizedI18nConfig} args._i18n I18n configuration.
+ * @param {InternalI18nOptions} args._i18n I18n configuration.
  * @returns {RegExp} Regular expression.
  */
 const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
@@ -170,7 +170,7 @@ let yamlQuoteWarnedOnce = false;
  * @param {object} args Arguments.
  * @param {Collection} args.rawCollection Developer-defined collection.
  * @param {CollectionFile} [args.file] Developer-defined collection file.
- * @param {NormalizedI18nConfig} args._i18n I18n configuration.
+ * @param {InternalI18nOptions} args._i18n I18n configuration.
  * @returns {FileConfig} Entry file configuration.
  */
 export const getFileConfig = ({ rawCollection, file, _i18n }) => {

@@ -5,12 +5,12 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { LocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
-   * @property {LocaleCode} locale Current pane’s locale.
+   * @property {InternalLocaleCode} locale Current pane’s locale.
    */
 
   /** @type {Props} */

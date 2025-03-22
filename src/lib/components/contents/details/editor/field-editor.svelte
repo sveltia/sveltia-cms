@@ -19,7 +19,7 @@
   /**
    * @import { Component } from 'svelte';
    * @import { Writable } from 'svelte/store';
-   * @import { LocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode } from '$lib/types/private';
    * @import {
    * BooleanField,
    * Field,
@@ -35,7 +35,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {LocaleCode} locale Current pane’s locale.
+   * @property {InternalLocaleCode} locale Current pane’s locale.
    * @property {FieldKeyPath} keyPath Field key path.
    * @property {Field} fieldConfig Field configuration.
    */

@@ -14,7 +14,7 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, FlattenedEntryContent, LocaleCode } from '$lib/types/private';
+ * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, ListField } from '$lib/types/public';
  */
 
@@ -59,7 +59,7 @@ const getItemList = (obj, keyPath) => {
 
 /**
  * Update the value in a list field.
- * @param {LocaleCode} locale Target locale.
+ * @param {InternalLocaleCode} locale Target locale.
  * @param {FieldKeyPath} keyPath Dot-notated field name.
  * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) =>
  * void } manipulate A function to manipulate the list, which takes one object argument containing
@@ -136,7 +136,7 @@ export const copyDefaultLocaleValues = (content) => {
 
 /**
  * Enable or disable the given locale’s content output for the current entry draft.
- * @param {LocaleCode} locale Locale.
+ * @param {InternalLocaleCode} locale Locale.
  */
 export const toggleLocale = (locale) => {
   /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
@@ -174,8 +174,8 @@ export const toggleLocale = (locale) => {
 
 /**
  * Copy or translate field value(s) from another locale.
- * @param {LocaleCode} sourceLocale Source locale, e.g. `en`.
- * @param {LocaleCode} targetLocale Target locale, e.g. `ja`.
+ * @param {InternalLocaleCode} sourceLocale Source locale, e.g. `en`.
+ * @param {InternalLocaleCode} targetLocale Target locale, e.g. `ja`.
  * @param {object} [options] Options.
  * @param {FieldKeyPath} [options.keyPath] Flattened (dot-notated) object keys that will be used for
  * searching the source values. Omit this if copying all the fields. If the triggered widget is List
@@ -291,7 +291,8 @@ export const copyFromLocale = async (
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
- * @param {LocaleCode} [locale] Target locale, e.g. `ja`. Can be empty if reverting everything.
+ * @param {InternalLocaleCode} [locale] Target locale, e.g. `ja`. Can be empty if reverting
+ * everything.
  * @param {FieldKeyPath} [keyPath] Flattened (dot-notated) object keys that will be used for
  * searching the source values. Omit this if copying all the fields. If the triggered widget is List
  * or Object, this will likely match multiple fields.
@@ -305,7 +306,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
 
   /**
    * Revert changes.
-   * @param {LocaleCode} _locale Iterating locale.
+   * @param {InternalLocaleCode} _locale Iterating locale.
    * @param {FlattenedEntryContent} valueMap Flattened entry content.
    * @param {boolean} reset Whether ro remove the current value.
    */

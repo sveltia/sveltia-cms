@@ -6,8 +6,8 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * @import {
  * Entry,
  * FileCollection,
- * NormalizedCollection,
- * NormalizedCollectionFile,
+ * InternalCollection,
+ * InternalCollectionFile,
  * } from '$lib/types/private';
  */
 
@@ -15,9 +15,9 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * Get a file collection’s file configurations that matches the given entry. One file can
  * theoretically appear in multiple collections files depending on the configuration, so that the
  * result is an array.
- * @param {NormalizedCollection} collection Collection.
+ * @param {InternalCollection} collection Collection.
  * @param {Entry} entry Entry.
- * @returns {NormalizedCollectionFile[]} Collection files.
+ * @returns {InternalCollectionFile[]} Collection files.
  */
 export const getFilesByEntry = (collection, entry) => {
   const _fileMap = collection.files

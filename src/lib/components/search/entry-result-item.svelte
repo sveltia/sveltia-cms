@@ -12,15 +12,15 @@
    * @import {
    * Entry,
    * EntryCollection,
-   * NormalizedCollection,
-   * NormalizedCollectionFile,
+   * InternalCollection,
+   * InternalCollectionFile,
    * } from '$lib/types/private';.
    */
 
   /**
    * @typedef {object} RowArgs
-   * @property {NormalizedCollection} collection Collection.
-   * @property {NormalizedCollectionFile} [collectionFile] Collection file. File collection only.
+   * @property {InternalCollection} collection Collection.
+   * @property {InternalCollectionFile} [collectionFile] Collection file. File collection only.
    */
 
   /**

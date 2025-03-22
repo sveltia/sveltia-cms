@@ -11,8 +11,8 @@ import { applyTransformations } from '$lib/services/common/transformations';
  * Entry,
  * EntryCollection,
  * FlattenedEntryContent,
- * LocaleCode,
- * NormalizedCollection,
+ * InternalCollection,
+ * InternalLocaleCode,
  * RawEntryContent,
  * } from '$lib/types/private';
  */
@@ -68,10 +68,11 @@ export const getEntrySummaryFromContent = (
 /**
  * Get the given entry’s summary that can be displayed in the entry list and other places. Format it
  * with the summary template if necessary, or simply use the `title` or similar field in the entry.
- * @param {NormalizedCollection} collection Entry’s collection.
+ * @param {InternalCollection} collection Entry’s collection.
  * @param {Entry} entry Entry.
  * @param {object} [options] Options.
- * @param {LocaleCode} [options.locale] Target locale. The default locale is used if omitted.
+ * @param {InternalLocaleCode} [options.locale] Target locale. The default locale is used if
+ * omitted.
  * @param {boolean} [options.useTemplate] Whether to use the collection’s `summary` template if
  * available.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.

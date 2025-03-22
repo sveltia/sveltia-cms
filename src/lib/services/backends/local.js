@@ -22,7 +22,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
  * BackendService,
  * BaseFileListItem,
  * FileChange,
- * NormalizedSiteConfig,
+ * InternalSiteConfig,
  * RepositoryInfo,
  * SignInOptions,
  * User,
@@ -121,7 +121,7 @@ const discardDirHandle = async () => {
  * Initialize the backend.
  */
 const init = () => {
-  const { name: service } = /** @type {NormalizedSiteConfig} */ (get(siteConfig)).backend;
+  const { name: service } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
 
   remoteRepository = allBackendServices[service]?.getRepositoryInfo?.();
 

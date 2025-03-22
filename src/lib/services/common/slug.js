@@ -14,7 +14,7 @@ import { renameIfNeeded } from '$lib/services/utils/file';
  * @import {
  * EntryCollection,
  * FillSlugTemplateOptions,
- * NormalizedSiteConfig,
+ * InternalSiteConfig,
  * } from '$lib/types/private';
  */
 
@@ -31,7 +31,7 @@ export const normalizeSlug = (string) => {
       clean_accents: cleanAccents = false,
       sanitize_replacement: sanitizeReplacement = '-',
     } = {},
-  } = /** @type {NormalizedSiteConfig} */ (get(siteConfig)) ?? {};
+  } = /** @type {InternalSiteConfig} */ (get(siteConfig)) ?? {};
 
   let slug = string;
 

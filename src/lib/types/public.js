@@ -3,8 +3,11 @@
  */
 
 /**
- * Type declarations for the configuration file and `CMS` methods. The one for Netlify/Decap CMS can
- * be found below, though their declarations are incomplete.
+ * The following type definitions are used both internally and externally, covering all the CMS
+ * configuration options and JavaScript method arguments available on the `CMS` object. This file is
+ * automatically converted into a TypeScript type declaration file (`public.d.ts`) during the build
+ * process, which is then distributed via npm. The Netlify/Decap CMS equivalent can be found below,
+ * although their content is incomplete.
  * @see https://github.com/decaporg/decap-cms/blob/main/packages/decap-cms-core/index.d.ts
  */
 
@@ -66,6 +69,7 @@
  * Configuration for the built-in media library.
  * @typedef {object} DefaultMediaLibraryConfig
  * @property {number} [max_file_size] Maximum file size in bytes.
+ * @see https://decapcms.org/docs/widgets/#file
  */
 
 /**
@@ -96,6 +100,7 @@
  * @typedef {object} UploadcareMediaLibrarySettings
  * @property {boolean} [autoFilename] Whether to append the file name to an output URL.
  * @property {string} [defaultOperations] Transformation operations to be included in an output URL.
+ * @see https://decapcms.org/docs/uploadcare/
  */
 
 /**
@@ -136,21 +141,23 @@
  * Internationalization (i18n) file structure type.
  * @typedef {'single_file' | 'multiple_files' | 'multiple_folders' | 'multiple_folders_i18n_root'
  * } I18nFileStructure
+ * @see https://decapcms.org/docs/i18n/
+ * @see https://github.com/decaporg/decap-cms/pull/7400
  */
 
 /**
- * ISO 639-1 locale code like `en`.
- * @typedef {string} StandardLocaleCode
+ * Standard ISO 639-1 locale code like `en`.
+ * @typedef {string} LocaleCode
  */
 
 /**
- * Global or Collection’s i18n options.
+ * Global or collection-level i18n options.
  * @typedef {object} I18nOptions
  * @property {I18nFileStructure} [structure] File structure.
- * @property {StandardLocaleCode[]} locales List of all available locales.
- * @property {StandardLocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
+ * @property {LocaleCode[]} locales List of all available locales.
+ * @property {LocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
  * creating a new entry draft.
- * @property {StandardLocaleCode} [default_locale] Default locale.
+ * @property {LocaleCode} [default_locale] Default locale.
  * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales. If
  * `false`, editors will be able to disable the output of non-default locales through the UI. An
  * option suggested in https://github.com/decaporg/decap-cms/issues/6932.
@@ -167,6 +174,7 @@
  * @typedef {object} JsonFormatOptions
  * @property {'space' | 'tab'} [indent_style] Indent style. Default: 'space'.
  * @property {number} [indent_size] Indent size. Default: 2.
+ * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
  */
 
 /**
@@ -175,6 +183,7 @@
  * @property {number} [indent_size] Indent size. Default: 2.
  * @property {'none' | 'double' | 'single'} [quote] String value’s default quote type. Default:
  * 'none'.
+ * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
  */
 
 /**
@@ -200,16 +209,19 @@
  * @typedef {'bold' | 'italic' | 'code' | 'link' | 'heading-one' | 'heading-two' | 'heading-three' |
  * 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' | 'numbered-list'
  * } RichTextEditorButtonName
+ * @see https://decapcms.org/docs/widgets/#markdown
  */
 
 /**
  * Built-in editor component name for the rich text editor.
  * @typedef {'code-block' | 'image'} RichTextEditorComponentName
+ * @see https://decapcms.org/docs/widgets/#markdown
  */
 
 /**
  * Supported mode names for the rich text editor.
  * @typedef {'rich_text' | 'raw'} RichTextEditorMode
+ * @see https://decapcms.org/docs/widgets/#markdown
  */
 
 /**
@@ -219,10 +231,10 @@
  * @property {string} [label] Field label.
  * @property {string} [comment] Short description of the field.
  * @property {string} [widget] Widget name. Default: `string`.
- * @property {boolean | StandardLocaleCode[]} [required] Whether to require data input (and data
- * output if the `omit_empty_optional_fields` option is `true`) for the field. Default: `true`. If
- * i18n is enabled and the field doesn’t require input for every locale, a subset of locales can be
- * passed as an array.
+ * @property {boolean | LocaleCode[]} [required] Whether to require data input (and data output if
+ * the `omit_empty_optional_fields` option is `true`) for the field. Default: `true`. If i18n is
+ * enabled and the field doesn’t require input for every locale, a subset of locales can be passed
+ * as an array.
  * @property {[string, string]} [pattern] Validation format. The first argument is a regular
  * expression pattern, and second argument is an error message.
  * @property {string} [hint] Value hint to be displayed below the input.
@@ -256,6 +268,7 @@
  * @typedef {object} VariableFieldProps
  * @property {VariableFieldType[]} [types] Multiple Object widgets (variable types) to be selected.
  * @property {string} [typeKey] Property name to store the type.
+ * @see https://decapcms.org/docs/variable-type-widgets/
  */
 
 /**
@@ -297,6 +310,7 @@
  * Decap CMS document says it defaults to `false` but it’s actually `true`.
  * @property {boolean} [output_code_only] Whether to output code snippet only.
  * @property {{ code: string, lang: string }} [keys] Output property names.
+ * @see https://decapcms.org/docs/widgets/#code
  */
 
 /**
@@ -419,7 +433,6 @@
  * without the field name. If the `single_file` i18n structure is enabled, the lists will still be
  * saved under locale keys.
  * @see https://decapcms.org/docs/widgets/#list
- * @see https://decapcms.org/docs/variable-type-widgets/
  */
 
 /**
@@ -581,6 +594,7 @@
  * @property {string} [prefix] A string to be prepended to the value. Default: an empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32. Default: `false`.
  * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`.
+ * @see https://github.com/decaporg/decap-cms/pull/6675
  */
 
 /**
@@ -639,8 +653,8 @@
  * @typedef {object} CustomSortableFieldsDefault
  * @property {FieldKeyPath} field A field name to be sorted by default.
  * @property {'ascending' | 'descending' | 'Ascending' | 'Descending' | 'None'} [direction] Default
- * sort direction. Title case values are supported for Static CMS compatibility. However,
- * `None` is not supported, considered as `ascending`.
+ * sort direction. Title case values are supported for Static CMS compatibility. However, `None` is
+ * not supported, considered as `ascending`.
  */
 
 /**
@@ -676,6 +690,7 @@
  * @property {any | any[]} [value] Field value. `null` can be used to match an undefined field.
  * Multiple values can be defined with an array.
  * @property {string} [pattern] Regex matching pattern.
+ * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
  */
 
 /**
@@ -692,6 +707,7 @@
  * @property {'string'} [widget] Widget for editing the path name.
  * @property {string} [label] Label for the path editor.
  * @property {string} [index_file] Index file name to be used.
+ * @see https://decapcms.org/docs/collection-nested/
  */
 
 /**
@@ -753,6 +769,8 @@
  * @property {number} [limit] The maximum number of entries that can be created in the entry
  * collection.
  * @see https://decapcms.org/docs/configuration-options/#collections
+ * @see https://decapcms.org/docs/collection-folder/
+ * @see https://decapcms.org/docs/collection-file/
  */
 
 /**
@@ -784,11 +802,13 @@
 /**
  * Entry file Parser.
  * @typedef {(text: string) => any | Promise<any>} FileParser
+ * @see https://decapcms.org/docs/custom-formatters/
  */
 
 /**
  * Entry file formatter.
  * @typedef {(value: any) => string | Promise<string>} FileFormatter
+ * @see https://decapcms.org/docs/custom-formatters/
  */
 
 /**
@@ -810,12 +830,19 @@
  */
 
 /**
+ * Supported event type.
+ * @typedef {'prePublish' | 'postPublish' | 'preUnpublish' | 'postUnpublish' | 'preSave' |
+ * 'postSave'} AppEventType
+ * @see https://decapcms.org/docs/registering-events/
+ */
+
+/**
  * Event listener properties.
  * @typedef {object} AppEventListener
- * @property {'prePublish' | 'postPublish' | 'preUnpublish' | 'postUnpublish' | 'preSave' |
- * 'postSave'} name Event name.
+ * @property {AppEventType} name Event type.
  * @property {(args: { entry: Record<string, any>, author: { login: string, name: string } }) => any
  * } handler Event handler.
+ * @see https://decapcms.org/docs/registering-events/
  */
 
 // @todo Write descriptions for the options below
@@ -830,6 +857,7 @@
  * @property {(collectionName: string, slug?: string) => any} getCollection
  * @property {Document} document
  * @property {Window} window
+ * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  */
 
 /**
@@ -839,6 +867,7 @@
  * @property {string} forID
  * @property {string} classNameWrapper
  * @property {(value: any) => void} onChange
+ * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  */
 
 /**
@@ -849,11 +878,13 @@
  * @property {Record<string, any>} entry
  * @property {(name: string) => any} getAsset
  * @property {Record<string, any>} fieldsMetaData
+ * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  */
 
 /**
  * @typedef {object} CustomWidgetSchema
  * @property {Record<string, any>} properties
+ * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  */
 
 export {};

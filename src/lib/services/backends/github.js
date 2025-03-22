@@ -23,7 +23,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  * BaseFileListItem,
  * CommitChangesOptions,
  * FileChange,
- * NormalizedSiteConfig,
+ * InternalSiteConfig,
  * RepositoryContentsMap,
  * RepositoryInfo,
  * SignInOptions,
@@ -172,9 +172,7 @@ const fetchGraphQL = async (query, variables = {}) => {
  * @returns {RepositoryInfo} Repository info.
  */
 const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } = /** @type {NormalizedSiteConfig} */ (get(siteConfig))
-    .backend;
-
+  const { repo: projectPath, branch } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
   const { origin: apiOrigin, isSelfHosted } = apiConfig;
   const origin = isSelfHosted ? apiOrigin : 'https://github.com';
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
@@ -221,7 +219,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     site_domain: siteDomain = hostname,
     base_url: baseURL = 'https://api.netlify.com',
     auth_endpoint: path = 'auth',
-  } = /** @type {NormalizedSiteConfig} */ (get(siteConfig)).backend;
+  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
 
   const token =
     cachedToken ||

@@ -31,8 +31,8 @@ import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
  * Entry,
  * EntryDraft,
  * FileChange,
+ * InternalCollectionFile,
  * MovingAsset,
- * NormalizedCollectionFile,
  * UpdatesToastState,
  * UploadingAssets,
  * } from '$lib/types/private';
@@ -203,7 +203,7 @@ export const moveAssets = async (action, movingAssets) => {
             getAssociatedCollections(entry).map(async (collection) => {
               /**
                * Add saving entry data to the stack.
-               * @param {NormalizedCollectionFile} [collectionFile] Collection file. File collection
+               * @param {InternalCollectionFile} [collectionFile] Collection file. File collection
                * only.
                */
               const addSavingEntryData = async (collectionFile) => {

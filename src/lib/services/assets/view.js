@@ -23,7 +23,7 @@ import {
  * BackendService,
  * FilteringConditions,
  * GroupingConditions,
- * NormalizedSiteConfig,
+ * InternalSiteConfig,
  * SortingConditions,
  * } from '$lib/types/private';
  */
@@ -69,9 +69,7 @@ export const getFolderLabelByCollection = (collectionName) => {
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 export const getFolderLabelByPath = (folderPath) => {
-  const { media_folder: defaultMediaFolder } = /** @type {NormalizedSiteConfig} */ (
-    get(siteConfig)
-  );
+  const { media_folder: defaultMediaFolder } = /** @type {InternalSiteConfig} */ (get(siteConfig));
 
   if (!folderPath) {
     return getFolderLabelByCollection('*');

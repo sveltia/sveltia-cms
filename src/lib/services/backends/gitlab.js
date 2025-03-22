@@ -27,7 +27,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  * BaseFileListItem,
  * CommitChangesOptions,
  * FileChange,
- * NormalizedSiteConfig,
+ * InternalSiteConfig,
  * RepositoryContentsMap,
  * RepositoryInfo,
  * SignInOptions,
@@ -180,9 +180,7 @@ const fetchGraphQL = async (query, variables = {}) => {
  * @returns {RepositoryInfo} Repository info.
  */
 const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } = /** @type {NormalizedSiteConfig} */ (get(siteConfig))
-    .backend;
-
+  const { repo: projectPath, branch } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
   const { origin, isSelfHosted } = apiConfig;
 
   /**
@@ -236,7 +234,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     auth_endpoint: path = 'oauth/authorize',
     auth_type: authType,
     app_id: clientId = '',
-  } = /** @type {NormalizedSiteConfig} */ (get(siteConfig)).backend;
+  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
 
   const authURL = `${stripSlashes(baseURL)}/${stripSlashes(path)}`;
   const scope = 'api';

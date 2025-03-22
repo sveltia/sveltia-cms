@@ -8,16 +8,16 @@
  * FileFormatter,
  * FileParser,
  * I18nFileStructure,
+ * LocaleCode,
  * SelectField,
  * SiteConfig,
- * StandardLocaleCode,
  * } from './public';
  */
 
 /**
  * ISO 639-1 locale code or `_default` for the unspecified default content locale. And `_` is a
  * special one that can be used to hold locale-agnostic data.
- * @typedef {StandardLocaleCode | '_default' | '_'} LocaleCode
+ * @typedef {LocaleCode | '_default' | '_'} InternalLocaleCode
  */
 
 /**
@@ -28,7 +28,7 @@
 
 /**
  * Site configuration for internal use.
- * @typedef {SiteConfig & SiteConfigExtraProps} NormalizedSiteConfig
+ * @typedef {SiteConfig & SiteConfigExtraProps} InternalSiteConfig
  */
 
 /**
@@ -52,7 +52,7 @@
  * @property {Record<string, string>} [logins] Log-in credentials (user name and password) for
  * integrations.
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
- * @property {LocaleCode} [locale] Selected UI locale, e.g. `en`.
+ * @property {InternalLocaleCode} [locale] Selected UI locale, e.g. `en`.
  * @property {boolean} [closeOnSave] Whether to close the entry editor after saving a draft.
  * @property {boolean} [underlineLinks] Whether to always underline links.
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
@@ -83,7 +83,7 @@
  * Options for the commit changes operation.
  * @typedef {object} CommitChangesOptions
  * @property {CommitType} commitType Commit type. Used only for Git backends.
- * @property {NormalizedCollection} [collection] Collection of the corresponding entry or asset.
+ * @property {InternalCollection} [collection] Collection of the corresponding entry or asset.
  * @property {boolean} [skipCI] Whether to disable automatic deployments for the commit. Used only
  * for Git backends.
  */
@@ -238,12 +238,12 @@
  * @typedef {object} CollectionEntryFolder
  * @property {string} collectionName Collection name.
  * @property {string} [fileName] File identifier. File collection only.
- * @property {Record<LocaleCode, string>} [filePathMap] File path map. The key is a locale, and the
- * value is the corresponding file path. File collection only.
+ * @property {Record<InternalLocaleCode, string>} [filePathMap] File path map. The key is a locale,
+ * and the value is the corresponding file path. File collection only.
  * @property {string} [folderPath] Folder path. Entry collection only.
- * @property {Record<LocaleCode, string>} [folderPathMap] Folder path map. Entry collection only.
- * Paths in `folderPathMap` are prefixed with a locale if the `multiple_folders_i18n_root` i18n
- * structure is used, while `folderPath` is a bare collection `folder` path.
+ * @property {Record<InternalLocaleCode, string>} [folderPathMap] Folder path map. Entry collection
+ * only. Paths in `folderPathMap` are prefixed with a locale if the `multiple_folders_i18n_root`
+ * i18n structure is used, while `folderPath` is a bare collection `folder` path.
  */
 
 /**
@@ -272,15 +272,17 @@
  */
 
 /**
- * Normalized i18n configuration of a collection or collection file.
- * @typedef {object} NormalizedI18nConfig
+ * Internal i18n configuration of a collection or collection file.
+ * @typedef {object} InternalI18nOptions
  * @property {boolean} i18nEnabled Whether i18n is enabled for the collection or collection file.
  * @property {boolean} [saveAllLocales] Whether to save the entries in all the locales. If `false`,
  * editors will be able to disable the output of non-default locales through the UI.
- * @property {LocaleCode[]} allLocales List of all available locales, or `['_default']` if i18n is
- * not enabled.
- * @property {LocaleCode[]} initialLocales Locales to be enabled when creating a new entry draft.
- * @property {LocaleCode} defaultLocale Default locale, or `_default` if i18n is not enabled.
+ * @property {InternalLocaleCode[]} allLocales List of all available locales, or `['_default']` if
+ * i18n is not enabled.
+ * @property {InternalLocaleCode[]} initialLocales Locales to be enabled when creating a new entry
+ * draft.
+ * @property {InternalLocaleCode} defaultLocale Default locale, or `_default` if i18n is not
+ * enabled.
  * @property {I18nFileStructure} structure File structure.
  * @property {{ key: string, value: string }} canonicalSlug See `canonical_slug` above.
  */
@@ -294,7 +296,7 @@
  * Extra properties for a collection.
  * @typedef {object} CollectionExtraProps
  * @property {CollectionType} _type Collection type.
- * @property {NormalizedI18nConfig} _i18n Normalized i18n configuration combined with the top-level
+ * @property {InternalI18nOptions} _i18n Internal i18n configuration combined with the top-level
  * configuration.
  * @property {CollectionAssetFolder} [_assetFolder] Asset folder configuration.
  */
@@ -315,7 +317,7 @@
 /**
  * Extra properties for a file collection.
  * @typedef {object} FileCollectionExtraProps
- * @property {Record<string, NormalizedCollectionFile>} _fileMap File map with normalized collection
+ * @property {Record<string, InternalCollectionFile>} _fileMap File map with normalized collection
  * file definitions. The key is a file identifier.
  */
 
@@ -326,20 +328,20 @@
 
 /**
  * A collection definition.
- * @typedef {EntryCollection | FileCollection} NormalizedCollection
+ * @typedef {EntryCollection | FileCollection} InternalCollection
  */
 
 /**
  * Extra properties for a collection file.
  * @typedef {object} ExtraCollectionFileProps
  * @property {FileConfig} _file Entry file configuration.
- * @property {NormalizedI18nConfig} _i18n Normalized i18n configuration combined with the top-level
- * and collection-level configuration.
+ * @property {InternalI18nOptions} _i18n Internal i18n configuration combined with the top-level and
+ * collection-level configuration.
  */
 
 /**
  * A collection file definition.
- * @typedef {CollectionFile & ExtraCollectionFileProps} NormalizedCollectionFile
+ * @typedef {CollectionFile & ExtraCollectionFileProps} InternalCollectionFile
  */
 
 /**
@@ -354,7 +356,7 @@
 /**
  * Localized entry map keyed with a locale code. When i18n is not enabled with the site config,
  * there will be one single property named `_default`.
- * @typedef {Record<LocaleCode, LocalizedEntry>} LocalizedEntryMap
+ * @typedef {Record<InternalLocaleCode, LocalizedEntry>} LocalizedEntryMap
  */
 
 /**
@@ -408,27 +410,27 @@
 
 /**
  * Key is a locale code, value is whether to enable/disable the locale’s content output.
- * @typedef {Record<LocaleCode, boolean>} LocaleStateMap
+ * @typedef {Record<InternalLocaleCode, boolean>} LocaleStateMap
  */
 
 /**
  * Locale slug map.
- * @typedef {Record<LocaleCode, string | undefined>} LocaleSlugMap
+ * @typedef {Record<InternalLocaleCode, string | undefined>} LocaleSlugMap
  */
 
 /**
  * Locale content map.
- * @typedef {Record<LocaleCode, FlattenedEntryContent>} LocaleContentMap
+ * @typedef {Record<InternalLocaleCode, FlattenedEntryContent>} LocaleContentMap
  */
 
 /**
  * Locale validity map.
- * @typedef {Record<LocaleCode, FlattenedEntryValidityState>} LocaleValidityMap
+ * @typedef {Record<InternalLocaleCode, FlattenedEntryValidityState>} LocaleValidityMap
  */
 
 /**
  * Locale expander map.
- * @typedef {Record<LocaleCode, FlattenedEntryExpanderState>} LocaleExpanderMap
+ * @typedef {Record<InternalLocaleCode, FlattenedEntryExpanderState>} LocaleExpanderMap
  */
 
 /**
@@ -436,9 +438,9 @@
  * @typedef {object} EntryDraft
  * @property {boolean} isNew `true` if it’s a new entry draft in an entry collection.
  * @property {string} collectionName Collection name.
- * @property {NormalizedCollection} collection Collection details.
+ * @property {InternalCollection} collection Collection details.
  * @property {string} [fileName] File identifier. File collection only.
- * @property {NormalizedCollectionFile} [collectionFile] File details. File collection only.
+ * @property {InternalCollectionFile} [collectionFile] File details. File collection only.
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
  * @property {LocaleStateMap} originalLocales Original locale state at the time of draft creation.
  * @property {LocaleStateMap} currentLocales Current locale state.
@@ -624,7 +626,7 @@
  * Entry editor’s pane settings.
  * @typedef {object} EntryEditorPane
  * @property {'edit' | 'preview'} mode Mode.
- * @property {LocaleCode} locale Locale.
+ * @property {InternalLocaleCode} locale Locale.
  */
 
 /**
@@ -667,7 +669,7 @@
 /**
  * Common properties to be passed to a field widget’s editor component.
  * @typedef {object} WidgetEditorProps
- * @property {LocaleCode} locale Current pane’s locale.
+ * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
  * @property {string} fieldId Field ID.
  * @property {string} fieldLabel Field label.
@@ -681,7 +683,7 @@
 /**
  * Common properties to be passed to a field widget’s preview component.
  * @typedef {object} WidgetPreviewProps
- * @property {LocaleCode} locale Current pane’s locale.
+ * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
  */
 
@@ -699,7 +701,7 @@
 /**
  * Select/Relation field editor’s selector properties.
  * @typedef {object} SelectFieldSelectorProps
- * @property {LocaleCode} locale Current pane’s locale.
+ * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
  * @property {string} fieldId Field ID.
  * @property {SelectField} fieldConfig Field configuration.
@@ -721,12 +723,12 @@
  * Options for the `fillSlugTemplate` method.
  * @typedef {object} FillSlugTemplateOptions
  * @property {'preview_path' | 'media_folder'} [type] Slug type.
- * @property {NormalizedCollection} collection Entry collection.
+ * @property {InternalCollection} collection Entry collection.
  * @property {FlattenedEntryContent} content Entry content for the default locale.
  * @property {string} [currentSlug] Entry slug already created for the path.
  * @property {string} [entryFilePath] File path of the entry. Required if the `type` is
  * `preview_path` or `media_folder`.
- * @property {LocaleCode} [locale] Locale. Required if the `type` is `preview_path`.
+ * @property {InternalLocaleCode} [locale] Locale. Required if the `type` is `preview_path`.
  * @property {Record<string, string>} [dateTimeParts] Map of date/time parts. Required if the `type`
  * is `preview_path`.
  */

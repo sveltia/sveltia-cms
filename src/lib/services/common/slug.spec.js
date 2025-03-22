@@ -5,13 +5,13 @@ import { defaultI18nConfig } from '$lib/services/contents/i18n';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 
 /**
- * @import { NormalizedCollection } from '$lib/types/private';
+ * @import { InternalCollection } from '$lib/types/private';
  */
 
 vi.mock('$lib/services/config');
 
 describe('Test fillSlugTemplate()', async () => {
-  /** @type {NormalizedCollection} */
+  /** @type {InternalCollection} */
   const collection = {
     name: 'posts',
     slug_length: 50,

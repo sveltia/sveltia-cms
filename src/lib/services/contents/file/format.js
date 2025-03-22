@@ -5,7 +5,7 @@ import { customFileFormats } from '$lib/services/contents/file';
 import { siteConfig } from '$lib/services/config';
 
 /**
- * @import { FileConfig, LocaleCode, RawEntryContent } from '$lib/types/private';
+ * @import { FileConfig, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
  * @import { JsonFormatOptions, YamlFormatOptions } from '$lib/types/public';
  */
 
@@ -72,9 +72,9 @@ export const formatYAML = (
 /**
  * Format raw entry content.
  * @param {object} entry File entry.
- * @param {RawEntryContent | Record<LocaleCode, RawEntryContent>} entry.content Content object. Note
- * that this method may modify the `content` (the `body` property will be removed if exists) so it
- * shouldn’t be a reference to an existing object.
+ * @param {RawEntryContent | Record<InternalLocaleCode, RawEntryContent>} entry.content Content
+ * object. Note that this method may modify the `content` (the `body` property will be removed if
+ * exists) so it shouldn’t be a reference to an existing object.
  * @param {FileConfig} entry._file Entry file configuration.
  * @returns {Promise<string>} Formatted string.
  */

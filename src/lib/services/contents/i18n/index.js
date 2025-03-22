@@ -4,13 +4,17 @@ import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 
 /**
- * @import { LocaleCode, NormalizedI18nConfig, NormalizedSiteConfig } from '$lib/types/private';
- * @import { Collection, CollectionFile, I18nOptions, StandardLocaleCode } from '$lib/types/public';
+ * @import {
+ * InternalLocaleCode,
+ * InternalI18nOptions,
+ * InternalSiteConfig,
+ * } from '$lib/types/private';
+ * @import { Collection, CollectionFile, I18nOptions, LocaleCode } from '$lib/types/public';
  */
 
 /**
  * The default, normalized i18n configuration with no locales defined.
- * @type {NormalizedI18nConfig}
+ * @type {InternalI18nOptions}
  */
 export const defaultI18nConfig = {
   i18nEnabled: false,
@@ -29,11 +33,11 @@ export const defaultI18nConfig = {
  * Get the normalized i18n configuration for the given collection or collection file.
  * @param {Collection} collection Developer-defined collection.
  * @param {CollectionFile} [file] Developer-defined collection file.
- * @returns {NormalizedI18nConfig} Config.
+ * @returns {InternalI18nOptions} Config.
  * @see https://decapcms.org/docs/i18n/
  */
 export const getI18nConfig = (collection, file) => {
-  const _siteConfig = /** @type {NormalizedSiteConfig} */ (get(siteConfig));
+  const _siteConfig = /** @type {InternalSiteConfig} */ (get(siteConfig));
   /** @type {I18nOptions | undefined} */
   let config;
 
@@ -118,8 +122,8 @@ export const getI18nConfig = (collection, file) => {
 
 /**
  * Get the canonical locale of the given locale that can be used for various `Intl` methods.
- * @param {LocaleCode} locale Locale.
- * @returns {StandardLocaleCode | undefined} Locale or `undefined` if not determined.
+ * @param {InternalLocaleCode} locale Locale.
+ * @returns {LocaleCode | undefined} Locale or `undefined` if not determined.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument
  */
 export const getCanonicalLocale = (locale) => {
@@ -138,7 +142,7 @@ export const getCanonicalLocale = (locale) => {
 
 /**
  * Translate the given locale code in the application UI locale.
- * @param {LocaleCode} locale Locale code like `en`.
+ * @param {InternalLocaleCode} locale Locale code like `en`.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
  * locale code as is.
  */
@@ -165,7 +169,7 @@ export const getLocaleLabel = (locale) => {
 
 /**
  * Get a simple list formatter.
- * @param {LocaleCode} locale Locale code.
+ * @param {InternalLocaleCode} locale Locale code.
  * @param {Partial<Intl.ListFormatOptions>} options Format options.
  * @returns {Intl.ListFormat} Formatter.
  */

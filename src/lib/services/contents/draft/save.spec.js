@@ -5,8 +5,8 @@ import { copyProperty, getEntryAssetFolderPaths } from '$lib/services/contents/d
  * @import {
  * CollectionType,
  * FlattenedEntryContent,
- * NormalizedCollection,
- * NormalizedI18nConfig,
+ * InternalCollection,
+ * InternalI18nOptions,
  * } from '$lib/types/private';
  * @import { Field, FileFormat } from '$lib/types/public';
  */
@@ -29,13 +29,13 @@ describe('Test getEntryAssetFolderPaths()', () => {
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders' };
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nRootMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders_i18n_root' };
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nMultiFile = { ...i18nBaseConfig, structure: 'multiple_files' };
-  /** @type {NormalizedI18nConfig} */
+  /** @type {InternalI18nOptions} */
   const i18nSingleFile = { ...i18nBaseConfig, structure: 'single_file' };
 
   const _file = {
@@ -57,7 +57,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   };
 
   test('simple path, multiple folders, entry relative', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -73,7 +73,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders, entry relative', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -89,7 +89,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders at root, entry relative', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -105,7 +105,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders at root, entry relative', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -121,7 +121,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple files, entry relative', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -137,7 +137,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple files, entry relative', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -153,7 +153,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, single file, entry relative', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -169,7 +169,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, single file, entry relative', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -185,7 +185,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders, entry absolute', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -201,7 +201,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders, entry absolute', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -217,7 +217,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple folders at root, entry absolute', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -233,7 +233,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple folders at root, entry absolute', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -249,7 +249,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, multiple files, entry absolute', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -265,7 +265,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, multiple files, entry absolute', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
@@ -281,7 +281,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('simple path, single file, entry absolute', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
@@ -297,7 +297,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   });
 
   test('nested path, single file, entry absolute', () => {
-    /** @type {NormalizedCollection} */
+    /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },

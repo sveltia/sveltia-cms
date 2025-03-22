@@ -9,7 +9,7 @@ import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/f
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { Entry, NormalizedCollectionFile } from '$lib/types/private';
+ * @import { Entry, InternalCollectionFile } from '$lib/types/private';
  */
 
 /**
@@ -99,7 +99,7 @@ export const getEntriesByAssetURL = async (
                 collections.map(async (collection) => {
                   /**
                    * Check if the field contains the asset.
-                   * @param {NormalizedCollectionFile} [collectionFile] Collection file. File
+                   * @param {InternalCollectionFile} [collectionFile] Collection file. File
                    * collection only.
                    * @returns {Promise<boolean>} Result.
                    */

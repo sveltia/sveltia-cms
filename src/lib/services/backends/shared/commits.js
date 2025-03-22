@@ -6,7 +6,7 @@ import { user } from '$lib/services/user';
  * @import {
  * CommitChangesOptions,
  * FileChange,
- * NormalizedSiteConfig,
+ * InternalSiteConfig,
  * User,
  * } from '$lib/types/private';
  */
@@ -39,7 +39,7 @@ export const createCommitMessage = (
       commit_messages: customCommitMessages = {},
       automatic_deployments: autoDeployEnabled,
     },
-  } = /** @type {NormalizedSiteConfig} */ (get(siteConfig));
+  } = /** @type {InternalSiteConfig} */ (get(siteConfig));
 
   const { login = '', name = '' } = /** @type {User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);

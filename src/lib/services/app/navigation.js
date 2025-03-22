@@ -5,7 +5,7 @@ import { showContentOverlay } from '$lib/services/contents/draft/editor';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
- * @import { NormalizedSiteConfig } from '$lib/types/private';
+ * @import { InternalSiteConfig } from '$lib/types/private';
  */
 
 /**
@@ -85,7 +85,7 @@ export const goBack = (path, options = {}) => {
  * Open the production site in a new browser tab.
  */
 export const openProductionSite = () => {
-  const { display_url: displayURL, _siteURL: siteURL } = /** @type {NormalizedSiteConfig} */ (
+  const { display_url: displayURL, _siteURL: siteURL } = /** @type {InternalSiteConfig} */ (
     get(siteConfig)
   );
 

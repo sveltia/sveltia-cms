@@ -10,9 +10,9 @@ import { getCollection } from '$lib/services/contents/collection';
 /**
  * @import {
  * Entry,
- * LocaleCode,
- * NormalizedCollection,
- * NormalizedCollectionFile,
+ * InternalCollection,
+ * InternalCollectionFile,
+ * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { DateTimeField } from '$lib/types/public';
  */
@@ -21,7 +21,7 @@ import { getCollection } from '$lib/services/contents/collection';
  * Get a list of collections the given entry belongs to. One entry can theoretically appear in
  * multiple collections depending on the configuration, so that the result is an array.
  * @param {Entry} entry Entry.
- * @returns {NormalizedCollection[]} Collections.
+ * @returns {InternalCollection[]} Collections.
  */
 export const getAssociatedCollections = (entry) =>
   getEntryFoldersByPath(Object.values(entry.locales)[0].path)
@@ -31,9 +31,9 @@ export const getAssociatedCollections = (entry) =>
 /**
  * Get the given entry file’s web-accessible URL on the live site.
  * @param {Entry} entry Entry.
- * @param {LocaleCode} locale Locale.
- * @param {NormalizedCollection} collection Collection.
- * @param {NormalizedCollectionFile} [collectionFile] Collection file. File collection only.
+ * @param {InternalLocaleCode} locale Locale.
+ * @param {InternalCollection} collection Collection.
+ * @param {InternalCollectionFile} [collectionFile] Collection file. File collection only.
  * @returns {string | undefined} URL on the live site.
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
@@ -92,7 +92,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
 /**
  * Get the given entry file’s web-accessible URL on the repository.
  * @param {Entry} entry Entry.
- * @param {LocaleCode} locale Locale.
+ * @param {InternalLocaleCode} locale Locale.
  * @returns {string} URL on the repository.
  */
 export const getEntryRepoBlobURL = (entry, locale) =>

@@ -4,7 +4,7 @@ import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, LocaleCode } from '$lib/types/private';
+ * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, KeyValueField } from '$lib/types/public';
  */
 
@@ -32,7 +32,7 @@ export const getDefaultValue = (fieldConfig) => {
  * @param {object} args Arguments.
  * @param {Writable<EntryDraft>} args.entryDraft Draft store.
  * @param {FieldKeyPath} args.keyPath Field key path.
- * @param {LocaleCode} args.locale Current pane’s locale.
+ * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @returns {[string, string][]} Key-value pairs.
  */
 export const getPairs = ({ entryDraft, keyPath, locale }) =>
@@ -66,7 +66,7 @@ export const validatePairs = ({ pairs, edited }) =>
  * @param {Writable<EntryDraft>} args.entryDraft Draft store.
  * @param {KeyValueField} args.fieldConfig Field configuration.
  * @param {FieldKeyPath} args.keyPath Field key path.
- * @param {LocaleCode} args.locale Current pane’s locale.
+ * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @param {[string, string][]} args.pairs Key-value pairs.
  */
 export const savePairs = ({ entryDraft, keyPath, locale, fieldConfig, pairs }) => {
