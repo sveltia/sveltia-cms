@@ -64,13 +64,13 @@
   const fileName = $derived($entryDraft?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const getFieldConfigArgs = $derived({ collectionName, fileName, valueMap });
   const hasValues = $derived(
     Object.entries(valueMap).some(
       ([_keyPath, value]) =>
         !!_keyPath.startsWith(`${keyPath}.`) &&
         (value !== null ||
-          getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath })?.widget ===
-            'object'),
+          getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath })?.widget === 'object'),
     ),
   );
   const canEdit = $derived(locale === defaultLocale || i18n !== false);
@@ -159,14 +159,7 @@
    * @returns {string} Formatted summary.
    */
   const _formatSummary = () =>
-    formatSummary({
-      collectionName,
-      fileName,
-      keyPath,
-      valueMap,
-      locale,
-      summaryTemplate,
-    });
+    formatSummary({ ...getFieldConfigArgs, keyPath, locale, summaryTemplate });
 
   onMount(() => {
     // Initialize the expander state

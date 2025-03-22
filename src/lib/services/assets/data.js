@@ -32,6 +32,7 @@ import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
  * EntryDraft,
  * FileChange,
  * InternalCollectionFile,
+ * InternalSiteConfig,
  * MovingAsset,
  * UpdatesToastState,
  * UploadingAssets,
@@ -128,6 +129,7 @@ export const saveAssets = async (uploadingAssets, options) => {
  * @param {MovingAsset[]} movingAssets Assets to be moved/renamed.
  */
 export const moveAssets = async (action, movingAssets) => {
+  const _siteConfig = /** @type {InternalSiteConfig} */ (get(siteConfig));
   const _allAssetFolders = get(allAssetFolders);
   /** @type {FileChange[]} */
   const changes = [];
@@ -201,19 +203,26 @@ export const moveAssets = async (action, movingAssets) => {
 
           await Promise.all(
             getAssociatedCollections(entry).map(async (collection) => {
+              const { editor: { preview: entryPreview } = {} } = collection;
+              const canPreview = entryPreview ?? _siteConfig.editor?.preview ?? true;
+
               /**
                * Add saving entry data to the stack.
                * @param {InternalCollectionFile} [collectionFile] Collection file. File collection
                * only.
                */
               const addSavingEntryData = async (collectionFile) => {
+                const { fields = [] } = collectionFile ?? collection;
+
                 /** @type {EntryDraft} */
                 const draft = {
                   ...draftProps,
+                  canPreview,
                   collection,
                   collectionName: collection.name,
                   collectionFile,
                   fileName: collectionFile?.name,
+                  fields,
                 };
 
                 const { savingEntry, changes: savingEntryChanges } = await createSavingEntryData({

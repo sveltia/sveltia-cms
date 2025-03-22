@@ -43,7 +43,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
   const {
     preview_path: pathTemplate,
     preview_path_date_field: dateFieldName,
-    fields,
+    fields = [],
   } = collectionFile ?? collection;
 
   if (!showLinks || !baseURL || !entryFilePath || !content || !pathTemplate) {
@@ -55,8 +55,8 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
 
   if (/{{(?:year|month|day|hour|minute|second)}}/g.test(pathTemplate)) {
     const fieldConfig = dateFieldName
-      ? fields?.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
-      : fields?.find(({ widget }) => widget === 'datetime');
+      ? fields.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
+      : fields.find(({ widget }) => widget === 'datetime');
 
     const fieldValue = fieldConfig ? content[fieldConfig.name] : undefined;
 

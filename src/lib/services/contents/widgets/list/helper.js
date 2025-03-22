@@ -62,21 +62,21 @@ export const formatSummary = ({
     );
   }
 
+  const getFieldConfigArgs = { collectionName, fileName, valueMap };
+
   return summaryTemplate.replaceAll(/{{(.+?)}}/g, (_match, /** @type {string} */ placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
     const _keyPath = `${keyPath}.${index}.${tag.replace(/^fields\./, '')}`;
 
     if (hasSingleSubField) {
       // Check if the key path is valid
-      if (!getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath })) {
+      if (!getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath })) {
         return '';
       }
     }
 
     return getFieldDisplayValue({
-      collectionName,
-      fileName,
-      valueMap,
+      ...getFieldConfigArgs,
       keyPath: hasSingleSubField ? `${keyPath}.${index}` : _keyPath,
       locale,
       transformations,

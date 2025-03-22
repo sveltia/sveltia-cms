@@ -43,6 +43,7 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const fileName = $derived($entryDraft?.fileName);
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale] ?? {}));
+  const expanderKeys = $derived(getExpanderKeys({ collectionName, fileName, valueMap, keyPath }));
   const { i18nEnabled, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );
@@ -65,11 +66,7 @@
    * control within the field, such as a text input or button.
    */
   const highlightEditorField = () => {
-    syncExpanderStates(
-      Object.fromEntries(
-        getExpanderKeys({ collectionName, fileName, valueMap, keyPath }).map((key) => [key, true]),
-      ),
-    );
+    syncExpanderStates(Object.fromEntries(expanderKeys.map((key) => [key, true])));
 
     window.requestAnimationFrame(() => {
       const targetField = document.querySelector(

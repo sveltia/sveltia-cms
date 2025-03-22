@@ -9,6 +9,7 @@ import { getFieldConfig } from '$lib/services/contents/entry/fields';
  * @import { Writable } from 'svelte/store';
  * @import {
  * BackendService,
+ * EntryDraft,
  * EntryEditorPane,
  * EntryEditorView,
  * FlattenedEntryContent,
@@ -99,10 +100,11 @@ export const syncExpanderStates = (stateMap) => {
  */
 export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath }) => {
   const keys = new Set();
+  const getFieldConfigArgs = { collectionName, fileName, valueMap };
 
   keyPath.split('.').forEach((_keyPart, index, arr) => {
     const _keyPath = arr.slice(0, index + 1).join('.');
-    const config = getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath });
+    const config = getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath });
     const endingWithNumber = /\.\d+$/.test(_keyPath);
 
     if (config?.widget === 'object') {
@@ -115,13 +117,7 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
       keys.add(endingWithNumber ? _keyPath : `${_keyPath}#`);
     } else if (index > 0) {
       const parentKeyPath = arr.slice(0, index).join('.');
-
-      const parentConfig = getFieldConfig({
-        collectionName,
-        fileName,
-        valueMap,
-        keyPath: parentKeyPath,
-      });
+      const parentConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: parentKeyPath });
 
       if (parentConfig?.widget === 'object' && /** @type {ObjectField} */ (parentConfig).fields) {
         keys.add(`${parentKeyPath}.${parentConfig.name}#`);
@@ -144,11 +140,12 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
  * @param {LocaleContentMap} args.currentValues Field values.
  */
 export const expandInvalidFields = ({ collectionName, fileName, currentValues }) => {
+  const { validities } = /** @type {EntryDraft} */ (get(entryDraft));
   /** @type {Record<FieldKeyPath, boolean>} */
   const stateMap = {};
 
-  Object.entries(get(entryDraft)?.validities ?? {}).forEach(([locale, validities]) => {
-    Object.entries(validities).forEach(([keyPath, { valid }]) => {
+  Object.entries(validities ?? {}).forEach(([locale, validityMap]) => {
+    Object.entries(validityMap).forEach(([keyPath, { valid }]) => {
       if (!valid) {
         getExpanderKeys({
           collectionName,

@@ -65,7 +65,7 @@
   const collectionName = $derived(collection?.name);
   const collectionLabel = $derived(collection?.label || collectionName);
   const collectionLabelSingular = $derived(collection?.label_singular || collectionLabel);
-  const canPreview = $derived(collection?.editor?.preview ?? $siteConfig?.editor?.preview ?? true);
+  const canPreview = $derived($entryDraft?.canPreview ?? true);
   const modified = $derived(isNew || $entryDraftModified);
   const errorCount = $derived(
     Object.values($entryDraft?.validities ?? {})

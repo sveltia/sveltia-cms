@@ -376,6 +376,7 @@ const finalizeContent = ({
   const { omit_empty_optional_fields: omitEmptyOptionalFields = false } =
     get(siteConfig)?.output ?? {};
 
+  const getFieldConfigArgs = { collectionName, fileName, valueMap };
   const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };
 
   // Add the slug first
@@ -385,7 +386,7 @@ const finalizeContent = ({
 
   // Move the listed properties to a new object
   createKeyPathList(fields).forEach((keyPath) => {
-    const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
+    const field = getFieldConfig({ ...getFieldConfigArgs, keyPath });
 
     if (keyPath in unsortedMap) {
       copyProperty({ key: keyPath, field, ...copyArgs });
@@ -434,10 +435,9 @@ const finalizeContent = ({
  * @returns {RawEntryContent} Modified and unflattened content.
  */
 const serializeContent = ({ draft, locale, valueMap }) => {
-  const { collection, collectionFile } = draft;
+  const { collection, collectionFile, fields } = draft;
 
   const {
-    fields = [],
     _file,
     _i18n: {
       canonicalSlug: { key: canonicalSlugKey },

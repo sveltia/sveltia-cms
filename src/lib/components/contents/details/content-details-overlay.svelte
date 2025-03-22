@@ -8,7 +8,6 @@
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { siteConfig } from '$lib/services/config';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
   import {
@@ -51,7 +50,7 @@
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );
-  const canPreview = $derived(collection?.editor?.preview ?? $siteConfig?.editor?.preview ?? true);
+  const canPreview = $derived($entryDraft?.canPreview ?? true);
   const paneStateKey = $derived(
     collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
   );

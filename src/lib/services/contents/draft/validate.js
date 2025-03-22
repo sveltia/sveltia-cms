@@ -38,6 +38,7 @@ export const validateEntry = () => {
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     const valueEntries = Object.entries(valueMap);
+    const getFieldConfigArgs = { collectionName: collection.name, fileName, valueMap };
 
     // If the locale is disabled, skip the validation and mark all fields valid
     if (!currentLocales[locale]) {
@@ -57,12 +58,7 @@ export const validateEntry = () => {
      * @param {any} value Field value.
      */
     const validateField = (keyPath, value) => {
-      const fieldConfig = getFieldConfig({
-        collectionName: collection.name,
-        fileName,
-        valueMap,
-        keyPath,
-      });
+      const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
 
       if (!fieldConfig) {
         return;
@@ -148,13 +144,7 @@ export const validateEntry = () => {
         // `field.keyN`, we should validate only once against all these values. The key can be
         // empty, so use `.*` in the regex instead of `.+`
         const _keyPath = /** @type {string} */ (keyPath.match(/(.+?)(?:\.[^.]*)?$/)?.[1]);
-
-        const parentFieldConfig = getFieldConfig({
-          collectionName: collection.name,
-          fileName,
-          valueMap,
-          keyPath: _keyPath,
-        });
+        const parentFieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath });
 
         if (_keyPath in validities[locale] || parentFieldConfig?.widget !== 'keyvalue') {
           return;

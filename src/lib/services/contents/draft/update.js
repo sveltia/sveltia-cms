@@ -105,17 +105,18 @@ export const updateListField = (locale, keyPath, manipulate) => {
  * @returns {FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = (content) => {
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { collectionName, fileName, collection, collectionFile } = draft;
+  const { collectionName, fileName, collection, collectionFile, currentValues } =
+    /** @type {EntryDraft} */ (get(entryDraft));
+
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
-  const defaultLocaleValues = draft.currentValues[defaultLocale];
+  const defaultLocaleValues = currentValues[defaultLocale];
+  const getFieldConfigArgs = { collectionName, fileName };
   /** @type {string[]} */
   const keys = unique([...Object.keys(content), ...Object.keys(defaultLocaleValues)]);
   const newContent = /** @type {FlattenedEntryContent} */ ({});
 
   keys.forEach((keyPath) => {
-    const canDuplicate =
-      getFieldConfig({ collectionName, fileName, keyPath })?.i18n === 'duplicate';
+    const canDuplicate = getFieldConfig({ ...getFieldConfigArgs, keyPath })?.i18n === 'duplicate';
 
     newContent[keyPath] =
       (canDuplicate ? defaultLocaleValues[keyPath] : undefined) ?? content[keyPath];
@@ -140,13 +141,12 @@ export const copyDefaultLocaleValues = (content) => {
  */
 export const toggleLocale = (locale) => {
   /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-    const { currentLocales, currentValues, validities } = _draft;
+    const { fields, currentLocales, currentValues, validities } = _draft;
     const enabled = !currentLocales[locale];
 
     // Initialize the content for the locale
     if (enabled && !currentValues[locale]) {
-      const { collection, collectionName, collectionFile, fileName, originalValues } = _draft;
-      const { fields = [] } = collectionFile ?? collection;
+      const { collectionName, fileName, originalValues } = _draft;
       const newContent = getDefaultValues(fields, locale);
 
       return {
@@ -189,11 +189,12 @@ export const copyFromLocale = async (
 ) => {
   const { collectionName, fileName, currentValues } = /** @type {EntryDraft} */ (get(entryDraft));
   const valueMap = currentValues[sourceLocale];
+  const getFieldConfigArgs = { collectionName, fileName, valueMap };
 
   const copingFields = Object.fromEntries(
     Object.entries(valueMap).filter(([_keyPath, sourceLocaleValue]) => {
       const targetLocaleValue = currentValues[targetLocale][_keyPath];
-      const field = getFieldConfig({ collectionName, fileName, valueMap, keyPath: _keyPath });
+      const field = getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath });
 
       if (
         (keyPath && !_keyPath.startsWith(keyPath)) ||
@@ -311,14 +312,11 @@ export const revertChanges = (locale = '', keyPath = '') => {
    * @param {boolean} reset Whether ro remove the current value.
    */
   const revert = (_locale, valueMap, reset = false) => {
+    const getFieldConfigArgs = { collectionName: collection.name, fileName, valueMap };
+
     Object.entries(valueMap).forEach(([_keyPath, value]) => {
       if (!keyPath || _keyPath.startsWith(keyPath)) {
-        const fieldConfig = getFieldConfig({
-          collectionName: collection.name,
-          fileName,
-          valueMap,
-          keyPath: _keyPath,
-        });
+        const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath });
 
         if (_locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
           if (reset) {

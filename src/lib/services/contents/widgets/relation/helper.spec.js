@@ -86,9 +86,10 @@ describe('Test getOptions()', async () => {
     media_folder: 'static/assets/uploads',
     public_folder: '/assets/uploads',
     collections: [
-      { name: 'authors', fields: [] },
-      { name: 'pages', fields: [] },
-      { name: 'relation_files', fields: [] },
+      { name: 'authors', folder: 'data/authors', fields: [] },
+      { name: 'pages', folder: 'data/pages', fields: [] },
+      { name: 'posts', folder: 'data/posts', fields: [] },
+      { name: 'relation_files', folder: 'data/relation_files', fields: [] },
     ],
     _siteURL: '',
     _baseURL: '',

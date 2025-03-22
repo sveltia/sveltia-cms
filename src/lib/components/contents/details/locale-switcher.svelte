@@ -2,7 +2,6 @@
   import { Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
-  import { siteConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
   import { entryEditorSettings } from '$lib/services/contents/draft/editor';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
@@ -41,7 +40,7 @@
         Object.values(validityMap ?? {}).some(({ valid }) => !valid),
     ),
   );
-  const canPreview = $derived(collection?.editor?.preview ?? $siteConfig?.editor?.preview ?? true);
+  const canPreview = $derived($entryDraft?.canPreview ?? true);
   const useDropDown = $derived(allLocales.length >= 5);
   const SelectComponent = $derived(useDropDown ? Select : SelectButtonGroup);
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);

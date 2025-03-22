@@ -108,7 +108,9 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       ({ hasContent, content }) =>
         hasContent && entryFilters.every(({ field, values }) => values.includes(content[field])),
     )
-    .map(({ refEntry: { slug, locales }, content }) => {
+    .map(({ refEntry, content }) => {
+      const { slug, locales } = refEntry;
+
       /**
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
@@ -150,6 +152,12 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             return [fieldName, locale];
           }
 
+          const collection = getCollection(fieldConfig.collection);
+
+          if (!collection) {
+            return [fieldName, ''];
+          }
+
           const _fieldConfig = getFieldConfig({
             collectionName: fieldConfig.collection,
             fileName: fieldConfig.file,
@@ -157,6 +165,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           });
 
           const keyPath = fieldName.replace(/^fields\./, '');
+          const { defaultLocale } = collection._i18n;
 
           // Resolve the displayed value for a nested relation field
           if (_fieldConfig?.widget === 'relation') {
@@ -172,18 +181,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             ];
           }
 
-          let label = content[keyPath];
-
-          if (label === undefined) {
-            // Fallback to the default locale
-            const { defaultLocale } = getCollection(fieldConfig.collection)?._i18n ?? {};
-
-            if (defaultLocale) {
-              label = locales[defaultLocale].content[keyPath];
-            }
-          }
-
-          return [fieldName, label ?? slug];
+          return [fieldName, content[keyPath] ?? locales[defaultLocale].content[keyPath] ?? slug];
         }),
       );
 

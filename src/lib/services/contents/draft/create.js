@@ -1,5 +1,6 @@
 import { stripTags } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
+import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
@@ -309,7 +310,8 @@ export const createProxy = ({
       }
 
       const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
-      const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
+      const getFieldConfigArgs = { collectionName, fileName, valueMap };
+      const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
 
       if (!fieldConfig) {
         return true;
@@ -341,7 +343,7 @@ export const createProxy = ({
                 !Object.keys(content).some((_keyPath) =>
                   _keyPath.startsWith(`${parentKeyPath}.`),
                 ) &&
-                !getFieldConfig({ collectionName, fileName, valueMap, keyPath: parentKeyPath })
+                !getFieldConfig({ ...getFieldConfigArgs, keyPath: parentKeyPath })
               ) {
                 return;
               }
@@ -387,11 +389,12 @@ export const createDraft = ({
   dynamicValues,
   expanderStates,
 }) => {
-  const collectionName = collection.name;
+  const { name: collectionName, editor: { preview: entryPreview } = {} } = collection;
   const fileName = collectionFile?.name;
   const { id, slug, locales } = originalEntry;
   const isNew = id === undefined;
   const { fields = [], _i18n } = collectionFile ?? collection;
+  const canPreview = entryPreview ?? get(siteConfig)?.editor?.preview ?? true;
 
   const {
     allLocales,
@@ -425,10 +428,12 @@ export const createDraft = ({
 
   entryDraft.set({
     isNew: isNew && !fileName,
+    canPreview,
     collectionName,
     collection,
     fileName,
     collectionFile,
+    fields,
     originalEntry: isNew ? undefined : originalEntry,
     originalLocales,
     currentLocales: structuredClone(originalLocales),
@@ -470,9 +475,11 @@ export const duplicateDraft = () => {
     // Remove the canonical slug
     delete valueMap[canonicalSlugKey];
 
+    const getFieldConfigArgs = { collectionName, fileName, valueMap };
+
     // Reset some unique values
     Object.keys(valueMap).forEach((keyPath) => {
-      const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
+      const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
 
       if (fieldConfig?.widget === 'uuid') {
         if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {

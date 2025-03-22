@@ -76,6 +76,10 @@ export const getAssociatedAssets = ({ entry, collectionName, relative = false })
   const { locales } = entry;
   const collection = getCollection(collectionName);
 
+  if (!collection) {
+    return [];
+  }
+
   const assets = /** @type {Asset[]} */ (
     Object.values(locales)
       .map(({ content }) =>
@@ -102,7 +106,7 @@ export const getAssociatedAssets = ({ entry, collectionName, relative = false })
   );
 
   // Add orphaned/unused entry-relative assets
-  if (relative && collection?._assetFolder?.entryRelative) {
+  if (relative && collection._assetFolder?.entryRelative) {
     const entryDirName = getPathInfo(Object.values(entry.locales)[0].path).dirname;
 
     get(allAssets).forEach((asset) => {

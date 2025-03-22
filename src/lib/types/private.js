@@ -2,6 +2,7 @@
  * @import {
  * Collection,
  * CollectionFile,
+ * Field,
  * FieldKeyPath,
  * FileExtension,
  * FileFormat,
@@ -437,10 +438,13 @@
  * Entry draft.
  * @typedef {object} EntryDraft
  * @property {boolean} isNew `true` if it’s a new entry draft in an entry collection.
+ * @property {boolean} canPreview Whether the entry draft can show the preview pane.
  * @property {string} collectionName Collection name.
  * @property {InternalCollection} collection Collection details.
  * @property {string} [fileName] File identifier. File collection only.
  * @property {InternalCollectionFile} [collectionFile] File details. File collection only.
+ * @property {Field[]} fields Field definition for the collection or collection file. If index file
+ * editing is enabled and the draft is the index file, it will be the index file’s fields.
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
  * @property {LocaleStateMap} originalLocales Original locale state at the time of draft creation.
  * @property {LocaleStateMap} currentLocales Current locale state.

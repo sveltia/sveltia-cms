@@ -215,6 +215,12 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
     return undefined;
   }
 
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    return undefined;
+  }
+
   if (resolveRef) {
     const fieldConfig = getFieldConfig({ collectionName, keyPath: key });
 
