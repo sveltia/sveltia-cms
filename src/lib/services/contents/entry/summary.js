@@ -150,11 +150,12 @@ export const getEntrySummary = (
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
     const valueMap = content;
     const keyPath = tag.replace(/^fields\./, '');
+    const getFieldConfigArgs = { collectionName, valueMap, keyPath };
     /** @type {any} */
     let value = replaceSub(tag);
 
     if (value === undefined) {
-      value = getFieldDisplayValue({ collectionName, valueMap, keyPath, locale: defaultLocale });
+      value = getFieldDisplayValue({ ...getFieldConfigArgs, locale: defaultLocale });
     }
 
     if (value === undefined) {
@@ -169,7 +170,7 @@ export const getEntrySummary = (
 
     if (transformations.length) {
       value = applyTransformations({
-        fieldConfig: getFieldConfig({ collectionName, valueMap, keyPath }),
+        fieldConfig: getFieldConfig({ ...getFieldConfigArgs }),
         value,
         transformations,
       });

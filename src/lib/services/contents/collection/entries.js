@@ -97,6 +97,12 @@ export const getEntriesByAssetURL = async (
 
               const ___results = await Promise.all(
                 collections.map(async (collection) => {
+                  const getFieldConfigArgs = {
+                    collectionName: collection.name,
+                    valueMap: content,
+                    keyPath,
+                  };
+
                   /**
                    * Check if the field contains the asset.
                    * @param {InternalCollectionFile} [collectionFile] Collection file. File
@@ -105,10 +111,8 @@ export const getEntriesByAssetURL = async (
                    */
                   const hasAsset = async (collectionFile) => {
                     const field = getFieldConfig({
-                      collectionName: collection.name,
+                      ...getFieldConfigArgs,
                       fileName: collectionFile?.name,
-                      valueMap: content,
-                      keyPath,
                     });
 
                     if (!field) {

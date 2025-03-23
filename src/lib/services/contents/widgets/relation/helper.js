@@ -48,6 +48,15 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     return cache;
   }
 
+  const { collection: collectionName, file: fileName, filters } = fieldConfig;
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    optionCacheMap.set(cacheKey, []);
+
+    return [];
+  }
+
   /**
    * @example 'userId'
    * @example 'name.first'
@@ -91,7 +100,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
   /**
    * Entry filters.
    */
-  const entryFilters = fieldConfig.filters ?? [];
+  const entryFilters = filters ?? [];
 
   const options = refEntries
     .map((refEntry) => {
@@ -110,6 +119,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     )
     .map(({ refEntry, content }) => {
       const { slug, locales } = refEntry;
+      const getFieldConfigArgs = { collectionName, fileName };
 
       /**
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
@@ -152,19 +162,8 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             return [fieldName, locale];
           }
 
-          const collection = getCollection(fieldConfig.collection);
-
-          if (!collection) {
-            return [fieldName, ''];
-          }
-
-          const _fieldConfig = getFieldConfig({
-            collectionName: fieldConfig.collection,
-            fileName: fieldConfig.file,
-            keyPath: fieldName,
-          });
-
           const keyPath = fieldName.replace(/^fields\./, '');
+          const _fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
           const { defaultLocale } = collection._i18n;
 
           // Resolve the displayed value for a nested relation field

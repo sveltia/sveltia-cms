@@ -88,6 +88,8 @@ export const fillSlugTemplate = (
       ? /** @type {EntryCollection} */ (collection)._file.basePath
       : undefined;
 
+  const getFieldConfigArgs = { collectionName, valueMap };
+
   /**
    * Replacer subroutine.
    * @param {string} tag Field name or one of special tags.
@@ -184,7 +186,7 @@ export const fillSlugTemplate = (
 
     if (transformations.length) {
       value = applyTransformations({
-        fieldConfig: getFieldConfig({ collectionName, valueMap, keyPath: tag }),
+        fieldConfig: getFieldConfig({ ...getFieldConfigArgs, keyPath: tag }),
         value,
         transformations,
       });
