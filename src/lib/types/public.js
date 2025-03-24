@@ -545,17 +545,22 @@
  */
 
 /**
- * Custom field definition. It can contain any properties.
+ * Entry field using a built-in widget.
+ * @typedef {BooleanField | CodeField | ColorField | ComputeField | DateTimeField | FileField |
+ * HiddenField | ImageField | KeyValueField | ListField | MapField | MarkdownField | NumberField |
+ * ObjectField | RelationField | SelectField | StringField | TextField | UuidField} StandardField
+ * @see https://decapcms.org/docs/widgets/
+ */
+
+/**
+ * Entry field using a custom widget. It can contain any properties.
  * @typedef {CommonFieldProps & Record<string, any>} CustomField
  * @see https://decapcms.org/docs/custom-widgets/
  */
 
 /**
  * Entry field.
- * @typedef {BooleanField | CodeField | ColorField | ComputeField | DateTimeField | FileField |
- * HiddenField | ImageField | KeyValueField | ListField | MapField | MarkdownField | NumberField |
- * ObjectField | RelationField | SelectField | StringField | TextField | UuidField | CustomField
- * } Field
+ * @typedef {StandardField | CustomField} Field
  */
 
 /**
@@ -802,9 +807,11 @@
  * joined by a slash, e.g. `group/project` or `group/subgroup/project`.
  * @property {string} [branch] Git branch name. If omitted, the default branch, usually `main` or
  * `master`, will be used.
- * @property {string} [api_root] API endpoint of the backend. Required when using GitHub Enterprise
- * Server or a self-hosted GitLab instance. Default: `https://api.github.com` (GitHub) or
+ * @property {string} [api_root] REST API endpoint for the backend. Required when using GitHub
+ * Enterprise Server or a self-hosted GitLab instance. Default: `https://api.github.com` (GitHub) or
  * `https://gitlab.com/api/v4` (GitLab).
+ * @property {string} [graphql_api_root] GraphQL endpoint for the backend. Default: inferred from
+ * `api_root` option value.
  * @property {string} [site_domain] Site domain used for OAuth, which will be included in the
  * `site_id` param to be sent to the API endpoint. Default: `location.hostname`.
  * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
