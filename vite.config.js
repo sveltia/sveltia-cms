@@ -29,7 +29,7 @@ const copyPackageFiles = () => ({
           // Keep only React type declarations used in the generated `d.ts` files
           '@types/react': packageJson.devDependencies['@types/react'],
         },
-        files: ['dist'],
+        files: ['dist', 'types', 'main.d.ts'],
         main: './dist/sveltia-cms.mjs',
         module: './dist/sveltia-cms.mjs',
         exports: {
