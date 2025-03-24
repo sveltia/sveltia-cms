@@ -52,16 +52,25 @@ const apiConfig = {
 };
 
 siteConfig?.subscribe((config) => {
-  const apiRoot = config?.backend.api_root ?? apiRootDefault;
-  const isSelfHosted = apiRoot !== apiRootDefault;
-  const { origin } = new URL(apiRoot);
+  const {
+    name,
+    api_root: restApiRoot = apiRootDefault,
+    graphql_api_root: graphqlApiRoot,
+  } = config?.backend ?? {};
 
-  Object.assign(apiConfig, {
-    origin,
-    rest: `${origin}/api/v4`,
-    graphql: `${origin}/api`,
-    isSelfHosted,
-  });
+  if (name === backendName) {
+    // Developers may misconfigure custom API roots, so we use the origin to redefine them
+    const restApiOrigin = new URL(restApiRoot).origin;
+    const graphqlApiOrigin = new URL(graphqlApiRoot ?? restApiRoot).origin;
+    const isSelfHosted = restApiRoot !== apiRootDefault;
+
+    Object.assign(apiConfig, {
+      origin: restApiOrigin,
+      rest: `${restApiOrigin}/api/v4`,
+      graphql: `${graphqlApiOrigin}/api`,
+      isSelfHosted,
+    });
+  }
 });
 
 /**
