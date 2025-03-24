@@ -518,7 +518,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - Support for an absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance), so these are no longer relevant:
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
-  - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api) — GraphQL is enabled by default
+  - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api), [`graphql_api_root`](https://decapcms.org/docs/gitlab-backend/#graphql-api) — GraphQL is enabled by default
   - Relation widget: `options_length`
 - Global [`locale`](https://decapcms.org/docs/configuration-options/#locale) option and `CMS.registerLocale()` method: Sveltia CMS automatically detects the user’s preferred language and changes the UI locale as [mentioned above](#better-localization).
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
