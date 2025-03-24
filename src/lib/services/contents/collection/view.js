@@ -28,7 +28,7 @@ import { prefs } from '$lib/services/user/prefs';
  * SortingConditions,
  * SortOrder,
  * } from '$lib/types/private';
- * @import { CustomSortableFields, DateTimeField, FieldKeyPath } from '$lib/types/public';
+ * @import { DateTimeField, FieldKeyPath, SortableFields } from '$lib/types/public';
  */
 
 /**
@@ -262,7 +262,7 @@ export const getSortableFields = (collection) => {
     }
 
     if (isObject(customSortableFields)) {
-      const def = /** @type {CustomSortableFields} */ (customSortableFields);
+      const def = /** @type {SortableFields} */ (customSortableFields);
 
       if (Array.isArray(def.fields)) {
         fields = def.fields;

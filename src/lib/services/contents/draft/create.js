@@ -146,6 +146,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
       return;
     }
 
+    // @ts-ignore `compute` and `uuid` widgets don’t have the `default` option
     const { widget: widgetName = 'string', default: defaultValue } = fieldConfig;
     const required = isFieldRequired({ fieldConfig, locale });
     const isArray = Array.isArray(defaultValue) && !!defaultValue.length;

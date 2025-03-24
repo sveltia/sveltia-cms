@@ -5,8 +5,8 @@ import { siteConfig } from '$lib/services/config';
 
 /**
  * @import {
- * InternalLocaleCode,
  * InternalI18nOptions,
+ * InternalLocaleCode,
  * InternalSiteConfig,
  * } from '$lib/types/private';
  * @import { Collection, CollectionFile, I18nOptions, LocaleCode } from '$lib/types/public';

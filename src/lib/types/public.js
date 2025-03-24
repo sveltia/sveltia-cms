@@ -7,57 +7,24 @@
  * configuration options and JavaScript method arguments available on the `CMS` object. This file is
  * automatically converted into a TypeScript type declaration file (`public.d.ts`) during the build
  * process, which is then distributed via npm. The Netlify/Decap CMS equivalent can be found below,
- * although their content is incomplete.
+ * although their types are incomplete and somewhat inaccurate.
  * @see https://github.com/decaporg/decap-cms/blob/main/packages/decap-cms-core/index.d.ts
  */
 
 /**
- * Supported backend name.
- * @typedef {'github' | 'gitlab'} BackendName
+ * Standard IETF locale tag like `en` or `en-US`.
+ * @typedef {string} LocaleCode
+ * @see https://en.wikipedia.org/wiki/IETF_language_tag
  */
 
 /**
- * Custom commit messages.
- * @typedef {object} CommitMessages
- * @property {string} [create] Message for created entries.
- * @property {string} [update] Message for updated entries.
- * @property {string} [delete] Message for deleted entries.
- * @property {string} [uploadMedia] Message for uploaded assets.
- * @property {string} [deleteMedia] Message for deleted assets.
- * @property {string} [openAuthoring] Message for open authoring.
- * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
- */
-
-/**
- * Backend options.
- * @typedef {object} BackendOptions
- * @property {BackendName} name Backend name.
- * @property {string} [repo] Required for the GitHub and GitLab backends. GitHub: organization/user
- * name and repository name joined with `/`, e.g. `owner/repo`. GitLab: namespace and project name
- * joined with `/`, e.g. `group/project` or `group/subgroup/project`.
- * @property {string} [branch] Git branch name. If omitted, the default branch, usually `main` or
- * `master`, will be used.
- * @property {string} [api_root] API endpoint of the backend. Required when using GitHub Enterprise
- * Server or a self-hosted GitLab instance.
- * @property {string} [site_domain] Site domain used for OAuth.
- * @property {string} [base_url] OAuth base URL origin.
- * @property {string} [auth_endpoint] OAuth URL path.
- * @property {'pkce' | 'implicit'} [auth_type] OAuth authentication method. GitLab only.
- * @property {string} [app_id] OAuth application ID. GitLab only.
- * @property {CommitMessages} [commit_messages] Custom commit messages.
- * @property {string} [preview_context] Deploy preview link context. GitHub only.
- * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow.
- * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow.
- * @property {boolean} [open_authoring] Whether to use Open Authoring.
- * @property {'repo' | 'public_repo'} [auth_scope] Authentication scope for Open Authoring.
- * @property {boolean} [automatic_deployments] Whether to enable or disable automatic deployments
- * with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `false`, the
- * `[skip ci]` prefix will be added to commit messages. Git backends only.
- * @see https://decapcms.org/docs/backends-overview/
- * @see https://decapcms.org/docs/github-backend/
- * @see https://decapcms.org/docs/gitlab-backend/
- * @see https://decapcms.org/docs/editorial-workflows/
- * @see https://decapcms.org/docs/open-authoring/
+ * An entry field name. It can be written in dot notation like `author.name` if the field is nested
+ * with an Object field. For a List subfield, a wildcard can be used like `authors.*.name`. We
+ * call this a key path, which is derived from the IndexedDB API terminology, and use it everywhere,
+ * as entry data is managed as a flatten object for easier access.
+ * @typedef {string} FieldKeyPath
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Basic_Terminology#key_path
+ * @see https://www.npmjs.com/package/flat
  */
 
 /**
@@ -67,27 +34,26 @@
 
 /**
  * Configuration for the built-in media library.
- * @typedef {object} DefaultMediaLibraryConfig
- * @property {number} [max_file_size] Maximum file size in bytes.
- * @see https://decapcms.org/docs/widgets/#file
- */
-
-/**
- * Options for the built-in media library.
- * @typedef {object} DefaultMediaLibrary
- * @property {'default'} [name] Library name. Required for the global `media_library` option.
- * @property {DefaultMediaLibraryConfig} [config] Options for the default media library.
+ * @typedef {object} DefaultMediaLibraryOptions
+ * @property {number} [max_file_size] Maximum file size in bytes that can be accepted for uploading.
  * @see https://decapcms.org/docs/widgets/#file
  * @see https://decapcms.org/docs/widgets/#image
  */
 
 /**
+ * Options for the built-in media library.
+ * @typedef {object} DefaultMediaLibrary
+ * @property {DefaultMediaLibraryOptions} [config] Configuration for the built-in media library.
+ */
+
+/**
  * Options for the Cloudinary media library.
  * @typedef {object} CloudinaryMediaLibrary
- * @property {'cloudinary'} [name] Library name. Required for the global `media_library` option.
- * @property {boolean} [output_filename_only] Whether to output a file name instead of a URL.
- * @property {boolean} [use_transformations] Whether to include transformations in an output URL.
- * @property {boolean} [use_secure_url] Whether to use an HTTP URL.
+ * @property {boolean} [output_filename_only] Whether to output a file name instead of a full URL.
+ * Default: `false`.
+ * @property {boolean} [use_transformations] Whether to include transformation segments in an output
+ * URL. Default: `true`.
+ * @property {boolean} [use_secure_url] Whether to use an HTTP URL. Default: `true`.
  * @property {Record<string, any>} [config] Options to be passed to Uploadcare, such as `multiple`.
  * The `cloud_name` and `api_key` options are required for the global `media_library` option. See
  * https://cloudinary.com/documentation/media_library_widget#2_set_the_configuration_options for a
@@ -98,15 +64,16 @@
 /**
  * Settings for the Uploadcare media library.
  * @typedef {object} UploadcareMediaLibrarySettings
- * @property {boolean} [autoFilename] Whether to append the file name to an output URL.
+ * @property {boolean} [autoFilename] Whether to append a file name to an output URL. Default:
+ * `false`.
  * @property {string} [defaultOperations] Transformation operations to be included in an output URL.
+ * Default: empty string.
  * @see https://decapcms.org/docs/uploadcare/
  */
 
 /**
  * Options for the Uploadcare media library.
  * @typedef {object} UploadcareMediaLibrary
- * @property {'uploadcare'} [name] Library name. Required for the global `media_library` option.
  * @property {Record<string, any>} [config] Options to be passed to Uploadcare, such as `multiple`.
  * The `publicKey` option is required for the global `media_library` option. See
  * https://uploadcare.com/docs/uploads/file-uploader-options/ for a full list of available options.
@@ -115,93 +82,303 @@
  */
 
 /**
- * Media library options.
- * @typedef {DefaultMediaLibrary | CloudinaryMediaLibrary | UploadcareMediaLibrary
- * } MediaLibraryOptions
+ * Supported media library.
+ * @typedef {DefaultMediaLibrary | CloudinaryMediaLibrary | UploadcareMediaLibrary} MediaLibrary
  * @see https://decapcms.org/docs/configuration-options/#media-library
  */
 
 /**
- * Entry slug options.
- * @typedef {object} SlugOptions
- * @property {'unicode' | 'ascii'} [encoding] Encoding option. Default: `unicode`.
- * @property {boolean} [clean_accents] Whether to remove accents. Default: `false`.
- * @property {string} [sanitize_replacement] String to replace sanitized characters. Default: `-`.
- * @see https://decapcms.org/docs/configuration-options/#slug-type
+ * Common field properties.
+ * @typedef {object} CommonFieldProps
+ * @property {string} name Unique identifier for the field. It cannot include periods and spaces.
+ * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
+ * field value.
+ * @property {string} [comment] Short description of the field to be displayed in the editor UI.
+ * @property {string} [widget] Name of a widget that defines the input UI and data type. Default:
+ * `string`.
+ * @property {boolean | LocaleCode[]} [required] Whether to make data input on the field required.
+ * Default: `true`. This option also affects data output if the `omit_empty_optional_fields` global
+ * output option is `true`. If i18n is enabled and the field doesn’t require input in all locales,
+ * required locale codes can be passed as an array like `[en, fr]` instead of a boolean.
+ * @property {[string, string]} [pattern] Validation format. The first argument is a regular
+ * expression pattern for a valid input value, and the second argument is an error message. This
+ * option has no effect on a List or Object field with subfields.
+ * @property {string} [hint] Help message to be displayed below the input UI. Limited Markdown
+ * formatting is supported: bold, italic, strikethrough and links.
+ * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
+ * @property {boolean | 'duplicate' | 'translate' | 'none'} [i18n] Whether to enable the editor UI
+ * in locales other than the default locale. Default: `false`. `duplicate` disables the UI in
+ * non-default like `false` but automatically copies the default locale’s value to other locales.
+ * `translate` and `none` are aliases of `true` and `false`, respectively. This option only works
+ * when i18n is set up with the global and collection-level `i18n` option.
+ * @see https://decapcms.org/docs/configuration-options/#fields
+ * @see https://decapcms.org/docs/widgets/
  */
 
 /**
- * Editor options.
- * @typedef {object} EditorOptions
- * @property {boolean} preview Whether to show the preview pane. Default: `true`.
- * @see https://decapcms.org/docs/configuration-options/#editor
+ * Field-level media library options.
+ * @typedef {object} FieldMediaLibraryOptions
+ * @property {MediaLibraryName} [name] Library name.
  */
 
 /**
- * Internationalization (i18n) file structure type.
- * @typedef {'single_file' | 'multiple_files' | 'multiple_folders' | 'multiple_folders_i18n_root'
- * } I18nFileStructure
- * @see https://decapcms.org/docs/i18n/
- * @see https://github.com/decaporg/decap-cms/pull/7400
+ * Media field properties.
+ * @typedef {object} MediaFieldProps
+ * @property {string} [default] Default value. A file path or complete URL.
+ * @property {boolean} [choose_url] Whether to show the URL input UI. Default: `true`.
+ * @property {string} [media_folder] Internal media folder path for the field. Default: global or
+ * collection-level `media_folder` value.
+ * @property {string} [public_folder] Public media folder path for the field. Default:
+ * `media_folder` option value.
+ * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Media library options for the
+ * field. Default: global `media_library` value.
+ * @property {boolean} [allow_multiple] Whether to enable multiple item selection in an external
+ * media library. Default: `true`.
+ * @see https://decapcms.org/docs/widgets/#file
+ * @see https://decapcms.org/docs/widgets/#image
  */
 
 /**
- * Standard ISO 639-1 locale code like `en`.
- * @typedef {string} LocaleCode
+ * Options for a field accepting multiple values.
+ * @typedef {object} MultiValueFieldProps
+ * @property {number} [min] Minimum number of items that can be added. Default: 0.
+ * @property {number} [max] Maximum number of items that can be added. Default: infinity.
  */
 
 /**
- * Global or collection-level i18n options.
- * @typedef {object} I18nOptions
- * @property {I18nFileStructure} [structure] File structure.
- * @property {LocaleCode[]} locales List of all available locales.
- * @property {LocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
- * creating a new entry draft.
- * @property {LocaleCode} [default_locale] Default locale.
- * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales. If
- * `false`, editors will be able to disable the output of non-default locales through the UI. An
- * option suggested in https://github.com/decaporg/decap-cms/issues/6932.
- * @property {{ key: string, value: string }} [canonical_slug] Property name and value template used
- * to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
- * localized files when entry slugs are localized. The default property name is `translationKey`
- * used in Hugo’s multilingual support, and the default value is the default locale’s slug.
- * @see https://decapcms.org/docs/i18n/
- * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
+ * Options for a field showing multiple options.
+ * @typedef {object} MultiOptionFieldProps
+ * @property {boolean} [multiple] Whether to accept multiple values. Default: `false`.
+ * @property {number} [min] Minimum number of items that can be selected. Default: 0. Ignored if
+ * `multiple` is `false`.
+ * @property {number} [max] Maximum number of items that can be selected. Default: infinity. Ignored
+ * if `multiple` is `false`.
+ * @property {number} [dropdown_threshold] Maximum number of options to be displayed as radio
+ * buttons (single-select) or checkboxes (multi-select) rather than a dropdown list. Default: 5.
  */
 
 /**
- * JSON format options.
- * @typedef {object} JsonFormatOptions
- * @property {'space' | 'tab'} [indent_style] Indent style. Default: 'space'.
- * @property {number} [indent_size] Indent size. Default: 2.
- * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ * Variable type for List/Object fields.
+ * @typedef {object} VariableFieldType
+ * @property {string} name Unique identifier for the type.
+ * @property {string} [label] Label of the type to be displayed in the editor UI. Default: `name`
+ * field value.
+ * @property {'object'} [widget] Widget name. Values other than `object` are ignored.
+ * @property {string} [summary] Template of a label to be displayed on a collapsed object.
+ * @property {Field[]} [fields] Set of subfields. This option can be omitted; in that case, only
+ * the `type` property will be saved.
+ * @see https://decapcms.org/docs/variable-type-widgets/
  */
 
 /**
- * YAML format options.
- * @typedef {object} YamlFormatOptions
- * @property {number} [indent_size] Indent size. Default: 2.
- * @property {'none' | 'double' | 'single'} [quote] String value’s default quote type. Default:
- * 'none'.
- * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ * Variable field properties.
+ * @typedef {object} VariableFieldProps
+ * @property {VariableFieldType[]} [types] Set of nested Object widgets to be selected or added.
+ * @property {string} [typeKey] Property name to store the type name in nested objects. Default:
+ * `type`.
+ * @see https://decapcms.org/docs/variable-type-widgets/
  */
 
 /**
- * Data output options.
- * @typedef {object} OutputOptions
- * @property {boolean} [omit_empty_optional_fields] Whether to prevent fields with `required: false`
- * and an empty value from being included in the data output. Default: false.
- * @property {JsonFormatOptions} [json] JSON format options.
- * @property {YamlFormatOptions} [yaml] YAML format options.
- * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ * Options for a field with a simple input UI that allows for extra labels.
+ * @typedef {object} AdjacentLabelProps
+ * @property {string} [before_input] An extra label to be displayed before the input UI. Markdown is
+ * supported. Default: empty string.
+ * @property {string} [after_input] An extra label to be displayed after the input UI. Markdown is
+ * supported. Default: empty string.
+ * @see https://github.com/sveltia/sveltia-cms/issues/110
  */
 
 /**
- * An entry field name. It can be written in dot notation if the field is nested with an Object
- * field, e.g. `author.name`. For a List field, a wildcard can be used like `authors.*.name`. We
- * call this a key path, which is derived from the IndexedDB API’s `keyPath` property, and use it
- * everywhere, as entry data is managed as a flatten object for easier access.
- * @typedef {string} FieldKeyPath
+ * Options for a field with a string-type input UI that counts the number of characters.
+ * @typedef {object} CharCountProps
+ * @property {number} [minlength] Minimum number of characters that can be entered in the input.
+ * Default: 0.
+ * @property {number} [maxlength] Maximum number of characters that can be entered in the input.
+ * Default: infinity.
+ * @see https://github.com/sveltia/sveltia-cms/issues/141
+ */
+
+/**
+ * Boolean field properties.
+ * @typedef {object} BooleanFieldProps
+ * @property {'boolean'} widget Widget name.
+ * @property {boolean} [default] Default value.
+ * @see https://decapcms.org/docs/widgets/#boolean
+ */
+
+/**
+ * Boolean field definition.
+ * @typedef {CommonFieldProps & BooleanFieldProps & AdjacentLabelProps} BooleanField
+ */
+
+/**
+ * Code field properties.
+ * @typedef {object} CodeFieldProps
+ * @property {'code'} widget Widget name.
+ * @property {string | Record<string, string>} [default] Default value. It must be a string if
+ * `output_code_only` is `false`. Otherwise it must be an object that match the `keys` option.
+ * @property {string} [default_language] Default language to be selected, like `js`. See
+ * https://prismjs.com/#supported-languages for a list of supported languages.
+ * @property {boolean} [allow_language_selection] Whether to show a language switcher so that users
+ * can change the language mode. Default: `true` (the Decap CMS document is wrong).
+ * @property {boolean} [output_code_only] Whether to output code snippet only. Default: `false`.
+ * @property {{ code: string, lang: string }} [keys] Output property names. It has no effect if
+ * `output_code_only` is `true`.
+ * @see https://decapcms.org/docs/widgets/#code
+ */
+
+/**
+ * Code field definition.
+ * @typedef {CommonFieldProps & CodeFieldProps} CodeField
+ */
+
+/**
+ * Color field properties.
+ * @typedef {object} ColorFieldProps
+ * @property {'color'} widget Widget name.
+ * @property {string} [default] Default value. Accepts a Hex color code.
+ * @property {boolean} [allowInput] Whether to show a textbox that allows users to manually edit the
+ * value. Default: `false`.
+ * @property {boolean} [enableAlpha] Whether to edit/save the alpha channel value.
+ * @see https://decapcms.org/docs/widgets/#color
+ */
+
+/**
+ * Color field definition.
+ * @typedef {CommonFieldProps & ColorFieldProps} ColorField
+ */
+
+/**
+ * Compute field properties.
+ * @typedef {object} ComputeFieldProps
+ * @property {'compute'} widget Widget name.
+ * @property {string} value Value template, like `posts-{{fields.slug}}`.
+ * @see https://github.com/sveltia/sveltia-cms/issues/111
+ */
+
+/**
+ * Compute field definition.
+ * @typedef {CommonFieldProps & ComputeFieldProps} ComputeField
+ */
+
+/**
+ * DateTime field properties.
+ * @typedef {object} DateTimeFieldProps
+ * @property {'datetime'} widget Widget name.
+ * @property {string} [default] Default value. Accepts a date/time string that matches the `format`,
+ * or `{{now}}` to populate the current date/time. Default: empty string.
+ * @property {string} [format] Storage format written in Moment.js tokens. See
+ * https://momentjs.com/docs/#/displaying/format/ for supported tokens. Default: ISO 8601 format.
+ * @property {string | boolean} [date_format] Date storage format written in Moment.js tokens if the
+ * value is a string and the `format` option is not defined. If `true`, ISO 8601 format is used
+ * unless the `format` option is defined. If `false`, date input/output is disabled.
+ * @property {string | boolean} [time_format] Time storage format written in Moment.js tokens if the
+ * value is a string and the `format` option is not defined. If `true`, ISO 8601 format is used
+ * unless the `format` option is defined. If `false`, time input/output is disabled.
+ * @property {boolean} [picker_utc] Whether to make the date input/output UTC. Default: `false`.
+ * @see https://decapcms.org/docs/widgets/#datetime
+ */
+
+/**
+ * DateTime field definition.
+ * @typedef {CommonFieldProps & DateTimeFieldProps} DateTimeField
+ */
+
+/**
+ * File field properties.
+ * @typedef {object} FileFieldProps
+ * @property {'file'} widget Widget name.
+ * @see https://decapcms.org/docs/widgets/#file
+ */
+
+/**
+ * File field definition.
+ * @typedef {CommonFieldProps & MediaFieldProps & FileFieldProps} FileField
+ */
+
+/**
+ * Hidden field properties.
+ * @typedef {object} HiddenFieldProps
+ * @property {'hidden'} widget Widget name.
+ * @property {any} [default] Default value. Accepts any data type that can be stored with the
+ * configured file format.
+ * @see https://decapcms.org/docs/widgets/#hidden
+ */
+
+/**
+ * Hidden field definition.
+ * @typedef {CommonFieldProps & HiddenFieldProps} HiddenField
+ */
+
+/**
+ * Image field properties.
+ * @typedef {object} ImageFieldProps
+ * @property {'image'} widget Widget name.
+ * @see https://decapcms.org/docs/widgets/#image
+ */
+
+/**
+ * Image field definition.
+ * @typedef {CommonFieldProps & MediaFieldProps & ImageFieldProps} ImageField
+ */
+
+/**
+ * KeyValue field properties.
+ * @typedef {object} KeyValueFieldProps
+ * @property {'keyvalue'} widget Widget name.
+ * @property {Record<string, string>} [default] Default key-value pairs.
+ * @property {string} [key_label] Label for the key column. Default: Key.
+ * @property {string} [value_label] Label for the value column. Default: Value.
+ * @see https://staticjscms.netlify.app/docs/widget-keyvalue
+ */
+
+/**
+ * KeyValue field definition.
+ * @typedef {CommonFieldProps & KeyValueFieldProps & MultiValueFieldProps} KeyValueField
+ */
+
+/**
+ * List field properties.
+ * @typedef {object} ListFieldProps
+ * @property {'list'} widget Widget name.
+ * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value.
+ * @property {boolean} [allow_add] Whether to allow users to add new values. Default: `true`.
+ * @property {boolean} [add_to_top] Whether to add new items to the top of the list instead of the
+ * bottom. Default: `false`.
+ * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
+ * field value.
+ * @property {string} [summary] Template of a label to be displayed on a collapsed list item.
+ * @property {boolean} [collapsed] Whether to collapse the UI by default. Default: `false`.
+ * @property {boolean} [minimize_collapsed] Whether to collapse the entire UI. Default: `false`.
+ * @property {Field} [field] Single field to be included in a list item.
+ * @property {Field[]} [fields] Set of fields to be included in a list item.
+ * @property {boolean} [root] Whether to save the field value at the top-level of the data file
+ * without the field name. If the `single_file` i18n structure is enabled, the lists will still be
+ * saved under locale keys. Default: `false`. See
+ * https://github.com/sveltia/sveltia-cms#editing-data-files-with-a-top-level-list for details.
+ * @see https://decapcms.org/docs/widgets/#list
+ */
+
+/**
+ * List field definition.
+ * @typedef {CommonFieldProps & ListFieldProps & MultiValueFieldProps & VariableFieldProps
+ * } ListField
+ */
+
+/**
+ * Map field properties.
+ * @typedef {object} MapFieldProps
+ * @property {'map'} widget Widget name.
+ * @property {string} [default] Default value. Accepts a stringified single GeoJSON geometry object.
+ * @property {number} [decimals] Precision of coordinates to be saved. Default: 7.
+ * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: Point.
+ * @see https://decapcms.org/docs/widgets/#map
+ */
+
+/**
+ * Map field definition.
+ * @typedef {CommonFieldProps & MapFieldProps} MapField
  */
 
 /**
@@ -219,241 +396,9 @@
  */
 
 /**
- * Supported mode names for the rich text editor.
+ * Supported mode name for the rich text editor.
  * @typedef {'rich_text' | 'raw'} RichTextEditorMode
  * @see https://decapcms.org/docs/widgets/#markdown
- */
-
-/**
- * Common field properties.
- * @typedef {object} CommonFieldProps
- * @property {string} name Field name. It shouldn’t include a dot.
- * @property {string} [label] Field label.
- * @property {string} [comment] Short description of the field.
- * @property {string} [widget] Widget name. Default: `string`.
- * @property {boolean | LocaleCode[]} [required] Whether to require data input (and data output if
- * the `omit_empty_optional_fields` option is `true`) for the field. Default: `true`. If i18n is
- * enabled and the field doesn’t require input for every locale, a subset of locales can be passed
- * as an array.
- * @property {[string, string]} [pattern] Validation format. The first argument is a regular
- * expression pattern, and second argument is an error message.
- * @property {string} [hint] Value hint to be displayed below the input.
- * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
- * @property {boolean | 'translate' | 'none' | 'duplicate'} [i18n] I18n option. Default: `false`.
- * `translate` is an alias of `true`. `none` is an alias of `false`.
- * @see https://decapcms.org/docs/configuration-options/#fields
- * @see https://decapcms.org/docs/widgets/
- */
-
-/**
- * Multi-value field properties.
- * @typedef {object} MultiValueFieldProps
- * @property {number} [min] Minimum number of items.
- * @property {number} [max] Maximum number of items.
- */
-
-/**
- * Variable type for List/Object fields.
- * @typedef {object} VariableFieldType
- * @property {string} label Label to distinguish the different types.
- * @property {string} name Type name.
- * @property {'object'} [widget] Widget type. `object` only.
- * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
- * @property {Field[]} [fields] List of nested fields.
- * @see https://decapcms.org/docs/variable-type-widgets/
- */
-
-/**
- * Variable field properties.
- * @typedef {object} VariableFieldProps
- * @property {VariableFieldType[]} [types] Multiple Object widgets (variable types) to be selected.
- * @property {string} [typeKey] Property name to store the type.
- * @see https://decapcms.org/docs/variable-type-widgets/
- */
-
-/**
- * Options for fields with a simple input UI that allows to have extra labels.
- * @typedef {object} BeforeAfterInputProps
- * @property {string} [before_input] An extra label to be displayed before the input UI. Default: an
- * empty string.
- * @property {string} [after_input] An extra label to be displayed after the input UI. Default: an
- * empty string.
- */
-
-/**
- * Options for fields with a string-type input UI.
- * @typedef {object} CharLengthProps
- * @property {number} [minlength] Minimum number of characters required for input.
- * @property {number} [maxlength] Maximum number of characters required for input.
- */
-
-/**
- * Boolean field properties.
- * @typedef {object} BooleanFieldProps
- * @property {'boolean'} widget Widget name.
- * @property {boolean} [default] Default value.
- * @see https://decapcms.org/docs/widgets/#boolean
- */
-
-/**
- * Boolean field definition.
- * @typedef {CommonFieldProps & BooleanFieldProps & BeforeAfterInputProps} BooleanField
- */
-
-/**
- * Code field properties.
- * @typedef {object} CodeFieldProps
- * @property {'code'} widget Widget name.
- * @property {string | Record<string, string>} [default] Default value.
- * @property {string} [default_language] Default language to be selected.
- * @property {boolean} [allow_language_selection] Whether to show the language switcher. Note: The
- * Decap CMS document says it defaults to `false` but it’s actually `true`.
- * @property {boolean} [output_code_only] Whether to output code snippet only.
- * @property {{ code: string, lang: string }} [keys] Output property names.
- * @see https://decapcms.org/docs/widgets/#code
- */
-
-/**
- * Code field definition.
- * @typedef {CommonFieldProps & CodeFieldProps} CodeField
- */
-
-/**
- * Color field properties.
- * @typedef {object} ColorFieldProps
- * @property {'color'} widget Widget name.
- * @property {string} [default] Default value.
- * @property {boolean} [allowInput] Whether to show the textbox to allow editing the value.
- * @property {boolean} [enableAlpha] Whether to save the alpha channel value.
- * @see https://decapcms.org/docs/widgets/#color
- */
-
-/**
- * Color field definition.
- * @typedef {CommonFieldProps & ColorFieldProps} ColorField
- */
-
-/**
- * Compute field properties.
- * @typedef {object} ComputeFieldProps
- * @property {'compute'} widget Widget name.
- * @property {string} [default] Default value. Unused.
- * @property {string} value Value template, like `posts-{{fields.slug}}`.
- */
-
-/**
- * Compute field definition.
- * @typedef {CommonFieldProps & ComputeFieldProps} ComputeField
- */
-
-/**
- * DateTime field properties.
- * @typedef {object} DateTimeFieldProps
- * @property {'datetime'} widget Widget name.
- * @property {string} [default] Default value.
- * @property {string} [format] Moment.js format to save the value.
- * @property {boolean | string} [date_format] Moment.js format (string) to display the date in the
- * UI, `true` to use the default locale format, or `false` to disable the date input.
- * @property {boolean | string} [time_format] Moment.js format (string) to display the time in the
- * UI, `true` to use the default locale format, or `false` to disable the time input.
- * @property {boolean} [picker_utc] Whether to show the value in UTC.
- * @see https://decapcms.org/docs/widgets/#datetime
- */
-
-/**
- * DateTime field definition.
- * @typedef {CommonFieldProps & DateTimeFieldProps} DateTimeField
- */
-
-/**
- * File field properties.
- * @typedef {object} FileFieldProps
- * @property {string} [default] Default value.
- * @property {boolean} [choose_url] Whether to hide the Insert from URL button.
- * @property {string} [media_folder] Internal media folder path for the field.
- * @property {string} [public_folder] Public media folder path for the field.
- * @property {MediaLibraryOptions} [media_library] Media library options.
- * @property {boolean} [allow_multiple] Whether to force disabling multiple inputs in the external
- * media library.
- * @see https://decapcms.org/docs/widgets/#file
- */
-
-/**
- * File field definition.
- * @typedef {CommonFieldProps & FileFieldProps & { widget: 'file' }} FileField
- */
-
-/**
- * Hidden field properties.
- * @typedef {object} HiddenFieldProps
- * @property {'hidden'} widget Widget name.
- * @property {any} [default] Default value.
- * @see https://decapcms.org/docs/widgets/#hidden
- */
-
-/**
- * Hidden field definition.
- * @typedef {CommonFieldProps & HiddenFieldProps} HiddenField
- */
-
-/**
- * Image field definition. It’s an alias of the File field.
- * @typedef {CommonFieldProps & FileFieldProps & { widget: 'image' }} ImageField
- */
-
-/**
- * KeyValue field properties.
- * @typedef {object} KeyValueFieldProps
- * @property {'keyvalue'} widget Widget name.
- * @property {Record<string, string>} [default] Default key-value pairs.
- * @property {string} [key_label] Label for the key column.
- * @property {string} [value_label] Label for the value column.
- * @see https://staticjscms.netlify.app/docs/widget-keyvalue
- */
-
-/**
- * KeyValue field definition.
- * @typedef {CommonFieldProps & KeyValueFieldProps & MultiValueFieldProps} KeyValueField
- */
-
-/**
- * List field properties.
- * @typedef {object} ListFieldProps
- * @property {'list'} widget Widget name.
- * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value.
- * @property {boolean} [allow_add] Whether to allow adding new values.
- * @property {boolean} [add_to_top] Whether show the Add button at the top of items.
- * @property {string} [label_singular] Label to be displayed on the Add button.
- * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
- * @property {boolean} [collapsed] Whether to collapse the UI by default.
- * @property {boolean} [minimize_collapsed] Whether to collapse the entire UI.
- * @property {Field} [field] Single field to be included.
- * @property {Field[]} [fields] List of fields to be included.
- * @property {boolean} [root] Whether to save the field value at the top-level of the data file
- * without the field name. If the `single_file` i18n structure is enabled, the lists will still be
- * saved under locale keys.
- * @see https://decapcms.org/docs/widgets/#list
- */
-
-/**
- * List field definition.
- * @typedef {CommonFieldProps & ListFieldProps & MultiValueFieldProps & VariableFieldProps
- * } ListField
- */
-
-/**
- * Map field properties.
- * @typedef {object} MapFieldProps
- * @property {'map'} widget Widget name.
- * @property {string} [default] Default value.
- * @property {number} [decimals] Precision of coordinates. Default: 7.
- * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type.
- * @see https://decapcms.org/docs/widgets/#map
- */
-
-/**
- * Map field definition.
- * @typedef {CommonFieldProps & MapFieldProps} MapField
  */
 
 /**
@@ -462,10 +407,14 @@
  * @property {'markdown'} widget Widget name.
  * @property {string} [default] Default value.
  * @property {boolean} [minimal] Whether to minimize the toolbar height.
- * @property {RichTextEditorButtonName[]} [buttons] Formatting button list.
- * @property {(RichTextEditorComponentName | string)[]} [editor_components] Editor button list.
- * @property {RichTextEditorMode[]} [modes] Editor mode(s).
- * @property {boolean} [sanitize_preview] Whether to sanitize the preview HTML.
+ * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
+ * enabled in the editor UI. Default: all the supported button names.
+ * @property {(RichTextEditorComponentName | string)[]} [editor_components] Names of components to
+ * be enabled in the editor UI. This may include custom component names. Default: all the built-in
+ * component names.
+ * @property {RichTextEditorMode[]} [modes] Editor modes to be enabled. If it’s `[raw, rich_text]`,
+ * rich text mode is disabled by default. Default: `[rich_text, raw]`.
+ * @property {boolean} [sanitize_preview] Whether to sanitize the preview HTML. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#markdown
  */
 
@@ -478,27 +427,27 @@
  * Number field properties.
  * @typedef {object} NumberFieldProps
  * @property {'number'} widget Widget name.
- * @property {string | number} [default] Default value.
- * @property {'int' | 'float'} [value_type] Type of value to be saved.
- * @property {number} [min] Minimum value.
- * @property {number} [max] Maximum value.
- * @property {number} [step] Number to increase/decrease with the arrow key/button.
+ * @property {number | string} [default] Default value.
+ * @property {'int' | 'float' | string} [value_type] Type of value to be saved. Default: `int`.
+ * @property {number} [min] Minimum value that can be entered in the input. Default: undefined.
+ * @property {number} [max] Maximum value that can be entered in the input. Default: undefined.
+ * @property {number} [step] Number to increase/decrease with the arrow key/button. Default: 1.
  * @see https://decapcms.org/docs/widgets/#number
  */
 
 /**
  * Number field definition.
- * @typedef {CommonFieldProps & NumberFieldProps & BeforeAfterInputProps} NumberField
+ * @typedef {CommonFieldProps & NumberFieldProps & AdjacentLabelProps} NumberField
  */
 
 /**
  * Object field properties.
  * @typedef {object} ObjectFieldProps
  * @property {'object'} widget Widget name.
- * @property {object} [default] Default values.
- * @property {boolean} [collapsed] Whether to collapse the UI by default.
- * @property {string} [summary] Template of the label to be displayed on the collapsed UI.
- * @property {Field[]} [fields] List of nested fields.
+ * @property {Record<string, any>} [default] Default values.
+ * @property {boolean} [collapsed] Whether to collapse the UI by default. Default: `false`.
+ * @property {string} [summary] Template of a label to be displayed on a collapsed object.
+ * @property {Field[]} fields Set of fields to be included.
  * @see https://decapcms.org/docs/widgets/#object
  */
 
@@ -518,42 +467,37 @@
  * Relation field properties.
  * @typedef {object} RelationFieldProps
  * @property {'relation'} widget Widget name.
+ * @property {any} [default] Default value.
  * @property {string} collection Referenced collection name.
  * @property {string} [file] Referenced file identifier for a file collection. Required if the
  * `collection` is a file collection.
- * @property {string} value_field Name of field ({@link FieldKeyPath}) to be stored as the value, or
- * `{{slug}}`. It can contain a locale prefix like `{{locale}}/{{slug}}`.
- * @property {string[]} [search_fields] Name of fields to be searched. This option is required in
- * Netlify/Decap CMS, but it’s optional in Sveltia CMS. Defaults to `display_fields`.
- * @property {string[]} [display_fields] Name of fields to be displayed. Defaults to `value_field`.
- * @property {any} [default] Default value.
- * @property {boolean} [multiple] Whether to accept multiple values.
- * @property {RelationFieldFilterOptions[]} [filters] Entry filters.
- * @property {number} [dropdown_threshold] Maximum number of options to be displayed as radio
- * buttons (single-select) or checkboxes (multi-select) rather than a dropdown list. Default: 5.
+ * @property {FieldKeyPath | string} value_field Field name to be stored as the value, or
+ * `{{slug}}`. It can contain a locale prefix like `{{locale}}/{{slug}}` if i18n is enabled.
+ * @property {(FieldKeyPath | string)[]} [display_fields] Name of fields to be displayed. It can
+ * contain string templates. Default: `value_field` field value.
+ * @property {FieldKeyPath[]} [search_fields] Name of fields to be searched. Default:
+ * `display_fields` field value.
+ * @property {RelationFieldFilterOptions[]} [filters] Entry filter options.
  * @see https://decapcms.org/docs/widgets/#relation
  */
 
 /**
  * Relation field definition.
- * @typedef {CommonFieldProps & RelationFieldProps & MultiValueFieldProps} RelationField
+ * @typedef {CommonFieldProps & RelationFieldProps & MultiOptionFieldProps} RelationField
  */
 
 /**
  * Select field properties.
  * @typedef {object} SelectFieldProps
  * @property {'select'} widget Widget name.
- * @property {string[]} [default] Default values.
+ * @property {string[]} [default] Default values, which should math the options.
  * @property {string[] | { label: string, value: string }[]} options Options.
- * @property {boolean} [multiple] Whether to accept multiple values.
- * @property {number} [dropdown_threshold] Maximum number of options to be displayed as radio
- * buttons (single-select) or checkboxes (multi-select) rather than a dropdown list. Default: 5.
  * @see https://decapcms.org/docs/widgets/#select
  */
 
 /**
  * Select field definition.
- * @typedef {CommonFieldProps & SelectFieldProps & MultiValueFieldProps} SelectField
+ * @typedef {CommonFieldProps & SelectFieldProps & MultiOptionFieldProps} SelectField
  */
 
 /**
@@ -561,16 +505,15 @@
  * @typedef {object} StringFieldProps
  * @property {'string'} widget Widget name.
  * @property {string} [default] Default value.
- * @property {'email' | 'url' | 'text'} [type] Input type.
- * @property {string} [prefix] A string to be prepended to the value. Default: an empty string.
- * @property {string} [suffix] A string to be appended to the value. Default: an empty string.
+ * @property {'email' | 'url' | 'text'} [type] Input type. Default: text.
+ * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
+ * @property {string} [suffix] A string to be appended to the value. Default: empty string.
  * @see https://decapcms.org/docs/widgets/#string
  */
 
 /**
  * String field definition.
- * @typedef {CommonFieldProps & StringFieldProps & BeforeAfterInputProps & CharLengthProps
- * } StringField
+ * @typedef {CommonFieldProps & StringFieldProps & AdjacentLabelProps & CharCountProps} StringField
  */
 
 /**
@@ -583,15 +526,14 @@
 
 /**
  * Text field definition.
- * @typedef {CommonFieldProps & TextFieldProps & CharLengthProps} TextField
+ * @typedef {CommonFieldProps & TextFieldProps & CharCountProps} TextField
  */
 
 /**
  * UUID field properties.
  * @typedef {object} UuidFieldProps
  * @property {'uuid'} widget Widget name.
- * @property {string} [default] Default value. Unused.
- * @property {string} [prefix] A string to be prepended to the value. Default: an empty string.
+ * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32. Default: `false`.
  * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`.
  * @see https://github.com/decaporg/decap-cms/pull/6675
@@ -603,30 +545,63 @@
  */
 
 /**
- * Custom field definition.
+ * Custom field definition. It can contain any properties.
  * @typedef {CommonFieldProps & Record<string, any>} CustomField
  * @see https://decapcms.org/docs/custom-widgets/
  */
 
 /**
- * Any supported {@link Entry} field.
+ * Entry field.
  * @typedef {BooleanField | CodeField | ColorField | ComputeField | DateTimeField | FileField |
- * ImageField | HiddenField | KeyValueField | ListField | MapField | MarkdownField | NumberField |
+ * HiddenField | ImageField | KeyValueField | ListField | MapField | MarkdownField | NumberField |
  * ObjectField | RelationField | SelectField | StringField | TextField | UuidField | CustomField
  * } Field
  */
 
 /**
- * A raw collection file defined in the configuration file.
+ * Internationalization (i18n) file structure type.
+ * @typedef {'single_file' | 'multiple_files' | 'multiple_folders' | 'multiple_folders_i18n_root'
+ * } I18nFileStructure
+ * @see https://decapcms.org/docs/i18n/
+ * @see https://github.com/decaporg/decap-cms/pull/7400
+ */
+
+/**
+ * Global, collection-level or collection file-level i18n options.
+ * @typedef {object} I18nOptions
+ * @property {I18nFileStructure} structure File structure for entry collections. File collections
+ * must define the structure using `{{locale}}` in the `file` option.
+ * @property {LocaleCode[]} locales List of all available locales.
+ * @property {LocaleCode} [default_locale] Default locale. Default: first locale in the `locales`
+ * option.
+ * @property {LocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
+ * creating a new entry draft. If this option is used, users will be able to disable the output of
+ * non-default locales through the UI. See
+ * https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content for details.
+ * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales. If
+ * `false`, users will be able to disable the output of non-default locales through the UI. See
+ * https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content for details.
+ * @property {{ key: string, value: string }} [canonical_slug] Property name and value template used
+ * to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
+ * localized files when entry slugs are localized. The default property name is `translationKey`
+ * used in Hugo’s multilingual support, and the default value is the default locale’s slug. See
+ * https://github.com/sveltia/sveltia-cms#localizing-entry-slugs for details.
+ * @see https://decapcms.org/docs/i18n/
+ * @see https://github.com/decaporg/decap-cms/issues/6932
+ */
+
+/**
+ * Single file in a file collection.
  * @typedef {object} CollectionFile
- * @property {string} name File identifier.
- * @property {string} [label] File label.
- * @property {string} file File path.
- * @property {Field[]} fields List of fields.
- * @property {I18nOptions | boolean} [i18n] I18n options.
- * @property {string} [preview_path] Preview URL template.
- * @property {FieldKeyPath} [preview_path_date_field] Date field used for the preview URL template.
+ * @property {string} name Unique identifier for the file.
+ * @property {string} [label] Label to be displayed in the editor UI. Default: `name` option value.
+ * @property {string} file File path relative to the project root.
+ * @property {Field[]} fields Set of fields to be included in the file.
+ * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
+ * @property {string} [preview_path] Preview URL path template.
+ * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.
  * @see https://decapcms.org/docs/collection-file/
+ * @see https://decapcms.org/docs/deploy-preview-links/
  */
 
 /**
@@ -648,19 +623,31 @@
  */
 
 /**
+ * Collection filter options.
+ * @typedef {object} CollectionFilter
+ * @property {FieldKeyPath} field Field name.
+ * @property {any | any[]} [value] Field value. `null` can be used to match an undefined field.
+ * Multiple values can be defined with an array. This option or `pattern` is required.
+ * @property {string} [pattern] Regex matching pattern.
+ * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
+ * @see https://github.com/decaporg/decap-cms/issues/7347
+ */
+
+/**
  * The default options for the sortable fields.
- * @typedef {object} CustomSortableFieldsDefault
+ * @typedef {object} SortableFieldsDefaultOptions
  * @property {FieldKeyPath} field A field name to be sorted by default.
  * @property {'ascending' | 'descending' | 'Ascending' | 'Descending' | 'None'} [direction] Default
  * sort direction. Title case values are supported for Static CMS compatibility. However, `None` is
- * not supported, considered as `ascending`.
+ * the same as `ascending`. Default: `ascending`.
  */
 
 /**
  * A collection’s advanced sortable fields definition, which is compatible with Static CMS.
- * @typedef {object} CustomSortableFields
+ * @typedef {object} SortableFields
  * @property {FieldKeyPath[]} fields A list of sortable field names.
- * @property {CustomSortableFieldsDefault} [default] Default sort settings.
+ * @property {SortableFieldsDefaultOptions} [default] Default sort settings. See
+ * https://github.com/sveltia/sveltia-cms#specifying-default-sort-field-and-direction for details.
  * @see https://staticjscms.netlify.app/docs/collection-overview#sortable-fields
  */
 
@@ -683,20 +670,18 @@
  */
 
 /**
- * Collection filter options.
- * @typedef {object} CollectionFilter
- * @property {FieldKeyPath} field Field name.
- * @property {any | any[]} [value] Field value. `null` can be used to match an undefined field.
- * Multiple values can be defined with an array.
- * @property {string} [pattern] Regex matching pattern.
- * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
+ * Editor options.
+ * @typedef {object} EditorOptions
+ * @property {boolean} preview Whether to show the preview pane. Default: `true`.
+ * @see https://decapcms.org/docs/configuration-options/#editor
  */
 
 /**
  * Nested collection options.
  * @typedef {object} NestedCollectionOptions
- * @property {number} [depth] Maximum depth to show nested items in the collection tree.
- * @property {string} [summary] Summary template for a tree item.
+ * @property {number} [depth] Maximum depth to show nested items in the collection tree. Default:
+ * infinity.
+ * @property {string} [summary] Summary template for a tree item. Default: `{{title}}`.
  * @see https://decapcms.org/docs/collection-nested/
  */
 
@@ -720,82 +705,202 @@
  * A raw collection defined in the configuration file. Note: In Sveltia CMS, a folder collection is
  * called an entry collection.
  * @typedef {object} Collection
- * @property {string} name Collection name.
- * @property {string} [label] UI label, e.g. `Blog Posts` or `Events`.
- * @property {string} [label_singular] Singular UI label, e.g. `Blog Post` or `Event`.
- * @property {string} [description] Shot description of the collection.
- * @property {string} [icon] Material Symbols icon name.
- * @property {FieldKeyPath} [identifier_field] Field name to be used as the ID of a collection item.
- * @property {CollectionFile[]} [files] File list for a file collection.
- * @property {string} [folder] Folder path for an entry collection.
- * @property {Field[]} [fields] List of fields for an entry collection.
- * @property {string} [path] Subfolder path for an entry collection.
- * @property {string} [media_folder] Internal media folder path for an entry collection.
- * @property {string} [public_folder] Public media folder path for an entry collection.
- * @property {CollectionFilter} [filter] Filter for an entry collection.
- * @property {boolean} [hide] Whether to hide the collection in the UI.
- * @property {boolean} [create] Whether to allow creating items in an entry collection.
- * @property {boolean} [delete] Whether to allow deleting items in an entry collection.
- * @property {boolean} [publish] Whether to hide the publishing control UI for Editorial Workflow.
- * @property {FileExtension} [extension] File extension.
- * @property {FileFormat} [format] File format.
- * @property {string | string[]} [frontmatter_delimiter] Delimiters used for the front matter
- * format.
+ * @property {string} name Unique identifier for the collection.
+ * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
+ * option value.
+ * @property {string} [label_singular] Singular UI label. It will be Blog Post if the `label` is
+ * Blog Posts, for example. Default: `label` option value.
+ * @property {string} [description] Short description of the collection to be displayed in the
+ * editor UI.
+ * @property {string} [icon] Name of a Material Symbols icon to be displayed in the collection list.
+ * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an
+ * entry. Entry collection only. Default: `title` or `name`.
+ * @property {CollectionFile[]} [files] A set of files. File collection only.
+ * @property {string} [folder] Base folder path relative to the project root. Entry collection only.
+ * @property {Field[]} [fields] Set of fields to be included in entries. Entry collection only.
+ * @property {string} [path] File path relative to `folder`, without a file extension. Entry
+ * collection only.
+ * @property {string} [media_folder] Internal media folder path for the collection. This overrides
+ * the global `media_folder` option.
+ * @property {string} [public_folder] Public media folder path for an entry collection. This
+ * overrides the global `public_folder` option. Default: `media_folder` option value.
+ * @property {CollectionFilter} [filter] Entry filter. Entry collection only.
+ * @property {boolean} [hide] Whether to hide the collection in the UI. Default: `false`.
+ * @property {boolean} [create] Whether to allow users to create entries in the collection. Entry
+ * collection only. Default: `false`.
+ * @property {boolean} [delete] Whether to allow users to delete entries in the collection. Entry
+ * collection only. Default: `true`.
+ * @property {boolean} [publish] Whether to show the publishing control UI for Editorial Workflow.
+ * Default: `true`.
+ * @property {FileExtension} [extension] File extension. Entry collection only. Default: `md`.
+ * @property {FileFormat} [format] File format. Entry collection only. Default: `yaml-frontmatter`.
+ * @property {string | string[]} [frontmatter_delimiter] Delimiters to be used for the front matter
+ * format. Entry collection only. Default: depends on the front matter type.
+ * @property {string} [slug] Item slug template. Entry collection only. Default: `identifier_field`
+ * option value.
+ * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
+ * Entry collection only. Default: infinity.
+ * @property {string} [summary] Entry summary template. Entry collection only. Default:
+ * `identifier_field`.
+ * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Entry
+ * collection only. Default: `title`, `name`, `date`, `author` and `description`. For a Git backend,
+ * commit author and commit date are also included by default.
+ * @property {ViewFilter[]} [view_filters] View filters to be used in the entry list. Entry
+ * collection only.
+ * @property {ViewGroup[]} [view_groups] View groups to be used in the entry list. Entry collection
+ * only.
+ * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
+ * @property {string} [preview_path] Preview URL path template.
+ * @property {string} [preview_path_date_field] Date field name used for `preview_path`.
+ * @property {EditorOptions} [editor] Editor view options.
+ * @property {NestedCollectionOptions} [nested] Options for a nested collection. Entry collection
+ * only.
+ * @property {CollectionMetaData} [meta] Meta data for a nested collection. Entry collection only.
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`. DEPRECATED in favor of the global YAML format
  * options.
- * @property {string} [slug] Item slug template for an entry collection.
- * @property {number} [slug_length] The maximum number of characters allowed for an entry slug. An
- * option suggested in https://github.com/decaporg/decap-cms/issues/6987.
- * @property {string} [summary] Item summary template for an entry collection.
- * @property {FieldKeyPath[] | CustomSortableFields} [sortable_fields] Custom sortable fields.
- * @property {ViewFilter[]} [view_filters] Predefined view filters.
- * @property {ViewGroup[]} [view_groups] Predefined view groups.
- * @property {I18nOptions | boolean} [i18n] I18n options.
- * @property {string} [preview_path] Preview URL template.
- * @property {string} [preview_path_date_field] Date field used for the preview URL template.
- * @property {EditorOptions} [editor] Editor view options.
- * @property {NestedCollectionOptions} [nested] Options for a Nested Collection.
- * @property {CollectionMetaData} [meta] Meta data for a Nested Collection.
  * @property {boolean} [divider] A special option to make this collection a divider UI in the
- * primary sidebar’s collection list. Other options will be ignored, but you may still need a random
- * `name` and an empty `files` list to avoid a config file validation error in VS Code.
+ * collection list. Other options will be ignored, but you’ll still need `name`. Default: `false`.
  * @property {FieldKeyPath | FieldKeyPath[]} [thumbnail] A field key path to be used to find an
  * entry thumbnail displayed on the entry list. A nested field can be specified using dot notation,
  * e.g. `heroImage.src`. A wildcard in the key path is also supported, e.g. `images.*.src`. Multiple
- * key paths can be specified as an array for fallback purpose. If this option is omitted, the
- * `name` of any non-nested, non-empty field using the Image or File widget is used.
- * @property {number} [limit] The maximum number of entries that can be created in the entry
- * collection.
+ * key paths can be specified as an array for fallbacks. If this option is omitted, the `name` of
+ * any non-nested, non-empty field using the Image or File widget is used. Entry collection only.
+ * @property {number} [limit] The maximum number of entries that can be created in the collection.
+ * Entry collection only. Default: infinity.
  * @see https://decapcms.org/docs/configuration-options/#collections
  * @see https://decapcms.org/docs/collection-folder/
  * @see https://decapcms.org/docs/collection-file/
+ * @see https://github.com/decaporg/decap-cms/issues/6987
+ * @see https://github.com/decaporg/decap-cms/issues/7417
+ * @see https://github.com/sveltia/sveltia-cms/issues/307
+ */
+
+/**
+ * Supported backend name.
+ * @typedef {'github' | 'gitlab'} BackendName
+ */
+
+/**
+ * Custom commit messages.
+ * @typedef {object} CommitMessages
+ * @property {string} [create] Message to be used when a new entry is created.
+ * @property {string} [update] Message to be used when existing entries are updated.
+ * @property {string} [delete] Message to be used when existing entries are deleted.
+ * @property {string} [uploadMedia] Message to be used when new files are uploaded/updated.
+ * @property {string} [deleteMedia] Message to be used when existing files are deleted.
+ * @property {string} [openAuthoring] Message to be used when committed via a forked repository.
+ * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
+ */
+
+/**
+ * Backend options.
+ * @typedef {object} BackendOptions
+ * @property {BackendName} name Backend name.
+ * @property {string} [repo] Required for the GitHub and GitLab backends. GitHub: organization/user
+ * name and repository name joined by a slash, e.g. `owner/repo`. GitLab: namespace and project name
+ * joined by a slash, e.g. `group/project` or `group/subgroup/project`.
+ * @property {string} [branch] Git branch name. If omitted, the default branch, usually `main` or
+ * `master`, will be used.
+ * @property {string} [api_root] API endpoint of the backend. Required when using GitHub Enterprise
+ * Server or a self-hosted GitLab instance. Default: `https://api.github.com` (GitHub) or
+ * `https://gitlab.com/api/v4` (GitLab).
+ * @property {string} [site_domain] Site domain used for OAuth, which will be included in the
+ * `site_id` param to be sent to the API endpoint. Default: `location.hostname`.
+ * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
+ * than Netlify, including Sveltia CMS Authenticator. Default: `https://api.netlify.com`.
+ * @property {string} [auth_endpoint] OAuth base URL path. Default: `auth` (GitHub) or
+ * `oauth/authorize` (GitLab).
+ * @property {'pkce' | 'implicit'} [auth_type] OAuth authentication method. GitLab only. Default:
+ * `pkce`.
+ * @property {string} [app_id] OAuth application ID. GitLab only.
+ * @property {CommitMessages} [commit_messages] Custom commit messages.
+ * @property {string} [preview_context] Deploy preview link context. GitHub only.
+ * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Default:
+ * `sveltia-cms/`.
+ * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:
+ * `false`.
+ * @property {boolean} [open_authoring] Whether to use Open Authoring. Default: `false`.
+ * @property {'repo' | 'public_repo'} [auth_scope] Authentication scope for Open Authoring.
+ * @property {boolean} [automatic_deployments] Whether to enable or disable automatic deployments
+ * with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `false`, the
+ * `[skip ci]` prefix will be added to commit messages. Git backends only. Default: undefined. See
+ * https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments for details.
+ * @see https://decapcms.org/docs/backends-overview/
+ * @see https://decapcms.org/docs/github-backend/
+ * @see https://decapcms.org/docs/gitlab-backend/
+ * @see https://decapcms.org/docs/editorial-workflows/
+ * @see https://decapcms.org/docs/open-authoring/
+ */
+
+/**
+ * Global media library options.
+ * @typedef {object} GlobalMediaLibraryOptions
+ * @property {MediaLibraryName} name Library name.
+ */
+
+/**
+ * Entry slug options.
+ * @typedef {object} SlugOptions
+ * @property {'unicode' | 'ascii'} [encoding] Encoding option. Default: `unicode`.
+ * @property {boolean} [clean_accents] Whether to remove accents. Default: `false`.
+ * @property {string} [sanitize_replacement] String to replace sanitized characters. Default: `-`.
+ * @see https://decapcms.org/docs/configuration-options/#slug-type
+ */
+
+/**
+ * JSON format options.
+ * @typedef {object} JsonFormatOptions
+ * @property {'space' | 'tab'} [indent_style] Indent style. Default: 'space'.
+ * @property {number} [indent_size] Indent size. Default: 2.
+ * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ */
+
+/**
+ * YAML format options.
+ * @typedef {object} YamlFormatOptions
+ * @property {number} [indent_size] Indent size. Default: 2.
+ * @property {'none' | 'double' | 'single'} [quote] String value’s default quote type. Default:
+ * 'none'.
+ * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ */
+
+/**
+ * Data output options.
+ * @typedef {object} OutputOptions
+ * @property {boolean} [omit_empty_optional_fields] Whether to prevent fields with `required: false`
+ * and an empty value from being included in entry data output. Default: `false`.
+ * @property {JsonFormatOptions} [json] JSON format options.
+ * @property {YamlFormatOptions} [yaml] YAML format options.
+ * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
  */
 
 /**
  * Site configuration.
  * @typedef {object} SiteConfig
  * @property {boolean} [load_config_file] Whether to load the `config.yml` file when using manual
- * initialization.
+ * initialization. This works only in the `CMS.init()` method’s `config` option. Default: `true`.
  * @property {BackendOptions} backend Backend options.
- * @property {string} [site_url] Site URL.
- * @property {string} [display_url] Site URL linked from the UI.
- * @property {string} [logo_url] URL of the site logo that will be displayed on the Sign-In page and
- * the browser’s tab (favicon). A square image works best.
+ * @property {'simple' | 'editorial_workflow' | ''} [publish_mode] Publish mode. Default: simple.
  * @property {string} media_folder Global internal media folder path, relative to the project’s root
  * directory.
  * @property {string} [public_folder] Global public media folder path, relative to the project’s
- * public URL. It must be an absolute path starting with `/`. If omitted,
- * {@link SiteConfig.media_folder} will be used.
- * @property {MediaLibraryOptions} [media_library] Media library options.
+ * public URL. It must be an absolute path starting with `/`. Default: `media_folder` option value.
+ * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Media library options.
+ * @property {string} [site_url] Site URL. Default: `location.origin`.
+ * @property {string} [display_url] Site URL linked from the UI. Default: `site_url` option value.
+ * @property {string} [logo_url] Absolute URL or absolute path to the site logo that will be
+ * displayed on the Sign-In page and the browser’s tab (favicon). A square image works best.
+ * Default: Sveltia logo.
+ * @property {boolean} [show_preview_links] Whether to show site preview links. Default: `true`.
  * @property {SlugOptions} [slug] Entry slug options.
- * @property {Collection[]} collections List of collections.
+ * @property {Collection[]} collections Set of collections.
  * @property {I18nOptions} [i18n] Global i18n options.
  * @property {EditorOptions} [editor] Editor view options.
- * @property {'simple' | 'editorial_workflow'} [publish_mode] Enable Editorial Workflow.
- * @property {boolean} [show_preview_links] Whether to show site preview links.
  * @property {OutputOptions} [output] Data output options.
  * @see https://decapcms.org/docs/configuration-options/
+ * @see https://decapcms.org/docs/i18n/
+ * @see https://decapcms.org/docs/manual-initialization/
  */
 
 /**
@@ -813,10 +918,10 @@
 /**
  * Custom editor component options.
  * @typedef {object} EditorComponentDefinition
- * @property {string} id Component name.
- * @property {string} label UI label.
- * @property {string} [icon] Material Symbols icon name.
- * @property {Field[]} fields List of fields to be displayed on the component.
+ * @property {string} id Unique identifier for the component.
+ * @property {string} label Label of the component to be displayed in the editor UI.
+ * @property {string} [icon] Name of a Material Symbols icon to be displayed in the editor UI.
+ * @property {Field[]} fields Set of fields to be displayed in the component.
  * @property {RegExp} pattern Regular expression to search a block from Markdown document.
  * @property {(match: RegExpMatchArray) => { [key: string]: any }} [fromBlock] Function to convert
  * the matching result to field properties. This can be omitted if the `pattern` regex contains
@@ -839,8 +944,8 @@
  * Event listener properties.
  * @typedef {object} AppEventListener
  * @property {AppEventType} name Event type.
- * @property {(args: { entry: Record<string, any>, author: { login: string, name: string } }) => any
- * } handler Event handler.
+ * @property {(args: { entry: Record<string, any>, author?: { login: string, name: string } }) =>
+ * any} handler Event handler.
  * @see https://decapcms.org/docs/registering-events/
  */
 
