@@ -117,7 +117,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 175+ of them, or 365+ including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 180+ of them, or 370+ including duplicates, have been effectively solved in Sveltia CMS
   - Target: 200 by GA; 300, or 600 including duplicates, in the future (yes, you read that right)
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Most of the bugs, including annoying crashes, are already solved
@@ -127,7 +127,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![175 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250226)<br>
+![180 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250324)<br>
 
 ## Differentiators
 
@@ -208,6 +208,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
+- We keep our TypeScript type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193] This makes it easier to provide a site configuration when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
 
 ### Better backend support
 
@@ -529,7 +530,6 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Custom widgets and custom editor components](https://decapcms.org/docs/custom-widgets/)
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
-- TypeScript support for `CMS.init()` and other methods ([#346](https://github.com/sveltia/sveltia-cms/issues/346))
 
 Due to the complexity, the following features will be added after the 1.0 release. Netlify/Decap CMS has a number of open issues with the collaboration and beta features — we want to implement them the right way.
 
@@ -1542,3 +1542,11 @@ This software is provided “as is” without any express or implied warranty. W
 [^188]: Netlify/Decap CMS [#7415](https://github.com/decaporg/decap-cms/issues/7415), [#7421](https://github.com/decaporg/decap-cms/issues/7421)
 
 [^189]: Netlify/Decap CMS [#7431](https://github.com/decaporg/decap-cms/issues/7431)
+
+[^190]: Netlify/Decap CMS [#4987](https://github.com/decaporg/decap-cms/issues/4987)
+
+[^191]: Netlify/Decap CMS [#5970](https://github.com/decaporg/decap-cms/issues/5970)
+
+[^192]: Netlify/Decap CMS [#6527](https://github.com/decaporg/decap-cms/issues/6527)
+
+[^193]: Netlify/Decap CMS [#6800](https://github.com/decaporg/decap-cms/issues/6800)
