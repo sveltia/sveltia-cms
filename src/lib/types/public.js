@@ -479,7 +479,8 @@
  * `{{slug}}` (entry slug). It can contain a locale prefix like `{{locale}}/{{slug}}` if i18n is
  * enabled. Default: `{{slug}}`.
  * @property {(FieldKeyPath | string)[]} [display_fields] Name of fields to be displayed. It can
- * contain string templates. Default: `value_field` field value.
+ * contain string templates. Default: `value_field` field value or the referenced collection’s
+ * `identifier_field`, which is `title` by default.
  * @property {FieldKeyPath[]} [search_fields] Name of fields to be searched. Default:
  * `display_fields` field value.
  * @property {RelationFieldFilterOptions[]} [filters] Entry filter options.

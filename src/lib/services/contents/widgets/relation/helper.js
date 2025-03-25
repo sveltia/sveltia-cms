@@ -4,6 +4,7 @@ import { unflatten } from 'flat';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
  * @import { Entry, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
@@ -57,6 +58,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     return [];
   }
 
+  const {
+    identifier_field: identifierField = 'title',
+    _i18n: { defaultLocale },
+  } = collection;
+
   /**
    * @example 'userId'
    * @example 'name.first'
@@ -68,14 +74,14 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example '{{fields.slug}}' (not mentioned in the Netlify/Decap CMS doc but Sveltia CMS supports
    * the `fields.` prefix for compatibility with other config options)
    */
-  const valueField = fieldConfig.value_field ?? '{{slug}}';
+  const valueField = fieldConfig.value_field;
   /**
    * @example ['userId']
    * @example ['name.first'] (nested)
    * @example ['cities.*.id', 'cities.*.name'] (with wildcard, multiple)
    * @example ['{{twitterHandle}} - {{followerCount}}'] (template)
    */
-  const displayFields = fieldConfig.display_fields ?? [valueField];
+  const displayFields = fieldConfig.display_fields ?? [valueField ?? `{{${identifierField}}}`];
   /**
    * The format is the same as {@link displayFields}.
    */
@@ -85,7 +91,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * @example '{{name.first}}'
    * @example '{{route}}#{{sections.*.name}}'
    */
-  const _valueField = normalizeFieldName(valueField);
+  const _valueField = normalizeFieldName(valueField ?? '{{slug}}');
   /**
    * Canonical, templatized display field.
    * @example '{{twitterHandle}} {{followerCount}}'
@@ -164,7 +170,6 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
           const keyPath = fieldName.replace(/^fields\./, '');
           const _fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
-          const { defaultLocale } = collection._i18n;
 
           // Resolve the displayed value for a nested relation field
           if (_fieldConfig?.widget === 'relation') {
@@ -180,7 +185,15 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             ];
           }
 
-          return [fieldName, content[keyPath] ?? locales[defaultLocale].content[keyPath] ?? slug];
+          return [
+            fieldName,
+            content[keyPath] ??
+              locales[defaultLocale].content[keyPath] ??
+              // Fall back if needed
+              getEntrySummaryFromContent(content, { identifierField }) ??
+              getEntrySummaryFromContent(locales[defaultLocale].content, { identifierField }) ??
+              slug,
+          ];
         }),
       );
 
