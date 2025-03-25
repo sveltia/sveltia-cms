@@ -152,7 +152,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 ### Better performance
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
-  - The CMS is compiled and distributed as vanilla JavaScript. You can use it with any framework or static site generator (SSG) that can load static data files during the build process.
+  - The CMS is compiled and distributed as vanilla JavaScript. You can use it with any framework or static site generator (SSG) that can load static data files during the build process, including Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 - Small footprint: The bundle size is around 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.9 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though we haven’t implemented [some features](#current-limitations) yet, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size.
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
@@ -210,7 +210,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
-- We try to keep our TypeScript type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
+- TypeScript support: We try to keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
 
 ### Better backend support
 
@@ -582,11 +582,11 @@ As the product evolves, we’ll implement a built-in configuration editor and pr
 
 Here are some starter kits for popular frameworks created by community members. More to come! (Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team.)
 
-- 11ty
-  - [Eleventy starter template](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
 - Astro
   - [astro-sveltia-cms](https://github.com/majesticostudio/astro-sveltia-cms), [astro-starter](https://github.com/zankhq/astro-starter) and [astros](https://github.com/zankhq/astros) by [@zanhk](https://github.com/zanhk)
   - [Astro i18n Starter](https://github.com/yacosta738/astro-cms) by [@yacosta738](https://github.com/yacosta738)
+- Eleventy (11ty)
+  - [Eleventy starter template](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
 - Hugo
   - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
   - [hugolify-sveltia-cms](https://github.com/Hugolify/hugolify-sveltia-cms/) by [@sebousan](https://github.com/sebousan)
