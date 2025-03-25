@@ -49,7 +49,13 @@ prefs.subscribe((newPrefs) => {
     }
   })();
 
-  const { locale, theme, underlineLinks = true, devModeEnabled = false } = newPrefs;
+  const {
+    locale,
+    theme,
+    underlineLinks = true,
+    beta = false,
+    devModeEnabled: devMode = false,
+  } = newPrefs;
 
   if (locale && get(appLocales).includes(locale)) {
     appLocale.set(locale);
@@ -62,6 +68,7 @@ prefs.subscribe((newPrefs) => {
     theme: autoTheming ? autoTheme : theme,
     autoTheming,
     underlineLinks,
-    env: devModeEnabled ? 'dev' : 'prod',
+    beta,
+    devMode,
   });
 });

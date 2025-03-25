@@ -634,6 +634,18 @@ export const strings = {
     },
     advanced: {
       title: '詳細',
+      beta: {
+        title: 'ベータ機能',
+        description:
+          '不安定あるいは未ローカライズの可能性がある、いくつかのベータ機能を有効化します。',
+        switch_label: 'ベータプログラムに参加する',
+      },
+      developer_mode: {
+        title: '開発者モード',
+        description:
+          '詳細なコンソールログやネイティブコンテキストメニューなど、いくつかの開発者向け機能を有効化します。',
+        switch_label: '開発者モードを有効にする',
+      },
       deploy_hook: {
         title: 'デプロイフック',
         description:
@@ -641,12 +653,6 @@ export const strings = {
         field_label: 'デプロイフック URL',
         url_saved: 'ウェブフック URL が保存されました。',
         url_removed: 'ウェブフック URL が削除されました。',
-      },
-      developer_mode: {
-        title: '開発者モード',
-        description:
-          '詳細なコンソールログやネイティブコンテキストメニューなど、いくつかの機能を有効化します。',
-        switch_label: '開発者モードを有効にする',
       },
     },
   },

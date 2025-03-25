@@ -630,6 +630,17 @@ export const strings = {
     },
     advanced: {
       title: 'Advanced',
+      beta: {
+        title: 'Beta Features',
+        description: 'Enable some beta features that may be unstable or unlocalized.',
+        switch_label: 'Join Beta Program',
+      },
+      developer_mode: {
+        title: 'Developer Mode',
+        description:
+          'Enable some developer-oriented features, including detailed console logs and native context menus.',
+        switch_label: 'Enable Developer Mode',
+      },
       deploy_hook: {
         title: 'Deploy Hook',
         description:
@@ -637,12 +648,6 @@ export const strings = {
         field_label: 'Deploy Hook URL',
         url_saved: 'Webhook URL has been saved.',
         url_removed: 'Webhook URL has been removed.',
-      },
-      developer_mode: {
-        title: 'Developer Mode',
-        description:
-          'Enable some features, including detailed console logs and native context menus.',
-        switch_label: 'Enable Developer Mode',
       },
     },
   },

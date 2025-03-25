@@ -18,7 +18,18 @@
 
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
 
+  let beta = $state(false);
   let devModeEnabled = $state(false);
+
+  $effect(() => {
+    beta = $prefs.beta ?? false;
+  });
+
+  $effect(() => {
+    if ($prefs.beta !== beta) {
+      $prefs.beta = beta;
+    }
+  });
 
   $effect(() => {
     devModeEnabled = $prefs.devModeEnabled ?? false;
@@ -32,6 +43,31 @@
 </script>
 
 <TabPanel id="prefs-tab-advanced">
+  <section>
+    <h4>
+      {$_('prefs.advanced.beta.title')}
+    </h4>
+    <p>
+      {$_('prefs.advanced.beta.description')}
+    </p>
+    <div role="none">
+      <Switch bind:checked={beta} label={$_('prefs.advanced.beta.switch_label')} />
+    </div>
+  </section>
+  <section>
+    <h4>
+      {$_('prefs.advanced.developer_mode.title')}
+    </h4>
+    <p>
+      {$_('prefs.advanced.developer_mode.description')}
+    </p>
+    <div role="none">
+      <Switch
+        bind:checked={devModeEnabled}
+        label={$_('prefs.advanced.developer_mode.switch_label')}
+      />
+    </div>
+  </section>
   {#if typeof autoDeployEnabled === 'boolean'}
     <section>
       <h4>
@@ -58,18 +94,4 @@
       </div>
     </section>
   {/if}
-  <section>
-    <h4>
-      {$_('prefs.advanced.developer_mode.title')}
-    </h4>
-    <p>
-      {$_('prefs.advanced.developer_mode.description')}
-    </p>
-    <div role="none">
-      <Switch
-        bind:checked={devModeEnabled}
-        label={$_('prefs.advanced.developer_mode.switch_label')}
-      />
-    </div>
-  </section>
 </TabPanel>
