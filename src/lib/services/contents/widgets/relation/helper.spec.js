@@ -104,14 +104,13 @@ describe('Test getOptions()', async () => {
       label: 'Author',
       widget,
       collection: 'authors',
-      value_field: 'name.first',
       display_fields: ['twitterHandle', 'followerCount'],
       search_fields: ['name.first', 'twitterHandle'],
     };
 
     const entries = memberEntries;
 
-    expect(getOptions(locale, config, entries)).toEqual([
+    expect(getOptions(locale, { ...config, value_field: 'name.first' }, entries)).toEqual([
       {
         label: 'ElsieMcbride 234',
         value: 'Elsie',
@@ -134,7 +133,7 @@ describe('Test getOptions()', async () => {
       display_fields: ['{{name.first}} {{name.last}} (@{{twitterHandle}})'],
     };
 
-    expect(getOptions(locale, { ...slugTestConfig, value_field: '{{slug}}' }, entries)).toEqual([
+    const entrySlugTestResults = [
       {
         label: 'Elsie Mcbride (@ElsieMcbride)',
         value: 'elsie-mcbride',
@@ -150,7 +149,15 @@ describe('Test getOptions()', async () => {
         value: 'melvin-lucas',
         searchValue: 'Melvin MelvinLucas',
       },
-    ]);
+    ];
+
+    // Entry slug: the `value_field` option defaults to `{{slug}}`
+    expect(getOptions(locale, { ...slugTestConfig }, entries)).toEqual(entrySlugTestResults);
+
+    // Entry slug
+    expect(getOptions(locale, { ...slugTestConfig, value_field: '{{slug}}' }, entries)).toEqual(
+      entrySlugTestResults,
+    );
 
     const inFieldSlugTestResults = [
       {

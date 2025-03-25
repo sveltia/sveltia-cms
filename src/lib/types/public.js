@@ -471,8 +471,9 @@
  * @property {string} collection Referenced collection name.
  * @property {string} [file] Referenced file identifier for a file collection. Required if the
  * `collection` is a file collection.
- * @property {FieldKeyPath | string} value_field Field name to be stored as the value, or
- * `{{slug}}`. It can contain a locale prefix like `{{locale}}/{{slug}}` if i18n is enabled.
+ * @property {FieldKeyPath | string} [value_field] Field name to be stored as the value, or
+ * `{{slug}}` (entry slug). It can contain a locale prefix like `{{locale}}/{{slug}}` if i18n is
+ * enabled. Default: `{{slug}}`.
  * @property {(FieldKeyPath | string)[]} [display_fields] Name of fields to be displayed. It can
  * contain string templates. Default: `value_field` field value.
  * @property {FieldKeyPath[]} [search_fields] Name of fields to be searched. Default:

@@ -34,7 +34,7 @@
     collection: collectionName,
     file: fileName,
     multiple = false,
-    value_field: valueField,
+    value_field: valueField = '{{slug}}',
   } = $derived(fieldConfig);
   const listFormatter = $derived(getListFormatter(locale));
   const refEntries = $derived(
