@@ -224,6 +224,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
+- The Test backend stores changes in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) instead of an in-memory cache. Developers can play with the CMS as much as they want without having to discard changes.[^194]
 
 ### Better i18n support
 
@@ -408,7 +409,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - `slug` can be used for `value_field` to show all available options instead of just one in some situations.[^91]
   - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`.[^94]
   - `display_fields` is displayed in the Preview Pane instead of `value_field`.
-  - The redundant `search_fields` option is not required in Sveltia CMS, as it defaults to `display_fields` (and `value_field`).
+  - The redundant `search_fields` option is optional in Sveltia CMS, as it defaults to `display_fields`, `value_field` or the collection’s `identifier_field`, which is `title` by default.
+  - The `value_field` option is also optional in Sveltia CMS, as it defaults to entry slugs (`{{slug}}`).
   - A new item created in a referenced collection is immediately available in the options.[^138]
 - Select
   - It’s possible to select an option with value `0`.[^56]
@@ -530,11 +532,11 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
-- [Test](https://decapcms.org/docs/test-backend/) backend
 - Field-specific media folders for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
 - [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
-- [Custom widgets and custom editor components](https://decapcms.org/docs/custom-widgets/)
+- [Custom widgets](https://decapcms.org/docs/custom-widgets/)
+- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for `toPreview`, Object/List widgets, and `default` field option
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
@@ -1557,3 +1559,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^192]: Netlify/Decap CMS [#6527](https://github.com/decaporg/decap-cms/issues/6527)
 
 [^193]: Netlify/Decap CMS [#6800](https://github.com/decaporg/decap-cms/issues/6800)
+
+[^194]: Netlify/Decap CMS [#7157](https://github.com/decaporg/decap-cms/issues/7157)

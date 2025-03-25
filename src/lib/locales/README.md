@@ -9,7 +9,6 @@ Thank you for your interest in translating the Sveltia CMS user interface! While
   - `sveltia-i18n` utilizes the [`messageformat`](https://github.com/messageformat/messageformat) library, which follows the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg) spec.
   - Previous versions of this README mentioned [Fluent](https://projectfluent.org/), which was developed by [Mozilla](https://www.mozilla.org/) for Firefox and other products. However, since Fluent is being succeeded by the MF2 standard, we have decided to use the latter for forward compatibility.
 - Some strings are provided by the [`sveltia-ui`](https://github.com/sveltia/sveltia-ui) library, which also needs to be migrated to `sveltia-i18n`.
-- We haven’t implemented the [Test backend](https://decapcms.org/docs/test-backend/) that allows localizers to check their work locally before submitting it.
 
 The existing Japanese localization is provided for the [maintainer](https://github.com/kyoshino)’s Japanese clients.
 
