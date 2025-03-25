@@ -124,7 +124,7 @@
 /**
  * Media field properties.
  * @typedef {object} MediaFieldProps
- * @property {string} [default] Default value. A file path or complete URL.
+ * @property {string} [default] Default value. Accepts a file path or complete URL.
  * @property {boolean} [choose_url] Whether to show the URL input UI. Default: `true`.
  * @property {string} [media_folder] Internal media folder path for the field. Default: global or
  * collection-level `media_folder` value.
@@ -203,7 +203,7 @@
  * Boolean field properties.
  * @typedef {object} BooleanFieldProps
  * @property {'boolean'} widget Widget name.
- * @property {boolean} [default] Default value.
+ * @property {boolean} [default] Default value. Accepts `true` or `false`.
  * @see https://decapcms.org/docs/widgets/#boolean
  */
 
@@ -224,7 +224,7 @@
  * can change the language mode. Default: `true` (the Decap CMS document is wrong).
  * @property {boolean} [output_code_only] Whether to output code snippet only. Default: `false`.
  * @property {{ code: string, lang: string }} [keys] Output property names. It has no effect if
- * `output_code_only` is `true`.
+ * `output_code_only` is `true`. Default: `{ code: 'code', lang: 'lang' }`.
  * @see https://decapcms.org/docs/widgets/#code
  */
 
@@ -237,7 +237,8 @@
  * Color field properties.
  * @typedef {object} ColorFieldProps
  * @property {'color'} widget Widget name.
- * @property {string} [default] Default value. Accepts a Hex color code.
+ * @property {string} [default] Default value. Accepts a Hex color code in the six-value (`#RRGGBB`)
+ * or eight-value (`#RRGGBBAA`) syntax.
  * @property {boolean} [allowInput] Whether to show a textbox that allows users to manually edit the
  * value. Default: `false`.
  * @property {boolean} [enableAlpha] Whether to edit/save the alpha channel value.
@@ -342,7 +343,9 @@
  * List field properties.
  * @typedef {object} ListFieldProps
  * @property {'list'} widget Widget name.
- * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value.
+ * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value. The
+ * format depends on how the field is configured, with or without `field`, `fields` or `types`. See
+ * the document for details.
  * @property {boolean} [allow_add] Whether to allow users to add new values. Default: `true`.
  * @property {boolean} [add_to_top] Whether to add new items to the top of the list instead of the
  * bottom. Default: `false`.
@@ -370,7 +373,8 @@
  * Map field properties.
  * @typedef {object} MapFieldProps
  * @property {'map'} widget Widget name.
- * @property {string} [default] Default value. Accepts a stringified single GeoJSON geometry object.
+ * @property {string} [default] Default value. Accepts a stringified single GeoJSON geometry object
+ * that contains `type` and `coordinates` properties.
  * @property {number} [decimals] Precision of coordinates to be saved. Default: 7.
  * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: Point.
  * @see https://decapcms.org/docs/widgets/#map
@@ -739,7 +743,8 @@
  * @property {boolean} [publish] Whether to show the publishing control UI for Editorial Workflow.
  * Default: `true`.
  * @property {FileExtension} [extension] File extension. Entry collection only. Default: `md`.
- * @property {FileFormat} [format] File format. Entry collection only. Default: `yaml-frontmatter`.
+ * @property {FileFormat} [format] File format. It should match the file extension. Default:
+ * `yaml-frontmatter`.
  * @property {string | string[]} [frontmatter_delimiter] Delimiters to be used for the front matter
  * format. Entry collection only. Default: depends on the front matter type.
  * @property {string} [slug] Item slug template. Entry collection only. Default: `identifier_field`
@@ -807,29 +812,32 @@
  * name and repository name joined by a slash, e.g. `owner/repo`. GitLab: namespace and project name
  * joined by a slash, e.g. `group/project` or `group/subgroup/project`.
  * @property {string} [branch] Git branch name. If omitted, the default branch, usually `main` or
- * `master`, will be used.
+ * `master`, will be used. Git backends only.
  * @property {string} [api_root] REST API endpoint for the backend. Required when using GitHub
- * Enterprise Server or a self-hosted GitLab instance. Default: `https://api.github.com` (GitHub) or
- * `https://gitlab.com/api/v4` (GitLab).
- * @property {string} [graphql_api_root] GraphQL endpoint for the backend. Default: inferred from
- * `api_root` option value.
+ * Enterprise Server or a self-hosted GitLab instance. Git backends only. Default:
+ * `https://api.github.com` (GitHub) or `https://gitlab.com/api/v4` (GitLab).
+ * @property {string} [graphql_api_root] GraphQL API endpoint for the backend. Git backends only.
+ * Default: inferred from `api_root` option value.
  * @property {string} [site_domain] Site domain used for OAuth, which will be included in the
- * `site_id` param to be sent to the API endpoint. Default: `location.hostname`.
+ * `site_id` param to be sent to the API endpoint. Git backends only. Default: `location.hostname`.
  * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
- * than Netlify, including Sveltia CMS Authenticator. Default: `https://api.netlify.com`.
- * @property {string} [auth_endpoint] OAuth base URL path. Default: `auth` (GitHub) or
- * `oauth/authorize` (GitLab).
+ * than Netlify, including Sveltia CMS Authenticator. Git backends only. Default:
+ * `https://api.netlify.com`.
+ * @property {string} [auth_endpoint] OAuth base URL path. Git backends only. Default: `auth`
+ * (GitHub) or `oauth/authorize` (GitLab).
  * @property {'pkce' | 'implicit'} [auth_type] OAuth authentication method. GitLab only. Default:
  * `pkce`.
  * @property {string} [app_id] OAuth application ID. GitLab only.
- * @property {CommitMessages} [commit_messages] Custom commit messages.
+ * @property {CommitMessages} [commit_messages] Custom commit messages. Git backends only.
  * @property {string} [preview_context] Deploy preview link context. GitHub only.
- * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Default:
- * `sveltia-cms/`.
- * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:
+ * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Git
+ * backends only. Default: `sveltia-cms/`.
+ * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Git
+ * backends only. Default: `false`.
+ * @property {boolean} [open_authoring] Whether to use Open Authoring. Git backends only. Default:
  * `false`.
- * @property {boolean} [open_authoring] Whether to use Open Authoring. Default: `false`.
- * @property {'repo' | 'public_repo'} [auth_scope] Authentication scope for Open Authoring.
+ * @property {'repo' | 'public_repo'} [auth_scope] Authentication scope for Open Authoring. Git
+ * backends only.
  * @property {boolean} [automatic_deployments] Whether to enable or disable automatic deployments
  * with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `false`, the
  * `[skip ci]` prefix will be added to commit messages. Git backends only. Default: undefined. See
