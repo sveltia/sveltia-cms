@@ -14,6 +14,7 @@ export const strings = {
   sign_in: 'ログイン',
   signed_in_as_x: '{name} としてログイン中',
   working_with_local_repo: 'ローカルレポジトリで作業中',
+  working_with_test_repo: 'テストレポジトリで作業中',
   sign_out: 'ログアウト',
 
   // Common terms
@@ -66,6 +67,7 @@ export const strings = {
     'ボタンをクリックして「{repo}」レポジトリのルートディレクトリを選択してください。',
   work_with_local_repo_description_no_repo:
     'ボタンをクリックして Git レポジトリのルートディレクトリを選択してください。',
+  work_with_test_repo: 'テストレポジトリで作業',
   sign_in_error: {
     not_project_root:
       '選択されたフォルダーはレポジトリのルートディレクトリではありません。再度お試しください。',

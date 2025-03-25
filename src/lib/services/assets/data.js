@@ -12,7 +12,7 @@ import {
   getCollectionsByAsset,
   overlaidAsset,
 } from '$lib/services/assets';
-import { backend, backendName } from '$lib/services/backends';
+import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { updatesToastDefaultState } from '$lib/services/contents/collection/data';
@@ -112,13 +112,12 @@ export const saveAssets = async (uploadingAssets, options) => {
     overlaidAsset.set(get(allAssets).find((a) => a.path === _overlaidAsset.path));
   }
 
-  const isLocal = get(backendName) === 'local';
   const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
 
   assetUpdatesToast.set({
     ...updatesToastDefaultState,
     saved: true,
-    published: !isLocal && autoDeployEnabled === true,
+    published: !!get(backend)?.isRemoteGit && autoDeployEnabled === true,
     count: files.length,
   });
 };

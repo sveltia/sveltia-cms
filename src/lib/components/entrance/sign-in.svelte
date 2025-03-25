@@ -21,6 +21,7 @@
     configuredBackendName ? allBackendServices[configuredBackendName] : null,
   );
   const repositoryName = $derived($siteConfig?.backend?.repo?.split('/')?.[1]);
+  const isTestRepo = $derived(configuredBackendName === 'test-repo');
 
   onMount(() => {
     const { hostname } = window.location;
@@ -46,12 +47,14 @@
   {:else}
     <Button
       variant="primary"
-      label={$_('sign_in_with_x', { values: { service: configuredBackend.label } })}
+      label={isTestRepo
+        ? $_('work_with_test_repo')
+        : $_('sign_in_with_x', { values: { service: configuredBackend.label } })}
       onclick={async () => {
         await signInManually(/** @type {string} */ (configuredBackendName));
       }}
     />
-    {#if isLocalHost}
+    {#if isLocalHost && !isTestRepo}
       <Button
         variant="primary"
         label={$_('work_with_local_repo')}

@@ -14,6 +14,7 @@ export const strings = {
   sign_in: 'Sign In',
   signed_in_as_x: 'Signed In as {name}',
   working_with_local_repo: 'Working with Local Repository',
+  working_with_test_repo: 'Working with Test Repository',
   sign_out: 'Sign Out',
 
   // Common terms
@@ -66,6 +67,7 @@ export const strings = {
     'Click the button to select the root directory of the “{repo}” repository.',
   work_with_local_repo_description_no_repo:
     'Click the button to select the root directory of your Git repository.',
+  work_with_test_repo: 'Work with Test Repository',
   sign_in_error: {
     not_project_root:
       'The folder you have selected is not a repository root directory. Please try again.',

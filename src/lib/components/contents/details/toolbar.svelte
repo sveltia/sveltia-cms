@@ -18,7 +18,7 @@
   import { _ } from 'svelte-i18n';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
-  import { backendName } from '$lib/services/backends';
+  import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/collection/data';
   import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
@@ -59,7 +59,7 @@
   const originalEntry = $derived($entryDraft?.originalEntry);
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const showSaveOptions = $derived(
-    $backendName !== 'local' && typeof autoDeployEnabled === 'boolean',
+    !!$backend?.isRemoteGit && typeof autoDeployEnabled === 'boolean',
   );
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   const collectionName = $derived(collection?.name);

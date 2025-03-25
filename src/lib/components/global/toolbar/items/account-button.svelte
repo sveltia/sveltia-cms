@@ -13,7 +13,8 @@
   let showPrefsDialog = $state(false);
 
   const hasAvatar = $derived(!!$user?.avatarURL);
-  const isLocal = $derived($backendName === 'local');
+  const isLocalRepo = $derived($backendName === 'local');
+  const isTestRepo = $derived($backendName === 'test-repo');
 </script>
 
 <div role="none" class="wrapper">
@@ -35,10 +36,12 @@
     {#snippet popup()}
       <Menu aria-label={$_('account')}>
         <MenuItem
-          label={isLocal
+          label={isLocalRepo
             ? $_('working_with_local_repo')
-            : $_('signed_in_as_x', { values: { name: $user?.login } })}
-          disabled={isLocal}
+            : isTestRepo
+              ? $_('working_with_test_repo')
+              : $_('signed_in_as_x', { values: { name: $user?.login } })}
+          disabled={isLocalRepo || isTestRepo}
           onclick={() => {
             window.open($user?.profileURL, '_blank');
           }}

@@ -789,7 +789,7 @@
 
 /**
  * Supported backend name.
- * @typedef {'github' | 'gitlab'} BackendName
+ * @typedef {'github' | 'gitlab' | 'test-repo'} BackendName
  */
 
 /**
@@ -845,6 +845,7 @@
  * @see https://decapcms.org/docs/backends-overview/
  * @see https://decapcms.org/docs/github-backend/
  * @see https://decapcms.org/docs/gitlab-backend/
+ * @see https://decapcms.org/docs/test-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://decapcms.org/docs/open-authoring/
  */

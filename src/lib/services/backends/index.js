@@ -2,6 +2,7 @@ import { derived, writable } from 'svelte/store';
 import github from '$lib/services/backends/github';
 import gitlab from '$lib/services/backends/gitlab';
 import local from '$lib/services/backends/local';
+import test from '$lib/services/backends/test';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -17,6 +18,7 @@ export const allBackendServices = {
   github,
   gitlab,
   local,
+  'test-repo': test,
 };
 /**
  * @type {Writable<string | undefined>}

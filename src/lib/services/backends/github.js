@@ -636,6 +636,7 @@ const triggerDeployment = async () => {
  * @type {BackendService}
  */
 export default {
+  isRemoteGit: true,
   name: backendName,
   label,
   repository,

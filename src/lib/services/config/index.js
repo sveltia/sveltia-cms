@@ -128,12 +128,14 @@ const validate = (config) => {
     );
   }
 
-  if (config.backend.repo === undefined) {
-    throw new Error(get(_)('config.error.missing_repository'));
-  }
+  if (['github', 'gitlab'].includes(config.backend.name)) {
+    if (config.backend.repo === undefined) {
+      throw new Error(get(_)('config.error.missing_repository'));
+    }
 
-  if (typeof config.backend.repo !== 'string' || !/(.+)\/([^/]+)$/.test(config.backend.repo)) {
-    throw new Error(get(_)('config.error.invalid_repository'));
+    if (typeof config.backend.repo !== 'string' || !/(.+)\/([^/]+)$/.test(config.backend.repo)) {
+      throw new Error(get(_)('config.error.invalid_repository'));
+    }
   }
 
   if (config.backend.auth_type === 'implicit') {

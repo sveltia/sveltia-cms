@@ -1,14 +1,14 @@
 <script>
   import { Alert, Button, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { backend, backendName, isLastCommitPublished } from '$lib/services/backends';
+  import { backend, isLastCommitPublished } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/user/prefs';
 
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const { deployHookURL } = $derived($prefs);
   const triggerDeployment = $derived($backend?.triggerDeployment);
-  const showButton = $derived($backendName !== 'local' && typeof autoDeployEnabled === 'boolean');
+  const showButton = $derived(!!$backend?.isRemoteGit && typeof autoDeployEnabled === 'boolean');
   const canPublish = $derived(
     (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished,
   );

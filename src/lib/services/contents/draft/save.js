@@ -6,7 +6,7 @@ import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
 import { allAssetFolders, allAssets, getAssetKind, getAssetsByDirName } from '$lib/services/assets';
-import { backend, backendName, isLastCommitPublished } from '$lib/services/backends';
+import { backend, isLastCommitPublished } from '$lib/services/backends';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -954,11 +954,11 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     ...savingAssets,
   ]);
 
-  const isLocal = get(backendName) === 'local';
   const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
 
   const published =
-    !isLocal && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
+    !!get(backend)?.isRemoteGit &&
+    (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
 
   contentUpdatesToast.set({
     ...updatesToastDefaultState,
