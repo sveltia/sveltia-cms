@@ -490,7 +490,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The application UI locale is automatically selected based on the preferred language set with the browser.[^132] Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized.[^98]
 - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container.[^117]
-- We are migrating from [svelte-i18n](https://github.com/kaisermann/svelte-i18n) to the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-based sveltia-i18n library for natural-sounding translations in every locale.
+- We are migrating from [`svelte-i18n`](https://github.com/kaisermann/svelte-i18n) to the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-based `sveltia-i18n` library for natural-sounding translations in every locale.
 
 ## Compatibility
 
@@ -516,9 +516,9 @@ However, 100% feature parity is not planned, and some features are still missing
 - The theme and keymap inline settings of the Code widget, along with support for some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/). Prism may be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575) in the future.
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - Support for an absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
-- Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance), so these are no longer relevant:
+- Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
-  - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api) — GraphQL is enabled by default
+  - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api)
   - Relation widget: `options_length`
 - The global [`locale`](https://decapcms.org/docs/configuration-options/#locale) option and `CMS.registerLocale()` method: Sveltia CMS automatically detects the user’s preferred language and changes the UI locale as [mentioned above](#better-localization).
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
