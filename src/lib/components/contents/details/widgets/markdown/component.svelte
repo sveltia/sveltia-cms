@@ -38,7 +38,8 @@
   /** @type {Record<string, any>} */
   const inputValues = $state({});
 
-  const supportedWidgets = ['image', 'string'];
+  // @todo Support nested object/list
+  const unsupportedWidgets = ['list', 'object'];
 
   /**
    * Get the wrapper element.
@@ -115,13 +116,14 @@
     </Button>
   </header>
   {#if locale && keyPath}
-    {#each fields as { name, label: fieldLabel, widget } (name)}
-      {#if widget && supportedWidgets.includes(widget)}
+    {#each fields as { name, label: fieldLabel, widget = 'string', ...rest } (name)}
+      <!-- @todo Support `default` option -->
+      {#if widget in editors && !unsupportedWidgets.includes(widget)}
         {@const SvelteComponent = editors[widget]}
         <section
           role="group"
           class="field"
-          aria-label={$_('x_field', { values: { field: fieldLabel } })}
+          aria-label={$_('x_field', { values: { field: fieldLabel ?? name } })}
           data-widget={widget}
           data-key-path="{keyPath}:{name}"
           onkeydowncapture={(event) => {
@@ -130,7 +132,7 @@
           }}
         >
           <header role="none">
-            <h4 role="none">{fieldLabel}</h4>
+            <h4 role="none">{fieldLabel ?? name}</h4>
           </header>
           <div role="none" class="widget-wrapper">
             <SvelteComponent
@@ -141,6 +143,7 @@
               fieldConfig={{ name, widget }}
               inEditorComponent={true}
               bind:currentValue={inputValues[name]}
+              {...rest}
             />
           </div>
         </section>
@@ -191,7 +194,7 @@
     padding: 16px;
 
     h4 {
-      margin-bottom: 8px;
+      margin-bottom: 8px !important;
       font-size: var(--sui-font-size-small);
       font-weight: 600;
       color: var(--sui-secondary-foreground-color);

@@ -1,5 +1,6 @@
 import { mount } from 'svelte';
 import { customFileFormats } from '$lib/services/contents/file';
+import { customComponents } from '$lib/services/contents/widgets/markdown';
 import App from './components/app.svelte';
 
 /**
@@ -94,11 +95,7 @@ const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
 const registerEditorComponent = (definition) => {
-  // eslint-disable-next-line no-console
-  console.error('Custom editor components are not yet supported in Sveltia CMS.');
-  void definition;
-
-  // customComponents[definition.id] = definition;
+  customComponents[definition.id] = definition;
 };
 
 /**

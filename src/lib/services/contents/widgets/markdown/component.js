@@ -52,7 +52,7 @@ export const getComponentDef = (name) => {
   /** @type {Record<string, EditorComponentDefinition>} */
   const definitions = {
     image: {
-      id: 'image',
+      id: 'image-builtin',
       icon: 'image',
       label: get(_)('editor_components.image'),
       fields: [
@@ -64,17 +64,14 @@ export const getComponentDef = (name) => {
         {
           name: 'alt',
           label: get(_)('editor_components.alt'),
-          widget: 'string',
         },
         {
           name: 'title',
           label: get(_)('editor_components.title'),
-          widget: 'string',
         },
         {
           name: 'link',
           label: get(_)('editor_components.link'),
-          widget: 'string',
         },
       ],
       pattern: /\[?!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)(?:\]\((?<link>.*?)\))?/,
@@ -114,7 +111,9 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
   const preview = toPreview({});
 
   const tagName =
-    typeof preview === 'string' ? (preview.match(/\w+/)?.[0] ?? undefined) : undefined;
+    typeof preview === 'string'
+      ? preview.trim().match(/^<(?<tagName>[a-z]+)/i)?.groups?.tagName
+      : undefined;
 
   /**
    * Genetic custom node.
@@ -280,7 +279,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
         });
       }
 
-      if (id === 'image') {
+      if (id === 'image-builtin') {
         // Add extra conversion for the built-in image component to support linked images
         Object.assign(conversionMap, {
           /**
