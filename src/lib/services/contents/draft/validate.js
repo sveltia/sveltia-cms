@@ -196,6 +196,15 @@ export const validateEntry = () => {
           value = files[value]?.name;
         }
 
+        // Special handling for image widget values
+        if (widgetName === 'image' && typeof value === 'object' && value !== null) {
+          if (required && (!value.alt || value.alt.trim() === '')) {
+            valueMissing = true;
+          }
+
+          value = value.src;
+        }
+
         if (typeof value === 'string') {
           value = value.trim();
         }
@@ -238,8 +247,8 @@ export const validateEntry = () => {
             ({ typeMismatch } = inputElement.validity);
           }
 
-          // Check if the email’s domain part contains a dot, because native validation marks
-          // `me@example` valid but it’s not valid in the real world
+          // Check if the email's domain part contains a dot, because native validation marks
+          // `me@example` valid but it's not valid in the real world
           if (type === 'email' && !typeMismatch && !value.split('@')[1]?.includes('.')) {
             typeMismatch = true;
           }
