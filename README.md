@@ -152,7 +152,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 ### Better performance
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
-  - The CMS is compiled and distributed as vanilla JavaScript. You can use it with any framework or static site generator (SSG) that can load static data files during the build process, including Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
+  - The CMS is compiled and distributed as vanilla JavaScript. You can use it with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 - Small footprint: The bundle size is around 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.9 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though we haven’t implemented [some features](#current-limitations) yet, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
 - We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size.
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
@@ -224,7 +224,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
-- The Test backend stores changes in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) instead of an in-memory cache. Developers can play with the CMS as much as they want without having to discard changes.[^194]
+- The Test backend stores changes in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) instead of an in-memory cache. Developers can play with the CMS as much as they want without having to discard changes.[^194] If you’re curious, the backend shares the implementation with our [local repository support](#working-with-a-local-git-repository), which interacts with your computer’s real file system.
 
 ### Better i18n support
 
@@ -536,7 +536,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
-- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for `toPreview`, Object/List widgets, and `default` field option
+- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for `toPreview`, Object/List widgets, and the `default` field option
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
