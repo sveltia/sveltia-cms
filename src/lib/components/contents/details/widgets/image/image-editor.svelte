@@ -262,11 +262,11 @@
           <div class="alt-text">
             <TextInput
               bind:value={currentValue.alt}
-              placeholder={$_('alt_text_placeholder')}
+              placeholder={$_('editor_components.alt')}
               {readonly}
               {required}
               {invalid}
-              aria-label={$_('alt_text_label')}
+              aria-label={$_('editor_components.alt')}
             />
           </div>
         {/if}
