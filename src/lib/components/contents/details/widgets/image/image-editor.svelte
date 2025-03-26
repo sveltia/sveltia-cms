@@ -189,7 +189,7 @@
         kind = currentValue.src ? await getMediaKind(currentValue.src) : undefined;
         src =
           currentValue.src && kind
-            ? await getMediaFieldURL(currentValue, entry, { thumbnail: true })
+            ? await getMediaFieldURL(currentValue.src, entry, { thumbnail: true })
             : undefined;
       } else if (/^https?:/.test(currentValue.src)) {
         asset = undefined;

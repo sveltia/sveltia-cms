@@ -11,6 +11,10 @@ collections:
     create: true
     format: yaml
     fields:
+      - name: title
+        label: Title
+        widget: string
+        default: "Test"
       - name: test_single
         label: Single Image
         widget: image

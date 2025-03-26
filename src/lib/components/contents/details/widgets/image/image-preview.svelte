@@ -17,7 +17,13 @@
   /**
    * @typedef {object} Props
    * @property {FileField} fieldConfig Field configuration.
-   * @property {string | undefined} currentValue Field value.
+   * @property {ImageValue | undefined} currentValue Field value.
+   */
+
+  /**
+   * @typedef {object} ImageValue
+   * @property {string} src URL of the image.
+   * @property {string} alt Alternative text of the image.
    */
 
   /** @type {WidgetPreviewProps & Props} */
@@ -36,10 +42,10 @@
    * Update a couple of properties when {@link currentValue} is updated.
    */
   const updateProps = async () => {
-    kind = currentValue ? await getMediaKind(currentValue) : undefined;
+    kind = currentValue?.src ? await getMediaKind(currentValue.src) : undefined;
     src =
-      currentValue && kind
-        ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry)
+      currentValue?.src && kind
+        ? await getMediaFieldURL(currentValue.src, $entryDraft?.originalEntry)
         : undefined;
   };
 
@@ -53,6 +59,6 @@
   <p>
     <AssetPreview {kind} {src} controls={['audio', 'video'].includes(kind)} />
   </p>
-{:else if typeof currentValue === 'string' && currentValue.trim() && !currentValue.startsWith('blob:')}
-  <p>{currentValue}</p>
+{:else if currentValue?.src && currentValue.src.trim() && !currentValue.src.startsWith('blob:')}
+  <p>{currentValue.src}</p>
 {/if}
