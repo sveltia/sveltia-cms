@@ -1,0 +1,23 @@
+﻿backend:
+  name: local
+
+media_folder: static/uploads
+public_folder: /uploads
+
+collections:
+  - name: test
+    label: Test Collection
+    folder: content/test
+    create: true
+    format: yaml
+    fields:
+      - name: test_single
+        label: Single Image
+        widget: image
+      # - name: test_many
+      #   label: Multiple Images
+      #   widget: list
+      #   fields:
+      #     - name: image
+      #       label: Image
+      #       widget: image

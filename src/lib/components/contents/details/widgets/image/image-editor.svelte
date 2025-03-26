@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the File and Image widgets.
+  Implement the editor for the Image widget.
   @see https://decapcms.org/docs/widgets/#file
   @see https://decapcms.org/docs/widgets/#image
 -->
@@ -35,9 +35,15 @@
    */
 
   /**
+   * @typedef {object} ImageValue
+   * @property {string | undefined} src URL of the image.
+   * @property {string | undefined} alt Alternative text of the image.
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {FileField | ImageField} fieldConfig Field configuration.
-   * @property {string | undefined} currentValue Field value.
+   * @property {ImageField} fieldConfig Field configuration.
+   * @property {ImageValue | undefined} currentValue Field value.
    */
 
   /** @type {WidgetEditorProps & Props} */
@@ -82,7 +88,7 @@
       config: { max_file_size: maxFileSize = /** @type {number | undefined} */ (undefined) } = {},
     } = {},
   } = $derived(fieldConfig);
-  const isImageWidget = $derived(widgetName === 'image');
+
   const collection = $derived($entryDraft?.collection);
   const entry = $derived($entryDraft?.originalEntry);
 
@@ -93,7 +99,7 @@
     dropZone?.reset();
 
     // This will reset `file`, `asset`, `kind` and `src` via `updateProps`
-    currentValue = '';
+    currentValue = { src: '', alt: '' };
 
     // Force running `updateProps` first, otherwise `file`, `asset`, etc. will be  `undefined` while
     // `await`ing a Promise in `onAssetSelect`
@@ -119,7 +125,6 @@
         asset = existingAsset;
         file = undefined;
       } else if (
-        isImageWidget &&
         maxFileSize !== undefined &&
         Number.isInteger(maxFileSize) &&
         file.size > maxFileSize
@@ -127,22 +132,33 @@
         showSizeLimitDialog = true;
       } else {
         // Set a temporary blob URL, which will be later replaced with the actual file path
-        currentValue = URL.createObjectURL(file);
+        const value = URL.createObjectURL(file);
+
+        currentValue = { src: value, alt: '' };
         // Cache the file itself for later upload
         /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = file;
       }
     }
 
     if (asset) {
-      currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true, entry });
+      currentValue = {
+        src: getAssetPublicURL(asset, {
+          pathOnly: true,
+          allowSpecial: true,
+          entry,
+        }),
+      };
     }
 
     if (url) {
-      currentValue = url;
+      currentValue = { src: url, alt: '' };
     }
 
     if (credit) {
-      photoCredit = DOMPurify.sanitize(credit, { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href'] });
+      photoCredit = DOMPurify.sanitize(credit, {
+        ALLOWED_TAGS: ['a'],
+        ALLOWED_ATTR: ['href'],
+      });
       showPhotoCreditDialog = true;
     }
   };
@@ -152,25 +168,25 @@
    */
   const updateProps = async () => {
     // Restore `file` after a draft backup is restored
-    if (currentValue?.startsWith('blob:') && $entryDraft) {
-      file = $entryDraft.files[currentValue];
+    if (currentValue?.src?.startsWith('blob:') && $entryDraft) {
+      file = $entryDraft.files[currentValue.src];
     }
 
     if (currentValue) {
       // Update the `src` when an asset is selected
-      if (currentValue.startsWith('blob:')) {
+      if (currentValue.src?.startsWith('blob:')) {
         asset = undefined;
-        kind = currentValue ? await getMediaKind(currentValue) : undefined;
+        kind = currentValue.src ? await getMediaKind(currentValue.src) : undefined;
         src =
-          currentValue && kind
+          currentValue.src && kind
             ? await getMediaFieldURL(currentValue, entry, { thumbnail: true })
             : undefined;
-      } else if (isImageWidget && /^https?:/.test(currentValue)) {
+      } else if (/^https?:/.test(currentValue.src)) {
         asset = undefined;
         kind = 'image';
-        src = currentValue;
+        src = currentValue.src;
       } else {
-        asset = getAssetByPath(currentValue, { entry, collection });
+        asset = getAssetByPath(currentValue.src, { entry, collection });
         kind = undefined;
         src = undefined;
       }
@@ -192,14 +208,14 @@
 <DropZone
   bind:this={dropZone}
   disabled={readonly}
-  accept={isImageWidget ? 'image/*' : undefined}
+  accept="image/*"
   onSelect={({ files }) => {
     if (files.length) {
       onAssetSelect({ file: files[0] });
     }
   }}
 >
-  {#if currentValue}
+  {#if currentValue && currentValue.src}
     <div role="none" class="filled">
       {#if kind && src}
         <AssetPreview {kind} {src} variant="tile" checkerboard={true} />
@@ -211,7 +227,7 @@
         </span>
       {/if}
       <div role="none">
-        {#if typeof currentValue === 'string'}
+        {#if typeof currentValue.src === 'string'}
           <div
             role="textbox"
             id="{fieldId}-value"
@@ -223,10 +239,8 @@
             aria-labelledby="{fieldId}-label"
             aria-errormessage="{fieldId}-error"
           >
-            {#if file}
-              {decodeURI(file.name.normalize())}
-            {:else if !currentValue.startsWith('blob:')}
-              {decodeURI(currentValue)}
+            {#if !currentValue.src.startsWith('blob:')}
+              {decodeURI(currentValue.src)}
             {/if}
           </div>
         {/if}
@@ -272,11 +286,7 @@
       >
         <Icon name="cloud_upload" />
         <div role="none">
-          {#if isImageWidget}
-            {$_(canDragDrop() ? 'drop_or_browse_image_file' : 'browse_file')}
-          {:else}
-            {$_(canDragDrop() ? 'drop_or_browse_file' : 'browse_file')}
-          {/if}
+          {$_(canDragDrop() ? 'drop_or_browse_image_file' : 'browse_file')}
         </div>
       </Button>
     </div>
@@ -284,7 +294,7 @@
 </DropZone>
 
 <SelectAssetsDialog
-  kind={isImageWidget ? 'image' : undefined}
+  kind="image"
   {canEnterURL}
   {entry}
   bind:open={showSelectAssetsDialog}
