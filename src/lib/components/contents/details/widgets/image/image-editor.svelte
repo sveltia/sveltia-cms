@@ -136,7 +136,7 @@
 
         currentValue = { src: value, alt: '' };
         // Cache the file itself for later upload
-        /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = file;
+        /** @type {EntryDraft} */ ($entryDraft).files[value] = file;
       }
     }
 
@@ -147,6 +147,7 @@
           allowSpecial: true,
           entry,
         }),
+        alt: '',
       };
     }
 

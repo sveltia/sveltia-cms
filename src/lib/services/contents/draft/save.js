@@ -63,7 +63,7 @@ import {
 /**
  * Entry slug variants.
  * @typedef {object} EntrySlugVariants
- * @property {string} defaultLocaleSlug Default locale’s entry slug.
+ * @property {string} defaultLocaleSlug Default locale's entry slug.
  * @property {LocaleSlugMap | undefined} localizedSlugs Localized slug map.
  * @property {string | undefined} canonicalSlug Canonical slug.
  */
@@ -346,7 +346,7 @@ export const copyProperty = ({
 };
 
 /**
- * Finalize the content by sorting the entry draft content’s object properties by the order of the
+ * Finalize the content by sorting the entry draft content's object properties by the order of the
  * configured collection fields. The result can be formatted as expected with `JSON.stringify()`, as
  * the built-in method uses insertion order for string key ordering.
  * @param {object} args Arguments.
@@ -467,7 +467,7 @@ const serializeContent = ({ draft, locale, valueMap }) => {
  * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
+ * @param {string} args.defaultLocaleSlug Default locale's entry slug.
  * @returns {LocaleSlugMap | undefined} Localized slug map.
  */
 const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
@@ -522,11 +522,11 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
 /**
  * Get the canonical slug to be added to the content of each file when the slug is localized. It
  * helps Sveltia CMS and some frameworks to link localized files. The default property name is
- * `translationKey` used in Hugo’s multilingual support, and the default value is the default
- * locale’s slug.
+ * `translationKey` used in Hugo's multilingual support, and the default value is the default
+ * locale's slug.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
+ * @param {string} args.defaultLocaleSlug Default locale's entry slug.
  * @param {LocaleSlugMap | undefined} args.localizedSlugs Localized slug map.
  * @param {FillSlugTemplateOptions} args.fillSlugOptions Arguments for {@link fillSlugTemplate}.
  * @returns {string | undefined} Canonical slug.
@@ -618,7 +618,7 @@ export const getSlugs = ({ draft }) => {
  * Get base arguments for {@link replaceBlobURL}.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
+ * @param {string} args.defaultLocaleSlug Default locale's entry slug.
  * @returns {{ assetFolderPaths: EntryAssetFolderPaths, assetNamesInSameFolder: string[],
  * savingAssetProps: SavingAsset }} Arguments.
  */
@@ -682,9 +682,17 @@ const replaceBlobURL = async ({
   assetNamesInSameFolder,
   assetFolderPaths: { internalAssetFolder, publicAssetFolder },
 }) => {
+  console.log('replaceBlobURL called with:', {
+    blobURL,
+    keyPath,
+    contentValue: content[keyPath],
+    hasFile: !!files[blobURL],
+  });
+
   const file = files[blobURL];
 
   if (!file) {
+    console.log('No file found for blob URL:', blobURL);
     return;
   }
 
@@ -695,8 +703,10 @@ const replaceBlobURL = async ({
   // Check if the file has already been added for other field or locale
   if (dupFile) {
     assetName = dupFile.name;
+    console.log('Found duplicate file, using existing name:', assetName);
   } else {
     assetName = renameIfNeeded(sanitizeFileName(file.name), assetNamesInSameFolder);
+    console.log('Generated new asset name:', assetName);
 
     const assetPath = internalAssetFolder ? `${internalAssetFolder}/${assetName}` : assetName;
 
@@ -720,7 +730,49 @@ const replaceBlobURL = async ({
       : assetName,
   );
 
-  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL);
+  console.log('Generated public URL:', publicURL);
+
+  // Handle nested object structures (like image widget values)
+  const value = content[keyPath];
+
+  console.log('Processing value:', {
+    type: typeof value,
+    isObject: typeof value === 'object' && value !== null,
+    hasSrc: value && 'src' in value,
+    value,
+  });
+
+  if (typeof value === 'object' && value !== null) {
+    // If it's an object with a src property, update that
+    if ('src' in value) {
+      console.log('Updating src property:', {
+        old: value.src,
+        new: value.src.replaceAll(blobURL, publicURL),
+      });
+      value.src = /** @type {string} */ (value.src).replaceAll(blobURL, publicURL);
+    } else {
+      // For other objects, recursively replace blob URLs
+      Object.entries(value).forEach(([k, v]) => {
+        if (typeof v === 'string' && v.includes(blobURL)) {
+          console.log('Updating nested property:', {
+            key: k,
+            old: v,
+            new: v.replaceAll(blobURL, publicURL),
+          });
+          value[k] = v.replaceAll(blobURL, publicURL);
+        }
+      });
+    }
+  } else {
+    // Handle string values (original behavior)
+    console.log('Updating string value:', {
+      old: content[keyPath],
+      new: /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL),
+    });
+    content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL);
+  }
+
+  console.log('Final content value:', content[keyPath]);
 };
 
 /**
@@ -735,7 +787,11 @@ const createBaseSavingEntryData = async ({
   draft,
   slugs: { defaultLocaleSlug, canonicalSlug, localizedSlugs },
 }) => {
+  console.log('createBaseSavingEntryData started');
+
   const { collection, currentLocales, collectionFile, currentValues, files } = draft;
+
+  console.log('Files to process:', Object.keys(files));
 
   const {
     _i18n: {
@@ -755,9 +811,13 @@ const createBaseSavingEntryData = async ({
     ...getReplaceBlobArgs({ draft, defaultLocaleSlug }),
   };
 
+  console.log('Processing entries for locales:', Object.keys(currentValues));
+
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(
       Object.entries(currentValues).map(async ([locale, content]) => {
+        console.log(`Processing locale: ${locale}`);
+
         const localizedSlug = localizedSlugs?.[locale];
         const slug = localizedSlug ?? defaultLocaleSlug;
         const path = createEntryPath({ draft, locale, slug });
@@ -774,23 +834,34 @@ const createBaseSavingEntryData = async ({
           Object.entries(content).map(async ([keyPath, value]) => {
             if (value === undefined) {
               delete content[keyPath];
-
               return;
             }
 
-            if (typeof value !== 'string') {
-              return;
+            // Handle both string values and object values with src property
+            if (typeof value === 'string') {
+              // Remove leading & trailing whitespace
+              content[keyPath] = value.trim();
+
+              // Replace blob URLs in File/Image fields with asset paths
+              const blobMatches = [...value.matchAll(getBlobRegex('g'))];
+
+              if (blobMatches.length > 0) {
+                console.log(`Found ${blobMatches.length} blob URLs in ${keyPath}`);
+                await Promise.all(
+                  blobMatches.map(([blobURL]) =>
+                    replaceBlobURL({ blobURL, keyPath, content, ...replaceBlobArgs }),
+                  ),
+                );
+              }
+            } else if (typeof value === 'object' && value !== null && 'src' in value) {
+              // Handle image widget values
+              const srcValue = value.src;
+
+              if (typeof srcValue === 'string' && srcValue.startsWith('blob:')) {
+                console.log(`Found blob URL in image widget ${keyPath}`);
+                await replaceBlobURL({ blobURL: srcValue, keyPath, content, ...replaceBlobArgs });
+              }
             }
-
-            // Remove leading & trailing whitespace
-            content[keyPath] = value.trim();
-
-            // Replace blob URLs in File/Image fields with asset paths
-            await Promise.all(
-              [...value.matchAll(getBlobRegex('g'))].map(([blobURL]) =>
-                replaceBlobURL({ blobURL, keyPath, content, ...replaceBlobArgs }),
-              ),
-            );
           }),
         );
 
@@ -799,6 +870,7 @@ const createBaseSavingEntryData = async ({
     ),
   );
 
+  console.log('Finished processing all locales');
   return { localizedEntryMap, changes, savingAssets };
 };
 
@@ -919,18 +991,30 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
  * @throws {Error} When the entry could not be validated or saved.
  */
 export const saveEntry = async ({ skipCI = undefined } = {}) => {
+  console.log('saveEntry started');
+
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collection, isNew, collectionName, fileName, currentValues } = draft;
 
+  console.log('Current values:', currentValues);
+
   if (!validateEntry()) {
     expandInvalidFields({ collectionName, fileName, currentValues });
-
     throw new Error('validation_failed');
   }
 
   const slugs = getSlugs({ draft });
   const { defaultLocaleSlug } = slugs;
+
+  console.log('Got slugs:', { defaultLocaleSlug });
+
   const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
+
+  console.log('Created saving entry data:', {
+    savingEntry,
+    changesCount: changes.length,
+    savingAssetsCount: savingAssets.length,
+  });
 
   try {
     await /** @type {BackendService} */ (get(backend)).commitChanges(changes, {
@@ -938,10 +1022,9 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
       collection,
       skipCI,
     });
+    console.log('Successfully committed changes');
   } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex.cause ?? ex);
-
+    console.error('Failed to commit changes:', ex);
     throw new Error('saving_failed', { cause: ex.cause ?? ex });
   }
 
