@@ -120,7 +120,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 180+ issues, or 370+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA (almost there)
-    - 300 issues, or 600 if including duplicates, in the future (yes, you read that right)
+    - 350 issues, or 600 if including duplicates, in the future (yes, you read that right)
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Most of the bugs, including annoying crashes, are already solved
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
@@ -224,7 +224,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
-- The Test backend stores changes in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) instead of an in-memory cache. Developers can play with the CMS as much as they want without discarding changes.[^194]
+- The Test backend stores entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS). Developers are free to play with the CMS without discarding changes.[^194]
 
 ### Better i18n support
 
@@ -537,7 +537,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - Field-specific media folders for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
 - [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
-- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for `toPreview`, Object/List widgets, and the `default` field option
+- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, Object/List widgets, and the `default` field option
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
