@@ -485,7 +485,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 - The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 - A custom logo defined with the `logo_url` property is displayed on the global application header and the browser tab (favicon).[^134] A smaller logo is also correctly positioned on the authentication page.[^135]
-- `CMS.registerCustomFormat()` supports async parser/formatter functions.[^149]
+- [`CMS.registerCustomFormat()`](https://decapcms.org/docs/custom-formatters/) supports async parser/formatter functions.[^149]
+- The component definition for [`CMS.registerEditorComponent()`](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) accepts the `icon` property. Developers can specify a Material Symbols icon name just like [custom collection icons](#using-a-custom-icon-for-a-collection).
 
 ### Better localization
 
