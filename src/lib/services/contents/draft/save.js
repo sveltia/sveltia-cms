@@ -777,8 +777,14 @@ const createBaseSavingEntryData = async ({
           return [locale, { path }];
         }
 
-        // Add the canonical slug
-        content[canonicalSlugKey] = canonicalSlug;
+        // Add the canonical slug if it exists
+        if (canonicalSlug) {
+          const {
+            _i18n: { canonicalSlug: { key: canonicalSlugKey } = { key: 'translationKey' } },
+          } = collectionFile ?? collection;
+
+          content[canonicalSlugKey] = canonicalSlug;
+        }
 
         // Normalize data
         await Promise.all(

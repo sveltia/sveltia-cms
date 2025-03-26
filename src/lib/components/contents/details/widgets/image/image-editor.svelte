@@ -5,7 +5,7 @@
   @see https://decapcms.org/docs/widgets/#image
 -->
 <script>
-  import { AlertDialog, Button, ConfirmationDialog, Icon, TextArea } from '@sveltia/ui';
+  import { AlertDialog, Button, ConfirmationDialog, Icon, TextArea, TextInput } from '@sveltia/ui';
   import { getHash } from '@sveltia/utils/crypto';
   import DOMPurify from 'isomorphic-dompurify';
   import { flushSync } from 'svelte';
@@ -21,6 +21,7 @@
     getMediaKind,
   } from '$lib/services/assets';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { generateAltText } from '$lib/services/utils/alt-text';
   import { canDragDrop, formatSize } from '$lib/services/utils/file';
 
   /**
@@ -36,8 +37,8 @@
 
   /**
    * @typedef {object} ImageValue
-   * @property {string | undefined} src URL of the image.
-   * @property {string | undefined} alt Alternative text of the image.
+   * @property {string} src URL of the image.
+   * @property {string} alt Alternative text of the image.
    */
 
   /**
@@ -133,26 +134,34 @@
       } else {
         // Set a temporary blob URL, which will be later replaced with the actual file path
         const value = URL.createObjectURL(file);
+        // Generate default alt text from filename
+        const defaultAlt = generateAltText(file.name || '');
 
-        currentValue = { src: value, alt: '' };
+        currentValue = { src: value, alt: defaultAlt };
         // Cache the file itself for later upload
         /** @type {EntryDraft} */ ($entryDraft).files[value] = file;
       }
     }
 
     if (asset) {
+      // Generate default alt text from asset name
+      const defaultAlt = generateAltText(asset.name || '');
+
       currentValue = {
         src: getAssetPublicURL(asset, {
           pathOnly: true,
           allowSpecial: true,
           entry,
         }),
-        alt: '',
+        alt: defaultAlt,
       };
     }
 
     if (url) {
-      currentValue = { src: url, alt: '' };
+      // Generate default alt text from URL
+      const defaultAlt = generateAltText(url || '');
+
+      currentValue = { src: url, alt: defaultAlt };
     }
 
     if (credit) {
@@ -219,9 +228,15 @@
   {#if currentValue && currentValue.src}
     <div role="none" class="filled">
       {#if kind && src}
-        <AssetPreview {kind} {src} variant="tile" checkerboard={true} />
+        <AssetPreview {kind} {src} variant="tile" checkerboard={true} alt={currentValue.alt} />
       {:else if asset}
-        <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
+        <AssetPreview
+          kind={asset.kind}
+          {asset}
+          variant="tile"
+          checkerboard={true}
+          alt={currentValue.alt}
+        />
       {:else}
         <span role="none" class="preview no-thumbnail">
           <Icon name="draft" />
@@ -243,6 +258,16 @@
             {#if !currentValue.src.startsWith('blob:')}
               {decodeURI(currentValue.src)}
             {/if}
+          </div>
+          <div class="alt-text">
+            <TextInput
+              bind:value={currentValue.alt}
+              placeholder={$_('alt_text_placeholder')}
+              {readonly}
+              {required}
+              {invalid}
+              aria-label={$_('alt_text_label')}
+            />
           </div>
         {/if}
         <div role="none">
@@ -401,5 +426,9 @@
         border-color: var(--sui-error-border-color);
       }
     }
+  }
+
+  .alt-text {
+    margin-top: 8px;
   }
 </style>
