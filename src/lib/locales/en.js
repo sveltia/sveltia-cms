@@ -1,3 +1,7 @@
+/**
+ * IMPORTANT: These strings are not ready for localization. DO NOT TRANSLATE THIS FILE.
+ * @see https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+ */
 export const strings = {
   // Pages & Navigation
   collections: 'Collections',
