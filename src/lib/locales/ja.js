@@ -387,8 +387,6 @@ export const strings = {
   },
   validation: {
     value_missing: 'この項目は必須です。',
-    alt_text_missing: 'アクセシビリティのために代替テキストは必須です。',
-    alt_text_empty: '代替テキストは空白にできません。',
     range_underflow: {
       select_many: '少なくとも {min} 個の項目を選択してください。',
       select_one: '少なくとも {min} 個の項目を選択してください。',
