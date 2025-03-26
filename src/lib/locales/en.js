@@ -68,7 +68,7 @@ export const strings = {
   signing_in: 'Signing in…',
   work_with_local_repo: 'Work with Local Repository',
   work_with_local_repo_description:
-    'Click the button to select the root directory of the “{repo}” repository.',
+    'Click the button to select the root directory of the "{repo}" repository.',
   work_with_local_repo_description_no_repo:
     'Click the button to select the root directory of your Git repository.',
   work_with_test_repo: 'Work with Test Repository',
@@ -87,10 +87,10 @@ export const strings = {
     TOKEN_REQUEST_FAILED: 'Failed to request an access token. Please try again later.',
     MALFORMED_RESPONSE: 'Server responded with malformed data. Please try again later.',
   },
-  repository_no_access: 'You don’t have access to the “{repo}” repository.',
-  repository_not_found: 'The “{repo}” repository doesn’t exist.',
-  repository_empty: 'The “{repo}” repository has no branches.',
-  branch_not_found: 'The “{repo}” repository doesn’t have the “{branch}” branch.',
+  repository_no_access: 'You don\'t have access to the "{repo}" repository.',
+  repository_not_found: 'The "{repo}" repository doesn\'t exist.',
+  repository_empty: 'The "{repo}" repository has no branches.',
+  branch_not_found: 'The "{repo}" repository doesn\'t have the "{branch}" branch.',
   unexpected_error: 'Unexpected Error',
 
   // Parser errors
@@ -146,20 +146,20 @@ export const strings = {
   entry_list: 'Entry List',
   file_list: 'File List',
   asset_list: 'Asset List',
-  x_collection: '“{collection}” Collection',
-  x_asset_folder: '“{folder}” Asset Folder',
+  x_collection: '"{collection}" Collection',
+  x_asset_folder: '"{folder}" Asset Folder',
   viewing_x_collection_many_entries:
-    'You’re now viewing the “{collection}” collection, which has {count} entries.',
+    'You\'re now viewing the "{collection}" collection, which has {count} entries.',
   viewing_x_collection_one_entry:
-    'You’re now viewing the “{collection}” collection, which has one entry.',
+    'You\'re now viewing the "{collection}" collection, which has one entry.',
   viewing_x_collection_no_entries:
-    'You’re now viewing the “{collection}” collection, which has no entries yet.',
+    'You\'re now viewing the "{collection}" collection, which has no entries yet.',
   viewing_x_asset_folder_many_assets:
-    'You’re now viewing the “{folder}” asset folder, which has {count} assets.',
+    'You\'re now viewing the "{folder}" asset folder, which has {count} assets.',
   viewing_x_asset_folder_one_asset:
-    'You’re now viewing the “{folder}” asset folder, which has one asset.',
+    'You\'re now viewing the "{folder}" asset folder, which has one asset.',
   viewing_x_asset_folder_no_assets:
-    'You’re now viewing the “{folder}” asset folder, which has no assets yet.',
+    'You\'re now viewing the "{folder}" asset folder, which has no assets yet.',
   collection_not_found: 'Collection not found',
   file_not_found: 'File not found.',
   x_of_x_selected: '{selected} of {total} selected',
@@ -201,9 +201,9 @@ export const strings = {
   creating_entries_disabled_by_limit:
     'You cannot add new entries to this collection because it has reached its limit of {limit} entries.',
   back_to_collection: 'Back to Collection',
-  search_results_for_x: 'Search Results for “{terms}”',
+  search_results_for_x: 'Search Results for "{terms}"',
   viewing_search_results:
-    'You’re now viewing search results for “{terms}”. We’ve found {entries} and {assets}.',
+    'You\'re now viewing search results for "{terms}". We\'ve found {entries} and {assets}.',
   many_entries: '{count} entries',
   one_entry: 'one entry',
   no_entries: 'no entries',
@@ -239,7 +239,7 @@ export const strings = {
   drop_or_browse_image_files: 'Drop image files here or click to browse',
   drop_file_here: 'Drop a file here',
   drop_files_here: 'Drop files here',
-  drop_files_type_mismatch: 'The dropped file is not the “{type}” type. Please try again.',
+  drop_files_type_mismatch: 'The dropped file is not the "{type}" type. Please try again.',
   choose_file: 'Choose File',
   choose_files: 'Choose Files',
   delete_asset: 'Delete Asset',
@@ -266,17 +266,17 @@ export const strings = {
   confirm_deleting_all_entries: 'Are you sure to delete all the entries?',
   confirm_deleting_all_entries_with_assets:
     'Are you sure to delete all the entries and associated assets?',
-  confirm_replacing_file: 'Are you sure to replace “{name}” with the following file?',
-  confirm_uploading_file: 'Are you sure to save the following file to the “{folder}” folder?',
+  confirm_replacing_file: 'Are you sure to replace "{name}" with the following file?',
+  confirm_uploading_file: 'Are you sure to save the following file to the "{folder}" folder?',
   confirm_uploading_files:
-    'Are you sure to save the following {count} files to the “{folder}” folder?',
+    'Are you sure to save the following {count} files to the "{folder}" folder?',
   no_entries_created: 'This collection has no entries yet.',
   create_new_entry: 'Create New Entry',
   no_files_in_collection: 'No files available in this collection.',
   asset_info: 'Asset Info',
   select_asset_show_info: 'Select an asset to show the info.',
   duplicate_entry: 'Duplicate Entry',
-  entry_duplicated: 'Entry has been duplicated. It’s now a new draft.',
+  entry_duplicated: "Entry has been duplicated. It's now a new draft.",
   entry_validation_error: 'One field has an error. Please correct it to save the entry.',
   entry_validation_errors: '{count} fields have an error. Please correct them to save the entry.',
   entry_saved: 'Entry has been saved.',
@@ -311,12 +311,12 @@ export const strings = {
   draft_backup_deleted: 'Draft backup has been deleted.',
   cancel_editing: 'Cancel Editing',
   creating_x: 'Creating {name}',
-  creating_x_collection_entry: 'You’re now creating a new entry in the “{collection}” collection.',
+  creating_x_collection_entry: 'You\'re now creating a new entry in the "{collection}" collection.',
   editing_x_in_x: 'Editing {collection} › {entry}',
   editing_x_collection_entry:
-    'You’re now editing the “{entry}” entry in the “{collection}” collection.',
+    'You\'re now editing the "{entry}" entry in the "{collection}" collection.',
   editing_x_collection_file:
-    'You’re now editing the “{file}” file in the “{collection}” collection.',
+    'You\'re now editing the "{file}" file in the "{collection}" collection.',
   save_and_publish: 'Save and Publish',
   save_without_publishing: 'Save without Publishing',
   show_editor_options: 'Show Editor Options',
@@ -333,7 +333,7 @@ export const strings = {
   content_preview: 'Content Preview',
   show_content_options_x_locale: 'Show {locale} Content Options',
   content_options_x_locale: '{locale} Content Options',
-  x_field: '“{field}” Field',
+  x_field: '"{field}" Field',
   show_field_options: 'Show Field Options',
   field_options: 'Field Options',
   unsupported_widget_x: 'Unsupported widget: {name}',
@@ -358,7 +358,7 @@ export const strings = {
   revert_all_changes: 'Revert All Changes',
   edit_slug: 'Edit Slug',
   edit_slug_warning:
-    'Changing the slug may break internal and external links to the entry. Currently, Sveltia CMS does not update references created with the Relation widget, so you’ll need to manually update such references along with other links.',
+    "Changing the slug may break internal and external links to the entry. Currently, Sveltia CMS does not update references created with the Relation widget, so you'll need to manually update such references along with other links.",
   edit_slug_error: {
     empty: 'The slug cannot be empty.',
     duplicate: 'This slug is used for another entry.',
@@ -384,6 +384,8 @@ export const strings = {
   },
   validation: {
     value_missing: 'This field is required.',
+    alt_text_missing: 'Alt text is required for accessibility.',
+    alt_text_empty: 'Alt text cannot be empty.',
     range_underflow: {
       number: 'Value must be greater than or equal to {min}.',
       select_many: 'You have to select at least {min} items.',
@@ -420,7 +422,7 @@ export const strings = {
   },
 
   // Media details
-  viewing_x_asset_details: 'You’re viewing the details of the “{name}” asset.',
+  viewing_x_asset_details: 'You\'re viewing the details of the "{name}" asset.',
   asset_editor: 'Asset Editor',
   preview_unavailable: 'Preview Unavailable.',
   public_url: 'Public URL',
@@ -542,17 +544,17 @@ export const strings = {
       no_collection: 'Collections are not defined in the configuration file.',
       missing_backend: 'The backend is not defined in the configuration file.',
       missing_backend_name: 'The backend name is not defined in the configuration file.',
-      unsupported_backend: 'The configured “{name}” backend is not supported.',
+      unsupported_backend: 'The configured "{name}" backend is not supported.',
       missing_repository: 'The repository is not defined in the configuration file.',
       invalid_repository:
-        'The configured repository is invalid. It must be in “owner/repo” format.',
+        'The configured repository is invalid. It must be in "owner/repo" format.',
       oauth_implicit_flow: 'The configured authentication method (implicit flow) is not supported.',
       oauth_no_app_id: 'OAuth application ID is not defined in the configuration file.',
       missing_media_folder: 'The media folder is not defined in the configuration file.',
       invalid_media_folder: 'The configured media folder is invalid. It must be a string.',
       invalid_public_folder: 'The configured public folder is invalid. It must be a string.',
       public_folder_relative_path:
-        'The configured public folder is invalid. It must be an absolute path starting with “/”.',
+        'The configured public folder is invalid. It must be an absolute path starting with "/".',
       public_folder_absolute_url: 'An absolute URL for the public folder option is not supported.',
       unexpected: 'There was an unexpected error while validating the configuration file.',
       try_again: 'Please solve the issue and try again.',
@@ -563,7 +565,7 @@ export const strings = {
   local_backend: {
     unsupported_browser:
       'Local development is not supported in your browser. Please use Chrome or Edge instead.',
-    disabled: 'Local development is disabled in your browser. <a>Here’s how to enable it</a>.',
+    disabled: "Local development is disabled in your browser. <a>Here's how to enable it</a>.",
   },
 
   // Editorial Workflow
@@ -650,7 +652,7 @@ export const strings = {
       deploy_hook: {
         title: 'Deploy Hook',
         description:
-          'Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.',
+          "Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you're using GitHub Actions.",
         field_label: 'Deploy Hook URL',
         url_saved: 'Webhook URL has been saved.',
         url_removed: 'Webhook URL has been removed.',
