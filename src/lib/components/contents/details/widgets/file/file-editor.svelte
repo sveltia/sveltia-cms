@@ -20,6 +20,7 @@
     getMediaFieldURL,
     getMediaKind,
   } from '$lib/services/assets';
+  import { siteConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
   import { canDragDrop, formatSize } from '$lib/services/utils/file';
 
@@ -77,14 +78,28 @@
     widget: widgetName,
     // Widget-specific options
     choose_url: canEnterURL = true,
-    media_library: {
-      // @ts-ignore
-      config: { max_file_size: maxFileSize = /** @type {number | undefined} */ (undefined) } = {},
-    } = {},
   } = $derived(fieldConfig);
   const isImageWidget = $derived(widgetName === 'image');
   const collection = $derived($entryDraft?.collection);
   const entry = $derived($entryDraft?.originalEntry);
+
+  /** @type {number} */
+  const maxFileSize = $derived.by(() => {
+    // Support both new and legacy options at field level and global
+    const size =
+      fieldConfig.media_libraries?.default?.config?.max_file_size ??
+      fieldConfig.media_library?.config?.max_file_size ??
+      $siteConfig?.media_libraries?.default?.config?.max_file_size ??
+      ($siteConfig?.media_library?.name === 'default'
+        ? $siteConfig.media_library.config?.max_file_size
+        : undefined);
+
+    if (typeof size === 'number' && Number.isInteger(size)) {
+      return size;
+    }
+
+    return Infinity;
+  });
 
   /**
    * Reset the current selection.
@@ -118,12 +133,7 @@
         // uploading the same file twice
         asset = existingAsset;
         file = undefined;
-      } else if (
-        isImageWidget &&
-        maxFileSize !== undefined &&
-        Number.isInteger(maxFileSize) &&
-        file.size > maxFileSize
-      ) {
+      } else if (isImageWidget && file.size > maxFileSize) {
         showSizeLimitDialog = true;
       } else {
         // Set a temporary blob URL, which will be later replaced with the actual file path
@@ -294,9 +304,7 @@
 />
 
 <AlertDialog bind:open={showSizeLimitDialog} title={$_('assets_dialog.large_file.title')}>
-  {$_('assets_dialog.large_file.description', {
-    values: { size: formatSize(/** @type {number} */ (maxFileSize)) },
-  })}
+  {$_('warning_oversized_file', { values: { size: formatSize(maxFileSize) } })}
 </AlertDialog>
 
 <ConfirmationDialog

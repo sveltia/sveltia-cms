@@ -88,6 +88,14 @@
  */
 
 /**
+ * Unified media library option that supports multiple libraries.
+ * @typedef {object} MediaLibraries
+ * @property {DefaultMediaLibrary} [default] Options for the built-in media library.
+ * @property {CloudinaryMediaLibrary} [cloudinary] Options for the Cloudinary media library.
+ * @property {UploadcareMediaLibrary} [uploadcare] Options for the Uploadcare media library.
+ */
+
+/**
  * Common field properties.
  * @typedef {object} CommonFieldProps
  * @property {string} name Unique identifier for the field. It cannot include periods and spaces.
@@ -130,8 +138,10 @@
  * collection-level `media_folder` value.
  * @property {string} [public_folder] Public media folder path for the field. Default:
  * `media_folder` option value.
- * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Media library options for the
- * field. Default: global `media_library` value.
+ * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Legacy media library option
+ * that allows only one library. Use `media_libraries` to support multiple libraries.
+ * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
+ * libraries.
  * @property {boolean} [allow_multiple] Whether to enable multiple item selection in an external
  * media library. Default: `true`.
  * @see https://decapcms.org/docs/widgets/#file
@@ -904,7 +914,11 @@
  * directory.
  * @property {string} [public_folder] Global public media folder path, relative to the project’s
  * public URL. It must be an absolute path starting with `/`. Default: `media_folder` option value.
- * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Media library options.
+ * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Legacy media library option
+ * that allows only one library. This overrides the global `media_library` option. Use
+ * `media_libraries` to support multiple libraries.
+ * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
+ * libraries. This overrides the global `media_libraries` option.
  * @property {string} [site_url] Site URL. Default: `location.origin`.
  * @property {string} [display_url] Site URL linked from the UI. Default: `site_url` option value.
  * @property {string} [logo_url] Absolute URL or absolute path to the site logo that will be

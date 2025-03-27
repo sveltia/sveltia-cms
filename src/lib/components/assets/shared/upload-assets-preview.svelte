@@ -8,21 +8,23 @@
   /**
    * @typedef {object} Props
    * @property {File[]} [files] File list.
+   * @property {boolean} [removable] Whether to show the Remove button on each row.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     files = $bindable([]),
+    removable = true,
     /* eslint-enable prefer-const */
   } = $props();
 </script>
 
-<div role="none" class="files">
+<div role="list" class="files">
   {#each files as file, index}
     {@const { name, type, size } = file}
     {@const { extension = '' } = getPathInfo(name)}
-    <div role="none" class="file">
+    <div role="listitem" class="file">
       {#if type.startsWith('image/')}
         <Image src={URL.createObjectURL(file)} variant="icon" checkerboard={true} />
       {:else}
@@ -42,7 +44,7 @@
         variant="ghost"
         iconic
         aria-label={$_('remove')}
-        hidden={files.length === 1}
+        hidden={!removable || files.length === 1}
         onclick={(event) => {
           event.stopPropagation();
           files.splice(index, 1);
@@ -59,7 +61,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 16px 0 0;
+    margin: 0 8px;
   }
 
   .file {

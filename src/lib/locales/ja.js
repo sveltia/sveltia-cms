@@ -268,10 +268,16 @@ export const strings = {
   confirm_deleting_all_entries: 'すべてのエントリーを削除してもよろしいですか？',
   confirm_deleting_all_entries_with_assets:
     'すべてのエントリーと関連アセットを削除してもよろしいですか？',
+  uploading_files: 'アップロード対象ファイル',
   confirm_replacing_file: '「{name}」を以下のファイルと差し替えてもよろしいですか？',
   confirm_uploading_file: '以下のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
   confirm_uploading_files:
     '以下の {count} 個のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
+  oversized_files: 'サイズ超過ファイル',
+  warning_oversized_file:
+    'このファイルは最大サイズ {size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。',
+  warning_oversized_files:
+    'これらのファイルは最大サイズ {size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください',
   no_entries_created: 'このコレクションにはまだエントリーがありません。',
   create_new_entry: '新しいエントリーを作成',
   no_files_in_collection: 'このコレクションにはファイルがありません。',
@@ -476,7 +482,6 @@ export const strings = {
     enter_image_url: '画像の URL を入力:',
     large_file: {
       title: '大きなファイル',
-      description: 'このファイルは最大サイズ {size} を超えています。他のファイルを選んでください。',
     },
     photo_credit: {
       title: '写真クレジット',

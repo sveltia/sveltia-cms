@@ -266,10 +266,16 @@ export const strings = {
   confirm_deleting_all_entries: 'Are you sure to delete all the entries?',
   confirm_deleting_all_entries_with_assets:
     'Are you sure to delete all the entries and associated assets?',
+  uploading_files: 'Uploading Files',
   confirm_replacing_file: 'Are you sure to replace “{name}” with the following file?',
   confirm_uploading_file: 'Are you sure to save the following file to the “{folder}” folder?',
   confirm_uploading_files:
     'Are you sure to save the following {count} files to the “{folder}” folder?',
+  oversized_files: 'Oversized Files',
+  warning_oversized_file:
+    'This file cannot be uploaded because it exceeds the maximum size of {size}. Please reduce the size or select a different file.',
+  warning_oversized_files:
+    'These files cannot be uploaded because they exceed the maximum size of {size}. Please reduce the sizes or select different files.',
   no_entries_created: 'This collection has no entries yet.',
   create_new_entry: 'Create New Entry',
   no_files_in_collection: 'No files available in this collection.',
@@ -476,7 +482,6 @@ export const strings = {
     enter_image_url: 'Enter URL of the image:',
     large_file: {
       title: 'Large File',
-      description: 'This file exceeds the maximum size of {size}. Please choose another.',
     },
     photo_credit: {
       title: 'Photo Credit',
