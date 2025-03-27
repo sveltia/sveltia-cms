@@ -65,7 +65,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Localizing entry slugs](#localizing-entry-slugs)
   - [Disabling non-default locale content](#disabling-non-default-locale-content)
   - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
-  - [Configure multiple media libraries](#configure-multiple-media-libraries)
+  - [Configuring multiple media libraries](#configuring-multiple-media-libraries)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
   - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
   - [Controlling data output](#controlling-data-output)
@@ -481,8 +481,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Users can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens.[^97]
 - No fatal application crash when uploading assets.[^112]
-- Supports multiple media libraries with the [new `media_libraries` option](#configure-multiple-media-libraries).[^195]
-- The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configure-multiple-media-libraries).
+- Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
+- The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
 
 ### Better customization
 
@@ -907,7 +907,7 @@ collections:
     slug: '{{uuid_short}}' # or {{uuid}} or {{uuid_shorter}}
 ```
 
-### Configure multiple media libraries
+### Configuring multiple media libraries
 
 The traditional [`media_library`](https://decapcms.org/docs/configuration-options/#media-library) option allows developers to configure only one media library:
 
