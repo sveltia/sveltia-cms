@@ -473,6 +473,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library.[^5]
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
+- Enhancements to media library integrations:
+  - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
+  - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for.[^38]
 - Assets stored in an entry-relative media folder are displayed in the Asset Library.[^142]
@@ -481,8 +484,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Users can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens.[^97]
 - No fatal application crash when uploading assets.[^112]
-- Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
-- The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
 
 ### Better customization
 
