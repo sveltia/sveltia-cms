@@ -211,7 +211,6 @@ export const renderPDF = async (
   // Lazily load the PDF.js library
   if (!pdfjs) {
     try {
-      // eslint-disable-next-line jsdoc/no-bad-blocks
       pdfjs = await import(/* @vite-ignore */ pdfjsModuleURL);
       pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerURL;
     } catch {

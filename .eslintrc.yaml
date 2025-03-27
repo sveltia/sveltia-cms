@@ -39,7 +39,9 @@ rules:
   jsdoc/check-line-alignment: 1
   jsdoc/check-syntax: 1
   jsdoc/match-description: 1
-  jsdoc/no-bad-blocks: 1
+  jsdoc/no-bad-blocks:
+    - warn
+    - ignore: ["vite-ignore"]
   jsdoc/no-blank-block-descriptions: 1
   jsdoc/no-defaults: 1
   jsdoc/require-asterisk-prefix: 1
