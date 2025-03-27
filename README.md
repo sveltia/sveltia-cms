@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![185 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250324)<br>
+![185 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250327)<br>
 
 ## Differentiators
 
@@ -225,7 +225,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
-- The Test backend stores entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS). Developers are free to play with the CMS without discarding changes.[^194]
+- The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194]
 
 ### Better i18n support
 
