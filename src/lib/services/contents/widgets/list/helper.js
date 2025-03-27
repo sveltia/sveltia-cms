@@ -40,6 +40,8 @@ export const formatSummary = ({
   hasSingleSubField,
   index,
 }) => {
+  const getFieldConfigArgs = { collectionName, fileName, valueMap };
+
   if (!summaryTemplate) {
     if (hasSingleSubField) {
       return valueMap[`${keyPath}.${index}`];
@@ -56,13 +58,17 @@ export const formatSummary = ({
     return (
       item.title ||
       item.name ||
-      // Use the first string-type field value, if available
-      Object.values(item).find((value) => typeof value === 'string' && !!value) ||
+      // Use the first visible string-type field value, if available
+      Object.entries(valueMap).find(
+        ([key, value]) =>
+          prefixRegex.test(key) &&
+          typeof value === 'string' &&
+          !!value.trim() &&
+          getFieldConfig({ ...getFieldConfigArgs, keyPath: key })?.widget !== 'hidden',
+      )?.[1] ||
       ''
     );
   }
-
-  const getFieldConfigArgs = { collectionName, fileName, valueMap };
 
   return summaryTemplate.replaceAll(/{{(.+?)}}/g, (_match, /** @type {string} */ placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);

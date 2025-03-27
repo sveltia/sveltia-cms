@@ -1,4 +1,4 @@
-import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
  * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
@@ -24,13 +24,19 @@ export const formatSummary = ({
   locale,
   summaryTemplate,
 }) => {
+  const getFieldConfigArgs = { collectionName, fileName, valueMap };
+
   if (!summaryTemplate) {
     return (
       valueMap[`${keyPath}.title`] ||
       valueMap[`${keyPath}.name`] ||
-      // Use the first string-type field value, if available
+      // Use the first visible string-type field value, if available
       Object.entries(valueMap).find(
-        ([key, value]) => key.startsWith(`${keyPath}.`) && typeof value === 'string' && !!value,
+        ([key, value]) =>
+          key.startsWith(`${keyPath}.`) &&
+          typeof value === 'string' &&
+          !!value.trim() &&
+          getFieldConfig({ ...getFieldConfigArgs, keyPath: key })?.widget !== 'hidden',
       )?.[1] ||
       ''
     );
@@ -40,9 +46,7 @@ export const formatSummary = ({
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
 
     return getFieldDisplayValue({
-      collectionName,
-      fileName,
-      valueMap,
+      ...getFieldConfigArgs,
       keyPath: `${keyPath}.${tag.replace(/^fields\./, '')}`,
       locale,
       transformations,
