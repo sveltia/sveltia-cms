@@ -20,10 +20,10 @@ import { getCollection } from '$lib/services/contents/collection';
 /**
  * Determine the slug for the given entry content.
  * @param {object} args Arguments.
- * @param {string} args.subPath File path without the collection folder, locale and extension. It’s
+ * @param {string} args.subPath File path without the collection folder, locale and extension. It's
  * a slug in most cases, but it may be a path containing slash(es) when the Folder Collections Path
  * is configured.
- * @param {string | undefined} args.subPathTemplate Collection’s `subPath` configuration.
+ * @param {string | undefined} args.subPathTemplate Collection's `subPath` configuration.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
@@ -125,8 +125,8 @@ const prepareEntry = async ({ file, entries, errors }) => {
     return;
   }
 
-  // Skip Hugo’s special `_index.md` file that shouldn’t appear in an entry collection, unless the
-  // collection’s `path` ends with `_index` and the extension is `md`. Localized index files like
+  // Skip Hugo's special `_index.md` file that shouldn't appear in an entry collection, unless the
+  // collection's `path` ends with `_index` and the extension is `md`. Localized index files like
   // `_index.en.md` are also excluded.
   if (
     /^_index(?:\..+)?\.md$/.test(getPathInfo(path).basename) &&
@@ -170,7 +170,28 @@ const prepareEntry = async ({ file, entries, errors }) => {
     const slug = fileName || getSlug({ subPath, subPathTemplate });
 
     entry.slug = slug;
-    entry.locales._default = { slug, path, sha, content: flatten(rawContent) };
+
+    // Preserve image widget values during flattening
+    /** @type {Record<string, any>} */
+    const content = {};
+    const flattenedContent = flatten(rawContent);
+
+    // Group flattened image fields back into objects
+    Object.entries(flattenedContent).forEach(([key, value]) => {
+      if (key.endsWith('.src')) {
+        const baseKey = key.slice(0, -4);
+
+        content[baseKey] = {
+          src: value,
+          alt: flattenedContent[`${baseKey}.alt`] || '',
+        };
+        delete flattenedContent[`${baseKey}.alt`];
+      } else if (!key.endsWith('.alt')) {
+        content[key] = value;
+      }
+    });
+
+    entry.locales._default = { slug, path, sha, content };
   }
 
   if (i18nSingleFile) {
@@ -180,7 +201,29 @@ const prepareEntry = async ({ file, entries, errors }) => {
     entry.locales = Object.fromEntries(
       allLocales
         .filter((_locale) => _locale in rawContent)
-        .map((_locale) => [_locale, { slug, path, sha, content: flatten(rawContent[_locale]) }]),
+        .map((_locale) => {
+          // Preserve image widget values during flattening
+          /** @type {Record<string, any>} */
+          const content = {};
+          const flattenedContent = flatten(rawContent[_locale]);
+
+          // Group flattened image fields back into objects
+          Object.entries(flattenedContent).forEach(([key, value]) => {
+            if (key.endsWith('.src')) {
+              const baseKey = key.slice(0, -4);
+
+              content[baseKey] = {
+                src: value,
+                alt: flattenedContent[`${baseKey}.alt`] || '',
+              };
+              delete flattenedContent[`${baseKey}.alt`];
+            } else if (!key.endsWith('.alt')) {
+              content[key] = value;
+            }
+          });
+
+          return [_locale, { slug, path, sha, content }];
+        }),
     );
   }
 
@@ -196,13 +239,33 @@ const prepareEntry = async ({ file, entries, errors }) => {
         : undefined;
 
     const slug = fileName || getSlug({ subPath, subPathTemplate });
-    const localizedEntry = { slug, path, sha, content: flatten(rawContent) };
+    // Preserve image widget values during flattening
+    /** @type {Record<string, any>} */
+    const content = {};
+    const flattenedContent = flatten(rawContent);
+
+    // Group flattened image fields back into objects
+    Object.entries(flattenedContent).forEach(([key, value]) => {
+      if (key.endsWith('.src')) {
+        const baseKey = key.slice(0, -4);
+
+        content[baseKey] = {
+          src: value,
+          alt: flattenedContent[`${baseKey}.alt`] || '',
+        };
+        delete flattenedContent[`${baseKey}.alt`];
+      } else if (!key.endsWith('.alt')) {
+        content[key] = value;
+      }
+    });
+
+    const localizedEntry = { slug, path, sha, content };
     // Use a temporary ID to locate all the localized files for the entry
     const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
     // Check if the entry has already been added for another locale
     const existingEntry = entries.find((e) => e.id === tempId);
 
-    // If found, add a new locale to the existing entry; don’t add another entry
+    // If found, add a new locale to the existing entry; don't add another entry
     if (existingEntry) {
       existingEntry.locales[locale] = localizedEntry;
 

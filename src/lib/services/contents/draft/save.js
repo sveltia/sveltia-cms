@@ -389,6 +389,17 @@ const finalizeContent = ({
     const field = getFieldConfig({ ...getFieldConfigArgs, keyPath });
 
     if (keyPath in unsortedMap) {
+      // Special handling for image widget values to preserve their structure
+      if (field?.widget === 'image') {
+        const value = unsortedMap[keyPath];
+
+        if (typeof value === 'object' && value !== null && 'src' in value) {
+          sortedMap[keyPath] = { ...value }; // Preserve the entire object structure
+          delete unsortedMap[keyPath];
+          return;
+        }
+      }
+
       copyProperty({ key: keyPath, field, ...copyArgs });
     } else if (field?.widget === 'keyvalue') {
       // Work around a bug in the flat library where numeric property keys used for KeyValue fields
@@ -809,12 +820,24 @@ const createBaseSavingEntryData = async ({
                   ),
                 );
               }
-            } else if (typeof value === 'object' && value !== null && 'src' in value) {
+            } else if (typeof value === 'object' && value !== null) {
               // Handle image widget values
-              const srcValue = value.src;
+              if ('src' in value) {
+                const srcValue = value.src;
 
-              if (typeof srcValue === 'string' && srcValue.startsWith('blob:')) {
-                await replaceBlobURL({ blobURL: srcValue, keyPath, content, ...replaceBlobArgs });
+                if (typeof srcValue === 'string' && srcValue.startsWith('blob:')) {
+                  await replaceBlobURL({ blobURL: srcValue, keyPath, content, ...replaceBlobArgs });
+                }
+
+                // Preserve the entire object structure
+                content[keyPath] = { ...value };
+              } else {
+                // For other objects, recursively replace blob URLs
+                Object.entries(value).forEach(([k, v]) => {
+                  if (typeof v === 'string' && v.includes('blob:')) {
+                    value[k] = v.replaceAll('blob:', '');
+                  }
+                });
               }
             }
           }),

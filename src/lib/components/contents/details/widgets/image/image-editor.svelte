@@ -108,6 +108,16 @@
   };
 
   /**
+   * Update the current value with a new alt text.
+   * @param {string} newAltText The new alt text to set.
+   */
+  const updateAltText = (newAltText) => {
+    currentValue = currentValue
+      ? { ...currentValue, alt: newAltText }
+      : { src: '', alt: newAltText };
+  };
+
+  /**
    * Handle selected asset.
    * @param {SelectedAsset} selectedAsset Selected asset details.
    */
@@ -148,11 +158,12 @@
       const defaultAlt = generateAltText(asset.name || '');
 
       currentValue = {
-        src: getAssetPublicURL(asset, {
-          pathOnly: true,
-          allowSpecial: true,
-          entry,
-        }),
+        src:
+          getAssetPublicURL(asset, {
+            pathOnly: true,
+            allowSpecial: true,
+            entry,
+          }) || '',
         alt: defaultAlt,
       };
     }
@@ -201,7 +212,7 @@
         src = undefined;
       }
     } else {
-      // Remove `file` after the value is removed
+      // Reset all values when currentValue is undefined
       asset = undefined;
       file = undefined;
       kind = undefined;
@@ -261,12 +272,15 @@
           </div>
           <div class="alt-text">
             <TextInput
-              bind:value={currentValue.alt}
+              value={currentValue?.alt || ''}
               placeholder={$_('editor_components.alt')}
               {readonly}
               {required}
               {invalid}
               aria-label={$_('editor_components.alt')}
+              on:input={(event) => {
+                updateAltText(event.target.value);
+              }}
             />
           </div>
         {/if}

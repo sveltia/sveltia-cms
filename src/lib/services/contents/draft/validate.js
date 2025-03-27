@@ -197,12 +197,44 @@ export const validateEntry = () => {
         }
 
         // Special handling for image widget values
-        if (widgetName === 'image' && typeof value === 'object' && value !== null) {
-          if (required && (!value.alt || value.alt.trim() === '')) {
-            valueMissing = true;
+        if (widgetName === 'image') {
+          // Check if this is a flattened image field (src or alt)
+          const isImageField = keyPath.endsWith('.src') || keyPath.endsWith('.alt');
+          const baseKeyPath = isImageField ? keyPath.slice(0, -4) : keyPath; // Remove .src or .alt
+
+          // Only validate once per image field
+          if (baseKeyPath in validities[locale]) {
+            return;
           }
 
-          value = value.src;
+          // Get both src and alt values
+          const srcValue = valueMap[`${baseKeyPath}.src`];
+          const altValue = valueMap[`${baseKeyPath}.alt`];
+
+          console.log('[Image Widget Validation] Base key path:', baseKeyPath);
+          console.log('[Image Widget Validation] Src value:', srcValue);
+          console.log('[Image Widget Validation] Alt value:', altValue);
+
+          if (required) {
+            if (!srcValue || srcValue.trim() === '') {
+              valueMissing = true;
+              console.log('[Image Widget Validation] Src missing or empty');
+            }
+
+            if (!altValue || altValue.trim() === '') {
+              valueMissing = true;
+              console.log('[Image Widget Validation] Alt missing or empty');
+            }
+          }
+
+          // Trim src if it exists
+          if (srcValue) {
+            valueMap[`${baseKeyPath}.src`] = srcValue.trim();
+            console.log('[Image Widget Validation] Trimmed src:', srcValue.trim());
+          }
+
+          // Use the src value for further validation
+          value = srcValue;
         }
 
         if (typeof value === 'string') {
@@ -217,6 +249,8 @@ export const validateEntry = () => {
         }
 
         if (Array.isArray(validation) && typeof validation[0] === 'string') {
+          console.log('[Image Widget Validation] Before pattern validation:', value);
+
           // Parse the regex to support simple pattern, e.g `.{12,}`, and complete expression, e.g.
           // `/^.{0,280}$/s`
           const { pattern, flags } = validation[0].match(fullRegexPattern)?.groups ?? {};
@@ -225,33 +259,17 @@ export const validateEntry = () => {
           if (pattern && !regex.test(String(value))) {
             patternMismatch = true;
           }
+
+          console.log('[Image Widget Validation] After pattern validation:', value);
         }
 
-        // Check the number of characters
         if (['string', 'text'].includes(widgetName)) {
+          console.log('[Image Widget Validation] Before string field validation:', value);
           ({ tooShort, tooLong } = validateStringField(
             /** @type {StringField | TextField} */ (fieldConfig),
             value,
           ));
-        }
-
-        // Check the URL or email with native form validation
-        if (widgetName === 'string' && value) {
-          const { type = 'text' } = /** @type {StringField} */ (fieldConfig);
-
-          if (type !== 'text') {
-            const inputElement = document.createElement('input');
-
-            inputElement.type = type;
-            inputElement.value = value;
-            ({ typeMismatch } = inputElement.validity);
-          }
-
-          // Check if the email's domain part contains a dot, because native validation marks
-          // `me@example` valid but it's not valid in the real world
-          if (type === 'email' && !typeMismatch && !value.split('@')[1]?.includes('.')) {
-            typeMismatch = true;
-          }
+          console.log('[Image Widget Validation] After string field validation:', value);
         }
 
         if (widgetName === 'number') {
