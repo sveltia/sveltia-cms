@@ -919,20 +919,25 @@ media_library:
     max_file_size: 1024000
 ```
 
-Sveltia CMS has added support for multiple media libraries with the new `media_libraries` option. It can be used as a global option as well as a File/Image field option.
+Sveltia CMS has added support for multiple media libraries with the new `media_libraries` option so you can mix up the default media library (your repository), [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/). It can be used as a global option as well as a File/Image field option.
 
 ```yaml
 media_libraries:
   default:
     config:
       max_file_size: 1024000
+      # coming soon: image optimizer options
   cloudinary:
     config:
       cloud_name: YOUR_CLOUD_NAME
       api_key: YOUR_API_KEY
+    output_filename_only: true
   uploadcare:
     config:
       publicKey: YOUR_PUBLIC_KEY
+    settings:
+      autoFilename: true
+      defaultOperations: '/resize/800x600/'
 ```
 
 ### Editing data files with a top-level list
