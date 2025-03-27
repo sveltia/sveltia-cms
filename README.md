@@ -927,11 +927,11 @@ media_libraries:
       max_file_size: 1024000
   cloudinary:
     config:
-      cloud_name: your_cloud_name
-      api_key: your_api_key
+      cloud_name: YOUR_CLOUD_NAME
+      api_key: YOUR_API_KEY
   uploadcare:
     config:
-      publicKey: YOUR_UPLOADCARE_PUBLIC_KEY
+      publicKey: YOUR_PUBLIC_KEY
 ```
 
 ### Editing data files with a top-level list
