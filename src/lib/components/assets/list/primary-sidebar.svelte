@@ -10,7 +10,18 @@
     selectedAssetFolder,
   } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
+  import { siteConfig } from '$lib/services/config';
   import { getCollection } from '$lib/services/contents/collection';
+
+  /**
+   * Get the index of a collection with the given name.
+   * @param {string | undefined} collectionName Collection name.
+   * @returns {number} Index.
+   */
+  const getCollectionIndex = (collectionName) =>
+    collectionName
+      ? ($siteConfig?.collections.findIndex(({ name }) => name === collectionName) ?? -1)
+      : -1;
 
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
 
@@ -21,7 +32,9 @@
       publicPath: undefined,
       entryRelative: false,
     },
-    ...$allAssetFolders,
+    ...$allAssetFolders.sort(
+      (a, b) => getCollectionIndex(a.collectionName) - getCollectionIndex(b.collectionName),
+    ),
   ]);
 </script>
 
