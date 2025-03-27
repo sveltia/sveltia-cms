@@ -141,11 +141,11 @@ const getAllFiles = async (rootDirHandle) => {
 };
 
 /**
- * Fetch file list and all the entry files, then cache them in the {@link allEntries} and
- * {@link allAssets} stores.
+ * Load file list and all the entry files from the file system, then cache them in the
+ * {@link allEntries} and {@link allAssets} stores.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  */
-export const fetchFiles = async (rootDirHandle) => {
+export const loadFiles = async (rootDirHandle) => {
   const { entryFiles, assetFiles } = createFileList(await getAllFiles(rootDirHandle));
 
   // Load all entry text content
@@ -177,7 +177,7 @@ export const fetchFiles = async (rootDirHandle) => {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry
  */
-export const commitChanges = async (rootDirHandle, changes) =>
+export const saveChanges = async (rootDirHandle, changes) =>
   Promise.all(
     changes.map(async ({ action, path, previousPath, data }) => {
       try {

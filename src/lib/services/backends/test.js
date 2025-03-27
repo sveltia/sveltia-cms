@@ -1,4 +1,4 @@
-import { commitChanges, fetchFiles, getHandleByPath } from '$lib/services/backends/shared/fs';
+import { getHandleByPath, loadFiles, saveChanges } from '$lib/services/backends/shared/fs';
 
 /**
  * @import { BackendService, FileChange, User } from '$lib/types/private';
@@ -42,20 +42,20 @@ const signIn = async () => {
 const signOut = async () => {};
 
 /**
- * Fetch file list and all the entry files, then cache them in the {@link allEntries} and
- * {@link allAssets} stores.
- * @returns {Promise<void>}
+ * Load file list and all the entry files from the file system, then cache them in the
+ * {@link allEntries} and {@link allAssets} stores.
  */
-const _fetchFiles = async () =>
-  fetchFiles(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle));
+const fetchFiles = async () => {
+  await loadFiles(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle));
+};
 
 /**
  * Save entries or assets locally.
  * @param {FileChange[]} changes File changes to be saved.
  * @returns {Promise<(?File)[]>} Created or updated files, if available.
  */
-const _commitChanges = async (changes) =>
-  commitChanges(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle), changes);
+const commitChanges = async (changes) =>
+  saveChanges(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle), changes);
 
 /**
  * @type {BackendService}
@@ -67,6 +67,6 @@ export default {
   init,
   signIn,
   signOut,
-  fetchFiles: _fetchFiles,
-  commitChanges: _commitChanges,
+  fetchFiles,
+  commitChanges,
 };
