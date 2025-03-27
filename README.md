@@ -65,6 +65,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Localizing entry slugs](#localizing-entry-slugs)
   - [Disabling non-default locale content](#disabling-non-default-locale-content)
   - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
+  - [Configure multiple media libraries](#configure-multiple-media-libraries)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
   - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
   - [Controlling data output](#controlling-data-output)
@@ -117,7 +118,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 180+ issues, or 370+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 185+ issues, or 375+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA (almost there)
     - 350 issues, or 600 if including duplicates, in the future (yes, you read that right)
@@ -129,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![180 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250324)<br>
+![185 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250324)<br>
 
 ## Differentiators
 
@@ -480,6 +481,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Users can add assets using the Quick Add button in the upper right corner of the application.
 - Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens.[^97]
 - No fatal application crash when uploading assets.[^112]
+- Supports multiple media libraries with the [new `media_libraries` option](#configure-multiple-media-libraries).[^195]
+- The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configure-multiple-media-libraries).
 
 ### Better customization
 
@@ -902,6 +905,33 @@ collections:
   - name: members
     label: Members
     slug: '{{uuid_short}}' # or {{uuid}} or {{uuid_shorter}}
+```
+
+### Configure multiple media libraries
+
+The traditional [`media_library`](https://decapcms.org/docs/configuration-options/#media-library) option allows developers to configure only one media library:
+
+```yaml
+media_library:
+  name: default
+  config:
+    max_file_size: 1024000
+```
+
+Sveltia CMS has added support for multiple media libraries with the new `media_libraries` option. It can be used as a global option as well as a File/Image field option.
+
+```yaml
+media_libraries:
+  default:
+    config:
+      max_file_size: 1024000
+  cloudinary:
+    config:
+      cloud_name: your_cloud_name
+      api_key: your_api_key
+  uploadcare:
+    config:
+      publicKey: YOUR_UPLOADCARE_PUBLIC_KEY
 ```
 
 ### Editing data files with a top-level list
@@ -1562,3 +1592,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^193]: Netlify/Decap CMS [#6800](https://github.com/decaporg/decap-cms/issues/6800)
 
 [^194]: Netlify/Decap CMS [#7157](https://github.com/decaporg/decap-cms/issues/7157)
+
+[^195]: Netlify/Decap CMS [#5901](https://github.com/decaporg/decap-cms/issues/5901)
