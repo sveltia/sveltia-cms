@@ -68,9 +68,6 @@
   {/if}
   {#if devSiteURL}
     <link href="{devSiteURL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
-    <link href="{devSiteURL}/admin/config.json" type="application/json" rel="cms-config-url" />
-    <link href="{devSiteURL}/admin/config-2.yml" type="application/yaml" rel="cms-config-url" />
-    <link href="{devSiteURL}/admin/config-3.yml" type="application/yaml" rel="cms-config-url" />
   {/if}
 </svelte:head>
 
