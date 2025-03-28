@@ -544,6 +544,8 @@ export const strings = {
       fetch_failed_not_ok: 'HTTP レスポンスがステータス {status} で返されました。',
       parse_failed: '設定ファイルを解析できませんでした。',
       parse_failed_invalid_object: '設定ファイルが有効な JavaScript オブジェクトではありません。',
+      parse_failed_unsupported_type:
+        '設定ファイルが有効なファイル形式ではありません。サポートされているのは YAML と JSON のみです。',
       no_collection: '設定ファイル内でコレクションが定義されていません。',
       missing_backend: '設定ファイル内でバックエンドが定義されていません。',
       missing_backend_name: '設定ファイル内でバックエンド名が定義されていません。',

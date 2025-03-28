@@ -8,6 +8,7 @@ import YAML from 'yaml';
 import { prefs } from '$lib/services/user/prefs';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 import { allEntryFolders } from '$lib/services/contents';
+import { fetchSiteConfig } from '$lib/services/config/loader';
 import { allBackendServices } from '$lib/services/backends';
 import { allAssetFolders } from '$lib/services/assets';
 
@@ -46,57 +47,6 @@ export const siteConfigVersion = writable();
 export const siteConfigError = writable();
 
 /**
- * Fetch the YAML site configuration file and return it as JSON.
- * @param {object} [options] Options.
- * @param {boolean} [options.ignoreError] Whether to ignore a fetch error.
- * @returns {Promise<any>} Configuration. Can be an empty object if the `ignoreError` option is
- * `true` and the config file is missing.
- * @throws {Error} When fetching or parsing has failed.
- */
-const fetchSiteConfig = async ({ ignoreError = false } = {}) => {
-  const {
-    // Depending on the server or framework configuration, the trailing slash may be removed from
-    // the CMS `/admin/` URL. In that case, fetch the config file from a root-relative URL instead
-    // of a regular relative URL to avoid 404 Not Found.
-    href = window.location.pathname === '/admin' ? '/admin/config.yml' : './config.yml',
-    type = 'application/yaml',
-  } =
-    /** @type {HTMLLinkElement | null} */ (document.querySelector('link[rel="cms-config-url"]')) ??
-    {};
-
-  /** @type {Response} */
-  let response;
-
-  try {
-    response = await fetch(href);
-  } catch (/** @type {any} */ ex) {
-    throw new Error(get(_)('config.error.fetch_failed'), { cause: ex });
-  }
-
-  const { ok, status } = response;
-
-  if (!ok) {
-    if (ignoreError) {
-      return {};
-    }
-
-    throw new Error(get(_)('config.error.fetch_failed'), {
-      cause: new Error(get(_)('config.error.fetch_failed_not_ok', { values: { status } })),
-    });
-  }
-
-  try {
-    if (type === 'application/json') {
-      return response.json();
-    }
-
-    return YAML.parse(await response.text(), { merge: true });
-  } catch (/** @type {any} */ ex) {
-    throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
-  }
-};
-
-/**
  * Validate the site configuration file.
  * @param {SiteConfig} config Raw config object.
  * @throws {Error} If there is an error in the config.
@@ -104,12 +54,6 @@ const fetchSiteConfig = async ({ ignoreError = false } = {}) => {
  * @todo Add more validations.
  */
 const validate = (config) => {
-  if (!isObject(config)) {
-    throw new Error(get(_)('config.error.parse_failed'), {
-      cause: new Error(get(_)('config.error.parse_failed_invalid_object')),
-    });
-  }
-
   if (!config.collections?.length) {
     throw new Error(get(_)('config.error.no_collection'));
   }
@@ -196,7 +140,7 @@ export const initSiteConfig = async (manualConfig) => {
       if (manualConfig.load_config_file === false) {
         tempConfig = manualConfig;
       } else {
-        tempConfig = merge(await fetchSiteConfig({ ignoreError: true }), manualConfig);
+        tempConfig = merge(await fetchSiteConfig(), manualConfig);
       }
     } else {
       tempConfig = await fetchSiteConfig();

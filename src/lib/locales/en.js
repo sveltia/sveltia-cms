@@ -544,6 +544,8 @@ export const strings = {
       fetch_failed_not_ok: 'HTTP response returned with status {status}.',
       parse_failed: 'The configuration file could not be parsed.',
       parse_failed_invalid_object: 'The configuration file is not a valid JavaScript object.',
+      parse_failed_unsupported_type:
+        'The configuration file is not a valid file type. Only YAML and JSON are supported.',
       no_collection: 'Collections are not defined in the configuration file.',
       missing_backend: 'The backend is not defined in the configuration file.',
       missing_backend_name: 'The backend name is not defined in the configuration file.',
