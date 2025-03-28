@@ -1612,6 +1612,6 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^195]: Netlify/Decap CMS [#5901](https://github.com/decaporg/decap-cms/issues/5901)
 
-[^196]: Netlify/Decap CMS [#3057](https://github.com/decaporg/decap-cms/issues/3057)
+[^196]: Netlify/Decap CMS [#3057](https://github.com/decaporg/decap-cms/issues/3057) — We use Svelte though.
 
 [^197]: Netlify/Decap CMS [#3457](https://github.com/decaporg/decap-cms/issues/3457), [#3624](https://github.com/decaporg/decap-cms/issues/3624)
