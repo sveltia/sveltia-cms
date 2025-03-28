@@ -145,7 +145,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
-- We build [our own UI library](https://github.com/sveltia/sveltia-ui) to ensure optimal usability without compromising accessibility.
+- We build [our own UI library](https://github.com/sveltia/sveltia-ui), including custom dialogs,[^196] to ensure optimal usability without compromising accessibility.
 - The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
@@ -211,7 +211,8 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
-- TypeScript support: We try to keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
+- Also supports [multiple configuration files](#providing-multiple-configuration-files).[^197]
+- Improved TypeScript support: We try to keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
 
 ### Better backend support
 
@@ -497,7 +498,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The application UI locale is automatically selected based on the preferred language set with the browser.[^132] Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized.[^98]
 - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container.[^117]
-- We are migrating from [`svelte-i18n`](https://github.com/kaisermann/svelte-i18n) to the new [MessageFormat 2](https://github.com/unicode-org/message-format-wg)-based `sveltia-i18n` library for natural-sounding translations in every locale.
 
 ## Compatibility
 
@@ -665,6 +665,17 @@ Sveltia CMS supports a configuration file written in the JSON format in addition
 ```
 
 Alternatively, you can [manually initialize](https://decapcms.org/docs/manual-initialization/) the CMS with a JavaScript configuration object.
+
+### Providing multiple configuration files
+
+With Sveltia CMS, developers can modularize the site configuration. Just provide multiple config links and the CMS will automatically merge them in the order of tag appearance using the [`deepmerge`](https://www.npmjs.com/package/deepmerge) library. It’s possible to use YAML, [JSON](#providing-a-json-configuration-file) or both.
+
+```html
+<link href="/admin/config.yml" type="application/yaml" rel="cms-config-url" />
+<link href="/admin/collections/authors.yml" type="application/yaml" rel="cms-config-url" />
+<link href="/admin/collections/pages.yml" type="application/yaml" rel="cms-config-url" />
+<link href="/admin/collections/posts.yml" type="application/yaml" rel="cms-config-url" />
+```
 
 ### Working around an authentication error
 
@@ -1600,3 +1611,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^194]: Netlify/Decap CMS [#7157](https://github.com/decaporg/decap-cms/issues/7157)
 
 [^195]: Netlify/Decap CMS [#5901](https://github.com/decaporg/decap-cms/issues/5901)
+
+[^196]: Netlify/Decap CMS [#3057](https://github.com/decaporg/decap-cms/issues/3057)
+
+[^197]: Netlify/Decap CMS [#3457](https://github.com/decaporg/decap-cms/issues/3457), [#3624](https://github.com/decaporg/decap-cms/issues/3624)
