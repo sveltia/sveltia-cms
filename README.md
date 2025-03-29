@@ -53,6 +53,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
 - [Tips \& tricks](#tips--tricks)
   - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
   - [Providing a JSON configuration file](#providing-a-json-configuration-file)
+  - [Providing multiple configuration files](#providing-multiple-configuration-files)
   - [Working around an authentication error](#working-around-an-authentication-error)
   - [Working with a local Git repository](#working-with-a-local-git-repository)
   - [Enabling local development in Brave](#enabling-local-development-in-brave)
@@ -121,7 +122,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 185+ issues, or 375+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA (almost there)
-    - 350 issues, or 600 if including duplicates, in the future (yes, you read that right)
+    - 350 issues, or 600 if including duplicates, in the future
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Most of the bugs, including annoying crashes, are already solved
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
@@ -585,7 +586,7 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 
 Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page and choose the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend instead. Then migrate to Sveltia CMS as described below.
 
-As the product evolves, we’ll implement a built-in configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
+Unfortunately, we are unable to provide free installation and setup support at this time. As the product evolves, we’ll implement a built-in configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
 
 Here are some starter kits for popular frameworks created by community members. More to come! (Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team.)
 
@@ -668,7 +669,7 @@ Alternatively, you can [manually initialize](https://decapcms.org/docs/manual-in
 
 ### Providing multiple configuration files
 
-With Sveltia CMS, developers can modularize the site configuration. Just provide multiple config links and the CMS will automatically merge them in the order of tag appearance using the [`deepmerge`](https://www.npmjs.com/package/deepmerge) library. It’s possible to use YAML, [JSON](#providing-a-json-configuration-file) or both.
+With Sveltia CMS, developers can modularize the site configuration. Just provide multiple config links and the CMS will automatically merge them in the order of `<link>` tag appearance. It’s possible to use YAML, [JSON](#providing-a-json-configuration-file) or both.
 
 ```html
 <link href="/admin/config.yml" type="application/yaml" rel="cms-config-url" />
@@ -1188,7 +1189,6 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - Developer documentation (implementation guide)
 - Marketing site
 - Live demo site
-- Automated unit test coverage (Vitest)
 
 ### After the 1.0 release
 
@@ -1204,7 +1204,6 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - Marketplace for custom widgets, etc.
 - VS Code extension for `config.yml` schema validation
 - Official starter templates for the most popular frameworks, including SvelteKit and Next.js
-- Automated E2E test coverage (Playwright)
 - and so much more!
 
 ## Related links
