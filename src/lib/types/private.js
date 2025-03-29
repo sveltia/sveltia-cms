@@ -1,5 +1,6 @@
 /**
  * @import {
+ * BackendName,
  * Collection,
  * CollectionFile,
  * Field,
@@ -8,6 +9,7 @@
  * FileFormat,
  * FileFormatter,
  * FileParser,
+ * GitBackendName,
  * I18nFileStructure,
  * LocaleCode,
  * SelectField,
@@ -36,7 +38,7 @@
  * User details. Most properties are from the GitHub API. The properties other than `backendName`
  * are not available for the local backend.
  * @typedef {object} User
- * @property {string} backendName Backend name, e.g. `github`.
+ * @property {BackendName | 'local'} backendName Backend name, e.g. `github`.
  * @property {string} [token] Backend OAuth token.
  * @property {number} [id] User ID.
  * @property {string} [name] User display name.
@@ -65,7 +67,7 @@
 /**
  * Basic Git repository information retrieved from the config file.
  * @typedef {object} RepositoryInfo
- * @property {string} service Repository hosting service name, e.g. `github`.
+ * @property {GitBackendName | ''} service Repository hosting service name, e.g. `github`.
  * @property {string} label Service label, e.g. `GitHub`.
  * @property {string} owner Owner name, which could be either an organization or individual user.
  * @property {string} repo Repository name.

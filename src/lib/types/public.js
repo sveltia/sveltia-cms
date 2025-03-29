@@ -33,7 +33,7 @@
  */
 
 /**
- * Configuration for the built-in media library.
+ * Configuration for the default media library.
  * @typedef {object} DefaultMediaLibraryOptions
  * @property {number} [max_file_size] Maximum file size in bytes that can be accepted for uploading.
  * @see https://decapcms.org/docs/widgets/#file
@@ -41,9 +41,9 @@
  */
 
 /**
- * Options for the built-in media library.
+ * Options for the default media library.
  * @typedef {object} DefaultMediaLibrary
- * @property {DefaultMediaLibraryOptions} [config] Configuration for the built-in media library.
+ * @property {DefaultMediaLibraryOptions} [config] Configuration for the default media library.
  */
 
 /**
@@ -89,8 +89,8 @@
 
 /**
  * Unified media library option that supports multiple libraries.
- * @typedef {object} MediaLibraries
- * @property {DefaultMediaLibrary} [default] Options for the built-in media library.
+ * @typedef {object} MediaLibraryMap
+ * @property {DefaultMediaLibrary} [default] Options for the default media library.
  * @property {CloudinaryMediaLibrary} [cloudinary] Options for the Cloudinary media library.
  * @property {UploadcareMediaLibrary} [uploadcare] Options for the Uploadcare media library.
  */
@@ -139,9 +139,10 @@
  * @property {string} [public_folder] Public media folder path for the field. Default:
  * `media_folder` option value.
  * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Legacy media library option
- * that allows only one library. Use `media_libraries` to support multiple libraries.
- * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
- * libraries.
+ * that allows only one library. This overrides the global `media_library` option. Use
+ * `media_libraries` instead to support multiple libraries.
+ * @property {MediaLibraryMap} [media_libraries] Unified media library option that supports multiple
+ * libraries. This overrides the global `media_libraries` option.
  * @property {boolean} [allow_multiple] Whether to enable multiple item selection in an external
  * media library. Default: `true`.
  * @see https://decapcms.org/docs/widgets/#file
@@ -159,10 +160,10 @@
  * Options for a field showing multiple options.
  * @typedef {object} MultiOptionFieldProps
  * @property {boolean} [multiple] Whether to accept multiple values. Default: `false`.
- * @property {number} [min] Minimum number of items that can be selected. Default: 0. Ignored if
- * `multiple` is `false`.
- * @property {number} [max] Maximum number of items that can be selected. Default: infinity. Ignored
- * if `multiple` is `false`.
+ * @property {number} [min] Minimum number of items that can be selected. Ignored if `multiple` is
+ * `false`. Default: 0.
+ * @property {number} [max] Maximum number of items that can be selected. Ignored if `multiple` is
+ * `false`. Default: infinity.
  * @property {number} [dropdown_threshold] Maximum number of options to be displayed as radio
  * buttons (single-select) or checkboxes (multi-select) rather than a dropdown list. Default: 5.
  */
@@ -183,7 +184,7 @@
 /**
  * Variable field properties.
  * @typedef {object} VariableFieldProps
- * @property {VariableFieldType[]} [types] Set of nested Object widgets to be selected or added.
+ * @property {VariableFieldType[]} [types] Set of nested Object fields to be selected or added.
  * @property {string} [typeKey] Property name to store the type name in nested objects. Default:
  * `type`.
  * @see https://decapcms.org/docs/variable-type-widgets/
@@ -229,7 +230,8 @@
  * @property {string | Record<string, string>} [default] Default value. It must be a string if
  * `output_code_only` is `false`. Otherwise it must be an object that match the `keys` option.
  * @property {string} [default_language] Default language to be selected, like `js`. See
- * https://prismjs.com/#supported-languages for a list of supported languages.
+ * https://prismjs.com/#supported-languages for a list of supported languages. Default: empty
+ * string, which is plaintext.
  * @property {boolean} [allow_language_selection] Whether to show a language switcher so that users
  * can change the language mode. Default: `true` (the Decap CMS document is wrong).
  * @property {boolean} [output_code_only] Whether to output code snippet only. Default: `false`.
@@ -251,7 +253,7 @@
  * or eight-value (`#RRGGBBAA`) syntax.
  * @property {boolean} [allowInput] Whether to show a textbox that allows users to manually edit the
  * value. Default: `false`.
- * @property {boolean} [enableAlpha] Whether to edit/save the alpha channel value.
+ * @property {boolean} [enableAlpha] Whether to edit/save the alpha channel value. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#color
  */
 
@@ -521,7 +523,8 @@
  * @typedef {object} StringFieldProps
  * @property {'string'} widget Widget name.
  * @property {string} [default] Default value.
- * @property {'email' | 'url' | 'text'} [type] Input type. Default: text.
+ * @property {'text' | 'url' | 'email'} [type] Data type. It’s useful when the input value needs a
+ * validation. Default: text.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {string} [suffix] A string to be appended to the value. Default: empty string.
  * @see https://decapcms.org/docs/widgets/#string
@@ -735,7 +738,7 @@
  * editor UI.
  * @property {string} [icon] Name of a Material Symbols icon to be displayed in the collection list.
  * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an
- * entry. Entry collection only. Default: `title` or `name`.
+ * entry. Entry collection only. Default: `title`.
  * @property {CollectionFile[]} [files] A set of files. File collection only.
  * @property {string} [folder] Base folder path relative to the project root. Entry collection only.
  * @property {Field[]} [fields] Set of fields to be included in entries. Entry collection only.
@@ -799,8 +802,13 @@
  */
 
 /**
+ * Supported Git backend name.
+ * @typedef {'github' | 'gitlab'} GitBackendName
+ */
+
+/**
  * Supported backend name.
- * @typedef {'github' | 'gitlab' | 'test-repo'} BackendName
+ * @typedef {GitBackendName | 'test-repo'} BackendName
  */
 
 /**
@@ -888,7 +896,7 @@
  * YAML format options.
  * @typedef {object} YamlFormatOptions
  * @property {number} [indent_size] Indent size. Default: 2.
- * @property {'none' | 'double' | 'single'} [quote] String value’s default quote type. Default:
+ * @property {'none' | 'single' | 'double'} [quote] String value’s default quote type. Default:
  * 'none'.
  * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
  */
@@ -906,23 +914,25 @@
 /**
  * Site configuration.
  * @typedef {object} SiteConfig
- * @property {boolean} [load_config_file] Whether to load the `config.yml` file when using manual
- * initialization. This works only in the `CMS.init()` method’s `config` option. Default: `true`.
+ * @property {boolean} [load_config_file] Whether to load YAML/JSON site configuration file(s) when
+ * manually initializing the CMS. This works only in the `CMS.init()` method’s `config` option.
+ * Default: `true`.
  * @property {BackendOptions} backend Backend options.
- * @property {'simple' | 'editorial_workflow' | ''} [publish_mode] Publish mode. Default: simple.
+ * @property {'simple' | 'editorial_workflow' | ''} [publish_mode] Publish mode. An empty string is
+ * the same as `simple`. Default: `simple`.
  * @property {string} media_folder Global internal media folder path, relative to the project’s root
  * directory.
  * @property {string} [public_folder] Global public media folder path, relative to the project’s
  * public URL. It must be an absolute path starting with `/`. Default: `media_folder` option value.
  * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Legacy media library option
  * that allows only one library. This overrides the global `media_library` option. Use
- * `media_libraries` to support multiple libraries.
- * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
- * libraries. This overrides the global `media_libraries` option.
- * @property {string} [site_url] Site URL. Default: `location.origin`.
+ * `media_libraries` instead to support multiple libraries.
+ * @property {MediaLibraryMap} [media_libraries] Unified media library option that supports multiple
+ * libraries.
+ * @property {string} [site_url] Site URL. Default: current site’s origin (`location.origin`).
  * @property {string} [display_url] Site URL linked from the UI. Default: `site_url` option value.
  * @property {string} [logo_url] Absolute URL or absolute path to the site logo that will be
- * displayed on the Sign-In page and the browser’s tab (favicon). A square image works best.
+ * displayed on the entrance page and the browser’s tab (favicon). A square image works best.
  * Default: Sveltia logo.
  * @property {boolean} [show_preview_links] Whether to show site preview links. Default: `true`.
  * @property {SlugOptions} [slug] Entry slug options.
