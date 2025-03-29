@@ -1,7 +1,7 @@
 <script>
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import ShortcutsDialog from '$lib/components/keyboard-shortcuts/shortcuts-dialog.svelte';
+  import ShortcutsDialog from '$lib/components/help/shortcuts-dialog.svelte';
   import { version } from '$lib/services/app';
   import { prefs } from '$lib/services/user/prefs';
 
