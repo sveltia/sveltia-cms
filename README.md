@@ -94,7 +94,7 @@ We loved the concept of Netlify CMS — turning a Git repository into a database
 
 Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successors:
 
-- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after doing a great job
+- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after making meaningful improvements
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly inactive
 
@@ -105,7 +105,7 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 ### Our goals
 
 - Making Sveltia CMS a viable, definitive successor to Netlify CMS
-- Empowering small businesses and individuals who need a simple, free, yet powerful, high-quality CMS solution
+- Empowering small businesses and individuals who need a simple, free, yet powerful, flexible, high-quality CMS solution
 - Emerging as the leading open source offering in the Git-based CMS market
 - Extending its capabilities as digital asset management (DAM) software
 - Showcasing the power of Svelte and UX engineering
@@ -146,7 +146,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
 - Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
-- We build [our own UI library](https://github.com/sveltia/sveltia-ui), including custom dialogs,[^196] to ensure optimal usability without compromising accessibility.
+- We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs,[^196] to ensure optimal usability without compromising accessibility.
 - The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
@@ -155,8 +155,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
   - The CMS is compiled and distributed as vanilla JavaScript. You can use it with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
-- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though some Netlify/Decap CMS features are [omitted](#features-not-to-be-implemented) or [unimplemented](#current-limitations) in Sveltia CMS, we have added a lot of new features. That’s the power of Svelte + [Vite](https://vite.dev/).
-- We have upgraded from Svelte 4 to [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) to further improve performance, including an even smaller bundle size.
+- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though some Netlify/Decap CMS features are [omitted](#features-not-to-be-implemented) or [unimplemented](#current-limitations) in Sveltia CMS, we have added a lot of new features. That’s the power of [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) + [Vite](https://vite.dev/).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
@@ -205,13 +204,13 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 ### Better installation
 
 - Sveltia CMS is built with [Svelte](https://svelte.dev/), and we only publish compiled vanilla JavaScript bundles, so there are no React compatibility issues that might prevent developers from upgrading a project for many months.[^177] We haven’t actually integrated React for custom widgets and other features yet, but anyway, no dependencies will be installed when you [install the app with npm](#installing-with-npm).
-- Sveltia CMS also won’t cause peer dependency conflicts due to legacy third-party React UI libraries.[^175] We build the app using [our own Svelte UI library](https://github.com/sveltia/sveltia-ui) to reduce reliance on third-party dependencies.
+- Sveltia CMS also won’t cause peer dependency conflicts due to legacy third-party React UI libraries.[^175] We build the app using [our own Svelte UI component library](https://github.com/sveltia/sveltia-ui) to reduce reliance on third-party dependencies.
+- Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - The [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) is automatically added to HTML to prevent the admin page from being indexed by search engines.[^174] Developers are still encouraged to manually add `<meta name="robots" content="noindex">` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.
 
 ### Better configuration
 
-- Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
-- Supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
+- Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files).[^197]
 - Improved TypeScript support: We try to keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
 
@@ -678,6 +677,8 @@ With Sveltia CMS, developers can modularize the site configuration. Just provide
 <link href="/admin/collections/posts.yml" type="application/yaml" rel="cms-config-url" />
 ```
 
+Both standard `application/yaml` and non-standard `text/yaml` are acceptable for the YAML config link `type`.
+
 ### Working around an authentication error
 
 If you get an “Authentication Aborted” error when trying to sign in to GitHub or GitLab using the authorization code flow, you may need to check your site’s [`Cross-Origin-Opener-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy). The COOP header is not widely used, but it’s known to break the OAuth flow with a popup window. If that’s your case, changing `same-origin` to `same-origin-allow-popups` solves the problem. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/131))
@@ -931,7 +932,7 @@ media_library:
     max_file_size: 1024000
 ```
 
-Sveltia CMS has added support for multiple media libraries with the new `media_libraries` option so you can mix up the default media library (your repository), [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/). It can be used as a global option as well as a File/Image field option.
+Sveltia CMS has added support for multiple media libraries with the new `media_libraries` option so you can mix up the default media library (your repository), [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/). The new option can be used as a global option as well as a File/Image field option.
 
 ```yaml
 media_libraries:
