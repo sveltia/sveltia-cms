@@ -1,7 +1,7 @@
 <script>
-  import { Switch, TabPanel } from '@sveltia/ui';
+  import { TabPanel } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { prefs } from '$lib/services/user/prefs';
+  import PrefSwitch from '$lib/components/prefs/controls/pref-switch.svelte';
 
   /**
    * @typedef {object} Props
@@ -14,18 +14,6 @@
     onChange = undefined,
     /* eslint-enable prefer-const, no-unused-vars */
   } = $props();
-
-  let underlineLinks = $state(true);
-
-  $effect(() => {
-    underlineLinks = $prefs.underlineLinks ?? true;
-  });
-
-  $effect(() => {
-    if ($prefs.underlineLinks !== underlineLinks) {
-      $prefs.underlineLinks = underlineLinks;
-    }
-  });
 </script>
 
 <TabPanel id="prefs-tab-accessibility">
@@ -37,8 +25,8 @@
       {$_('prefs.accessibility.underline_links.description')}
     </p>
     <div role="none">
-      <Switch
-        bind:checked={underlineLinks}
+      <PrefSwitch
+        key="underlineLinks"
         label={$_('prefs.accessibility.underline_links.switch_label')}
       />
     </div>

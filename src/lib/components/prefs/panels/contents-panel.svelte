@@ -1,7 +1,7 @@
 <script>
-  import { Switch, TabPanel } from '@sveltia/ui';
+  import { TabPanel } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { prefs } from '$lib/services/user/prefs';
+  import PrefSwitch from '$lib/components/prefs/controls/pref-switch.svelte';
 
   /**
    * @typedef {object} Props
@@ -14,44 +14,21 @@
     onChange = undefined,
     /* eslint-enable prefer-const, no-unused-vars */
   } = $props();
-
-  let useDraftBackup = $state(true);
-  let closeOnSave = $state(true);
-
-  $effect(() => {
-    useDraftBackup = $prefs.useDraftBackup ?? true;
-  });
-
-  $effect(() => {
-    if ($prefs.useDraftBackup !== useDraftBackup) {
-      $prefs.useDraftBackup = useDraftBackup;
-    }
-  });
-
-  $effect(() => {
-    closeOnSave = $prefs.closeOnSave ?? true;
-  });
-
-  $effect(() => {
-    if ($prefs.closeOnSave !== closeOnSave) {
-      $prefs.closeOnSave = closeOnSave;
-    }
-  });
 </script>
 
 <TabPanel id="prefs-tab-contents">
   <section>
     <h4>{$_('prefs.contents.editor.title')}</h4>
     <div role="none">
-      <Switch
+      <PrefSwitch
+        key="useDraftBackup"
         label={$_('prefs.contents.editor.use_draft_backup.switch_label')}
-        bind:checked={useDraftBackup}
       />
     </div>
     <div role="none">
-      <Switch
+      <PrefSwitch
+        key="closeOnSave"
         label={$_('prefs.contents.editor.close_on_save.switch_label')}
-        bind:checked={closeOnSave}
       />
     </div>
   </section>

@@ -1,6 +1,7 @@
 <script>
-  import { Switch, TabPanel, TextInput } from '@sveltia/ui';
+  import { TabPanel, TextInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import PrefSwitch from '$lib/components/prefs/controls/pref-switch.svelte';
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/user/prefs';
 
@@ -17,29 +18,6 @@
   } = $props();
 
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
-
-  let beta = $state(false);
-  let devModeEnabled = $state(false);
-
-  $effect(() => {
-    beta = $prefs.beta ?? false;
-  });
-
-  $effect(() => {
-    if ($prefs.beta !== beta) {
-      $prefs.beta = beta;
-    }
-  });
-
-  $effect(() => {
-    devModeEnabled = $prefs.devModeEnabled ?? false;
-  });
-
-  $effect(() => {
-    if ($prefs.devModeEnabled !== devModeEnabled) {
-      $prefs.devModeEnabled = devModeEnabled;
-    }
-  });
 </script>
 
 <TabPanel id="prefs-tab-advanced">
@@ -51,7 +29,7 @@
       {$_('prefs.advanced.beta.description')}
     </p>
     <div role="none">
-      <Switch bind:checked={beta} label={$_('prefs.advanced.beta.switch_label')} />
+      <PrefSwitch key="beta" label={$_('prefs.advanced.beta.switch_label')} defaultValue={false} />
     </div>
   </section>
   <section>
@@ -62,9 +40,10 @@
       {$_('prefs.advanced.developer_mode.description')}
     </p>
     <div role="none">
-      <Switch
-        bind:checked={devModeEnabled}
+      <PrefSwitch
+        key="devModeEnabled"
         label={$_('prefs.advanced.developer_mode.switch_label')}
+        defaultValue={false}
       />
     </div>
   </section>

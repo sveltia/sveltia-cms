@@ -622,7 +622,7 @@ export const strings = {
       editor: {
         title: 'エディター',
         use_draft_backup: {
-          switch_label: '下書きを自動的にバックアップする',
+          switch_label: 'エントリーの下書きを自動的にバックアップする',
         },
         close_on_save: {
           switch_label: '下書き保存後にエディターを閉じる',
