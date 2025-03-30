@@ -56,6 +56,7 @@
  * integrations.
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
  * @property {InternalLocaleCode} [locale] Selected UI locale, e.g. `en`.
+ * @property {boolean} [useDraftBackup] Whether to use the entry draft backup mechanism.
  * @property {boolean} [closeOnSave] Whether to close the entry editor after saving a draft.
  * @property {boolean} [underlineLinks] Whether to always underline links.
  * @property {boolean} [beta] Whether to enable beta features.

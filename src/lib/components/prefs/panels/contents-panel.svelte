@@ -15,7 +15,18 @@
     /* eslint-enable prefer-const, no-unused-vars */
   } = $props();
 
+  let useDraftBackup = $state(true);
   let closeOnSave = $state(true);
+
+  $effect(() => {
+    useDraftBackup = $prefs.useDraftBackup ?? true;
+  });
+
+  $effect(() => {
+    if ($prefs.useDraftBackup !== useDraftBackup) {
+      $prefs.useDraftBackup = useDraftBackup;
+    }
+  });
 
   $effect(() => {
     closeOnSave = $prefs.closeOnSave ?? true;
@@ -31,6 +42,12 @@
 <TabPanel id="prefs-tab-contents">
   <section>
     <h4>{$_('prefs.contents.editor.title')}</h4>
+    <div role="none">
+      <Switch
+        label={$_('prefs.contents.editor.use_draft_backup.switch_label')}
+        bind:checked={useDraftBackup}
+      />
+    </div>
     <div role="none">
       <Switch
         label={$_('prefs.contents.editor.close_on_save.switch_label')}

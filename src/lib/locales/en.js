@@ -618,6 +618,9 @@ export const strings = {
       title: 'Contents',
       editor: {
         title: 'Editor',
+        use_draft_backup: {
+          switch_label: 'Automatically back up a draft',
+        },
         close_on_save: {
           switch_label: 'Close the editor after saving a draft',
         },

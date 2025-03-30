@@ -6,6 +6,7 @@ import { backend } from '$lib/services/backends';
 import { siteConfigVersion } from '$lib/services/config';
 import { entryDraft, entryDraftModified, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create';
+import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -84,6 +85,10 @@ export const getBackup = async (collectionName, slug = '') => {
  * @param {EntryDraft} draft Draft.
  */
 export const saveBackup = async (draft) => {
+  if (!(get(prefs).useDraftBackup ?? true)) {
+    return;
+  }
+
   const {
     collectionName,
     originalEntry,
@@ -126,6 +131,10 @@ export const saveBackup = async (draft) => {
  * @param {string} [args.slug] Entry slug. Existing entry only.
  */
 export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '' }) => {
+  if (!(get(prefs).useDraftBackup ?? true)) {
+    return;
+  }
+
   const backup = await getBackup(collectionName, slug);
 
   if (!backup) {
@@ -200,6 +209,10 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
  * Check if the current entry’s draft backup has been saved, and if so, show a toast notification.
  */
 export const showBackupToastIfNeeded = async () => {
+  if (!(get(prefs).useDraftBackup ?? true)) {
+    return;
+  }
+
   const draft = get(entryDraft);
 
   if (!draft || get(backupToastState).saved) {
