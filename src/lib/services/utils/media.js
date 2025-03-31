@@ -26,7 +26,7 @@ const pdfjsGetDocOptions = {
 
 /**
  * Placeholder for the PDF.js module.
- * @type {{ getDocument: Function, GlobalWorkerOptions: { workerSrc: string } }}
+ * @type {import('pdfjs-dist')}
  */
 let pdfjs;
 
@@ -230,6 +230,7 @@ export const renderPDF = async (
     const scale = resizeCanvas(canvas, width, height, dimension);
 
     await pdfPage.render({
+      // @ts-ignore `OffscreenCanvas` is supported
       canvasContext: context,
       viewport: scale === 1 ? viewport : pdfPage.getViewport({ scale }),
     }).promise;
