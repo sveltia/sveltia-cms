@@ -23,7 +23,7 @@
       <SelectButtonGroup
         aria-label={$_('prefs.appearance.select_theme')}
         onChange={(event) => {
-          $prefs = { ...$prefs, theme: /** @type {CustomEvent} */ (event).detail.value };
+          $prefs = { ...$prefs, theme: event.detail.value };
         }}
       >
         {#each ['auto', 'dark', 'light'] as value}

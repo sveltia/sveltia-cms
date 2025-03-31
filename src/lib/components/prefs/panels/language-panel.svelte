@@ -25,7 +25,7 @@
         <Select
           aria-label={$_('prefs.language.ui_language.select_language')}
           value={$appLocale ?? undefined}
-          onChange={(/** @type {CustomEvent} */ event) => {
+          onChange={(event) => {
             $prefs = { ...$prefs, locale: event.detail.value };
           }}
         >

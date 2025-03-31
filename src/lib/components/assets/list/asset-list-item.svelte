@@ -51,7 +51,7 @@
 <GridRow
   aria-rowindex={$listedAssets.indexOf(asset)}
   onChange={(event) => {
-    updateSelection(/** @type {CustomEvent} */ (event).detail.selected);
+    updateSelection(event.detail.selected);
   }}
   onfocus={() => {
     $focusedAsset = asset;

@@ -51,7 +51,7 @@
 <GridRow
   aria-rowindex={$listedEntries.indexOf(entry)}
   onChange={(event) => {
-    updateSelection(/** @type {CustomEvent} */ (event).detail.selected);
+    updateSelection(event.detail.selected);
   }}
   onclick={() => {
     goto(`/collections/${collection.name}/entries/${entry.subPath}`);

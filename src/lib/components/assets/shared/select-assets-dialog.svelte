@@ -134,7 +134,7 @@
       aria-label={$_('assets_dialog.locations')}
       aria-controls="{elementIdPrefix}-content-pane"
       onChange={(event) => {
-        libraryName = /** @type {CustomEvent} */ (event).detail.name;
+        libraryName = event.detail.name;
         selectedAsset = null;
       }}
     >
