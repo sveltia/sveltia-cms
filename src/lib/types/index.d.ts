@@ -14,7 +14,6 @@ interface Element {
 }
 
 interface FileSystemFileHandle {
-  createWritable: Function;
   move: Function;
 }
 
@@ -22,13 +21,6 @@ interface FileSystemDirectoryHandle {
   keys: Function;
   entries: Function;
   requestPermission: Function;
-}
-
-/**
- * @see https://github.com/microsoft/TypeScript/issues/29129
- */
-namespace Intl {
-  const getCanonicalLocales: (string) => string[];
 }
 
 /**
