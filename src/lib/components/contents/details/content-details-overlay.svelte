@@ -166,14 +166,12 @@
   });
 
   $effect(() => {
-    void showPreview;
-    void canPreview;
+    void [showPreview, canPreview];
     switchPanes();
   });
 
   $effect(() => {
-    void $editorLeftPane;
-    void $editorRightPane;
+    void [$editorLeftPane, $editorRightPane];
     savePanes();
   });
 

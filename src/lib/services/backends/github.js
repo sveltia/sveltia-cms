@@ -219,7 +219,7 @@ const init = () => {
  */
 const signIn = async ({ token: cachedToken, auto = false }) => {
   if (auto && !cachedToken) {
-    return void 0;
+    return undefined;
   }
 
   const { hostname } = window.location;
@@ -264,7 +264,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
  * Sign out from GitHub. Nothing to do here.
  * @returns {Promise<void>}
  */
-const signOut = async () => void 0;
+const signOut = async () => undefined;
 
 /**
  * Check if the user has access to the current repository.

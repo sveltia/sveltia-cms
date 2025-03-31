@@ -146,7 +146,7 @@
   });
 
   $effect(() => {
-    void searchTerms;
+    void [searchTerms];
     window.clearTimeout(debounceTimer);
     debounceTimer = window.setTimeout(() => {
       if (hasAuthInfo) {

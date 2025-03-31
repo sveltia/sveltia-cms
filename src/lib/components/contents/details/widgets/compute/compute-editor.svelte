@@ -95,7 +95,7 @@
   };
 
   $effect(() => {
-    void valueMap;
+    void [valueMap];
 
     untrack(() => {
       setCurrentValue();

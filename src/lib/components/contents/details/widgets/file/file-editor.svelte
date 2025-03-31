@@ -194,7 +194,7 @@
   };
 
   $effect(() => {
-    void currentValue;
+    void [currentValue];
     updateProps();
   });
 </script>

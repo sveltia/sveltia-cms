@@ -130,7 +130,7 @@
   };
 
   $effect(() => {
-    void $state.snapshot($entryDraft?.currentValues[locale]);
+    void [$state.snapshot($entryDraft?.currentValues[locale])];
 
     untrack(() => {
       updatePairs();
@@ -138,7 +138,7 @@
   });
 
   $effect(() => {
-    void $state.snapshot(pairs);
+    void [$state.snapshot(pairs)];
 
     untrack(() => {
       updateStore();

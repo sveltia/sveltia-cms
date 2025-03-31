@@ -273,7 +273,7 @@
 
   $effect(() => {
     if (mounted && !hasSubFields) {
-      void currentValue;
+      void [currentValue];
 
       untrack(() => {
         setInputValue();

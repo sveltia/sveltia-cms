@@ -59,7 +59,7 @@
   });
 
   $effect(() => {
-    void values;
+    void [values];
 
     untrack(() => {
       if (!equal(values, $state.snapshot(inputValues))) {

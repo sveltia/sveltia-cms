@@ -47,7 +47,7 @@
   };
 
   $effect(() => {
-    void asset;
+    void [asset];
     updateProps();
   });
 </script>

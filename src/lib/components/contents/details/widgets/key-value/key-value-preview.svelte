@@ -56,7 +56,7 @@
 
   $effect(() => {
     if ($entryDraft) {
-      void $state.snapshot($entryDraft.currentValues[locale]);
+      void [$state.snapshot($entryDraft.currentValues[locale])];
 
       untrack(() => {
         updatePairs();

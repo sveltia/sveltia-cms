@@ -70,9 +70,7 @@
   });
 
   $effect(() => {
-    void mounted;
-    void $backend;
-    void $siteConfig;
+    void [mounted, $backend, $siteConfig];
     init();
   });
 </script>

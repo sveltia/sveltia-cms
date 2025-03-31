@@ -44,7 +44,7 @@
       import.meta.env.DEV ||
       !document.querySelector('script[src^="https://unpkg.com/@sveltia/cms"]')
     ) {
-      return void 0;
+      return undefined;
     }
 
     checkForUpdates();

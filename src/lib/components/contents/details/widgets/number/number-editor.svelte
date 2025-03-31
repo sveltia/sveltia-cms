@@ -91,7 +91,7 @@
   };
 
   $effect(() => {
-    void currentValue;
+    void [currentValue];
 
     untrack(() => {
       setInputValue();
@@ -99,7 +99,7 @@
   });
 
   $effect(() => {
-    void strInputValue;
+    void [strInputValue];
 
     untrack(() => {
       setCurrentValue();
@@ -107,7 +107,7 @@
   });
 
   $effect(() => {
-    void numInputValue;
+    void [numInputValue];
 
     untrack(() => {
       setCurrentValue();

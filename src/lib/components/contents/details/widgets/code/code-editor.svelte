@@ -96,7 +96,7 @@
   };
 
   $effect(() => {
-    void valueMap;
+    void [valueMap];
 
     untrack(() => {
       setInputValue();
@@ -104,8 +104,7 @@
   });
 
   $effect(() => {
-    void code;
-    void lang;
+    void [code, lang];
 
     untrack(() => {
       setCurrentValue();

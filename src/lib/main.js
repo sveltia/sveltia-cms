@@ -106,7 +106,7 @@ const registerEditorComponent = (definition) => {
 const registerEventListener = (eventListener) => {
   // eslint-disable-next-line no-console
   console.error('Event hooks are not yet supported in Sveltia CMS.');
-  void eventListener;
+  void [eventListener];
 };
 
 /**
@@ -119,8 +119,7 @@ const registerEventListener = (eventListener) => {
 const registerPreviewStyle = (style, { raw = false } = {}) => {
   // eslint-disable-next-line no-console
   console.error('Custom preview styles are not yet supported in Sveltia CMS.');
-  void style;
-  void raw;
+  void [style, raw];
 };
 
 /**
@@ -132,8 +131,7 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
 const registerPreviewTemplate = (name, component) => {
   // eslint-disable-next-line no-console
   console.error('Custom preview templates are not yet supported in Sveltia CMS.');
-  void name;
-  void component;
+  void [name, component];
 };
 
 /**
@@ -147,10 +145,7 @@ const registerPreviewTemplate = (name, component) => {
 const registerWidget = (name, control, preview, schema) => {
   // eslint-disable-next-line no-console
   console.error('Custom widgets are not yet supported in Sveltia CMS.');
-  void name;
-  void control;
-  void preview;
-  void schema;
+  void [name, control, preview, schema];
 };
 
 const CMS = new Proxy(

@@ -96,7 +96,7 @@
         mediaElement?.addEventListener(
           isImage ? 'load' : 'loadedmetadata',
           () => {
-            resolve(void 0);
+            resolve(undefined);
           },
           { once: true },
         );
@@ -117,14 +117,12 @@
   };
 
   $effect(() => {
-    void mediaElement;
-    void asset;
+    void [mediaElement, asset];
     updateSrc();
   });
 
   $effect(() => {
-    void mediaElement;
-    void src;
+    void [mediaElement, src];
     checkLoaded();
   });
 </script>

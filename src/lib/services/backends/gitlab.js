@@ -260,17 +260,17 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
         authURL: authURL.replace('/authorize', '/token'),
       });
 
-      return void 0;
+      return undefined;
     }
 
     if (auto) {
-      return void 0;
+      return undefined;
     }
 
     token = await initClientSideAuth({ backendName, clientId, authURL, scope });
   } else {
     if (auto) {
-      return void 0;
+      return undefined;
     }
 
     token = await initServerSideAuth({ backendName, siteDomain, authURL, scope });
@@ -301,7 +301,7 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
  * Sign out from GitLab. Nothing to do here.
  * @returns {Promise<void>}
  */
-const signOut = async () => void 0;
+const signOut = async () => undefined;
 
 /**
  * Check if the user has access to the current repository.
