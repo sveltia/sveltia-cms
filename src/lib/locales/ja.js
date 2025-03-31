@@ -604,17 +604,11 @@ export const strings = {
       dark: 'ダーク',
       light: 'ライト',
     },
-    languages: {
+    language: {
       title: '言語',
       ui_language: {
         title: 'ユーザーインターフェース言語',
         select_language: '言語を選択',
-      },
-      translator: {
-        title: '{service} 翻訳',
-        field_label: '{service} API 認証キー',
-        description:
-          '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された認証キー</a> をここに入力すると、テキストエントリー項目の素早い翻訳が可能となります。',
       },
     },
     contents: {
@@ -627,6 +621,12 @@ export const strings = {
         close_on_save: {
           switch_label: '下書き保存後にエディターを閉じる',
         },
+      },
+      translator: {
+        title: '{service} 翻訳',
+        field_label: '{service} API 認証キー',
+        description:
+          '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された認証キー</a> をここに入力すると、テキストエントリー項目の素早い翻訳が可能となります。',
       },
     },
     media: {

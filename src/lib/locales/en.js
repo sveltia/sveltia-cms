@@ -601,17 +601,11 @@ export const strings = {
       dark: 'Dark',
       light: 'Light',
     },
-    languages: {
-      title: 'Languages',
+    language: {
+      title: 'Language',
       ui_language: {
         title: 'User Interface Language',
         select_language: 'Select Language',
-      },
-      translator: {
-        title: '{service} Translator',
-        field_label: '{service} API Authentication Key',
-        description:
-          'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your Authentication Key</a> here to enable quick translation of text entry fields.',
       },
     },
     contents: {
@@ -624,6 +618,12 @@ export const strings = {
         close_on_save: {
           switch_label: 'Close the editor after saving a draft',
         },
+      },
+      translator: {
+        title: '{service} Translator',
+        field_label: '{service} API Authentication Key',
+        description:
+          'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your Authentication Key</a> here to enable quick translation of text entry fields.',
       },
     },
     media: {

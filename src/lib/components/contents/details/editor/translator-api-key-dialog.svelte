@@ -40,7 +40,7 @@
   }}
 >
   {@html DOMPurify.sanitize(
-    $_('prefs.languages.translator.description', {
+    $_('prefs.contents.translator.description', {
       values: {
         service: serviceLabel,
         homeHref: `href="${developerURL}"`,

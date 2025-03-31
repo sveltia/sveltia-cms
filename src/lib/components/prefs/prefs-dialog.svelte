@@ -5,7 +5,7 @@
   import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
   import AppearancePanel from '$lib/components/prefs/panels/appearance-panel.svelte';
   import ContentsPanel from '$lib/components/prefs/panels/contents-panel.svelte';
-  import LanguagesPanel from '$lib/components/prefs/panels/languages-panel.svelte';
+  import LanguagePanel from '$lib/components/prefs/panels/language-panel.svelte';
   import MediaPanel from '$lib/components/prefs/panels/media-panel.svelte';
 
   /**
@@ -28,7 +28,7 @@
 
   const panels = [
     { key: 'appearance', icon: 'palette', component: AppearancePanel },
-    { key: 'languages', icon: 'language', component: LanguagesPanel },
+    { key: 'language', icon: 'language', component: LanguagePanel },
     { key: 'contents', icon: 'library_books', component: ContentsPanel },
     { key: 'media', icon: 'photo_library', component: MediaPanel },
     { key: 'accessibility', icon: 'accessibility_new', component: AccessibilityPanel },
@@ -38,6 +38,7 @@
 
 <Dialog
   title={$_('settings')}
+  size="large"
   bind:open
   showOk={false}
   showCancel={false}
