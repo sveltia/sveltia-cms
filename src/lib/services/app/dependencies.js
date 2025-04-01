@@ -6,8 +6,8 @@ import { dependencies } from '$lib/services/app';
  * @returns {string} URL.
  */
 export const getUnpkgURL = (name) => {
-  const url = `https://unpkg.com/${encodeURIComponent(name)}`;
+  const url = `https://unpkg.com/${name}`;
   const version = /** @type {Record<string, string>} */ (dependencies)[name]?.replace(/^\D/, '');
 
-  return version ? `${url}@${encodeURIComponent(version)}` : url;
+  return version ? `${url}@${version}` : url;
 };
