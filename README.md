@@ -78,6 +78,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
 - [Roadmap](#roadmap)
   - [Before the 1.0 release](#before-the-10-release)
   - [After the 1.0 release](#after-the-10-release)
+- [Trivia](#trivia)
 - [Related links](#related-links)
   - [As seen on](#as-seen-on)
 - [Disclaimer](#disclaimer)
@@ -102,8 +103,6 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 
 While Sveltia CMS is specifically designed to replace legacy Netlify CMS instances, it also aims to serve as a substitute for the other Netlify CMS successors. We hope that, especially with the [robust i18n support](#better-i18n-support), our product will eventually become an attractive choice for anyone looking for a free headless CMS.
 
-Trivia: The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. And now we are completely rewriting it in Svelte. So this is effectively the second time the application has gone through a framework migration.
-
 ### Our goals
 
 - Making Sveltia CMS a viable, definitive successor to Netlify CMS
@@ -116,7 +115,7 @@ Trivia: The [original version of Netlify CMS](https://github.com/netlify/netlify
 
 Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in mid-2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
-While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also involves different kinds of activities that require considerable effort:
+While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system that involves various kinds of activities that require considerable effort:
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
@@ -366,6 +365,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Code
   - More than 300 languages are available, thanks to [Prism](https://prismjs.com/)’s extensive language support.
   - The language switcher always appears in the user interface, so it’s easy to spot and change the selected language.
+  - Dynamic loading of language modes work as expected.[^198]
   - Code fields under a List field work as expected, saving both code and language.[^181]
 - Color
   - The widget doesn’t cause scrolling issues.[^128]
@@ -824,7 +824,7 @@ Note that the Translation button on the pane header only translates empty fields
 If you have upgraded to DeepL API Pro, provide your new Authentication Key:
 
 1. Click the Account button in the upper right corner, then click Settings.
-1. Select the Language tab.
+1. Select the Contents tab.
 1. Replace your free API key ending with `:fx` with the new paid API key in the DeepL API Authentication Key field.
 1. Close the Settings dialog.
 
@@ -1210,6 +1210,10 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 - VS Code extension for `config.yml` schema validation
 - Official starter templates for the most popular frameworks, including SvelteKit and Next.js
 - and so much more!
+
+## Trivia
+
+- The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. And now we are completely rewriting it in Svelte. So this is effectively the second time the application has gone through a framework migration.
 
 ## Related links
 
@@ -1619,3 +1623,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^196]: Netlify/Decap CMS [#3057](https://github.com/decaporg/decap-cms/issues/3057) — We use Svelte though.
 
 [^197]: Netlify/Decap CMS [#3457](https://github.com/decaporg/decap-cms/issues/3457), [#3624](https://github.com/decaporg/decap-cms/issues/3624)
+
+[^198]: Netlify/Decap CMS [#7442](https://github.com/decaporg/decap-cms/issues/7442)
