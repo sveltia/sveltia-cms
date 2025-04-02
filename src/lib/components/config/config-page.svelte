@@ -2,13 +2,13 @@
   import { _ } from 'svelte-i18n';
   import YAML from 'yaml';
   import PageContainer from '$lib/components/common/page-container.svelte';
-  import { siteConfig } from '$lib/services/config';
+  import { rawSiteConfig } from '$lib/services/config';
 </script>
 
 <PageContainer class="content" aria-label={$_('site_configuration_editor')}>
   {#snippet main()}
     <div role="blockquote" aria-label={$_('site_config')}>
-      <pre>{YAML.stringify($siteConfig)}</pre>
+      <pre>{YAML.stringify(rawSiteConfig)}</pre>
     </div>
   {/snippet}
 </PageContainer>
@@ -22,5 +22,6 @@
   pre {
     margin: 0;
     padding: 16px;
+    background-color: var(--sui-primary-background-color);
   }
 </style>

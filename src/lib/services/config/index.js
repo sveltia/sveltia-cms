@@ -1,5 +1,5 @@
 import { getHash } from '@sveltia/utils/crypto';
-import { isObject } from '@sveltia/utils/object';
+import { isObject, toRaw } from '@sveltia/utils/object';
 import { compare, isURL, stripSlashes } from '@sveltia/utils/string';
 import merge from 'deepmerge';
 import { _ } from 'svelte-i18n';
@@ -33,6 +33,10 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  * with the dev server’s middleware, or loading the CMS config file may fail due to a CORS error.
  */
 export const devSiteURL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
+/**
+ * @type {Partial<SiteConfig>}
+ */
+export const rawSiteConfig = {};
 /**
  * @type {Writable<InternalSiteConfig | undefined>}
  */
@@ -130,26 +134,30 @@ export const initSiteConfig = async (manualConfig) => {
     }
 
     /** @type {any} */
-    let tempConfig;
+    let rawConfig;
 
     if (manualConfig) {
       if (!isObject(manualConfig)) {
         throw new Error(get(_)('config.error.parse_failed'));
       }
 
-      if (manualConfig.load_config_file === false) {
-        tempConfig = manualConfig;
-      } else {
-        tempConfig = merge(await fetchSiteConfig(), manualConfig);
+      // Clone the object because it may contain proxified arrays, etc.
+      rawConfig = toRaw(manualConfig);
+
+      if (rawConfig.load_config_file !== false) {
+        rawConfig = merge(await fetchSiteConfig(), rawConfig);
       }
     } else {
-      tempConfig = await fetchSiteConfig();
+      rawConfig = await fetchSiteConfig();
     }
 
-    validate(tempConfig);
+    // Store the raw config so it can be used in the parser and config viewer
+    Object.assign(rawSiteConfig, rawConfig);
+
+    validate(rawConfig);
 
     /** @type {InternalSiteConfig} */
-    const config = tempConfig;
+    const config = structuredClone(rawConfig);
 
     // Set the site URL for development or production. See also `/src/lib/components/app.svelte`
     config._siteURL = config.site_url?.trim() || (DEV ? devSiteURL : window.location.origin);
