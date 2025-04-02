@@ -5,14 +5,14 @@ import { isObject } from '@sveltia/utils/object';
  */
 
 /**
- * Get the default value for a Code field.
+ * Get the default value map for a Code field.
  * @param {object} args Arguments.
  * @param {CodeField} args.fieldConfig Field configuration.
  * @param {FieldKeyPath} args.keyPath Field key path.
- * @returns {Record<string, any>} Default value.
+ * @returns {Record<string, any>} Default value map.
  * @todo Write tests for this.
  */
-export const getDefaultValue = ({ fieldConfig, keyPath }) => {
+export const getCodeFieldDefaultValueMap = ({ fieldConfig, keyPath }) => {
   /** @type {Record<string, any>} */
   const content = {};
 

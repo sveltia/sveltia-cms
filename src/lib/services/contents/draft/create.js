@@ -6,10 +6,13 @@ import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
 import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
-import { getDefaultValue as getDefaultCodeValue } from '$lib/services/contents/widgets/code/helper';
-import { getDefaultValue as getDefaultDateTimeValue } from '$lib/services/contents/widgets/date-time/helper';
-import { getDefaultValue as getDefaultHiddenValue } from '$lib/services/contents/widgets/hidden/helper';
-import { getDefaultValue as getDefaultKvValue } from '$lib/services/contents/widgets/key-value/helper';
+import { getBooleanFieldDefaultValueMap } from '$lib/services/contents/widgets/boolean/helper';
+import { getCodeFieldDefaultValueMap } from '$lib/services/contents/widgets/code/helper';
+import { getDateTimeFieldDefaultValueMap } from '$lib/services/contents/widgets/date-time/helper';
+import { getHiddenFieldDefaultValueMap } from '$lib/services/contents/widgets/hidden/helper';
+import { getKeyValueFieldDefaultValueMap } from '$lib/services/contents/widgets/key-value/helper';
+import { getListFieldDefaultValueMap } from '$lib/services/contents/widgets/list/helper';
+import { getSelectFieldDefaultValueMap } from '$lib/services/contents/widgets/select/helper';
 import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/widgets/uuid/helper';
 
 /**
@@ -24,13 +27,11 @@ import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/w
  * LocaleExpanderMap,
  * } from '$lib/types/private';
  * @import {
- * CodeField,
- * DateTimeField,
  * Field,
  * FieldKeyPath,
  * HiddenField,
- * KeyValueField,
  * ListField,
+ * LocaleCode,
  * NumberField,
  * ObjectField,
  * RelationField,
@@ -42,14 +43,14 @@ import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/w
 /**
  * Parse the given dynamic default value.
  * @param {object} args Arguments.
- * @param {Field} args.fieldConfig Field configuration.
+ * @param {FlattenedEntryContent} args.newContent An object holding a new content key-value map.
  * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
- * @param {FlattenedEntryContent} args.newContent An object holding a content key-value map.
+ * @param {Field} args.fieldConfig Field configuration.
  * @param {string} args.value Dynamic default value.
  * @see https://decapcms.org/docs/dynamic-default-values/
  * @todo Validate the value carefully before adding it to the content map.
  */
-const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) => {
+const parseDynamicDefaultValue = ({ newContent, keyPath, fieldConfig, value }) => {
   const { widget: widgetName = 'string' } = fieldConfig;
 
   /**
@@ -119,6 +120,76 @@ const parseDynamicDefaultValue = ({ fieldConfig, keyPath, newContent, value }) =
 };
 
 /**
+ * @type {Record<string, (args: { fieldConfig: any, keyPath: FieldKeyPath, locale: LocaleCode }) =>
+ * Record<string, any>>}
+ */
+const getDefaultValueMapFunctions = {
+  boolean: getBooleanFieldDefaultValueMap,
+  code: getCodeFieldDefaultValueMap,
+  datetime: getDateTimeFieldDefaultValueMap,
+  hidden: getHiddenFieldDefaultValueMap,
+  keyvalue: getKeyValueFieldDefaultValueMap,
+  list: getListFieldDefaultValueMap,
+  relation: getSelectFieldDefaultValueMap, // alias
+  select: getSelectFieldDefaultValueMap,
+};
+
+/**
+ * Populate the default value for the given field. Check if a dynamic default value is specified,
+ * then look for the field configuration’s `default` property.
+ * @param {object} args Arguments.
+ * @param {FlattenedEntryContent} args.newContent An object holding a new content key-value map.
+ * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {InternalLocaleCode} args.locale Locale.
+ * @param {Record<string, string>} args.dynamicValues Dynamic default values.
+ */
+const populateDefaultValue = ({ newContent, keyPath, fieldConfig, locale, dynamicValues }) => {
+  if (keyPath in dynamicValues) {
+    parseDynamicDefaultValue({ newContent, keyPath, fieldConfig, value: dynamicValues[keyPath] });
+
+    return;
+  }
+
+  // @ts-ignore `compute` and `uuid` widgets don’t have the `default` option
+  const { widget: widgetName = 'string', default: defaultValue } = fieldConfig;
+
+  if (widgetName === 'object') {
+    const required = isFieldRequired({ fieldConfig, locale });
+    const { fields: subFields, types } = /** @type {ObjectField} */ (fieldConfig);
+
+    if (!required || Array.isArray(types)) {
+      // Enable validation
+      newContent[keyPath] = null;
+    } else {
+      // Populate values recursively
+      subFields?.forEach((_subField) => {
+        populateDefaultValue({
+          newContent,
+          keyPath: [keyPath, _subField.name].join('.'),
+          fieldConfig: _subField,
+          locale,
+          dynamicValues,
+        });
+      });
+    }
+
+    return;
+  }
+
+  if (widgetName in getDefaultValueMapFunctions) {
+    Object.assign(
+      newContent,
+      getDefaultValueMapFunctions[widgetName]({ fieldConfig, keyPath, locale }),
+    );
+
+    return;
+  }
+
+  newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
+};
+
+/**
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the site configuration.
  * @param {Field[]} fields Field list of a collection.
@@ -132,133 +203,13 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
   /** @type {FlattenedEntryContent} */
   const newContent = {};
 
-  /**
-   * Get the default value for the given field. Check if a dynamic default value is specified, then
-   * look for the field configuration’s `default` property.
-   * @param {object} args Arguments.
-   * @param {Field} args.fieldConfig Field configuration.
-   * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
-   */
-  const getDefaultValue = ({ fieldConfig, keyPath }) => {
-    if (keyPath in dynamicValues) {
-      parseDynamicDefaultValue({ fieldConfig, keyPath, newContent, value: dynamicValues[keyPath] });
-
-      return;
-    }
-
-    // @ts-ignore `compute` and `uuid` widgets don’t have the `default` option
-    const { widget: widgetName = 'string', default: defaultValue } = fieldConfig;
-    const required = isFieldRequired({ fieldConfig, locale });
-    const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
-
-    if (widgetName === 'list') {
-      const { fields: subFields, types } = /** @type {ListField} */ (fieldConfig);
-
-      if (!isArray) {
-        newContent[keyPath] = [];
-
-        return;
-      }
-
-      if (subFields || types) {
-        defaultValue.forEach((items, index) => {
-          Object.entries(items).forEach(([key, val]) => {
-            newContent[[keyPath, index, key].join('.')] = val;
-          });
-        });
-
-        return;
-      }
-
-      defaultValue.forEach((val, index) => {
-        newContent[[keyPath, index].join('.')] = val;
-      });
-
-      return;
-    }
-
-    if (widgetName === 'object') {
-      const { fields: subFields, types } = /** @type {ObjectField} */ (fieldConfig);
-
-      if (!required || Array.isArray(types)) {
-        // Enable validation
-        newContent[keyPath] = null;
-      } else {
-        subFields?.forEach((_subField) => {
-          getDefaultValue({
-            keyPath: [keyPath, _subField.name].join('.'),
-            fieldConfig: _subField,
-          });
-        });
-      }
-
-      return;
-    }
-
-    if (widgetName === 'boolean') {
-      newContent[keyPath] = typeof defaultValue === 'boolean' ? defaultValue : false;
-
-      return;
-    }
-
-    if (widgetName === 'code') {
-      Object.assign(
-        newContent,
-        getDefaultCodeValue({
-          // eslint-disable-next-line object-shorthand
-          fieldConfig: /** @type {CodeField} */ (fieldConfig),
-          keyPath,
-        }),
-      );
-
-      return;
-    }
-
-    if (widgetName === 'relation' || widgetName === 'select') {
-      const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
-
-      if (multiple) {
-        if (isArray) {
-          defaultValue.forEach((value, index) => {
-            newContent[[keyPath, index].join('.')] = value;
-          });
-        } else {
-          newContent[keyPath] = [];
-        }
-
-        return;
-      }
-    }
-
-    if (widgetName === 'datetime') {
-      newContent[keyPath] = getDefaultDateTimeValue(/** @type {DateTimeField} */ (fieldConfig));
-
-      return;
-    }
-
-    if (widgetName === 'hidden') {
-      newContent[keyPath] = getDefaultHiddenValue(/** @type {HiddenField} */ (fieldConfig), locale);
-
-      return;
-    }
-
-    if (widgetName === 'keyvalue') {
-      Object.entries(getDefaultKvValue(/** @type {KeyValueField} */ (fieldConfig))).forEach(
-        ([key, val]) => {
-          newContent[`${keyPath}.${key}`] = String(val);
-        },
-      );
-
-      return;
-    }
-
-    newContent[keyPath] = defaultValue !== undefined ? defaultValue : '';
-  };
-
-  fields.forEach((_field) => {
-    getDefaultValue({
-      keyPath: _field.name,
-      fieldConfig: _field,
+  fields.forEach((fieldConfig) => {
+    populateDefaultValue({
+      newContent,
+      keyPath: fieldConfig.name,
+      fieldConfig,
+      locale,
+      dynamicValues,
     });
   });
 
@@ -502,9 +453,14 @@ export const duplicateDraft = () => {
         }
 
         if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
-          valueMap[keyPath] = getDefaultHiddenValue(
-            /** @type {HiddenField} */ (fieldConfig),
-            locale,
+          Object.assign(
+            valueMap,
+            getHiddenFieldDefaultValueMap({
+              // eslint-disable-next-line object-shorthand
+              fieldConfig: /** @type {HiddenField} */ (fieldConfig),
+              keyPath,
+              locale,
+            }),
           );
         }
       }

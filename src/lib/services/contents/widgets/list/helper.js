@@ -7,6 +7,36 @@ import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/ent
  */
 
 /**
+ * Get the default value map for a List field.
+ * @param {object} args Arguments.
+ * @param {ListField} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @returns {Record<string, any>} Default value map.
+ */
+export const getListFieldDefaultValueMap = ({ fieldConfig, keyPath }) => {
+  const { default: defaultValue, fields, types } = fieldConfig;
+  const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
+  /** @type {Record<string, any>}  */
+  const content = {};
+
+  if (!isArray) {
+    content[keyPath] = [];
+  } else if (fields || types) {
+    defaultValue.forEach((items, index) => {
+      Object.entries(items).forEach(([key, val]) => {
+        content[[keyPath, index, key].join('.')] = val;
+      });
+    });
+  } else {
+    defaultValue.forEach((val, index) => {
+      content[[keyPath, index].join('.')] = val;
+    });
+  }
+
+  return content;
+};
+
+/**
  * Check if the given fields contain a single List widget with the `root` option enabled.
  * @param {Field[]} fields Field list.
  * @returns {boolean} Result.

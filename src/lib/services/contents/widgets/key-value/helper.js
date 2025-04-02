@@ -13,7 +13,7 @@ import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
  * @param {KeyValueField} fieldConfig Field configuration.
  * @returns {Record<string, string>} Default value.
  */
-export const getDefaultValue = (fieldConfig) => {
+const getDefaultValue = (fieldConfig) => {
   const { default: defaultValue, required = true } = fieldConfig;
 
   if (defaultValue && isObject(defaultValue)) {
@@ -25,6 +25,24 @@ export const getDefaultValue = (fieldConfig) => {
   }
 
   return {};
+};
+
+/**
+ * Get the default value map for a KeyValue field.
+ * @param {object} args Arguments.
+ * @param {KeyValueField} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @returns {Record<string, string>} Default value map.
+ */
+export const getKeyValueFieldDefaultValueMap = ({ fieldConfig, keyPath }) => {
+  /** @type {Record<string, string>}  */
+  const content = {};
+
+  Object.entries(getDefaultValue(fieldConfig)).forEach(([key, val]) => {
+    content[`${keyPath}.${key}`] = String(val);
+  });
+
+  return content;
 };
 
 /**

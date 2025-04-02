@@ -3,8 +3,34 @@ import { escapeRegExp } from '@sveltia/utils/string';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
- * @import { FieldKeyPath, SelectField } from '$lib/types/public';
+ * @import { FieldKeyPath, RelationField, SelectField } from '$lib/types/public';
  */
+
+/**
+ * Get the default value map for a Relation/Select field.
+ * @param {object} args Arguments.
+ * @param {RelationField | SelectField} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @returns {Record<string, any>} Default value map.
+ */
+export const getSelectFieldDefaultValueMap = ({ fieldConfig, keyPath }) => {
+  const { default: defaultValue, multiple = false } = fieldConfig;
+  const isArray = Array.isArray(defaultValue) && !!defaultValue.length;
+  /** @type {Record<string, any>}  */
+  const content = {};
+
+  if (!multiple) {
+    content[keyPath] = defaultValue !== undefined ? defaultValue : '';
+  } else if (isArray) {
+    defaultValue.forEach((value, index) => {
+      content[[keyPath, index].join('.')] = value;
+    });
+  } else {
+    content[keyPath] = [];
+  }
+
+  return content;
+};
 
 /**
  * @type {Map<string, any | any[]>}

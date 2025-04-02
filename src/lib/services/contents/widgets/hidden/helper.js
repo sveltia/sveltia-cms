@@ -2,7 +2,7 @@ import { generateUUID } from '@sveltia/utils/crypto';
 
 /**
  * @import { InternalLocaleCode } from '$lib/types/private';
- * @import { HiddenField } from '$lib/types/public';
+ * @import { FieldKeyPath, HiddenField } from '$lib/types/public';
  */
 
 /**
@@ -12,7 +12,7 @@ import { generateUUID } from '@sveltia/utils/crypto';
  * @returns {any} Default value.
  * @todo Write tests for this.
  */
-export const getDefaultValue = (fieldConfig, locale) => {
+const getDefaultValue = (fieldConfig, locale) => {
   const { default: defaultValue } = fieldConfig;
 
   if (typeof defaultValue !== 'string') {
@@ -43,3 +43,15 @@ export const getDefaultValue = (fieldConfig, locale) => {
     return '';
   });
 };
+
+/**
+ * Get the default value map for a Hidden field.
+ * @param {object} args Arguments.
+ * @param {HiddenField} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @returns {Record<string, any>} Default value map.
+ */
+export const getHiddenFieldDefaultValueMap = ({ fieldConfig, keyPath, locale }) => ({
+  [keyPath]: getDefaultValue(fieldConfig, locale),
+});

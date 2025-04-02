@@ -3,7 +3,7 @@ import moment from 'moment';
 
 /**
  * @import { DateTimeFieldNormalizedProps } from '$lib/types/private';
- * @import { DateTimeField } from '$lib/types/public';
+ * @import { DateTimeField, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -145,7 +145,7 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
  * @returns {string} Default value.
  * @todo Write tests for this.
  */
-export const getDefaultValue = (fieldConfig) => {
+const getDefaultValue = (fieldConfig) => {
   const { default: defaultValue } = fieldConfig;
 
   if (typeof defaultValue !== 'string') {
@@ -164,6 +164,17 @@ export const getDefaultValue = (fieldConfig) => {
 
   return defaultValue;
 };
+
+/**
+ * Get the default value map for a DateTime field.
+ * @param {object} args Arguments.
+ * @param {DateTimeField} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @returns {Record<string, string>} Default value map.
+ */
+export const getDateTimeFieldDefaultValueMap = ({ fieldConfig, keyPath }) => ({
+  [keyPath]: getDefaultValue(fieldConfig),
+});
 
 /**
  * Get the input value given the current value.
