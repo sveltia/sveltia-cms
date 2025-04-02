@@ -306,6 +306,11 @@ export const deleteAssets = async (assets) => {
 
   allAssets.update((_allAssets) => _allAssets.filter((asset) => !assets.includes(asset)));
 
+  // Clear asset info in the sidebar
+  focusedAsset.update((_focusedAsset) =>
+    assets.some(({ path }) => _focusedAsset?.path === path) ? undefined : _focusedAsset,
+  );
+
   assetUpdatesToast.set({
     ...updatesToastDefaultState,
     deleted: true,
