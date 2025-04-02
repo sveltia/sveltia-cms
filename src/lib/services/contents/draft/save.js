@@ -853,10 +853,12 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     const data = await formatEntryFile({
       content: i18nEnabled
         ? Object.fromEntries(
-            Object.entries(savingEntry.locales).map(([locale, le]) => [
-              locale,
-              serializeContent({ draft, locale, valueMap: le.content }),
-            ]),
+            Object.entries(savingEntry.locales)
+              .filter(([, le]) => !!le.content)
+              .map(([locale, le]) => [
+                locale,
+                serializeContent({ draft, locale, valueMap: le.content }),
+              ]),
           )
         : serializeContent({ draft, locale: '_default', valueMap: content }),
       _file,
