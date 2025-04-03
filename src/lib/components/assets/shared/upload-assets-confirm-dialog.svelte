@@ -4,32 +4,17 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { showAssetOverlay, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
+  import { getMaxFileSize } from '$lib/services/assets/media-library';
   import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
-  import { siteConfig } from '$lib/services/config';
   import { formatSize } from '$lib/services/utils/file';
-
-  const { files, folder, originalAsset } = $derived($uploadingAssets);
 
   /** @type {File[]} */
   let uploadingFiles = $state([]);
   /** @type {File[]} */
   let oversizedFiles = $state([]);
 
-  /** @type {number} */
-  const maxFileSize = $derived.by(() => {
-    // Support both new and legacy options
-    const size =
-      $siteConfig?.media_libraries?.default?.config?.max_file_size ??
-      ($siteConfig?.media_library?.name === 'default'
-        ? $siteConfig.media_library.config?.max_file_size
-        : undefined);
-
-    if (typeof size === 'number' && Number.isInteger(size)) {
-      return size;
-    }
-
-    return Infinity;
-  });
+  const { files, folder, originalAsset } = $derived($uploadingAssets);
+  const maxFileSize = $derived(getMaxFileSize());
 
   $effect(() => {
     uploadingFiles = files.filter(({ size }) => size <= maxFileSize);

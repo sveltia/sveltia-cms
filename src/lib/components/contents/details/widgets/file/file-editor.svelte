@@ -20,7 +20,7 @@
     getMediaFieldURL,
     getMediaKind,
   } from '$lib/services/assets';
-  import { siteConfig } from '$lib/services/config';
+  import { getMaxFileSize } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
   import { canDragDrop, formatSize } from '$lib/services/utils/file';
 
@@ -80,26 +80,9 @@
     choose_url: canEnterURL = true,
   } = $derived(fieldConfig);
   const isImageWidget = $derived(widgetName === 'image');
+  const maxFileSize = $derived(getMaxFileSize(fieldConfig));
   const collection = $derived($entryDraft?.collection);
   const entry = $derived($entryDraft?.originalEntry);
-
-  /** @type {number} */
-  const maxFileSize = $derived.by(() => {
-    // Support both new and legacy options at field level and global
-    const size =
-      fieldConfig.media_libraries?.default?.config?.max_file_size ??
-      fieldConfig.media_library?.config?.max_file_size ??
-      $siteConfig?.media_libraries?.default?.config?.max_file_size ??
-      ($siteConfig?.media_library?.name === 'default'
-        ? $siteConfig.media_library.config?.max_file_size
-        : undefined);
-
-    if (typeof size === 'number' && Number.isInteger(size)) {
-      return size;
-    }
-
-    return Infinity;
-  });
 
   /**
    * Reset the current selection.
