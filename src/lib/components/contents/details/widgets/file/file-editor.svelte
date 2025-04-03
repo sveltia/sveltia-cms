@@ -116,7 +116,7 @@
         // uploading the same file twice
         asset = existingAsset;
         file = undefined;
-      } else if (isImageWidget && file.size > maxFileSize) {
+      } else if (file.size > maxFileSize) {
         showSizeLimitDialog = true;
       } else {
         // Set a temporary blob URL, which will be later replaced with the actual file path
