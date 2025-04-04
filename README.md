@@ -979,7 +979,7 @@ media_libraries:
           optimize: true
 ```
 
-Then, whenever a user selects images to upload, those images are automatically optimized, all within the browser. Raster images such as PNG and JPEG are automatically converted to WebP format and resized if necessary. SVG images are minified using the [SVGO](https://github.com/svg/svgo) library.
+Then, whenever a user selects images to upload, those images are automatically optimized, all within the browser. Raster images such as JPEG and PNG are automatically converted to WebP format and resized if necessary. SVG images are minified using the [SVGO](https://github.com/svg/svgo) library.
 
 In case you’re not aware, [WebP](https://developers.google.com/speed/webp) offers better compression than JPEG and PNG and is now [widely supported](https://caniuse.com/webp) across major browsers. So there is no reason not to use WebP on the web.
 
