@@ -14,6 +14,7 @@
 
   let isLocalHost = $state(false);
   let isLocalBackendSupported = $state(false);
+  let isTestBackendSupported = $state(false);
   let isBrave = $state(false);
 
   const configuredBackendName = $derived($siteConfig?.backend?.name);
@@ -31,6 +32,9 @@
     isLocalHost =
       hostname === '127.0.0.1' || hostname === 'localhost' || hostname.endsWith('.localhost');
     isLocalBackendSupported = 'showDirectoryPicker' in window;
+    // https://developer.mozilla.org/en-US/docs/Web/API/FileSystemFileHandle/createWritable
+    isTestBackendSupported =
+      typeof window.FileSystemFileHandle?.prototype?.createWritable === 'function';
     isBrave = navigator.userAgentData?.brands.some(({ brand }) => brand === 'Brave') ?? false;
 
     signInAutomatically();
@@ -50,10 +54,16 @@
       label={isTestRepo
         ? $_('work_with_test_repo')
         : $_('sign_in_with_x', { values: { service: configuredBackend.label } })}
+      disabled={isTestRepo && !isTestBackendSupported}
       onclick={async () => {
         await signInManually(/** @type {string} */ (configuredBackendName));
       }}
     />
+    {#if isTestRepo && !isTestBackendSupported}
+      <div role="alert">
+        {$_('test_backend.unsupported_browser')}
+      </div>
+    {/if}
     {#if isLocalHost && !isTestRepo}
       <Button
         variant="primary"
