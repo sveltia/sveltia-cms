@@ -67,6 +67,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Disabling non-default locale content](#disabling-non-default-locale-content)
   - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
   - [Configuring multiple media libraries](#configuring-multiple-media-libraries)
+  - [Optimizing images for uploaded](#optimizing-images-for-uploaded)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
   - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
   - [Controlling data output](#controlling-data-output)
@@ -120,7 +121,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 185+ issues, or 375+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 190+ issues, or 380+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA (almost there)
     - 350 issues, or 600 if including duplicates, in the future
@@ -132,7 +133,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![185 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250327)<br>
+![190 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250403)<br>
 
 ## Differentiators
 
@@ -479,6 +480,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Enhancements to media library integrations:
   - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
   - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
+  - The default media library comes with a [built-in image optimizer](#optimizing-images-for-uploaded). With a few lines of configuration, images uploaded by users are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200]
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for.[^38]
 - Assets stored in an entry-relative media folder are displayed in the Asset Library.[^142]
@@ -944,7 +946,8 @@ media_libraries:
   default:
     config:
       max_file_size: 1024000
-      # coming soon: image optimizer options
+      transformations:
+        # See the next section
   cloudinary:
     config:
       cloud_name: YOUR_CLOUD_NAME
@@ -957,6 +960,29 @@ media_libraries:
       autoFilename: true
       defaultOperations: '/resize/800x600/'
 ```
+
+### Optimizing images for uploaded
+
+Ever wanted to prevent end-users from adding huge images? The built-in optimizer in Sveltia CMS helps developers avoid such situations with a simple configuration like this:
+
+```yaml
+media_libraries:
+  default:
+    config:
+      transformations:
+        raster_image:
+          format: webp # only `webp` is supported
+          quality: 85 # default: 85
+          width: 2048 # default: original size
+          height: 2048 # default: original size
+```
+
+- As [noted above](#configuring-multiple-media-libraries), the `media_libraries` option can be global at the root level of `config.yml`, or field-specific for File/Image widgets.
+- `raster_image` applies to any supported raster image format: `avif`, `bmp`, `gif`, `jpeg`, `png`, `webp`. If you like, you can use a specific format as key instead of `raster_image`.
+- The `width` and `height` options are the maximum width and height, respectively. If an image is larger than the specified dimension, it will be scaled down. Smaller images will not be resized.
+- File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported. A [third-party library](https://github.com/jamsinclair/jSquash) is used as a fallback.
+- AVIF conversion is not supported at this time because no browser has native encoding support and the library is very slow.
+- We may add more transformation options in the future.
 
 ### Editing data files with a top-level list
 
@@ -1626,3 +1652,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^197]: Netlify/Decap CMS [#3457](https://github.com/decaporg/decap-cms/issues/3457), [#3624](https://github.com/decaporg/decap-cms/issues/3624)
 
 [^198]: Netlify/Decap CMS [#7442](https://github.com/decaporg/decap-cms/issues/7442)
+
+[^199]: Netlify/Decap CMS [#5419](https://github.com/decaporg/decap-cms/issues/5419), [#7107](https://github.com/decaporg/decap-cms/issues/7107)
+
+[^200]: Netlify/Decap CMS [#1322](https://github.com/decaporg/decap-cms/issues/1322), [#6442](https://github.com/decaporg/decap-cms/issues/6442)
