@@ -38,6 +38,11 @@
  */
 
 /**
+ * Supported vector image format.
+ * @typedef {'svg'} VectorImageFormat
+ */
+
+/**
  * Supported raster image conversion format. We don’t support AVIF at this time because no browser
  * supports AVIF encoding natively and `@jsquash/avif` is slow. Meanwhile, browsers other than
  * Safari support WebP encoding and `@jsquash/webp` is relatively fast.
@@ -62,8 +67,19 @@
  */
 
 /**
+ * Vector image transformation option map.
+ * @typedef {object} VectorImageTransformationOptions
+ * @property {boolean} [optimize] Whether to optimize the image.
+ */
+
+/**
+ * Vector image transformation option map.
+ * @typedef {Record<VectorImageFormat, VectorImageTransformationOptions>} VectorImageTransformations
+ */
+
+/**
  * Image transformation option map.
- * @typedef {RasterImageTransformations} ImageTransformations
+ * @typedef {RasterImageTransformations & VectorImageTransformations} ImageTransformations
  */
 
 /**

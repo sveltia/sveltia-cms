@@ -364,6 +364,29 @@ export const renderPDF = async (
 };
 
 /**
+ * Optimize a SVG image using the SVGO library.
+ * @param {File | Blob} blob Source file.
+ * @returns {Promise<Blob>} Optimized image file.
+ * @see https://github.com/svg/svgo/issues/1050
+ */
+export const optimizeSVG = async (blob) => {
+  const importURL = getUnpkgURL('svgo');
+  const string = await blob.text();
+
+  try {
+    /** @type {import('svgo')} */
+    const { optimize } = await import(/* @vite-ignore */ `${importURL}/dist/svgo.browser.js`);
+    const { data } = optimize(string);
+
+    return new Blob([data], { type: blob.type });
+  } catch {
+    //
+  }
+
+  return blob;
+};
+
+/**
  * Check if the given string is a YouTube video URL.
  * @param {string} string URL-like string.
  * @returns {boolean} Result.

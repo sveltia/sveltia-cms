@@ -2,6 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import {
+  optimizeSVG,
   rasterImageConversionFormats,
   rasterImageExtensionRegex,
   rasterImageFormats,
@@ -112,6 +113,11 @@ export const transformFile = async (file, transformations) => {
 
       return new File([blob], newFileName, { type: blob.type });
     }
+  }
+
+  // Process SVG image
+  if (type === 'image' && subType === 'svg+xml' && transformations.svg?.optimize) {
+    return new File([await optimizeSVG(file)], file.name, { type: file.type });
   }
 
   return file;
