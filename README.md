@@ -963,26 +963,27 @@ media_libraries:
 
 ### Optimizing images for upload
 
-Ever wanted to prevent end-users from adding huge images? The built-in optimizer in Sveltia CMS helps developers avoid such situations with a simple configuration like this:
+Ever wanted to prevent end-users from adding huge images to your repository? The built-in optimizer in Sveltia CMS makes developers’ lives easier with a simple configuration like this:
 
 ```yaml
 media_libraries:
   default:
     config:
       transformations:
-        raster_image:
-          format: webp # only `webp` is supported
+        raster_image: # original format
+          format: webp # new format, only `webp` is supported
           quality: 85 # default: 85
           width: 2048 # default: original size
           height: 2048 # default: original size
 ```
 
 - As [noted above](#configuring-multiple-media-libraries), the `media_libraries` option can be global at the root level of `config.yml`, or field-specific for File/Image widgets.
-- `raster_image` applies to any supported raster image format: `avif`, `bmp`, `gif`, `jpeg`, `png`, `webp`. If you like, you can use a specific format as key instead of `raster_image`.
+- `raster_image` applies to any supported raster image format: `avif`, `bmp`, `gif`, `jpeg`, `png` and `webp`. If you like, you can use a specific format as key instead of `raster_image`.
 - The `width` and `height` options are the maximum width and height, respectively. If an image is larger than the specified dimension, it will be scaled down. Smaller images will not be resized.
 - File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported. A [third-party library](https://github.com/jamsinclair/jSquash) is used as a fallback.
 - AVIF conversion is not supported at this time because no browser has native encoding support and the library is very slow.
 - We may add more transformation options in the future.
+- This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process.
 
 ### Editing data files with a top-level list
 
