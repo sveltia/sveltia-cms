@@ -575,10 +575,6 @@ export const strings = {
     disabled:
       'お使いのブラウザーではローカル開発が無効化されています。<a>有効化する方法はこちら</a>。',
   },
-  test_backend: {
-    unsupported_browser:
-      'お使いのブラウザーはテストバックンドに対応していません。代わりに Chrome、Edge か Firefox を使ってください。',
-  },
 
   // Editorial Workflow
   status: {
