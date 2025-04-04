@@ -478,9 +478,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
 - Enhancements to media library integrations:
+  - The default media library comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images uploaded by users are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200]
   - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
   - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
-  - The default media library comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images uploaded by users are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200]
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for.[^38]
 - Assets stored in an entry-relative media folder are displayed in the Asset Library.[^142]
@@ -977,13 +977,15 @@ media_libraries:
           height: 2048 # default: original size
 ```
 
-- As [noted above](#configuring-multiple-media-libraries), the `media_libraries` option can be global at the root level of `config.yml`, or field-specific for File/Image widgets.
+Then, whenever a user selects images to upload, those images are automatically converted to WebP format and resized if necessary, all within the browser. In case you’re not aware, [WebP](https://developers.google.com/speed/webp) offers better compression than JPEG and PNG and is now [widely supported](https://caniuse.com/webp) across major browsers.
+
+- As [noted above](#configuring-multiple-media-libraries), the `media_libraries` option can be global at the root level of `config.yml`, which applies to both entry fields and the Asset Library, or field-specific for the File/Image widgets.
 - `raster_image` applies to any supported raster image format: `avif`, `bmp`, `gif`, `jpeg`, `png` and `webp`. If you like, you can use a specific format as key instead of `raster_image`.
 - The `width` and `height` options are the maximum width and height, respectively. If an image is larger than the specified dimension, it will be scaled down. Smaller images will not be resized.
 - File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported and a [third-party library](https://github.com/jamsinclair/jSquash) is used instead.
 - AVIF conversion is not supported at this time because no browser has native encoding support and the library is very slow.
-- We may add more transformation options in the future, such as SVG minification.
 - This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process.
+- We may add more transformation options in the future, such as SVG minification.
 
 ### Editing data files with a top-level list
 
