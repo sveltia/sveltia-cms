@@ -4,6 +4,11 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
+import {
+  getFileTransformations,
+  getMaxFileSize,
+  transformFile,
+} from '$lib/services/assets/media-library';
 import { backend } from '$lib/services/backends';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
@@ -12,7 +17,7 @@ import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries'
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { createPath, decodeFilePath, encodeFilePath, resolvePath } from '$lib/services/utils/file';
-import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/media';
+import { getMediaMetadata, renderPDF, transformImage } from '$lib/services/utils/media';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -25,6 +30,8 @@ import { convertImage, getMediaMetadata, renderPDF } from '$lib/services/utils/m
  * EntryCollection,
  * InternalCollection,
  * InternalCollectionFile,
+ * InternalImageTransformationOptions,
+ * ProcessedAssets,
  * UploadingAssets,
  * } from '$lib/types/private';
  */
@@ -83,6 +90,52 @@ export const editingAsset = writable();
  * @type {Writable<Asset | undefined>}
  */
 export const renamingAsset = writable();
+
+/**
+ * @type {Readable<ProcessedAssets>}
+ */
+export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], set, update) => {
+  set({
+    processing: false,
+    undersizedFiles: [],
+    oversizedFiles: [],
+    transformedFileMap: new WeakMap(),
+  });
+
+  const originalFiles = _uploadingAssets.files;
+  const transformedFileMap = new WeakMap();
+  const fileTransformations = getFileTransformations();
+  const maxFileSize = getMaxFileSize();
+  /** @type {File[]} */
+  let files = [];
+
+  (async () => {
+    if (originalFiles.length && fileTransformations) {
+      update((state) => ({ ...state, processing: true }));
+
+      files = await Promise.all(
+        originalFiles.map(async (file) => {
+          const newFile = await transformFile(file, fileTransformations);
+
+          if (newFile !== file) {
+            transformedFileMap.set(newFile, file);
+          }
+
+          return newFile;
+        }),
+      );
+    } else {
+      files = [...originalFiles];
+    }
+
+    update(() => ({
+      processing: false,
+      undersizedFiles: files.filter(({ size }) => size <= maxFileSize),
+      oversizedFiles: files.filter(({ size }) => size > maxFileSize),
+      transformedFileMap,
+    }));
+  })();
+});
 
 /**
  * Check if the given asset kind is media.
@@ -234,9 +287,10 @@ export const getAssetThumbnailURL = async (asset) => {
 
   if (!thumbnailBlob) {
     const blob = await getAssetBlob(asset);
-    const options = { format: /** @type {'webp'} */ ('webp'), quality: 0.85, dimension: 512 };
+    /** @type {InternalImageTransformationOptions} */
+    const options = { format: 'webp', quality: 85, width: 512, height: 512, fit: 'contain' };
 
-    thumbnailBlob = isPDF ? await renderPDF(blob, options) : await convertImage(blob, options);
+    thumbnailBlob = isPDF ? await renderPDF(blob, options) : await transformImage(blob, options);
 
     await thumbnailDB?.set(asset.sha, thumbnailBlob);
   }

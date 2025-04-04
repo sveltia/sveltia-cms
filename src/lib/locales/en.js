@@ -266,6 +266,8 @@ export const strings = {
   confirm_deleting_all_entries: 'Are you sure to delete all the entries?',
   confirm_deleting_all_entries_with_assets:
     'Are you sure to delete all the entries and associated assets?',
+  processing_file: 'Processing a file. This may take a while.',
+  processing_files: 'Processing files. This may take a while.',
   uploading_files: 'Uploading Files',
   confirm_replacing_file: 'Are you sure to replace “{name}” with the following file?',
   confirm_uploading_file: 'Are you sure to save the following file to the “{folder}” folder?',
@@ -276,6 +278,8 @@ export const strings = {
     'This file cannot be uploaded because it exceeds the maximum size of {size}. Please reduce the size or select a different file.',
   warning_oversized_files:
     'These files cannot be uploaded because they exceed the maximum size of {size}. Please reduce the sizes or select different files.',
+  file_meta: '{type} · {size}',
+  file_meta_converted_from_x: '(converted from {type})',
   no_entries_created: 'This collection has no entries yet.',
   create_new_entry: 'Create New Entry',
   no_files_in_collection: 'No files available in this collection.',

@@ -33,9 +33,51 @@
  */
 
 /**
+ * Supported raster image format.
+ * @typedef {'avif' | 'bmp' | 'gif' | 'jpeg' | 'png' | 'webp'} RasterImageFormat
+ */
+
+/**
+ * Supported raster image conversion format. We don’t support AVIF at this time because no browser
+ * supports AVIF encoding natively and `@jsquash/avif` is slow. Meanwhile, browsers other than
+ * Safari support WebP encoding and `@jsquash/webp` is relatively fast.
+ * @typedef {'webp'} RasterImageConversionFormat
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
+ * @see https://stackoverflow.com/q/61206083
+ */
+
+/**
+ * Raster image transformation options.
+ * @typedef {object} RasterImageTransformationOptions
+ * @property {RasterImageConversionFormat} [format] New format. Default: `webp`.
+ * @property {number} [quality] Image quality between 0 and 100. Default: 85.
+ * @property {number} [width] Max width. Default: original width.
+ * @property {number} [height] Max height. Default: original height.
+ */
+
+/**
+ * Raster image transformation option map.
+ * @typedef {Record<RasterImageFormat | 'raster_image', RasterImageTransformationOptions>
+ * } RasterImageTransformations
+ */
+
+/**
+ * Image transformation option map.
+ * @typedef {RasterImageTransformations} ImageTransformations
+ */
+
+/**
+ * File transformation option map.
+ * @typedef {ImageTransformations} FileTransformations
+ */
+
+/**
  * Configuration for the default media library.
  * @typedef {object} DefaultMediaLibraryOptions
  * @property {number} [max_file_size] Maximum file size in bytes that can be accepted for uploading.
+ * @property {FileTransformations} [transformations] File transformation option map. The key is an
+ * original format like `png` or `jpeg`. It can also be `raster_image` that matches any supported
+ * raster image format.
  * @see https://decapcms.org/docs/widgets/#file
  * @see https://decapcms.org/docs/widgets/#image
  */

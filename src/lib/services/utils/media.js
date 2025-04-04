@@ -2,8 +2,19 @@ import { isURL } from '@sveltia/utils/string';
 import { getUnpkgURL } from '$lib/services/app/dependencies';
 
 /**
- * @import { AssetKind } from '$lib/types/private';
+ * @import {
+ * AssetKind,
+ * ImageFitOption,
+ * InternalImageTransformationOptions,
+ * } from '$lib/types/private';
+ * @import { RasterImageConversionFormat, RasterImageFormat } from '$lib/types/public';
  */
+
+/** @type {RasterImageFormat[]} */
+export const rasterImageFormats = ['avif', 'bmp', 'gif', 'jpeg', 'png', 'webp'];
+export const rasterImageExtensionRegex = /\b(?:avif|bmp|gif|jpe?g|png|webp)$/i;
+/** @type {RasterImageConversionFormat[]} */
+export const rasterImageConversionFormats = ['webp'];
 
 /**
  * PDF.js distribution URL. We don’t bundle the library due to the large size and multiple files.
@@ -79,60 +90,168 @@ export const getMediaMetadata = (src, kind) => {
 export const formatDuration = (duration) => new Date(duration * 1000).toISOString().substr(11, 8);
 
 /**
- * Resize a canvas based on the given dimension.
- * @param {HTMLCanvasElement | OffscreenCanvas} canvas Canvas to be resized.
- * @param {number} width Source image width.
- * @param {number} height Source image height.
- * @param {number} [dimension] Maximum width/height of the canvas.
- * @returns {number} Scale.
+ * Calculate the size of resized canvas.
+ * @param {{ width: number, height: number }} source Source dimensions.
+ * @param {{ width?: number, height?: number, fit?: ImageFitOption }} [target] Target dimensions and
+ * fit option.
+ * @returns {{ scale: number, width: number, height: number }} Scale and new width/height.
  */
-const resizeCanvas = (canvas, width, height, dimension) => {
-  let scale = 1;
+export const calculateResize = (
+  { width: originalWidth, height: originalHeight },
+  {
+    width: targetWidth = originalWidth,
+    height: targetHeight = originalHeight,
+    fit = 'scale-down',
+  } = {},
+) => {
+  const original = { scale: 1, width: originalWidth, height: originalHeight };
 
-  if (dimension) {
-    if (width > height) {
-      scale = dimension / width;
-      canvas.width = dimension;
-      canvas.height = height * scale;
-    } else {
-      scale = dimension / height;
-      canvas.width = width * scale;
-      canvas.height = dimension;
-    }
-  } else {
-    canvas.width = width;
-    canvas.height = height;
+  if (originalWidth === targetHeight && originalHeight === targetHeight) {
+    return original;
   }
 
-  return scale;
+  const isLandscape = originalWidth > originalHeight;
+  const isSmaller = originalWidth < targetHeight || originalHeight < targetHeight;
+  let scale = 1;
+  let newWidth = 0;
+  let newHeight = 0;
+
+  if (fit === 'scale-down') {
+    if (isSmaller) {
+      return original;
+    }
+
+    fit = 'contain';
+  }
+
+  if (fit === 'contain') {
+    if (isLandscape) {
+      if (targetWidth > targetHeight) {
+        scale = targetWidth / originalWidth;
+        newWidth = targetWidth;
+      } else {
+        scale = targetHeight / originalWidth;
+        newWidth = targetHeight;
+      }
+
+      newHeight = originalHeight * scale;
+    } else {
+      if (targetWidth > targetHeight) {
+        scale = targetHeight / originalHeight;
+        newHeight = targetHeight;
+      } else {
+        scale = targetWidth / originalHeight;
+        newHeight = targetWidth;
+      }
+
+      newWidth = originalWidth * scale;
+    }
+  }
+
+  return { scale, width: newWidth, height: newHeight };
+};
+
+/**
+ * Resize a Canvas based on the given dimension.
+ * @param {HTMLCanvasElement | OffscreenCanvas} canvas Canvas to be resized.
+ * @param {{ width: number, height: number }} source Source dimensions.
+ * @param {{ width?: number, height?: number, fit?: ImageFitOption }} [target] Target dimensions and
+ * fit option.
+ * @returns {{ scale: number, width: number, height: number }} Scale and new width/height.
+ */
+const resizeCanvas = (canvas, source, target) => {
+  const { scale, width, height } = calculateResize(source, target);
+
+  canvas.width = width;
+  canvas.height = height;
+
+  return { scale, width, height };
+};
+
+/** @type {Record<string, boolean>} */
+const encodingSupportMap = {};
+
+/**
+ * Check if the browser supports `canvas.convertToBlob()` encoding for the given format.
+ * @param {string} format Format, like `webp`.
+ * @returns {Promise<boolean>} Result.
+ */
+const checkIfEncodingIsSupported = async (format) => {
+  if (format in encodingSupportMap) {
+    return encodingSupportMap[format];
+  }
+
+  const type = `image/${format}`;
+  const canvas = new OffscreenCanvas(1, 1);
+  // Need this for Chrome
+  // eslint-disable-next-line no-unused-vars
+  const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
+  const blob = await canvas.convertToBlob({ type });
+  const result = blob.type === type;
+
+  encodingSupportMap[format] = result;
+
+  return result;
+};
+
+/**
+ * Export Canvas data as an image blob. If the browser doesn’t support native encoding for the given
+ * format (e.g. WebP on Safari), use the jSquash library as fallback.
+ * @param {OffscreenCanvas} canvas Canvas to be exported.
+ * @param {object} [options] Options.
+ * @param {string} [options.format] Format, like `webp`.
+ * @param {number} [options.quality] Image quality between 0 and 100.
+ * @returns {Promise<Blob>} Image blob.
+ * @see https://github.com/jamsinclair/jSquash
+ */
+const exportCanvasAsBlob = async (canvas, { format = 'webp', quality = 85 } = {}) => {
+  const type = `image/${format}`;
+
+  if (
+    !(await checkIfEncodingIsSupported(format)) &&
+    /** @type {string[]} */ (rasterImageConversionFormats).includes(format)
+  ) {
+    const importURL = getUnpkgURL(`@jsquash/${format}`);
+    const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+    try {
+      /** @type {import('@jsquash/webp').encode} */
+      const encode = (await import(/* @vite-ignore */ `${importURL}/encode.js?module`)).default;
+      const buffer = await encode(imageData, { quality });
+
+      return new Blob([buffer], { type });
+    } catch {
+      //
+    }
+  }
+
+  return canvas.convertToBlob({ type, quality: quality / 100 });
 };
 
 /**
  * Convert the given image file to another format.
  * @param {File | Blob} blob Source file.
- * @param {object} [options] Options.
- * @param {'jpeg' | 'png' | 'webp'} [options.format] New image format. Default: PNG.
- * @param {number} [options.quality] Image quality between 0 and 1.
- * @param {number} [options.dimension] Maximum width/height of the image.
+ * @param {InternalImageTransformationOptions} [options] Options.
  * @returns {Promise<Blob>} New image file.
  * @throws {Error} If the file is not an image.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
  * @see https://stackoverflow.com/q/62909538
  */
-export const convertImage = async (
+export const transformImage = async (
   blob,
-  { format = 'png', quality = 1, dimension = undefined } = {},
+  { format = 'png', quality = 85, width = undefined, height = undefined, fit = 'scale-down' } = {},
 ) => {
   /** @type {CanvasImageSource} */
   let source;
   /** @type {number} */
-  let width = 0;
+  let naturalWidth = 0;
   /** @type {number} */
-  let height = 0;
+  let naturalHeight = 0;
 
   try {
     source = await createImageBitmap(blob);
-    ({ width, height } = source);
+    ({ width: naturalWidth, height: naturalHeight } = source);
   } catch {
     // Fall back to `<img>` or `<video>` when thrown; this includes SVG
     const blobURL = URL.createObjectURL(blob);
@@ -181,7 +300,7 @@ export const convertImage = async (
   const canvas = new OffscreenCanvas(512, 512);
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
 
-  resizeCanvas(canvas, width, height, dimension);
+  resizeCanvas(canvas, { width: naturalWidth, height: naturalHeight }, { fit, width, height });
   context.drawImage(source, 0, 0, canvas.width, canvas.height);
 
   // Clean up
@@ -189,16 +308,13 @@ export const convertImage = async (
     document.body.removeChild(source);
   }
 
-  return canvas.convertToBlob({ type: `image/${format}`, quality });
+  return exportCanvasAsBlob(canvas, { format, quality });
 };
 
 /**
  * Create a thumbnail image of a PDF document using PDF.js.
  * @param {File | Blob} blob Source file.
- * @param {object} [options] Options.
- * @param {'jpeg' | 'png' | 'webp'} [options.format] New image format. Default: PNG.
- * @param {number} [options.quality] Image quality between 0 and 1.
- * @param {number} [options.dimension] Maximum width/height of the image.
+ * @param {InternalImageTransformationOptions} [options] Options.
  * @returns {Promise<Blob>} Thumbnail blob.
  * @throws {Error} When the rendering failed.
  * @see https://github.com/mozilla/pdf.js/blob/master/examples/webpack/main.mjs
@@ -206,7 +322,7 @@ export const convertImage = async (
  */
 export const renderPDF = async (
   blob,
-  { format = 'png', quality = 1, dimension = undefined } = {},
+  { format = 'png', quality = 85, width = undefined, height = undefined, fit = 'scale-down' } = {},
 ) => {
   // Lazily load the PDF.js library
   if (!pdfjs) {
@@ -226,8 +342,12 @@ export const renderPDF = async (
     const pdfDocument = await pdfjs.getDocument({ ...pdfjsGetDocOptions, url }).promise;
     const pdfPage = await pdfDocument.getPage(1);
     const viewport = pdfPage.getViewport({ scale: 1 });
-    const { width, height } = viewport;
-    const scale = resizeCanvas(canvas, width, height, dimension);
+
+    const { scale } = resizeCanvas(
+      canvas,
+      { width: viewport.width, height: viewport.height },
+      { width, height, fit },
+    );
 
     await pdfPage.render({
       // @ts-ignore `OffscreenCanvas` is supported
@@ -240,7 +360,7 @@ export const renderPDF = async (
     throw new Error('Failed to render PDF');
   }
 
-  return canvas.convertToBlob({ type: `image/${format}`, quality });
+  return exportCanvasAsBlob(canvas, { format, quality });
 };
 
 /**

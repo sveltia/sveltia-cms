@@ -20,7 +20,11 @@
     getMediaFieldURL,
     getMediaKind,
   } from '$lib/services/assets';
-  import { getMaxFileSize } from '$lib/services/assets/media-library';
+  import {
+    getFileTransformations,
+    getMaxFileSize,
+    transformFile,
+  } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
   import { canDragDrop, formatSize } from '$lib/services/utils/file';
 
@@ -73,6 +77,7 @@
   let photoCredit = $state('');
   /** @type {DropZone | undefined} */
   let dropZone = $state();
+  let processing = $state(false);
 
   const {
     widget: widgetName,
@@ -81,6 +86,7 @@
   } = $derived(fieldConfig);
   const isImageWidget = $derived(widgetName === 'image');
   const maxFileSize = $derived(getMaxFileSize(fieldConfig));
+  const fileTransformations = $derived(getFileTransformations(fieldConfig));
   const collection = $derived($entryDraft?.collection);
   const entry = $derived($entryDraft?.originalEntry);
 
@@ -103,6 +109,7 @@
    * @param {SelectedAsset} selectedAsset Selected asset details.
    */
   const onAssetSelect = async (selectedAsset) => {
+    processing = true;
     resetSelection();
 
     ({ asset, file, url, credit } = selectedAsset);
@@ -116,13 +123,19 @@
         // uploading the same file twice
         asset = existingAsset;
         file = undefined;
-      } else if (file.size > maxFileSize) {
-        showSizeLimitDialog = true;
       } else {
-        // Set a temporary blob URL, which will be later replaced with the actual file path
-        currentValue = URL.createObjectURL(file);
-        // Cache the file itself for later upload
-        /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = file;
+        if (fileTransformations) {
+          file = await transformFile(file, fileTransformations);
+        }
+
+        if (file.size > maxFileSize) {
+          showSizeLimitDialog = true;
+        } else {
+          // Set a temporary blob URL, which will be later replaced with the actual file path
+          currentValue = URL.createObjectURL(file);
+          // Cache the file itself for later upload
+          /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = file;
+        }
       }
     }
 
@@ -138,6 +151,8 @@
       photoCredit = DOMPurify.sanitize(credit, { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href'] });
       showPhotoCreditDialog = true;
     }
+
+    processing = false;
   };
 
   /**
@@ -192,7 +207,7 @@
     }
   }}
 >
-  {#if currentValue}
+  {#if currentValue && !processing}
     <div role="none" class="filled">
       {#if kind && src}
         <AssetPreview {kind} {src} variant="tile" checkerboard={true} />
@@ -250,12 +265,12 @@
       </div>
     </div>
   {:else}
-    <div class="empty" class:invalid>
+    <div class="empty" class:invalid class:processing>
       <Button
         flex
         role="button"
         variant="tertiary"
-        disabled={readonly}
+        disabled={readonly || processing}
         tabindex="0"
         onclick={() => {
           if (!readonly) {
@@ -265,7 +280,11 @@
       >
         <Icon name="cloud_upload" />
         <div role="none">
-          {#if isImageWidget}
+          {#if processing}
+            <div role="status">
+              {$_('processing_file')}
+            </div>
+          {:else if isImageWidget}
             {$_(canDragDrop() ? 'drop_or_browse_image_file' : 'browse_file')}
           {:else}
             {$_(canDragDrop() ? 'drop_or_browse_file' : 'browse_file')}

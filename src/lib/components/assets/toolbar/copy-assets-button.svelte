@@ -2,7 +2,7 @@
   import { Alert, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import { convertImage } from '$lib/services/utils/media';
+  import { transformImage } from '$lib/services/utils/media';
   import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
 
   /**
@@ -95,7 +95,7 @@
     }
 
     if (blob.type !== 'image/png') {
-      blob = await convertImage(blob);
+      blob = await transformImage(blob);
     }
 
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);

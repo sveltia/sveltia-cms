@@ -12,6 +12,7 @@
  * GitBackendName,
  * I18nFileStructure,
  * LocaleCode,
+ * RasterImageFormat,
  * SelectField,
  * SiteConfig,
  * } from './public';
@@ -740,6 +741,33 @@
  * @property {InternalLocaleCode} [locale] Locale. Required if the `type` is `preview_path`.
  * @property {Record<string, string>} [dateTimeParts] Map of date/time parts. Required if the `type`
  * is `preview_path`.
+ */
+
+/**
+ * Supported image fit option.
+ * @typedef {'scale-down' | 'contain'} ImageFitOption
+ */
+
+/**
+ * Image transformation options used internally.
+ * @typedef {object} InternalImageTransformationOptions
+ * @property {RasterImageFormat} [format] New image format. Default: original format.
+ * @property {number} [quality] Image quality between 0 and 100. Default: 85.
+ * @property {number} [width] Width. Default: original width.
+ * @property {number} [height] Height. Default: original height.
+ * @property {ImageFitOption} [fit] Fit option. Default: `scale-down`.
+ * @see https://developers.cloudflare.com/images/transform-images/transform-via-url/
+ * @see https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types
+ */
+
+/**
+ * Shape of the `processedAssets` store.
+ * @typedef {object} ProcessedAssets
+ * @property {boolean} processing Whether the files are being processed.
+ * @property {File[]} undersizedFiles Files that can be uploaded.
+ * @property {File[]} oversizedFiles Files that cannot be uploaded due to the size limit.
+ * @property {WeakMap<File, File>} transformedFileMap Mapping of transformed files and the
+ * originals.
  */
 
 export {};

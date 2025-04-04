@@ -2,23 +2,22 @@
   import { Alert, ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import { showAssetOverlay, uploadingAssets } from '$lib/services/assets';
+  import { processedAssets, showAssetOverlay, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
   import { getMaxFileSize } from '$lib/services/assets/media-library';
   import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { formatSize } from '$lib/services/utils/file';
 
   /** @type {File[]} */
-  let uploadingFiles = $state([]);
-  /** @type {File[]} */
-  let oversizedFiles = $state([]);
+  let files = $state([]);
 
-  const { files, folder, originalAsset } = $derived($uploadingAssets);
+  const { files: originalFiles, folder, originalAsset } = $derived($uploadingAssets);
+  const { processing, undersizedFiles, oversizedFiles, transformedFileMap } =
+    $derived($processedAssets);
   const maxFileSize = $derived(getMaxFileSize());
 
   $effect(() => {
-    uploadingFiles = files.filter(({ size }) => size <= maxFileSize);
-    oversizedFiles = files.filter(({ size }) => size > maxFileSize);
+    files = [...undersizedFiles];
   });
 
   $effect(() => {
@@ -35,16 +34,21 @@
   open={$showUploadAssetsConfirmDialog}
   title={$_(originalAsset ? 'replace_asset' : 'upload_assets')}
   okLabel={$_(originalAsset ? 'replace' : 'upload')}
-  okDisabled={!uploadingFiles.length}
+  okDisabled={!files.length}
   onOk={async () => {
-    await saveAssets($uploadingAssets, { commitType: 'uploadMedia' });
+    await saveAssets({ files, folder, originalAsset }, { commitType: 'uploadMedia' });
     $uploadingAssets = { folder: undefined, files: [] };
   }}
   onCancel={() => {
     $uploadingAssets = { folder: undefined, files: [] };
   }}
 >
-  {#if uploadingFiles.length}
+  {#if processing}
+    <div role="status">
+      {$_(originalFiles.length === 1 ? 'processing_file' : 'processing_files')}
+    </div>
+  {/if}
+  {#if files.length}
     <div role="group" class="section uploading" aria-label={$_('uploading_files')}>
       <div role="none">
         {#if originalAsset}
@@ -52,12 +56,12 @@
             values: { name: originalAsset.name },
           })}
         {:else}
-          {$_(uploadingFiles.length === 1 ? 'confirm_uploading_file' : 'confirm_uploading_files', {
-            values: { count: uploadingFiles.length, folder: `/${folder}` },
+          {$_(files.length === 1 ? 'confirm_uploading_file' : 'confirm_uploading_files', {
+            values: { count: files.length, folder: `/${folder}` },
           })}
         {/if}
       </div>
-      <UploadAssetsPreview bind:files={uploadingFiles} />
+      <UploadAssetsPreview bind:files {transformedFileMap} />
     </div>
   {/if}
   {#if oversizedFiles.length}
@@ -67,7 +71,7 @@
           values: { size: formatSize(maxFileSize) },
         })}
       </Alert>
-      <UploadAssetsPreview bind:files={oversizedFiles} removable={false} />
+      <UploadAssetsPreview files={oversizedFiles} {transformedFileMap} removable={false} />
     </div>
   {/if}
 </ConfirmationDialog>

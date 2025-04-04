@@ -268,6 +268,8 @@ export const strings = {
   confirm_deleting_all_entries: 'すべてのエントリーを削除してもよろしいですか？',
   confirm_deleting_all_entries_with_assets:
     'すべてのエントリーと関連アセットを削除してもよろしいですか？',
+  processing_file: 'ファイルを処理しています。これには時間がかかる場合があります。',
+  processing_files: 'ファイルを処理しています。これには時間がかかる場合があります。',
   uploading_files: 'アップロード対象ファイル',
   confirm_replacing_file: '「{name}」を以下のファイルと差し替えてもよろしいですか？',
   confirm_uploading_file: '以下のファイルを「{folder}」フォルダーに保存してもよろしいですか？',
@@ -278,6 +280,8 @@ export const strings = {
     'このファイルは最大サイズ {size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。',
   warning_oversized_files:
     'これらのファイルは最大サイズ {size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください',
+  file_meta: '{type} · {size}',
+  file_meta_converted_from_x: '({type} から変換)',
   no_entries_created: 'このコレクションにはまだエントリーがありません。',
   create_new_entry: '新しいエントリーを作成',
   no_files_in_collection: 'このコレクションにはファイルがありません。',
