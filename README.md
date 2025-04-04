@@ -478,7 +478,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
 - Enhancements to media library integrations:
-  - The default media library comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images uploaded by users are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200]
+  - The default media library comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images uploaded by users are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
   - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
   - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
@@ -975,9 +975,13 @@ media_libraries:
           quality: 85 # default: 85
           width: 2048 # default: original size
           height: 2048 # default: original size
+        svg:
+          optimize: true
 ```
 
-Then, whenever a user selects images to upload, those images are automatically converted to WebP format and resized if necessary, all within the browser. In case you’re not aware, [WebP](https://developers.google.com/speed/webp) offers better compression than JPEG and PNG and is now [widely supported](https://caniuse.com/webp) across major browsers.
+Then, whenever a user selects images to upload, those images are automatically optimized, all within the browser. Raster images such as PNG and JPEG are automatically converted to WebP format and resized if necessary. SVG images are minified using the [SVGO](https://github.com/svg/svgo) library.
+
+In case you’re not aware, [WebP](https://developers.google.com/speed/webp) offers better compression than JPEG and PNG and is now [widely supported](https://caniuse.com/webp) across major browsers. So there is no reason not to use WebP on the web.
 
 - As [noted above](#configuring-multiple-media-libraries), the `media_libraries` option can be global at the root level of `config.yml`, which applies to both entry fields and the Asset Library, or field-specific for the File/Image widgets.
 - `raster_image` applies to any supported raster image format: `avif`, `bmp`, `gif`, `jpeg`, `png` and `webp`. If you like, you can use a specific format as key instead of `raster_image`.
@@ -985,7 +989,7 @@ Then, whenever a user selects images to upload, those images are automatically c
 - File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported and a [third-party library](https://github.com/jamsinclair/jSquash) is used instead.
 - AVIF conversion is not supported at this time because no browser has native encoding support and the library is very slow.
 - This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process.
-- We may add more transformation options in the future, such as SVG minification.
+- We may add more transformation options in the future.
 
 ### Editing data files with a top-level list
 
