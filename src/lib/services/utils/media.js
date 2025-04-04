@@ -285,6 +285,12 @@ export const transformImage = async (
           'load',
           () => {
             ({ naturalWidth: width, naturalHeight: height } = image);
+
+            // Fix naturalWidth/Height for SVG
+            if (naturalWidth === 0 || naturalHeight === 0) {
+              ({ naturalWidth, naturalHeight } = image);
+            }
+
             resolve(image);
           },
           { once: true },
