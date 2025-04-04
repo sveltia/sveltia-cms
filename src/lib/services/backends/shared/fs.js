@@ -203,15 +203,16 @@ export const saveChanges = async (rootDirHandle, changes) =>
             await getHandleByPath(rootDirHandle, path)
           );
 
-          const writer = await fileHandle.createWritable();
+          // The `createWritable` method is not yet supported by Safari
+          const writer = await fileHandle.createWritable?.();
 
           try {
-            await writer.write(data);
+            await writer?.write(data);
           } catch {
             // Can throw if the file has just been moved/renamed without any change, and then the
             // `data` is no longer available
           } finally {
-            await writer.close();
+            await writer?.close();
           }
 
           return fileHandle.getFile();

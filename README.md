@@ -227,7 +227,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
-- The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194]
+- The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage is not yet supported in Safari.
 
 ### Better i18n support
 
@@ -577,6 +577,7 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 ### Other notes
 
 - Make sure you’re using the latest stable version of a modern web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not officially supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
+- The persistent storage for the Test backend is not yet supported in Safari.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
 - Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked.
