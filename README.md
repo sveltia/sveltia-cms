@@ -963,7 +963,7 @@ media_libraries:
 
 ### Optimizing images for upload
 
-Ever wanted to prevent end-users from adding huge images to your repository? The built-in optimizer in Sveltia CMS makes developers’ lives easier with a simple configuration like this:
+Ever wanted to prevent end-users from adding huge images to your repository? The built-in image optimizer in Sveltia CMS makes developers’ lives easier with a simple configuration like this:
 
 ```yaml
 media_libraries:
@@ -979,15 +979,15 @@ media_libraries:
           optimize: true
 ```
 
-Then, whenever a user selects images to upload, those images are automatically optimized, all within the browser. Raster images such as JPEG and PNG are automatically converted to WebP format and resized if necessary. SVG images are minified using the [SVGO](https://github.com/svg/svgo) library.
+Then, whenever a user selects images to upload, those images are automatically optimized, all within the browser. Raster images such as JPEG and PNG are converted to WebP format and resized if necessary. SVG images are minified using the [SVGO](https://github.com/svg/svgo) library.
 
-In case you’re not aware, [WebP](https://developers.google.com/speed/webp) offers better compression than JPEG and PNG and is now [widely supported](https://caniuse.com/webp) across major browsers. So there is no reason not to use WebP on the web.
+In case you’re not aware, [WebP](https://developers.google.com/speed/webp) offers better compression than conventional formats and is now [widely supported](https://caniuse.com/webp) across major browsers. So there is no reason not to use WebP on the web.
 
 - As [noted above](#configuring-multiple-media-libraries), the `media_libraries` option can be global at the root level of `config.yml`, which applies to both entry fields and the Asset Library, or field-specific for the File/Image widgets.
 - `raster_image` applies to any supported raster image format: `avif`, `bmp`, `gif`, `jpeg`, `png` and `webp`. If you like, you can use a specific format as key instead of `raster_image`.
 - The `width` and `height` options are the maximum width and height, respectively. If an image is larger than the specified dimension, it will be scaled down. Smaller images will not be resized.
-- File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported and a [third-party library](https://github.com/jamsinclair/jSquash) is used instead.
-- AVIF conversion is not supported at this time because no browser has native encoding support and the library is very slow.
+- File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported and the [jSquash library](https://github.com/jamsinclair/jSquash) is used instead.
+- AVIF conversion is not supported at this time because no browser has native encoding support and the third-party library is very slow.
 - This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process.
 - We may add more transformation options in the future.
 
