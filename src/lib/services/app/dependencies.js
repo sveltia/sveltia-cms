@@ -11,3 +11,12 @@ export const getUnpkgURL = (name) => {
 
   return version ? `${url}@${version}` : url;
 };
+
+/**
+ * Load an ES module of a third-party library from UNPKG.
+ * @param {string} library Library name.
+ * @param {string} path Absolute path of the module.
+ * @returns {Promise<any>} Module.
+ */
+export const loadModule = async (library, path) =>
+  import(/* @vite-ignore */ `${getUnpkgURL(library)}${path}`);

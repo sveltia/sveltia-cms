@@ -7,7 +7,7 @@ import {
   rasterImageExtensionRegex,
   rasterImageFormats,
   transformImage,
-} from '$lib/services/utils/media';
+} from '$lib/services/utils/media/image';
 
 /**
  * @import {

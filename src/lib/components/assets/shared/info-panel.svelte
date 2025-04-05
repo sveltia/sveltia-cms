@@ -11,7 +11,7 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { dateFormatOptions, timeFormatOptions } from '$lib/services/utils/date';
   import { formatSize } from '$lib/services/utils/file';
-  import { formatDuration } from '$lib/services/utils/media';
+  import { formatDuration } from '$lib/services/utils/media/video';
 
   /**
    * @import { Asset, AssetDetails } from '$lib/types/private';

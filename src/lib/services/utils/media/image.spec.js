@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { calculateResize } from '$lib/services/utils/media';
+import { calculateResize } from '$lib/services/utils/media/image';
 
 describe('Test calculateResize()', () => {
   test('scale-down', () => {

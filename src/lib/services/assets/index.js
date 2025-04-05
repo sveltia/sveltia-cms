@@ -17,7 +17,9 @@ import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries'
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { createPath, decodeFilePath, encodeFilePath, resolvePath } from '$lib/services/utils/file';
-import { getMediaMetadata, renderPDF, transformImage } from '$lib/services/utils/media';
+import { getMediaMetadata } from '$lib/services/utils/media';
+import { transformImage } from '$lib/services/utils/media/image';
+import { renderPDF } from '$lib/services/utils/media/pdf';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
