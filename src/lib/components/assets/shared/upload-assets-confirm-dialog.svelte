@@ -4,7 +4,7 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { processedAssets, showAssetOverlay, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
-  import { getMaxFileSize } from '$lib/services/assets/media-library';
+  import { getMediaLibraryConfig } from '$lib/services/assets/media-library';
   import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { formatSize } from '$lib/services/utils/file';
 
@@ -14,7 +14,7 @@
   const { files: originalFiles, folder, originalAsset } = $derived($uploadingAssets);
   const { processing, undersizedFiles, oversizedFiles, transformedFileMap } =
     $derived($processedAssets);
-  const maxFileSize = $derived(getMaxFileSize());
+  const { maxFileSize } = $derived(getMediaLibraryConfig());
 
   $effect(() => {
     files = [...undersizedFiles];

@@ -11,61 +11,41 @@ import {
 
 /**
  * @import {
+ * DefaultMediaLibraryOptions,
  * FileField,
  * FileTransformations,
  * ImageField,
+ * MediaLibraryName,
  * RasterImageTransformationOptions,
  * } from '$lib/types/public';
  */
 
 /**
- * Get a default media library option. Support both new and legacy options at the field level and
- * global.
- * @param {'max_file_size' | 'transformations'} key Option key.
- * @param {ImageField | FileField} [fieldConfig] Field configuration.
- * @returns {any} Option.
+ * Get normalized default media library options. Support both new and legacy options at the field
+ * level and global.
+ * @param {object} [options] Options.
+ * @param {MediaLibraryName} [options.libraryName] Library name.
+ * @param {ImageField | FileField} [options.fieldConfig] Field configuration.
+ * @returns {{ maxFileSize: number, fileTransformations?: FileTransformations }} Options.
+ * @todo Support Cloudinary and Uploadcare.
  */
-const getMediaLibraryOption = (key, fieldConfig) => {
+export const getMediaLibraryConfig = ({ libraryName = 'default', fieldConfig } = {}) => {
   const _siteConfig = get(siteConfig);
 
-  return (
-    fieldConfig?.media_libraries?.default?.config?.[key] ??
-    fieldConfig?.media_library?.config?.[key] ??
-    _siteConfig?.media_libraries?.default?.config?.[key] ??
-    (_siteConfig?.media_library?.name === 'default'
-      ? _siteConfig.media_library.config?.[key]
-      : undefined)
-  );
-};
+  /** @type {DefaultMediaLibraryOptions | undefined} */
+  const { max_file_size: max, transformations } =
+    fieldConfig?.media_libraries?.[libraryName]?.config ??
+    fieldConfig?.media_library?.config ??
+    _siteConfig?.media_libraries?.[libraryName]?.config ??
+    (_siteConfig?.media_library?.name === libraryName
+      ? _siteConfig.media_library.config
+      : undefined) ??
+    {};
 
-/**
- * Get the maximum file size for uploads.
- * @param {ImageField | FileField} [fieldConfig] Field configuration.
- * @returns {number} Size.
- */
-export const getMaxFileSize = (fieldConfig) => {
-  const size = getMediaLibraryOption('max_file_size', fieldConfig);
-
-  if (typeof size === 'number' && Number.isInteger(size)) {
-    return size;
-  }
-
-  return Infinity;
-};
-
-/**
- * Get file transformation options.
- * @param {ImageField | FileField} [fieldConfig] Field configuration.
- * @returns {FileTransformations | undefined} Options.
- */
-export const getFileTransformations = (fieldConfig) => {
-  const option = getMediaLibraryOption('transformations', fieldConfig);
-
-  if (isObject(option)) {
-    return option;
-  }
-
-  return undefined;
+  return {
+    maxFileSize: typeof max === 'number' && Number.isInteger(max) ? max : Infinity,
+    fileTransformations: isObject(transformations) ? transformations : undefined,
+  };
 };
 
 /**

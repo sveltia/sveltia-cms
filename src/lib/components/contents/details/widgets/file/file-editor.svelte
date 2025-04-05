@@ -20,11 +20,7 @@
     getMediaFieldURL,
     getMediaKind,
   } from '$lib/services/assets';
-  import {
-    getFileTransformations,
-    getMaxFileSize,
-    transformFile,
-  } from '$lib/services/assets/media-library';
+  import { getMediaLibraryConfig, transformFile } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
   import { canDragDrop, formatSize } from '$lib/services/utils/file';
 
@@ -85,8 +81,7 @@
     choose_url: canEnterURL = true,
   } = $derived(fieldConfig);
   const isImageWidget = $derived(widgetName === 'image');
-  const maxFileSize = $derived(getMaxFileSize(fieldConfig));
-  const fileTransformations = $derived(getFileTransformations(fieldConfig));
+  const { maxFileSize, fileTransformations } = $derived(getMediaLibraryConfig({ fieldConfig }));
   const collection = $derived($entryDraft?.collection);
   const entry = $derived($entryDraft?.originalEntry);
 

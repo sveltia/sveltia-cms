@@ -4,11 +4,7 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
-import {
-  getFileTransformations,
-  getMaxFileSize,
-  transformFile,
-} from '$lib/services/assets/media-library';
+import { getMediaLibraryConfig, transformFile } from '$lib/services/assets/media-library';
 import { backend } from '$lib/services/backends';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
@@ -106,8 +102,7 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
 
   const originalFiles = _uploadingAssets.files;
   const transformedFileMap = new WeakMap();
-  const fileTransformations = getFileTransformations();
-  const maxFileSize = getMaxFileSize();
+  const { maxFileSize, fileTransformations } = getMediaLibraryConfig();
   /** @type {File[]} */
   let files = [];
 
