@@ -1006,8 +1006,8 @@ In case you’re not aware, [WebP](https://developers.google.com/speed/webp) off
 - As [noted above](#configuring-multiple-media-libraries), the `media_libraries` option can be global at the root level of `config.yml`, which applies to both entry fields and the Asset Library, or field-specific for the File/Image widgets.
 - `raster_image` applies to any supported raster image format: `avif`, `bmp`, `gif`, `jpeg`, `png` and `webp`. If you like, you can use a specific format as key instead of `raster_image`.
 - The `width` and `height` options are the maximum width and height, respectively. If an image is larger than the specified dimension, it will be scaled down. Smaller images will not be resized.
-- File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported and the [jSquash](https://github.com/jamsinclair/jSquash) library is used instead.
-- AVIF conversion is not supported because no browser has native AVIF encoding support ([Chromium won’t fix it](https://issues.chromium.org/issues/40848792)) and the third-party library is very slow.
+- File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is [not supported](https://bugs.webkit.org/show_bug.cgi?id=183257) and the [jSquash](https://github.com/jamsinclair/jSquash) library is used instead.
+- AVIF conversion is not supported because no browser has native AVIF encoding support ([Chromium won’t fix it](https://issues.chromium.org/issues/40848792)) and the third-party library (and AVIF encoding in general) is very slow.
 - This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process.
 - We may add more transformation options in the future.
 
