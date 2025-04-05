@@ -42,9 +42,12 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Better customization](#better-customization)
   - [Better localization](#better-localization)
 - [Compatibility](#compatibility)
-  - [Features not to be implemented](#features-not-to-be-implemented)
-  - [Current limitations](#current-limitations)
+  - [Compatibility with Netlify CMS \& Decap CMS](#compatibility-with-netlify-cms--decap-cms)
+    - [Features not to be implemented](#features-not-to-be-implemented)
+    - [Current limitations](#current-limitations)
   - [Compatibility with Static CMS](#compatibility-with-static-cms)
+  - [Framework support](#framework-support)
+  - [Browser support](#browser-support)
   - [Other notes](#other-notes)
 - [Getting started](#getting-started)
   - [Installation \& setup](#installation--setup)
@@ -120,7 +123,7 @@ Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system that involves various kinds of activities that require considerable effort:
 
-- Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
+- Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility-with-netlify-cms--decap-cms)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 190+ issues, or 380+ if including duplicates, have been effectively solved in Sveltia CMS
@@ -158,7 +161,6 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 ### Better performance
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
-  - The CMS is compiled and distributed as vanilla JavaScript. You can use it with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 - Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though some Netlify/Decap CMS features are [omitted](#features-not-to-be-implemented) or [unimplemented](#current-limitations) in Sveltia CMS, we have added a lot of new features. That’s the power of [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) + [Vite](https://vite.dev/).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
@@ -230,7 +232,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
-- The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage is not yet supported in Safari.
+- The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] Persistent storage is not yet supported in Safari.
 
 ### Better i18n support
 
@@ -507,11 +509,13 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ## Compatibility
 
+### Compatibility with Netlify CMS & Decap CMS
+
 We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern alternative. It’s ready to be used as a drop-in replacement for Netlify/Decap CMS in some casual use case scenarios with a [single line of code update](#migration).
 
 However, 100% feature parity is not planned, and some features are still missing or will not be added due to performance, deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
 
-### Features not to be implemented
+#### Features not to be implemented
 
 - **The Azure, Bitbucket, Gitea/Forgejo and Git Gateway backends**: For performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
@@ -537,7 +541,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - Any other undocumented options/features. Exceptions apply.
 
-### Current limitations
+#### Current limitations
 
 These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release.
 
@@ -578,10 +582,20 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 - Customization
   - `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
 
+### Framework support
+
+Sveltia CMS is **framework-agnostic** because it’s distributed as compiled vanilla JavaScript and only manages content. You can use the app with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
+
+### Browser support
+
+Sveitia CMS works with all modern browsers, but there are a few limitations because it utilizes some new web technologies:
+
+- The [local repository workflow](#working-with-a-local-git-repository) requires a Chromium-based browser, including Chrome, Edge and Brave.
+- Safari: The Test backend doesn’t save changes locally; [image optimization](#optimizing-images-for-upload) is slower than in other browsers.
+- Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not officially supported, although they may still work.
+
 ### Other notes
 
-- Make sure you’re using the latest stable version of a modern web browser. Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not officially supported, although they may still work. The [local repository workflow](#working-with-a-local-git-repository) requires Chrome, Edge or another Chromium-based browser.
-- The persistent storage for the Test backend is not yet supported in Safari.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
 - Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked.
@@ -609,7 +623,7 @@ The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/sta
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository. Your new `<script>` tag is:
+Have a look at the [compatibility info](#compatibility-with-netlify-cms--decap-cms) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository. Your new `<script>` tag is:
 
 ```html
 <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
@@ -1224,7 +1238,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### Before the 1.0 release
 
-- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
+- Enhanced [compatibility with Netlify/Decap CMS](#compatibility-with-netlify-cms--decap-cms)
 - Tackling some more Netlify/Decap CMS issues
 - Accessibility audit
 - Developer documentation (implementation guide)
