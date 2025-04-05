@@ -42,9 +42,8 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
   - [Better customization](#better-customization)
   - [Better localization](#better-localization)
 - [Compatibility](#compatibility)
-  - [Compatibility with Netlify CMS \& Decap CMS](#compatibility-with-netlify-cms--decap-cms)
-    - [Features not to be implemented](#features-not-to-be-implemented)
-    - [Current limitations](#current-limitations)
+  - [Features not to be implemented](#features-not-to-be-implemented)
+  - [Current limitations](#current-limitations)
   - [Compatibility with Static CMS](#compatibility-with-static-cms)
   - [Framework support](#framework-support)
   - [Browser support](#browser-support)
@@ -123,7 +122,7 @@ Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system that involves various kinds of activities that require considerable effort:
 
-- Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility-with-netlify-cms--decap-cms)
+- Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 190+ issues, or 380+ if including duplicates, have been effectively solved in Sveltia CMS
@@ -509,13 +508,11 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ## Compatibility
 
-### Compatibility with Netlify CMS & Decap CMS
-
 We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern alternative. It’s ready to be used as a drop-in replacement for Netlify/Decap CMS in some casual use case scenarios with a [single line of code update](#migration).
 
 However, 100% feature parity is not planned, and some features are still missing or will not be added due to performance, deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
 
-#### Features not to be implemented
+### Features not to be implemented
 
 - **The Azure, Bitbucket, Gitea/Forgejo and Git Gateway backends**: For performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
@@ -541,7 +538,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - Any other undocumented options/features. Exceptions apply.
 
-#### Current limitations
+### Current limitations
 
 These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release.
 
@@ -560,6 +557,8 @@ Due to the complexity, the following features will be added after the 1.0 releas
 - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
 - [Nested Collections](https://decapcms.org/docs/collection-nested/)
+
+Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
 ### Compatibility with Static CMS
 
@@ -598,7 +597,6 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - The GitLab backend requires GitLab 16.3 or later.
-- Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
 ## Getting started
 
@@ -623,7 +621,7 @@ The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/sta
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility-with-netlify-cms--decap-cms) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository. Your new `<script>` tag is:
+Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository. Your new `<script>` tag is:
 
 ```html
 <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
@@ -1238,7 +1236,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### Before the 1.0 release
 
-- Enhanced [compatibility with Netlify/Decap CMS](#compatibility-with-netlify-cms--decap-cms)
+- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling some more Netlify/Decap CMS issues
 - Accessibility audit
 - Developer documentation (implementation guide)
