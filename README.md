@@ -12,7 +12,9 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
 
 ![Screenshot: Full Fledged Asset Library; First Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250131)<br>
 
-![Screenshot: GitHub, GitLab; Streamlined Local Repository Workflow; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250131)<br>
+![Screenshot: GitHub, GitLab; Streamlined Local Repository Workflow; WebP, SVGO; Built-In Image Optimizer](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250404)<br>
+
+![Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250404)<br>
 
 ## Table of contents
 
@@ -477,8 +479,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library.[^5]
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
-- Enhancements to media library integrations:
-  - The default media library comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images uploaded by users are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
+- Enhancements to media libraries:
+  - The default media library comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images selected by users for upload are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
   - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
   - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
@@ -986,8 +988,8 @@ In case you’re not aware, [WebP](https://developers.google.com/speed/webp) off
 - As [noted above](#configuring-multiple-media-libraries), the `media_libraries` option can be global at the root level of `config.yml`, which applies to both entry fields and the Asset Library, or field-specific for the File/Image widgets.
 - `raster_image` applies to any supported raster image format: `avif`, `bmp`, `gif`, `jpeg`, `png` and `webp`. If you like, you can use a specific format as key instead of `raster_image`.
 - The `width` and `height` options are the maximum width and height, respectively. If an image is larger than the specified dimension, it will be scaled down. Smaller images will not be resized.
-- File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported and the [jSquash library](https://github.com/jamsinclair/jSquash) is used instead.
-- AVIF conversion is not supported at this time because no browser has native encoding support and the third-party library is very slow.
+- File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is not yet supported and the [jSquash](https://github.com/jamsinclair/jSquash) library is used instead.
+- AVIF conversion is not supported because no browser has native AVIF encoding support ([Chromium won’t fix it](https://issues.chromium.org/issues/40848792)) and the third-party library is very slow.
 - This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process.
 - We may add more transformation options in the future.
 
