@@ -585,7 +585,9 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 
 ### Framework support
 
-Sveltia CMS is **framework-agnostic** because it’s distributed as compiled vanilla JavaScript and only manages content. You can use the app with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
+While Sveltia CMS is built with Svelte, the application is **framework-agnostic** because it’s distributed as compiled vanilla JavaScript and is a pure headless CMS that only manages content in Git repositories.
+
+You can use the CMS with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 
 ### Browser support
 
