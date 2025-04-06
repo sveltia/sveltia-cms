@@ -13,7 +13,8 @@
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
-  import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
+  import { isSmallScreen } from '$lib/services/app/env';
+  import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
   import {
     allAssetFolders,
     allAssets,
@@ -23,13 +24,20 @@
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
+  import { showSearchBar } from '$lib/services/search';
 
   const routeRegex =
-    /^\/assets(?:\/(?<folderPath>[/\-\w]+))?(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?$/;
+    /^\/assets(?:\/(?<folderPath>[/\-\w]+)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
+
+  let isIndexPage = $state(false);
 
   const selectedAssetFolderLabel = $derived(
     getFolderLabelByPath($selectedAssetFolder?.internalPath),
   );
+
+  $effect(() => {
+    $showSearchBar = !$isSmallScreen || isIndexPage;
+  });
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.
@@ -39,13 +47,28 @@
     const { path } = parseLocation();
     const match = path.match(routeRegex);
 
+    isIndexPage = false;
+
     if (!match?.groups) {
-      return;
+      return; // Different page
     }
 
     const { folderPath, fileName } = match.groups;
 
     if (!folderPath) {
+      if ($isSmallScreen) {
+        // Show the asset folder list only
+        $selectedAssetFolder = undefined;
+        isIndexPage = true;
+      } else {
+        // Redirect to All Assets
+        goto('/assets/all');
+      }
+
+      return;
+    }
+
+    if (folderPath === 'all') {
       $selectedAssetFolder = undefined;
     } else if ($selectedAssetFolder?.internalPath !== folderPath) {
       const folder = $allAssetFolders.find(({ internalPath }) => folderPath === internalPath);
@@ -97,33 +120,37 @@
 
 <PageContainer class="media" aria-label={$_('asset_library')}>
   {#snippet primarySidebar()}
-    <PrimarySidebar />
+    {#if !$isSmallScreen || isIndexPage}
+      <PrimarySidebar />
+    {/if}
   {/snippet}
   {#snippet main()}
-    <Group
-      id="assets-container"
-      class="main"
-      aria-label={$_('x_asset_folder', {
-        values: { folder: selectedAssetFolderLabel },
-      })}
-    >
-      <PageContainerMainArea>
-        {#snippet primaryToolbar()}
-          <PrimaryToolbar />
-        {/snippet}
-        {#snippet secondaryToolbar()}
-          {#if $listedAssets.length}
-            <SecondaryToolbar />
-          {/if}
-        {/snippet}
-        {#snippet mainContent()}
-          <AssetList />
-        {/snippet}
-        {#snippet secondarySidebar()}
-          <SecondarySidebar />
-        {/snippet}
-      </PageContainerMainArea>
-    </Group>
+    {#if !$isSmallScreen || !isIndexPage}
+      <Group
+        id="assets-container"
+        class="main"
+        aria-label={$_('x_asset_folder', {
+          values: { folder: selectedAssetFolderLabel },
+        })}
+      >
+        <PageContainerMainArea>
+          {#snippet primaryToolbar()}
+            <PrimaryToolbar />
+          {/snippet}
+          {#snippet secondaryToolbar()}
+            {#if $listedAssets.length}
+              <SecondaryToolbar />
+            {/if}
+          {/snippet}
+          {#snippet mainContent()}
+            <AssetList />
+          {/snippet}
+          {#snippet secondarySidebar()}
+            <SecondarySidebar />
+          {/snippet}
+        </PageContainerMainArea>
+      </Group>
+    {/if}
   {/snippet}
 </PageContainer>
 

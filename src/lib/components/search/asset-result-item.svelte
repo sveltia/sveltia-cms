@@ -36,6 +36,8 @@
     {$appLocale ? getFolderLabelByPath(folder) : ''}
   </GridCell>
   <GridCell class="title">
-    {name}
+    <span role="none" class="label">
+      {name}
+    </span>
   </GridCell>
 </GridRow>

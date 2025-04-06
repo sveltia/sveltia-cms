@@ -12,12 +12,14 @@
   /**
    * @typedef {object} Props
    * @property {Asset[]} [assets] Selected assets.
+   * @property {boolean} [useButton] Whether to use the Button component.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     assets = [],
+    useButton = true,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -128,37 +130,49 @@
   });
 </script>
 
-<MenuButton
-  variant="ghost"
-  disabled={!assets.length}
-  label={$_('copy')}
-  popupPosition="bottom-right"
->
-  {#snippet popup()}
-    <Menu aria-label={$_('copy_options')}>
-      <MenuItem
-        label={singleAsset ? $_('public_url') : $_('public_urls')}
-        disabled={!publicURLs.length}
-        onclick={() => {
-          doCopyAction(copyPublicURLs, $_('asset_url_copied'), $_('asset_urls_copied'));
-        }}
-      />
-      <MenuItem
-        label={singleAsset ? $_('file_path') : $_('file_paths')}
-        onclick={() => {
-          doCopyAction(copyFilePaths, $_('asset_path_copied'), $_('asset_paths_copied'));
-        }}
-      />
-      <MenuItem
-        label={$_('file_data')}
-        disabled={!canCopyFileData}
-        onclick={() => {
-          doCopyAction(copyFileData, $_('asset_data_copied'), $_('asset_data_copied'));
-        }}
-      />
-    </Menu>
-  {/snippet}
-</MenuButton>
+{#snippet menuItems()}
+  <MenuItem
+    label={singleAsset ? $_('public_url') : $_('public_urls')}
+    disabled={!publicURLs.length}
+    onclick={() => {
+      doCopyAction(copyPublicURLs, $_('asset_url_copied'), $_('asset_urls_copied'));
+    }}
+  />
+  <MenuItem
+    label={singleAsset ? $_('file_path') : $_('file_paths')}
+    onclick={() => {
+      doCopyAction(copyFilePaths, $_('asset_path_copied'), $_('asset_paths_copied'));
+    }}
+  />
+  <MenuItem
+    label={$_('file_data')}
+    disabled={!canCopyFileData}
+    onclick={() => {
+      doCopyAction(copyFileData, $_('asset_data_copied'), $_('asset_data_copied'));
+    }}
+  />
+{/snippet}
+
+{#if useButton}
+  <MenuButton
+    variant="ghost"
+    disabled={!assets.length}
+    label={$_('copy')}
+    popupPosition="bottom-right"
+  >
+    {#snippet popup()}
+      <Menu aria-label={$_('copy_options')}>
+        {@render menuItems()}
+      </Menu>
+    {/snippet}
+  </MenuButton>
+{:else}
+  <MenuItem disabled={!assets.length} label={$_('copy')} popupPosition="left-top">
+    {#snippet items()}
+      {@render menuItems()}
+    {/snippet}
+  </MenuItem>
+{/if}
 
 <Toast bind:show={toast.show}>
   <Alert status={toast.status}>{toast.text}</Alert>

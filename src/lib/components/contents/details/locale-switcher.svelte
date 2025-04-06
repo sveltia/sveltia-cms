@@ -1,7 +1,8 @@
 <script>
-  import { Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
+  import { Button, Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { entryDraft } from '$lib/services/contents/draft';
   import { entryEditorSettings } from '$lib/services/contents/draft/editor';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
@@ -31,7 +32,9 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   const listedLocales = $derived(
-    allLocales.filter((locale) => !($thatPane?.mode === 'edit' && $thatPane.locale === locale)),
+    $isSmallScreen
+      ? [...allLocales]
+      : allLocales.filter((locale) => !($thatPane?.mode === 'edit' && $thatPane.locale === locale)),
   );
   const hasAnyError = $derived(
     Object.entries($entryDraft?.validities ?? {}).some(
@@ -41,7 +44,7 @@
     ),
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
-  const useDropDown = $derived(allLocales.length >= 5);
+  const useDropDown = $derived($isSmallScreen || allLocales.length >= 5);
   const SelectComponent = $derived(useDropDown ? Select : SelectButtonGroup);
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);
   const variant = $derived(useDropDown ? undefined : 'tertiary');
@@ -102,6 +105,24 @@
       {/if}
     </div>
   </SelectComponent>
+  {#if $isSmallScreen}
+    <Button
+      variant="ghost"
+      iconic
+      aria-label={$_('preview')}
+      pressed={$thisPane?.mode === 'preview'}
+      onclick={() => {
+        $thisPane = {
+          mode: $thisPane?.mode === 'preview' ? 'edit' : 'preview',
+          locale: $thisPane?.locale ?? '',
+        };
+      }}
+    >
+      {#snippet startIcon()}
+        <Icon name="visibility" />
+      {/snippet}
+    </Button>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -110,6 +131,14 @@
 
     :global(.combobox.error [role='combobox']) {
       border-color: var(--sui-error-border-color);
+    }
+
+    :global(.combobox) {
+      @media (width < 768px) {
+        min-width: 128px;
+        --sui-textbox-height: 32px;
+        --sui-button-medium-height: 32px;
+      }
     }
   }
 

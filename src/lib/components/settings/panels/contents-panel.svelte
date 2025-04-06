@@ -1,9 +1,11 @@
 <script>
-  import { TabPanel, TextInput } from '@sveltia/ui';
+  import { TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
+  import PrefSwitch from '$lib/components/settings/controls/pref-switch.svelte';
+  import { siteConfig } from '$lib/services/config';
+  import { allTranslationServices } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/user/prefs';
-  import { allStockPhotoServices } from '$lib/services/integrations/media-libraries';
 
   /**
    * @typedef {object} Props
@@ -18,16 +20,26 @@
   } = $props();
 </script>
 
-<TabPanel id="prefs-tab-media">
-  {#each Object.entries(allStockPhotoServices) as [serviceId, service] (serviceId)}
+<section>
+  <h4>{$_('prefs.contents.editor.title')}</h4>
+  <div role="none">
+    <PrefSwitch
+      key="useDraftBackup"
+      label={$_('prefs.contents.editor.use_draft_backup.switch_label')}
+    />
+  </div>
+  <div role="none">
+    <PrefSwitch key="closeOnSave" label={$_('prefs.contents.editor.close_on_save.switch_label')} />
+  </div>
+</section>
+{#if ($siteConfig?.i18n?.locales?.length ?? 0) > 1}
+  {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
     {@const { serviceLabel, developerURL, apiKeyURL } = service}
     <section>
-      <h4>
-        {$_('prefs.media.stock_photos.title', { values: { service: serviceLabel } })}
-      </h4>
+      <h4>{$_('prefs.contents.translator.title', { values: { service: serviceLabel } })}</h4>
       <p>
         {@html DOMPurify.sanitize(
-          $_('prefs.media.stock_photos.description', {
+          $_('prefs.contents.translator.description', {
             values: {
               service: serviceLabel,
               homeHref: `href="${developerURL}"`,
@@ -43,7 +55,7 @@
             bind:value={$prefs.apiKeys[serviceId]}
             flex
             spellcheck="false"
-            aria-label={$_('prefs.media.stock_photos.field_label', {
+            aria-label={$_('prefs.contents.translator.field_label', {
               values: { service: serviceLabel },
             })}
             onchange={() => {
@@ -60,4 +72,4 @@
       </div>
     </section>
   {/each}
-</TabPanel>
+{/if}

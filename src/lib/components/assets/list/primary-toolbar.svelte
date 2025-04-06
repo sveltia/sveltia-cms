@@ -7,6 +7,9 @@
   import EditOptionsButton from '$lib/components/assets/toolbar/edit-options-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/toolbar/preview-asset-button.svelte';
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
+  import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
+  import { goBack } from '$lib/services/app/navigation';
   import { focusedAsset, selectedAssetFolder, selectedAssets } from '$lib/services/assets';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
 
@@ -18,28 +21,40 @@
 </script>
 
 <Toolbar variant="primary" aria-label={$_('folder')}>
+  {#if $isSmallScreen}
+    <BackButton
+      aria-label={$_('back_to_asset_folder_list')}
+      onclick={() => {
+        goBack('/assets');
+      }}
+    />
+  {/if}
   <h2 role="none">
     {$appLocale ? getFolderLabelByPath($selectedAssetFolder?.internalPath) : ''}
-    {#if $selectedAssetFolder}
+    {#if !$isSmallScreen && $selectedAssetFolder}
       <span role="none">/{$selectedAssetFolder.internalPath}</span>
     {/if}
   </h2>
   <Spacer flex />
-  <PreviewAssetButton asset={$focusedAsset} />
-  <CopyAssetsButton assets={$focusedAsset ? [$focusedAsset] : []} />
-  <DownloadAssetsButton {assets} />
-  <DeleteAssetsButton
-    {assets}
-    buttonDescription={$_(assets.length === 1 ? 'delete_selected_asset' : 'delete_selected_assets')}
-    dialogDescription={$_(
-      assets.length === 1
-        ? 'confirm_deleting_selected_asset'
-        : assets.length === $listedAssets.length
-          ? 'confirm_deleting_all_assets'
-          : 'confirm_deleting_selected_assets',
-      { values: { count: assets.length } },
-    )}
-  />
-  <EditOptionsButton asset={$focusedAsset} />
+  {#if !$isSmallScreen}
+    <PreviewAssetButton asset={$focusedAsset} />
+    <CopyAssetsButton assets={$focusedAsset ? [$focusedAsset] : []} />
+    <DownloadAssetsButton {assets} />
+    <DeleteAssetsButton
+      {assets}
+      buttonDescription={$_(
+        assets.length === 1 ? 'delete_selected_asset' : 'delete_selected_assets',
+      )}
+      dialogDescription={$_(
+        assets.length === 1
+          ? 'confirm_deleting_selected_asset'
+          : assets.length === $listedAssets.length
+            ? 'confirm_deleting_all_assets'
+            : 'confirm_deleting_selected_assets',
+        { values: { count: assets.length } },
+      )}
+    />
+    <EditOptionsButton asset={$focusedAsset} />
+  {/if}
   <UploadAssetsButton />
 </Toolbar>

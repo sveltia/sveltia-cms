@@ -2,6 +2,7 @@
   import { Divider, Icon, Listbox, Option } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
   import { allEntries } from '$lib/services/contents';
@@ -13,14 +14,15 @@
 </script>
 
 <div role="none" class="primary-sidebar">
-  <Listbox aria-label={$_('collections')} aria-controls="collection-container">
+  <h2>{$_('collections')}</h2>
+  <Listbox aria-label={$_('collection_list')} aria-controls="collection-container">
     {#each collections as { name, label, icon, files, divider = false } (name)}
       {#if divider}
         <Divider />
       {:else}
         <Option
           label={label || name}
-          selected={$selectedCollection?.name === name}
+          selected={$isSmallScreen ? false : $selectedCollection?.name === name}
           onSelect={() => {
             goto(`/collections/${name}`);
           }}

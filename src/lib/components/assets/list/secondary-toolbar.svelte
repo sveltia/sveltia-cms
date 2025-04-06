@@ -5,6 +5,7 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { assetKinds, selectedAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
 
@@ -13,7 +14,9 @@
 </script>
 
 <Toolbar variant="secondary" aria-label={$_('asset_list')}>
-  <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
+  {#if !$isSmallScreen}
+    <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
+  {/if}
   <Spacer flex />
   <SortMenu
     disabled={!hasMultipleAssets}
@@ -30,24 +33,26 @@
     aria-controls="asset-list"
   />
   <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
-  <Divider orientation="vertical" />
-  <Button
-    variant="ghost"
-    iconic
-    disabled={!hasListedAssets}
-    pressed={!!$currentView.showInfo}
-    aria-controls="asset-info"
-    aria-expanded={!!$currentView.showInfo}
-    aria-label={$_($currentView.showInfo ? 'hide_info' : 'show_info')}
-    onclick={() => {
-      currentView.update((view) => ({
-        ...view,
-        showInfo: !$currentView.showInfo,
-      }));
-    }}
-  >
-    {#snippet startIcon()}
-      <Icon name="info" />
-    {/snippet}
-  </Button>
+  {#if !$isSmallScreen}
+    <Divider orientation="vertical" />
+    <Button
+      variant="ghost"
+      iconic
+      disabled={!hasListedAssets}
+      pressed={!!$currentView.showInfo}
+      aria-controls="asset-info"
+      aria-expanded={!!$currentView.showInfo}
+      aria-label={$_($currentView.showInfo ? 'hide_info' : 'show_info')}
+      onclick={() => {
+        currentView.update((view) => ({
+          ...view,
+          showInfo: !$currentView.showInfo,
+        }));
+      }}
+    >
+      {#snippet startIcon()}
+        <Icon name="info" />
+      {/snippet}
+    </Button>
+  {/if}
 </Toolbar>

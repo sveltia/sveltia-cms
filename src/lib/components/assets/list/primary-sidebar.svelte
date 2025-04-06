@@ -2,6 +2,7 @@
   import { Icon, Listbox, Option } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import {
     allAssetFolders,
@@ -39,7 +40,8 @@
 </script>
 
 <div role="none" class="primary-sidebar">
-  <Listbox aria-label={$_('asset_folders')} aria-controls="assets-container">
+  <h2>{$_('assets')}</h2>
+  <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
     {#each folders as { collectionName, internalPath, entryRelative } (collectionName)}
       {@const collection = collectionName ? getCollection(collectionName) : undefined}
       <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
@@ -48,10 +50,10 @@
         (internalPath === undefined && !$selectedAssetFolder) ||
         internalPath === $selectedAssetFolder?.internalPath}
       <Option
-        {selected}
+        selected={$isSmallScreen ? false : selected}
         label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}
         onSelect={() => {
-          goto(internalPath ? `/assets/${internalPath}` : '/assets');
+          goto(internalPath ? `/assets/${internalPath}` : '/assets/all');
         }}
         ondragover={(event) => {
           event.preventDefault();

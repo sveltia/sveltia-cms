@@ -7,6 +7,7 @@
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -87,6 +88,10 @@
     await tick();
     restoring = false;
 
+    if ($isSmallScreen) {
+      $editorRightPane = null;
+    }
+
     return true;
   };
 
@@ -104,7 +109,9 @@
 
     $editorLeftPane = { mode: 'edit', locale: $editorLeftPane?.locale ?? defaultLocale };
 
-    if (!showPreview || !canPreview) {
+    if ($isSmallScreen) {
+      $editorRightPane = null;
+    } else if (!showPreview || !canPreview) {
       const otherLocales = i18nEnabled
         ? allLocales.filter((l) => l !== $editorLeftPane?.locale)
         : [];
@@ -320,6 +327,10 @@
         min-width: 480px;
         background-color: var(--sui-primary-background-color);
         transition: all 500ms;
+
+        @media (width < 768px) {
+          min-width: auto;
+        }
       }
 
       & > :global([data-mode='edit']) {

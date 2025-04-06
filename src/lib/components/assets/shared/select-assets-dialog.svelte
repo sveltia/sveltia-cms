@@ -1,11 +1,12 @@
 <script>
-  import { Dialog, Listbox, Option, OptionGroup, SearchBar, TextInput } from '@sveltia/ui';
+  import { Dialog, Listbox, Option, OptionGroup, SearchBar, Select, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
   import ExternalAssetsPanel from '$lib/components/assets/shared/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/shared/internal-assets-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { allAssets, globalAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
@@ -62,11 +63,12 @@
   const entryDirName = $derived(
     entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined,
   );
-  const isLocalLibrary = $derived(libraryName.endsWith('-assets'));
+  const isLocalLibrary = $derived(libraryName?.endsWith('-assets') ?? true);
   const isEnabledMediaService = $derived(
     (Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName]) ||
       (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]),
   );
+  const Selector = $derived($isSmallScreen ? Select : Listbox);
 
   $effect(() => {
     libraryName = showEntryAssets
@@ -90,6 +92,23 @@
   });
 </script>
 
+{#snippet filterTools()}
+  {#if isLocalLibrary || isEnabledMediaService}
+    {#if $selectAssetsView}
+      <ViewSwitcher
+        currentView={(() => /** @type {Writable<SelectAssetsView>} */ (selectAssetsView))()}
+        aria-controls="select-assets-grid"
+      />
+    {/if}
+    <SearchBar
+      flex={$isSmallScreen}
+      bind:value={rawSearchTerms}
+      disabled={!!selectedAsset?.file}
+      aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
+    />
+  {/if}
+{/snippet}
+
 <Dialog
   {title}
   size={'x-large'}
@@ -103,18 +122,8 @@
   }}
 >
   {#snippet headerExtra()}
-    {#if isLocalLibrary || isEnabledMediaService}
-      {#if $selectAssetsView}
-        <ViewSwitcher
-          currentView={(() => /** @type {Writable<SelectAssetsView>} */ (selectAssetsView))()}
-          aria-controls="select-assets-grid"
-        />
-      {/if}
-      <SearchBar
-        bind:value={rawSearchTerms}
-        disabled={!!selectedAsset?.file}
-        aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
-      />
+    {#if !$isSmallScreen}
+      {@render filterTools()}
     {/if}
   {/snippet}
   {#snippet footerExtra()}
@@ -129,55 +138,63 @@
     {/if}
   {/snippet}
   <div role="none" class="wrapper">
-    <Listbox
-      class="tabs"
-      aria-label={$_('assets_dialog.locations')}
-      aria-controls="{elementIdPrefix}-content-pane"
-      onChange={(event) => {
-        libraryName = event.detail.name;
-        selectedAsset = null;
-      }}
-    >
-      <OptionGroup label={$_('assets_dialog.location.repository')}>
-        {#if showEntryAssets}
-          <Option
-            name="entry-assets"
-            label={$_('entry_assets')}
-            selected={libraryName === 'entry-assets'}
-          />
-        {/if}
-        {#if showCollectionAssets}
-          <Option
-            name="collection-assets"
-            label={$_('collection_assets')}
-            selected={libraryName === 'collection-assets'}
-          />
-        {/if}
-        <Option
-          name="uncategorized-assets"
-          label={$_('uncategorized')}
-          selected={libraryName === 'uncategorized-assets'}
-        />
-      </OptionGroup>
-      <OptionGroup label={$_('assets_dialog.location.local')}>
-        <Option name="upload" label={$_('upload')} selected={showUploader} />
-      </OptionGroup>
-      {#if canEnterURL || !!Object.keys(allCloudStorageServices).length}
-        <OptionGroup label={$_('assets_dialog.location.external_locations')}>
-          {#if canEnterURL}
-            <Option name="enter-url" label={$_('assets_dialog.enter_url')} />
+    <div role="none" class="nav">
+      <Selector
+        class="tabs"
+        aria-label={$_('assets_dialog.locations')}
+        aria-controls="{elementIdPrefix}-content-pane"
+        onChange={(event) => {
+          libraryName = event.detail.name;
+          selectedAsset = null;
+        }}
+      >
+        <OptionGroup label={$_('assets_dialog.location.repository')}>
+          {#if showEntryAssets}
+            <Option
+              name="entry-assets"
+              label={$_('entry_assets')}
+              selected={libraryName === 'entry-assets'}
+            />
           {/if}
-          {#each Object.values(allCloudStorageServices) as { serviceId, serviceLabel } (serviceId)}
+          {#if showCollectionAssets}
+            <Option
+              name="collection-assets"
+              label={$_('collection_assets')}
+              selected={libraryName === 'collection-assets'}
+            />
+          {/if}
+          <Option
+            name="uncategorized-assets"
+            label={$_('uncategorized')}
+            selected={libraryName === 'uncategorized-assets'}
+          />
+        </OptionGroup>
+        <OptionGroup label={$_('assets_dialog.location.local')}>
+          <Option name="upload" label={$_('upload')} selected={showUploader} />
+        </OptionGroup>
+        {#if canEnterURL || !!Object.keys(allCloudStorageServices).length}
+          <OptionGroup label={$_('assets_dialog.location.external_locations')}>
+            {#if canEnterURL}
+              <Option name="enter-url" label={$_('assets_dialog.enter_url')} />
+            {/if}
+            {#each Object.values(allCloudStorageServices) as service (service.serviceId)}
+              {@const { serviceId, serviceLabel } = service}
+              <Option name={serviceId} label={serviceLabel} />
+            {/each}
+          </OptionGroup>
+        {/if}
+        <OptionGroup label={$_('assets_dialog.location.stock_photos')}>
+          {#each Object.values(allStockPhotoServices) as { serviceId, serviceLabel } (serviceId)}
             <Option name={serviceId} label={serviceLabel} />
           {/each}
         </OptionGroup>
+      </Selector>
+      {#if $isSmallScreen}
+        <div role="none" class="filter-tools">
+          {@render filterTools()}
+        </div>
       {/if}
-      <OptionGroup label={$_('assets_dialog.location.stock_photos')}>
-        {#each Object.values(allStockPhotoServices) as { serviceId, serviceLabel } (serviceId)}
-          <Option name={serviceId} label={serviceLabel} />
-        {/each}
-      </OptionGroup>
-    </Listbox>
+    </div>
     <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
       {#if showEntryAssets && (libraryName === 'entry-assets' || showUploader)}
         <InternalAssetsPanel
@@ -264,7 +281,22 @@
   .wrapper {
     display: flex;
     gap: 16px;
-    height: 60vh;
+    height: 60dvh;
+
+    @media (width < 768px) {
+      flex-direction: column;
+      overflow: hidden;
+      height: 72dvh;
+    }
+
+    .nav {
+      display: flex;
+      gap: 4px;
+
+      @media (width < 768px) {
+        flex-direction: column;
+      }
+    }
 
     :global(.listbox) {
       flex: none;
@@ -275,5 +307,10 @@
       overflow: auto;
       flex: auto;
     }
+  }
+
+  .filter-tools {
+    display: flex;
+    gap: 8px;
   }
 </style>
