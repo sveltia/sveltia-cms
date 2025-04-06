@@ -231,9 +231,9 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     pat_url: patURL,
   } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
 
-  if(patURL) {
+  if(!cachedToken && patURL) {
     const { token: patToken } = (await sendRequest(patURL));
-    cachedToken = patToken ?? cachedToken;
+    cachedToken = patToken;
   }
 
   const token =
