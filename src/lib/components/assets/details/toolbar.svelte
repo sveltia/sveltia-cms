@@ -1,36 +1,22 @@
 <script>
-  import { Button, Icon, Spacer, Toolbar } from '@sveltia/ui';
+  import { Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/toolbar/download-assets-button.svelte';
   import EditOptionsButton from '$lib/components/assets/toolbar/edit-options-button.svelte';
+  import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goBack } from '$lib/services/app/navigation';
   import { overlaidAsset, selectedAssetFolder } from '$lib/services/assets';
 
   const assets = $derived($overlaidAsset ? [$overlaidAsset] : []);
+  const useButton = $derived(!$isSmallScreen);
 </script>
 
-<Toolbar variant="primary" aria-label={$_('primary')}>
-  <Button
-    variant="ghost"
-    iconic
-    aria-label={$_('cancel_editing')}
-    keyShortcuts="Escape"
-    onclick={() => {
-      goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
-    }}
-  >
-    {#snippet startIcon()}
-      <Icon name="arrow_back_ios_new" />
-    {/snippet}
-  </Button>
-  <h2 role="none">
-    <strong role="none">{$overlaidAsset?.name}</strong>
-  </h2>
-  <Spacer flex />
-  <CopyAssetsButton {assets} />
-  <DownloadAssetsButton {assets} />
+{#snippet overflowButtons()}
+  <CopyAssetsButton {assets} {useButton} />
+  <DownloadAssetsButton {assets} {useButton} />
   <DeleteAssetsButton
     {assets}
     buttonDescription={$_('delete_asset')}
@@ -38,6 +24,35 @@
     onDelete={() => {
       goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
     }}
+    {useButton}
   />
-  <EditOptionsButton asset={$overlaidAsset} />
+{/snippet}
+
+<Toolbar variant="primary" aria-label={$_('primary')}>
+  <BackButton
+    aria-label={$_('cancel_editing')}
+    onclick={() => {
+      goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
+    }}
+  />
+  <h2 role="none">
+    <strong role="none">{$overlaidAsset?.name}</strong>
+  </h2>
+  {#if !$isSmallScreen}
+    {@render overflowButtons()}
+  {/if}
+  <EditOptionsButton asset={$overlaidAsset}>
+    {#snippet extraItems()}
+      {#if $isSmallScreen}
+        {@render overflowButtons()}
+      {/if}
+    {/snippet}
+  </EditOptionsButton>
 </Toolbar>
+
+<style lang="scss">
+  h2 {
+    flex: auto !important;
+    padding-inline-end: 0 !important;
+  }
+</style>

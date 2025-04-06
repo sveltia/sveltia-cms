@@ -1,23 +1,29 @@
 <script>
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goto, selectedPageName } from '$lib/services/app/navigation';
   import { selectedAssetFolder } from '$lib/services/assets';
-  import { siteConfig } from '$lib/services/config';
-  import { selectedCollection } from '$lib/services/contents/collection';
+  import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
 
   const pages = $derived([
     {
       key: 'collections',
       label: $_('contents'),
       icon: 'library_books',
-      link: `/collections/${$selectedCollection?.name ?? $siteConfig?.collections[0].name}`,
+      link: $isSmallScreen
+        ? '/collections'
+        : `/collections/${$selectedCollection?.name ?? getFirstCollection()?.name}`,
     },
     {
       key: 'assets',
       label: $_('assets'),
       icon: 'photo_library',
-      link: $selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets',
+      link: $isSmallScreen
+        ? '/assets'
+        : $selectedAssetFolder
+          ? `/assets/${$selectedAssetFolder.internalPath}`
+          : '/assets/all',
     },
     // {
     //   key: 'workflow',
@@ -31,6 +37,16 @@
     //   icon: 'settings',
     //   link: '/config',
     // },
+    ...($isSmallScreen
+      ? [
+          {
+            key: 'menu',
+            label: $_('menu'),
+            icon: 'menu',
+            link: '/menu',
+          },
+        ]
+      : []),
   ]);
 </script>
 
@@ -43,7 +59,7 @@
         selected={$selectedPageName === key}
         aria-label={label}
         keyShortcuts="Alt+{index + 1}"
-        onSelect={() => {
+        onclick={() => {
           goto(link);
         }}
       >
@@ -61,6 +77,11 @@
 
     :global(.sui.select-button-group) {
       gap: 4px;
+
+      @media (width < 768px) {
+        justify-content: space-evenly;
+        width: 100%;
+      }
     }
 
     :global(.sui.button) {

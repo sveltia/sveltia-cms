@@ -5,7 +5,6 @@
     Button,
     ConfirmationDialog,
     Divider,
-    Icon,
     Menu,
     MenuButton,
     MenuItem,
@@ -16,7 +15,9 @@
     Toolbar,
   } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goBack, goto } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
@@ -137,20 +138,36 @@
   };
 </script>
 
-<Toolbar variant="primary" aria-label={$_('primary')}>
-  <Button
+{#snippet overflowButtons()}
+  {@const Component = $isSmallScreen ? MenuItem : Button}
+  <Component
     variant="ghost"
-    iconic
+    label={$_('duplicate')}
+    aria-label={$_('duplicate_entry')}
+    disabled={collection?.create === false}
+    onclick={() => {
+      goto(`/collections/${collectionName}/new`, { replaceState: true, notifyChange: false });
+      duplicateDraft();
+    }}
+  />
+  <Component
+    variant="ghost"
+    label={$_('delete')}
+    aria-label={$_('delete_entry')}
+    disabled={collection?.delete === false}
+    onclick={() => {
+      showDeleteDialog = true;
+    }}
+  />
+{/snippet}
+
+<Toolbar variant="primary" aria-label={$_('primary')}>
+  <BackButton
     aria-label={$_('cancel_editing')}
-    keyShortcuts="Escape"
     onclick={() => {
       goBack(`/collections/${collectionName}`);
     }}
-  >
-    {#snippet startIcon()}
-      <Icon name="arrow_back_ios_new" />
-    {/snippet}
-  </Button>
+  />
   <h2 role="none">
     <strong role="none">
       {#if isNew}
@@ -179,26 +196,8 @@
       }}
     />
   {/if}
-  {#if !disabled && !collectionFile && !isNew}
-    <Button
-      variant="ghost"
-      label={$_('duplicate')}
-      aria-label={$_('duplicate_entry')}
-      disabled={collection?.create === false}
-      onclick={() => {
-        goto(`/collections/${collectionName}/new`, { replaceState: true, notifyChange: false });
-        duplicateDraft();
-      }}
-    />
-    <Button
-      variant="ghost"
-      label={$_('delete')}
-      aria-label={$_('delete_entry')}
-      disabled={collection?.delete === false}
-      onclick={() => {
-        showDeleteDialog = true;
-      }}
-    />
+  {#if !$isSmallScreen && !disabled && !collectionFile && !isNew}
+    {@render overflowButtons()}
   {/if}
   <MenuButton
     {disabled}
@@ -210,29 +209,9 @@
   >
     {#snippet popup()}
       <Menu aria-label={$_('editor_options')}>
-        <MenuItemCheckbox
-          label={$_('show_preview')}
-          checked={$entryEditorSettings?.showPreview}
-          disabled={!canPreview}
-          onChange={() => {
-            entryEditorSettings.update((view = {}) => ({
-              ...view,
-              showPreview: !view.showPreview,
-            }));
-          }}
-        />
-        <MenuItemCheckbox
-          label={$_('sync_scrolling')}
-          checked={$entryEditorSettings?.syncScrolling}
-          disabled={!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1}
-          onChange={() => {
-            entryEditorSettings.update((view = {}) => ({
-              ...view,
-              syncScrolling: !view.syncScrolling,
-            }));
-          }}
-        />
-        <Divider />
+        {#if $isSmallScreen && !disabled && !collectionFile && !isNew}
+          {@render overflowButtons()}
+        {/if}
         <MenuItem
           label={$_('edit_slug')}
           disabled={!!collectionFile || isNew || collection?.delete === false}
@@ -247,6 +226,31 @@
             revertChanges();
           }}
         />
+        {#if !$isSmallScreen}
+          <Divider />
+          <MenuItemCheckbox
+            label={$_('show_preview')}
+            checked={$entryEditorSettings?.showPreview}
+            disabled={!canPreview}
+            onChange={() => {
+              entryEditorSettings.update((view = {}) => ({
+                ...view,
+                showPreview: !view.showPreview,
+              }));
+            }}
+          />
+          <MenuItemCheckbox
+            label={$_('sync_scrolling')}
+            checked={$entryEditorSettings?.syncScrolling}
+            disabled={!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1}
+            onChange={() => {
+              entryEditorSettings.update((view = {}) => ({
+                ...view,
+                syncScrolling: !view.syncScrolling,
+              }));
+            }}
+          />
+        {/if}
       </Menu>
     {/snippet}
   </MenuButton>
@@ -353,5 +357,12 @@
     background-color: var(--sui-secondary-background-color);
     font-size: var(--sui-font-size-default);
     line-height: 1.5;
+  }
+
+  h2 {
+    @media (width < 768px) {
+      flex: auto !important;
+      padding-inline-end: 0 !important;
+    }
   }
 </style>

@@ -54,6 +54,7 @@ export const strings = {
   folder: 'Folder',
   api_key: 'API Key',
   details: 'Details',
+  back: 'Back',
 
   // Common errors
   clipboard_error: 'There was an error while copying data.',
@@ -102,7 +103,9 @@ export const strings = {
   // Global toolbar
   visit_live_site: 'Visit Live Site',
   switch_page: 'Switch Page',
-  search_placeholder: 'Search for entries and assets…',
+  search_placeholder_entries: 'Search for entries…',
+  search_placeholder_assets: 'Search for assets…',
+  search_placeholder_all: 'Search for entries and assets…',
   create_entry_or_assets: 'Create Entry or Assets',
   publish_changes: 'Publish Changes',
   publishing_changes: 'Publishing Changes…',
@@ -193,7 +196,6 @@ export const strings = {
   hide_assets: 'Hide Assets',
   show_info: 'Show Info',
   hide_info: 'Hide Info',
-  asset_folders: 'Asset Folders',
   all_assets: 'All Assets',
   uncategorized: 'Uncategorized',
   creating_entries_disabled_by_admin:
@@ -201,6 +203,11 @@ export const strings = {
   creating_entries_disabled_by_limit:
     'You cannot add new entries to this collection because it has reached its limit of {limit} entries.',
   back_to_collection: 'Back to Collection',
+  collection_list: 'Collection List',
+  back_to_collection_list: 'Back to Collection List',
+  asset_folder_list: 'Asset Folder List',
+  back_to_asset_folder_list: 'Back to Asset Folder List',
+  search_results: 'Search Results',
   search_results_for_x: 'Search Results for “{terms}”',
   viewing_search_results:
     'You’re now viewing search results for “{terms}”. We’ve found {entries} and {assets}.',

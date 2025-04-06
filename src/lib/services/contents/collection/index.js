@@ -127,3 +127,10 @@ export const getCollection = (name) => {
 
   return collection;
 };
+
+/**
+ * Get the first visible entry collection or file collection in the collection list.
+ * @returns {Collection | undefined} Found collection.
+ */
+export const getFirstCollection = () =>
+  get(siteConfig)?.collections.find((c) => !c.hide && !c.divider);

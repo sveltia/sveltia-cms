@@ -11,6 +11,16 @@ import { getEntrySummary } from '$lib/services/contents/entry/summary';
  */
 
 /**
+ * @type {Writable<boolean>}
+ */
+export const showSearchBar = writable(true);
+
+/**
+ * @type {Writable<'entries' | 'assets' | null>}
+ */
+export const searchMode = writable(null);
+
+/**
  * @type {Writable<string>}
  */
 export const searchTerms = writable('');

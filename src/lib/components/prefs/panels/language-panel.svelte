@@ -1,5 +1,5 @@
 <script>
-  import { Option, Select, TabPanel } from '@sveltia/ui';
+  import { Option, Select } from '@sveltia/ui';
   import { _, locale as appLocale, locales as appLocales } from 'svelte-i18n';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { prefs } from '$lib/services/user/prefs';
@@ -17,27 +17,21 @@
   } = $props();
 </script>
 
-<TabPanel id="prefs-tab-language">
-  <section>
-    <h4>{$_('prefs.language.ui_language.title')}</h4>
-    <div role="none">
-      {#key $appLocale}
-        <Select
-          aria-label={$_('prefs.language.ui_language.select_language')}
-          value={$appLocale ?? undefined}
-          onChange={(event) => {
-            $prefs = { ...$prefs, locale: event.detail.value };
-          }}
-        >
-          {#each $appLocales as locale}
-            <Option
-              label={getLocaleLabel(locale)}
-              value={locale}
-              selected={locale === $appLocale}
-            />
-          {/each}
-        </Select>
-      {/key}
-    </div>
-  </section>
-</TabPanel>
+<section>
+  <h4>{$_('prefs.language.ui_language.title')}</h4>
+  <div role="none">
+    {#key $appLocale}
+      <Select
+        aria-label={$_('prefs.language.ui_language.select_language')}
+        value={$appLocale ?? undefined}
+        onChange={(event) => {
+          $prefs = { ...$prefs, locale: event.detail.value };
+        }}
+      >
+        {#each $appLocales as locale}
+          <Option label={getLocaleLabel(locale)} value={locale} selected={locale === $appLocale} />
+        {/each}
+      </Select>
+    {/key}
+  </div>
+</section>

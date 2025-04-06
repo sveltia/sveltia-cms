@@ -150,6 +150,20 @@
       display: flex;
       overflow: hidden;
 
+      @media (width < 768px) {
+        flex-direction: column;
+
+        :global(.preview) {
+          flex: none !important;
+          aspect-ratio: 1 / 1;
+        }
+
+        :global(.detail) {
+          flex: auto;
+          width: auto;
+        }
+      }
+
       .preview {
         flex: auto;
         overflow: hidden;

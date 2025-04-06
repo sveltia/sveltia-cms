@@ -1,12 +1,7 @@
 <script>
-  import { Alert, Dialog, Icon, Tab, TabList, Toast } from '@sveltia/ui';
+  import { Alert, Dialog, Icon, Tab, TabList, TabPanel, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import AccessibilityPanel from '$lib/components/prefs/panels/accessibility-panel.svelte';
-  import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
-  import AppearancePanel from '$lib/components/prefs/panels/appearance-panel.svelte';
-  import ContentsPanel from '$lib/components/prefs/panels/contents-panel.svelte';
-  import LanguagePanel from '$lib/components/prefs/panels/language-panel.svelte';
-  import MediaPanel from '$lib/components/prefs/panels/media-panel.svelte';
+  import { panels } from '$lib/components/prefs';
 
   /**
    * @typedef {object} Props
@@ -25,15 +20,6 @@
   let selectedPanel = $state('appearance');
   let toastMessage = $state('');
   let showToast = $state(false);
-
-  const panels = [
-    { key: 'appearance', icon: 'palette', component: AppearancePanel },
-    { key: 'language', icon: 'language', component: LanguagePanel },
-    { key: 'contents', icon: 'library_books', component: ContentsPanel },
-    { key: 'media', icon: 'photo_library', component: MediaPanel },
-    { key: 'accessibility', icon: 'accessibility_new', component: AccessibilityPanel },
-    { key: 'advanced', icon: 'build', component: AdvancedPanel },
-  ];
 </script>
 
 <Dialog
@@ -64,13 +50,15 @@
         </Tab>
       {/each}
     </TabList>
-    {#each panels as { key, component: Panel } (key)}
-      <Panel
-        onChange={({ message }) => {
-          toastMessage = message;
-          showToast = true;
-        }}
-      />
+    {#each panels as { key, component: Content } (key)}
+      <TabPanel id="prefs-tab-{key}">
+        <Content
+          onChange={(/** @type {{ message: string }} */ { message }) => {
+            toastMessage = message;
+            showToast = true;
+          }}
+        />
+      </TabPanel>
     {/each}
   </div>
 </Dialog>

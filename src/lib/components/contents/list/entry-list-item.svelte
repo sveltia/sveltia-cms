@@ -1,6 +1,7 @@
 <script>
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
@@ -57,16 +58,18 @@
     goto(`/collections/${collection.name}/entries/${entry.subPath}`);
   }}
 >
-  <GridCell class="checkbox">
-    <Checkbox
-      role="none"
-      tabindex="-1"
-      checked={$selectedEntries.includes(entry)}
-      onChange={({ detail: { checked } }) => {
-        updateSelection(checked);
-      }}
-    />
-  </GridCell>
+  {#if !$isSmallScreen}
+    <GridCell class="checkbox">
+      <Checkbox
+        role="none"
+        tabindex="-1"
+        checked={$selectedEntries.includes(entry)}
+        onChange={({ detail: { checked } }) => {
+          updateSelection(checked);
+        }}
+      />
+    </GridCell>
+  {/if}
   {#if collection._thumbnailFieldNames.length}
     <GridCell class="image">
       {#await getEntryThumbnail(collection, entry) then src}
@@ -77,7 +80,7 @@
     </GridCell>
   {/if}
   <GridCell class="title">
-    <span role="none">
+    <span role="none" class="label">
       {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
     </span>
   </GridCell>

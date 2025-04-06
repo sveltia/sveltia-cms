@@ -22,16 +22,28 @@
   } = $props();
 </script>
 
-{@render primaryToolbar?.()}
-<div role="none" class="main-inner">
-  <div role="none" class="main-inner-main">
-    {@render secondaryToolbar?.()}
-    {@render mainContent?.()}
+<div role="none" class="wrapper">
+  {@render primaryToolbar?.()}
+  <div role="none" class="main-inner">
+    <div role="none" class="main-inner-main">
+      {@render secondaryToolbar?.()}
+      {@render mainContent?.()}
+    </div>
+    {@render secondarySidebar?.()}
   </div>
-  {@render secondarySidebar?.()}
 </div>
 
 <style lang="scss">
+  .wrapper {
+    display: contents;
+
+    :global(.sui.toolbar.primary) {
+      @media (width < 768px) {
+        background-color: var(--sui-secondary-background-color);
+      }
+    }
+  }
+
   .main-inner {
     flex: auto;
     display: flex;
@@ -48,9 +60,12 @@
       flex: none;
       overflow: auto;
       box-sizing: content-box;
-      border-top-left-radius: 16px;
       width: 320px;
       background-color: var(--sui-secondary-background-color);
+
+      @media (width >= 768px) {
+        border-top-left-radius: 16px;
+      }
 
       :global([role='listbox']) {
         padding: 12px;

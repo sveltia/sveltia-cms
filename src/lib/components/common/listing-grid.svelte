@@ -52,6 +52,11 @@
       grid-template-columns: repeat(auto-fill, minmax(var(--grid-size, 200px), 1fr));
       gap: 16px;
       border-width: 0;
+
+      @media (width < 768px) {
+        grid-template-columns: repeat(auto-fill, minmax(var(--grid-size, 160px), 1fr));
+        gap: 8px;
+      }
     }
 
     :global([role='row']) {
@@ -107,7 +112,16 @@
   .list-view {
     --icon-size: 36px;
 
+    @media (width < 768px) {
+      padding: 0 !important;
+    }
+
     :global([role='grid']) {
+      @media (width < 768px) {
+        width: 100%;
+        --sui-focus-ring-width: 0;
+      }
+
       :global(.row-group) {
         :global(.row-group-caption + .grid-row) {
           :global(.grid-cell) {
@@ -146,8 +160,11 @@
         max-width: 100%;
         color: var(--sui-secondary-foreground-color);
         white-space: nowrap;
-        text-overflow: ellipsis;
         vertical-align: middle;
+
+        @media (width < 768px) {
+          height: 64px;
+        }
 
         &:first-child {
           padding-left: 16px;
@@ -156,6 +173,16 @@
         :global(.label) {
           overflow: hidden;
           text-overflow: ellipsis;
+
+          @media (width < 768px) {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            white-space: normal;
+            line-height: var(--sui-line-height-comfortable);
+            word-break: break-all;
+          }
         }
       }
 

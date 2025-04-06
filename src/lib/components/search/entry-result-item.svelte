@@ -60,11 +60,13 @@
         {collection.label || collection.name}
       </GridCell>
       <GridCell class="title">
-        {#if collectionFile}
-          {collectionFile.label || collectionFile.name}
-        {:else}
-          {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
-        {/if}
+        <span role="none" class="label">
+          {#if collectionFile}
+            {collectionFile.label || collectionFile.name}
+          {:else}
+            {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+          {/if}
+        </span>
       </GridCell>
     </GridRow>
   {/if}

@@ -14,18 +14,21 @@
   import { prefs } from '$lib/services/user/prefs';
 
   /**
+   * @import { Snippet } from 'svelte';
    * @import { Asset, AssetDetails } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {Asset} [asset] Selected asset.
+   * @property {Snippet} [extraItems] Slot content.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     asset,
+    extraItems = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -55,6 +58,7 @@
 >
   {#snippet popup()}
     <Menu aria-label={$_('edit_options')}>
+      {@render extraItems?.()}
       <MenuItem
         variant="ghost"
         label={$_('edit')}

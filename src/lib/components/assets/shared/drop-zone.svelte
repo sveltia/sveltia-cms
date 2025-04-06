@@ -2,8 +2,9 @@
   import { Button, Icon } from '@sveltia/ui';
   import { scanFiles } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
+  import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
+  import { canDragDrop } from '$lib/services/utils/file';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -123,7 +124,15 @@
   {#if showUploadButton || (showFilePreview && files.length)}
     <div role="none" class="content">
       {#if showUploadButton}
-        <div role="none">{$_(multiple ? 'drop_or_browse_files' : 'drop_or_browse_file')}</div>
+        <div role="none">
+          {$_(
+            canDragDrop()
+              ? multiple
+                ? 'drop_or_browse_files'
+                : 'drop_or_browse_file'
+              : 'browse_file',
+          )}
+        </div>
         <div role="none">
           <Button
             variant="primary"

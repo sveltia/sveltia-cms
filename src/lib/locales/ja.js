@@ -54,6 +54,7 @@ export const strings = {
   folder: 'フォルダー',
   api_key: 'API キー',
   details: '詳細',
+  back: '戻る',
 
   // Common errors
   clipboard_error: 'データのコピー中に問題が発生しました。',
@@ -102,7 +103,9 @@ export const strings = {
   // Global toolbar
   visit_live_site: '管理対象サイトを開く',
   switch_page: 'ページを切り替え',
-  search_placeholder: 'エントリーとアセットを検索…',
+  search_placeholder_entries: 'エントリーを検索…',
+  search_placeholder_assets: 'アセットを検索…',
+  search_placeholder_all: 'エントリーとアセットを検索…',
   create_entry_or_assets: 'エントリーまたはアセットを作成',
   publish_changes: '変更を公開',
   publishing_changes: '変更を公開しています…',
@@ -193,7 +196,6 @@ export const strings = {
   hide_assets: 'アセットを隠す',
   show_info: '情報を表示',
   hide_info: '情報を隠す',
-  asset_folders: 'アセットフォルダー',
   all_assets: 'すべてのアセット',
   uncategorized: '未分類',
   creating_entries_disabled_by_admin:
@@ -201,6 +203,11 @@ export const strings = {
   creating_entries_disabled_by_limit:
     'このコレクションは最大の {limit} エントリーに達したため、新しいエントリーを作成することはできません。',
   back_to_collection: 'コレクションへ戻る',
+  collection_list: 'コレクションリスト',
+  back_to_collection_list: 'コレクションリストへ戻る',
+  asset_folder_list: 'アセットフォルダーリスト',
+  back_to_asset_folder_list: 'アセットフォルダーリストへ戻る',
+  search_results: '検索結果',
   search_results_for_x: '「{terms}」の検索結果',
   viewing_search_results:
     '「{terms}」の検索結果を表示しています。{entries} と {assets} が見つかりました。',

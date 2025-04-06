@@ -7,14 +7,18 @@
   import ContentsPage from '$lib/components/contents/contents-page.svelte';
   import TranslatorApiKeyDialog from '$lib/components/contents/details/editor/translator-api-key-dialog.svelte';
   import EntryParseErrorsToast from '$lib/components/contents/shared/entry-parse-errors-toast.svelte';
+  import BottomNavigation from '$lib/components/global/toolbar/bottom-navigation.svelte';
   import GlobalToolbar from '$lib/components/global/toolbar/global-toolbar.svelte';
+  import MenuPage from '$lib/components/menu/menu-page.svelte';
+  import PrefsPage from '$lib/components/prefs/prefs-page.svelte';
   import SearchPage from '$lib/components/search/search-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { showAssetOverlay } from '$lib/services/assets';
-  import { siteConfig } from '$lib/services/config';
-  import { selectedCollection } from '$lib/services/contents/collection';
+  import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
+  import { searchMode, showSearchBar } from '$lib/services/search';
 
   /** @type {Record<string, any>} */
   export const pages = {
@@ -23,6 +27,9 @@
     search: SearchPage,
     workflow: WorkflowPage,
     config: ConfigPage,
+    // For small screens
+    menu: MenuPage,
+    settings: PrefsPage,
   };
 
   const SelectedPage = $derived(pages[$selectedPageName]);
@@ -43,15 +50,36 @@
     if (!pageName) {
       // Redirect any invalid page to the contents page
       window.location.replace(
-        `#/collections/${$selectedCollection?.name ?? $siteConfig?.collections[0].name}`,
+        `#/collections/${$selectedCollection?.name ?? getFirstCollection()?.name}`,
       );
     } else if ($selectedPageName !== pageName) {
       $selectedPageName = pageName;
+    }
+
+    if (pageName === 'collections') {
+      $searchMode = 'entries';
+    } else if (pageName === 'assets') {
+      $searchMode = 'assets';
+    } else if (pageName === 'search') {
+      $showSearchBar = true;
+    } else {
+      $showSearchBar = false;
+      $searchMode = null;
     }
   };
 
   onMount(() => {
     selectPage();
+  });
+
+  onMount(() => {
+    const mql = window.matchMedia('(width < 768px)');
+
+    $isSmallScreen = mql.matches;
+
+    mql.addEventListener('change', () => {
+      $isSmallScreen = mql.matches;
+    });
   });
 </script>
 
@@ -63,6 +91,7 @@
 
 <GlobalToolbar />
 <SelectedPage />
+<BottomNavigation />
 
 <UploadAssetsDialog />
 <UploadAssetsConfirmDialog />

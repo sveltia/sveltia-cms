@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { allAssets, uploadingAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
@@ -18,7 +19,7 @@
   <Group
     id="collection-assets"
     class="secondary-sidebar"
-    hidden={!$currentView.showMedia}
+    hidden={$isSmallScreen || !$currentView.showMedia}
     aria-label={$_('collection_assets')}
   >
     <DropZone

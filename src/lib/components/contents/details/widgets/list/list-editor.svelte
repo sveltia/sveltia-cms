@@ -492,6 +492,10 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+
+    @media (width < 768px) {
+      white-space: normal;
+    }
   }
 
   .item-list {
