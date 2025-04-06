@@ -1,7 +1,7 @@
 <script>
   import { Divider, Menu, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import PrefsDialog from '$lib/components/prefs/prefs-dialog.svelte';
+  import SettingsDialog from '$lib/components/settings/settings-dialog.svelte';
   import { isSmallScreen } from '$lib/services/app/env';
   import { goto, openProductionSite } from '$lib/services/app/navigation';
   import { backend, backendName } from '$lib/services/backends';
@@ -84,7 +84,7 @@
   />
 </Menu>
 
-<PrefsDialog
+<SettingsDialog
   bind:open={showPrefsDialog}
   onClose={() => {
     menuButton?.focus();

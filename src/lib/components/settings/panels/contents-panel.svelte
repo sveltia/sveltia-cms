@@ -2,7 +2,7 @@
   import { TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
-  import PrefSwitch from '$lib/components/prefs/controls/pref-switch.svelte';
+  import PrefSwitch from '$lib/components/settings/controls/pref-switch.svelte';
   import { siteConfig } from '$lib/services/config';
   import { allTranslationServices } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/user/prefs';

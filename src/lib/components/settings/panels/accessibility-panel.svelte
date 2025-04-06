@@ -1,6 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n';
-  import PrefSwitch from '$lib/components/prefs/controls/pref-switch.svelte';
+  import PrefSwitch from '$lib/components/settings/controls/pref-switch.svelte';
 
   /**
    * @typedef {object} Props

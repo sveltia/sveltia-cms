@@ -1,7 +1,7 @@
 <script>
   import { Alert, Dialog, Icon, Tab, TabList, TabPanel, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { panels } from '$lib/components/prefs';
+  import { panels } from '$lib/components/settings';
 
   /**
    * @typedef {object} Props

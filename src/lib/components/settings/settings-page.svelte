@@ -2,7 +2,7 @@
   import { Alert, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import PageContainer from '$lib/components/common/page-container.svelte';
-  import { panels } from '$lib/components/prefs';
+  import { panels } from '$lib/components/settings';
 
   let toastMessage = $state('');
   let showToast = $state(false);

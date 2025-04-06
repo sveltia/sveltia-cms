@@ -1,9 +1,9 @@
-import AccessibilityPanel from '$lib/components/prefs/panels/accessibility-panel.svelte';
-import AdvancedPanel from '$lib/components/prefs/panels/advanced-panel.svelte';
-import AppearancePanel from '$lib/components/prefs/panels/appearance-panel.svelte';
-import ContentsPanel from '$lib/components/prefs/panels/contents-panel.svelte';
-import LanguagePanel from '$lib/components/prefs/panels/language-panel.svelte';
-import MediaPanel from '$lib/components/prefs/panels/media-panel.svelte';
+import AccessibilityPanel from '$lib/components/settings/panels/accessibility-panel.svelte';
+import AdvancedPanel from '$lib/components/settings/panels/advanced-panel.svelte';
+import AppearancePanel from '$lib/components/settings/panels/appearance-panel.svelte';
+import ContentsPanel from '$lib/components/settings/panels/contents-panel.svelte';
+import LanguagePanel from '$lib/components/settings/panels/language-panel.svelte';
+import MediaPanel from '$lib/components/settings/panels/media-panel.svelte';
 
 /** @type {{ key: string, icon: string, component: import('svelte').Component }[]} */
 export const panels = [

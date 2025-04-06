@@ -10,8 +10,8 @@
   import BottomNavigation from '$lib/components/global/toolbar/bottom-navigation.svelte';
   import GlobalToolbar from '$lib/components/global/toolbar/global-toolbar.svelte';
   import MenuPage from '$lib/components/menu/menu-page.svelte';
-  import PrefsPage from '$lib/components/prefs/prefs-page.svelte';
   import SearchPage from '$lib/components/search/search-page.svelte';
+  import SettingsPage from '$lib/components/settings/settings-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
   import { isSmallScreen } from '$lib/services/app/env';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
@@ -29,7 +29,7 @@
     config: ConfigPage,
     // For small screens
     menu: MenuPage,
-    settings: PrefsPage,
+    settings: SettingsPage,
   };
 
   const SelectedPage = $derived(pages[$selectedPageName]);
