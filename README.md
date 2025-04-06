@@ -12,9 +12,9 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
 
 ![Screenshot: Full-Fledged Asset Library; First-Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250405)<br>
 
-![Screenshot: GitHub, GitLab; Streamlined Local Repository Workflow; WebP, SVGO; Built-In Image Optimizer](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250405)<br>
+![Screenshot: Mobile Support; WebP, SVGO; Built-In Image Optimizer](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250406)<br>
 
-![Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250405)<br>
+![GitHub, GitLab; Streamlined Local & Remote Workflow; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250406)<br>
 
 ## Table of contents
 
@@ -125,7 +125,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 190+ issues, or 380+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 190+ issues, or 390+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA (almost there)
     - 350 issues, or 600 if including duplicates, in the future
@@ -150,7 +150,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 - Frequent releases deliver new features and enhancements to users faster. Most of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
-- Comes with touch device support, such as larger buttons for easier tapping. While the UI is not yet optimized for small screens, it should work well with large tablets like iPad Pro or Pixel Tablet. Mobile support and other optimizations such as swipe navigation are planned after the 1.0 release.
+- Comes with decent mobile support.[^18] Expect some glitches — we are still working to fully optimize the app for small screens and touch devices.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs,[^196] to ensure optimal usability without compromising accessibility.
 - The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
@@ -1252,7 +1252,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### After the 1.0 release
 
 - Implementing the [remaining Netlify/Decap CMS features](#current-limitations)
-- Tackling even more Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] mobile optimization,[^18] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+- Tackling even more Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation and content writing
@@ -1318,7 +1318,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^17]: Netlify/Decap CMS [#1333](https://github.com/decaporg/decap-cms/issues/1333), [#4216](https://github.com/decaporg/decap-cms/issues/4216)
 
-[^18]: Netlify/Decap CMS [#441](https://github.com/decaporg/decap-cms/issues/441)
+[^18]: Netlify/Decap CMS [#441](https://github.com/decaporg/decap-cms/issues/441), [#1277](https://github.com/decaporg/decap-cms/issues/1277), [#1339](https://github.com/decaporg/decap-cms/issues/1339), [#2500](https://github.com/decaporg/decap-cms/issues/2500), [#2833](https://github.com/decaporg/decap-cms/issues/2833), [#2984](https://github.com/decaporg/decap-cms/issues/2984), [#3852](https://github.com/decaporg/decap-cms/issues/3852), [#7241](https://github.com/decaporg/decap-cms/issues/7241)
 
 [^19]: Netlify/Decap CMS [#5910](https://github.com/decaporg/decap-cms/issues/5910)
 

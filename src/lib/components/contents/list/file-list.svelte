@@ -28,7 +28,9 @@
             }}
           >
             <GridCell class="title">
-              {label || name}
+              <span role="none" class="label">
+                {label || name}
+              </span>
             </GridCell>
           </GridRow>
         {/snippet}

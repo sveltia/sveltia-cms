@@ -1,6 +1,7 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { selectedAssetFolder } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
 
@@ -10,8 +11,9 @@
 
 <Button
   variant="primary"
-  label={$_('upload')}
   disabled={uploadDisabled}
+  iconic={$isSmallScreen}
+  label={$isSmallScreen ? undefined : $_('upload')}
   aria-label={$_('upload_assets')}
   onclick={() => {
     $showUploadAssetsDialog = true;

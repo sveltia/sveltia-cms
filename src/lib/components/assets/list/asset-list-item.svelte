@@ -1,6 +1,7 @@
 <script>
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { canPreviewAsset, focusedAsset, selectedAssets } from '$lib/services/assets';
   import { listedAssets } from '$lib/services/assets/view';
@@ -56,22 +57,29 @@
   onfocus={() => {
     $focusedAsset = asset;
   }}
+  onclick={() => {
+    if ($focusedAsset && canPreviewAsset($focusedAsset)) {
+      goto(`/assets/${$focusedAsset.path}`);
+    }
+  }}
   ondblclick={() => {
     if ($focusedAsset && canPreviewAsset($focusedAsset)) {
       goto(`/assets/${$focusedAsset.path}`);
     }
   }}
 >
-  <GridCell class="checkbox">
-    <Checkbox
-      role="none"
-      tabindex="-1"
-      checked={$selectedAssets.includes(asset)}
-      onChange={({ detail: { checked } }) => {
-        updateSelection(checked);
-      }}
-    />
-  </GridCell>
+  {#if !$isSmallScreen}
+    <GridCell class="checkbox">
+      <Checkbox
+        role="none"
+        tabindex="-1"
+        checked={$selectedAssets.includes(asset)}
+        onChange={({ detail: { checked } }) => {
+          updateSelection(checked);
+        }}
+      />
+    </GridCell>
+  {/if}
   <GridCell class="image">
     <AssetPreview
       {kind}
@@ -81,6 +89,6 @@
     />
   </GridCell>
   <GridCell class="title">
-    <span role="none">{name}</span>
+    <span role="none" class="label">{name}</span>
   </GridCell>
 </GridRow>

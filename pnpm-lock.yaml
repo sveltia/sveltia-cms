@@ -21,8 +21,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@sveltia/ui':
-        specifier: ^0.25.12
-        version: 0.25.12(svelte@5.25.7)
+        specifier: ^0.25.14
+        version: 0.25.14(svelte@5.25.7)
       '@sveltia/utils':
         specifier: ^0.7.1
         version: 0.7.1
@@ -118,14 +118,14 @@ importers:
         specifier: ^1.86.3
         version: 1.86.3
       stylelint:
-        specifier: ^16.17.0
-        version: 16.17.0(typescript@5.5.4)
+        specifier: ^16.18.0
+        version: 16.18.0(typescript@5.5.4)
       stylelint-config-recommended-scss:
         specifier: ^14.1.0
-        version: 14.1.0(postcss@8.5.3)(stylelint@16.17.0(typescript@5.5.4))
+        version: 14.1.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.5.4))
       stylelint-scss:
         specifier: ^6.11.1
-        version: 6.11.1(stylelint@16.17.0(typescript@5.5.4))
+        version: 6.11.1(stylelint@16.18.0(typescript@5.5.4))
       svelte:
         specifier: 5.25.7
         version: 5.25.7
@@ -978,8 +978,8 @@ packages:
       svelte: ^5.0.0
       vite: ^6.0.0
 
-  '@sveltia/ui@0.25.12':
-    resolution: {integrity: sha512-0auwHAR95K41L8j7w+eCYucXX5FFiOu0Un2PP+ONP5v08OERAS6DAaXXsItyDkCO6afADEa1aflN2/QbNU7JAw==}
+  '@sveltia/ui@0.25.14':
+    resolution: {integrity: sha512-HZc7xqiJ3TRbAqeNTNeoXJngW2YYoOei6IDcE4wyXgVI1JgzwBjSSSMtb0qX7dKmcQ59a4rZ2Hh3aiuD3xKcYw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2705,8 +2705,8 @@ packages:
     peerDependencies:
       stylelint: ^16.0.2
 
-  stylelint@16.17.0:
-    resolution: {integrity: sha512-I9OwVIWRMqVm2Br5iTbrfSqGRPWQUlvm6oXO1xZuYYu0Gpduy67N8wXOZv15p6E/JdlZiAtQaIoLKZEWk5hrjw==}
+  stylelint@16.18.0:
+    resolution: {integrity: sha512-OXb68qzesv7J70BSbFwfK3yTVLEVXiQ/ro6wUE4UrSbKCMjLLA02S8Qq3LC01DxKyVjk7z8xh35aB4JzO3/sNA==}
     engines: {node: '>=18.12.0'}
     hasBin: true
 
@@ -3829,7 +3829,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.25.12(svelte@5.25.7)':
+  '@sveltia/ui@0.25.14(svelte@5.25.7)':
     dependencies:
       '@lexical/code': 0.29.0
       '@lexical/dragon': 0.29.0
@@ -5782,20 +5782,20 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
-  stylelint-config-recommended-scss@14.1.0(postcss@8.5.3)(stylelint@16.17.0(typescript@5.5.4)):
+  stylelint-config-recommended-scss@14.1.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.5.4)):
     dependencies:
       postcss-scss: 4.0.9(postcss@8.5.3)
-      stylelint: 16.17.0(typescript@5.5.4)
-      stylelint-config-recommended: 14.0.1(stylelint@16.17.0(typescript@5.5.4))
-      stylelint-scss: 6.11.1(stylelint@16.17.0(typescript@5.5.4))
+      stylelint: 16.18.0(typescript@5.5.4)
+      stylelint-config-recommended: 14.0.1(stylelint@16.18.0(typescript@5.5.4))
+      stylelint-scss: 6.11.1(stylelint@16.18.0(typescript@5.5.4))
     optionalDependencies:
       postcss: 8.5.3
 
-  stylelint-config-recommended@14.0.1(stylelint@16.17.0(typescript@5.5.4)):
+  stylelint-config-recommended@14.0.1(stylelint@16.18.0(typescript@5.5.4)):
     dependencies:
-      stylelint: 16.17.0(typescript@5.5.4)
+      stylelint: 16.18.0(typescript@5.5.4)
 
-  stylelint-scss@6.11.1(stylelint@16.17.0(typescript@5.5.4)):
+  stylelint-scss@6.11.1(stylelint@16.18.0(typescript@5.5.4)):
     dependencies:
       css-tree: 3.1.0
       is-plain-object: 5.0.0
@@ -5805,9 +5805,9 @@ snapshots:
       postcss-resolve-nested-selector: 0.1.6
       postcss-selector-parser: 7.1.0
       postcss-value-parser: 4.2.0
-      stylelint: 16.17.0(typescript@5.5.4)
+      stylelint: 16.18.0(typescript@5.5.4)
 
-  stylelint@16.17.0(typescript@5.5.4):
+  stylelint@16.18.0(typescript@5.5.4):
     dependencies:
       '@csstools/css-parser-algorithms': 3.0.4(@csstools/css-tokenizer@3.0.3)
       '@csstools/css-tokenizer': 3.0.3

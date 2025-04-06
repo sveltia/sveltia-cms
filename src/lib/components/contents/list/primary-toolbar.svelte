@@ -3,8 +3,10 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
+  import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import { isSmallScreen } from '$lib/services/app/env';
+  import { goBack, goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
@@ -37,25 +39,38 @@
 
 {#if $selectedCollection}
   <Toolbar variant="primary" aria-label={$_('collection')}>
-    <h2 role="none">{collectionLabel}</h2>
-    <div role="none" class="description">{@html sanitize(description || '')}</div>
-    <Spacer flex />
-    {#if isEntryCollection}
-      <Button
-        variant="ghost"
-        label={$_('delete')}
-        aria-label={$selectedEntries.length === 1
-          ? $_('delete_selected_entry')
-          : $_('delete_selected_entries')}
-        disabled={!$selectedEntries.length || !canDelete}
+    {#if $isSmallScreen}
+      <BackButton
+        aria-label={$_('back_to_collection_list')}
         onclick={() => {
-          showDeleteDialog = true;
+          goBack('/collections');
         }}
       />
+    {/if}
+    <h2 role="none">{collectionLabel}</h2>
+    {#if !$isSmallScreen}
+      <div role="none" class="description">{@html sanitize(description || '')}</div>
+    {/if}
+    <Spacer flex />
+    {#if isEntryCollection}
+      {#if !$isSmallScreen}
+        <Button
+          variant="ghost"
+          label={$_('delete')}
+          aria-label={$selectedEntries.length === 1
+            ? $_('delete_selected_entry')
+            : $_('delete_selected_entries')}
+          disabled={!$selectedEntries.length || !canDelete}
+          onclick={() => {
+            showDeleteDialog = true;
+          }}
+        />
+      {/if}
       <Button
         variant="primary"
         disabled={createDisabled}
-        label={$_('create')}
+        iconic={$isSmallScreen}
+        label={$isSmallScreen ? undefined : $_('create')}
         aria-label={$_('create_new_entry')}
         keyShortcuts="Accel+E"
         onclick={() => {

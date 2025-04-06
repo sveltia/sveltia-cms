@@ -45,6 +45,10 @@
         padding: 0 16px 16px;
         height: 100%;
         overflow-y: auto;
+
+        @media (width < 768px) {
+          padding: 4px;
+        }
       }
     }
   }

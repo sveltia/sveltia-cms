@@ -11,23 +11,35 @@
   import PrimaryToolbar from '$lib/components/contents/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
-  import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
-  import { getCollection, selectedCollection } from '$lib/services/contents/collection';
+  import { isSmallScreen } from '$lib/services/app/env';
+  import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+  import {
+    getCollection,
+    getFirstCollection,
+    selectedCollection,
+  } from '$lib/services/contents/collection';
   import { contentUpdatesToast } from '$lib/services/contents/collection/data';
   import { getFile } from '$lib/services/contents/collection/files';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { showSearchBar } from '$lib/services/search';
 
   /**
    * @import { FileCollection, InternalCollection } from '$lib/types/private';
    */
 
   const routeRegex =
-    /^\/collections\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries))?(?:\/(?<subPath>.+?))?$/;
+    /^\/collections(?:\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries))?(?:\/(?<subPath>.+?))?)?$/;
+
+  let isIndexPage = $state(false);
 
   const MainContent = $derived($selectedCollection?.files ? FileList : EntryList);
+
+  $effect(() => {
+    $showSearchBar = !$isSmallScreen || isIndexPage;
+  });
 
   /**
    * Navigate to the content list or content details page given the URL hash.
@@ -37,13 +49,29 @@
     const { path, params } = parseLocation();
     const match = path.match(routeRegex);
 
+    isIndexPage = false;
+
     if (!match?.groups) {
-      return; // Not Found
+      return; // Different page
     }
 
     const { _collectionName, routeType, subPath } = match.groups;
+
+    if (!_collectionName) {
+      if ($isSmallScreen) {
+        // Show the collection list only
+        $selectedCollection = undefined;
+        isIndexPage = true;
+      } else {
+        // Redirect to the first collection
+        goto(`/collections/${getFirstCollection()?.name}`);
+      }
+
+      return;
+    }
+
     /** @type {InternalCollection | undefined} */
-    const collection = _collectionName ? getCollection(_collectionName) : undefined;
+    const collection = getCollection(_collectionName);
 
     if (!collection || collection.hide) {
       $selectedCollection = undefined;
@@ -152,34 +180,38 @@
 
 <PageContainer class="content" aria-label={$_('content_library')}>
   {#snippet primarySidebar()}
-    <PrimarySidebar />
+    {#if !$isSmallScreen || isIndexPage}
+      <PrimarySidebar />
+    {/if}
   {/snippet}
   {#snippet main()}
-    <Group
-      id="collection-container"
-      class="main"
-      aria-label={$_('x_collection', {
-        values: { collection: $selectedCollection?.label || $selectedCollection?.name },
-      })}
-      aria-description={$selectedCollection?.description}
-    >
-      <PageContainerMainArea>
-        {#snippet primaryToolbar()}
-          <PrimaryToolbar />
-        {/snippet}
-        {#snippet secondaryToolbar()}
-          {#if $selectedCollection?._type === 'entry' && $listedEntries.length}
-            <SecondaryToolbar />
-          {/if}
-        {/snippet}
-        {#snippet mainContent()}
-          <MainContent />
-        {/snippet}
-        {#snippet secondarySidebar()}
-          <SecondarySidebar />
-        {/snippet}
-      </PageContainerMainArea>
-    </Group>
+    {#if !$isSmallScreen || !isIndexPage}
+      <Group
+        id="collection-container"
+        class="main"
+        aria-label={$_('x_collection', {
+          values: { collection: $selectedCollection?.label || $selectedCollection?.name },
+        })}
+        aria-description={$selectedCollection?.description}
+      >
+        <PageContainerMainArea>
+          {#snippet primaryToolbar()}
+            <PrimaryToolbar />
+          {/snippet}
+          {#snippet secondaryToolbar()}
+            {#if $selectedCollection?._type === 'entry' && $listedEntries.length}
+              <SecondaryToolbar />
+            {/if}
+          {/snippet}
+          {#snippet mainContent()}
+            <MainContent />
+          {/snippet}
+          {#snippet secondarySidebar()}
+            <SecondarySidebar />
+          {/snippet}
+        </PageContainerMainArea>
+      </Group>
+    {/if}
   {/snippet}
 </PageContainer>
 

@@ -33,10 +33,19 @@
     gap: 4px;
     background-color: var(--sui-secondary-background-color); // same as toolbar
 
+    @media (width < 768px) {
+      flex-direction: column;
+    }
+
     :global(.column) {
       flex: auto;
       width: calc(100% / 3);
       background-color: var(--sui-primary-background-color);
+
+      @media (width < 768px) {
+        width: 100%;
+        height: calc(100% / 3);
+      }
     }
 
     header {

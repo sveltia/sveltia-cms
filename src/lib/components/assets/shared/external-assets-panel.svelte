@@ -296,6 +296,7 @@
 
   .input-outer {
     width: 400px;
+    max-width: 100%;
     text-align: center;
   }
 </style>

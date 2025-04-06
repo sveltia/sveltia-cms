@@ -6,6 +6,7 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
@@ -32,10 +33,12 @@
 
 {#if entryCollection}
   <Toolbar variant="secondary" aria-label={$_('entry_list')}>
-    <ItemSelector
-      allItems={$entryGroups.map(({ entries }) => entries).flat(1)}
-      selectedItems={selectedEntries}
-    />
+    {#if !$isSmallScreen}
+      <ItemSelector
+        allItems={$entryGroups.map(({ entries }) => entries).flat(1)}
+        selectedItems={selectedEntries}
+      />
+    {/if}
     <Spacer flex />
     <SortMenu
       disabled={!hasMultipleEntries || !$sortFields.length}
@@ -66,25 +69,27 @@
       {currentView}
       aria-controls="entry-list"
     />
-    <Divider orientation="vertical" />
-    <Button
-      variant="ghost"
-      iconic
-      disabled={!hasListedEntries || !entryCollection._assetFolder}
-      pressed={!!$currentView.showMedia}
-      aria-controls="collection-assets"
-      aria-expanded={$currentView.showMedia}
-      aria-label={$_($currentView.showMedia ? 'hide_assets' : 'show_assets')}
-      onclick={() => {
-        currentView.update((view) => ({
-          ...view,
-          showMedia: !$currentView.showMedia,
-        }));
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="photo_library" />
-      {/snippet}
-    </Button>
+    {#if !$isSmallScreen}
+      <Divider orientation="vertical" />
+      <Button
+        variant="ghost"
+        iconic
+        disabled={!hasListedEntries || !entryCollection._assetFolder}
+        pressed={!!$currentView.showMedia}
+        aria-controls="collection-assets"
+        aria-expanded={$currentView.showMedia}
+        aria-label={$_($currentView.showMedia ? 'hide_assets' : 'show_assets')}
+        onclick={() => {
+          currentView.update((view) => ({
+            ...view,
+            showMedia: !$currentView.showMedia,
+          }));
+        }}
+      >
+        {#snippet startIcon()}
+          <Icon name="photo_library" />
+        {/snippet}
+      </Button>
+    {/if}
   </Toolbar>
 {/if}

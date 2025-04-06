@@ -2,9 +2,8 @@
   import { SearchBar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
-  import { siteConfig } from '$lib/services/config';
-  import { selectedCollection } from '$lib/services/contents/collection';
-  import { searchTerms } from '$lib/services/search';
+  import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
+  import { searchMode, searchTerms } from '$lib/services/search';
 
   /**
    * Navigate to the search results page if search terms are given, or go back the previous page.
@@ -20,12 +19,10 @@
     if (terms) {
       goto(`/search/${terms}`, { replaceState: searching });
     } else if (hadTerms && searching) {
-      goBack(`/collections/${$selectedCollection?.name ?? $siteConfig?.collections[0].name}`);
+      goBack(`/collections/${$selectedCollection?.name ?? getFirstCollection()?.name}`);
     }
   };
 
-  /** @type {HTMLElement | undefined} */
-  let wrapper = $state();
   /** @type {any | undefined} */
   let searchBar = $state();
 
@@ -37,12 +34,12 @@
   });
 </script>
 
-<div role="none" class="wrapper" bind:this={wrapper}>
+<div role="none" class="wrapper">
   <SearchBar
     bind:this={searchBar}
     keyShortcuts="Accel+F"
     showInlineLabel={true}
-    aria-label={$_('search_placeholder')}
+    aria-label={$_(`search_placeholder_${$searchMode}`)}
     --sui-textbox-placeholder-text-align="center"
     oninput={({ target }) => {
       // @todo Implement quick search dropdown.
