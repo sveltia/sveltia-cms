@@ -228,7 +228,13 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     site_domain: siteDomain = hostname,
     base_url: baseURL = 'https://api.netlify.com',
     auth_endpoint: path = 'auth',
+    pat_url: patURL,
   } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+
+  if(patURL) {
+    const { token: patToken } = (await sendRequest(patURL));
+    cachedToken = patToken ?? cachedToken;
+  }
 
   const token =
     cachedToken ||
