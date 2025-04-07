@@ -166,7 +166,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
 - Uses caching, lazy loading and infinite scrolling techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
-- Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS.[^39]
+- Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS.[^39][^38]
 - No typing lag on input widgets, especially within nested lists and objects.[^77]
 
 ### Better productivity
@@ -482,7 +482,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
 - Enhancements to media libraries:
   - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
-  - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.
+  - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8]
   - Default media library
     - It comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images selected by users for upload are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
     - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
