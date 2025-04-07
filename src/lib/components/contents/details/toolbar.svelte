@@ -171,9 +171,9 @@
   <h2 role="none">
     <strong role="none">
       {#if isNew}
-        {$_('creating_x', { values: { name: collectionLabelSingular } })}
+        {$_('create_entry_title', { values: { name: collectionLabelSingular } })}
       {:else}
-        {$_('editing_x_in_x', {
+        {$_('edit_entry_title', {
           values: {
             collection: collectionLabel,
             entry: collectionFile

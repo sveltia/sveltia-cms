@@ -327,13 +327,12 @@ export const strings = {
   draft_backup_restored: 'Draft backup has been restored.',
   draft_backup_deleted: 'Draft backup has been deleted.',
   cancel_editing: 'Cancel Editing',
-  creating_x: 'Creating {name}',
-  creating_x_collection_entry: 'You’re now creating a new entry in the “{collection}” collection.',
-  editing_x_in_x: 'Editing {collection} › {entry}',
-  editing_x_collection_entry:
+  create_entry_title: 'Creating {name}',
+  create_entry_announcement: 'You’re now creating a new entry in the “{collection}” collection.',
+  edit_entry_title: '{collection} › {entry}',
+  edit_entry_announcement:
     'You’re now editing the “{entry}” entry in the “{collection}” collection.',
-  editing_x_collection_file:
-    'You’re now editing the “{file}” file in the “{collection}” collection.',
+  edit_file_announcement: 'You’re now editing the “{file}” file in the “{collection}” collection.',
   save_and_publish: 'Save and Publish',
   save_without_publishing: 'Save without Publishing',
   show_editor_options: 'Show Editor Options',

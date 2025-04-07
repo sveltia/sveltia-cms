@@ -131,7 +131,7 @@
           });
         }
 
-        $announcedPageStatus = $_('editing_x_collection_file', {
+        $announcedPageStatus = $_('edit_file_announcement', {
           values: {
             collection: collectionLabel,
             file: collectionFile.label || collectionFile.name,
@@ -143,7 +143,7 @@
       if (routeType === 'new' && !subPath) {
         createDraft({ collection, dynamicValues: params });
 
-        $announcedPageStatus = $_('creating_x_collection_entry', {
+        $announcedPageStatus = $_('create_entry_announcement', {
           values: {
             collection: collectionLabel,
           },
@@ -156,7 +156,7 @@
         if (originalEntry) {
           createDraft({ collection, originalEntry });
 
-          $announcedPageStatus = $_('editing_x_collection_entry', {
+          $announcedPageStatus = $_('edit_entry_announcement', {
             values: {
               collection: collectionLabel,
               entry: getEntrySummary($selectedCollection, originalEntry),
