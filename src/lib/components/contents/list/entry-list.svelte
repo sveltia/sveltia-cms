@@ -1,12 +1,12 @@
 <script>
-  import { Button, GridBody, Icon } from '@sveltia/ui';
+  import { GridBody } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
 
@@ -52,18 +52,7 @@
     {:else}
       <EmptyState>
         <span role="none">{$_('no_entries_created')}</span>
-        <Button
-          variant="primary"
-          disabled={!collection.create}
-          label={$_('create_new_entry')}
-          onclick={() => {
-            goto(`/collections/${collection.name}/new`);
-          }}
-        >
-          {#snippet startIcon()}
-            <Icon name="edit" />
-          {/snippet}
-        </Button>
+        <CreateEntryButton collectionName={collection.name} label={$_('create_new_entry')} />
       </EmptyState>
     {/if}
   {:else}

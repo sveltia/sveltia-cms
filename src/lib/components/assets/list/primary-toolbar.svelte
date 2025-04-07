@@ -7,10 +7,16 @@
   import EditOptionsButton from '$lib/components/assets/toolbar/edit-options-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/toolbar/preview-asset-button.svelte';
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
+  import FloatingActionButtonWrapper from '$lib/components/common/floating-action-button-wrapper.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { isSmallScreen } from '$lib/services/app/env';
   import { goBack } from '$lib/services/app/navigation';
-  import { focusedAsset, selectedAssetFolder, selectedAssets } from '$lib/services/assets';
+  import {
+    canCreateAsset,
+    focusedAsset,
+    selectedAssetFolder,
+    selectedAssets,
+  } from '$lib/services/assets';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
 
   const assets = $derived.by(() => {
@@ -18,6 +24,8 @@
     if ($focusedAsset) return [$focusedAsset];
     return [];
   });
+
+  const uploadDisabled = $derived(!canCreateAsset($selectedAssetFolder));
 </script>
 
 <Toolbar variant="primary" aria-label={$_('folder')}>
@@ -56,5 +64,9 @@
     />
     <EditOptionsButton asset={$focusedAsset} />
   {/if}
-  <UploadAssetsButton />
+  <FloatingActionButtonWrapper>
+    {#if !$isSmallScreen || ($listedAssets.length && !uploadDisabled)}
+      <UploadAssetsButton label={$isSmallScreen ? undefined : $_('upload')} />
+    {/if}
+  </FloatingActionButtonWrapper>
 </Toolbar>

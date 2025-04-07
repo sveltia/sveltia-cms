@@ -1,14 +1,16 @@
 <script>
-  import { Button, Icon, Infobar, Spacer, Toolbar } from '@sveltia/ui';
+  import { Button, Infobar, Spacer, Toolbar } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
+  import FloatingActionButtonWrapper from '$lib/components/common/floating-action-button-wrapper.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
+  import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { isSmallScreen } from '$lib/services/app/env';
-  import { goBack, goto } from '$lib/services/app/navigation';
+  import { goBack } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { selectedEntries } from '$lib/services/contents/collection/entries';
+  import { canCreateEntry, selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
 
   let showDeleteDialog = $state(false);
@@ -24,16 +26,14 @@
       ALLOWED_ATTR: ['href'],
     });
 
-  const name = $derived($selectedCollection?.name);
+  const name = $derived($selectedCollection?.name ?? '');
   const label = $derived($selectedCollection?.label);
   const description = $derived($selectedCollection?.description);
   const isEntryCollection = $derived($selectedCollection?._type === 'entry');
   const canCreate = $derived($selectedCollection?.create ?? false);
   const canDelete = $derived($selectedCollection?.delete ?? true);
   const limit = $derived($selectedCollection?.limit ?? Infinity);
-  const createDisabled = $derived(
-    isEntryCollection && (!canCreate || $listedEntries.length >= limit),
-  );
+  const createDisabled = $derived(!canCreateEntry($selectedCollection));
   const collectionLabel = $derived(label || name || '');
 </script>
 
@@ -66,24 +66,18 @@
           }}
         />
       {/if}
-      <Button
-        variant="primary"
-        disabled={createDisabled}
-        iconic={$isSmallScreen}
-        label={$isSmallScreen ? undefined : $_('create')}
-        aria-label={$_('create_new_entry')}
-        keyShortcuts="Accel+E"
-        onclick={() => {
-          goto(`/collections/${name}/new`);
-        }}
-      >
-        {#snippet startIcon()}
-          <Icon name="edit" />
-        {/snippet}
-      </Button>
+      <FloatingActionButtonWrapper>
+        {#if !$isSmallScreen || ($listedEntries.length && !createDisabled)}
+          <CreateEntryButton
+            collectionName={name}
+            label={$isSmallScreen ? undefined : $_('create')}
+            keyShortcuts="Accel+E"
+          />
+        {/if}
+      </FloatingActionButtonWrapper>
     {/if}
   </Toolbar>
-  {#if createDisabled}
+  {#if isEntryCollection && createDisabled}
     <Infobar
       dismissible={false}
       --sui-infobar-border-width="1px 0"

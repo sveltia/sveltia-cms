@@ -9,7 +9,7 @@
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
-  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+  import { canCreateEntry } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
   import {
     resetBackupToastState,
@@ -40,7 +40,6 @@
   /** @type {HTMLElement | undefined} */
   let rightPaneContentArea = $state();
 
-  const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
@@ -57,9 +56,7 @@
   );
   const canCreate = $derived(collection?.create ?? false);
   const limit = $derived(collection?.limit ?? Infinity);
-  const createDisabled = $derived(
-    isNew && (!canCreate || getEntriesByCollection(collection?.name ?? '').length >= limit),
-  );
+  const createDisabled = $derived(!canCreateEntry(collection));
 
   /**
    * Restore the pane state from IndexedDB.

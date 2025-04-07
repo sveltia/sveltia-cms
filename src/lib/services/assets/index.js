@@ -602,3 +602,11 @@ export const getAssetsByDirName = (dirname) =>
 selectedAssetFolder.subscribe(() => {
   focusedAsset.set(undefined);
 });
+
+/**
+ * Check if asset creation is allowed in the folder. Can’t upload assets if collection assets are
+ * saved at entry-relative paths.
+ * @param {CollectionAssetFolder | undefined} assetFolder Asset folder.
+ * @returns {boolean} Result.
+ */
+export const canCreateAsset = (assetFolder) => !!assetFolder && !assetFolder.entryRelative;

@@ -1,19 +1,29 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { isSmallScreen } from '$lib/services/app/env';
-  import { selectedAssetFolder } from '$lib/services/assets';
+  import { canCreateAsset, selectedAssetFolder } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
 
-  // Can’t upload assets if collection assets are saved at entry-relative paths
-  const uploadDisabled = $derived(!!$selectedAssetFolder?.entryRelative);
+  /**
+   * @typedef {object} Props
+   * @property {string} [label] Button label. If `undefined`, the button will be iconic.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    label = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const disabled = $derived(!canCreateAsset($selectedAssetFolder));
 </script>
 
 <Button
   variant="primary"
-  disabled={uploadDisabled}
-  iconic={$isSmallScreen}
-  label={$isSmallScreen ? undefined : $_('upload')}
+  iconic={!label}
+  {disabled}
+  {label}
   aria-label={$_('upload_assets')}
   onclick={() => {
     $showUploadAssetsDialog = true;
