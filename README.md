@@ -2,19 +2,19 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility.
 
-The free, open source alternative to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
+The free, open source alternative/successor to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
 
-![Screenshot: Git-based Headless CMS Made Right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
+![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
-![Screenshot: Fast and Lightweight; Modern UX/UI with Dark Mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2.webp?20250405)<br>
+![Fast and lightweight; modern UX/UI with dark mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2.webp?20250405)<br>
 
-![Screenshot: Stock Photo Integration with Pexels, Pixabay and Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250405)<br>
+![Stock photo integration: Pexels, Pixabay, Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250405)<br>
 
-![Screenshot: Full-Fledged Asset Library; First-Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250405)<br>
+![Full-fledged Asset Library; first-class internationalization support; DeepL integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250405)<br>
 
-![Screenshot: WebP, SVGO; Built-In Image Optimizer; Mobile Support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250407)<br>
+![Built-in image optimizer for WebP and SVG; mobile support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250407)<br>
 
-![GitHub, GitLab; Streamlined Local & Remote Workflow; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250406)<br>
+![Streamlined local and remote workflow; GitHub, GitLab support; single-line migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250406)<br>
 
 ## Table of contents
 
@@ -118,7 +118,7 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 
 ## Development status
 
-Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in mid-2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
+> [!IMPORTANT] Sveltia CMS is currently in beta and version 1.0 (GA) is expected to ship in Q3 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system that involves various kinds of activities that require considerable effort:
 
@@ -137,11 +137,11 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![190 Netlify/Decap CMS Issues Solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250403)<br>
+![190 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250403)<br>
 
 ## Differentiators
 
-We hope Netlify/Decap CMS users will be pleased and surprised by the numerous improvements we have made, from the small to the large. Here’s what makes Sveltia CMS different. Look how serious we are!
+Netlify/Decap CMS users will definitely be pleased and surprised by the numerous improvements we have made, from the small to the large. Here’s what makes Sveltia CMS different. Look how serious we are!
 
 ### Better UX
 
