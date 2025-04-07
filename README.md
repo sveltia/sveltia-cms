@@ -12,7 +12,7 @@ The free, open source alternative to Netlify/Decap CMS is now in public beta, tu
 
 ![Screenshot: Full-Fledged Asset Library; First-Class I18n Support with DeepL](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250405)<br>
 
-![Screenshot: Mobile Support; WebP, SVGO; Built-In Image Optimizer](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250406)<br>
+![Screenshot: WebP, SVGO; Built-In Image Optimizer; Mobile Support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250407)<br>
 
 ![GitHub, GitLab; Streamlined Local & Remote Workflow; Single Line Migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250406)<br>
 
@@ -159,7 +159,7 @@ We hope Netlify/Decap CMS users will be pleased and surprised by the numerous im
 
 ### Better performance
 
-- Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead).
+- Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead). Note that Sveltia CMS is framework-agnostic; it’s served as a vanilla JavaScript bundle.
 - Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though some Netlify/Decap CMS features are [omitted](#features-not-to-be-implemented) or [unimplemented](#current-limitations) in Sveltia CMS, we have added a lot of new features. That’s the power of [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) + [Vite](https://vite.dev/).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation widgets.[^14]
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
