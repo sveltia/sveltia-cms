@@ -11,6 +11,6 @@ export const isSmallScreen = writable(false);
 export const isMediumScreen = writable(false);
 
 /**
- * Whether the app is displayed on a medium screen (desktop).
+ * Whether the app is displayed on a large screen (desktop).
  */
 export const isLargeScreen = writable(false);
