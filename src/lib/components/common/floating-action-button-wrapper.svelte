@@ -28,11 +28,12 @@
       display: block;
       position: fixed;
       inset: auto 16px 72px auto;
-      z-index: 1;
+      z-index: 100;
 
       :global(button) {
         border-radius: 50%;
         height: 56px;
+        box-shadow: 0 4px 8px #0006;
 
         :global(.icon) {
           font-size: 32px;

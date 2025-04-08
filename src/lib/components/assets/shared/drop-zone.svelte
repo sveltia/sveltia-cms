@@ -197,7 +197,7 @@
       pointer-events: none;
     }
 
-    :global(button) {
+    :global(button:not(:disabled)) {
       pointer-events: auto;
     }
   }
