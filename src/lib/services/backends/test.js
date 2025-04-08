@@ -1,6 +1,5 @@
-import { _ } from 'svelte-i18n';
-import { get } from 'svelte/store';
 import { getHandleByPath, loadFiles, saveChanges } from '$lib/services/backends/shared/fs';
+import { dataLoaded } from '$lib/services/contents';
 
 /**
  * @import { BackendService, FileChange, User } from '$lib/types/private';
@@ -22,7 +21,6 @@ const init = () => {};
  * the origin private file system (OPFS), so we can read/write files.
  * @returns {Promise<User>} User info. Since we don’t have any details for the local user, just
  * return the backend name.
- * @throws {Error} When the directory handle could not be acquired.
  * @see https://web.dev/articles/origin-private-file-system
  * @todo Preload entry files on the demo site.
  */
@@ -32,9 +30,7 @@ const signIn = async () => {
       await getHandleByPath(await navigator.storage.getDirectory(), 'sveltia-cms-test')
     );
   } catch {
-    throw new Error('Directory handle could not be acquired', {
-      cause: new Error(get(_)('test_repo_init_failed')),
-    });
+    // Directory handle could not be acquired for security reasons, but we can ignore the error
   }
 
   return { backendName };
@@ -47,19 +43,25 @@ const signOut = async () => {};
 
 /**
  * Load file list and all the entry files from the file system, then cache them in the
- * {@link allEntries} and {@link allAssets} stores.
+ * {@link allEntries} and {@link allAssets} stores. If the root directory handle is not available,
+ * simply pretend that the data is loaded.
  */
 const fetchFiles = async () => {
-  await loadFiles(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle));
+  if (rootDirHandle) {
+    await loadFiles(rootDirHandle);
+  } else {
+    dataLoaded.set(true);
+  }
 };
 
 /**
- * Save entries or assets locally.
+ * Save entries or assets locally. If the root directory handle is not available, do nothing; the
+ * data will still be stored in the in-memory cache, allowing the user to continue using the app
+ * without an error.
  * @param {FileChange[]} changes File changes to be saved.
  * @returns {Promise<(?File)[]>} Created or updated files, if available.
  */
-const commitChanges = async (changes) =>
-  saveChanges(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle), changes);
+const commitChanges = async (changes) => (rootDirHandle ? saveChanges(rootDirHandle, changes) : []);
 
 /**
  * @type {BackendService}
