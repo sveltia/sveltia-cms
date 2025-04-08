@@ -2,6 +2,7 @@
   import { Icon, Listbox, Option } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
+  import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import {
@@ -40,7 +41,15 @@
 </script>
 
 <div role="none" class="primary-sidebar">
-  <h2>{$_('assets')}</h2>
+  {#if $isSmallScreen}
+    <h2>{$_('assets')}</h2>
+    <QuickSearchBar
+      onclick={(event) => {
+        event.preventDefault();
+        goto('/search');
+      }}
+    />
+  {/if}
   <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
     {#each folders as { collectionName, internalPath, entryRelative } (collectionName)}
       {@const collection = collectionName ? getCollection(collectionName) : undefined}

@@ -173,16 +173,18 @@
       {#if isNew}
         {$_('create_entry_title', { values: { name: collectionLabelSingular } })}
       {:else}
-        {$_('edit_entry_title', {
-          values: {
-            collection: collectionLabel,
-            entry: collectionFile
-              ? collectionFile.label || collectionFile.name
-              : collection && originalEntry
-                ? getEntrySummary(collection, originalEntry)
-                : '',
-          },
-        })}
+        {@const entrySummary = collectionFile
+          ? collectionFile.label || collectionFile.name
+          : collection && originalEntry
+            ? getEntrySummary(collection, originalEntry)
+            : ''}
+        {#if $isSmallScreen}
+          {entrySummary}
+        {:else}
+          {$_('edit_entry_title', {
+            values: { collection: collectionLabel, entry: entrySummary },
+          })}
+        {/if}
       {/if}
     </strong>
   </h2>

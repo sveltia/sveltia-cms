@@ -163,6 +163,7 @@
         vertical-align: middle;
 
         @media (width < 768px) {
+          border-width: 0 !important;
           height: 64px;
         }
 
@@ -180,7 +181,7 @@
             -webkit-line-clamp: 2;
             line-clamp: 2;
             white-space: normal;
-            line-height: var(--sui-line-height-comfortable);
+            line-height: var(--sui-line-height-compact);
             word-break: break-all;
           }
         }

@@ -1,10 +1,15 @@
 <script>
+  import { Group, Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
+  import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
+  import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import SearchResults from '$lib/components/search/search-results.svelte';
-  import { announcedPageStatus, parseLocation } from '$lib/services/app/navigation';
-  import { searchResults, searchTerms } from '$lib/services/search';
+  import { isSmallScreen } from '$lib/services/app/env';
+  import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+  import { searchMode, searchResults, searchTerms } from '$lib/services/search';
 
   const routeRegex = /^\/search\/(?<terms>.+)$/;
 
@@ -44,6 +49,8 @@
 
   onMount(() => {
     navigate();
+
+    /** @type {HTMLInputElement} */ (document.querySelector('.sui.search-bar input'))?.focus();
   });
 </script>
 
@@ -58,6 +65,42 @@
   aria-label={$_('search_results_for_x', { values: { terms: $searchTerms } })}
 >
   {#snippet main()}
-    <SearchResults />
+    <Group id="assets-container" class="main">
+      <PageContainerMainArea>
+        {#snippet primaryToolbar()}
+          {#if $isSmallScreen}
+            <Toolbar variant="primary">
+              <BackButton
+                aria-label={$_(
+                  $searchMode === 'assets'
+                    ? 'back_to_asset_folder_list'
+                    : 'back_to_collection_list',
+                )}
+                onclick={() => {
+                  $searchTerms = '';
+                  goto($searchMode === 'assets' ? '/assets' : '/collections');
+                }}
+              />
+              <div role="search">
+                <QuickSearchBar />
+              </div>
+            </Toolbar>
+          {/if}
+        {/snippet}
+        {#snippet mainContent()}
+          <SearchResults />
+        {/snippet}
+      </PageContainerMainArea>
+    </Group>
   {/snippet}
 </PageContainer>
+
+<style lang="scss">
+  [role='search'] {
+    display: contents;
+
+    :global(.sui.search-bar) {
+      flex: auto;
+    }
+  }
+</style>

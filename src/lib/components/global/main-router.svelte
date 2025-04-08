@@ -18,7 +18,7 @@
   import { showAssetOverlay } from '$lib/services/assets';
   import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
-  import { searchMode, showSearchBar } from '$lib/services/search';
+  import { searchMode } from '$lib/services/search';
 
   /** @type {Record<string, any>} */
   export const pages = {
@@ -62,10 +62,7 @@
       $searchMode = 'entries';
     } else if (pageName === 'assets') {
       $searchMode = 'assets';
-    } else if (pageName === 'search') {
-      $showSearchBar = true;
-    } else {
-      $showSearchBar = false;
+    } else if (pageName !== 'search') {
       $searchMode = null;
     }
   };

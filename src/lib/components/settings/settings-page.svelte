@@ -1,6 +1,7 @@
 <script>
-  import { Alert, Toast } from '@sveltia/ui';
+  import { Alert, Group, Toast, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import { panels } from '$lib/components/settings';
 
@@ -10,21 +11,32 @@
 
 <PageContainer class="content" aria-label={$_('settings')}>
   {#snippet main()}
-    <div role="none" class="wrapper">
-      {#each panels as { key, component: Content } (key)}
-        <section>
-          <h3>{$_(`prefs.${key}.title`)}</h3>
-          <div role="none" class="inner">
-            <Content
-              onChange={(/** @type {{ message: string }} */ { message }) => {
-                toastMessage = message;
-                showToast = true;
-              }}
-            />
+    <Group id="assets-container" class="main">
+      <PageContainerMainArea>
+        {#snippet primaryToolbar()}
+          <Toolbar variant="primary">
+            <h2 role="none">{$_('settings')}</h2>
+          </Toolbar>
+        {/snippet}
+        {#snippet mainContent()}
+          <div role="none" class="wrapper">
+            {#each panels as { key, component: Content } (key)}
+              <section>
+                <h3>{$_(`prefs.${key}.title`)}</h3>
+                <div role="none" class="inner">
+                  <Content
+                    onChange={(/** @type {{ message: string }} */ { message }) => {
+                      toastMessage = message;
+                      showToast = true;
+                    }}
+                  />
+                </div>
+              </section>
+            {/each}
           </div>
-        </section>
-      {/each}
-    </div>
+        {/snippet}
+      </PageContainerMainArea>
+    </Group>
   {/snippet}
 </PageContainer>
 
@@ -35,7 +47,6 @@
 <style lang="scss">
   .wrapper {
     overflow-y: auto;
-    width: 100%;
     height: 100%;
   }
 

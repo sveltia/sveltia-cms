@@ -58,7 +58,7 @@
     $focusedAsset = asset;
   }}
   onclick={() => {
-    if ($focusedAsset && canPreviewAsset($focusedAsset)) {
+    if (($isSmallScreen || $isMediumScreen) && $focusedAsset && canPreviewAsset($focusedAsset)) {
       goto(`/assets/${$focusedAsset.path}`);
     }
   }}

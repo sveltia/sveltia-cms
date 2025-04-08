@@ -29,7 +29,7 @@
           </InfiniteScroll>
         {/key}
       </ListingGrid>
-    {:else}
+    {:else if $searchTerms}
       <EmptyState>
         <span role="none">{$_('no_entries_found')}</span>
       </EmptyState>

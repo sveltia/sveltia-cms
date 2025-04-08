@@ -6,6 +6,18 @@
   import { searchMode, searchTerms } from '$lib/services/search';
 
   /**
+   * @typedef {object} Props
+   * @property {(event: MouseEvent) => void} [onclick] `click` event handler.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    onclick = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  /**
    * Navigate to the search results page if search terms are given, or go back the previous page.
    * @param {string} terms New search terms.
    */
@@ -38,9 +50,9 @@
   <SearchBar
     bind:this={searchBar}
     keyShortcuts="Accel+F"
-    showInlineLabel={true}
-    aria-label={$_(`search_placeholder_${$searchMode}`)}
+    placeholder={$_(`search_placeholder_${$searchMode}`)}
     --sui-textbox-placeholder-text-align="center"
+    {onclick}
     oninput={({ target }) => {
       // @todo Implement quick search dropdown.
       navigate(/** @type {HTMLInputElement} */ (target).value.trim());

@@ -24,7 +24,6 @@
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { showSearchBar } from '$lib/services/search';
 
   /**
    * @import { FileCollection, InternalCollection } from '$lib/types/private';
@@ -36,10 +35,6 @@
   let isIndexPage = $state(false);
 
   const MainContent = $derived($selectedCollection?.files ? FileList : EntryList);
-
-  $effect(() => {
-    $showSearchBar = !$isSmallScreen || isIndexPage;
-  });
 
   /**
    * Navigate to the content list or content details page given the URL hash.

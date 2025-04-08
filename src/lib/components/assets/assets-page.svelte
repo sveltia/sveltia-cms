@@ -24,7 +24,6 @@
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
-  import { showSearchBar } from '$lib/services/search';
 
   const routeRegex =
     /^\/assets(?:\/(?<folderPath>[/\-\w]+)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
@@ -34,10 +33,6 @@
   const selectedAssetFolderLabel = $derived(
     getFolderLabelByPath($selectedAssetFolder?.internalPath),
   );
-
-  $effect(() => {
-    $showSearchBar = !$isSmallScreen || isIndexPage;
-  });
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.

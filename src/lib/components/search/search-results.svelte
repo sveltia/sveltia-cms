@@ -2,6 +2,7 @@
   import { _ } from 'svelte-i18n';
   import AssetResults from '$lib/components/search/asset-results.svelte';
   import EntryResults from '$lib/components/search/entry-results.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { searchMode } from '$lib/services/search';
 
   /**
@@ -10,9 +11,11 @@
 </script>
 
 <div role="none" class="wrapper">
-  <header role="none">
-    <h2 role="none">{$_('search_results')}</h2>
-  </header>
+  {#if !$isSmallScreen}
+    <header role="none">
+      <h2 role="none">{$_('search_results')}</h2>
+    </header>
+  {/if}
   <div role="none" class="results">
     {#if $searchMode === 'entries'}
       <EntryResults />
@@ -28,6 +31,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    background-color: var(--sui-primary-background-color);
   }
 
   header {

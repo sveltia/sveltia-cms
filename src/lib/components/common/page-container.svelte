@@ -74,14 +74,14 @@
       :global(h2) {
         display: flex;
         align-items: center;
-        padding: 16px 16px 0;
-        height: 32px;
+        padding: 0 20px;
+        height: var(--sui-primary-toolbar-size);
         font-size: var(--sui-font-size-x-large);
+      }
 
-        @media (768px <= width) {
-          position: absolute;
-          left: -99999px;
-        }
+      :global(.sui.search-bar) {
+        margin-inline: 8px;
+        --sui-textbox-background-color: var(--sui-tertiary-background-color);
       }
 
       :global([role='radiogroup']) {
