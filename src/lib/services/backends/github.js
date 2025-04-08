@@ -218,10 +218,6 @@ const init = () => {
  * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
  */
 const signIn = async ({ token: cachedToken, auto = false }) => {
-  if (auto && !cachedToken) {
-    return undefined;
-  }
-
   const { hostname } = window.location;
 
   const {
@@ -231,8 +227,13 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     pat_url: patURL,
   } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
 
-  if(!cachedToken && patURL) {
-    const { token: patToken } = (await sendRequest(patURL));
+  if (auto && !(cachedToken || patURL)) {
+    return undefined;
+  }
+
+  if (!cachedToken && patURL) {
+    const { token: patToken } = await sendRequest(patURL);
+
     cachedToken = patToken;
   }
 

@@ -903,6 +903,8 @@
  * @property {string} [auth_endpoint] OAuth base URL path. Git backends only. Default: `auth`
  * (GitHub) or `oauth/authorize` (GitLab).
  * @property {'pkce' | 'implicit'} [auth_type] OAuth authentication method. GitLab only. Default:
+ * @property {string} [pat_url] Secure Git token URL endpoint. Alternative method of obtaining a
+ * token to be used on Git API calls.
  * `pkce`.
  * @property {string} [app_id] OAuth application ID. GitLab only.
  * @property {CommitMessages} [commit_messages] Custom commit messages. Git backends only.
