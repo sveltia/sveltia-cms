@@ -92,6 +92,8 @@ export const strings = {
   repository_not_found: 'The “{repo}” repository doesn’t exist.',
   repository_empty: 'The “{repo}” repository has no branches.',
   branch_not_found: 'The “{repo}” repository doesn’t have the “{branch}” branch.',
+  test_repo_init_failed:
+    'Test repository could not be initialized. Are you using a private window?',
   unexpected_error: 'Unexpected Error',
 
   // Parser errors

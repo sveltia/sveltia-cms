@@ -595,6 +595,7 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 - The [local repository workflow](#working-with-a-local-git-repository) requires a Chromium-based browser, including Chrome, Edge and Brave.
 - Safari: The Test backend doesn’t save changes locally; [image optimization](#optimizing-images-for-upload) is slower than in other browsers.
+- Test backend doesn’t work in some browsers when using a private window.
 - Firefox ESR and its derivatives, including Tor Browser and Mullvad Browser, are not officially supported, although they may still work.
 
 ### Other notes

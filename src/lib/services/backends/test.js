@@ -1,3 +1,5 @@
+import { _ } from 'svelte-i18n';
+import { get } from 'svelte/store';
 import { getHandleByPath, loadFiles, saveChanges } from '$lib/services/backends/shared/fs';
 
 /**
@@ -30,7 +32,9 @@ const signIn = async () => {
       await getHandleByPath(await navigator.storage.getDirectory(), 'sveltia-cms-test')
     );
   } catch {
-    throw new Error('Directory handle could not be acquired');
+    throw new Error('Directory handle could not be acquired', {
+      cause: new Error(get(_)('test_repo_init_failed')),
+    });
   }
 
   return { backendName };

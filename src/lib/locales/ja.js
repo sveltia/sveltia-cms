@@ -92,6 +92,8 @@ export const strings = {
   repository_not_found: '「{repo}」レポジトリは存在しません。',
   repository_empty: '「{repo}」レポジトリにはブランチがありません。',
   branch_not_found: '「{repo}」レポジトリに「{branch}」ブランチは存在しません。',
+  test_repo_init_failed:
+    'テストリポジトリを初期化できませんでした。プライベートウィンドウを使用していませんか？',
   unexpected_error: '予期せぬエラー',
 
   // Parser errors
