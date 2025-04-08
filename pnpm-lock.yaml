@@ -15,14 +15,14 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       '@lexical/markdown':
-        specifier: ^0.29.0
-        version: 0.29.0
+        specifier: ^0.30.0
+        version: 0.30.0
       '@sindresorhus/transliterate':
         specifier: ^1.6.0
         version: 1.6.0
       '@sveltia/ui':
-        specifier: ^0.25.14
-        version: 0.25.14(svelte@5.25.7)
+        specifier: ^0.25.15
+        version: 0.25.15(svelte@5.25.8)
       '@sveltia/utils':
         specifier: ^0.7.1
         version: 0.7.1
@@ -39,14 +39,14 @@ importers:
         specifier: ^2.23.0
         version: 2.23.0
       lexical:
-        specifier: ^0.29.0
-        version: 0.29.0
+        specifier: ^0.30.0
+        version: 0.30.0
       marked:
-        specifier: ^15.0.7
-        version: 15.0.7
+        specifier: ^15.0.8
+        version: 15.0.8
       marked-bidi:
         specifier: ^1.0.12
-        version: 1.0.12(marked@15.0.7)
+        version: 1.0.12(marked@15.0.8)
       mime:
         specifier: ^4.0.7
         version: 4.0.7
@@ -74,7 +74,7 @@ importers:
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: 5.0.3
-        version: 5.0.3(svelte@5.25.7)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))
+        version: 5.0.3(svelte@5.25.8)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))
       '@types/node':
         specifier: ^22.14.0
         version: 22.14.0
@@ -101,7 +101,7 @@ importers:
         version: 50.6.9(eslint@8.57.1)
       eslint-plugin-svelte:
         specifier: ^2.46.1
-        version: 2.46.1(eslint@8.57.1)(svelte@5.25.7)
+        version: 2.46.1(eslint@8.57.1)(svelte@5.25.8)
       postcss:
         specifier: ^8.5.3
         version: 8.5.3
@@ -113,7 +113,7 @@ importers:
         version: 3.5.3
       prettier-plugin-svelte:
         specifier: ^3.3.3
-        version: 3.3.3(prettier@3.5.3)(svelte@5.25.7)
+        version: 3.3.3(prettier@3.5.3)(svelte@5.25.8)
       sass:
         specifier: ^1.86.3
         version: 1.86.3
@@ -127,17 +127,17 @@ importers:
         specifier: ^6.11.1
         version: 6.11.1(stylelint@16.18.0(typescript@5.5.4))
       svelte:
-        specifier: 5.25.7
-        version: 5.25.7
+        specifier: 5.25.8
+        version: 5.25.8
       svelte-check:
         specifier: ^4.1.5
-        version: 4.1.5(picomatch@4.0.2)(svelte@5.25.7)(typescript@5.5.4)
+        version: 4.1.5(picomatch@4.0.2)(svelte@5.25.8)(typescript@5.5.4)
       svelte-i18n:
         specifier: ^4.0.1
-        version: 4.0.1(svelte@5.25.7)
+        version: 4.0.1(svelte@5.25.8)
       svelte-preprocess:
         specifier: ^6.0.3
-        version: 6.0.3(postcss-load-config@3.1.4(postcss@8.5.3))(postcss@8.5.3)(sass@1.86.3)(svelte@5.25.7)(typescript@5.5.4)
+        version: 6.0.3(postcss-load-config@3.1.4(postcss@8.5.3))(postcss@8.5.3)(sass@1.86.3)(svelte@5.25.8)(typescript@5.5.4)
       vite:
         specifier: ^6.2.5
         version: 6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1)
@@ -193,8 +193,8 @@ packages:
   '@cspell/dict-al@1.1.0':
     resolution: {integrity: sha512-PtNI1KLmYkELYltbzuoztBxfi11jcE9HXBHCpID2lou/J4VMYKJPNqe4ZjVzSI9NYbMnMnyG3gkbhIdx66VSXg==}
 
-  '@cspell/dict-aws@4.0.9':
-    resolution: {integrity: sha512-bDYdnnJGwSkIZ4gzrauu7qzOs/ZAY/FnU4k11LgdMI8BhwMfsbsy2EI1iS+sD/BI5ZnNT9kU5YR3WADeNOmhRg==}
+  '@cspell/dict-aws@4.0.10':
+    resolution: {integrity: sha512-0qW4sI0GX8haELdhfakQNuw7a2pnWXz3VYQA2MpydH2xT2e6EN9DWFpKAi8DfcChm8MgDAogKkoHtIo075iYng==}
 
   '@cspell/dict-bash@4.2.0':
     resolution: {integrity: sha512-HOyOS+4AbCArZHs/wMxX/apRkjxg6NDWdt0jF9i9XkvJQUltMwEhyA2TWYjQ0kssBsnof+9amax2lhiZnh3kCg==}
@@ -223,8 +223,8 @@ packages:
   '@cspell/dict-django@4.1.4':
     resolution: {integrity: sha512-fX38eUoPvytZ/2GA+g4bbdUtCMGNFSLbdJJPKX2vbewIQGfgSFJKY56vvcHJKAvw7FopjvgyS/98Ta9WN1gckg==}
 
-  '@cspell/dict-docker@1.1.12':
-    resolution: {integrity: sha512-6d25ZPBnYZaT9D9An/x6g/4mk542R8bR3ipnby3QFCxnfdd6xaWiTcwDPsCgwN2aQZIQ1jX/fil9KmBEqIK/qA==}
+  '@cspell/dict-docker@1.1.13':
+    resolution: {integrity: sha512-85X+ZC/CPT3ie26DcfeMFkZSNuhS8DlAqPXzAjilHtGE/Nj+QnS3jyBz0spDJOJrjh8wx1+ro2oCK98sbVcztw==}
 
   '@cspell/dict-dotnet@5.0.9':
     resolution: {integrity: sha512-JGD6RJW5sHtO5lfiJl11a5DpPN6eKSz5M1YBa1I76j4dDOIqgZB6rQexlDlK1DH9B06X4GdDQwdBfnpAB0r2uQ==}
@@ -238,8 +238,8 @@ packages:
   '@cspell/dict-en-gb@1.1.33':
     resolution: {integrity: sha512-tKSSUf9BJEV+GJQAYGw5e+ouhEe2ZXE620S7BLKe3ZmpnjlNG9JqlnaBhkIMxKnNFkLY2BP/EARzw31AZnOv4g==}
 
-  '@cspell/dict-en_us@4.3.37':
-    resolution: {integrity: sha512-lQUW4NF4pa7fH29OUUUrkaF0t8TnxirBRXc2SYs3b9JWMtaeqpwnSLXwh1LkJjIvxVf+Db7Rhojhj/+AJyHPqw==}
+  '@cspell/dict-en_us@4.4.0':
+    resolution: {integrity: sha512-TEfVT2NwvI9k1/ECjuC7GbULxenjJAbTLWMri1eMRk3mRGtqg5j0XzvvNRFuJWq8X48MdGVjsD+ZVI/VR94+eQ==}
 
   '@cspell/dict-filetypes@3.0.11':
     resolution: {integrity: sha512-bBtCHZLo7MiSRUqx5KEiPdGOmXIlDGY+L7SJEtRWZENpAKE+96rT7hj+TUUYWBbCzheqHr0OXZJFEKDgsG/uZg==}
@@ -262,8 +262,8 @@ packages:
   '@cspell/dict-git@3.0.4':
     resolution: {integrity: sha512-C44M+m56rYn6QCsLbiKiedyPTMZxlDdEYAsPwwlL5bhMDDzXZ3Ic8OCQIhMbiunhCOJJT+er4URmOmM+sllnjg==}
 
-  '@cspell/dict-golang@6.0.19':
-    resolution: {integrity: sha512-VS+oinB2/CbgmHE06kMJlj52OVMZM0S2EEXph3oaroNTgTuclSwdFylQmOEjquZi55kW+n3FM9MyWXiitB7Dtg==}
+  '@cspell/dict-golang@6.0.20':
+    resolution: {integrity: sha512-b7nd9XXs+apMMzNSWorjirQsbmlwcTC0ViQJU8u+XNose3z0y7oNeEpbTPTVoN1+1sO9aOHuFwfwoOMFCDS14Q==}
 
   '@cspell/dict-google@1.0.8':
     resolution: {integrity: sha512-BnMHgcEeaLyloPmBs8phCqprI+4r2Jb8rni011A8hE+7FNk7FmLE3kiwxLFrcZnnb7eqM0agW4zUaNoB0P+z8A==}
@@ -315,8 +315,8 @@ packages:
   '@cspell/dict-node@5.0.7':
     resolution: {integrity: sha512-ZaPpBsHGQCqUyFPKLyCNUH2qzolDRm1/901IO8e7btk7bEDF56DN82VD43gPvD4HWz3yLs/WkcLa01KYAJpnOw==}
 
-  '@cspell/dict-npm@5.1.33':
-    resolution: {integrity: sha512-ZJ7mFmAmaxLNix8JEnCCGhsA4PskQjaF+aDcShyxD5o43yKhSwKg7ePhgHhwAa19FjB7Kea2h4k++Oshu8xziQ==}
+  '@cspell/dict-npm@5.1.34':
+    resolution: {integrity: sha512-UrUYqRQX864Cx9QJkg7eEIxmjYGqcje+x1j7bzl+a3jCKwT6jm+p0off6VEOf3EReHP0dWUSYO3Q0+pLL/N+FQ==}
 
   '@cspell/dict-php@4.0.14':
     resolution: {integrity: sha512-7zur8pyncYZglxNmqsRycOZ6inpDoVd4yFfz1pQRe5xaRWMiK3Km4n0/X/1YMWhh3e3Sl/fQg5Axb2hlN68t1g==}
@@ -345,8 +345,8 @@ packages:
   '@cspell/dict-shell@1.1.0':
     resolution: {integrity: sha512-D/xHXX7T37BJxNRf5JJHsvziFDvh23IF/KvkZXNSh8VqcRdod3BAz9VGHZf6VDqcZXr1VRqIYR3mQ8DSvs3AVQ==}
 
-  '@cspell/dict-software-terms@5.0.4':
-    resolution: {integrity: sha512-y9wngLi4JhrmzPOOd64OsNdwaLPA2AzbdXqPpV+2d8LSnXwBtsmvIIg3Vt/w0QCzhNusbjVS26hlSu+Zk+fp9w==}
+  '@cspell/dict-software-terms@5.0.5':
+    resolution: {integrity: sha512-ZjAOa8FI8/JrxaRqKT3eS7AQXFjU174xxQoKYMkmdwSyNIj7WUCAg10UeLqeMjFVv36zIO0Hm0dD2+Bvn18SLA==}
 
   '@cspell/dict-sql@2.2.0':
     resolution: {integrity: sha512-MUop+d1AHSzXpBvQgQkCiok8Ejzb+nrzyG16E8TvKL2MQeDwnIvMe3bv90eukP6E1HWb+V/MA/4pnq0pcJWKqQ==}
@@ -650,44 +650,44 @@ packages:
   '@keyv/serialize@1.0.3':
     resolution: {integrity: sha512-qnEovoOp5Np2JDGonIDL6Ayihw0RhnRh6vxPuHo4RDn1UOzwEo4AeIfpL6UGIrsceWrCMiVPgwRjbHu4vYFc3g==}
 
-  '@lexical/clipboard@0.29.0':
-    resolution: {integrity: sha512-llxZosYCwH13p2GfPfhAinukdvAZYxWuwf5md107X80hsE8TQJj25unjqTwRKQ+w/wD+hpmBMziU8+K/WTitWQ==}
+  '@lexical/clipboard@0.30.0':
+    resolution: {integrity: sha512-taWQURtE6xF4Jy4I8teQw3+nVBVNO1r+9N9voXeivgwxSrAM40rjqQ/aZEKxWbwZtfkABDkCEArbVrqP0SkWcQ==}
 
-  '@lexical/code@0.29.0':
-    resolution: {integrity: sha512-yKGzoKpyIO39Xf7OKLPpoCE5V8mTDCM3l3CDHZR3X1gM/VZQzf4jAiO3b06y9YkQ2fM8kqwchYu87wGvs8/iIQ==}
+  '@lexical/code@0.30.0':
+    resolution: {integrity: sha512-OmA6Bmp3w9SMV25Hae1dLXtPNOdCgnzo1xy84K19U+dPP5iqXagwFq5oY/9PVOOI2wgaQHrz3C+7B4phDb9xaA==}
 
-  '@lexical/dragon@0.29.0':
-    resolution: {integrity: sha512-Zaky2jd/Pp1blAZqPeGNdyhxnVL4lwVjbWPxhfS1gbW4Q5CBQ3aD3B0T4ljiKfmRNJm004LJ9q7KjhlRbREvZA==}
+  '@lexical/dragon@0.30.0':
+    resolution: {integrity: sha512-eikVYw1pIcFIOojn2mGlps59YcyT9ATd6UMIx/ivuscakrZeU7SZM/F6c75QPJXNOu1b2koOo+4Bb1GT6jixGQ==}
 
-  '@lexical/history@0.29.0':
-    resolution: {integrity: sha512-OrCwZycp/yaq63mw511NutkwAB+W6WSchG1xTxlLh6nbc8jnbvKhCf4CGbnrvlhD7hTuzxJ8FI9/2M/2zv/mNQ==}
+  '@lexical/history@0.30.0':
+    resolution: {integrity: sha512-dxudthi94vSLQKXVq3LSwcOVkOmb2lvxoy7sCma513yJbrsn3fPLppR2Ynhl6aB9oPw675wSDrfsE6BG3U3+CA==}
 
-  '@lexical/html@0.29.0':
-    resolution: {integrity: sha512-+jV6ijppOpxpUGeXkGssXJbsAmFALfeLrgbM0xuZbxZ7RgYZ+5Atn00WjSno7+JV5EOuRkYmCNtS1tiHtXMY1g==}
+  '@lexical/html@0.30.0':
+    resolution: {integrity: sha512-GdegWO6RjJ7eE+yD3Z0X/OpT88SZjOs3DyQ0rgrZy3z7RPaFCbEEcq0M/NssJbKAB1XOFUsUFrnS7kZs1vJzGg==}
 
-  '@lexical/link@0.29.0':
-    resolution: {integrity: sha512-wGbKRF0x/6ZQHuCfr8m8qD1J0R1kFmWINBG2A1hUXPDf7UY5qm/nS2oKNDGpjiDMGwkVZ7n7WfzeBGO+KRe/Lg==}
+  '@lexical/link@0.30.0':
+    resolution: {integrity: sha512-isD3PC0ywQIwbtekHYEvh7hDxcPz/cEr/AspYntYs08u5J0czhw3rpqnXWGauWaav5V9ExIkf1ZkGUFUI6bw5w==}
 
-  '@lexical/list@0.29.0':
-    resolution: {integrity: sha512-sWiof+i2ff8rL7KxJ3dxHLwyJfX423e1EVLmAdQEOPhyZJiNbeLTSNhNGsZ8FjFoBwvTTEDwuQZm3iT3hliKOg==}
+  '@lexical/list@0.30.0':
+    resolution: {integrity: sha512-WKnwH+Cg+j2I0EbaEyPHo8MPNyrqQV3W1NmH5Mf/iRxCq42z7NJxemhmRUxbqv8vsugACwBkh2RlkhekRXmUQQ==}
 
-  '@lexical/markdown@0.29.0':
-    resolution: {integrity: sha512-4Od8WoDoviv9DxJZVgrIORTIAzyoGOpztbGbIBXguGmwvy7NnHQDh9fZYIYRrdI1Awp1VVGdJ3ku/7KTgSOoRw==}
+  '@lexical/markdown@0.30.0':
+    resolution: {integrity: sha512-GGddZs63k0wb3/fdL7JyBjiy8L1AIHuRKT68riWbKAcNL7rfMl3Uy5VnMkgV/5bN/2eUQijkGjxG+VxsR8RWbw==}
 
-  '@lexical/rich-text@0.29.0':
-    resolution: {integrity: sha512-fSKgXGxJUOWo7dwSTUYFVBNNk4pPN8norsZfdmKM1kGDS1/GKuVzlzHLKZ7rQb8RLD5a43p4ifEL+28P+q0Qqg==}
+  '@lexical/rich-text@0.30.0':
+    resolution: {integrity: sha512-oitOh5u68E5DBZt5VBZIaIeM/iNdt3mIDkGp2C259x81V/9KlSNB9c3rqdTKcs/A+Msw4j60FRhdmZcKQ9uYUA==}
 
-  '@lexical/selection@0.29.0':
-    resolution: {integrity: sha512-lX9CRrXgKte65cozTHFXwUJ2fvZD92OEtos+YU+U40GJjf3NdheGeKDxDfOpF4AXrYRSszY7E0CzmIvuEs0p4A==}
+  '@lexical/selection@0.30.0':
+    resolution: {integrity: sha512-Ys2XfSmIV/Irg6Xo663YtR4jozIv/7sDemArkEGHT0fxZn2py5qftowPF5IBqFYxKTigAdv5vVPwusBvAnLIEg==}
 
-  '@lexical/table@0.29.0':
-    resolution: {integrity: sha512-Jdj32kBDeJh/0dGaZB14JggnEIS956/cN7grnLr7cmhhVzDicvLMBENSXQVEJAQVcSIU4G9EvxC7GJZ9VgqDnA==}
+  '@lexical/table@0.30.0':
+    resolution: {integrity: sha512-XPCIMIGnZLKTa5/4cP16bXbmzvMndPR273HNl7ZaF35ky7UjZxdj42HBbE7q9zw2zbRPDiO77EyhYA0p20cbdw==}
 
-  '@lexical/text@0.29.0':
-    resolution: {integrity: sha512-QnNGr6ickTLk76o3PdxJjPwt//dpuh8idVfR73WdCIoAwkhiEPUxxTZERoMsudXj6O/lJ+/HhI61wVjLckYr3A==}
+  '@lexical/text@0.30.0':
+    resolution: {integrity: sha512-P0ptriFwwP/hoDpz/MoBbzHxrFHqh0kCGzASWUdRZ1zrU0yPvJ9vV/UNMhyolH7xx+eAGI1Yl+m74NlpGmXqTg==}
 
-  '@lexical/utils@0.29.0':
-    resolution: {integrity: sha512-y2hhWQDjcXdplsAaQMuZx6ht9u1I4BV5NynA+WKoQ3h8vKxzeDnpCxVOK/zxU1R5dhM/nilnFu7uhvrSeEn+TQ==}
+  '@lexical/utils@0.30.0':
+    resolution: {integrity: sha512-VJlAUhupCZmnbYYX3zMWovd4viu2guR01sAqKGbbOMbP+4rlaymixFbinvNPaRKDBloOARi+fpiveQFxnyr/Ew==}
 
   '@napi-rs/canvas-android-arm64@0.1.69':
     resolution: {integrity: sha512-4icWTByY8zPvM9SelfQKf3I6kwXw0aI5drBOVrwfER5kjwXJd78FPSDSZkxDHjvIo9Q86ljl18Yr963ehA4sHQ==}
@@ -978,8 +978,8 @@ packages:
       svelte: ^5.0.0
       vite: ^6.0.0
 
-  '@sveltia/ui@0.25.14':
-    resolution: {integrity: sha512-HZc7xqiJ3TRbAqeNTNeoXJngW2YYoOei6IDcE4wyXgVI1JgzwBjSSSMtb0qX7dKmcQ59a4rZ2Hh3aiuD3xKcYw==}
+  '@sveltia/ui@0.25.15':
+    resolution: {integrity: sha512-WkRgMiFeaLkqpl5mWhCKE1hOD0MkcCgW2Oimx0VS8qxPP7Cum9q3I5tok7I0ROkbiqXriCgQm/rrfIJ8b4wsgg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2157,8 +2157,8 @@ packages:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
 
-  lexical@0.29.0:
-    resolution: {integrity: sha512-eoBHUEn0LmExKeK6x2cFKU0FPaMk2Bc5HgiCzTiv5ymKtwWw7LeKcxaNPmLxRRdQpcWV1IMKjayAbw7Lt/Gu7w==}
+  lexical@0.30.0:
+    resolution: {integrity: sha512-6gxYeXaJiAcreJD0whCofvO0MuJmnWoIgIl1w7L5FTigfhnEohuCx2SoI/oywzfzXE9gzZnyr3rVvZrMItPL8A==}
 
   lilconfig@2.1.0:
     resolution: {integrity: sha512-utWOt/GHzuUxnLKxB6dk81RoOeoNeHgbrXiuGk4yyF5qlRz+iIVWu56E2fqGHFrXz0QNUhLB/8nKqvRH66JKGQ==}
@@ -2197,8 +2197,8 @@ packages:
     peerDependencies:
       marked: '>= 4 < 16'
 
-  marked@15.0.7:
-    resolution: {integrity: sha512-dgLIeKGLx5FwziAnsk4ONoGwHwGPJzselimvlVskE9XLN4Orv9u2VA3GWw/lYUqjfA0rUT/6fqKwfZJapP9BEg==}
+  marked@15.0.8:
+    resolution: {integrity: sha512-rli4l2LyZqpQuRve5C0rkn6pj3hT8EWPC+zkAxFTAJLxRbENfTAhEQq9itrmf1Y81QtAX5D/MYlGlIomNgj9lA==}
     engines: {node: '>= 18'}
     hasBin: true
 
@@ -2218,8 +2218,8 @@ packages:
   mdn-data@2.12.2:
     resolution: {integrity: sha512-IEn+pegP1aManZuckezWCO+XZQDplx1366JoVhTpMpBB1sPey/SbveZQUosKiKiGYjg1wH4pMlNgXbCiYgihQA==}
 
-  mdn-data@2.19.0:
-    resolution: {integrity: sha512-vXxcNOxiaUhwoBShl2gd8xOQFeKWLosotfwPeRQsDwtruBSDFAzPPLfg2KMgdK8iz4RUVdswyWMuZwOVojrVZQ==}
+  mdn-data@2.20.0:
+    resolution: {integrity: sha512-/d3otgvmquUkAN2RVxSg6lIbQrYX7isR4aC5Hvw8JuHvzctR3eUG50WmsAZjb9MkbJ5LbijPSy7uIxEtQDGI0w==}
 
   memoizee@0.4.17:
     resolution: {integrity: sha512-DGqD7Hjpi/1or4F/aYAspXKNm5Yili0QDAFAY4QYvpqpgiY6+1jOfqpmByzjxbWd/T9mChbCArXAbDAsTm5oXA==}
@@ -2783,8 +2783,8 @@ packages:
       typescript:
         optional: true
 
-  svelte@5.25.7:
-    resolution: {integrity: sha512-0fzXbXaKfSvFUs6Wxev2h4CoEhexZotbTF9EJ4+Cg7MHW64ZnZ9+xUedZyEpgj0Tt9HrYGv9aASHkqjn9b/cPw==}
+  svelte@5.25.8:
+    resolution: {integrity: sha512-yRmjmT5rgCZUMfCKS5varGlSe/nQyr2oClyIirbBChfTFc00YjVAyVWo1zOH74La3hi5KRSkNJKncyJ04PwIYA==}
     engines: {node: '>=18'}
 
   svg-tags@1.0.0:
@@ -3135,7 +3135,7 @@ snapshots:
     dependencies:
       '@cspell/dict-ada': 4.1.0
       '@cspell/dict-al': 1.1.0
-      '@cspell/dict-aws': 4.0.9
+      '@cspell/dict-aws': 4.0.10
       '@cspell/dict-bash': 4.2.0
       '@cspell/dict-companies': 3.1.14
       '@cspell/dict-cpp': 6.0.7
@@ -3145,12 +3145,12 @@ snapshots:
       '@cspell/dict-dart': 2.3.0
       '@cspell/dict-data-science': 2.0.8
       '@cspell/dict-django': 4.1.4
-      '@cspell/dict-docker': 1.1.12
+      '@cspell/dict-docker': 1.1.13
       '@cspell/dict-dotnet': 5.0.9
       '@cspell/dict-elixir': 4.0.7
       '@cspell/dict-en-common-misspellings': 2.0.10
       '@cspell/dict-en-gb': 1.1.33
-      '@cspell/dict-en_us': 4.3.37
+      '@cspell/dict-en_us': 4.4.0
       '@cspell/dict-filetypes': 3.0.11
       '@cspell/dict-flutter': 1.1.0
       '@cspell/dict-fonts': 4.0.4
@@ -3158,7 +3158,7 @@ snapshots:
       '@cspell/dict-fullstack': 3.2.6
       '@cspell/dict-gaming-terms': 1.1.1
       '@cspell/dict-git': 3.0.4
-      '@cspell/dict-golang': 6.0.19
+      '@cspell/dict-golang': 6.0.20
       '@cspell/dict-google': 1.0.8
       '@cspell/dict-haskell': 4.0.5
       '@cspell/dict-html': 4.0.11
@@ -3174,7 +3174,7 @@ snapshots:
       '@cspell/dict-markdown': 2.0.10(@cspell/dict-css@4.0.17)(@cspell/dict-html-symbol-entities@4.0.3)(@cspell/dict-html@4.0.11)(@cspell/dict-typescript@3.2.1)
       '@cspell/dict-monkeyc': 1.0.10
       '@cspell/dict-node': 5.0.7
-      '@cspell/dict-npm': 5.1.33
+      '@cspell/dict-npm': 5.1.34
       '@cspell/dict-php': 4.0.14
       '@cspell/dict-powershell': 5.0.14
       '@cspell/dict-public-licenses': 2.0.13
@@ -3184,7 +3184,7 @@ snapshots:
       '@cspell/dict-rust': 4.0.11
       '@cspell/dict-scala': 5.0.7
       '@cspell/dict-shell': 1.1.0
-      '@cspell/dict-software-terms': 5.0.4
+      '@cspell/dict-software-terms': 5.0.5
       '@cspell/dict-sql': 2.2.0
       '@cspell/dict-svelte': 1.0.6
       '@cspell/dict-swift': 2.0.5
@@ -3210,7 +3210,7 @@ snapshots:
 
   '@cspell/dict-al@1.1.0': {}
 
-  '@cspell/dict-aws@4.0.9': {}
+  '@cspell/dict-aws@4.0.10': {}
 
   '@cspell/dict-bash@4.2.0':
     dependencies:
@@ -3232,7 +3232,7 @@ snapshots:
 
   '@cspell/dict-django@4.1.4': {}
 
-  '@cspell/dict-docker@1.1.12': {}
+  '@cspell/dict-docker@1.1.13': {}
 
   '@cspell/dict-dotnet@5.0.9': {}
 
@@ -3242,7 +3242,7 @@ snapshots:
 
   '@cspell/dict-en-gb@1.1.33': {}
 
-  '@cspell/dict-en_us@4.3.37': {}
+  '@cspell/dict-en_us@4.4.0': {}
 
   '@cspell/dict-filetypes@3.0.11': {}
 
@@ -3258,7 +3258,7 @@ snapshots:
 
   '@cspell/dict-git@3.0.4': {}
 
-  '@cspell/dict-golang@6.0.19': {}
+  '@cspell/dict-golang@6.0.20': {}
 
   '@cspell/dict-google@1.0.8': {}
 
@@ -3295,7 +3295,7 @@ snapshots:
 
   '@cspell/dict-node@5.0.7': {}
 
-  '@cspell/dict-npm@5.1.33': {}
+  '@cspell/dict-npm@5.1.34': {}
 
   '@cspell/dict-php@4.0.14': {}
 
@@ -3317,7 +3317,7 @@ snapshots:
 
   '@cspell/dict-shell@1.1.0': {}
 
-  '@cspell/dict-software-terms@5.0.4': {}
+  '@cspell/dict-software-terms@5.0.5': {}
 
   '@cspell/dict-sql@2.2.0': {}
 
@@ -3540,83 +3540,83 @@ snapshots:
     dependencies:
       buffer: 6.0.3
 
-  '@lexical/clipboard@0.29.0':
+  '@lexical/clipboard@0.30.0':
     dependencies:
-      '@lexical/html': 0.29.0
-      '@lexical/list': 0.29.0
-      '@lexical/selection': 0.29.0
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/html': 0.30.0
+      '@lexical/list': 0.30.0
+      '@lexical/selection': 0.30.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
 
-  '@lexical/code@0.29.0':
+  '@lexical/code@0.30.0':
     dependencies:
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
       prismjs: 1.30.0
 
-  '@lexical/dragon@0.29.0':
+  '@lexical/dragon@0.30.0':
     dependencies:
-      lexical: 0.29.0
+      lexical: 0.30.0
 
-  '@lexical/history@0.29.0':
+  '@lexical/history@0.30.0':
     dependencies:
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
 
-  '@lexical/html@0.29.0':
+  '@lexical/html@0.30.0':
     dependencies:
-      '@lexical/selection': 0.29.0
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/selection': 0.30.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
 
-  '@lexical/link@0.29.0':
+  '@lexical/link@0.30.0':
     dependencies:
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
 
-  '@lexical/list@0.29.0':
+  '@lexical/list@0.30.0':
     dependencies:
-      '@lexical/selection': 0.29.0
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/selection': 0.30.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
 
-  '@lexical/markdown@0.29.0':
+  '@lexical/markdown@0.30.0':
     dependencies:
-      '@lexical/code': 0.29.0
-      '@lexical/link': 0.29.0
-      '@lexical/list': 0.29.0
-      '@lexical/rich-text': 0.29.0
-      '@lexical/text': 0.29.0
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/code': 0.30.0
+      '@lexical/link': 0.30.0
+      '@lexical/list': 0.30.0
+      '@lexical/rich-text': 0.30.0
+      '@lexical/text': 0.30.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
 
-  '@lexical/rich-text@0.29.0':
+  '@lexical/rich-text@0.30.0':
     dependencies:
-      '@lexical/clipboard': 0.29.0
-      '@lexical/selection': 0.29.0
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/clipboard': 0.30.0
+      '@lexical/selection': 0.30.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
 
-  '@lexical/selection@0.29.0':
+  '@lexical/selection@0.30.0':
     dependencies:
-      lexical: 0.29.0
+      lexical: 0.30.0
 
-  '@lexical/table@0.29.0':
+  '@lexical/table@0.30.0':
     dependencies:
-      '@lexical/clipboard': 0.29.0
-      '@lexical/utils': 0.29.0
-      lexical: 0.29.0
+      '@lexical/clipboard': 0.30.0
+      '@lexical/utils': 0.30.0
+      lexical: 0.30.0
 
-  '@lexical/text@0.29.0':
+  '@lexical/text@0.30.0':
     dependencies:
-      lexical: 0.29.0
+      lexical: 0.30.0
 
-  '@lexical/utils@0.29.0':
+  '@lexical/utils@0.30.0':
     dependencies:
-      '@lexical/list': 0.29.0
-      '@lexical/selection': 0.29.0
-      '@lexical/table': 0.29.0
-      lexical: 0.29.0
+      '@lexical/list': 0.30.0
+      '@lexical/selection': 0.30.0
+      '@lexical/table': 0.30.0
+      lexical: 0.30.0
 
   '@napi-rs/canvas-android-arm64@0.1.69':
     optional: true
@@ -3807,44 +3807,44 @@ snapshots:
     dependencies:
       acorn: 8.14.1
 
-  '@sveltejs/vite-plugin-svelte-inspector@4.0.1(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.25.7)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1)))(svelte@5.25.7)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))':
+  '@sveltejs/vite-plugin-svelte-inspector@4.0.1(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.25.8)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1)))(svelte@5.25.8)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 5.0.3(svelte@5.25.7)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))
+      '@sveltejs/vite-plugin-svelte': 5.0.3(svelte@5.25.8)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))
       debug: 4.4.0
-      svelte: 5.25.7
+      svelte: 5.25.8
       vite: 6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1)
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.25.7)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))':
+  '@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.25.8)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte-inspector': 4.0.1(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.25.7)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1)))(svelte@5.25.7)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))
+      '@sveltejs/vite-plugin-svelte-inspector': 4.0.1(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.25.8)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1)))(svelte@5.25.8)(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))
       debug: 4.4.0
       deepmerge: 4.3.1
       kleur: 4.1.5
       magic-string: 0.30.17
-      svelte: 5.25.7
+      svelte: 5.25.8
       vite: 6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1)
       vitefu: 1.0.6(vite@6.2.5(@types/node@22.14.0)(sass@1.86.3)(yaml@2.7.1))
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.25.14(svelte@5.25.7)':
+  '@sveltia/ui@0.25.15(svelte@5.25.8)':
     dependencies:
-      '@lexical/code': 0.29.0
-      '@lexical/dragon': 0.29.0
-      '@lexical/history': 0.29.0
-      '@lexical/link': 0.29.0
-      '@lexical/list': 0.29.0
-      '@lexical/markdown': 0.29.0
-      '@lexical/rich-text': 0.29.0
-      '@lexical/selection': 0.29.0
-      '@lexical/table': 0.29.0
-      '@lexical/utils': 0.29.0
+      '@lexical/code': 0.30.0
+      '@lexical/dragon': 0.30.0
+      '@lexical/history': 0.30.0
+      '@lexical/link': 0.30.0
+      '@lexical/list': 0.30.0
+      '@lexical/markdown': 0.30.0
+      '@lexical/rich-text': 0.30.0
+      '@lexical/selection': 0.30.0
+      '@lexical/table': 0.30.0
+      '@lexical/utils': 0.30.0
       '@sveltia/utils': 0.7.1
-      lexical: 0.29.0
+      lexical: 0.30.0
       prismjs: 1.30.0
-      svelte: 5.25.7
+      svelte: 5.25.8
 
   '@sveltia/utils@0.7.1':
     dependencies:
@@ -4618,7 +4618,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-svelte@2.46.1(eslint@8.57.1)(svelte@5.25.7):
+  eslint-plugin-svelte@2.46.1(eslint@8.57.1)(svelte@5.25.8):
     dependencies:
       '@eslint-community/eslint-utils': 4.5.1(eslint@8.57.1)
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -4631,9 +4631,9 @@ snapshots:
       postcss-safe-parser: 6.0.0(postcss@8.5.3)
       postcss-selector-parser: 6.1.2
       semver: 7.7.1
-      svelte-eslint-parser: 0.43.0(svelte@5.25.7)
+      svelte-eslint-parser: 0.43.0(svelte@5.25.8)
     optionalDependencies:
-      svelte: 5.25.7
+      svelte: 5.25.8
     transitivePeerDependencies:
       - ts-node
 
@@ -5246,7 +5246,7 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  lexical@0.29.0: {}
+  lexical@0.30.0: {}
 
   lilconfig@2.1.0: {}
 
@@ -5274,11 +5274,11 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  marked-bidi@1.0.12(marked@15.0.7):
+  marked-bidi@1.0.12(marked@15.0.8):
     dependencies:
-      marked: 15.0.7
+      marked: 15.0.8
 
-  marked@15.0.7: {}
+  marked@15.0.8: {}
 
   math-intrinsics@1.1.0: {}
 
@@ -5290,7 +5290,7 @@ snapshots:
 
   mdn-data@2.12.2: {}
 
-  mdn-data@2.19.0: {}
+  mdn-data@2.20.0: {}
 
   memoizee@0.4.17:
     dependencies:
@@ -5526,10 +5526,10 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-svelte@3.3.3(prettier@3.5.3)(svelte@5.25.7):
+  prettier-plugin-svelte@3.3.3(prettier@3.5.3)(svelte@5.25.8):
     dependencies:
       prettier: 3.5.3
-      svelte: 5.25.7
+      svelte: 5.25.8
 
   prettier@3.5.3: {}
 
@@ -5800,7 +5800,7 @@ snapshots:
       css-tree: 3.1.0
       is-plain-object: 5.0.0
       known-css-properties: 0.35.0
-      mdn-data: 2.19.0
+      mdn-data: 2.20.0
       postcss-media-query-parser: 0.2.3
       postcss-resolve-nested-selector: 0.1.6
       postcss-selector-parser: 7.1.0
@@ -5862,19 +5862,19 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-check@4.1.5(picomatch@4.0.2)(svelte@5.25.7)(typescript@5.5.4):
+  svelte-check@4.1.5(picomatch@4.0.2)(svelte@5.25.8)(typescript@5.5.4):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       chokidar: 4.0.3
       fdir: 6.4.3(picomatch@4.0.2)
       picocolors: 1.1.1
       sade: 1.8.1
-      svelte: 5.25.7
+      svelte: 5.25.8
       typescript: 5.5.4
     transitivePeerDependencies:
       - picomatch
 
-  svelte-eslint-parser@0.43.0(svelte@5.25.7):
+  svelte-eslint-parser@0.43.0(svelte@5.25.8):
     dependencies:
       eslint-scope: 7.2.2
       eslint-visitor-keys: 3.4.3
@@ -5882,9 +5882,9 @@ snapshots:
       postcss: 8.5.3
       postcss-scss: 4.0.9(postcss@8.5.3)
     optionalDependencies:
-      svelte: 5.25.7
+      svelte: 5.25.8
 
-  svelte-i18n@4.0.1(svelte@5.25.7):
+  svelte-i18n@4.0.1(svelte@5.25.8):
     dependencies:
       cli-color: 2.0.4
       deepmerge: 4.3.1
@@ -5892,19 +5892,19 @@ snapshots:
       estree-walker: 2.0.2
       intl-messageformat: 10.7.16
       sade: 1.8.1
-      svelte: 5.25.7
+      svelte: 5.25.8
       tiny-glob: 0.2.9
 
-  svelte-preprocess@6.0.3(postcss-load-config@3.1.4(postcss@8.5.3))(postcss@8.5.3)(sass@1.86.3)(svelte@5.25.7)(typescript@5.5.4):
+  svelte-preprocess@6.0.3(postcss-load-config@3.1.4(postcss@8.5.3))(postcss@8.5.3)(sass@1.86.3)(svelte@5.25.8)(typescript@5.5.4):
     dependencies:
-      svelte: 5.25.7
+      svelte: 5.25.8
     optionalDependencies:
       postcss: 8.5.3
       postcss-load-config: 3.1.4(postcss@8.5.3)
       sass: 1.86.3
       typescript: 5.5.4
 
-  svelte@5.25.7:
+  svelte@5.25.8:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@jridgewell/sourcemap-codec': 1.5.0
