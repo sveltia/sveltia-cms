@@ -79,7 +79,11 @@ export const canCreateEntry = (collection) => {
 
   const { _type, create = false, limit = Infinity } = collection;
 
-  return _type === 'entry' && create && getEntriesByCollection(collection.name).length < limit;
+  if (_type === 'file') {
+    return true;
+  }
+
+  return create && getEntriesByCollection(collection.name).length < limit;
 };
 
 /**
