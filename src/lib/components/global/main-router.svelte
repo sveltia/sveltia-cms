@@ -13,7 +13,7 @@
   import SearchPage from '$lib/components/search/search-page.svelte';
   import SettingsPage from '$lib/components/settings/settings-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isLargeScreen, isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { showAssetOverlay } from '$lib/services/assets';
   import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
@@ -50,7 +50,9 @@
     if (!pageName) {
       // Redirect any invalid page to the contents page
       window.location.replace(
-        `#/collections/${$selectedCollection?.name ?? getFirstCollection()?.name}`,
+        $isSmallScreen
+          ? '#/collections'
+          : `#/collections/${$selectedCollection?.name ?? getFirstCollection()?.name}`,
       );
     } else if ($selectedPageName !== pageName) {
       $selectedPageName = pageName;
@@ -69,22 +71,38 @@
   };
 
   onMount(() => {
-    selectPage();
-  });
+    const mqlSmall = window.matchMedia('(width < 768px)');
+    const mqlMedium = window.matchMedia('(768px <= width < 1024px)');
+    const mqlLarge = window.matchMedia('(1024px <= width)');
 
-  onMount(() => {
-    const mql = window.matchMedia('(width < 768px)');
+    $isSmallScreen = mqlSmall.matches;
+    $isMediumScreen = mqlMedium.matches;
+    $isLargeScreen = mqlLarge.matches;
 
-    $isSmallScreen = mql.matches;
-
-    mql.addEventListener('change', () => {
-      $isSmallScreen = mql.matches;
+    mqlSmall.addEventListener('change', () => {
+      $isSmallScreen = mqlSmall.matches;
     });
+
+    mqlMedium.addEventListener('change', () => {
+      $isMediumScreen = mqlMedium.matches;
+    });
+
+    mqlMedium.addEventListener('change', () => {
+      $isLargeScreen = mqlLarge.matches;
+    });
+
+    selectPage();
   });
 </script>
 
 <svelte:window
   onhashchange={() => {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        //
+      });
+    }
+
     selectPage();
   }}
 />

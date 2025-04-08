@@ -19,6 +19,8 @@
 <style lang="scss">
   .toolbar-wrapper {
     border-top: 1px solid var(--sui-secondary-border-color);
+    // Exclude the bottom nav from view transition
+    view-transition-name: main-header;
 
     &[inert] {
       // Disable the keyboard shortcut for the search bar
@@ -31,12 +33,6 @@
         display: flex;
         align-items: center;
         justify-content: space-evenly;
-      }
-
-      :global(.search-bar) {
-        flex: none;
-        width: 640px;
-        max-width: 50%;
       }
     }
   }

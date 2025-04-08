@@ -63,7 +63,7 @@
       width: 320px;
       background-color: var(--sui-secondary-background-color);
 
-      @media (width >= 768px) {
+      @media (768px <= width) {
         border-top-left-radius: 16px;
       }
 

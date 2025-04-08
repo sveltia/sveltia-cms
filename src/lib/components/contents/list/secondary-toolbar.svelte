@@ -6,7 +6,7 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
@@ -33,7 +33,7 @@
 
 {#if entryCollection}
   <Toolbar variant="secondary" aria-label={$_('entry_list')}>
-    {#if !$isSmallScreen}
+    {#if !($isSmallScreen || $isMediumScreen)}
       <ItemSelector
         allItems={$entryGroups.map(({ entries }) => entries).flat(1)}
         selectedItems={selectedEntries}
@@ -69,7 +69,7 @@
       {currentView}
       aria-controls="entry-list"
     />
-    {#if !$isSmallScreen}
+    {#if !($isSmallScreen || $isMediumScreen)}
       <Divider orientation="vertical" />
       <Button
         variant="ghost"

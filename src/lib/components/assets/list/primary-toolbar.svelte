@@ -9,7 +9,7 @@
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
   import FloatingActionButtonWrapper from '$lib/components/common/floating-action-button-wrapper.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goBack } from '$lib/services/app/navigation';
   import {
     canCreateAsset,
@@ -44,7 +44,7 @@
     {/if}
   </h2>
   <Spacer flex />
-  {#if !$isSmallScreen}
+  {#if !($isSmallScreen || $isMediumScreen)}
     <PreviewAssetButton asset={$focusedAsset} />
     <CopyAssetsButton assets={$focusedAsset ? [$focusedAsset] : []} />
     <DownloadAssetsButton {assets} />

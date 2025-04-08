@@ -7,7 +7,7 @@
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import PreviewButton from '$lib/components/contents/details/preview-button.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { backend } from '$lib/services/backends';
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
@@ -70,10 +70,10 @@
   <Toolbar variant="secondary" aria-label={$_('secondary')}>
     {#if i18nEnabled}
       <LocaleSwitcher {id} {thisPane} {thatPane} />
-      {#if $isSmallScreen && canPreview}
+      {#if ($isSmallScreen || $isMediumScreen) && canPreview}
         <PreviewButton {thisPane} />
       {/if}
-    {:else if !$isSmallScreen}
+    {:else if !($isSmallScreen || $isMediumScreen)}
       <h3 role="none">{$thisPane?.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
     {:else if canPreview}
       <PreviewButton {thisPane} />

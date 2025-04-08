@@ -78,7 +78,7 @@
         height: 32px;
         font-size: var(--sui-font-size-x-large);
 
-        @media (width >= 768px) {
+        @media (768px <= width) {
           position: absolute;
           left: -99999px;
         }
@@ -112,10 +112,6 @@
             flex: auto;
             overflow: hidden;
             text-overflow: ellipsis;
-
-            @media (width < 768px) {
-              font-size: var(--sui-font-size-large);
-            }
           }
 
           :global(.icon) {
@@ -169,7 +165,7 @@
       overflow: hidden;
       background-color: var(--sui-primary-background-color);
 
-      @media (width >= 768px) {
+      @media (768px <= width) {
         border-top-left-radius: 16px;
       }
 

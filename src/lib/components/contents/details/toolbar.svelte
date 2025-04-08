@@ -17,7 +17,7 @@
   import { _ } from 'svelte-i18n';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goBack, goto } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
@@ -226,7 +226,7 @@
             revertChanges();
           }}
         />
-        {#if !$isSmallScreen}
+        {#if !($isSmallScreen || $isMediumScreen)}
           <Divider />
           <MenuItemCheckbox
             label={$_('show_preview')}

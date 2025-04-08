@@ -7,7 +7,7 @@
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { canCreateEntry } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -85,7 +85,7 @@
     await tick();
     restoring = false;
 
-    if ($isSmallScreen) {
+    if ($isSmallScreen || $isMediumScreen) {
       $editorRightPane = null;
     }
 
@@ -106,7 +106,7 @@
 
     $editorLeftPane = { mode: 'edit', locale: $editorLeftPane?.locale ?? defaultLocale };
 
-    if ($isSmallScreen) {
+    if ($isSmallScreen || $isMediumScreen) {
       $editorRightPane = null;
     } else if (!showPreview || !canPreview) {
       const otherLocales = i18nEnabled
@@ -170,7 +170,7 @@
   });
 
   $effect(() => {
-    void [showPreview, canPreview];
+    void [showPreview, canPreview, $isSmallScreen, $isMediumScreen];
     switchPanes();
   });
 

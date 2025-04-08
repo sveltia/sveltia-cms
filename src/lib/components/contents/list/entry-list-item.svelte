@@ -1,7 +1,7 @@
 <script>
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
@@ -58,7 +58,7 @@
     goto(`/collections/${collection.name}/entries/${entry.subPath}`);
   }}
 >
-  {#if !$isSmallScreen}
+  {#if !($isSmallScreen || $isMediumScreen)}
     <GridCell class="checkbox">
       <Checkbox
         role="none"

@@ -5,7 +5,7 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { assetKinds, selectedAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
 
@@ -14,7 +14,7 @@
 </script>
 
 <Toolbar variant="secondary" aria-label={$_('asset_list')}>
-  {#if !$isSmallScreen}
+  {#if !($isSmallScreen || $isMediumScreen)}
     <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
   {/if}
   <Spacer flex />
@@ -33,7 +33,7 @@
     aria-controls="asset-list"
   />
   <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
-  {#if !$isSmallScreen}
+  {#if !($isSmallScreen || $isMediumScreen)}
     <Divider orientation="vertical" />
     <Button
       variant="ghost"

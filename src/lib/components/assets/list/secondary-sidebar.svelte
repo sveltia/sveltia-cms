@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { focusedAsset } from '$lib/services/assets';
   import { currentView } from '$lib/services/assets/view';
 </script>
@@ -11,7 +11,7 @@
 <Group
   id="asset-info"
   class="secondary-sidebar"
-  hidden={$isSmallScreen || !$currentView.showInfo}
+  hidden={$isSmallScreen || $isMediumScreen || !$currentView.showInfo}
   aria-label={$_('asset_info')}
 >
   {#if $focusedAsset}
