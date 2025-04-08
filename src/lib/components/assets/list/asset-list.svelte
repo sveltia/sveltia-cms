@@ -57,7 +57,9 @@
     {:else}
       <EmptyState>
         <span role="none">{$_('no_files_found')}</span>
-        <UploadAssetsButton label={$_('upload')} />
+        {#if !uploadDisabled}
+          <UploadAssetsButton label={$_('upload_assets')} />
+        {/if}
       </EmptyState>
     {/if}
   </DropZone>
