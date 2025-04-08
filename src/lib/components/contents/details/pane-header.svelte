@@ -6,6 +6,8 @@
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
+  import PreviewButton from '$lib/components/contents/details/preview-button.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { backend } from '$lib/services/backends';
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
@@ -56,6 +58,7 @@
         originalValues[$thisPane.locale],
       ),
   );
+  const canPreview = $derived($entryDraft?.canPreview ?? true);
   const previewURL = $derived(
     collection && originalEntry && $thisPane?.locale
       ? getEntryPreviewURL(originalEntry, $thisPane.locale, collection, collectionFile)
@@ -67,8 +70,13 @@
   <Toolbar variant="secondary" aria-label={$_('secondary')}>
     {#if i18nEnabled}
       <LocaleSwitcher {id} {thisPane} {thatPane} />
-    {:else}
+      {#if $isSmallScreen && canPreview}
+        <PreviewButton {thisPane} />
+      {/if}
+    {:else if !$isSmallScreen}
       <h3 role="none">{$thisPane?.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
+    {:else if canPreview}
+      <PreviewButton {thisPane} />
     {/if}
     <Spacer flex />
     {#if $thisPane?.mode === 'edit'}

@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
+  import { Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
   import { isSmallScreen } from '$lib/services/app/env';
@@ -105,24 +105,6 @@
       {/if}
     </div>
   </SelectComponent>
-  {#if $isSmallScreen}
-    <Button
-      variant="ghost"
-      iconic
-      aria-label={$_('preview')}
-      pressed={$thisPane?.mode === 'preview'}
-      onclick={() => {
-        $thisPane = {
-          mode: $thisPane?.mode === 'preview' ? 'edit' : 'preview',
-          locale: $thisPane?.locale ?? '',
-        };
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="visibility" />
-      {/snippet}
-    </Button>
-  {/if}
 </div>
 
 <style lang="scss">
