@@ -8,7 +8,7 @@
   let showToast = $state(false);
 </script>
 
-<PageContainer class="content" aria-label={$_('menu')}>
+<PageContainer class="content" aria-label={$_('settings')}>
   {#snippet main()}
     <div role="none" class="wrapper">
       {#each panels as { key, component: Content } (key)}

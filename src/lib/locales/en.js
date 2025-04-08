@@ -11,6 +11,7 @@ export const strings = {
   media: 'Media',
   workflow: 'Workflow',
   editorial_workflow: 'Editorial Workflow',
+  menu: 'Menu',
 
   // Account
   user_name: 'User Name',
