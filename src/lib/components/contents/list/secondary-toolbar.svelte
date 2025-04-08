@@ -64,11 +64,9 @@
         aria-controls="entry-list"
       />
     {/if}
-    <ViewSwitcher
-      disabled={!hasListedEntries || !thumbnailFieldNames.length}
-      {currentView}
-      aria-controls="entry-list"
-    />
+    {#if thumbnailFieldNames.length}
+      <ViewSwitcher disabled={!hasListedEntries} {currentView} aria-controls="entry-list" />
+    {/if}
     {#if !($isSmallScreen || $isMediumScreen)}
       <Divider orientation="vertical" />
       <Button

@@ -7,6 +7,7 @@
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { normalize } from '$lib/services/search';
 
   /**
@@ -68,17 +69,19 @@
           {@const pathArray = relPath.split('/')}
           <Option label="" value={path}>
             <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
-            <span role="none" class="name">
-              {#each pathArray as segment, index}
-                {#if index === pathArray.length - 1}
-                  <!-- File name -->
-                  <strong>{@render getLabel(segment)}</strong>
-                {:else}
-                  <!-- Folder name -->
-                  {@render getLabel(segment)}/
-                {/if}
-              {/each}
-            </span>
+            {#if !$isSmallScreen || viewType === 'list'}
+              <span role="none" class="name">
+                {#each pathArray as segment, index}
+                  {#if index === pathArray.length - 1}
+                    <!-- File name -->
+                    <strong>{@render getLabel(segment)}</strong>
+                  {:else}
+                    <!-- Folder name -->
+                    {@render getLabel(segment)}/
+                  {/if}
+                {/each}
+              </span>
+            {/if}
           </Option>
         {/snippet}
       </InfiniteScroll>

@@ -5,6 +5,7 @@
    * @property {boolean} [multiple] Whether to accept multiple files.
    * @property {(detail: { files: File[], file: File }) => void} [onSelect] Custom `select` event
    * handler. Since `multiple` could be false, we pass both `file` and `files` with the arguments.
+   * @property {() => void} [onCancel] `cancel` event handler.
    */
 
   /** @type {Props} */
@@ -13,6 +14,7 @@
     accept = undefined,
     multiple = false,
     onSelect = undefined,
+    onCancel = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -40,5 +42,6 @@
   }}
   oncancel={(event) => {
     event.stopPropagation();
+    onCancel?.();
   }}
 />

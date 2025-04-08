@@ -80,7 +80,7 @@
       }
 
       :global(.sui.search-bar) {
-        margin-inline: 8px;
+        margin-inline: 12px;
         --sui-textbox-background-color: var(--sui-tertiary-background-color);
       }
 

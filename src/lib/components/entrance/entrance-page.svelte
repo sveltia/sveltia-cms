@@ -89,6 +89,10 @@
     .logo {
       max-width: 160px;
       height: auto;
+
+      @media (width < 768px) {
+        max-width: 120px;
+      }
     }
 
     h1 {

@@ -104,9 +104,15 @@
   }}
 />
 
-<GlobalToolbar />
+{#if !$isSmallScreen}
+  <GlobalToolbar />
+{/if}
+
 <SelectedPage />
-<BottomNavigation />
+
+{#if $isSmallScreen}
+  <BottomNavigation />
+{/if}
 
 <UploadAssetsDialog />
 <UploadAssetsConfirmDialog />

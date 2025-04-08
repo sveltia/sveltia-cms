@@ -9,28 +9,25 @@
   import PublishButton from '$lib/components/global/toolbar/items/publish-button.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import SiteLogo from '$lib/components/global/toolbar/items/site-logo.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { hasOverlay } from '$lib/services/app/navigation';
 </script>
 
-{#if !$isSmallScreen}
-  <div role="none" class="toolbar-wrapper" inert={$hasOverlay}>
-    <Toolbar variant="primary" aria-label={$_('global')}>
-      <div role="none" class="buttons">
-        <SiteLogo />
-        <PageSwitcher />
-      </div>
-      <QuickSearchBar />
-      <div role="none" class="buttons">
-        <PublishButton />
-        <CreateButton />
-        <NotificationsButton />
-        <HelpButton />
-        <AccountButton />
-      </div>
-    </Toolbar>
-  </div>
-{/if}
+<div role="none" class="toolbar-wrapper" inert={$hasOverlay}>
+  <Toolbar variant="primary" aria-label={$_('global')}>
+    <div role="none" class="buttons">
+      <SiteLogo />
+      <PageSwitcher />
+    </div>
+    <QuickSearchBar />
+    <div role="none" class="buttons">
+      <PublishButton />
+      <CreateButton />
+      <NotificationsButton />
+      <HelpButton />
+      <AccountButton />
+    </div>
+  </Toolbar>
+</div>
 
 <style lang="scss">
   .toolbar-wrapper {

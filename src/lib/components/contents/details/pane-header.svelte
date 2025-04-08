@@ -68,7 +68,7 @@
 
 <div role="none" {id} class="header">
   <Toolbar variant="secondary" aria-label={$_('secondary')}>
-    {#if i18nEnabled}
+    {#if i18nEnabled && allLocales.length > 1}
       <LocaleSwitcher {id} {thisPane} {thatPane} />
       {#if ($isSmallScreen || $isMediumScreen) && canPreview}
         <PreviewButton {thisPane} />

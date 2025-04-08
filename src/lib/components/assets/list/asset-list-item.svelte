@@ -85,10 +85,13 @@
       {kind}
       {asset}
       variant={viewType === 'list' ? 'icon' : 'tile'}
+      cover={$isSmallScreen}
       checkerboard={kind === 'image'}
     />
   </GridCell>
-  <GridCell class="title">
-    <span role="none" class="label">{name}</span>
-  </GridCell>
+  {#if !$isSmallScreen || viewType === 'list'}
+    <GridCell class="title">
+      <span role="none" class="label">{name}</span>
+    </GridCell>
+  {/if}
 </GridRow>

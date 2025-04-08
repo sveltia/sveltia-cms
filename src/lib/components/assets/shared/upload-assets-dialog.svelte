@@ -80,5 +80,8 @@
     onSelect={({ files }) => {
       onSelect(files);
     }}
+    onCancel={() => {
+      $showUploadAssetsDialog = false;
+    }}
   />
 {/if}

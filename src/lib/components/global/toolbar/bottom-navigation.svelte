@@ -2,19 +2,16 @@
   import { Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import PageSwitcher from '$lib/components/global/toolbar/items/page-switcher.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { hasOverlay } from '$lib/services/app/navigation';
 </script>
 
-{#if $isSmallScreen}
-  <div role="none" class="toolbar-wrapper" inert={$hasOverlay}>
-    <Toolbar variant="primary" aria-label={$_('global')}>
-      <div role="none" class="buttons">
-        <PageSwitcher />
-      </div>
-    </Toolbar>
-  </div>
-{/if}
+<div role="none" class="toolbar-wrapper" inert={$hasOverlay}>
+  <Toolbar variant="primary" aria-label={$_('global')}>
+    <div role="none" class="buttons">
+      <PageSwitcher />
+    </div>
+  </Toolbar>
+</div>
 
 <style lang="scss">
   .toolbar-wrapper {

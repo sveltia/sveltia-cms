@@ -12,6 +12,7 @@
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
   import { prefs } from '$lib/services/user/prefs';
 
@@ -186,7 +187,9 @@
           {@const { id, previewURL, description, kind: _kind } = asset}
           <Option label="" value={id}>
             <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
-            <span role="none" class="name">{description}</span>
+            {#if !$isSmallScreen || $selectAssetsView?.type === 'list'}
+              <span role="none" class="name">{description}</span>
+            {/if}
           </Option>
         {/snippet}
       </InfiniteScroll>
