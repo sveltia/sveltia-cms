@@ -9,6 +9,10 @@ interface Navigator {
   userAgentData?: { platform: string; brands: { brand: string }[] };
 }
 
+interface Document {
+  startViewTransition?: Function;
+}
+
 interface Element {
   scrollIntoViewIfNeeded?: Function;
 }
