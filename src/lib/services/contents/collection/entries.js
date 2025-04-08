@@ -100,6 +100,7 @@ export const getEntriesByAssetURL = async (
 ) => {
   const baseURL = get(siteConfig)?._baseURL;
   const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
+  const isBlobURL = assetURL.startsWith('blob:');
 
   const results = await Promise.all(
     entries.map(async (entry) => {
@@ -141,7 +142,9 @@ export const getEntriesByAssetURL = async (
                     const { widget: widgetName = 'string' } = field;
 
                     if (['image', 'file'].includes(widgetName)) {
-                      const match = (await getMediaFieldURL(value, entry)) === assetURL;
+                      const match = isBlobURL
+                        ? (await getMediaFieldURL(value, entry)) === assetURL
+                        : value === assetURL;
 
                       if (match && newURL) {
                         content[keyPath] = newURL;
@@ -158,7 +161,9 @@ export const getEntriesByAssetURL = async (
                         return (
                           await Promise.all(
                             matches.map(async ([, src]) => {
-                              const match = (await getMediaFieldURL(src, entry)) === assetURL;
+                              const match = isBlobURL
+                                ? (await getMediaFieldURL(src, entry)) === assetURL
+                                : src === assetURL;
 
                               if (match && newURL) {
                                 content[keyPath] = content[keyPath].replace(src, newURL);

@@ -566,7 +566,7 @@ export const getAssetDetails = async (asset) => {
   const { blobBaseURL } = get(backend)?.repository ?? {};
   const blobURL = await getAssetBlobURL(asset);
   const publicURL = getAssetPublicURL(asset);
-  const url = blobURL ?? publicURL;
+  const url = publicURL ?? blobURL;
   let dimensions;
   let duration;
 

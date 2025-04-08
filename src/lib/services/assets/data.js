@@ -151,7 +151,7 @@ export const moveAssets = async (action, movingAssets) => {
         data: new File([asset.file ?? (await getAssetBlob(asset))], newName),
       });
 
-      const assetURL = asset.blobURL ?? getAssetPublicURL(asset);
+      const assetURL = getAssetPublicURL(asset) ?? asset.blobURL;
       const usedEntries = assetURL ? await getEntriesByAssetURL(assetURL) : [];
 
       if (!assetURL || !usedEntries.length) {
