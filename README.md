@@ -150,7 +150,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Frequent releases deliver new features and enhancements to users faster. Most of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
-- Users can manage content on-the-go with decent mobile support.[^18] There are still rough edges though; we are working to fully optimize the app for small screens and touch devices.
+- Mobile and tablet support: Users can manage content on-the-go.[^18] There are still rough edges though; we are working to fully optimize the app for small screens and touch devices.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs,[^196] to ensure optimal usability without compromising accessibility.
 - The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
