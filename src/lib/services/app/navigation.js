@@ -1,4 +1,7 @@
+import { sleep } from '@sveltia/utils/misc';
+import { flushSync } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
+import { isSmallScreen } from '$lib/services/app/env';
 import { showAssetOverlay } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/draft/editor';
@@ -6,6 +9,18 @@ import { showContentOverlay } from '$lib/services/contents/draft/editor';
 /**
  * @import { Readable, Writable } from 'svelte/store';
  * @import { InternalSiteConfig } from '$lib/types/private';
+ */
+
+/**
+ * @typedef {'forwards' | 'backwards' | 'unknown'} ViewTransitionType
+ */
+
+/**
+ * @typedef {object} GoToMethodOptions
+ * @property {object} [state] History state to be included.
+ * @property {boolean} [replaceState] Whether to replace the history state.
+ * @property {boolean} [notifyChange] Whether to dispatch a `hashchange` event.
+ * @property {ViewTransitionType} [transitionType] View transition type.
  */
 
 /**
@@ -43,15 +58,43 @@ export const parseLocation = (loc = window.location) => {
 };
 
 /**
+ * Start page transition, if possible, and execute a callback function once it’s complete.
+ * @param {ViewTransitionType} transitionType View transition type.
+ * @param {() => void} callback Callback function.
+ * @see https://developer.chrome.com/docs/web-platform/view-transitions/same-document
+ */
+const startViewTransition = (transitionType, callback) => {
+  if (!get(isSmallScreen) || !document.startViewTransition) {
+    callback();
+    return;
+  }
+
+  document.startViewTransition({
+    // @ts-ignore
+    types: [transitionType],
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    update: async () => {
+      callback();
+      await sleep(100);
+      await new Promise((resolve) => {
+        flushSync(() => {
+          resolve(undefined);
+        });
+      });
+    },
+  });
+};
+
+/**
  * Navigate to a different URL or replace the current URL. This is similar to SvelteKit’s `goto`
  * method but assumes hash-based SPA routing.
  * @param {string} path URL path. It will appear in th URL hash but omit the leading `#` sign here.
- * @param {object} [options] Options.
- * @param {object} [options.state] History state to be included.
- * @param {boolean} [options.replaceState] Whether to replace the history state.
- * @param {boolean} [options.notifyChange] Whether to dispatch a `hashchange` event.
+ * @param {GoToMethodOptions} [options] Options.
  */
-export const goto = (path, { state = {}, replaceState = false, notifyChange = true } = {}) => {
+export const goto = async (
+  path,
+  { state = {}, replaceState = false, notifyChange = true, transitionType = 'unknown' } = {},
+) => {
   const oldURL = window.location.hash;
   const newURL = `#${path}`;
   /** @type {[any, string, string]} */
@@ -64,20 +107,26 @@ export const goto = (path, { state = {}, replaceState = false, notifyChange = tr
   }
 
   if (notifyChange) {
-    window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL }));
+    startViewTransition(transitionType, () => {
+      window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL }));
+    });
   }
 };
 
 /**
  * Go back to the previous page if possible, or navigate to the given fallback URL.
  * @param {string} path Fallback URL path.
- * @param {object} [options] Options to be passed to {@link goto}.
+ * @param {GoToMethodOptions} [options] Options to be passed to {@link goto}.
  */
 export const goBack = (path, options = {}) => {
+  const transitionType = 'backwards';
+
   if (window.history.state?.from) {
-    window.history.back();
+    startViewTransition(transitionType, () => {
+      window.history.back();
+    });
   } else {
-    goto(path, options);
+    goto(path, { ...options, transitionType });
   }
 };
 

@@ -94,12 +94,6 @@
 
 <svelte:window
   onhashchange={() => {
-    if (document.startViewTransition) {
-      document.startViewTransition(() => {
-        //
-      });
-    }
-
     selectPage();
   }}
 />
@@ -108,7 +102,9 @@
   <GlobalToolbar />
 {/if}
 
-<SelectedPage />
+<div role="none" class="page-root">
+  <SelectedPage />
+</div>
 
 {#if $isSmallScreen}
   <BottomNavigation />
@@ -118,3 +114,14 @@
 <UploadAssetsConfirmDialog />
 <TranslatorApiKeyDialog />
 <EntryParseErrorsToast />
+
+<style lang="scss">
+  .page-root {
+    position: relative;
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    view-transition-name: page-root;
+  }
+</style>

@@ -109,6 +109,7 @@
           goto(`/collections/${collectionName}/entries/${savedEntry.subPath}`, {
             replaceState: true,
             notifyChange: false,
+            transitionType: 'backwards',
           });
         }
 
@@ -146,7 +147,11 @@
     aria-label={$_('duplicate_entry')}
     disabled={collection?.create === false}
     onclick={() => {
-      goto(`/collections/${collectionName}/new`, { replaceState: true, notifyChange: false });
+      goto(`/collections/${collectionName}/new`, {
+        replaceState: true,
+        notifyChange: false,
+        transitionType: 'forwards',
+      });
       duplicateDraft();
     }}
   />

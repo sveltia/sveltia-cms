@@ -53,6 +53,7 @@
               <BackButton onclick={() => goBack('/settings')} />
               <h2 role="none">{$_(`prefs.${selectedPanel.key}.title`)}</h2>
             {:else}
+              <BackButton onclick={() => goBack('/menu')} />
               <h2 role="none">{$_('settings')}</h2>
             {/if}
           </Toolbar>
@@ -74,7 +75,7 @@
                 {#each panels as { key, icon } (key)}
                   <MenuItem
                     label={$_(`prefs.${key}.title`)}
-                    onclick={() => goto(`/settings/${key}`)}
+                    onclick={() => goto(`/settings/${key}`, { transitionType: 'forwards' })}
                   >
                     {#snippet startIcon()}
                       <Icon name={icon} />

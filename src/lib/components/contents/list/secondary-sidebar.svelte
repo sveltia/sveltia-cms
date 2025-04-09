@@ -32,7 +32,7 @@
       <AssetsPanel
         assets={$allAssets.filter(({ folder }) => internalPath === folder)}
         onSelect={({ asset }) => {
-          goto(`/assets/${asset.path}`);
+          goto(`/assets/${asset.path}`, { transitionType: 'forwards' });
         }}
       />
     </DropZone>

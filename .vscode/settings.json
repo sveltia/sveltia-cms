@@ -5,6 +5,7 @@
   "javascript.preferences.importModuleSpecifier": "non-relative",
   "javascript.validate.enable": true,
   "eslint.validate": ["javascript", "svelte"],
+  "scss.lint.unknownAtRules": "ignore",
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

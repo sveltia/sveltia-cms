@@ -55,7 +55,9 @@
     updateSelection(event.detail.selected);
   }}
   onclick={() => {
-    goto(`/collections/${collection.name}/entries/${entry.subPath}`);
+    goto(`/collections/${collection.name}/entries/${entry.subPath}`, {
+      transitionType: 'forwards',
+    });
   }}
 >
   {#if !($isSmallScreen || $isMediumScreen)}

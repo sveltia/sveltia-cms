@@ -56,7 +56,7 @@
   /** @type {Record<string, string>} */ { link, collectionLabel, entryLabel },
 )}
   <p>
-    <Button role="link" variant="link" onclick={() => goto(link)}>
+    <Button role="link" variant="link" onclick={() => goto(link, { transitionType: 'forwards' })}>
       <span role="none">{collectionLabel} › {entryLabel}</span>
     </Button>
   </p>

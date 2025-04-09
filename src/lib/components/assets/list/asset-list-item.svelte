@@ -59,12 +59,12 @@
   }}
   onclick={() => {
     if (($isSmallScreen || $isMediumScreen) && $focusedAsset && canPreviewAsset($focusedAsset)) {
-      goto(`/assets/${$focusedAsset.path}`);
+      goto(`/assets/${$focusedAsset.path}`, { transitionType: 'forwards' });
     }
   }}
   ondblclick={() => {
     if ($focusedAsset && canPreviewAsset($focusedAsset)) {
-      goto(`/assets/${$focusedAsset.path}`);
+      goto(`/assets/${$focusedAsset.path}`, { transitionType: 'forwards' });
     }
   }}
 >

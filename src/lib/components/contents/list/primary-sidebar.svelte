@@ -33,7 +33,7 @@
           label={label || name}
           selected={$isSmallScreen ? false : $selectedCollection?.name === name}
           onSelect={() => {
-            goto(`/collections/${name}`);
+            goto(`/collections/${name}`, { transitionType: 'forwards' });
           }}
         >
           {#snippet startIcon()}

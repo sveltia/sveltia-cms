@@ -24,7 +24,9 @@
         {#snippet renderItem(/** @type {CollectionFile} */ { name, label })}
           <GridRow
             onclick={() => {
-              goto(`/collections/${$selectedCollection.name}/entries/${name}`);
+              goto(`/collections/${$selectedCollection.name}/entries/${name}`, {
+                transitionType: 'forwards',
+              });
             }}
           >
             <GridCell class="title">

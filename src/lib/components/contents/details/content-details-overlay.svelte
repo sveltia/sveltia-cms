@@ -219,7 +219,10 @@
             <Button
               variant="primary"
               onclick={() => {
-                goto(`/collection/${collection?.name}`, { replaceState: true });
+                goto(`/collection/${collection?.name}`, {
+                  replaceState: true,
+                  transitionType: 'backwards',
+                });
               }}
             >
               {$_('back_to_collection')}

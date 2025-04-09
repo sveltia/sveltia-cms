@@ -32,7 +32,7 @@
   aria-label={$_('create_new_entry')}
   {keyShortcuts}
   onclick={() => {
-    goto(`/collections/${collectionName}/new`);
+    goto(`/collections/${collectionName}/new`, { transitionType: 'forwards' });
   }}
 >
   {#snippet startIcon()}

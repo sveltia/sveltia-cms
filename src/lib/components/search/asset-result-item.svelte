@@ -26,7 +26,7 @@
 
 <GridRow
   onclick={() => {
-    goto(`/assets/${path}`);
+    goto(`/assets/${path}`, { transitionType: 'forwards' });
   }}
 >
   <GridCell class="image">

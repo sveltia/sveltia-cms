@@ -44,7 +44,9 @@
   {#if content}
     <GridRow
       onclick={() => {
-        goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`);
+        goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`, {
+          transitionType: 'forwards',
+        });
       }}
     >
       <GridCell class="image">

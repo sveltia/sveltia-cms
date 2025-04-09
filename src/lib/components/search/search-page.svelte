@@ -78,7 +78,9 @@
                 )}
                 onclick={() => {
                   $searchTerms = '';
-                  goto($searchMode === 'assets' ? '/assets' : '/collections');
+                  goto($searchMode === 'assets' ? '/assets' : '/collections', {
+                    transitionType: 'backwards',
+                  });
                 }}
               />
               <div role="search">

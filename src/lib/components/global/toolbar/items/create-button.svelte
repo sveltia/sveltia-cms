@@ -39,7 +39,7 @@
             label={labelSingular || label || name}
             disabled={!create || getEntriesByCollection(name).length >= limit}
             onclick={() => {
-              goto(`/collections/${name}/new`);
+              goto(`/collections/${name}/new`, { transitionType: 'forwards' });
             }}
           />
         {/each}
@@ -48,7 +48,7 @@
       <MenuItem
         label={$_('assets')}
         onclick={async () => {
-          goto('/assets');
+          goto('/assets', { transitionType: 'forwards' });
           await sleep(100);
           $showUploadAssetsDialog = true;
         }}

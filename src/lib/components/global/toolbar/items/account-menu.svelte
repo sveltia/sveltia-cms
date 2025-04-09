@@ -57,7 +57,7 @@
     <MenuItem
       label={$_('site_config')}
       onclick={() => {
-        goto('/config');
+        goto('/config', { transitionType: 'forwards' });
       }}
     />
   {/if}
@@ -66,7 +66,7 @@
     label={$_('settings')}
     onclick={() => {
       if ($isSmallScreen) {
-        goto('/settings');
+        goto('/settings', { transitionType: 'forwards' });
       } else {
         showPrefsDialog = true;
       }

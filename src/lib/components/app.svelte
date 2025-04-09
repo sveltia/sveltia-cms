@@ -102,6 +102,78 @@
 </AppShell>
 
 <style lang="scss">
+  @view-transition {
+    navigation: auto;
+  }
+
+  @keyframes slide-out-to-left {
+    from {
+      transform: translateX(0);
+      filter: brightness(1);
+    }
+
+    to {
+      transform: translateX(-20%);
+      filter: brightness(0.5);
+    }
+  }
+
+  @keyframes slide-out-to-right {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes slide-in-from-right {
+    from {
+      transform: translateX(100%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slide-in-from-left {
+    from {
+      transform: translateX(-20%);
+      filter: brightness(0.5);
+    }
+
+    to {
+      transform: translateX(0);
+      filter: brightness(1);
+    }
+  }
+
+  :global(html):active-view-transition-type(forwards) {
+    &::view-transition-old(page-root) {
+      z-index: 999;
+      animation: 200ms ease-out both slide-out-to-left;
+    }
+
+    &::view-transition-new(page-root) {
+      z-index: 1000;
+      animation: 200ms ease-out both slide-in-from-right;
+    }
+  }
+
+  :global(html):active-view-transition-type(backwards) {
+    &::view-transition-old(page-root) {
+      z-index: 1000;
+      animation: 200ms ease-out both slide-out-to-right;
+    }
+
+    &::view-transition-new(page-root) {
+      z-index: 999;
+      animation: 200ms ease-out both slide-in-from-left;
+    }
+  }
+
   :global(body:not(:has(#nc-root))) {
     overflow: hidden;
   }

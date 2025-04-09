@@ -62,7 +62,9 @@
         selected={$isSmallScreen ? false : selected}
         label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}
         onSelect={() => {
-          goto(internalPath ? `/assets/${internalPath}` : '/assets/all');
+          goto(internalPath ? `/assets/${internalPath}` : '/assets/all', {
+            transitionType: 'forwards',
+          });
         }}
         ondragover={(event) => {
           event.preventDefault();

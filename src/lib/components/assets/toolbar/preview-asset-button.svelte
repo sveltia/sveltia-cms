@@ -27,6 +27,6 @@
   label={$_('preview')}
   aria-label={$_('show_preview')}
   onclick={() => {
-    goto(`/assets/${asset?.path}`);
+    goto(`/assets/${asset?.path}`, { transitionType: 'forwards' });
   }}
 />
