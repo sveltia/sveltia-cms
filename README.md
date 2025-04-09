@@ -12,7 +12,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
 
 ![Full-fledged Asset Library; first-class internationalization support; DeepL integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250405)<br>
 
-![Built-in image optimizer for WebP and SVG; mobile support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250407)<br>
+![Built-in image optimizer for WebP and SVG; mobile & tablet support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250409)<br>
 
 ![Streamlined local and remote workflow; GitHub, GitLab support; single-line migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250406)<br>
 
