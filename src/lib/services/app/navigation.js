@@ -58,14 +58,14 @@ export const parseLocation = (loc = window.location) => {
 };
 
 /**
- * Start page transition, if possible, and execute a callback function once it’s complete.
+ * Start page transition, if possible, after updating the content.
  * @param {ViewTransitionType} transitionType View transition type.
- * @param {() => void} callback Callback function.
+ * @param {() => void} updateContent Function to trigger a content update.
  * @see https://developer.chrome.com/docs/web-platform/view-transitions/same-document
  */
-const startViewTransition = (transitionType, callback) => {
+const startViewTransition = (transitionType, updateContent) => {
   if (!get(isSmallScreen) || !document.startViewTransition) {
-    callback();
+    updateContent();
     return;
   }
 
@@ -74,7 +74,7 @@ const startViewTransition = (transitionType, callback) => {
     types: [transitionType],
     // eslint-disable-next-line jsdoc/require-jsdoc
     update: async () => {
-      callback();
+      updateContent();
       await sleep(100);
       await new Promise((resolve) => {
         flushSync(() => {
