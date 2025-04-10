@@ -153,24 +153,24 @@
   :global(html):active-view-transition-type(forwards) {
     &::view-transition-old(page-root) {
       z-index: 999;
-      animation: 200ms ease-out both slide-out-to-left;
+      animation: 150ms ease-out both slide-out-to-left;
     }
 
     &::view-transition-new(page-root) {
       z-index: 1000;
-      animation: 200ms ease-out both slide-in-from-right;
+      animation: 150ms ease-out both slide-in-from-right;
     }
   }
 
   :global(html):active-view-transition-type(backwards) {
     &::view-transition-old(page-root) {
       z-index: 1000;
-      animation: 200ms ease-out both slide-out-to-right;
+      animation: 150ms ease-out both slide-out-to-right;
     }
 
     &::view-transition-new(page-root) {
       z-index: 999;
-      animation: 200ms ease-out both slide-in-from-left;
+      animation: 150ms ease-out both slide-in-from-left;
     }
   }
 

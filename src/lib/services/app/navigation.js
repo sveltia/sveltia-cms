@@ -76,7 +76,7 @@ const startViewTransition = (transitionType, updateContent) => {
     // eslint-disable-next-line jsdoc/require-jsdoc
     update: async () => {
       updateContent();
-      await sleep(100);
+      await sleep(50);
       await new Promise((resolve) => {
         flushSync(() => {
           resolve(undefined);
