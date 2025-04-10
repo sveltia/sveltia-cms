@@ -14,7 +14,12 @@
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import { isSmallScreen } from '$lib/services/app/env';
-  import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+  import {
+    announcedPageStatus,
+    goto,
+    parseLocation,
+    updateContentFromHashChange,
+  } from '$lib/services/app/navigation';
   import {
     allAssetFolders,
     allAssets,
@@ -108,8 +113,8 @@
 </script>
 
 <svelte:window
-  onhashchange={() => {
-    navigate();
+  onhashchange={(event) => {
+    updateContentFromHashChange(event, navigate, routeRegex);
   }}
 />
 

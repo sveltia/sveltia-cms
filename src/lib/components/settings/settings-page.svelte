@@ -6,7 +6,12 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { panels } from '$lib/components/settings';
-  import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
+  import {
+    goBack,
+    goto,
+    parseLocation,
+    updateContentFromHashChange,
+  } from '$lib/services/app/navigation';
 
   const routeRegex = /^\/settings(?:\/(?<panelKey>.+))?$/;
 
@@ -38,8 +43,8 @@
 </script>
 
 <svelte:window
-  onhashchange={() => {
-    navigate();
+  onhashchange={(event) => {
+    updateContentFromHashChange(event, navigate, routeRegex);
   }}
 />
 

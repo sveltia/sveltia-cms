@@ -174,6 +174,13 @@
     }
   }
 
+  :global(html):active-view-transition-type(unknown) {
+    &::view-transition-old(page-root),
+    &::view-transition-new(page-root) {
+      animation: none;
+    }
+  }
+
   :global(body:not(:has(#nc-root))) {
     overflow: hidden;
   }

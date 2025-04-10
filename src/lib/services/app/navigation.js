@@ -45,11 +45,12 @@ export const announcedPageStatus = writable('');
 
 /**
  * Parse the URL and return the decoded result.
- * @param {Location} [loc] URL. Omit this to use the current URL.
+ * @param {string} [href] URL. Omit this to use the current URL.
  * @returns {{ path: string, params: Record<string, string> }} Path and search params.
  */
-export const parseLocation = (loc = window.location) => {
-  const { pathname, searchParams } = new URL(`${loc.origin}${loc.hash.substring(1)}`);
+export const parseLocation = (href = window.location.href) => {
+  const { origin, hash } = new URL(href);
+  const { pathname, searchParams } = new URL(`${origin}${hash.substring(1)}`);
 
   return {
     path: decodeURIComponent(pathname),
@@ -86,6 +87,45 @@ const startViewTransition = (transitionType, updateContent) => {
 };
 
 /**
+ * Update the content when the `hashchange` event is triggered. This function aims to support page
+ * transition via the browser’s back/forward navigation.
+ * @param {HashChangeEvent} event `hashchange` event.
+ * @param {() => void} updateContent Function to trigger a content update.
+ * @param {RegExp} routeRegex Regex to match a specific route.
+ * @todo Develop a robust way to handle transition using the Navigation API.
+ */
+export const updateContentFromHashChange = (event, updateContent, routeRegex) => {
+  const { isTrusted, oldURL, newURL } = event;
+
+  // If `isTrusted` is `true`, it’s the browser’s back/forward navigation, so we need to start
+  // transitioning. If `false`, the event is trigged by the `goto` method below; in that case, just
+  // finish updating the content.
+  if (!isTrusted) {
+    updateContent();
+    return;
+  }
+
+  const oldPath = parseLocation(oldURL).path;
+  const newPath = parseLocation(newURL).path;
+  // Compare paths to see if it’s a navigation within the same section, e.g. `/collection` to
+  // `/collection/new`.
+  const inSameSection = routeRegex.test(oldPath) && routeRegex.test(newPath);
+  // Count the number of path segments; navigating from `/collection` to `/collection/new` is
+  // forwards, `/assets/all` to `/assets` is backwards
+  const oldPathSegmentCount = oldPath.split('/').length;
+  const newPathSegmentCount = newPath.split('/').length;
+
+  startViewTransition(
+    inSameSection && oldPathSegmentCount < newPathSegmentCount
+      ? 'forwards'
+      : inSameSection && oldPathSegmentCount > newPathSegmentCount
+        ? 'backwards'
+        : 'unknown',
+    () => updateContent(),
+  );
+};
+
+/**
  * Navigate to a different URL or replace the current URL. This is similar to SvelteKit’s `goto`
  * method but assumes hash-based SPA routing.
  * @param {string} path URL path. It will appear in th URL hash but omit the leading `#` sign here.
@@ -95,8 +135,9 @@ export const goto = async (
   path,
   { state = {}, replaceState = false, notifyChange = true, transitionType = 'unknown' } = {},
 ) => {
-  const oldURL = window.location.hash;
-  const newURL = `#${path}`;
+  const { origin, hash } = window.location;
+  const oldURL = `${origin}/${hash}`;
+  const newURL = `${origin}/#${path}`;
   /** @type {[any, string, string]} */
   const args = [{ ...state, from: oldURL }, '', newURL];
 

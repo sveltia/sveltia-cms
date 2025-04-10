@@ -12,7 +12,12 @@
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
   import { isSmallScreen } from '$lib/services/app/env';
-  import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+  import {
+    announcedPageStatus,
+    goto,
+    parseLocation,
+    updateContentFromHashChange,
+  } from '$lib/services/app/navigation';
   import {
     getCollection,
     getFirstCollection,
@@ -168,8 +173,8 @@
 </script>
 
 <svelte:window
-  onhashchange={() => {
-    navigate();
+  onhashchange={(event) => {
+    updateContentFromHashChange(event, navigate, routeRegex);
   }}
 />
 
