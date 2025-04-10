@@ -107,11 +107,12 @@ export const updateContentFromHashChange = (event, updateContent, routeRegex) =>
 
   const oldPath = parseLocation(oldURL).path;
   const newPath = parseLocation(newURL).path;
-  // Compare paths to see if it’s a navigation within the same section, e.g. `/collection` to
-  // `/collection/new`.
+  // Compare paths to see if it’s a navigation within the same section, e.g. `/collections` to
+  // `/collections/posts`.
   const inSameSection = routeRegex.test(oldPath) && routeRegex.test(newPath);
-  // Count the number of path segments; navigating from `/collection` to `/collection/new` is
-  // forwards, `/assets/all` to `/assets` is backwards
+  // Count the number of path segments; navigating from `/collections` to `/collections/posts` and
+  // `/collections/posts` to `/collections/posts/new` is forwards, while `/assets/all` to `/assets`
+  // is backwards
   const oldPathSegmentCount = oldPath.split('/').length;
   const newPathSegmentCount = newPath.split('/').length;
 
