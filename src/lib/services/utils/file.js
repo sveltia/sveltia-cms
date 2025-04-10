@@ -6,9 +6,12 @@ import { get } from 'svelte/store';
 
 /**
  * Encode the given (partial) file path or file name. Since {@link encodeURIComponent} encodes
- * slashes, we need to split and join. The `@` prefix is an exception; it shouldn’t be encoded.
+ * slashes, we need to split and join. Also, encode some more characters, including `!`, `(` and
+ * `)`, which affect the Markdown syntax like images and links. The `@` prefix is an exception; it
+ * shouldn’t be encoded.
  * @param {string} path Original path.
  * @returns {string} Encoded path.
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent#encoding_for_rfc3986
  */
 export const encodeFilePath = (path) => {
   const hasAtPrefix = path.startsWith('@');
@@ -17,7 +20,15 @@ export const encodeFilePath = (path) => {
     path = path.slice(1);
   }
 
-  path = path.split('/').map(encodeURIComponent).join('/');
+  path = path
+    .split('/')
+    .map((str) =>
+      encodeURIComponent(str).replace(
+        /[!'()*]/g,
+        (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+      ),
+    )
+    .join('/');
 
   if (hasAtPrefix) {
     return `@${path}`;
