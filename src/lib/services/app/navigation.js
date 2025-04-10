@@ -98,8 +98,8 @@ export const updateContentFromHashChange = (event, updateContent, routeRegex) =>
   const { isTrusted, oldURL, newURL } = event;
 
   // If `isTrusted` is `true`, it’s the browser’s back/forward navigation, so we need to start
-  // transitioning. If `false`, the event is trigged by the `goto` method below; in that case, just
-  // finish updating the content.
+  // transitioning. If `false`, the event is trigged by the `goto` method below and transition has
+  // already started; in that case, just finish updating the content.
   if (!isTrusted) {
     updateContent();
     return;
@@ -115,14 +115,14 @@ export const updateContentFromHashChange = (event, updateContent, routeRegex) =>
   const oldPathSegmentCount = oldPath.split('/').length;
   const newPathSegmentCount = newPath.split('/').length;
 
-  startViewTransition(
-    inSameSection && oldPathSegmentCount < newPathSegmentCount
-      ? 'forwards'
-      : inSameSection && oldPathSegmentCount > newPathSegmentCount
-        ? 'backwards'
-        : 'unknown',
-    () => updateContent(),
-  );
+  const transitionType =
+    inSameSection && oldPathSegmentCount > newPathSegmentCount
+      ? 'backwards'
+      : inSameSection && oldPathSegmentCount < newPathSegmentCount
+        ? 'forwards'
+        : 'unknown';
+
+  startViewTransition(transitionType, () => updateContent());
 };
 
 /**
