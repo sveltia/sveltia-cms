@@ -24,11 +24,6 @@
   } from '$lib/services/contents/draft/editor';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
 
-  /**
-   * A reference to the group element.
-   * @type {HTMLElement | undefined}
-   */
-  let group = undefined;
   let restoring = false;
 
   let hidden = $state(true);
@@ -142,16 +137,14 @@
     // Wait until `inert` is updated
     await tick();
 
-    if (group) {
-      group.tabIndex = 0;
-      group.focus();
+    if (wrapper) {
+      wrapper.tabIndex = 0;
+      wrapper.focus();
     }
   };
 
   onMount(() => {
-    group = /** @type {HTMLElement} */ (wrapper?.querySelector('[role="group"]'));
-
-    group.addEventListener('transitionend', () => {
+    wrapper?.addEventListener('transitionend', () => {
       if (!$showContentOverlay) {
         hidden = true;
         $entryDraft = null;

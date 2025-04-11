@@ -12,8 +12,6 @@
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
-  /** @type {HTMLElement | undefined} */
-  let group = undefined;
   let hidden = $state(true);
   /** @type {Blob | undefined} */
   let blob = $state();
@@ -29,9 +27,9 @@
     // Wait until `inert` is updated
     await tick();
 
-    if (group) {
-      group.tabIndex = 0;
-      group.focus();
+    if (wrapper) {
+      wrapper.tabIndex = 0;
+      wrapper.focus();
     }
   };
 
@@ -44,15 +42,11 @@
   });
 
   $effect(() => {
-    if (wrapper && !group) {
-      group = /** @type {HTMLElement} */ (wrapper.querySelector('[role="group"]'));
-
-      group.addEventListener('transitionend', () => {
-        if (!$showAssetOverlay) {
-          hidden = true;
-        }
-      });
-    }
+    wrapper?.addEventListener('transitionend', () => {
+      if (!$showAssetOverlay) {
+        hidden = true;
+      }
+    });
   });
 
   $effect(() => {
