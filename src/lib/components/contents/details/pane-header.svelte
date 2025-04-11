@@ -7,12 +7,12 @@
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import PreviewButton from '$lib/components/contents/details/preview-button.svelte';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { backend } from '$lib/services/backends';
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
   /**

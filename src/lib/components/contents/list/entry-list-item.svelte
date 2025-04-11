@@ -1,12 +1,12 @@
 <script>
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { Entry, EntryCollection, ViewType } from '$lib/types/private';

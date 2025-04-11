@@ -5,9 +5,9 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { assetKinds, selectedAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   const hasListedAssets = $derived(!!$listedAssets.length);
   const hasMultipleAssets = $derived($listedAssets.length > 1);

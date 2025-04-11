@@ -13,7 +13,6 @@
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import {
     announcedPageStatus,
     goto,
@@ -29,6 +28,7 @@
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   const routeRegex =
     /^\/assets(?:\/(?<folderPath>[/\-\w]+)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;

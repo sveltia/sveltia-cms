@@ -2,10 +2,10 @@
   import { Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { entryDraft } from '$lib/services/contents/draft';
   import { entryEditorSettings } from '$lib/services/contents/draft/editor';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { Writable } from 'svelte/store';

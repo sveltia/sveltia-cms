@@ -2,8 +2,8 @@
   import { _ } from 'svelte-i18n';
   import AssetResults from '$lib/components/search/asset-results.svelte';
   import EntryResults from '$lib/components/search/entry-results.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { searchMode } from '$lib/services/search';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { Asset, Entry } from '$lib/types/private';

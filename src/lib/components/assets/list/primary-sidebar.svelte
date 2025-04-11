@@ -3,7 +3,6 @@
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import {
     allAssetFolders,
@@ -14,6 +13,7 @@
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { siteConfig } from '$lib/services/config';
   import { getCollection } from '$lib/services/contents/collection';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * Get the index of a collection with the given name.

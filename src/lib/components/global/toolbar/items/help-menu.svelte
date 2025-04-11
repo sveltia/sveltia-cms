@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import ShortcutsDialog from '$lib/components/help/shortcuts-dialog.svelte';
   import { version } from '$lib/services/app';
+  import { hasMouse } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
   /**
@@ -22,7 +23,7 @@
 
 <Menu aria-label={$_('help')}>
   <!-- Assume the user has a physical keyboard if the pointer is mouse (on desktop) -->
-  {#if window.matchMedia('(pointer: fine)').matches}
+  {#if $hasMouse}
     <MenuItem
       label={$_('keyboard_shortcuts')}
       onclick={() => {

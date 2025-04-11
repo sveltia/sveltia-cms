@@ -13,12 +13,12 @@
   import SearchPage from '$lib/components/search/search-page.svelte';
   import SettingsPage from '$lib/components/settings/settings-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { showAssetOverlay } from '$lib/services/assets';
   import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
   import { searchMode } from '$lib/services/search';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /** @type {Record<string, any>} */
   export const pages = {

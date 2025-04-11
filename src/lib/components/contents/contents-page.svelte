@@ -11,7 +11,6 @@
   import PrimaryToolbar from '$lib/components/contents/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import {
     announcedPageStatus,
     goto,
@@ -29,6 +28,7 @@
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { FileCollection, InternalCollection } from '$lib/types/private';

@@ -17,7 +17,6 @@
   import { _ } from 'svelte-i18n';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goBack, goto } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
@@ -31,6 +30,7 @@
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
   /**

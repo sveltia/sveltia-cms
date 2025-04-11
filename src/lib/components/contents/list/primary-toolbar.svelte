@@ -7,11 +7,11 @@
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { goBack } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { canCreateEntry, selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   let showDeleteDialog = $state(false);
 

@@ -7,8 +7,8 @@
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { normalize } from '$lib/services/search';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { Asset, ViewType } from '$lib/types/private';

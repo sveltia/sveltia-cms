@@ -4,7 +4,7 @@
   import { _ } from 'svelte-i18n';
   import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import { canDragDrop } from '$lib/services/utils/file';
+  import { hasMouse } from '$lib/services/user/env';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -126,11 +126,7 @@
       {#if showUploadButton}
         <div role="none">
           {$_(
-            canDragDrop()
-              ? multiple
-                ? 'drop_or_browse_files'
-                : 'drop_or_browse_file'
-              : 'browse_file',
+            $hasMouse ? (multiple ? 'drop_or_browse_files' : 'drop_or_browse_file') : 'browse_file',
           )}
         </div>
         <div role="none">

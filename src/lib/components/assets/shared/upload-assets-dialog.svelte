@@ -11,7 +11,7 @@
     uploadingAssets,
   } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
-  import { canDragDrop } from '$lib/services/utils/file';
+  import { hasMouse } from '$lib/services/user/env';
 
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
@@ -43,7 +43,7 @@
 
   $effect(() => {
     // Open the file picker directly if drag & drop is not supported (on mobile)
-    if (!canDragDrop() && $showUploadAssetsDialog) {
+    if (!$hasMouse && $showUploadAssetsDialog) {
       filePicker?.open();
     }
   });
@@ -55,7 +55,7 @@
   });
 </script>
 
-{#if canDragDrop()}
+{#if $hasMouse}
   <Dialog
     title={originalAsset
       ? $_('replace_x', { values: { name: originalAsset.name } })

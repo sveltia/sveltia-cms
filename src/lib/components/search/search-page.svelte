@@ -7,9 +7,9 @@
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import SearchResults from '$lib/components/search/search-results.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
   import { searchMode, searchResults, searchTerms } from '$lib/services/search';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   const routeRegex = /^\/search\/(?<terms>.+)$/;
 

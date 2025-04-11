@@ -22,7 +22,8 @@
   } from '$lib/services/assets';
   import { getMediaLibraryConfig, transformFile } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { canDragDrop, formatSize } from '$lib/services/utils/file';
+  import { hasMouse } from '$lib/services/user/env';
+  import { formatSize } from '$lib/services/utils/file';
 
   /**
    * @import {
@@ -280,9 +281,9 @@
               {$_('processing_file')}
             </div>
           {:else if isImageWidget}
-            {$_(canDragDrop() ? 'drop_or_browse_image_file' : 'browse_file')}
+            {$_($hasMouse ? 'drop_or_browse_image_file' : 'browse_file')}
           {:else}
-            {$_(canDragDrop() ? 'drop_or_browse_file' : 'browse_file')}
+            {$_($hasMouse ? 'drop_or_browse_file' : 'browse_file')}
           {/if}
         </div>
       </Button>

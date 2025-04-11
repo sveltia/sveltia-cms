@@ -7,7 +7,6 @@
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { canCreateEntry } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -23,6 +22,7 @@
     showDuplicateToast,
   } from '$lib/services/contents/draft/editor';
   import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   let restoring = false;
 

@@ -52,14 +52,6 @@ export const decodeFilePath = (path) => decodeURIComponent(path);
 export const sanitizeFileName = (name) => sanitize(name.normalize());
 
 /**
- * Check if the user’s browsing environment supports drag & drop operation. Assume drag & drop is
- * supported if the pointer is mouse (on desktop).
- * @returns {boolean} Result.
- */
-export const canDragDrop = () =>
-  (globalThis.matchMedia('(pointer: fine)')?.matches ?? false) && 'ondrop' in globalThis;
-
-/**
  * Format the given file size in bytes, KB, MB, GB or TB.
  * @param {number} size File size.
  * @returns {string} Formatted size.

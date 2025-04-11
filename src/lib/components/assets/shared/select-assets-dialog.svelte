@@ -6,7 +6,6 @@
   import InternalAssetsPanel from '$lib/components/assets/shared/internal-assets-panel.svelte';
   import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { allAssets, globalAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
@@ -15,6 +14,7 @@
     allStockPhotoServices,
   } from '$lib/services/integrations/media-libraries';
   import { normalize } from '$lib/services/search';
+  import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
   /**

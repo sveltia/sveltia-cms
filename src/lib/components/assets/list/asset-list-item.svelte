@@ -1,10 +1,10 @@
 <script>
   import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goto } from '$lib/services/app/navigation';
   import { canPreviewAsset, focusedAsset, selectedAssets } from '$lib/services/assets';
   import { listedAssets } from '$lib/services/assets/view';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { Asset, ViewType } from '$lib/types/private';

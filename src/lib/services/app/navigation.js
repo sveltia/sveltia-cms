@@ -1,10 +1,10 @@
 import { sleep } from '@sveltia/utils/misc';
 import { flushSync } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
-import { isSmallScreen } from '$lib/services/app/env';
 import { showAssetOverlay } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/draft/editor';
+import { isSmallScreen } from '$lib/services/user/env';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';

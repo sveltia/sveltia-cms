@@ -9,7 +9,6 @@
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
   import FloatingActionButtonWrapper from '$lib/components/common/floating-action-button-wrapper.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { goBack } from '$lib/services/app/navigation';
   import {
     canCreateAsset,
@@ -18,6 +17,7 @@
     selectedAssets,
   } from '$lib/services/assets';
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   const assets = $derived.by(() => {
     if ($selectedAssets.length) return $selectedAssets;

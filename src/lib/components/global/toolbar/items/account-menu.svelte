@@ -2,11 +2,11 @@
   import { Divider, Menu, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import SettingsDialog from '$lib/components/settings/settings-dialog.svelte';
-  import { isSmallScreen } from '$lib/services/app/env';
   import { goto, openProductionSite } from '$lib/services/app/navigation';
   import { backend, backendName } from '$lib/services/backends';
   import { user } from '$lib/services/user';
   import { signOut } from '$lib/services/user/auth';
+  import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
   /**

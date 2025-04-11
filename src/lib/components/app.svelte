@@ -8,13 +8,13 @@
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
   import UpdateNotification from '$lib/components/global/infobars/update-notification.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
-  import { initScreenSizeDetection } from '$lib/services/app/env';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
   import { devSiteURL, initSiteConfig, siteConfig } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user';
+  import { initUserEnvDetection } from '$lib/services/user/env';
 
   /**
    * @import { SiteConfig } from '$lib/types/public';
@@ -41,7 +41,7 @@
   });
 
   onMount(() => {
-    initScreenSizeDetection();
+    initUserEnvDetection();
   });
 
   // Fix the position of the custom mount element if needed

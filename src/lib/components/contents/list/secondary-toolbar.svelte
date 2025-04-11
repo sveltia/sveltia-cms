@@ -6,7 +6,6 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/app/env';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
@@ -15,6 +14,7 @@
     listedEntries,
     sortFields,
   } from '$lib/services/contents/collection/view';
+  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { EntryCollection } from '$lib/types/private';
