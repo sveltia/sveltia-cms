@@ -36,7 +36,7 @@
 </script>
 
 <Dialog
-  title={$_('help.keyboard_shortcuts')}
+  title={$_('keyboard_shortcuts')}
   bind:open
   showOk={false}
   showCancel={false}
@@ -46,7 +46,7 @@
   }}
 >
   <div role="none" class="wrapper">
-    <Table aria-label={$_('help.keyboard_shortcuts')}>
+    <Table aria-label={$_('keyboard_shortcuts')}>
       {#each shortcuts as { feature, keys } (keys)}
         <TableRow>
           <TableCell class="feature">{$_(`keyboard_shortcuts_.${feature}`)}</TableCell>
