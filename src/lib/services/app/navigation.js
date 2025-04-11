@@ -136,9 +136,9 @@ export const goto = async (
   path,
   { state = {}, replaceState = false, notifyChange = true, transitionType = 'unknown' } = {},
 ) => {
-  const { origin, hash } = window.location;
-  const oldURL = `${origin}/${hash}`;
-  const newURL = `${origin}/#${path}`;
+  const { origin, pathname, hash } = window.location;
+  const oldURL = `${origin}${pathname}${hash}`;
+  const newURL = `${origin}${pathname}#${path}`;
   /** @type {[any, string, string]} */
   const args = [{ ...state, from: oldURL }, '', newURL];
 
