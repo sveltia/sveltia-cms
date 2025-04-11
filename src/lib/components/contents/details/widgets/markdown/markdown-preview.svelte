@@ -66,20 +66,22 @@
 
 <style lang="scss">
   div {
-    :global(:is(h1, h2, h3, h4, h5, h6, p, ul, ol)) {
-      margin: 1em 0 0;
-    }
+    :global {
+      :is(h1, h2, h3, h4, h5, h6, p, ul, ol) {
+        margin: 1em 0 0;
+      }
 
-    :global(:is(video, img)) {
-      max-width: 100%;
-      max-height: 100%;
-    }
+      :is(video, img) {
+        max-width: 100%;
+        max-height: 100%;
+      }
 
-    :global(:is(a:has(img))) {
-      display: inline-block;
+      :is(a:has(img)) {
+        display: inline-block;
 
-      :global(:is(img)) {
-        pointer-events: none;
+        img {
+          pointer-events: none;
+        }
       }
     }
   }

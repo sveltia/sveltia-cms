@@ -4,7 +4,7 @@
   @see https://decapcms.org/docs/widgets/#object
 -->
 <script>
-  import { Button, Checkbox, Group, Icon } from '@sveltia/ui';
+  import { Button, Checkbox, Icon } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
   import { sleep } from '@sveltia/utils/misc';
   import { toRaw } from '@sveltia/utils/object';
@@ -190,71 +190,69 @@
 {/if}
 
 {#if (!(!required || hasVariableTypes) || hasValues) && canEdit}
-  <div role="none" class="wrapper">
-    <Group aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}>
-      <ObjectHeader
-        label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
-        controlId="object-{widgetId}-item-list"
-        expanded={parentExpanded}
-        toggleExpanded={subFields.length
-          ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
-          : undefined}
-      >
-        {#snippet endContent()}
-          {#if hasVariableTypes}
-            <Button
-              size="small"
-              iconic
-              disabled={addButtonDisabled}
-              aria-label={$_('remove')}
-              onclick={() => {
-                removeFields();
-              }}
-            >
-              {#snippet startIcon()}
-                <Icon name="close" />
-              {/snippet}
-            </Button>
-          {/if}
-        {/snippet}
-      </ObjectHeader>
-      <div role="none" class="item-list" id="object-{widgetId}-item-list" bind:this={wrapper}>
-        {#await waitForVisibility(wrapper) then}
-          {#if parentExpanded}
-            {#each subFields as subField (subField.name)}
-              {#await sleep(0) then}
-                <FieldEditor
-                  keyPath={[keyPath, subField.name].join('.')}
-                  {locale}
-                  fieldConfig={subField}
-                />
-              {/await}
-            {/each}
-          {:else}
-            <div role="none" class="summary" id="object-{widgetId}-summary">
-              {_formatSummary()}
-            </div>
-          {/if}
-        {/await}
-      </div>
-    </Group>
+  <div
+    role="group"
+    class="wrapper"
+    aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}
+  >
+    <ObjectHeader
+      label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+      controlId="object-{widgetId}-item-list"
+      expanded={parentExpanded}
+      toggleExpanded={subFields.length
+        ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
+        : undefined}
+    >
+      {#snippet endContent()}
+        {#if hasVariableTypes}
+          <Button
+            size="small"
+            iconic
+            disabled={addButtonDisabled}
+            aria-label={$_('remove')}
+            onclick={() => {
+              removeFields();
+            }}
+          >
+            {#snippet startIcon()}
+              <Icon name="close" />
+            {/snippet}
+          </Button>
+        {/if}
+      {/snippet}
+    </ObjectHeader>
+    <div role="none" class="item-list" id="object-{widgetId}-item-list" bind:this={wrapper}>
+      {#await waitForVisibility(wrapper) then}
+        {#if parentExpanded}
+          {#each subFields as subField (subField.name)}
+            {#await sleep(0) then}
+              <FieldEditor
+                keyPath={[keyPath, subField.name].join('.')}
+                {locale}
+                fieldConfig={subField}
+              />
+            {/await}
+          {/each}
+        {:else}
+          <div role="none" class="summary" id="object-{widgetId}-summary">
+            {_formatSummary()}
+          </div>
+        {/if}
+      {/await}
+    </div>
   </div>
 {/if}
 
 <style lang="scss">
   .wrapper {
-    display: contents;
+    border-width: 2px;
+    border-color: var(--sui-secondary-border-color);
+    border-radius: var(--sui-control-medium-border-radius);
 
     :global(.sui.checkbox) + & {
       & > :global(.group) {
         margin-top: 8px;
       }
-    }
-
-    & > :global(.group) {
-      border-width: 2px;
-      border-color: var(--sui-secondary-border-color);
-      border-radius: var(--sui-control-medium-border-radius);
     }
   }
 

@@ -113,10 +113,6 @@
 <style lang="scss">
   .wrapper {
     display: contents;
-
-    & > :global(.group) {
-      display: contents;
-    }
   }
 
   .content {

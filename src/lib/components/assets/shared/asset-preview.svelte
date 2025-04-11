@@ -206,7 +206,7 @@
         pointer-events: none;
       }
 
-      :global(.overlay) {
+      .overlay {
         z-index: -1;
         backdrop-filter: blur(32px) brightness(0.8);
       }

@@ -103,13 +103,6 @@
       font-size: var(--sui-font-size-xxx-large);
     }
 
-    :global(.message) {
-      margin: 0 0 16px;
-      font-size: var(--sui-font-size-large);
-      font-weight: var(--sui-font-weight-normal);
-      text-align: center;
-    }
-
     .error {
       border-radius: var(--sui-control-medium-border-radius);
       padding: 12px;
@@ -117,6 +110,16 @@
       font-size: var(--sui-font-size-default);
       line-height: 1.5;
       text-align: center;
+    }
+
+    :global {
+      // `<SignIn>` also has `.message`
+      .message {
+        margin: 0 0 16px;
+        font-size: var(--sui-font-size-large);
+        font-weight: var(--sui-font-weight-normal);
+        text-align: center;
+      }
     }
   }
 </style>

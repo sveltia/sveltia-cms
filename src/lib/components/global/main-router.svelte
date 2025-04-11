@@ -13,7 +13,7 @@
   import SearchPage from '$lib/components/search/search-page.svelte';
   import SettingsPage from '$lib/components/settings/settings-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
-  import { isLargeScreen, isMediumScreen, isSmallScreen } from '$lib/services/app/env';
+  import { isSmallScreen } from '$lib/services/app/env';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { showAssetOverlay } from '$lib/services/assets';
   import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
@@ -68,26 +68,6 @@
   };
 
   onMount(() => {
-    const mqlSmall = window.matchMedia('(width < 768px)');
-    const mqlMedium = window.matchMedia('(768px <= width < 1024px)');
-    const mqlLarge = window.matchMedia('(1024px <= width)');
-
-    $isSmallScreen = mqlSmall.matches;
-    $isMediumScreen = mqlMedium.matches;
-    $isLargeScreen = mqlLarge.matches;
-
-    mqlSmall.addEventListener('change', () => {
-      $isSmallScreen = mqlSmall.matches;
-    });
-
-    mqlMedium.addEventListener('change', () => {
-      $isMediumScreen = mqlMedium.matches;
-    });
-
-    mqlMedium.addEventListener('change', () => {
-      $isLargeScreen = mqlLarge.matches;
-    });
-
     selectPage();
   });
 </script>

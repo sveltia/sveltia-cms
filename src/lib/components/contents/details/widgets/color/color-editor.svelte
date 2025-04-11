@@ -162,14 +162,16 @@
       align-items: center;
       gap: 8px;
 
-      :global(.sui.text-input) {
-        width: 80px;
-        min-width: 0;
-      }
+      :global {
+        .sui.text-input {
+          width: 80px;
+          min-width: 0;
+        }
 
-      :global(.sui.slider) {
-        padding: 8px;
-        --sui-slider-base-width: 80px;
+        .sui.slider {
+          padding: 8px;
+          --sui-slider-base-width: 80px;
+        }
       }
     }
   }

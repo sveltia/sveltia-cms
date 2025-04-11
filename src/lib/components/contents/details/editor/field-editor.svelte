@@ -350,55 +350,57 @@
       gap: 4px;
     }
 
-    :global(input[type='text']),
-    :global(textarea) {
-      width: 100%;
-    }
-
-    :global(input[type='color']),
-    :global(input[type='number']) {
-      outline: 0;
-      border-width: 1px;
-      border-color: var(--sui-primary-border-color);
-      border-radius: var(--sui-control-medium-border-radius);
-      height: var(--sui-button-medium-height);
-      color: inherit;
-      background-color: var(--sui-textbox-background-color);
-    }
-
-    :global(input[type='file']),
-    :global(input[type='checkbox']),
-    & > :global(div) {
-      color: inherit;
-    }
-
-    :global(input[type='date']),
-    :global(input[type='datetime-local']),
-    :global(input[type='time']) {
-      outline: 0;
-      margin: var(--sui-focus-ring-width);
-      border-width: var(--sui-textbox-border-width, 1px);
-      border-color: var(--sui-primary-border-color);
-      border-radius: var(--sui-control-medium-border-radius);
-      padding: var(--sui-textbox-singleline-padding);
-      width: auto;
-      height: var(--sui-textbox-height);
-      color: var(--sui-textbox-foreground-color);
-      background-color: var(--sui-textbox-background-color);
-      font-family: var(--sui-textbox-font-family);
-      font-size: var(--sui-textbox-font-size);
-      text-transform: uppercase;
-
-      &:disabled {
-        opacity: 0.4;
+    :global {
+      :is(input[type='text'], textarea) {
+        width: 100%;
       }
-    }
 
-    :global(input[type='color'][aria-invalid='true']),
-    :global(input[type='date'][aria-invalid='true']),
-    :global(input[type='datetime-local'][aria-invalid='true']),
-    :global(input[type='time'][aria-invalid='true']) {
-      border-color: var(--sui-error-border-color);
+      input:is([type='color'], [type='number']) {
+        outline: 0;
+        border-width: 1px;
+        border-color: var(--sui-primary-border-color);
+        border-radius: var(--sui-control-medium-border-radius);
+        height: var(--sui-button-medium-height);
+        color: inherit;
+        background-color: var(--sui-textbox-background-color);
+      }
+
+      input:is([type='file'], [type='checkbox']) {
+        color: inherit;
+      }
+
+      & > div {
+        color: inherit;
+      }
+
+      input:is([type='date'], [type='datetime-local'], [type='time']) {
+        outline: 0;
+        margin: var(--sui-focus-ring-width);
+        border-width: var(--sui-textbox-border-width, 1px);
+        border-color: var(--sui-primary-border-color);
+        border-radius: var(--sui-control-medium-border-radius);
+        padding: var(--sui-textbox-singleline-padding);
+        width: auto;
+        height: var(--sui-textbox-height);
+        color: var(--sui-textbox-foreground-color);
+        background-color: var(--sui-textbox-background-color);
+        font-family: var(--sui-textbox-font-family);
+        font-size: var(--sui-textbox-font-size);
+        text-transform: uppercase;
+
+        &:disabled {
+          opacity: 0.4;
+        }
+      }
+
+      input[aria-invalid='true']:is(
+          [type='color'],
+          [type='date'],
+          [type='datetime-local'],
+          [type='time']
+        ) {
+        border-color: var(--sui-error-border-color);
+      }
     }
   }
 

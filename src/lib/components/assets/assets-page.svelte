@@ -1,5 +1,5 @@
 <script>
-  import { Alert, Group, Toast } from '@sveltia/ui';
+  import { Alert, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -118,7 +118,7 @@
   }}
 />
 
-<PageContainer class="media" aria-label={$_('asset_library')}>
+<PageContainer aria-label={$_('asset_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
       <PrimarySidebar />
@@ -126,30 +126,25 @@
   {/snippet}
   {#snippet main()}
     {#if !$isSmallScreen || !isIndexPage}
-      <Group
+      <PageContainerMainArea
         id="assets-container"
-        class="main"
-        aria-label={$_('x_asset_folder', {
-          values: { folder: selectedAssetFolderLabel },
-        })}
+        aria-label={$_('x_asset_folder', { values: { folder: selectedAssetFolderLabel } })}
       >
-        <PageContainerMainArea>
-          {#snippet primaryToolbar()}
-            <PrimaryToolbar />
-          {/snippet}
-          {#snippet secondaryToolbar()}
-            {#if $listedAssets.length}
-              <SecondaryToolbar />
-            {/if}
-          {/snippet}
-          {#snippet mainContent()}
-            <AssetList />
-          {/snippet}
-          {#snippet secondarySidebar()}
-            <SecondarySidebar />
-          {/snippet}
-        </PageContainerMainArea>
-      </Group>
+        {#snippet primaryToolbar()}
+          <PrimaryToolbar />
+        {/snippet}
+        {#snippet secondaryToolbar()}
+          {#if $listedAssets.length}
+            <SecondaryToolbar />
+          {/if}
+        {/snippet}
+        {#snippet mainContent()}
+          <AssetList />
+        {/snippet}
+        {#snippet secondarySidebar()}
+          <SecondarySidebar />
+        {/snippet}
+      </PageContainerMainArea>
     {/if}
   {/snippet}
 </PageContainer>

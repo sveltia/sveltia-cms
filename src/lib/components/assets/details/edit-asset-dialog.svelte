@@ -93,17 +93,19 @@
   .wrapper {
     display: contents;
 
-    :global(textarea) {
-      min-height: 40dvh;
-      max-height: 80dvh;
-      font-family: var(--sui-font-family-monospace);
-      font-size: var(--sui-font-size-monospace);
-      text-wrap: nowrap;
-      resize: vertical;
-    }
+    :global {
+      textarea {
+        min-height: 40dvh;
+        max-height: 80dvh;
+        font-family: var(--sui-font-family-monospace);
+        font-size: var(--sui-font-size-monospace);
+        text-wrap: nowrap;
+        resize: vertical;
+      }
 
-    &.wrap :global(textarea) {
-      text-wrap: wrap;
+      &.wrap textarea {
+        text-wrap: wrap;
+      }
     }
   }
 </style>

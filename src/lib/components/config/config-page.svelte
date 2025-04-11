@@ -5,7 +5,7 @@
   import { rawSiteConfig } from '$lib/services/config';
 </script>
 
-<PageContainer class="content" aria-label={$_('site_configuration_editor')}>
+<PageContainer aria-label={$_('site_configuration_editor')}>
   {#snippet main()}
     <div role="blockquote" aria-label={$_('site_config')}>
       <pre>{YAML.stringify(rawSiteConfig)}</pre>
@@ -22,6 +22,7 @@
   pre {
     margin: 0;
     padding: 16px;
+    width: fit-content;
     background-color: var(--sui-primary-background-color);
   }
 </style>

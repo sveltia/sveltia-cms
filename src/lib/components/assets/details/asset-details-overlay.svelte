@@ -1,21 +1,19 @@
 <script>
-  import { Group } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { getAssetBlob, isMediaKind, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
-  import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
+  import EmptyState from '$lib/components/common/empty-state.svelte';
+  import { getAssetBlob, isMediaKind, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
   /** @type {HTMLElement | undefined} */
   let group = undefined;
-  let hiding = $state(false);
   let hidden = $state(true);
   /** @type {Blob | undefined} */
   let blob = $state();
@@ -51,7 +49,6 @@
 
       group.addEventListener('transitionend', () => {
         if (!$showAssetOverlay) {
-          hiding = false;
           hidden = true;
         }
       });
@@ -61,87 +58,78 @@
   $effect(() => {
     if (wrapper) {
       if ($showAssetOverlay) {
-        hiding = false;
         hidden = false;
         moveFocus();
-      } else {
-        hiding = true;
       }
     }
   });
 </script>
 
 <div
-  role="none"
+  role="group"
   class="wrapper"
-  class:hiding
   {hidden}
   inert={!$showAssetOverlay}
+  aria-label={$_('asset_editor')}
   bind:this={wrapper}
 >
-  <Group aria-label={$_('asset_editor')}>
-    {#key $overlaidAsset?.sha}
-      <Toolbar />
-      <div role="none" class="row">
-        <div role="none" class="preview">
-          {#if kind && isMediaKind(kind)}
-            <AssetPreview
-              {kind}
-              asset={$overlaidAsset}
-              blurBackground={['image', 'video'].includes(kind)}
-              checkerboard={kind === 'image'}
-              alt={kind === 'image' ? name : undefined}
-              controls={['audio', 'video'].includes(kind)}
-            />
-          {:else if blob?.type === 'application/pdf'}
-            <iframe src={blobURL} title={name}></iframe>
-          {:else if blob?.type && isTextFileType(blob.type)}
-            {#await $overlaidAsset?.text ?? blob.text() then text}
-              {#if name?.endsWith('.md')}
-                {#await marked.parse(text, { breaks: true, async: true }) then rawHTML}
-                  <div role="figure" class="markdown">
-                    {@html DOMPurify.sanitize(rawHTML)}
-                  </div>
-                {:catch}
-                  <pre role="figure">{text}</pre>
-                {/await}
-              {:else}
+  {#key $overlaidAsset?.sha}
+    <Toolbar />
+    <div role="none" class="row">
+      <div role="none" class="preview">
+        {#if kind && isMediaKind(kind)}
+          <AssetPreview
+            {kind}
+            asset={$overlaidAsset}
+            blurBackground={['image', 'video'].includes(kind)}
+            checkerboard={kind === 'image'}
+            alt={kind === 'image' ? name : undefined}
+            controls={['audio', 'video'].includes(kind)}
+          />
+        {:else if blob?.type === 'application/pdf'}
+          <iframe src={blobURL} title={name}></iframe>
+        {:else if blob?.type && isTextFileType(blob.type)}
+          {#await $overlaidAsset?.text ?? blob.text() then text}
+            {#if name?.endsWith('.md')}
+              {#await marked.parse(text, { breaks: true, async: true }) then rawHTML}
+                <div role="figure" class="markdown">
+                  {@html DOMPurify.sanitize(rawHTML)}
+                </div>
+              {:catch}
                 <pre role="figure">{text}</pre>
-              {/if}
-            {/await}
-          {:else}
-            <EmptyState>
-              <span role="alert">{$_('preview_unavailable')}</span>
-            </EmptyState>
-          {/if}
-        </div>
-        {#if $overlaidAsset}
-          <InfoPanel asset={$overlaidAsset} />
+              {/await}
+            {:else}
+              <pre role="figure">{text}</pre>
+            {/if}
+          {/await}
+        {:else}
+          <EmptyState>
+            <span role="alert">{$_('preview_unavailable')}</span>
+          </EmptyState>
         {/if}
       </div>
-    {/key}
-  </Group>
+      {#if $overlaidAsset}
+        <InfoPanel asset={$overlaidAsset} />
+      {/if}
+    </div>
+  {/key}
 </div>
 
 <style lang="scss">
   .wrapper {
-    display: contents;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--sui-secondary-background-color);
+    transition: filter 250ms;
 
     &[hidden] {
       display: none;
     }
 
-    & > :global(.sui.group) {
-      position: absolute;
-      inset: 0;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      background-color: var(--sui-secondary-background-color);
-      transition: filter 250ms;
-    }
-
-    &[inert] > :global(.sui.group) {
+    &[inert] {
       filter: opacity(0);
     }
 
@@ -153,14 +141,16 @@
       @media (width < 768px) {
         flex-direction: column;
 
-        :global(.preview) {
+        .preview {
           flex: none !important;
           aspect-ratio: 1 / 1;
         }
 
-        :global(.detail) {
-          flex: auto;
-          width: auto;
+        :global {
+          .detail {
+            flex: auto;
+            width: auto;
+          }
         }
       }
 
@@ -188,8 +178,10 @@
         }
       }
 
-      :global(.detail) {
-        background-color: var(--sui-primary-background-color);
+      :global {
+        .detail {
+          background-color: var(--sui-primary-background-color);
+        }
       }
     }
   }

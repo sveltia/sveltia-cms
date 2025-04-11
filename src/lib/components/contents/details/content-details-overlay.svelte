@@ -31,7 +31,6 @@
   let group = undefined;
   let restoring = false;
 
-  let hiding = $state(false);
   let hidden = $state(true);
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
@@ -154,7 +153,6 @@
 
     group.addEventListener('transitionend', () => {
       if (!$showContentOverlay) {
-        hiding = false;
         hidden = true;
         $entryDraft = null;
       }
@@ -182,10 +180,8 @@
   $effect(() => {
     if (wrapper) {
       if (!$showContentOverlay) {
-        hiding = true;
         showBackupToastIfNeeded();
       } else if (hidden) {
-        hiding = false;
         hidden = false;
         switchPanes();
         moveFocus();
@@ -196,92 +192,90 @@
 </script>
 
 <div
-  role="none"
-  class="wrapper"
-  class:hiding
+  role="group"
+  class="wrapper content-editor"
   {hidden}
   inert={!$showContentOverlay}
+  aria-label={$_('content_editor')}
   bind:this={wrapper}
 >
-  <Group class="content-editor" aria-label={$_('content_editor')}>
-    {#key entryId}
-      <Toolbar disabled={createDisabled} />
-      {#if createDisabled}
-        <EmptyState>
-          <div role="none">
-            {#if !canCreate}
-              {$_('creating_entries_disabled_by_admin')}
-            {:else}
-              {$_('creating_entries_disabled_by_limit', { values: { limit } })}
-            {/if}
-          </div>
-          <div role="none">
-            <Button
-              variant="primary"
-              onclick={() => {
-                goto(`/collection/${collection?.name}`, {
-                  replaceState: true,
-                  transitionType: 'backwards',
-                });
-              }}
-            >
-              {$_('back_to_collection')}
-            </Button>
-          </div>
-        </EmptyState>
-      {:else}
-        <div role="none" class="cols">
-          {#if collection}
-            {#if $editorLeftPane}
-              {@const { locale, mode } = $editorLeftPane}
-              <Group
-                class="pane"
-                aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-                  values: { locale: getLocaleLabel(locale) },
-                })}
-                data-locale={locale}
-                data-mode={mode}
-              >
-                <PaneHeader
-                  id="left-pane-header"
-                  thisPane={editorLeftPane}
-                  thatPane={editorRightPane}
-                />
-                <PaneBody
-                  id="left-pane-body"
-                  thisPane={editorLeftPane}
-                  bind:thisPaneContentArea={leftPaneContentArea}
-                  thatPaneContentArea={rightPaneContentArea}
-                />
-              </Group>
-            {/if}
-            {#if $editorRightPane}
-              {@const { locale, mode } = $editorRightPane}
-              <Group
-                aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-                  values: { locale: getLocaleLabel(locale) },
-                })}
-                data-locale={locale}
-                data-mode={mode}
-              >
-                <PaneHeader
-                  id="right-pane-header"
-                  thisPane={editorRightPane}
-                  thatPane={editorLeftPane}
-                />
-                <PaneBody
-                  id="right-pane-body"
-                  thisPane={editorRightPane}
-                  bind:thisPaneContentArea={rightPaneContentArea}
-                  thatPaneContentArea={leftPaneContentArea}
-                />
-              </Group>
-            {/if}
+  {#key entryId}
+    <Toolbar disabled={createDisabled} />
+    {#if createDisabled}
+      <EmptyState>
+        <div role="none">
+          {#if !canCreate}
+            {$_('creating_entries_disabled_by_admin')}
+          {:else}
+            {$_('creating_entries_disabled_by_limit', { values: { limit } })}
           {/if}
         </div>
-      {/if}
-    {/key}
-  </Group>
+        <div role="none">
+          <Button
+            variant="primary"
+            onclick={() => {
+              goto(`/collection/${collection?.name}`, {
+                replaceState: true,
+                transitionType: 'backwards',
+              });
+            }}
+          >
+            {$_('back_to_collection')}
+          </Button>
+        </div>
+      </EmptyState>
+    {:else}
+      <div role="none" class="cols">
+        {#if collection}
+          {#if $editorLeftPane}
+            {@const { locale, mode } = $editorLeftPane}
+            <Group
+              class="pane"
+              aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+                values: { locale: getLocaleLabel(locale) },
+              })}
+              data-locale={locale}
+              data-mode={mode}
+            >
+              <PaneHeader
+                id="left-pane-header"
+                thisPane={editorLeftPane}
+                thatPane={editorRightPane}
+              />
+              <PaneBody
+                id="left-pane-body"
+                thisPane={editorLeftPane}
+                bind:thisPaneContentArea={leftPaneContentArea}
+                thatPaneContentArea={rightPaneContentArea}
+              />
+            </Group>
+          {/if}
+          {#if $editorRightPane}
+            {@const { locale, mode } = $editorRightPane}
+            <Group
+              aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+                values: { locale: getLocaleLabel(locale) },
+              })}
+              data-locale={locale}
+              data-mode={mode}
+            >
+              <PaneHeader
+                id="right-pane-header"
+                thisPane={editorRightPane}
+                thatPane={editorLeftPane}
+              />
+              <PaneBody
+                id="right-pane-body"
+                thisPane={editorRightPane}
+                bind:thisPaneContentArea={rightPaneContentArea}
+                thatPaneContentArea={leftPaneContentArea}
+              />
+            </Group>
+          {/if}
+        {/if}
+      </div>
+    {/if}
+  {/key}
 </div>
 
 <BackupFeedback />
@@ -294,23 +288,19 @@
 
 <style lang="scss">
   .wrapper {
-    display: contents;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--sui-secondary-background-color);
+    transition: filter 250ms;
 
     &[hidden] {
       display: none;
     }
 
-    & > :global(.sui.group) {
-      position: absolute;
-      inset: 0;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      background-color: var(--sui-secondary-background-color);
-      transition: filter 250ms;
-    }
-
-    &[inert] > :global(.sui.group) {
+    &[inert] {
       filter: opacity(0);
     }
 
@@ -321,24 +311,26 @@
       gap: 4px;
       background-color: var(--sui-secondary-background-color); // same as toolbar
 
-      & > :global(div) {
-        display: flex;
-        flex-direction: column;
-        min-width: 480px;
-        background-color: var(--sui-primary-background-color);
-        transition: all 500ms;
+      :global {
+        & > div {
+          display: flex;
+          flex-direction: column;
+          min-width: 480px;
+          background-color: var(--sui-primary-background-color);
+          transition: all 500ms;
 
-        @media (width < 768px) {
-          min-width: auto;
+          &[data-mode='edit'] {
+            flex: 1 1;
+          }
+
+          &[data-mode='preview'] {
+            flex: 2 1;
+          }
+
+          @media (width < 768px) {
+            min-width: auto;
+          }
         }
-      }
-
-      & > :global([data-mode='edit']) {
-        flex: 1 1;
-      }
-
-      & > :global([data-mode='preview']) {
-        flex: 2 1;
       }
     }
   }

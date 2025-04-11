@@ -1,5 +1,5 @@
 <script>
-  import { Alert, Group, Toast } from '@sveltia/ui';
+  import { Alert, Toast } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
@@ -178,7 +178,7 @@
   }}
 />
 
-<PageContainer class="content" aria-label={$_('content_library')}>
+<PageContainer aria-label={$_('content_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
       <PrimarySidebar />
@@ -186,31 +186,27 @@
   {/snippet}
   {#snippet main()}
     {#if !$isSmallScreen || !isIndexPage}
-      <Group
-        id="collection-container"
-        class="main"
+      <PageContainerMainArea
         aria-label={$_('x_collection', {
           values: { collection: $selectedCollection?.label || $selectedCollection?.name },
         })}
         aria-description={$selectedCollection?.description}
       >
-        <PageContainerMainArea>
-          {#snippet primaryToolbar()}
-            <PrimaryToolbar />
-          {/snippet}
-          {#snippet secondaryToolbar()}
-            {#if $selectedCollection?._type === 'entry' && $listedEntries.length}
-              <SecondaryToolbar />
-            {/if}
-          {/snippet}
-          {#snippet mainContent()}
-            <MainContent />
-          {/snippet}
-          {#snippet secondarySidebar()}
-            <SecondarySidebar />
-          {/snippet}
-        </PageContainerMainArea>
-      </Group>
+        {#snippet primaryToolbar()}
+          <PrimaryToolbar />
+        {/snippet}
+        {#snippet secondaryToolbar()}
+          {#if $selectedCollection?._type === 'entry' && $listedEntries.length}
+            <SecondaryToolbar />
+          {/if}
+        {/snippet}
+        {#snippet mainContent()}
+          <MainContent />
+        {/snippet}
+        {#snippet secondarySidebar()}
+          <SecondarySidebar />
+        {/snippet}
+      </PageContainerMainArea>
     {/if}
   {/snippet}
 </PageContainer>

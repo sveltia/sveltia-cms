@@ -16,21 +16,17 @@
 <style lang="scss">
   .toolbar-wrapper {
     border-top: 1px solid var(--sui-secondary-border-color);
-    // Exclude the bottom nav from view transition
-    view-transition-name: main-header;
 
     &[inert] {
       // Disable the keyboard shortcut for the search bar
       display: none;
     }
+  }
 
-    & > :global(.toolbar) {
-      :global(.buttons) {
-        flex: auto;
-        display: flex;
-        align-items: center;
-        justify-content: space-evenly;
-      }
-    }
+  .buttons {
+    flex: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
   }
 </style>

@@ -124,12 +124,6 @@
     margin: 8px 0;
     padding: 8px 0;
 
-    & > :global(*) {
-      margin-right: auto;
-      margin-left: auto;
-      max-width: 768px;
-    }
-
     h4 {
       color: var(--sui-secondary-foreground-color);
       font-size: var(--sui-font-size-small);
@@ -139,14 +133,21 @@
       }
     }
 
-    :global(p) {
-      margin: 8px auto 0;
-      -webkit-user-select: text;
-      user-select: text;
-    }
+    :global {
+      & > * {
+        margin-inline: auto;
+        max-width: 768px;
+      }
 
-    :global(img) {
-      max-height: 800px !important;
+      p {
+        margin: 8px auto 0;
+        -webkit-user-select: text;
+        user-select: text;
+      }
+
+      img {
+        max-height: 800px !important;
+      }
     }
   }
 </style>

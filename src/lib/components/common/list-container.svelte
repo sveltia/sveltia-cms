@@ -2,8 +2,6 @@
   @component A container for the entry list or asset list.
 -->
 <script>
-  import { Group } from '@sveltia/ui';
-
   /**
    * @import { Snippet } from 'svelte';
    */
@@ -22,10 +20,8 @@
   } = $props();
 </script>
 
-<div role="none" class="list-container">
-  <Group {...rest}>
-    {@render children?.()}
-  </Group>
+<div role="group" class="list-container" {...rest}>
+  {@render children?.()}
 </div>
 
 <style lang="scss">
@@ -33,23 +29,8 @@
     flex: auto;
     position: relative;
     height: 100%;
-    overflow: hidden;
-
-    & > :global(.group) {
-      height: 100%;
-      overflow-y: auto;
-      overscroll-behavior-y: contain;
-
-      :global(:is(.grid-view, .list-view)) {
-        display: block;
-        padding: 0 16px 16px;
-        height: 100%;
-        overflow-y: auto;
-
-        @media (width < 768px) {
-          padding: 4px;
-        }
-      }
-    }
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
 </style>

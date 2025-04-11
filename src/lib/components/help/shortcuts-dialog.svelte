@@ -65,24 +65,26 @@
   .wrapper {
     display: contents;
 
-    :global(.table-row) {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 8px 0;
-      border-top: 1px solid var(--sui-secondary-border-color);
-
-      &:last-child {
-        border-bottom: 1px solid var(--sui-secondary-border-color);
-      }
-
-      :global(.feature) {
-        flex: auto;
-      }
-
-      :global(.keys) {
+    :global {
+      .table-row {
         display: flex;
-        gap: 8px;
+        align-items: center;
+        gap: 16px;
+        padding: 8px 0;
+        border-top: 1px solid var(--sui-secondary-border-color);
+
+        &:last-child {
+          border-bottom: 1px solid var(--sui-secondary-border-color);
+        }
+
+        .feature {
+          flex: auto;
+        }
+
+        .keys {
+          display: flex;
+          gap: 8px;
+        }
       }
     }
   }

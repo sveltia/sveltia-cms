@@ -350,7 +350,7 @@
 >
   {$_('saving_entry.error.description')}
   {#if errorMessage}
-    <div class="error">
+    <div role="none" class="error">
       {errorMessage}
     </div>
   {/if}

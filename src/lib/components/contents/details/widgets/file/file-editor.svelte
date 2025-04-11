@@ -260,7 +260,7 @@
       </div>
     </div>
   {:else}
-    <div class="empty" class:invalid class:processing>
+    <div role="none" class="empty" class:invalid class:processing>
       <Button
         flex
         role="button"
@@ -333,23 +333,25 @@
     gap: 16px;
     margin: var(--sui-focus-ring-width);
 
-    :global(.preview) {
-      flex: none;
-      width: 160px !important;
-      height: 160px !important;
-      border-width: 1px;
-      border-color: var(--sui-control-border-color);
-      border-radius: var(--sui-control-medium-border-radius);
-    }
+    :global {
+      .preview {
+        flex: none;
+        width: 160px !important;
+        height: 160px !important;
+        border-width: 1px;
+        border-color: var(--sui-control-border-color);
+        border-radius: var(--sui-control-medium-border-radius);
 
-    :global(.preview.no-thumbnail) {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: var(--sui-secondary-background-color);
+        &.no-thumbnail {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: var(--sui-secondary-background-color);
 
-      :global(.icon) {
-        font-size: 64px;
+          .icon {
+            font-size: 64px;
+          }
+        }
       }
     }
 
@@ -371,28 +373,30 @@
   }
 
   .empty {
-    :global(button) {
-      flex-direction: column;
-      justify-content: center;
-      height: 160px;
+    :global {
+      button {
+        flex-direction: column;
+        justify-content: center;
+        height: 160px;
 
-      :global(.icon) {
-        color: var(--sui-secondary-foreground-color);
-        font-size: 48px;
+        .icon {
+          color: var(--sui-secondary-foreground-color);
+          font-size: 48px;
+        }
+
+        &:disabled {
+          pointer-events: none !important;
+
+          * {
+            opacity: 0.5;
+          }
+        }
       }
-    }
 
-    :global(button:disabled) {
-      pointer-events: none !important;
-
-      :global(*) {
-        opacity: 0.5;
-      }
-    }
-
-    &.invalid {
-      :global(button) {
-        border-color: var(--sui-error-border-color);
+      &.invalid {
+        button {
+          border-color: var(--sui-error-border-color);
+        }
       }
     }
   }

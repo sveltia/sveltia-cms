@@ -67,8 +67,10 @@
   .wrapper {
     display: contents;
 
-    :global(button) {
-      border-radius: var(--sui-button-medium-border-radius) !important;
+    :global {
+      button {
+        border-radius: var(--sui-button-medium-border-radius) !important;
+      }
     }
   }
 </style>

@@ -75,17 +75,19 @@
   .wrapper {
     display: contents;
 
-    :global(.sui.select-button-group) {
-      gap: 4px;
+    :global {
+      .sui.select-button-group {
+        gap: 4px;
 
-      @media (width < 768px) {
-        justify-content: space-evenly;
-        width: 100%;
+        @media (width < 768px) {
+          justify-content: space-evenly;
+          width: 100%;
+        }
       }
-    }
 
-    :global(.sui.button) {
-      border-radius: var(--sui-button-medium-border-radius) !important;
+      .sui.button {
+        border-radius: var(--sui-button-medium-border-radius) !important;
+      }
     }
   }
 </style>

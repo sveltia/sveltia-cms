@@ -4,7 +4,7 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
 </script>
 
-<PageContainer class="content" aria-label={$_('editorial_workflow')}>
+<PageContainer aria-label={$_('editorial_workflow')}>
   {#snippet main()}
     <div role="none" class="columns">
       <Group class="column" aria-labelledby="draft-column-title">
@@ -35,16 +35,19 @@
 
     @media (width < 768px) {
       flex-direction: column;
+      gap: 0;
     }
 
-    :global(.column) {
-      flex: auto;
-      width: calc(100% / 3);
-      background-color: var(--sui-primary-background-color);
+    :global {
+      .column {
+        flex: auto;
+        width: calc(100% / 3);
+        background-color: var(--sui-primary-background-color);
 
-      @media (width < 768px) {
-        width: 100%;
-        height: calc(100% / 3);
+        @media (width < 768px) {
+          width: 100%;
+          height: calc(100% / 3);
+        }
       }
     }
 

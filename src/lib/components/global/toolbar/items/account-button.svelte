@@ -36,9 +36,11 @@
   .wrapper {
     display: contents;
 
-    :global(button.avatar) {
-      border-width: 0;
-      background-color: transparent;
+    :global {
+      button.avatar {
+        border-width: 0;
+        background-color: transparent;
+      }
     }
   }
 

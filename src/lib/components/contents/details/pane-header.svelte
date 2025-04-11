@@ -155,14 +155,16 @@
   .header {
     flex: none !important;
 
-    & > :global([role='toolbar']) {
-      margin-right: auto;
-      margin-left: auto;
-      max-width: 800px;
+    :global {
+      & > .sui.toolbar {
+        margin-right: auto;
+        margin-left: auto;
+        max-width: 800px;
 
-      :global(h3) {
-        margin: 0 8px;
-        font-size: var(--sui-font-size-default);
+        h3 {
+          margin: 0 8px;
+          font-size: var(--sui-font-size-default);
+        }
       }
     }
   }

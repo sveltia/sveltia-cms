@@ -71,33 +71,35 @@
   .wrapper {
     display: flex;
 
-    :global(.tab-list) {
-      flex: none;
-    }
-
-    :global(.tab-panel) {
-      flex: auto;
-      border-width: 0;
-
-      :global(section:not(:first-child)) {
-        margin: 16px 0 0;
+    :global {
+      .sui.tab-list {
+        flex: none;
       }
 
-      :global(p) {
-        margin-top: 0;
-      }
+      .sui.tab-panel {
+        flex: auto;
+        border-width: 0;
 
-      :global(h4) {
-        font-size: inherit;
-
-        & ~ :global(div) {
-          margin: 8px 0 0;
+        section:not(:first-child) {
+          margin: 16px 0 0;
         }
 
-        & ~ :global(p) {
-          margin: 8px 0 0;
-          color: var(--sui-secondary-foreground-color);
-          font-size: var(--sui-font-size-small);
+        p {
+          margin-top: 0;
+        }
+
+        h4 {
+          font-size: inherit;
+
+          & ~ div {
+            margin: 8px 0 0;
+          }
+
+          & ~ p {
+            margin: 8px 0 0;
+            color: var(--sui-secondary-foreground-color);
+            font-size: var(--sui-font-size-small);
+          }
         }
       }
     }

@@ -11,18 +11,19 @@
    * @property {Snippet} [secondarySidebar] Secondary sidebar content.
    */
 
-  /** @type {Props} */
+  /** @type {Props & Record<string, any>} */
   let {
     /* eslint-disable prefer-const */
     primaryToolbar = undefined,
     secondaryToolbar = undefined,
     mainContent = undefined,
     secondarySidebar = undefined,
+    ...rest
     /* eslint-enable prefer-const */
   } = $props();
 </script>
 
-<div role="none" class="wrapper">
+<div role="group" class="wrapper" {...rest}>
   {@render primaryToolbar?.()}
   <div role="none" class="main-inner">
     <div role="none" class="main-inner-main">
@@ -35,11 +36,23 @@
 
 <style lang="scss">
   .wrapper {
-    display: contents;
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--sui-primary-background-color);
 
-    :global(.sui.toolbar.primary) {
-      @media (width < 768px) {
-        background-color: var(--sui-secondary-background-color);
+    &:not(:first-child) {
+      border-top-left-radius: 16px;
+    }
+
+    :global {
+      .sui.toolbar.primary {
+        justify-content: center;
+
+        @media (width < 768px) {
+          background-color: var(--sui-secondary-background-color);
+        }
       }
     }
   }
@@ -56,19 +69,21 @@
       overflow: hidden;
     }
 
-    :global(.secondary-sidebar) {
-      flex: none;
-      overflow: auto;
-      box-sizing: content-box;
-      width: 320px;
-      background-color: var(--sui-secondary-background-color);
+    :global {
+      .secondary-sidebar {
+        flex: none;
+        overflow: auto;
+        box-sizing: content-box;
+        width: 320px;
+        background-color: var(--sui-secondary-background-color);
 
-      @media (768px <= width) {
-        border-top-left-radius: 16px;
-      }
+        @media (768px <= width) {
+          border-top-left-radius: 16px;
+        }
 
-      :global([role='listbox']) {
-        padding: 12px;
+        [role='listbox'] {
+          padding: 12px;
+        }
       }
     }
   }

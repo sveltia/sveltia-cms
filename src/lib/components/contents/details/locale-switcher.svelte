@@ -51,13 +51,14 @@
   const size = $derived(useDropDown ? undefined : 'small');
 </script>
 
-<div class="outer">
+<div role="none" class="wrapper">
   <SelectComponent
     class={hasAnyError ? 'error' : undefined}
     aria-label={$_('switch_locale')}
     aria-controls={id.replace('-header', '-body')}
   >
-    <div class="inner">
+    <!-- Need an inner to style elements inside the <dialog> -->
+    <div role="none" class="inner">
       {#each listedLocales as locale}
         {@const label = getLocaleLabel(locale)}
         {@const disabled = !$entryDraft?.currentLocales[locale]}
@@ -108,18 +109,20 @@
 </div>
 
 <style lang="scss">
-  .outer {
+  .wrapper {
     display: contents;
 
-    :global(.combobox.error [role='combobox']) {
-      border-color: var(--sui-error-border-color);
-    }
+    :global {
+      .combobox {
+        @media (width < 1024px) {
+          min-width: 128px;
+          --sui-textbox-height: 32px;
+          --sui-button-medium-height: 32px;
+        }
 
-    :global(.combobox) {
-      @media (width < 1024px) {
-        min-width: 128px;
-        --sui-textbox-height: 32px;
-        --sui-button-medium-height: 32px;
+        &.error [role='combobox'] {
+          border-color: var(--sui-error-border-color);
+        }
       }
     }
   }
@@ -127,9 +130,10 @@
   .inner {
     display: contents;
 
-    :global(.error),
-    :global(.error button) {
-      color: var(--sui-error-foreground-color) !important;
+    :global {
+      :is(.error, .error button) {
+        color: var(--sui-error-foreground-color) !important;
+      }
     }
   }
 </style>

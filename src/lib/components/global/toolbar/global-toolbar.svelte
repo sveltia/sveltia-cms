@@ -38,33 +38,35 @@
       display: none;
     }
 
-    & > :global(.toolbar) {
-      @media (width < 768px) {
-        padding: 0 4px;
-      }
-
-      :global(.buttons) {
-        flex: auto;
-        display: flex;
-        align-items: center;
-        width: 50%;
-
-        &:last-child {
-          justify-content: flex-end;
-        }
-      }
-
-      :global(.search-bar) {
-        flex: none;
-        width: 640px;
-        max-width: 50%;
-
+    :global {
+      & > .sui.toolbar {
         @media (width < 768px) {
+          padding: 0 4px;
+        }
+
+        .buttons {
           flex: auto;
-          width: -moz-available;
-          width: -webkit-fill-available;
-          width: stretch;
-          max-width: none;
+          display: flex;
+          align-items: center;
+          width: 50%;
+
+          &:last-child {
+            justify-content: flex-end;
+          }
+        }
+
+        .sui.search-bar {
+          flex: none;
+          width: 640px;
+          max-width: 50%;
+
+          @media (width < 768px) {
+            flex: auto;
+            width: -moz-available;
+            width: -webkit-fill-available;
+            width: stretch;
+            max-width: none;
+          }
         }
       }
     }

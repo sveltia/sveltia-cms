@@ -235,7 +235,7 @@
   </ValidationError>
 {/if}
 
-<div>
+<div role="none">
   <Button
     label={$_('add')}
     variant="tertiary"

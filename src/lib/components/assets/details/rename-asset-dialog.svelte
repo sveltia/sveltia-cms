@@ -98,7 +98,7 @@
       <span role="none">.{extension}</span>
     {/if}
   </div>
-  <div class="error" id="{componentId}-error">
+  <div role="none" class="error" id="{componentId}-error">
     {#if invalid}
       {$_(`enter_new_name_for_asset_error.${error}`)}
     {/if}

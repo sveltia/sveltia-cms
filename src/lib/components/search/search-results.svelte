@@ -30,11 +30,13 @@
   .wrapper {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     width: 100%;
     background-color: var(--sui-primary-background-color);
   }
 
   header {
+    flex: none;
     display: flex;
     align-items: center;
     padding: 0 16px;
@@ -51,35 +53,32 @@
     display: flex;
     gap: 16px;
     overflow: hidden;
-    padding: 16px;
     height: 100%;
 
-    @media (width < 768px) {
-      padding: 0;
-
-      :global(h3) {
-        display: none;
-      }
-    }
-
-    & > :global(.group) {
-      flex: auto;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      width: 50%;
-      height: 100%;
-    }
-
-    :global(h3) {
-      flex: none;
-      margin: 0 0 8px;
-      color: var(--sui-secondary-foreground-color);
-      font-size: var(--sui-font-size-large);
-
-      & + :global(div) {
-        overflow: auto;
+    :global {
+      & > .sui.group {
         flex: auto;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        width: 50%;
+        height: 100%;
+      }
+
+      h3 {
+        flex: none;
+        margin: 16px;
+        color: var(--sui-secondary-foreground-color);
+        font-size: var(--sui-font-size-large);
+
+        & + div {
+          overflow: auto;
+          flex: auto;
+        }
+
+        @media (width < 768px) {
+          display: none;
+        }
       }
     }
   }

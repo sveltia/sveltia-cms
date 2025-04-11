@@ -1,5 +1,4 @@
 <script>
-  import { Group } from '@sveltia/ui';
   import { hasOverlay } from '$lib/services/app/navigation';
 
   /**
@@ -24,153 +23,120 @@
   } = $props();
 </script>
 
-<div role="none" id="page-container" class="outer" inert={$hasOverlay}>
-  <Group class="browser {className}" {...rest}>
-    {@render primarySidebar?.()}
-    {@render main?.()}
-  </Group>
+<div role="group" id="page-container" class="outer {className}" inert={$hasOverlay} {...rest}>
+  {@render primarySidebar?.()}
+  {@render main?.()}
 </div>
 
 <style lang="scss">
   .outer {
     flex: auto;
     display: flex;
-    flex-direction: column;
     overflow: hidden;
 
     &[inert] {
       display: none;
     }
 
-    & > :global([role='toolbar']) {
-      flex: none;
-
-      :global([role='search']) {
-        flex: auto;
-        width: auto;
-        max-width: 480px;
-      }
-    }
-
-    :global(.browser) {
-      flex: auto;
-      display: flex;
-      overflow: hidden;
-    }
-
-    :global(.primary-sidebar) {
-      display: flex;
-      flex-direction: column;
-      flex: none;
-      width: 240px;
-      overflow-y: auto;
-
-      @media (width < 768px) {
-        flex: auto;
-        width: auto;
-        background-color: var(--sui-primary-background-color);
-      }
-
-      :global(h2) {
+    :global {
+      .primary-sidebar {
         display: flex;
-        align-items: center;
-        padding: 0 20px;
-        height: var(--sui-primary-toolbar-size);
-        font-size: var(--sui-font-size-x-large);
-      }
+        flex-direction: column;
+        flex: none;
+        width: 240px;
+        overflow-y: auto;
 
-      :global(.sui.search-bar) {
-        margin-inline: 12px;
-        --sui-textbox-background-color: var(--sui-tertiary-background-color);
-      }
+        @media (width < 768px) {
+          flex: auto;
+          width: auto;
+          background-color: var(--sui-primary-background-color);
+        }
 
-      :global([role='radiogroup']) {
-        width: 100%;
-      }
-
-      :global([role='listbox']) {
-        margin: 8px;
-        border-width: 0;
-        background-color: transparent;
-
-        :global(button) {
+        h2 {
           display: flex;
-          justify-content: flex-start;
-          border-radius: var(--sui-control-medium-border-radius);
+          align-items: center;
+          padding: 0 20px;
+          height: var(--sui-primary-toolbar-size);
+          font-size: var(--sui-font-size-x-large);
+        }
+
+        .sui.search-bar {
+          margin-inline: 12px;
+          --sui-textbox-background-color: var(--sui-tertiary-background-color);
+        }
+
+        [role='radiogroup'] {
           width: 100%;
-          text-align: left;
+        }
 
-          @media (width < 768px) {
-            --sui-option-height: 48px;
+        [role='listbox'] {
+          margin: 8px;
+          border-width: 0;
+          background-color: transparent;
+
+          button {
+            display: flex;
+            justify-content: flex-start;
+            border-radius: var(--sui-control-medium-border-radius);
+            width: 100%;
+            text-align: left;
+
+            &:not(:first-child) {
+              margin-top: 4px;
+            }
+
+            &:not(:focus) {
+              border-color: transparent;
+            }
+
+            @media (width < 768px) {
+              --sui-option-height: 48px;
+            }
+
+            span {
+              flex: none;
+            }
+
+            .label {
+              flex: auto;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .icon {
+              transition: color 200ms;
+            }
+
+            .icon.check {
+              display: none;
+            }
+
+            .count {
+              padding: 2px;
+              color: var(--sui-tertiary-foreground-color);
+              font-size: var(--sui-font-size-small);
+              transition: color 200ms;
+            }
           }
 
-          :global(span) {
-            flex: none;
+          [role='option'][aria-selected='true'] {
+            color: var(--sui-highlight-foreground-color);
+            background-color: var(--sui-selected-background-color);
+
+            .count {
+              color: var(--sui-highlighted-foreground-color);
+            }
           }
 
-          :global(.label) {
-            flex: auto;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-
-          :global(.icon) {
-            transition: color 200ms;
-          }
-
-          :global(.icon.check) {
-            display: none;
-          }
-
-          :global(.count) {
-            padding: 2px;
-            color: var(--sui-tertiary-foreground-color);
-            font-size: var(--sui-font-size-small);
-            transition: color 200ms;
+          [role='option'].dragover {
+            color: var(--sui-primary-accent-color-inverted) !important;
+            background-color: var(--sui-primary-accent-color) !important;
           }
         }
 
-        :global(button:not(:first-child)) {
-          margin-top: 4px;
+        .sui.divider {
+          margin: 8px 0;
         }
-
-        :global(button:not(:focus)) {
-          border-color: transparent;
-        }
-
-        :global([role='option'][aria-selected='true']) {
-          color: var(--sui-highlight-foreground-color);
-          background-color: var(--sui-selected-background-color);
-
-          :global(.count) {
-            color: var(--sui-highlighted-foreground-color);
-          }
-        }
-
-        :global([role='option'].dragover) {
-          color: var(--sui-primary-accent-color-inverted) !important;
-          background-color: var(--sui-primary-accent-color) !important;
-        }
-      }
-
-      :global(.sui.divider) {
-        margin: 8px 0;
-      }
-    }
-
-    :global(.main) {
-      flex: auto;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background-color: var(--sui-primary-background-color);
-
-      @media (768px <= width) {
-        border-top-left-radius: 16px;
-      }
-
-      :global(.primary.global[role='toolbar']) {
-        justify-content: center;
       }
     }
   }

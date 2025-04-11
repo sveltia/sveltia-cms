@@ -1,5 +1,5 @@
 <script>
-  import { Group, Toolbar } from '@sveltia/ui';
+  import { Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
@@ -60,40 +60,33 @@
   }}
 />
 
-<PageContainer
-  class="content"
-  aria-label={$_('search_results_for_x', { values: { terms: $searchTerms } })}
->
+<PageContainer aria-label={$_('search_results_for_x', { values: { terms: $searchTerms } })}>
   {#snippet main()}
-    <Group id="assets-container" class="main">
-      <PageContainerMainArea>
-        {#snippet primaryToolbar()}
-          {#if $isSmallScreen}
-            <Toolbar variant="primary">
-              <BackButton
-                aria-label={$_(
-                  $searchMode === 'assets'
-                    ? 'back_to_asset_folder_list'
-                    : 'back_to_collection_list',
-                )}
-                onclick={() => {
-                  $searchTerms = '';
-                  goto($searchMode === 'assets' ? '/assets' : '/collections', {
-                    transitionType: 'backwards',
-                  });
-                }}
-              />
-              <div role="search">
-                <QuickSearchBar />
-              </div>
-            </Toolbar>
-          {/if}
-        {/snippet}
-        {#snippet mainContent()}
-          <SearchResults />
-        {/snippet}
-      </PageContainerMainArea>
-    </Group>
+    <PageContainerMainArea>
+      {#snippet primaryToolbar()}
+        {#if $isSmallScreen}
+          <Toolbar variant="primary">
+            <BackButton
+              aria-label={$_(
+                $searchMode === 'assets' ? 'back_to_asset_folder_list' : 'back_to_collection_list',
+              )}
+              onclick={() => {
+                $searchTerms = '';
+                goto($searchMode === 'assets' ? '/assets' : '/collections', {
+                  transitionType: 'backwards',
+                });
+              }}
+            />
+            <div role="search">
+              <QuickSearchBar />
+            </div>
+          </Toolbar>
+        {/if}
+      {/snippet}
+      {#snippet mainContent()}
+        <SearchResults />
+      {/snippet}
+    </PageContainerMainArea>
   {/snippet}
 </PageContainer>
 
@@ -101,8 +94,10 @@
   [role='search'] {
     display: contents;
 
-    :global(.sui.search-bar) {
-      flex: auto;
+    :global {
+      .sui.search-bar {
+        flex: auto;
+      }
     }
   }
 </style>

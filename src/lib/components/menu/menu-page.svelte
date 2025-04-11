@@ -1,5 +1,5 @@
 <script>
-  import { Group, Toolbar } from '@sveltia/ui';
+  import { Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
@@ -7,29 +7,27 @@
   import HelpMenu from '$lib/components/global/toolbar/items/help-menu.svelte';
 </script>
 
-<PageContainer class="content" aria-label={$_('menu')}>
+<PageContainer aria-label={$_('menu')}>
   {#snippet main()}
-    <Group id="assets-container" class="main">
-      <PageContainerMainArea>
-        {#snippet primaryToolbar()}
-          <Toolbar variant="primary">
-            <h2 role="none">{$_('menu')}</h2>
-          </Toolbar>
-        {/snippet}
-        {#snippet mainContent()}
-          <div role="none" class="wrapper">
-            <section>
-              <h3>{$_('account')}</h3>
-              <AccountMenu />
-            </section>
-            <section>
-              <h3>{$_('help')}</h3>
-              <HelpMenu />
-            </section>
-          </div>
-        {/snippet}
-      </PageContainerMainArea>
-    </Group>
+    <PageContainerMainArea>
+      {#snippet primaryToolbar()}
+        <Toolbar variant="primary">
+          <h2 role="none">{$_('menu')}</h2>
+        </Toolbar>
+      {/snippet}
+      {#snippet mainContent()}
+        <div role="none" class="wrapper">
+          <section>
+            <h3>{$_('account')}</h3>
+            <AccountMenu />
+          </section>
+          <section>
+            <h3>{$_('help')}</h3>
+            <HelpMenu />
+          </section>
+        </div>
+      {/snippet}
+    </PageContainerMainArea>
   {/snippet}
 </PageContainer>
 

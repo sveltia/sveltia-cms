@@ -186,19 +186,17 @@
     height: 100%;
     pointer-events: auto;
 
-    & > :global(.group) {
-      overflow-y: auto;
-      padding: 16px;
-      width: 100%;
-      height: 100%;
-    }
+    :global {
+      & > .group {
+        overflow-y: auto;
+        padding: 16px;
+        width: 100%;
+        height: 100%;
+      }
 
-    & > * {
-      pointer-events: none;
-    }
-
-    :global(button:not(:disabled)) {
-      pointer-events: auto;
+      button:not(:disabled) {
+        pointer-events: auto;
+      }
     }
   }
 

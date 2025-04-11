@@ -8,6 +8,7 @@
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
   import UpdateNotification from '$lib/components/global/infobars/update-notification.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
+  import { initScreenSizeDetection } from '$lib/services/app/env';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
@@ -33,7 +34,14 @@
 
   onMount(() => {
     initAppLocale();
+  });
+
+  onMount(() => {
     initSiteConfig(config);
+  });
+
+  onMount(() => {
+    initScreenSizeDetection();
   });
 
   // Fix the position of the custom mount element if needed
@@ -150,43 +158,48 @@
     }
   }
 
-  :global(html):active-view-transition-type(forwards) {
-    &::view-transition-old(page-root) {
-      z-index: 999;
-      animation: 150ms ease-out both slide-out-to-left;
+  :global {
+    html:active-view-transition-type(forwards) {
+      &::view-transition-old(page-root) {
+        z-index: 999;
+        animation: 150ms ease-out both slide-out-to-left;
+      }
+
+      &::view-transition-new(page-root) {
+        z-index: 1000;
+        animation: 150ms ease-out both slide-in-from-right;
+      }
     }
 
-    &::view-transition-new(page-root) {
-      z-index: 1000;
-      animation: 150ms ease-out both slide-in-from-right;
+    html:active-view-transition-type(backwards) {
+      &::view-transition-old(page-root) {
+        z-index: 1000;
+        animation: 150ms ease-out both slide-out-to-right;
+      }
+
+      &::view-transition-new(page-root) {
+        z-index: 999;
+        animation: 150ms ease-out both slide-in-from-left;
+      }
     }
-  }
 
-  :global(html):active-view-transition-type(backwards) {
-    &::view-transition-old(page-root) {
-      z-index: 1000;
-      animation: 150ms ease-out both slide-out-to-right;
+    html:active-view-transition-type(unknown) {
+      &::view-transition-old(page-root) {
+        animation: none;
+      }
+
+      &::view-transition-new(page-root) {
+        animation: none;
+      }
     }
 
-    &::view-transition-new(page-root) {
-      z-index: 999;
-      animation: 150ms ease-out both slide-in-from-left;
+    body:not(:has(#nc-root)) {
+      overflow: hidden;
     }
-  }
 
-  :global(html):active-view-transition-type(unknown) {
-    &::view-transition-old(page-root),
-    &::view-transition-new(page-root) {
-      animation: none;
+    #nc-root > .sui.app-shell {
+      position: absolute;
     }
-  }
-
-  :global(body:not(:has(#nc-root))) {
-    overflow: hidden;
-  }
-
-  :global(#nc-root > .sui.app-shell) {
-    position: absolute;
   }
 
   .outer {

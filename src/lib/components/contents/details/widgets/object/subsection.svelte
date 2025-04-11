@@ -36,7 +36,7 @@
       {label}
     </div>
   {/if}
-  <div class="items">
+  <div role="none" class="items">
     {#await waitForVisibility(wrapper) then}
       {@render children?.()}
     {/await}

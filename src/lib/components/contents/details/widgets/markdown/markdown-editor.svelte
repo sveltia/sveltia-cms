@@ -141,10 +141,11 @@
     display: contents;
 
     &.minimal {
-      :global([role='textbox']),
-      :global(textarea) {
-        overflow: auto;
-        max-height: 240px;
+      :global {
+        :is([role='textbox'], textarea) {
+          overflow: auto;
+          max-height: 240px;
+        }
       }
     }
   }

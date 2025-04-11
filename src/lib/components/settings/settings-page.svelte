@@ -1,5 +1,5 @@
 <script>
-  import { Alert, Group, Icon, Menu, MenuItem, Toast, Toolbar } from '@sveltia/ui';
+  import { Alert, Icon, Menu, MenuItem, Toast, Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
@@ -48,51 +48,49 @@
   }}
 />
 
-<PageContainer class="content" aria-label={$_('settings')}>
+<PageContainer aria-label={$_('settings')}>
   {#snippet main()}
-    <Group id="assets-container" class="main">
-      <PageContainerMainArea>
-        {#snippet primaryToolbar()}
-          <Toolbar variant="primary">
-            {#if selectedPanel}
-              <BackButton onclick={() => goBack('/settings')} />
-              <h2 role="none">{$_(`prefs.${selectedPanel.key}.title`)}</h2>
-            {:else}
-              <BackButton onclick={() => goBack('/menu')} />
-              <h2 role="none">{$_('settings')}</h2>
-            {/if}
-          </Toolbar>
-        {/snippet}
-        {#snippet mainContent()}
-          <div role="none" class="wrapper">
-            {#if selectedPanel}
-              {@const Content = selectedPanel.component}
-              <div role="none" class="inner">
-                <Content
-                  onChange={(/** @type {{ message: string }} */ { message }) => {
-                    toastMessage = message;
-                    showToast = true;
-                  }}
-                />
-              </div>
-            {:else}
-              <Menu aria-label={$_('settings')}>
-                {#each panels as { key, icon } (key)}
-                  <MenuItem
-                    label={$_(`prefs.${key}.title`)}
-                    onclick={() => goto(`/settings/${key}`, { transitionType: 'forwards' })}
-                  >
-                    {#snippet startIcon()}
-                      <Icon name={icon} />
-                    {/snippet}
-                  </MenuItem>
-                {/each}
-              </Menu>
-            {/if}
-          </div>
-        {/snippet}
-      </PageContainerMainArea>
-    </Group>
+    <PageContainerMainArea>
+      {#snippet primaryToolbar()}
+        <Toolbar variant="primary">
+          {#if selectedPanel}
+            <BackButton onclick={() => goBack('/settings')} />
+            <h2 role="none">{$_(`prefs.${selectedPanel.key}.title`)}</h2>
+          {:else}
+            <BackButton onclick={() => goBack('/menu')} />
+            <h2 role="none">{$_('settings')}</h2>
+          {/if}
+        </Toolbar>
+      {/snippet}
+      {#snippet mainContent()}
+        <div role="none" class="wrapper">
+          {#if selectedPanel}
+            {@const Content = selectedPanel.component}
+            <div role="none" class="inner">
+              <Content
+                onChange={(/** @type {{ message: string }} */ { message }) => {
+                  toastMessage = message;
+                  showToast = true;
+                }}
+              />
+            </div>
+          {:else}
+            <Menu aria-label={$_('settings')}>
+              {#each panels as { key, icon } (key)}
+                <MenuItem
+                  label={$_(`prefs.${key}.title`)}
+                  onclick={() => goto(`/settings/${key}`, { transitionType: 'forwards' })}
+                >
+                  {#snippet startIcon()}
+                    <Icon name={icon} />
+                  {/snippet}
+                </MenuItem>
+              {/each}
+            </Menu>
+          {/if}
+        </div>
+      {/snippet}
+    </PageContainerMainArea>
   {/snippet}
 </PageContainer>
 
@@ -107,29 +105,32 @@
     --sui-menu-border-width: 0;
     --sui-menu-border-radius: 0;
     --sui-menu-padding: 8px 0;
+    --sui-menuitem-height: 48px;
 
     .inner {
       padding: 16px;
 
-      :global(section:not(:first-child)) {
-        margin: 16px 0 0;
-      }
-
-      :global(p) {
-        margin-top: 0;
-      }
-
-      :global(h4) {
-        font-size: inherit;
-
-        & ~ :global(div) {
-          margin: 8px 0 0;
+      :global {
+        section:not(:first-child) {
+          margin: 16px 0 0;
         }
 
-        & ~ :global(p) {
-          margin: 8px 0 0;
-          color: var(--sui-secondary-foreground-color);
-          font-size: var(--sui-font-size-small);
+        p {
+          margin-top: 0;
+        }
+
+        h4 {
+          font-size: inherit;
+
+          & ~ div {
+            margin: 8px 0 0;
+          }
+
+          & ~ p {
+            margin: 8px 0 0;
+            color: var(--sui-secondary-foreground-color);
+            font-size: var(--sui-font-size-small);
+          }
         }
       }
     }
