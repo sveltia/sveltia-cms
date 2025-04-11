@@ -218,17 +218,24 @@ const init = () => {
  * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
  */
 const signIn = async ({ token: cachedToken, auto = false }) => {
-  if (auto && !cachedToken) {
-    return undefined;
-  }
-
   const { hostname } = window.location;
 
   const {
     site_domain: siteDomain = hostname,
     base_url: baseURL = 'https://api.netlify.com',
     auth_endpoint: path = 'auth',
+    pat_url: patURL,
   } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+
+  if (auto && !(cachedToken || patURL)) {
+    return undefined;
+  }
+
+  if (!cachedToken && patURL) {
+    const { token: patToken } = await sendRequest(patURL);
+
+    cachedToken = patToken;
+  }
 
   const token =
     cachedToken ||

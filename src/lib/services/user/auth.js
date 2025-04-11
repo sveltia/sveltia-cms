@@ -70,10 +70,11 @@ export const signInAutomatically = async () => {
   backendName.set(_backendName);
 
   const _backend = get(backend);
+  const _patURL = get(siteConfig)?.backend?.pat_url;
 
-  if (_user && _backend) {
+  if ((_user || _patURL) && _backend) {
     try {
-      _user = await _backend.signIn({ token: _user.token, auto: true });
+      _user = await _backend.signIn({ token: _user?.token, auto: true });
     } catch {
       // The local backend may throw if the file handle permission is not given
       _user = undefined;
