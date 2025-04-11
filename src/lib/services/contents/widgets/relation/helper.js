@@ -3,7 +3,7 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
@@ -128,6 +128,20 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       const getFieldConfigArgs = { collectionName, fileName };
 
       /**
+       * Wrapper for {@link getFieldDisplayValue}.
+       * @param {FieldKeyPath} keyPath Field key path.
+       * @param {InternalLocaleCode} [_locale] Target locale.
+       * @returns {string} Display value.
+       */
+      const getDisplayValue = (keyPath, _locale) =>
+        getFieldDisplayValue({
+          ...getFieldConfigArgs,
+          keyPath,
+          valueMap: _locale ? locales[_locale].content : content,
+          locale: _locale ?? locale,
+        });
+
+      /**
        * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
        * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
        * multiple references can be replaced at once. Otherwise, the key is a complete key path
@@ -169,31 +183,16 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           }
 
           const keyPath = fieldName.replace(/^fields\./, '');
-          const _fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
 
-          // Resolve the displayed value for a nested relation field
-          if (_fieldConfig?.widget === 'relation') {
-            return [
-              fieldName,
-              // eslint-disable-next-line no-use-before-define
-              getReferencedOptionLabel({
-                fieldConfig: /** @type {RelationField} */ (_fieldConfig),
-                valueMap: content,
-                keyPath,
-                locale,
-              }) ?? slug,
-            ];
-          }
+          const label =
+            getDisplayValue(keyPath) ??
+            // Fall back if needed
+            getDisplayValue(keyPath, defaultLocale) ??
+            getEntrySummaryFromContent(content, { identifierField }) ??
+            getEntrySummaryFromContent(locales[defaultLocale].content, { identifierField }) ??
+            slug;
 
-          return [
-            fieldName,
-            content[keyPath] ??
-              locales[defaultLocale].content[keyPath] ??
-              // Fall back if needed
-              getEntrySummaryFromContent(content, { identifierField }) ??
-              getEntrySummaryFromContent(locales[defaultLocale].content, { identifierField }) ??
-              slug,
-          ];
+          return [fieldName, label];
         }),
       );
 

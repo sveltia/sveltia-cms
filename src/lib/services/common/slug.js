@@ -3,7 +3,10 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
-import { applyTransformations, defaultRegex } from '$lib/services/common/transformations';
+import {
+  applyTransformations,
+  defaultTransformationRegex,
+} from '$lib/services/common/transformations';
 import { siteConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
@@ -164,7 +167,7 @@ export const fillSlugTemplate = (
     let hasDefaultTransformation = false;
 
     transformations.forEach((tf, index) => {
-      const { defaultValue } = tf.match(defaultRegex)?.groups ?? {};
+      const { defaultValue } = tf.match(defaultTransformationRegex)?.groups ?? {};
 
       if (defaultValue !== undefined) {
         hasDefaultTransformation = true;

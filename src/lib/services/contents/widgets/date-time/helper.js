@@ -1,8 +1,15 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
+import { getCanonicalLocale } from '$lib/services/contents/i18n';
+import {
+  dateFormatOptions,
+  dateRegex,
+  timeFormatOptions,
+  timeSuffixRegex,
+} from '$lib/services/utils/date';
 
 /**
- * @import { DateTimeFieldNormalizedProps } from '$lib/types/private';
+ * @import { DateTimeFieldNormalizedProps, InternalLocaleCode } from '$lib/types/private';
  * @import { DateTimeField, FieldKeyPath } from '$lib/types/public';
  */
 
@@ -226,4 +233,57 @@ export const getInputValue = (currentValue, fieldConfig) => {
 
     return '';
   }
+};
+
+/**
+ * Get the display value of a DateTime field.
+ * @param {object} args Arguments.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {DateTimeField} args.fieldConfig Field configuration.
+ * @param {string | undefined} args.currentValue Stored value.
+ * @returns {string} Display value.
+ */
+export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue }) => {
+  const { format, dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+
+  if (typeof currentValue !== 'string' || !currentValue.trim()) {
+    return '';
+  }
+
+  if (format) {
+    try {
+      // Parse and reformat the value because it could be saved in a wrong format
+      return (utc ? moment.utc : moment)(currentValue, format).format(format);
+    } catch {
+      //
+    }
+  }
+
+  const date = getDate(currentValue, fieldConfig);
+  const canonicalLocale = getCanonicalLocale(locale);
+
+  if (!date) {
+    return '';
+  }
+
+  if (timeOnly) {
+    return date.toLocaleTimeString(canonicalLocale, timeFormatOptions);
+  }
+
+  if (dateOnly) {
+    return date.toLocaleDateString(canonicalLocale, {
+      ...dateFormatOptions,
+      timeZone:
+        utc || dateRegex.test(currentValue) || timeSuffixRegex.test(currentValue)
+          ? 'UTC'
+          : undefined,
+    });
+  }
+
+  return date.toLocaleString(canonicalLocale, {
+    ...dateFormatOptions,
+    ...timeFormatOptions,
+    timeZone: utc ? 'UTC' : undefined,
+    timeZoneName: utc ? undefined : 'short',
+  });
 };

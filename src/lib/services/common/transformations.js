@@ -6,10 +6,11 @@ import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/he
  * @import { DateTimeField, Field } from '$lib/types/public';
  */
 
-export const dateRegex = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
-export const defaultRegex = /^default\('(?<defaultValue>.+?)'\)$/;
-export const ternaryRegex = /^ternary\('(?<truthyValue>.*?)',\s*'(?<falsyValue>.*?)'\)$/;
-export const truncateRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
+export const dateTransformationRegex = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
+export const defaultTransformationRegex = /^default\('(?<defaultValue>.+?)'\)$/;
+export const ternaryTransformationRegex =
+  /^ternary\('(?<truthyValue>.*?)',\s*'(?<falsyValue>.*?)'\)$/;
+export const truncateTransformationRegex = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
 
 /**
  * Apply a string transformation to the value.
@@ -31,7 +32,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
     return slugPartStr.toLowerCase();
   }
 
-  const dateTransformer = transformation.match(dateRegex);
+  const dateTransformer = transformation.match(dateTransformationRegex);
 
   if (dateTransformer?.groups) {
     const { format, timeZone } = dateTransformer.groups;
@@ -52,7 +53,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
     return '';
   }
 
-  const defaultTransformer = transformation.match(defaultRegex);
+  const defaultTransformer = transformation.match(defaultTransformationRegex);
 
   if (defaultTransformer?.groups) {
     const { defaultValue } = defaultTransformer.groups;
@@ -60,7 +61,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
     return value ? slugPartStr : defaultValue;
   }
 
-  const ternaryTransformer = transformation.match(ternaryRegex);
+  const ternaryTransformer = transformation.match(ternaryTransformationRegex);
 
   if (ternaryTransformer?.groups) {
     const { truthyValue, falsyValue } = ternaryTransformer.groups;
@@ -68,7 +69,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
     return value ? truthyValue : falsyValue;
   }
 
-  const truncateTransformer = transformation.match(truncateRegex);
+  const truncateTransformer = transformation.match(truncateTransformationRegex);
 
   if (truncateTransformer?.groups) {
     const { max, ellipsis = '…' } = truncateTransformer.groups;

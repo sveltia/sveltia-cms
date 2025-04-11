@@ -1,7 +1,11 @@
 import { escapeRegExp } from '@sveltia/utils/string';
-import { applyTransformations } from '$lib/services/common/transformations';
+import {
+  applyTransformations,
+  dateTransformationRegex,
+} from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
 import { getListFormatter } from '$lib/services/contents/i18n';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 
@@ -12,7 +16,14 @@ import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
  * FlattenedEntryContent,
  * InternalLocaleCode,
  * } from '$lib/types/private';
- * @import { Field, FieldKeyPath, ListField, RelationField, SelectField } from '$lib/types/public';
+ * @import {
+ * DateTimeField,
+ * Field,
+ * FieldKeyPath,
+ * ListField,
+ * RelationField,
+ * SelectField,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -121,7 +132,7 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.
  * @param {string[]} [args.transformations] String transformations.
- * @returns {any | any[]} Resolved field value(s).
+ * @returns {string} Resolved display value.
  */
 export const getFieldDisplayValue = ({
   collectionName,
@@ -133,6 +144,19 @@ export const getFieldDisplayValue = ({
 }) => {
   const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
   let value = valueMap[keyPath];
+
+  if (fieldConfig?.widget === 'datetime') {
+    // If the `date` transformation is provided, do nothing; it should be used instead of the field
+    // `format` option, so the keep the original value for `applyTransformations()`
+    if (!transformations?.some((tf) => dateTransformationRegex.test(tf))) {
+      value = getDateTimeFieldDisplayValue({
+        locale,
+        // eslint-disable-next-line object-shorthand
+        fieldConfig: /** @type {DateTimeField} */ (fieldConfig),
+        currentValue: value,
+      });
+    }
+  }
 
   if (fieldConfig?.widget === 'relation') {
     value = getReferencedOptionLabel({
