@@ -52,12 +52,13 @@ export const getDate = (currentValue, fieldConfig) => {
   }
 
   try {
-    if (timeOnly) {
-      return new Date(new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`));
-    }
-
     if (format) {
       return (utc ? moment.utc : moment)(currentValue, format).toDate();
+    }
+
+    if (timeOnly) {
+      // Use the current date
+      return new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`);
     }
 
     return new Date(currentValue);
@@ -109,6 +110,7 @@ export const getCurrentDateTime = (fieldConfig) => {
  */
 export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
   const { format, dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+  const inputFormat = dateOnly ? 'YYYY-MM-DD' : timeOnly ? 'HH:mm' : 'YYYY-MM-DDTHH:mm';
   // Append seconds (and milliseconds) for data format & framework compatibility
   const timeSuffix = `:00${currentValue?.endsWith('.000') ? '.000' : ''}`;
 
@@ -120,13 +122,9 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
     return undefined;
   }
 
-  if (timeOnly) {
-    return `${inputValue}${timeSuffix}`;
-  }
-
   try {
     if (format) {
-      return (utc ? moment.utc : moment)(inputValue).format(format);
+      return (utc ? moment.utc : moment)(inputValue, inputFormat).format(format);
     }
 
     if (dateOnly) {
