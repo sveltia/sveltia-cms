@@ -1,6 +1,7 @@
 <script>
-  import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
+  import { Button, Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import { isLargeScreen } from '$lib/services/user/env';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -22,45 +23,57 @@
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
+
+  const isGridView = $derived($currentView.type === 'grid');
 </script>
 
 <div role="none" class="wrapper">
-  <SelectButtonGroup {disabled} aria-label={$_('switch_view')} {...rest}>
-    <SelectButton
+  {#if $isLargeScreen}
+    <SelectButtonGroup {disabled} aria-label={$_('switch_view')} {...rest}>
+      <SelectButton
+        {disabled}
+        selected={!isGridView}
+        variant="ghost"
+        iconic
+        aria-label={$_('list_view')}
+        onSelect={() => {
+          currentView.update((view) => ({ ...view, type: 'list' }));
+        }}
+      >
+        {#snippet startIcon()}
+          <Icon name="format_list_bulleted" />
+        {/snippet}
+      </SelectButton>
+      <SelectButton
+        {disabled}
+        selected={isGridView}
+        variant="ghost"
+        iconic
+        aria-label={$_('grid_view')}
+        onSelect={() => {
+          currentView.update((view) => ({ ...view, type: 'grid' }));
+        }}
+      >
+        {#snippet startIcon()}
+          <Icon name="grid_view" />
+        {/snippet}
+      </SelectButton>
+    </SelectButtonGroup>
+  {:else}
+    <Button
       {disabled}
-      selected={$currentView.type !== 'grid'}
       variant="ghost"
       iconic
-      aria-label={$_('list_view')}
-      onSelect={() => {
-        currentView.update((view) => ({
-          ...view,
-          type: 'list',
-        }));
+      aria-label={$_(isGridView ? 'switch_to_list_view' : 'switch_to_grid_view')}
+      onclick={() => {
+        currentView.update((view) => ({ ...view, type: isGridView ? 'list' : 'grid' }));
       }}
     >
       {#snippet startIcon()}
-        <Icon name="format_list_bulleted" />
+        <Icon name={isGridView ? 'format_list_bulleted' : 'grid_view'} />
       {/snippet}
-    </SelectButton>
-    <SelectButton
-      {disabled}
-      selected={$currentView.type === 'grid'}
-      variant="ghost"
-      iconic
-      aria-label={$_('grid_view')}
-      onSelect={() => {
-        currentView.update((view) => ({
-          ...view,
-          type: 'grid',
-        }));
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="grid_view" />
-      {/snippet}
-    </SelectButton>
-  </SelectButtonGroup>
+    </Button>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -68,7 +81,7 @@
     display: contents;
 
     :global {
-      button {
+      .select-button-group button {
         border-radius: var(--sui-button-medium-border-radius) !important;
       }
     }

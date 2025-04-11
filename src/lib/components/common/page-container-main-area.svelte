@@ -54,6 +54,12 @@
           background-color: var(--sui-secondary-background-color);
         }
       }
+
+      .sui.toolbar.secondary {
+        @media (width < 768px) {
+          padding: 0;
+        }
+      }
     }
   }
 

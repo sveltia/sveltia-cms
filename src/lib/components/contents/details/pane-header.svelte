@@ -161,6 +161,10 @@
         margin-left: auto;
         max-width: 800px;
 
+        @media (width < 768px) {
+          padding: 0;
+        }
+
         h3 {
           margin: 0 8px;
           font-size: var(--sui-font-size-default);

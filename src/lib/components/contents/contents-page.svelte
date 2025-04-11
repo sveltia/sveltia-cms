@@ -61,6 +61,7 @@
       if ($isSmallScreen) {
         // Show the collection list only
         $selectedCollection = undefined;
+        $announcedPageStatus = $_('viewing_collection_list');
         isIndexPage = true;
       } else {
         // Redirect to the first collection

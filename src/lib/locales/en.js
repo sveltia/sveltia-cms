@@ -152,6 +152,8 @@ export const strings = {
   asset_list: 'Asset List',
   x_collection: '“{collection}” Collection',
   x_asset_folder: '“{folder}” Asset Folder',
+  viewing_collection_list: 'You’re now viewing the collection list.',
+  viewing_asset_folder_list: 'You’re now viewing the asset folder list.',
   viewing_x_collection_many_entries:
     'You’re now viewing the “{collection}” collection, which has {count} entries.',
   viewing_x_collection_one_entry:
@@ -170,6 +172,8 @@ export const strings = {
   switch_view: 'Switch View',
   list_view: 'List View',
   grid_view: 'Grid View',
+  switch_to_list_view: 'Switch to List View',
+  switch_to_grid_view: 'Switch to Grid View',
   sort: 'Sort',
   sorting_options: 'Sorting Options',
   sort_keys: {

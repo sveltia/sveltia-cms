@@ -59,6 +59,7 @@
       if ($isSmallScreen) {
         // Show the asset folder list only
         $selectedAssetFolder = undefined;
+        $announcedPageStatus = $_('viewing_asset_folder_list');
         isIndexPage = true;
       } else {
         // Redirect to All Assets

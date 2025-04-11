@@ -152,6 +152,8 @@ export const strings = {
   asset_list: 'アセットリスト',
   x_collection: '「{collection}」コレクション',
   x_asset_folder: '「{folder}」アセットフォルダー',
+  viewing_collection_list: 'コレクションリストを表示しています。',
+  viewing_asset_folder_list: 'アセットフォルダーリストを表示しています。',
   viewing_x_collection_many_entries:
     '「{collection}」コレクションを表示しています。ここには {count} 個のエントリーがあります。',
   viewing_x_collection_one_entry:
@@ -170,6 +172,8 @@ export const strings = {
   switch_view: 'ビューを切り替え',
   list_view: 'リストビュー',
   grid_view: 'グリッドビュー',
+  switch_to_list_view: 'リストビューに切り替え',
+  switch_to_grid_view: 'グリッドビューに切り替え',
   sort: '並び替え',
   sorting_options: '並べ替えオプション',
   sort_keys: {

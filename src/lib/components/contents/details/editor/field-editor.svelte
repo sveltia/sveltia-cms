@@ -326,10 +326,11 @@
   header {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin: 0 -8px 8px;
     height: var(--sui-button-small-height);
 
     h4 {
+      margin-inline: 8px 0;
       font-size: var(--sui-font-size-small);
       font-weight: var(--sui-font-weight-bold);
       color: var(--sui-secondary-foreground-color);
