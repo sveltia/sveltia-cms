@@ -185,7 +185,7 @@ export const transformImage = async (
           'canplay',
           async () => {
             video.pause();
-            ({ videoWidth: width, videoHeight: height } = video);
+            ({ videoWidth: naturalWidth, videoHeight: naturalHeight } = video);
             resolve(video);
           },
           { once: true },
@@ -198,6 +198,7 @@ export const transformImage = async (
 
         // Add `<video>` to DOM or it won’t be rendered on canvas
         video.style.opacity = '0';
+        video.style.pointerEvents = 'none';
         document.body.appendChild(video);
       } else {
         const image = new Image();
@@ -205,13 +206,7 @@ export const transformImage = async (
         image.addEventListener(
           'load',
           () => {
-            ({ naturalWidth: width, naturalHeight: height } = image);
-
-            // Fix naturalWidth/Height for SVG
-            if (naturalWidth === 0 || naturalHeight === 0) {
-              ({ naturalWidth, naturalHeight } = image);
-            }
-
+            ({ naturalWidth, naturalHeight } = image);
             resolve(image);
           },
           { once: true },
@@ -223,6 +218,9 @@ export const transformImage = async (
 
     URL.revokeObjectURL(blobURL);
   }
+
+  width ??= naturalWidth;
+  height ??= naturalHeight;
 
   const canvas = new OffscreenCanvas(512, 512);
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
