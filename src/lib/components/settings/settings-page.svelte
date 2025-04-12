@@ -1,5 +1,5 @@
 <script>
-  import { Alert, Icon, Menu, MenuItem, Toast, Toolbar } from '@sveltia/ui';
+  import { Alert, Icon, Menu, MenuItem, Spacer, Toast, Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
@@ -60,6 +60,7 @@
             <BackButton onclick={() => goBack('/menu')} />
             <h2 role="none">{$_('settings')}</h2>
           {/if}
+          <Spacer flex />
         </Toolbar>
       {/snippet}
       {#snippet mainContent()}

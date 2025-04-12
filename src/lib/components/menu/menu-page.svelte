@@ -1,5 +1,5 @@
 <script>
-  import { Toolbar } from '@sveltia/ui';
+  import { Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
@@ -13,6 +13,7 @@
       {#snippet primaryToolbar()}
         <Toolbar variant="primary">
           <h2 role="none">{$_('menu')}</h2>
+          <Spacer flex />
         </Toolbar>
       {/snippet}
       {#snippet mainContent()}
