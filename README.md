@@ -548,7 +548,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
 - [Gitea backend](https://decapcms.org/docs/gitea-backend/) ([#198](https://github.com/sveltia/sveltia-cms/issues/198))
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
-- Field-specific media folders for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
+- Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
 - [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
 - [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, Object/List widgets, and the `default` field option
@@ -559,7 +559,7 @@ Due to the complexity, the following features will be added after the 1.0 releas
 
 - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
-- [Nested Collections](https://decapcms.org/docs/collection-nested/)
+- [Nested Collections](https://decapcms.org/docs/collection-nested/) (beta)
 
 Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
