@@ -38,12 +38,15 @@
     hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
   );
   const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
+  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const collectionFile = $derived($entryDraft?.collectionFile);
   const fileName = $derived($entryDraft?.fileName);
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale] ?? {}));
-  const expanderKeys = $derived(getExpanderKeys({ collectionName, fileName, valueMap, keyPath }));
+  const expanderKeys = $derived(
+    getExpanderKeys({ collectionName, fileName, valueMap, keyPath, isIndexFile }),
+  );
   const { i18nEnabled, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
   );

@@ -1,7 +1,7 @@
 <script>
   import { Alert, Toast } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import ContentDetailsOverlay from '$lib/components/contents/details/content-details-overlay.svelte';
@@ -142,7 +142,11 @@
     } else {
       // Folder collection
       if (routeType === 'new' && !subPath) {
-        createDraft({ collection, dynamicValues: params });
+        createDraft({
+          collection,
+          dynamicValues: params,
+          isIndexFile: !!window.history.state?.index,
+        });
 
         $announcedPageStatus = $_('create_entry_announcement', {
           values: {
@@ -154,7 +158,7 @@
       if (routeType === 'entries' && subPath) {
         const originalEntry = $listedEntries.find((entry) => entry.subPath === subPath);
 
-        if (originalEntry) {
+        if (originalEntry && $appLocale) {
           createDraft({ collection, originalEntry });
 
           $announcedPageStatus = $_('edit_entry_announcement', {

@@ -18,6 +18,7 @@ import { allEntries } from '$lib/services/contents';
 import { updatesToastDefaultState } from '$lib/services/contents/collection/data';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { createSavingEntryData, getSlugs } from '$lib/services/contents/draft/save';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
@@ -202,8 +203,21 @@ export const moveAssets = async (action, movingAssets) => {
 
           await Promise.all(
             getAssociatedCollections(entry).map(async (collection) => {
-              const { editor: { preview: entryPreview } = {} } = collection;
-              const canPreview = entryPreview ?? _siteConfig.editor?.preview ?? true;
+              const isIndexFile = isCollectionIndexFile(collection, entry);
+
+              const {
+                editor: { preview: entryPreview } = {},
+                index_file: {
+                  fields: indexFileFields,
+                  editor: { preview: indexFilePreview = undefined } = {},
+                } = {},
+              } = collection;
+
+              const canPreview =
+                (isIndexFile ? indexFilePreview : undefined) ??
+                entryPreview ??
+                _siteConfig?.editor?.preview ??
+                true;
 
               /**
                * Add saving entry data to the stack.
@@ -211,11 +225,13 @@ export const moveAssets = async (action, movingAssets) => {
                * only.
                */
               const addSavingEntryData = async (collectionFile) => {
-                const { fields = [] } = collectionFile ?? collection;
+                const { fields: regularFields = [] } = collectionFile ?? collection;
+                const fields = isIndexFile ? (indexFileFields ?? regularFields) : regularFields;
 
                 /** @type {EntryDraft} */
                 const draft = {
                   ...draftProps,
+                  isIndexFile,
                   canPreview,
                   collection,
                   collectionName: collection.name,

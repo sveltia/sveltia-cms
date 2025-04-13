@@ -3,6 +3,7 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
@@ -125,7 +126,8 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     )
     .map(({ refEntry, content }) => {
       const { slug, locales } = refEntry;
-      const getFieldConfigArgs = { collectionName, fileName };
+      const isIndexFile = isCollectionIndexFile(collection, refEntry);
+      const getFieldConfigArgs = { collectionName, fileName, isIndexFile };
 
       /**
        * Wrapper for {@link getFieldDisplayValue}.

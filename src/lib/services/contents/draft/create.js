@@ -2,6 +2,7 @@ import { stripTags } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
@@ -229,7 +230,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
  * @returns {any} Created proxy.
  */
 export const createProxy = ({
-  draft: { collectionName, fileName },
+  draft: { collectionName, fileName, isIndexFile },
   locale: sourceLocale,
   target = {},
   getValueMap = undefined,
@@ -262,7 +263,7 @@ export const createProxy = ({
       }
 
       const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
-      const getFieldConfigArgs = { collectionName, fileName, valueMap };
+      const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
       const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
 
       if (!fieldConfig) {
@@ -335,6 +336,7 @@ export const createProxy = ({
  * passed through URL parameters.
  * @param {LocaleExpanderMap} [args.expanderStates] Expander UI state. Can be set when resetting an
  * entry draft.
+ * @param {boolean} [args.isIndexFile] Whether to edit the collection’s index file.
  */
 export const createDraft = ({
   collection,
@@ -342,13 +344,28 @@ export const createDraft = ({
   originalEntry = {},
   dynamicValues,
   expanderStates,
+  isIndexFile = isCollectionIndexFile(collection, originalEntry),
 }) => {
-  const { name: collectionName, editor: { preview: entryPreview } = {} } = collection;
+  const {
+    name: collectionName,
+    editor: { preview: entryPreview } = {},
+    index_file: {
+      fields: indexFileFields,
+      editor: { preview: indexFilePreview = undefined } = {},
+    } = {},
+  } = collection;
+
   const fileName = collectionFile?.name;
   const { id, slug, locales } = originalEntry;
   const isNew = id === undefined;
-  const { fields = [], _i18n } = collectionFile ?? collection;
-  const canPreview = entryPreview ?? get(siteConfig)?.editor?.preview ?? true;
+  const { fields: regularFields = [], _i18n } = collectionFile ?? collection;
+  const fields = isIndexFile ? (indexFileFields ?? regularFields) : regularFields;
+
+  const canPreview =
+    (isIndexFile ? indexFilePreview : undefined) ??
+    entryPreview ??
+    get(siteConfig)?.editor?.preview ??
+    true;
 
   const {
     allLocales,
@@ -382,6 +399,7 @@ export const createDraft = ({
 
   entryDraft.set({
     isNew: isNew && !fileName,
+    isIndexFile,
     canPreview,
     collectionName,
     collection,
@@ -398,7 +416,7 @@ export const createDraft = ({
       enabledLocales.map((locale) => [
         locale,
         createProxy({
-          draft: { collectionName, fileName },
+          draft: { collectionName, fileName, isIndexFile },
           locale,
           target: structuredClone(originalValues[locale]),
         }),
@@ -418,7 +436,16 @@ export const createDraft = ({
  */
 export const duplicateDraft = () => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { collectionName, fileName, collection, collectionFile, currentValues, validities } = draft;
+
+  const {
+    collectionName,
+    fileName,
+    collection,
+    collectionFile,
+    currentValues,
+    validities,
+    isIndexFile,
+  } = draft;
 
   const {
     defaultLocale,
@@ -429,7 +456,7 @@ export const duplicateDraft = () => {
     // Remove the canonical slug
     delete valueMap[canonicalSlugKey];
 
-    const getFieldConfigArgs = { collectionName, fileName, valueMap };
+    const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
 
     // Reset some unique values
     Object.keys(valueMap).forEach((keyPath) => {

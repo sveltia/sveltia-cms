@@ -296,6 +296,8 @@ export const strings = {
   file_meta_converted_from_x: '({type} から変換)',
   no_entries_created: 'このコレクションにはまだエントリーがありません。',
   create_new_entry: '新しいエントリーを作成',
+  entry: 'エントリー',
+  index_file: 'インデックスファイル',
   no_files_in_collection: 'このコレクションにはファイルがありません。',
   asset_info: 'アセット情報',
   select_asset_show_info: 'アセットを選択すると情報が表示されます。',

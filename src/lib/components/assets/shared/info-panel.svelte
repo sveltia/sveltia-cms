@@ -151,11 +151,13 @@
             entryLabel: collectionFile.label || collectionFile.name,
           })}
         {:else}
-          {@render usedEntryLink({
-            link: `/collections/${collection.name}/entries/${entry.subPath}`,
-            collectionLabel,
-            entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
-          })}
+          {#key $appLocale}
+            {@render usedEntryLink({
+              link: `/collections/${collection.name}/entries/${entry.subPath}`,
+              collectionLabel,
+              entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
+            })}
+          {/key}
         {/each}
       {/each}
     {:else}

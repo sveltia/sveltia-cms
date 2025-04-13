@@ -63,6 +63,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
 
   const {
     name: collectionName,
+    index_file: indexFile,
     _i18n: { defaultLocale: locale },
   } = collection;
 
@@ -122,6 +123,15 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
 
   if (order === 'descending') {
     _entries.reverse();
+  }
+
+  // Index file should always be at the top
+  if (typeof indexFile?.name === 'string') {
+    const index = _entries.findIndex((entry) => entry.slug === indexFile.name);
+
+    if (index > -1) {
+      _entries.unshift(_entries.splice(index, 1)[0]);
+    }
   }
 
   return _entries;
@@ -382,7 +392,9 @@ export const listedEntries = derived(
  * @type {Readable<{ name: string, entries: Entry[] }[]>}
  */
 export const entryGroups = derived(
-  [listedEntries, currentView],
+  // Include `appLocale` as a dependency because `sortEntries()` and `groupEntries()` may return
+  // localized labels
+  [listedEntries, currentView, appLocale],
   ([_listedEntries, _currentView], set) => {
     const collection = /** @type {InternalCollection} */ (get(selectedCollection));
     /** @type {Entry[]} */

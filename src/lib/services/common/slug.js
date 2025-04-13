@@ -78,6 +78,7 @@ export const fillSlugTemplate = (
     entryFilePath,
     locale,
     dateTimeParts = getDateTimeParts({ timeZone: 'UTC' }),
+    isIndexFile = false,
   },
 ) => {
   const {
@@ -91,7 +92,7 @@ export const fillSlugTemplate = (
       ? /** @type {EntryCollection} */ (collection)._file.basePath
       : undefined;
 
-  const getFieldConfigArgs = { collectionName, valueMap };
+  const getFieldConfigArgs = { collectionName, valueMap, isIndexFile };
 
   /**
    * Replacer subroutine.

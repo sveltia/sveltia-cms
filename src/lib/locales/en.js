@@ -294,6 +294,8 @@ export const strings = {
   file_meta_converted_from_x: '(converted from {type})',
   no_entries_created: 'This collection has no entries yet.',
   create_new_entry: 'Create New Entry',
+  entry: 'Entry',
+  index_file: 'Index File',
   no_files_in_collection: 'No files available in this collection.',
   asset_info: 'Asset Info',
   select_asset_show_info: 'Select an asset to show the info.',

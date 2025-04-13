@@ -36,6 +36,7 @@
   } = $props();
 
   const { value: valueTemplate = '' } = $derived(fieldConfig);
+  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
@@ -82,6 +83,7 @@
           valueMap,
           keyPath: tagName.replace(/^fields\./, ''),
           locale,
+          isIndexFile,
         });
 
         return Array.isArray(value) ? listFormatter.format(value) : String(value);

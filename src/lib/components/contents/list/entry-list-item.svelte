@@ -1,8 +1,10 @@
 <script>
-  import { Checkbox, GridCell, GridRow, TruncatedText } from '@sveltia/ui';
+  import { Checkbox, GridCell, GridRow, Icon, TruncatedText } from '@sveltia/ui';
+  import { locale as appLocale } from 'svelte-i18n';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
+  import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -84,8 +86,25 @@
   <GridCell class="title">
     <div role="none" class="label">
       <TruncatedText lines={2}>
-        {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+        {#key $appLocale}
+          {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+        {/key}
+        {#if isCollectionIndexFile(collection, entry)}
+          <Icon name="home" class="home" />
+        {/if}
       </TruncatedText>
     </div>
   </GridCell>
 </GridRow>
+
+<style lang="scss">
+  .label {
+    :global {
+      .icon.home {
+        opacity: 0.5;
+        font-size: 20px;
+        vertical-align: -4px;
+      }
+    }
+  }
+</style>

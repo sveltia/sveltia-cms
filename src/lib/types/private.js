@@ -444,6 +444,8 @@
  * Entry draft.
  * @typedef {object} EntryDraft
  * @property {boolean} isNew `true` if it’s a new entry draft in an entry collection.
+ * @property {boolean} isIndexFile Whether the corresponding entry is the collection’s special index
+ * file used specifically in Hugo.
  * @property {boolean} canPreview Whether the entry draft can show the preview pane.
  * @property {string} collectionName Collection name.
  * @property {InternalCollection} collection Collection details.
@@ -741,6 +743,8 @@
  * @property {InternalLocaleCode} [locale] Locale. Required if the `type` is `preview_path`.
  * @property {Record<string, string>} [dateTimeParts] Map of date/time parts. Required if the `type`
  * is `preview_path`.
+ * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
  */
 
 /**

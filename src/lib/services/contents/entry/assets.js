@@ -8,6 +8,7 @@ import {
   getMediaFieldURL,
 } from '$lib/services/assets';
 import { getCollection } from '$lib/services/contents/collection';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getFieldConfig } from '$lib/services/contents/entry/fields';
 
 /**
@@ -80,6 +81,8 @@ export const getAssociatedAssets = ({ entry, collectionName, relative = false })
     return [];
   }
 
+  const isIndexFile = isCollectionIndexFile(collection, entry);
+
   const assets = /** @type {Asset[]} */ (
     Object.values(locales)
       .map(({ content }) =>
@@ -88,7 +91,7 @@ export const getAssociatedAssets = ({ entry, collectionName, relative = false })
             typeof value === 'string' &&
             (relative ? !/^[/@]/.test(value) : true) &&
             ['image', 'file'].includes(
-              getFieldConfig({ collectionName, keyPath })?.widget ?? 'string',
+              getFieldConfig({ collectionName, keyPath, isIndexFile })?.widget ?? 'string',
             )
           ) {
             const asset = getAssetByPath(value, { entry, collection });

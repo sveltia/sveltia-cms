@@ -30,15 +30,23 @@ const fullRegexPattern = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
  * @todo Rewrite this to better support list and object fields.
  */
 export const validateEntry = () => {
-  const { collection, collectionFile, fileName, currentLocales, currentValues, files, validities } =
-    /** @type {EntryDraft} */ (get(entryDraft));
+  const {
+    collection,
+    collectionFile,
+    fileName,
+    currentLocales,
+    currentValues,
+    files,
+    validities,
+    isIndexFile,
+  } = /** @type {EntryDraft} */ (get(entryDraft));
 
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
   let validated = true;
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     const valueEntries = Object.entries(valueMap);
-    const getFieldConfigArgs = { collectionName: collection.name, fileName, valueMap };
+    const getFieldConfigArgs = { collectionName: collection.name, fileName, valueMap, isIndexFile };
 
     // If the locale is disabled, skip the validation and mark all fields valid
     if (!currentLocales[locale]) {

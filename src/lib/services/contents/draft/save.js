@@ -165,7 +165,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
  * @see https://decapcms.org/docs/i18n/
  */
 const createEntryPath = ({ draft, locale, slug }) => {
-  const { collection, collectionFile, originalEntry, currentValues } = draft;
+  const { collection, collectionFile, originalEntry, currentValues, isIndexFile } = draft;
 
   if (collectionFile) {
     return collectionFile.file.replace('{{locale}}', locale);
@@ -192,6 +192,7 @@ const createEntryPath = ({ draft, locale, slug }) => {
         locale,
         content: currentValues[defaultLocale],
         currentSlug: slug,
+        isIndexFile,
       })
     : slug;
 
@@ -356,6 +357,8 @@ export const copyProperty = ({
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
  * @param {string} [args.canonicalSlugKey] Property name of a canonical slug.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
  * @param {boolean} [args.isTomlOutput] Whether the output it TOML format.
  * @returns {RawEntryContent} Unflattened entry content sorted by fields.
  */
@@ -366,6 +369,7 @@ const finalizeContent = ({
   locale,
   valueMap,
   canonicalSlugKey,
+  isIndexFile = false,
   isTomlOutput = false,
 }) => {
   /** @type {FlattenedEntryContent} */
@@ -376,7 +380,7 @@ const finalizeContent = ({
   const { omit_empty_optional_fields: omitEmptyOptionalFields = false } =
     get(siteConfig)?.output ?? {};
 
-  const getFieldConfigArgs = { collectionName, fileName, valueMap };
+  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
   const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };
 
   // Add the slug first
@@ -435,7 +439,7 @@ const finalizeContent = ({
  * @returns {RawEntryContent} Modified and unflattened content.
  */
 const serializeContent = ({ draft, locale, valueMap }) => {
-  const { collection, collectionFile, fields } = draft;
+  const { collection, collectionFile, fields, isIndexFile } = draft;
 
   const {
     _file,
@@ -451,6 +455,7 @@ const serializeContent = ({ draft, locale, valueMap }) => {
     locale,
     valueMap,
     canonicalSlugKey,
+    isIndexFile,
     isTomlOutput: ['toml', 'toml-frontmatter'].includes(_file.format),
   });
 
@@ -471,7 +476,8 @@ const serializeContent = ({ draft, locale, valueMap }) => {
  * @returns {LocaleSlugMap | undefined} Localized slug map.
  */
 const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
-  const { collection, collectionFile, currentLocales, currentSlugs, currentValues } = draft;
+  const { collection, collectionFile, currentLocales, currentSlugs, currentValues, isIndexFile } =
+    draft;
 
   const {
     identifier_field: identifierField = 'title',
@@ -512,6 +518,7 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
                   localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
                 ),
               },
+              isIndexFile,
             }));
 
       return [locale, slug];
@@ -563,7 +570,7 @@ const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOp
  * @returns {FillSlugTemplateOptions} Options.
  */
 const getFillSlugOptions = ({ draft }) => {
-  const { collection, collectionFile, currentValues } = draft;
+  const { collection, collectionFile, currentValues, isIndexFile } = draft;
 
   const {
     _i18n: { defaultLocale },
@@ -573,6 +580,7 @@ const getFillSlugOptions = ({ draft }) => {
     // eslint-disable-next-line object-shorthand
     collection: /** @type {EntryCollection} */ (collection),
     content: currentValues[defaultLocale],
+    isIndexFile,
   };
 };
 
@@ -583,12 +591,21 @@ const getFillSlugOptions = ({ draft }) => {
  * @returns {EntrySlugVariants} Slugs.
  */
 export const getSlugs = ({ draft }) => {
-  const { collection, collectionFile, fileName, currentSlugs } = draft;
+  const { collection, collectionFile, fileName, currentSlugs, isIndexFile } = draft;
 
   const {
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
+    index_file: indexFile,
   } = collection;
+
+  if (isIndexFile) {
+    return {
+      defaultLocaleSlug: indexFile?.name ?? '_index',
+      localizedSlugs: undefined,
+      canonicalSlug: undefined,
+    };
+  }
 
   const {
     _i18n: { defaultLocale },
@@ -623,7 +640,7 @@ export const getSlugs = ({ draft }) => {
  * savingAssetProps: SavingAsset }} Arguments.
  */
 const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
-  const { collection, collectionName, collectionFile } = draft;
+  const { collection, collectionName, collectionFile, isIndexFile } = draft;
   const fillSlugOptions = getFillSlugOptions({ draft });
 
   const {
@@ -635,6 +652,7 @@ const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
     type: 'media_folder',
     currentSlug: defaultLocaleSlug,
     entryFilePath: createEntryPath({ draft, locale: defaultLocale, slug: defaultLocaleSlug }),
+    isIndexFile,
   });
 
   const { internalBaseAssetFolder, internalAssetFolder } = assetFolderPaths;

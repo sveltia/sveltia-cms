@@ -84,6 +84,7 @@
   const hasVariableTypes = $derived(Array.isArray(types));
   const hasSubFields = $derived(hasSingleSubField || hasMultiSubFields || hasVariableTypes);
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`));
+  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const collectionFile = $derived($entryDraft?.collectionFile);
@@ -255,6 +256,7 @@
       summaryTemplate,
       hasSingleSubField,
       index,
+      isIndexFile,
     });
 
   onMount(() => {

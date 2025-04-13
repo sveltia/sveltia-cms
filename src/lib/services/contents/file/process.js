@@ -125,13 +125,19 @@ const prepareEntry = async ({ file, entries, errors }) => {
     return;
   }
 
-  // Skip Hugo’s special `_index.md` file that shouldn’t appear in an entry collection, unless the
-  // collection’s `path` ends with `_index` and the extension is `md`. Localized index files like
-  // `_index.en.md` are also excluded.
+  // Skip Hugo’s special `_index.md` file that shouldn’t appear in a collection. Localized index
+  // files like `_index.en.md` are also excluded by default. Exceptions:
+  // 1. The collection is a file collection
+  // 2. The collection is an entry collection and index file editing is enabled
+  // 3. The collection is an entry collection and the `path` option value ends with `_index` and the
+  // extension is `md`
   if (
     /^_index(?:\..+)?\.md$/.test(getPathInfo(path).basename) &&
-    !(subPathTemplate?.split('/').pop() === '_index' && extension === 'md') &&
-    !fileName
+    !(
+      !!fileName ||
+      collection.index_file?.name === '_index' ||
+      (subPathTemplate?.split('/').pop() === '_index' && extension === 'md')
+    )
   ) {
     return;
   }

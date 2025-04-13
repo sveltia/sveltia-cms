@@ -1,5 +1,6 @@
 <script>
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
+  import { locale as appLocale } from 'svelte-i18n';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getFilesByEntry } from '$lib/services/contents/collection/files';
@@ -67,7 +68,12 @@
             {#if collectionFile}
               {collectionFile.label || collectionFile.name}
             {:else}
-              {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+              {#key $appLocale}
+                {@html getEntrySummary(collection, entry, {
+                  useTemplate: true,
+                  allowMarkdown: true,
+                })}
+              {/key}
             {/if}
           </TruncatedText>
         </div>

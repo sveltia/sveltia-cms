@@ -59,13 +59,14 @@
     types,
     typeKey = 'type',
   } = $derived(fieldConfig);
+  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const collectionFile = $derived($entryDraft?.collectionFile);
   const fileName = $derived($entryDraft?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
-  const getFieldConfigArgs = $derived({ collectionName, fileName, valueMap });
+  const getFieldConfigArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   const hasValues = $derived(
     Object.entries(valueMap).some(
       ([_keyPath, value]) =>

@@ -1,9 +1,11 @@
 <script>
-  import { Button, Icon } from '@sveltia/ui';
+  import { Button, Icon, Menu, MenuItem, SplitButton } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { goto } from '$lib/services/app/navigation';
+  import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { canCreateEntry } from '$lib/services/contents/collection/entries';
+  import { canCreateIndexFile } from '$lib/services/contents/collection/index-file';
 
   /**
    * @typedef {object} Props
@@ -22,20 +24,39 @@
   } = $props();
 
   const disabled = $derived(!canCreateEntry($selectedCollection));
+  const hasOptions = $derived(
+    // Use `$allEntries` as a trigger to update the state when a new entry is created
+    $allEntries && $selectedCollection ? canCreateIndexFile($selectedCollection) : false,
+  );
+  const ButtonComponent = $derived(hasOptions ? SplitButton : Button);
+
+  /**
+   * Open the content editor.
+   * @param {boolean} [index] Whether to create the index file instead of a regular entry.
+   */
+  const openEditor = (index = false) => {
+    goto(`/collections/${collectionName}/new`, { state: { index }, transitionType: 'forwards' });
+  };
 </script>
 
-<Button
+<ButtonComponent
   variant="primary"
   iconic={!label}
   {disabled}
   {label}
   aria-label={$_('create_new_entry')}
   {keyShortcuts}
-  onclick={() => {
-    goto(`/collections/${collectionName}/new`, { transitionType: 'forwards' });
-  }}
+  onclick={() => openEditor()}
 >
   {#snippet startIcon()}
     <Icon name="edit" />
   {/snippet}
-</Button>
+  {#snippet popup()}
+    {#if hasOptions}
+      <Menu>
+        <MenuItem label={$_('entry')} onclick={() => openEditor()} />
+        <MenuItem label={$_('index_file')} onclick={() => openEditor(true)} />
+      </Menu>
+    {/if}
+  {/snippet}
+</ButtonComponent>

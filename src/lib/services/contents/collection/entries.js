@@ -4,6 +4,7 @@ import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/fields';
 
@@ -121,6 +122,7 @@ export const getEntriesByAssetURL = async (
                     collectionName: collection.name,
                     valueMap: content,
                     keyPath,
+                    isIndexFile: isCollectionIndexFile(collection, entry),
                   };
 
                   /**

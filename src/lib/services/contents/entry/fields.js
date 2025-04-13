@@ -4,6 +4,7 @@ import {
   dateTransformationRegex,
 } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
@@ -39,6 +40,8 @@ const fieldConfigCacheMap = new Map();
  * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values. This is
  * required when working with list/object widget variable types.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
  * @returns {Field | undefined} Field configuration.
  */
 export const getFieldConfig = ({
@@ -46,8 +49,9 @@ export const getFieldConfig = ({
   fileName = undefined,
   valueMap = {},
   keyPath,
+  isIndexFile = false,
 }) => {
-  const cacheKey = JSON.stringify({ collectionName, fileName, valueMap, keyPath });
+  const cacheKey = JSON.stringify({ collectionName, fileName, valueMap, keyPath, isIndexFile });
   const cache = fieldConfigCacheMap.get(cacheKey);
 
   if (cache) {
@@ -66,7 +70,9 @@ export const getFieldConfig = ({
     return undefined;
   }
 
-  const { fields = [] } = collectionFile ?? collection;
+  const { index_file: { fields: indexFileFields } = {} } = collection;
+  const { fields: regularFields = [] } = collectionFile ?? collection;
+  const fields = isIndexFile ? (indexFileFields ?? regularFields) : regularFields;
   const keyPathArray = keyPath.split('.');
   /** @type {Field | undefined} */
   let field;
@@ -132,6 +138,8 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.
  * @param {string[]} [args.transformations] String transformations.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
  * @returns {string} Resolved display value.
  */
 export const getFieldDisplayValue = ({
@@ -141,8 +149,9 @@ export const getFieldDisplayValue = ({
   keyPath,
   locale,
   transformations,
+  isIndexFile = false,
 }) => {
-  const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath });
+  const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath, isIndexFile });
   let value = valueMap[keyPath];
 
   if (fieldConfig?.widget === 'datetime') {
@@ -246,7 +255,8 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
   }
 
   if (resolveRef) {
-    const fieldConfig = getFieldConfig({ collectionName, keyPath: key });
+    const isIndexFile = isCollectionIndexFile(collection, entry);
+    const fieldConfig = getFieldConfig({ collectionName, keyPath: key, isIndexFile });
 
     // Resolve the displayed value for a relation field
     if (fieldConfig?.widget === 'relation') {

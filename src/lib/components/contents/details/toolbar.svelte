@@ -15,7 +15,7 @@
     Toolbar,
     TruncatedText,
   } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
@@ -56,6 +56,7 @@
   let menuButton = $state();
 
   const isNew = $derived($entryDraft?.isNew ?? true);
+  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
@@ -146,7 +147,7 @@
     variant="ghost"
     label={$_('duplicate')}
     aria-label={$_('duplicate_entry')}
-    disabled={collection?.create === false}
+    disabled={isIndexFile || collection?.create === false}
     onclick={() => {
       goto(`/collections/${collectionName}/new`, {
         replaceState: true,
@@ -181,7 +182,7 @@
       {:else}
         {@const entrySummary = collectionFile
           ? collectionFile.label || collectionFile.name
-          : collection && originalEntry
+          : collection && originalEntry && $appLocale
             ? getEntrySummary(collection, originalEntry)
             : ''}
         {#if $isSmallScreen}
@@ -222,7 +223,7 @@
         {/if}
         <MenuItem
           label={$_('edit_slug')}
-          disabled={!!collectionFile || isNew || collection?.delete === false}
+          disabled={!!collectionFile || isNew || isIndexFile || collection?.delete === false}
           onclick={() => {
             showEditSlugDialog = true;
           }}

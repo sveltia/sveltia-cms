@@ -105,12 +105,12 @@ export const updateListField = (locale, keyPath, manipulate) => {
  * @returns {FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = (content) => {
-  const { collectionName, fileName, collection, collectionFile, currentValues } =
+  const { collectionName, fileName, collection, collectionFile, currentValues, isIndexFile } =
     /** @type {EntryDraft} */ (get(entryDraft));
 
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const defaultLocaleValues = currentValues[defaultLocale];
-  const getFieldConfigArgs = { collectionName, fileName };
+  const getFieldConfigArgs = { collectionName, fileName, isIndexFile };
   /** @type {string[]} */
   const keys = unique([...Object.keys(content), ...Object.keys(defaultLocaleValues)]);
   const newContent = /** @type {FlattenedEntryContent} */ ({});
@@ -187,9 +187,12 @@ export const copyFromLocale = async (
   targetLocale,
   { keyPath = '', translate = false } = {},
 ) => {
-  const { collectionName, fileName, currentValues } = /** @type {EntryDraft} */ (get(entryDraft));
+  const { collectionName, fileName, currentValues, isIndexFile } = /** @type {EntryDraft} */ (
+    get(entryDraft)
+  );
+
   const valueMap = currentValues[sourceLocale];
-  const getFieldConfigArgs = { collectionName, fileName, valueMap };
+  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
 
   const copingFields = Object.fromEntries(
     Object.entries(valueMap).filter(([_keyPath, sourceLocaleValue]) => {
@@ -299,7 +302,7 @@ export const copyFromLocale = async (
  * or Object, this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
-  const { collection, collectionFile, fileName, currentValues, originalValues } =
+  const { collection, collectionFile, fileName, currentValues, originalValues, isIndexFile } =
     /** @type {EntryDraft} */ (get(entryDraft));
 
   const { allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
@@ -312,7 +315,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
    * @param {boolean} reset Whether ro remove the current value.
    */
   const revert = (_locale, valueMap, reset = false) => {
-    const getFieldConfigArgs = { collectionName: collection.name, fileName, valueMap };
+    const getFieldConfigArgs = { collectionName: collection.name, fileName, valueMap, isIndexFile };
 
     Object.entries(valueMap).forEach(([_keyPath, value]) => {
       if (!keyPath || _keyPath.startsWith(keyPath)) {

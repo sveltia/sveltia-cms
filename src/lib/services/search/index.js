@@ -1,3 +1,4 @@
+import { locale as appLocale } from 'svelte-i18n';
 import { derived, writable } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { allEntries } from '$lib/services/contents';
@@ -38,7 +39,8 @@ export const normalize = (value) =>
  * @todo Search relation fields.
  */
 export const searchResults = derived(
-  [allEntries, allAssets, searchTerms],
+  // Include `appLocale` as a dependency because `getEntrySummary()` may return a localized label
+  [allEntries, allAssets, searchTerms, appLocale],
   ([_allEntries, _allAssets, _searchTerms], set) => {
     const terms = _searchTerms ? normalize(_searchTerms) : '';
     /**

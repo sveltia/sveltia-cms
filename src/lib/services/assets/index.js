@@ -11,6 +11,7 @@ import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { createPath, decodeFilePath, encodeFilePath, resolvePath } from '$lib/services/utils/file';
 import { getMediaMetadata } from '$lib/services/utils/media';
@@ -447,6 +448,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
       content: flatten(content),
       currentSlug: entry.slug,
       entryFilePath: path,
+      isIndexFile: isCollectionIndexFile(collection, entry),
     });
   }
 

@@ -12,6 +12,8 @@ import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/ent
  * @param {string} [args.fileName] File name.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {FlattenedEntryContent} args.valueMap Entry content.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {string} [args.summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
  * @returns {string} Formatted summary.
@@ -21,10 +23,11 @@ export const formatSummary = ({
   fileName,
   keyPath,
   valueMap,
+  isIndexFile = false,
   locale,
   summaryTemplate,
 }) => {
-  const getFieldConfigArgs = { collectionName, fileName, valueMap };
+  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
 
   if (!summaryTemplate) {
     return (

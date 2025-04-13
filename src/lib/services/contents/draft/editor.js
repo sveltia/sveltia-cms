@@ -95,12 +95,20 @@ export const syncExpanderStates = (stateMap) => {
  * @param {string} [args.fileName] File name.
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `testimonials.0.authors.2.foo`.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
  * @returns {string[]} Keys, e.g. `['testimonials', 'testimonials.0', 'testimonials.0.authors',
  * 'testimonials.0.authors.2', 'testimonials.0.authors.2.foo']`.
  */
-export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath }) => {
+export const getExpanderKeys = ({
+  collectionName,
+  fileName,
+  valueMap,
+  keyPath,
+  isIndexFile = false,
+}) => {
   const keys = new Set();
-  const getFieldConfigArgs = { collectionName, fileName, valueMap };
+  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
 
   keyPath.split('.').forEach((_keyPart, index, arr) => {
     const _keyPath = arr.slice(0, index + 1).join('.');
@@ -140,7 +148,7 @@ export const getExpanderKeys = ({ collectionName, fileName, valueMap, keyPath })
  * @param {LocaleContentMap} args.currentValues Field values.
  */
 export const expandInvalidFields = ({ collectionName, fileName, currentValues }) => {
-  const { validities } = /** @type {EntryDraft} */ (get(entryDraft));
+  const { validities, isIndexFile } = /** @type {EntryDraft} */ (get(entryDraft));
   /** @type {Record<FieldKeyPath, boolean>} */
   const stateMap = {};
 
@@ -152,6 +160,7 @@ export const expandInvalidFields = ({ collectionName, fileName, currentValues })
           fileName,
           valueMap: currentValues[locale],
           keyPath,
+          isIndexFile,
         }).forEach((key) => {
           stateMap[key] = true;
         });
