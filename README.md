@@ -65,7 +65,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
   - [Adding dividers to the collection list](#adding-dividers-to-the-collection-list)
   - [Using a custom media folder for a collection](#using-a-custom-media-folder-for-a-collection)
   - [Specifying default sort field and direction](#specifying-default-sort-field-and-direction)
-  - [Editing Hugo’s special index file in a folder collection](#editing-hugos-special-index-file-in-a-folder-collection)
+  - [Including Hugo’s special index file in a folder collection](#including-hugos-special-index-file-in-a-folder-collection)
   - [Using keyboard shortcuts](#using-keyboard-shortcuts)
   - [Using DeepL to translate entry fields](#using-deepl-to-translate-entry-fields)
   - [Localizing entry slugs](#localizing-entry-slugs)
@@ -311,7 +311,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - [Default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
   - Sorting entries by a DateTime field works as expected.[^110]
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
-  - [Index file inclusion](#editing-hugos-special-index-file-in-a-folder-collection) allows users to edit Hugo’s special `_index.md` file, including localized ones like `_index.en.md`, within a folder collection.[^201] If the `index_file` option is not defined, these files will be hidden in a folder collection unless the `path` option is configured to end with `_index` and the `extension` is `md`.[^120]
+  - [Index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) allows users to edit Hugo’s special `_index.md` file, including localized ones like `_index.en.md`, within a folder collection.[^201] If the `index_file` option is not defined, these files will be hidden in a folder collection unless the `path` option is configured to end with `_index` and the `extension` is `md`.[^120]
   - A console error won’t be thrown when a collection doesn’t have the `title` field.[^152] In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug, so the summary will never be an empty.[^161] This supports a typical VitePress setup.
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console.[^121]
   - A single file can be used for more than one item in a file collection.[^127]
@@ -592,7 +592,7 @@ While Sveltia CMS is built with Svelte, the application is **framework-agnostic*
 
 You can use the CMS with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 
-We have added support for features required by certain frameworks, such as [index file inclusion](#editing-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, and [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific needs.
+We have added support for features required by certain frameworks, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, and [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific needs.
 
 ### Browser support
 
@@ -823,7 +823,7 @@ For backward compatibility with [Netlify/Decap CMS](https://decapcms.org/docs/co
 
 For backward compatibility with [Static CMS](https://staticjscms.netlify.app/docs/collection-overview#sortable-fields), the `direction` option accepts title case values: `Ascending` and `Descending`. However, `None` is not supported and has the same effect as `ascending`.
 
-### Editing Hugo’s special index file in a folder collection
+### Including Hugo’s special index file in a folder collection
 
 Before this feature, Hugo’s [special `_index.md` file](https://gohugo.io/content-management/organization/#index-pages-_indexmd) was hidden in a folder collection, and you had to create a file collection to manage the file, since it usually comes with a different set of fields than regular entry fields. Now, with the new `index_file` option, you can include the index file inside a folder collection, above regular entries, for easier editing:
 
