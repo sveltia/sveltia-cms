@@ -24,6 +24,8 @@
       $searchTerms = terms;
     }
 
+    $searchMode ??= 'entries';
+
     const { entries, assets } = $searchResults;
     const entryCount = entries.length;
     const assetCount = assets.length;
