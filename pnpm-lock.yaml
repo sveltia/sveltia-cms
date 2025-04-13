@@ -21,8 +21,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@sveltia/ui':
-        specifier: ^0.26.1
-        version: 0.26.1(svelte@5.26.2)
+        specifier: ^0.26.2
+        version: 0.26.2(svelte@5.26.2)
       '@sveltia/utils':
         specifier: ^0.7.1
         version: 0.7.1
@@ -130,8 +130,8 @@ importers:
         specifier: 5.26.2
         version: 5.26.2
       svelte-check:
-        specifier: ^4.1.5
-        version: 4.1.5(picomatch@4.0.2)(svelte@5.26.2)(typescript@5.5.4)
+        specifier: ^4.1.6
+        version: 4.1.6(picomatch@4.0.2)(svelte@5.26.2)(typescript@5.5.4)
       svelte-i18n:
         specifier: ^4.0.1
         version: 4.0.1(svelte@5.26.2)
@@ -978,8 +978,8 @@ packages:
       svelte: ^5.0.0
       vite: ^6.0.0
 
-  '@sveltia/ui@0.26.1':
-    resolution: {integrity: sha512-xVe7ad8loZbfUsnpFVezi6U787meOrWtbo9Ek/R6d7yIVAvPGxcQgzEWceXRDbS53Z5f93JZmAoUx2lXzLwyvw==}
+  '@sveltia/ui@0.26.2':
+    resolution: {integrity: sha512-BrDqgX/4LxMGXizdehNWJb/r9swimyzsR6rRPEBZgWF892HQ4LAOm9VejvvdUSlU4RpCbCVRdbAyTKlmva3odQ==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2722,8 +2722,8 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  svelte-check@4.1.5:
-    resolution: {integrity: sha512-Gb0T2IqBNe1tLB9EB1Qh+LOe+JB8wt2/rNBDGvkxQVvk8vNeAoG+vZgFB/3P5+zC7RWlyBlzm9dVjZFph/maIg==}
+  svelte-check@4.1.6:
+    resolution: {integrity: sha512-P7w/6tdSfk3zEVvfsgrp3h3DFC75jCdZjTQvgGJtjPORs1n7/v2VMPIoty3PWv7jnfEm3x0G/p9wH4pecTb0Wg==}
     engines: {node: '>= 18.0.0'}
     hasBin: true
     peerDependencies:
@@ -3829,7 +3829,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.26.1(svelte@5.26.2)':
+  '@sveltia/ui@0.26.2(svelte@5.26.2)':
     dependencies:
       '@lexical/code': 0.30.0
       '@lexical/dragon': 0.30.0
@@ -5862,7 +5862,7 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-check@4.1.5(picomatch@4.0.2)(svelte@5.26.2)(typescript@5.5.4):
+  svelte-check@4.1.6(picomatch@4.0.2)(svelte@5.26.2)(typescript@5.5.4):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       chokidar: 4.0.3
