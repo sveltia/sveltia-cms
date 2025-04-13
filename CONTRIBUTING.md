@@ -2,7 +2,7 @@
 
 ## Bug reports
 
-Since Sveltia CMS is still its early stages, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug) so we can make the product better for everyone.
+Since Sveltia CMS is still its early stages, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
 
 ## Code contributions
 

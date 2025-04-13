@@ -563,7 +563,7 @@ Due to the complexity, the following features will be added after the 1.0 releas
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
 - [Nested Collections](https://decapcms.org/docs/collection-nested/) (beta)
 
-Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?labels=bug). Bear in mind that undocumented behaviour can easily be overlooked.
+Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
 ### Compatibility with Static CMS
 

@@ -12,4 +12,4 @@ Thank you for your interest in translating the Sveltia CMS user interface! While
 
 The existing Japanese localization is provided for the [maintainer](https://github.com/kyoshino)’s Japanese clients.
 
-If your language is not yet on the [waiting list](https://github.com/sveltia/sveltia-cms/labels/l10n) and you’d like to localize the app, feel free to [file a new issue](https://github.com/sveltia/sveltia-cms/issues/new?labels=l10n) so we can ping you when it’s ready!
+If your language is not yet on the [waiting list](https://github.com/sveltia/sveltia-cms/labels/l10n) and you’d like to localize the app, feel free to [file a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=task&labels=l10n) so we can ping you when it’s ready!

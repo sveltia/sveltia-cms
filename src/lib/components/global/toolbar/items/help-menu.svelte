@@ -56,7 +56,7 @@
   <MenuItem
     label={$_('report_issue')}
     onclick={() => {
-      window.open('https://github.com/sveltia/sveltia-cms/issues/new?labels=bug', '_blank');
+      window.open('https://github.com/sveltia/sveltia-cms/issues/new?type=bug', '_blank');
     }}
   />
   <MenuItem
