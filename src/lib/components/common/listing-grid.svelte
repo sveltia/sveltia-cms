@@ -98,7 +98,6 @@
             margin: 12px;
             height: 40px;
             line-height: 1.5;
-            word-break: break-all;
           }
         }
 
@@ -201,7 +200,6 @@
             @media (width < 768px) {
               white-space: normal;
               line-height: var(--sui-line-height-compact);
-              word-break: break-all;
             }
           }
 

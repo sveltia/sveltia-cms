@@ -99,3 +99,9 @@
     </GridCell>
   {/if}
 </GridRow>
+
+<style lang="scss">
+  .label {
+    word-break: break-all;
+  }
+</style>
