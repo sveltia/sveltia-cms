@@ -522,13 +522,13 @@ However, 100% feature parity is not planned, and some features are still missing
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service: Consider other storage providers.
-- Deprecated camel case configuration options: Use snake case instead, according to the current Netlify/Decap CMS document.
-  - Collection: `sortableFields`
-  - DateTime widget: `dateFormat`, `timeFormat`, `pickerUtc`
-  - Markdown widget: `editorComponents`
-  - Number widget: `valueType`
-  - Relation widget: `displayFields`, `searchFields`, `valueField`
-  - Note: Some other camel case options are not deprecated.
+- Deprecated camel case configuration options: Use snake case instead, according to the current Decap CMS document.
+  - [Collection](https://decapcms.org/docs/configuration-options/#sortable_fields): `sortableFields`
+  - [DateTime](https://decapcms.org/docs/widgets/#datetime) widget: `dateFormat`, `timeFormat`, `pickerUtc`
+  - [Markdown](https://decapcms.org/docs/widgets/#markdown) widget: `editorComponents`
+  - [Number](https://decapcms.org/docs/widgets/#number) widget: `valueType`
+  - [Relation](https://decapcms.org/docs/widgets/#relation) widget: `displayFields`, `searchFields`, `valueField`
+  - Note: Some other camel case options, including Color widget options, are not deprecated.
 - The deprecated Date widget: It has already been removed from Decap CMS 3.0. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
 - Some date/time format tokens: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with Day.js, and Sveltia CMS will follow suit soon. Since [Day.js tokens](https://day.js.org/docs/en/display/format) are not 100% compatible with [Moment.js tokens](https://momentjs.com/docs/#/displaying/format/), this could be a breaking change in certain cases.
 - The theme and keymap inline settings of the Code widget, along with support for some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/). Prism may be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575) in the future.
