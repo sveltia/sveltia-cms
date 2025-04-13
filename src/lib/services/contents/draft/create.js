@@ -419,9 +419,9 @@ export const createDraft = ({
 export const duplicateDraft = () => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collectionName, fileName, collection, collectionFile, currentValues, validities } = draft;
-  const { defaultLocale } = (collectionFile ?? collection)._i18n;
 
   const {
+    defaultLocale,
     canonicalSlug: { key: canonicalSlugKey },
   } = (collectionFile ?? collection)._i18n;
 
