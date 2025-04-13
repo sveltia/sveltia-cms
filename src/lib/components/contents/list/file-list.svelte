@@ -1,8 +1,6 @@
 <script>
-  import { GridCell, GridRow } from '@sveltia/ui';
+  import { EmptyState, GridCell, GridRow, InfiniteScroll, TruncatedText } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
-  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -30,9 +28,11 @@
             }}
           >
             <GridCell class="title">
-              <span role="none" class="label">
-                {label || name}
-              </span>
+              <div role="none" class="label">
+                <TruncatedText lines={2}>
+                  {label || name}
+                </TruncatedText>
+              </div>
             </GridCell>
           </GridRow>
         {/snippet}

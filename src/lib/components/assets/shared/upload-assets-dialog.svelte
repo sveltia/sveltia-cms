@@ -1,9 +1,8 @@
 <script>
-  import { Dialog } from '@sveltia/ui';
+  import { Dialog, FilePicker } from '@sveltia/ui';
   import mime from 'mime';
   import { _ } from 'svelte-i18n';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
   import {
     globalAssetFolder,
     selectedAssetFolder,

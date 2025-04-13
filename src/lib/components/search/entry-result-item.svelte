@@ -1,5 +1,5 @@
 <script>
-  import { GridCell, GridRow } from '@sveltia/ui';
+  import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getFilesByEntry } from '$lib/services/contents/collection/files';
@@ -62,13 +62,15 @@
         {collection.label || collection.name}
       </GridCell>
       <GridCell class="title">
-        <span role="none" class="label">
-          {#if collectionFile}
-            {collectionFile.label || collectionFile.name}
-          {:else}
-            {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
-          {/if}
-        </span>
+        <div role="none" class="label">
+          <TruncatedText lines={2}>
+            {#if collectionFile}
+              {collectionFile.label || collectionFile.name}
+            {:else}
+              {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+            {/if}
+          </TruncatedText>
+        </div>
       </GridCell>
     </GridRow>
   {/if}

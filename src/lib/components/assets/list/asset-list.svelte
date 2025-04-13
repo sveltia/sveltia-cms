@@ -1,11 +1,9 @@
 <script>
-  import { GridBody } from '@sveltia/ui';
+  import { EmptyState, GridBody, InfiniteScroll } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
-  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import {

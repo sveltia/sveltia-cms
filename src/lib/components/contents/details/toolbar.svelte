@@ -13,6 +13,7 @@
     SplitButton,
     Toast,
     Toolbar,
+    TruncatedText,
   } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
@@ -174,7 +175,7 @@
     }}
   />
   <h2 role="none">
-    <strong role="none">
+    <TruncatedText>
       {#if isNew}
         {$_('create_entry_title', { values: { name: collectionLabelSingular } })}
       {:else}
@@ -191,7 +192,7 @@
           })}
         {/if}
       {/if}
-    </strong>
+    </TruncatedText>
   </h2>
   <Spacer flex />
   {#if !disabled && previewURL}

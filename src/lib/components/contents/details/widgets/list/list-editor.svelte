@@ -14,6 +14,7 @@
     MenuItem,
     Spacer,
     TextInput,
+    TruncatedText,
   } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { escapeRegExp } from '@sveltia/utils/string';
@@ -29,6 +30,7 @@
   import { updateListField } from '$lib/services/contents/draft/update';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/widgets/list/helper';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
@@ -454,7 +456,9 @@
               {/each}
             {:else}
               <div role="none" class="summary">
-                {_formatSummary(index, summaryTemplate)}
+                <TruncatedText lines={$isSmallScreen ? 2 : 1}>
+                  {_formatSummary(index, summaryTemplate)}
+                </TruncatedText>
               </div>
             {/if}
           </div>
@@ -486,16 +490,6 @@
   .toolbar {
     display: flex;
     align-items: center;
-  }
-
-  .summary {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-
-    @media (width < 768px) {
-      white-space: normal;
-    }
   }
 
   .item-list {

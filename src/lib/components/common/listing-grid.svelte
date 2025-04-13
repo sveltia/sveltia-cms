@@ -94,10 +94,6 @@
 
         .title {
           .label {
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
             overflow: hidden;
             margin: 12px;
             height: 40px;
@@ -201,13 +197,8 @@
 
           .label {
             overflow: hidden;
-            text-overflow: ellipsis;
 
             @media (width < 768px) {
-              display: -webkit-box;
-              -webkit-box-orient: vertical;
-              -webkit-line-clamp: 2;
-              line-clamp: 2;
               white-space: normal;
               line-height: var(--sui-line-height-compact);
               word-break: break-all;

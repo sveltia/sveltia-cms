@@ -1,5 +1,5 @@
 <script>
-  import { GridCell, GridRow } from '@sveltia/ui';
+  import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import { locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -36,8 +36,10 @@
     {$appLocale ? getFolderLabelByPath(folder) : ''}
   </GridCell>
   <GridCell class="title">
-    <span role="none" class="label">
-      {name}
-    </span>
+    <div role="none" class="label">
+      <TruncatedText lines={2}>
+        {name}
+      </TruncatedText>
+    </div>
   </GridCell>
 </GridRow>

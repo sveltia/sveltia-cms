@@ -1,10 +1,18 @@
 <script>
-  import { Dialog, Listbox, Option, OptionGroup, SearchBar, Select, TextInput } from '@sveltia/ui';
+  import {
+    Dialog,
+    EmptyState,
+    Listbox,
+    Option,
+    OptionGroup,
+    SearchBar,
+    Select,
+    TextInput,
+  } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
   import ExternalAssetsPanel from '$lib/components/assets/shared/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/shared/internal-assets-panel.svelte';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssets, globalAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';

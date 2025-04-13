@@ -1,8 +1,7 @@
 <script>
-  import { Alert, Button, Group, Toast } from '@sveltia/ui';
+  import { Alert, Button, EmptyState, Group, Toast } from '@sveltia/ui';
   import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
   import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';

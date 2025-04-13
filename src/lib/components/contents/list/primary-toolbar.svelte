@@ -1,9 +1,15 @@
 <script>
-  import { Button, Infobar, Spacer, Toolbar } from '@sveltia/ui';
+  import {
+    Button,
+    FloatingActionButtonWrapper,
+    Infobar,
+    Spacer,
+    Toolbar,
+    TruncatedText,
+  } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
-  import FloatingActionButtonWrapper from '$lib/components/common/floating-action-button-wrapper.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
@@ -49,7 +55,11 @@
     {/if}
     <h2 role="none">{collectionLabel}</h2>
     {#if !$isSmallScreen}
-      <div role="none" class="description">{@html sanitize(description || '')}</div>
+      <div role="none" class="description">
+        <TruncatedText>
+          {@html sanitize(description || '')}
+        </TruncatedText>
+      </div>
     {/if}
     <Spacer flex />
     {#if isEntryCollection}
@@ -99,8 +109,5 @@
     flex: auto;
     font-size: var(--sui-font-size-small);
     opacity: 0.8;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
   }
 </style>

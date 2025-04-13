@@ -4,14 +4,19 @@
   one for an image/file entry field.
 -->
 <script>
-  import { Button, Option, PasswordInput, TextInput } from '@sveltia/ui';
+  import {
+    Button,
+    EmptyState,
+    InfiniteScroll,
+    Option,
+    PasswordInput,
+    TextInput,
+  } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
-  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';

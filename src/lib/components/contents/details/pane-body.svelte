@@ -1,7 +1,6 @@
 <script>
-  import { Button } from '@sveltia/ui';
+  import { Button, EmptyState } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';

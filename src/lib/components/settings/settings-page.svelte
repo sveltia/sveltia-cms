@@ -106,7 +106,6 @@
     --sui-menu-border-width: 0;
     --sui-menu-border-radius: 0;
     --sui-menu-padding: 8px 0;
-    --sui-menuitem-height: 48px;
 
     .inner {
       padding: 16px;

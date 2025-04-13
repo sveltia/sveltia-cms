@@ -1,12 +1,10 @@
 <script>
-  import { Option } from '@sveltia/ui';
+  import { EmptyState, InfiniteScroll, Option, TruncatedText } from '@sveltia/ui';
   import { stripSlashes } from '@sveltia/utils/string';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
-  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import { normalize } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
 
@@ -71,15 +69,17 @@
             <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
             {#if !$isSmallScreen || viewType === 'list'}
               <span role="none" class="name">
-                {#each pathArray as segment, index}
-                  {#if index === pathArray.length - 1}
-                    <!-- File name -->
-                    <strong>{@render getLabel(segment)}</strong>
-                  {:else}
-                    <!-- Folder name -->
-                    {@render getLabel(segment)}/
-                  {/if}
-                {/each}
+                <TruncatedText lines={2}>
+                  {#each pathArray as segment, index}
+                    {#if index === pathArray.length - 1}
+                      <!-- File name -->
+                      <strong>{@render getLabel(segment)}</strong>
+                    {:else}
+                      <!-- Folder name -->
+                      {@render getLabel(segment)}/
+                    {/if}
+                  {/each}
+                </TruncatedText>
               </span>
             {/if}
           </Option>

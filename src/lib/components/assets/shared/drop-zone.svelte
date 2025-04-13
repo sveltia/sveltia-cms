@@ -1,10 +1,9 @@
 <script>
-  import { Button, Icon } from '@sveltia/ui';
+  import { Button, FilePicker, Icon } from '@sveltia/ui';
   import { scanFiles } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import FilePicker from '$lib/components/assets/shared/file-picker.svelte';
-  import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { hasMouse } from '$lib/services/user/env';
+  import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
 
   /**
    * @import { Snippet } from 'svelte';

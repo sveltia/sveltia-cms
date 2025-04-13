@@ -1,8 +1,6 @@
 <script>
-  import { Group } from '@sveltia/ui';
+  import { EmptyState, Group, InfiniteScroll } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
-  import InfiniteScroll from '$lib/components/common/infinite-scroll.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import AssetResultItem from '$lib/components/search/asset-result-item.svelte';
   import { searchResults, searchTerms } from '$lib/services/search';

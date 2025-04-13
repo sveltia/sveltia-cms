@@ -1,5 +1,5 @@
 <script>
-  import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
+  import { Checkbox, GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import Image from '$lib/components/common/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
@@ -82,8 +82,10 @@
     </GridCell>
   {/if}
   <GridCell class="title">
-    <span role="none" class="label">
-      {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
-    </span>
+    <div role="none" class="label">
+      <TruncatedText lines={2}>
+        {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+      </TruncatedText>
+    </div>
   </GridCell>
 </GridRow>

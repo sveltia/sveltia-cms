@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon } from '@sveltia/ui';
+  import { Button, Icon, TruncatedText } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { _, locale as appLocale } from 'svelte-i18n';
   import { formatSize } from '$lib/services/utils/file';
@@ -40,7 +40,11 @@
         </span>
       {/if}
       <div role="none" class="info">
-        <div role="none" class="name">{name.normalize()}</div>
+        <div role="none" class="name">
+          <TruncatedText>
+            {name.normalize()}
+          </TruncatedText>
+        </div>
         <div role="none" class="meta">
           {$_('file_meta', {
             values: {
@@ -115,12 +119,6 @@
       gap: 4px;
       overflow: hidden;
       text-align: left;
-
-      .name {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
 
       .meta {
         font-size: var(--sui-font-size-small);

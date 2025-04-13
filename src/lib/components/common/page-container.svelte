@@ -89,10 +89,6 @@
               border-color: transparent;
             }
 
-            @media (width < 768px) {
-              --sui-option-height: 48px;
-            }
-
             span {
               flex: none;
             }
@@ -100,7 +96,6 @@
             .label {
               flex: auto;
               overflow: hidden;
-              text-overflow: ellipsis;
             }
 
             .icon {

@@ -1,14 +1,14 @@
 <script>
+  import { EmptyState } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import Toolbar from '$lib/components/assets/details/toolbar.svelte';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
-  import EmptyState from '$lib/components/common/empty-state.svelte';
   import { getAssetBlob, isMediaKind, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
+  import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import Toolbar from '$lib/components/assets/details/toolbar.svelte';
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();

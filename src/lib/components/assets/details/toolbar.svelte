@@ -1,5 +1,5 @@
 <script>
-  import { Toolbar } from '@sveltia/ui';
+  import { Toolbar, TruncatedText } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
@@ -36,7 +36,9 @@
     }}
   />
   <h2 role="none">
-    <strong role="none">{$overlaidAsset?.name}</strong>
+    <TruncatedText>
+      {$overlaidAsset?.name}
+    </TruncatedText>
   </h2>
   {#if !$isSmallScreen}
     {@render overflowButtons()}

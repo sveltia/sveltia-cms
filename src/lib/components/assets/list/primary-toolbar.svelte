@@ -1,5 +1,5 @@
 <script>
-  import { Spacer, Toolbar } from '@sveltia/ui';
+  import { FloatingActionButtonWrapper, Spacer, Toolbar } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
@@ -7,7 +7,6 @@
   import EditOptionsButton from '$lib/components/assets/toolbar/edit-options-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/toolbar/preview-asset-button.svelte';
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
-  import FloatingActionButtonWrapper from '$lib/components/common/floating-action-button-wrapper.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
   import {

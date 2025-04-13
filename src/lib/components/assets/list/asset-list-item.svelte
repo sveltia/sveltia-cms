@@ -1,5 +1,5 @@
 <script>
-  import { Checkbox, GridCell, GridRow } from '@sveltia/ui';
+  import { Checkbox, GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { canPreviewAsset, focusedAsset, selectedAssets } from '$lib/services/assets';
@@ -91,7 +91,11 @@
   </GridCell>
   {#if !$isSmallScreen || viewType === 'list'}
     <GridCell class="title">
-      <span role="none" class="label">{name}</span>
+      <div role="none" class="label">
+        <TruncatedText lines={2}>
+          {name}
+        </TruncatedText>
+      </div>
     </GridCell>
   {/if}
 </GridRow>

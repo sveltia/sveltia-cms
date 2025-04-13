@@ -4,7 +4,7 @@
   @see https://decapcms.org/docs/widgets/#object
 -->
 <script>
-  import { Button, Checkbox, Icon } from '@sveltia/ui';
+  import { Button, Checkbox, Icon, TruncatedText } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
   import { sleep } from '@sveltia/utils/misc';
   import { toRaw } from '@sveltia/utils/object';
@@ -20,6 +20,7 @@
   import { getFieldConfig } from '$lib/services/contents/entry/fields';
   import { defaultI18nConfig } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/widgets/object/helper';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
@@ -234,9 +235,14 @@
             {/await}
           {/each}
         {:else}
-          <div role="none" class="summary" id="object-{widgetId}-summary">
-            {_formatSummary()}
-          </div>
+          {@const formattedSummary = _formatSummary()}
+          {#if formattedSummary}
+            <div role="none" class="summary" id="object-{widgetId}-summary">
+              <TruncatedText lines={isSmallScreen ? 2 : 1}>
+                {formattedSummary}
+              </TruncatedText>
+            </div>
+          {/if}
         {/if}
       {/await}
     </div>
@@ -257,13 +263,6 @@
   }
 
   .summary {
-    overflow: hidden;
     padding: 8px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-
-    &:empty {
-      display: none;
-    }
   }
 </style>
