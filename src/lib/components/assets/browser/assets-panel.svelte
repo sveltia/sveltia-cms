@@ -3,8 +3,8 @@
   import { stripSlashes } from '@sveltia/utils/string';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
+  import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import { normalize } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
 

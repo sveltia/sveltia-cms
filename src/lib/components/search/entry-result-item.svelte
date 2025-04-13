@@ -1,7 +1,7 @@
 <script>
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import { locale as appLocale } from 'svelte-i18n';
-  import Image from '$lib/components/common/image.svelte';
+  import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getFilesByEntry } from '$lib/services/contents/collection/files';
   import { getAssociatedCollections } from '$lib/services/contents/entry';

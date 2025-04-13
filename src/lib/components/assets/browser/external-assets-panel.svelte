@@ -15,8 +15,8 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import SimpleImageGrid from '$lib/components/assets/shared/simple-image-grid.svelte';
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';

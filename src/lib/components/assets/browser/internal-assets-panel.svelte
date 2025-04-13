@@ -1,6 +1,6 @@
 <script>
   import { untrack } from 'svelte';
-  import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
+  import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
 

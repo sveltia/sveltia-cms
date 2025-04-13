@@ -1,7 +1,7 @@
 <script>
   import { Group } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import AssetsPanel from '$lib/components/assets/shared/assets-panel.svelte';
+  import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { allAssets, uploadingAssets } from '$lib/services/assets';
