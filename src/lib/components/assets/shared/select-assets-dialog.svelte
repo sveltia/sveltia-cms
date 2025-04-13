@@ -151,6 +151,7 @@
         class="tabs"
         aria-label={$_('assets_dialog.locations')}
         aria-controls="{elementIdPrefix}-content-pane"
+        filterThreshold={-1}
         onChange={(event) => {
           libraryName = event.detail.name;
           selectedAsset = null;
