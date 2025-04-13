@@ -765,7 +765,7 @@ fields:
     label: Tags
     icon: sell # or any icon name
     create: true
-    folder: data/tags/
+    folder: content/tags
 ```
 
 ### Adding dividers to the collection list
@@ -796,7 +796,7 @@ public_folder: /media
 collections:
   - name: products
     label: Products
-    folder: data/products/
+    folder: content/products
     media_folder: /static/media/products # make sure to append a slash
     public_folder: /media/products
 ```
@@ -829,7 +829,7 @@ Before this feature, Hugo’s [special `_index.md` file](https://gohugo.io/conte
 collections:
   - name: posts
     label: Blog posts
-    folder: data/posts/
+    folder: content/posts
     fields: # Fields for regular entries
       ...
     index_file:
@@ -888,7 +888,7 @@ collections:
   - name: posts
     label: Blog posts
     create: true
-    folder: data/posts/
+    folder: content/posts
     slug: '{{title | localize}}' # This does the trick
     format: yaml
     i18n: true
@@ -901,12 +901,12 @@ collections:
 
 With this configuration, an entry is saved with localized filenames, while the default locale’s slug is stored in each file as an extra `translationKey` property, which is used in [Hugo’s multilingual support](https://gohugo.io/content-management/multilingual/#bypassing-default-linking). Sveltia CMS and Hugo read this property to link localized files.
 
-- `data/posts/en/my-trip-to-new-york.yaml`
+- `content/posts/en/my-trip-to-new-york.yaml`
   ```yaml
   translationKey: my-trip-to-new-york
   title: My trip to New York
   ```
-- `data/posts/fr/mon-voyage-a-new-york.yaml`
+- `content/posts/fr/mon-voyage-a-new-york.yaml`
   ```yaml
   translationKey: my-trip-to-new-york
   title: Mon voyage à New York
