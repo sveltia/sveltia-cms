@@ -281,9 +281,9 @@
               {$_('processing_file')}
             </div>
           {:else if isImageWidget}
-            {$_($hasMouse ? 'drop_or_browse_image_file' : 'browse_file')}
+            {$_($hasMouse ? 'drop_image_file_or_click_to_browse' : 'tap_to_browse')}
           {:else}
-            {$_($hasMouse ? 'drop_or_browse_file' : 'browse_file')}
+            {$_($hasMouse ? 'drop_file_or_click_to_browse' : 'tap_to_browse')}
           {/if}
         </div>
       </Button>

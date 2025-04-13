@@ -124,9 +124,11 @@
     <div role="none" class="content">
       {#if showUploadButton}
         <div role="none">
-          {$_(
-            $hasMouse ? (multiple ? 'drop_or_browse_files' : 'drop_or_browse_file') : 'browse_file',
-          )}
+          {#if $hasMouse}
+            {$_(multiple ? 'drop_files_or_click_to_browse' : 'drop_file_or_click_to_browse')}
+          {:else}
+            {$_('tap_to_browse')}
+          {/if}
         </div>
         <div role="none">
           <Button
