@@ -49,7 +49,7 @@
   let hasError = $state(false);
   let loaded = $state(false);
 
-  const isThumbnail = $derived(!!asset && !!variant);
+  const isThumbnail = $derived(!!asset && !!variant && !controls);
   const isImage = $derived(isThumbnail || kind === 'image' || asset?.name.endsWith('.pdf'));
 
   let updatingSrc = false;
