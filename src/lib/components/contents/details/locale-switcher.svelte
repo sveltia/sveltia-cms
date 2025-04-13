@@ -76,6 +76,7 @@
               : ''}"
           selected={$thisPane?.mode === 'edit' && $thisPane.locale === locale}
           class={hasError ? 'error' : ''}
+          data-mode="edit"
           onSelect={() => {
             $thisPane = { mode: 'edit', locale };
 
@@ -99,6 +100,7 @@
           {size}
           label={$_('preview')}
           selected={$thisPane?.mode === 'preview'}
+          data-mode="preview"
           onSelect={() => {
             $thisPane = { mode: 'preview', locale: $thatPane?.locale ?? '' };
           }}
@@ -131,7 +133,7 @@
     display: contents;
 
     :global {
-      :is(.error, .error button) {
+      :is(.error, .error button[data-mode='edit']) {
         color: var(--sui-error-foreground-color) !important;
       }
     }
