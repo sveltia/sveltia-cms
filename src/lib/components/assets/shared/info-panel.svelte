@@ -84,7 +84,11 @@
   </section>
   <section>
     <h4>{$_('size')}</h4>
-    <p>{$appLocale ? formatSize(size) : ''}</p>
+    <p>
+      {#key $appLocale}
+        {formatSize(size)}
+      {/key}
+    </p>
   </section>
   {#if canPreview}
     <section>

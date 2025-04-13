@@ -332,6 +332,7 @@ const getSortFieldLabel = (collection, key) => {
  * @type {Readable<{ key: string, label: string }[]>}
  */
 export const sortFields = derived(
+  // Include `appLocale` as a dependency because `getSortFieldLabel()` may return a localized label
   [selectedCollection, allEntries, appLocale],
   ([collection, _allEntries], set) => {
     // Disable sorting for file collections

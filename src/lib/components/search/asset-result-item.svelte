@@ -33,7 +33,9 @@
     <AssetPreview {kind} {asset} variant="icon" cover />
   </GridCell>
   <GridCell class="collection">
-    {$appLocale ? getFolderLabelByPath(folder) : ''}
+    {#key $appLocale}
+      {getFolderLabelByPath(folder)}
+    {/key}
   </GridCell>
   <GridCell class="title">
     <div role="none" class="label">

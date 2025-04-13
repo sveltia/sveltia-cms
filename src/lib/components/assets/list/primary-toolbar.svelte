@@ -37,7 +37,9 @@
     />
   {/if}
   <h2 role="none">
-    {$appLocale ? getFolderLabelByPath($selectedAssetFolder?.internalPath) : ''}
+    {#key $appLocale}
+      {getFolderLabelByPath($selectedAssetFolder?.internalPath)}
+    {/key}
     {#if !$isSmallScreen && $selectedAssetFolder}
       <span role="none">/{$selectedAssetFolder.internalPath}</span>
     {/if}

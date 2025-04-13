@@ -46,14 +46,16 @@
           </TruncatedText>
         </div>
         <div role="none" class="meta">
-          {$_('file_meta', {
-            values: {
-              type: $_(`file_type_labels.${file.type.split('/')[1]}`, {
-                default: getPathInfo(name).extension?.toUpperCase(),
-              }),
-              size: $appLocale ? formatSize(size) : '',
-            },
-          })}
+          {#key $appLocale}
+            {$_('file_meta', {
+              values: {
+                type: $_(`file_type_labels.${file.type.split('/')[1]}`, {
+                  default: getPathInfo(name).extension?.toUpperCase(),
+                }),
+                size: formatSize(size),
+              },
+            })}
+          {/key}
           {#if originalFile && originalFile.type !== file.type}
             {$_('file_meta_converted_from_x', {
               values: {
