@@ -239,7 +239,7 @@
           {@const formattedSummary = _formatSummary()}
           {#if formattedSummary}
             <div role="none" class="summary" id="object-{widgetId}-summary">
-              <TruncatedText lines={isSmallScreen ? 2 : 1}>
+              <TruncatedText lines={$isSmallScreen ? 2 : 1}>
                 {formattedSummary}
               </TruncatedText>
             </div>
