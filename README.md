@@ -592,6 +592,8 @@ While Sveltia CMS is built with Svelte, the application is **framework-agnostic*
 
 You can use the CMS with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 
+We have added support for features required by certain frameworks, such as [index file inclusion](#editing-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, and [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific needs.
+
 ### Browser support
 
 Sveitia CMS works with all modern browsers, but there are a few limitations because it utilizes some new web technologies:
