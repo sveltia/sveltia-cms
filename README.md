@@ -359,8 +359,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - JSON/TOML/YAML data is saved with a new line at the end of the file to prevent unnecessary changes being made to the file.[^11]
 - Leading/trailing whitespaces in text-type field values are automatically removed when you save an entry.[^37]
 - YAML string folding (maximum line width) is disabled, mainly for framework compatibility.[^119]
+- A standard time is formatted as `HH:mm:ss` instead of `HH:mm` for framework compatibility.
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML.[^147]
-- In a JSON/YAML output, a standard time is formatted as `HH:mm:ss` instead of `HH:mm` for framework compatibility.
 - Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes.[^155][^9]
   - The `yaml_quote` collection option added in [v0.5.10](https://github.com/sveltia/sveltia-cms/releases/tag/v0.5.10) is now deprecated and will be removed in v1.0.0. `yaml_quote: true` is equivalent to `quote: double` in the new YAML format options.
 
@@ -592,7 +592,7 @@ While Sveltia CMS is built with Svelte, the application is **framework-agnostic*
 
 You can use the CMS with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 
-We have added support for features required by certain frameworks, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, and [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific needs.
+We have added support for features required by certain frameworks, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, as well as [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific needs.
 
 ### Browser support
 
@@ -836,10 +836,10 @@ collections:
       ...
     index_file:
       name: _index # File name, required
-      fields: # Fields for the index file. If omitted, regular fields are used
+      fields: # Fields for the index file. If omitted, regular entry fields are used
         ...
       editor:
-        preview: false # Hide preview, optional
+        preview: false # Hide the preview pane, optional
 ```
 
 ### Using keyboard shortcuts
