@@ -4,9 +4,13 @@
 
 Since Sveltia CMS is still its early stages, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
 
+## Feature requests
+
+You can also [request new features](https://github.com/sveltia/sveltia-cms/issues/new?type=feature), but we may not be able to work on it in the near future due to heavy workload. Keep in mind that even though there are only a handful of issues in [our repository](https://github.com/sveltia/sveltia-cms/issues?q=is%3Aissue%20state%3Aopen%20type%3AFeature), we mostly track [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues?q=label%3A%22type%3A%20feature%22%20OR%20label%3A%22kind%3A%20feature%22), which means we have tons of things to do.
+
 ## Code contributions
 
-Due to limited review resources and the ongoing technical upgrades across the codebase, pull requests will not be accepted for the time being, except for trivial changes. Please file issues instead. We plan to create contributor documents after the 1.0 release.
+Due to limited review resources and ongoing technical upgrades across the codebase, pull requests will not be accepted for the time being, except for trivial changes such as fixing a typo, style, etc. Please file issues instead. We plan to create contributor documents after the 1.0 release.
 
 ## Localizations
 
