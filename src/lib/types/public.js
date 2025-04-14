@@ -784,7 +784,7 @@
  */
 
 /**
- * Index file editing options.
+ * Index file inclusion options.
  * @typedef {object} CollectionIndexFile
  * @property {string} name Index file name. Use `_index` for Hugo’s special index file.
  * @property {Field[]} [fields] Set of fields for the index file. If omitted, the regular entry
@@ -849,7 +849,7 @@
  * @property {NestedCollectionOptions} [nested] Options for a nested collection. Entry collection
  * only.
  * @property {CollectionMetaData} [meta] Meta data for a nested collection. Entry collection only.
- * @property {CollectionIndexFile} [index_file] Index file editing options. Entry collection only.
+ * @property {CollectionIndexFile} [index_file] Index file inclusion options. Entry collection only.
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`. DEPRECATED in favor of the global YAML format
  * options.

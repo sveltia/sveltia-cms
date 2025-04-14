@@ -7,7 +7,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 /**
  * Get the collection’s index file name.
  * @param {InternalCollection} collection Collection.
- * @returns {string | undefined} File name if index file editing is enabled.
+ * @returns {string | undefined} File name if index file inclusion is enabled.
  */
 export const getIndexFileName = (collection) => {
   const name = collection.index_file?.name;
@@ -20,8 +20,8 @@ export const getIndexFileName = (collection) => {
 };
 
 /**
- * Check if index file editing (for Hugo) is enabled for the collection, and the given entry is the
- * special index file.
+ * Check if index file inclusion (for Hugo) is enabled for the collection, and the given entry is
+ * the special index file.
  * @param {InternalCollection} collection Collection.
  * @param {Entry} entry Entry.
  * @returns {boolean} Result.

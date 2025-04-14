@@ -452,7 +452,7 @@
  * @property {string} [fileName] File identifier. File collection only.
  * @property {InternalCollectionFile} [collectionFile] File details. File collection only.
  * @property {Field[]} fields Field definition for the collection or collection file. If index file
- * editing is enabled and the draft is the index file, it will be the index file’s fields.
+ * inclusion is enabled and the draft is the index file, it will be the index file’s fields.
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
  * @property {LocaleStateMap} originalLocales Original locale state at the time of draft creation.
  * @property {LocaleStateMap} currentLocales Current locale state.
