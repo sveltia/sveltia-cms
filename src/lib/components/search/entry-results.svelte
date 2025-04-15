@@ -3,24 +3,41 @@
   import { _ } from 'svelte-i18n';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryResultItem from '$lib/components/search/entry-result-item.svelte';
-  import { searchResults, searchTerms } from '$lib/services/search';
+  import { announcedPageStatus } from '$lib/services/app/navigation';
+  import { entrySearchResults, searchTerms } from '$lib/services/search';
 
   /**
    * @import { Entry } from '$lib/types/private';
    */
+
+  $effect(() => {
+    const entryCount = $entrySearchResults.length;
+
+    $announcedPageStatus = $_('viewing_entry_search_results', {
+      values: {
+        terms: $searchTerms,
+        entries:
+          entryCount > 1
+            ? $_('many_entries', { values: { count: entryCount } })
+            : entryCount === 1
+              ? $_('one_entry')
+              : $_('no_entries'),
+      },
+    });
+  });
 </script>
 
 <Group aria-labelledby="search-results-entries">
   <h3 role="none" id="search-results-entries">{$_('entries')}</h3>
   <div role="none">
-    {#if $searchResults.entries.length}
+    {#if $entrySearchResults.length}
       <ListingGrid
         viewType="list"
         aria-label={$_('entries')}
-        aria-rowcount={$searchResults.entries.length}
+        aria-rowcount={$entrySearchResults.length}
       >
         {#key $searchTerms}
-          <InfiniteScroll items={$searchResults.entries} itemKey="id">
+          <InfiniteScroll items={$entrySearchResults} itemKey="id">
             {#snippet renderItem(/** @type {Entry} */ entry)}
               <EntryResultItem {entry} />
             {/snippet}

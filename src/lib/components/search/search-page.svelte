@@ -7,8 +7,8 @@
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import SearchResults from '$lib/components/search/search-results.svelte';
-  import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
-  import { searchMode, searchResults, searchTerms } from '$lib/services/search';
+  import { goto, parseLocation } from '$lib/services/app/navigation';
+  import { searchMode, searchTerms } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const routeRegex = /^\/search\/(?<terms>.+)$/;
@@ -25,28 +25,6 @@
     }
 
     $searchMode ??= 'entries';
-
-    const { entries, assets } = $searchResults;
-    const entryCount = entries.length;
-    const assetCount = assets.length;
-
-    $announcedPageStatus = $_('viewing_search_results', {
-      values: {
-        terms: $searchTerms,
-        entries:
-          entryCount > 1
-            ? $_('many_entries', { values: { count: entryCount } })
-            : entryCount === 1
-              ? $_('one_entry')
-              : $_('no_entries'),
-        assets:
-          assetCount > 1
-            ? $_('many_assets', { values: { count: assetCount } })
-            : assetCount === 1
-              ? $_('one_asset')
-              : $_('no_assets'),
-      },
-    });
   };
 
   onMount(() => {

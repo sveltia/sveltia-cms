@@ -34,14 +34,14 @@ export const normalize = (value) =>
     .toLocaleLowerCase();
 
 /**
- * Hold search results for the current search terms.
- * @type {Readable<{ entries: Entry[], assets: Asset[] }>}
+ * Hold entry search results for the current search terms.
+ * @type {Readable<Entry[]>}
  * @todo Search relation fields.
  */
-export const searchResults = derived(
+export const entrySearchResults = derived(
   // Include `appLocale` as a dependency because `getEntrySummary()` may return a localized label
-  [allEntries, allAssets, searchTerms, appLocale],
-  ([_allEntries, _allAssets, _searchTerms], set) => {
+  [allEntries, searchTerms, appLocale],
+  ([_allEntries, _searchTerms], set) => {
     const terms = _searchTerms ? normalize(_searchTerms) : '';
     /**
      * Check if the given label matches the search terms.
@@ -91,6 +91,19 @@ export const searchResults = derived(
         .map((result) => result.entry);
     })();
 
+    set(entries);
+  },
+);
+
+/**
+ * Hold asset search results for the current search terms.
+ * @type {Readable<Asset[]>}
+ */
+export const assetSearchResults = derived(
+  [allAssets, searchTerms],
+  ([_allAssets, _searchTerms], set) => {
+    const terms = _searchTerms ? normalize(_searchTerms) : '';
+
     const assets = (() => {
       if (!_allAssets.length || !terms) {
         return [];
@@ -99,6 +112,6 @@ export const searchResults = derived(
       return _allAssets.filter((asset) => normalize(asset.name).includes(terms));
     })();
 
-    set({ entries, assets });
+    set(assets);
   },
 );

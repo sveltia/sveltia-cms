@@ -214,8 +214,10 @@ export const strings = {
   back_to_asset_folder_list: 'アセットフォルダーリストへ戻る',
   search_results: '検索結果',
   search_results_for_x: '「{terms}」の検索結果',
-  viewing_search_results:
-    '「{terms}」の検索結果を表示しています。{entries} と {assets} が見つかりました。',
+  viewing_entry_search_results:
+    '「{terms}」の検索結果を表示しています。{entries} が見つかりました。',
+  viewing_asset_search_results:
+    '「{terms}」の検索結果を表示しています。{assets} が見つかりました。',
   many_entries: '{count} 個のエントリー',
   one_entry: '1 個のエントリー',
   no_entries: '0 個のエントリー',

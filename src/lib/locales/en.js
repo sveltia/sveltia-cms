@@ -214,8 +214,10 @@ export const strings = {
   back_to_asset_folder_list: 'Back to Asset Folder List',
   search_results: 'Search Results',
   search_results_for_x: 'Search Results for “{terms}”',
-  viewing_search_results:
-    'You’re now viewing search results for “{terms}”. We’ve found {entries} and {assets}.',
+  viewing_entry_search_results:
+    'You’re now viewing search results for “{terms}”. We’ve found {entries}.',
+  viewing_asset_search_results:
+    'You’re now viewing search results for “{terms}”. We’ve found {assets}.',
   many_entries: '{count} entries',
   one_entry: 'one entry',
   no_entries: 'no entries',
