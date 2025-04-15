@@ -343,8 +343,7 @@
         flex: none;
         width: 160px !important;
         height: 160px !important;
-        border-width: 1px;
-        border-color: var(--sui-control-border-color);
+        border-color: var(--sui-control-border-color) !important;
         border-radius: var(--sui-control-medium-border-radius);
 
         &.no-thumbnail {

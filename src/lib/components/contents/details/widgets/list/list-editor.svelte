@@ -186,16 +186,21 @@
         ? (types?.find(({ name }) => name === type)?.fields ?? [])
         : (fields ?? (field ? [field] : []));
 
-      const newItem =
-        typeof dupIndex === 'number'
-          ? structuredClone(valueList[dupIndex])
-          : unflatten(getDefaultValues(subFields, locale));
+      const newItem = (() => {
+        if (typeof dupIndex === 'number') {
+          return structuredClone(valueList[dupIndex]);
+        }
+
+        const item = unflatten(getDefaultValues(subFields, locale));
+
+        return hasSingleSubField && field ? item[field.name] : item;
+      })();
 
       if (type) {
         newItem[typeKey] = type;
       }
 
-      valueList.splice(index, 0, hasSingleSubField && field ? newItem[field.name] : newItem);
+      valueList.splice(index, 0, newItem);
       expanderStateList.splice(index, 0, true);
     });
   };
