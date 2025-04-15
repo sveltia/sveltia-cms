@@ -161,6 +161,7 @@
   :global {
     html:active-view-transition-type(forwards) {
       &::view-transition-old(page-root) {
+        z-index: 999;
         animation: 100ms ease-out both slide-out-to-left;
 
         @media (prefers-reduced-motion) {
@@ -169,6 +170,7 @@
       }
 
       &::view-transition-new(page-root) {
+        z-index: 1000;
         animation: 100ms ease-out both slide-in-from-right;
 
         @media (prefers-reduced-motion) {
@@ -179,6 +181,7 @@
 
     html:active-view-transition-type(backwards) {
       &::view-transition-old(page-root) {
+        z-index: 1000;
         animation: 100ms ease-out both slide-out-to-right;
 
         @media (prefers-reduced-motion) {
@@ -187,6 +190,7 @@
       }
 
       &::view-transition-new(page-root) {
+        z-index: 999;
         animation: 100ms ease-out both slide-in-from-left;
 
         @media (prefers-reduced-motion) {

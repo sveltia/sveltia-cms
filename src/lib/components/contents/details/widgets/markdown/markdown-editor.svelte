@@ -148,5 +148,20 @@
         }
       }
     }
+
+    :global {
+      @media (width < 768px) {
+        .sui.text-editor {
+          // Remove the section margin
+          margin: 0 -16px -16px;
+          width: auto;
+        }
+
+        :is(.sui.toolbar, .lexical-root, textarea) {
+          border: 0;
+          border-radius: 0;
+        }
+      }
+    }
   }
 </style>
