@@ -79,7 +79,9 @@ export const entrySearchResults = derived(
 
             Object.values(entry.locales).forEach(({ content }) => {
               points += Object.values(content).filter(
-                (value) => typeof value === 'string' && !!value && hasMatch(value),
+                (value) =>
+                  (typeof value === 'string' && !!value && hasMatch(value)) ||
+                  (typeof value === 'number' && hasMatch(String(value))),
               ).length;
             });
           });
