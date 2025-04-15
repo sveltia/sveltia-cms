@@ -19,7 +19,7 @@
   /**
    * @import { Component } from 'svelte';
    * @import { Writable } from 'svelte/store';
-   * @import { InternalLocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode, WidgetContext } from '$lib/types/private';
    * @import {
    * BooleanField,
    * Field,
@@ -38,6 +38,7 @@
    * @property {InternalLocaleCode} locale Current pane’s locale.
    * @property {FieldKeyPath} keyPath Field key path.
    * @property {Field} fieldConfig Field configuration.
+   * @property {WidgetContext} [context] Where the widget is rendered.
    */
 
   /** @type {Props} */
@@ -46,6 +47,7 @@
     locale,
     keyPath,
     fieldConfig,
+    context = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -267,6 +269,7 @@
           {readonly}
           {required}
           {invalid}
+          {context}
         />
       {:else}
         {#if beforeInputLabel}
@@ -286,6 +289,7 @@
           {readonly}
           {required}
           {invalid}
+          {context}
         />
         {#if suffix}
           <div role="none" class="suffix">{suffix}</div>

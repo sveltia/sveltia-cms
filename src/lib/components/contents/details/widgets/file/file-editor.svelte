@@ -51,7 +51,7 @@
     required = true,
     readonly = false,
     invalid = false,
-    inEditorComponent = false,
+    context = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -85,6 +85,10 @@
   const { maxFileSize, fileTransformations } = $derived(getMediaLibraryConfig({ fieldConfig }));
   const collection = $derived($entryDraft?.collection);
   const entry = $derived($entryDraft?.originalEntry);
+  const showRemoveButton = $derived(
+    !required &&
+      (!context || !['markdown-editor-component', 'single-field-list-widget'].includes(context)),
+  );
 
   /**
    * Reset the current selection.
@@ -245,7 +249,7 @@
               showSelectAssetsDialog = true;
             }}
           />
-          {#if !inEditorComponent}
+          {#if showRemoveButton}
             <Button
               disabled={readonly}
               variant="tertiary"

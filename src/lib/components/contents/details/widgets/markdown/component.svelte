@@ -141,7 +141,7 @@
               fieldId={generateElementId('field')}
               fieldLabel={fieldLabel ?? name}
               fieldConfig={{ name, widget }}
-              inEditorComponent={true}
+              context="markdown-editor-component"
               bind:currentValue={inputValues[name]}
               {...rest}
             />

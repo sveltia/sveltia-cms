@@ -6,7 +6,6 @@
 <script>
   import {
     Button,
-    Divider,
     Group,
     Icon,
     Menu,
@@ -436,11 +435,20 @@
                         onclick={() => addItem({ index: index + 1 })}
                       />
                     {/if}
-                    <Divider />
-                    <MenuItem label={$_('remove')} onclick={() => removeItem(index)} />
                   </Menu>
                 {/snippet}
               </MenuButton>
+              <Button
+                variant="ghost"
+                size="small"
+                iconic
+                aria-label={$_('remove')}
+                onclick={() => removeItem(index)}
+              >
+                {#snippet startIcon()}
+                  <Icon name="close" />
+                {/snippet}
+              </Button>
             {/snippet}
           </ObjectHeader>
           <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
@@ -453,6 +461,7 @@
                       : `${keyPath}.${index}.${subField.name}`}
                     {locale}
                     fieldConfig={subField}
+                    context={hasSingleSubField ? 'single-field-list-widget' : undefined}
                   />
                 {/await}
               {/each}

@@ -679,6 +679,11 @@
  */
 
 /**
+ * Context for a widget, which may change the behavior of the editor/preview.
+ * @typedef {'markdown-editor-component' | 'single-field-list-widget'} WidgetContext
+ */
+
+/**
  * Common properties to be passed to a field widget’s editor component.
  * @typedef {object} WidgetEditorProps
  * @property {InternalLocaleCode} locale Current pane’s locale.
@@ -688,8 +693,7 @@
  * @property {boolean} [required] Whether to mark the field required.
  * @property {boolean} [readonly] Whether to mark the field read-only.
  * @property {boolean} [invalid] Whether to mark the field invalid.
- * @property {boolean} [inEditorComponent] Whether the widget is used in the Markdown widget’s
- * editor component.
+ * @property {WidgetContext} [context] Where the widget is rendered.
  */
 
 /**
@@ -697,6 +701,7 @@
  * @typedef {object} WidgetPreviewProps
  * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
+ * @property {WidgetContext} [context] Where the widget is rendered.
  */
 
 /**
