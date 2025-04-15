@@ -51,12 +51,15 @@
     :global {
       .row-group-caption {
         display: block;
-        margin: 8px;
         grid-column: 1 / -1; // span the entire row
 
         th {
           display: block;
         }
+      }
+
+      .row-group:not(:first-child) .row-group-caption {
+        margin-top: 16px;
       }
 
       .grid-body {
@@ -158,10 +161,6 @@
           &:last-child .grid-cell {
             border-width: 1px 0;
           }
-        }
-
-        [role='rowheader'] {
-          border-width: 0;
         }
 
         .grid-cell {
