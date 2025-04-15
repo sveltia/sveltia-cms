@@ -238,7 +238,7 @@
                 id="left-pane-body"
                 thisPane={editorLeftPane}
                 bind:thisPaneContentArea={leftPaneContentArea}
-                thatPaneContentArea={rightPaneContentArea}
+                bind:thatPaneContentArea={rightPaneContentArea}
               />
             </Group>
           {/if}
@@ -260,7 +260,7 @@
                 id="right-pane-body"
                 thisPane={editorRightPane}
                 bind:thisPaneContentArea={rightPaneContentArea}
-                thatPaneContentArea={leftPaneContentArea}
+                bind:thatPaneContentArea={leftPaneContentArea}
               />
             </Group>
           {/if}
