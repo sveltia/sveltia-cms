@@ -264,9 +264,11 @@ let thumbnailDB = undefined;
 /**
  * Get a thumbnail image for the given asset.
  * @param {Asset} asset Asset.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.cacheOnly] Whether to search a thumbnail in the cache database only.
  * @returns {Promise<string | undefined>} Thumbnail blob URL.
  */
-export const getAssetThumbnailURL = async (asset) => {
+export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) => {
   const isPDF = asset.name.endsWith('.pdf');
 
   if (!(['image', 'video'].includes(asset.kind) || isPDF)) {
@@ -284,6 +286,10 @@ export const getAssetThumbnailURL = async (asset) => {
   let thumbnailBlob = await thumbnailDB?.get(asset.sha);
 
   if (!thumbnailBlob) {
+    if (cacheOnly) {
+      return undefined;
+    }
+
     const blob = await getAssetBlob(asset);
     /** @type {InternalImageTransformationOptions} */
     const options = { format: 'webp', quality: 85, width: 512, height: 512, fit: 'contain' };

@@ -56,6 +56,7 @@ export const strings = {
   api_key: 'API キー',
   details: '詳細',
   back: '戻る',
+  loading: '読み込み中…',
 
   // Common errors
   clipboard_error: 'データのコピー中に問題が発生しました。',

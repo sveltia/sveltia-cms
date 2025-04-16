@@ -1,6 +1,7 @@
 <script>
   import { Icon } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
+  import { _ } from 'svelte-i18n';
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets';
 
   /**
@@ -48,6 +49,8 @@
   let mediaElement = $state();
   let hasError = $state(false);
   let loaded = $state(false);
+  /** @type {string | undefined} */
+  let blurImageURL = $state();
 
   const isThumbnail = $derived(!!asset && !!variant && !controls);
   const isImage = $derived(isThumbnail || kind === 'image' || asset?.name.endsWith('.pdf'));
@@ -73,6 +76,10 @@
       src = isThumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
     } catch {
       hasError = true;
+    }
+
+    if (blurBackground && !blurImageURL && src) {
+      blurImageURL = src;
     }
 
     updatingSrc = false;
@@ -117,13 +124,23 @@
   };
 
   $effect(() => {
-    void [mediaElement, asset];
-    updateSrc();
+    if (asset && !blurImageURL) {
+      (async () => {
+        blurImageURL = await getAssetThumbnailURL(asset, { cacheOnly: true });
+      })();
+    }
   });
 
   $effect(() => {
-    void [mediaElement, src];
-    checkLoaded();
+    if (mediaElement && asset) {
+      updateSrc();
+    }
+  });
+
+  $effect(() => {
+    if (mediaElement && src) {
+      checkLoaded();
+    }
   });
 </script>
 
@@ -154,13 +171,12 @@
   {/if}
   {#if blurBackground}
     <div role="none" class="blur">
-      <div role="none" class="overlay"></div>
-      {#if kind === 'video'}
-        <!-- svelte-ignore a11y_media_has_caption -->
-        <video {src} playsinline></video>
-      {:else}
-        <img {loading} {src} alt="" />
-      {/if}
+      <div role="status" class="overlay">
+        {#if !isThumbnail && !loaded}
+          {$_('loading')}
+        {/if}
+      </div>
+      <img role="none" loading="lazy" src={blurImageURL} alt="" class:loaded={!!blurImageURL} />
     </div>
   {/if}
 </div>
@@ -207,16 +223,23 @@
       }
 
       .overlay {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         z-index: -1;
         backdrop-filter: blur(32px) brightness(0.8);
       }
 
-      :is(:global(img, video)) {
+      img {
         width: 100%;
         height: 100%;
         z-index: -2;
         object-fit: cover;
         transform: scale(1.2);
+
+        &.loaded {
+          opacity: 1;
+        }
       }
     }
 
