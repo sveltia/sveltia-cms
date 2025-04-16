@@ -180,7 +180,7 @@
           }
 
           &.checkbox {
-            padding-left: 8px;
+            padding-left: 8px !important;
             width: 44px;
           }
 
