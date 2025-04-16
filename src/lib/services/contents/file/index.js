@@ -90,10 +90,11 @@ const detectFileFormat = ({ extension, format }) => {
  * @param {FileFormat} args.format File format.
  * @param {string} args.basePath Normalized `folder` collection option.
  * @param {string} [args.subPath] Normalized `path` collection option.
+ * @param {string} [args.indexFileName] File name for index file inclusion. Typically `_index`.
  * @param {InternalI18nOptions} args._i18n I18n configuration.
  * @returns {RegExp} Regular expression.
  */
-const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
+const getEntryPathRegEx = ({ extension, format, basePath, subPath, indexFileName, _i18n }) => {
   const { i18nEnabled, structure, allLocales } = _i18n;
   const i18nMultiFile = i18nEnabled && structure === 'multiple_files';
   const i18nMultiFolder = i18nEnabled && structure === 'multiple_folders';
@@ -106,7 +107,9 @@ const getEntryPathRegEx = ({ extension, format, basePath, subPath, _i18n }) => {
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    */
   const filePathMatcher = subPath
-    ? `(?<subPath>${subPath.replace(/\//g, '\\/').replace(/{{.+?}}/g, '[^/]+')})`
+    ? `(?<subPath>${subPath
+        .replace(/\//g, '\\/')
+        .replace(/{{.+?}}/g, '[^/]+')}${indexFileName ? `|${indexFileName}` : ''})`
     : '(?<subPath>.+)';
 
   const localeMatcher = `(?<locale>${allLocales.join('|')})`;
@@ -181,6 +184,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     format: _format,
     frontmatter_delimiter: delimiter,
     yaml_quote: yamlQuote,
+    index_file: indexFile,
   } = rawCollection;
 
   const isEntryCollection = typeof folder === 'string';
@@ -188,6 +192,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   const extension = detectFileExtension({ format: _format, extension: _extension, path: filePath });
   const format = detectFileFormat({ format: _format, extension });
   const basePath = isEntryCollection ? stripSlashes(folder) : undefined;
+  const indexFileName = isEntryCollection ? indexFile?.name : undefined;
 
   if (yamlQuote !== undefined && !yamlQuoteWarnedOnce) {
     yamlQuoteWarnedOnce = true;
@@ -206,7 +211,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     subPath: isEntryCollection ? subPath : undefined,
     fullPathRegEx:
       basePath !== undefined
-        ? getEntryPathRegEx({ extension, format, basePath, subPath, _i18n })
+        ? getEntryPathRegEx({ extension, format, basePath, subPath, indexFileName, _i18n })
         : undefined,
     fullPath: filePath
       ? stripSlashes(filePath).replace('{{locale}}', _i18n.defaultLocale)

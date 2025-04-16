@@ -180,21 +180,23 @@ const createEntryPath = ({ draft, locale, slug }) => {
   const {
     _file: { basePath, subPath, extension },
     _i18n: { defaultLocale, structure },
+    index_file: indexFile,
   } = _collection;
 
   /**
    * Support folder collections path.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    */
-  const path = subPath
-    ? fillSlugTemplate(subPath, {
-        collection: _collection,
-        locale,
-        content: currentValues[defaultLocale],
-        currentSlug: slug,
-        isIndexFile,
-      })
-    : slug;
+  const path = isIndexFile
+    ? /** @type {string} */ (indexFile?.name)
+    : subPath
+      ? fillSlugTemplate(subPath, {
+          collection: _collection,
+          locale,
+          content: currentValues[defaultLocale],
+          currentSlug: slug,
+        })
+      : slug;
 
   const pathOptions = {
     multiple_folders: `${basePath}/${locale}/${path}.${extension}`,
