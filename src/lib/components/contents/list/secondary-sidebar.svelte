@@ -7,7 +7,7 @@
   import { allAssets, uploadingAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView } from '$lib/services/contents/collection/view';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
+  import { isLargeScreen } from '$lib/services/user/env';
 
   const internalPath = $derived($selectedCollection?._assetFolder?.internalPath);
   const entryRelative = $derived($selectedCollection?._assetFolder?.entryRelative);
@@ -15,13 +15,8 @@
   const uploadDisabled = $derived(!!entryRelative);
 </script>
 
-{#if internalPath}
-  <Group
-    id="collection-assets"
-    class="secondary-sidebar"
-    hidden={$isSmallScreen || $isMediumScreen || !$currentView.showMedia}
-    aria-label={$_('collection_assets')}
-  >
+{#if internalPath && $isLargeScreen && $currentView.showMedia}
+  <Group id="collection-assets" class="secondary-sidebar" aria-label={$_('collection_assets')}>
     <DropZone
       disabled={uploadDisabled}
       multiple={true}
