@@ -47,17 +47,19 @@
 </script>
 
 <div role="none" class="wrapper">
-  <SearchBar
-    bind:this={searchBar}
-    keyShortcuts="Accel+F"
-    placeholder={$_(`search_placeholder_${$searchMode}`)}
-    --sui-textbox-placeholder-text-align="center"
-    {onclick}
-    oninput={({ target }) => {
-      // @todo Implement quick search dropdown.
-      navigate(/** @type {HTMLInputElement} */ (target).value.trim());
-    }}
-  />
+  {#if $searchMode}
+    <SearchBar
+      bind:this={searchBar}
+      keyShortcuts="Accel+F"
+      placeholder={$_(`search_placeholder_${$searchMode}`)}
+      --sui-textbox-placeholder-text-align="center"
+      {onclick}
+      oninput={({ target }) => {
+        // @todo Implement quick search dropdown.
+        navigate(/** @type {HTMLInputElement} */ (target).value.trim());
+      }}
+    />
+  {/if}
 </div>
 
 <style lang="scss">
