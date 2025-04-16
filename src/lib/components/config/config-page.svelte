@@ -22,7 +22,8 @@
   pre {
     margin: 0;
     padding: 16px;
-    width: fit-content;
+    width: 100%;
+    min-width: fit-content;
     background-color: var(--sui-primary-background-color);
   }
 </style>
