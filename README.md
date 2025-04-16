@@ -624,7 +624,7 @@ Here are some starter kits for popular frameworks created by community members. 
   - [Eleventy starter template](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
 - Hugo
   - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
-  - [hugolify-sveltia-cms](https://github.com/Hugolify/hugolify-sveltia-cms/) by [@sebousan](https://github.com/sebousan)
+  - [hugolify-admin](https://github.com/Hugolify/hugolify-admin) by [@sebousan](https://github.com/sebousan)
 
 The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/start-with-a-template/) and [examples](https://decapcms.org/docs/examples/). You can probably use one of them and switch to Sveltia CMS.
 
