@@ -183,6 +183,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Uploading files can be done with drag and drop.[^20]
 - Users can upload multiple files at once to the Asset Library.[^5]
 - Users can delete multiple entries and assets at once.
+- Instant full-text search is sorted by relevance, so you can find entries faster.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
 
 ### Better accessibility
@@ -320,7 +321,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can select multiple entries and delete them at once.
   - In an entry summary, basic Markdown syntax used in the title, including bold, italic and code, are parsed as Markdown. HTML character references (entities) are also parsed properly.[^69]
   - If you update an entry field that appears in the collection’s `summary`, such as `title`, the entry list displays an updated summary after you save the entry.[^159]
-  - If entries don’t have an Image field for thumbnails, the entry list will only be displayed in list view, because it doesn’t make sense to show grid view.[^143]
+  - Thumbnails of entries are displayed not only in the grid view but also in the list view, making it easier to navigate.
+  - If entries don’t have an Image field for thumbnails, the entry list will only be displayed in the list view, because it doesn’t make sense to show the grid view.[^143]
   - Assets stored in a [collection media folder](#using-a-custom-media-folder-for-a-collection) can be displayed next to the entries.
   - The New Entry button won’t appear when a developer accidentally sets the `create: true` option on a file collection because it’s useless.[^89]
   - The Delete Entry button won’t appear when a developer accidentally sets the `delete: true` option on a file collection because the preconfigured files should not be deleted.
@@ -843,7 +845,7 @@ collections:
         preview: false # Hide the preview pane, optional
 ```
 
-Note that the index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, while the index file remains at `contents/posts/_index.md`.
+Note that the index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, while the index file remains at `content/posts/_index.md`.
 
 ### Using keyboard shortcuts
 
