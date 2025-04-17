@@ -126,7 +126,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 190+ issues, or 390+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 190+ issues, or 395+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA (almost there)
     - 350 issues, or 600 if including duplicates, in the future
@@ -398,6 +398,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can enter spaces in a simple text-based List field.[^50]
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
+  - A Markdown field plays well with a variable type List field.[^202]
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
@@ -841,6 +842,8 @@ collections:
       editor:
         preview: false # Hide the preview pane, optional
 ```
+
+Note that the index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, while the index file remains at `contents/posts/_index.md`.
 
 ### Using keyboard shortcuts
 
@@ -1710,3 +1713,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^200]: Netlify/Decap CMS [#1322](https://github.com/decaporg/decap-cms/issues/1322), [#6442](https://github.com/decaporg/decap-cms/issues/6442)
 
 [^201]: Netlify/Decap CMS [#7381](https://github.com/decaporg/decap-cms/issues/7381)
+
+[^202]: Netlify/Decap CMS [#7458](https://github.com/decaporg/decap-cms/issues/7458)
