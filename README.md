@@ -627,9 +627,7 @@ Or try one of the starter kits for popular frameworks created by community membe
   - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
   - [hugolify-admin](https://github.com/Hugolify/hugolify-admin) by [@sebousan](https://github.com/sebousan)
 
-_Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team._
-
-The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/start-with-a-template/) and [examples](https://decapcms.org/docs/examples/). You can probably use one of them and switch to Sveltia CMS.
+The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/start-with-a-template/) and [examples](https://decapcms.org/docs/examples/). You can probably use one of them and switch to Sveltia CMS. (Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team.)
 
 Unfortunately, we are unable to provide free installation and setup support at this time. As the product evolves, we’ll provide a built-in configuration editor, comprehensive documentation and official starter kits to make it easier for everyone to get started with Sveltia CMS.
 
@@ -759,8 +757,8 @@ In the Brave browser, you must enable the File System Access API with an experim
 
 You can specify an icon for each collection for easy identification in the collection list. You don’t need to install a custom icon set because the Material Symbols font file is already loaded for the application UI. Just pick one of the 2,500+ icons:
 
-1. Visit the [Material Symbols](https://fonts.google.com/icons?icon.set=Material+Symbols&icon.platform=android) page on Google Fonts.
-1. Search and select an icon, and copy the icon name displayed on the right panel.
+1. Visit the [Material Symbols](https://fonts.google.com/icons?icon.set=Material+Symbols&icon.platform=web) page on Google Fonts.
+1. Browse and select an icon, and copy the icon name that appears at the bottom of the right pane.
 1. Add it to one of your collection definitions in `config.yml` as the new `icon` property, like the example below.
 1. Repeat the same steps for all the collections if desired.
 1. Commit and push the changes to your Git repository.
