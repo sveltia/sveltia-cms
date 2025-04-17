@@ -183,7 +183,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Uploading files can be done with drag and drop.[^20]
 - Users can upload multiple files at once to the Asset Library.[^5]
 - Users can delete multiple entries and assets at once.
-- Instant full-text search is sorted by relevance, so you can find entries faster.
+- Instant full-text search with results sorted by relevance helps you find entries faster.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
 
 ### Better accessibility
