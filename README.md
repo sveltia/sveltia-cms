@@ -234,7 +234,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
-- The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] Persistent storage is not yet supported in Safari.
+- The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] Persistent storage works with all modern browsers except Safari.
 
 ### Better i18n support
 
@@ -521,7 +521,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **The Azure, Bitbucket, Forgejo and Git Gateway backends**: For performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
+- **The Azure, Bitbucket, Forgejo and Git Gateway backends**: For performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future. We may also support the other platforms if their APIs improve to allow the CMS to fetch multiple entries at once. The Gitea backend [may be implemented](https://github.com/sveltia/sveltia-cms/issues/198), but it won’t be compatible with Forgejo due to API differences.
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service: Consider other storage providers.
@@ -616,9 +616,7 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page and choose the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend instead. Then migrate to Sveltia CMS as described below.
 
-Unfortunately, we are unable to provide free installation and setup support at this time. As the product evolves, we’ll implement a built-in configuration editor and provide comprehensive documentation to make it easier for everyone to get started with Sveltia CMS.
-
-Here are some starter kits for popular frameworks created by community members. More to come! (Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team.)
+Or try one of the starter kits for popular frameworks created by community members:
 
 - Astro
   - [astro-sveltia-cms](https://github.com/majesticostudio/astro-sveltia-cms), [astro-starter](https://github.com/zankhq/astro-starter) and [astros](https://github.com/zankhq/astros) by [@zanhk](https://github.com/zanhk)
@@ -629,7 +627,11 @@ Here are some starter kits for popular frameworks created by community members. 
   - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
   - [hugolify-admin](https://github.com/Hugolify/hugolify-admin) by [@sebousan](https://github.com/sebousan)
 
+_Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team._
+
 The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/start-with-a-template/) and [examples](https://decapcms.org/docs/examples/). You can probably use one of them and switch to Sveltia CMS.
+
+Unfortunately, we are unable to provide free installation and setup support at this time. As the product evolves, we’ll provide a built-in configuration editor, comprehensive documentation and official starter kits to make it easier for everyone to get started with Sveltia CMS.
 
 ### Migration
 
@@ -828,7 +830,7 @@ For backward compatibility with [Static CMS](https://staticjscms.netlify.app/doc
 
 ### Including Hugo’s special index file in a folder collection
 
-Before this feature, Hugo’s [special `_index.md` file](https://gohugo.io/content-management/organization/#index-pages-_indexmd) was hidden in a folder collection, and you had to create a file collection to manage the file, since it usually comes with a different set of fields than regular entry fields. Now, with the new `index_file` option, you can include the index file inside a folder collection, above regular entries, for easier editing:
+Before this feature, Hugo’s [special `_index.md` file](https://gohugo.io/content-management/organization/#index-pages-_indexmd) was hidden in a folder collection, and you had to create a file collection to manage the file, since it usually comes with a different set of fields than regular entry fields. Now, with the new `index_file` option, you can add the index file to the corresponding folder collection, above regular entries, for easier editing:
 
 ```yaml
 collections:
@@ -842,10 +844,10 @@ collections:
       fields: # Fields for the index file. If omitted, regular entry fields are used
         ...
       editor:
-        preview: false # Hide the preview pane, optional
+        preview: false # Hide the preview pane if needed
 ```
 
-Note that the index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, while the index file remains at `content/posts/_index.md`.
+Note that the special index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, but the index file remains at `content/posts/_index.md`.
 
 ### Using keyboard shortcuts
 
@@ -1281,10 +1283,10 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ### After the 1.0 release
 
 - Implementing the [remaining Netlify/Decap CMS features](#current-limitations)
-- Tackling even more Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
-- AI integrations for image generation and content writing
+- AI integrations for image generation, content writing, etc.
 - Search enhancements
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - End-user documentation
@@ -1297,7 +1299,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 ## Trivia
 
 - The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. And now we are completely rewriting it in Svelte. So this is effectively the second time the application has gone through a framework migration.
-- Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is paramount to our rapid application development.
+- Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for improved DX, but also for our rapid application development.
 
 ## Related links
 
