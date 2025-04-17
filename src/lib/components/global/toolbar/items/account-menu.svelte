@@ -1,6 +1,8 @@
 <script>
   import { Divider, Menu, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import ReleaseNotesMenuItem from '$lib/components/help/release-notes-menu-item.svelte';
+  import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
   import SettingsDialog from '$lib/components/settings/settings-dialog.svelte';
   import { goto, openProductionSite } from '$lib/services/app/navigation';
   import { backend, backendName } from '$lib/services/backends';
@@ -72,6 +74,11 @@
       }
     }}
   />
+  <!-- @todo Remove the following 2 items when the Help menu is enabled -->
+  <ShortcutsMenuItem {menuButton} />
+  {#if $prefs.devModeEnabled}
+    <ReleaseNotesMenuItem />
+  {/if}
   <Divider />
   <MenuItem
     label={$_('sign_out')}

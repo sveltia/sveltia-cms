@@ -23,7 +23,10 @@
       <PublishButton />
       <CreateButton />
       <NotificationsButton />
-      <HelpButton />
+      <!-- @todo Show the Help menu when end user resources are prepared -->
+      {#if 0}
+        <HelpButton />
+      {/if}
       <AccountButton />
     </div>
   </Toolbar>

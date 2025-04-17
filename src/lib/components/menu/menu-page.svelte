@@ -22,10 +22,13 @@
             <h3>{$_('account')}</h3>
             <AccountMenu />
           </section>
-          <section>
-            <h3>{$_('help')}</h3>
-            <HelpMenu />
-          </section>
+          <!-- @todo Show the Help menu when end user resources are prepared -->
+          {#if 0}
+            <section>
+              <h3>{$_('help')}</h3>
+              <HelpMenu />
+            </section>
+          {/if}
         </div>
       {/snippet}
     </PageContainerMainArea>
