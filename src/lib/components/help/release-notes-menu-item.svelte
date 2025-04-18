@@ -11,7 +11,6 @@
     window.open('https://github.com/sveltia/sveltia-cms/releases', '_blank');
   }}
 >
-  <!-- eslint-disable-next-line no-shadow -->
   {#snippet endIcon()}
     {#if $prefs.devModeEnabled}
       <span class="version" aria-label="({$_('version_x', { values: { version } })})">
