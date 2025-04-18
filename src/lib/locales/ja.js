@@ -19,7 +19,7 @@ export const strings = {
   sign_in: 'ログイン',
   sign_in_with_mobile: 'モバイルでログイン',
   sign_in_with_mobile_instruction:
-    '以下の QR コードを携帯電話かタブレットでスキャンすると、パスワードなしでサインインできます。ユーザー設定は自動的にコピーされます。',
+    '以下の QR コードを携帯電話かタブレットでスキャンすると、パスワードなしでログインできます。ユーザー設定は自動的にコピーされます。',
   signed_in_as_x: '{name} としてログイン中',
   working_with_local_repo: 'ローカルレポジトリで作業中',
   working_with_test_repo: 'テストレポジトリで作業中',
