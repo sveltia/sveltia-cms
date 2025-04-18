@@ -37,10 +37,12 @@
 
 <Dialog
   title={$_('keyboard_shortcuts')}
+  size="small"
   bind:open
   showOk={false}
   showCancel={false}
   showClose={true}
+  style="--sui-dialog-small-content-max-height:auto"
   onClose={() => {
     onClose?.();
   }}
