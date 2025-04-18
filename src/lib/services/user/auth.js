@@ -2,10 +2,12 @@ import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
+import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
 import { user } from '$lib/services/user';
+import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -70,6 +72,32 @@ export const signInAutomatically = async () => {
   backendName.set(_backendName);
 
   const _backend = get(backend);
+  const { path } = parseLocation();
+  /** @type {Record<string, any> | undefined} */
+  let copiedPrefs = undefined;
+
+  // Support QR code authentication
+  if (!_user && _backend) {
+    const { encodedData } = path.match(/^\/signin\/(?<encodedData>.+)/)?.groups ?? {};
+
+    if (encodedData) {
+      goto('', { replaceState: true }); // Remove token from the URL
+
+      try {
+        const data = JSON.parse(atob(encodedData));
+
+        if (isObject(data) && typeof data.token === 'string') {
+          _user = { token: data.token };
+
+          if (isObject(data.prefs)) {
+            copiedPrefs = data.prefs;
+          }
+        }
+      } catch {
+        //
+      }
+    }
+  }
 
   if (_user && _backend) {
     try {
@@ -88,6 +116,11 @@ export const signInAutomatically = async () => {
 
   // Use the cached user to start fetching files
   user.set(_user);
+
+  // Copy user preferences passed with QR code
+  if (copiedPrefs) {
+    prefs.update((currentPrefs) => ({ ...currentPrefs, ...copiedPrefs }));
+  }
 
   try {
     await _backend.fetchFiles();

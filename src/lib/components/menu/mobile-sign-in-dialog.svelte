@@ -1,0 +1,40 @@
+<script>
+  import { Dialog } from '@sveltia/ui';
+  import QRCode from 'qrcode';
+  import { _ } from 'svelte-i18n';
+  import { showMobileSignInDialog } from '$lib/services/app/onboarding';
+  import { user } from '$lib/services/user';
+  import { prefs } from '$lib/services/user/prefs';
+
+  /** @type {HTMLCanvasElement | undefined} */
+  let canvas = $state();
+
+  $effect(() => {
+    if (canvas && $showMobileSignInDialog) {
+      const { origin, pathname } = window.location;
+      const encodedData = btoa(JSON.stringify({ token: $user?.token, prefs: $prefs }));
+
+      QRCode.toCanvas(canvas, `${origin}${pathname}#/signin/${encodedData}`);
+    }
+  });
+</script>
+
+<Dialog
+  bind:open={$showMobileSignInDialog}
+  title={$_('sign_in_with_mobile')}
+  size="small"
+  showCancel={false}
+  style="--sui-dialog-small-content-max-height:auto"
+>
+  <div>{$_('sign_in_with_mobile_instruction')}</div>
+  <canvas bind:this={canvas}></canvas>
+</Dialog>
+
+<style lang="scss">
+  canvas {
+    display: block;
+    margin: 16px auto 0;
+    width: 200px !important;
+    height: 200px !important;
+  }
+</style>

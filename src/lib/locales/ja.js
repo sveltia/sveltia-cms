@@ -17,6 +17,9 @@ export const strings = {
   user_name: 'ユーザー名',
   password: 'パスワード',
   sign_in: 'ログイン',
+  sign_in_with_mobile: 'モバイルでログイン',
+  sign_in_with_mobile_instruction:
+    '以下の QR コードを携帯電話かタブレットでスキャンすると、パスワードなしでサインインできます。ユーザー設定は自動的にコピーされます。',
   signed_in_as_x: '{name} としてログイン中',
   working_with_local_repo: 'ローカルレポジトリで作業中',
   working_with_test_repo: 'テストレポジトリで作業中',
@@ -130,6 +133,10 @@ export const strings = {
   share_feedback: 'フィードバックを共有',
   get_help: 'サポート',
   join_discord: 'Discord チャンネルに参加',
+
+  // Onboarding
+  mobile_promo_title: 'Sveltia CMS がモバイルに対応しました！',
+  mobile_promo_button: '試してみる',
 
   // Update notification
   update_available: 'Sveltia CMS の最新版が利用可能です。',

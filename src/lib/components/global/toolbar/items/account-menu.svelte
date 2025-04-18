@@ -5,6 +5,7 @@
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
   import SettingsDialog from '$lib/components/settings/settings-dialog.svelte';
   import { goto, openProductionSite } from '$lib/services/app/navigation';
+  import { canShowMobileSignInDialog, showMobileSignInDialog } from '$lib/services/app/onboarding';
   import { backend, backendName } from '$lib/services/backends';
   import { user } from '$lib/services/user';
   import { signOut } from '$lib/services/user/auth';
@@ -78,6 +79,14 @@
   <ShortcutsMenuItem {menuButton} />
   {#if $prefs.devModeEnabled}
     <ReleaseNotesMenuItem />
+  {/if}
+  {#if $canShowMobileSignInDialog}
+    <MenuItem
+      label={$_('sign_in_with_mobile')}
+      onclick={() => {
+        $showMobileSignInDialog = true;
+      }}
+    />
   {/if}
   <Divider />
   <MenuItem

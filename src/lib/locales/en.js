@@ -17,6 +17,9 @@ export const strings = {
   user_name: 'User Name',
   password: 'Password',
   sign_in: 'Sign In',
+  sign_in_with_mobile: 'Sign In with Mobile',
+  sign_in_with_mobile_instruction:
+    'Scan the QR code below with your phone or tablet for passwordless sign-in. Your settings will be automatically copied.',
   signed_in_as_x: 'Signed In as {name}',
   working_with_local_repo: 'Working with Local Repository',
   working_with_test_repo: 'Working with Test Repository',
@@ -101,6 +104,10 @@ export const strings = {
     'There was an error while parsing an entry file. Check the browser console for details.',
   entry_parse_errors:
     'There were errors while parsing entry files. Check the browser console for details.',
+
+  // Onboarding
+  mobile_promo_title: 'Sveltia CMS is now available on mobile!',
+  mobile_promo_button: 'Give it a try',
 
   // Global toolbar
   visit_live_site: 'Visit Live Site',

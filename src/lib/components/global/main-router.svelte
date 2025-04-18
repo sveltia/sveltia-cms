@@ -7,13 +7,16 @@
   import ContentsPage from '$lib/components/contents/contents-page.svelte';
   import TranslatorApiKeyDialog from '$lib/components/contents/details/editor/translator-api-key-dialog.svelte';
   import EntryParseErrorsToast from '$lib/components/contents/shared/entry-parse-errors-toast.svelte';
+  import MobilePromoInfobar from '$lib/components/global/infobars/mobile-promo-infobar.svelte';
   import BottomNavigation from '$lib/components/global/toolbar/bottom-navigation.svelte';
   import GlobalToolbar from '$lib/components/global/toolbar/global-toolbar.svelte';
   import MenuPage from '$lib/components/menu/menu-page.svelte';
+  import MobileSignInDialog from '$lib/components/menu/mobile-sign-in-dialog.svelte';
   import SearchPage from '$lib/components/search/search-page.svelte';
   import SettingsPage from '$lib/components/settings/settings-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
+  import { canShowMobileSignInDialog } from '$lib/services/app/onboarding';
   import { showAssetOverlay } from '$lib/services/assets';
   import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
@@ -77,6 +80,11 @@
     selectPage();
   }}
 />
+
+{#if $canShowMobileSignInDialog}
+  <MobilePromoInfobar />
+  <MobileSignInDialog />
+{/if}
 
 {#if !$isSmallScreen}
   <GlobalToolbar />
