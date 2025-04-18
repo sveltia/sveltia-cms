@@ -47,28 +47,6 @@ const apiConfig = {
   isSelfHosted: false,
 };
 
-siteConfig?.subscribe((config) => {
-  const {
-    name,
-    api_root: restApiRoot = apiRootDefault,
-    graphql_api_root: graphqlApiRoot,
-  } = config?.backend ?? {};
-
-  if (name === backendName) {
-    // Developers may misconfigure custom API roots, so we use the origin to redefine them
-    const restApiOrigin = new URL(restApiRoot).origin;
-    const graphqlApiOrigin = new URL(graphqlApiRoot ?? restApiRoot).origin;
-    const isSelfHosted = restApiRoot !== apiRootDefault;
-
-    Object.assign(apiConfig, {
-      origin: restApiOrigin,
-      rest: isSelfHosted ? `${restApiOrigin}/api/v3` : restApiOrigin,
-      graphql: isSelfHosted ? `${graphqlApiOrigin}/api` : graphqlApiOrigin,
-      isSelfHosted,
-    });
-  }
-});
-
 /**
  * @type {RepositoryInfo}
  */
@@ -202,6 +180,26 @@ const getRepositoryInfo = () => {
  * Initialize the GitHub backend.
  */
 const init = () => {
+  const {
+    name,
+    api_root: restApiRoot = apiRootDefault,
+    graphql_api_root: graphqlApiRoot,
+  } = get(siteConfig)?.backend ?? {};
+
+  if (name === backendName) {
+    // Developers may misconfigure custom API roots, so we use the origin to redefine them
+    const restApiOrigin = new URL(restApiRoot).origin;
+    const graphqlApiOrigin = new URL(graphqlApiRoot ?? restApiRoot).origin;
+    const isSelfHosted = restApiRoot !== apiRootDefault;
+
+    Object.assign(apiConfig, {
+      origin: restApiOrigin,
+      rest: isSelfHosted ? `${restApiOrigin}/api/v3` : restApiOrigin,
+      graphql: isSelfHosted ? `${graphqlApiOrigin}/api` : graphqlApiOrigin,
+      isSelfHosted,
+    });
+  }
+
   const repositoryInfo = getRepositoryInfo();
 
   if (get(prefs).devModeEnabled) {
