@@ -152,12 +152,13 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
 - Mobile and tablet support: Users can manage content on-the-go.[^18] There are still rough edges though; we are working to fully optimize the app for small screens and touch devices.
+  - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - Other fatal crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112]
 - We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs,[^196] to ensure optimal usability without compromising accessibility.
-- The in-app Help menu provides all links to useful resources, including release notes, feedback and support.
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
+<!-- - The in-app Help menu provides all links to useful resources, including release notes, feedback and support. -->
 
 ### Better performance
 
@@ -1252,7 +1253,7 @@ img-src 'self' blob: data: https://*;
 1. Enable Developer Mode.
 1. Close the Settings dialog.
 
-Now you can see the application version under the Help menu, next to the Account menu.
+A Release Notes link will now appear under the Account menu with the current application version.
 
 ## Support & feedback
 
