@@ -23,7 +23,9 @@
   bind:open={$showMobileSignInDialog}
   title={$_('sign_in_with_mobile')}
   size="small"
+  showOk={false}
   showCancel={false}
+  showClose={true}
   style="--sui-dialog-small-content-max-height:auto"
 >
   <div>{$_('sign_in_with_mobile_instruction')}</div>
@@ -33,7 +35,7 @@
 <style lang="scss">
   canvas {
     display: block;
-    margin: 16px auto 0;
+    margin: 32px auto 16px;
     width: 200px !important;
     height: 200px !important;
   }
