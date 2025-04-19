@@ -52,84 +52,87 @@
   {/if}
   <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
     {#each folders as { collectionName, internalPath, entryRelative } (collectionName)}
-      {@const collection = collectionName ? getCollection(collectionName) : undefined}
-      <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
-      {@const uploadDisabled = entryRelative}
-      {@const selected =
-        (internalPath === undefined && !$selectedAssetFolder) ||
-        internalPath === $selectedAssetFolder?.internalPath}
-      <Option
-        selected={$isSmallScreen ? false : selected}
-        label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}
-        onSelect={() => {
-          goto(internalPath ? `/assets/${internalPath}` : '/assets/all', {
-            transitionType: 'forwards',
-          });
-        }}
-        ondragover={(event) => {
-          event.preventDefault();
+      {#await sleep(0) then}
+        {@const collection = collectionName ? getCollection(collectionName) : undefined}
+        <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
+        {@const uploadDisabled = entryRelative}
+        {@const selected =
+          (internalPath === undefined && !$selectedAssetFolder) ||
+          internalPath === $selectedAssetFolder?.internalPath}
+        <Option
+          selected={$isSmallScreen ? false : selected}
+          label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}
+          onSelect={() => {
+            goto(internalPath ? `/assets/${internalPath}` : '/assets/all', {
+              transitionType: 'forwards',
+            });
+          }}
+          ondragover={(event) => {
+            event.preventDefault();
 
-          if (uploadDisabled) {
-            return;
-          }
+            if (uploadDisabled) {
+              return;
+            }
 
-          if (internalPath === undefined || selected) {
-            /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
-          } else {
-            /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';
-            /** @type {HTMLElement} */ (event.target).classList.add('dragover');
-          }
-        }}
-        ondragleave={(event) => {
-          event.preventDefault();
+            if (internalPath === undefined || selected) {
+              /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
+            } else {
+              /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';
+              /** @type {HTMLElement} */ (event.target).classList.add('dragover');
+            }
+          }}
+          ondragleave={(event) => {
+            event.preventDefault();
 
-          if (uploadDisabled) {
-            return;
-          }
+            if (uploadDisabled) {
+              return;
+            }
 
-          /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-        }}
-        ondragend={(event) => {
-          event.preventDefault();
+            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+          }}
+          ondragend={(event) => {
+            event.preventDefault();
 
-          if (uploadDisabled) {
-            return;
-          }
+            if (uploadDisabled) {
+              return;
+            }
 
-          /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-        }}
-        ondrop={(event) => {
-          event.preventDefault();
+            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+          }}
+          ondrop={(event) => {
+            event.preventDefault();
 
-          if (uploadDisabled) {
-            return;
-          }
+            if (uploadDisabled) {
+              return;
+            }
 
-          /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-          // @todo Move the assets while updating entries using the files, after showing a
-          // confirmation dialog.
-        }}
-      >
-        {#snippet startIcon()}
-          <Icon name={collection?.icon || 'folder'} />
-        {/snippet}
-        {#snippet endIcon()}
-          {#key $allAssets}
-            {#await sleep(0) then}
-              {@const count = (internalPath ? getAssetsByFolder(internalPath) : $allAssets).length}
-              <span
-                class="count"
-                aria-label="({$_(
-                  count > 1 ? 'many_assets' : count === 1 ? 'one_asset' : 'no_assets',
-                  { values: { count } },
-                )})"
-              >
-                {numberFormatter.format(count)}
-              </span>
-            {/await}
-          {/key}
-        {/snippet}
-      </Option>
+            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+            // @todo Move the assets while updating entries using the files, after showing a
+            // confirmation dialog.
+          }}
+        >
+          {#snippet startIcon()}
+            <Icon name={collection?.icon || 'folder'} />
+          {/snippet}
+          {#snippet endIcon()}
+            {#key $allAssets}
+              {#await sleep(0) then}
+                {@const count = (internalPath ? getAssetsByFolder(internalPath) : $allAssets)
+                  .length}
+                <span
+                  class="count"
+                  aria-label="({$_(
+                    count > 1 ? 'many_assets' : count === 1 ? 'one_asset' : 'no_assets',
+                    { values: { count } },
+                  )})"
+                >
+                  {numberFormatter.format(count)}
+                </span>
+              {/await}
+            {/key}
+          {/snippet}
+        </Option>
+      {/await}
     {/each}
   </Listbox>
 </div>

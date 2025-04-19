@@ -1,5 +1,6 @@
 <script>
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { locale as appLocale } from 'svelte-i18n';
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -83,9 +84,13 @@
 {/snippet}
 
 {#each getAssociatedCollections(entry) as collection (collection.name)}
-  {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
-    {@render resultRow({ collection, collectionFile })}
-  {:else}
-    {@render resultRow({ collection })}
-  {/each}
+  {#await sleep(0) then}
+    {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
+      {#await sleep(0) then}
+        {@render resultRow({ collection, collectionFile })}
+      {/await}
+    {:else}
+      {@render resultRow({ collection })}
+    {/each}
+  {/await}
 {/each}

@@ -61,25 +61,27 @@
 {#if hasSubFields}
   <!-- eslint-disable-next-line no-unused-vars -->
   {#each items as item, index}
-    {@const subFieldName = Array.isArray(types)
-      ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
-      : undefined}
-    {@const typeConfig = types?.find(({ name }) => name === subFieldName)}
-    {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
-    {@const subFields = subFieldName
-      ? (typeConfig?.fields ?? [])
-      : (fields ?? (field ? [field] : []))}
-    <Subsection {label}>
-      {#each subFields as subField (subField.name)}
-        {#await sleep(0) then}
-          <FieldPreview
-            keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
-            {locale}
-            fieldConfig={subField}
-          />
-        {/await}
-      {/each}
-    </Subsection>
+    {#await sleep(0) then}
+      {@const subFieldName = Array.isArray(types)
+        ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
+        : undefined}
+      {@const typeConfig = types?.find(({ name }) => name === subFieldName)}
+      {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
+      {@const subFields = subFieldName
+        ? (typeConfig?.fields ?? [])
+        : (fields ?? (field ? [field] : []))}
+      <Subsection {label}>
+        {#each subFields as subField (subField.name)}
+          {#await sleep(0) then}
+            <FieldPreview
+              keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
+              {locale}
+              fieldConfig={subField}
+            />
+          {/await}
+        {/each}
+      </Subsection>
+    {/await}
   {/each}
 {:else if Array.isArray(currentValue) && currentValue.length}
   <p lang={locale} dir="auto">{listFormatter.format(currentValue)}</p>

@@ -1,12 +1,13 @@
 <script>
   import { EmptyState, InfiniteScroll, Option, TruncatedText } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
-  import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import { normalize } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
+  import { normalize } from '$lib/services/search';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
 
   /**
    * @import { Asset, ViewType } from '$lib/types/private';
@@ -61,28 +62,30 @@
     >
       <InfiniteScroll items={filteredAssets} itemKey="path">
         {#snippet renderItem(/** @type {Asset} */ asset)}
-          {@const { kind, name, path } = asset}
-          <!-- Show asset path relative to the base folder, or just file name -->
-          {@const relPath = basePath ? stripSlashes(path.replace(basePath, '')) : name}
-          {@const pathArray = relPath.split('/')}
-          <Option label="" value={path}>
-            <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
-            {#if !$isSmallScreen || viewType === 'list'}
-              <span role="none" class="name">
-                <TruncatedText lines={2}>
-                  {#each pathArray as segment, index}
-                    {#if index === pathArray.length - 1}
-                      <!-- File name -->
-                      <strong>{@render getLabel(segment)}</strong>
-                    {:else}
-                      <!-- Folder name -->
-                      {@render getLabel(segment)}/
-                    {/if}
-                  {/each}
-                </TruncatedText>
-              </span>
-            {/if}
-          </Option>
+          {#await sleep(0) then}
+            {@const { kind, name, path } = asset}
+            <!-- Show asset path relative to the base folder, or just file name -->
+            {@const relPath = basePath ? stripSlashes(path.replace(basePath, '')) : name}
+            {@const pathArray = relPath.split('/')}
+            <Option label="" value={path}>
+              <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
+              {#if !$isSmallScreen || viewType === 'list'}
+                <span role="none" class="name">
+                  <TruncatedText lines={2}>
+                    {#each pathArray as segment, index}
+                      {#if index === pathArray.length - 1}
+                        <!-- File name -->
+                        <strong>{@render getLabel(segment)}</strong>
+                      {:else}
+                        <!-- Folder name -->
+                        {@render getLabel(segment)}/
+                      {/if}
+                    {/each}
+                  </TruncatedText>
+                </span>
+              {/if}
+            </Option>
+          {/await}
         {/snippet}
       </InfiniteScroll>
     </SimpleImageGrid>

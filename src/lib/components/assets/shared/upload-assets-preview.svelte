@@ -1,6 +1,7 @@
 <script>
   import { Button, Icon, TruncatedText } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
+  import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
   import { formatSize } from '$lib/services/utils/file';
   import Image from '$lib/components/assets/shared/image.svelte';
@@ -29,57 +30,59 @@
 
 <div role="list" class="files">
   {#each files as file, index}
-    {@const { name, type, size } = file}
-    {@const originalFile = transformedFileMap?.get(file)}
-    <div role="listitem" class="file">
-      {#if type.startsWith('image/')}
-        <Image src={URL.createObjectURL(file)} variant="icon" checkerboard={true} />
-      {:else}
-        <span role="none" class="image">
-          <Icon name="draft" />
-        </span>
-      {/if}
-      <div role="none" class="info">
-        <div role="none" class="name">
-          <TruncatedText>
-            {name.normalize()}
-          </TruncatedText>
+    {#await sleep(0) then}
+      {@const { name, type, size } = file}
+      {@const originalFile = transformedFileMap?.get(file)}
+      <div role="listitem" class="file">
+        {#if type.startsWith('image/')}
+          <Image src={URL.createObjectURL(file)} variant="icon" checkerboard={true} />
+        {:else}
+          <span role="none" class="image">
+            <Icon name="draft" />
+          </span>
+        {/if}
+        <div role="none" class="info">
+          <div role="none" class="name">
+            <TruncatedText>
+              {name.normalize()}
+            </TruncatedText>
+          </div>
+          <div role="none" class="meta">
+            {#key $appLocale}
+              {$_('file_meta', {
+                values: {
+                  type: $_(`file_type_labels.${file.type.split('/')[1]}`, {
+                    default: getPathInfo(name).extension?.toUpperCase(),
+                  }),
+                  size: formatSize(size),
+                },
+              })}
+            {/key}
+            {#if originalFile && originalFile.type !== file.type}
+              {$_('file_meta_converted_from_x', {
+                values: {
+                  type: $_(`file_type_labels.${originalFile.type.split('/')[1]}`, {
+                    default: getPathInfo(originalFile.name).extension?.toUpperCase(),
+                  }),
+                },
+              })}
+            {/if}
+          </div>
         </div>
-        <div role="none" class="meta">
-          {#key $appLocale}
-            {$_('file_meta', {
-              values: {
-                type: $_(`file_type_labels.${file.type.split('/')[1]}`, {
-                  default: getPathInfo(name).extension?.toUpperCase(),
-                }),
-                size: formatSize(size),
-              },
-            })}
-          {/key}
-          {#if originalFile && originalFile.type !== file.type}
-            {$_('file_meta_converted_from_x', {
-              values: {
-                type: $_(`file_type_labels.${originalFile.type.split('/')[1]}`, {
-                  default: getPathInfo(originalFile.name).extension?.toUpperCase(),
-                }),
-              },
-            })}
-          {/if}
-        </div>
+        <Button
+          variant="ghost"
+          iconic
+          aria-label={$_('remove')}
+          hidden={!removable || files.length === 1}
+          onclick={(event) => {
+            event.stopPropagation();
+            files.splice(index, 1);
+          }}
+        >
+          <Icon name="close" />
+        </Button>
       </div>
-      <Button
-        variant="ghost"
-        iconic
-        aria-label={$_('remove')}
-        hidden={!removable || files.length === 1}
-        onclick={(event) => {
-          event.stopPropagation();
-          files.splice(index, 1);
-        }}
-      >
-        <Icon name="close" />
-      </Button>
-    </div>
+    {/await}
   {/each}
 </div>
 

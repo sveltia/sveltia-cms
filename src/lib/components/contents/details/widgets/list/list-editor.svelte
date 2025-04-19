@@ -345,140 +345,142 @@
       class:collapsed={!parentExpanded}
     >
       {#each items as item, index}
-        {@const expandedKeyPath = `${keyPath}.${index}`}
-        {@const expanded = $entryDraft?.expanderStates?._[expandedKeyPath] ?? true}
-        {@const typeConfig = hasVariableTypes
-          ? types?.find(({ name }) => name === item[typeKey])
-          : undefined}
-        {@const subFields = hasVariableTypes
-          ? (typeConfig?.fields ?? [])
-          : (fields ?? (field ? [field] : []))}
-        {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
-        <!-- @todo Support drag sorting. -->
-        <div role="none" class="item">
-          <ObjectHeader
-            label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
-            controlId="list-{widgetId}-item-{index}-body"
-            {expanded}
-            toggleExpanded={subFields.length
-              ? () => syncExpanderStates({ [expandedKeyPath]: !expanded })
-              : undefined}
-          >
-            {#snippet centerContent()}
-              <Button
-                size="small"
-                iconic
-                disabled={isDuplicateField || index === 0}
-                aria-label={$_('move_up')}
-                onclick={() => moveUpItem(index)}
-              >
-                {#snippet startIcon()}
-                  <Icon name="arrow_upward" />
-                {/snippet}
-              </Button>
-              <Spacer />
-              <Button
-                iconic
-                size="small"
-                disabled={isDuplicateField || index === items.length - 1}
-                aria-label={$_('move_down')}
-                onclick={() => moveDownItem(index)}
-              >
-                {#snippet startIcon()}
-                  <Icon name="arrow_downward" />
-                {/snippet}
-              </Button>
-            {/snippet}
-            {#snippet endContent()}
-              <MenuButton
-                variant="ghost"
-                size="small"
-                iconic
-                popupPosition="bottom-right"
-                aria-label={$_('list_item_options')}
-                disabled={isDuplicateField}
-              >
-                {#snippet popup()}
-                  <Menu aria-label={$_('translation_options')}>
-                    <MenuItem
-                      label={$_('duplicate')}
-                      disabled={hasMaxItems}
-                      onclick={() => addItem({ index: index + 1, dupIndex: index })}
+        {#await sleep(0) then}
+          {@const expandedKeyPath = `${keyPath}.${index}`}
+          {@const expanded = $entryDraft?.expanderStates?._[expandedKeyPath] ?? true}
+          {@const typeConfig = hasVariableTypes
+            ? types?.find(({ name }) => name === item[typeKey])
+            : undefined}
+          {@const subFields = hasVariableTypes
+            ? (typeConfig?.fields ?? [])
+            : (fields ?? (field ? [field] : []))}
+          {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
+          <!-- @todo Support drag sorting. -->
+          <div role="none" class="item">
+            <ObjectHeader
+              label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+              controlId="list-{widgetId}-item-{index}-body"
+              {expanded}
+              toggleExpanded={subFields.length
+                ? () => syncExpanderStates({ [expandedKeyPath]: !expanded })
+                : undefined}
+            >
+              {#snippet centerContent()}
+                <Button
+                  size="small"
+                  iconic
+                  disabled={isDuplicateField || index === 0}
+                  aria-label={$_('move_up')}
+                  onclick={() => moveUpItem(index)}
+                >
+                  {#snippet startIcon()}
+                    <Icon name="arrow_upward" />
+                  {/snippet}
+                </Button>
+                <Spacer />
+                <Button
+                  iconic
+                  size="small"
+                  disabled={isDuplicateField || index === items.length - 1}
+                  aria-label={$_('move_down')}
+                  onclick={() => moveDownItem(index)}
+                >
+                  {#snippet startIcon()}
+                    <Icon name="arrow_downward" />
+                  {/snippet}
+                </Button>
+              {/snippet}
+              {#snippet endContent()}
+                <MenuButton
+                  variant="ghost"
+                  size="small"
+                  iconic
+                  popupPosition="bottom-right"
+                  aria-label={$_('list_item_options')}
+                  disabled={isDuplicateField}
+                >
+                  {#snippet popup()}
+                    <Menu aria-label={$_('translation_options')}>
+                      <MenuItem
+                        label={$_('duplicate')}
+                        disabled={hasMaxItems}
+                        onclick={() => addItem({ index: index + 1, dupIndex: index })}
+                      />
+                      {#if hasVariableTypes}
+                        <MenuItem label={$_('add_item_above')} disabled={hasMaxItems}>
+                          <!-- eslint-disable-next-line no-shadow -->
+                          {#snippet items()}
+                            {#each types ?? [] as { name, label: itemLabel } (name)}
+                              <MenuItem
+                                label={itemLabel || name}
+                                onclick={() => addItem({ index, type: name })}
+                              />
+                            {/each}
+                          {/snippet}
+                        </MenuItem>
+                        <MenuItem label={$_('add_item_below')} disabled={hasMaxItems}>
+                          <!-- eslint-disable-next-line no-shadow -->
+                          {#snippet items()}
+                            {#each types ?? [] as { name, label: itemLabel } (name)}
+                              <MenuItem
+                                label={itemLabel || name}
+                                onclick={() => addItem({ index: index + 1, type: name })}
+                              />
+                            {/each}
+                          {/snippet}
+                        </MenuItem>
+                      {:else}
+                        <MenuItem
+                          label={$_('add_item_above')}
+                          disabled={hasMaxItems}
+                          onclick={() => addItem({ index })}
+                        />
+                        <MenuItem
+                          label={$_('add_item_below')}
+                          disabled={hasMaxItems}
+                          onclick={() => addItem({ index: index + 1 })}
+                        />
+                      {/if}
+                    </Menu>
+                  {/snippet}
+                </MenuButton>
+                <Button
+                  variant="ghost"
+                  size="small"
+                  iconic
+                  aria-label={$_('remove')}
+                  onclick={() => removeItem(index)}
+                >
+                  {#snippet startIcon()}
+                    <Icon name="close" />
+                  {/snippet}
+                </Button>
+              {/snippet}
+            </ObjectHeader>
+            <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
+              {#if expanded}
+                {#each subFields as subField (subField.name)}
+                  {#await sleep(0) then}
+                    <FieldEditor
+                      keyPath={hasSingleSubField
+                        ? `${keyPath}.${index}`
+                        : `${keyPath}.${index}.${subField.name}`}
+                      {locale}
+                      fieldConfig={subField}
+                      context={hasSingleSubField ? 'single-field-list-widget' : undefined}
                     />
-                    {#if hasVariableTypes}
-                      <MenuItem label={$_('add_item_above')} disabled={hasMaxItems}>
-                        <!-- eslint-disable-next-line no-shadow -->
-                        {#snippet items()}
-                          {#each types ?? [] as { name, label: itemLabel } (name)}
-                            <MenuItem
-                              label={itemLabel || name}
-                              onclick={() => addItem({ index, type: name })}
-                            />
-                          {/each}
-                        {/snippet}
-                      </MenuItem>
-                      <MenuItem label={$_('add_item_below')} disabled={hasMaxItems}>
-                        <!-- eslint-disable-next-line no-shadow -->
-                        {#snippet items()}
-                          {#each types ?? [] as { name, label: itemLabel } (name)}
-                            <MenuItem
-                              label={itemLabel || name}
-                              onclick={() => addItem({ index: index + 1, type: name })}
-                            />
-                          {/each}
-                        {/snippet}
-                      </MenuItem>
-                    {:else}
-                      <MenuItem
-                        label={$_('add_item_above')}
-                        disabled={hasMaxItems}
-                        onclick={() => addItem({ index })}
-                      />
-                      <MenuItem
-                        label={$_('add_item_below')}
-                        disabled={hasMaxItems}
-                        onclick={() => addItem({ index: index + 1 })}
-                      />
-                    {/if}
-                  </Menu>
-                {/snippet}
-              </MenuButton>
-              <Button
-                variant="ghost"
-                size="small"
-                iconic
-                aria-label={$_('remove')}
-                onclick={() => removeItem(index)}
-              >
-                {#snippet startIcon()}
-                  <Icon name="close" />
-                {/snippet}
-              </Button>
-            {/snippet}
-          </ObjectHeader>
-          <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
-            {#if expanded}
-              {#each subFields as subField (subField.name)}
-                {#await sleep(0) then}
-                  <FieldEditor
-                    keyPath={hasSingleSubField
-                      ? `${keyPath}.${index}`
-                      : `${keyPath}.${index}.${subField.name}`}
-                    {locale}
-                    fieldConfig={subField}
-                    context={hasSingleSubField ? 'single-field-list-widget' : undefined}
-                  />
-                {/await}
-              {/each}
-            {:else}
-              <div role="none" class="summary">
-                <TruncatedText lines={$isSmallScreen ? 2 : 1}>
-                  {_formatSummary(index, summaryTemplate)}
-                </TruncatedText>
-              </div>
-            {/if}
+                  {/await}
+                {/each}
+              {:else}
+                <div role="none" class="summary">
+                  <TruncatedText lines={$isSmallScreen ? 2 : 1}>
+                    {_formatSummary(index, summaryTemplate)}
+                  </TruncatedText>
+                </div>
+              {/if}
+            </div>
           </div>
-        </div>
+        {/await}
       {/each}
     </div>
     {#if allowAdd && !addToTop && items.length}

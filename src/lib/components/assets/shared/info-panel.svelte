@@ -1,6 +1,7 @@
 <script>
   import { Button } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
+  import { sleep } from '@sveltia/utils/misc';
   import mime from 'mime';
   import { _, locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -142,24 +143,26 @@
   <section>
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as entry (entry.sha)}
-      {#each getAssociatedCollections(entry) as collection (collection.name)}
-        {@const collectionLabel = collection.label || collection.name}
-        {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
-          {@render usedEntryLink({
-            link: `/collections/${collection.name}/entries/${collectionFile.name}`,
-            collectionLabel,
-            entryLabel: collectionFile.label || collectionFile.name,
-          })}
-        {:else}
-          {#key $appLocale}
+      {#await sleep(0) then}
+        {#each getAssociatedCollections(entry) as collection (collection.name)}
+          {@const collectionLabel = collection.label || collection.name}
+          {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
             {@render usedEntryLink({
-              link: `/collections/${collection.name}/entries/${entry.subPath}`,
+              link: `/collections/${collection.name}/entries/${collectionFile.name}`,
               collectionLabel,
-              entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
+              entryLabel: collectionFile.label || collectionFile.name,
             })}
-          {/key}
+          {:else}
+            {#key $appLocale}
+              {@render usedEntryLink({
+                link: `/collections/${collection.name}/entries/${entry.subPath}`,
+                collectionLabel,
+                entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
+              })}
+            {/key}
+          {/each}
         {/each}
-      {/each}
+      {/await}
     {:else}
       <p>{$_('sort_keys.none')}</p>
     {/each}

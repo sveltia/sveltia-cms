@@ -1,5 +1,6 @@
 <script>
   import { EmptyState, GridCell, GridRow, InfiniteScroll, TruncatedText } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
@@ -20,21 +21,23 @@
     >
       <InfiniteScroll items={$selectedCollection.files} itemKey="name">
         {#snippet renderItem(/** @type {CollectionFile} */ { name, label })}
-          <GridRow
-            onclick={() => {
-              goto(`/collections/${$selectedCollection.name}/entries/${name}`, {
-                transitionType: 'forwards',
-              });
-            }}
-          >
-            <GridCell class="title">
-              <div role="none" class="label">
-                <TruncatedText lines={2}>
-                  {label || name}
-                </TruncatedText>
-              </div>
-            </GridCell>
-          </GridRow>
+          {#await sleep(0) then}
+            <GridRow
+              onclick={() => {
+                goto(`/collections/${$selectedCollection.name}/entries/${name}`, {
+                  transitionType: 'forwards',
+                });
+              }}
+            >
+              <GridCell class="title">
+                <div role="none" class="label">
+                  <TruncatedText lines={2}>
+                    {label || name}
+                  </TruncatedText>
+                </div>
+              </GridCell>
+            </GridRow>
+          {/await}
         {/snippet}
       </InfiniteScroll>
     </ListingGrid>

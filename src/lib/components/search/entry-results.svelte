@@ -1,5 +1,6 @@
 <script>
   import { EmptyState, Group, InfiniteScroll } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryResultItem from '$lib/components/search/entry-result-item.svelte';
@@ -39,7 +40,9 @@
         {#key $searchTerms}
           <InfiniteScroll items={$entrySearchResults} itemKey="id">
             {#snippet renderItem(/** @type {Entry} */ entry)}
-              <EntryResultItem {entry} />
+              {#await sleep(0) then}
+                <EntryResultItem {entry} />
+              {/await}
             {/snippet}
           </InfiniteScroll>
         {/key}

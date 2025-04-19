@@ -12,6 +12,7 @@
     PasswordInput,
     TextInput,
   } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -189,13 +190,15 @@
     >
       <InfiniteScroll items={searchResults} itemKey="id">
         {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-          {@const { id, previewURL, description, kind: _kind } = asset}
-          <Option label="" value={id}>
-            <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
-            {#if !$isSmallScreen || $selectAssetsView?.type === 'list'}
-              <span role="none" class="name">{description}</span>
-            {/if}
-          </Option>
+          {#await sleep(0) then}
+            {@const { id, previewURL, description, kind: _kind } = asset}
+            <Option label="" value={id}>
+              <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
+              {#if !$isSmallScreen || $selectAssetsView?.type === 'list'}
+                <span role="none" class="name">{description}</span>
+              {/if}
+            </Option>
+          {/await}
         {/snippet}
       </InfiniteScroll>
     </SimpleImageGrid>

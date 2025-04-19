@@ -1,5 +1,6 @@
 <script>
   import { EmptyState, GridBody, InfiniteScroll } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
@@ -28,19 +29,23 @@
         aria-rowcount={$listedEntries.length}
       >
         {#each $entryGroups as { name, entries } (name)}
-          <!-- @todo Implement custom table column option that can replace summary template -->
-          <GridBody label={name !== '*' ? name : undefined}>
-            <InfiniteScroll
-              items={entries.filter(
-                ({ locales }) => !!(locales[defaultLocale] ?? Object.values(locales)[0])?.content,
-              )}
-              itemKey="id"
-            >
-              {#snippet renderItem(/** @type {Entry} */ entry)}
-                <EntryListItem {collection} {entry} {viewType} />
-              {/snippet}
-            </InfiniteScroll>
-          </GridBody>
+          {#await sleep(0) then}
+            <!-- @todo Implement custom table column option that can replace summary template -->
+            <GridBody label={name !== '*' ? name : undefined}>
+              <InfiniteScroll
+                items={entries.filter(
+                  ({ locales }) => !!(locales[defaultLocale] ?? Object.values(locales)[0])?.content,
+                )}
+                itemKey="id"
+              >
+                {#snippet renderItem(/** @type {Entry} */ entry)}
+                  {#await sleep(0) then}
+                    <EntryListItem {collection} {entry} {viewType} />
+                  {/await}
+                {/snippet}
+              </InfiniteScroll>
+            </GridBody>
+          {/await}
         {/each}
       </ListingGrid>
     {:else if $listedEntries.length}

@@ -26,22 +26,22 @@
   {/if}
   <Listbox aria-label={$_('collection_list')} aria-controls="collection-container">
     {#each collections as { name, label, icon, files, divider = false } (name)}
-      {#if divider}
-        <Divider />
-      {:else}
-        <Option
-          label={label || name}
-          selected={$isSmallScreen ? false : $selectedCollection?.name === name}
-          onSelect={() => {
-            goto(`/collections/${name}`, { transitionType: 'forwards' });
-          }}
-        >
-          {#snippet startIcon()}
-            <Icon name={icon || 'edit_note'} />
-          {/snippet}
-          {#snippet endIcon()}
-            {#key $allEntries}
-              {#await sleep(0) then}
+      {#await sleep(0) then}
+        {#if divider}
+          <Divider />
+        {:else}
+          <Option
+            label={label || name}
+            selected={$isSmallScreen ? false : $selectedCollection?.name === name}
+            onSelect={() => {
+              goto(`/collections/${name}`, { transitionType: 'forwards' });
+            }}
+          >
+            {#snippet startIcon()}
+              <Icon name={icon || 'edit_note'} />
+            {/snippet}
+            {#snippet endIcon()}
+              {#key $allEntries}
                 {@const count = (files ?? getEntriesByCollection(name)).length}
                 <span
                   class="count"
@@ -52,11 +52,11 @@
                 >
                   {numberFormatter.format(count)}
                 </span>
-              {/await}
-            {/key}
-          {/snippet}
-        </Option>
-      {/if}
+              {/key}
+            {/snippet}
+          </Option>
+        {/if}
+      {/await}
     {/each}
   </Listbox>
 </div>

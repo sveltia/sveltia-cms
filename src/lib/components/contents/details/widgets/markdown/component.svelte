@@ -1,6 +1,7 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
   import { generateElementId } from '@sveltia/utils/element';
+  import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -117,37 +118,39 @@
   </header>
   {#if locale && keyPath}
     {#each fields as { name, label: fieldLabel, widget = 'string', ...rest } (name)}
-      <!-- @todo Support `default` option -->
-      {#if widget in editors && !unsupportedWidgets.includes(widget)}
-        {@const SvelteComponent = editors[widget]}
-        <section
-          role="group"
-          class="field"
-          aria-label={$_('x_field', { values: { field: fieldLabel ?? name } })}
-          data-widget={widget}
-          data-key-path="{keyPath}:{name}"
-          onkeydowncapture={(event) => {
-            // Allow to select all in any `TextInput` within the component below using Ctrl+A
-            event.stopPropagation();
-          }}
-        >
-          <header role="none">
-            <h4 role="none">{fieldLabel ?? name}</h4>
-          </header>
-          <div role="none" class="widget-wrapper">
-            <SvelteComponent
-              {locale}
-              keyPath="{keyPath}:{name}"
-              fieldId={generateElementId('field')}
-              fieldLabel={fieldLabel ?? name}
-              fieldConfig={{ name, widget }}
-              context="markdown-editor-component"
-              bind:currentValue={inputValues[name]}
-              {...rest}
-            />
-          </div>
-        </section>
-      {/if}
+      {#await sleep(0) then}
+        <!-- @todo Support `default` option -->
+        {#if widget in editors && !unsupportedWidgets.includes(widget)}
+          {@const SvelteComponent = editors[widget]}
+          <section
+            role="group"
+            class="field"
+            aria-label={$_('x_field', { values: { field: fieldLabel ?? name } })}
+            data-widget={widget}
+            data-key-path="{keyPath}:{name}"
+            onkeydowncapture={(event) => {
+              // Allow to select all in any `TextInput` within the component below using Ctrl+A
+              event.stopPropagation();
+            }}
+          >
+            <header role="none">
+              <h4 role="none">{fieldLabel ?? name}</h4>
+            </header>
+            <div role="none" class="widget-wrapper">
+              <SvelteComponent
+                {locale}
+                keyPath="{keyPath}:{name}"
+                fieldId={generateElementId('field')}
+                fieldLabel={fieldLabel ?? name}
+                fieldConfig={{ name, widget }}
+                context="markdown-editor-component"
+                bind:currentValue={inputValues[name]}
+                {...rest}
+              />
+            </div>
+          </section>
+        {/if}
+      {/await}
     {/each}
   {/if}
 </div>
