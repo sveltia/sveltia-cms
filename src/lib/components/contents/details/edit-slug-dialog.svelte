@@ -66,7 +66,7 @@
     /** @type {EntryDraft} */ ($entryDraft).currentSlugs = updatedSlugs;
   }}
 >
-  <Alert status="warning">
+  <Alert status="warning" --font-size="var(--sui-font-size-small)">
     {$_('edit_slug_warning')}
   </Alert>
   <div role="none" class="locales">
