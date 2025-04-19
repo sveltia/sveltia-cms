@@ -60,6 +60,7 @@ export const strings = {
   details: 'Details',
   back: 'Back',
   loading: 'Loading…',
+  later: 'Later',
 
   // Common errors
   clipboard_error: 'There was an error while copying data.',

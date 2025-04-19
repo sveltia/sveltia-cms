@@ -60,6 +60,7 @@ export const strings = {
   details: '詳細',
   back: '戻る',
   loading: '読み込み中…',
+  later: '後で',
 
   // Common errors
   clipboard_error: 'データのコピー中に問題が発生しました。',

@@ -7,7 +7,6 @@
 
   /** @type {IndexedDB | undefined} */
   let uiSettingsDB;
-  let closed = false;
   let showInfobar = $state(false);
 
   $effect(() => {
@@ -17,28 +16,19 @@
       uiSettingsDB = new IndexedDB(databaseName, 'ui-settings');
 
       (async () => {
-        if (!(await uiSettingsDB.get('onboarding'))?.mobileCta) {
+        const onboardingState = (await uiSettingsDB.get('onboarding')) ?? {};
+
+        if (!onboardingState.mobileCta) {
           showInfobar = true;
         }
-      })();
-    }
-  });
 
-  $effect(() => {
-    if (uiSettingsDB && !closed && !showInfobar) {
-      closed = true;
-
-      (async () => {
-        await uiSettingsDB.set('onboarding', {
-          ...((await uiSettingsDB.get('onboarding')) ?? {}),
-          mobileCta: true,
-        });
+        await uiSettingsDB.set('onboarding', { ...onboardingState, mobileCta: true });
       })();
     }
   });
 </script>
 
-<Infobar show={showInfobar} --sui-infobar-message-justify-content="center">
+<Infobar show={showInfobar} dismissible={false} --sui-infobar-message-justify-content="center">
   {$_('mobile_promo_title')}
   <Button
     variant="link"
@@ -46,6 +36,13 @@
     onclick={() => {
       showInfobar = false;
       $showMobileSignInDialog = true;
+    }}
+  />
+  <Button
+    variant="link"
+    label={$_('later')}
+    onclick={() => {
+      showInfobar = false;
     }}
   />
 </Infobar>
