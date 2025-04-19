@@ -20,7 +20,7 @@
    */
 
   const viewType = $derived($currentView.type);
-  const uploadDisabled = $derived(!canCreateAsset($selectedAssetFolder));
+  const uploadDisabled = $derived(!canCreateAsset($selectedAssetFolder ?? $globalAssetFolder));
 </script>
 
 <ListContainer aria-label={$_('asset_list')}>

@@ -12,6 +12,7 @@
   import {
     canCreateAsset,
     focusedAsset,
+    globalAssetFolder,
     selectedAssetFolder,
     selectedAssets,
   } from '$lib/services/assets';
@@ -24,7 +25,7 @@
     return [];
   });
 
-  const uploadDisabled = $derived(!canCreateAsset($selectedAssetFolder));
+  const uploadDisabled = $derived(!canCreateAsset($selectedAssetFolder ?? $globalAssetFolder));
 </script>
 
 <Toolbar variant="primary" aria-label={$_('folder')}>
