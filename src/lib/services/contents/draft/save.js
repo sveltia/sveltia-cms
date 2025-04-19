@@ -5,7 +5,12 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
-import { allAssetFolders, allAssets, getAssetKind, getAssetsByDirName } from '$lib/services/assets';
+import {
+  allAssets,
+  getAssetKind,
+  getAssetsByDirName,
+  globalAssetFolder,
+} from '$lib/services/assets';
 import { backend, isLastCommitPublished } from '$lib/services/backends';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
@@ -35,6 +40,7 @@ import {
  * @import {
  * Asset,
  * BackendService,
+ * CollectionAssetFolder,
  * CommitAuthor,
  * Entry,
  * EntryCollection,
@@ -110,7 +116,9 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
 
   const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
   const isMultiFolders = ['multiple_folders', 'multiple_folders_i18n_root'].includes(structure);
-  const { entryRelative, internalPath, publicPath } = _assetFolder ?? get(allAssetFolders)[0];
+
+  const { entryRelative, internalPath, publicPath } =
+    _assetFolder ?? /** @type {CollectionAssetFolder} */ (get(globalAssetFolder));
 
   if (!entryRelative) {
     return {

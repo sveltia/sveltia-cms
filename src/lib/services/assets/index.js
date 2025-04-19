@@ -417,7 +417,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
   // eslint-disable-next-line prefer-const
   let { collectionName, internalPath, publicPath } = !dirName
-    ? get(allAssetFolders)[0] // Global asset folder
+    ? /** @type {CollectionAssetFolder} */ (get(globalAssetFolder))
     : (get(allAssetFolders).findLast((folder) =>
         dirName.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
       ) ?? {});
