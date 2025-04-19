@@ -345,7 +345,7 @@
       class:collapsed={!parentExpanded}
     >
       {#each items as item, index}
-        {#await sleep(0) then}
+        {#await sleep() then}
           {@const expandedKeyPath = `${keyPath}.${index}`}
           {@const expanded = $entryDraft?.expanderStates?._[expandedKeyPath] ?? true}
           {@const typeConfig = hasVariableTypes
@@ -460,7 +460,7 @@
             <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
               {#if expanded}
                 {#each subFields as subField (subField.name)}
-                  {#await sleep(0) then}
+                  {#await sleep() then}
                     <FieldEditor
                       keyPath={hasSingleSubField
                         ? `${keyPath}.${index}`

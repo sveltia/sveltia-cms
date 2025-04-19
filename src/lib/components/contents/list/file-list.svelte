@@ -21,7 +21,7 @@
     >
       <InfiniteScroll items={$selectedCollection.files} itemKey="name">
         {#snippet renderItem(/** @type {CollectionFile} */ { name, label })}
-          {#await sleep(0) then}
+          {#await sleep() then}
             <GridRow
               onclick={() => {
                 goto(`/collections/${$selectedCollection.name}/entries/${name}`, {

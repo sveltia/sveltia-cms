@@ -23,7 +23,7 @@
 </script>
 
 {#each fields as fieldConfig (fieldConfig.name)}
-  {#await sleep(0) then}
+  {#await sleep() then}
     <FieldEditor keyPath={fieldConfig.name} {locale} {fieldConfig} />
   {/await}
 {/each}

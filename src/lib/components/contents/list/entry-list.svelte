@@ -29,7 +29,7 @@
         aria-rowcount={$listedEntries.length}
       >
         {#each $entryGroups as { name, entries } (name)}
-          {#await sleep(0) then}
+          {#await sleep() then}
             <!-- @todo Implement custom table column option that can replace summary template -->
             <GridBody label={name !== '*' ? name : undefined}>
               <InfiniteScroll
@@ -39,7 +39,7 @@
                 itemKey="id"
               >
                 {#snippet renderItem(/** @type {Entry} */ entry)}
-                  {#await sleep(0) then}
+                  {#await sleep() then}
                     <EntryListItem {collection} {entry} {viewType} />
                   {/await}
                 {/snippet}

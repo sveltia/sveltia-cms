@@ -143,7 +143,7 @@
   <section>
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as entry (entry.sha)}
-      {#await sleep(0) then}
+      {#await sleep() then}
         {#each getAssociatedCollections(entry) as collection (collection.name)}
           {@const collectionLabel = collection.label || collection.name}
           {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}

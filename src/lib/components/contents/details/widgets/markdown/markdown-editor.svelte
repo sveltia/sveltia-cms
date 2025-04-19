@@ -118,7 +118,7 @@
 </script>
 
 <div role="none" class="wrapper" class:minimal>
-  {#await sleep(0) then}
+  {#await sleep() then}
     <TextEditor
       lang={locale}
       {modes}

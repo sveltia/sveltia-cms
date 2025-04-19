@@ -118,7 +118,7 @@
   </header>
   {#if locale && keyPath}
     {#each fields as { name, label: fieldLabel, widget = 'string', ...rest } (name)}
-      {#await sleep(0) then}
+      {#await sleep() then}
         <!-- @todo Support `default` option -->
         {#if widget in editors && !unsupportedWidgets.includes(widget)}
           {@const SvelteComponent = editors[widget]}

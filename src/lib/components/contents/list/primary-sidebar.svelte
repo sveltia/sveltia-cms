@@ -26,7 +26,7 @@
   {/if}
   <Listbox aria-label={$_('collection_list')} aria-controls="collection-container">
     {#each collections as { name, label, icon, files, divider = false } (name)}
-      {#await sleep(0) then}
+      {#await sleep() then}
         {#if divider}
           <Divider />
         {:else}

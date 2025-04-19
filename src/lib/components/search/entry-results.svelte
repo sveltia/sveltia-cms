@@ -40,7 +40,7 @@
         {#key $searchTerms}
           <InfiniteScroll items={$entrySearchResults} itemKey="id">
             {#snippet renderItem(/** @type {Entry} */ entry)}
-              {#await sleep(0) then}
+              {#await sleep() then}
                 <EntryResultItem {entry} />
               {/await}
             {/snippet}

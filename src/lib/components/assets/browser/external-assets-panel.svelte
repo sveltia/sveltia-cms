@@ -190,7 +190,7 @@
     >
       <InfiniteScroll items={searchResults} itemKey="id">
         {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-          {#await sleep(0) then}
+          {#await sleep() then}
             {@const { id, previewURL, description, kind: _kind } = asset}
             <Option label="" value={id}>
               <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />

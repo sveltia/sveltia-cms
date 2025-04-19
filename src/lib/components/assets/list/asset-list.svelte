@@ -42,12 +42,12 @@
         aria-rowcount={$listedAssets.length}
       >
         {#each Object.entries($assetGroups) as [name, assets] (name)}
-          {#await sleep(0) then}
+          {#await sleep() then}
             <GridBody label={name !== '*' ? name : undefined}>
               <InfiniteScroll items={assets} itemKey="path">
                 {#snippet renderItem(/** @type {Asset} */ asset)}
                   {#key asset.sha}
-                    {#await sleep(0) then}
+                    {#await sleep() then}
                       <AssetListItem {asset} {viewType} />
                     {/await}
                   {/key}

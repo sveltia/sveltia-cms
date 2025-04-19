@@ -52,7 +52,7 @@
   {/if}
   <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
     {#each folders as { collectionName, internalPath, entryRelative } (collectionName)}
-      {#await sleep(0) then}
+      {#await sleep() then}
         {@const collection = collectionName ? getCollection(collectionName) : undefined}
         <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
         {@const uploadDisabled = entryRelative}
@@ -116,7 +116,7 @@
           {/snippet}
           {#snippet endIcon()}
             {#key $allAssets}
-              {#await sleep(0) then}
+              {#await sleep() then}
                 {@const count = (internalPath ? getAssetsByFolder(internalPath) : $allAssets)
                   .length}
                 <span

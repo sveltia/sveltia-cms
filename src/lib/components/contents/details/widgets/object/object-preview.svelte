@@ -53,7 +53,7 @@
 {#if hasValues}
   <Subsection {label}>
     {#each subFields as subField (subField.name)}
-      {#await sleep(0) then}
+      {#await sleep() then}
         <FieldPreview
           keyPath={[keyPath, subField.name].join('.')}
           {locale}

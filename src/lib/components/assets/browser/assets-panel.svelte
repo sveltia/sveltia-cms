@@ -62,7 +62,7 @@
     >
       <InfiniteScroll items={filteredAssets} itemKey="path">
         {#snippet renderItem(/** @type {Asset} */ asset)}
-          {#await sleep(0) then}
+          {#await sleep() then}
             {@const { kind, name, path } = asset}
             <!-- Show asset path relative to the base folder, or just file name -->
             {@const relPath = basePath ? stripSlashes(path.replace(basePath, '')) : name}

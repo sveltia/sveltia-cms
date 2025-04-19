@@ -84,9 +84,9 @@
 {/snippet}
 
 {#each getAssociatedCollections(entry) as collection (collection.name)}
-  {#await sleep(0) then}
+  {#await sleep() then}
     {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
-      {#await sleep(0) then}
+      {#await sleep() then}
         {@render resultRow({ collection, collectionFile })}
       {/await}
     {:else}

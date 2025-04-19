@@ -28,7 +28,7 @@
 </script>
 
 <div role="none" class="{viewType}-view">
-  {#await sleep(0) then}
+  {#await sleep() then}
     <Grid multiple clickToSelect={false} {...rest}>
       {@render children?.()}
     </Grid>

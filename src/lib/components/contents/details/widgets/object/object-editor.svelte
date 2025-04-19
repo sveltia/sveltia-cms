@@ -227,7 +227,7 @@
       {#await waitForVisibility(wrapper) then}
         {#if parentExpanded}
           {#each subFields as subField (subField.name)}
-            {#await sleep(0) then}
+            {#await sleep() then}
               <FieldEditor
                 keyPath={[keyPath, subField.name].join('.')}
                 {locale}

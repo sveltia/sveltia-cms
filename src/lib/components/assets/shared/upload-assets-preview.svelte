@@ -30,7 +30,7 @@
 
 <div role="list" class="files">
   {#each files as file, index}
-    {#await sleep(0) then}
+    {#await sleep() then}
       {@const { name, type, size } = file}
       {@const originalFile = transformedFileMap?.get(file)}
       <div role="listitem" class="file">

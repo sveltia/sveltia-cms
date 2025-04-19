@@ -61,7 +61,7 @@
 {#if hasSubFields}
   <!-- eslint-disable-next-line no-unused-vars -->
   {#each items as item, index}
-    {#await sleep(0) then}
+    {#await sleep() then}
       {@const subFieldName = Array.isArray(types)
         ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
         : undefined}
@@ -72,7 +72,7 @@
         : (fields ?? (field ? [field] : []))}
       <Subsection {label}>
         {#each subFields as subField (subField.name)}
-          {#await sleep(0) then}
+          {#await sleep() then}
             <FieldPreview
               keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
               {locale}
