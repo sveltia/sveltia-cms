@@ -321,8 +321,7 @@
     }
 
     & > * {
-      margin-right: auto;
-      margin-left: auto;
+      margin-inline: auto !important;
       max-width: 768px;
     }
   }
