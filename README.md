@@ -593,11 +593,11 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 
 ### Framework support
 
-While Sveltia CMS is built with Svelte, the application is **framework-agnostic** because it’s distributed as compiled vanilla JavaScript and is a pure headless CMS that only manages content in Git repositories.
+While Sveltia CMS is built with Svelte, the application is **framework-agnostic**. It’s a small, compiled, vanilla JavaScript bundle that manages content in a Git repository directly via the REST/GraphQL API. It doesn’t interact with the framework that builds your site.
 
-You can use the CMS with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
+So you can use the CMS with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 
-We have added support for features required by certain frameworks, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, as well as [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific needs.
+We have added support for features used by certain frameworks and i18n libraries, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, as well as [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific needs.
 
 ### Browser support
 
@@ -635,7 +635,9 @@ Unfortunately, we are unable to provide free installation and setup support at t
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement. Edit `/admin/index.html` to replace the CMS `<script>` tag, and push the change to your repository. Your new `<script>` tag is:
+Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub or GitLab backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
+
+Open `/admin/index.html` locally with an editor like VS Code and replace the CMS `<script>` tag with the new one:
 
 ```html
 <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
@@ -655,9 +657,9 @@ From Decap CMS:
 +<script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
 ```
 
-That’s it! You can open `https://[hostname]/admin/` as before to start editing. There is even no authentication process if you’ve already been signed in with GitHub or GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
+Next, let’s [test Sveltia CMS on your local machine](#working-with-a-local-git-repository). If everything looks good, push the change to your repository.
 
-That said, we strongly recommend testing your new Sveltia CMS instance first on your local machine. [See below](#working-with-a-local-git-repository) for how.
+You can now open `https://[hostname]/admin/` as usual to start editing. There is even no authentication process if you’re already signed in with GitHub or GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
 #### Migrating from Git Gateway backend
 
