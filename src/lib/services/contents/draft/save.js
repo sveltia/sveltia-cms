@@ -323,14 +323,15 @@ export const copyProperty = ({
 }) => {
   let value = unsortedMap[key];
 
-  // Use native date for TOML
+  // Use native date for TOML if a custom format is not defined
   // @see https://github.com/squirrelchat/smol-toml?tab=readme-ov-file#dates
   // @see https://toml.io/en/v1.0.0#offset-date-time
   if (
     isTomlOutput &&
     typeof value === 'string' &&
     fullDateTimeRegEx.test(value) &&
-    field?.widget === 'datetime'
+    field?.widget === 'datetime' &&
+    !field.format
   ) {
     try {
       value = new TomlDate(value);
