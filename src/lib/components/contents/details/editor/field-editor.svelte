@@ -320,7 +320,7 @@
       border-color: var(--sui-secondary-border-color);
     }
 
-    & > * {
+    & > :global(*) {
       margin-inline: auto !important;
       max-width: 768px;
     }
