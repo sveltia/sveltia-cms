@@ -20,7 +20,7 @@
     getMediaFieldURL,
     getMediaKind,
   } from '$lib/services/assets';
-  import { getMediaLibraryConfig, transformFile } from '$lib/services/assets/media-library';
+  import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
   import { hasMouse } from '$lib/services/user/env';
   import { formatSize } from '$lib/services/utils/file';
@@ -82,7 +82,9 @@
     choose_url: canEnterURL = true,
   } = $derived(fieldConfig);
   const isImageWidget = $derived(widgetName === 'image');
-  const { maxFileSize, fileTransformations } = $derived(getMediaLibraryConfig({ fieldConfig }));
+  const {
+    config: { max_file_size: maxSize, transformations },
+  } = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
   const collection = $derived($entryDraft?.collection);
   const entry = $derived($entryDraft?.originalEntry);
   const showRemoveButton = $derived(
@@ -124,11 +126,11 @@
         asset = existingAsset;
         file = undefined;
       } else {
-        if (fileTransformations) {
-          file = await transformFile(file, fileTransformations);
+        if (transformations) {
+          file = await transformFile(file, transformations);
         }
 
-        if (file.size > maxFileSize) {
+        if (file.size > /** @type {number} */ (maxSize)) {
           showSizeLimitDialog = true;
         } else {
           // Set a temporary blob URL, which will be later replaced with the actual file path
@@ -299,6 +301,7 @@
   kind={isImageWidget ? 'image' : undefined}
   {canEnterURL}
   {entry}
+  {fieldConfig}
   bind:open={showSelectAssetsDialog}
   onSelect={({ asset: selectedAsset }) => {
     onAssetSelect(selectedAsset);
@@ -306,7 +309,7 @@
 />
 
 <AlertDialog bind:open={showSizeLimitDialog} title={$_('assets_dialog.large_file.title')}>
-  {$_('warning_oversized_file', { values: { size: formatSize(maxFileSize) } })}
+  {$_('warning_oversized_file', { values: { size: formatSize(/** @type {number} */ (maxSize)) } })}
 </AlertDialog>
 
 <ConfirmationDialog

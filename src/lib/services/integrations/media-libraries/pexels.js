@@ -126,7 +126,7 @@ const search = async (query, { apiKey }) => {
  * @type {MediaLibraryService}
  */
 export default {
-  serviceType: 'stock_photos',
+  serviceType: 'stock_assets',
   serviceId: 'pexels',
   serviceLabel: 'Pexels',
   serviceURL: 'https://www.pexels.com/',

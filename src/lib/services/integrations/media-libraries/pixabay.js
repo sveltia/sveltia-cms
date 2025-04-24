@@ -112,7 +112,7 @@ const search = async (query, { apiKey }) => {
  * @type {MediaLibraryService}
  */
 export default {
-  serviceType: 'stock_photos',
+  serviceType: 'stock_assets',
   serviceId: 'pixabay',
   serviceLabel: 'Pixabay',
   serviceURL: 'https://pixabay.com/',

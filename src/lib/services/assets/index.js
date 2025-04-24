@@ -4,7 +4,7 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
-import { getMediaLibraryConfig, transformFile } from '$lib/services/assets/media-library';
+import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
 import { backend } from '$lib/services/backends';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
@@ -103,17 +103,17 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
 
   const originalFiles = _uploadingAssets.files;
   const transformedFileMap = new WeakMap();
-  const { maxFileSize, fileTransformations } = getMediaLibraryConfig();
+  const { max_file_size: maxSize, transformations } = getDefaultMediaLibraryOptions().config;
   /** @type {File[]} */
   let files = [];
 
   (async () => {
-    if (originalFiles.length && fileTransformations) {
+    if (originalFiles.length && transformations) {
       update((state) => ({ ...state, processing: true }));
 
       files = await Promise.all(
         originalFiles.map(async (file) => {
-          const newFile = await transformFile(file, fileTransformations);
+          const newFile = await transformFile(file, transformations);
 
           if (newFile !== file) {
             transformedFileMap.set(newFile, file);
@@ -128,8 +128,8 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
 
     update(() => ({
       processing: false,
-      undersizedFiles: files.filter(({ size }) => size <= maxFileSize),
-      oversizedFiles: files.filter(({ size }) => size > maxFileSize),
+      undersizedFiles: files.filter(({ size }) => size <= /** @type {number} */ (maxSize)),
+      oversizedFiles: files.filter(({ size }) => size > /** @type {number} */ (maxSize)),
       transformedFileMap,
     }));
   })();

@@ -4,7 +4,7 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { processedAssets, showAssetOverlay, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data';
-  import { getMediaLibraryConfig } from '$lib/services/assets/media-library';
+  import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
   import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { formatSize } from '$lib/services/utils/file';
 
@@ -14,7 +14,7 @@
   const { files: originalFiles, folder, originalAsset } = $derived($uploadingAssets);
   const { processing, undersizedFiles, oversizedFiles, transformedFileMap } =
     $derived($processedAssets);
-  const { maxFileSize } = $derived(getMediaLibraryConfig());
+  const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
 
   $effect(() => {
     files = [...undersizedFiles];
@@ -68,7 +68,7 @@
     <div role="group" class="section oversized" aria-label={$_('oversized_files')}>
       <Alert status="warning">
         {$_(oversizedFiles.length === 1 ? 'warning_oversized_file' : 'warning_oversized_files', {
-          values: { size: formatSize(maxFileSize) },
+          values: { size: formatSize(/** @type {number} */ (maxSize)) },
         })}
       </Alert>
       <UploadAssetsPreview files={oversizedFiles} {transformedFileMap} removable={false} />

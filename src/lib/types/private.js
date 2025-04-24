@@ -134,9 +134,9 @@
  */
 
 /**
- * External media library service, such as a stock photo provider or a cloud storage service.
+ * External media library service, such as a stock asset provider or a cloud storage service.
  * @typedef {object} MediaLibraryService
- * @property {'stock_photos' | 'cloud_storage'} serviceType Service type.
+ * @property {'stock_assets' | 'cloud_storage'} serviceType Service type.
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
  * @property {string} serviceURL Service URL.
@@ -564,7 +564,7 @@
  */
 
 /**
- * Asset on an external media library, such as a stock photo or a file on cloud storage.
+ * Asset on an external media library, such as a stock photo/video or a file on cloud storage.
  * @typedef {object} ExternalAsset
  * @property {string} id Asset ID.
  * @property {string} description Asset description.
@@ -583,9 +583,9 @@
  * @typedef {object} SelectedAsset
  * @property {Asset} [asset] One of the existing assets available in the CMS.
  * @property {File} [file] File selected from the user’s computer, or an image file downloaded from
- * a stock photo service.
- * @property {string} [url] URL from direct input or a hotlinking stock photo.
- * @property {string} [credit] Attribution HTML string for a stock photo, including the photographer
+ * a stock asset provider.
+ * @property {string} [url] URL from direct input or a hotlinking stock asset.
+ * @property {string} [credit] Attribution HTML string for a stock asset, including the photographer
  * name/link and service name/link.
  */
 

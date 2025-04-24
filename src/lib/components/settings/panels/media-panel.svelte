@@ -2,8 +2,14 @@
   import { TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
+  import { getStockAssetMediaLibraryOptions } from '$lib/services/assets/media-library';
+  import { allStockAssetProviders } from '$lib/services/integrations/media-libraries';
   import { prefs } from '$lib/services/user/prefs';
-  import { allStockPhotoServices } from '$lib/services/integrations/media-libraries';
+
+  /**
+   * @import { MediaLibraryService } from '$lib/types/private';
+   * @import { StockAssetProviderName } from '$lib/types/public';
+   */
 
   /**
    * @typedef {object} Props
@@ -16,9 +22,17 @@
     onChange = undefined,
     /* eslint-enable prefer-const, no-unused-vars */
   } = $props();
+
+  const enabledStockAssetProviderEntries = $derived.by(() => {
+    const { providers = [] } = getStockAssetMediaLibraryOptions();
+
+    return /** @type {[StockAssetProviderName, MediaLibraryService][]} */ (
+      Object.entries(allStockAssetProviders)
+    ).filter(([serviceId]) => providers.includes(serviceId));
+  });
 </script>
 
-{#each Object.entries(allStockPhotoServices) as [serviceId, service] (serviceId)}
+{#each enabledStockAssetProviderEntries as [serviceId, service] (serviceId)}
   {@const { serviceLabel, developerURL, apiKeyURL } = service}
   <section>
     <h4>
@@ -58,4 +72,6 @@
       {/if}
     </div>
   </section>
+{:else}
+  {$_('prefs.media.stock_photos.providers_disabled')}
 {/each}

@@ -15,11 +15,12 @@
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssets, globalAssetFolder } from '$lib/services/assets';
+  import { getStockAssetMediaLibraryOptions } from '$lib/services/assets/media-library';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
   import {
     allCloudStorageServices,
-    allStockPhotoServices,
+    allStockAssetProviders,
   } from '$lib/services/integrations/media-libraries';
   import { normalize } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
@@ -27,7 +28,14 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { AssetKind, Entry, SelectedAsset, SelectAssetsView } from '$lib/types/private';
+   * @import {
+   * AssetKind,
+   * Entry,
+   * MediaLibraryService,
+   * SelectAssetsView,
+   * SelectedAsset,
+   * } from '$lib/types/private';
+   * @import { FileField, ImageField, StockAssetProviderName } from '$lib/types/public';
    */
 
   /**
@@ -36,6 +44,7 @@
    * @property {AssetKind | undefined} [kind] Asset kind.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
    * @property {Entry} [entry] Associated entry.
+   * @property {FileField | ImageField} [fieldConfig] Field configuration.
    * @property {(detail: { asset: SelectedAsset }) => void} [onSelect] Custom `select` event
    * handler.
    */
@@ -47,6 +56,7 @@
     kind,
     canEnterURL = true,
     entry,
+    fieldConfig,
     onSelect = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -72,8 +82,18 @@
     entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined,
   );
   const isLocalLibrary = $derived(libraryName?.endsWith('-assets') ?? true);
+  const enabledStockAssetProviderEntries = $derived.by(() => {
+    const { providers = [] } = getStockAssetMediaLibraryOptions({ fieldConfig });
+
+    return /** @type {[StockAssetProviderName, MediaLibraryService][]} */ (
+      Object.entries(allStockAssetProviders)
+    ).filter(([serviceId]) => providers.includes(serviceId));
+  });
   const isEnabledMediaService = $derived(
-    (Object.keys(allStockPhotoServices).includes(libraryName) && $prefs?.apiKeys?.[libraryName]) ||
+    (enabledStockAssetProviderEntries
+      .map(([serviceId]) => serviceId)
+      .includes(/** @type {StockAssetProviderName} */ (libraryName)) &&
+      $prefs?.apiKeys?.[libraryName]) ||
       (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]),
   );
   const Selector = $derived($isSmallScreen ? Select : Listbox);
@@ -137,7 +157,7 @@
   {#snippet footerExtra()}
     {#if isEnabledMediaService}
       {@const { showServiceLink, serviceLabel, serviceURL } =
-        allStockPhotoServices[libraryName] ?? {}}
+        allStockAssetProviders[/** @type {StockAssetProviderName} */ (libraryName)] ?? {}}
       {#if showServiceLink}
         <a href={serviceURL}>
           {$_('prefs.media.stock_photos.credit', { values: { service: serviceLabel } })}
@@ -192,11 +212,13 @@
             {/each}
           </OptionGroup>
         {/if}
-        <OptionGroup label={$_('assets_dialog.location.stock_photos')}>
-          {#each Object.values(allStockPhotoServices) as { serviceId, serviceLabel } (serviceId)}
-            <Option name={serviceId} label={serviceLabel} />
-          {/each}
-        </OptionGroup>
+        {#if enabledStockAssetProviderEntries.length}
+          <OptionGroup label={$_('assets_dialog.location.stock_photos')}>
+            {#each enabledStockAssetProviderEntries as [serviceId, { serviceLabel }] (serviceId)}
+              <Option name={serviceId} label={serviceLabel} />
+            {/each}
+          </OptionGroup>
+        {/if}
       </Selector>
       {#if $isSmallScreen}
         <div role="none" class="filter-tools">
@@ -269,7 +291,7 @@
           />
         {/if}
       {/each}
-      {#each Object.entries(allStockPhotoServices) as [serviceId, serviceProps] (serviceId)}
+      {#each enabledStockAssetProviderEntries as [serviceId, serviceProps] (serviceId)}
         {#if libraryName === serviceId}
           <ExternalAssetsPanel
             {kind}

@@ -52,7 +52,7 @@
   } = $props();
 
   const {
-    serviceType = 'stock_photos',
+    serviceType = 'stock_assets',
     serviceId = '',
     serviceLabel = '',
     hotlinking = false,
@@ -206,7 +206,7 @@
 {:else if hasConfig}
   <EmptyState>
     <p role="alert">
-      {#if serviceType === 'stock_photos'}
+      {#if serviceType === 'stock_assets'}
         {@html DOMPurify.sanitize(
           $_('prefs.media.stock_photos.description', {
             values: {

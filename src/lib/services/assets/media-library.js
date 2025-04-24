@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
+import { allStockAssetProviders } from '$lib/services/integrations/media-libraries';
 import {
   optimizeSVG,
   rasterImageConversionFormats,
@@ -11,40 +12,77 @@ import {
 
 /**
  * @import {
- * DefaultMediaLibraryOptions,
+ * DefaultMediaLibraryConfig,
  * FileField,
  * FileTransformations,
  * ImageField,
  * MediaLibraryName,
  * RasterImageTransformationOptions,
+ * StockAssetMediaLibrary,
+ * StockAssetProviderName,
  * } from '$lib/types/public';
  */
 
 /**
- * Get normalized default media library options. Support both new and legacy options at the field
- * level and global.
+ * Get any media library options. Support both new and legacy options at the field level and global.
  * @param {object} [options] Options.
  * @param {MediaLibraryName} [options.libraryName] Library name.
- * @param {ImageField | FileField} [options.fieldConfig] Field configuration.
- * @returns {{ maxFileSize: number, fileTransformations?: FileTransformations }} Options.
- * @todo Support Cloudinary and Uploadcare.
+ * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
+ * @returns {Record<string, any>} Options.
  */
-export const getMediaLibraryConfig = ({ libraryName = 'default', fieldConfig } = {}) => {
+const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
   const _siteConfig = get(siteConfig);
 
-  /** @type {DefaultMediaLibraryOptions | undefined} */
-  const { max_file_size: max, transformations } =
-    fieldConfig?.media_libraries?.[libraryName]?.config ??
-    fieldConfig?.media_library?.config ??
-    _siteConfig?.media_libraries?.[libraryName]?.config ??
-    (_siteConfig?.media_library?.name === libraryName
-      ? _siteConfig.media_library.config
+  return (
+    fieldConfig?.media_libraries?.[libraryName] ??
+    (fieldConfig?.media_library?.name === libraryName ||
+    _siteConfig?.media_library?.name === libraryName
+      ? fieldConfig?.media_library
       : undefined) ??
-    {};
+    _siteConfig?.media_libraries?.[libraryName] ??
+    (_siteConfig?.media_library?.name === libraryName ? _siteConfig.media_library : undefined) ??
+    {}
+  );
+};
+
+/**
+ * Get normalized default media library options.
+ * @param {object} [options] Options.
+ * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
+ * @returns {{ config: DefaultMediaLibraryConfig }} Options.
+ */
+export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {
+  const options = getMediaLibraryOptions({ fieldConfig });
+
+  /** @type {DefaultMediaLibraryConfig} */
+  const { max_file_size: maxSize, transformations } =
+    typeof options === 'boolean' ? {} : (options?.config ?? {});
 
   return {
-    maxFileSize: typeof max === 'number' && Number.isInteger(max) ? max : Infinity,
-    fileTransformations: isObject(transformations) ? transformations : undefined,
+    config: {
+      max_file_size: typeof maxSize === 'number' && Number.isInteger(maxSize) ? maxSize : Infinity,
+      transformations: isObject(transformations) ? transformations : undefined,
+    },
+  };
+};
+
+/**
+ * Get normalized stock photo/video media library options.
+ * @param {object} [options] Options.
+ * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
+ * @returns {StockAssetMediaLibrary} Options.
+ */
+export const getStockAssetMediaLibraryOptions = ({ fieldConfig } = {}) => {
+  const options = getMediaLibraryOptions({ libraryName: 'stock_assets', fieldConfig });
+
+  const allProviderNames = /** @type {StockAssetProviderName[]} */ (
+    Object.keys(allStockAssetProviders)
+  );
+
+  const { providers } = options;
+
+  return {
+    providers: Array.isArray(providers) ? providers : allProviderNames,
   };
 };
 

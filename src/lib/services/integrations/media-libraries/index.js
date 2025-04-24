@@ -4,6 +4,7 @@ import unsplash from './unsplash';
 
 /**
  * @import { MediaLibraryService } from '$lib/types/private';
+ * @import { StockAssetProviderName } from '$lib/types/public';
  */
 
 /**
@@ -14,10 +15,10 @@ export const allCloudStorageServices = {
   //
 };
 /**
- * List of all the external media libraries.
- * @type {Record<string, MediaLibraryService>}
+ * List of all the supported stock asset providers.
+ * @type {Record<StockAssetProviderName, MediaLibraryService>}
  */
-export const allStockPhotoServices = {
+export const allStockAssetProviders = {
   pexels,
   pixabay,
   unsplash,

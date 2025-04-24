@@ -218,7 +218,7 @@ const search = async (query, { apiKey }) => {
  * @type {MediaLibraryService}
  */
 export default {
-  serviceType: 'stock_photos',
+  serviceType: 'stock_assets',
   serviceId: 'unsplash',
   serviceLabel: 'Unsplash',
   serviceURL: 'https://unsplash.com/',

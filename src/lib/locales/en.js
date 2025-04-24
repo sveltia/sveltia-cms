@@ -662,6 +662,7 @@ export const strings = {
         description:
           'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your API Key</a> here to insert free stock photos to image entry fields.',
         credit: 'Photos provided by {service}',
+        providers_disabled: 'Stock asset providers are disabled by the administrator.',
       },
     },
     accessibility: {

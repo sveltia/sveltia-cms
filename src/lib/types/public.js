@@ -29,7 +29,7 @@
 
 /**
  * Supported media library name.
- * @typedef {'default' | 'cloudinary' | 'uploadcare'} MediaLibraryName
+ * @typedef {'default' | 'cloudinary' | 'uploadcare' | 'stock_assets'} MediaLibraryName
  */
 
 /**
@@ -89,7 +89,7 @@
 
 /**
  * Configuration for the default media library.
- * @typedef {object} DefaultMediaLibraryOptions
+ * @typedef {object} DefaultMediaLibraryConfig
  * @property {number} [max_file_size] Maximum file size in bytes that can be accepted for uploading.
  * @property {FileTransformations} [transformations] File transformation option map. The key is an
  * original format like `png` or `jpeg`. It can also be `raster_image` that matches any supported
@@ -101,7 +101,7 @@
 /**
  * Options for the default media library.
  * @typedef {object} DefaultMediaLibrary
- * @property {DefaultMediaLibraryOptions} [config] Configuration for the default media library.
+ * @property {DefaultMediaLibraryConfig} [config] Configuration for the default media library.
  */
 
 /**
@@ -140,17 +140,33 @@
  */
 
 /**
+ * Name of supported stock photo/video provider.
+ * @typedef {'pexels' | 'pixabay' | 'unsplash'} StockAssetProviderName
+ */
+
+/**
+ * Options for the unified stock photo/video media library.
+ * @typedef {object} StockAssetMediaLibrary
+ * @property {StockAssetProviderName[]} [providers] Enabled stock photo/video providers. The stock
+ * photo/video section in the asset browser is hidden if an empty array is given. Default: all
+ * supported providers.
+ */
+
+/**
  * Supported media library.
- * @typedef {DefaultMediaLibrary | CloudinaryMediaLibrary | UploadcareMediaLibrary} MediaLibrary
+ * @typedef {DefaultMediaLibrary | CloudinaryMediaLibrary | UploadcareMediaLibrary |
+ * StockAssetMediaLibrary} MediaLibrary
  * @see https://decapcms.org/docs/configuration-options/#media-library
  */
 
 /**
  * Unified media library option that supports multiple libraries.
- * @typedef {object} MediaLibraryMap
+ * @typedef {object} MediaLibraries
  * @property {DefaultMediaLibrary} [default] Options for the default media library.
  * @property {CloudinaryMediaLibrary} [cloudinary] Options for the Cloudinary media library.
  * @property {UploadcareMediaLibrary} [uploadcare] Options for the Uploadcare media library.
+ * @property {StockAssetMediaLibrary} [stock_assets] Options for the unified stock photo/video media
+ * library.
  */
 
 /**
@@ -199,7 +215,7 @@
  * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Legacy media library option
  * that allows only one library. This overrides the global `media_library` option. Use
  * `media_libraries` instead to support multiple libraries.
- * @property {MediaLibraryMap} [media_libraries] Unified media library option that supports multiple
+ * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
  * libraries. This overrides the global `media_libraries` option.
  * @property {boolean} [allow_multiple] Whether to enable multiple item selection in an external
  * media library. Default: `true`.
@@ -996,7 +1012,7 @@
  * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Legacy media library option
  * that allows only one library. This overrides the global `media_library` option. Use
  * `media_libraries` instead to support multiple libraries.
- * @property {MediaLibraryMap} [media_libraries] Unified media library option that supports multiple
+ * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
  * libraries.
  * @property {string} [site_url] Site URL. Default: current site’s origin (`location.origin`).
  * @property {string} [display_url] Site URL linked from the UI. Default: `site_url` option value.
