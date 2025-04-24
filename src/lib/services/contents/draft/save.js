@@ -25,6 +25,7 @@ import { expandInvalidFields } from '$lib/services/contents/draft/editor';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
+import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
 import { user } from '$lib/services/user';
 import { fullDateTimeRegEx } from '$lib/services/utils/date';
@@ -57,6 +58,7 @@ import {
  * User,
  * } from '$lib/types/private';
  * @import {
+ * DateTimeField,
  * Field,
  * FieldKeyPath,
  * ListField,
@@ -331,7 +333,7 @@ export const copyProperty = ({
     typeof value === 'string' &&
     fullDateTimeRegEx.test(value) &&
     field?.widget === 'datetime' &&
-    !field.format
+    !parseDateTimeConfig(/** @type {DateTimeField} */ (field)).format
   ) {
     try {
       value = new TomlDate(value);
