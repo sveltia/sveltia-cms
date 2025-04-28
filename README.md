@@ -73,6 +73,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
   - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
   - [Configuring multiple media libraries](#configuring-multiple-media-libraries)
   - [Optimizing images for upload](#optimizing-images-for-upload)
+  - [Disabling stock assets](#disabling-stock-assets)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
   - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
   - [Controlling data output](#controlling-data-output)
@@ -489,10 +490,12 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
 - Enhancements to media libraries:
   - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
-  - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8]
   - Default media library
     - It comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images selected by users for upload are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
     - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
+  - Other integrations
+    - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8] Developers can [disable them](#disabling-stock-assets) if needed.
+    - More integration options, including Amazon S3 and Cloudflare R2, would be added in the future.
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for.[^38]
 - Assets stored in an entry-relative media folder are displayed in the Asset Library.[^142]
@@ -1043,6 +1046,16 @@ In case you’re not aware, [WebP](https://developers.google.com/speed/webp) off
 - AVIF conversion is not supported because no browser has native AVIF encoding support ([Chromium won’t fix it](https://issues.chromium.org/issues/40848792)) and the third-party library (and AVIF encoding in general) is very slow.
 - This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process.
 - We may add more transformation options in the future.
+
+### Disabling stock assets
+
+The Select File/Image dialog includes some stock photo providers for convenience, but sometimes these may be irrelevant. Developers can hide them with the following configuration:
+
+```yaml
+media_libraries:
+  stock_assets:
+    providers: []
+```
 
 ### Editing data files with a top-level list
 
