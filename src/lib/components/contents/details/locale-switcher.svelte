@@ -53,7 +53,7 @@
 
 <div role="none" class="wrapper">
   <SelectComponent
-    class={hasAnyError ? 'error' : undefined}
+    class={hasAnyError && useDropDown ? 'error' : undefined}
     aria-label={$_('switch_locale')}
     aria-controls={id.replace('-header', '-body')}
   >
