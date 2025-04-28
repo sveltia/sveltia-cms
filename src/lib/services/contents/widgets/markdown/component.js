@@ -217,6 +217,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
       const component = mount(Component, {
         target: document.createElement('div'),
         props: {
+          componentId: id,
           label,
           fields,
           values: this.__props,

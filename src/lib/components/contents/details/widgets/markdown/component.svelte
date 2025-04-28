@@ -14,6 +14,7 @@
 
   /**
    * @typedef {object} Props
+   * @property {string} componentId Editor component ID.
    * @property {string} label Field label.
    * @property {Field[]} fields Subfield definitions.
    * @property {Record<string, any>} values Value map.
@@ -23,6 +24,7 @@
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
+    componentId,
     label,
     fields,
     values = {},
@@ -88,6 +90,7 @@
   contenteditable="false"
   tabindex="0"
   aria-label={label}
+  data-component-id={componentId}
   onkeydown={(event) => {
     if (
       !(/** @type {HTMLElement} */ (event.target).matches('button, input, textarea')) &&
@@ -201,6 +204,27 @@
       font-size: var(--sui-font-size-small);
       font-weight: 600;
       color: var(--sui-secondary-foreground-color);
+    }
+
+    &[data-widget='string'] {
+      @media (768px <= width) {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        [data-component-id='image-builtin'] & {
+          border-width: 0;
+          padding-block: 0 16px;
+        }
+
+        h4 {
+          margin-bottom: 0 !important;
+        }
+
+        .widget-wrapper {
+          flex: auto;
+        }
+      }
     }
   }
 </style>
