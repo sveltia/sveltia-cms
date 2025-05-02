@@ -83,8 +83,10 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
 - [Support \& feedback](#support--feedback)
 - [Contributions](#contributions)
 - [Roadmap](#roadmap)
-  - [Before the 1.0 release](#before-the-10-release)
-  - [After the 1.0 release](#after-the-10-release)
+  - [v1.0 Release Candidate](#v10-release-candidate)
+  - [v1.0](#v10)
+  - [v2.0](#v20)
+  - [Future](#future)
 - [Trivia](#trivia)
 - [Related links](#related-links)
   - [As seen on](#as-seen-on)
@@ -104,7 +106,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after making meaningful improvements
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly inactive
+- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and numerous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right and inevitable one, as proven by the [hundreds of improvements](#differentiators) we have already made.
 
@@ -152,7 +154,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Frequent releases deliver new features and enhancements to users faster. Most of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
-- Mobile and tablet support: Users can manage content on-the-go.[^18] There are still rough edges though; we are working to fully optimize the app for small screens and touch devices.
+- Mobile and tablet support beyond responsive design: Users can manage content on-the-go.[^18] There are still rough edges though; we are working to fully optimize the app for small screens and touch devices.
   - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - Other fatal crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204]
@@ -377,7 +379,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - More than 300 languages are available, thanks to [Prism](https://prismjs.com/)’s extensive language support.
   - The language switcher always appears in the user interface, so it’s easy to spot and change the selected language.
   - Dynamic loading of language modes work as expected.[^198]
-  - Code fields under a List field work as expected, saving both code and language.[^181]
+  - A Code field under a List field work as expected, saving both code and language.[^181]
 - Color
   - The widget doesn’t cause scrolling issues.[^128]
   - The preview shows both the RGB(A) hex value and the `rgb()` function notation.
@@ -402,7 +404,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can enter spaces in a simple text-based List field.[^50]
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
-  - A Markdown field plays well with a variable type List field.[^202]
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
@@ -414,6 +415,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Code in a code block in the editor can be copied as expected.[^165]
   - Language-annotated code block doesn’t trigger unsaved changes.[^189]
   - Line breaks are rendered as line breaks in the Preview Pane according to GitHub Flavored Markdown (GFM).
+  - A Markdown field plays well with a variable type List field.[^202]
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
@@ -541,7 +543,7 @@ However, 100% feature parity is not planned, and some features are still missing
 - Some date/time format tokens: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with Day.js, and Sveltia CMS will follow suit soon. Since [Day.js tokens](https://day.js.org/docs/en/display/format) are not 100% compatible with [Moment.js tokens](https://momentjs.com/docs/#/displaying/format/), this could be a breaking change in certain cases.
 - The theme and keymap inline settings of the Code widget, along with support for some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/). Prism may be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575) in the future.
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
-- Support for an absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
+- An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
   - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api)
@@ -1286,26 +1288,36 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ## Roadmap
 
-### Before the 1.0 release
+### v1.0 Release Candidate
 
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling some more Netlify/Decap CMS issues
 - Accessibility audit
+
+### v1.0
+
+Due Q3 2025
+
+- [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
 - Developer documentation (implementation guide)
 - Marketing site
 - Live demo site
 
-### After the 1.0 release
+### v2.0
 
-- Implementing the [remaining Netlify/Decap CMS features](#current-limitations)
+- Implementing [some deferred Netlify/Decap CMS features](#current-limitations)
+- Tackling even more Netlify/Decap CMS issues
+- End-user documentation
+- Contributor documentation
+
+### Future
+
 - Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation, content writing, etc.
 - Search enhancements
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
-- End-user documentation
-- Contributor documentation
 - Marketplace for custom widgets, etc.
 - VS Code extension for `config.yml` schema validation
 - Official starter templates for the most popular frameworks, including SvelteKit and Next.js
