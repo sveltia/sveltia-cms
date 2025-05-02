@@ -16,7 +16,7 @@
    * EntryCollection,
    * InternalCollection,
    * InternalCollectionFile,
-   * } from '$lib/types/private';.
+   * } from '$lib/types/private';
    */
 
   /**
