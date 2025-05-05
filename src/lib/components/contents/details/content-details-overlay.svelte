@@ -1,6 +1,6 @@
 <script>
   import { Alert, Button, EmptyState, Group, Toast } from '@sveltia/ui';
-  import { onMount, tick } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
@@ -161,7 +161,10 @@
 
   $effect(() => {
     void [showPreview, canPreview, $isSmallScreen, $isMediumScreen];
-    switchPanes();
+
+    untrack(() => {
+      switchPanes();
+    });
   });
 
   $effect(() => {

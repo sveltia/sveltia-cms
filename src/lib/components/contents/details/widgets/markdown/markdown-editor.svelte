@@ -154,7 +154,7 @@
         .sui.text-editor {
           // Remove the section margin
           margin: 0 -16px -16px;
-          width: auto;
+          width: 100dvw;
         }
 
         :is(.sui.toolbar, .lexical-root, textarea) {
