@@ -212,7 +212,7 @@
         align-items: center;
         gap: 8px;
 
-        [data-component-id='image-builtin'] & {
+        [data-component-id='image'] & {
           border-width: 0;
           padding-block: 0 16px;
         }

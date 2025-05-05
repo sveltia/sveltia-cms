@@ -52,7 +52,7 @@ export const getComponentDef = (name) => {
   /** @type {Record<string, EditorComponentDefinition>} */
   const definitions = {
     image: {
-      id: 'image-builtin',
+      id: 'image',
       icon: 'image',
       label: get(_)('editor_components.image'),
       fields: [
@@ -280,7 +280,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
         });
       }
 
-      if (id === 'image-builtin') {
+      if (id === 'image') {
         // Add extra conversion for the built-in image component to support linked images
         Object.assign(conversionMap, {
           /**
