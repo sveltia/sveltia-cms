@@ -5,8 +5,15 @@
 -->
 <script>
   import { TextEditor } from '@sveltia/ui';
+  import { getDateTimeParts } from '@sveltia/utils/datetime';
   import { sleep } from '@sveltia/utils/misc';
+  import {
+    $createParagraphNode as createParagraphNode,
+    getNearestEditorFromDOMNode,
+    $insertNodes as insertNodes,
+  } from 'lexical';
   import { untrack } from 'svelte';
+  import { rasterImageFormats } from '$lib/services/utils/media/image';
   import {
     EditorComponent,
     getComponentDef,
@@ -77,6 +84,65 @@
       ].map((definition) => new EditorComponent(definition))
     ),
   );
+  const imageComponent = $derived(components.find(({ id }) => id === 'image'));
+
+  const supportedImageTypes = [...rasterImageFormats, 'svg+xml'];
+
+  /**
+   * Handle pasted or dropped file(s). If it’s an image, insert it to the editor content.
+   * @param {ClipboardEvent | DragEvent} event `paste` or `drop` event.
+   */
+  const onFileInsert = async (event) => {
+    const isPasteEvent = event.type === 'paste';
+    const outer = /** @type {HTMLElement} */ (event.target)?.closest('div');
+    const editor = getNearestEditorFromDOMNode(outer);
+
+    if (!imageComponent || !outer?.matches('.lexical-root') || !editor) {
+      return;
+    }
+
+    const files = [
+      ...((isPasteEvent
+        ? /** @type {ClipboardEvent} */ (event).clipboardData?.files
+        : /** @type {DragEvent} */ (event).dataTransfer?.files) ?? []),
+    ];
+
+    files.forEach((file) => {
+      const { name, type } = file;
+
+      if (!type.startsWith('image/') || !supportedImageTypes.includes(type.split('/')[1])) {
+        return;
+      }
+
+      // Rename pasted file because it’s typically named `image.png`
+      if (isPasteEvent) {
+        const { year, month, day, hour, minute, second } = getDateTimeParts();
+        const extension = name.match(/\w+$/)?.[0] ?? 'png';
+        const fileName = `${year}-${month}-${day}-${hour}-${minute}-${second}.${extension}`;
+
+        file = new File([file], fileName, { type });
+      }
+
+      const src = URL.createObjectURL(file);
+
+      editor.update(
+        () => {
+          insertNodes([imageComponent.createNode({ src }), createParagraphNode()]);
+        },
+        {
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          onUpdate: async () => {
+            await sleep(250);
+
+            const dropTarget = outer.querySelector(`img[src="${src}"]`)?.closest('.drop-target');
+
+            // Dispatch `Select` event so the file is processed in `FileEditor`
+            dropTarget?.dispatchEvent(new CustomEvent('Select', { detail: { files: [file] } }));
+          },
+        },
+      );
+    });
+  };
 
   /**
    * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
@@ -132,6 +198,12 @@
       aria-labelledby="{fieldId}-label"
       aria-errormessage="{fieldId}-error"
       autoResize={true}
+      onpaste={(/** @type {ClipboardEvent} */ event) => {
+        onFileInsert(event);
+      }}
+      ondrop={(/** @type {DragEvent} */ event) => {
+        onFileInsert(event);
+      }}
     />
   {/await}
 </div>

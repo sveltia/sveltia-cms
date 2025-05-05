@@ -1,6 +1,7 @@
 <script>
   import { Button, FilePicker, Icon } from '@sveltia/ui';
   import { scanFiles } from '@sveltia/utils/file';
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { hasMouse } from '$lib/services/user/env';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
@@ -33,6 +34,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  /** @type {HTMLElement | undefined} */
+  let dropTarget = $state();
   let dragging = $state(false);
   let typeMismatch = $state(false);
   /** @type {FilePicker | undefined} */
@@ -63,9 +66,16 @@
     files = multiple ? allFiles : allFiles.slice(0, 1);
     onSelect?.({ files });
   };
+
+  onMount(() => {
+    dropTarget?.addEventListener('Select', (event) => {
+      onSelect?.({ files: /** @type {CustomEvent} */ (event).detail.files });
+    });
+  });
 </script>
 
 <div
+  bind:this={dropTarget}
   role="none"
   class="drop-target"
   ondragover={(event) => {
