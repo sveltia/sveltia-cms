@@ -93,7 +93,6 @@
    * @param {ClipboardEvent | DragEvent} event `paste` or `drop` event.
    */
   const onFileInsert = async (event) => {
-    const isPasteEvent = event.type === 'paste';
     const outer = /** @type {HTMLElement} */ (event.target)?.closest('div');
     const editor = getNearestEditorFromDOMNode(outer);
 
@@ -102,7 +101,7 @@
     }
 
     const files = [
-      ...((isPasteEvent
+      ...((event.type === 'paste'
         ? /** @type {ClipboardEvent} */ (event).clipboardData?.files
         : /** @type {DragEvent} */ (event).dataTransfer?.files) ?? []),
     ];
@@ -114,11 +113,10 @@
         return;
       }
 
-      // Rename pasted file because it’s typically named `image.png`
-      if (isPasteEvent) {
+      // Rename pasted file with generic name
+      if (name === 'image.png') {
         const { year, month, day, hour, minute, second } = getDateTimeParts();
-        const extension = name.match(/\w+$/)?.[0] ?? 'png';
-        const fileName = `${year}-${month}-${day}-${hour}-${minute}-${second}.${extension}`;
+        const fileName = `${year}-${month}-${day}-${hour}-${minute}-${second}.png`;
 
         file = new File([file], fileName, { type });
       }
