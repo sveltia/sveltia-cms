@@ -13,7 +13,11 @@
     $insertNodes as insertNodes,
   } from 'lexical';
   import { untrack } from 'svelte';
-  import { rasterImageFormats } from '$lib/services/utils/media/image';
+  import {
+    rasterImageExtensionRegex,
+    supportedImageTypes,
+    vectorImageExtensionRegex,
+  } from '$lib/services/utils/media/image';
   import {
     EditorComponent,
     getComponentDef,
@@ -30,6 +34,10 @@
   /**
    * @import { WidgetEditorProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';
+   */
+
+  /**
+   * @typedef {{ file?: File, src?: string, alt?: string }} ImageEntry
    */
 
   /**
@@ -86,50 +94,36 @@
   );
   const imageComponent = $derived(components.find(({ id }) => id === 'image'));
 
-  const supportedImageTypes = [...rasterImageFormats, 'svg+xml'];
-
   /**
-   * Handle pasted or dropped file(s). If it’s an image, insert it to the editor content.
-   * @param {ClipboardEvent | DragEvent} event `paste` or `drop` event.
+   * Insert images to the editor content.
+   * @param {object} args Arguments.
+   * @param {EventTarget | null} args.target Event target.
+   * @param {ImageEntry[]} args.images Image list.
    */
-  const onFileInsert = async (event) => {
-    const outer = /** @type {HTMLElement} */ (event.target)?.closest('div');
+  const insertImages = ({ target, images }) => {
+    const outer = /** @type {HTMLElement} */ (target)?.closest('div');
     const editor = getNearestEditorFromDOMNode(outer);
 
     if (!imageComponent || !outer?.matches('.lexical-root') || !editor) {
       return;
     }
 
-    const files = [
-      ...((event.type === 'paste'
-        ? /** @type {ClipboardEvent} */ (event).clipboardData?.files
-        : /** @type {DragEvent} */ (event).dataTransfer?.files) ?? []),
-    ];
-
-    files.forEach((file) => {
-      const { name, type } = file;
-
-      if (!type.startsWith('image/') || !supportedImageTypes.includes(type.split('/')[1])) {
-        return;
+    images.forEach(({ file, src, alt = '' }) => {
+      if (file) {
+        src = URL.createObjectURL(file);
       }
-
-      // Rename pasted file with generic name
-      if (name === 'image.png') {
-        const { year, month, day, hour, minute, second } = getDateTimeParts();
-        const fileName = `${year}-${month}-${day}-${hour}-${minute}-${second}.png`;
-
-        file = new File([file], fileName, { type });
-      }
-
-      const src = URL.createObjectURL(file);
 
       editor.update(
         () => {
-          insertNodes([imageComponent.createNode({ src }), createParagraphNode()]);
+          insertNodes([imageComponent.createNode({ src, alt }), createParagraphNode()]);
         },
         {
           // eslint-disable-next-line jsdoc/require-jsdoc
           onUpdate: async () => {
+            if (!file) {
+              return;
+            }
+
             await sleep(250);
 
             const dropTarget = outer.querySelector(`img[src="${src}"]`)?.closest('.drop-target');
@@ -140,6 +134,149 @@
         },
       );
     });
+  };
+
+  /**
+   * Handle pasted file. If it’s an image, insert it to the editor content.
+   * @param {ClipboardEvent} event `paste` event.
+   */
+  const onPaste = async (event) => {
+    const { target, clipboardData } = event;
+    const pastedItems = clipboardData?.items;
+
+    if (!pastedItems) {
+      return;
+    }
+
+    /** @type {ImageEntry[]} */
+    let images = [];
+
+    const fileIndex = [...pastedItems].findIndex(
+      ({ kind, type }) => kind === 'file' && supportedImageTypes.includes(type),
+    );
+
+    const htmlIndex = [...pastedItems].findIndex(
+      ({ kind, type }) => kind === 'string' && type === 'text/html',
+    );
+
+    if (fileIndex > -1 && htmlIndex > -1) {
+      // Handle pasted remote files: When a remote image is copied within the browser, both file and
+      // HTML with `<img>` are added to the clipboard. Scrape the filename and alt text from the
+      // HTML content
+      const file = fileIndex > -1 ? pastedItems[fileIndex].getAsFile() : undefined;
+
+      if (!file) {
+        return;
+      }
+
+      // Clear the clipboard to prevent Lexical from pasting the HTML
+      pastedItems.clear();
+      event.stopPropagation();
+
+      let alt = '';
+      let fileName = file.name;
+
+      /** @type {?HTMLImageElement} */
+      const img = await new Promise((resolve) => {
+        pastedItems[htmlIndex].getAsString((str) => {
+          resolve(new DOMParser().parseFromString(str, 'text/html').querySelector('img'));
+        });
+      });
+
+      if (img) {
+        alt = img.alt;
+
+        if (/^https?:/.test(img.src)) {
+          const name = new URL(img.src).pathname.split('/').pop() ?? '';
+
+          if (rasterImageExtensionRegex.test(name) || vectorImageExtensionRegex.test(name)) {
+            fileName = name;
+          }
+        }
+      }
+
+      images = [{ file: new File([file], fileName, { type: file.type }), alt }];
+    } else {
+      // Handle pasted local files
+      images = [...clipboardData.files]
+        .filter(({ type }) => supportedImageTypes.includes(type))
+        .map((file) => ({ file }));
+    }
+
+    if (images.length) {
+      images = images.map(({ file, alt }, index) => {
+        // Rename pasted file with generic name
+        if (file?.name === 'image.png') {
+          const { year, month, day, hour, minute, second } = getDateTimeParts();
+          const suffix = images.length > 1 ? `-${index + 1}` : '';
+          const fileName = `${year}${month}${day}-${hour}${minute}${second}${suffix}.png`;
+
+          file = new File([file], fileName, { type: file.type });
+        }
+
+        return { file, alt };
+      });
+
+      insertImages({ target, images });
+    }
+  };
+
+  /**
+   * Handle dropped file(s). If it’s an image, insert it to the editor content.
+   * @param {DragEvent} event `drop` event.
+   */
+  const onDrop = async (event) => {
+    const { target, dataTransfer } = event;
+    const droppedFiles = dataTransfer?.files;
+    /** @type {ImageEntry[]} */
+    let images = [];
+
+    if (droppedFiles?.length) {
+      // Handle dropped local files
+      images = [...droppedFiles]
+        .filter(({ type }) => supportedImageTypes.includes(type))
+        .map((file) => ({ file }));
+    } else {
+      // Handle dropped remote files: The clipboard doesn’t contain the file itself but the HTML may
+      // contain `<img>`; use the `src` and `alt` attributes to insert a new image. We don’t fetch
+      // the file unless a data URL is given, because it’s likely to fail due to the external site’s
+      // CORS policy
+      const html = event.dataTransfer?.getData('text/html');
+
+      if (html) {
+        const img = new DOMParser().parseFromString(html, 'text/html').querySelector('img');
+
+        if (img) {
+          const { src, alt } = img;
+          const dataMatcher = src.match(/^data:(?<type>image\/.+?);base64,.+/);
+          /** @type {File | undefined} */
+          let file = undefined;
+
+          if (dataMatcher) {
+            const type = dataMatcher.groups?.type ?? '';
+
+            if (supportedImageTypes.includes(type)) {
+              try {
+                const blob = await (await fetch(src)).blob();
+                const { year, month, day, hour, minute, second } = getDateTimeParts();
+                const extension = type.split('/')[1];
+                const fileName = `${year}${month}${day}-${hour}${minute}${second}.${extension}`;
+
+                file = new File([blob], fileName, { type });
+              } catch {
+                return;
+              }
+            }
+          }
+
+          images = [{ file, src, alt }];
+        }
+      }
+    }
+
+    if (images.length) {
+      insertImages({ target, images });
+    }
   };
 
   /**
@@ -196,11 +333,12 @@
       aria-labelledby="{fieldId}-label"
       aria-errormessage="{fieldId}-error"
       autoResize={true}
-      onpaste={(/** @type {ClipboardEvent} */ event) => {
-        onFileInsert(event);
+      onpastecapture={(/** @type {ClipboardEvent} */ event) => {
+        // Use `capture` to handle the event before Lexical does
+        onPaste(event);
       }}
       ondrop={(/** @type {DragEvent} */ event) => {
-        onFileInsert(event);
+        onDrop(event);
       }}
     />
   {/await}

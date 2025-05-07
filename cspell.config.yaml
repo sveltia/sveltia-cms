@@ -53,6 +53,7 @@ words:
   - mkdn
   - Mullvad
   - onkeydowncapture
+  - onpastecapture
   - onwheelcapture
   - OPFS
   - passwordless

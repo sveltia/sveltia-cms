@@ -2,12 +2,23 @@ import { loadModule } from '$lib/services/app/dependencies';
 
 /**
  * @import { ImageFitOption, InternalImageTransformationOptions } from '$lib/types/private';
- * @import { RasterImageConversionFormat, RasterImageFormat } from '$lib/types/public';
+ * @import {
+ * RasterImageConversionFormat,
+ * RasterImageFormat,
+ * VectorImageFormat,
+ * } from '$lib/types/public';
  */
 
 /** @type {RasterImageFormat[]} */
 export const rasterImageFormats = ['avif', 'bmp', 'gif', 'jpeg', 'png', 'webp'];
+export const rasterImageTypes = rasterImageFormats.map((format) => `image/${format}`);
 export const rasterImageExtensionRegex = /\b(?:avif|bmp|gif|jpe?g|png|webp)$/i;
+/** @type {VectorImageFormat[]} */
+export const vectorImageFormats = ['svg'];
+export const vectorImageTypes = ['image/svg+xml'];
+export const vectorImageExtensionRegex = /\b(?:svg)$/i;
+export const supportedImageFormats = [...rasterImageFormats, ...vectorImageFormats];
+export const supportedImageTypes = [...rasterImageTypes, ...vectorImageTypes];
 /** @type {RasterImageConversionFormat[]} */
 export const rasterImageConversionFormats = ['webp'];
 
