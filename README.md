@@ -416,6 +416,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Language-annotated code block doesn’t trigger unsaved changes.[^189]
   - Line breaks are rendered as line breaks in the Preview Pane according to GitHub Flavored Markdown (GFM).
   - A Markdown field plays well with a variable type List field.[^202]
+  - It’s possible to paste/drop local/remote images into the rich text editor to insert these images. Note: Pasting multiple images is [not supported in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=864052).
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
