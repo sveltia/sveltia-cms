@@ -408,15 +408,15 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
+  - A Markdown field plays well with a variable type List field.[^202]
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
   - The built-in `image` component can be inserted with a single click.
   - The built-in `image` component allows users to add, edit or remove a link on an image.[^171]
+  - It’s possible to paste/drop local/remote images into the rich text editor to insert them as expected. Note: Pasting multiple images is [not supported in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=864052).
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
   - Code in a code block in the editor can be copied as expected.[^165]
   - Language-annotated code block doesn’t trigger unsaved changes.[^189]
   - Line breaks are rendered as line breaks in the Preview Pane according to GitHub Flavored Markdown (GFM).
-  - A Markdown field plays well with a variable type List field.[^202]
-  - It’s possible to paste/drop local/remote images into the rich text editor to insert these images. Note: Pasting multiple images is [not supported in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=864052).
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
