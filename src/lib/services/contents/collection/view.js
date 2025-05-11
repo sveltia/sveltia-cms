@@ -28,7 +28,7 @@ import { prefs } from '$lib/services/user/prefs';
  * SortingConditions,
  * SortOrder,
  * } from '$lib/types/private';
- * @import { DateTimeField, FieldKeyPath, SortableFields } from '$lib/types/public';
+ * @import { DateTimeField, FieldKeyPath, NumberField, SortableFields } from '$lib/types/public';
  */
 
 /**
@@ -77,18 +77,29 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
     );
   }
 
+  const fieldConfig = getFieldConfig({ collectionName, keyPath: key });
+
   const type =
-    { slug: String, commit_author: String, commit_date: Date }[key] ||
-    (_entries.length
-      ? getPropertyValue({ entry: _entries[0], locale, collectionName, key })?.constructor
-      : String) ||
-    String;
+    { slug: String, commit_author: String, commit_date: Date }[key] ??
+    (() => {
+      if (fieldConfig?.widget === 'boolean') {
+        return Boolean;
+      }
+
+      if (fieldConfig?.widget === 'number') {
+        const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
+
+        if (valueType === 'int' || valueType === 'float') {
+          return Number;
+        }
+      }
+
+      return String;
+    })();
 
   const valueMap = Object.fromEntries(
     _entries.map((entry) => [entry.slug, getPropertyValue({ entry, locale, collectionName, key })]),
   );
-
-  const fieldConfig = getFieldConfig({ collectionName, keyPath: key });
 
   const dateFieldConfig =
     fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
@@ -97,28 +108,21 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
     const aValue = valueMap[a.slug];
     const bValue = valueMap[b.slug];
 
-    if (aValue === undefined || bValue === undefined) {
-      return 0;
-    }
-
     if (dateFieldConfig) {
-      const aDate = getDate(aValue, dateFieldConfig);
-      const bDate = getDate(bValue, dateFieldConfig);
+      const aDate = aValue ? getDate(aValue, dateFieldConfig) : undefined;
+      const bDate = bValue ? getDate(bValue, dateFieldConfig) : undefined;
 
-      if (aDate && bDate) {
-        return Number(aDate) - Number(bDate);
-      }
+      return Number(aDate ?? 0) - Number(bDate ?? 0);
     }
 
     if (type === String) {
-      return compare(removeMarkdownChars(aValue), removeMarkdownChars(bValue));
+      return compare(
+        removeMarkdownChars(aValue ? String(aValue) : ''),
+        removeMarkdownChars(bValue ? String(bValue) : ''),
+      );
     }
 
-    if (type === Date) {
-      return Number(aValue) - Number(bValue);
-    }
-
-    return aValue - bValue;
+    return Number(aValue ?? 0) - Number(bValue ?? 0);
   });
 
   if (order === 'descending') {
