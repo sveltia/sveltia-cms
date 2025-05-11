@@ -13,7 +13,13 @@ import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries'
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
-import { createPath, decodeFilePath, encodeFilePath, resolvePath } from '$lib/services/utils/file';
+import {
+  createPath,
+  createPathRegEx,
+  decodeFilePath,
+  encodeFilePath,
+  resolvePath,
+} from '$lib/services/utils/file';
 import { getMediaMetadata } from '$lib/services/utils/media';
 import { transformImage } from '$lib/services/utils/media/image';
 import { renderPDF } from '$lib/services/utils/media/pdf';
@@ -461,7 +467,15 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
   const _publicPath = collection?._assetFolder?.publicPath;
 
   const subPath = _publicPath
-    ? stripSlashes(dirName.replace(new RegExp(`^${escapeRegExp(_publicPath)}`), ''))
+    ? stripSlashes(
+        dirName.replace(
+          // Deal with template tags like `/assets/images/{{slug}}`
+          createPathRegEx(_publicPath, (segment) =>
+            /{{.+?}}/.test(segment) ? '[^/]+' : escapeRegExp(segment),
+          ),
+          '',
+        ),
+      )
     : '';
 
   const fullPath = createPath([internalPath, subPath, fileName]);
@@ -487,7 +501,7 @@ export const getAssetPublicURL = (
 ) => {
   const _allAssetFolders = get(allAssetFolders);
 
-  const { publicPath, entryRelative } =
+  const { publicPath, entryRelative, hasTemplateTags } =
     _allAssetFolders.find(({ collectionName }) =>
       getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
     ) ??
@@ -507,7 +521,18 @@ export const getAssetPublicURL = (
     return undefined;
   }
 
-  const path = asset.path.replace(asset.folder, publicPath === '/' ? '' : (publicPath ?? ''));
+  const path = hasTemplateTags
+    ? asset.path.replace(
+        // Deal with template tags like `/assets/images/{{slug}}`
+        createPathRegEx(asset.folder, (segment) => {
+          const tag = segment.match(/{{(?<tag>.+?)}}/)?.groups?.tag;
+
+          return tag ? `(?<${tag}>[^/]+)` : escapeRegExp(segment);
+        }),
+        publicPath?.replaceAll(/{{(.+?)}}/g, '$<$1>') ?? '',
+      )
+    : asset.path.replace(asset.folder, publicPath === '/' ? '' : (publicPath ?? ''));
+
   const encodedPath = encodeFilePath(path);
 
   // Path starting with `@`, etc. cannot be linked
@@ -613,8 +638,9 @@ selectedAssetFolder.subscribe(() => {
 
 /**
  * Check if asset creation is allowed in the folder. Can’t upload assets if collection assets are
- * saved at entry-relative paths.
+ * saved at entry-relative paths or the asset folder contains template tags.
  * @param {CollectionAssetFolder | undefined} assetFolder Asset folder.
  * @returns {boolean} Result.
  */
-export const canCreateAsset = (assetFolder) => !!assetFolder && !assetFolder.entryRelative;
+export const canCreateAsset = (assetFolder) =>
+  !!assetFolder && !assetFolder.entryRelative && !assetFolder.hasTemplateTags;

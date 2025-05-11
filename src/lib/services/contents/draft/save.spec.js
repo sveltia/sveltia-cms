@@ -46,14 +46,23 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
   const relativeAssetFolder = {
     entryRelative: true,
+    hasTemplateTags: false,
     internalPath: 'src/content/blog',
     publicPath: '',
   };
 
   const absoluteAssetFolder = {
     entryRelative: false,
+    hasTemplateTags: false,
     internalPath: 'static/uploads/blog',
     publicPath: '/uploads/blog',
+  };
+
+  const templateTagAssetFolder = {
+    entryRelative: false,
+    hasTemplateTags: true,
+    internalPath: 'static/uploads/blog/{{slug}}',
+    publicPath: '/uploads/blog/{{slug}}',
   };
 
   test('simple path, multiple folders, entry relative', () => {
@@ -309,6 +318,22 @@ describe('Test getEntryAssetFolderPaths()', () => {
       internalBaseAssetFolder: 'static/uploads/blog',
       internalAssetFolder: 'static/uploads/blog',
       publicAssetFolder: '/uploads/blog',
+    });
+  });
+
+  test('asset folder with template tags', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: undefined },
+      _i18n: i18nSingleFile,
+      _assetFolder: templateTagAssetFolder,
+    };
+
+    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
+      internalBaseAssetFolder: 'static/uploads/blog/{{slug}}',
+      internalAssetFolder: 'static/uploads/blog/foo',
+      publicAssetFolder: '/uploads/blog/foo',
     });
   });
 });

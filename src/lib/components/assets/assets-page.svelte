@@ -30,8 +30,7 @@
   import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
   import { isSmallScreen } from '$lib/services/user/env';
 
-  const routeRegex =
-    /^\/assets(?:\/(?<folderPath>[/\-\w]+)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
+  const routeRegex = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
 
   let isIndexPage = $state(false);
 

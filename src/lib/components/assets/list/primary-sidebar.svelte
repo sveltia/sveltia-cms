@@ -33,6 +33,7 @@
       internalPath: undefined,
       publicPath: undefined,
       entryRelative: false,
+      hasTemplateTags: false,
     },
     ...$allAssetFolders.sort(
       (a, b) => getCollectionIndex(a.collectionName) - getCollectionIndex(b.collectionName),
@@ -51,11 +52,12 @@
     />
   {/if}
   <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
-    {#each folders as { collectionName, internalPath, entryRelative } (collectionName)}
+    {#each folders as folder (folder.collectionName)}
       {#await sleep() then}
+        {@const { collectionName, internalPath, entryRelative, hasTemplateTags } = folder}
         {@const collection = collectionName ? getCollection(collectionName) : undefined}
         <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
-        {@const uploadDisabled = entryRelative}
+        {@const uploadDisabled = entryRelative || hasTemplateTags}
         {@const selected =
           (internalPath === undefined && !$selectedAssetFolder) ||
           internalPath === $selectedAssetFolder?.internalPath}

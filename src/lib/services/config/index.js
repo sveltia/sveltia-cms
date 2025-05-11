@@ -261,6 +261,7 @@ siteConfig.subscribe((config) => {
     internalPath: globalMediaFolder,
     publicPath: globalPublicFolder,
     entryRelative: false,
+    hasTemplateTags: false,
   };
 
   /**
@@ -321,6 +322,7 @@ siteConfig.subscribe((config) => {
           internalPath: stripSlashes(entryRelative ? (collectionFolder ?? '') : mediaFolder),
           publicPath,
           entryRelative,
+          hasTemplateTags: /{{.+?}}/.test(mediaFolder),
         };
       })
       .filter(Boolean)

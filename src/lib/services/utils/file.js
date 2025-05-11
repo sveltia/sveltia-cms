@@ -5,6 +5,15 @@ import { _, locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
 /**
+ * Create a regular expression that matches the given path.
+ * @param {string} path Path.
+ * @param {(segment: string) => string} replacer Function to replace each path segment.
+ * @returns {RegExp} Regular expression.
+ */
+export const createPathRegEx = (path, replacer) =>
+  new RegExp(`^${path.split('/').map(replacer).join('\\/')}`);
+
+/**
  * Encode the given (partial) file path or file name. Since {@link encodeURIComponent} encodes
  * slashes, we need to split and join. Also, encode some more characters, including `!`, `(` and
  * `)`, which affect the Markdown syntax like images and links. The `@` prefix is an exception; it

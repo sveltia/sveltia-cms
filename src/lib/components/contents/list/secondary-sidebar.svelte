@@ -9,10 +9,15 @@
   import { currentView } from '$lib/services/contents/collection/view';
   import { isLargeScreen } from '$lib/services/user/env';
 
-  const internalPath = $derived($selectedCollection?._assetFolder?.internalPath);
-  const entryRelative = $derived($selectedCollection?._assetFolder?.entryRelative);
+  const { internalPath, entryRelative, hasTemplateTags } = $derived(
+    $selectedCollection?._assetFolder ?? {
+      internalPath: '',
+      entryRelative: false,
+      hasTemplateTags: false,
+    },
+  );
   // Can’t upload assets if collection assets are saved at entry-relative paths
-  const uploadDisabled = $derived(!!entryRelative);
+  const uploadDisabled = $derived(entryRelative || hasTemplateTags);
 </script>
 
 {#if internalPath && $isLargeScreen && $currentView.showMedia}

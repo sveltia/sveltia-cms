@@ -265,6 +265,8 @@
  * because the complete path cannot be easily determined.
  * @property {boolean} entryRelative Whether the `internalPath` is a relative path from the asset’s
  * associated entry.
+ * @property {boolean} hasTemplateTags Whether the `internalPath` contains template tags like
+ * `/assets/images/{{slug}}`, which require special handling like `entryRelative`.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
 

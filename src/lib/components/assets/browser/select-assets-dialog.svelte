@@ -73,10 +73,15 @@
     kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file'),
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
-  const internalPath = $derived($selectedCollection?._assetFolder?.internalPath ?? '');
-  const entryRelative = $derived($selectedCollection?._assetFolder?.entryRelative ?? false);
-  const showCollectionAssets = $derived(!!internalPath && !entryRelative);
-  const showEntryAssets = $derived(!!entry && entryRelative);
+  const { internalPath, entryRelative, hasTemplateTags } = $derived(
+    $selectedCollection?._assetFolder ?? {
+      internalPath: '',
+      entryRelative: false,
+      hasTemplateTags: false,
+    },
+  );
+  const showCollectionAssets = $derived(!!internalPath && !entryRelative && !hasTemplateTags);
+  const showEntryAssets = $derived(!!entry && (entryRelative || hasTemplateTags));
   const showUploader = $derived(libraryName === 'upload');
   const entryDirName = $derived(
     entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined,
@@ -232,7 +237,10 @@
           {kind}
           assets={$allAssets.filter(
             (asset) =>
-              (!kind || kind === asset.kind) && getPathInfo(asset.path).dirname === entryDirName,
+              (!kind || kind === asset.kind) &&
+              (entryRelative
+                ? getPathInfo(asset.path).dirname === entryDirName
+                : asset.folder === internalPath),
           )}
           bind:selectedAsset
           {showUploader}
