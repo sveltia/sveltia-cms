@@ -140,7 +140,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![205 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250511)<br>
+![205 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250512)<br>
 
 ## Differentiators
 
@@ -154,7 +154,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1][^211][^212][^213][^214]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
 - Users can easily manage content on-the-go with mobile and tablet support.[^18][^215]
-  - For a smoother experience, we even go beyond responsive design with [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. We are working to fully optimize the app for small screens and touch devices.
+  - For a smoother experience, we even go beyond responsive design with [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. However, there are still rough edges, and we are working to fully optimize the app for small screens and touch devices.
   - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204]
