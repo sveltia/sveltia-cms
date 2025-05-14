@@ -294,6 +294,8 @@
  * enabled.
  * @property {I18nFileStructure} structure File structure.
  * @property {{ key: string, value: string }} canonicalSlug See `canonical_slug` above.
+ * @property {boolean} omitDefaultLocaleFromFileName Whether to exclude the default locale from
+ * entry filenames.
  */
 
 /**

@@ -1,7 +1,7 @@
 import { generateUUID, getHash } from '@sveltia/utils/crypto';
 import { getBlobRegex } from '@sveltia/utils/file';
 import { isObject, toRaw } from '@sveltia/utils/object';
-import { compare, escapeRegExp } from '@sveltia/utils/string';
+import { compare, escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
@@ -177,21 +177,28 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
 const createEntryPath = ({ draft, locale, slug }) => {
   const { collection, collectionFile, originalEntry, currentValues, isIndexFile } = draft;
 
+  const {
+    _i18n: { defaultLocale, structure, omitDefaultLocaleFromFileName },
+  } = collectionFile ?? collection;
+
+  const omitLocaleFromFileName = omitDefaultLocaleFromFileName && locale === defaultLocale;
+
   if (collectionFile) {
-    return collectionFile.file.replace('{{locale}}', locale);
+    const path = stripSlashes(collectionFile.file);
+
+    return omitLocaleFromFileName
+      ? path.replace('.{{locale}}', '')
+      : path.replace('{{locale}}', locale);
   }
 
   if (originalEntry?.locales[locale]?.slug === slug) {
     return originalEntry.locales[locale].path;
   }
 
-  const _collection = /** @type {EntryCollection} */ (collection);
-
   const {
     _file: { basePath, subPath, extension },
-    _i18n: { defaultLocale, structure },
     index_file: indexFile,
-  } = _collection;
+  } = /** @type {EntryCollection} */ (collection);
 
   /**
    * Support folder collections path.
@@ -201,7 +208,7 @@ const createEntryPath = ({ draft, locale, slug }) => {
     ? /** @type {string} */ (indexFile?.name)
     : subPath
       ? fillSlugTemplate(subPath, {
-          collection: _collection,
+          collection,
           locale,
           content: currentValues[defaultLocale],
           currentSlug: slug,
@@ -211,7 +218,9 @@ const createEntryPath = ({ draft, locale, slug }) => {
   const pathOptions = {
     multiple_folders: `${basePath}/${locale}/${path}.${extension}`,
     multiple_folders_i18n_root: `${locale}/${basePath}/${path}.${extension}`,
-    multiple_files: `${basePath}/${path}.${locale}.${extension}`,
+    multiple_files: omitLocaleFromFileName
+      ? `${basePath}/${path}.${extension}`
+      : `${basePath}/${path}.${locale}.${extension}`,
     single_file: `${basePath}/${path}.${extension}`,
   };
 

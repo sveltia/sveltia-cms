@@ -27,6 +27,7 @@ export const defaultI18nConfig = {
     key: 'translationKey',
     value: '{{slug}}',
   },
+  omitDefaultLocaleFromFileName: false,
 };
 
 /**
@@ -73,6 +74,7 @@ export const getI18nConfig = (collection, file) => {
       key: canonicalSlugKey = 'translationKey',
       value: canonicalSlugTemplate = '{{slug}}',
     } = {},
+    omit_default_locale_from_filename: _omitDefaultLocaleFromFileName = false,
   } = /** @type {I18nOptions} */ (config ?? {});
 
   const i18nEnabled = !!_locales.length;
@@ -117,6 +119,9 @@ export const getI18nConfig = (collection, file) => {
       key: canonicalSlugKey,
       value: canonicalSlugTemplate,
     },
+    omitDefaultLocaleFromFileName:
+      _omitDefaultLocaleFromFileName &&
+      (file ? /\.{{locale}}\.[a-zA-Z0-9]+$/.test(file.file) : structure === 'multiple_files'),
   };
 };
 

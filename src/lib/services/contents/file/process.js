@@ -155,7 +155,10 @@ const prepareEntry = async ({ file, entries, errors }) => {
       subPath = path;
     }
   } else {
-    ({ subPath, locale } = path.match(/** @type {RegExp} */ (fullPathRegEx))?.groups ?? {});
+    // If the `omit_default_locale_from_filename` i18n option is enabled, the matching comes with
+    // the `locale` group being `undefined` for the default locale, so we need a fallback for it
+    ({ subPath, locale = defaultLocale } =
+      path.match(/** @type {RegExp} */ (fullPathRegEx))?.groups ?? {});
   }
 
   if (!subPath) {

@@ -27,6 +27,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
     initialLocales: ['en'],
     defaultLocale: 'en',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+    omitDefaultLocaleFromFileName: false,
   };
 
   /** @type {InternalI18nOptions} */

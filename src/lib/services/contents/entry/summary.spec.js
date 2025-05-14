@@ -25,6 +25,7 @@ describe('Test getEntrySummary()', () => {
       defaultLocale: 'de',
       structure: 'multiple_files',
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+      omitDefaultLocaleFromFileName: false,
     },
     _thumbnailFieldNames: [],
   };

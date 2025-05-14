@@ -18,6 +18,7 @@ import { allAssetFolders } from '$lib/services/assets';
  * @import {
  * CollectionAssetFolder,
  * CollectionEntryFolder,
+ * InternalLocaleCode,
  * InternalSiteConfig,
  * } from '$lib/types/private';
  */
@@ -226,19 +227,31 @@ siteConfig.subscribe((config) => {
         const { name: collectionName, files } = collection;
 
         return (files ?? []).map((file) => {
-          const path = stripSlashes(file.file);
+          /** @type {Record<InternalLocaleCode, string>} */
+          const filePathMap = (() => {
+            const path = stripSlashes(file.file);
+
+            if (!path.includes('{{locale}}')) {
+              return { _default: path };
+            }
+
+            const _i18n = getI18nConfig(collection, file);
+            const { allLocales, defaultLocale, omitDefaultLocaleFromFileName } = _i18n;
+
+            return Object.fromEntries(
+              allLocales.map((locale) => [
+                locale,
+                omitDefaultLocaleFromFileName && locale === defaultLocale
+                  ? path.replace('.{{locale}}', '')
+                  : path.replace('{{locale}}', locale),
+              ]),
+            );
+          })();
 
           return {
             collectionName,
             fileName: file.name,
-            filePathMap: path.includes('{{locale}}')
-              ? Object.fromEntries(
-                  getI18nConfig(collection, file).allLocales.map((locale) => [
-                    locale,
-                    path.replace('{{locale}}', locale),
-                  ]),
-                )
-              : { _default: path },
+            filePathMap,
           };
         });
       })

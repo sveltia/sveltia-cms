@@ -687,6 +687,11 @@
  * localized files when entry slugs are localized. The default property name is `translationKey`
  * used in Hugo’s multilingual support, and the default value is the default locale’s slug. See
  * https://github.com/sveltia/sveltia-cms#localizing-entry-slugs for details.
+ * @property {boolean} [omit_default_locale_from_filename] Whether to exclude the default locale
+ * from entry filenames. Default: `false`. This option applies to entry collections with the
+ * `multiple_files` i18n structure enabled, as well as to file collection items with the `file` path
+ * ending with `.{{locale}}.<extension>`. This is useful for Zola’s multilingual support:
+ * https://www.getzola.org/documentation/content/multilingual/#content.
  * @see https://decapcms.org/docs/i18n/
  * @see https://github.com/decaporg/decap-cms/issues/6932
  */

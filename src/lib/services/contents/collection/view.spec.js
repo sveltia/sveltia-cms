@@ -21,6 +21,7 @@ describe('Test getSortableFields()', async () => {
       defaultLocale: '_default',
       structure: 'single_file',
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+      omitDefaultLocaleFromFileName: false,
     },
     _file: {
       extension: 'json',

@@ -42,6 +42,7 @@ describe('Test getFileConfig()', () => {
     defaultLocale: '_default',
     structure: 'single_file',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+    omitDefaultLocaleFromFileName: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -52,6 +53,7 @@ describe('Test getFileConfig()', () => {
     defaultLocale: 'en',
     structure: 'single_file',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+    omitDefaultLocaleFromFileName: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -62,6 +64,7 @@ describe('Test getFileConfig()', () => {
     defaultLocale: 'en',
     structure: 'multiple_files',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+    omitDefaultLocaleFromFileName: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -72,6 +75,7 @@ describe('Test getFileConfig()', () => {
     defaultLocale: 'en',
     structure: 'multiple_folders',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+    omitDefaultLocaleFromFileName: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -82,6 +86,7 @@ describe('Test getFileConfig()', () => {
     defaultLocale: 'en',
     structure: 'multiple_folders_i18n_root',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+    omitDefaultLocaleFromFileName: false,
   };
 
   test('entry collection without i18n', () => {

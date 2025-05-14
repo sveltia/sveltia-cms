@@ -134,6 +134,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(getI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
@@ -144,6 +145,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(getI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
@@ -154,6 +156,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: '_default',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -177,6 +180,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(getI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
@@ -187,6 +191,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(getI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
@@ -197,6 +202,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: '_default',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(defaultI18nConfig);
@@ -227,6 +233,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -250,6 +257,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -273,6 +281,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithPartialI18nOverride)).toEqual(
@@ -289,6 +298,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(
@@ -301,6 +311,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -324,6 +335,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithCompleteI18nOverride)).toEqual(
@@ -340,6 +352,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
 
     expect(
@@ -352,6 +365,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -374,6 +388,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -396,6 +411,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -418,6 +434,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -440,6 +457,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 
@@ -462,6 +480,7 @@ describe('Test getI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
+      omitDefaultLocaleFromFileName: false,
     });
   });
 });
