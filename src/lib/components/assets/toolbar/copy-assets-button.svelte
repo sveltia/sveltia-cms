@@ -2,7 +2,7 @@
   import { Alert, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import { transformImage } from '$lib/services/utils/media/image';
+  import { supportedImageTypes, transformImage } from '$lib/services/utils/media/image';
   import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
 
   /**
@@ -51,14 +51,15 @@
     }
 
     const blob = await getAssetBlob(assets[0]);
+    const { type } = blob;
 
     assetBlob = blob;
 
-    if (isTextFileType(blob.type)) {
+    if (isTextFileType(type)) {
       return true;
     }
 
-    if (blob.type.startsWith('image/')) {
+    if (supportedImageTypes.includes(type)) {
       return typeof navigator.clipboard.write === 'function';
     }
 
@@ -85,18 +86,19 @@
    */
   const copyFileData = async () => {
     let blob = /** @type {Blob} */ (assetBlob);
+    const { type } = blob;
 
-    if (isTextFileType(blob.type)) {
+    if (isTextFileType(type)) {
       await navigator.clipboard.writeText(await blob.text());
 
       return;
     }
 
-    if (!blob.type.startsWith('image/')) {
+    if (!supportedImageTypes.includes(type)) {
       throw new Error('Unsupported type');
     }
 
-    if (blob.type !== 'image/png') {
+    if (type !== 'image/png') {
       blob = await transformImage(blob);
     }
 

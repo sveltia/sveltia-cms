@@ -3,6 +3,7 @@
   import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
+  import { supportedImageTypes } from '$lib/services/utils/media/image';
   import { formatSize } from '$lib/services/utils/file';
   import Image from '$lib/components/assets/shared/image.svelte';
 
@@ -34,7 +35,7 @@
       {@const { name, type, size } = file}
       {@const originalFile = transformedFileMap?.get(file)}
       <div role="listitem" class="file">
-        {#if type.startsWith('image/')}
+        {#if supportedImageTypes.includes(type)}
           <Image src={URL.createObjectURL(file)} variant="icon" checkerboard={true} />
         {:else}
           <span role="none" class="image">

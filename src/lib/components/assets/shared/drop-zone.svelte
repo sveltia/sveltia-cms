@@ -3,6 +3,7 @@
   import { scanFiles } from '@sveltia/utils/file';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import { supportedImageTypes } from '$lib/services/utils/media/image';
   import { hasMouse } from '$lib/services/user/env';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
 
@@ -155,7 +156,13 @@
           </Button>
         </div>
         {#if typeMismatch}
-          <div role="alert">{$_('drop_files_type_mismatch', { values: { type: accept } })}</div>
+          <div role="alert">
+            {#if accept === supportedImageTypes.join(',')}
+              {$_('dropped_image_type_mismatch')}
+            {:else}
+              {$_('dropped_file_type_mismatch', { values: { type: accept } })}
+            {/if}
+          </div>
         {/if}
       {/if}
       {#if showFilePreview && files.length}

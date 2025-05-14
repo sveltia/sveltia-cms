@@ -262,7 +262,9 @@ export const strings = {
   drop_image_files_or_click_to_browse: 'ここに画像ファイルをドロップするかクリックして参照…',
   drop_file_here: 'ここにファイルをドロップ',
   drop_files_here: 'ここにファイルをドロップ',
-  drop_files_type_mismatch:
+  dropped_image_type_mismatch:
+    'ドロップされたファイルはサポートされていません。AVIF、GIF、JPEG、PNG、WebP または SVG 形式の画像のみが受け入れられます。再度お試しください。',
+  dropped_file_type_mismatch:
     'ドロップされたファイルは「{type}」形式ではありません。再度お試しください。',
   choose_file: 'ファイルを選択',
   choose_files: 'ファイルを選択',

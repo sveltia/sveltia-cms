@@ -10,9 +10,9 @@ import { loadModule } from '$lib/services/app/dependencies';
  */
 
 /** @type {RasterImageFormat[]} */
-export const rasterImageFormats = ['avif', 'bmp', 'gif', 'jpeg', 'png', 'webp'];
+export const rasterImageFormats = ['avif', 'gif', 'jpeg', 'png', 'webp'];
 export const rasterImageTypes = rasterImageFormats.map((format) => `image/${format}`);
-export const rasterImageExtensionRegex = /\b(?:avif|bmp|gif|jpe?g|png|webp)$/i;
+export const rasterImageExtensionRegex = /\b(?:avif|gif|jpe?g|png|webp)$/i;
 /** @type {VectorImageFormat[]} */
 export const vectorImageFormats = ['svg'];
 export const vectorImageTypes = ['image/svg+xml'];

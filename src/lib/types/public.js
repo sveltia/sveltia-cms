@@ -34,7 +34,7 @@
 
 /**
  * Supported raster image format.
- * @typedef {'avif' | 'bmp' | 'gif' | 'jpeg' | 'png' | 'webp'} RasterImageFormat
+ * @typedef {'avif' | 'gif' | 'jpeg' | 'png' | 'webp'} RasterImageFormat
  */
 
 /**

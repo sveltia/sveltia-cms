@@ -3,6 +3,7 @@
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { selectAssetsView } from '$lib/services/contents/draft/editor';
+  import { supportedImageTypes } from '$lib/services/utils/media/image';
 
   /**
    * @import { Asset, AssetKind, SelectedAsset } from '$lib/types/private';
@@ -44,7 +45,7 @@
 
 <DropZone
   bind:this={dropZone}
-  accept={kind === 'image' ? 'image/*' : undefined}
+  accept={kind === 'image' ? supportedImageTypes.join(',') : undefined}
   showUploadButton={showUploader}
   showFilePreview={true}
   onSelect={({ files }) => {
