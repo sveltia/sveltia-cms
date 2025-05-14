@@ -87,7 +87,7 @@
 
 {#snippet typeMismatchAlert()}
   {#if accept === supportedImageTypes.join(',')}
-    {$_('dropped_image_type_mismatch_description')}
+    {$_('dropped_image_type_mismatch')}
   {:else}
     {$_('dropped_file_type_mismatch', {
       values: {

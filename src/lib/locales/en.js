@@ -264,7 +264,7 @@ export const strings = {
   drop_files_here: 'Drop files here',
   unsupported_file_type: 'Unsupported File Type',
   dropped_file_type_mismatch: 'The dropped file is not the {type} type. Please try again.',
-  dropped_image_type_mismatch_description:
+  dropped_image_type_mismatch:
     'The dropped file is not supported. Only an AVIF, GIF, JPEG, PNG, WebP or SVG image is accepted. Please try again.',
   choose_file: 'Choose File',
   choose_files: 'Choose Files',
