@@ -1,11 +1,12 @@
 <script>
-  import { Button, FilePicker, Icon } from '@sveltia/ui';
+  import { AlertDialog, Button, FilePicker, Icon } from '@sveltia/ui';
   import { scanFiles } from '@sveltia/utils/file';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
-  import { supportedImageTypes } from '$lib/services/utils/media/image';
-  import { hasMouse } from '$lib/services/user/env';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
+  import { getListFormatter } from '$lib/services/contents/i18n';
+  import { hasMouse } from '$lib/services/user/env';
+  import { supportedImageTypes } from '$lib/services/utils/media/image';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -39,10 +40,13 @@
   let dropTarget = $state();
   let dragging = $state(false);
   let typeMismatch = $state(false);
+  let showTypeMismatchAlertDialog = $state(false);
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
   /** @type {File[]}  */
   let files = $state([]);
+
+  const showDefaultContent = $derived(showUploadButton || (showFilePreview && files.length));
 
   /**
    * Open the file picker to let the user choose file(s).
@@ -73,7 +77,27 @@
       onSelect?.({ files: /** @type {CustomEvent} */ (event).detail.files });
     });
   });
+
+  $effect(() => {
+    if (!showDefaultContent && typeMismatch) {
+      showTypeMismatchAlertDialog = true;
+    }
+  });
 </script>
+
+{#snippet typeMismatchAlert()}
+  {#if accept === supportedImageTypes.join(',')}
+    {$_('dropped_image_type_mismatch_description')}
+  {:else}
+    {$_('dropped_file_type_mismatch', {
+      values: {
+        type: getListFormatter(/** @type {string} */ ($appLocale), {
+          type: 'disjunction',
+        }).format(/** @type {string} */ (accept).split(/,\s*/)),
+      },
+    })}
+  {/if}
+{/snippet}
 
 <div
   bind:this={dropTarget}
@@ -131,7 +155,7 @@
     with an external upload button. In that case, the file preview, if enabled, should replace the
     default slot content.
   -->
-  {#if showUploadButton || (showFilePreview && files.length)}
+  {#if showDefaultContent}
     <div role="none" class="content">
       {#if showUploadButton}
         <div role="none">
@@ -157,11 +181,7 @@
         </div>
         {#if typeMismatch}
           <div role="alert">
-            {#if accept === supportedImageTypes.join(',')}
-              {$_('dropped_image_type_mismatch')}
-            {:else}
-              {$_('dropped_file_type_mismatch', { values: { type: accept } })}
-            {/if}
+            {@render typeMismatchAlert()}
           </div>
         {/if}
       {/if}
@@ -190,6 +210,12 @@
     updateFileList(_files);
   }}
 />
+
+{#if !showDefaultContent}
+  <AlertDialog bind:open={showTypeMismatchAlertDialog} title={$_('unsupported_file_type')}>
+    {@render typeMismatchAlert()}
+  </AlertDialog>
+{/if}
 
 <style lang="scss">
   .drop-target {

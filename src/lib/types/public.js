@@ -207,6 +207,9 @@
  * Media field properties.
  * @typedef {object} MediaFieldProps
  * @property {string} [default] Default value. Accepts a file path or complete URL.
+ * @property {string} [accept] File types that the field should accept. The value would be a
+ * comma-separated list of unique file type specifiers, the format used for the HTML `accept`
+ * attribute: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept.
  * @property {boolean} [choose_url] Whether to show the URL input UI. Default: `true`.
  * @property {string} [media_folder] Internal media folder path for the field. Default: global or
  * collection-level `media_folder` value.

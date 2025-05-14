@@ -79,6 +79,7 @@
 
   const {
     widget: widgetName,
+    accept,
     // Widget-specific options
     choose_url: canEnterURL = true,
   } = $derived(fieldConfig);
@@ -203,7 +204,7 @@
 <DropZone
   bind:this={dropZone}
   disabled={readonly}
-  accept={isImageWidget ? supportedImageTypes.join(',') : undefined}
+  accept={accept ?? (isImageWidget ? supportedImageTypes.join(',') : undefined)}
   onSelect={({ files }) => {
     if (files.length) {
       onAssetSelect({ file: files[0] });
@@ -300,6 +301,7 @@
 
 <SelectAssetsDialog
   kind={isImageWidget ? 'image' : undefined}
+  {accept}
   {canEnterURL}
   {entry}
   {fieldConfig}

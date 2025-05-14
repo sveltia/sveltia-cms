@@ -12,6 +12,7 @@
   /**
    * @typedef {object} Props
    * @property {AssetKind} [kind] Asset kind.
+   * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {Asset[]} [assets] Asset list.
    * @property {SelectedAsset | null} [selectedAsset] Selected asset.
    * @property {boolean} [showUploader] Whether to show the uploader.
@@ -23,6 +24,7 @@
   let {
     /* eslint-disable prefer-const */
     kind,
+    accept = undefined,
     assets = [],
     selectedAsset = $bindable(null),
     showUploader = false,
@@ -45,7 +47,7 @@
 
 <DropZone
   bind:this={dropZone}
-  accept={kind === 'image' ? supportedImageTypes.join(',') : undefined}
+  accept={accept ?? (kind === 'image' ? supportedImageTypes.join(',') : undefined)}
   showUploadButton={showUploader}
   showFilePreview={true}
   onSelect={({ files }) => {

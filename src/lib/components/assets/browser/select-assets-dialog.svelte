@@ -42,6 +42,7 @@
    * @typedef {object} Props
    * @property {boolean} [open] Whether to open the dialog.
    * @property {AssetKind | undefined} [kind] Asset kind.
+   * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
    * @property {Entry} [entry] Associated entry.
    * @property {FileField | ImageField} [fieldConfig] Field configuration.
@@ -54,6 +55,7 @@
     /* eslint-disable prefer-const */
     open = $bindable(false),
     kind,
+    accept = undefined,
     canEnterURL = true,
     entry,
     fieldConfig,
@@ -235,6 +237,7 @@
       {#if showEntryAssets && (libraryName === 'entry-assets' || showUploader)}
         <InternalAssetsPanel
           {kind}
+          {accept}
           assets={$allAssets.filter(
             (asset) =>
               (!kind || kind === asset.kind) &&
@@ -249,6 +252,7 @@
       {:else if showCollectionAssets && (libraryName === 'collection-assets' || showUploader)}
         <InternalAssetsPanel
           {kind}
+          {accept}
           assets={$allAssets.filter(
             (asset) => (!kind || kind === asset.kind) && asset.folder === internalPath,
           )}
@@ -260,6 +264,7 @@
       {:else if libraryName === 'uncategorized-assets' || showUploader}
         <InternalAssetsPanel
           {kind}
+          {accept}
           assets={$allAssets.filter(
             (asset) =>
               (!kind || kind === asset.kind) && asset.folder === $globalAssetFolder?.internalPath,
