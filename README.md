@@ -128,7 +128,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 205+ issues, or 410+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 205+ issues, or 415+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA (we did it!)
     - 350 issues, or 700 if including duplicates, in the future
@@ -249,6 +249,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - File collections support multiple files/folders i18n structures.[^87] To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
     - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales.[^7][^68] The `i18n` configuration can normally be used for the subfields.
   - The new `multiple_folders_i18n_root` i18n structure allows to have locale folders below the project root: `<locale>/<folder>/<slug>.<extension>`. [^182]
+  - The new `omit_default_locale_from_filename` i18n option allows to exclude the default locale from filenames. This option applies to entry collections with the `multiple_files` i18n structure enabled, as well as to file collection items with the `file` path ending with `.{{locale}}.<extension>`, aiming to support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/). ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/394))
   - The `required` field option accepts an array of locale codes in addition to a boolean, making the field required for a subset of locales when i18n support is enabled. For example, if only English is required, you could write `required: [en]`. An empty array is equivalent to `required: false`.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure.[^21]
   - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language.[^63]
@@ -443,6 +444,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI.[^28] Markdown is supported in the value.
     - Compatibility note: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively, which have different meaning in Sveltia CMS.
 - File and Image
+  - The new `accept` option allows files to be filtered by unique file type specifiers, in the same way as the HTML [`accept` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept) for `<input type="file">`.[^216]
+    - By default, the Image widget only accepts an AVIF, GIF, JPEG, PNG, WebP or SVG image. BMP, HEIC, JPEG XL, PSD, TIFF and other less common or non-standard files are excluded.[^217]
+    - The File widget has no default restriction.
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
     - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab.[^19]
     - A new asset can be uploaded by dragging & dropping it into the dialog.[^20]
@@ -603,7 +607,7 @@ While Sveltia CMS is built with Svelte, the application is **framework-agnostic*
 
 So you can use the CMS with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 
-We have added support for features used by certain frameworks and i18n libraries, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, as well as [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific needs.
+We have added support for features used by certain frameworks and i18n libraries, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, i18n support for Astro and Zola, and [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific requirements.
 
 ### Browser support
 
@@ -1770,3 +1774,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^214]: Netlify/Decap CMS [#3266](https://github.com/decaporg/decap-cms/issues/3266)
 
 [^215]: Netlify/Decap CMS [#7241](https://github.com/decaporg/decap-cms/issues/7241)
+
+[^216]: Netlify/Decap CMS [#1345](https://github.com/decaporg/decap-cms/issues/1345)
+
+[^217]: Netlify/Decap CMS [#5467](https://github.com/decaporg/decap-cms/issues/5467)

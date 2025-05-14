@@ -108,6 +108,7 @@ words:
   - xslx
   - yacosta
   - zanhk
+  - Zola
 overrides:
   - language: en-gb
     filename: "**/*.md"
