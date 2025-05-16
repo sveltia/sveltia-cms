@@ -703,6 +703,11 @@
  * @property {string} [label] Label to be displayed in the editor UI. Default: `name` option value.
  * @property {string} file File path relative to the project root.
  * @property {Field[]} fields Set of fields to be included in the file.
+ * @property {string} [media_folder] Internal media folder path for the collection. This overrides
+ * the global or collection-level `media_folder` option.
+ * @property {string} [public_folder] Public media folder path for an entry collection. This
+ * overrides the global or collection-level `public_folder` option. Default: `media_folder` option
+ * value.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.

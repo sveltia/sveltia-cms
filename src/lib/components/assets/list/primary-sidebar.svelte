@@ -11,33 +11,29 @@
     selectedAssetFolder,
   } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
-  import { siteConfig } from '$lib/services/config';
-  import { getCollection } from '$lib/services/contents/collection';
+  import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
+  import { getFileIndex } from '$lib/services/contents/collection/files';
   import { isSmallScreen } from '$lib/services/user/env';
-
-  /**
-   * Get the index of a collection with the given name.
-   * @param {string | undefined} collectionName Collection name.
-   * @returns {number} Index.
-   */
-  const getCollectionIndex = (collectionName) =>
-    collectionName
-      ? ($siteConfig?.collections.findIndex(({ name }) => name === collectionName) ?? -1)
-      : -1;
 
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
 
   const folders = $derived([
+    // All assets
     {
       collectionName: '*',
+      fileName: undefined,
       internalPath: undefined,
       publicPath: undefined,
       entryRelative: false,
       hasTemplateTags: false,
     },
-    ...$allAssetFolders.sort(
-      (a, b) => getCollectionIndex(a.collectionName) - getCollectionIndex(b.collectionName),
-    ),
+    // Global, collection-level, file-level folders, sorted by appearance order in the config
+    ...$allAssetFolders
+      .sort(
+        (a, b) =>
+          getFileIndex(a.collectionName, a.fileName) - getFileIndex(b.collectionName, b.fileName),
+      )
+      .sort((a, b) => getCollectionIndex(a.collectionName) - getCollectionIndex(b.collectionName)),
   ]);
 </script>
 
@@ -52,9 +48,9 @@
     />
   {/if}
   <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
-    {#each folders as folder (folder.collectionName)}
+    {#each folders as folder ([folder.collectionName ?? '-', folder.fileName ?? '-'].join('/'))}
       {#await sleep() then}
-        {@const { collectionName, internalPath, entryRelative, hasTemplateTags } = folder}
+        {@const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } = folder}
         {@const collection = collectionName ? getCollection(collectionName) : undefined}
         <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
         {@const uploadDisabled = entryRelative || hasTemplateTags}
@@ -63,7 +59,7 @@
           internalPath === $selectedAssetFolder?.internalPath}
         <Option
           selected={$isSmallScreen ? false : selected}
-          label={$appLocale ? getFolderLabelByCollection(collectionName) : ''}
+          label={$appLocale ? getFolderLabelByCollection(collectionName, fileName) : ''}
           onSelect={() => {
             goto(internalPath ? `/assets/${internalPath}` : '/assets/all', {
               transitionType: 'forwards',

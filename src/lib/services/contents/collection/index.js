@@ -124,6 +124,19 @@ export const getCollection = (name) => {
 };
 
 /**
+ * Get the index of a collection with the given name.
+ * @param {string | undefined} collectionName Collection name.
+ * @returns {number} Index.
+ */
+export const getCollectionIndex = (collectionName) => {
+  if (collectionName) {
+    return get(siteConfig)?.collections.findIndex(({ name }) => name === collectionName) ?? -1;
+  }
+
+  return -1;
+};
+
+/**
  * Get the first visible entry collection or file collection in the collection list.
  * @returns {Collection | undefined} Found collection.
  */

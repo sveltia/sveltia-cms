@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 
@@ -49,3 +50,21 @@ export const getFile = (collectionName, fileName) =>
         getFilesByEntry(collection, entry).some((file) => file.name === fileName),
     ),
   );
+
+/**
+ * Get the index of a collection file with the given name.
+ * @param {string | undefined} collectionName Collection name.
+ * @param {string | undefined} fileName File identifier. File collection only.
+ * @returns {number} Index.
+ */
+export const getFileIndex = (collectionName, fileName) => {
+  if (collectionName && fileName) {
+    return (
+      get(siteConfig)
+        ?.collections.find(({ name }) => name === collectionName)
+        ?.files?.findIndex(({ name }) => name === fileName) ?? -1
+    );
+  }
+
+  return -1;
+};

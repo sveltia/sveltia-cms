@@ -46,10 +46,11 @@ export const showUploadAssetsConfirmDialog = derived(
  * Get the label for the given collection. It can be a category name if the folder is a
  * collection-specific asset folder.
  * @param {string | undefined} collectionName Collection name.
+ * @param {string} [fileName] File identifier. File collection only.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
-export const getFolderLabelByCollection = (collectionName) => {
+export const getFolderLabelByCollection = (collectionName, fileName) => {
   if (collectionName === '*') {
     return get(_)('all_assets');
   }
@@ -58,7 +59,17 @@ export const getFolderLabelByCollection = (collectionName) => {
     return get(_)('uncategorized');
   }
 
-  return get(siteConfig)?.collections.find(({ name }) => name === collectionName)?.label ?? '';
+  const collection = get(siteConfig)?.collections.find(({ name }) => name === collectionName);
+  const collectionLabel = collection?.label ?? collection?.name ?? collectionName;
+
+  if (!fileName) {
+    return collectionLabel;
+  }
+
+  const file = collection?.files?.find(({ name }) => name === fileName);
+  const fileLabel = file?.label ?? file?.name ?? fileName;
+
+  return `${collectionLabel} › ${fileLabel}`;
 };
 
 /**
@@ -82,7 +93,7 @@ export const getFolderLabelByPath = (folderPath) => {
   const folder = get(allAssetFolders).find(({ internalPath }) => internalPath === folderPath);
 
   if (folder) {
-    return getFolderLabelByCollection(folder.collectionName);
+    return getFolderLabelByCollection(folder.collectionName, folder.fileName);
   }
 
   return '';
