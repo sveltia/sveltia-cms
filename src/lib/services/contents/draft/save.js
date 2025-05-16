@@ -40,8 +40,8 @@ import {
 /**
  * @import {
  * Asset,
+ * AssetFolderInfo,
  * BackendService,
- * CollectionAssetFolder,
  * CommitAuthor,
  * Entry,
  * EntryCollection,
@@ -120,7 +120,7 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
   const isMultiFolders = ['multiple_folders', 'multiple_folders_i18n_root'].includes(structure);
 
   const { entryRelative, internalPath, publicPath } =
-    _assetFolder ?? /** @type {CollectionAssetFolder} */ (get(globalAssetFolder));
+    _assetFolder ?? /** @type {AssetFolderInfo} */ (get(globalAssetFolder));
 
   if (!entryRelative) {
     return {

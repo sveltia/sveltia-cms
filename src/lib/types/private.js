@@ -241,8 +241,8 @@
  */
 
 /**
- * Entry folder configuration by collection.
- * @typedef {object} CollectionEntryFolder
+ * Collection-level or file-level entry folder information.
+ * @typedef {object} EntryFolderInfo
  * @property {string} collectionName Collection name.
  * @property {string} [fileName] File identifier. File collection only.
  * @property {Record<InternalLocaleCode, string>} [filePathMap] File path map. The key is a locale,
@@ -254,9 +254,11 @@
  */
 
 /**
- * Asset folder configuration by collection.
- * @typedef {object} CollectionAssetFolder
+ * Global, collection-level, file-level or field-level asset folder information.
+ * @typedef {object} AssetFolderInfo
  * @property {string} [collectionName] Collection name or `undefined` for the global folder.
+ * @property {string} [fileName] File identifier. File collection only.
+ * @property {FieldKeyPath} [keyPath] Field key path.
  * @property {string} internalPath Folder path on the repository/filesystem, relative to the project
  * root directory. It can be a partial path if the collection’s `media_folder` property is a
  * relative path, because the complete path is entry-specific in that case.
@@ -272,12 +274,12 @@
 
 /**
  * File info being processed as {@link Entry}.
- * @typedef {BaseFileListItem & { folder: CollectionEntryFolder }} BaseEntryListItem
+ * @typedef {BaseFileListItem & { folder: EntryFolderInfo }} BaseEntryListItem
  */
 
 /**
  * File info being processed as {@link Asset}.
- * @typedef {BaseFileListItem & { folder: CollectionAssetFolder }} BaseAssetListItem
+ * @typedef {BaseFileListItem & { folder: AssetFolderInfo }} BaseAssetListItem
  */
 
 /**
@@ -309,7 +311,7 @@
  * @property {CollectionType} _type Collection type.
  * @property {InternalI18nOptions} _i18n Internal i18n configuration combined with the top-level
  * configuration.
- * @property {CollectionAssetFolder} [_assetFolder] Asset folder configuration.
+ * @property {AssetFolderInfo} [_assetFolder] Asset folder configuration.
  */
 
 /**

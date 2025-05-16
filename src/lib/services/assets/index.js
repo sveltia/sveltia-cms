@@ -29,8 +29,8 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * @import {
  * Asset,
  * AssetDetails,
+ * AssetFolderInfo,
  * AssetKind,
- * CollectionAssetFolder,
  * Entry,
  * EntryCollection,
  * InternalCollection,
@@ -53,17 +53,17 @@ export const documentExtensions = /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx
  */
 export const allAssets = writable([]);
 /**
- * @type {Writable<CollectionAssetFolder[]>}
+ * @type {Writable<AssetFolderInfo[]>}
  */
 export const allAssetFolders = writable([]);
 /**
- * @type {Readable<CollectionAssetFolder | undefined>}
+ * @type {Readable<AssetFolderInfo | undefined>}
  */
 export const globalAssetFolder = derived([allAssetFolders], ([_allAssetFolders], set) => {
   set(_allAssetFolders.find(({ collectionName }) => !collectionName));
 });
 /**
- * @type {Writable<CollectionAssetFolder | undefined>}
+ * @type {Writable<AssetFolderInfo | undefined>}
  */
 export const selectedAssetFolder = writable();
 /**
@@ -315,7 +315,7 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
  * @param {boolean} [options.matchSubFolders] Whether to match assets stored in the subfolders of a
  * global/collection internal path. By default (`false`), for example, if the given `path` is
  * `images/products/image.jpg`, it matches the `images/products` folder but not `images`.
- * @returns {CollectionAssetFolder[]} Asset folders.
+ * @returns {AssetFolderInfo[]} Asset folders.
  */
 export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) => {
   const { filename } = getPathInfo(path);
@@ -423,7 +423,7 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
 
   // eslint-disable-next-line prefer-const
   let { collectionName, internalPath, publicPath } = !dirName
-    ? /** @type {CollectionAssetFolder} */ (get(globalAssetFolder))
+    ? /** @type {AssetFolderInfo} */ (get(globalAssetFolder))
     : (get(allAssetFolders).findLast((folder) =>
         dirName.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
       ) ?? {});
@@ -639,7 +639,7 @@ selectedAssetFolder.subscribe(() => {
 /**
  * Check if asset creation is allowed in the folder. Can’t upload assets if collection assets are
  * saved at entry-relative paths or the asset folder contains template tags.
- * @param {CollectionAssetFolder | undefined} assetFolder Asset folder.
+ * @param {AssetFolderInfo | undefined} assetFolder Asset folder.
  * @returns {boolean} Result.
  */
 export const canCreateAsset = (assetFolder) =>

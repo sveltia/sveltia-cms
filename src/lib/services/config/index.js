@@ -16,8 +16,8 @@ import { allAssetFolders } from '$lib/services/assets';
  * @import { Writable } from 'svelte/store';
  * @import { SiteConfig } from '$lib/types/public'
  * @import {
- * CollectionAssetFolder,
- * CollectionEntryFolder,
+ * AssetFolderInfo,
+ * EntryFolderInfo,
  * InternalLocaleCode,
  * InternalSiteConfig,
  * } from '$lib/types/private';
@@ -199,7 +199,7 @@ siteConfig.subscribe((config) => {
     collections,
   } = config;
 
-  /** @type {CollectionEntryFolder[]} */
+  /** @type {EntryFolderInfo[]} */
   const _allEntryFolders = [
     ...collections
       .filter(({ folder, hide, divider }) => typeof folder === 'string' && !hide && !divider)
@@ -268,7 +268,7 @@ siteConfig.subscribe((config) => {
     ? `/${stripSlashes(_globalPublicFolder)}`.replace(/^\/@/, '@')
     : `/${globalMediaFolder}`;
 
-  /** @type {CollectionAssetFolder} */
+  /** @type {AssetFolderInfo} */
   const globalAssetFolder = {
     collectionName: undefined,
     internalPath: globalMediaFolder,
@@ -281,7 +281,7 @@ siteConfig.subscribe((config) => {
    * Folder Collections Media and Public Folder.
    * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
    */
-  const collectionAssetFolders = /** @type {CollectionAssetFolder[]} */ (
+  const collectionAssetFolders = /** @type {AssetFolderInfo[]} */ (
     collections
       .filter(
         ({ hide, divider, media_folder: mediaFolder, path: entryPath }) =>

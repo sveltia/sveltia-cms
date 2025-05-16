@@ -3,7 +3,7 @@ import { getCollection } from '$lib/services/contents/collection';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { CollectionEntryFolder, Entry, EntryCollection } from '$lib/types/private';
+ * @import { Entry, EntryCollection, EntryFolderInfo } from '$lib/types/private';
  */
 
 /**
@@ -15,7 +15,7 @@ export const dataLoaded = writable(false);
  */
 export const dataLoadedProgress = writable();
 /**
- * @type {Writable<CollectionEntryFolder[]>}
+ * @type {Writable<EntryFolderInfo[]>}
  */
 export const allEntryFolders = writable([]);
 /**
@@ -30,9 +30,9 @@ export const entryParseErrors = writable([]);
 /**
  * Get collection entry folders that match the given path.
  * @param {string} path Entry path.
- * @returns {CollectionEntryFolder[]} Entry folders. Sometimes it’s hard to find the right folder
- * because multiple collections can have the same folder or partially overlapping folder paths, but
- * the first one is most likely what you need.
+ * @returns {EntryFolderInfo[]} Entry folders. Sometimes it’s hard to find the right folder because
+ * multiple collections can have the same folder or partially overlapping folder paths, but the
+ * first one is most likely what you need.
  */
 export const getEntryFoldersByPath = (path) =>
   get(allEntryFolders)
