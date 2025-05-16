@@ -16,7 +16,7 @@
     selectedAssetFolder,
     selectedAssets,
   } from '$lib/services/assets';
-  import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
+  import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   const assets = $derived.by(() => {
@@ -39,9 +39,9 @@
   {/if}
   <h2 role="none">
     {#key $appLocale}
-      {getFolderLabelByPath($selectedAssetFolder?.internalPath)}
+      {getFolderLabelByCollection($selectedAssetFolder)}
     {/key}
-    {#if !$isSmallScreen && $selectedAssetFolder}
+    {#if !$isSmallScreen && $selectedAssetFolder?.internalPath}
       <span role="none">/{$selectedAssetFolder.internalPath}</span>
     {/if}
   </h2>

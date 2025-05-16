@@ -1,6 +1,7 @@
 <script>
   import { Alert, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
+  import equal from 'fast-deep-equal';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
@@ -27,16 +28,14 @@
     showAssetOverlay,
   } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
-  import { getFolderLabelByPath, listedAssets } from '$lib/services/assets/view';
+  import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const routeRegex = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
 
   let isIndexPage = $state(false);
 
-  const selectedAssetFolderLabel = $derived(
-    getFolderLabelByPath($selectedAssetFolder?.internalPath),
-  );
+  const selectedAssetFolderLabel = $derived(getFolderLabelByCollection($selectedAssetFolder));
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.
@@ -68,16 +67,15 @@
       return;
     }
 
-    if (folderPath === 'all') {
-      $selectedAssetFolder = undefined;
-    } else if ($selectedAssetFolder?.internalPath !== folderPath) {
-      const folder = $allAssetFolders.find(({ internalPath }) => folderPath === internalPath);
+    const folder =
+      window.history.state?.folder ??
+      $allAssetFolders.find(({ internalPath }) => folderPath === internalPath);
 
-      if (folder) {
-        $selectedAssetFolder = folder;
-      } else {
-        // Not Found
-      }
+    if (!folder) {
+      // Not found
+      $selectedAssetFolder = undefined;
+    } else if (!equal($selectedAssetFolder, folder)) {
+      $selectedAssetFolder = folder;
     }
 
     if (!fileName) {

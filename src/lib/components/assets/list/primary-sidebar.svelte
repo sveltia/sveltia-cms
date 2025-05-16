@@ -1,6 +1,7 @@
 <script>
   import { Icon, Listbox, Option } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
+  import equal from 'fast-deep-equal';
   import { _, locale as appLocale } from 'svelte-i18n';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -50,19 +51,21 @@
   <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
     {#each folders as folder ([folder.collectionName ?? '-', folder.fileName ?? '-'].join('/'))}
       {#await sleep() then}
-        {@const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } = folder}
+        {@const { collectionName, internalPath, entryRelative, hasTemplateTags } = folder}
         {@const collection = collectionName ? getCollection(collectionName) : undefined}
         <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
         {@const uploadDisabled = entryRelative || hasTemplateTags}
-        {@const selected =
-          (internalPath === undefined && !$selectedAssetFolder) ||
-          internalPath === $selectedAssetFolder?.internalPath}
+        {@const selected = equal($selectedAssetFolder, folder)}
         <Option
           selected={$isSmallScreen ? false : selected}
-          label={$appLocale ? getFolderLabelByCollection(collectionName, fileName) : ''}
+          label={$appLocale ? getFolderLabelByCollection(folder) : ''}
           onSelect={() => {
             goto(internalPath ? `/assets/${internalPath}` : '/assets/all', {
               transitionType: 'forwards',
+              // An internal path can be shared by multiple collections, files and fields. Pass the
+              // folder info as history state so we can distinguish these different asset folders
+              // while keeping the URL clean.
+              state: { folder },
             });
           }}
           ondragover={(event) => {
