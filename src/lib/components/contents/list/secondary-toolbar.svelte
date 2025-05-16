@@ -6,6 +6,7 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import { getAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
@@ -72,7 +73,7 @@
       <Button
         variant="ghost"
         iconic
-        disabled={!hasListedEntries || !entryCollection._assetFolder}
+        disabled={!hasListedEntries || !getAssetFolder({ collectionName })}
         pressed={!!$currentView.showMedia}
         aria-controls="collection-assets"
         aria-expanded={$currentView.showMedia}

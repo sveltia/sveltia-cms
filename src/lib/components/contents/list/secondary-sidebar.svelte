@@ -4,13 +4,13 @@
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { allAssets, uploadingAssets } from '$lib/services/assets';
+  import { allAssets, getAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView } from '$lib/services/contents/collection/view';
   import { isLargeScreen } from '$lib/services/user/env';
 
   const { internalPath, entryRelative, hasTemplateTags } = $derived(
-    $selectedCollection?._assetFolder ?? {
+    getAssetFolder({ collectionName: $selectedCollection?.name }) ?? {
       internalPath: '',
       entryRelative: false,
       hasTemplateTags: false,

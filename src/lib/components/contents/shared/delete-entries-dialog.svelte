@@ -1,6 +1,7 @@
 <script>
   import { ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+  import { getAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { deleteEntries } from '$lib/services/contents/collection/data';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
@@ -20,9 +21,13 @@
   } = $props();
 
   const associatedAssets = $derived.by(() => {
-    if (!!$selectedEntries.length && !!$selectedCollection?._assetFolder?.entryRelative) {
-      const collectionName = $selectedCollection.name;
+    const collectionName = $selectedCollection?.name;
 
+    if (
+      $selectedEntries.length &&
+      collectionName &&
+      getAssetFolder({ collectionName })?.entryRelative
+    ) {
       return $selectedEntries
         .map((entry) => getAssociatedAssets({ entry, collectionName, relative: true }))
         .flat(1);

@@ -14,7 +14,7 @@
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { allAssets, globalAssetFolder } from '$lib/services/assets';
+  import { allAssets, getAssetFolder, globalAssetFolder } from '$lib/services/assets';
   import { getStockAssetMediaLibraryOptions } from '$lib/services/assets/media-library';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
@@ -76,7 +76,7 @@
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
   const { internalPath, entryRelative, hasTemplateTags } = $derived(
-    $selectedCollection?._assetFolder ?? {
+    getAssetFolder({ collectionName: $selectedCollection?.name }) ?? {
       internalPath: '',
       entryRelative: false,
       hasTemplateTags: false,

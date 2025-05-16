@@ -4,6 +4,7 @@ import { get } from 'svelte/store';
 import {
   allAssets,
   getAssetByPath,
+  getAssetFolder,
   getCollectionsByAsset,
   getMediaFieldURL,
 } from '$lib/services/assets';
@@ -70,10 +71,11 @@ export const getEntryThumbnail = async (collection, entry) => {
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
  * @param {string} args.collectionName Name of a collection that the entry belongs to.
+ * @param {string} [args.fileName] File identifier. File collection only.
  * @param {boolean} [args.relative] Whether to only collect assets stored at a relative path.
  * @returns {Asset[]} Assets.
  */
-export const getAssociatedAssets = ({ entry, collectionName, relative = false }) => {
+export const getAssociatedAssets = ({ entry, collectionName, fileName, relative = false }) => {
   const { locales } = entry;
   const collection = getCollection(collectionName);
 
@@ -109,7 +111,7 @@ export const getAssociatedAssets = ({ entry, collectionName, relative = false })
   );
 
   // Add orphaned/unused entry-relative assets
-  if (relative && collection._assetFolder?.entryRelative) {
+  if (relative && getAssetFolder({ collectionName, fileName })?.entryRelative) {
     const entryDirName = getPathInfo(Object.values(entry.locales)[0].path).dirname;
 
     get(allAssets).forEach((asset) => {

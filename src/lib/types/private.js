@@ -311,7 +311,6 @@
  * @property {CollectionType} _type Collection type.
  * @property {InternalI18nOptions} _i18n Internal i18n configuration combined with the top-level
  * configuration.
- * @property {AssetFolderInfo} [_assetFolder] Asset folder configuration.
  */
 
 /**
@@ -747,6 +746,7 @@
  * @typedef {object} FillSlugTemplateOptions
  * @property {'preview_path' | 'media_folder'} [type] Slug type.
  * @property {InternalCollection} collection Entry collection.
+ * @property {InternalCollectionFile} [collectionFile] File details. File collection only.
  * @property {FlattenedEntryContent} content Entry content for the default locale.
  * @property {string} [currentSlug] Entry slug already created for the path.
  * @property {string} [entryFilePath] File path of the entry. Required if the `type` is

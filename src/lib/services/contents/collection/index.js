@@ -1,6 +1,5 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
-import { allAssetFolders } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { getFileConfig } from '$lib/services/contents/file';
 import { getI18nConfig } from '$lib/services/contents/i18n';
@@ -94,22 +93,18 @@ export const getCollection = (name) => {
 
   const _i18n = getI18nConfig(rawCollection);
 
-  const collectionBase = {
-    ...rawCollection,
-    _i18n,
-    _assetFolder: get(allAssetFolders).find(({ collectionName }) => collectionName === name),
-  };
-
   /** @type {InternalCollection} */
   const collection = isEntryCollection
     ? /** @type {EntryCollection} */ ({
-        ...collectionBase,
+        ...rawCollection,
+        _i18n,
         _type: /** @type {CollectionType} */ ('entry'),
         _file: getFileConfig({ rawCollection, _i18n }),
         _thumbnailFieldNames: getThumbnailFieldNames(rawCollection),
       })
     : /** @type {FileCollection} */ ({
-        ...collectionBase,
+        ...rawCollection,
+        _i18n,
         _type: /** @type {CollectionType} */ ('file'),
         _fileMap: /** @type {CollectionFile[]} */ (files)?.length
           ? Object.fromEntries(

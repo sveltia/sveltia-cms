@@ -39,6 +39,7 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * ProcessedAssets,
  * UploadingAssets,
  * } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 export const mediaKinds = ['image', 'video', 'audio'];
@@ -309,6 +310,19 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
 };
 
 /**
+ * Get an asset folder that matches the given condition.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.collectionName Collection name.
+ * @param {string} [args.fileName] File identifier. File collection only.
+ * @param {FieldKeyPath} [args.keyPath] Field key path.
+ * @returns {AssetFolderInfo | undefined} Asset folder information.
+ */
+export const getAssetFolder = ({ collectionName, fileName, keyPath }) =>
+  get(allAssetFolders).find(
+    (f) => f.collectionName === collectionName && f.fileName === fileName && f.keyPath === keyPath,
+  );
+
+/**
  * Get collection asset folders that match the given path.
  * @param {string} path Asset path.
  * @param {object} [options] Options.
@@ -464,7 +478,12 @@ export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
     });
   }
 
-  const _publicPath = collection?._assetFolder?.publicPath;
+  const [collectionFile] = collection && entry ? getFilesByEntry(collection, entry) : [];
+
+  const _publicPath = collection
+    ? getAssetFolder({ collectionName: collection.name, fileName: collectionFile?.name })
+        ?.publicPath
+    : undefined;
 
   const subPath = _publicPath
     ? stripSlashes(

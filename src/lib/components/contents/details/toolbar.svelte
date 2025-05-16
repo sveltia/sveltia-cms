@@ -19,6 +19,7 @@
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
+  import { getAssetFolder } from '$lib/services/assets';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/collection/data';
@@ -66,6 +67,7 @@
   );
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   const collectionName = $derived(collection?.name);
+  const fileName = $derived(collectionFile?.name);
   const collectionLabel = $derived(collection?.label || collectionName);
   const collectionLabelSingular = $derived(collection?.label_singular || collectionLabel);
   const canPreview = $derived($entryDraft?.canPreview ?? true);
@@ -77,8 +79,8 @@
       .filter(Boolean).length,
   );
   const associatedAssets = $derived(
-    collectionName && originalEntry && !!collection?._assetFolder?.entryRelative
-      ? getAssociatedAssets({ entry: originalEntry, collectionName, relative: true })
+    collectionName && originalEntry && getAssetFolder({ collectionName, fileName })?.entryRelative
+      ? getAssociatedAssets({ entry: originalEntry, collectionName, fileName, relative: true })
       : [],
   );
   const previewURL = $derived(

@@ -7,6 +7,7 @@ import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
 import {
   allAssets,
+  getAssetFolder,
   getAssetKind,
   getAssetsByDirName,
   globalAssetFolder,
@@ -104,11 +105,10 @@ import {
  * @returns {EntryAssetFolderPaths} Determined paths.
  */
 export const getEntryAssetFolderPaths = (fillSlugOptions) => {
-  const { collection } = fillSlugOptions;
+  const { collection, collectionFile } = fillSlugOptions;
 
   const {
     _i18n: { structure },
-    _assetFolder,
   } = collection;
 
   const subPath =
@@ -120,7 +120,8 @@ export const getEntryAssetFolderPaths = (fillSlugOptions) => {
   const isMultiFolders = ['multiple_folders', 'multiple_folders_i18n_root'].includes(structure);
 
   const { entryRelative, internalPath, publicPath } =
-    _assetFolder ?? /** @type {AssetFolderInfo} */ (get(globalAssetFolder));
+    getAssetFolder({ collectionName: collection.name, fileName: collectionFile?.name }) ??
+    /** @type {AssetFolderInfo} */ (get(globalAssetFolder));
 
   if (!entryRelative) {
     return {
@@ -601,6 +602,7 @@ const getFillSlugOptions = ({ draft }) => {
   return {
     // eslint-disable-next-line object-shorthand
     collection: /** @type {EntryCollection} */ (collection),
+    collectionFile,
     content: currentValues[defaultLocale],
     isIndexFile,
   };

@@ -1,8 +1,11 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { copyProperty, getEntryAssetFolderPaths } from '$lib/services/contents/draft/save';
+
+vi.mock('$lib/services/assets');
 
 /**
  * @import {
+ * AssetFolderInfo,
  * CollectionType,
  * FlattenedEntryContent,
  * InternalCollection,
@@ -46,6 +49,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   };
 
   const relativeAssetFolder = {
+    collectionName: 'blog',
     entryRelative: true,
     hasTemplateTags: false,
     internalPath: 'src/content/blog',
@@ -53,6 +57,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
   };
 
   const absoluteAssetFolder = {
+    collectionName: 'blog',
     entryRelative: false,
     hasTemplateTags: false,
     internalPath: 'static/uploads/blog',
@@ -60,20 +65,32 @@ describe('Test getEntryAssetFolderPaths()', () => {
   };
 
   const templateTagAssetFolder = {
+    collectionName: 'blog',
     entryRelative: false,
     hasTemplateTags: true,
     internalPath: 'static/uploads/blog/{{slug}}',
     publicPath: '/uploads/blog/{{slug}}',
   };
 
-  test('simple path, multiple folders, entry relative', () => {
+  /**
+   * Mock `getAssetFolder()`.
+   * @param {AssetFolderInfo} folder Asset folder info.
+   */
+  const setupAssetFolder = async (folder) => {
+    // @ts-ignore
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    (await import('$lib/services/assets')).getAssetFolder = () => folder;
+  };
+
+  test('simple path, multiple folders, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
       _i18n: i18nMultiFolder,
-      _assetFolder: relativeAssetFolder,
     };
+
+    await setupAssetFolder(relativeAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'src/content/blog',
@@ -82,14 +99,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('nested path, multiple folders, entry relative', () => {
+  test('nested path, multiple folders, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nMultiFolder,
-      _assetFolder: relativeAssetFolder,
     };
+
+    await setupAssetFolder(relativeAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'src/content/blog',
@@ -98,14 +116,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('simple path, multiple folders at root, entry relative', () => {
+  test('simple path, multiple folders at root, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
       _i18n: i18nRootMultiFolder,
-      _assetFolder: relativeAssetFolder,
     };
+
+    await setupAssetFolder(relativeAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'src/content/blog',
@@ -114,14 +133,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('nested path, multiple folders at root, entry relative', () => {
+  test('nested path, multiple folders at root, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nRootMultiFolder,
-      _assetFolder: relativeAssetFolder,
     };
+
+    await setupAssetFolder(relativeAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'src/content/blog',
@@ -130,14 +150,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('simple path, multiple files, entry relative', () => {
+  test('simple path, multiple files, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
       _i18n: i18nMultiFile,
-      _assetFolder: relativeAssetFolder,
     };
+
+    await setupAssetFolder(relativeAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'src/content/blog',
@@ -146,14 +167,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('nested path, multiple files, entry relative', () => {
+  test('nested path, multiple files, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nMultiFile,
-      _assetFolder: relativeAssetFolder,
     };
+
+    await setupAssetFolder(relativeAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'src/content/blog',
@@ -162,14 +184,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('simple path, single file, entry relative', () => {
+  test('simple path, single file, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
       _i18n: i18nSingleFile,
-      _assetFolder: relativeAssetFolder,
     };
+
+    await setupAssetFolder(relativeAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'src/content/blog',
@@ -178,14 +201,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('nested path, single file, entry relative', () => {
+  test('nested path, single file, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nSingleFile,
-      _assetFolder: relativeAssetFolder,
     };
+
+    await setupAssetFolder(relativeAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'src/content/blog',
@@ -194,14 +218,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('simple path, multiple folders, entry absolute', () => {
+  test('simple path, multiple folders, entry absolute', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
       _i18n: i18nMultiFolder,
-      _assetFolder: absoluteAssetFolder,
     };
+
+    await setupAssetFolder(absoluteAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog',
@@ -210,14 +235,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('nested path, multiple folders, entry absolute', () => {
+  test('nested path, multiple folders, entry absolute', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nMultiFolder,
-      _assetFolder: absoluteAssetFolder,
     };
+
+    await setupAssetFolder(absoluteAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog',
@@ -226,14 +252,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('simple path, multiple folders at root, entry absolute', () => {
+  test('simple path, multiple folders at root, entry absolute', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
       _i18n: i18nRootMultiFolder,
-      _assetFolder: absoluteAssetFolder,
     };
+
+    await setupAssetFolder(absoluteAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog',
@@ -242,14 +269,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('nested path, multiple folders at root, entry absolute', () => {
+  test('nested path, multiple folders at root, entry absolute', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nRootMultiFolder,
-      _assetFolder: absoluteAssetFolder,
     };
+
+    await setupAssetFolder(absoluteAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog',
@@ -258,14 +286,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('simple path, multiple files, entry absolute', () => {
+  test('simple path, multiple files, entry absolute', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
       _i18n: i18nMultiFile,
-      _assetFolder: absoluteAssetFolder,
     };
+
+    await setupAssetFolder(absoluteAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog',
@@ -274,14 +303,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('nested path, multiple files, entry absolute', () => {
+  test('nested path, multiple files, entry absolute', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nMultiFile,
-      _assetFolder: absoluteAssetFolder,
     };
+
+    await setupAssetFolder(absoluteAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog',
@@ -290,14 +320,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('simple path, single file, entry absolute', () => {
+  test('simple path, single file, entry absolute', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}' },
       _i18n: i18nSingleFile,
-      _assetFolder: absoluteAssetFolder,
     };
+
+    await setupAssetFolder(absoluteAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog',
@@ -306,14 +337,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('nested path, single file, entry absolute', () => {
+  test('nested path, single file, entry absolute', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: '{{slug}}/index' },
       _i18n: i18nSingleFile,
-      _assetFolder: absoluteAssetFolder,
     };
+
+    await setupAssetFolder(absoluteAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog',
@@ -322,14 +354,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
     });
   });
 
-  test('asset folder with template tags', () => {
+  test('asset folder with template tags', async () => {
     /** @type {InternalCollection} */
     const collection = {
       ...collectionBase,
       _file: { ..._file, subPath: undefined },
       _i18n: i18nSingleFile,
-      _assetFolder: templateTagAssetFolder,
     };
+
+    await setupAssetFolder(templateTagAssetFolder);
 
     expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
       internalBaseAssetFolder: 'static/uploads/blog/{{slug}}',
