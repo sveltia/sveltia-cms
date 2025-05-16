@@ -16,11 +16,10 @@ export const customFileFormats = {};
  * @param {object} args Arguments.
  * @param {FileExtension} [args.extension] Developer-defined file extension.
  * @param {FileFormat} [args.format] Developer-defined file format.
- * @param {string} [args.path] File path, e.g. `about.json`.
  * @returns {FileExtension} Determined extension.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
-const detectFileExtension = ({ extension, format, path }) => {
+const detectFileExtension = ({ extension, format }) => {
   const customExtension = format ? customFileFormats[format]?.extension : undefined;
 
   if (customExtension) {
@@ -29,10 +28,6 @@ const detectFileExtension = ({ extension, format, path }) => {
 
   if (extension) {
     return extension;
-  }
-
-  if (path) {
-    return getPathInfo(path).extension ?? 'md';
   }
 
   if (format === 'yaml' || format === 'yml') {
@@ -188,15 +183,18 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     path: subPath,
     extension: _extension,
     format: _format,
-    frontmatter_delimiter: delimiter,
+    frontmatter_delimiter: _delimiter,
     yaml_quote: yamlQuote,
     index_file: indexFile,
   } = rawCollection;
 
   const isEntryCollection = typeof folder === 'string';
   const filePath = file?.file ? stripSlashes(file.file) : undefined;
-  const extension = detectFileExtension({ format: _format, extension: _extension, path: filePath });
-  const format = detectFileFormat({ format: _format, extension });
+  const __extension = filePath ? getPathInfo(filePath).extension : _extension;
+  const __format = file?.format ?? _format;
+  const extension = detectFileExtension({ format: __format, extension: __extension });
+  const format = detectFileFormat({ format: __format, extension });
+  const delimiter = file?.frontmatter_delimiter ?? _delimiter;
   const basePath = isEntryCollection ? stripSlashes(folder) : undefined;
   const indexFileName = isEntryCollection ? indexFile?.name : undefined;
 

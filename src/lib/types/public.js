@@ -708,6 +708,11 @@
  * @property {string} [public_folder] Public media folder path for an entry collection. This
  * overrides the global or collection-level `public_folder` option. Default: `media_folder` option
  * value.
+ * @property {FileFormat} [format] File format. This overrides the collection-level `format` option.
+ * Default: `yaml-frontmatter`.
+ * @property {string | string[]} [frontmatter_delimiter] Delimiters to be used for the front matter
+ * format. This overrides the collection-level `frontmatter_delimiter` option. Default: depends on
+ * the front matter type.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.
@@ -857,7 +862,7 @@
  * @property {FileFormat} [format] File format. It should match the file extension. Default:
  * `yaml-frontmatter`.
  * @property {string | string[]} [frontmatter_delimiter] Delimiters to be used for the front matter
- * format. Entry collection only. Default: depends on the front matter type.
+ * format. Default: depends on the front matter type.
  * @property {string} [slug] Item slug template. Entry collection only. Default: `identifier_field`
  * option value.
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.

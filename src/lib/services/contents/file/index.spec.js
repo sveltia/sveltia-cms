@@ -946,4 +946,74 @@ describe('Test getFileConfig()', () => {
       yamlQuote: false,
     });
   });
+
+  test('file collection with format override', () => {
+    expect(
+      getFileConfig({
+        rawCollection: {
+          ...rawFileCollection,
+        },
+        file: {
+          ...rawFileCollectionFrontMatterFile,
+          format: 'yaml-frontmatter',
+        },
+        _i18n: i18nDisabled,
+      }),
+    ).toEqual({
+      extension: 'md',
+      format: 'yaml-frontmatter',
+      basePath: undefined,
+      subPath: undefined,
+      fullPathRegEx: undefined,
+      fullPath: 'data/members.md',
+      fmDelimiters: ['---', '---'],
+      yamlQuote: false,
+    });
+
+    expect(
+      getFileConfig({
+        rawCollection: {
+          ...rawFileCollection,
+          format: 'yaml-frontmatter',
+        },
+        file: {
+          ...rawFileCollectionFrontMatterFile,
+          format: 'toml-frontmatter',
+        },
+        _i18n: i18nDisabled,
+      }),
+    ).toEqual({
+      extension: 'md',
+      format: 'toml-frontmatter',
+      basePath: undefined,
+      subPath: undefined,
+      fullPathRegEx: undefined,
+      fullPath: 'data/members.md',
+      fmDelimiters: ['+++', '+++'],
+      yamlQuote: false,
+    });
+
+    expect(
+      getFileConfig({
+        rawCollection: {
+          ...rawFileCollection,
+          format: 'yaml-frontmatter',
+        },
+        file: {
+          ...rawFileCollectionJsonFile,
+          format: 'json',
+        },
+        _i18n: i18nDisabled,
+      }),
+    ).toEqual({
+      extension: 'json',
+      format: 'json',
+      basePath: undefined,
+      subPath: undefined,
+      fullPathRegEx: undefined,
+      fullPath: 'data/members.json',
+      fmDelimiters: undefined,
+      yamlQuote: false,
+    });
+  });
 });
