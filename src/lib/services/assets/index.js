@@ -368,138 +368,176 @@ export const getCollectionsByAsset = (asset) =>
     .filter((collection) => !!collection);
 
 /**
- * Get an asset by a public path typically stored as an image field value.
- * @param {string} savedPath Saved absolute path or relative path.
- * @param {object} [options] Options.
- * @param {Entry} [options.entry] Associated entry to be used to help locate an asset from a
- * relative path. Can be `undefined` when editing a new draft.
- * @param {InternalCollection} [options.collection] Associated collection. Can be undefined, then it
- * will be automatically determined from the entry.
+ * Get an asset by a relative public path typically stored as an image field value.
+ * @param {object} args Arguments.
+ * @param {string} args.path Saved absolute path or relative path.
+ * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
+ * path. Can be `undefined` when editing a new draft.
  * @returns {Asset | undefined} Corresponding asset.
  */
-export const getAssetByPath = (savedPath, { entry, collection } = {}) => {
-  const decodedPath = decodeFilePath(savedPath);
+const getAssetByRelativePath = ({ path, entry }) => {
+  if (!entry) {
+    return undefined;
+  }
 
-  // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
-  // considered as an absolute path.
-  if (!/^[/@]/.test(decodedPath)) {
-    if (!entry) {
+  const { locales } = entry;
+
+  /**
+   * Find an asset.
+   * @param {InternalCollection | InternalCollectionFile} input Collection or single collection
+   * file.
+   * @returns {Asset | undefined} Found asset.
+   */
+  const getAsset = ({ _i18n }) => {
+    const { defaultLocale } = _i18n;
+    const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
+    const { path: entryFilePath, content: entryContent } = locales[locale];
+
+    if (!entryFilePath || !entryContent) {
       return undefined;
     }
 
-    const { locales } = entry;
+    const { entryFolder } = entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)?.groups ?? {};
+    const resolvedPath = resolvePath(`${entryFolder}/${path}`);
 
-    /**
-     * Find an asset.
-     * @param {InternalCollection | InternalCollectionFile} input Collection or single collection
-     * file.
-     * @returns {Asset | undefined} Found asset.
-     */
-    const getAsset = ({ _i18n }) => {
-      const { defaultLocale } = _i18n;
-      const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
-      const { path: entryFilePath, content: entryContent } = locales[locale];
+    return get(allAssets).find((asset) => asset.path === resolvedPath);
+  };
 
-      if (!entryFilePath || !entryContent) {
-        return undefined;
-      }
+  const assets = getAssociatedCollections(entry).map((_collection) => {
+    const collectionFiles = getFilesByEntry(_collection, entry);
 
-      const { entryFolder } = entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)?.groups ?? {};
-      const resolvedPath = resolvePath(`${entryFolder}/${decodedPath}`);
+    if (collectionFiles.length) {
+      return collectionFiles.map(getAsset);
+    }
 
-      return get(allAssets).find((asset) => asset.path === resolvedPath);
-    };
+    return getAsset(_collection);
+  });
 
-    const assets = getAssociatedCollections(entry).map((_collection) => {
-      const collectionFiles = getFilesByEntry(_collection, entry);
+  return (
+    assets.flat(1).filter(Boolean)[0] ??
+    // Fall back to exact match at the root folder
+    get(allAssets).find((asset) => asset.path === path)
+  );
+};
 
-      if (collectionFiles.length) {
-        return collectionFiles.map(getAsset);
-      }
-
-      return getAsset(_collection);
-    });
-
-    return (
-      assets.flat(1).filter(Boolean)[0] ??
-      // Fall back to exact match at the root folder
-      get(allAssets).find((asset) => asset.path === decodedPath)
-    );
-  }
-
-  const exactMatch = get(allAssets).find((asset) => asset.path === stripSlashes(decodedPath));
+/**
+ * Get an asset by an absolute public path typically stored as an image field value.
+ * @param {object} args Arguments.
+ * @param {string} args.path Saved absolute path or relative path.
+ * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
+ * path. Can be `undefined` when editing a new draft.
+ * @param {string} [args.collectionName] Collection name. If `undefined`, it will be automatically
+ * determined from the entry.
+ * @param {string} [args.fileName] File identifier. File collection only. If `undefined`, it will be
+ * automatically determined from the entry.
+ * @returns {Asset | undefined} Corresponding asset.
+ */
+const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
+  const exactMatch = get(allAssets).find((asset) => asset.path === stripSlashes(path));
 
   if (exactMatch) {
     return exactMatch;
   }
 
-  const { dirname: dirName = '', basename: fileName } = getPathInfo(decodedPath);
+  const { dirname: dirName = '', basename: baseName } = getPathInfo(path);
+  /** @type {Asset | undefined} */
+  let foundAsset = undefined;
 
-  // eslint-disable-next-line prefer-const
-  let { collectionName, internalPath, publicPath } = !dirName
-    ? /** @type {AssetFolderInfo} */ (get(globalAssetFolder))
-    : (get(allAssetFolders).findLast((folder) =>
-        dirName.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
-      ) ?? {});
+  const scanningFolders = [
+    getAssetFolder({ collectionName, fileName }),
+    getAssetFolder({ collectionName }),
+    get(globalAssetFolder),
+    get(allAssetFolders).findLast((folder) =>
+      dirName.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
+    ),
+  ].filter((folderInfo) => !!folderInfo);
 
-  if (internalPath === undefined) {
-    return undefined;
-  }
+  scanningFolders.some((folderInfo) => {
+    const { publicPath, collectionName: _collectionName } = folderInfo;
+    let { internalPath } = folderInfo;
 
-  // Find a global/uncategorized asset
-  if (!collectionName) {
-    const fullPath = decodedPath.replace(
-      new RegExp(`^${escapeRegExp(publicPath || dirName)}`),
-      internalPath,
-    );
+    // Find a global/uncategorized asset
+    if (!_collectionName) {
+      const fullPath = path.replace(
+        new RegExp(`^${escapeRegExp(publicPath || dirName)}`),
+        internalPath,
+      );
 
-    const globalAsset = get(allAssets).find((asset) => asset.path === fullPath);
+      const found = get(allAssets).find((asset) => asset.path === fullPath);
 
-    if (globalAsset) {
-      return globalAsset;
+      foundAsset = found;
+
+      return !!found;
     }
-  }
 
-  if (entry && !collection) {
-    [collection] = getAssociatedCollections(entry);
-  }
+    const collection = _collectionName
+      ? getCollection(_collectionName)
+      : entry
+        ? getAssociatedCollections(entry)?.[0]
+        : undefined;
 
-  if (entry && collection && /{{.+?}}/.test(internalPath)) {
-    const { content, path } = entry.locales[collection._i18n.defaultLocale];
+    if (/{{.+?}}/.test(internalPath)) {
+      if (!(entry && collection)) {
+        return false;
+      }
 
-    internalPath = fillSlugTemplate(internalPath, {
-      type: 'media_folder',
-      // eslint-disable-next-line object-shorthand
-      collection: /** @type {EntryCollection} */ (collection),
-      content: flatten(content),
-      currentSlug: entry.slug,
-      entryFilePath: path,
-      isIndexFile: isCollectionIndexFile(collection, entry),
-    });
-  }
+      const { content, path: entryFilePath } = entry.locales[collection._i18n.defaultLocale];
 
-  const [collectionFile] = collection && entry ? getFilesByEntry(collection, entry) : [];
+      internalPath = fillSlugTemplate(internalPath, {
+        type: 'media_folder',
+        collection,
+        content: flatten(content),
+        currentSlug: entry.slug,
+        entryFilePath,
+        isIndexFile: isCollectionIndexFile(collection, entry),
+      });
+    }
 
-  const _publicPath = collection
-    ? getAssetFolder({ collectionName: collection.name, fileName: collectionFile?.name })
-        ?.publicPath
-    : undefined;
-
-  const subPath = _publicPath
-    ? stripSlashes(
-        dirName.replace(
-          // Deal with template tags like `/assets/images/{{slug}}`
-          createPathRegEx(_publicPath, (segment) =>
-            /{{.+?}}/.test(segment) ? '[^/]+' : escapeRegExp(segment),
+    const subPath = publicPath
+      ? stripSlashes(
+          dirName.replace(
+            // Deal with template tags like `/assets/images/{{slug}}`
+            createPathRegEx(publicPath, (segment) =>
+              /{{.+?}}/.test(segment) ? '[^/]+' : escapeRegExp(segment),
+            ),
+            '',
           ),
-          '',
-        ),
-      )
-    : '';
+        )
+      : '';
 
-  const fullPath = createPath([internalPath, subPath, fileName]);
+    const fullPath = createPath([internalPath, subPath, baseName]);
+    const found = get(allAssets).find((asset) => asset.path === fullPath);
 
-  return get(allAssets).find((asset) => asset.path === fullPath);
+    foundAsset = found;
+
+    return !!found;
+  });
+
+  return foundAsset;
+};
+
+/**
+ * Get an asset by a public path typically stored as an image field value.
+ * @param {object} args Arguments.
+ * @param {string} args.value Saved absolute path or relative path.
+ * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
+ * path. Can be `undefined` when editing a new draft.
+ * @param {string} [args.collectionName] Collection name. If `undefined`, it will be automatically
+ * determined from the entry.
+ * @param {string} [args.fileName] File identifier. File collection only. If `undefined`, it will be
+ * automatically determined from the entry.
+ * @returns {Asset | undefined} Corresponding asset.
+ */
+export const getAssetByPath = ({ value, entry, collectionName, fileName }) => {
+  const path = decodeFilePath(value);
+
+  // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
+  // considered as an absolute path.
+  if (!/^[/@]/.test(path)) {
+    return getAssetByRelativePath({ path, entry });
+  }
+
+  return getAssetByAbsolutePath({ path, entry, collectionName, fileName });
 };
 
 /**
@@ -570,15 +608,23 @@ export const getAssetPublicURL = (
 
 /**
  * Get the blob or public URL from the given image/file entry field value.
- * @param {string} value Saved field value. It can be an absolute path, entry-relative path, or a
- * complete/external URL.
- * @param {Entry} [entry] Associated entry to be used to help locate an asset from a relative path.
- * Can be `undefined` when editing a new draft.
- * @param {object} [options] Options.
- * @param {boolean} [options.thumbnail] Whether to use a thumbnail of the image.
+ * @param {object} args Arguments.
+ * @param {string} args.value Saved field value. It can be an absolute path, entry-relative path, or
+ * a complete/external URL.
+ * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
+ * path. Can be `undefined` when editing a new draft.
+ * @param {string | undefined} [args.collectionName] Collection name.
+ * @param {string} [args.fileName] File identifier. File collection only.
+ * @param {boolean} [args.thumbnail] Whether to use a thumbnail of the image.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */
-export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {}) => {
+export const getMediaFieldURL = async ({
+  value,
+  entry,
+  collectionName,
+  fileName,
+  thumbnail = false,
+}) => {
   if (!value) {
     return undefined;
   }
@@ -587,7 +633,7 @@ export const getMediaFieldURL = async (value, entry, { thumbnail = false } = {})
     return value;
   }
 
-  const asset = getAssetByPath(value, { entry });
+  const asset = getAssetByPath({ value, entry, collectionName, fileName });
 
   if (!asset) {
     return undefined;

@@ -87,8 +87,9 @@
   const {
     config: { max_file_size: maxSize, transformations },
   } = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
-  const collection = $derived($entryDraft?.collection);
   const entry = $derived($entryDraft?.originalEntry);
+  const collectionName = $derived($entryDraft?.collectionName);
+  const fileName = $derived($entryDraft?.fileName);
   const showRemoveButton = $derived(
     !required &&
       (!context || !['markdown-editor-component', 'single-field-list-widget'].includes(context)),
@@ -169,20 +170,22 @@
     }
 
     if (currentValue) {
+      const getURLArgs = { value: currentValue, entry, collectionName, fileName };
+
       // Update the `src` when an asset is selected
       if (currentValue.startsWith('blob:')) {
         asset = undefined;
         kind = currentValue ? await getMediaKind(currentValue) : undefined;
         src =
           currentValue && kind
-            ? await getMediaFieldURL(currentValue, entry, { thumbnail: true })
+            ? await getMediaFieldURL({ ...getURLArgs, thumbnail: true })
             : undefined;
       } else if (isImageWidget && /^https?:/.test(currentValue)) {
         asset = undefined;
         kind = 'image';
         src = currentValue;
       } else {
-        asset = getAssetByPath(currentValue, { entry, collection });
+        asset = getAssetByPath({ ...getURLArgs });
         kind = undefined;
         src = undefined;
       }

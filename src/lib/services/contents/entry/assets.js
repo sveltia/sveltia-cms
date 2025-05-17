@@ -55,7 +55,7 @@ export const getEntryThumbnail = async (collection, entry) => {
   for (const keyPath of keyPathList) {
     const url = content[keyPath]
       ? // eslint-disable-next-line no-await-in-loop
-        await getMediaFieldURL(content[keyPath], entry, { thumbnail: true })
+        await getMediaFieldURL({ value: content[keyPath], entry, thumbnail: true })
       : undefined;
 
     if (url) {
@@ -96,7 +96,7 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
               getFieldConfig({ collectionName, keyPath, isIndexFile })?.widget ?? 'string',
             )
           ) {
-            const asset = getAssetByPath(value, { entry, collection });
+            const asset = getAssetByPath({ value, entry, collectionName, fileName });
 
             if (asset && getCollectionsByAsset(asset).some((c) => c.name === collectionName)) {
               return asset;

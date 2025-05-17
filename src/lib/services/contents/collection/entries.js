@@ -118,8 +118,10 @@ export const getEntriesByAssetURL = async (
 
               const ___results = await Promise.all(
                 collections.map(async (collection) => {
+                  const collectionName = collection.name;
+
                   const getFieldConfigArgs = {
-                    collectionName: collection.name,
+                    collectionName,
                     valueMap: content,
                     keyPath,
                     isIndexFile: isCollectionIndexFile(collection, entry),
@@ -132,20 +134,19 @@ export const getEntriesByAssetURL = async (
                    * @returns {Promise<boolean>} Result.
                    */
                   const hasAsset = async (collectionFile) => {
-                    const field = getFieldConfig({
-                      ...getFieldConfigArgs,
-                      fileName: collectionFile?.name,
-                    });
+                    const fileName = collectionFile?.name;
+                    const field = getFieldConfig({ ...getFieldConfigArgs, fileName });
 
                     if (!field) {
                       return false;
                     }
 
+                    const getURLArgs = { entry, collectionName, fileName };
                     const { widget: widgetName = 'string' } = field;
 
                     if (['image', 'file'].includes(widgetName)) {
                       const match = isBlobURL
-                        ? (await getMediaFieldURL(value, entry)) === assetURL
+                        ? (await getMediaFieldURL({ ...getURLArgs, value })) === assetURL
                         : value === assetURL;
 
                       if (match && newURL) {
@@ -163,9 +164,10 @@ export const getEntriesByAssetURL = async (
                         return (
                           await Promise.all(
                             matches.map(async ([, src]) => {
-                              const match = isBlobURL
-                                ? (await getMediaFieldURL(src, entry)) === assetURL
-                                : src === assetURL;
+                              const match =
+                                (isBlobURL
+                                  ? await getMediaFieldURL({ ...getURLArgs, value: src })
+                                  : src) === assetURL;
 
                               if (match && newURL) {
                                 content[keyPath] = content[keyPath].replace(src, newURL);

@@ -32,6 +32,10 @@
   /** @type {string | undefined} */
   let src = $state();
 
+  const entry = $derived($entryDraft?.originalEntry);
+  const collectionName = $derived($entryDraft?.collectionName);
+  const fileName = $derived($entryDraft?.fileName);
+
   /**
    * Update a couple of properties when {@link currentValue} is updated.
    */
@@ -39,7 +43,7 @@
     kind = currentValue ? await getMediaKind(currentValue) : undefined;
     src =
       currentValue && kind
-        ? await getMediaFieldURL(currentValue, $entryDraft?.originalEntry)
+        ? await getMediaFieldURL({ value: currentValue, entry, collectionName, fileName })
         : undefined;
   };
 

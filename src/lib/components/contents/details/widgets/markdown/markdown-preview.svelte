@@ -31,6 +31,9 @@
 
   let rawHTML = $state('');
 
+  const entry = $derived($entryDraft?.originalEntry);
+  const collectionName = $derived($entryDraft?.collectionName);
+  const fileName = $derived($entryDraft?.fileName);
   const { sanitize_preview: sanitize = false } = $derived(fieldConfig);
 
   /** @type {import("marked").MarkedOptions} */
@@ -40,7 +43,7 @@
     // eslint-disable-next-line jsdoc/require-jsdoc
     walkTokens: async (token) => {
       if (token.type === 'image') {
-        const url = await getMediaFieldURL(token.href, $entryDraft?.originalEntry);
+        const url = await getMediaFieldURL({ value: token.href, entry, collectionName, fileName });
 
         if (url) {
           token.href = url;
