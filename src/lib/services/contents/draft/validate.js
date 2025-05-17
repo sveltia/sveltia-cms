@@ -201,7 +201,7 @@ export const validateEntry = () => {
           value.startsWith('blob:')
         ) {
           // The stored `value` is a blob URL; get the original file name
-          value = files[value]?.name;
+          value = files[value]?.file?.name;
         }
 
         if (typeof value === 'string') {

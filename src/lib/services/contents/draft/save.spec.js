@@ -92,10 +92,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(relativeAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'src/content/blog',
-      internalAssetFolder: 'src/content/blog/foo',
-      publicAssetFolder: '../foo',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedPublicPath: '../foo',
     });
   });
 
@@ -109,10 +114,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(relativeAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'src/content/blog',
-      internalAssetFolder: 'src/content/blog/foo',
-      publicAssetFolder: '../../foo',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedPublicPath: '../../foo',
     });
   });
 
@@ -126,10 +136,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(relativeAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'src/content/blog',
-      internalAssetFolder: 'src/content/blog/foo',
-      publicAssetFolder: '../foo',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedPublicPath: '../foo',
     });
   });
 
@@ -143,10 +158,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(relativeAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'src/content/blog',
-      internalAssetFolder: 'src/content/blog/foo',
-      publicAssetFolder: '../../foo',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedPublicPath: '../../foo',
     });
   });
 
@@ -160,10 +180,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(relativeAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'src/content/blog',
-      internalAssetFolder: 'src/content/blog',
-      publicAssetFolder: '',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '',
     });
   });
 
@@ -177,10 +202,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(relativeAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'src/content/blog',
-      internalAssetFolder: 'src/content/blog/foo',
-      publicAssetFolder: '',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedPublicPath: '',
     });
   });
 
@@ -194,10 +224,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(relativeAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'src/content/blog',
-      internalAssetFolder: 'src/content/blog',
-      publicAssetFolder: '',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '',
     });
   });
 
@@ -211,10 +246,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(relativeAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'src/content/blog',
-      internalAssetFolder: 'src/content/blog/foo',
-      publicAssetFolder: '',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedPublicPath: '',
     });
   });
 
@@ -228,10 +268,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(absoluteAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog',
-      internalAssetFolder: 'static/uploads/blog',
-      publicAssetFolder: '/uploads/blog',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: absoluteAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog',
+      resolvedInternalPath: 'static/uploads/blog',
+      resolvedPublicPath: '/uploads/blog',
     });
   });
 
@@ -245,10 +290,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(absoluteAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog',
-      internalAssetFolder: 'static/uploads/blog',
-      publicAssetFolder: '/uploads/blog',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: absoluteAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog',
+      resolvedInternalPath: 'static/uploads/blog',
+      resolvedPublicPath: '/uploads/blog',
     });
   });
 
@@ -262,10 +312,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(absoluteAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog',
-      internalAssetFolder: 'static/uploads/blog',
-      publicAssetFolder: '/uploads/blog',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: absoluteAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog',
+      resolvedInternalPath: 'static/uploads/blog',
+      resolvedPublicPath: '/uploads/blog',
     });
   });
 
@@ -279,10 +334,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(absoluteAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog',
-      internalAssetFolder: 'static/uploads/blog',
-      publicAssetFolder: '/uploads/blog',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: absoluteAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog',
+      resolvedInternalPath: 'static/uploads/blog',
+      resolvedPublicPath: '/uploads/blog',
     });
   });
 
@@ -296,10 +356,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(absoluteAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog',
-      internalAssetFolder: 'static/uploads/blog',
-      publicAssetFolder: '/uploads/blog',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: absoluteAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog',
+      resolvedInternalPath: 'static/uploads/blog',
+      resolvedPublicPath: '/uploads/blog',
     });
   });
 
@@ -313,10 +378,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(absoluteAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog',
-      internalAssetFolder: 'static/uploads/blog',
-      publicAssetFolder: '/uploads/blog',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: absoluteAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog',
+      resolvedInternalPath: 'static/uploads/blog',
+      resolvedPublicPath: '/uploads/blog',
     });
   });
 
@@ -330,10 +400,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(absoluteAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog',
-      internalAssetFolder: 'static/uploads/blog',
-      publicAssetFolder: '/uploads/blog',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: absoluteAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog',
+      resolvedInternalPath: 'static/uploads/blog',
+      resolvedPublicPath: '/uploads/blog',
     });
   });
 
@@ -347,10 +422,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(absoluteAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog',
-      internalAssetFolder: 'static/uploads/blog',
-      publicAssetFolder: '/uploads/blog',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: absoluteAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog',
+      resolvedInternalPath: 'static/uploads/blog',
+      resolvedPublicPath: '/uploads/blog',
     });
   });
 
@@ -364,10 +444,15 @@ describe('Test getEntryAssetFolderPaths()', () => {
 
     await setupAssetFolder(templateTagAssetFolder);
 
-    expect(getEntryAssetFolderPaths({ collection, content: {}, currentSlug })).toEqual({
-      internalBaseAssetFolder: 'static/uploads/blog/{{slug}}',
-      internalAssetFolder: 'static/uploads/blog/foo',
-      publicAssetFolder: '/uploads/blog/foo',
+    expect(
+      getEntryAssetFolderPaths({
+        folderInfo: templateTagAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      rawInternalPath: 'static/uploads/blog/{{slug}}',
+      resolvedInternalPath: 'static/uploads/blog/foo',
+      resolvedPublicPath: '/uploads/blog/foo',
     });
   });
 });

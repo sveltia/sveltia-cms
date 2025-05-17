@@ -1,5 +1,5 @@
 import { getBlobRegex } from '@sveltia/utils/file';
-import { toRaw } from '@sveltia/utils/object';
+import { isObject, toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
@@ -165,14 +165,20 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
           Object.entries(valueMap).forEach(([keyPath, value]) => {
             if (typeof value === 'string') {
               [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
-                const file = files[blobURL];
+                let cache = files[blobURL];
 
-                if (file instanceof File) {
+                // Support `LegacyEntryFileMap`
+                // @todo Remove this before the 1.0 release
+                if (cache instanceof File) {
+                  cache = { file: cache, folderInfo: undefined };
+                }
+
+                if (isObject(cache)) {
                   // Regenerate a blob URL
-                  const newURL = URL.createObjectURL(file);
+                  const newURL = URL.createObjectURL(cache.file);
 
                   valueMap[keyPath] = value.replaceAll(blobURL, newURL);
-                  draft.files[newURL] = file;
+                  draft.files[newURL] = cache;
                 }
               });
             }

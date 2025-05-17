@@ -16,9 +16,11 @@
   import {
     allAssets,
     getAssetByPath,
+    getAssetFolder,
     getAssetPublicURL,
     getMediaFieldURL,
     getMediaKind,
+    globalAssetFolder,
   } from '$lib/services/assets';
   import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -105,7 +107,7 @@
     currentValue = '';
 
     // Force running `updateProps` first, otherwise `file`, `asset`, etc. will be  `undefined` while
-    // `await`ing a Promise in `onAssetSelect`
+    // `await`ing a Promise in `onResourceSelect`
     flushSync();
   };
 
@@ -120,27 +122,28 @@
     ({ asset, file, url, credit } = selectedResource);
 
     if (file) {
+      file = transformations ? await transformFile(file, transformations) : file;
+
       const hash = await getHash(file);
-      const existingAsset = $allAssets.find((a) => a.sha === hash);
+      const { folderInfo } = selectedResource;
+
+      const existingAsset = $allAssets.find(
+        (a) => a.sha === hash && a.folder === folderInfo?.internalPath,
+      );
 
       if (existingAsset) {
         // If the selected file has already been uploaded, use the existing asset instead of
         // uploading the same file twice
         asset = existingAsset;
         file = undefined;
+      } else if (file.size > /** @type {number} */ (maxSize)) {
+        showSizeLimitDialog = true;
+        file = undefined;
       } else {
-        if (transformations) {
-          file = await transformFile(file, transformations);
-        }
-
-        if (file.size > /** @type {number} */ (maxSize)) {
-          showSizeLimitDialog = true;
-        } else {
-          // Set a temporary blob URL, which will be later replaced with the actual file path
-          currentValue = URL.createObjectURL(file);
-          // Cache the file itself for later upload
-          /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = file;
-        }
+        // Set a temporary blob URL, which will be later replaced with the actual file path
+        currentValue = URL.createObjectURL(file);
+        // Cache the file itself for later upload
+        /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = { file, folderInfo };
       }
     }
 
@@ -166,7 +169,7 @@
   const updateProps = async () => {
     // Restore `file` after a draft backup is restored
     if (currentValue?.startsWith('blob:') && $entryDraft) {
-      file = $entryDraft.files[currentValue];
+      file = $entryDraft.files[currentValue]?.file;
     }
 
     if (currentValue) {
@@ -210,7 +213,13 @@
   accept={accept ?? (isImageWidget ? supportedImageTypes.join(',') : undefined)}
   onDrop={({ files }) => {
     if (files.length) {
-      onResourceSelect({ file: files[0] });
+      onResourceSelect({
+        file: files[0],
+        folderInfo:
+          getAssetFolder({ collectionName, fileName }) ??
+          getAssetFolder({ collectionName }) ??
+          $globalAssetFolder,
+      });
     }
   }}
 >

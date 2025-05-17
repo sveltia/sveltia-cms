@@ -7,7 +7,6 @@ import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
 import {
   allAssets,
-  getAssetFolder,
   getAssetKind,
   getAssetsByDirName,
   globalAssetFolder,
@@ -47,7 +46,6 @@ import {
  * Entry,
  * EntryCollection,
  * EntryDraft,
- * EntryFileMap,
  * FileChange,
  * FillSlugTemplateOptions,
  * FlattenedEntryContent,
@@ -80,9 +78,10 @@ import {
 /**
  * Paths for entry assets.
  * @typedef {object} EntryAssetFolderPaths
- * @property {string} internalBaseAssetFolder Collection-defined path.
- * @property {string} internalAssetFolder May contain a sub path when assets are entry-relative.
- * @property {string} publicAssetFolder Collection-defined public path.
+ * @property {string} rawInternalPath Raw `internalPath` from `AssetFolderInfo`.
+ * @property {string} resolvedInternalPath Resolved `internalPath` with any template tags replaced.
+ * May contain a sub path when assets are entry-relative.
+ * @property {string} resolvedPublicPath Resolved `publicPath` with any template tags replaced.
  */
 
 /**
@@ -98,72 +97,6 @@ import {
  * Properties for a saving asset.
  * @typedef {SavingAssetProps & RepositoryFileMetadata} SavingAsset
  */
-
-/**
- * Get the internal/public asset path configuration for the entry assets.
- * @param {FillSlugTemplateOptions} fillSlugOptions Options for {@link fillSlugTemplate}.
- * @returns {EntryAssetFolderPaths} Determined paths.
- */
-export const getEntryAssetFolderPaths = (fillSlugOptions) => {
-  const { collection, collectionFile } = fillSlugOptions;
-
-  const {
-    _i18n: { structure },
-  } = collection;
-
-  const subPath =
-    collection._type === 'entry'
-      ? /** @type {EntryCollection} */ (collection)._file.subPath
-      : undefined;
-
-  const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
-  const isMultiFolders = ['multiple_folders', 'multiple_folders_i18n_root'].includes(structure);
-
-  const { entryRelative, internalPath, publicPath } =
-    getAssetFolder({ collectionName: collection.name, fileName: collectionFile?.name }) ??
-    /** @type {AssetFolderInfo} */ (get(globalAssetFolder));
-
-  if (!entryRelative) {
-    return {
-      internalBaseAssetFolder: internalPath,
-      internalAssetFolder: fillSlugTemplate(internalPath, fillSlugOptions),
-      publicAssetFolder: fillSlugTemplate(publicPath, fillSlugOptions),
-    };
-  }
-
-  return {
-    internalBaseAssetFolder: internalPath,
-    internalAssetFolder: resolvePath(
-      fillSlugTemplate(
-        createPath([
-          internalPath,
-          isMultiFolders || subPath?.includes('/') ? subPathFirstPart : undefined,
-        ]),
-        fillSlugOptions,
-      ),
-    ),
-    publicAssetFolder:
-      !isMultiFolders && /^\.?$/.test(publicPath)
-        ? // Dot-only public path is a special case; the final path stored as the field value will
-          // be `./image.png` rather than `image.png`
-          publicPath
-        : resolvePath(
-            fillSlugTemplate(
-              isMultiFolders
-                ? // When multiple folders are used for i18n, the file structure would look like
-                  // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md`
-                  // and the asset path would be `{collection}/{slug}/{file}.jpg`
-                  createPath([
-                    ...Array((subPath?.match(/\//g) ?? []).length + 1).fill('..'),
-                    publicPath,
-                    subPathFirstPart,
-                  ])
-                : publicPath,
-              fillSlugOptions,
-            ),
-          ),
-  };
-};
 
 /**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
@@ -602,7 +535,6 @@ const getFillSlugOptions = ({ draft }) => {
   return {
     // eslint-disable-next-line object-shorthand
     collection: /** @type {EntryCollection} */ (collection),
-    collectionFile,
     content: currentValues[defaultLocale],
     isIndexFile,
   };
@@ -656,82 +588,146 @@ export const getSlugs = ({ draft }) => {
 };
 
 /**
- * Get base arguments for {@link replaceBlobURL}.
+ * Get the internal/public asset path configuration for the entry assets.
+ * @param {object} args Arguments.
+ * @param {AssetFolderInfo} args.folderInfo Asset folder associated with a new file.
+ * @param {FillSlugTemplateOptions} args.fillSlugOptions Arguments for {@link fillSlugTemplate}.
+ * @returns {EntryAssetFolderPaths} Determined paths.
+ */
+export const getEntryAssetFolderPaths = ({ folderInfo, fillSlugOptions }) => {
+  const { entryRelative, internalPath, publicPath } = folderInfo;
+
+  if (!entryRelative) {
+    return {
+      rawInternalPath: internalPath,
+      resolvedInternalPath: fillSlugTemplate(internalPath, fillSlugOptions),
+      resolvedPublicPath: fillSlugTemplate(publicPath, fillSlugOptions),
+    };
+  }
+
+  const { collection } = fillSlugOptions;
+
+  const isMultiFolders = ['multiple_folders', 'multiple_folders_i18n_root'].includes(
+    collection._i18n.structure,
+  );
+
+  const subPath =
+    collection._type === 'entry'
+      ? /** @type {EntryCollection} */ (collection)._file.subPath
+      : undefined;
+
+  const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
+
+  return {
+    rawInternalPath: internalPath,
+    resolvedInternalPath: resolvePath(
+      fillSlugTemplate(
+        createPath([
+          internalPath,
+          isMultiFolders || subPath?.includes('/') ? subPathFirstPart : undefined,
+        ]),
+        fillSlugOptions,
+      ),
+    ),
+    resolvedPublicPath:
+      !isMultiFolders && /^\.?$/.test(publicPath)
+        ? // Dot-only public path is a special case; the final path stored as the field value will
+          // be `./image.png` rather than `image.png`
+          publicPath
+        : resolvePath(
+            fillSlugTemplate(
+              isMultiFolders
+                ? // When multiple folders are used for i18n, the file structure would look like
+                  // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md`
+                  // and the asset path would be `{collection}/{slug}/{file}.jpg`
+                  createPath([
+                    ...Array((subPath?.match(/\//g) ?? []).length + 1).fill('..'),
+                    publicPath,
+                    subPathFirstPart,
+                  ])
+                : publicPath,
+              fillSlugOptions,
+            ),
+          ),
+  };
+};
+
+/**
+ * Get the information required to save an asset.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
+ * @param {AssetFolderInfo} args.folderInfo Asset folder associated with a new file.
  * @returns {{ assetFolderPaths: EntryAssetFolderPaths, assetNamesInSameFolder: string[],
  * savingAssetProps: SavingAsset }} Arguments.
  */
-const getReplaceBlobArgs = ({ draft, defaultLocaleSlug }) => {
+const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folderInfo }) => {
   const { collection, collectionName, collectionFile, isIndexFile } = draft;
-  const fillSlugOptions = getFillSlugOptions({ draft });
 
   const {
     _i18n: { defaultLocale },
   } = collectionFile ?? collection;
 
   const assetFolderPaths = getEntryAssetFolderPaths({
-    ...fillSlugOptions,
-    type: 'media_folder',
-    currentSlug: defaultLocaleSlug,
-    entryFilePath: createEntryPath({ draft, locale: defaultLocale, slug: defaultLocaleSlug }),
-    isIndexFile,
+    folderInfo,
+    fillSlugOptions: {
+      ...getFillSlugOptions({ draft }),
+      type: 'media_folder',
+      currentSlug: defaultLocaleSlug,
+      entryFilePath: createEntryPath({ draft, locale: defaultLocale, slug: defaultLocaleSlug }),
+      isIndexFile,
+    },
   });
 
-  const { internalBaseAssetFolder, internalAssetFolder } = assetFolderPaths;
-
-  const assetNamesInSameFolder = getAssetsByDirName(internalAssetFolder).map((a) =>
-    a.name.normalize(),
-  );
-
+  const { rawInternalPath, resolvedInternalPath } = assetFolderPaths;
   const { email, name } = /** @type {User} */ (get(user));
 
-  /** @type {SavingAsset} */
-  const savingAssetProps = {
-    text: undefined,
-    collectionName,
-    folder: internalBaseAssetFolder,
-    commitAuthor: email ? /** @type {CommitAuthor} */ ({ name, email }) : undefined,
-    commitDate: new Date(), // Use the current datetime
+  return {
+    assetFolderPaths,
+    assetNamesInSameFolder: getAssetsByDirName(resolvedInternalPath).map((a) => a.name.normalize()),
+    savingAssetProps: {
+      text: undefined,
+      collectionName,
+      folder: rawInternalPath,
+      commitAuthor: email ? /** @type {CommitAuthor} */ ({ name, email }) : undefined,
+      commitDate: new Date(), // Use the current datetime
+    },
   };
-
-  return { assetFolderPaths, assetNamesInSameFolder, savingAssetProps };
 };
 
 /**
  * Replace a blob URL with the final path, and add the file to the changeset.
  * @param {object} args Arguments.
- * @param {string} args.blobURL Blob URL.
+ * @param {File} args.file Raw file.
+ * @param {AssetFolderInfo} args.folderInfo Asset folder associated with the new file.
+ * @param {string} args.blobURL Blob URL of the file.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {FlattenedEntryContent} args.content Localized content.
  * @param {FileChange[]} args.changes Changeset.
- * @param {EntryFileMap} args.files Files to be uploaded.
  * @param {Asset[]} args.savingAssets List of assets to be saved.
- * @param {SavingAsset} args.savingAssetProps Base properties for assets to be saved.
- * @param {string[]} args.assetNamesInSameFolder Name of assets stored in the same folder as the
- * target asset folder.
- * @param {EntryAssetFolderPaths} args.assetFolderPaths Path configuration for the entry assets.
  */
 const replaceBlobURL = async ({
+  file,
+  folderInfo,
   blobURL,
+  draft,
+  defaultLocaleSlug,
   keyPath,
   content,
   changes,
-  files,
   savingAssets,
-  savingAssetProps,
-  assetNamesInSameFolder,
-  assetFolderPaths: { internalAssetFolder, publicAssetFolder },
 }) => {
-  const file = files[blobURL];
-
-  if (!file) {
-    return;
-  }
-
   const sha = await getHash(file);
   const dupFile = savingAssets.find((f) => f.sha === sha);
+
+  const {
+    savingAssetProps,
+    assetNamesInSameFolder,
+    assetFolderPaths: { resolvedInternalPath, resolvedPublicPath },
+  } = getAssetSavingInfo({ draft, defaultLocaleSlug, folderInfo });
+
   let assetName = '';
 
   // Check if the file has already been added for other field or locale
@@ -740,14 +736,14 @@ const replaceBlobURL = async ({
   } else {
     assetName = renameIfNeeded(sanitizeFileName(file.name), assetNamesInSameFolder);
 
-    const assetPath = internalAssetFolder ? `${internalAssetFolder}/${assetName}` : assetName;
+    const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${assetName}` : assetName;
 
     assetNamesInSameFolder.push(assetName);
     changes.push({ action: 'create', path: assetPath, data: file });
 
     savingAssets.push({
       ...savingAssetProps,
-      blobURL: URL.createObjectURL(file),
+      blobURL,
       name: assetName,
       path: assetPath,
       sha,
@@ -757,8 +753,8 @@ const replaceBlobURL = async ({
   }
 
   const publicURL = encodeFilePath(
-    publicAssetFolder
-      ? `${publicAssetFolder === '/' ? '' : publicAssetFolder}/${assetName}`
+    resolvedPublicPath
+      ? `${resolvedPublicPath === '/' ? '' : resolvedPublicPath}/${assetName}`
       : assetName,
   );
 
@@ -777,6 +773,7 @@ const createBaseSavingEntryData = async ({
   draft,
   slugs: { defaultLocaleSlug, canonicalSlug, localizedSlugs },
 }) => {
+  const _globalAssetFolder = /** @type {AssetFolderInfo} */ (get(globalAssetFolder));
   const { collection, currentLocales, collectionFile, currentValues, files } = draft;
 
   const {
@@ -789,13 +786,7 @@ const createBaseSavingEntryData = async ({
   const changes = [];
   /** @type {Asset[]} */
   const savingAssets = [];
-
-  const replaceBlobArgs = {
-    files,
-    changes,
-    savingAssets,
-    ...getReplaceBlobArgs({ draft, defaultLocaleSlug }),
-  };
+  const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets };
 
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(
@@ -827,11 +818,17 @@ const createBaseSavingEntryData = async ({
             // Remove leading & trailing whitespace
             content[keyPath] = value.trim();
 
+            const replaceBlobArgs = { ...replaceBlobBaseArgs, keyPath, content };
+
             // Replace blob URLs in File/Image fields with asset paths
             await Promise.all(
-              [...value.matchAll(getBlobRegex('g'))].map(([blobURL]) =>
-                replaceBlobURL({ blobURL, keyPath, content, ...replaceBlobArgs }),
-              ),
+              [...value.matchAll(getBlobRegex('g'))].map(async ([blobURL]) => {
+                const { file, folderInfo = _globalAssetFolder } = files[blobURL] ?? {};
+
+                if (file) {
+                  await replaceBlobURL({ file, folderInfo, blobURL, ...replaceBlobArgs });
+                }
+              }),
             );
           }),
         );

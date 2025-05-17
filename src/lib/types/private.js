@@ -403,8 +403,15 @@
  */
 
 /**
- * Flattened entry file list object, where key is a uuid, and value is be a file to be uploaded.
- * @typedef {Record<string, File>} EntryFileMap
+ * Flattened entry file list object, where key is a blob URL, and value is be a file to be uploaded
+ * and its target asset folder.
+ * @typedef {Record<string, { file: File, folderInfo?: AssetFolderInfo }>} EntryFileMap
+ */
+
+/**
+ * A legacy version of {@link EntryFileMap} that may be used in backups.
+ * @typedef {Record<string, File>} LegacyEntryFileMap
+ * @todo Remove this before the 1.0 release.
  */
 
 /**
@@ -486,7 +493,7 @@
  * @property {LocaleSlugMap} currentSlugs Key is a locale code, value is the current slug.
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened object
  * containing all the current field values while editing.
- * @property {EntryFileMap} files Files to be uploaded.
+ * @property {EntryFileMap | LegacyEntryFileMap} files Files to be uploaded.
  */
 
 /**
@@ -589,6 +596,7 @@
  * @property {Asset} [asset] One of the existing assets available in the CMS.
  * @property {File} [file] File selected from the user’s computer, or an image file downloaded from
  * a stock asset provider.
+ * @property {AssetFolderInfo} [folderInfo] Target asset folder info for the `file`.
  * @property {string} [url] URL from direct input or a hotlinking stock asset.
  * @property {string} [credit] Attribution HTML string for a stock asset, including the photographer
  * name/link and service name/link.
@@ -746,7 +754,6 @@
  * @typedef {object} FillSlugTemplateOptions
  * @property {'preview_path' | 'media_folder'} [type] Slug type.
  * @property {InternalCollection} collection Entry collection.
- * @property {InternalCollectionFile} [collectionFile] File details. File collection only.
  * @property {FlattenedEntryContent} content Entry content for the default locale.
  * @property {string} [currentSlug] Entry slug already created for the path.
  * @property {string} [entryFilePath] File path of the entry. Required if the `type` is
