@@ -25,6 +25,7 @@ import { getFieldConfig } from '$lib/services/contents/entry/fields';
  */
 export const getEntryThumbnail = async (collection, entry) => {
   const {
+    name: collectionName,
     _i18n: { defaultLocale },
     _thumbnailFieldNames,
   } = collection;
@@ -55,7 +56,7 @@ export const getEntryThumbnail = async (collection, entry) => {
   for (const keyPath of keyPathList) {
     const url = content[keyPath]
       ? // eslint-disable-next-line no-await-in-loop
-        await getMediaFieldURL({ value: content[keyPath], entry, thumbnail: true })
+        await getMediaFieldURL({ value: content[keyPath], entry, collectionName, thumbnail: true })
       : undefined;
 
     if (url) {
@@ -71,7 +72,7 @@ export const getEntryThumbnail = async (collection, entry) => {
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
  * @param {string} args.collectionName Name of a collection that the entry belongs to.
- * @param {string} [args.fileName] File identifier. File collection only.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {boolean} [args.relative] Whether to only collect assets stored at a relative path.
  * @returns {Asset[]} Assets.
  */

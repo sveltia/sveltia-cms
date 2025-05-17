@@ -32,7 +32,7 @@
   let rawHTML = $state('');
 
   const entry = $derived($entryDraft?.originalEntry);
-  const collectionName = $derived($entryDraft?.collectionName);
+  const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
   const { sanitize_preview: sanitize = false } = $derived(fieldConfig);
 

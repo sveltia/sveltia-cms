@@ -84,7 +84,7 @@ export const getAllEntryFolders = (config) => {
  * Get a normalized asset folder information given the arguments.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] File identifier. File collection only.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {string} args.mediaFolder Raw `media_folder` option of the collection or collection file.
  * @param {string | undefined} args.publicFolder Raw `public_folder` option of the collection or
  * collection file.
@@ -94,7 +94,7 @@ export const getAllEntryFolders = (config) => {
  * @param {string} args.globalPublicFolder Normalized global `public_folder` option.
  * @returns {AssetFolderInfo} Normalized asset folder information.
  */
-const getAssetFolder = ({
+const normalizeAssetFolder = ({
   collectionName,
   fileName,
   mediaFolder,
@@ -191,14 +191,14 @@ export const getAllAssetFolders = (config) => {
       return;
     }
 
-    const getAssetFolderArgs = { collectionName, globalMediaFolder, globalPublicFolder };
+    const normalizeFolderArgs = { collectionName, globalMediaFolder, globalPublicFolder };
     // When specifying a `path` on an entry collection, `media_folder` defaults to an empty string
     const mediaFolder = _mediaFolder === undefined && entryPath !== undefined ? '' : _mediaFolder;
 
     if (mediaFolder !== undefined) {
       assetFolders.push(
-        getAssetFolder({
-          ...getAssetFolderArgs,
+        normalizeAssetFolder({
+          ...normalizeFolderArgs,
           mediaFolder,
           publicFolder,
           baseFolder,
@@ -216,8 +216,8 @@ export const getAllAssetFolders = (config) => {
 
       if (fileMediaFolder !== undefined) {
         assetFolders.push(
-          getAssetFolder({
-            ...getAssetFolderArgs,
+          normalizeAssetFolder({
+            ...normalizeFolderArgs,
             fileName,
             mediaFolder: fileMediaFolder,
             publicFolder: filePublicFolder,

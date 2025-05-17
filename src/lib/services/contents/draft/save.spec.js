@@ -98,7 +98,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'src/content/blog',
+      internalPath: 'src/content/blog',
       resolvedInternalPath: 'src/content/blog/foo',
       resolvedPublicPath: '../foo',
     });
@@ -120,7 +120,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'src/content/blog',
+      internalPath: 'src/content/blog',
       resolvedInternalPath: 'src/content/blog/foo',
       resolvedPublicPath: '../../foo',
     });
@@ -142,7 +142,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'src/content/blog',
+      internalPath: 'src/content/blog',
       resolvedInternalPath: 'src/content/blog/foo',
       resolvedPublicPath: '../foo',
     });
@@ -164,7 +164,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'src/content/blog',
+      internalPath: 'src/content/blog',
       resolvedInternalPath: 'src/content/blog/foo',
       resolvedPublicPath: '../../foo',
     });
@@ -186,7 +186,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'src/content/blog',
+      internalPath: 'src/content/blog',
       resolvedInternalPath: 'src/content/blog',
       resolvedPublicPath: '',
     });
@@ -208,7 +208,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'src/content/blog',
+      internalPath: 'src/content/blog',
       resolvedInternalPath: 'src/content/blog/foo',
       resolvedPublicPath: '',
     });
@@ -230,7 +230,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'src/content/blog',
+      internalPath: 'src/content/blog',
       resolvedInternalPath: 'src/content/blog',
       resolvedPublicPath: '',
     });
@@ -252,7 +252,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'src/content/blog',
+      internalPath: 'src/content/blog',
       resolvedInternalPath: 'src/content/blog/foo',
       resolvedPublicPath: '',
     });
@@ -274,7 +274,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog',
+      internalPath: 'static/uploads/blog',
       resolvedInternalPath: 'static/uploads/blog',
       resolvedPublicPath: '/uploads/blog',
     });
@@ -296,7 +296,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog',
+      internalPath: 'static/uploads/blog',
       resolvedInternalPath: 'static/uploads/blog',
       resolvedPublicPath: '/uploads/blog',
     });
@@ -318,7 +318,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog',
+      internalPath: 'static/uploads/blog',
       resolvedInternalPath: 'static/uploads/blog',
       resolvedPublicPath: '/uploads/blog',
     });
@@ -340,7 +340,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog',
+      internalPath: 'static/uploads/blog',
       resolvedInternalPath: 'static/uploads/blog',
       resolvedPublicPath: '/uploads/blog',
     });
@@ -362,7 +362,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog',
+      internalPath: 'static/uploads/blog',
       resolvedInternalPath: 'static/uploads/blog',
       resolvedPublicPath: '/uploads/blog',
     });
@@ -384,7 +384,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog',
+      internalPath: 'static/uploads/blog',
       resolvedInternalPath: 'static/uploads/blog',
       resolvedPublicPath: '/uploads/blog',
     });
@@ -406,7 +406,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog',
+      internalPath: 'static/uploads/blog',
       resolvedInternalPath: 'static/uploads/blog',
       resolvedPublicPath: '/uploads/blog',
     });
@@ -428,7 +428,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog',
+      internalPath: 'static/uploads/blog',
       resolvedInternalPath: 'static/uploads/blog',
       resolvedPublicPath: '/uploads/blog',
     });
@@ -450,7 +450,7 @@ describe('Test getEntryAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      rawInternalPath: 'static/uploads/blog/{{slug}}',
+      internalPath: 'static/uploads/blog/{{slug}}',
       resolvedInternalPath: 'static/uploads/blog/foo',
       resolvedPublicPath: '/uploads/blog/foo',
     });

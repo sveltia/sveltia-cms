@@ -47,7 +47,7 @@ export const showUploadAssetsConfirmDialog = derived(
  * collection-specific asset folder.
  * @param {object} [args] Arguments.
  * @param {string | undefined} [args.collectionName] Collection name.
- * @param {string} [args.fileName] File identifier. File collection only.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */

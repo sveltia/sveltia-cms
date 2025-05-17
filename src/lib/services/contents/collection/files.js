@@ -38,7 +38,7 @@ export const getFilesByEntry = (collection, entry) => {
 /**
  * Get a file collection entry that matches the given collection name and file name.
  * @param {string} collectionName Collection name.
- * @param {string} fileName File name.
+ * @param {string} fileName Collection file name.
  * @returns {Entry | undefined} File.
  * @see https://decapcms.org/docs/collection-file/
  */
@@ -54,7 +54,7 @@ export const getFile = (collectionName, fileName) =>
 /**
  * Get the index of a collection file with the given name.
  * @param {string | undefined} collectionName Collection name.
- * @param {string | undefined} fileName File identifier. File collection only.
+ * @param {string | undefined} fileName Collection file name.
  * @returns {number} Index.
  */
 export const getFileIndex = (collectionName, fileName) => {

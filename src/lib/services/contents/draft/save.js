@@ -78,7 +78,7 @@ import {
 /**
  * Paths for entry assets.
  * @typedef {object} EntryAssetFolderPaths
- * @property {string} rawInternalPath Raw `internalPath` from `AssetFolderInfo`.
+ * @property {string} internalPath Raw `internalPath` from `AssetFolderInfo`.
  * @property {string} resolvedInternalPath Resolved `internalPath` with any template tags replaced.
  * May contain a sub path when assets are entry-relative.
  * @property {string} resolvedPublicPath Resolved `publicPath` with any template tags replaced.
@@ -308,7 +308,7 @@ export const copyProperty = ({
  * the built-in method uses insertion order for string key ordering.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] File name.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {Field[]} args.fields Field list of a collection or a file.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
@@ -341,7 +341,7 @@ const finalizeContent = ({
 
   // Add the slug first
   if (canonicalSlugKey && canonicalSlugKey in unsortedMap) {
-    copyProperty({ key: canonicalSlugKey, ...copyArgs });
+    copyProperty({ ...copyArgs, key: canonicalSlugKey });
   }
 
   // Move the listed properties to a new object
@@ -349,7 +349,7 @@ const finalizeContent = ({
     const field = getFieldConfig({ ...getFieldConfigArgs, keyPath });
 
     if (keyPath in unsortedMap) {
-      copyProperty({ key: keyPath, field, ...copyArgs });
+      copyProperty({ ...copyArgs, key: keyPath, field });
     } else if (field?.widget === 'keyvalue') {
       // Work around a bug in the flat library where numeric property keys used for KeyValue fields
       // trigger a wrong conversion to an array instead of an object
@@ -360,7 +360,7 @@ const finalizeContent = ({
       Object.entries(unsortedMap)
         .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))
         .forEach(([_keyPath]) => {
-          copyProperty({ key: _keyPath, field, ...copyArgs });
+          copyProperty({ ...copyArgs, key: _keyPath, field });
         });
     } else {
       const regex = new RegExp(
@@ -371,7 +371,7 @@ const finalizeContent = ({
         .filter((_keyPath) => regex.test(_keyPath))
         .sort(([a, b]) => compare(a, b))
         .forEach((_keyPath) => {
-          copyProperty({ key: _keyPath, field, ...copyArgs });
+          copyProperty({ ...copyArgs, key: _keyPath, field });
         });
     }
   });
@@ -380,7 +380,7 @@ const finalizeContent = ({
   Object.keys(unsortedMap)
     .sort(([a, b]) => compare(a, b))
     .forEach((key) => {
-      copyProperty({ key, ...copyArgs });
+      copyProperty({ ...copyArgs, key });
     });
 
   return unflatten(sortedMap);
@@ -599,7 +599,7 @@ export const getEntryAssetFolderPaths = ({ folderInfo, fillSlugOptions }) => {
 
   if (!entryRelative) {
     return {
-      rawInternalPath: internalPath,
+      internalPath,
       resolvedInternalPath: fillSlugTemplate(internalPath, fillSlugOptions),
       resolvedPublicPath: fillSlugTemplate(publicPath, fillSlugOptions),
     };
@@ -619,7 +619,7 @@ export const getEntryAssetFolderPaths = ({ folderInfo, fillSlugOptions }) => {
   const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
 
   return {
-    rawInternalPath: internalPath,
+    internalPath,
     resolvedInternalPath: resolvePath(
       fillSlugTemplate(
         createPath([
@@ -679,7 +679,7 @@ const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folderInfo }) => {
     },
   });
 
-  const { rawInternalPath, resolvedInternalPath } = assetFolderPaths;
+  const { internalPath, resolvedInternalPath } = assetFolderPaths;
   const { email, name } = /** @type {User} */ (get(user));
 
   return {
@@ -688,7 +688,7 @@ const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folderInfo }) => {
     savingAssetProps: {
       text: undefined,
       collectionName,
-      folder: rawInternalPath,
+      folder: internalPath,
       commitAuthor: email ? /** @type {CommitAuthor} */ ({ name, email }) : undefined,
       commitDate: new Date(), // Use the current datetime
     },
@@ -818,15 +818,21 @@ const createBaseSavingEntryData = async ({
             // Remove leading & trailing whitespace
             content[keyPath] = value.trim();
 
+            const matches = [...value.matchAll(getBlobRegex('g'))];
+
+            if (!matches.length) {
+              return;
+            }
+
             const replaceBlobArgs = { ...replaceBlobBaseArgs, keyPath, content };
 
             // Replace blob URLs in File/Image fields with asset paths
             await Promise.all(
-              [...value.matchAll(getBlobRegex('g'))].map(async ([blobURL]) => {
+              matches.map(async ([blobURL]) => {
                 const { file, folderInfo = _globalAssetFolder } = files[blobURL] ?? {};
 
                 if (file) {
-                  await replaceBlobURL({ file, folderInfo, blobURL, ...replaceBlobArgs });
+                  await replaceBlobURL({ ...replaceBlobArgs, file, folderInfo, blobURL });
                 }
               }),
             );

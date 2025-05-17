@@ -1,5 +1,5 @@
 import { getBlobRegex } from '@sveltia/utils/file';
-import { isObject, toRaw } from '@sveltia/utils/object';
+import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
@@ -127,7 +127,7 @@ export const saveBackup = async (draft) => {
  * Check if a draft backup is available, and restore it if requested by the user.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {string} [args.slug] Entry slug. Existing entry only.
  */
 export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '' }) => {
@@ -173,7 +173,7 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
                   cache = { file: cache, folderInfo: undefined };
                 }
 
-                if (isObject(cache)) {
+                if (cache) {
                   // Regenerate a blob URL
                   const newURL = URL.createObjectURL(cache.file);
 

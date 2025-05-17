@@ -90,7 +90,7 @@
     config: { max_file_size: maxSize, transformations },
   } = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
   const entry = $derived($entryDraft?.originalEntry);
-  const collectionName = $derived($entryDraft?.collectionName);
+  const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
   const showRemoveButton = $derived(
     !required &&
@@ -122,7 +122,9 @@
     ({ asset, file, url, credit } = selectedResource);
 
     if (file) {
-      file = transformations ? await transformFile(file, transformations) : file;
+      if (transformations) {
+        file = await transformFile(file, transformations);
+      }
 
       const hash = await getHash(file);
       const { folderInfo } = selectedResource;

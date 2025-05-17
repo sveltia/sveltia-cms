@@ -36,7 +36,7 @@ const fieldConfigCacheMap = new Map();
  * Get a field’s config object that matches the given field name (key path).
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] File name if the collection is a file collection.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values. This is
  * required when working with list/object widget variable types.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
@@ -133,7 +133,7 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
  * Get a field’s display value that matches the given field name (key path).
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] File name.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.

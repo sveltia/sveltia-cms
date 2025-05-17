@@ -313,7 +313,7 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
  * Get an asset folder that matches the given condition.
  * @param {object} args Arguments.
  * @param {string | undefined} args.collectionName Collection name.
- * @param {string} [args.fileName] File identifier. File collection only.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {FieldKeyPath} [args.keyPath] Field key path.
  * @returns {AssetFolderInfo | undefined} Asset folder information.
  */
@@ -370,7 +370,7 @@ export const getCollectionsByAsset = (asset) =>
 /**
  * Get an asset by a relative public path typically stored as an image field value.
  * @param {object} args Arguments.
- * @param {string} args.path Saved absolute path or relative path.
+ * @param {string} args.path Saved relative path.
  * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
  * path. Can be `undefined` when editing a new draft.
  * @returns {Asset | undefined} Corresponding asset.
@@ -423,13 +423,11 @@ const getAssetByRelativePath = ({ path, entry }) => {
 /**
  * Get an asset by an absolute public path typically stored as an image field value.
  * @param {object} args Arguments.
- * @param {string} args.path Saved absolute path or relative path.
+ * @param {string} args.path Saved absolute path.
  * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
  * path. Can be `undefined` when editing a new draft.
- * @param {string} [args.collectionName] Collection name. If `undefined`, it will be automatically
- * determined from the entry.
- * @param {string} [args.fileName] File identifier. File collection only. If `undefined`, it will be
- * automatically determined from the entry.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @returns {Asset | undefined} Corresponding asset.
  */
 const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
@@ -522,10 +520,8 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
  * @param {string} args.value Saved absolute path or relative path.
  * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
  * path. Can be `undefined` when editing a new draft.
- * @param {string} [args.collectionName] Collection name. If `undefined`, it will be automatically
- * determined from the entry.
- * @param {string} [args.fileName] File identifier. File collection only. If `undefined`, it will be
- * automatically determined from the entry.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = ({ value, entry, collectionName, fileName }) => {
@@ -613,8 +609,8 @@ export const getAssetPublicURL = (
  * a complete/external URL.
  * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
  * path. Can be `undefined` when editing a new draft.
- * @param {string | undefined} [args.collectionName] Collection name.
- * @param {string} [args.fileName] File identifier. File collection only.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {boolean} [args.thumbnail] Whether to use a thumbnail of the image.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */

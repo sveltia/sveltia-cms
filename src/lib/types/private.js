@@ -244,7 +244,7 @@
  * Collection-level or file-level entry folder information.
  * @typedef {object} EntryFolderInfo
  * @property {string} collectionName Collection name.
- * @property {string} [fileName] File identifier. File collection only.
+ * @property {string} [fileName] Collection file name. File collection only.
  * @property {Record<InternalLocaleCode, string>} [filePathMap] File path map. The key is a locale,
  * and the value is the corresponding file path. File collection only.
  * @property {string} [folderPath] Folder path. Entry collection only.
@@ -257,7 +257,7 @@
  * Global, collection-level, file-level or field-level asset folder information.
  * @typedef {object} AssetFolderInfo
  * @property {string} [collectionName] Collection name or `undefined` for the global folder.
- * @property {string} [fileName] File identifier. File collection only.
+ * @property {string} [fileName] Collection file name. File collection only.
  * @property {FieldKeyPath} [keyPath] Field key path.
  * @property {string} internalPath Folder path on the repository/filesystem, relative to the project
  * root directory. It can be a partial path if the collection’s `media_folder` property is a
@@ -461,7 +461,7 @@
  * @property {boolean} canPreview Whether the entry draft can show the preview pane.
  * @property {string} collectionName Collection name.
  * @property {InternalCollection} collection Collection details.
- * @property {string} [fileName] File identifier. File collection only.
+ * @property {string} [fileName] Collection file name. File collection only.
  * @property {InternalCollectionFile} [collectionFile] File details. File collection only.
  * @property {Field[]} fields Field definition for the collection or collection file. If index file
  * inclusion is enabled and the draft is the index file, it will be the index file’s fields.
