@@ -6,7 +6,7 @@
   import { supportedImageTypes } from '$lib/services/utils/media/image';
 
   /**
-   * @import { Asset, AssetKind, SelectedAsset } from '$lib/types/private';
+   * @import { Asset, AssetKind, SelectedResource } from '$lib/types/private';
    */
 
   /**
@@ -14,7 +14,7 @@
    * @property {AssetKind} [kind] Asset kind.
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {Asset[]} [assets] Asset list.
-   * @property {SelectedAsset | null} [selectedAsset] Selected asset.
+   * @property {SelectedResource | null} [selectedResource] Selected resource.
    * @property {boolean} [showUploader] Whether to show the uploader.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.
@@ -26,7 +26,7 @@
     kind,
     accept = undefined,
     assets = [],
-    selectedAsset = $bindable(null),
+    selectedResource = $bindable(null),
     showUploader = false,
     searchTerms = '',
     basePath = undefined,
@@ -37,7 +37,7 @@
   let dropZone = $state();
 
   $effect(() => {
-    if (!selectedAsset) {
+    if (!selectedResource) {
       untrack(() => {
         dropZone?.reset();
       });
@@ -51,7 +51,7 @@
   showUploadButton={showUploader}
   showFilePreview={true}
   onSelect={({ files }) => {
-    selectedAsset = files.length ? { file: files[0] } : null;
+    selectedResource = files.length ? { file: files[0] } : null;
   }}
 >
   {#if !showUploader}
@@ -63,7 +63,7 @@
       gridId="select-assets-grid"
       checkerboard={true}
       onSelect={({ asset }) => {
-        selectedAsset = { asset };
+        selectedResource = { asset };
       }}
     />
   {/if}

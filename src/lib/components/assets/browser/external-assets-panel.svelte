@@ -27,7 +27,7 @@
    * AssetKind,
    * ExternalAsset,
    * MediaLibraryService,
-   * SelectedAsset,
+   * SelectedResource,
    * } from '$lib/types/private';
    */
 
@@ -37,7 +37,7 @@
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {MediaLibraryService} serviceProps Media library service details.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
-   * @property {(detail: SelectedAsset) => void} [onSelect] Custom `select` event handler.
+   * @property {(resource: SelectedResource) => void} [onSelect] Custom `Select` event handler.
    */
 
   /** @type {Props} */

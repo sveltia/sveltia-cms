@@ -33,7 +33,7 @@
    * Entry,
    * MediaLibraryService,
    * SelectAssetsView,
-   * SelectedAsset,
+   * SelectedResource,
    * } from '$lib/types/private';
    * @import { FileField, ImageField, StockAssetProviderName } from '$lib/types/public';
    */
@@ -46,8 +46,7 @@
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
    * @property {Entry} [entry] Associated entry.
    * @property {FileField | ImageField} [fieldConfig] Field configuration.
-   * @property {(detail: { asset: SelectedAsset }) => void} [onSelect] Custom `select` event
-   * handler.
+   * @property {(resource: SelectedResource) => void} [onSelect] Custom `Select` event handler.
    */
 
   /** @type {Props} */
@@ -65,8 +64,8 @@
 
   const elementIdPrefix = $props.id();
 
-  /** @type {SelectedAsset | null} */
-  let selectedAsset = $state(null);
+  /** @type {SelectedResource | null} */
+  let selectedResource = $state(null);
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
   let libraryName = $state('uncategorized-assets');
@@ -138,7 +137,7 @@
     <SearchBar
       flex={$isSmallScreen}
       bind:value={rawSearchTerms}
-      disabled={!!selectedAsset?.file}
+      disabled={!!selectedResource?.file}
       aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />
   {/if}
@@ -148,12 +147,12 @@
   {title}
   size={'x-large'}
   okLabel={$_('insert')}
-  okDisabled={!selectedAsset}
+  okDisabled={!selectedResource}
   bind:open
   onOk={() => {
-    onSelect?.({
-      asset: /** @type {SelectedAsset} */ (selectedAsset),
-    });
+    if (selectedResource) {
+      onSelect?.(selectedResource);
+    }
   }}
 >
   {#snippet headerExtra()}
@@ -181,7 +180,7 @@
         filterThreshold={-1}
         onChange={(event) => {
           libraryName = event.detail.name;
-          selectedAsset = null;
+          selectedResource = null;
         }}
       >
         <OptionGroup label={$_('assets_dialog.location.repository')}>
@@ -245,7 +244,7 @@
                 ? getPathInfo(asset.path).dirname === entryDirName
                 : asset.folder === internalPath),
           )}
-          bind:selectedAsset
+          bind:selectedResource
           {showUploader}
           {searchTerms}
         />
@@ -256,7 +255,7 @@
           assets={$allAssets.filter(
             (asset) => (!kind || kind === asset.kind) && asset.folder === internalPath,
           )}
-          bind:selectedAsset
+          bind:selectedResource
           {showUploader}
           {searchTerms}
           basePath={internalPath}
@@ -269,7 +268,7 @@
             (asset) =>
               (!kind || kind === asset.kind) && asset.folder === $globalAssetFolder?.internalPath,
           )}
-          bind:selectedAsset
+          bind:selectedResource
           {showUploader}
           {searchTerms}
           basePath={$globalAssetFolder?.internalPath}
@@ -286,7 +285,7 @@
             bind:value={enteredURL}
             flex
             oninput={() => {
-              selectedAsset = enteredURL.trim() ? { url: enteredURL.trim() } : null;
+              selectedResource = enteredURL.trim() ? { url: enteredURL.trim() } : null;
             }}
           />
         </EmptyState>
@@ -299,7 +298,7 @@
             {serviceProps}
             gridId="select-assets-grid"
             onSelect={(detail) => {
-              selectedAsset = detail;
+              selectedResource = detail;
             }}
           />
         {/if}
@@ -312,7 +311,7 @@
             {serviceProps}
             gridId="select-assets-grid"
             onSelect={(detail) => {
-              selectedAsset = detail;
+              selectedResource = detail;
             }}
           />
         {/if}

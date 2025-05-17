@@ -31,7 +31,7 @@
    * Asset,
    * AssetKind,
    * EntryDraft,
-   * SelectedAsset,
+   * SelectedResource,
    * WidgetEditorProps,
    * } from '$lib/types/private';
    * @import { FileField, ImageField } from '$lib/types/public';
@@ -109,14 +109,14 @@
   };
 
   /**
-   * Handle selected asset.
-   * @param {SelectedAsset} selectedAsset Selected asset details.
+   * Handle selected resource.
+   * @param {SelectedResource} selectedResource Selected resource.
    */
-  const onAssetSelect = async (selectedAsset) => {
+  const onResourceSelect = async (selectedResource) => {
     processing = true;
     resetSelection();
 
-    ({ asset, file, url, credit } = selectedAsset);
+    ({ asset, file, url, credit } = selectedResource);
 
     if (file) {
       const hash = await getHash(file);
@@ -207,7 +207,7 @@
   accept={accept ?? (isImageWidget ? supportedImageTypes.join(',') : undefined)}
   onSelect={({ files }) => {
     if (files.length) {
-      onAssetSelect({ file: files[0] });
+      onResourceSelect({ file: files[0] });
     }
   }}
 >
@@ -306,9 +306,7 @@
   {entry}
   {fieldConfig}
   bind:open={showSelectAssetsDialog}
-  onSelect={({ asset: selectedAsset }) => {
-    onAssetSelect(selectedAsset);
-  }}
+  onSelect={onResourceSelect}
 />
 
 <AlertDialog bind:open={showSizeLimitDialog} title={$_('assets_dialog.large_file.title')}>

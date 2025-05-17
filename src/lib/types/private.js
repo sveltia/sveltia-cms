@@ -584,8 +584,8 @@
  */
 
 /**
- * Asset selected on `<SelectAssetsDialog>`.
- * @typedef {object} SelectedAsset
+ * Resource selected on `<SelectAssetsDialog>`.
+ * @typedef {object} SelectedResource
  * @property {Asset} [asset] One of the existing assets available in the CMS.
  * @property {File} [file] File selected from the user’s computer, or an image file downloaded from
  * a stock asset provider.
