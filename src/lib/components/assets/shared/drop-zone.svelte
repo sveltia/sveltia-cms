@@ -19,7 +19,7 @@
    * @property {boolean} [multiple] Whether to accept multiple files.
    * @property {boolean} [showUploadButton] Whether to show the upload button.
    * @property {boolean} [showFilePreview] Whether to show file preview after files are selected.
-   * @property {(detail: { files: File[] }) => void} [onSelect] Custom `select` event handler.
+   * @property {(detail: { files: File[] }) => void} [onDrop] Custom `Drop` event handler.
    * @property {Snippet} [children] Slot content.
    */
 
@@ -31,7 +31,7 @@
     multiple = false,
     showUploadButton = false,
     showFilePreview = false,
-    onSelect = undefined,
+    onDrop = undefined,
     children = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -60,7 +60,7 @@
    */
   export const reset = () => {
     files = [];
-    onSelect?.({ files });
+    onDrop?.({ files });
   };
 
   /**
@@ -69,12 +69,12 @@
    */
   const updateFileList = (allFiles) => {
     files = multiple ? allFiles : allFiles.slice(0, 1);
-    onSelect?.({ files });
+    onDrop?.({ files });
   };
 
   onMount(() => {
     dropTarget?.addEventListener('Select', (event) => {
-      onSelect?.({ files: /** @type {CustomEvent} */ (event).detail.files });
+      onDrop?.({ files: /** @type {CustomEvent} */ (event).detail.files });
     });
   });
 

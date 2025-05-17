@@ -205,7 +205,7 @@
   bind:this={dropZone}
   disabled={readonly}
   accept={accept ?? (isImageWidget ? supportedImageTypes.join(',') : undefined)}
-  onSelect={({ files }) => {
+  onDrop={({ files }) => {
     if (files.length) {
       onResourceSelect({ file: files[0] });
     }

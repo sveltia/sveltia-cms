@@ -66,7 +66,7 @@
       showUploadButton={true}
       {accept}
       {multiple}
-      onSelect={({ files }) => {
+      onDrop={({ files }) => {
         onSelect(files);
       }}
     />

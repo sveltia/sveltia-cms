@@ -27,7 +27,7 @@
   <DropZone
     disabled={uploadDisabled}
     multiple={true}
-    onSelect={({ files }) => {
+    onDrop={({ files }) => {
       $uploadingAssets = {
         folder: $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
         files,

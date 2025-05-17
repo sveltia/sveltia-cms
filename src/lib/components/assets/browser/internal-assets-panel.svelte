@@ -50,7 +50,7 @@
   accept={accept ?? (kind === 'image' ? supportedImageTypes.join(',') : undefined)}
   showUploadButton={showUploader}
   showFilePreview={true}
-  onSelect={({ files }) => {
+  onDrop={({ files }) => {
     selectedResource = files.length ? { file: files[0] } : null;
   }}
 >
