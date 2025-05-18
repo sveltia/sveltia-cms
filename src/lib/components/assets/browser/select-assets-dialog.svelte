@@ -77,7 +77,7 @@
   let selectedResource = $state();
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
-  let libraryName = $state('local-global');
+  let libraryName = $state('default-global');
   /** @type {EntryFileMap} */
   let droppedFiles = $state({});
   /** @type {Asset[]} */
@@ -90,7 +90,7 @@
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
   /** @type {Record<string, { folder: AssetFolderInfo | undefined, enabled: boolean }>} */
-  const localFolders = $derived.by(() => {
+  const allDefaultLibraryFolders = $derived.by(() => {
     const collectionName = $entryDraft?.collectionName ?? '';
     const fileName = $entryDraft?.fileName;
     const fileAssetFolder = getAssetFolder({ collectionName, fileName });
@@ -127,9 +127,11 @@
 
     return entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined;
   });
-  const isLocalLibrary = $derived(libraryName.startsWith('local-'));
+  const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
   const selectedFolder = $derived(
-    isLocalLibrary ? localFolders[libraryName.replace('local-', '')].folder : undefined,
+    isDefaultLibrary
+      ? allDefaultLibraryFolders[libraryName.replace('default-', '')].folder
+      : undefined,
   );
   const listedAssets = $derived(
     [...$allAssets, ...unsavedAssets]
@@ -215,7 +217,10 @@
   };
 
   $effect.pre(() => {
-    libraryName = `local-${Object.entries(localFolders).find(([, { enabled }]) => enabled)?.[0]}`;
+    // Select the first enabled folder
+    const id = Object.entries(allDefaultLibraryFolders).find(([, { enabled }]) => enabled)?.[0];
+
+    libraryName = `default-${id}`;
   });
 
   $effect(() => {
@@ -235,7 +240,7 @@
 </script>
 
 {#snippet headerItems()}
-  {#if isLocalLibrary || isEnabledMediaService}
+  {#if isDefaultLibrary || isEnabledMediaService}
     {#if $selectAssetsView}
       <ViewSwitcher
         currentView={(() => /** @type {Writable<SelectAssetsView>} */ (selectAssetsView))()}
@@ -249,7 +254,7 @@
       aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />
   {/if}
-  {#if isLocalLibrary}
+  {#if isDefaultLibrary}
     <Button
       variant="primary"
       label={$_('upload')}
@@ -314,9 +319,9 @@
         }}
       >
         <OptionGroup label={$_('assets_dialog.location.repository')}>
-          {#each Object.entries(localFolders) as [id, { enabled }] (id)}
+          {#each Object.entries(allDefaultLibraryFolders) as [id, { enabled }] (id)}
             {#if enabled}
-              {@const name = `local-${id}`}
+              {@const name = `default-${id}`}
               <Option
                 {name}
                 label={$_(`assets_dialog.folder.${id}`)}
@@ -351,7 +356,7 @@
       {/if}
     </div>
     <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
-      {#if isLocalLibrary && selectedFolder}
+      {#if isDefaultLibrary && selectedFolder}
         <InternalAssetsPanel
           {accept}
           assets={listedAssets.filter((asset) =>
