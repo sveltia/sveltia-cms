@@ -397,7 +397,7 @@
       button {
         flex-direction: column;
         justify-content: center;
-        height: 160px;
+        height: 120px;
 
         .icon {
           color: var(--sui-secondary-foreground-color);
