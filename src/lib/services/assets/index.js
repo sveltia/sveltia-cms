@@ -452,18 +452,20 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
   ].filter((folder) => !!folder);
 
   scanningFolders.some((folder) => {
-    const { collectionName: _collectionName } = folder;
     let { internalPath } = folder;
-
-    const collection = _collectionName
-      ? getCollection(_collectionName)
-      : entry
-        ? getAssociatedCollections(entry)?.[0]
-        : undefined;
 
     // Deal with template tags like `/assets/images/{{slug}}`
     if (/{{.+?}}/.test(internalPath)) {
+      const { collectionName: _collectionName } = folder;
+
+      const collection = _collectionName
+        ? getCollection(_collectionName)
+        : entry
+          ? getAssociatedCollections(entry)?.[0]
+          : undefined;
+
       if (!(entry && collection)) {
+        // Cannot resolve the path
         return false;
       }
 
@@ -482,7 +484,9 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
     const fullPath = createPath([internalPath, baseName]);
     const found = get(allAssets).find((asset) => asset.path === fullPath);
 
-    foundAsset = found;
+    if (found) {
+      foundAsset = found;
+    }
 
     return !!found;
   });
