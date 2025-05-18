@@ -1,5 +1,4 @@
 import { generateUUID } from '@sveltia/utils/crypto';
-import { getPathInfo } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
@@ -16,6 +15,13 @@ import { getCollection } from '$lib/services/contents/collection';
  * InternalLocaleCode,
  * } from '$lib/types/private';
  */
+
+/**
+ * Check if the given file path is Hugo’s special index file: `_index.md` or `_index.{{locale}}.md`.
+ * @param {string} path File path to be tested.
+ * @returns {boolean} Result.
+ */
+export const isIndexFile = (path) => /\/_index(?:\.[\w-]+)?\.md$/.test(path);
 
 /**
  * Determine the slug for the given entry content.
@@ -132,7 +138,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
   // 3. The collection is an entry collection and the `path` option value ends with `_index` and the
   // extension is `md`
   if (
-    /^_index(?:\..+)?\.md$/.test(getPathInfo(path).basename) &&
+    isIndexFile(path) &&
     !(
       !!fileName ||
       collection.index_file?.name === '_index' ||

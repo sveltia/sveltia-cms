@@ -8,7 +8,7 @@ import {
   entryParseErrors,
   getEntryFoldersByPath,
 } from '$lib/services/contents';
-import { prepareEntries } from '$lib/services/contents/file/process';
+import { isIndexFile, prepareEntries } from '$lib/services/contents/file/process';
 
 /**
  * @import {
@@ -59,8 +59,8 @@ export const createFileList = (files) => {
     }
 
     // Exclude files already listed as entries. These files can appear in the file list when a
-    // relative media path is configured for a collection
-    if (assetFolder && !entryFiles.find((e) => e.path === path)) {
+    // relative media path is configured for a collection. Also exclude Hugo’s special index files.
+    if (assetFolder && !entryFiles.find((e) => e.path === path) && !isIndexFile(path)) {
       assetFiles.push({ ...fileInfo, type: 'asset', folder: assetFolder });
     }
   });
