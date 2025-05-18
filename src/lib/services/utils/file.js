@@ -11,7 +11,7 @@ import { get } from 'svelte/store';
  * @returns {RegExp} Regular expression.
  */
 export const createPathRegEx = (path, replacer) =>
-  new RegExp(`^${path.split('/').map(replacer).join('\\/')}`);
+  new RegExp(`^${path.split('/').map(replacer).join('\\/')}\\b`);
 
 /**
  * Encode the given (partial) file path or file name. Since {@link encodeURIComponent} encodes

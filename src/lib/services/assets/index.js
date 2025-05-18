@@ -452,22 +452,8 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
   ].filter((folder) => !!folder);
 
   scanningFolders.some((folder) => {
-    const { publicPath, collectionName: _collectionName } = folder;
+    const { collectionName: _collectionName } = folder;
     let { internalPath } = folder;
-
-    // Find a global/uncategorized asset
-    if (!_collectionName) {
-      const fullPath = path.replace(
-        new RegExp(`^${escapeRegExp(publicPath || dirName)}`),
-        internalPath,
-      );
-
-      const found = get(allAssets).find((asset) => asset.path === fullPath);
-
-      foundAsset = found;
-
-      return !!found;
-    }
 
     const collection = _collectionName
       ? getCollection(_collectionName)
@@ -475,6 +461,7 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
         ? getAssociatedCollections(entry)?.[0]
         : undefined;
 
+    // Deal with template tags like `/assets/images/{{slug}}`
     if (/{{.+?}}/.test(internalPath)) {
       if (!(entry && collection)) {
         return false;
@@ -492,19 +479,7 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
       });
     }
 
-    const subPath = publicPath
-      ? stripSlashes(
-          dirName.replace(
-            // Deal with template tags like `/assets/images/{{slug}}`
-            createPathRegEx(publicPath, (segment) =>
-              /{{.+?}}/.test(segment) ? '[^/]+' : escapeRegExp(segment),
-            ),
-            '',
-          ),
-        )
-      : '';
-
-    const fullPath = createPath([internalPath, subPath, baseName]);
+    const fullPath = createPath([internalPath, baseName]);
     const found = get(allAssets).find((asset) => asset.path === fullPath);
 
     foundAsset = found;

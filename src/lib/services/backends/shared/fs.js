@@ -5,13 +5,14 @@
 import { unique } from '@sveltia/utils/array';
 import { getHash } from '@sveltia/utils/crypto';
 import { getPathInfo, readAsText } from '@sveltia/utils/file';
-import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
 import { createFileList } from '$lib/services/backends/shared/data';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { createPathRegEx } from '$lib/services/utils/file';
 
 /**
  * @import { BaseFileListItem, FileChange } from '$lib/types/private';
@@ -65,11 +66,11 @@ const getAllFiles = async (rootDirHandle) => {
   );
 
   /**
-   * Get a regular expression to match the given path.
+   * Get a regular expression that matches the given path, taking template tags into account.
    * @param {string} path Path.
    * @returns {RegExp} RegEx.
    */
-  const getRegEx = (path) => new RegExp(`^${escapeRegExp(path)}\\b`);
+  const getRegEx = (path) => createPathRegEx(path, (segment) => segment.replace(/{{.+?}}/, '.+?'));
   const scanningPathsRegEx = scanningPaths.map(getRegEx);
 
   /**
