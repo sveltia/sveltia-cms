@@ -388,10 +388,11 @@
     :global {
       .preview {
         flex: none;
-        width: 160px !important;
-        height: 160px !important;
+        width: 120px !important;
+        height: 120px !important;
         border-color: var(--sui-control-border-color) !important;
         border-radius: var(--sui-control-medium-border-radius);
+        padding: 8px !important;
 
         &.no-thumbnail {
           display: flex;
@@ -428,7 +429,8 @@
       button {
         flex-direction: column;
         justify-content: center;
-        height: 160px;
+        height: 120px;
+        font-size: var(--sui-font-size-small);
 
         .icon {
           color: var(--sui-secondary-foreground-color);
