@@ -303,6 +303,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
+  - Each file in a file collection has the `format` and `frontmatter_delimiter` options, which can be used to specify the file format, making it possible to have `yaml-frontmatter`, `toml-frontmatter` and `json-frontmatter` side by side.[^218]
 - Entry slugs
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values.[^133]
@@ -444,11 +445,11 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI.[^28] Markdown is supported in the value.
     - Compatibility note: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively, which have different meaning in Sveltia CMS.
 - File and Image
-  - The new `accept` option allows files to be filtered by unique file type specifiers, in the same way as the HTML [`accept` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept) for `<input type="file">`.[^216]
+  - The new `accept` option allows files to be filtered by a comma-separated list of unique file type specifiers, in the same way as the HTML [`accept` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept) for `<input type="file">`.[^216]
     - By default, the Image widget only accepts an AVIF, GIF, JPEG, PNG, WebP or SVG image. BMP, HEIC, JPEG XL, PSD, TIFF and other less common or non-standard files are excluded.[^217]
     - The File widget has no default restriction.
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
-    - [Collection-specific assets](#using-a-custom-media-folder-for-a-collection) are listed for easy selection, while all assets are displayed in a separate tab.[^19]
+    - Entry, file, [collection](#using-a-custom-media-folder-for-a-collection) and global assets are listed on separate tabs for easy selection.[^19]
     - A new asset can be uploaded by dragging & dropping it into the dialog.[^20]
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo.[^8] More stock photo providers will be added in the future.
@@ -1778,3 +1779,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^216]: Netlify/Decap CMS [#1345](https://github.com/decaporg/decap-cms/issues/1345)
 
 [^217]: Netlify/Decap CMS [#5467](https://github.com/decaporg/decap-cms/issues/5467)
+
+[^218]: Netlify/Decap CMS [#978](https://github.com/decaporg/decap-cms/issues/978)
