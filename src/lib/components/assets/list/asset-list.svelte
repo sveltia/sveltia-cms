@@ -20,7 +20,8 @@
    */
 
   const viewType = $derived($currentView.type);
-  const uploadDisabled = $derived(!canCreateAsset($selectedAssetFolder ?? $globalAssetFolder));
+  const folder = $derived($selectedAssetFolder ?? $globalAssetFolder);
+  const uploadDisabled = $derived(!canCreateAsset(folder));
 </script>
 
 <ListContainer aria-label={$_('asset_list')}>
@@ -28,10 +29,7 @@
     disabled={uploadDisabled}
     multiple={true}
     onDrop={({ files }) => {
-      $uploadingAssets = {
-        folder: $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
-        files,
-      };
+      $uploadingAssets = { folder, files };
     }}
   >
     {#if Object.values($assetGroups).flat(1).length}

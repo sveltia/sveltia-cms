@@ -7,7 +7,6 @@ import { prefs } from '$lib/services/user/prefs';
 import { siteConfig } from '$lib/services/config';
 import { backend } from '$lib/services/backends';
 import {
-  allAssetFolders,
   allAssets,
   getAssetKind,
   selectedAssetFolder,
@@ -71,33 +70,6 @@ export const getFolderLabelByCollection = ({ collectionName, fileName } = {}) =>
   const fileLabel = file?.label || file?.name || fileName;
 
   return `${collectionLabel} › ${fileLabel}`;
-};
-
-/**
- * Get the label for the given folder path. It can be a category name if the folder is a
- * collection-specific asset folder.
- * @param {string | undefined} folderPath Media folder path.
- * @returns {string} Human-readable label.
- * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
- */
-export const getFolderLabelByPath = (folderPath) => {
-  const { media_folder: defaultMediaFolder } = /** @type {InternalSiteConfig} */ (get(siteConfig));
-
-  if (!folderPath) {
-    return getFolderLabelByCollection({ collectionName: '*' });
-  }
-
-  if (folderPath === defaultMediaFolder) {
-    return getFolderLabelByCollection({ collectionName: undefined });
-  }
-
-  const folder = get(allAssetFolders).find(({ internalPath }) => internalPath === folderPath);
-
-  if (folder) {
-    return getFolderLabelByCollection(folder);
-  }
-
-  return '';
 };
 
 /**
@@ -286,7 +258,7 @@ export const listedAssets = derived(
   [allAssets, selectedAssetFolder],
   ([_allAssets, _selectedAssetFolder], set) => {
     if (_allAssets && _selectedAssetFolder && _selectedAssetFolder.collectionName !== '*') {
-      set(_allAssets.filter(({ folder }) => _selectedAssetFolder.internalPath === folder));
+      set(_allAssets.filter(({ folder }) => equal(folder, _selectedAssetFolder)));
     } else {
       set(_allAssets ? [..._allAssets] : []);
     }

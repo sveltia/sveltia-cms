@@ -31,9 +31,7 @@
     }
 
     $uploadingAssets = {
-      folder: originalAsset
-        ? originalAsset.folder
-        : $selectedAssetFolder?.internalPath || $globalAssetFolder?.internalPath,
+      folder: originalAsset ? originalAsset.folder : ($selectedAssetFolder ?? $globalAssetFolder),
       files,
       originalAsset,
     };

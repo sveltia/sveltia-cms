@@ -118,7 +118,7 @@
           {#snippet endIcon()}
             {#key $allAssets}
               {#await sleep() then}
-                {@const count = (internalPath ? getAssetsByFolder(internalPath) : $allAssets)
+                {@const count = (folder.internalPath ? getAssetsByFolder(folder) : $allAssets)
                   .length}
                 <span
                   class="count"

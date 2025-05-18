@@ -54,7 +54,7 @@ export const saveAssets = async (uploadingAssets, options) => {
   const { files, folder, originalAsset } = uploadingAssets;
 
   const assetNamesInSameFolder = folder
-    ? getAssetsByDirName(folder).map((a) => a.name.normalize())
+    ? getAssetsByDirName(folder.internalPath).map((a) => a.name.normalize())
     : [];
 
   const savingFileList = files.map((file) => {
@@ -168,7 +168,7 @@ export const moveAssets = async (action, movingAssets) => {
 
       const updatedEntries = await getEntriesByAssetURL(assetURL, {
         entries: structuredClone(usedEntries),
-        newURL: newPath.replace(asset.folder, publicPath ?? ''),
+        newURL: newPath.replace(asset.folder.internalPath, publicPath ?? ''),
       });
 
       await Promise.all(

@@ -242,7 +242,7 @@
               (!kind || kind === asset.kind) &&
               (entryRelative
                 ? getPathInfo(asset.path).dirname === entryDirName
-                : asset.folder === internalPath),
+                : asset.folder.internalPath === internalPath),
           )}
           bind:selectedResource
           {showUploader}
@@ -253,7 +253,7 @@
           {kind}
           {accept}
           assets={$allAssets.filter(
-            (asset) => (!kind || kind === asset.kind) && asset.folder === internalPath,
+            (asset) => (!kind || kind === asset.kind) && asset.folder.internalPath === internalPath,
           )}
           bind:selectedResource
           {showUploader}
@@ -266,7 +266,8 @@
           {accept}
           assets={$allAssets.filter(
             (asset) =>
-              (!kind || kind === asset.kind) && asset.folder === $globalAssetFolder?.internalPath,
+              (!kind || kind === asset.kind) &&
+              asset.folder.internalPath === $globalAssetFolder?.internalPath,
           )}
           bind:selectedResource
           {showUploader}

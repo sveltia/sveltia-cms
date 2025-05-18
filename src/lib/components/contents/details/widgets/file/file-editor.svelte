@@ -7,6 +7,7 @@
 <script>
   import { AlertDialog, Button, ConfirmationDialog, Icon, TextArea } from '@sveltia/ui';
   import { getHash } from '@sveltia/utils/crypto';
+  import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
   import { flushSync } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -127,11 +128,8 @@
       }
 
       const hash = await getHash(file);
-      const { folderInfo } = selectedResource;
-
-      const existingAsset = $allAssets.find(
-        (a) => a.sha === hash && a.folder === folderInfo?.internalPath,
-      );
+      const { folder } = selectedResource;
+      const existingAsset = $allAssets.find((a) => a.sha === hash && equal(a.folder, folder));
 
       if (existingAsset) {
         // If the selected file has already been uploaded, use the existing asset instead of
@@ -145,7 +143,7 @@
         // Set a temporary blob URL, which will be later replaced with the actual file path
         currentValue = URL.createObjectURL(file);
         // Cache the file itself for later upload
-        /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = { file, folderInfo };
+        /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = { file, folder };
       }
     }
 
@@ -217,7 +215,7 @@
     if (files.length) {
       onResourceSelect({
         file: files[0],
-        folderInfo:
+        folder:
           getAssetFolder({ collectionName, fileName }) ??
           getAssetFolder({ collectionName }) ??
           $globalAssetFolder,

@@ -3,7 +3,7 @@
   import { locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { getFolderLabelByPath } from '$lib/services/assets/view';
+  import { getFolderLabelByCollection } from '$lib/services/assets/view';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -34,7 +34,7 @@
   </GridCell>
   <GridCell class="collection">
     {#key $appLocale}
-      {getFolderLabelByPath(folder)}
+      {getFolderLabelByCollection(folder)}
     {/key}
   </GridCell>
   <GridCell class="title">

@@ -12,15 +12,7 @@ import { getAssetKind } from '$lib/services/assets';
  */
 export const parseAssetFiles = (assetFiles) =>
   assetFiles.map((assetInfo) => {
-    const {
-      file,
-      path,
-      sha,
-      size,
-      text = undefined,
-      meta = {},
-      folder: { internalPath },
-    } = assetInfo;
+    const { file, path, sha, size, text = undefined, meta = {}, folder } = assetInfo;
 
     return /** @type {Asset} */ ({
       file,
@@ -31,7 +23,7 @@ export const parseAssetFiles = (assetFiles) =>
       size,
       kind: getAssetKind(path),
       text,
-      folder: internalPath,
+      folder,
       ...meta,
     });
   });

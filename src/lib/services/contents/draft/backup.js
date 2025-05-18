@@ -170,7 +170,7 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
                 // Support `LegacyEntryFileMap`
                 // @todo Remove this before the 1.0 release
                 if (cache instanceof File) {
-                  cache = { file: cache, folderInfo: undefined };
+                  cache = { file: cache, folder: undefined };
                 }
 
                 if (cache) {

@@ -1,6 +1,7 @@
 import { getPathInfo, isTextFileType } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
 import mime from 'mime';
 import { derived, get, writable } from 'svelte/store';
@@ -448,11 +449,11 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
     get(allAssetFolders).findLast((folder) =>
       dirName.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
     ),
-  ].filter((folderInfo) => !!folderInfo);
+  ].filter((folder) => !!folder);
 
-  scanningFolders.some((folderInfo) => {
-    const { publicPath, collectionName: _collectionName } = folderInfo;
-    let { internalPath } = folderInfo;
+  scanningFolders.some((folder) => {
+    const { publicPath, collectionName: _collectionName } = folder;
+    let { internalPath } = folder;
 
     // Find a global/uncategorized asset
     if (!_collectionName) {
@@ -577,14 +578,14 @@ export const getAssetPublicURL = (
   const path = hasTemplateTags
     ? asset.path.replace(
         // Deal with template tags like `/assets/images/{{slug}}`
-        createPathRegEx(asset.folder, (segment) => {
+        createPathRegEx(asset.folder.internalPath, (segment) => {
           const tag = segment.match(/{{(?<tag>.+?)}}/)?.groups?.tag;
 
           return tag ? `(?<${tag}>[^/]+)` : escapeRegExp(segment);
         }),
         publicPath?.replaceAll(/{{(.+?)}}/g, '$<$1>') ?? '',
       )
-    : asset.path.replace(asset.folder, publicPath === '/' ? '' : (publicPath ?? ''));
+    : asset.path.replace(asset.folder.internalPath, publicPath === '/' ? '' : (publicPath ?? ''));
 
   const encodedPath = encodeFilePath(path);
 
@@ -679,10 +680,10 @@ export const getAssetDetails = async (asset) => {
 
 /**
  * Get a list of assets stored in the given collection defined folder.
- * @param {string} folder Folder path.
+ * @param {AssetFolderInfo} folder Folder info.
  * @returns {Asset[]} Assets.
  */
-export const getAssetsByFolder = (folder) => get(allAssets).filter((a) => a.folder === folder);
+export const getAssetsByFolder = (folder) => get(allAssets).filter((a) => equal(a.folder, folder));
 
 /**
  * Get a list of assets stored in the given internal directory.

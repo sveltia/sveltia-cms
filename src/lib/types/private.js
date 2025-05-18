@@ -405,7 +405,7 @@
 /**
  * Flattened entry file list object, where key is a blob URL, and value is be a file to be uploaded
  * and its target asset folder.
- * @typedef {Record<string, { file: File, folderInfo?: AssetFolderInfo }>} EntryFileMap
+ * @typedef {Record<string, { file: File, folder?: AssetFolderInfo }>} EntryFileMap
  */
 
 /**
@@ -530,7 +530,7 @@
 /**
  * Asset to be uploaded.
  * @typedef {object} UploadingAssets
- * @property {string | undefined} folder Target folder path.
+ * @property {AssetFolderInfo | undefined} folder Target asset folder info.
  * @property {File[]} files File list.
  * @property {Asset} [originalAsset] Asset to be replaced.
  */
@@ -554,8 +554,7 @@
  * @property {number} size File size in bytes.
  * @property {AssetKind} kind Basic file type.
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
- * @property {string} folder Path of a collection-specific folder that contains the file or global
- * media folder.
+ * @property {AssetFolderInfo} folder Asset folder info.
  */
 
 /**
@@ -596,7 +595,7 @@
  * @property {Asset} [asset] One of the existing assets available in the CMS.
  * @property {File} [file] File selected from the user’s computer, or an image file downloaded from
  * a stock asset provider.
- * @property {AssetFolderInfo} [folderInfo] Target asset folder info for the `file`.
+ * @property {AssetFolderInfo} [folder] Target asset folder info for the `file`.
  * @property {string} [url] URL from direct input or a hotlinking stock asset.
  * @property {string} [credit] Attribution HTML string for a stock asset, including the photographer
  * name/link and service name/link.
