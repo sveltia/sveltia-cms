@@ -93,7 +93,7 @@
   const allDefaultLibraryFolders = $derived.by(() => {
     const collectionName = $entryDraft?.collectionName ?? '';
     const fileName = $entryDraft?.fileName;
-    const fileAssetFolder = getAssetFolder({ collectionName, fileName });
+    const fileAssetFolder = fileName ? getAssetFolder({ collectionName, fileName }) : undefined;
     const collectionAssetFolder = getAssetFolder({ collectionName });
     const entryAssetFolder = fileAssetFolder ?? collectionAssetFolder;
 
