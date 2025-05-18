@@ -1,7 +1,10 @@
 <script>
   import {
+    Button,
     Dialog,
     EmptyState,
+    FilePicker,
+    Icon,
     Listbox,
     Option,
     OptionGroup,
@@ -9,14 +12,15 @@
     Select,
     TextInput,
   } from '@sveltia/ui';
+  import { getHash } from '@sveltia/utils/crypto';
   import { getPathInfo } from '@sveltia/utils/file';
+  import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { allAssets, getAssetFolder, globalAssetFolder } from '$lib/services/assets';
+  import { allAssets, getAssetFolder, getAssetKind, globalAssetFolder } from '$lib/services/assets';
   import { getStockAssetMediaLibraryOptions } from '$lib/services/assets/media-library';
-  import { selectedCollection } from '$lib/services/contents/collection';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
   import {
     allCloudStorageServices,
@@ -25,12 +29,16 @@
   import { normalize } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
+  import { supportedImageTypes } from '$lib/services/utils/media/image';
 
   /**
    * @import { Writable } from 'svelte/store';
    * @import {
+   * Asset,
+   * AssetFolderInfo,
    * AssetKind,
-   * Entry,
+   * EntryDraft,
+   * EntryFileMap,
    * MediaLibraryService,
    * SelectAssetsView,
    * SelectedResource,
@@ -44,9 +52,10 @@
    * @property {AssetKind | undefined} [kind] Asset kind.
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
-   * @property {Entry} [entry] Associated entry.
+   * @property {Writable<EntryDraft | null | undefined>} [entryDraft] Associated entry draft.
    * @property {FileField | ImageField} [fieldConfig] Field configuration.
-   * @property {(resource: SelectedResource) => void} [onSelect] Custom `Select` event handler.
+   * @property {(resource: SelectedResource) => void} [onSelect] Custom `Select` event handler that
+   * will be called when the dialog is closed with the Insert button.
    */
 
   /** @type {Props} */
@@ -54,9 +63,9 @@
     /* eslint-disable prefer-const */
     open = $bindable(false),
     kind,
-    accept = undefined,
+    accept = kind === 'image' ? supportedImageTypes.join(',') : undefined,
     canEnterURL = true,
-    entry,
+    entryDraft,
     fieldConfig,
     onSelect = undefined,
     /* eslint-enable prefer-const */
@@ -64,30 +73,71 @@
 
   const elementIdPrefix = $props.id();
 
-  /** @type {SelectedResource | null} */
-  let selectedResource = $state(null);
+  /** @type {SelectedResource | undefined} */
+  let selectedResource = $state();
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
-  let libraryName = $state('uncategorized-assets');
+  let libraryName = $state('local-global');
+  /** @type {EntryFileMap} */
+  let droppedFiles = $state({});
+  /** @type {Asset[]} */
+  let unsavedAssets = $state([]);
+  /** @type {FilePicker | undefined} */
+  let filePicker = $state();
 
   const title = $derived(
     kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file'),
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
-  const { internalPath, entryRelative, hasTemplateTags } = $derived(
-    getAssetFolder({ collectionName: $selectedCollection?.name }) ?? {
-      internalPath: '',
-      entryRelative: false,
-      hasTemplateTags: false,
-    },
+  /** @type {Record<string, { folder: AssetFolderInfo | undefined, enabled: boolean }>} */
+  const localFolders = $derived.by(() => {
+    const collectionName = $entryDraft?.collectionName ?? '';
+    const fileName = $entryDraft?.fileName;
+    const fileAssetFolder = getAssetFolder({ collectionName, fileName });
+    const collectionAssetFolder = getAssetFolder({ collectionName });
+    const entryAssetFolder = fileAssetFolder ?? collectionAssetFolder;
+
+    return {
+      entry: {
+        folder: entryAssetFolder,
+        enabled:
+          !!entryAssetFolder &&
+          (entryAssetFolder.entryRelative || entryAssetFolder.hasTemplateTags),
+      },
+      file: {
+        folder: fileAssetFolder,
+        enabled:
+          !!fileAssetFolder && !fileAssetFolder.entryRelative && !fileAssetFolder.hasTemplateTags,
+      },
+      collection: {
+        folder: collectionAssetFolder,
+        enabled:
+          !!collectionAssetFolder &&
+          !collectionAssetFolder.entryRelative &&
+          !collectionAssetFolder.hasTemplateTags,
+      },
+      global: {
+        folder: $globalAssetFolder,
+        enabled: true,
+      },
+    };
+  });
+  const entryDirName = $derived.by(() => {
+    const entry = $entryDraft?.originalEntry;
+
+    return entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined;
+  });
+  const isLocalLibrary = $derived(libraryName.startsWith('local-'));
+  const selectedFolder = $derived(
+    isLocalLibrary ? localFolders[libraryName.replace('local-', '')].folder : undefined,
   );
-  const showCollectionAssets = $derived(!!internalPath && !entryRelative && !hasTemplateTags);
-  const showEntryAssets = $derived(!!entry && (entryRelative || hasTemplateTags));
-  const showUploader = $derived(libraryName === 'upload');
-  const entryDirName = $derived(
-    entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined,
+  const listedAssets = $derived(
+    [...$allAssets, ...unsavedAssets]
+      .filter((asset) => !kind || kind === asset.kind)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      // Unsaved assets should go first
+      .sort((a, b) => Number(!!b.unsaved) - Number(!!a.unsaved)),
   );
-  const isLocalLibrary = $derived(libraryName?.endsWith('-assets') ?? true);
   const enabledStockAssetProviderEntries = $derived.by(() => {
     const { providers = [] } = getStockAssetMediaLibraryOptions({ fieldConfig });
 
@@ -102,21 +152,79 @@
       $prefs?.apiKeys?.[libraryName]) ||
       (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]),
   );
+  const enabledCloudServiceEntries = $derived(Object.entries(allCloudStorageServices));
+  const enabledExternalServiceEntries = $derived([
+    ...enabledStockAssetProviderEntries,
+    ...enabledCloudServiceEntries,
+  ]);
   const Selector = $derived($isSmallScreen ? Select : Listbox);
 
-  $effect(() => {
-    libraryName = showEntryAssets
-      ? 'entry-assets'
-      : showCollectionAssets
-        ? 'collection-assets'
-        : 'uncategorized-assets';
+  /**
+   * Convert unsaved files to the `Asset` format so these can be browsed just like other assets.
+   * @returns {Promise<Asset[]>} Assets.
+   */
+  const getUnsavedAssets = async () =>
+    Promise.all(
+      [...Object.entries($entryDraft?.files ?? {}), ...Object.entries(droppedFiles)].map(
+        async ([blobURL, { file, folder }]) => {
+          const { name, size } = file;
+
+          return /** @type {Asset} */ ({
+            unsaved: true,
+            file,
+            blobURL,
+            name,
+            path: `${folder?.internalPath}/${name}`,
+            sha: await getHash(file),
+            size,
+            kind: getAssetKind(name),
+            folder,
+          });
+        },
+      ),
+    );
+
+  /**
+   * Handle dropped files.
+   * @param {File[]} files File list.
+   */
+  const onDrop = (files) => {
+    files.forEach(async (file, index) => {
+      const hash = await getHash(file);
+      const folder = selectedFolder;
+      const resource = { file, folder };
+
+      const hasExistingResource = (
+        await Promise.all(
+          unsavedAssets.map(
+            async (a) => !!a.file && (await getHash(a.file)) === hash && equal(a.folder, folder),
+          ),
+        )
+      ).some(Boolean);
+
+      if (hasExistingResource) {
+        return;
+      }
+
+      droppedFiles[URL.createObjectURL(file)] = resource;
+
+      if (index === 0) {
+        selectedResource = resource;
+      }
+    });
+  };
+
+  $effect.pre(() => {
+    libraryName = `local-${Object.entries(localFolders).find(([, { enabled }]) => enabled)?.[0]}`;
   });
 
   $effect(() => {
-    if (open) {
-      // Reset values
-      enteredURL = '';
-    }
+    void $entryDraft?.files;
+    void droppedFiles;
+
+    (async () => {
+      unsavedAssets = await getUnsavedAssets();
+    })();
   });
 
   $effect(() => {
@@ -126,7 +234,7 @@
   });
 </script>
 
-{#snippet filterTools()}
+{#snippet headerItems()}
   {#if isLocalLibrary || isEnabledMediaService}
     {#if $selectAssetsView}
       <ViewSwitcher
@@ -141,6 +249,19 @@
       aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />
   {/if}
+  {#if isLocalLibrary}
+    <Button
+      variant="primary"
+      label={$_('upload')}
+      onclick={() => {
+        filePicker?.open();
+      }}
+    >
+      {#snippet startIcon()}
+        <Icon name="cloud_upload" />
+      {/snippet}
+    </Button>
+  {/if}
 {/snippet}
 
 <Dialog
@@ -151,13 +272,22 @@
   bind:open
   onOk={() => {
     if (selectedResource) {
-      onSelect?.(selectedResource);
+      const resource = $state.snapshot(selectedResource);
+      const { unsaved, file, folder } = resource.asset ?? {};
+
+      onSelect?.(unsaved ? { file, folder } : resource);
     }
+  }}
+  onClose={() => {
+    // Reset values
+    enteredURL = '';
+    rawSearchTerms = '';
+    droppedFiles = {};
   }}
 >
   {#snippet headerExtra()}
     {#if !$isSmallScreen}
-      {@render filterTools()}
+      {@render headerItems()}
     {/if}
   {/snippet}
   {#snippet footerExtra()}
@@ -180,32 +310,20 @@
         filterThreshold={-1}
         onChange={(event) => {
           libraryName = event.detail.name;
-          selectedResource = null;
+          selectedResource = undefined;
         }}
       >
         <OptionGroup label={$_('assets_dialog.location.repository')}>
-          {#if showEntryAssets}
-            <Option
-              name="entry-assets"
-              label={$_('entry_assets')}
-              selected={libraryName === 'entry-assets'}
-            />
-          {/if}
-          {#if showCollectionAssets}
-            <Option
-              name="collection-assets"
-              label={$_('collection_assets')}
-              selected={libraryName === 'collection-assets'}
-            />
-          {/if}
-          <Option
-            name="uncategorized-assets"
-            label={$_('uncategorized')}
-            selected={libraryName === 'uncategorized-assets'}
-          />
-        </OptionGroup>
-        <OptionGroup label={$_('assets_dialog.location.local')}>
-          <Option name="upload" label={$_('upload')} selected={showUploader} />
+          {#each Object.entries(localFolders) as [id, { enabled }] (id)}
+            {#if enabled}
+              {@const name = `local-${id}`}
+              <Option
+                {name}
+                label={$_(`assets_dialog.folder.${id}`)}
+                selected={libraryName === name}
+              />
+            {/if}
+          {/each}
         </OptionGroup>
         {#if canEnterURL || !!Object.keys(allCloudStorageServices).length}
           <OptionGroup label={$_('assets_dialog.location.external_locations')}>
@@ -228,51 +346,25 @@
       </Selector>
       {#if $isSmallScreen}
         <div role="none" class="filter-tools">
-          {@render filterTools()}
+          {@render headerItems()}
         </div>
       {/if}
     </div>
     <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
-      {#if showEntryAssets && (libraryName === 'entry-assets' || showUploader)}
+      {#if isLocalLibrary && selectedFolder}
         <InternalAssetsPanel
-          {kind}
           {accept}
-          assets={$allAssets.filter(
-            (asset) =>
-              (!kind || kind === asset.kind) &&
-              (entryRelative
-                ? getPathInfo(asset.path).dirname === entryDirName
-                : asset.folder.internalPath === internalPath),
+          assets={listedAssets.filter((asset) =>
+            selectedFolder.entryRelative
+              ? getPathInfo(asset.path).dirname === entryDirName
+              : equal(asset.folder, selectedFolder),
           )}
           bind:selectedResource
-          {showUploader}
           {searchTerms}
-        />
-      {:else if showCollectionAssets && (libraryName === 'collection-assets' || showUploader)}
-        <InternalAssetsPanel
-          {kind}
-          {accept}
-          assets={$allAssets.filter(
-            (asset) => (!kind || kind === asset.kind) && asset.folder.internalPath === internalPath,
-          )}
-          bind:selectedResource
-          {showUploader}
-          {searchTerms}
-          basePath={internalPath}
-        />
-      {:else if libraryName === 'uncategorized-assets' || showUploader}
-        <InternalAssetsPanel
-          {kind}
-          {accept}
-          assets={$allAssets.filter(
-            (asset) =>
-              (!kind || kind === asset.kind) &&
-              asset.folder.internalPath === $globalAssetFolder?.internalPath,
-          )}
-          bind:selectedResource
-          {showUploader}
-          {searchTerms}
-          basePath={$globalAssetFolder?.internalPath}
+          basePath={selectedFolder.internalPath}
+          onDrop={({ files }) => {
+            onDrop(files);
+          }}
         />
       {/if}
       {#if canEnterURL && libraryName === 'enter-url'}
@@ -286,33 +378,22 @@
             bind:value={enteredURL}
             flex
             oninput={() => {
-              selectedResource = enteredURL.trim() ? { url: enteredURL.trim() } : null;
+              const url = enteredURL.trim();
+
+              selectedResource = url ? { url } : undefined;
             }}
           />
         </EmptyState>
       {/if}
-      {#each Object.entries(allCloudStorageServices) as [serviceId, serviceProps] (serviceId)}
+      {#each enabledExternalServiceEntries as [serviceId, serviceProps] (serviceId)}
         {#if libraryName === serviceId}
           <ExternalAssetsPanel
             {kind}
             {searchTerms}
             {serviceProps}
             gridId="select-assets-grid"
-            onSelect={(detail) => {
-              selectedResource = detail;
-            }}
-          />
-        {/if}
-      {/each}
-      {#each enabledStockAssetProviderEntries as [serviceId, serviceProps] (serviceId)}
-        {#if libraryName === serviceId}
-          <ExternalAssetsPanel
-            {kind}
-            {searchTerms}
-            {serviceProps}
-            gridId="select-assets-grid"
-            onSelect={(detail) => {
-              selectedResource = detail;
+            onSelect={(resource) => {
+              selectedResource = resource;
             }}
           />
         {/if}
@@ -320,6 +401,14 @@
     </div>
   </div>
 </Dialog>
+
+<FilePicker
+  bind:this={filePicker}
+  {accept}
+  onSelect={({ files }) => {
+    onDrop(files);
+  }}
+/>
 
 <style lang="scss">
   .wrapper {

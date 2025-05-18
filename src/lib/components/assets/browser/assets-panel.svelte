@@ -10,12 +10,13 @@
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
 
   /**
-   * @import { Asset, ViewType } from '$lib/types/private';
+   * @import { Asset, SelectedResource, ViewType } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {Asset[]} [assets] Asset list.
+   * @property {SelectedResource} [selectedResource] Selected resource.
    * @property {ViewType} [viewType] View type.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.
@@ -29,6 +30,7 @@
   let {
     /* eslint-disable prefer-const */
     assets = [],
+    selectedResource = $bindable(),
     viewType = 'grid',
     searchTerms = '',
     basePath = undefined,
@@ -55,19 +57,31 @@
       {viewType}
       showTitle={true}
       onChange={({ value }) => {
-        onSelect?.({
-          asset: /** @type {Asset} */ (assets.find(({ path }) => path === value)),
-        });
+        const asset = /** @type {Asset} */ (assets.find(({ path }) => path === value));
+
+        selectedResource = { asset };
+        onSelect?.({ asset });
       }}
     >
       <InfiniteScroll items={filteredAssets} itemKey="path">
         {#snippet renderItem(/** @type {Asset} */ asset)}
           {#await sleep() then}
-            {@const { kind, name, path } = asset}
+            {@const { kind, name, path, unsaved } = asset}
             <!-- Show asset path relative to the base folder, or just file name -->
             {@const relPath = basePath ? stripSlashes(path.replace(basePath, '')) : name}
             {@const pathArray = relPath.split('/')}
-            <Option label="" value={path}>
+            <Option
+              label=""
+              value={path}
+              selected={(selectedResource?.asset?.path ||
+                `${basePath}/${selectedResource?.file?.name}`) === path}
+            >
+              {#snippet checkIcon()}
+                <!-- Remove check icon -->
+              {/snippet}
+              {#if viewType === 'grid' && unsaved}
+                <div role="none" class="unsaved">{$_('assets_dialog.unsaved')}</div>
+              {/if}
               <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
               {#if !$isSmallScreen || viewType === 'list'}
                 <span role="none" class="name">
@@ -82,6 +96,9 @@
                       {/if}
                     {/each}
                   </TruncatedText>
+                  {#if viewType === 'list' && unsaved}
+                    <div role="none" class="unsaved">{$_('assets_dialog.unsaved')}</div>
+                  {/if}
                 </span>
               {/if}
             </Option>
@@ -101,9 +118,44 @@
     overflow-y: auto;
     height: 100%;
 
-    :global([role='listbox']) {
-      background-color: transparent;
+    :global {
+      [role='listbox'] {
+        background-color: transparent;
+
+        &.grid {
+          [role='option'] {
+            position: relative;
+          }
+
+          .unsaved {
+            position: absolute;
+            inset: 4px 4px auto auto;
+            z-index: 1;
+          }
+        }
+
+        &.list {
+          .name {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+          }
+        }
+      }
     }
+  }
+
+  .unsaved {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-color: var(--sui-info-border-color);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--sui-info-foreground-color);
+    background-color: var(--sui-info-background-color);
+    font-size: var(--sui-font-size-small);
   }
 
   .name {

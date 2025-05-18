@@ -155,7 +155,6 @@ export const strings = {
   content_library: 'コンテンツライブラリ',
   asset_library: 'アセットライブラリ',
   collection_assets: 'コレクションアセット',
-  entry_assets: 'エントリーアセット',
   entry_list: 'エントリーリスト',
   file_list: 'ファイルリスト',
   asset_list: 'アセットリスト',
@@ -501,6 +500,13 @@ export const strings = {
       external_locations: '外部の場所',
       stock_photos: 'ストックフォト',
     },
+    folder: {
+      field: 'フィールドアセット',
+      entry: 'エントリーアセット',
+      file: 'ファイルアセット',
+      collection: 'コレクションアセット',
+      global: 'グローバルアセット',
+    },
     error: {
       invalid_key: 'あなたの API キーは正しくないか期限切れです。確認の上、再度お試しください。',
       search_fetch_failed: 'アセットを検索中に問題が発生しました。後で再度お試しください。',
@@ -518,6 +524,7 @@ export const strings = {
       title: '写真クレジット',
       description: '可能であれば以下のクレジットを使ってください:',
     },
+    unsaved: '未保存',
   },
   character_counter: {
     min_max: {

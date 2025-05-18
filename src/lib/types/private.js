@@ -545,7 +545,7 @@
 /**
  * Asset properties.
  * @typedef {object} AssetProps
- * @property {File} [file] File object. Local backend only.
+ * @property {File} [file] File object. Local backend and unsaved files only.
  * @property {string} [blobURL] Blob URL for the asset. It’s a temporary URL for a remote file being
  * fetched or a local file being uploaded. Or `undefined` if the URL is not generated yet.
  * @property {string} name File name.
@@ -555,6 +555,7 @@
  * @property {AssetKind} kind Basic file type.
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {AssetFolderInfo} folder Asset folder info.
+ * @property {boolean} [unsaved] Whether the asset is unsaved.
  */
 
 /**

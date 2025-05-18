@@ -155,7 +155,6 @@ export const strings = {
   content_library: 'Content Library',
   asset_library: 'Asset Library',
   collection_assets: 'Collection Assets',
-  entry_assets: 'Entry Assets',
   entry_list: 'Entry List',
   file_list: 'File List',
   asset_list: 'Asset List',
@@ -501,6 +500,13 @@ export const strings = {
       external_locations: 'External Locations',
       stock_photos: 'Stock Photos',
     },
+    folder: {
+      field: 'Field Assets',
+      entry: 'Entry Assets',
+      file: 'File Assets',
+      collection: 'Collection Assets',
+      global: 'Global Assets',
+    },
     error: {
       invalid_key: 'Your API Key is invalid or expired. Please double check and try again.',
       search_fetch_failed: 'There was an error while searching assets. Please try again later.',
@@ -518,6 +524,7 @@ export const strings = {
       title: 'Photo Credit',
       description: 'Use the following credit if possible:',
     },
+    unsaved: 'Unsaved',
   },
   character_counter: {
     min_max: {

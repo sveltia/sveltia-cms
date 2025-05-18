@@ -193,6 +193,9 @@
           {#await sleep() then}
             {@const { id, previewURL, description, kind: _kind } = asset}
             <Option label="" value={id}>
+              {#snippet checkIcon()}
+                <!-- Remove check icon -->
+              {/snippet}
               <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
               {#if !$isSmallScreen || $selectAssetsView?.type === 'list'}
                 <span role="none" class="name">{description}</span>

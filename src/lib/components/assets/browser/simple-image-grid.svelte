@@ -72,12 +72,6 @@
               object-fit: contain;
             }
           }
-
-          button[aria-selected='true'] {
-            .icon {
-              display: none;
-            }
-          }
         }
 
         .name {
@@ -114,12 +108,10 @@
         }
 
         button[aria-selected='true'] {
-          .preview {
-            outline-offset: -2px;
-            outline-width: 2px !important;
-            outline-style: solid;
-            outline-color: var(--sui-primary-accent-color-light);
-          }
+          outline-offset: -2px;
+          outline-width: 2px !important;
+          outline-style: solid;
+          outline-color: var(--sui-primary-accent-color-light);
         }
       }
 
@@ -139,6 +131,7 @@
 
             .name {
               flex: auto;
+              padding-inline: 0 8px;
             }
           }
 

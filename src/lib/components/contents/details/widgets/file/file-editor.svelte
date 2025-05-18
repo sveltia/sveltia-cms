@@ -99,6 +99,27 @@
   );
 
   /**
+   * Get the blob URL of an unsaved file that matches the given file.
+   * @param {File} _file File to be searched.
+   * @returns {Promise<string | undefined>} Blob URL.
+   */
+  const getExistingBlobURL = async (_file) => {
+    const hash = await getHash(_file);
+    /** @type {string | undefined} */
+    let foundURL = undefined;
+
+    await Promise.all(
+      Object.entries($entryDraft?.files ?? {}).map(async ([blobURL, f]) => {
+        if (!foundURL && (await getHash(f.file)) === hash) {
+          foundURL = blobURL;
+        }
+      }),
+    );
+
+    return foundURL;
+  };
+
+  /**
    * Reset the current selection.
    */
   const resetSelection = () => {
@@ -123,32 +144,42 @@
     ({ asset, file, url, credit } = selectedResource);
 
     if (file) {
-      if (transformations) {
-        file = await transformFile(file, transformations);
-      }
+      const existingBlobURL = await getExistingBlobURL(file);
 
-      const hash = await getHash(file);
-      const { folder } = selectedResource;
-      const existingAsset = $allAssets.find((a) => a.sha === hash && equal(a.folder, folder));
-
-      if (existingAsset) {
-        // If the selected file has already been uploaded, use the existing asset instead of
-        // uploading the same file twice
-        asset = existingAsset;
-        file = undefined;
-      } else if (file.size > /** @type {number} */ (maxSize)) {
-        showSizeLimitDialog = true;
-        file = undefined;
+      if (existingBlobURL) {
+        currentValue = existingBlobURL;
       } else {
-        // Set a temporary blob URL, which will be later replaced with the actual file path
-        currentValue = URL.createObjectURL(file);
-        // Cache the file itself for later upload
-        /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = { file, folder };
+        if (transformations) {
+          file = await transformFile(file, transformations);
+        }
+
+        const hash = await getHash(file);
+        const { folder } = selectedResource;
+        const existingAsset = $allAssets.find((a) => a.sha === hash && equal(a.folder, folder));
+
+        if (existingAsset) {
+          // If the selected file has already been uploaded, use the existing asset instead of
+          // uploading the same file twice
+          asset = existingAsset;
+          file = undefined;
+        } else if (file.size > /** @type {number} */ (maxSize)) {
+          showSizeLimitDialog = true;
+          file = undefined;
+        } else {
+          // Set a temporary blob URL, which will be later replaced with the actual file path
+          currentValue = URL.createObjectURL(file);
+          // Cache the file itself for later upload
+          /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = { file, folder };
+        }
       }
     }
 
     if (asset) {
-      currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true, entry });
+      if (!asset.unsaved) {
+        currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true, entry });
+      } else if (asset.file) {
+        currentValue = await getExistingBlobURL(asset.file);
+      }
     }
 
     if (url) {
@@ -315,7 +346,7 @@
   kind={isImageWidget ? 'image' : undefined}
   {accept}
   {canEnterURL}
-  {entry}
+  {entryDraft}
   {fieldConfig}
   bind:open={showSelectAssetsDialog}
   onSelect={onResourceSelect}
