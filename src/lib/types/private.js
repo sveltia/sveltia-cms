@@ -455,6 +455,7 @@
 /**
  * Entry draft.
  * @typedef {object} EntryDraft
+ * @property {number} createdAt Timestamp of the draft creation.
  * @property {boolean} isNew `true` if it’s a new entry draft in an entry collection.
  * @property {boolean} isIndexFile Whether the corresponding entry is the collection’s special index
  * file used specifically in Hugo.

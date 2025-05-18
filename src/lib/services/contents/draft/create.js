@@ -398,6 +398,7 @@ export const createDraft = ({
   );
 
   entryDraft.set({
+    createdAt: Date.now(),
     isNew: isNew && !fileName,
     isIndexFile,
     canPreview,

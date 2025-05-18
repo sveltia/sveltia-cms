@@ -35,10 +35,6 @@
 
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
-  const originalEntry = $derived($entryDraft?.originalEntry);
-  const entryId = $derived(
-    originalEntry?.id ?? [collection?.name ?? '-', collectionFile?.name ?? '-'].join('/'),
-  );
   const { showPreview } = $derived($entryEditorSettings ?? {});
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
@@ -194,7 +190,7 @@
   aria-label={$_('content_editor')}
   bind:this={wrapper}
 >
-  {#key entryId}
+  {#key $entryDraft?.createdAt}
     <Toolbar disabled={createDisabled} />
     {#if createDisabled}
       <EmptyState>

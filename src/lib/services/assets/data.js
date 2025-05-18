@@ -231,6 +231,7 @@ export const moveAssets = async (action, movingAssets) => {
                 /** @type {EntryDraft} */
                 const draft = {
                   ...draftProps,
+                  createdAt: Date.now(),
                   isIndexFile,
                   canPreview,
                   collection,
