@@ -210,7 +210,7 @@ export const strings = {
   show_info: 'Show Info',
   hide_info: 'Hide Info',
   all_assets: 'All Assets',
-  uncategorized: 'Uncategorized',
+  global_assets: 'Global Assets',
   creating_entries_disabled_by_admin:
     'Creating new entries in this collection is disabled by the administrator.',
   creating_entries_disabled_by_limit:

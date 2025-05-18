@@ -56,7 +56,7 @@ export const getFolderLabelByCollection = ({ collectionName, fileName } = {}) =>
   }
 
   if (!collectionName) {
-    return get(_)('uncategorized');
+    return get(_)('global_assets');
   }
 
   const collection = get(siteConfig)?.collections.find(({ name }) => name === collectionName);

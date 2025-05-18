@@ -210,7 +210,7 @@ export const strings = {
   show_info: '情報を表示',
   hide_info: '情報を隠す',
   all_assets: 'すべてのアセット',
-  uncategorized: '未分類',
+  global_assets: 'グローバルアセット',
   creating_entries_disabled_by_admin:
     'このコレクションへの新しいエントリーの作成は、管理者によって無効化されています。',
   creating_entries_disabled_by_limit:
