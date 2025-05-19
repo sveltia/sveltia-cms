@@ -128,7 +128,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 205+ issues, or 415+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 210+ issues, or 420+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA (we did it!)
     - 350 issues, or 700 if including duplicates, in the future
@@ -140,7 +140,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![205 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250512)<br>
+![210 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250519)<br>
 
 ## Differentiators
 
@@ -404,7 +404,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A required List field with no subfield or value is marked as invalid.[^43] No need to set the `min` and `max` options for the `required` option to work.
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing.[^44]
   - An optional List field won’t populate an item by default when the subfield has the `default` value.[^162]
-  - Users can enter spaces in a simple text-based List field.[^50]
+  - A simple list field with no subfields is displayed as a multiline text field,[^219] where users can enter spaces and commas.[^50][^220]
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
@@ -1783,3 +1783,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^217]: Netlify/Decap CMS [#5467](https://github.com/decaporg/decap-cms/issues/5467)
 
 [^218]: Netlify/Decap CMS [#978](https://github.com/decaporg/decap-cms/issues/978)
+
+[^219]: Netlify/Decap CMS [#3018](https://github.com/decaporg/decap-cms/issues/3018)
+
+[^220]: Netlify/Decap CMS [#2153](https://github.com/decaporg/decap-cms/issues/2153)
