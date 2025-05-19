@@ -4,7 +4,7 @@ import { unflatten } from 'flat';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
-import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
@@ -130,6 +130,21 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       const getFieldConfigArgs = { collectionName, fileName, isIndexFile };
 
       /**
+       * Flag for handling a list field with the `field` option that produces a single subfield.
+       * @see https://decapcms.org/docs/widgets/#list
+       * @see https://github.com/sveltia/sveltia-cms/discussions/400
+       */
+      const isSimpleListField = (() => {
+        const _keyPath = _valueField.match(/^{{(\w+)\.\*\.\w+}}$/)?.[1];
+
+        const _config = _keyPath
+          ? getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath })
+          : undefined;
+
+        return _config?.widget === 'list' && !!_config.field;
+      })();
+
+      /**
        * Wrapper for {@link getFieldDisplayValue}.
        * @param {FieldKeyPath} keyPath Field key path.
        * @param {InternalLocaleCode} [_locale] Target locale.
@@ -157,7 +172,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
             ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
           ].map((fieldName) =>
-            fieldName.includes('.')
+            !isSimpleListField && fieldName.includes('.')
               ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
               : fieldName,
           ),
@@ -174,6 +189,14 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             );
 
             return [fieldName, valueMap[Object.keys(valueMap)[0]] ?? ''];
+          }
+
+          if (isSimpleListField) {
+            const [, _fieldName, _replacer] = fieldName.match(/^(\w+\.\*)\.(\w+)$/) ?? [];
+
+            if (_fieldName) {
+              return [_fieldName, Object.entries(content).map(([, v]) => ({ [_replacer]: v }))];
+            }
           }
 
           if (fieldName === 'slug') {

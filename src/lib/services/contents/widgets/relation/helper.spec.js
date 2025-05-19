@@ -89,7 +89,33 @@ describe('Test getOptions()', async () => {
       { name: 'authors', folder: 'data/authors', fields: [] },
       { name: 'pages', folder: 'data/pages', fields: [] },
       { name: 'posts', folder: 'data/posts', fields: [] },
-      { name: 'relation_files', folder: 'data/relation_files', fields: [] },
+      {
+        name: 'relation_files',
+        files: [
+          {
+            name: 'cities',
+            file: 'data/cities.md',
+            fields: [
+              {
+                name: 'cities',
+                widget: 'list',
+                fields: [{ name: 'name' }, { name: 'id' }],
+              },
+            ],
+          },
+          {
+            name: 'categories',
+            file: 'data/categories.md',
+            fields: [
+              {
+                name: 'blog',
+                widget: 'list',
+                field: { name: 'category', widget: 'string' },
+              },
+            ],
+          },
+        ],
+      },
     ],
     _siteURL: '',
     _baseURL: '',
@@ -890,5 +916,41 @@ describe('Test getOptions()', async () => {
         entries,
       ),
     ).toEqual([]);
+  });
+
+  // https://github.com/sveltia/sveltia-cms/discussions/400
+  test('referring a list field with a single subfield', () => {
+    const config = {
+      name: 'categories',
+      label: 'Categories',
+      widget,
+      collection: 'relation_files',
+      file: 'categories',
+      value_field: 'blog.*.category',
+    };
+
+    /** @type {Entry[]} */
+    const entries = [
+      {
+        id: '',
+        sha: '',
+        slug: 'categories',
+        subPath: 'categories',
+        locales: {
+          _default: {
+            ...localizedEntryProps,
+            content: flatten({
+              blog: ['foo', 'bar', 'baz'],
+            }),
+          },
+        },
+      },
+    ];
+
+    expect(getOptions(locale, config, entries)).toEqual([
+      { value: 'bar', label: 'bar', searchValue: 'bar' },
+      { value: 'baz', label: 'baz', searchValue: 'baz' },
+      { value: 'foo', label: 'foo', searchValue: 'foo' },
+    ]);
   });
 });
