@@ -128,23 +128,24 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       const { slug, locales } = refEntry;
       const isIndexFile = isCollectionIndexFile(collection, refEntry);
       const getFieldConfigArgs = { collectionName, fileName, isIndexFile };
+      const _keyPath = _valueField.match(/^{{(.+)\.\*(?:\.\w+)?}}$/)?.[1];
+
+      const _config = _keyPath
+        ? getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath })
+        : undefined;
+
+      /**
+       * Flag for handling a simple list field with no subfields.
+       */
+      const isSimpleListField =
+        _config?.widget === 'list' && !_config.field && !_config.fields && !_config.types;
 
       /**
        * Flag for handling a list field with the `field` option that produces a single subfield.
-       * Note that this only takes simple cases into account, e.g. `{{categories.*.name}}`; it
-       * doesn’t work with edge cases using a deeply nested key path.
-       * @see https://decapcms.org/docs/widgets/#list
        * @see https://github.com/sveltia/sveltia-cms/discussions/400
        */
-      const isListFieldWithSingleSubfield = (() => {
-        const _keyPath = _valueField.match(/^{{(\w+)\.\*\.\w+}}$/)?.[1];
-
-        const _config = _keyPath
-          ? getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath })
-          : undefined;
-
-        return _config?.widget === 'list' && !!_config.field;
-      })();
+      const isSingleSubfieldListField =
+        _config?.widget === 'list' && !!_config.field && !_config.fields && !_config.types;
 
       /**
        * Wrapper for {@link getFieldDisplayValue}.
@@ -174,30 +175,37 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
             ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
           ].map((fieldName) =>
-            !isListFieldWithSingleSubfield && fieldName.includes('.')
+            !isSingleSubfieldListField && fieldName.includes('.')
               ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
               : fieldName,
           ),
         ).map((/** @type {string} */ fieldName) => {
           if (fieldName.endsWith('.*')) {
-            const regex = new RegExp(
-              `^${escapeRegExp(fieldName).replace('\\.\\*', '\\.\\d+\\.[^.]+')}$`,
-            );
+            const pattern = isSimpleListField ? '\\.\\d+' : '\\.\\d+\\.[^.]+';
+            const regex = new RegExp(`^${escapeRegExp(fieldName).replace('\\.\\*', pattern)}$`);
 
+            /** @type {Record<string, any[]>} */
             const valueMap = unflatten(
               Object.fromEntries(
                 Object.entries(content).filter(([keyPath]) => regex.test(keyPath)),
               ),
             );
 
-            return [fieldName, valueMap[Object.keys(valueMap)[0]] ?? ''];
+            const key = Object.keys(valueMap)[0];
+            const list = valueMap[key];
+
+            if (isSimpleListField) {
+              return [key, list.map((value) => ({ '*': value }))];
+            }
+
+            return [fieldName, list ?? ''];
           }
 
-          if (isListFieldWithSingleSubfield) {
-            // This `match` should not return `null` because `isListFieldWithSingleSubfield` already
+          if (isSingleSubfieldListField) {
+            // This `match` should not return `null` because `isSingleSubfieldListField` already
             // matched the same regex
             const [, _fieldName, key] = fieldName.match(/^(\w+\.\*)\.(\w+)$/) ?? [];
-            const regex = new RegExp(`^${_fieldName.replace('.*', '\\.\\d+')}$`);
+            const regex = new RegExp(`^${_fieldName.replace('\\.\\*', '\\.\\d+')}$`);
 
             return [
               _fieldName,

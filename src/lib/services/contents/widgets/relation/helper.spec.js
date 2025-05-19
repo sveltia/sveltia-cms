@@ -104,15 +104,21 @@ describe('Test getOptions()', async () => {
             ],
           },
           {
+            name: 'tags',
+            file: 'data/tags.md',
+            fields: [
+              { name: 'title' },
+              // List field with no subfields
+              { name: 'tags', widget: 'list' },
+            ],
+          },
+          {
             name: 'categories',
             file: 'data/categories.md',
             fields: [
               { name: 'title' },
-              {
-                name: 'blog',
-                widget: 'list',
-                field: { name: 'category' },
-              },
+              // List field with a single subfield
+              { name: 'blog', widget: 'list', field: { name: 'category' } },
             ],
           },
         ],
@@ -917,6 +923,42 @@ describe('Test getOptions()', async () => {
         entries,
       ),
     ).toEqual([]);
+  });
+
+  test('referring a list field with no subfields', () => {
+    const config = {
+      name: 'tags',
+      label: 'Tags',
+      widget,
+      collection: 'relation_files',
+      file: 'tags',
+      value_field: 'tags.*',
+    };
+
+    /** @type {Entry[]} */
+    const entries = [
+      {
+        id: '',
+        sha: '',
+        slug: 'tags',
+        subPath: 'tags',
+        locales: {
+          _default: {
+            ...localizedEntryProps,
+            content: flatten({
+              title: 'title',
+              tags: ['foo', 'bar', 'baz'],
+            }),
+          },
+        },
+      },
+    ];
+
+    expect(getOptions(locale, config, entries)).toEqual([
+      { value: 'bar', label: 'bar', searchValue: 'bar' },
+      { value: 'baz', label: 'baz', searchValue: 'baz' },
+      { value: 'foo', label: 'foo', searchValue: 'foo' },
+    ]);
   });
 
   // https://github.com/sveltia/sveltia-cms/discussions/400
