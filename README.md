@@ -300,6 +300,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the entry slug, e.g. `{{date | date('YYYYMMDD-HHmm', 'utc')}}`. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/278#issuecomment-2565313420))
     - The `date` transformation returns an empty string if an invalid date is given.[^176]
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
+  - The collection `label` defaults to the `name` value according to the [Decap CMS document](https://decapcms.org/docs/configuration-options/#collections), while Netlify/Decap CMS actually throws a configuration error if the `label` option is omitted.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
@@ -433,7 +434,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The redundant `search_fields` option is optional in Sveltia CMS, as it defaults to `display_fields`, `value_field` or the collection’s `identifier_field`, which is `title` by default.
   - The `value_field` option is also optional in Sveltia CMS, as it defaults to entry slugs (`{{slug}}`).
   - A new item created in a referenced collection is immediately available in the options.[^138]
-  - It’s possible to refer to a list field with the `field` option, which produces a single subfield but does not output the subfield `name` in the data, using the `{{cities.*.name}}` syntax. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/400))
+  - It’s possible to refer to a list field with the `field` option, which produces a single subfield but does not output the subfield `name` in the data, using the `value_field: cities.*.name` syntax. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/400))
 - Select
   - It’s possible to select an option with value `0`.[^56]
   - `label` is displayed in the Preview Pane instead of `value`.
