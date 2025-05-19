@@ -130,7 +130,7 @@
    * due to {@link setInputValue}.
    */
   const updateSimpleList = () => {
-    const normalizedValue = inputValue.split(/\n/g).map((val) => val.trim());
+    const normalizedValue = inputValue.split(/\n/g);
 
     Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
       if (i18n !== 'duplicate' && _locale !== locale) {
