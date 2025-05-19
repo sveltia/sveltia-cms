@@ -274,6 +274,7 @@
   size={'x-large'}
   okLabel={$_('insert')}
   okDisabled={!selectedResource}
+  focusInput={false}
   bind:open
   onOk={() => {
     if (selectedResource) {
