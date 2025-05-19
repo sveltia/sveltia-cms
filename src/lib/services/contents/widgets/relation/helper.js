@@ -134,7 +134,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
        * @see https://decapcms.org/docs/widgets/#list
        * @see https://github.com/sveltia/sveltia-cms/discussions/400
        */
-      const isSimpleListField = (() => {
+      const isListFieldWithSingleSubfield = (() => {
         const _keyPath = _valueField.match(/^{{(\w+)\.\*\.\w+}}$/)?.[1];
 
         const _config = _keyPath
@@ -172,7 +172,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
             ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
           ].map((fieldName) =>
-            !isSimpleListField && fieldName.includes('.')
+            !isListFieldWithSingleSubfield && fieldName.includes('.')
               ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
               : fieldName,
           ),
@@ -191,11 +191,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
             return [fieldName, valueMap[Object.keys(valueMap)[0]] ?? ''];
           }
 
-          if (isSimpleListField) {
-            const [, _fieldName, _replacer] = fieldName.match(/^(\w+\.\*)\.(\w+)$/) ?? [];
+          if (isListFieldWithSingleSubfield) {
+            const [, _fieldName, _key] = fieldName.match(/^(\w+\.\*)\.(\w+)$/) ?? [];
 
             if (_fieldName) {
-              return [_fieldName, Object.entries(content).map(([, v]) => ({ [_replacer]: v }))];
+              return [_fieldName, Object.entries(content).map(([, v]) => ({ [_key]: v }))];
             }
           }
 

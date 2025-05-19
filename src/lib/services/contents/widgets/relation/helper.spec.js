@@ -110,7 +110,7 @@ describe('Test getOptions()', async () => {
               {
                 name: 'blog',
                 widget: 'list',
-                field: { name: 'category', widget: 'string' },
+                field: { name: 'category' },
               },
             ],
           },
