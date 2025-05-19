@@ -131,6 +131,8 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
       /**
        * Flag for handling a list field with the `field` option that produces a single subfield.
+       * Note that this only takes simple cases into account, e.g. `{{categories.*.name}}`; it
+       * doesn’t work with edge cases using a deeply nested key path.
        * @see https://decapcms.org/docs/widgets/#list
        * @see https://github.com/sveltia/sveltia-cms/discussions/400
        */
@@ -192,11 +194,17 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           }
 
           if (isListFieldWithSingleSubfield) {
-            const [, _fieldName, _key] = fieldName.match(/^(\w+\.\*)\.(\w+)$/) ?? [];
+            // This `match` should not return `null` because `isListFieldWithSingleSubfield` already
+            // matched the same regex
+            const [, _fieldName, key] = fieldName.match(/^(\w+\.\*)\.(\w+)$/) ?? [];
+            const regex = new RegExp(`^${_fieldName.replace('.*', '\\.\\d+')}$`);
 
-            if (_fieldName) {
-              return [_fieldName, Object.entries(content).map(([, v]) => ({ [_key]: v }))];
-            }
+            return [
+              _fieldName,
+              Object.entries(content)
+                .filter(([k]) => regex.test(k))
+                .map(([, v]) => ({ [key]: v })),
+            ];
           }
 
           if (fieldName === 'slug') {

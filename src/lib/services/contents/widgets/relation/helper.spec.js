@@ -107,6 +107,7 @@ describe('Test getOptions()', async () => {
             name: 'categories',
             file: 'data/categories.md',
             fields: [
+              { name: 'title' },
               {
                 name: 'blog',
                 widget: 'list',
@@ -940,6 +941,7 @@ describe('Test getOptions()', async () => {
           _default: {
             ...localizedEntryProps,
             content: flatten({
+              title: 'title',
               blog: ['foo', 'bar', 'baz'],
             }),
           },

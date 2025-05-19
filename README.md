@@ -433,6 +433,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The redundant `search_fields` option is optional in Sveltia CMS, as it defaults to `display_fields`, `value_field` or the collection’s `identifier_field`, which is `title` by default.
   - The `value_field` option is also optional in Sveltia CMS, as it defaults to entry slugs (`{{slug}}`).
   - A new item created in a referenced collection is immediately available in the options.[^138]
+  - It’s possible to refer to a list field with the `field` option, which produces a single subfield but does not output the subfield `name` in the data, using the `{{cities.*.name}}` syntax. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/400))
 - Select
   - It’s possible to select an option with value `0`.[^56]
   - `label` is displayed in the Preview Pane instead of `value`.
