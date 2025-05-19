@@ -495,8 +495,7 @@ export const strings = {
     search_for_image: '画像を検索',
     locations: '場所',
     location: {
-      local: 'お使いのコンピューター',
-      repository: 'このレポジトリ',
+      repository: 'あなたのサイト',
       external_locations: '外部の場所',
       stock_photos: 'ストックフォト',
     },

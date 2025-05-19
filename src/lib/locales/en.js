@@ -495,8 +495,7 @@ export const strings = {
     search_for_image: 'Search for Images',
     locations: 'Locations',
     location: {
-      local: 'Your Computer',
-      repository: 'This Repository',
+      repository: 'Your Site',
       external_locations: 'External Locations',
       stock_photos: 'Stock Photos',
     },
