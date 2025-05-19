@@ -12,7 +12,7 @@
     MenuButton,
     MenuItem,
     Spacer,
-    TextInput,
+    TextArea,
     TruncatedText,
   } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
@@ -118,28 +118,19 @@
   const hasMaxItems = $derived(items.length >= max);
 
   /**
-   * Update {@link inputValue} when {@link currentValue} is reverted. This also cleans up the input
-   * field value by removing extra spaces or commas.
+   * Update {@link inputValue} when {@link currentValue} is updated.
    */
   const setInputValue = () => {
-    const currentValueStr = currentValue?.join(', ') ?? '';
-
-    // Avoid a cycle dependency & infinite loop
-    if (!/,\s*$/.test(inputValue) && inputValue.trim() !== currentValueStr) {
-      inputValue = currentValueStr;
-    }
+    inputValue = currentValue?.join('\n') ?? '';
   };
 
   /**
    * Update the value for the List widget w/o subfield(s). This has to be called from the `input`
-   * event handler on `<TextInput>`, not a `inputValue` reaction, because it causes an infinite loop
+   * event handler on `<TextArea>`, not a `inputValue` reaction, because it causes an infinite loop
    * due to {@link setInputValue}.
    */
   const updateSimpleList = () => {
-    const normalizedValue = inputValue
-      .split(/,/g)
-      .map((val) => val.trim())
-      .filter((val) => val !== '');
+    const normalizedValue = inputValue.split(/\n/g).map((val) => val.trim());
 
     Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
       if (i18n !== 'duplicate' && _locale !== locale) {
@@ -490,8 +481,9 @@
       </div>
     {/if}
   {:else}
-    <TextInput
+    <TextArea
       bind:value={inputValue}
+      autoResize={true}
       flex
       {readonly}
       {required}

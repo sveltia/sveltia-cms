@@ -10,7 +10,6 @@
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import Subsection from '$lib/components/contents/details/widgets/object/subsection.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
@@ -43,7 +42,6 @@
   } = $derived(fieldConfig);
   const hasSubFields = $derived(!!(field ?? fields ?? types));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`));
-  const listFormatter = $derived(getListFormatter(locale));
   const items = $derived(
     unflatten(
       Object.fromEntries(
@@ -84,5 +82,9 @@
     {/await}
   {/each}
 {:else if Array.isArray(currentValue) && currentValue.length}
-  <p lang={locale} dir="auto">{listFormatter.format(currentValue)}</p>
+  <ul lang={locale} dir="auto">
+    {#each currentValue as item}
+      <li>{item}</li>
+    {/each}
+  </ul>
 {/if}
