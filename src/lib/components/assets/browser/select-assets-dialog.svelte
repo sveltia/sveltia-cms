@@ -13,7 +13,6 @@
     TextInput,
   } from '@sveltia/ui';
   import { getHash } from '@sveltia/utils/crypto';
-  import { getPathInfo } from '@sveltia/utils/file';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
@@ -121,11 +120,6 @@
         enabled: true,
       },
     };
-  });
-  const entryDirName = $derived.by(() => {
-    const entry = $entryDraft?.originalEntry;
-
-    return entry ? getPathInfo(Object.values(entry.locales)[0].path).dirname : undefined;
   });
   const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
   const selectedFolder = $derived(
@@ -360,11 +354,7 @@
       {#if isDefaultLibrary && selectedFolder}
         <InternalAssetsPanel
           {accept}
-          assets={listedAssets.filter((asset) =>
-            selectedFolder.entryRelative
-              ? getPathInfo(asset.path).dirname === entryDirName
-              : equal(asset.folder, selectedFolder),
-          )}
+          assets={listedAssets.filter((asset) => equal(asset.folder, selectedFolder))}
           bind:selectedResource
           {searchTerms}
           basePath={selectedFolder.internalPath}
