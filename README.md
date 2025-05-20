@@ -404,7 +404,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A required List field with no subfield or value is marked as invalid.[^43] No need to set the `min` and `max` options for the `required` option to work.
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing.[^44]
   - An optional List field won’t populate an item by default when the subfield has the `default` value.[^162]
-  - A simple list field with no subfields is displayed as a multiline text field,[^219] where users can enter spaces and commas.[^50][^220]
+  - A simple list field with no subfields is displayed as a multiline text field,[^219] where users can use spaces[^50] and commas[^220] for list items. A comma is no longer treated as a list delimiter.
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
