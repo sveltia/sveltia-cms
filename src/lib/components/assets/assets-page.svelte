@@ -78,8 +78,8 @@
       );
 
     if (!folder) {
-      // Not found, redirect to All Assets
-      goto('/assets/-/all');
+      // Not found
+      $selectedAssetFolder = undefined;
     } else if (!equal($selectedAssetFolder, folder)) {
       $selectedAssetFolder = folder;
     }
