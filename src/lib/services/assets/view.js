@@ -22,7 +22,6 @@ import {
  * BackendService,
  * FilteringConditions,
  * GroupingConditions,
- * InternalSiteConfig,
  * SortingConditions,
  * } from '$lib/types/private';
  */
