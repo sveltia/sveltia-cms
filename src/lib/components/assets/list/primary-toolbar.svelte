@@ -1,5 +1,5 @@
 <script>
-  import { FloatingActionButtonWrapper, Spacer, Toolbar } from '@sveltia/ui';
+  import { FloatingActionButtonWrapper, Toolbar } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
@@ -45,7 +45,6 @@
       <span role="none">/{$selectedAssetFolder.internalPath}</span>
     {/if}
   </h2>
-  <Spacer flex />
   {#if !($isSmallScreen || $isMediumScreen)}
     <PreviewAssetButton asset={$focusedAsset} />
     <CopyAssetsButton assets={$focusedAsset ? [$focusedAsset] : []} />

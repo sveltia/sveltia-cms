@@ -9,7 +9,6 @@
     MenuButton,
     MenuItem,
     MenuItemCheckbox,
-    Spacer,
     SplitButton,
     Toast,
     Toolbar,
@@ -197,7 +196,6 @@
       {/if}
     </TruncatedText>
   </h2>
-  <Spacer flex />
   {#if !disabled && previewURL}
     <Button
       variant="tertiary"
@@ -368,12 +366,5 @@
     background-color: var(--sui-secondary-background-color);
     font-size: var(--sui-font-size-default);
     line-height: 1.5;
-  }
-
-  h2 {
-    @media (width < 768px) {
-      flex: auto !important;
-      padding-inline-end: 0 !important;
-    }
   }
 </style>

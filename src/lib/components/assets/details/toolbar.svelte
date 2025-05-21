@@ -51,10 +51,3 @@
     {/snippet}
   </EditOptionsButton>
 </Toolbar>
-
-<style lang="scss">
-  h2 {
-    flex: auto !important;
-    padding-inline-end: 0 !important;
-  }
-</style>

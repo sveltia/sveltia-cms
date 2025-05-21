@@ -3,7 +3,6 @@
     Button,
     FloatingActionButtonWrapper,
     Infobar,
-    Spacer,
     Toolbar,
     TruncatedText,
   } from '@sveltia/ui';
@@ -61,7 +60,6 @@
         </TruncatedText>
       </div>
     {/if}
-    <Spacer flex />
     {#if isEntryCollection}
       {#if !$isSmallScreen}
         <Button
