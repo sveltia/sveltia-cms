@@ -1126,9 +1126,9 @@ We understand that this configuration may be a bit confusing, but it’s necessa
 
 This tip is not really specific to Sveltia CMS, but some developers have asked the maintainer about it:
 
-In the Markdown editor, pressing `Shift+Enter` inserts a [soft line break](https://spec.commonmark.org/0.31.2/#soft-line-breaks) (`\n`). We can’t change the behaviour to add a [hard line break](https://spec.commonmark.org/0.31.2/#hard-line-breaks) (`<br>`) — it’s a limitation of the underlying [Lexical](https://lexical.dev/) framework. However, if you look at the preview, you may notice that a soft line break is rendered as a hard line break. That’s because the preview is using the [Marked](https://marked.js.org/) library with the [`breaks` option](https://marked.js.org/using_advanced#options) enabled, which mimics how comments are rendered on GitHub.
+In the Markdown editor, pressing `Shift+Enter` inserts a [soft line break](https://spec.commonmark.org/0.31.2/#soft-line-breaks) (`\n`). We can’t change the behaviour to add a [hard line break](https://spec.commonmark.org/0.31.2/#hard-line-breaks) (`<br>`) — it’s a limitation of the underlying [Lexical](https://lexical.dev/) framework. However, if you look at the preview, you may notice that a soft line break is rendered as a hard line break. That’s because the preview is using the [Marked](https://github.com/markedjs/marked) library with the [`breaks` option](https://marked.js.org/using_advanced#options) enabled, which mimics how comments are rendered on GitHub.
 
-Chances are the Markdown library you’ve installed for your frontend can do the same:
+Chances are the Markdown parser you’ve installed for your frontend can do the same:
 
 - [markdown-it](https://github.com/markdown-it/markdown-it) and [remarkable](https://github.com/jonschlinkert/remarkable) also have the `breaks` option
 - [showdown](https://github.com/showdownjs/showdown) has the `simpleLineBreaks` option
