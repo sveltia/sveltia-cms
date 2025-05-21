@@ -131,8 +131,9 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 210+ issues, or 420+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
-    - 200 issues, or 400 if including duplicates, by GA (we did it!)
+    - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 350 issues, or 700 if including duplicates, in the future
+    - or everything that’s relevant, fixable and worthwhile 💪
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Most of the bugs, including annoying crashes, are already solved
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
@@ -149,7 +150,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 
 ### Better UX
 
-- Created and actively maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design and marketing. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
+- Created and actively maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design, marketing and problem solving. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - The maintainer tries to respond to bug reports as quickly as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
 - Frequent releases deliver new features and enhancements to users faster. Most of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1][^211][^212][^213][^214]
@@ -175,6 +176,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Uses caching, lazy loading and infinite scrolling techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS.[^39][^38]
 - No typing lag on input widgets, especially within nested lists and objects.[^77]
+- The entry preview doesn’t use an `<iframe>` because it’s a performance overhead.[^179]
 
 ### Better productivity
 
