@@ -435,7 +435,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`.[^94]
   - `display_fields` is displayed in the Preview Pane instead of `value_field`.
   - The redundant `search_fields` option is optional in Sveltia CMS, as it defaults to `display_fields`, `value_field` or the collection’s `identifier_field`, which is `title` by default.
-  - The `value_field` option is also optional in Sveltia CMS, as it defaults to entry slugs (`{{slug}}`).
+  - The `value_field` option is also optional in Sveltia CMS, as it defaults to `{{slug}}` (entry slugs).
   - A new item created in a referenced collection is immediately available in the options.[^138]
   - A referenced DateTime field value is displayed in the specified format.[^221]
   - It’s possible to refer to a List field with the `field` option, which produces a single subfield but does not output the subfield `name` in the data, using the `value_field: cities.*.name` syntax. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/400))
