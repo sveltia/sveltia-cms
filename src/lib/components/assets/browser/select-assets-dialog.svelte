@@ -13,6 +13,7 @@
     TextInput,
   } from '@sveltia/ui';
   import { getHash } from '@sveltia/utils/crypto';
+  import { getPathInfo } from '@sveltia/utils/file';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
@@ -37,7 +38,6 @@
    * AssetFolderInfo,
    * AssetKind,
    * EntryDraft,
-   * EntryFileMap,
    * MediaLibraryService,
    * SelectAssetsView,
    * SelectedResource,
@@ -77,8 +77,8 @@
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
   let libraryName = $state('default-global');
-  /** @type {EntryFileMap} */
-  let droppedFiles = $state({});
+  /** @type {Asset[]} */
+  let droppedAssets = $state([]);
   /** @type {Asset[]} */
   let unsavedAssets = $state([]);
   /** @type {FilePicker | undefined} */
@@ -127,6 +127,15 @@
       ? allDefaultLibraryFolders[libraryName.replace('default-', '')].folder
       : undefined,
   );
+  const originalEntry = $derived($entryDraft?.originalEntry);
+  const targetFolderPath = $derived.by(() => {
+    if (selectedFolder?.entryRelative && originalEntry) {
+      // @todo FIXME: This only works with `media_folder: ""`
+      return getPathInfo(Object.values(originalEntry.locales)[0].path).dirname;
+    }
+
+    return selectedFolder?.internalPath;
+  });
   const listedAssets = $derived(
     [...$allAssets, ...unsavedAssets]
       .filter((asset) => !kind || kind === asset.kind)
@@ -157,28 +166,39 @@
 
   /**
    * Convert unsaved files to the `Asset` format so these can be browsed just like other assets.
+   * @param {object} args Arguments.
+   * @param {File} args.file Raw file.
+   * @param {string} [args.blobURL] Blob URL of the file.
+   * @param {AssetFolderInfo | undefined} args.folder Asset folder.
+   * @returns {Promise<Asset>} Asset.
+   */
+  const convertFileItemToAsset = async ({ file, blobURL, folder }) => {
+    const { name, size } = file;
+
+    return /** @type {Asset} */ ({
+      unsaved: true,
+      file,
+      blobURL: blobURL ?? URL.createObjectURL(file),
+      name,
+      path: `${targetFolderPath}/${name}`,
+      sha: await getHash(file),
+      size,
+      kind: getAssetKind(name),
+      folder,
+    });
+  };
+
+  /**
+   * Get all the unsaved assets, including already cached for the draft and dropped ones.
    * @returns {Promise<Asset[]>} Assets.
    */
   const getUnsavedAssets = async () =>
-    Promise.all(
-      [...Object.entries($entryDraft?.files ?? {}), ...Object.entries(droppedFiles)].map(
-        async ([blobURL, { file, folder }]) => {
-          const { name, size } = file;
-
-          return /** @type {Asset} */ ({
-            unsaved: true,
-            file,
-            blobURL,
-            name,
-            path: `${folder?.internalPath}/${name}`,
-            sha: await getHash(file),
-            size,
-            kind: getAssetKind(name),
-            folder,
-          });
-        },
+    Promise.all([
+      ...[...Object.entries($entryDraft?.files ?? {})].map(async ([blobURL, { file, folder }]) =>
+        convertFileItemToAsset({ file, blobURL, folder }),
       ),
-    );
+      ...Object.values(droppedAssets),
+    ]);
 
   /**
    * Handle dropped files.
@@ -188,7 +208,7 @@
     files.forEach(async (file, index) => {
       const hash = await getHash(file);
       const folder = selectedFolder;
-      const resource = { file, folder };
+      const asset = await convertFileItemToAsset({ file, folder });
 
       const hasExistingResource = (
         await Promise.all(
@@ -202,10 +222,10 @@
         return;
       }
 
-      droppedFiles[URL.createObjectURL(file)] = resource;
+      droppedAssets.push(asset);
 
       if (index === 0) {
-        selectedResource = resource;
+        selectedResource = { asset };
       }
     });
   };
@@ -219,7 +239,7 @@
 
   $effect(() => {
     void $entryDraft?.files;
-    void droppedFiles;
+    void droppedAssets;
 
     (async () => {
       unsavedAssets = await getUnsavedAssets();
@@ -282,7 +302,7 @@
     // Reset values
     enteredURL = '';
     rawSearchTerms = '';
-    droppedFiles = {};
+    droppedAssets = [];
   }}
 >
   {#snippet headerExtra()}
@@ -354,7 +374,13 @@
       {#if isDefaultLibrary && selectedFolder}
         <InternalAssetsPanel
           {accept}
-          assets={listedAssets.filter((asset) => equal(asset.folder, selectedFolder))}
+          assets={listedAssets.filter(
+            (asset) =>
+              equal(asset.folder, selectedFolder) &&
+              (selectedFolder.entryRelative
+                ? getPathInfo(asset.path).dirname === targetFolderPath
+                : true),
+          )}
           bind:selectedResource
           {searchTerms}
           basePath={selectedFolder.internalPath}

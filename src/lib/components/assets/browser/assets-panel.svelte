@@ -2,6 +2,7 @@
   import { EmptyState, InfiniteScroll, Option, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
+  import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
   import { isSmallScreen } from '$lib/services/user/env';
@@ -66,16 +67,12 @@
       <InfiniteScroll items={filteredAssets} itemKey="path">
         {#snippet renderItem(/** @type {Asset} */ asset)}
           {#await sleep() then}
-            {@const { kind, name, path, unsaved } = asset}
+            {@const { kind, name, path, unsaved, folder } = asset}
             <!-- Show asset path relative to the base folder, or just file name -->
-            {@const relPath = basePath ? stripSlashes(path.replace(basePath, '')) : name}
+            {@const relPath =
+              basePath && !folder.entryRelative ? stripSlashes(path.replace(basePath, '')) : name}
             {@const pathArray = relPath.split('/')}
-            <Option
-              label=""
-              value={path}
-              selected={(selectedResource?.asset?.path ||
-                `${basePath}/${selectedResource?.file?.name}`) === path}
-            >
+            <Option label="" value={path} selected={equal(asset, selectedResource?.asset)}>
               {#snippet checkIcon()}
                 <!-- Remove check icon -->
               {/snippet}
