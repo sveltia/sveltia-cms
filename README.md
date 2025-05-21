@@ -1130,9 +1130,12 @@ In the Markdown editor, pressing `Shift+Enter` inserts a [soft line break](https
 
 Chances are the Markdown parser you’ve installed for your frontend can do the same:
 
-- [markdown-it](https://github.com/markdown-it/markdown-it) and [remarkable](https://github.com/jonschlinkert/remarkable) also have the `breaks` option
-- [showdown](https://github.com/showdownjs/showdown) has the `simpleLineBreaks` option
-- [remark](https://github.com/remarkjs/remark) offers a [plugin](https://github.com/remarkjs/remark-breaks)
+- [markdown-it](https://github.com/markdown-it/markdown-it) (used in Eleventy and VitePress) also has the `breaks` option
+- [remarkable](https://github.com/jonschlinkert/remarkable) also has the `breaks` option
+- [Showdown](https://github.com/showdownjs/showdown) has the `simpleLineBreaks` option
+- [goldmark](https://github.com/yuin/goldmark/) (used in Hugo) has the `html.WithHardWraps` option
+- [kramdown](https://github.com/gettalong/kramdown) (used in Jekyll) has the `hard_wrap` option with the GFM parser
+- [remark](https://github.com/remarkjs/remark) (used in Astro) offers a [plugin](https://github.com/remarkjs/remark-breaks)
 - [micromark](https://github.com/micromark/micromark) clarifies it doesn’t have such an option and recommends alternatives
 
 ### Controlling data output
