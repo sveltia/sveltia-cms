@@ -1128,7 +1128,7 @@ This tip is not really specific to Sveltia CMS, but some developers have asked t
 
 In the Markdown editor, pressing `Shift+Enter` inserts a [soft line break](https://spec.commonmark.org/0.31.2/#soft-line-breaks) (`\n`). We can’t change the behaviour to add a [hard line break](https://spec.commonmark.org/0.31.2/#hard-line-breaks) (`<br>`) — it’s a limitation of the underlying [Lexical](https://lexical.dev/) framework. However, if you look at the preview, you may notice that a soft line break is rendered as a hard line break. That’s because the preview is using the [Marked](https://github.com/markedjs/marked) library with the [`breaks` option](https://marked.js.org/using_advanced#options) enabled, which mimics how comments are rendered on GitHub.
 
-Chances are the Markdown parser you’ve installed for your frontend can do the same:
+Chances are the Markdown parser you use for your frontend can do the same:
 
 - [markdown-it](https://github.com/markdown-it/markdown-it) (used in Eleventy and VitePress) also has the `breaks` option
 - [remarkable](https://github.com/jonschlinkert/remarkable) also has the `breaks` option
