@@ -76,6 +76,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
   - [Disabling stock assets](#disabling-stock-assets)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
   - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
+  - [Rendering soft line breaks as hard line breaks in Markdown](#rendering-soft-line-breaks-as-hard-line-breaks-in-markdown)
   - [Controlling data output](#controlling-data-output)
   - [Disabling automatic deployments](#disabling-automatic-deployments)
   - [Setting up Content Security Policy](#setting-up-content-security-policy)
@@ -404,7 +405,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - A required List field with no subfield or value is marked as invalid.[^43] No need to set the `min` and `max` options for the `required` option to work.
   - An optional List field with no subfield or value is saved as an empty array, rather than nothing.[^44]
   - An optional List field won’t populate an item by default when the subfield has the `default` value.[^162]
-  - A simple list field with no subfields is displayed as a multiline text field,[^219] where users can use spaces[^50] and commas[^220] for list items. A comma is no longer treated as a list delimiter.
+  - A simple List field with no subfields is displayed as a multiline text field,[^219] where users can use spaces[^50] and commas[^220] for list items. A comma is no longer treated as a list delimiter.
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
@@ -419,7 +420,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
   - Code in a code block in the editor can be copied as expected.[^165]
   - Language-annotated code block doesn’t trigger unsaved changes.[^189]
-  - Line breaks are rendered as line breaks in the Preview Pane according to GitHub Flavored Markdown (GFM).
+  - Soft line breaks are [rendered as hard line breaks](#rendering-soft-line-breaks-as-hard-line-breaks-in-markdown) in the Preview Pane.
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
@@ -434,7 +435,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The redundant `search_fields` option is optional in Sveltia CMS, as it defaults to `display_fields`, `value_field` or the collection’s `identifier_field`, which is `title` by default.
   - The `value_field` option is also optional in Sveltia CMS, as it defaults to entry slugs (`{{slug}}`).
   - A new item created in a referenced collection is immediately available in the options.[^138]
-  - It’s possible to refer to a list field with the `field` option, which produces a single subfield but does not output the subfield `name` in the data, using the `value_field: cities.*.name` syntax. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/400))
+  - A referenced DateTime field value is displayed in the specified format.[^221]
+  - It’s possible to refer to a List field with the `field` option, which produces a single subfield but does not output the subfield `name` in the data, using the `value_field: cities.*.name` syntax. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/400))
 - Select
   - It’s possible to select an option with value `0`.[^56]
   - `label` is displayed in the Preview Pane instead of `value`.
@@ -1118,6 +1120,19 @@ Use `date_format: false` to hide the date picker and make the input [time only](
 
 We understand that this configuration may be a bit confusing, but it’s necessary to maintain backward compatibility with Netlify CMS. We plan to improve the widget options and introduce new input types: [month](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/month) and [week](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/week).
 
+### Rendering soft line breaks as hard line breaks in Markdown
+
+This tip is not really specific to Sveltia CMS, but some developers have asked the maintainer about it:
+
+In the Markdown editor, pressing `Shift+Enter` inserts a [soft line break](https://spec.commonmark.org/0.31.2/#soft-line-breaks) (`\n`). We can’t change the behaviour to add a [hard line break](https://spec.commonmark.org/0.31.2/#hard-line-breaks) (`<br>`) — it’s a limitation of the underlying [Lexical](https://lexical.dev/) framework. However, if you look at the preview, you may notice that a soft line break is rendered as a hard line break. That’s because the preview is using the [Marked](https://marked.js.org/) library with the [`breaks` option](https://marked.js.org/using_advanced#options) enabled, which mimics how comments are rendered on GitHub.
+
+Chances are the Markdown library you’ve installed for your frontend can do the same:
+
+- [markdown-it](https://github.com/markdown-it/markdown-it) and [remarkable](https://github.com/jonschlinkert/remarkable) also have the `breaks` option
+- [showdown](https://github.com/showdownjs/showdown) has the `simpleLineBreaks` option
+- [remark](https://github.com/remarkjs/remark) offers a [plugin](https://github.com/remarkjs/remark-breaks)
+- [micromark](https://github.com/micromark/micromark) clarifies it doesn’t have such an option and recommends alternatives
+
 ### Controlling data output
 
 Sveltia CMS supports some [data output](#better-data-output) options, including JSON/YAML formatting preferences, at the root level of the configuration file. The default options are listed below:
@@ -1787,3 +1802,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^219]: Netlify/Decap CMS [#3018](https://github.com/decaporg/decap-cms/issues/3018)
 
 [^220]: Netlify/Decap CMS [#2153](https://github.com/decaporg/decap-cms/issues/2153)
+
+[^221]: Netlify/Decap CMS [#3421](https://github.com/decaporg/decap-cms/issues/3421)
