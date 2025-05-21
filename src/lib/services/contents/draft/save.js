@@ -595,6 +595,11 @@ export const getSlugs = ({ draft }) => {
 export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
   const { entryRelative, internalPath, publicPath } = folder;
 
+  if (internalPath === undefined || publicPath === undefined) {
+    // This shouldn’t happen, but avoids type errors in the following code
+    return { resolvedInternalPath: '', resolvedPublicPath: '' };
+  }
+
   if (!entryRelative) {
     return {
       resolvedInternalPath: fillSlugTemplate(internalPath, fillSlugOptions),
@@ -769,7 +774,7 @@ const createBaseSavingEntryData = async ({
   draft,
   slugs: { defaultLocaleSlug, canonicalSlug, localizedSlugs },
 }) => {
-  const _globalAssetFolder = /** @type {AssetFolderInfo} */ (get(globalAssetFolder));
+  const _globalAssetFolder = get(globalAssetFolder);
   const { collection, currentLocales, collectionFile, currentValues, files } = draft;
 
   const {

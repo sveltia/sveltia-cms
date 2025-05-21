@@ -1,7 +1,7 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { canCreateAsset, globalAssetFolder, selectedAssetFolder } from '$lib/services/assets';
+  import { canCreateAsset, targetAssetFolder } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
 
   /**
@@ -16,7 +16,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const disabled = $derived(!canCreateAsset($selectedAssetFolder ?? $globalAssetFolder));
+  const disabled = $derived(!canCreateAsset($targetAssetFolder));
 </script>
 
 <Button

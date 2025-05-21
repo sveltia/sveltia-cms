@@ -22,7 +22,7 @@
     buttonDescription={$_('delete_asset')}
     dialogDescription={$_('confirm_deleting_this_asset')}
     onDelete={() => {
-      goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
+      goBack(`/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`);
     }}
     {useButton}
   />
@@ -32,7 +32,7 @@
   <BackButton
     aria-label={$_('cancel_editing')}
     onclick={() => {
-      goBack($selectedAssetFolder ? `/assets/${$selectedAssetFolder.internalPath}` : '/assets');
+      goBack(`/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`);
     }}
   />
   <h2 role="none">

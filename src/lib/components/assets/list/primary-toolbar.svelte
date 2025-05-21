@@ -12,9 +12,9 @@
   import {
     canCreateAsset,
     focusedAsset,
-    globalAssetFolder,
     selectedAssetFolder,
     selectedAssets,
+    targetAssetFolder,
   } from '$lib/services/assets';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
@@ -25,7 +25,7 @@
     return [];
   });
 
-  const uploadDisabled = $derived(!canCreateAsset($selectedAssetFolder ?? $globalAssetFolder));
+  const uploadDisabled = $derived(!canCreateAsset($targetAssetFolder));
 </script>
 
 <Toolbar variant="primary" aria-label={$_('folder')}>
@@ -39,9 +39,9 @@
   {/if}
   <h2 role="none">
     {#key $appLocale}
-      {getFolderLabelByCollection($selectedAssetFolder)}
+      {$selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : ''}
     {/key}
-    {#if !$isSmallScreen && $selectedAssetFolder?.internalPath}
+    {#if !$isSmallScreen && $selectedAssetFolder?.internalPath !== undefined}
       <span role="none">/{$selectedAssetFolder.internalPath}</span>
     {/if}
   </h2>

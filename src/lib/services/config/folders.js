@@ -156,6 +156,15 @@ export const getAllAssetFolders = (config) => {
     : `/${globalMediaFolder}`;
 
   /** @type {AssetFolderInfo} */
+  const allAssetsFolder = {
+    collectionName: undefined,
+    internalPath: undefined,
+    publicPath: undefined,
+    entryRelative: false,
+    hasTemplateTags: false,
+  };
+
+  /** @type {AssetFolderInfo} */
   const globalAssetFolder = {
     collectionName: undefined,
     internalPath: globalMediaFolder,
@@ -228,7 +237,7 @@ export const getAllAssetFolders = (config) => {
     });
   });
 
-  assetFolders.sort((a, b) => compare(a.internalPath, b.internalPath));
+  assetFolders.sort((a, b) => compare(a.internalPath ?? '', b.internalPath ?? ''));
 
-  return [globalAssetFolder, ...assetFolders];
+  return [allAssetsFolder, globalAssetFolder, ...assetFolders];
 };

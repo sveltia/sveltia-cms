@@ -35,7 +35,9 @@
 
   let isIndexPage = $state(false);
 
-  const selectedAssetFolderLabel = $derived(getFolderLabelByCollection($selectedAssetFolder));
+  const selectedAssetFolderLabel = $derived(
+    $selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : '',
+  );
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.
@@ -61,7 +63,7 @@
         isIndexPage = true;
       } else {
         // Redirect to All Assets
-        goto('/assets/all');
+        goto('/assets/-/all');
       }
 
       return;
@@ -69,11 +71,15 @@
 
     const folder =
       window.history.state?.folder ??
-      $allAssetFolders.find(({ internalPath }) => folderPath === internalPath);
+      $allAssetFolders.find(({ internalPath, collectionName }) =>
+        folderPath === '-/all'
+          ? internalPath === undefined && collectionName === undefined
+          : internalPath === folderPath,
+      );
 
     if (!folder) {
-      // Not found
-      $selectedAssetFolder = undefined;
+      // Not found, redirect to All Assets
+      goto('/assets/-/all');
     } else if (!equal($selectedAssetFolder, folder)) {
       $selectedAssetFolder = folder;
     }

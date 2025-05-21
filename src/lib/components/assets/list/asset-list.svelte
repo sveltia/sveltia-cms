@@ -7,12 +7,7 @@
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
-  import {
-    canCreateAsset,
-    globalAssetFolder,
-    selectedAssetFolder,
-    uploadingAssets,
-  } from '$lib/services/assets';
+  import { canCreateAsset, targetAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
 
   /**
@@ -20,7 +15,7 @@
    */
 
   const viewType = $derived($currentView.type);
-  const folder = $derived($selectedAssetFolder ?? $globalAssetFolder);
+  const folder = $derived($targetAssetFolder);
   const uploadDisabled = $derived(!canCreateAsset(folder));
 </script>
 

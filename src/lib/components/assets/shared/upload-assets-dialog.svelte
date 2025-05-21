@@ -3,12 +3,7 @@
   import mime from 'mime';
   import { _ } from 'svelte-i18n';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import {
-    globalAssetFolder,
-    selectedAssetFolder,
-    showAssetOverlay,
-    uploadingAssets,
-  } from '$lib/services/assets';
+  import { showAssetOverlay, targetAssetFolder, uploadingAssets } from '$lib/services/assets';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { hasMouse } from '$lib/services/user/env';
 
@@ -31,7 +26,7 @@
     }
 
     $uploadingAssets = {
-      folder: originalAsset ? originalAsset.folder : ($selectedAssetFolder ?? $globalAssetFolder),
+      folder: originalAsset ? originalAsset.folder : $targetAssetFolder,
       files,
       originalAsset,
     };

@@ -256,15 +256,18 @@
 /**
  * Global, collection-level, file-level or field-level asset folder information.
  * @typedef {object} AssetFolderInfo
- * @property {string} [collectionName] Collection name or `undefined` for the global folder.
+ * @property {string | undefined} collectionName Collection name or `undefined` for the All Assets
+ * and Global Assets folders.
  * @property {string} [fileName] Collection file name. File collection only.
  * @property {FieldKeyPath} [keyPath] Field key path.
- * @property {string} internalPath Folder path on the repository/filesystem, relative to the project
- * root directory. It can be a partial path if the collection’s `media_folder` property is a
- * relative path, because the complete path is entry-specific in that case.
- * @property {string} publicPath Absolute folder path that will appear in the public URL, starting
- * with `/`. It can be empty if the collection’s `public_folder` property is a relative path,
- * because the complete path cannot be easily determined.
+ * @property {string | undefined} internalPath Folder path on the repository/filesystem, relative to
+ * the project root directory. It can be a partial path if the collection’s `media_folder` property
+ * is a relative path, because the complete path is entry-specific in that case. It will be
+ * `undefined` for the All Assets folder.
+ * @property {string | undefined} publicPath Absolute folder path that will appear in the public
+ * URL, starting with `/`. It can be empty if the collection’s `public_folder` property is a
+ * relative path, because the complete path cannot be easily determined. It will be `undefined` for
+ * the All Assets folder.
  * @property {boolean} entryRelative Whether the `internalPath` is a relative path from the asset’s
  * associated entry.
  * @property {boolean} hasTemplateTags Whether the `internalPath` contains template tags like

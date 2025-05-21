@@ -12,13 +12,13 @@
 
   const folder = $derived(getAssetFolder({ collectionName: $selectedCollection?.name }));
   const { internalPath, entryRelative, hasTemplateTags } = $derived(
-    folder ?? { internalPath: '', entryRelative: false, hasTemplateTags: false },
+    folder ?? { internalPath: undefined, entryRelative: false, hasTemplateTags: false },
   );
   // Can’t upload assets if collection assets are saved at entry-relative paths
   const uploadDisabled = $derived(entryRelative || hasTemplateTags);
 </script>
 
-{#if internalPath && $isLargeScreen && $currentView.showMedia}
+{#if internalPath !== undefined && $isLargeScreen && $currentView.showMedia}
   <Group id="collection-assets" class="secondary-sidebar" aria-label={$_('collection_assets')}>
     <DropZone
       disabled={uploadDisabled}

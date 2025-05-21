@@ -19,11 +19,7 @@
       key: 'assets',
       label: $_('assets'),
       icon: 'photo_library',
-      link: $isSmallScreen
-        ? '/assets'
-        : $selectedAssetFolder
-          ? `/assets/${$selectedAssetFolder.internalPath}`
-          : '/assets/all',
+      link: $isSmallScreen ? '/assets' : `/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`,
     },
     // {
     //   key: 'workflow',

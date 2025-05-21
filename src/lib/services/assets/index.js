@@ -58,10 +58,17 @@ export const allAssets = writable([]);
  */
 export const allAssetFolders = writable([]);
 /**
- * @type {Readable<AssetFolderInfo | undefined>}
+ * @type {Readable<AssetFolderInfo>}
  */
 export const globalAssetFolder = derived([allAssetFolders], ([_allAssetFolders], set) => {
-  set(_allAssetFolders.find(({ collectionName }) => !collectionName));
+  set(
+    /** @type {AssetFolderInfo} */ (
+      _allAssetFolders.find(
+        ({ collectionName, internalPath }) =>
+          collectionName === undefined && internalPath !== undefined,
+      )
+    ),
+  );
 });
 /**
  * @type {Writable<AssetFolderInfo | undefined>}
@@ -96,6 +103,17 @@ export const editingAsset = writable();
  * @type {Writable<Asset | undefined>}
  */
 export const renamingAsset = writable();
+
+/**
+ * Upload target asset folder.
+ * @type {Readable<AssetFolderInfo>}
+ */
+export const targetAssetFolder = derived(
+  [selectedAssetFolder, globalAssetFolder],
+  ([_selectedAssetFolder, _globalAssetFolder]) =>
+    // When selecting All Assets folder, the `internalPath` will be `undefined`
+    _selectedAssetFolder?.internalPath !== undefined ? _selectedAssetFolder : _globalAssetFolder,
+);
 
 /**
  * @type {Readable<ProcessedAssets>}
@@ -341,6 +359,10 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) =>
 
   return get(allAssetFolders)
     .filter(({ internalPath, entryRelative }) => {
+      if (internalPath === undefined) {
+        return false;
+      }
+
       if (entryRelative) {
         return path.startsWith(`${internalPath}/`);
       }
@@ -354,7 +376,7 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) =>
 
       return regex.test(getPathInfo(path).dirname ?? '');
     })
-    .sort((a, b) => b.internalPath.localeCompare(a.internalPath ?? '') ?? 0);
+    .sort((a, b) => (b.internalPath ?? '').localeCompare(a.internalPath ?? '') ?? 0);
 };
 
 /**
@@ -446,7 +468,7 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
     getAssetFolder({ collectionName }),
     get(globalAssetFolder),
     get(allAssetFolders).findLast((folder) =>
-      dirName.match(`^${folder.publicPath.replace(/{{.+?}}/g, '.+?')}\\b`),
+      dirName.match(`^${(folder.publicPath ?? '').replace(/{{.+?}}/g, '.+?')}\\b`),
     ),
   ].filter((folder) => !!folder);
 
@@ -454,7 +476,7 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
     let { internalPath } = folder;
 
     // Deal with template tags like `/assets/images/{{slug}}`
-    if (/{{.+?}}/.test(internalPath)) {
+    if (internalPath !== undefined && /{{.+?}}/.test(internalPath)) {
       const { collectionName: _collectionName } = folder;
 
       const collection = _collectionName
@@ -531,14 +553,10 @@ export const getAssetPublicURL = (
   asset,
   { pathOnly = false, allowSpecial = false, entry = undefined } = {},
 ) => {
-  const _allAssetFolders = get(allAssetFolders);
-
   const { publicPath, entryRelative, hasTemplateTags } =
-    _allAssetFolders.find(({ collectionName }) =>
+    get(allAssetFolders).find(({ collectionName }) =>
       getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
-    ) ??
-    _allAssetFolders.find(({ collectionName }) => !collectionName) ??
-    {};
+    ) ?? get(globalAssetFolder);
 
   // Cannot determine the URL if it’s relative to an entry, unless the asset is in the same folder
   if (entryRelative) {
@@ -556,14 +574,17 @@ export const getAssetPublicURL = (
   const path = hasTemplateTags
     ? asset.path.replace(
         // Deal with template tags like `/assets/images/{{slug}}`
-        createPathRegEx(asset.folder.internalPath, (segment) => {
+        createPathRegEx(asset.folder.internalPath ?? '', (segment) => {
           const tag = segment.match(/{{(?<tag>.+?)}}/)?.groups?.tag;
 
           return tag ? `(?<${tag}>[^/]+)` : escapeRegExp(segment);
         }),
         publicPath?.replaceAll(/{{(.+?)}}/g, '$<$1>') ?? '',
       )
-    : asset.path.replace(asset.folder.internalPath, publicPath === '/' ? '' : (publicPath ?? ''));
+    : asset.path.replace(
+        asset.folder.internalPath ?? '',
+        publicPath === '/' ? '' : (publicPath ?? ''),
+      );
 
   const encodedPath = encodeFilePath(path);
 

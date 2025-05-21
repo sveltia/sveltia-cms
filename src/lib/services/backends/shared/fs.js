@@ -61,7 +61,9 @@ const getAllFiles = async (rootDirHandle) => {
           filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
         )
         .flat(1),
-      ...get(allAssetFolders).map(({ internalPath }) => internalPath),
+      ...get(allAssetFolders)
+        .filter(({ internalPath }) => internalPath !== undefined)
+        .map(({ internalPath }) => internalPath),
     ].map((path) => stripSlashes(path ?? '')),
   );
 

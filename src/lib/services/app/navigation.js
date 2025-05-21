@@ -111,8 +111,8 @@ export const updateContentFromHashChange = (event, updateContent, routeRegex) =>
   // `/collections/posts`.
   const inSameSection = routeRegex.test(oldPath) && routeRegex.test(newPath);
   // Count the number of path segments; navigating from `/collections` to `/collections/posts` and
-  // `/collections/posts` to `/collections/posts/new` is forwards, while `/assets/all` to `/assets`
-  // is backwards
+  // `/collections/posts` to `/collections/posts/new` is forwards, while `/assets/-/all` to
+  // `/assets` is backwards
   const oldPathSegmentCount = oldPath.split('/').length;
   const newPathSegmentCount = newPath.split('/').length;
 

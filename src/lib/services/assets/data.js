@@ -10,6 +10,7 @@ import {
   getAssetPublicURL,
   getAssetsByDirName,
   getCollectionsByAsset,
+  globalAssetFolder,
   overlaidAsset,
 } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
@@ -53,9 +54,10 @@ export const assetUpdatesToast = writable({ ...updatesToastDefaultState });
 export const saveAssets = async (uploadingAssets, options) => {
   const { files, folder, originalAsset } = uploadingAssets;
 
-  const assetNamesInSameFolder = folder
-    ? getAssetsByDirName(folder.internalPath).map((a) => a.name.normalize())
-    : [];
+  const assetNamesInSameFolder =
+    folder?.internalPath !== undefined
+      ? getAssetsByDirName(folder.internalPath).map((a) => a.name.normalize())
+      : [];
 
   const savingFileList = files.map((file) => {
     const name =
@@ -68,7 +70,7 @@ export const saveAssets = async (uploadingAssets, options) => {
     return {
       action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
       name,
-      path: [folder, name].join('/'),
+      path: [folder?.internalPath, name].join('/'),
       file,
     };
   });
@@ -130,6 +132,7 @@ export const saveAssets = async (uploadingAssets, options) => {
  */
 export const moveAssets = async (action, movingAssets) => {
   const _siteConfig = /** @type {InternalSiteConfig} */ (get(siteConfig));
+  const _globalAssetFolder = get(globalAssetFolder);
   const _allAssetFolders = get(allAssetFolders);
   /** @type {FileChange[]} */
   const changes = [];
@@ -162,13 +165,11 @@ export const moveAssets = async (action, movingAssets) => {
       const { publicPath } =
         _allAssetFolders.find(({ collectionName }) =>
           getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
-        ) ??
-        _allAssetFolders.find(({ collectionName }) => !collectionName) ??
-        {};
+        ) ?? _globalAssetFolder;
 
       const updatedEntries = await getEntriesByAssetURL(assetURL, {
         entries: structuredClone(usedEntries),
-        newURL: newPath.replace(asset.folder.internalPath, publicPath ?? ''),
+        newURL: newPath.replace(asset.folder.internalPath ?? '', publicPath ?? ''),
       });
 
       await Promise.all(

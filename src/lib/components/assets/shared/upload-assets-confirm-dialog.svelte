@@ -57,7 +57,7 @@
           })}
         {:else}
           {$_(files.length === 1 ? 'confirm_uploading_file' : 'confirm_uploading_files', {
-            values: { count: files.length, folder: `/${folder}` },
+            values: { count: files.length, folder: `/${folder?.internalPath}` },
           })}
         {/if}
       </div>

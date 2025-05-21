@@ -18,6 +18,7 @@ import {
  * @import { Readable, Writable } from 'svelte/store';
  * @import {
  * Asset,
+ * AssetFolderInfo,
  * AssetListView,
  * BackendService,
  * FilteringConditions,
@@ -43,19 +44,13 @@ export const showUploadAssetsConfirmDialog = derived(
 /**
  * Get the label for the given collection. It can be a category name if the folder is a
  * collection-specific asset folder.
- * @param {object} [args] Arguments.
- * @param {string | undefined} [args.collectionName] Collection name.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {AssetFolderInfo} folder Folder info.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
-export const getFolderLabelByCollection = ({ collectionName, fileName } = {}) => {
-  if (collectionName === '*') {
-    return get(_)('all_assets');
-  }
-
-  if (!collectionName) {
-    return get(_)('global_assets');
+export const getFolderLabelByCollection = ({ collectionName, fileName, internalPath }) => {
+  if (collectionName === undefined) {
+    return get(_)(internalPath === undefined ? 'all_assets' : 'global_assets');
   }
 
   const collection = get(siteConfig)?.collections.find(({ name }) => name === collectionName);
@@ -256,7 +251,7 @@ export const sortFields = derived(
 export const listedAssets = derived(
   [allAssets, selectedAssetFolder],
   ([_allAssets, _selectedAssetFolder], set) => {
-    if (_allAssets && _selectedAssetFolder && _selectedAssetFolder.collectionName !== '*') {
+    if (_allAssets && _selectedAssetFolder && _selectedAssetFolder.internalPath !== undefined) {
       set(_allAssets.filter(({ folder }) => equal(folder, _selectedAssetFolder)));
     } else {
       set(_allAssets ? [..._allAssets] : []);
@@ -309,7 +304,7 @@ const initSettings = async ({ repository }) => {
 
   selectedAssetFolder.subscribe((folder) => {
     const view =
-      get(assetListSettings)?.[folder?.internalPath || '*'] ?? structuredClone(defaultView);
+      get(assetListSettings)?.[folder?.internalPath ?? '*'] ?? structuredClone(defaultView);
 
     if (!equal(view, get(currentView))) {
       currentView.set(view);
@@ -317,7 +312,7 @@ const initSettings = async ({ repository }) => {
   });
 
   currentView.subscribe((view) => {
-    const path = get(selectedAssetFolder)?.internalPath || '*';
+    const path = get(selectedAssetFolder)?.internalPath ?? '*';
     const savedView = get(assetListSettings)?.[path] ?? {};
 
     if (!equal(view, savedView)) {

@@ -19,16 +19,8 @@
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
 
   const folders = $derived([
-    // All assets
-    {
-      collectionName: '*',
-      fileName: undefined,
-      internalPath: undefined,
-      publicPath: undefined,
-      entryRelative: false,
-      hasTemplateTags: false,
-    },
-    // Global, collection-level, file-level folders, sorted by appearance order in the config
+    // All Assets, Global Assets, then collection-level, file-level folders, sorted by appearance
+    // order in the config
     ...$allAssetFolders
       .sort(
         (a, b) =>
@@ -49,7 +41,7 @@
     />
   {/if}
   <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
-    {#each folders as folder ([folder.collectionName ?? '-', folder.fileName ?? '-'].join('/'))}
+    {#each folders as folder ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
       {#await sleep() then}
         {@const { collectionName, internalPath, entryRelative, hasTemplateTags } = folder}
         {@const collection = collectionName ? getCollection(collectionName) : undefined}
@@ -60,7 +52,7 @@
           selected={$isSmallScreen ? false : selected}
           label={$appLocale ? getFolderLabelByCollection(folder) : ''}
           onSelect={() => {
-            goto(internalPath ? `/assets/${internalPath}` : '/assets/all', {
+            goto(`/assets/${internalPath ?? '-/all'}`, {
               transitionType: 'forwards',
               // An internal path can be shared by multiple collections, files and fields. Pass the
               // folder info as history state so we can distinguish these different asset folders
@@ -118,7 +110,9 @@
           {#snippet endIcon()}
             {#key $allAssets}
               {#await sleep() then}
-                {@const count = (internalPath ? getAssetsByFolder(folder) : $allAssets).length}
+                {@const count = (
+                  internalPath !== undefined ? getAssetsByFolder(folder) : $allAssets
+                ).length}
                 <span
                   class="count"
                   aria-label="({$_(
