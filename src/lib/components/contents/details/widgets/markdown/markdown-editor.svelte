@@ -360,8 +360,8 @@
     :global {
       @media (width < 768px) {
         .sui.text-editor {
-          // Remove the section margin
-          margin: 0 -16px -16px;
+          // Remove the section padding
+          margin: 0 calc(var(--field-editor-padding) * -1) calc(var(--field-editor-padding) * -1);
           width: 100dvw;
         }
 

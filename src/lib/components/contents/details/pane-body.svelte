@@ -115,9 +115,14 @@
   }
 
   .content {
+    --field-editor-padding: 16px;
     flex: auto;
     overflow-y: auto;
     scroll-behavior: auto; /* Don’t use smooth scroll for syncing */
     overscroll-behavior-y: contain;
+
+    @media (width < 768px) {
+      --field-editor-padding: 12px;
+    }
   }
 </style>

@@ -313,7 +313,7 @@
 
 <style lang="scss">
   section {
-    padding: 16px;
+    padding: var(--field-editor-padding);
 
     &:not(:last-child) {
       border-width: 0 0 1px;

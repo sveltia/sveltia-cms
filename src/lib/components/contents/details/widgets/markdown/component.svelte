@@ -197,7 +197,7 @@
   section {
     margin: 0;
     border-top: 1px solid var(--sui-secondary-border-color);
-    padding: 16px;
+    padding: var(--field-editor-padding);
 
     h4 {
       margin-bottom: 8px !important;
