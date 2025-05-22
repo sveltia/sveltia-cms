@@ -1,6 +1,7 @@
 <script>
   import { Icon } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
+  import { flushSync } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets';
 
@@ -83,6 +84,10 @@
     }
 
     updatingSrc = false;
+
+    // For some reason this is required to update the `$effect` calling `checkLoaded()`, otherwise
+    // navigating from `/assets` to `/assets/<collection>` on small screen leaves the preview empty
+    flushSync();
   };
 
   /**
