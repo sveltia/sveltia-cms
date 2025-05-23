@@ -940,6 +940,7 @@
  * `https://api.github.com` (GitHub) or `https://gitlab.com/api/v4` (GitLab).
  * @property {string} [graphql_api_root] GraphQL API endpoint for the backend. Git backends only.
  * Default: inferred from `api_root` option value.
+ * @property {string} [search_folder] The folder path to be searched for files. Gitlab only.
  * @property {string} [site_domain] Site domain used for OAuth, which will be included in the
  * `site_id` param to be sent to the API endpoint. Git backends only. Default: `location.hostname`.
  * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other

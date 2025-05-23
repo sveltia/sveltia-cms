@@ -167,7 +167,12 @@ const fetchGraphQL = async (query, variables = {}) => {
  * @returns {RepositoryInfo} Repository info.
  */
 const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+  const {
+    repo: projectPath,
+    branch,
+    search_folder: searchFolder,
+  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+
   const { origin, isSelfHosted } = apiConfig;
 
   /**
@@ -189,6 +194,7 @@ const getRepositoryInfo = () => {
     baseURL: `${origin}/${owner}/${repo}`,
     databaseName: `${backendName}:${owner}/${repo}`,
     isSelfHosted,
+    searchFolder,
   });
 };
 
@@ -418,7 +424,7 @@ const fetchLastCommit = async () => {
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
 const fetchFileList = async () => {
-  const { owner, repo, branch } = repository;
+  const { owner, repo, branch, searchFolder } = repository;
   /** @type {{ type: string, path: string, sha: string }[]} */
   const blobs = [];
   let cursor = '';
@@ -436,7 +442,7 @@ const fetchFileList = async () => {
           query {
             project(fullPath: "${owner}/${repo}") {
               repository {
-                tree(ref: "${branch}", recursive: true) {
+                tree(ref: "${branch}", recursive: true${searchFolder ? `, path: "${searchFolder}"` : ''}) {
                   blobs(after: "${cursor}") {
                     nodes {
                       type

@@ -76,6 +76,7 @@
  * @property {string} [branch] Branch name, e.g. `master` or `main`.
  * @property {string} [baseURL] The repository’s web-accessible URL that can be linked from the CMS
  * UI to the backend service. Git backends only.
+ * @property {string} [searchFolder] The folder used to search for files in the repository.
  * @property {string} [databaseName] IndexedDB database name. Git backends only.
  * @property {string} [treeBaseURL] Repository’s tree base URL with a branch name. It’s the same as
  * `baseURL` when the default branch is used. Git backends only.
