@@ -105,9 +105,11 @@ export const resizeCanvas = (canvas, source, target) => {
 const encodingSupportMap = {};
 
 /**
- * Check if the browser supports `canvas.convertToBlob()` encoding for the given format.
+ * Check if the browser supports `canvas.convertToBlob()` encoding for the given format. Safari
+ * doesn’t support native WebP encoding, so this returns `false` if the `format` is `webp`.
  * @param {string} format Format, like `webp`.
  * @returns {Promise<boolean>} Result.
+ * @see https://bugs.webkit.org/show_bug.cgi?id=183257
  */
 const checkIfEncodingIsSupported = async (format) => {
   if (format in encodingSupportMap) {
@@ -116,7 +118,7 @@ const checkIfEncodingIsSupported = async (format) => {
 
   const type = `image/${format}`;
   const canvas = new OffscreenCanvas(1, 1);
-  // Need this for Chrome
+  // Need this for Chrome for some reason
   // eslint-disable-next-line no-unused-vars
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
   const blob = await canvas.convertToBlob({ type });

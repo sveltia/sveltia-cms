@@ -207,6 +207,7 @@ export const saveChanges = async (rootDirHandle, changes) =>
           );
 
           // The `createWritable` method is not yet supported by Safari
+          // @see https://bugs.webkit.org/show_bug.cgi?id=254726
           const writer = await fileHandle.createWritable?.();
 
           try {
