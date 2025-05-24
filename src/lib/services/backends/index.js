@@ -20,11 +20,23 @@ export const allBackendServices = {
   local,
   'test-repo': test,
 };
+
 /**
+ * List of all the Git backend services.
+ * @type {Record<string, BackendService>}
+ */
+export const gitBackendServices = Object.fromEntries(
+  Object.entries(allBackendServices).filter(([, service]) => service.isGit),
+);
+
+/**
+ * Currently selected backend service name.
  * @type {Writable<string | undefined>}
  */
 export const backendName = writable();
+
 /**
+ * Currently selected backend service.
  * @type {Readable<BackendService | undefined>}
  */
 export const backend = derived([backendName], ([name], _set, update) => {
@@ -40,6 +52,9 @@ export const backend = derived([backendName], ([name], _set, update) => {
 });
 
 /**
+ * Whether the last commit was published. This is used to determine if the last commit was published
+ * to the remote backend. If the last commit was not published, the user will be prompted to publish
+ * it.
  * @type {Writable<boolean>}
  */
 export const isLastCommitPublished = writable(true);

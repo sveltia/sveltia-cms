@@ -120,7 +120,7 @@ export const saveAssets = async (uploadingAssets, options) => {
   assetUpdatesToast.set({
     ...updatesToastDefaultState,
     saved: true,
-    published: !!get(backend)?.isRemoteGit && autoDeployEnabled === true,
+    published: !!get(backend)?.isGit && autoDeployEnabled === true,
     count: files.length,
   });
 };

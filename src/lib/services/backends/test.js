@@ -67,7 +67,7 @@ const commitChanges = async (changes) => (rootDirHandle ? saveChanges(rootDirHan
  * @type {BackendService}
  */
 export default {
-  isRemoteGit: false,
+  isGit: false,
   name: backendName,
   label,
   init,

@@ -61,9 +61,7 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
-  const showSaveOptions = $derived(
-    !!$backend?.isRemoteGit && typeof autoDeployEnabled === 'boolean',
-  );
+  const showSaveOptions = $derived(!!$backend?.isGit && typeof autoDeployEnabled === 'boolean');
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
   const collectionName = $derived(collection?.name);
   const fileName = $derived(collectionFile?.name);

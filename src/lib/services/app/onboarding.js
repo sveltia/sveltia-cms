@@ -6,7 +6,7 @@ import { hasMouse, isLargeScreen } from '$lib/services/user/env';
 export const canShowMobileSignInDialog = derived(
   [isLargeScreen, hasMouse, backend, user],
   ([_isLargeScreen, _hasMouse, _backend, _user]) =>
-    _isLargeScreen && _hasMouse && !!_backend?.isRemoteGit && !!_user?.token,
+    _isLargeScreen && _hasMouse && !!_backend?.isGit && !!_user?.token,
 );
 
 export const showMobileSignInDialog = writable(false);

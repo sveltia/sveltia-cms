@@ -109,7 +109,7 @@
 /**
  * Backend service.
  * @typedef {object} BackendService
- * @property {boolean} isRemoteGit Whether the backend is a remote Git service.
+ * @property {boolean} isGit Whether the backend is a Git service.
  * @property {string} name Service name, e.g. `github`.
  * @property {string} label Service label, e.g. `GitHub`.
  * @property {RepositoryInfo} [repository] Basic repository info. Git and local backends only.

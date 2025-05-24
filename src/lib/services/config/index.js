@@ -9,7 +9,7 @@ import { prefs } from '$lib/services/user/prefs';
 import { allEntryFolders } from '$lib/services/contents';
 import { fetchSiteConfig } from '$lib/services/config/loader';
 import { getAllAssetFolders, getAllEntryFolders } from '$lib/services/config/folders';
-import { allBackendServices } from '$lib/services/backends';
+import { allBackendServices, gitBackendServices } from '$lib/services/backends';
 import { allAssetFolders } from '$lib/services/assets';
 
 /**
@@ -72,7 +72,7 @@ const validate = (config) => {
     );
   }
 
-  if (['github', 'gitlab'].includes(config.backend.name)) {
+  if (Object.keys(gitBackendServices).includes(config.backend.name)) {
     if (config.backend.repo === undefined) {
       throw new Error(get(_)('config.error.missing_repository'));
     }

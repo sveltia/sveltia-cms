@@ -8,7 +8,7 @@
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const { deployHookURL } = $derived($prefs);
   const triggerDeployment = $derived($backend?.triggerDeployment);
-  const showButton = $derived(!!$backend?.isRemoteGit && typeof autoDeployEnabled === 'boolean');
+  const showButton = $derived(!!$backend?.isGit && typeof autoDeployEnabled === 'boolean');
   const canPublish = $derived(
     (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished,
   );

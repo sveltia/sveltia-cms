@@ -1005,8 +1005,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
 
   const published =
-    !!get(backend)?.isRemoteGit &&
-    (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
+    !!get(backend)?.isGit && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
 
   contentUpdatesToast.set({
     ...updatesToastDefaultState,

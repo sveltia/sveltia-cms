@@ -158,7 +158,7 @@ const commitChanges = async (changes) =>
  * @type {BackendService}
  */
 export default {
-  isRemoteGit: false,
+  isGit: false,
   name: backendName,
   label,
   repository,
