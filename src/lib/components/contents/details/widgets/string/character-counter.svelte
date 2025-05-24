@@ -22,7 +22,7 @@
 
   const { minlength, maxlength } = $derived(fieldConfig);
   const { count, hasMin, hasMax, invalid } = $derived(
-    validateStringField(fieldConfig, currentValue),
+    validateStringField({ fieldConfig, value: currentValue }),
   );
 </script>
 

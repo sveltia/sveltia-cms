@@ -418,16 +418,22 @@
  */
 
 /**
- * Flattened entry validity state object, where key is a key path, but value will be the value’s
- * validity, using the same properties as the native HTML5 constraint validation.
- * @typedef {Record<FieldKeyPath, Record<string, boolean>>} FlattenedEntryValidityState
+ * Validation state of a field value. The key is a validation property name, and the value is a
+ * boolean. These are the same properties as the native HTML5 constraint validation.
+ * @typedef {Record<string, boolean>} EntryValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
+ */
+
+/**
+ * Flattened entry validity state object, where key is a key path, but value will be the value’s
+ * validity.
+ * @typedef {Record<FieldKeyPath, EntryValidityState>} FlattenedEntryValidityStateMap
  */
 
 /**
  * Flattened entry expander state object, where key is a key path, but value will be the field’s
  * expander UI state.
- * @typedef {Record<FieldKeyPath, boolean>} FlattenedEntryExpanderState
+ * @typedef {Record<FieldKeyPath, boolean>} FlattenedEntryExpanderStateMap
  */
 
 /**
@@ -447,12 +453,12 @@
 
 /**
  * Locale validity map.
- * @typedef {Record<InternalLocaleCode, FlattenedEntryValidityState>} LocaleValidityMap
+ * @typedef {Record<InternalLocaleCode, FlattenedEntryValidityStateMap>} LocaleValidityMap
  */
 
 /**
  * Locale expander map.
- * @typedef {Record<InternalLocaleCode, FlattenedEntryExpanderState>} LocaleExpanderMap
+ * @typedef {Record<InternalLocaleCode, FlattenedEntryExpanderStateMap>} LocaleExpanderMap
  */
 
 /**
