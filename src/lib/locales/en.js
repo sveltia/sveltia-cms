@@ -655,6 +655,9 @@ export const strings = {
         close_on_save: {
           switch_label: 'Close the editor after saving a draft',
         },
+        close_with_escape: {
+          switch_label: 'Close the editor with the Escape key',
+        },
       },
       translator: {
         title: '{service} Translator',

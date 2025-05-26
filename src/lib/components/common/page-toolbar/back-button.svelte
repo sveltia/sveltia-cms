@@ -5,7 +5,7 @@
   /**
    * @typedef {object} Props
    * @property {string} [aria-label] `aria-label` property on the button.
-   * @property {boolean} [useShortcut] Whether to enable Escape keyboard shortcut.
+   * @property {boolean} [useShortcut] Whether to enable Escape keyboard shortcut. Default: `false`.
    * @property {(event: MouseEvent) => void} [onclick] `click` event handler.
    */
 
@@ -13,7 +13,7 @@
   let {
     /* eslint-disable prefer-const */
     'aria-label': ariaLabel,
-    useShortcut = true,
+    useShortcut = false,
     onclick = undefined,
     /* eslint-enable prefer-const */
   } = $props();

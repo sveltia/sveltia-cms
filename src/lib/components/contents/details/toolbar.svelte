@@ -170,6 +170,7 @@
 <Toolbar variant="primary" aria-label={$_('primary')}>
   <BackButton
     aria-label={$_('cancel_editing')}
+    useShortcut={$prefs.closeWithEscape}
     onclick={() => {
       goBack(`/collections/${collectionName}`);
     }}

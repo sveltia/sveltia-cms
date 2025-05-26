@@ -59,6 +59,8 @@
  * @property {InternalLocaleCode} [locale] Selected UI locale, e.g. `en`.
  * @property {boolean} [useDraftBackup] Whether to use the entry draft backup mechanism.
  * @property {boolean} [closeOnSave] Whether to close the entry editor after saving a draft.
+ * @property {boolean} [closeWithEscape] Whether to close the entry editor by pressing the Escape
+ * key.
  * @property {boolean} [underlineLinks] Whether to always underline links.
  * @property {boolean} [beta] Whether to enable beta features.
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.

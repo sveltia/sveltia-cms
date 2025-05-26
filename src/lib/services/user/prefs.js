@@ -27,6 +27,7 @@ export const prefs = writable({}, (set) => {
       _prefs.apiKeys ??= {};
       _prefs.useDraftBackup ??= true;
       _prefs.closeOnSave ??= true;
+      _prefs.closeWithEscape ??= true;
       _prefs.underlineLinks ??= true;
       _prefs.beta ??= false;
       _prefs.devModeEnabled ??= false;

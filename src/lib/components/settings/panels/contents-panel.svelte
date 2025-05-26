@@ -31,6 +31,12 @@
   <div role="none">
     <PrefSwitch key="closeOnSave" label={$_('prefs.contents.editor.close_on_save.switch_label')} />
   </div>
+  <div role="none">
+    <PrefSwitch
+      key="closeWithEscape"
+      label={$_('prefs.contents.editor.close_with_escape.switch_label')}
+    />
+  </div>
 </section>
 {#if ($siteConfig?.i18n?.locales?.length ?? 0) > 1}
   {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}

@@ -658,6 +658,9 @@ export const strings = {
         close_on_save: {
           switch_label: '下書き保存後にエディターを閉じる',
         },
+        close_with_escape: {
+          switch_label: 'Escape キーでエディターを閉じる',
+        },
       },
       translator: {
         title: '{service} 翻訳',

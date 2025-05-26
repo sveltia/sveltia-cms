@@ -31,6 +31,7 @@
 <Toolbar variant="primary" aria-label={$_('primary')}>
   <BackButton
     aria-label={$_('cancel_editing')}
+    useShortcut={true}
     onclick={() => {
       goBack(`/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`);
     }}
