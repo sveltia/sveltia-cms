@@ -906,7 +906,7 @@
 
 /**
  * Supported Git backend name.
- * @typedef {'github' | 'gitlab'} GitBackendName
+ * @typedef {'github' | 'gitlab' | 'gitea'} GitBackendName
  */
 
 /**
@@ -930,26 +930,28 @@
  * Backend options.
  * @typedef {object} BackendOptions
  * @property {BackendName} name Backend name.
- * @property {string} [repo] Required for the GitHub and GitLab backends. GitHub: organization/user
- * name and repository name joined by a slash, e.g. `owner/repo`. GitLab: namespace and project name
- * joined by a slash, e.g. `group/project` or `group/subgroup/project`.
+ * @property {string} [repo] Repository identifier. Required for Git backends. GitHub/Gitea:
+ * organization/user name and repository name joined by a slash, e.g. `owner/repo`. GitLab:
+ * namespace and project name joined by a slash, e.g. `group/project` or `group/subgroup/project`.
  * @property {string} [branch] Git branch name. If omitted, the default branch, usually `main` or
  * `master`, will be used. Git backends only.
- * @property {string} [api_root] REST API endpoint for the backend. Required when using GitHub
- * Enterprise Server or a self-hosted GitLab instance. Git backends only. Default:
- * `https://api.github.com` (GitHub) or `https://gitlab.com/api/v4` (GitLab).
+ * @property {string} [api_root] REST API endpoint for the backend. Git backends only. Required when
+ * using GitHub Enterprise Server, a self-hosted GitLab/Gitea instance. Default:
+ * `https://api.github.com` (GitHub), `https://gitlab.com/api/v4` (GitLab) or
+ * `https://gitea.com/api/v1` (Gitea).
  * @property {string} [graphql_api_root] GraphQL API endpoint for the backend. Git backends only.
  * Default: inferred from `api_root` option value.
  * @property {string} [site_domain] Site domain used for OAuth, which will be included in the
  * `site_id` param to be sent to the API endpoint. Git backends only. Default: `location.hostname`.
- * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
- * than Netlify, including Sveltia CMS Authenticator. Git backends only. Default:
- * `https://api.netlify.com`.
+ * @property {string} [base_url] OAuth base URL origin. Git backends only. Required when using an
+ * OAuth client other than Netlify, including Sveltia CMS Authenticator. Default:
+ * `https://api.netlify.com` (GitHub), `https://gitlab.com` (GitLab) or `https://gitea.com/`
+ * (Gitea).
  * @property {string} [auth_endpoint] OAuth base URL path. Git backends only. Default: `auth`
  * (GitHub) or `oauth/authorize` (GitLab).
  * @property {'pkce' | 'implicit'} [auth_type] OAuth authentication method. GitLab only. Default:
  * `pkce`.
- * @property {string} [app_id] OAuth application ID. GitLab only.
+ * @property {string} [app_id] OAuth application ID. GitLab and Gitea only. Required for Gitea.
  * @property {CommitMessages} [commit_messages] Custom commit messages. Git backends only.
  * @property {string} [preview_context] Deploy preview link context. GitHub only.
  * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Git
@@ -967,6 +969,7 @@
  * @see https://decapcms.org/docs/backends-overview/
  * @see https://decapcms.org/docs/github-backend/
  * @see https://decapcms.org/docs/gitlab-backend/
+ * @see https://decapcms.org/docs/gitea-backend/
  * @see https://decapcms.org/docs/test-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://decapcms.org/docs/open-authoring/
