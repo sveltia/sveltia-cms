@@ -1,4 +1,4 @@
-import { getBase64 } from '@sveltia/utils/file';
+import { encodeBase64 } from '@sveltia/utils/file';
 import { sleep } from '@sveltia/utils/misc';
 import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
@@ -574,7 +574,7 @@ const commitChanges = async (changes, options) => {
       .filter(({ action }) => ['create', 'update', 'move'].includes(action))
       .map(async ({ path, data, base64 }) => ({
         path,
-        contents: base64 ?? (await getBase64(data ?? '')),
+        contents: base64 ?? (await encodeBase64(data ?? '')),
       })),
   );
 

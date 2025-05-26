@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { getBase64 } from '@sveltia/utils/file';
+import { encodeBase64 } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
@@ -689,7 +689,7 @@ const commitChanges = async (changes, options) => {
         actions: await Promise.all(
           changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
             action,
-            content: base64 ?? (typeof data !== 'string' ? await getBase64(data) : data),
+            content: base64 ?? (typeof data !== 'string' ? await encodeBase64(data) : data),
             encoding: base64 || typeof data !== 'string' ? 'base64' : 'text',
             file_path: path,
             previous_path: previousPath,
