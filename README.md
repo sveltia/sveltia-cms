@@ -379,9 +379,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better widgets
 
-Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS except Map. We have made significant improvements to these widgets while adding some new ones. The Map widget will be added soon.
+Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS except Map. We have made significant improvements to these widgets while adding some new ones. The remaining Map widget will be added soon.
 
-Note: The Date widget has been deprecated in Netlify CMS and removed from both Decap CMS and Sveltia CMS in favour of the DateTime widget. See the [Compatibility](#compatibility) section for details.
+Note: The Date widget has been deprecated in Netlify CMS and removed from both Decap CMS and Sveltia CMS in favour of the DateTime widget, as noted in the [Compatibility](#compatibility) section.
 
 - Boolean
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error.[^45]
@@ -1608,7 +1608,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^116]: Netlify/Decap CMS [#3431](https://github.com/decaporg/decap-cms/issues/3431)
 
-[^117]: Netlify/Decap CMS [#3562](https://github.com/decaporg/decap-cms/issues/3562), [#6215](https://github.com/decaporg/decap-cms/issues/6215)
+[^117]: Netlify/Decap CMS [#3562](https://github.com/decaporg/decap-cms/issues/3562), [#6215](https://github.com/decaporg/decap-cms/issues/6215), [#7479](https://github.com/decaporg/decap-cms/issues/7479)
 
 [^118]: Netlify/Decap CMS [#7267](https://github.com/decaporg/decap-cms/issues/7267)
 
