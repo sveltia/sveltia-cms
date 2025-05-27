@@ -1012,6 +1012,11 @@
  * @typedef {object} OutputOptions
  * @property {boolean} [omit_empty_optional_fields] Whether to prevent fields with `required: false`
  * and an empty value from being included in entry data output. Default: `false`.
+ * @property {boolean} [encode_file_path] Whether to encode the file path in File/Image fields.
+ * Default: `false`. This is useful when a file path contains special characters that need to be
+ * URL-encoded, such as spaces and parentheses. For example, `Hello World (1).webp` would be
+ * `Hello%20World%20%281%29.webp`. In general, File/Image fields should contain the original file
+ * path, and web-specific encoding should be done in the front-end code.
  * @property {JsonFormatOptions} [json] JSON format options.
  * @property {YamlFormatOptions} [yaml] YAML format options.
  * @see https://github.com/sveltia/sveltia-cms#controlling-data-output

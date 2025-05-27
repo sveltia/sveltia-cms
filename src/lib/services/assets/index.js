@@ -36,6 +36,7 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * InternalCollection,
  * InternalCollectionFile,
  * InternalImageTransformationOptions,
+ * InternalSiteConfig,
  * ProcessedAssets,
  * UploadingAssets,
  * } from '$lib/types/private';
@@ -571,7 +572,10 @@ export const getAssetPublicURL = (
     return undefined;
   }
 
-  const path = hasTemplateTags
+  const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =
+    /** @type {InternalSiteConfig} */ (get(siteConfig));
+
+  let path = hasTemplateTags
     ? asset.path.replace(
         // Deal with template tags like `/assets/images/{{slug}}`
         createPathRegEx(asset.folder.internalPath ?? '', (segment) => {
@@ -586,20 +590,20 @@ export const getAssetPublicURL = (
         publicPath === '/' ? '' : (publicPath ?? ''),
       );
 
-  const encodedPath = encodeFilePath(path);
+  if (encodingEnabled) {
+    path = encodeFilePath(path);
+  }
 
   // Path starting with `@`, etc. cannot be linked
-  if (!encodedPath.startsWith('/') && !allowSpecial) {
+  if (!path.startsWith('/') && !allowSpecial) {
     return undefined;
   }
 
   if (pathOnly) {
-    return encodedPath;
+    return path;
   }
 
-  const baseURL = get(siteConfig)?._baseURL;
-
-  return `${baseURL}${encodedPath}`;
+  return `${baseURL}${path}`;
 };
 
 /**

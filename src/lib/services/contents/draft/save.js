@@ -708,6 +708,7 @@ const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
  * @param {FlattenedEntryContent} args.content Localized content.
  * @param {FileChange[]} args.changes Changeset.
  * @param {Asset[]} args.savingAssets List of assets to be saved.
+ * @param {boolean} args.encodingEnabled Whether the file path encoding is enabled.
  */
 const replaceBlobURL = async ({
   file,
@@ -719,6 +720,7 @@ const replaceBlobURL = async ({
   content,
   changes,
   savingAssets,
+  encodingEnabled,
 }) => {
   const sha = await getHash(file);
   const dupFile = savingAssets.find((f) => f.sha === sha);
@@ -753,11 +755,13 @@ const replaceBlobURL = async ({
     });
   }
 
-  const publicURL = encodeFilePath(
-    resolvedPublicPath
-      ? `${resolvedPublicPath === '/' ? '' : resolvedPublicPath}/${assetName}`
-      : assetName,
-  );
+  let publicURL = resolvedPublicPath
+    ? `${resolvedPublicPath === '/' ? '' : resolvedPublicPath}/${assetName}`
+    : assetName;
+
+  if (encodingEnabled) {
+    publicURL = encodeFilePath(publicURL);
+  }
 
   content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL);
 };
@@ -787,7 +791,8 @@ const createBaseSavingEntryData = async ({
   const changes = [];
   /** @type {Asset[]} */
   const savingAssets = [];
-  const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets };
+  const { encode_file_path: encodingEnabled = false } = get(siteConfig)?.output ?? {};
+  const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets, encodingEnabled };
 
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(
