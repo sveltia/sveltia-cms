@@ -545,7 +545,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **Azure, Bitbucket and Forgejo backends**: For performance reasons. We may support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once. Our [Gitea backend](https://github.com/sveltia/sveltia-cms/issues/198) is incompatible with Forgejo because it uses a new efficient API method. [Forgejo support](https://github.com/sveltia/sveltia-cms/issues/381) will not be added until they implement an equivalent.
+- **Azure, Bitbucket and Forgejo backends**: For performance reasons. We may support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once. Our [Gitea backend](https://github.com/sveltia/sveltia-cms/issues/198) is incompatible with Forgejo because it uses a new efficient API method. [Forgejo support](https://github.com/sveltia/sveltia-cms/issues/381) will not be added until they implement an equivalent API enhancement.
 - **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future.
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
@@ -624,7 +624,7 @@ We have added support for features and file structures used in certain framework
 ### Backend support
 
 - The GitLab backend requires GitLab 16.3 or later.
-- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo because it uses a new API method that Forgejo does not support yet. Support Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` instead of `https://try.gitea.io`.
+- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo due to a new API method. Support for Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` instead of `https://try.gitea.io`.
 
 ### Browser support
 
