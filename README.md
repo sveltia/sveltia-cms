@@ -240,6 +240,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab) under the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
+- Our Gitea backend is high-performing because it retrieves multiple entries simultaneously. It also won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in a file path.[^222]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
@@ -544,7 +545,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **Azure, Bitbucket and Forgejo backends**: For performance reasons. We may support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once. Our [planned Gitea backend](https://github.com/sveltia/sveltia-cms/issues/198) is incompatible with Forgejo because it uses a new efficient API method. [Forgejo support](https://github.com/sveltia/sveltia-cms/issues/381) will not be added until they implement an equivalent.
+- **Azure, Bitbucket and Forgejo backends**: For performance reasons. We may support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once. Our [Gitea backend](https://github.com/sveltia/sveltia-cms/issues/198) is incompatible with Forgejo because it uses a new efficient API method. [Forgejo support](https://github.com/sveltia/sveltia-cms/issues/381) will not be added until they implement an equivalent.
 - **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future.
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
@@ -575,7 +576,6 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
-- [Gitea backend](https://decapcms.org/docs/gitea-backend/) ([#198](https://github.com/sveltia/sveltia-cms/issues/198))
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
 - [Map](https://decapcms.org/docs/widgets/#map) widget
@@ -624,6 +624,7 @@ We have added support for features and file structures used in certain framework
 ### Backend support
 
 - The GitLab backend requires GitLab 16.3 or later.
+- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo as it uses a new efficient API method that Forgejo does not support yet.
 
 ### Browser support
 
@@ -1153,6 +1154,7 @@ Sveltia CMS supports some [data output](#better-data-output) options, including 
 ```yaml
 output:
   omit_empty_optional_fields: false
+  encode_file_path: false # true to URL-encode file paths for FIle/Image fields
   json:
     indent_style: space # or tab
     indent_size: 2
@@ -1817,3 +1819,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^220]: Netlify/Decap CMS [#2153](https://github.com/decaporg/decap-cms/issues/2153)
 
 [^221]: Netlify/Decap CMS [#3421](https://github.com/decaporg/decap-cms/issues/3421)
+
+[^222]: Netlify/Decap CMS [#7281](https://github.com/decaporg/decap-cms/issues/7281) — The issue was closed, but the attached PR is not yet merged.
