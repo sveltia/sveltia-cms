@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 210+ issues, or 420+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 210+ issues, or 425+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 350 issues, or 700 if including duplicates, in the future
@@ -240,7 +240,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab or Gitea) under the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
-- Our Gitea backend is high-performing because it retrieves multiple entries simultaneously. It also won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in a file path.[^222]
+- Our Gitea backend is high-performing because it retrieves multiple entries simultaneously. It also won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
@@ -1154,7 +1154,7 @@ Sveltia CMS supports some [data output](#better-data-output) options, including 
 ```yaml
 output:
   omit_empty_optional_fields: false
-  encode_file_path: false # true to URL-encode file paths for FIle/Image fields
+  encode_file_path: false # true to URL-encode file paths for File/Image fields
   json:
     indent_style: space # or tab
     indent_size: 2
