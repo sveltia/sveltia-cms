@@ -624,7 +624,7 @@ We have added support for features and file structures used in certain framework
 ### Backend support
 
 - The GitLab backend requires GitLab 16.3 or later.
-- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo as it uses a new efficient API method that Forgejo does not support yet.
+- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo because it uses a new API method that Forgejo does not support yet. Support Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` instead of `https://try.gitea.io`.
 
 ### Browser support
 
