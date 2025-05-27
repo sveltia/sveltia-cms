@@ -123,7 +123,7 @@ While Sveltia CMS is specifically designed to replace legacy Netlify CMS instanc
 
 ## Development status
 
-Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in Q4 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in Q4 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system that involves various kinds of activities that require considerable effort:
 
@@ -572,7 +572,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Current limitations
 
-These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due Q4 2025.
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due Q4 2025. We’ll keep you updated via [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app).
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
