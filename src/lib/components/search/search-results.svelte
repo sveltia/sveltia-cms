@@ -4,10 +4,6 @@
   import EntryResults from '$lib/components/search/entry-results.svelte';
   import { searchMode } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
-
-  /**
-   * @import { Asset, Entry } from '$lib/types/private';
-   */
 </script>
 
 <div role="none" class="wrapper">

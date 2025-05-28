@@ -25,6 +25,7 @@
     "check:svelte": "svelte-check",
     "check:prettier": "prettier --check .",
     "check:eslint": "eslint .",
+    "check:imports": "node scripts/find-unused-imports.js",
     "check:stylelint": "stylelint '**/*.{css,scss,svelte}'",
     "test": "vitest"
   },

@@ -8,10 +8,6 @@
   import Image from '$lib/components/assets/shared/image.svelte';
 
   /**
-   * @import { ProcessedAssets } from '$lib/types/private';
-   */
-
-  /**
    * @typedef {object} Props
    * @property {File[]} files File list.
    * @property {WeakMap<File, File>} [transformedFileMap] Mapping of transformed files and the
