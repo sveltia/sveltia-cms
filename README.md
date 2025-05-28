@@ -753,7 +753,7 @@ Sveltia CMS has simplified the local repository workflow by removing the need fo
 Here are the workflow steps and tips:
 
 1. Make sure you have configured the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea](https://decapcms.org/docs/gitea-backend/) backend.
-   - The Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. You’ll need either `name: github` or `name: gitlab` along with the `repo` definition. If you haven’t determined your repository name yet, just use a tentative name.
+   - The Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. Use `github`, `gitlab` or `gitea` for the `name` along with the `repo` definition. If you haven’t determined your repository name yet, just use a tentative name.
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Open `http://localhost:[port]/admin/index.html` with Chrome or Edge.
    - The port number varies by framework. Check the terminal output from the previous step.
@@ -1357,9 +1357,9 @@ Due Q4 2025
 ### Future
 
 - Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
-- Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a GitHub or GitLab account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
+- Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a Git service account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
-- AI integrations for image generation, content writing, etc.
+- AI integrations for image generation, content writing, translation, etc.
 - Search enhancements
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - Marketplace for custom widgets, etc.
