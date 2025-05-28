@@ -95,6 +95,8 @@ export const strings = {
     MALFORMED_RESPONSE: 'Server responded with malformed data. Please try again later.',
   },
   backend_unsupported_version: 'The {name} backend requires {name} {version} or later.',
+  backend_unsupported_forgejo:
+    'The Gitea backend is not compatible with Forgejo due to API differences.',
   repository_no_access: 'You don’t have access to the “{repo}” repository.',
   repository_not_found: 'The “{repo}” repository doesn’t exist.',
   repository_empty: 'The “{repo}” repository has no branches.',
