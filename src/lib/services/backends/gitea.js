@@ -232,20 +232,23 @@ const signOut = async () => undefined;
 
 /**
  * Check if the Gitea version is supported.
- * @throws {Error} When the Gitea version is unsupported.
+ * @throws {Error} When the Gitea version is unsupported. Also when we detect Forgejo, which is a
+ * hard fork of Gitea that we do not support yet.
  * @see https://docs.gitea.com/api/1.24/#tag/miscellaneous/operation/getVersion
+ * @see https://github.com/sveltia/sveltia-cms/issues/381
  */
 const checkGiteaVersion = async () => {
   const { version } = /** @type {{ version: string }} */ (await fetchAPI('/version'));
 
+  // Check if it’s Forgejo. The `version` will look like `11.0.1-46-17b3302+gitea-1.22.0`
   if (version.includes('+gitea-')) {
-    // It’s Forgejo that we don’t support yet. The `version` will look like
-    // `11.0.1-46-17b3302+gitea-1.22.0`, indicating it’s a hard fork of Gitea.
-    // @see https://github.com/sveltia/sveltia-cms/issues/381
     throw new Error('Unsupported Forgejo version', {
       cause: new Error(get(_)('backend_unsupported_forgejo')),
     });
-  } else if (Number.parseFloat(version) < minSupportedVersion) {
+  }
+
+  // Otherwise it’s Gitea, so we can just compare the version number
+  if (Number.parseFloat(version) < minSupportedVersion) {
     throw new Error('Unsupported Gitea version', {
       cause: new Error(
         get(_)('backend_unsupported_version', {
