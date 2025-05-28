@@ -172,7 +172,7 @@
   });
 </script>
 
-{#if !required}
+{#if !hasVariableTypes && !required}
   <Checkbox
     label={$_('add_x', { values: { name: fieldLabel || fieldName } })}
     checked={hasValues}
