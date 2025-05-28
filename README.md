@@ -107,7 +107,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after making meaningful improvements
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, scarce releases
+- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant with scarce releases
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and numerous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right and inevitable one, as proven by the [hundreds of improvements](#differentiators) we have already made.
 
@@ -624,7 +624,7 @@ We have added support for features and file structures used in certain framework
 ### Backend support
 
 - The GitLab backend requires GitLab 16.3 or later.
-- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo due to a new API method. Support for Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` (public free service) instead of `https://try.gitea.io` (test instance).
+- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo due to API differences. Support for Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` (public free service) instead of `https://try.gitea.io` (test instance).
 
 ### Browser support
 
