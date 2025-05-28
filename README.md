@@ -107,7 +107,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after making meaningful improvements
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant
+- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, scarce releases
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt and numerous bugs of Netlify CMS, which was launched back in 2015. We are confident that our decision to rebuild the application from scratch was the right and inevitable one, as proven by the [hundreds of improvements](#differentiators) we have already made.
 
@@ -545,7 +545,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **Azure, Bitbucket and Forgejo backends**: For performance reasons. We may support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once. Our [Gitea backend](https://github.com/sveltia/sveltia-cms/issues/198) is incompatible with Forgejo because it uses a new efficient API method. [Forgejo support](https://github.com/sveltia/sveltia-cms/issues/381) will not be added until they implement an equivalent API enhancement.
+- **Azure, Bitbucket and Forgejo backends**: For performance reasons. We may support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once. Our Gitea backend is not compatible with Forgejo due to API differences. [Forgejo support](https://github.com/sveltia/sveltia-cms/issues/381) will not be added until they implement an equivalent API enhancement.
 - **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future.
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
@@ -572,7 +572,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Current limitations
 
-These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due Q4 2025. We’ll keep you updated via [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app).
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due Q4 2025. Check the [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
@@ -615,7 +615,7 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 
 ### Framework support
 
-While Sveltia CMS is built with Svelte, the application is **framework-agnostic**. It’s a small, compiled, vanilla JavaScript bundle that manages content in a Git repository directly via the REST/GraphQL API. It doesn’t interact with the framework that builds your site.
+While Sveltia CMS is built with Svelte, the application is **framework-agnostic**. It’s a small, compiled, vanilla JavaScript bundle that manages content in a Git repository directly via an API. It doesn’t interact with the framework that builds your site.
 
 So you can use the CMS with any framework or static site generator (SSG) that can load static files during the build process, including but not limited to Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit and VitePress.
 
@@ -624,7 +624,7 @@ We have added support for features and file structures used in certain framework
 ### Backend support
 
 - The GitLab backend requires GitLab 16.3 or later.
-- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo due to a new API method. Support for Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` instead of `https://try.gitea.io`.
+- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo due to a new API method. Support for Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` (public free service) instead of `https://try.gitea.io` (test instance).
 
 ### Browser support
 
