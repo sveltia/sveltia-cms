@@ -109,7 +109,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, with only occasional releases
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We rebuilt the app from the ground up using a [modern framework](https://svelte.dev/), with full access to [their issue tracker](https://github.com/decaporg/decap-cms/issues). This lets us make [hundreds of improvements](#differentiators) without getting stuck in the old code.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We rebuilt the app from the ground up using a [modern framework](https://svelte.dev/), with full access to the [predecessor’s issue tracker](https://github.com/decaporg/decap-cms/issues). This lets us make [hundreds of improvements](#differentiators) without getting stuck in the old code.
 
 While Sveltia CMS was created to replace legacy Netlify CMS instances, it can also be used as an alternative to other Netlify CMS successors. With its [solid i18n support](#better-i18n-support), we’re hoping our product will eventually be an appearing option for anyone looking for a free headless CMS.
 
@@ -133,10 +133,11 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 210+ issues, or 425+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
-    - 350 issues, or 700 if including duplicates, in the future
-    - or everything that’s relevant, fixable and worthwhile 💪
+    - 350 issues, or 700 if including duplicates, in the future 💪
+    - or everything that’s relevant, fixable and worthwhile 🔥
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
-  - Most of the bugs, including annoying crashes, are already solved
+  - Many of the bugs, including the annoying crashes, have already been solved
+    - The remaining bugs are mostly related to [unimplemented features](#current-limitations)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are on our table or already implemented in Sveltia CMS
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Implementing our own enhancement ideas for every part of the product
@@ -157,7 +158,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1][^211][^212][^213][^214]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
 - Users can easily manage content on-the-go with mobile and tablet support.[^18][^215]
-  - For a smoother experience, we even go beyond responsive design with [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. However, there are still rough edges, and we are working to fully optimize the app for small screens and touch devices.
+  - For a smoother experience, we even go beyond responsive design with optimized navigation, [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. However, there are still rough edges, and we are working to fully optimize the app for small screens and touch devices.
   - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204]
@@ -557,7 +558,7 @@ However, 100% feature parity is not planned, and some features are still missing
   - [Number](https://decapcms.org/docs/widgets/#number) widget: `valueType`
   - [Relation](https://decapcms.org/docs/widgets/#relation) widget: `displayFields`, `searchFields`, `valueField`
   - Note: Some other camel case options, including Color widget options, are not deprecated.
-- The deprecated Date widget: It has already been removed from Decap CMS 3.0. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
+- The deprecated Date widget: It was removed from Decap CMS 3.0 and Sveltia CMS 0.10. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
 - Some date/time format tokens: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with Day.js, and Sveltia CMS will follow suit soon. Since [Day.js tokens](https://day.js.org/docs/en/display/format) are not 100% compatible with [Moment.js tokens](https://momentjs.com/docs/#/displaying/format/), this could be a breaking change in certain cases.
 - The theme and keymap inline settings of the Code widget, along with support for some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/). Prism may be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575) in the future.
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
