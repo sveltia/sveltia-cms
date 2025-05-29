@@ -68,6 +68,8 @@ rules:
   svelte/no-at-html-tags: off
   # Ignore false errors
   svelte/no-unused-svelte-ignore: off
+  # Silence false errors with `custom_element_props_identifier`
+  svelte/valid-compile: off
   # https://svelte.dev/docs#component-format-script
   no-undef-init: off
   no-underscore-dangle: off
