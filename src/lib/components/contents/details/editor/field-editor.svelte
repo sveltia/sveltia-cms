@@ -77,6 +77,7 @@
     widget: widgetName = 'string',
     i18n = false,
     pattern = /** @type {string[]} */ ([]),
+    readonly: readonlyOption = false,
   } = $derived(fieldConfig);
   const required = $derived(isFieldRequired({ fieldConfig, locale }));
   const {
@@ -154,7 +155,9 @@
   const validity = $derived($entryDraft?.validities[locale][keyPath]);
   const fieldLabel = $derived(label || fieldName);
   const readonly = $derived(
-    (i18n === 'duplicate' && locale !== defaultLocale) || widgetName === 'compute',
+    readonlyOption ||
+      (i18n === 'duplicate' && locale !== defaultLocale) ||
+      widgetName === 'compute',
   );
   const invalid = $derived(validity?.valid === false);
 </script>
@@ -404,6 +407,13 @@
           [type='time']
         ) {
         border-color: var(--sui-error-border-color);
+      }
+
+      input:read-only {
+        // Make readonly inputs selectable
+        -webkit-user-select: text;
+        user-select: text;
+        pointer-events: auto;
       }
     }
   }
