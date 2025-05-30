@@ -1,6 +1,10 @@
 import { isObject } from '@sveltia/utils/object';
 
 /**
+ * @import { AuthTokenResponse } from '$lib/types/private';
+ */
+
+/**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other
  * specified format, and handle errors gracefully.
  * @param {string} url URL.
@@ -8,11 +12,18 @@ import { isObject } from '@sveltia/utils/object';
  * @param {object} [options] Options.
  * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response parser type. The
  * default is `json`. Use `raw` to return a `Response` object as is.
+ * @param {() => Promise<AuthTokenResponse>} [options.refreshAccessToken] A function to refresh the
+ * OAuth access token when the request fails with a 401 Unauthorized status. If this function is
+ * provided, the request will be retried with the new token.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the request or response.
  */
-export const sendRequest = async (url, init = {}, { responseType = 'json' } = {}) => {
+export const sendRequest = async (
+  url,
+  init = {},
+  { responseType = 'json', refreshAccessToken = undefined } = {},
+) => {
   /** @type {Response} */
   let response;
 
@@ -34,7 +45,9 @@ export const sendRequest = async (url, init = {}, { responseType = 'json' } = {}
     throw new Error('Failed to send the request', { cause: ex });
   }
 
-  if (responseType === 'raw') {
+  const { ok, status } = response;
+
+  if (ok && responseType === 'raw') {
     return response;
   }
 
@@ -42,11 +55,11 @@ export const sendRequest = async (url, init = {}, { responseType = 'json' } = {}
   let result;
 
   try {
-    if (responseType === 'blob') {
+    if (ok && responseType === 'blob') {
       return response.blob();
     }
 
-    if (responseType === 'text') {
+    if (ok && responseType === 'text') {
       return response.text();
     }
 
@@ -55,12 +68,20 @@ export const sendRequest = async (url, init = {}, { responseType = 'json' } = {}
     throw new Error('Failed to parse the response', { cause: ex });
   }
 
-  const { ok, status } = response;
-
   // Return the parsed result for a successful response, but a GraphQL error is typically returned
   // with 200 OK so we need to check the content for the `errors` key
   if (ok && !(url.endsWith('/graphql') && isObject(result) && result.errors)) {
     return result;
+  }
+
+  if (status === 401 && refreshAccessToken) {
+    const [scheme] = init.headers.get('Authorization')?.split(' ') ?? ['token'];
+    const { token } = await refreshAccessToken();
+
+    init.headers.set('Authorization', `${scheme} ${token}`);
+
+    // Retry the request with the new token. Omit `refreshAccessToken` to avoid infinite loops.
+    return sendRequest(url, init, { responseType });
   }
 
   if (!isObject(result)) {

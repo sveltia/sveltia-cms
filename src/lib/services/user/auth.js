@@ -100,11 +100,18 @@ export const signInAutomatically = async () => {
   }
 
   if (_user && _backend) {
+    // Temporarily populate the `user` store with the cache, otherwise it’s not updated in
+    // `refreshAccessToken`
+    user.set(_user);
+
+    const { token, refreshToken } = _user;
+
     try {
-      _user = await _backend.signIn({ token: _user.token, auto: true });
+      _user = await _backend.signIn({ token, refreshToken, auto: true });
     } catch {
       // The local backend may throw if the file handle permission is not given
       _user = undefined;
+      user.set(undefined);
     }
   }
 

@@ -8,6 +8,7 @@ import {
   handleClientSideAuthPopup,
   initClientSideAuth,
   initServerSideAuth,
+  refreshAccessToken,
 } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
@@ -114,11 +115,31 @@ const checkStatus = async () => {
 };
 
 /**
+ * Get the OAuth authentication properties for GitLab.
+ * @returns {{ clientId: string, authURL: string, tokenURL: string }} Authentication properties.
+ */
+const getAuthProps = () => {
+  const {
+    base_url: baseURL = 'https://gitlab.com',
+    auth_endpoint: authPath = 'oauth/authorize',
+    app_id: clientId = '',
+  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+
+  const authURL = `${stripSlashes(baseURL)}/${stripSlashes(authPath)}`;
+  const tokenURL = authURL.replace('/authorize', '/token');
+
+  return { clientId, authURL, tokenURL };
+};
+
+/**
  * Send a request to GitLab REST/GraphQL API.
  * @param {string} path Endpoint.
  * @param {{ method?: string, headers?: any, body?: any }} [init] Request options.
  * @param {object} [options] Other options.
- * @param {string} [options.token] OAuth token.
+ * @param {string} [options.token] OAuth access token. If not provided, it will be taken from the
+ * `user` store.
+ * @param {string} [options.refreshToken] OAuth refresh token. If not provided, it will be taken
+ * from the `user` store.
  * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response type. The default is
  *`json`, while `raw` returns a `Response` object as is.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
@@ -130,14 +151,23 @@ const checkStatus = async () => {
 const fetchAPI = async (
   path,
   init = {},
-  { token = /** @type {string} */ (get(user)?.token), responseType = 'json' } = {},
+  { token = undefined, refreshToken = undefined, responseType = 'json' } = {},
 ) => {
   const apiRoot = apiConfig[path === '/graphql' ? 'graphql' : 'rest'];
+  const _user = get(user);
+
+  token ??= _user?.token;
+  refreshToken ??= _user?.refreshToken;
 
   init.headers = new Headers(init.headers);
   init.headers.set('Authorization', `Bearer ${token}`);
 
-  return sendRequest(`${apiRoot}${path}`, init, { responseType });
+  return sendRequest(`${apiRoot}${path}`, init, {
+    responseType,
+    refreshAccessToken: refreshToken
+      ? () => refreshAccessToken({ ...getAuthProps(), refreshToken })
+      : undefined,
+  });
 };
 
 /**
@@ -232,46 +262,37 @@ const init = () => {
  * @throws {Error} When there was an authentication error.
  * @see https://docs.gitlab.com/ee/api/users.html#list-current-user
  */
-const signIn = async ({ token: cachedToken, auto = false }) => {
-  const { origin, hostname } = window.location;
+const signIn = async ({ token, refreshToken, auto = false }) => {
+  if (!token) {
+    const { origin, hostname } = window.location;
 
-  const {
-    site_domain: siteDomain = hostname,
-    base_url: baseURL = 'https://gitlab.com',
-    auth_endpoint: path = 'oauth/authorize',
-    auth_type: authType,
-    app_id: clientId = '',
-  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+    const { site_domain: siteDomain = hostname, auth_type: authType } =
+      get(siteConfig)?.backend ?? {};
 
-  const authURL = `${stripSlashes(baseURL)}/${stripSlashes(path)}`;
-  const scope = 'api';
-  let token = '';
+    const { clientId, authURL, tokenURL } = getAuthProps();
+    const authArgs = { backendName, authURL, scope: 'api' };
 
-  if (cachedToken) {
-    token = cachedToken;
-  } else if (authType === 'pkce') {
-    if (window.opener?.origin === origin && window.name === 'auth') {
-      // We are in the auth popup window; let’s get the OAuth flow done
-      await handleClientSideAuthPopup({
-        backendName,
-        clientId,
-        authURL: authURL.replace('/authorize', '/token'),
-      });
+    if (authType === 'pkce') {
+      const inPopup = window.opener?.origin === origin && window.name === 'auth';
 
-      return undefined;
+      if (inPopup) {
+        // We are in the auth popup window; let’s get the OAuth flow done
+        await handleClientSideAuthPopup({ backendName, clientId, tokenURL });
+      }
+
+      if (inPopup || auto) {
+        return undefined;
+      }
+
+      ({ token, refreshToken } = await initClientSideAuth({ ...authArgs, clientId }));
+    } else {
+      if (auto) {
+        return undefined;
+      }
+
+      // @todo Add `refreshToken` support
+      ({ token } = await initServerSideAuth({ ...authArgs, siteDomain }));
     }
-
-    if (auto) {
-      return undefined;
-    }
-
-    token = await initClientSideAuth({ backendName, clientId, authURL, scope });
-  } else {
-    if (auto) {
-      return undefined;
-    }
-
-    token = await initServerSideAuth({ backendName, siteDomain, authURL, scope });
   }
 
   const {
@@ -281,11 +302,21 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     email,
     avatar_url: avatarURL,
     web_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', {}, { token }));
+  } = /** @type {any} */ (await fetchAPI('/user', {}, { token, refreshToken }));
+
+  const _user = get(user);
+
+  // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
+  // the user info
+  if (_user?.token && _user.token !== token) {
+    token = _user.token;
+    refreshToken = _user.refreshToken;
+  }
 
   return {
     backendName,
     token,
+    refreshToken,
     id,
     name,
     login,

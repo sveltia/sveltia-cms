@@ -4,7 +4,11 @@ import { decodeBase64, encodeBase64 } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import { handleClientSideAuthPopup, initClientSideAuth } from '$lib/services/backends/shared/auth';
+import {
+  handleClientSideAuthPopup,
+  initClientSideAuth,
+  refreshAccessToken,
+} from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
 import { siteConfig } from '$lib/services/config';
@@ -89,11 +93,31 @@ const repository = new Proxy(/** @type {any} */ ({}), {
 });
 
 /**
+ * Get the OAuth authentication properties for Gitea.
+ * @returns {{ clientId: string, authURL: string, tokenURL: string }} Authentication properties.
+ */
+const getAuthProps = () => {
+  const {
+    base_url: baseURL = 'https://gitea.com',
+    auth_endpoint: authPath = 'login/oauth/authorize',
+    app_id: clientId = '',
+  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+
+  const authURL = `${stripSlashes(baseURL)}/${stripSlashes(authPath)}`;
+  const tokenURL = authURL.replace('/authorize', '/access_token');
+
+  return { clientId, authURL, tokenURL };
+};
+
+/**
  * Send a request to Gitea REST API.
  * @param {string} path Endpoint.
  * @param {{ method?: string, headers?: any, body?: any }} [init] Request options.
  * @param {object} [options] Other options.
- * @param {string} [options.token] OAuth token.
+ * @param {string} [options.token] OAuth access token. If not provided, it will be taken from the
+ * `user` store.
+ * @param {string} [options.refreshToken] OAuth refresh token. If not provided, it will be taken
+ * from the `user` store.
  * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response type. The default is
  *`json`, while `raw` returns a `Response` object as is.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
@@ -104,14 +128,23 @@ const repository = new Proxy(/** @type {any} */ ({}), {
 const fetchAPI = async (
   path,
   init = {},
-  { token = /** @type {string} */ (get(user)?.token), responseType = 'json' } = {},
+  { token = undefined, refreshToken = undefined, responseType = 'json' } = {},
 ) => {
-  const { rest } = apiConfig;
+  const { rest: apiRoot } = apiConfig;
+  const _user = get(user);
+
+  token ??= _user?.token;
+  refreshToken ??= _user?.refreshToken;
 
   init.headers = new Headers(init.headers);
   init.headers.set('Authorization', `token ${token}`);
 
-  return sendRequest(`${rest}${path}`, init, { responseType });
+  return sendRequest(`${apiRoot}${path}`, init, {
+    responseType,
+    refreshAccessToken: refreshToken
+      ? () => refreshAccessToken({ ...getAuthProps(), refreshToken })
+      : undefined,
+  });
 };
 
 /**
@@ -169,38 +202,23 @@ const init = () => {
  * @throws {Error} When there was an authentication error.
  * @see https://docs.gitea.com/api/1.24/#tag/user/operation/userGetCurrent
  */
-const signIn = async ({ token: cachedToken, auto = false }) => {
-  const { origin } = window.location;
+const signIn = async ({ token, refreshToken, auto = false }) => {
+  if (!token) {
+    const { origin } = window.location;
+    const { clientId, authURL, tokenURL } = getAuthProps();
+    const scope = 'read:repository,write:repository,read:user';
+    const inPopup = window.opener?.origin === origin && window.name === 'auth';
 
-  const {
-    base_url: baseURL = 'https://gitea.com',
-    auth_endpoint: path = 'login/oauth/authorize',
-    app_id: clientId = '',
-  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
-
-  const authURL = `${stripSlashes(baseURL)}/${stripSlashes(path)}`;
-  const scope = 'read:repository,write:repository,read:user';
-  let token = '';
-
-  if (cachedToken) {
-    token = cachedToken;
-  } else {
-    if (window.opener?.origin === origin && window.name === 'auth') {
+    if (inPopup) {
       // We are in the auth popup window; let's get the OAuth flow done
-      await handleClientSideAuthPopup({
-        backendName,
-        clientId,
-        authURL: authURL.replace('/authorize', '/access_token'),
-      });
+      await handleClientSideAuthPopup({ backendName, clientId, tokenURL });
+    }
 
+    if (inPopup || auto) {
       return undefined;
     }
 
-    if (auto) {
-      return undefined;
-    }
-
-    token = await initClientSideAuth({ backendName, clientId, authURL, scope });
+    ({ token, refreshToken } = await initClientSideAuth({ backendName, clientId, authURL, scope }));
   }
 
   const {
@@ -210,11 +228,21 @@ const signIn = async ({ token: cachedToken, auto = false }) => {
     email,
     avatar_url: avatarURL,
     html_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', {}, { token }));
+  } = /** @type {any} */ (await fetchAPI('/user', {}, { token, refreshToken }));
+
+  const _user = get(user);
+
+  // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
+  // the user info
+  if (_user?.token && _user.token !== token) {
+    token = _user.token;
+    refreshToken = _user.refreshToken;
+  }
 
   return {
     backendName,
     token,
+    refreshToken,
     id,
     name,
     login,

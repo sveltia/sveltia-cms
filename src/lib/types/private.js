@@ -40,7 +40,8 @@
  * are not available for the local backend.
  * @typedef {object} User
  * @property {BackendName | 'local'} backendName Backend name, e.g. `github`.
- * @property {string} [token] Backend OAuth token.
+ * @property {string} [token] Backend OAuth access token.
+ * @property {string} [refreshToken] Backend OAuth refresh token.
  * @property {number} [id] User ID.
  * @property {string} [name] User display name.
  * @property {string} [login] User account name.
@@ -100,7 +101,14 @@
  * Options for the `signIn` function on {@link BackendService}.
  * @typedef {object} SignInOptions
  * @property {boolean} auto Whether the sign-in process is automatic.
- * @property {string} [token] User’s Locally-cached authentication token. Git backends only.
+ * @property {string} [token] User’s locally-cached OAuth access token. Git backends only.
+ * @property {string} [refreshToken] User’s locally-cached OAuth refresh token. Git backends only.
+ */
+
+/**
+ * OAuth token response type. `refreshToken` is optional because earlier versions of Sveltia CMS and
+ * Sveltia CMS Authenticator did not support refresh tokens.
+ * @typedef {{ token: string, refreshToken?: string }} AuthTokenResponse
  */
 
 /**

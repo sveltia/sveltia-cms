@@ -106,6 +106,20 @@ const checkStatus = async () => {
 };
 
 /**
+ * Get the OAuth authentication properties for GitHub.
+ * @returns {{ authURL: string, tokenURL: string }} Authentication properties.
+ */
+const getAuthProps = () => {
+  const { base_url: baseURL = 'https://api.netlify.com', auth_endpoint: authPath = 'auth' } =
+    /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+
+  const authURL = `${stripSlashes(baseURL)}/${stripSlashes(authPath)}`;
+  const tokenURL = authURL.replace('/authorize', '/access_token');
+
+  return { authURL, tokenURL };
+};
+
+/**
  * Send a request to GitHub REST/GraphQL API.
  * @param {string} path Endpoint.
  * @param {{ method?: string, headers?: any, body?: any }} [init] Request options.
@@ -214,28 +228,25 @@ const init = () => {
  * @returns {Promise<User | void>} User info, or nothing when the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
  * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
+ * @todo Add `refreshToken` support.
  */
-const signIn = async ({ token: cachedToken, auto = false }) => {
-  if (auto && !cachedToken) {
+const signIn = async ({ token, auto = false }) => {
+  if (auto && !token) {
     return undefined;
   }
 
-  const { hostname } = window.location;
+  if (!token) {
+    const { hostname } = window.location;
+    const { site_domain: siteDomain = hostname } = get(siteConfig)?.backend ?? {};
+    const { authURL } = getAuthProps();
 
-  const {
-    site_domain: siteDomain = hostname,
-    base_url: baseURL = 'https://api.netlify.com',
-    auth_endpoint: path = 'auth',
-  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
-
-  const token =
-    cachedToken ||
-    (await initServerSideAuth({
+    ({ token } = await initServerSideAuth({
       backendName,
       siteDomain,
-      authURL: `${stripSlashes(baseURL)}/${stripSlashes(path)}`,
+      authURL,
       scope: 'repo,user',
     }));
+  }
 
   const {
     id,

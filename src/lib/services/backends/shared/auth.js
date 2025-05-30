@@ -1,7 +1,13 @@
 import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
+import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
+import { user } from '$lib/services/user';
+
+/**
+ * @import { AuthTokenResponse, User } from '$lib/types/private';
+ */
 
 export const inAuthPopup = writable(false);
 
@@ -11,7 +17,7 @@ export const inAuthPopup = writable(false);
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `github`.
  * @param {string} args.authURL Authentication site URL.
- * @returns {Promise<string>} Auth token.
+ * @returns {Promise<AuthTokenResponse>} Auth access token and refresh token.
  * @throws {Error} When authentication failed or the popup window is closed before the auth process
  * is complete.
  * @see https://decapcms.org/docs/backends-overview/
@@ -68,17 +74,23 @@ const authorize = async ({ backendName, authURL }) => {
       const { result: resultStr } =
         data.match(`^authorization:${provider}:(success|error):(?<result>.+)`)?.groups ?? {};
 
-      /** @type {{ token?: string, error?: string, errorCode?: string }} */
+      /**
+       * @type {{ token: string, refreshToken?: string } | { error: string, errorCode?: string }}
+       */
       let result;
 
       try {
         result = resultStr ? JSON.parse(resultStr) : { error: 'No data' };
+
+        if (!isObject(result)) {
+          result = { error: 'Malformed data' };
+        }
       } catch {
         result = { error: 'Malformed data' };
       }
 
-      if (typeof result.token === 'string') {
-        resolve(result.token);
+      if ('token' in result) {
+        resolve(result);
       } else {
         reject(
           new Error('Authentication failed', {
@@ -107,7 +119,7 @@ const authorize = async ({ backendName, authURL }) => {
  * @param {string} args.siteDomain Domain of the site hosting the CMS.
  * @param {string} args.authURL Authorization site URL.
  * @param {string} args.scope Authorization scope.
- * @returns {Promise<string>} Auth token.
+ * @returns {Promise<AuthTokenResponse>} Auth access token and refresh token.
  */
 export const initServerSideAuth = async ({ backendName, siteDomain, authURL, scope }) => {
   try {
@@ -162,7 +174,7 @@ const createAuthSecrets = async () => {
  * @param {string} args.clientId OAuth application ID.
  * @param {string} args.authURL Authorization site URL.
  * @param {string} args.scope Authorization scope.
- * @returns {Promise<string>} Auth token.
+ * @returns {Promise<AuthTokenResponse>} Auth access token and refresh token.
  * @see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-with-proof-key-for-code-exchange-pkce
  */
 export const initClientSideAuth = async ({ backendName, clientId, authURL, scope }) => {
@@ -201,14 +213,15 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
  * Communicate with the window opener as part of {@link finishClientSideAuth}.
  * @param {object} args Options.
  * @param {string} [args.provider] Backend name, e,g. `github`.
- * @param {string} [args.token] OAuth token.
+ * @param {string} [args.token] OAuth access token.
+ * @param {string} [args.refreshToken] OAuth refresh token.
  * @param {string} [args.error] Error message when an OAuth token is not available.
  * @param {string} [args.errorCode] Error code to be used to localize the error message in
  * Sveltia CMS.
  */
-const sendMessage = ({ provider = 'unknown', token, error, errorCode }) => {
+const sendMessage = ({ provider = 'unknown', token, refreshToken, error, errorCode }) => {
   const _state = error ? 'error' : 'success';
-  const content = error ? { provider, error, errorCode } : { provider, token };
+  const content = error ? { provider, error, errorCode } : { provider, token, refreshToken };
 
   window.addEventListener('message', ({ data, origin }) => {
     if (data === `authorizing:${provider}`) {
@@ -229,14 +242,14 @@ const sendMessage = ({ provider = 'unknown', token, error, errorCode }) => {
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `gitlab`.
  * @param {string} args.clientId OAuth application ID.
- * @param {string} args.authURL Authorization site URL.
+ * @param {string} args.tokenURL OAuth token request URL.
  * @param {string} args.code Authorization code.
  * @param {string} args.state Authorization state, which is a CSRF token previously set.
  * @returns {Promise<void>} None.
  * @see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-with-proof-key-for-code-exchange-pkce
  * @see https://github.com/sveltia/sveltia-cms-auth/blob/main/src/index.js
  */
-export const finishClientSideAuth = async ({ backendName, clientId, authURL, code, state }) => {
+export const finishClientSideAuth = async ({ backendName, clientId, tokenURL, code, state }) => {
   const { origin, pathname } = new URL(window.location.href);
   const { csrfToken, codeVerifier } = (await LocalStorage.get('sveltia-cms.auth')) ?? {};
   const provider = backendName;
@@ -255,19 +268,20 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
 
   let response;
   let token = '';
+  let refreshToken = '';
   let error = '';
 
   try {
-    response = await fetch(authURL, {
+    response = await fetch(tokenURL, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        grant_type: 'authorization_code',
         client_id: clientId,
         code,
-        grant_type: 'authorization_code',
         redirect_uri: redirectURL,
         code_verifier: codeVerifier,
       }),
@@ -285,7 +299,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
   }
 
   try {
-    ({ access_token: token, error } = await response.json());
+    ({ access_token: token, refresh_token: refreshToken, error } = await response.json());
   } catch {
     return sendMessage({
       provider,
@@ -294,7 +308,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
     });
   }
 
-  return sendMessage({ provider, token, error });
+  return sendMessage({ provider, token, refreshToken, error });
 };
 
 /**
@@ -303,16 +317,16 @@ export const finishClientSideAuth = async ({ backendName, clientId, authURL, cod
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `gitlab`.
  * @param {string} args.clientId OAuth application ID.
- * @param {string} args.authURL Authorization site URL.
+ * @param {string} args.tokenURL OAuth token request URL.
  */
-export const handleClientSideAuthPopup = async ({ backendName, clientId, authURL }) => {
+export const handleClientSideAuthPopup = async ({ backendName, clientId, tokenURL }) => {
   inAuthPopup.set(true);
 
   const { search } = window.location;
   const { code, state } = Object.fromEntries(new URLSearchParams(search));
 
   if (code && state) {
-    await finishClientSideAuth({ backendName, clientId, authURL, code, state });
+    await finishClientSideAuth({ backendName, clientId, tokenURL, code, state });
   } else {
     const { realAuthURL } = (await LocalStorage.get('sveltia-cms.auth')) ?? {};
 
@@ -320,4 +334,51 @@ export const handleClientSideAuthPopup = async ({ backendName, clientId, authURL
       window.location.href = realAuthURL;
     }
   }
+};
+
+/**
+ * Refresh the OAuth access token using the refresh token.
+ * @param {object} args Arguments.
+ * @param {string} args.clientId OAuth application ID.
+ * @param {string} args.tokenURL OAuth token request URL.
+ * @param {string} args.refreshToken OAuth refresh token.
+ * @returns {Promise<AuthTokenResponse>} New access token and refresh token.
+ */
+export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) => {
+  let response;
+  let token = '';
+
+  try {
+    response = await fetch(tokenURL, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        grant_type: 'refresh_token',
+        client_id: clientId,
+        refresh_token: refreshToken,
+      }),
+    });
+  } catch {
+    //
+  }
+
+  if (!response?.ok) {
+    throw new Error(get(_)('sign_in_error.TOKEN_REFRESH_FAILED'));
+  }
+
+  ({ access_token: token, refresh_token: refreshToken } = await response.json());
+
+  // Update the user store with the new token and refresh token
+  user.update((_user) => {
+    if (_user) {
+      Object.assign(_user, { token, refreshToken });
+    }
+
+    return _user;
+  });
+
+  return { token, refreshToken };
 };

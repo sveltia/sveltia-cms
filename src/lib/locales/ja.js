@@ -92,6 +92,7 @@ export const strings = {
     AUTH_CODE_REQUEST_FAILED: '認証コードを取得できませんでした。後で再度お試しください。',
     CSRF_DETECTED: 'CSRF 攻撃の可能性が検出されたため、認証フローは中断されました。',
     TOKEN_REQUEST_FAILED: 'アクセストークンを要求できませんでした。後で再度お試しください。',
+    TOKEN_REFRESH_FAILED: 'アクセストークンの更新に失敗しました。後で再度お試しください。',
     MALFORMED_RESPONSE: 'サーバーから不正なデータが返されました。後で再度お試しください。',
   },
   backend_unsupported_version:
