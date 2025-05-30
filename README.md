@@ -360,7 +360,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - For better performance, the Preview Pane doesn’t use an `<iframe>`.[^179]
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
-  - This is equivalent to the (misleading) visual editing feature introduced in [Decap 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option. Also, image previews are not broken in Sveltia CMS.[^188]
+  - This is equivalent to the (misleading) visual editing feature introduced in [Decap 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option.
+  - Our implementation doesn’t cause a module import error or broken image previews.[^225][^188]
 - The Preview Pane doesn’t cause a scrolling issue.[^136]
 - The Preview Pane doesn’t crash with a Minified React error.[^186]
 - Provides better scroll synchronization between the panes when editing or previewing an entry.[^92]
@@ -1837,3 +1838,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^223]: Netlify/Decap CMS [#7483](https://github.com/decaporg/decap-cms/issues/7483)
 
 [^224]: Netlify/Decap CMS [#7352](https://github.com/decaporg/decap-cms/issues/7352)
+
+[^225]: Netlify/Decap CMS [#7401](https://github.com/decaporg/decap-cms/issues/7401)
