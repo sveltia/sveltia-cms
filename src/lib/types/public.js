@@ -183,7 +183,7 @@
  * output option is `true`. If i18n is enabled and the field doesn’t require input in all locales,
  * required locale codes can be passed as an array like `[en, fr]` instead of a boolean.
  * @property {boolean} [readonly] Whether to make the field read-only. Default: `false`. This is
- * useful if the `default` value is given and the field should not be editable.
+ * useful when a `default` value is provided and the field should not be editable by users.
  * @property {[string, string]} [pattern] Validation format. The first argument is a regular
  * expression pattern for a valid input value, and the second argument is an error message. This
  * option has no effect on a List or Object field with subfields.

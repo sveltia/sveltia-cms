@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 210+ issues, or 425+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 215+ issues, or 425+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 350 issues, or 700 if including duplicates, in the future 💪
@@ -144,7 +144,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![210 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250519)<br>
+![215 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250530)<br>
 
 ## Differentiators
 
@@ -242,6 +242,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Our Gitea backend is high-performing because it retrieves multiple entries simultaneously. It also won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
+- The OAuth token is automatically renewed with when using the GitLab or Gitea backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
 - Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
@@ -345,6 +346,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Required fields, not optional fields, are marked for efficient data entry.
 - Users can revert changes to all fields or a specific field.
 - If you revert changes and there are no unsaved changes, the Save button is disabled as expected.[^118]
+- The new `readonly` field option makes the field read-only. This is useful when a `default` value is provided and the field should not be editable by users.[^223]
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects.[^40]
 - A full regular expression, including flags, can be used for the widget `pattern` option.[^82] For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
 - A long validation error message is displayed in full, without being hidden behind the field label.[^59]
@@ -1831,3 +1833,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^221]: Netlify/Decap CMS [#3421](https://github.com/decaporg/decap-cms/issues/3421)
 
 [^222]: Netlify/Decap CMS [#7281](https://github.com/decaporg/decap-cms/issues/7281) — The issue was closed, but the attached PR is not yet merged.
+
+[^223]: Netlify/Decap CMS [#7483](https://github.com/decaporg/decap-cms/issues/7483)
+
+[^224]: Netlify/Decap CMS [#7352](https://github.com/decaporg/decap-cms/issues/7352)
