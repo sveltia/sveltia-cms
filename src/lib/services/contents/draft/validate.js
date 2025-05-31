@@ -86,7 +86,7 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
         return undefined;
       }
     } else {
-      // `selection` or `relation` field with `multiple: true`
+      // `select` or `relation` field with `multiple: true`, same as a simple list field
       return undefined;
     }
   }
