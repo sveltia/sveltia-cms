@@ -91,6 +91,7 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
   const valueEntries = Object.entries(valueMap);
   const required = isFieldRequired({ fieldConfig, locale });
   const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
+  const isMultiSelection = ['select', 'relation'].includes(widgetName) && multiple;
 
   const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
     fieldConfig
@@ -107,7 +108,7 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
     typeMismatch: false,
   };
 
-  if (widgetName === 'list') {
+  if (widgetName === 'list' || isMultiSelection) {
     // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.N`,
     // we should validate only once against all these values
     if (keyPath in validities[locale]) {
@@ -194,7 +195,9 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
     value = files[value]?.file?.name;
   }
 
-  if (!['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(widgetName)) {
+  if (
+    !(['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(widgetName) || isMultiSelection)
+  ) {
     if (typeof value === 'string') {
       value = value.trim();
     }
