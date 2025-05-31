@@ -193,7 +193,9 @@
 >
   {#key $entryDraft?.createdAt}
     <Toolbar disabled={isNew && createDisabled} />
-    {#if isNew && createDisabled}
+    {#if !$entryDraft}
+      <!-- Hide the content after saving a draft -->
+    {:else if isNew && createDisabled}
       <EmptyState>
         <div role="none">
           {#if !canCreate}
