@@ -492,7 +492,7 @@ const fetchBlob = async (asset) => {
 
   return /** @type {Promise<Blob>} */ (
     fetchAPI(
-      `/repos/${owner}/${repo}/raw/${encodeURIComponent(path)}?ref=${branch}`,
+      `/repos/${owner}/${repo}/media/${encodeURIComponent(path)}?ref=${branch}`,
       {},
       { responseType: 'blob' },
     )
