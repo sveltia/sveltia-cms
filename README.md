@@ -97,9 +97,9 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
 
 Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stalled for more than six months. [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances without much effort, mainly to get better internationalization (i18n) support.
 
-To achieve radical improvements in UX, performance, i18n and other areas, it was ultimately decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the concept with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
+To achieve radical improvements in UX, performance, i18n and other areas, it was ultimately decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the idea with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
-We loved the concept of Netlify CMS — turning a Git repository into a database with a single page app served from a CDN plus a plain YAML config file — and we wanted to revive it, modernize it, and take it to the next level.
+We loved the well-received concept of Netlify CMS: turning a Git repository into a database with a single page app served from a CDN plus a plain YAML config file. We wanted to revive it, modernize it, and take it to the next level.
 
 ### Our advantage
 
@@ -134,7 +134,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 350 issues, or 700 if including duplicates, in the future 💪
-    - or everything that’s relevant, fixable and worthwhile 🔥
+    - or every single issue that’s relevant, fixable, and worth dealing with 🔥
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Many of the bugs, including the annoying crashes, have already been solved
     - The remaining bugs are mostly related to [unimplemented features](#current-limitations)
