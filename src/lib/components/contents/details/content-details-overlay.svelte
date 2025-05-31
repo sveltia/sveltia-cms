@@ -33,6 +33,7 @@
   /** @type {HTMLElement | undefined} */
   let rightPaneContentArea = $state();
 
+  const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const { showPreview } = $derived($entryEditorSettings ?? {});
@@ -191,8 +192,8 @@
   bind:this={wrapper}
 >
   {#key $entryDraft?.createdAt}
-    <Toolbar disabled={createDisabled} />
-    {#if createDisabled}
+    <Toolbar disabled={isNew && createDisabled} />
+    {#if isNew && createDisabled}
       <EmptyState>
         <div role="none">
           {#if !canCreate}

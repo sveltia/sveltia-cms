@@ -22,6 +22,7 @@
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { deleteEntries } from '$lib/services/contents/collection/data';
+  import { canCreateEntry } from '$lib/services/contents/collection/entries';
   import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft, duplicateDraft } from '$lib/services/contents/draft/create';
   import { copyFromLocaleToast, entryEditorSettings } from '$lib/services/contents/draft/editor';
@@ -146,7 +147,7 @@
     variant="ghost"
     label={$_('duplicate')}
     aria-label={$_('duplicate_entry')}
-    disabled={isIndexFile || collection?.create === false}
+    disabled={isIndexFile || collection?.create === false || !canCreateEntry(collection)}
     onclick={() => {
       goto(`/collections/${collectionName}/new`, {
         replaceState: true,
