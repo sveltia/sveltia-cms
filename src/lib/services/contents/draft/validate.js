@@ -71,7 +71,7 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
   }
 
   // Validate a list itself before the items
-  if (!['select', 'relation'].includes(widgetName) && /\.\d+$/.test(keyPath)) {
+  if (/\.\d+$/.test(keyPath)) {
     const listKeyPath = keyPath.replace(/\.\d+$/, '');
 
     if (!(listKeyPath in validities[locale])) {
@@ -85,6 +85,9 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
         // Simple list field
         return undefined;
       }
+    } else {
+      // `selection` or `relation` field with `multiple: true`
+      return undefined;
     }
   }
 
