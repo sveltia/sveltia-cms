@@ -18,6 +18,7 @@ ignorePaths:
   - data/**/*.json
   - package/**
 words:
+  - analyzing
   - astrolicious
   - astros
   - brotlied
