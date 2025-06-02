@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 215+ issues, or 425+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 215+ issues, or 430+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 350 issues, or 700 if including duplicates, in the future 💪
@@ -362,7 +362,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
   - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option.
-  - Our implementation doesn’t cause a module import error or broken image previews.[^225][^188]
+  - Our implementation doesn’t cause a module import error[^225] or broken image previews.[^188]
 - The Preview Pane doesn’t cause a scrolling issue.[^136]
 - The Preview Pane doesn’t crash with a Minified React error.[^186]
 - Provides better scroll synchronization between the panes when editing or previewing an entry.[^92]
@@ -438,7 +438,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection:[^30]
-    - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` and `typeKey` options) just like the List widget.
+    - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` and `typeKey` options) just like the List widget.[^226]
     - An optional Object field (`required: false`) can be manually added or removed with a checkbox.[^88] If unadded or removed, the required subfields won’t trigger validation errors,[^16] and the field will be saved as `null`.
 - Relation
   - Field options are displayed with no additional API requests.[^14] The confusing `options_length` option, which defaults to 20, is therefore ignored.[^76]
@@ -520,7 +520,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
     - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
   - Other integrations
     - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8] Developers can [disable them](#disabling-stock-assets) if needed.
-    - More integration options, including Amazon S3 and Cloudflare R2, would be added in the future.
+    - More integration options, including Amazon S3 and Cloudflare R2/Images/Stream, would be added in the future.
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for.[^38]
 - Assets stored in an entry-relative media folder are displayed in the Asset Library.[^142]
@@ -1736,7 +1736,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^172]: Netlify/Decap CMS [#3715](https://github.com/decaporg/decap-cms/issues/3715)
 
-[^173]: Netlify/Decap CMS [#3715](https://github.com/decaporg/decap-cms/issues/5317)
+[^173]: Netlify/Decap CMS [#5317](https://github.com/decaporg/decap-cms/issues/5317)
 
 [^174]: Netlify/Decap CMS [#6616](https://github.com/decaporg/decap-cms/issues/6616)
 
@@ -1762,7 +1762,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^185]: Netlify/Decap CMS [#6203](https://github.com/decaporg/decap-cms/issues/6203), [#7417](https://github.com/decaporg/decap-cms/issues/7417)
 
-[^186]: Netlify/Decap CMS [#3454](https://github.com/decaporg/decap-cms/issues/3454), [#3585](https://github.com/decaporg/decap-cms/issues/3585), [#3651](https://github.com/decaporg/decap-cms/issues/3651), [#3885](https://github.com/decaporg/decap-cms/issues/3885), [#3962](https://github.com/decaporg/decap-cms/issues/3962), [#4037](https://github.com/decaporg/decap-cms/issues/4037), [#4143](https://github.com/decaporg/decap-cms/issues/4143), [#6585](https://github.com/decaporg/decap-cms/issues/6585), [#6664](https://github.com/decaporg/decap-cms/issues/6664), [#6665](https://github.com/decaporg/decap-cms/issues/6665), [#6739](https://github.com/decaporg/decap-cms/issues/6739), [#7243](https://github.com/decaporg/decap-cms/issues/7243), [#7379](https://github.com/decaporg/decap-cms/issues/7379), [#7469](https://github.com/decaporg/decap-cms/issues/7469)
+[^186]: Netlify/Decap CMS [#2368](https://github.com/decaporg/decap-cms/issues/2368), [#3454](https://github.com/decaporg/decap-cms/issues/3454), [#3585](https://github.com/decaporg/decap-cms/issues/3585), [#3651](https://github.com/decaporg/decap-cms/issues/3651), [#3885](https://github.com/decaporg/decap-cms/issues/3885), [#3962](https://github.com/decaporg/decap-cms/issues/3962), [#4037](https://github.com/decaporg/decap-cms/issues/4037), [#4143](https://github.com/decaporg/decap-cms/issues/4143), [#6585](https://github.com/decaporg/decap-cms/issues/6585), [#6664](https://github.com/decaporg/decap-cms/issues/6664), [#6665](https://github.com/decaporg/decap-cms/issues/6665), [#6739](https://github.com/decaporg/decap-cms/issues/6739), [#7243](https://github.com/decaporg/decap-cms/issues/7243), [#7379](https://github.com/decaporg/decap-cms/issues/7379), [#7469](https://github.com/decaporg/decap-cms/issues/7469)
 
 [^187]: Netlify/Decap CMS [#1244](https://github.com/decaporg/decap-cms/issues/1244)
 
@@ -1841,3 +1841,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^224]: Netlify/Decap CMS [#7352](https://github.com/decaporg/decap-cms/issues/7352)
 
 [^225]: Netlify/Decap CMS [#7401](https://github.com/decaporg/decap-cms/issues/7401)
+
+[^226]: Netlify/Decap CMS [#7031](https://github.com/decaporg/decap-cms/pull/7031)
