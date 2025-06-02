@@ -184,9 +184,9 @@
  * required locale codes can be passed as an array like `[en, fr]` instead of a boolean.
  * @property {boolean} [readonly] Whether to make the field read-only. Default: `false`. This is
  * useful when a `default` value is provided and the field should not be editable by users.
- * @property {[string, string]} [pattern] Validation format. The first argument is a regular
- * expression pattern for a valid input value, and the second argument is an error message. This
- * option has no effect on a List or Object field with subfields.
+ * @property {[string | RegExp, string]} [pattern] Validation format. The first argument is a
+ * regular expression matching pattern for a valid input value, and the second argument is an error
+ * message. This option has no effect on a List or Object field with subfields.
  * @property {string} [hint] Help message to be displayed below the input UI. Limited Markdown
  * formatting is supported: bold, italic, strikethrough and links.
  * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
@@ -746,7 +746,7 @@
  * @property {FieldKeyPath} field Field name.
  * @property {any | any[]} [value] Field value. `null` can be used to match an undefined field.
  * Multiple values can be defined with an array. This option or `pattern` is required.
- * @property {string} [pattern] Regex matching pattern.
+ * @property {string | RegExp} [pattern] Regular expression matching pattern.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
  * @see https://github.com/decaporg/decap-cms/issues/7347
  */
@@ -774,7 +774,7 @@
  * @typedef {object} ViewFilter
  * @property {string} label Label.
  * @property {FieldKeyPath} field Field name.
- * @property {string | boolean} pattern Regex matching pattern or exact value.
+ * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
 
@@ -783,7 +783,7 @@
  * @typedef {object} ViewGroup
  * @property {string} label Label.
  * @property {FieldKeyPath} field Field name.
- * @property {string | boolean} pattern Regex matching pattern or exact value.
+ * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
 

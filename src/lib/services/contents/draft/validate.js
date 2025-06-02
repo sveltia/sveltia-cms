@@ -4,6 +4,7 @@ import { entryDraft } from '$lib/services/contents/draft';
 import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 import { validateStringField } from '$lib/services/contents/widgets/string/helper';
+import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -19,9 +20,6 @@ import { validateStringField } from '$lib/services/contents/widgets/string/helpe
  * TextField,
  * } from '$lib/types/public';
  */
-
-// cspell:disable-next-line
-const fullRegexPattern = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
 
 const validityProxyHandler = {
   /**
@@ -212,13 +210,10 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
       validity.valueMissing = true;
     }
 
-    if (Array.isArray(validation) && typeof validation[0] === 'string') {
-      // Parse the regex to support simple pattern, e.g `.{12,}`, and complete expression, e.g.
-      // `/^.{0,280}$/s`
-      const { pattern, flags } = validation[0].match(fullRegexPattern)?.groups ?? {};
-      const regex = new RegExp(pattern, flags);
+    if (Array.isArray(validation)) {
+      const regex = getRegex(validation[0]);
 
-      if (pattern && !regex.test(String(value))) {
+      if (regex && !regex.test(String(value))) {
         validity.patternMismatch = true;
       }
     }

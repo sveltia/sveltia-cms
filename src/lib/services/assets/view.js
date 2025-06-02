@@ -3,9 +3,6 @@ import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { derived, get, writable } from 'svelte/store';
-import { prefs } from '$lib/services/user/prefs';
-import { siteConfig } from '$lib/services/config';
-import { backend } from '$lib/services/backends';
 import {
   allAssets,
   getAssetKind,
@@ -13,6 +10,10 @@ import {
   selectedAssets,
   uploadingAssets,
 } from '$lib/services/assets';
+import { backend } from '$lib/services/backends';
+import { siteConfig } from '$lib/services/config';
+import { prefs } from '$lib/services/user/prefs';
+import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -146,7 +147,7 @@ const filterAssets = (assets, { field, pattern } = { field: '', pattern: '' }) =
     return assets.filter(({ path }) => getAssetKind(path) === pattern);
   }
 
-  const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
+  const regex = getRegex(pattern);
 
   return assets.filter((asset) => {
     const value = /** @type {Record<string, any>} */ (asset)[field];
@@ -171,7 +172,7 @@ const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefine
     return assets.length ? { '*': assets } : {};
   }
 
-  const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
+  const regex = getRegex(pattern);
   /** @type {Record<string, Asset[]>} */
   const groups = {};
   const otherKey = get(_)('other');

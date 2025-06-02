@@ -639,7 +639,7 @@
  * Entry/Asset filtering conditions.
  * @typedef {object} FilteringConditions
  * @property {string} field Target field name.
- * @property {string | boolean} pattern Regex matching pattern or exact value.
+ * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
 
@@ -647,7 +647,8 @@
  * Entry/Asset grouping conditions.
  * @typedef {object} GroupingConditions
  * @property {string} field Target field name.
- * @property {string | boolean} [pattern] Regex matching pattern or exact value.
+ * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
+ * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
 

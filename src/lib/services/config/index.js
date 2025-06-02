@@ -1,5 +1,5 @@
 import { getHash } from '@sveltia/utils/crypto';
-import { isObject, toRaw } from '@sveltia/utils/object';
+import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 import merge from 'deepmerge';
 import { _ } from 'svelte-i18n';
@@ -137,8 +137,7 @@ export const initSiteConfig = async (manualConfig) => {
         throw new Error(get(_)('config.error.parse_failed'));
       }
 
-      // Clone the object because it may contain proxified arrays, etc.
-      rawConfig = toRaw(manualConfig);
+      rawConfig = manualConfig;
 
       if (rawConfig.load_config_file !== false) {
         rawConfig = merge(await fetchSiteConfig(), rawConfig);

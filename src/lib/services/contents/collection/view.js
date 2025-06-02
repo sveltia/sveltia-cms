@@ -14,6 +14,7 @@ import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/f
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
 import { prefs } from '$lib/services/user/prefs';
+import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -161,7 +162,7 @@ const filterEntries = (entries, collection, filters) => {
     ({ field, pattern }) =>
       field !== undefined &&
       pattern !== undefined &&
-      configuredFilters.some((f) => f.field === field && f.pattern === pattern),
+      configuredFilters.some((f) => f.field === field && String(f.pattern) === String(pattern)),
   );
 
   return entries.filter((entry) =>
@@ -170,7 +171,7 @@ const filterEntries = (entries, collection, filters) => {
       const args = { entry, locale, collectionName, key: field };
       const rawValue = getPropertyValue({ ...args, resolveRef: false });
       const refValue = getPropertyValue({ ...args });
-      const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
+      const regex = getRegex(pattern);
 
       if (rawValue === undefined || refValue === undefined) {
         return false;
@@ -209,7 +210,7 @@ const groupEntries = (
   } = collection;
 
   const sortCondition = get(currentView).sort;
-  const regex = typeof pattern === 'string' ? new RegExp(pattern) : undefined;
+  const regex = getRegex(pattern);
   /** @type {Record<string, Entry[]>} */
   const groups = {};
   const otherKey = get(_)('other');

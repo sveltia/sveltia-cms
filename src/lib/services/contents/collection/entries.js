@@ -7,6 +7,7 @@ import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/fields';
+import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -42,9 +43,7 @@ export const getEntriesByCollection = (collectionName) => {
   } = collection;
 
   const filterField = filter?.field;
-
-  const filterPattern =
-    typeof filter?.pattern === 'string' ? new RegExp(filter.pattern) : undefined;
+  const filterPattern = getRegex(filter?.pattern);
 
   const filterValues =
     filter?.value === undefined ? [] : Array.isArray(filter.value) ? filter.value : [filter.value];
