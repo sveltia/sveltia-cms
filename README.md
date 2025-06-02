@@ -242,9 +242,9 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 - Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab or Gitea) under the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
-- Our Gitea backend is high-performing because it retrieves multiple entries at once. [Git LFS](https://git-lfs.com/) is supported out of the box if your Gitea instance has enabled [built-in LFS support](https://docs.gitea.com/administration/git-lfs-setup). Additionally, it won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
+- Our Gitea backend is high-performing because it retrieves multiple entries at once. [Git LFS](https://git-lfs.com/) is supported out of the box if your Gitea instance has enabled [built-in LFS support](https://docs.gitea.com/administration/git-lfs-setup). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
 - The OAuth access token is automatically renewed when using the GitLab or Gitea backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
-- Features the all-new local backend that boosts DX. See the [productivity section](#better-productivity) above.
+- Features the all-new [local repository workflow](#working-with-a-local-git-repository) that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
 
