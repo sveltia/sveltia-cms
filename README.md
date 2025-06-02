@@ -99,7 +99,7 @@ Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stal
 
 To achieve radical improvements in UX, performance, i18n and other areas, it was ultimately decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the idea with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
-We loved the simple architecture of Netlify CMS: turning a Git repository into a database with a single page app served from a CDN plus a plain YAML config file. In support of the [Jamstack](https://jamstack.org/) concept, we wanted to revive it, modernize it, and take it to the next level.
+We loved the simple architecture of Netlify CMS that turned a Git repository into a database with a single page app served from a CDN plus a plain YAML config file. In support of the [Jamstack](https://jamstack.org/) concept, we wanted to revive it, modernize it, and take it to the next level.
 
 ### Our advantage
 
@@ -125,7 +125,7 @@ While Sveltia CMS was created to replace legacy Netlify CMS instances, it can al
 
 Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in Q4 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
-While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system that involves various kinds of activities that require considerable effort:
+While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
@@ -385,7 +385,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better widgets
 
-Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS except Map. We have made significant improvements to these widgets while adding some new ones. The remaining Map widget will be added soon.
+Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS except Map. We have made significant improvements to these widgets while adding some new ones. The remaining Map widget will be added soon, followed by support for [custom widgets](https://decapcms.org/docs/custom-widgets/).
 
 Note: The Date widget has been deprecated in Netlify CMS and removed from both Decap CMS and Sveltia CMS in favour of the DateTime widget, as noted in the [Compatibility](#compatibility) section.
 
