@@ -133,7 +133,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - So far, 220+ issues, or 435+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
-    - 350 issues, or 700 if including duplicates, in the future 💪
+    - 400 issues, or 800 if including duplicates, in the future 💪
     - or every single issue that’s relevant, fixable, and worth dealing with 🔥
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Many of the bugs, including the annoying crashes, have already been solved
