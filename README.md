@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 220+ issues, or 435+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 220+ issues, or 440+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -258,7 +258,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
     - File collections support multiple files/folders i18n structures.[^87] To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
     - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales.[^7][^68] The `i18n` configuration can normally be used for the subfields.
-  - The new `multiple_folders_i18n_root` i18n structure allows to have locale folders below the project root: `<locale>/<folder>/<slug>.<extension>`. [^182]
+  - The new `multiple_folders_i18n_root` i18n structure allows to have locale folders below the project root: `<locale>/<folder>/<slug>.<extension>`.[^182]
   - The new `omit_default_locale_from_filename` i18n option allows to exclude the default locale from filenames. This option applies to entry collections with the `multiple_files` i18n structure enabled, as well as to file collection items with the `file` path ending with `.{{locale}}.<extension>`, aiming to support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/). ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/394))
   - The `required` field option accepts an array of locale codes in addition to a boolean, making the field required for a subset of locales when i18n support is enabled. For example, if only English is required, you could write `required: [en]`. An empty array is equivalent to `required: false`.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure.[^21]
@@ -1397,7 +1397,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^1]: Netlify/Decap CMS [#2557](https://github.com/decaporg/decap-cms/issues/2557)
 
-[^2]: Netlify/Decap CMS [#2039](https://github.com/decaporg/decap-cms/issues/2039), [#3267](https://github.com/decaporg/decap-cms/issues/3267)
+[^2]: Netlify/Decap CMS [#2039](https://github.com/decaporg/decap-cms/issues/2039), [#3267](https://github.com/decaporg/decap-cms/issues/3267), [#7084](https://github.com/decaporg/decap-cms/discussions/7084)
 
 [^3]: Netlify/Decap CMS [#1040](https://github.com/decaporg/decap-cms/issues/1040)
 
@@ -1429,7 +1429,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^17]: Netlify/Decap CMS [#1333](https://github.com/decaporg/decap-cms/issues/1333), [#4216](https://github.com/decaporg/decap-cms/issues/4216)
 
-[^18]: Netlify/Decap CMS [#441](https://github.com/decaporg/decap-cms/issues/441), [#1277](https://github.com/decaporg/decap-cms/issues/1277), [#1339](https://github.com/decaporg/decap-cms/issues/1339), [#2500](https://github.com/decaporg/decap-cms/issues/2500), [#2833](https://github.com/decaporg/decap-cms/issues/2833), [#2984](https://github.com/decaporg/decap-cms/issues/2984), [#3852](https://github.com/decaporg/decap-cms/issues/3852)
+[^18]: Netlify/Decap CMS [#441](https://github.com/decaporg/decap-cms/issues/441), [#1277](https://github.com/decaporg/decap-cms/issues/1277), [#1339](https://github.com/decaporg/decap-cms/issues/1339), [#2500](https://github.com/decaporg/decap-cms/issues/2500), [#2833](https://github.com/decaporg/decap-cms/issues/2833), [#2984](https://github.com/decaporg/decap-cms/issues/2984), [#3852](https://github.com/decaporg/decap-cms/issues/3852), [#7083](https://github.com/decaporg/decap-cms/discussions/7083)
 
 [^19]: Netlify/Decap CMS [#5910](https://github.com/decaporg/decap-cms/issues/5910)
 
@@ -1563,7 +1563,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^84]: Netlify/Decap CMS [#7142](https://github.com/decaporg/decap-cms/issues/7142), [#7276](https://github.com/decaporg/decap-cms/issues/7276)
 
-[^85]: Netlify/Decap CMS [#5055](https://github.com/decaporg/decap-cms/issues/5055), [#5470](https://github.com/decaporg/decap-cms/issues/5470), [#6989](https://github.com/decaporg/decap-cms/issues/6989)
+[^85]: Netlify/Decap CMS [#5055](https://github.com/decaporg/decap-cms/issues/5055), [#5470](https://github.com/decaporg/decap-cms/issues/5470), [#6956](https://github.com/decaporg/decap-cms/discussions/6956), [#6989](https://github.com/decaporg/decap-cms/issues/6989)
 
 [^86]: Netlify/Decap CMS [#1609](https://github.com/decaporg/decap-cms/issues/1609), [#3557](https://github.com/decaporg/decap-cms/issues/3557), [#5253](https://github.com/decaporg/decap-cms/issues/5253), [#6759](https://github.com/decaporg/decap-cms/issues/6759), [#6901](https://github.com/decaporg/decap-cms/issues/6901)
 
@@ -1633,7 +1633,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^119]: Netlify/Decap CMS [#5640](https://github.com/decaporg/decap-cms/issues/5640), [#6444](https://github.com/decaporg/decap-cms/issues/6444)
 
-[^120]: Netlify/Decap CMS [#2727](https://github.com/decaporg/decap-cms/issues/2727), [#4884](https://github.com/decaporg/decap-cms/issues/4884)
+[^120]: Netlify/Decap CMS [#2727](https://github.com/decaporg/decap-cms/issues/2727), [#4884](https://github.com/decaporg/decap-cms/issues/4884), [#6908](https://github.com/decaporg/decap-cms/discussions/6908)
 
 [^121]: Netlify/Decap CMS [#7262](https://github.com/decaporg/decap-cms/issues/7262)
 
@@ -1787,7 +1787,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^196]: Netlify/Decap CMS [#3057](https://github.com/decaporg/decap-cms/issues/3057), [#3260](https://github.com/decaporg/decap-cms/issues/3260) — We use Svelte though.
 
-[^197]: Netlify/Decap CMS [#3457](https://github.com/decaporg/decap-cms/issues/3457), [#3624](https://github.com/decaporg/decap-cms/issues/3624)
+[^197]: Netlify/Decap CMS [#3457](https://github.com/decaporg/decap-cms/issues/3457), [#3624](https://github.com/decaporg/decap-cms/issues/3624), [#6713](https://github.com/decaporg/decap-cms/discussions/6713)
 
 [^198]: Netlify/Decap CMS [#7442](https://github.com/decaporg/decap-cms/issues/7442)
 
