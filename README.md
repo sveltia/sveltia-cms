@@ -150,7 +150,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 Netlify/Decap CMS users will definitely be pleased and surprised by the numerous improvements we have made, from the small to the large. Here’s what makes Sveltia CMS different. Look how serious we are!
 
-Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap CMS. Some bugs may have been fixed in the current version of Decap CMS.
+Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap CMS. Some of the listed bugs may have been fixed in the current version of Decap CMS.
 
 ### Better UX
 
