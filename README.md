@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 215+ issues, or 430+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 220+ issues, or 435+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 350 issues, or 700 if including duplicates, in the future 💪
@@ -144,11 +144,13 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![215 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250530)<br>
+![220 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250602)<br>
 
 ## Differentiators
 
 Netlify/Decap CMS users will definitely be pleased and surprised by the numerous improvements we have made, from the small to the large. Here’s what makes Sveltia CMS different. Look how serious we are!
+
+Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap CMS. Some bugs may have been fixed in the current version of Decap CMS.
 
 ### Better UX
 
@@ -199,7 +201,7 @@ Netlify/Decap CMS users will definitely be pleased and surprised by the numerous
 ### Better accessibility
 
 - Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys.[^17][^67]
-- Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver. An announcement is read out when you navigate to another page.
+- Comprehensive [WAI-ARIA](https://w3c.github.io/aria/) support enables users who rely on screen readers such as NVDA and VoiceOver.[^228] An announcement is read out when you navigate to another page.
 - The rich text editor is built with [Lexical](https://lexical.dev/), which is said to follow accessibility best practices. The [Dragon NaturallySpeaking support](https://lexical.dev/docs/packages/lexical-dragon) is enabled.
 - Ensures sufficient contrast between the foreground text and background colours.
 - Enabled and disabled buttons can be clearly distinguished.[^105]
@@ -424,7 +426,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
 - Markdown
-  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
+  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] extra HTML comments when pasting,[^229] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A Markdown field plays well with a variable type List field.[^202]
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
@@ -1761,7 +1763,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^184]: Netlify/Decap CMS [#377](https://github.com/decaporg/decap-cms/issues/377)
 
-[^185]: Netlify/Decap CMS [#6203](https://github.com/decaporg/decap-cms/issues/6203), [#7417](https://github.com/decaporg/decap-cms/issues/7417)
+[^185]: Netlify/Decap CMS [#6203](https://github.com/decaporg/decap-cms/issues/6203), [#7417](https://github.com/decaporg/decap-cms/issues/7417), [#7451](https://github.com/decaporg/decap-cms/pull/7451)
 
 [^186]: Netlify/Decap CMS [#2368](https://github.com/decaporg/decap-cms/issues/2368), [#3454](https://github.com/decaporg/decap-cms/issues/3454), [#3585](https://github.com/decaporg/decap-cms/issues/3585), [#3651](https://github.com/decaporg/decap-cms/issues/3651), [#3885](https://github.com/decaporg/decap-cms/issues/3885), [#3962](https://github.com/decaporg/decap-cms/issues/3962), [#4037](https://github.com/decaporg/decap-cms/issues/4037), [#4143](https://github.com/decaporg/decap-cms/issues/4143), [#6585](https://github.com/decaporg/decap-cms/issues/6585), [#6664](https://github.com/decaporg/decap-cms/issues/6664), [#6665](https://github.com/decaporg/decap-cms/issues/6665), [#6739](https://github.com/decaporg/decap-cms/issues/6739), [#7243](https://github.com/decaporg/decap-cms/issues/7243), [#7379](https://github.com/decaporg/decap-cms/issues/7379), [#7469](https://github.com/decaporg/decap-cms/issues/7469)
 
@@ -1846,3 +1848,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^226]: Netlify/Decap CMS [#7031](https://github.com/decaporg/decap-cms/pull/7031)
 
 [^227]: Netlify/Decap CMS [#6794](https://github.com/decaporg/decap-cms/pull/6794)
+
+[^228]: Netlify/Decap CMS [#6762](https://github.com/decaporg/decap-cms/pull/6762)
+
+[^229]: Netlify/Decap CMS [#6180](https://github.com/decaporg/decap-cms/issues/6180)
