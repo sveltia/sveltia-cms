@@ -678,7 +678,8 @@ const fetchFiles = async () => {
 };
 
 /**
- * Fetch an asset as a Blob via the API.
+ * Fetch an asset as a Blob via the API. We use the `lfs` query parameter to ensure that GitLab
+ * returns the file content even if it’s tracked by Git LFS.
  * @param {Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
  * @see https://docs.gitlab.com/ee/api/repository_files.html#get-raw-file-from-repository
@@ -690,7 +691,7 @@ const fetchBlob = async (asset) => {
   return /** @type {Promise<Blob>} */ (
     fetchAPI(
       `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/files` +
-        `/${encodeURIComponent(path)}/raw?ref=${encodeURIComponent(branch)}`,
+        `/${encodeURIComponent(path)}/raw?lfs=true&ref=${encodeURIComponent(branch)}`,
       {},
       { responseType: 'blob' },
     )
