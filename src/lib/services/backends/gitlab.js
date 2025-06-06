@@ -26,7 +26,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  * BackendServiceStatus,
  * BaseFileListItem,
  * BaseFileListItemProps,
- *CommitAction,
+ * CommitAction,
  * CommitChangesOptions,
  * FileChange,
  * InternalSiteConfig,
