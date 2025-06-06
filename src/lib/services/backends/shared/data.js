@@ -23,6 +23,12 @@ import { isIndexFile, prepareEntries } from '$lib/services/contents/file/process
  */
 
 /**
+ * Regular expression to match Git configuration files.
+ * @type {RegExp}
+ */
+const gitConfigFileRegex = /^.*\.git(?:attributes|ignore|keep)$/;
+
+/**
  * @typedef {object} BaseFileList
  * @property {BaseEntryListItem[]} entryFiles Entry file list.
  * @property {BaseAssetListItem[]} assetFiles Asset file list.
@@ -71,7 +77,7 @@ export const createFileList = (files) => {
 
     // Include extra files that we need to keep track of, such as `.gitattributes` and `.gitkeep`.
     // We need these files for some features, such as Git LFS tracking and assets folder navigation.
-    if (/^.*\.git(?:attributes|ignore|keep)$/.test(path)) {
+    if (gitConfigFileRegex.test(path)) {
       configFiles.push({ ...fileInfo, type: 'config' });
     }
   });
