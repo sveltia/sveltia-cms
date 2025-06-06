@@ -663,8 +663,7 @@ export const getAssetDetails = async (asset) => {
   const { kind, path } = asset;
   const { blobBaseURL } = get(backend)?.repository ?? {};
   const blobURL = await getAssetBlobURL(asset);
-  const publicURL = getAssetPublicURL(asset);
-  const url = publicURL ?? blobURL;
+  const url = getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true }) ?? blobURL;
   let dimensions;
   let duration;
 
@@ -673,7 +672,7 @@ export const getAssetDetails = async (asset) => {
   }
 
   return {
-    publicURL,
+    publicURL: getAssetPublicURL(asset),
     repoBlobURL: blobBaseURL ? `${blobBaseURL}/${path}` : undefined,
     dimensions,
     duration,
