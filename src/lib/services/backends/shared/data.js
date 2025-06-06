@@ -26,7 +26,7 @@ import { isIndexFile, prepareEntries } from '$lib/services/contents/file/process
  * Regular expression to match Git configuration files.
  * @type {RegExp}
  */
-const gitConfigFileRegex = /^.*\.git(?:attributes|ignore|keep)$/;
+const gitConfigFileRegex = /^(?:.+\/)?(\.git(?:attributes|ignore|keep))$/;
 
 /**
  * @typedef {object} BaseFileList
