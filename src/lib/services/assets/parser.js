@@ -1,4 +1,3 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import { getAssetKind } from '$lib/services/assets';
 
 /**
@@ -12,13 +11,13 @@ import { getAssetKind } from '$lib/services/assets';
  */
 export const parseAssetFiles = (assetFiles) =>
   assetFiles.map((assetInfo) => {
-    const { file, path, sha, size, text = undefined, meta = {}, folder } = assetInfo;
+    const { file, path, name, sha, size, text = undefined, meta = {}, folder } = assetInfo;
 
     return /** @type {Asset} */ ({
       file,
       blobURL: undefined,
       path,
-      name: getPathInfo(path).basename,
+      name,
       sha,
       size,
       kind: getAssetKind(path),

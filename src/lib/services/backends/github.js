@@ -1,4 +1,4 @@
-import { encodeBase64 } from '@sveltia/utils/file';
+import { encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { sleep } from '@sveltia/utils/misc';
 import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
@@ -398,7 +398,7 @@ const fetchFileList = async (lastHash) => {
 
   return result.tree
     .filter(({ type }) => type === 'blob')
-    .map(({ path, sha, size }) => ({ path, sha, size }));
+    .map(({ path, sha, size }) => ({ path, sha, size, name: getPathInfo(path).basename }));
 };
 
 /**

@@ -1,7 +1,8 @@
+import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { allAssets, getAssetFoldersByPath } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
-import { gitConfigFiles, isLastCommitPublished } from '$lib/services/backends';
+import { gitConfigFileRegex, gitConfigFiles, isLastCommitPublished } from '$lib/services/backends';
 import {
   allEntries,
   dataLoaded,
@@ -21,12 +22,6 @@ import { isIndexFile, prepareEntries } from '$lib/services/contents/file/process
  * RepositoryInfo,
  * } from '$lib/types/private';
  */
-
-/**
- * Regular expression to match Git configuration files.
- * @type {RegExp}
- */
-const gitConfigFileRegex = /^(?:.+\/)?(\.git(?:attributes|ignore|keep))$/;
 
 /**
  * @typedef {object} BaseFileList
@@ -62,23 +57,30 @@ export const createFileList = (files) => {
 
   files.forEach((fileInfo) => {
     const { path } = fileInfo;
-    const [entryFolder] = getEntryFoldersByPath(path);
-    const [assetFolder] = getAssetFoldersByPath(path, { matchSubFolders: true });
+    const { basename } = getPathInfo(path);
 
-    if (entryFolder) {
-      entryFiles.push({ ...fileInfo, type: 'entry', folder: entryFolder });
-    }
+    if (basename.startsWith('.')) {
+      // Correct Git config files that we need to keep track of, such as `.gitattributes` and
+      // `.gitkeep`. We need these files for some features, such as Git LFS tracking and assets
+      // folder creation.
+      if (gitConfigFileRegex.test(path)) {
+        configFiles.push({ ...fileInfo, type: 'config' });
+      }
+    } else {
+      const [entryFolder] = getEntryFoldersByPath(path);
+      const [assetFolder] = getAssetFoldersByPath(path, { matchSubFolders: true });
 
-    // Exclude files already listed as entries. These files can appear in the file list when a
-    // relative media path is configured for a collection. Also exclude Hugo’s special index files.
-    if (assetFolder && !entryFiles.find((e) => e.path === path) && !isIndexFile(path)) {
-      assetFiles.push({ ...fileInfo, type: 'asset', folder: assetFolder });
-    }
+      // Correct entry files
+      if (entryFolder) {
+        entryFiles.push({ ...fileInfo, type: 'entry', folder: entryFolder });
+      }
 
-    // Include extra files that we need to keep track of, such as `.gitattributes` and `.gitkeep`.
-    // We need these files for some features, such as Git LFS tracking and assets folder navigation.
-    if (gitConfigFileRegex.test(path)) {
-      configFiles.push({ ...fileInfo, type: 'config' });
+      // Correct asset files while excluding files already listed as entries. These files can appear
+      // in the file list when a relative media path is configured for a collection. Also exclude
+      // Hugo’s special index files.
+      if (assetFolder && !entryFiles.find((e) => e.path === path) && !isIndexFile(path)) {
+        assetFiles.push({ ...fileInfo, type: 'asset', folder: assetFolder });
+      }
     }
   });
 
@@ -130,7 +132,13 @@ export const fetchAndParseFiles = async ({
   if (cachedHash && cachedHash === lastHash && gitConfigFetched && cachedFileEntries.length) {
     // Skip fetching the file list if the cached hash matches the latest. But don’t skip if the file
     // cache is empty; something probably went wrong the last time the files were fetched.
-    fileList = createFileList(cachedFileEntries.map(([path, data]) => ({ path, ...data })));
+    fileList = createFileList(
+      cachedFileEntries.map(([path, data]) => ({
+        path,
+        name: getPathInfo(path).basename,
+        ...data,
+      })),
+    );
   } else {
     // Get a complete file list first, and filter what’s managed in CMS
     fileList = createFileList(await fetchFileList(lastHash));
@@ -174,7 +182,6 @@ export const fetchAndParseFiles = async ({
 
     return {
       ...file,
-      name: file.path.split('/').pop(),
       meta: file.meta ?? meta,
       // The size and text are only available in the 2nd request (`fetchFileContents`) on GitLab
       size: file.size ?? size,

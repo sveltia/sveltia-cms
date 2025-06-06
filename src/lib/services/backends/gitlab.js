@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { encodeBase64 } from '@sveltia/utils/file';
+import { encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
@@ -499,8 +499,10 @@ const fetchFileList = async () => {
     }
   }
 
-  // The `size` is not available here; it will be retrieved in `fetchFileContents` below.
-  return blobs.filter(({ type }) => type === 'blob').map(({ path, sha }) => ({ path, sha }));
+  // The `size` is not available here; it will be retrieved in `fetchFileContents` below
+  return blobs
+    .filter(({ type }) => type === 'blob')
+    .map(({ path, sha }) => ({ path, sha, size: 0, name: getPathInfo(path).basename }));
 };
 
 /**

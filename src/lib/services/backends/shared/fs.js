@@ -9,13 +9,14 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
+import { gitConfigFileRegex, gitConfigFiles } from '$lib/services/backends';
 import { createFileList } from '$lib/services/backends/shared/data';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { createPathRegEx } from '$lib/services/utils/file';
 
 /**
- * @import { BaseFileListItemProps, FileChange } from '$lib/types/private';
+ * @import { BaseFileListItem, BaseFileListItemProps, FileChange } from '$lib/types/private';
  */
 
 /**
@@ -81,7 +82,8 @@ const getAllFiles = async (rootDirHandle) => {
    */
   const iterate = async (dirHandle) => {
     for await (const [name, handle] of dirHandle.entries()) {
-      if (name.startsWith('.')) {
+      // Skip hidden files and directories, except for Git configuration files
+      if (name.startsWith('.') && !gitConfigFileRegex.test(name)) {
         continue;
       }
 
@@ -127,6 +129,7 @@ const getAllFiles = async (rootDirHandle) => {
       // The file path must be normalized, as certain non-ASCII characters (e.g. Japanese) can be
       // problematic particularly on macOS
       path: path.normalize(),
+      name: file.name.normalize(),
       size: file.size,
       sha: await (async () => {
         try {
@@ -144,31 +147,43 @@ const getAllFiles = async (rootDirHandle) => {
 };
 
 /**
+ * Read text content from a file and store it in the entry file object.
+ * @param {BaseFileListItem} entryFile Entry file object to read text from.
+ */
+const readTextFile = async (entryFile) => {
+  const { name, file } = entryFile;
+
+  // Skip `.gitkeep` file, as we don't need to read its content
+  if (name === '.gitkeep') {
+    return;
+  }
+
+  try {
+    entryFile.text = await readAsText(/** @type {File} */ (file));
+  } catch (/** @type {any} */ ex) {
+    entryFile.text = '';
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  }
+};
+
+/**
  * Load file list and all the entry files from the file system, then cache them in the
  * {@link allEntries} and {@link allAssets} stores.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  */
 export const loadFiles = async (rootDirHandle) => {
-  const { entryFiles, assetFiles } = createFileList(await getAllFiles(rootDirHandle));
+  const { entryFiles, assetFiles, configFiles } = createFileList(await getAllFiles(rootDirHandle));
 
-  // Load all entry text content
-  await Promise.all(
-    entryFiles.map(async (entryFile) => {
-      try {
-        entryFile.text = await readAsText(/** @type {File} */ (entryFile.file));
-      } catch (/** @type {any} */ ex) {
-        entryFile.text = '';
-        // eslint-disable-next-line no-console
-        console.error(ex);
-      }
-    }),
-  );
+  await Promise.all(entryFiles.map(readTextFile));
+  await Promise.all(configFiles.map(readTextFile));
 
   const { entries, errors } = await prepareEntries(entryFiles);
 
   allEntries.set(entries);
-  entryParseErrors.set(errors);
   allAssets.set(parseAssetFiles(assetFiles));
+  gitConfigFiles.set(configFiles);
+  entryParseErrors.set(errors);
   dataLoaded.set(true);
 };
 
