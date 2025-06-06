@@ -1,9 +1,10 @@
 /* eslint-disable no-await-in-loop */
 
-import { encodeBase64 } from '@sveltia/utils/file';
+import { encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { lfsFileExtensions } from '$lib/services/backends';
 import {
   handleClientSideAuthPopup,
   initClientSideAuth,
@@ -23,9 +24,9 @@ import { sendRequest } from '$lib/services/utils/networking';
  * Asset,
  * BackendService,
  * BackendServiceStatus,
- * BaseAssetListItem,
- * BaseEntryListItem,
  * BaseFileListItem,
+ * BaseFileListItemProps,
+ *CommitAction,
  * CommitChangesOptions,
  * FileChange,
  * InternalSiteConfig,
@@ -444,7 +445,7 @@ const fetchLastCommit = async () => {
 
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
- * @returns {Promise<BaseFileListItem[]>} File list.
+ * @returns {Promise<BaseFileListItemProps[]>} File list.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#repositorytree
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
@@ -519,7 +520,7 @@ const fetchFileList = async () => {
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.
- * @param {(BaseEntryListItem | BaseAssetListItem)[]} fetchingFiles Base entry/asset list items.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#tree
@@ -711,6 +712,35 @@ const fetchBlob = async (asset) => {
  */
 const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
+  const _lfsFileExtensions = get(lfsFileExtensions);
+  /**
+   * @type {{ action: CommitAction, content?: string, encoding?: string, file_path: string,
+   * previous_path?: string }[]}
+   */
+  const actions = [];
+
+  await Promise.all(
+    changes.map(async ({ action, path, previousPath, data = '', base64 }) => {
+      // If the file is tracked by Git LFS, we must delete it first when updating it
+      // @see https://stackoverflow.com/q/76836622
+      if (action === 'update' && _lfsFileExtensions.length) {
+        const { extension } = getPathInfo(path);
+
+        if (extension && _lfsFileExtensions.includes(extension.toLowerCase())) {
+          actions.push({ action: 'delete', file_path: path });
+          action = 'create';
+        }
+      }
+
+      actions.push({
+        action,
+        content: base64 ?? (typeof data !== 'string' ? await encodeBase64(data) : data),
+        encoding: base64 || typeof data !== 'string' ? 'base64' : 'text',
+        file_path: path,
+        previous_path: previousPath,
+      });
+    }),
+  );
 
   const result = /** @type {{ web_url: string }} */ (
     await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`, {
@@ -718,15 +748,7 @@ const commitChanges = async (changes, options) => {
       body: {
         branch,
         commit_message: createCommitMessage(changes, options),
-        actions: await Promise.all(
-          changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
-            action,
-            content: base64 ?? (typeof data !== 'string' ? await encodeBase64(data) : data),
-            encoding: base64 || typeof data !== 'string' ? 'base64' : 'text',
-            file_path: path,
-            previous_path: previousPath,
-          })),
-        ),
+        actions,
       },
     })
   );

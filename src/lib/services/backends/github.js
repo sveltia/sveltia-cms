@@ -18,9 +18,8 @@ import { sendRequest } from '$lib/services/utils/networking';
  * Asset,
  * BackendService,
  * BackendServiceStatus,
- * BaseAssetListItem,
- * BaseEntryListItem,
  * BaseFileListItem,
+ * BaseFileListItemProps,
  * CommitChangesOptions,
  * FileChange,
  * InternalSiteConfig,
@@ -387,7 +386,7 @@ const fetchLastCommit = async () => {
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
- * @returns {Promise<BaseFileListItem[]>} File list.
+ * @returns {Promise<BaseFileListItemProps[]>} File list.
  */
 const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
@@ -404,7 +403,7 @@ const fetchFileList = async (lastHash) => {
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.
- * @param {(BaseEntryListItem | BaseAssetListItem)[]} fetchingFiles Base entry/asset list items.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 const fetchFileContents = async (fetchingFiles) => {
@@ -428,7 +427,7 @@ const fetchFileContents = async (fetchingFiles) => {
         const str = [];
         const index = startIndex + i;
 
-        if (type === 'entry') {
+        if (type !== 'asset') {
           str.push(`
             content_${index}: object(oid: "${sha}") {
               ... on Blob { text }

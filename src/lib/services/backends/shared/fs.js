@@ -15,7 +15,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 import { createPathRegEx } from '$lib/services/utils/file';
 
 /**
- * @import { BaseFileListItem, FileChange } from '$lib/types/private';
+ * @import { BaseFileListItemProps, FileChange } from '$lib/types/private';
  */
 
 /**
@@ -47,7 +47,7 @@ export const getHandleByPath = async (rootDirHandle, path) => {
 /**
  * Retrieve all files under the static directory.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
- * @returns {Promise<BaseFileListItem[]>} File list.
+ * @returns {Promise<BaseFileListItemProps[]>} File list.
  */
 const getAllFiles = async (rootDirHandle) => {
   /** @type {{ file: File, path: string }[]} */

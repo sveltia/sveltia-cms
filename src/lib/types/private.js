@@ -222,18 +222,6 @@
  */
 
 /**
- * File info being processed as {@link Entry} or {@link Asset}.
- * @typedef {object} BaseFileListItem
- * @property {'entry' | 'asset'} [type] File type handled in the CMS.
- * @property {File} [file] File object. Local backend only.
- * @property {string} path File path.
- * @property {string} sha SHA-1 hash for the file.
- * @property {number} [size] File size in bytes.
- * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
- * @property {RepositoryFileMetadata} [meta] Metadata from the repository. Git backends only.
- */
-
-/**
  * Entry file configuration.
  * @typedef {object} FileConfig
  * @property {FileExtension} extension File extension.
@@ -248,6 +236,18 @@
  * @property {[string, string]} [fmDelimiters] Front matter delimiters.
  * @property {boolean} [yamlQuote] YAML quote configuration. DEPRECATED in favor of the global YAML
  * format options.
+ */
+
+/**
+ * File info being processed as {@link Entry} or {@link Asset}.
+ * @typedef {object} BaseFileListItemProps
+ * @property {File} [file] File object. Local backend only.
+ * @property {string} path File path.
+ * @property {string} [name] File name, without a path.
+ * @property {string} sha SHA-1 hash for the file.
+ * @property {number} [size] File size in bytes.
+ * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
+ * @property {RepositoryFileMetadata} [meta] Metadata from the repository. Git backends only.
  */
 
 /**
@@ -287,12 +287,22 @@
 
 /**
  * File info being processed as {@link Entry}.
- * @typedef {BaseFileListItem & { folder: EntryFolderInfo }} BaseEntryListItem
+ * @typedef {BaseFileListItemProps & { type: 'entry', folder: EntryFolderInfo }} BaseEntryListItem
  */
 
 /**
  * File info being processed as {@link Asset}.
- * @typedef {BaseFileListItem & { folder: AssetFolderInfo }} BaseAssetListItem
+ * @typedef {BaseFileListItemProps & { type: 'asset', folder: AssetFolderInfo }} BaseAssetListItem
+ */
+
+/**
+ * File info for Git configuration files, such as `.gitattributes`, `.gitkeep`, etc.
+ * @typedef {BaseFileListItemProps & { type: 'config' }} BaseConfigListItem
+ */
+
+/**
+ * File list item that can be an entry, asset or config file.
+ * @typedef {BaseEntryListItem | BaseAssetListItem | BaseConfigListItem} BaseFileListItem
  */
 
 /**

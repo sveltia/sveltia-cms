@@ -21,9 +21,8 @@ import { sendRequest } from '$lib/services/utils/networking';
  * @import {
  * Asset,
  * BackendService,
- * BaseAssetListItem,
- * BaseEntryListItem,
  * BaseFileListItem,
+ * BaseFileListItemProps,
  * CommitChangesOptions,
  * FileChange,
  * InternalSiteConfig,
@@ -369,7 +368,7 @@ const fetchLastCommit = async () => {
 /**
  * Fetch the repository's complete file list, and return it in the canonical format.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
- * @returns {Promise<BaseFileListItem[]>} File list.
+ * @returns {Promise<BaseFileListItemProps[]>} File list.
  * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/GetTree
  */
 const fetchFileList = async (lastHash) => {
@@ -402,13 +401,13 @@ const fetchFileList = async (lastHash) => {
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.
- * @param {(BaseEntryListItem | BaseAssetListItem)[]} fetchingFiles Base entry/asset list items.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  * @see https://github.com/go-gitea/gitea/pull/34139
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
-  const allPaths = fetchingFiles.filter(({ type }) => type === 'entry').map(({ path }) => path);
+  const allPaths = fetchingFiles.filter(({ type }) => type !== 'asset').map(({ path }) => path);
   /** @type {PartialContentsListItem[]} */
   const results = [];
   const paths = [...allPaths];
