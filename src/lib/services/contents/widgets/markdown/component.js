@@ -49,53 +49,55 @@ const escapeAllChars = (props) =>
  * @returns {EditorComponentDefinition | undefined} Definition.
  */
 export const getComponentDef = (name) => {
+  const imageProps = {
+    icon: 'image',
+    label: get(_)('editor_components.image'),
+    fields: [
+      { name: 'src', label: get(_)('editor_components.src'), widget: 'image' },
+      { name: 'alt', label: get(_)('editor_components.alt') },
+      { name: 'title', label: get(_)('editor_components.title') },
+    ],
+  };
+
+  /* eslint-disable jsdoc/require-jsdoc */
   /** @type {Record<string, EditorComponentDefinition>} */
   const definitions = {
     image: {
+      ...imageProps,
       id: 'image',
-      icon: 'image',
-      label: get(_)('editor_components.image'),
-      fields: [
-        {
-          name: 'src',
-          label: get(_)('editor_components.src'),
-          widget: 'image',
-        },
-        {
-          name: 'alt',
-          label: get(_)('editor_components.alt'),
-        },
-        {
-          name: 'title',
-          label: get(_)('editor_components.title'),
-        },
-        {
-          name: 'link',
-          label: get(_)('editor_components.link'),
-        },
-      ],
+      pattern: /\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)/,
+      toBlock: (props) => {
+        const { src, alt, title } = escapeAllChars(props);
+
+        return src ? `![${alt}](${src}${title ? ` "${title}"` : ''})` : '';
+      },
+      toPreview: (props) => {
+        const { src, alt, title } = escapeAllChars(props);
+
+        // Return `<img>` even if `src` is empty to make sure the `tagName` below works
+        return `<img src="${src}" alt="${alt}" title="${title}">`;
+      },
+    },
+    'linked-image': {
+      ...imageProps,
+      id: 'linked-image',
+      fields: [...imageProps.fields, { name: 'link', label: get(_)('editor_components.link') }],
       pattern: /\[?!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)(?:\]\((?<link>.*?)\))?/,
-      // eslint-disable-next-line jsdoc/require-jsdoc
       toBlock: (props) => {
         const { src, alt, title, link } = escapeAllChars(props);
+        const img = src ? `![${alt}](${src}${title ? ` "${title}"` : ''})` : '';
 
-        if (!src) {
-          return '';
-        }
-
-        const img = `![${alt}](${src}${title ? ` "${title}"` : ''})`;
-
-        return link ? `[${img}](${link})` : img;
+        return img && link ? `[${img}](${link})` : img;
       },
-      // eslint-disable-next-line jsdoc/require-jsdoc
       toPreview: (props) => {
         const { src, alt, title, link } = escapeAllChars(props);
-        // Return `<img>` even if `src` is empty to make sure the `tagName` below works
         const img = `<img src="${src}" alt="${alt}" title="${title}">`;
 
+        // Return `<img>` even if `src` is empty to make sure the `tagName` below works
         return link ? `<a href="${link}">${img}</a>` : img;
       },
     },
+    /* eslint-enable jsdoc/require-jsdoc */
   };
 
   return definitions[name];
@@ -280,7 +282,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
         });
       }
 
-      if (id === 'image') {
+      if (id === 'linked-image') {
         // Add extra conversion for the built-in image component to support linked images
         Object.assign(conversionMap, {
           /**

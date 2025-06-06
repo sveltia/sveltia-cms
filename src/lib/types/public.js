@@ -510,6 +510,11 @@
  * @property {RichTextEditorMode[]} [modes] Editor modes to be enabled. If it’s `[raw, rich_text]`,
  * rich text mode is disabled by default. Default: `[rich_text, raw]`.
  * @property {boolean} [sanitize_preview] Whether to sanitize the preview HTML. Default: `false`.
+ * @property {boolean} [linked_images] Whether to enable the linked images feature for the built-in
+ * `image` component. Default: `true`. When enabled, the image component provides an additional text
+ * field for specifying a URL to wrap the image as a link. The resulting Markdown output will be in
+ * the format `[![alt](src)](link)`, where clicking the image navigates to the provided link. This
+ * feature can be disabled if it causes conflicts with certain frameworks.
  * @see https://decapcms.org/docs/widgets/#markdown
  */
 

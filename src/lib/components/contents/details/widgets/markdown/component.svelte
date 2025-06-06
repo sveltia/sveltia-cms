@@ -212,7 +212,7 @@
         align-items: center;
         gap: 8px;
 
-        [data-component-id='image'] & {
+        :is([data-component-id='image'], [data-component-id='linked-image']) & {
           border-width: 0;
           padding-block: 0 16px;
         }

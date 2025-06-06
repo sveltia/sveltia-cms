@@ -66,6 +66,7 @@
     modes: _modes = [...defaultModes],
     buttons: _buttons = [...defaultButtons],
     editor_components: _editorComponents = [...defaultComponents],
+    linked_images: linkedImagesEnabled = true,
     minimal = false,
   } = $derived(fieldConfig);
   const modes = $derived(_modes.map((name) => modeNameMap[name]).filter(Boolean));
@@ -79,17 +80,28 @@
       .map((name) => buttonNameMap[name])
       .filter(Boolean),
   );
+  const builtinComponentDefs = $derived(
+    _editorComponents
+      .map((name) => {
+        // Exclude `code-block` implemented as a block type, as well as custom components
+        if (name === 'code-block' || name in customComponents) {
+          return undefined;
+        }
+
+        // Use a different component definition for linked images
+        if (name === 'image' && linkedImagesEnabled) {
+          return 'linked-image';
+        }
+
+        return name;
+      })
+      .map((name) => (name ? getComponentDef(name) : undefined))
+      .filter((definition) => !!definition),
+  );
+  const customComponentDefs = $derived(Object.values(customComponents));
   const components = $derived(
-    /** @type {import('@sveltia/ui').TextEditorComponent[]} */ (
-      [
-        ..._editorComponents
-          .map((name) =>
-            // Exclude `code-block` implemented as a block type, as well as custom components
-            name === 'code-block' || name in customComponents ? undefined : getComponentDef(name),
-          )
-          .filter((definition) => !!definition),
-        ...Object.values(customComponents),
-      ].map((definition) => new EditorComponent(definition))
+    [...builtinComponentDefs, ...customComponentDefs].map(
+      (def) => /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
     ),
   );
   const imageComponent = $derived(components.find(({ id }) => id === 'image'));
