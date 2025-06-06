@@ -554,7 +554,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Features not to be implemented
 
-- **Azure, Bitbucket and Forgejo backends**: For performance reasons. We may support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once. Our Gitea backend is not compatible with Forgejo due to API differences. [Forgejo support](https://github.com/sveltia/sveltia-cms/issues/381) will not be added until they implement an equivalent API enhancement.
+- **Azure and Bitbucket backends**: For performance reasons. We’ll support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative in the future.
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support in the future, most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
@@ -585,6 +585,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
+- [Forgejo backend](https://decapcms.org/docs/gitea-backend/) ([#381](https://github.com/sveltia/sveltia-cms/issues/381))
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
 - [Map](https://decapcms.org/docs/widgets/#map) widget
@@ -633,7 +634,7 @@ We have added support for features and file structures used in certain framework
 ### Backend support
 
 - The GitLab backend requires GitLab 16.3 or later.
-- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo due to API differences. Support for Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` (public free service) instead of `https://try.gitea.io` (test instance).
+- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo at this time due to API differences. Support for Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` (public free service) instead of `https://try.gitea.io` (test instance).
 
 ### Browser support
 
