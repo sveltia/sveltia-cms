@@ -243,8 +243,9 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab or Gitea) under the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
+- The GitLab backend supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
-- Our Gitea backend is high-performing because it retrieves multiple entries at once. [Git LFS](https://git-lfs.com/) is supported out of the box if your Gitea instance has enabled [built-in LFS support](https://docs.gitea.com/administration/git-lfs-setup). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
+- Our Gitea backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
 - The OAuth access token is automatically renewed when using the GitLab or Gitea backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
@@ -431,7 +432,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - A Markdown field plays well with a variable type List field.[^202]
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
   - The built-in `image` component can be inserted with a single click.
-  - The built-in `image` component allows users to add, edit or remove a link on an image.[^171]
+  - The built-in `image` component allows users to add, edit or remove a link on an image.[^171] To disable this feature, add `linked_images: false` to the Markdown field options.
   - It’s possible to paste/drop local/remote images into the rich text editor to insert them as expected. Note: Pasting multiple images is [not supported in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=864052). In Netlify/Decap CMS, pasting an image may cause the application to crash.
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
   - Code in a code block in the editor can be copied as expected.[^165]
@@ -1854,3 +1855,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^229]: Netlify/Decap CMS [#6180](https://github.com/decaporg/decap-cms/issues/6180)
 
 [^230]: Netlify/Decap CMS [#7486](https://github.com/decaporg/decap-cms/discussions/7486)
+
+[^231]: Netlify/Decap CMS [#3704](https://github.com/decaporg/decap-cms/issues/3704)
