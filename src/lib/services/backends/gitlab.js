@@ -11,7 +11,7 @@ import {
   refreshAccessToken,
 } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
-import { fetchAndParseFiles } from '$lib/services/backends/shared/data';
+import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
 import { siteConfig } from '$lib/services/config';
 import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';

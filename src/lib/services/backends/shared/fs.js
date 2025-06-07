@@ -10,7 +10,7 @@ import { get } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
 import { gitConfigFileRegex, gitConfigFiles } from '$lib/services/backends';
-import { createFileList } from '$lib/services/backends/shared/data';
+import { createFileList } from '$lib/services/backends/shared/fetch';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { createPathRegEx } from '$lib/services/utils/file';
@@ -204,8 +204,7 @@ const readTextFile = async (entryFile) => {
 export const loadFiles = async (rootDirHandle) => {
   const { entryFiles, assetFiles, configFiles } = createFileList(await getAllFiles(rootDirHandle));
 
-  await Promise.all(entryFiles.map(readTextFile));
-  await Promise.all(configFiles.map(readTextFile));
+  await Promise.all([...entryFiles, ...configFiles].map(readTextFile));
 
   const { entries, errors } = await prepareEntries(entryFiles);
 
@@ -214,6 +213,63 @@ export const loadFiles = async (rootDirHandle) => {
   gitConfigFiles.set(configFiles);
   entryParseErrors.set(errors);
   dataLoaded.set(true);
+};
+
+/**
+ * Move a file from a previous path to a new path within the file system.
+ * @param {object} args Arguments.
+ * @param {FileSystemDirectoryHandle} args.rootDirHandle Root directory handle.
+ * @param {string} args.previousPath The current path of the file to move.
+ * @param {string} args.path The new path where the file should be moved.
+ * @returns {Promise<FileSystemFileHandle>} Moved file handle.
+ */
+const moveFile = async ({ rootDirHandle, previousPath, path }) => {
+  const { dirname, basename } = getPathInfo(path);
+
+  const fileHandle = /** @type {FileSystemFileHandle} */ (
+    await getHandleByPath(rootDirHandle, previousPath)
+  );
+
+  if (dirname && dirname !== getPathInfo(previousPath).dirname) {
+    await fileHandle.move(await getHandleByPath(rootDirHandle, dirname), basename);
+  } else {
+    await fileHandle.move(basename);
+  }
+
+  return fileHandle;
+};
+
+/**
+ * Write data to a file at the specified path.
+ * @param {object} args Arguments.
+ * @param {FileSystemDirectoryHandle} args.rootDirHandle Root directory handle.
+ * @param {FileSystemFileHandle} [args.fileHandle] File handle to write to. Provided if the file has
+ * been moved.
+ * @param {string} args.path The relative path to the file within the root directory.
+ * @param {string | File} args.data The data to write to the file.
+ * @returns {Promise<File>} Written file.
+ */
+const writeFile = async ({ rootDirHandle, fileHandle, path, data }) => {
+  fileHandle ??= /** @type {FileSystemFileHandle} */ (await getHandleByPath(rootDirHandle, path));
+
+  // The `createWritable` method is not yet supported by Safari
+  // @see https://bugs.webkit.org/show_bug.cgi?id=254726
+  const writer = await fileHandle.createWritable?.();
+
+  try {
+    await writer?.write(data);
+  } catch {
+    // Can throw if the file has just been moved/renamed without any change, and then the `data` is
+    // no longer available
+  } finally {
+    try {
+      await writer?.close();
+    } catch {
+      //
+    }
+  }
+
+  return fileHandle.getFile();
 };
 
 /**
@@ -250,6 +306,26 @@ const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
 };
 
 /**
+ * Delete a file at the specified path within the file system.
+ * @param {object} args Arguments.
+ * @param {FileSystemDirectoryHandle} args.rootDirHandle Root directory handle.
+ * @param {string} args.path The path to the file to be deleted.
+ */
+const deleteFile = async ({ rootDirHandle, path }) => {
+  const { dirname: dirPath = '', basename: fileName } = getPathInfo(stripSlashes(path));
+
+  const dirHandle = /** @type {FileSystemDirectoryHandle} */ (
+    await getHandleByPath(rootDirHandle, dirPath)
+  );
+
+  await dirHandle.removeEntry(fileName);
+
+  if (dirPath) {
+    await deleteEmptyParentDirs(rootDirHandle, dirPath.split('/'));
+  }
+};
+
+/**
  * Save a file to the file system based on the provided change options.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {FileChange} change File change options.
@@ -261,52 +337,18 @@ const saveChange = async (rootDirHandle, { action, path, previousPath, data }) =
   let fileHandle;
 
   if (action === 'move' && previousPath) {
-    const { dirname, basename } = getPathInfo(path);
-
-    fileHandle = /** @type {FileSystemFileHandle} */ (
-      await getHandleByPath(rootDirHandle, previousPath)
-    );
-
-    if (dirname && dirname !== getPathInfo(previousPath).dirname) {
-      await fileHandle.move(await getHandleByPath(rootDirHandle, dirname), basename);
-    } else {
-      await fileHandle.move(basename);
-    }
+    fileHandle = await moveFile({ rootDirHandle, previousPath, path });
   }
 
   if (['create', 'update', 'move'].includes(action) && data) {
-    fileHandle ??= /** @type {FileSystemFileHandle} */ (await getHandleByPath(rootDirHandle, path));
-
-    // The `createWritable` method is not yet supported by Safari
-    // @see https://bugs.webkit.org/show_bug.cgi?id=254726
-    const writer = await fileHandle.createWritable?.();
-
-    try {
-      await writer?.write(data);
-    } catch {
-      // Can throw if the file has just been moved/renamed without any change, and then the
-      // `data` is no longer available
-    } finally {
-      await writer?.close();
-    }
-
-    return fileHandle.getFile();
+    // We don’t need to write the file is it’s just been renamed with no change, but the `data` is
+    // always provided for the compatibility with Git backends, so we cannot distinguish between the
+    // two cases
+    return writeFile({ rootDirHandle, fileHandle, path, data });
   }
 
   if (action === 'delete') {
-    const { dirname: dirPath = '', basename: fileName } = getPathInfo(stripSlashes(path));
-
-    const dirHandle = /** @type {FileSystemDirectoryHandle} */ (
-      await getHandleByPath(rootDirHandle, dirPath)
-    );
-
-    await dirHandle.removeEntry(fileName);
-
-    if (!dirPath) {
-      return null;
-    }
-
-    await deleteEmptyParentDirs(rootDirHandle, dirPath.split('/'));
+    await deleteFile({ rootDirHandle, path });
   }
 
   return null;

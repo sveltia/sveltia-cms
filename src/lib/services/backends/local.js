@@ -1,7 +1,6 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
 import { allBackendServices } from '$lib/services/backends';
-import { repositoryProps } from '$lib/services/backends/shared/data';
 import { loadFiles, saveChanges } from '$lib/services/backends/shared/fs';
 import { siteConfig } from '$lib/services/config';
 
@@ -22,6 +21,10 @@ const label = 'Local Repository';
  * @type {RepositoryInfo | undefined}
  */
 let remoteRepository = undefined;
+/**
+ * @type {RepositoryInfo}
+ */
+const repositoryProps = { service: '', label: '', owner: '', repo: '', branch: '' };
 
 /**
  * @type {RepositoryInfo}
