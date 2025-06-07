@@ -120,4 +120,10 @@ export default defineConfig({
     copyPackageFiles(),
     generateTypes(),
   ],
+  test: {
+    coverage: {
+      include: ['src/lib/**/*.js'],
+      reporter: ['text'],
+    },
+  },
 });
