@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   getCurrentDateTime,
   getCurrentValue,
@@ -64,7 +64,7 @@ beforeEach(() => {
 });
 
 describe('parseDateTimeConfig', () => {
-  it('should parse basic configuration', () => {
+  test('should parse basic configuration', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -84,7 +84,7 @@ describe('parseDateTimeConfig', () => {
     });
   });
 
-  it('should handle date only configuration', () => {
+  test('should handle date only configuration', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -102,7 +102,7 @@ describe('parseDateTimeConfig', () => {
     });
   });
 
-  it('should handle time only configuration', () => {
+  test('should handle time only configuration', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -120,7 +120,7 @@ describe('parseDateTimeConfig', () => {
     });
   });
 
-  it('should handle empty configuration', () => {
+  test('should handle empty configuration', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -138,13 +138,13 @@ describe('parseDateTimeConfig', () => {
 });
 
 describe('getDate', () => {
-  it('should return undefined for empty value', () => {
+  test('should return undefined for empty value', () => {
     const result = getDate(undefined, baseFieldConfig);
 
     expect(result).toBeUndefined();
   });
 
-  it('should parse date with custom format', () => {
+  test('should parse date with custom format', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -159,7 +159,7 @@ describe('getDate', () => {
     expect(result?.getDate()).toBe(25);
   });
 
-  it('should handle time only format', () => {
+  test('should handle time only format', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -174,14 +174,14 @@ describe('getDate', () => {
     expect(result?.getMinutes()).toBe(30);
   });
 
-  it('should parse ISO date string', () => {
+  test('should parse ISO date string', () => {
     const result = getDate('2023-12-25T14:30:00', baseFieldConfig);
 
     expect(result).toBeInstanceOf(Date);
     expect(result?.getFullYear()).toBe(2023);
   });
 
-  it('should handle invalid date gracefully', () => {
+  test('should handle invalid date gracefully', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const result = getDate('invalid-date', baseFieldConfig);
 
@@ -193,14 +193,14 @@ describe('getDate', () => {
 });
 
 describe('getCurrentDateTime', () => {
-  it('should return current date and time', () => {
+  test('should return current date and time', () => {
     const result = getCurrentDateTime(baseFieldConfig);
 
     expect(typeof result).toBe('string');
     expect(result).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
   });
 
-  it('should return date only', () => {
+  test('should return date only', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -213,7 +213,7 @@ describe('getCurrentDateTime', () => {
     expect(result).toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 
-  it('should return time only', () => {
+  test('should return time only', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -226,7 +226,7 @@ describe('getCurrentDateTime', () => {
     expect(result).toMatch(/\d{2}:\d{2}/);
   });
 
-  it('should return UTC format', () => {
+  test('should return UTC format', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -239,7 +239,7 @@ describe('getCurrentDateTime', () => {
     expect(result).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
   });
 
-  it('should handle timezone differences correctly', () => {
+  test('should handle timezone differences correctly', () => {
     // Test UTC - should return UTC time
     const utcResult = getCurrentDateTime({
       ...baseFieldConfig,
@@ -256,13 +256,13 @@ describe('getCurrentDateTime', () => {
 });
 
 describe('getCurrentValue', () => {
-  it('should return empty string for empty input', () => {
+  test('should return empty string for empty input', () => {
     const result = getCurrentValue('', 'current', baseFieldConfig);
 
     expect(result).toBe('');
   });
 
-  it('should return undefined for null input', () => {
+  test('should return undefined for null input', () => {
     const result = getCurrentValue(undefined, 'current', {
       widget: 'datetime',
       name: 'test_datetime',
@@ -271,7 +271,7 @@ describe('getCurrentValue', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should format with custom format', () => {
+  test('should format with custom format', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -284,7 +284,7 @@ describe('getCurrentValue', () => {
     expect(result).toMatch(/2023-12-25/);
   });
 
-  it('should handle date only', () => {
+  test('should handle date only', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -297,7 +297,7 @@ describe('getCurrentValue', () => {
     expect(result).toMatch(/2023-12-25/);
   });
 
-  it('should handle UTC format', () => {
+  test('should handle UTC format', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -310,13 +310,13 @@ describe('getCurrentValue', () => {
     expect(result).toMatch(/2023-12-25T14:30/);
   });
 
-  it('should append time suffix', () => {
+  test('should append time suffix', () => {
     const result = getCurrentValue('2023-12-25T14:30', '2023-12-25T14:30:00', baseFieldConfig);
 
     expect(result).toBe('2023-12-25T14:30:00');
   });
 
-  it('should handle milliseconds in current value', () => {
+  test('should handle milliseconds in current value', () => {
     const result = getCurrentValue('2023-12-25T14:30', '2023-12-25T14:30:00.000', baseFieldConfig);
 
     expect(result).toBe('2023-12-25T14:30:00.000');
@@ -324,7 +324,7 @@ describe('getCurrentValue', () => {
 });
 
 describe('getDateTimeFieldDefaultValueMap', () => {
-  it('should return default value map with empty string', () => {
+  test('should return default value map with empty string', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -336,7 +336,7 @@ describe('getDateTimeFieldDefaultValueMap', () => {
     expect(result).toEqual({ 'test.field': '' });
   });
 
-  it('should return default value map with string default', () => {
+  test('should return default value map with string default', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -349,7 +349,7 @@ describe('getDateTimeFieldDefaultValueMap', () => {
     expect(result).toEqual({ 'test.field': '2023-12-25' });
   });
 
-  it('should handle {{now}} default value', () => {
+  test('should handle {{now}} default value', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -364,7 +364,7 @@ describe('getDateTimeFieldDefaultValueMap', () => {
     expect(result['test.field']).not.toBe('{{now}}');
   });
 
-  it('should handle non-string default value', () => {
+  test('should handle non-string default value', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       widget: 'datetime',
@@ -381,13 +381,13 @@ describe('getDateTimeFieldDefaultValueMap', () => {
 });
 
 describe('getInputValue', () => {
-  it('should return empty string for no current value', () => {
+  test('should return empty string for no current value', () => {
     const result = getInputValue(undefined, baseFieldConfig);
 
     expect(result).toBe('');
   });
 
-  it('should return date for standard date format', () => {
+  test('should return date for standard date format', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -400,7 +400,7 @@ describe('getInputValue', () => {
     expect(result).toMatch(/2023-12-25/);
   });
 
-  it('should return time for standard time format', () => {
+  test('should return time for standard time format', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -413,14 +413,14 @@ describe('getInputValue', () => {
     expect(result).toMatch(/14:30/);
   });
 
-  it('should parse and format date-time', () => {
+  test('should parse and format date-time', () => {
     const result = getInputValue('2023-12-25T14:30:00', baseFieldConfig);
 
     expect(typeof result).toBe('string');
     expect(result).toMatch(/2023-12-25/);
   });
 
-  it('should handle date only configuration', () => {
+  test('should handle date only configuration', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -433,7 +433,7 @@ describe('getInputValue', () => {
     expect(result).toMatch(/2023-12-25/);
   });
 
-  it('should handle time only configuration', () => {
+  test('should handle time only configuration', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -446,7 +446,7 @@ describe('getInputValue', () => {
     expect(result).toMatch(/14:30/);
   });
 
-  it('should handle UTC configuration', () => {
+  test('should handle UTC configuration', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       widget: 'datetime',
@@ -460,7 +460,7 @@ describe('getInputValue', () => {
     expect(result).toMatch(/2023-12-25/);
   });
 
-  it('should handle parsing errors gracefully', () => {
+  test('should handle parsing errors gracefully', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const result = getInputValue('invalid-date', baseFieldConfig);
 
@@ -468,7 +468,7 @@ describe('getInputValue', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should handle UTC timezone correctly in getInputValue', () => {
+  test('should handle UTC timezone correctly in getInputValue', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -482,7 +482,7 @@ describe('getInputValue', () => {
     expect(result).toMatch(/2023-12-25T14:30/);
   });
 
-  it('should extract time from datetime string for timeOnly config', () => {
+  test('should extract time from datetime string for timeOnly config', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -502,7 +502,7 @@ describe('getInputValue', () => {
 });
 
 describe('getDateTimeFieldDisplayValue', () => {
-  it('should return empty string for empty value', () => {
+  test('should return empty string for empty value', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: baseFieldConfig,
@@ -512,7 +512,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result).toBe('');
   });
 
-  it('should return empty string for non-string value', () => {
+  test('should return empty string for non-string value', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: baseFieldConfig,
@@ -522,7 +522,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result).toBe('');
   });
 
-  it('should format with custom format', () => {
+  test('should format with custom format', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD HH:mm' },
@@ -533,7 +533,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it('should handle date only display', () => {
+  test('should handle date only display', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: { ...baseFieldConfig, time_format: false },
@@ -544,7 +544,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it('should handle time only display', () => {
+  test('should handle time only display', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: { ...baseFieldConfig, date_format: false },
@@ -555,7 +555,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it('should handle full date-time display', () => {
+  test('should handle full date-time display', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: baseFieldConfig,
@@ -566,7 +566,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it('should handle UTC display', () => {
+  test('should handle UTC display', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: { ...baseFieldConfig, picker_utc: true },
@@ -577,7 +577,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it('should return empty string for invalid date', () => {
+  test('should return empty string for invalid date', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: baseFieldConfig,
@@ -588,7 +588,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result).toBe('');
   });
 
-  it('should handle format parsing errors', () => {
+  test('should handle format parsing errors', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: { ...baseFieldConfig, format: 'INVALID-FORMAT' },
@@ -598,7 +598,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(typeof result).toBe('string');
   });
 
-  it('should handle UTC timezone in display values', () => {
+  test('should handle UTC timezone in display values', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: { ...baseFieldConfig, picker_utc: true },
@@ -609,7 +609,7 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it('should handle timezone offset in date regex matching', () => {
+  test('should handle timezone offset in date regex matching', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',
       fieldConfig: { ...baseFieldConfig, time_format: false },
@@ -629,7 +629,7 @@ describe('moment.js format tokens', () => {
   // - `w`, `ww` require `WeekOfYear` plugin
   // - `dddd`, `ddd`, `A`, `a` are in `Day.js` core
   describe('Year tokens', () => {
-    it('should handle YYYY (4-digit year)', () => {
+    test('should handle YYYY (4-digit year)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -641,7 +641,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('2023');
     });
 
-    it('should handle YY (2-digit year)', () => {
+    test('should handle YY (2-digit year)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -653,7 +653,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('23');
     });
 
-    it('should parse date with YYYY format', () => {
+    test('should parse date with YYYY format', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -666,7 +666,7 @@ describe('moment.js format tokens', () => {
       expect(result?.getFullYear()).toBe(2023);
     });
 
-    it('should parse date with YY format', () => {
+    test('should parse date with YY format', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -681,7 +681,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Month tokens', () => {
-    it('should handle MM (2-digit month)', () => {
+    test('should handle MM (2-digit month)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -693,7 +693,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('05');
     });
 
-    it('should handle M (1-digit month)', () => {
+    test('should handle M (1-digit month)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -705,7 +705,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('5');
     });
 
-    it('should handle MMM (short month name)', () => {
+    test('should handle MMM (short month name)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -717,7 +717,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('May');
     });
 
-    it('should handle MMMM (full month name)', () => {
+    test('should handle MMMM (full month name)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -729,7 +729,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('May');
     });
 
-    it('should parse date with MMM format', () => {
+    test('should parse date with MMM format', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -743,7 +743,7 @@ describe('moment.js format tokens', () => {
       expect(result?.getFullYear()).toBe(2023);
     });
 
-    it('should parse date with MMMM format', () => {
+    test('should parse date with MMMM format', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -758,7 +758,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Day tokens', () => {
-    it('should handle DD (2-digit day)', () => {
+    test('should handle DD (2-digit day)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -770,7 +770,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('05');
     });
 
-    it('should handle D (1-digit day)', () => {
+    test('should handle D (1-digit day)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -782,7 +782,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('5');
     });
 
-    it('should handle Do (ordinal day)', () => {
+    test('should handle Do (ordinal day)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -794,7 +794,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('5th');
     });
 
-    it('should handle dddd (full day name)', () => {
+    test('should handle dddd (full day name)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -806,7 +806,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('Monday');
     });
 
-    it('should handle ddd (short day name)', () => {
+    test('should handle ddd (short day name)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -818,7 +818,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('Mon');
     });
 
-    it('should parse date with Do format', () => {
+    test('should parse date with Do format', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -833,7 +833,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Hour tokens', () => {
-    it('should handle HH (24-hour format, 2-digit)', () => {
+    test('should handle HH (24-hour format, 2-digit)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -845,7 +845,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('14');
     });
 
-    it('should handle H (24-hour format, 1-digit)', () => {
+    test('should handle H (24-hour format, 1-digit)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -857,7 +857,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('9');
     });
 
-    it('should handle hh (12-hour format, 2-digit)', () => {
+    test('should handle hh (12-hour format, 2-digit)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -869,7 +869,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('02');
     });
 
-    it('should handle h (12-hour format, 1-digit)', () => {
+    test('should handle h (12-hour format, 1-digit)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -881,7 +881,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('2');
     });
 
-    it('should parse time with HH format', () => {
+    test('should parse time with HH format', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -894,7 +894,7 @@ describe('moment.js format tokens', () => {
       expect(result?.getHours()).toBe(14);
     });
 
-    it('should parse time with hh A format', () => {
+    test('should parse time with hh A format', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -909,7 +909,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Minute and Second tokens', () => {
-    it('should handle mm (2-digit minutes)', () => {
+    test('should handle mm (2-digit minutes)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -921,7 +921,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('05');
     });
 
-    it('should handle m (1-digit minutes)', () => {
+    test('should handle m (1-digit minutes)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -933,7 +933,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('5');
     });
 
-    it('should handle ss (2-digit seconds)', () => {
+    test('should handle ss (2-digit seconds)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -946,7 +946,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('00');
     });
 
-    it('should handle s (1-digit seconds)', () => {
+    test('should handle s (1-digit seconds)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -959,7 +959,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('0');
     });
 
-    it('should handle SSS (milliseconds)', () => {
+    test('should handle SSS (milliseconds)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -974,7 +974,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('AM/PM tokens', () => {
-    it('should handle A (uppercase AM/PM)', () => {
+    test('should handle A (uppercase AM/PM)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -986,7 +986,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('PM');
     });
 
-    it('should handle a (lowercase am/pm)', () => {
+    test('should handle a (lowercase am/pm)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -998,7 +998,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('pm');
     });
 
-    it('should handle morning time with A', () => {
+    test('should handle morning time with A', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1010,7 +1010,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('AM');
     });
 
-    it('should parse 12-hour time with AM/PM', () => {
+    test('should parse 12-hour time with AM/PM', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1025,7 +1025,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Quarter tokens', () => {
-    it('should handle Q (quarter)', () => {
+    test('should handle Q (quarter)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1037,7 +1037,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('4');
     });
 
-    it('should handle first quarter', () => {
+    test('should handle first quarter', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1051,7 +1051,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Week tokens', () => {
-    it('should handle w (week of year)', () => {
+    test('should handle w (week of year)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1064,7 +1064,7 @@ describe('moment.js format tokens', () => {
       expect(Number.parseInt(result || '0', 10)).toBeGreaterThan(0);
     });
 
-    it('should handle ww (2-digit week)', () => {
+    test('should handle ww (2-digit week)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1078,7 +1078,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Complex format combinations', () => {
-    it('should handle common date format (YYYY-MM-DD)', () => {
+    test('should handle common date format (YYYY-MM-DD)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1096,7 +1096,7 @@ describe('moment.js format tokens', () => {
       expect(parsed?.getDate()).toBe(25);
     });
 
-    it('should handle US date format (MM/DD/YYYY)', () => {
+    test('should handle US date format (MM/DD/YYYY)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1114,7 +1114,7 @@ describe('moment.js format tokens', () => {
       expect(parsed?.getDate()).toBe(25);
     });
 
-    it('should handle European date format (DD/MM/YYYY)', () => {
+    test('should handle European date format (DD/MM/YYYY)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1132,7 +1132,7 @@ describe('moment.js format tokens', () => {
       expect(parsed?.getDate()).toBe(25);
     });
 
-    it('should handle full datetime format (YYYY-MM-DD HH:mm:ss)', () => {
+    test('should handle full datetime format (YYYY-MM-DD HH:mm:ss)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1152,7 +1152,7 @@ describe('moment.js format tokens', () => {
       expect(parsed?.getSeconds()).toBe(45);
     });
 
-    it('should handle human-readable format (MMMM Do, YYYY)', () => {
+    test('should handle human-readable format (MMMM Do, YYYY)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1170,7 +1170,7 @@ describe('moment.js format tokens', () => {
       expect(parsed?.getDate()).toBe(25);
     });
 
-    it('should handle 12-hour time format (h:mm A)', () => {
+    test('should handle 12-hour time format (h:mm A)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1187,7 +1187,7 @@ describe('moment.js format tokens', () => {
       expect(parsed?.getMinutes()).toBe(30);
     });
 
-    it('should handle day of week with date (dddd, MMMM Do YYYY)', () => {
+    test('should handle day of week with date (dddd, MMMM Do YYYY)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1205,7 +1205,7 @@ describe('moment.js format tokens', () => {
       expect(parsed?.getDate()).toBe(25);
     });
 
-    it('should handle ISO-like format with timezone (YYYY-MM-DDTHH:mm:ssZ)', () => {
+    test('should handle ISO-like format with timezone (YYYY-MM-DDTHH:mm:ssZ)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1226,7 +1226,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Edge cases and error handling', () => {
-    it('should handle invalid format gracefully', () => {
+    test('should handle invalid format gracefully', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       /** @type {DateTimeField} */
@@ -1242,7 +1242,7 @@ describe('moment.js format tokens', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should handle parsing with wrong format', () => {
+    test('should handle parsing with wrong format', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       /** @type {DateTimeField} */
@@ -1259,7 +1259,7 @@ describe('moment.js format tokens', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should handle empty format string', () => {
+    test('should handle empty format string', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1272,7 +1272,7 @@ describe('moment.js format tokens', () => {
       expect(typeof result).toBe('string');
     });
 
-    it('should handle null format', () => {
+    test('should handle null format', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -1288,7 +1288,7 @@ describe('moment.js format tokens', () => {
   });
 
   describe('Display value formatting with moment tokens', () => {
-    it('should display with custom format (MMMM Do, YYYY)', () => {
+    test('should display with custom format (MMMM Do, YYYY)', () => {
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
         fieldConfig: { ...baseFieldConfig, format: 'MMMM Do, YYYY' },
@@ -1298,7 +1298,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('December 25th, 2023');
     });
 
-    it('should display with 12-hour format (h:mm A)', () => {
+    test('should display with 12-hour format (h:mm A)', () => {
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
         fieldConfig: { ...baseFieldConfig, format: 'h:mm A' },
@@ -1308,7 +1308,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('2:30 PM');
     });
 
-    it('should display with European format (DD/MM/YYYY)', () => {
+    test('should display with European format (DD/MM/YYYY)', () => {
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
         fieldConfig: { ...baseFieldConfig, format: 'DD/MM/YYYY' },
@@ -1318,7 +1318,7 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('25/12/2023');
     });
 
-    it('should handle format display errors gracefully', () => {
+    test('should handle format display errors gracefully', () => {
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
         fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD' },
