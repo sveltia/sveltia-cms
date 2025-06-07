@@ -27,7 +27,8 @@
     "check:eslint": "eslint .",
     "check:imports": "node scripts/find-unused-imports.js",
     "check:stylelint": "stylelint '**/*.{css,scss,svelte}'",
-    "test": "vitest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "5.0.3",
