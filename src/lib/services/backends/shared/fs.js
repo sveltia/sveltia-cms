@@ -20,6 +20,10 @@ import { createPathRegEx } from '$lib/services/utils/file';
  */
 
 /**
+ * @typedef {{ file: File, path: string }} FileListItem
+ */
+
+/**
  * Get a file or directory handle at the given path.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {string} path Path to the file/directory.
@@ -46,13 +50,106 @@ export const getHandleByPath = async (rootDirHandle, path) => {
 };
 
 /**
+ * Create a regular expression that matches the given path, taking template tags into account.
+ * @param {string} path Path.
+ * @returns {RegExp} RegEx.
+ */
+const getPathRegex = (path) =>
+  createPathRegEx(path, (segment) => segment.replace(/{{.+?}}/, '.+?'));
+
+/**
+ * Retrieve all the files under the given directory recursively.
+ * @param {FileSystemDirectoryHandle | any} dirHandle Directory handle.
+ * @param {object} context Context object.
+ * @param {FileSystemDirectoryHandle} context.rootDirHandle Root directory handle.
+ * @param {string[]} context.scanningPaths Scanning paths.
+ * @param {RegExp[]} context.scanningPathsRegEx Regular expressions for scanning paths.
+ * @param {FileListItem[]} context.fileList List of available files.
+ */
+const scanDir = async (dirHandle, context) => {
+  const { rootDirHandle, scanningPaths, scanningPathsRegEx, fileList } = context;
+
+  for await (const [name, handle] of dirHandle.entries()) {
+    // Skip hidden files and directories, except for Git configuration files
+    if (name.startsWith('.') && !gitConfigFileRegex.test(name)) {
+      continue;
+    }
+
+    const path = (await rootDirHandle.resolve(handle))?.join('/') ?? '';
+    const hasMatchingPath = scanningPathsRegEx.some((regex) => regex.test(path));
+
+    if (handle.kind === 'file') {
+      if (!hasMatchingPath) {
+        continue;
+      }
+
+      try {
+        /** @type {File} */
+        let file = await handle.getFile();
+        const { type, lastModified } = file;
+
+        // Clone the file immediately to avoid potential permission problems
+        file = new File([file], file.name, { type, lastModified });
+
+        fileList.push({ file, path });
+      } catch (/** @type {any} */ ex) {
+        // eslint-disable-next-line no-console
+        console.error(ex);
+      }
+    }
+
+    if (handle.kind === 'directory') {
+      const regex = getPathRegex(path);
+
+      if (!hasMatchingPath && !scanningPaths.some((p) => regex.test(p))) {
+        continue;
+      }
+
+      await scanDir(handle, context);
+    }
+  }
+};
+
+/**
+ * Asynchronously computes and returns the hash of a given file.
+ * @param {File} file The file object to compute the hash for.
+ * @returns {Promise<string>} The computed hash as a string, or an empty string if an error occurs.
+ */
+const getFileHash = async (file) => {
+  try {
+    // Need `await` here to catch any exception
+    return await getHash(file);
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  }
+
+  return '';
+};
+
+/**
+ * Normalize a file list item to ensure it has the required properties. This function also computes
+ * the SHA-1 hash of the file. The file path and name must be normalized, as certain non-ASCII
+ * characters (e.g. Japanese) can be problematic particularly on macOS.
+ * @param {FileListItem} fileListItem File list item.
+ * @returns {Promise<BaseFileListItemProps>} Normalized file list item.
+ */
+const normalizeFileListItem = async ({ file, path }) => ({
+  file,
+  path: path.normalize(),
+  name: file.name.normalize(),
+  size: file.size,
+  sha: await getFileHash(file),
+});
+
+/**
  * Retrieve all files under the static directory.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
  */
 const getAllFiles = async (rootDirHandle) => {
-  /** @type {{ file: File, path: string }[]} */
-  const availableFileList = [];
+  /** @type {FileListItem[]} */
+  const fileList = [];
 
   /** @type {string[]} */
   const scanningPaths = unique(
@@ -68,82 +165,14 @@ const getAllFiles = async (rootDirHandle) => {
     ].map((path) => stripSlashes(path ?? '')),
   );
 
-  /**
-   * Get a regular expression that matches the given path, taking template tags into account.
-   * @param {string} path Path.
-   * @returns {RegExp} RegEx.
-   */
-  const getRegEx = (path) => createPathRegEx(path, (segment) => segment.replace(/{{.+?}}/, '.+?'));
-  const scanningPathsRegEx = scanningPaths.map(getRegEx);
+  await scanDir(rootDirHandle, {
+    rootDirHandle,
+    scanningPaths,
+    scanningPathsRegEx: scanningPaths.map(getPathRegex),
+    fileList,
+  });
 
-  /**
-   * Retrieve all the files under the given directory recursively.
-   * @param {FileSystemDirectoryHandle | any} dirHandle Directory handle.
-   */
-  const iterate = async (dirHandle) => {
-    for await (const [name, handle] of dirHandle.entries()) {
-      // Skip hidden files and directories, except for Git configuration files
-      if (name.startsWith('.') && !gitConfigFileRegex.test(name)) {
-        continue;
-      }
-
-      const path = (await rootDirHandle.resolve(handle))?.join('/') ?? '';
-      const hasMatchingPath = scanningPathsRegEx.some((regex) => regex.test(path));
-
-      if (handle.kind === 'file') {
-        if (!hasMatchingPath) {
-          continue;
-        }
-
-        try {
-          /** @type {File} */
-          let file = await handle.getFile();
-
-          // Clone the file immediately to avoid potential permission problems
-          file = new File([file], file.name, { type: file.type, lastModified: file.lastModified });
-
-          availableFileList.push({ file, path });
-        } catch (/** @type {any} */ ex) {
-          // eslint-disable-next-line no-console
-          console.error(ex);
-        }
-      }
-
-      if (handle.kind === 'directory') {
-        const regex = getRegEx(path);
-
-        if (!hasMatchingPath && !scanningPaths.some((p) => regex.test(p))) {
-          continue;
-        }
-
-        await iterate(handle);
-      }
-    }
-  };
-
-  await iterate(rootDirHandle);
-
-  return Promise.all(
-    availableFileList.map(async ({ file, path }) => ({
-      file,
-      // The file path must be normalized, as certain non-ASCII characters (e.g. Japanese) can be
-      // problematic particularly on macOS
-      path: path.normalize(),
-      name: file.name.normalize(),
-      size: file.size,
-      sha: await (async () => {
-        try {
-          // Need `await` here to catch any exception
-          return await getHash(file);
-        } catch (/** @type {any} */ ex) {
-          // eslint-disable-next-line no-console
-          console.error(ex);
-        }
-
-        return '';
-      })(),
-    })),
-  );
+  return Promise.all(fileList.map(normalizeFileListItem));
 };
 
 /**
@@ -188,6 +217,102 @@ export const loadFiles = async (rootDirHandle) => {
 };
 
 /**
+ * Recursively delete empty parent directories.
+ * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * @param {string[]} pathSegments Array of directory path segments.
+ */
+const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
+  let dirHandle = /** @type {FileSystemDirectoryHandle} */ (
+    await getHandleByPath(rootDirHandle, pathSegments.join('/'))
+  );
+
+  for (;;) {
+    /** @type {string[]} */
+    const keys = [];
+
+    for await (const key of dirHandle.keys()) {
+      keys.push(key);
+    }
+
+    if (keys.length > 1 || !pathSegments.length) {
+      break;
+    }
+
+    const dirName = /** @type {string} */ (pathSegments.pop());
+
+    // Get the parent directory handle
+    dirHandle = /** @type {FileSystemDirectoryHandle} */ (
+      await getHandleByPath(rootDirHandle, pathSegments.join('/'))
+    );
+
+    await dirHandle.removeEntry(dirName);
+  }
+};
+
+/**
+ * Save a file to the file system based on the provided change options.
+ * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * @param {FileChange} change File change options.
+ * @returns {Promise<?File>} Created or updated file, if available.
+ * @throws {Error} If an error occurs while saving the file.
+ */
+const saveChange = async (rootDirHandle, { action, path, previousPath, data }) => {
+  /** @type {FileSystemFileHandle | undefined} */
+  let fileHandle;
+
+  if (action === 'move' && previousPath) {
+    const { dirname, basename } = getPathInfo(path);
+
+    fileHandle = /** @type {FileSystemFileHandle} */ (
+      await getHandleByPath(rootDirHandle, previousPath)
+    );
+
+    if (dirname && dirname !== getPathInfo(previousPath).dirname) {
+      await fileHandle.move(await getHandleByPath(rootDirHandle, dirname), basename);
+    } else {
+      await fileHandle.move(basename);
+    }
+  }
+
+  if (['create', 'update', 'move'].includes(action) && data) {
+    fileHandle ??= /** @type {FileSystemFileHandle} */ (await getHandleByPath(rootDirHandle, path));
+
+    // The `createWritable` method is not yet supported by Safari
+    // @see https://bugs.webkit.org/show_bug.cgi?id=254726
+    const writer = await fileHandle.createWritable?.();
+
+    try {
+      await writer?.write(data);
+    } catch {
+      // Can throw if the file has just been moved/renamed without any change, and then the
+      // `data` is no longer available
+    } finally {
+      await writer?.close();
+    }
+
+    return fileHandle.getFile();
+  }
+
+  if (action === 'delete') {
+    const { dirname: dirPath = '', basename: fileName } = getPathInfo(stripSlashes(path));
+
+    const dirHandle = /** @type {FileSystemDirectoryHandle} */ (
+      await getHandleByPath(rootDirHandle, dirPath)
+    );
+
+    await dirHandle.removeEntry(fileName);
+
+    if (!dirPath) {
+      return null;
+    }
+
+    await deleteEmptyParentDirs(rootDirHandle, dirPath.split('/'));
+  }
+
+  return null;
+};
+
+/**
  * Save entries or assets locally.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {FileChange[]} changes File changes to be saved.
@@ -197,83 +322,10 @@ export const loadFiles = async (rootDirHandle) => {
  */
 export const saveChanges = async (rootDirHandle, changes) =>
   Promise.all(
-    changes.map(async ({ action, path, previousPath, data }) => {
+    changes.map(async (change) => {
       try {
-        /** @type {FileSystemFileHandle | undefined} */
-        let fileHandle;
-
-        if (action === 'move' && previousPath) {
-          const { dirname, basename } = getPathInfo(path);
-
-          fileHandle = /** @type {FileSystemFileHandle} */ (
-            await getHandleByPath(rootDirHandle, previousPath)
-          );
-
-          if (dirname && dirname !== getPathInfo(previousPath).dirname) {
-            await fileHandle.move(await getHandleByPath(rootDirHandle, dirname), basename);
-          } else {
-            await fileHandle.move(basename);
-          }
-        }
-
-        if (['create', 'update', 'move'].includes(action) && data) {
-          fileHandle ??= /** @type {FileSystemFileHandle} */ (
-            await getHandleByPath(rootDirHandle, path)
-          );
-
-          // The `createWritable` method is not yet supported by Safari
-          // @see https://bugs.webkit.org/show_bug.cgi?id=254726
-          const writer = await fileHandle.createWritable?.();
-
-          try {
-            await writer?.write(data);
-          } catch {
-            // Can throw if the file has just been moved/renamed without any change, and then the
-            // `data` is no longer available
-          } finally {
-            await writer?.close();
-          }
-
-          return fileHandle.getFile();
-        }
-
-        if (action === 'delete') {
-          const { dirname: dirPath = '', basename: fileName } = getPathInfo(stripSlashes(path));
-
-          let dirHandle = /** @type {FileSystemDirectoryHandle} */ (
-            await getHandleByPath(rootDirHandle, dirPath)
-          );
-
-          await dirHandle.removeEntry(fileName);
-
-          if (!dirPath) {
-            return null;
-          }
-
-          const dirPathArray = dirPath.split('/');
-
-          // Delete an empty enclosing folder recursively
-          for (;;) {
-            /** @type {string[]} */
-            const keys = [];
-
-            for await (const key of dirHandle.keys()) {
-              keys.push(key);
-            }
-
-            if (keys.length > 1 || !dirPathArray.length) {
-              break;
-            }
-
-            const dirName = /** @type {string} */ (dirPathArray.pop());
-
-            // Get the parent directory handle
-            dirHandle = /** @type {FileSystemDirectoryHandle} */ (
-              await getHandleByPath(rootDirHandle, dirPathArray.join('/'))
-            );
-            dirHandle.removeEntry(dirName);
-          }
-        }
+        // Need `await` here to catch any exception
+        return await saveChange(rootDirHandle, change);
       } catch (/** @type {any} */ ex) {
         // eslint-disable-next-line no-console
         console.error(ex);

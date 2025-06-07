@@ -56,14 +56,12 @@ export const createFileList = (files) => {
   const configFiles = [];
 
   files.forEach((fileInfo) => {
-    const { path } = fileInfo;
-    const { basename } = getPathInfo(path);
+    const { path, name } = fileInfo;
 
-    if (basename.startsWith('.')) {
-      // Correct Git config files that we need to keep track of, such as `.gitattributes` and
-      // `.gitkeep`. We need these files for some features, such as Git LFS tracking and assets
-      // folder creation.
-      if (gitConfigFileRegex.test(path)) {
+    if (name.startsWith('.')) {
+      // Correct Git config files that we need, such as `.gitattributes` and`.gitkeep`, to enable
+      // some features like Git LFS tracking and assets folder creation
+      if (gitConfigFileRegex.test(name)) {
         configFiles.push({ ...fileInfo, type: 'config' });
       }
     } else {
