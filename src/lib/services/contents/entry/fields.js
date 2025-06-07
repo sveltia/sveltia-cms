@@ -30,7 +30,7 @@ import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 /**
  * @type {Map<string, Field | undefined>}
  */
-const fieldConfigCacheMap = new Map();
+export const fieldConfigCacheMap = new Map();
 
 /**
  * Get a field’s config object that matches the given field name (key path).
@@ -52,19 +52,20 @@ export const getFieldConfig = ({
   isIndexFile = false,
 }) => {
   const cacheKey = JSON.stringify({ collectionName, fileName, valueMap, keyPath, isIndexFile });
-  const cache = fieldConfigCacheMap.get(cacheKey);
 
-  if (cache) {
-    return cache;
+  if (fieldConfigCacheMap.has(cacheKey)) {
+    return fieldConfigCacheMap.get(cacheKey);
   }
 
   const collection = getCollection(collectionName);
 
   const collectionFile = fileName
-    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
+    ? /** @type {FileCollection} */ (collection)?._fileMap?.[fileName]
     : undefined;
 
-  if (!collection || (fileName && !collectionFile)) {
+  // For entry collections, `fileName` is ignored and `collectionFile` will be `undefined`
+  // Only fail if we explicitly need a file collection but can't find the file
+  if (!collection || (fileName && collection?._type === 'file' && !collectionFile)) {
     fieldConfigCacheMap.set(cacheKey, undefined);
 
     return undefined;
@@ -80,6 +81,11 @@ export const getFieldConfig = ({
   keyPathArray.forEach((key, index) => {
     if (index === 0) {
       field = fields.find(({ name }) => name === key);
+
+      // If using index file and field not found, try regular fields as fallback
+      if (!field && isIndexFile && indexFileFields) {
+        field = regularFields.find(({ name }) => name === key);
+      }
     } else if (field) {
       const isNumericKey = /^\d+$/.test(key);
       const keyPathArraySub = keyPathArray.slice(0, index);
@@ -97,6 +103,10 @@ export const getFieldConfig = ({
         // It’s possible to get a single-subfield List field with or without a subfield name (e.g.
         // `image.0` or `image.0.src`), but when a subfield name is specified, check if it’s valid
         field = !subFieldName || subField.name === subFieldName ? subField : undefined;
+      } else if (subFields && isNumericKey) {
+        // For list widgets with multiple fields, numeric keys (like "0") should be skipped
+        // Keep the current field (the list widget) and continue to the next part of the path field
+        // remains unchanged
       } else if (subFields && !isNumericKey) {
         field = subFields.find(({ name }) => name === key);
       } else if (types && isNumericKey) {
@@ -109,6 +119,10 @@ export const getFieldConfig = ({
         field = types
           .find(({ name }) => name === valueMap[[...keyPathArraySub, typeKey].join('.')])
           ?.fields?.find(({ name }) => name === key);
+      } else {
+        // If we reach here, the list field is malformed (no `field`, `fields`, or `types`) and
+        // we’re trying to access a nested path, so return undefined
+        field = undefined;
       }
     }
   });
@@ -153,6 +167,11 @@ export const getFieldDisplayValue = ({
 }) => {
   const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath, isIndexFile });
   let value = valueMap[keyPath];
+
+  // If the field doesn’t exist in `valueMap` and transformations are applied, return empty string
+  if (value === undefined && transformations?.length) {
+    return '';
+  }
 
   if (fieldConfig?.widget === 'datetime') {
     // If the `date` transformation is provided, do nothing; it should be used instead of the field

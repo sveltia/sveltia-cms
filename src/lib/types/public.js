@@ -567,7 +567,8 @@
  * Relation field properties.
  * @typedef {object} RelationFieldProps
  * @property {'relation'} widget Widget name.
- * @property {any} [default] Default value.
+ * @property {any | any[]} [default] Default value(s), which should match the options. When
+ * `multiple` is `false`, it should be a single value that matches the `value_field` option.
  * @property {string} collection Referenced collection name.
  * @property {string} [file] Referenced file identifier for a file collection. Required if the
  * `collection` is a file collection.
@@ -592,7 +593,8 @@
  * Select field properties.
  * @typedef {object} SelectFieldProps
  * @property {'select'} widget Widget name.
- * @property {string[]} [default] Default values, which should math the options.
+ * @property {any | any[]} [default] Default value(s), which should match the options. When
+ * `multiple` is `false`, it should be a single value that matches the `value` option.
  * @property {string[] | { label: string, value: string }[]} options Options.
  * @see https://decapcms.org/docs/widgets/#select
  */

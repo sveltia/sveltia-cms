@@ -10,7 +10,6 @@ import { generateUUID } from '@sveltia/utils/crypto';
  * @param {HiddenField} fieldConfig Field configuration.
  * @param {InternalLocaleCode} locale Locale code.
  * @returns {any} Default value.
- * @todo Write tests for this.
  */
 const getDefaultValue = (fieldConfig, locale) => {
   const { default: defaultValue } = fieldConfig;

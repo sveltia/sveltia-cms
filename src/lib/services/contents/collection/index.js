@@ -23,7 +23,7 @@ export const selectedCollection = writable();
 /**
  * @type {Map<string, InternalCollection | undefined>}
  */
-const collectionCacheMap = new Map();
+export const collectionCacheMap = new Map();
 
 /**
  * Get a list of field key paths to be used to find an entry thumbnail.

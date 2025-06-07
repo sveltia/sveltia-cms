@@ -31,8 +31,8 @@ export const formatSummary = ({
 
   if (!summaryTemplate) {
     return (
-      valueMap[`${keyPath}.title`] ||
-      valueMap[`${keyPath}.name`] ||
+      (typeof valueMap[`${keyPath}.title`] === 'string' && valueMap[`${keyPath}.title`].trim()) ||
+      (typeof valueMap[`${keyPath}.name`] === 'string' && valueMap[`${keyPath}.name`].trim()) ||
       // Use the first visible string-type field value, if available
       Object.entries(valueMap).find(
         ([key, value]) =>

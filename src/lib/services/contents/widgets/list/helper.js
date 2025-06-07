@@ -88,28 +88,57 @@ export const formatSummary = ({
         .map(([key, value]) => [key.replace(prefixRegex, ''), value]),
     );
 
+    /**
+     * Check if a field is visible and has valid content.
+     * @param {string} fieldName Field name.
+     * @returns {string | null} Field value or `null`.
+     */
+    const getVisibleFieldValue = (fieldName) => {
+      const fieldValue = item[fieldName];
+
+      if (typeof fieldValue !== 'string' || !fieldValue.trim()) {
+        return null;
+      }
+
+      const fieldPath = `${keyPath}.${index}.${fieldName}`;
+      const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: fieldPath });
+
+      return fieldConfig?.widget !== 'hidden' ? fieldValue : null;
+    };
+
     return (
-      item.title ||
-      item.name ||
+      getVisibleFieldValue('title') ||
+      getVisibleFieldValue('name') ||
       // Use the first visible string-type field value, if available
-      Object.entries(valueMap).find(
-        ([key, value]) =>
-          prefixRegex.test(key) &&
-          typeof value === 'string' &&
-          !!value.trim() &&
-          getFieldConfig({ ...getFieldConfigArgs, keyPath: key })?.widget !== 'hidden',
-      )?.[1] ||
+      Object.entries(valueMap).find(([key, value]) => {
+        if (!prefixRegex.test(key) || typeof value !== 'string' || !value.trim()) {
+          return false;
+        }
+
+        const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: key });
+
+        // If we can get field config, check if it's hidden
+        // If we can't get field config, assume it's not hidden and allow it
+        return fieldConfig ? fieldConfig.widget !== 'hidden' : true;
+      })?.[1] ||
       ''
     );
   }
 
   return summaryTemplate.replaceAll(/{{(.+?)}}/g, (_match, /** @type {string} */ placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
-    const _keyPath = `${keyPath}.${index}.${tag.replace(/^fields\./, '')}`;
+    const fieldName = tag.replace(/^fields\./, '');
+    const _keyPath = `${keyPath}.${index}.${fieldName}`;
 
     if (hasSingleSubField) {
-      // Check if the key path is valid
-      if (!getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath })) {
+      // For single-field lists, check if the requested field name matches the actual field name
+      const listFieldConfig = /** @type {ListField} */ (
+        getFieldConfig({ ...getFieldConfigArgs, keyPath })
+      );
+
+      const singleFieldConfig = listFieldConfig?.field;
+
+      if (!singleFieldConfig || singleFieldConfig.name !== fieldName) {
         return '';
       }
     }

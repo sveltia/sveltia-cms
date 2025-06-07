@@ -10,7 +10,6 @@ import { isObject } from '@sveltia/utils/object';
  * @param {CodeField} args.fieldConfig Field configuration.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @returns {Record<string, any>} Default value map.
- * @todo Write tests for this.
  */
 export const getCodeFieldDefaultValueMap = ({ fieldConfig, keyPath }) => {
   /** @type {Record<string, any>} */

@@ -42,7 +42,6 @@ export const parseDateTimeConfig = (fieldConfig) => {
  * @param {string | undefined} currentValue Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {Date | undefined} Date.
- * @todo Write tests for this.
  */
 export const getDate = (currentValue, fieldConfig) => {
   const { format, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
@@ -106,7 +105,6 @@ export const getCurrentDateTime = (fieldConfig) => {
  * @param {string | undefined} currentValue Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {string | undefined} New value.
- * @todo Write tests for this.
  */
 export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
   const { format, dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
@@ -124,7 +122,14 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
 
   try {
     if (format) {
-      return (utc ? moment.utc : moment)(inputValue, inputFormat).format(format);
+      const result = (utc ? moment.utc : moment)(inputValue, inputFormat).format(format);
+
+      // Handle `moment.js` inconsistency where `Z` token might output `+00:00` instead of `Z`
+      if (format.includes('Z') && result.endsWith('+00:00')) {
+        return result.replace('+00:00', 'Z');
+      }
+
+      return result;
     }
 
     if (dateOnly) {
@@ -148,7 +153,6 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
  * Get the default value for a DateTime field.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {string} Default value.
- * @todo Write tests for this.
  */
 const getDefaultValue = (fieldConfig) => {
   const { default: defaultValue } = fieldConfig;
@@ -186,7 +190,6 @@ export const getDateTimeFieldDefaultValueMap = ({ fieldConfig, keyPath }) => ({
  * @param {string | undefined} currentValue Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {string | undefined} New value.
- * @todo Write tests for this.
  */
 export const getInputValue = (currentValue, fieldConfig) => {
   const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
@@ -200,7 +203,8 @@ export const getInputValue = (currentValue, fieldConfig) => {
   const value = dateOnly
     ? currentValue?.match(/^(?<date>\d{4}-[01]\d-[0-3]\d)\b/)?.groups?.date
     : timeOnly
-      ? currentValue?.match(/^(?<time>[0-2]\d:[0-5]\d)\b/)?.groups?.time
+      ? // Match both `YYYY-MM-DDTHH:mm(:ss)` and `HH:mm(:ss)` formats
+        currentValue?.match(/(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/)?.groups?.time
       : undefined;
 
   if (value) {
@@ -208,8 +212,20 @@ export const getInputValue = (currentValue, fieldConfig) => {
   }
 
   try {
+    const dateForParts = currentValue ? getDate(currentValue, fieldConfig) : new Date();
+
+    // If `getDate` returned `undefined` (parsing failed), return empty string
+    if (currentValue && !dateForParts) {
+      return '';
+    }
+
+    // If `getDate` returned an invalid `Date` object, return empty string
+    if (currentValue && dateForParts && Number.isNaN(dateForParts.getTime())) {
+      return '';
+    }
+
     const { year, month, day, hour, minute } = getDateTimeParts({
-      date: currentValue ? getDate(currentValue, fieldConfig) : new Date(),
+      date: dateForParts,
       timeZone: utc ? 'UTC' : undefined,
     });
 
@@ -260,7 +276,7 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
   const date = getDate(currentValue, fieldConfig);
   const canonicalLocale = getCanonicalLocale(locale);
 
-  if (!date) {
+  if (!date || Number.isNaN(date.getTime())) {
     return '';
   }
 

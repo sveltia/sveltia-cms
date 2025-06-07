@@ -1,6 +1,5 @@
 import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
-import { unflatten } from 'flat';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
@@ -11,6 +10,15 @@ import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary
  * @import { Entry, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
  */
+
+/**
+ * @typedef {{ label: string, value: any, searchValue: string }} RelationOption
+ */
+
+/**
+ * @type {Map<string, RelationOption[]>}
+ */
+export const optionCacheMap = new Map();
 
 /**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.
@@ -31,16 +39,89 @@ const normalizeFieldName = (fieldName) => {
 };
 
 /**
- * @type {Map<string, { label: string, value: any }[]>}
+ * Determines the type of list field based on the field configuration.
+ * @param {any} fieldConfig Field configuration object.
+ * @returns {object} Object with boolean flags for different list field types.
  */
-const optionCacheMap = new Map();
+const getListFieldTypes = (fieldConfig) => {
+  if (!fieldConfig) {
+    return {
+      isSimpleListField: false,
+      isSingleSubfieldListField: false,
+    };
+  }
+
+  const isListWidget = fieldConfig.widget === 'list';
+  const hasField = !!fieldConfig.field;
+  const hasFields = !!fieldConfig.fields;
+  const hasTypes = !!fieldConfig.types;
+
+  return {
+    isSimpleListField: isListWidget && !hasField && !hasFields && !hasTypes,
+    isSingleSubfieldListField: isListWidget && hasField && !hasFields && !hasTypes,
+  };
+};
+
+/**
+ * Gets the replacement value for a field name based on standard field types.
+ * @param {string} fieldName The field name to get replacement for.
+ * @param {any} context Context object containing `slug`, `locale`, and `getDisplayValue` function.
+ * @param {any} fallbackContext Fallback context for additional content.
+ * @returns {string} The replacement value.
+ */
+const getFieldReplacement = (fieldName, context, fallbackContext) => {
+  const { slug, locale, getDisplayValue } = context;
+  const { content, locales, defaultLocale, identifierField } = fallbackContext;
+
+  if (fieldName === 'slug') {
+    return slug;
+  }
+
+  if (fieldName === 'locale') {
+    return locale;
+  }
+
+  const keyPath = fieldName.replace(/^fields\./, '');
+
+  return (
+    getDisplayValue(keyPath) ||
+    getDisplayValue(keyPath, defaultLocale) ||
+    getEntrySummaryFromContent(content, { identifierField }) ||
+    getEntrySummaryFromContent(locales[defaultLocale]?.content || {}, {
+      identifierField,
+    }) ||
+    slug
+  );
+};
+
+/**
+ * Replaces all template tags in the given strings with actual values.
+ * @param {any} templates Object containing `label`, `value`, and `searchValue` templates.
+ * @param {string[]} fieldNames Array of field names to replace.
+ * @param {any} context Context object for replacements.
+ * @param {any} fallbackContext Fallback context for additional content.
+ * @returns {any} Object with replaced `label`, `value`, and `searchValue`.
+ */
+const replaceTemplateFields = (templates, fieldNames, context, fallbackContext) => {
+  let { label, value, searchValue } = templates;
+
+  fieldNames.forEach((fieldName) => {
+    const replacement = getFieldReplacement(fieldName, context, fallbackContext);
+
+    label = label.replaceAll(`{{${fieldName}}}`, replacement);
+    value = value.replaceAll(`{{${fieldName}}}`, replacement);
+    searchValue = searchValue.replaceAll(`{{${fieldName}}}`, replacement);
+  });
+
+  return { label, value, searchValue };
+};
 
 /**
  * Get options for a Relation field.
  * @param {InternalLocaleCode} locale Current locale.
  * @param {RelationField} fieldConfig Field configuration.
  * @param {Entry[]} refEntries Referenced entries.
- * @returns {{ label: string, value: any }[]} Options.
+ * @returns {RelationOption[]} Options.
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
   const cacheKey = JSON.stringify({ locale, fieldConfig, refEntries });
@@ -116,7 +197,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 
       return {
         refEntry,
-        hasContent: !!content,
+        hasContent: !!content && Object.keys(content).length > 0,
         content: content ?? {},
       };
     })
@@ -128,24 +209,6 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       const { slug, locales } = refEntry;
       const isIndexFile = isCollectionIndexFile(collection, refEntry);
       const getFieldConfigArgs = { collectionName, fileName, isIndexFile };
-      const _keyPath = _valueField.match(/^{{(.+)\.\*(?:\.\w+)?}}$/)?.[1];
-
-      const _config = _keyPath
-        ? getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath })
-        : undefined;
-
-      /**
-       * Flag for handling a simple list field with no subfields.
-       */
-      const isSimpleListField =
-        _config?.widget === 'list' && !_config.field && !_config.fields && !_config.types;
-
-      /**
-       * Flag for handling a list field with the `field` option that produces a single subfield.
-       * @see https://github.com/sveltia/sveltia-cms/discussions/400
-       */
-      const isSingleSubfieldListField =
-        _config?.widget === 'list' && !!_config.field && !_config.fields && !_config.types;
 
       /**
        * Wrapper for {@link getFieldDisplayValue}.
@@ -161,118 +224,182 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
           locale: _locale ?? locale,
         });
 
-      /**
-       * Map of replacing values. For a list widget, the key is a _partial_ key path like `cities.*`
-       * instead of `cities.*.id` or `cities.*.name`, and the value is a key-value map, so that
-       * multiple references can be replaced at once. Otherwise, the key is a complete key path
-       * except for `slug`, and the value is the actual value.
-       * @type {Record<string, string | number | object[]>}
-       */
-      const replacers = Object.fromEntries(
-        unique(
-          [
-            ...[..._displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-            ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-            ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-          ].map((fieldName) =>
-            !isSingleSubfieldListField && fieldName.includes('.')
-              ? fieldName.replace(/^([^.]+)+\.\*\.[^.]+$/, '$1.*')
-              : fieldName,
-          ),
-        ).map((/** @type {string} */ fieldName) => {
-          if (fieldName.endsWith('.*')) {
-            const pattern = isSimpleListField ? '\\.\\d+' : '\\.\\d+\\.[^.]+';
-            const regex = new RegExp(`^${escapeRegExp(fieldName).replace('\\.\\*', pattern)}$`);
+      // Extract all field names from templates
+      const allFieldNames = unique([
+        ...[..._displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+        ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+        ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
+      ]);
 
-            /** @type {Record<string, any[]>} */
-            const valueMap = unflatten(
-              Object.fromEntries(
-                Object.entries(content).filter(([keyPath]) => regex.test(keyPath)),
-              ),
-            );
+      // Check if any field has wildcards (list fields)
+      const hasListFields = allFieldNames.some((name) => name.includes('*'));
 
-            const key = Object.keys(valueMap)[0];
-            const list = valueMap[key];
+      if (!hasListFields) {
+        // Simple case: no list fields, create single option
+        const replacers = Object.fromEntries(
+          allFieldNames.map((fieldName) => {
+            const context = { slug, locale, getDisplayValue };
+            const fallbackContext = { content, locales, defaultLocale, identifierField };
 
-            if (isSimpleListField) {
-              return [key, list.map((value) => ({ '*': value }))];
-            }
+            return [fieldName, getFieldReplacement(fieldName, context, fallbackContext)];
+          }),
+        );
 
-            return [fieldName, list ?? ''];
-          }
+        let label = _displayField;
+        let value = _valueField;
+        let searchValue = _searchField;
 
-          if (isSingleSubfieldListField) {
-            // This `match` should not return `null` because `isSingleSubfieldListField` already
-            // matched the same regex
-            const [, _fieldName, key] = fieldName.match(/^(\w+\.\*)\.(\w+)$/) ?? [];
-            const regex = new RegExp(`^${_fieldName.replace('\\.\\*', '\\.\\d+')}$`);
+        Object.entries(replacers).forEach(([key, val]) => {
+          label = label.replaceAll(`{{${key}}}`, val);
+          value = value.replaceAll(`{{${key}}}`, val);
+          searchValue = searchValue.replaceAll(`{{${key}}}`, val);
+        });
 
-            return [
-              _fieldName,
-              Object.entries(content)
-                .filter(([k]) => regex.test(k))
-                .map(([, v]) => ({ [key]: v })),
-            ];
-          }
-
-          if (fieldName === 'slug') {
-            return [fieldName, slug];
-          }
-
-          if (fieldName === 'locale') {
-            return [fieldName, locale];
-          }
-
-          const keyPath = fieldName.replace(/^fields\./, '');
-
-          const label =
-            getDisplayValue(keyPath) ??
-            // Fall back if needed
-            getDisplayValue(keyPath, defaultLocale) ??
-            getEntrySummaryFromContent(content, { identifierField }) ??
-            getEntrySummaryFromContent(locales[defaultLocale].content, { identifierField }) ??
+        // Handle empty label fallback
+        if (!label || label.trim() === '') {
+          label =
+            getEntrySummaryFromContent(content, { identifierField }) ||
+            getEntrySummaryFromContent(locales[defaultLocale]?.content || {}, {
+              identifierField,
+            }) ||
             slug;
+        }
 
-          return [fieldName, label];
-        }),
-      );
+        return [
+          {
+            label: label || '',
+            value: value || slug,
+            searchValue: searchValue || label || '',
+          },
+        ];
+      }
 
-      /**
-       * The number of options.
-       */
-      const count = Math.max(
-        ...Object.values(replacers).map((value) => (Array.isArray(value) ? value.length : 1)),
-      );
+      // Complex case: handle list fields
+      /** @type {RelationOption[]} */
+      const results = [];
+      const listFieldConfigs = new Map();
 
-      let labels = new Array(count).fill(_displayField);
-      let values = new Array(count).fill(_valueField);
-      let searchValues = new Array(count).fill(_searchField);
+      // First, analyze all list fields and get their configurations
+      allFieldNames.forEach((fieldName) => {
+        if (fieldName.includes('*')) {
+          const baseFieldName = fieldName.replace(/\.\*.*$/, '');
 
-      Object.entries(replacers).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          value.forEach((valueMap, index) => {
-            Object.entries(valueMap).forEach(([k, v]) => {
-              labels.forEach((_label, labelIndex) => {
-                if ((index === 0 && labelIndex === 0) || index % labelIndex === 0) {
-                  labels[index] = labels[index].replaceAll(`{{${key}.${k}}}`, v);
-                  values[index] = values[index].replaceAll(`{{${key}.${k}}}`, v);
-                  searchValues[index] = searchValues[index].replaceAll(`{{${key}.${k}}}`, v);
-                }
-              });
-            });
+          const fieldConfigForList = getFieldConfig({
+            ...getFieldConfigArgs,
+            keyPath: baseFieldName,
           });
-        } else {
-          labels = labels.map((l) => l.replaceAll(`{{${key}}}`, value));
-          values = values.map((v) => v.replaceAll(`{{${key}}}`, value));
-          searchValues = searchValues.map((v) => v.replaceAll(`{{${key}}}`, value));
+
+          listFieldConfigs.set(fieldName, {
+            baseFieldName,
+            fieldConfig: fieldConfigForList,
+            ...getListFieldTypes(fieldConfigForList),
+          });
         }
       });
 
-      return labels.map((label, index) => ({
-        label,
-        value: values[index],
-        searchValue: searchValues[index],
-      }));
+      // Handle different list field scenarios
+      const listFieldEntries = Array.from(listFieldConfigs.entries());
+
+      if (listFieldEntries.length === 1) {
+        const [fieldName, config] = listFieldEntries[0];
+
+        if (config.isSingleSubfieldListField) {
+          // Single subfield list: join all values into one option (e.g., `skills.*`)
+          const regex = new RegExp(`^${escapeRegExp(config.baseFieldName)}\\.\\d+$`);
+
+          const values = Object.entries(content)
+            .filter(([k]) => regex.test(k))
+            .map(([, v]) => v);
+
+          const joinedValue = values.join(' ');
+
+          const templates = {
+            label: _displayField.replaceAll(`{{${fieldName}}}`, joinedValue),
+            value: _valueField.replaceAll(`{{${fieldName}}}`, joinedValue),
+            searchValue: _searchField.replaceAll(`{{${fieldName}}}`, joinedValue),
+          };
+
+          const { label, value, searchValue } = replaceTemplateFields(
+            templates,
+            allFieldNames.filter((name) => !name.includes('.*')),
+            { slug, locale, getDisplayValue },
+            { content, locales, defaultLocale, identifierField },
+          );
+
+          return [
+            {
+              label: label || '',
+              value: value || slug,
+              searchValue: searchValue || label || '',
+            },
+          ];
+        }
+
+        // Complex list field: create separate option for each list item (e.g., `cities.*.name`)
+        const subFieldMatch = fieldName.match(/^([^.]+)\.\*\.([^.]+)$/);
+
+        if (subFieldMatch) {
+          const [, baseFieldNameForList, subKey] = subFieldMatch;
+
+          const regex = new RegExp(
+            `^${escapeRegExp(baseFieldNameForList)}\\.\\d+\\.${escapeRegExp(subKey)}$`,
+          );
+
+          const listValues = Object.entries(content)
+            .filter(([k]) => regex.test(k))
+            .map(([k, v]) => {
+              const indexRegex = new RegExp(
+                `^${escapeRegExp(baseFieldNameForList)}\\.([0-9]+)\\.${escapeRegExp(subKey)}$`,
+              );
+
+              const indexMatch = k.match(indexRegex);
+
+              return { index: parseInt(indexMatch?.[1] || '0', 10), value: v };
+            })
+            .sort((a, b) => a.index - b.index);
+
+          listValues.forEach(({ value: listValue }) => {
+            const templates = {
+              label: _displayField.replaceAll(`{{${fieldName}}}`, listValue),
+              value: _valueField.replaceAll(`{{${fieldName}}}`, listValue),
+              searchValue: _searchField.replaceAll(`{{${fieldName}}}`, listValue),
+            };
+
+            const { label, value, searchValue } = replaceTemplateFields(
+              templates,
+              allFieldNames.filter((name) => !name.includes('.*')),
+              { slug, locale, getDisplayValue },
+              { content, locales, defaultLocale, identifierField },
+            );
+
+            results.push({
+              label: label || '',
+              value: value || slug,
+              searchValue: searchValue || label || '',
+            });
+          });
+
+          return results;
+        }
+      }
+
+      // Fallback for complex multi-list scenarios or unhandled cases
+      const templates = { label: _displayField, value: _valueField, searchValue: _searchField };
+
+      const { label, value, searchValue } = replaceTemplateFields(
+        templates,
+        allFieldNames,
+        { slug, locale, getDisplayValue },
+        { content, locales, defaultLocale, identifierField },
+      );
+
+      return [
+        {
+          label: label || '',
+          value: value || slug,
+          searchValue: searchValue || label || '',
+        },
+      ];
     })
     .flat(1)
     .sort((a, b) => compare(a.label, b.label));
@@ -290,7 +417,6 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
  * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.
  * @returns {any | any[]} Resolved field value(s).
- * @todo Write tests for this.
  */
 export const getReferencedOptionLabel = ({ fieldConfig, valueMap, keyPath, locale }) => {
   const { multiple, collection } = fieldConfig;
