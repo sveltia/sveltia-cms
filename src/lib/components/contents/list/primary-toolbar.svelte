@@ -3,6 +3,7 @@
     Button,
     FloatingActionButtonWrapper,
     Infobar,
+    Spacer,
     Toolbar,
     TruncatedText,
   } from '@sveltia/ui';
@@ -53,7 +54,9 @@
       />
     {/if}
     <h2 role="none">{collectionLabel}</h2>
-    {#if !$isSmallScreen}
+    {#if $isSmallScreen}
+      <Spacer flex />
+    {:else}
       <div role="none" class="description">
         <TruncatedText>
           {@html sanitize(description || '')}
@@ -103,6 +106,10 @@
 <DeleteEntriesDialog bind:open={showDeleteDialog} />
 
 <style lang="scss">
+  h2 {
+    flex: none !important;
+  }
+
   .description {
     flex: auto;
     font-size: var(--sui-font-size-small);
