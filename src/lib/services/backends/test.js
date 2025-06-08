@@ -13,8 +13,9 @@ const label = 'Test';
 let rootDirHandle = undefined;
 /**
  * Initialize the test backend. There is nothing to do here.
+ * @returns {undefined}
  */
-const init = () => {};
+const init = () => undefined;
 
 /**
  * Sign in with the test backend. There is no actual sign-in; just get the root directory handle in

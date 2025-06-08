@@ -35,6 +35,10 @@ import { isIndexFile, prepareEntries } from '$lib/services/contents/file/process
  */
 
 /**
+ * @typedef {(lastHash: string) => Promise<BaseFileListItemProps[]>} FetchFileListFunction
+ */
+
+/**
  * Parse a list of all files on the repository/filesystem to create entry and asset lists, with the
  * relevant collection/file configuration added.
  * @param {BaseFileListItemProps[]} files Unfiltered file list.
@@ -81,16 +85,16 @@ export const createFileList = (files) => {
 };
 
 /**
- * Build the file list from cache or remote.
+ * Get the file list from the meta database or fetch it if not cached.
  * @param {object} args Arguments.
  * @param {IndexedDB} args.metaDB The meta database instance.
  * @param {string} args.lastHash The latest commit hash.
  * @param {[string, any][]} args.cachedFileEntries Cached file entries.
- * @param {(lastHash: string) => Promise<BaseFileListItemProps[]>} args.fetchFileList Function to
- * fetch the repository’s complete file list.
+ * @param {FetchFileListFunction} args.fetchFileList Function to fetch the repository’s complete
+ * file list.
  * @returns {Promise<BaseFileList>} The file list.
  */
-const buildFileList = async ({ metaDB, lastHash, cachedFileEntries, fetchFileList }) => {
+const getFileList = async ({ metaDB, lastHash, cachedFileEntries, fetchFileList }) => {
   const cachedHash = await metaDB.get('last_commit_hash');
   const gitConfigFetched = await metaDB.get('git_config_fetched');
 
@@ -198,8 +202,8 @@ const updateCache = async ({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetc
  * default branch name.
  * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
  * the last commit’s SHA-1 hash and message.
- * @param {(lastHash: string) => Promise<BaseFileListItemProps[]>} args.fetchFileList Function to
- * fetch the repository’s complete file list.
+ * @param {FetchFileListFunction} args.fetchFileList Function to fetch the repository’s complete
+ * file list.
  * @param {(fetchingFiles: BaseFileListItem[]) => Promise<RepositoryContentsMap>
  * } args.fetchFileContents Function to fetch the metadata of entry/asset files as well as text file
  * contents.
@@ -224,7 +228,7 @@ export const fetchAndParseFiles = async ({
 
   // This has to be done after the branch is determined
   const { hash: lastHash, message } = await fetchLastCommit();
-  const fileList = await buildFileList({ metaDB, lastHash, cachedFileEntries, fetchFileList });
+  const fileList = await getFileList({ metaDB, lastHash, cachedFileEntries, fetchFileList });
 
   // @todo Check if the commit has a workflow run that trigged deployment
   isLastCommitPublished.set(!message.startsWith('[skip ci]'));

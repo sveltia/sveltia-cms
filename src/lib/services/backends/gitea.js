@@ -4,28 +4,26 @@ import { decodeBase64, encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import {
-  handleClientSideAuthPopup,
-  initClientSideAuth,
-  refreshAccessToken,
-} from '$lib/services/backends/shared/auth';
+import { apiConfigPlaceholder, repositoryInfoPlaceholder } from '$lib/services/backends/shared';
+import { fetchAPIWithAuth } from '$lib/services/backends/shared/api';
+import { handleClientSideAuthPopup, initClientSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
 import { siteConfig } from '$lib/services/config';
 import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';
 import { prefs } from '$lib/services/user/prefs';
-import { sendRequest } from '$lib/services/utils/networking';
 
 /**
  * @import {
+ * ApiEndpointConfig,
  * Asset,
  * BackendService,
  * BaseFileListItem,
  * BaseFileListItemProps,
  * CommitChangesOptions,
+ * FetchApiOptions,
  * FileChange,
- * InternalSiteConfig,
  * RepositoryContentsMap,
  * RepositoryInfo,
  * SignInOptions,
@@ -44,6 +42,10 @@ import { sendRequest } from '$lib/services/utils/networking';
 const backendName = 'gitea';
 const label = 'Gitea';
 const apiRootDefault = 'https://gitea.com/api/v1';
+/** @type {RepositoryInfo} */
+const repository = { ...repositoryInfoPlaceholder };
+/** @type {ApiEndpointConfig} */
+const apiConfig = { ...apiConfigPlaceholder };
 /**
  * Minimum supported Gitea version. We require at least 1.24 to use the new `file-contents` API
  * endpoint.
@@ -52,145 +54,89 @@ const apiRootDefault = 'https://gitea.com/api/v1';
 const minSupportedVersion = 1.24;
 /** @type {any} */
 let repositoryResponseCache = null;
-
-/**
- * @type {{ origin: string, rest: string, isSelfHosted: boolean }}
- */
-const apiConfig = {
-  origin: '',
-  rest: '',
-  isSelfHosted: false,
-};
-
-/**
- * @type {RepositoryInfo}
- */
-const repository = new Proxy(/** @type {any} */ ({}), {
-  /**
-   * Define the getter.
-   * @param {Record<string, any>} obj Object itself.
-   * @param {string} key Property name.
-   * @returns {any} Property value.
-   */
-  get: (obj, key) => {
-    if (key in obj) {
-      return obj[key];
-    }
-
-    const { baseURL, branch } = obj;
-
-    if (key === 'treeBaseURL') {
-      return branch ? `${baseURL}/src/branch/${branch}` : baseURL;
-    }
-
-    if (key === 'blobBaseURL') {
-      return branch ? `${baseURL}/src/branch/${branch}` : '';
-    }
-
-    return undefined;
-  },
-});
-
-/**
- * Get the OAuth authentication properties for Gitea.
- * @returns {{ clientId: string, authURL: string, tokenURL: string }} Authentication properties.
- */
-const getAuthProps = () => {
-  const {
-    base_url: baseURL = 'https://gitea.com',
-    auth_endpoint: authPath = 'login/oauth/authorize',
-    app_id: clientId = '',
-  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
-
-  const authURL = `${stripSlashes(baseURL)}/${stripSlashes(authPath)}`;
-  const tokenURL = authURL.replace('/authorize', '/access_token');
-
-  return { clientId, authURL, tokenURL };
-};
-
 /**
  * Send a request to Gitea REST API.
  * @param {string} path Endpoint.
- * @param {{ method?: string, headers?: any, body?: any }} [init] Request options.
- * @param {object} [options] Other options.
- * @param {string} [options.token] OAuth access token. If not provided, it will be taken from the
- * `user` store.
- * @param {string} [options.refreshToken] OAuth refresh token. If not provided, it will be taken
- * from the `user` store.
- * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response type. The default is
- *`json`, while `raw` returns a `Response` object as is.
+ * @param {FetchApiOptions} [options] Fetch options.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
  * @see https://docs.gitea.com/api/1.24/
  */
-const fetchAPI = async (
-  path,
-  init = {},
-  { token = undefined, refreshToken = undefined, responseType = 'json' } = {},
-) => {
-  const { rest: apiRoot } = apiConfig;
-  const _user = get(user);
-
-  token ??= _user?.token;
-  refreshToken ??= _user?.refreshToken;
-
-  init.headers = new Headers(init.headers);
-  init.headers.set('Authorization', `token ${token}`);
-
-  return sendRequest(`${apiRoot}${path}`, init, {
-    responseType,
-    refreshAccessToken: refreshToken
-      ? () => refreshAccessToken({ ...getAuthProps(), refreshToken })
-      : undefined,
-  });
-};
+const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, apiConfig);
 
 /**
- * Get the configured repository's basic information.
- * @returns {RepositoryInfo} Repository info.
+ * Generates base URLs for accessing the repository’s resources.
+ * @param {string} baseURL The name of the repository.
+ * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
+ * the site configuration.
+ * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
+ * for browsing files, and the blob base URL for accessing file contents.
  */
-const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
-  const { origin, isSelfHosted } = apiConfig;
-  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-
-  return Object.assign(repository, {
-    service: backendName,
-    label,
-    owner,
-    repo,
-    branch,
-    baseURL: `${origin}/${owner}/${repo}`,
-    databaseName: `${backendName}:${owner}/${repo}`,
-    isSelfHosted,
-  });
-};
+const getBaseURLs = (baseURL, branch) => ({
+  treeBaseURL: branch ? `${baseURL}/src/branch/${branch}` : baseURL,
+  blobBaseURL: branch ? `${baseURL}/src/branch/${branch}` : '',
+});
 
 /**
  * Initialize the Gitea backend.
+ * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
+ * not Gitea.
  */
 const init = () => {
-  const { name, api_root: restApiRoot = apiRootDefault } = get(siteConfig)?.backend ?? {};
+  const { backend } = get(siteConfig) ?? {};
 
-  if (name === backendName) {
-    // Developers may misconfigure custom API roots, so we use the origin to redefine them
-    const restApiOrigin = new URL(restApiRoot).origin;
-    const isSelfHosted = restApiRoot !== apiRootDefault;
-
-    Object.assign(apiConfig, {
-      origin: restApiOrigin,
-      rest: `${restApiOrigin}/api/v1`,
-      isSelfHosted,
-    });
+  if (backend?.name !== backendName) {
+    return undefined;
   }
 
-  const repositoryInfo = getRepositoryInfo();
+  const {
+    repo: projectPath,
+    branch,
+    base_url: authRoot = 'https://gitea.com',
+    auth_endpoint: authPath = 'login/oauth/authorize',
+    app_id: clientId = '',
+    api_root: restApiRoot = apiRootDefault,
+  } = backend;
+
+  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
+  // Developers may misconfigure custom API roots, so we use the origin to redefine them
+  const restApiOrigin = new URL(restApiRoot).origin;
+  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
+  const baseURL = `${restApiOrigin}/${owner}/${repo}`;
+
+  Object.assign(
+    repository,
+    /** @type {RepositoryInfo} */ ({
+      service: backendName,
+      label,
+      owner,
+      repo,
+      branch,
+      baseURL,
+      databaseName: `${backendName}:${owner}/${repo}`,
+      isSelfHosted: restApiRoot !== apiRootDefault,
+    }),
+    getBaseURLs(baseURL, branch),
+  );
+
+  Object.assign(
+    apiConfig,
+    /** @type {ApiEndpointConfig} */ ({
+      clientId,
+      authURL,
+      tokenURL: authURL.replace('/authorize', '/access_token'),
+      origin: restApiOrigin,
+      restBaseURL: `${restApiOrigin}/api/v1`,
+    }),
+  );
 
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
-    console.info('repositoryInfo', repositoryInfo);
+    console.info('repositoryInfo', repository);
   }
+
+  return repository;
 };
 
 /**
@@ -204,7 +150,7 @@ const init = () => {
 const signIn = async ({ token, refreshToken, auto = false }) => {
   if (!token) {
     const { origin } = window.location;
-    const { clientId, authURL, tokenURL } = getAuthProps();
+    const { clientId, authURL, tokenURL } = apiConfig;
     const scope = 'read:repository,write:repository,read:user';
     const inPopup = window.opener?.origin === origin && window.name === 'auth';
 
@@ -227,7 +173,7 @@ const signIn = async ({ token, refreshToken, auto = false }) => {
     email,
     avatar_url: avatarURL,
     html_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', {}, { token, refreshToken }));
+  } = /** @type {any} */ (await fetchAPI('/user', { token, refreshToken }));
 
   const _user = get(user);
 
@@ -323,19 +269,21 @@ const checkRepositoryAccess = async () => {
  * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGet
  */
 const fetchDefaultBranchName = async () => {
-  const { owner, repo } = repository;
+  const { owner, repo, baseURL = '' } = repository;
 
   try {
-    const { default_branch: defaultBranch } =
+    const { default_branch: branch } =
       repositoryResponseCache ?? /** @type {any} */ (await fetchAPI(`/repos/${owner}/${repo}`));
 
-    if (!defaultBranch) {
+    if (!branch) {
       throw new Error('Failed to retrieve the default branch name.', {
         cause: new Error(get(_)('repository_empty', { values: { repo } })),
       });
     }
 
-    return defaultBranch;
+    Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
+
+    return branch;
   } catch (error) {
     throw new Error('Failed to retrieve the default branch name.', {
       cause: new Error(get(_)('repository_not_found', { values: { repo } })),
@@ -490,11 +438,9 @@ const fetchBlob = async (asset) => {
   const { path } = asset;
 
   return /** @type {Promise<Blob>} */ (
-    fetchAPI(
-      `/repos/${owner}/${repo}/media/${encodeURIComponent(path)}?ref=${branch}`,
-      {},
-      { responseType: 'blob' },
-    )
+    fetchAPI(`/repos/${owner}/${repo}/media/${encodeURIComponent(path)}?ref=${branch}`, {
+      responseType: 'blob',
+    })
   );
 };
 
@@ -543,7 +489,6 @@ export default {
   name: backendName,
   label,
   repository,
-  getRepositoryInfo,
   init,
   signIn,
   signOut,

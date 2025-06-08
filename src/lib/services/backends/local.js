@@ -102,15 +102,18 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
 
 /**
  * Initialize the local backend.
+ * @returns {RepositoryInfo | undefined} Repository info.
  */
 const init = () => {
   const { name: service } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
 
-  remoteRepository = allBackendServices[service]?.getRepositoryInfo?.();
+  remoteRepository = allBackendServices[service]?.init?.();
 
   const { databaseName } = remoteRepository ?? {};
 
   rootDirHandleDB = databaseName ? new IndexedDB(databaseName, 'file-system-handles') : null;
+
+  return repository;
 };
 
 /**

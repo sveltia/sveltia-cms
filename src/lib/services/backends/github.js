@@ -4,6 +4,8 @@ import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { apiConfigPlaceholder, repositoryInfoPlaceholder } from '$lib/services/backends/shared';
+import { fetchAPIWithAuth } from '$lib/services/backends/shared/api';
 import { initServerSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
@@ -15,14 +17,15 @@ import { sendRequest } from '$lib/services/utils/networking';
 
 /**
  * @import {
+ * ApiEndpointConfig,
  * Asset,
  * BackendService,
  * BackendServiceStatus,
  * BaseFileListItem,
  * BaseFileListItemProps,
  * CommitChangesOptions,
+ * FetchApiOptions,
  * FileChange,
- * InternalSiteConfig,
  * RepositoryContentsMap,
  * RepositoryInfo,
  * SignInOptions,
@@ -35,45 +38,10 @@ const label = 'GitHub';
 const statusDashboardURL = 'https://www.githubstatus.com/';
 const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
 const apiRootDefault = 'https://api.github.com';
-
-/**
- * @type {{ origin: string, rest: string, graphql: string, isSelfHosted: boolean }}
- */
-const apiConfig = {
-  origin: '',
-  rest: '',
-  graphql: '',
-  isSelfHosted: false,
-};
-
-/**
- * @type {RepositoryInfo}
- */
-const repository = new Proxy(/** @type {any} */ ({}), {
-  /**
-   * Define the getter.
-   * @param {Record<string, any>} obj Object itself.
-   * @param {string} key Property name.
-   * @returns {any} Property value.
-   */
-  get: (obj, key) => {
-    if (key in obj) {
-      return obj[key];
-    }
-
-    const { baseURL, branch } = obj;
-
-    if (key === 'treeBaseURL') {
-      return branch ? `${baseURL}/tree/${branch}` : baseURL;
-    }
-
-    if (key === 'blobBaseURL') {
-      return branch ? `${baseURL}/blob/${branch}` : '';
-    }
-
-    return undefined;
-  },
-});
+/** @type {RepositoryInfo} */
+const repository = { ...repositoryInfoPlaceholder };
+/** @type {ApiEndpointConfig} */
+const apiConfig = { ...apiConfigPlaceholder };
 
 /**
  * Check the GitHub service status.
@@ -105,120 +73,102 @@ const checkStatus = async () => {
 };
 
 /**
- * Get the OAuth authentication properties for GitHub.
- * @returns {{ authURL: string, tokenURL: string }} Authentication properties.
- */
-const getAuthProps = () => {
-  const { base_url: baseURL = 'https://api.netlify.com', auth_endpoint: authPath = 'auth' } =
-    /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
-
-  const authURL = `${stripSlashes(baseURL)}/${stripSlashes(authPath)}`;
-  const tokenURL = authURL.replace('/authorize', '/access_token');
-
-  return { authURL, tokenURL };
-};
-
-/**
  * Send a request to GitHub REST/GraphQL API.
  * @param {string} path Endpoint.
- * @param {{ method?: string, headers?: any, body?: any }} [init] Request options.
- * @param {object} [options] Other options.
- * @param {string} [options.token] OAuth token.
- * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response type. The default is
- *`json`, while `raw` returns a `Response` object as is.
+ * @param {FetchApiOptions} [options] Fetch options.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
  * @see https://docs.github.com/en/rest
- * @see https://docs.github.com/en/graphql
  */
-const fetchAPI = async (
-  path,
-  init = {},
-  { token = /** @type {User} */ (get(user)).token, responseType = 'json' } = {},
-) => {
-  const apiRoot = apiConfig[path === '/graphql' ? 'graphql' : 'rest'];
-
-  init.headers = new Headers(init.headers);
-  init.headers.set('Authorization', `token ${token}`);
-
-  return sendRequest(`${apiRoot}${path}`, init, { responseType });
-};
+const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, apiConfig);
 
 /**
  * Send a request to GitHub GraphQL API.
  * @param {string} query Query string.
  * @param {object} [variables] Any variable to be applied.
  * @returns {Promise<object>} Response data.
+ * @see https://docs.github.com/en/graphql
  */
-const fetchGraphQL = async (query, variables = {}) => {
-  const { data } = /** @type {{ data: object }} */ (
-    await fetchAPI('/graphql', {
-      method: 'POST',
-      body: {
-        // Remove line breaks and subsequent space characters; we must be careful as file paths may
-        // contain spaces
-        query: query.replace(/\n\s*/g, ' '),
-        variables,
-      },
-    })
-  );
-
-  return data;
-};
+const fetchGraphQL = async (query, variables = {}) =>
+  /** @type {Promise<object>} */ (fetchAPI('/graphql', { body: { query, variables } }));
 
 /**
- * Get the configured repository’s basic information.
- * @returns {RepositoryInfo} Repository info.
+ * Generates base URLs for accessing the repository’s resources.
+ * @param {string} baseURL The name of the repository.
+ * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
+ * the site configuration.
+ * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
+ * for browsing files, and the blob base URL for accessing file contents.
  */
-const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
-  const { origin: apiOrigin, isSelfHosted } = apiConfig;
-  const origin = isSelfHosted ? apiOrigin : 'https://github.com';
-  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-
-  return Object.assign(repository, {
-    service: backendName,
-    label,
-    owner,
-    repo,
-    branch,
-    baseURL: `${origin}/${owner}/${repo}`,
-    databaseName: `${backendName}:${owner}/${repo}`,
-    isSelfHosted,
-  });
-};
+const getBaseURLs = (baseURL, branch) => ({
+  treeBaseURL: branch ? `${baseURL}/tree/${branch}` : baseURL,
+  blobBaseURL: branch ? `${baseURL}/blob/${branch}` : '',
+});
 
 /**
  * Initialize the GitHub backend.
+ * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
+ * not GitHub.
  */
 const init = () => {
-  const {
-    name,
-    api_root: restApiRoot = apiRootDefault,
-    graphql_api_root: graphqlApiRoot,
-  } = get(siteConfig)?.backend ?? {};
+  const { backend } = get(siteConfig) ?? {};
 
-  if (name === backendName) {
-    // Developers may misconfigure custom API roots, so we use the origin to redefine them
-    const restApiOrigin = new URL(restApiRoot).origin;
-    const graphqlApiOrigin = new URL(graphqlApiRoot ?? restApiRoot).origin;
-    const isSelfHosted = restApiRoot !== apiRootDefault;
-
-    Object.assign(apiConfig, {
-      origin: restApiOrigin,
-      rest: isSelfHosted ? `${restApiOrigin}/api/v3` : restApiOrigin,
-      graphql: isSelfHosted ? `${graphqlApiOrigin}/api` : graphqlApiOrigin,
-      isSelfHosted,
-    });
+  if (backend?.name !== backendName) {
+    return undefined;
   }
 
-  const repositoryInfo = getRepositoryInfo();
+  const {
+    repo: projectPath,
+    branch,
+    base_url: authRoot = 'https://api.netlify.com',
+    auth_endpoint: authPath = 'auth',
+    api_root: restApiRoot = apiRootDefault,
+    graphql_api_root: graphqlApiRoot = restApiRoot,
+  } = backend;
+
+  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
+  // Developers may misconfigure custom API roots, so we use the origin to redefine them
+  const restApiOrigin = new URL(restApiRoot).origin;
+  const graphqlApiOrigin = new URL(graphqlApiRoot).origin;
+  const isSelfHosted = restApiRoot !== apiRootDefault;
+  const origin = isSelfHosted ? restApiOrigin : 'https://github.com';
+  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
+  const baseURL = `${origin}/${owner}/${repo}`;
+
+  Object.assign(
+    repository,
+    /** @type {RepositoryInfo} */ ({
+      service: backendName,
+      label,
+      owner,
+      repo,
+      branch,
+      baseURL,
+      databaseName: `${backendName}:${owner}/${repo}`,
+      isSelfHosted,
+    }),
+    getBaseURLs(baseURL, branch),
+  );
+
+  Object.assign(
+    apiConfig,
+    /** @type {ApiEndpointConfig} */ ({
+      clientId: '', // @todo Implement OAuth token renewal
+      authURL,
+      tokenURL: authURL.replace('/authorize', '/access_token'),
+      origin: restApiOrigin,
+      restBaseURL: isSelfHosted ? `${restApiOrigin}/api/v3` : restApiOrigin,
+      graphqlBaseURL: isSelfHosted ? `${graphqlApiOrigin}/api` : graphqlApiOrigin,
+    }),
+  );
 
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
-    console.info('repositoryInfo', repositoryInfo);
+    console.info('repositoryInfo', repository);
   }
+
+  return repository;
 };
 
 /**
@@ -237,7 +187,7 @@ const signIn = async ({ token, auto = false }) => {
   if (!token) {
     const { hostname } = window.location;
     const { site_domain: siteDomain = hostname } = get(siteConfig)?.backend ?? {};
-    const { authURL } = getAuthProps();
+    const { authURL } = apiConfig;
 
     ({ token } = await initServerSideAuth({
       backendName,
@@ -254,7 +204,7 @@ const signIn = async ({ token, auto = false }) => {
     email,
     avatar_url: avatarURL,
     html_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', {}, { token }));
+  } = /** @type {any} */ (await fetchAPI('/user', { token }));
 
   return {
     backendName,
@@ -284,11 +234,10 @@ const checkRepositoryAccess = async () => {
   const userName = /** @type {string} */ (get(user)?.login);
 
   const { ok } = /** @type {Response} */ (
-    await fetchAPI(
-      `/repos/${owner}/${repo}/collaborators/${encodeURIComponent(userName)}`,
-      { headers: { Accept: 'application/json' } },
-      { responseType: 'raw' },
-    )
+    await fetchAPI(`/repos/${owner}/${repo}/collaborators/${encodeURIComponent(userName)}`, {
+      headers: { Accept: 'application/json' },
+      responseType: 'raw',
+    })
   );
 
   if (!ok) {
@@ -304,9 +253,9 @@ const checkRepositoryAccess = async () => {
  * @throws {Error} When the repository could not be found, or when the repository is empty.
  */
 const fetchDefaultBranchName = async () => {
-  const { owner, repo } = repository;
+  const { owner, repo, baseURL = '' } = repository;
 
-  const result = /** @type {{ repository: { defaultBranchRef: { name: string } } }} */ (
+  const result = /** @type {{ repository: { defaultBranchRef?: { name: string } } }} */ (
     await fetchGraphQL(`
       query {
         repository(owner: "${owner}", name: "${repo}") {
@@ -324,13 +273,17 @@ const fetchDefaultBranchName = async () => {
     });
   }
 
-  if (!result.repository.defaultBranchRef) {
+  const { name: branch } = result.repository.defaultBranchRef ?? {};
+
+  if (!branch) {
     throw new Error('Failed to retrieve the default branch name.', {
       cause: new Error(get(_)('repository_empty', { values: { repo } })),
     });
   }
 
-  return result.repository.defaultBranchRef.name;
+  Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
+
+  return branch;
 };
 
 /**
@@ -553,11 +506,10 @@ const fetchBlob = async (asset) => {
   const { sha, path } = asset;
 
   const response = /** @type {Response} */ (
-    await fetchAPI(
-      `/repos/${owner}/${repo}/git/blobs/${sha}`,
-      { headers: { Accept: 'application/vnd.github.raw' } },
-      { responseType: 'raw' },
-    )
+    await fetchAPI(`/repos/${owner}/${repo}/git/blobs/${sha}`, {
+      headers: { Accept: 'application/vnd.github.raw' },
+      responseType: 'raw',
+    })
   );
 
   // Handle SVG and other non-binary files
@@ -629,14 +581,11 @@ const triggerDeployment = async () => {
   const { owner, repo } = repository;
 
   return /** @type {Promise<Response>} */ (
-    fetchAPI(
-      `/repos/${owner}/${repo}/dispatches`,
-      {
-        method: 'POST',
-        body: { event_type: 'sveltia-cms-publish' },
-      },
-      { responseType: 'raw' },
-    )
+    fetchAPI(`/repos/${owner}/${repo}/dispatches`, {
+      method: 'POST',
+      body: { event_type: 'sveltia-cms-publish' },
+      responseType: 'raw',
+    })
   );
 };
 
@@ -650,7 +599,6 @@ export default {
   repository,
   statusDashboardURL,
   checkStatus,
-  getRepositoryInfo,
   init,
   signIn,
   signOut,

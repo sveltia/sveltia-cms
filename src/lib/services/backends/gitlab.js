@@ -4,11 +4,12 @@ import { encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { apiConfigPlaceholder, repositoryInfoPlaceholder } from '$lib/services/backends/shared';
+import { fetchAPIWithAuth } from '$lib/services/backends/shared/api';
 import {
   handleClientSideAuthPopup,
   initClientSideAuth,
   initServerSideAuth,
-  refreshAccessToken,
 } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
@@ -20,15 +21,15 @@ import { sendRequest } from '$lib/services/utils/networking';
 
 /**
  * @import {
+ * ApiEndpointConfig,
  * Asset,
  * BackendService,
  * BackendServiceStatus,
  * BaseFileListItem,
  * BaseFileListItemProps,
- * CommitAction,
  * CommitChangesOptions,
+ * FetchApiOptions,
  * FileChange,
- * InternalSiteConfig,
  * RepositoryContentsMap,
  * RepositoryInfo,
  * SignInOptions,
@@ -41,45 +42,10 @@ const label = 'GitLab';
 const statusDashboardURL = 'https://status.gitlab.com/';
 const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
 const apiRootDefault = 'https://gitlab.com/api/v4';
-
-/**
- * @type {{ origin: string, rest: string, graphql: string, isSelfHosted: boolean }}
- */
-const apiConfig = {
-  origin: '',
-  rest: '',
-  graphql: '',
-  isSelfHosted: false,
-};
-
-/**
- * @type {RepositoryInfo}
- */
-const repository = new Proxy(/** @type {any} */ ({}), {
-  /**
-   * Define the getter.
-   * @param {Record<string, any>} obj Object itself.
-   * @param {string} key Property name.
-   * @returns {any} Property value.
-   */
-  get: (obj, key) => {
-    if (key in obj) {
-      return obj[key];
-    }
-
-    const { baseURL, branch } = obj;
-
-    if (key === 'treeBaseURL') {
-      return branch ? `${baseURL}/-/tree/${branch}` : baseURL;
-    }
-
-    if (key === 'blobBaseURL') {
-      return branch ? `${baseURL}/-/blob/${branch}` : '';
-    }
-
-    return undefined;
-  },
-});
+/** @type {RepositoryInfo} */
+const repository = { ...repositoryInfoPlaceholder };
+/** @type {ApiEndpointConfig} */
+const apiConfig = { ...apiConfigPlaceholder };
 
 /**
  * Check the GitLab service status.
@@ -115,90 +81,65 @@ const checkStatus = async () => {
 };
 
 /**
- * Get the OAuth authentication properties for GitLab.
- * @returns {{ clientId: string, authURL: string, tokenURL: string }} Authentication properties.
- */
-const getAuthProps = () => {
-  const {
-    base_url: baseURL = 'https://gitlab.com',
-    auth_endpoint: authPath = 'oauth/authorize',
-    app_id: clientId = '',
-  } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
-
-  const authURL = `${stripSlashes(baseURL)}/${stripSlashes(authPath)}`;
-  const tokenURL = authURL.replace('/authorize', '/token');
-
-  return { clientId, authURL, tokenURL };
-};
-
-/**
  * Send a request to GitLab REST/GraphQL API.
  * @param {string} path Endpoint.
- * @param {{ method?: string, headers?: any, body?: any }} [init] Request options.
- * @param {object} [options] Other options.
- * @param {string} [options.token] OAuth access token. If not provided, it will be taken from the
- * `user` store.
- * @param {string} [options.refreshToken] OAuth refresh token. If not provided, it will be taken
- * from the `user` store.
- * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response type. The default is
- *`json`, while `raw` returns a `Response` object as is.
+ * @param {FetchApiOptions} [options] Fetch options.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
  * @see https://docs.gitlab.com/ee/api/rest/
- * @see https://docs.gitlab.com/ee/api/graphql/
  */
-const fetchAPI = async (
-  path,
-  init = {},
-  { token = undefined, refreshToken = undefined, responseType = 'json' } = {},
-) => {
-  const apiRoot = apiConfig[path === '/graphql' ? 'graphql' : 'rest'];
-  const _user = get(user);
-
-  token ??= _user?.token;
-  refreshToken ??= _user?.refreshToken;
-
-  init.headers = new Headers(init.headers);
-  init.headers.set('Authorization', `Bearer ${token}`);
-
-  return sendRequest(`${apiRoot}${path}`, init, {
-    responseType,
-    refreshAccessToken: refreshToken
-      ? () => refreshAccessToken({ ...getAuthProps(), refreshToken })
-      : undefined,
-  });
-};
+const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, apiConfig);
 
 /**
  * Send a request to GitLab GraphQL API.
  * @param {string} query Query string.
  * @param {object} [variables] Any variable to be applied.
  * @returns {Promise<object>} Response data.
+ * @see https://docs.gitlab.com/ee/api/graphql/
  */
-const fetchGraphQL = async (query, variables = {}) => {
-  const { data } = /** @type {{ data: object }} */ (
-    await fetchAPI('/graphql', {
-      method: 'POST',
-      body: {
-        // Remove line breaks and subsequent space characters; we must be careful as file paths may
-        // contain spaces
-        query: query.replace(/\n\s*/g, ' '),
-        variables,
-      },
-    })
-  );
-
-  return data;
-};
+const fetchGraphQL = async (query, variables = {}) =>
+  /** @type {Promise<object>} */ (fetchAPI('/graphql', { body: { query, variables } }));
 
 /**
- * Get the configured repository’s basic information.
- * @returns {RepositoryInfo} Repository info.
+ * Generates base URLs for accessing the repository’s resources.
+ * @param {string} baseURL The name of the repository.
+ * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
+ * the site configuration.
+ * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
+ * for browsing files, and the blob base URL for accessing file contents.
  */
-const getRepositoryInfo = () => {
-  const { repo: projectPath, branch } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
-  const { origin, isSelfHosted } = apiConfig;
+const getBaseURLs = (baseURL, branch) => ({
+  treeBaseURL: branch ? `${baseURL}/-/tree/${branch}` : baseURL,
+  blobBaseURL: branch ? `${baseURL}/-/blob/${branch}` : '',
+});
+
+/**
+ * Initialize the GitLab backend.
+ * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
+ * not GitLab.
+ */
+const init = () => {
+  const { backend } = get(siteConfig) ?? {};
+
+  if (backend?.name !== backendName) {
+    return undefined;
+  }
+
+  const {
+    repo: projectPath,
+    branch,
+    base_url: authRoot = 'https://gitlab.com',
+    auth_endpoint: authPath = 'oauth/authorize',
+    app_id: clientId = '',
+    api_root: restApiRoot = apiRootDefault,
+    graphql_api_root: graphqlApiRoot = restApiRoot,
+  } = backend;
+
+  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
+  // Developers may misconfigure custom API roots, so we use the origin to redefine them
+  const restApiOrigin = new URL(restApiRoot).origin;
+  const graphqlApiOrigin = new URL(graphqlApiRoot).origin;
 
   /**
    * In GitLab terminology, an owner is called a namespace, and a repository is called a project. A
@@ -210,48 +151,42 @@ const getRepositoryInfo = () => {
   const { owner, repo } =
     /** @type {string} */ (projectPath).match(/(?<owner>.+)\/(?<repo>[^/]+)$/)?.groups ?? {};
 
-  return Object.assign(repository, {
-    service: backendName,
-    label,
-    owner,
-    repo,
-    branch,
-    baseURL: `${origin}/${owner}/${repo}`,
-    databaseName: `${backendName}:${owner}/${repo}`,
-    isSelfHosted,
-  });
-};
+  const baseURL = `${restApiOrigin}/${owner}/${repo}`;
 
-/**
- * Initialize the GitLab backend.
- */
-const init = () => {
-  const {
-    name,
-    api_root: restApiRoot = apiRootDefault,
-    graphql_api_root: graphqlApiRoot,
-  } = get(siteConfig)?.backend ?? {};
+  Object.assign(
+    repository,
+    /** @type {RepositoryInfo} */ ({
+      service: backendName,
+      label,
+      owner,
+      repo,
+      branch,
+      baseURL,
+      databaseName: `${backendName}:${owner}/${repo}`,
+      isSelfHosted: restApiRoot !== apiRootDefault,
+    }),
+    getBaseURLs(baseURL, branch),
+  );
 
-  if (name === backendName) {
-    // Developers may misconfigure custom API roots, so we use the origin to redefine them
-    const restApiOrigin = new URL(restApiRoot).origin;
-    const graphqlApiOrigin = new URL(graphqlApiRoot ?? restApiRoot).origin;
-    const isSelfHosted = restApiRoot !== apiRootDefault;
-
-    Object.assign(apiConfig, {
+  Object.assign(
+    apiConfig,
+    /** @type {ApiEndpointConfig} */ ({
+      clientId,
+      authURL,
+      tokenURL: authURL.replace('/authorize', '/token'),
+      authScheme: 'Bearer',
       origin: restApiOrigin,
-      rest: `${restApiOrigin}/api/v4`,
-      graphql: `${graphqlApiOrigin}/api`,
-      isSelfHosted,
-    });
-  }
-
-  const repositoryInfo = getRepositoryInfo();
+      restBaseURL: `${restApiOrigin}/api/v4`,
+      graphqlBaseURL: `${graphqlApiOrigin}/api`,
+    }),
+  );
 
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
-    console.info('repositoryInfo', repositoryInfo);
+    console.info('repositoryInfo', repository);
   }
+
+  return repository;
 };
 
 /**
@@ -269,7 +204,7 @@ const signIn = async ({ token, refreshToken, auto = false }) => {
     const { site_domain: siteDomain = hostname, auth_type: authType } =
       get(siteConfig)?.backend ?? {};
 
-    const { clientId, authURL, tokenURL } = getAuthProps();
+    const { clientId, authURL, tokenURL } = apiConfig;
     const authArgs = { backendName, authURL, scope: 'api' };
 
     if (authType === 'pkce') {
@@ -302,7 +237,7 @@ const signIn = async ({ token, refreshToken, auto = false }) => {
     email,
     avatar_url: avatarURL,
     web_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', {}, { token, refreshToken }));
+  } = /** @type {any} */ (await fetchAPI('/user', { token, refreshToken }));
 
   const _user = get(user);
 
@@ -342,11 +277,10 @@ const checkRepositoryAccess = async () => {
   const userId = /** @type {number} */ (get(user)?.id);
 
   const { ok } = /** @type {Response} */ (
-    await fetchAPI(
-      `/projects/${encodeURIComponent(`${owner}/${repo}`)}/members/all/${userId}`,
-      { headers: { Accept: 'application/json' } },
-      { responseType: 'raw' },
-    )
+    await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/members/all/${userId}`, {
+      headers: { Accept: 'application/json' },
+      responseType: 'raw',
+    })
   );
 
   if (!ok) {
@@ -363,9 +297,9 @@ const checkRepositoryAccess = async () => {
  * @see https://docs.gitlab.com/ee/api/graphql/reference/#repository
  */
 const fetchDefaultBranchName = async () => {
-  const { owner, repo } = repository;
+  const { owner, repo, baseURL = '' } = repository;
 
-  const result = /** @type {{ project: { repository: { rootRef: string } } }} */ (
+  const result = /** @type {{ project: { repository?: { rootRef: string } } }} */ (
     await fetchGraphQL(`
       query {
         project(fullPath: "${owner}/${repo}") {
@@ -383,15 +317,17 @@ const fetchDefaultBranchName = async () => {
     });
   }
 
-  const { rootRef } = result.project.repository;
+  const { rootRef: branch } = result.project.repository ?? {};
 
-  if (!rootRef) {
+  if (!branch) {
     throw new Error('Failed to retrieve the default branch name.', {
       cause: new Error(get(_)('repository_empty', { values: { repo } })),
     });
   }
 
-  return rootRef;
+  Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
+
+  return branch;
 };
 
 /**
@@ -694,7 +630,6 @@ const fetchBlob = async (asset) => {
     fetchAPI(
       `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/files` +
         `/${encodeURIComponent(path)}/raw?lfs=true&ref=${encodeURIComponent(branch)}`,
-      {},
       { responseType: 'blob' },
     )
   );
@@ -746,7 +681,6 @@ export default {
   repository,
   statusDashboardURL,
   checkStatus,
-  getRepositoryInfo,
   init,
   signIn,
   signOut,
