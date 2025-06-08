@@ -17,6 +17,10 @@ env:
   browser: true
   es2022: true
   node: true
+overrides:
+  - extends: ["plugin:package-json/legacy-recommended"]
+    files: ["package.json"]
+    parser: "jsonc-eslint-parser"
 rules:
   class-methods-use-this: off
   import/extensions: off
