@@ -182,7 +182,7 @@ const getAllFiles = async (rootDirHandle) => {
 const readTextFile = async (entryFile) => {
   const { name, file } = entryFile;
 
-  // Skip `.gitkeep` file, as we don't need to read its content
+  // Skip `.gitkeep` file, as we don’t need to read its content
   if (name === '.gitkeep') {
     return;
   }

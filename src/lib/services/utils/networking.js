@@ -1,7 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 /**
- * @import { AuthTokenResponse } from '$lib/types/private';
+ * @import { AuthTokens } from '$lib/types/private';
  */
 
 /**
@@ -12,9 +12,9 @@ import { isObject } from '@sveltia/utils/object';
  * @param {object} [options] Options.
  * @param {'json' | 'text' | 'blob' | 'raw'} [options.responseType] Response parser type. The
  * default is `json`. Use `raw` to return a `Response` object as is.
- * @param {() => Promise<AuthTokenResponse>} [options.refreshAccessToken] A function to refresh the
- * OAuth access token when the request fails with a 401 Unauthorized status. If this function is
- * provided, the request will be retried with the new token.
+ * @param {() => Promise<AuthTokens>} [options.refreshAccessToken] A function to refresh the OAuth
+ * access token when the request fails with a 401 Unauthorized status. If this function is provided,
+ * the request will be retried with the new token.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the request or response.

@@ -23,6 +23,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  * @import {
  * ApiEndpointConfig,
  * Asset,
+ * AuthTokens,
  * BackendService,
  * BackendServiceStatus,
  * BaseFileListItem,
@@ -87,7 +88,7 @@ const checkStatus = async () => {
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
- * @see https://docs.gitlab.com/ee/api/rest/
+ * @see https://docs.gitlab.com/api/rest/
  */
 const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, apiConfig);
 
@@ -96,7 +97,7 @@ const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, a
  * @param {string} query Query string.
  * @param {object} [variables] Any variable to be applied.
  * @returns {Promise<object>} Response data.
- * @see https://docs.gitlab.com/ee/api/graphql/
+ * @see https://docs.gitlab.com/api/graphql/
  */
 const fetchGraphQL = async (query, variables = {}) =>
   /** @type {Promise<object>} */ (fetchAPI('/graphql', { body: { query, variables } }));
@@ -145,7 +146,7 @@ const init = () => {
    * In GitLab terminology, an owner is called a namespace, and a repository is called a project. A
    * namespace can contain a group and a subgroup concatenated with a `/` so we cannot simply use
    * `split('/')` here. A project name should not contain a `/`.
-   * @see https://docs.gitlab.com/ee/user/namespace/
+   * @see https://docs.gitlab.com/user/namespace/
    * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/80055
    */
   const { owner, repo } =
@@ -190,12 +191,39 @@ const init = () => {
 };
 
 /**
+ * Retrieves the authenticated user’s profile information from GitLab REST API.
+ * @param {AuthTokens} tokens Authentication tokens.
+ * @returns {Promise<User>} User information.
+ * @see https://docs.gitlab.com/api/users.html#list-current-user
+ */
+const getUserProfile = async ({ token, refreshToken }) => {
+  const {
+    id,
+    name,
+    username: login,
+    email,
+    avatar_url: avatarURL,
+    web_url: profileURL,
+  } = /** @type {any} */ (await fetchAPI('/user', { token, refreshToken }));
+
+  const _user = get(user);
+
+  // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
+  // the user info
+  if (_user?.token && _user.token !== token) {
+    token = _user.token;
+    refreshToken = _user.refreshToken;
+  }
+
+  return { backendName, id, name, login, email, avatarURL, profileURL, token, refreshToken };
+};
+
+/**
  * Retrieve the repository configuration and sign in with GitLab REST API.
  * @param {SignInOptions} options Options.
  * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
  * the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
- * @see https://docs.gitlab.com/ee/api/users.html#list-current-user
  */
 const signIn = async ({ token, refreshToken, auto = false }) => {
   if (!token) {
@@ -230,35 +258,7 @@ const signIn = async ({ token, refreshToken, auto = false }) => {
     }
   }
 
-  const {
-    id,
-    name,
-    username: login,
-    email,
-    avatar_url: avatarURL,
-    web_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', { token, refreshToken }));
-
-  const _user = get(user);
-
-  // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
-  // the user info
-  if (_user?.token && _user.token !== token) {
-    token = _user.token;
-    refreshToken = _user.refreshToken;
-  }
-
-  return {
-    backendName,
-    token,
-    refreshToken,
-    id,
-    name,
-    login,
-    email,
-    avatarURL,
-    profileURL,
-  };
+  return getUserProfile({ token, refreshToken });
 };
 
 /**
@@ -270,7 +270,7 @@ const signOut = async () => undefined;
 /**
  * Check if the user has access to the current repository.
  * @throws {Error} If the user is not a collaborator of the repository.
- * @see https://docs.gitlab.com/ee/api/members.html#get-a-member-of-a-group-or-project-including-inherited-and-invited-members
+ * @see https://docs.gitlab.com/api/members.html#get-a-member-of-a-group-or-project-including-inherited-and-invited-members
  */
 const checkRepositoryAccess = async () => {
   const { owner, repo } = repository;
@@ -294,7 +294,7 @@ const checkRepositoryAccess = async () => {
  * Fetch the repository’s default branch name, which is typically `master` or `main`.
  * @returns {Promise<string>} Branch name.
  * @throws {Error} When the repository could not be found, or when the repository is empty.
- * @see https://docs.gitlab.com/ee/api/graphql/reference/#repository
+ * @see https://docs.gitlab.com/api/graphql/reference/#repository
  */
 const fetchDefaultBranchName = async () => {
   const { owner, repo, baseURL = '' } = repository;
@@ -334,7 +334,7 @@ const fetchDefaultBranchName = async () => {
  * Fetch the last commit on the repository.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
- * @see https://docs.gitlab.com/ee/api/graphql/reference/#tree
+ * @see https://docs.gitlab.com/api/graphql/reference/#tree
  */
 const fetchLastCommit = async () => {
   const { owner, repo, branch } = repository;
@@ -381,7 +381,7 @@ const fetchLastCommit = async () => {
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
- * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#repositorytree
+ * @see https://docs.gitlab.com/api/graphql/reference/index.html#repositorytree
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
 const fetchFileList = async () => {
@@ -456,20 +456,23 @@ const fetchFileList = async () => {
  */
 
 /**
- * Fetch the metadata of entry/asset files as well as text file contents.
- * @param {BaseFileListItem[]} fetchingFiles Base file list.
- * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
- * @see https://docs.gitlab.com/ee/api/graphql/reference/#repositoryblob
- * @see https://docs.gitlab.com/ee/api/graphql/reference/index.html#tree
+ * Fetch the blobs for the given file paths. This function retrieves the raw text contents of files
+ * in the repository using the GitLab GraphQL API. It handles pagination by fetching a fixed number
+ * of paths at a time, ensuring that the complexity score of the query does not exceed the limit. It
+ * also updates the `dataLoadedProgress` store to reflect the progress of data loading.
+ * @param {string[]} allPaths List of all file paths to fetch.
+ * @returns {Promise<{ size: string, rawTextBlob: string }[]>} Fetched blobs with their sizes and
+ * raw text contents.
+ * @see https://docs.gitlab.com/api/graphql/reference/#repositoryblob
+ * @see https://docs.gitlab.com/api/graphql/reference/#tree
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
- * @see https://docs.gitlab.com/ee/api/graphql/#limits
+ * @see https://docs.gitlab.com/api/graphql/#limits
  */
-const fetchFileContents = async (fetchingFiles) => {
+const fetchBlobs = async (allPaths) => {
   const { owner, repo, branch } = repository;
-  const allPaths = fetchingFiles.map(({ path }) => path);
+  const paths = [...allPaths];
   /** @type {{ size: string, rawTextBlob: string }[]} */
   const blobs = [];
-  let paths = [...allPaths];
 
   dataLoadedProgress.set(0);
 
@@ -513,90 +516,125 @@ const fetchFileContents = async (fetchingFiles) => {
 
   dataLoadedProgress.set(undefined);
 
+  return blobs;
+};
+
+/**
+ * Fetch commit information for each file in the repository. This function retrieves the last commit
+ * information for each file path using the GitLab GraphQL API. It handles pagination by fetching a
+ * fixed number of paths at a time, ensuring that the complexity score of the query does not exceed
+ * the limit. The commit information includes the author’s GitLab user info, name, email, and
+ * committed date.
+ * @param {string[]} allPaths List of all file paths to fetch.
+ * @returns {Promise<GitLabCommit[]>} Fetched commit information for each file.
+ */
+const fetchCommits = async (allPaths) => {
+  const { owner, repo, branch } = repository;
+  const paths = [...allPaths];
   /** @type {GitLabCommit[]} */
   const commits = [];
 
-  // Fetch commit info only when there aren’t many files, because it’s costly
-  if (allPaths.length < 100) {
-    paths = [...allPaths];
-
-    // The complexity score of this query is 5 + (18 * node size) so 13 paths = 239 complexity
-    for (;;) {
-      const result = //
-        /**
-         * @type {{ project: { repository: { [tree_index: string]: {
-         * lastCommit: GitLabCommit
-         * } } } } }}
-         */ (
-          await fetchGraphQL(
-            `
-              query {
-                project(fullPath: "${owner}/${repo}") {
-                  repository {
-                    ${paths
-                      .splice(0, 13)
-                      .map(
-                        (path, index) => `
-                          tree_${index}: tree(ref: "${branch}", path: "${path}") {
-                            lastCommit {
-                              author {
-                                id
-                                username
-                              }
-                              authorName
-                              authorEmail
-                              committedDate
+  // The complexity score of this query is 5 + (18 * node size) so 13 paths = 239 complexity
+  for (;;) {
+    const result = //
+      /**
+       * @type {{ project: { repository: { [tree_index: string]: {
+       * lastCommit: GitLabCommit
+       * } } } } }}
+       */ (
+        await fetchGraphQL(
+          `
+            query {
+              project(fullPath: "${owner}/${repo}") {
+                repository {
+                  ${paths
+                    .splice(0, 13)
+                    .map(
+                      (path, index) => `
+                        tree_${index}: tree(ref: "${branch}", path: "${path}") {
+                          lastCommit {
+                            author {
+                              id
+                              username
                             }
+                            authorName
+                            authorEmail
+                            committedDate
                           }
-                        `,
-                      )
-                      .join('')}
-                  }
+                        }
+                      `,
+                    )
+                    .join('')}
                 }
               }
-            `,
-          )
-        );
+            }
+          `,
+        )
+      );
 
-      commits.push(...Object.values(result.project.repository).map(({ lastCommit }) => lastCommit));
+    commits.push(...Object.values(result.project.repository).map(({ lastCommit }) => lastCommit));
 
-      if (!paths.length) {
-        break;
-      }
+    if (!paths.length) {
+      break;
     }
   }
 
-  return Object.fromEntries(
-    fetchingFiles.map(({ path, sha }, index) => {
-      const { size, rawTextBlob } = blobs[index];
-      const commit = commits[index];
+  return commits;
+};
 
-      const data = {
-        sha,
-        size: Number(size),
-        text: rawTextBlob,
-        meta: {},
+/**
+ * Parse the file contents from the API response.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @param {{ size: string, rawTextBlob: string }[]} blobs File sizes and raw text blobs.
+ * @param {GitLabCommit[]} commits Commit information for each file.
+ * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
+ */
+const parseFileContents = async (fetchingFiles, blobs, commits) => {
+  const entries = fetchingFiles.map(({ path, sha }, index) => {
+    const { size, rawTextBlob } = blobs[index];
+    const commit = commits[index];
+
+    const data = {
+      sha,
+      size: Number(size),
+      text: rawTextBlob,
+      meta: {},
+    };
+
+    if (commit) {
+      const { author, authorName, authorEmail, committedDate } = commit;
+      const { id, username } = author ?? {};
+      const idMatcher = id?.match(/\d+/);
+
+      data.meta = {
+        commitAuthor: {
+          name: authorName,
+          email: authorEmail,
+          id: idMatcher ? Number(idMatcher[0]) : undefined,
+          login: username,
+        },
+        committedDate: new Date(committedDate),
       };
+    }
 
-      if (commit) {
-        const { author, authorName, authorEmail, committedDate } = commit;
-        const { id, username } = author ?? {};
-        const idMatcher = id?.match(/\d+/);
+    return [path, data];
+  });
 
-        data.meta = {
-          commitAuthor: {
-            name: authorName,
-            email: authorEmail,
-            id: idMatcher ? Number(idMatcher[0]) : undefined,
-            login: username,
-          },
-          committedDate: new Date(committedDate),
-        };
-      }
+  return Object.fromEntries(entries);
+};
 
-      return [path, data];
-    }),
-  );
+/**
+ * Fetch the metadata of entry/asset files as well as text file contents.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
+ */
+const fetchFileContents = async (fetchingFiles) => {
+  const allPaths = fetchingFiles.map(({ path }) => path);
+  const blobs = await fetchBlobs(allPaths);
+  // Fetch commit info only when there aren’t many files, because it’s costly
+  const commits = allPaths.length < 100 ? await fetchCommits(allPaths) : [];
+
+  return parseFileContents(fetchingFiles, blobs, commits);
 };
 
 /**
@@ -620,7 +658,7 @@ const fetchFiles = async () => {
  * returns the file content even if it’s tracked by Git LFS.
  * @param {Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
- * @see https://docs.gitlab.com/ee/api/repository_files.html#get-raw-file-from-repository
+ * @see https://docs.gitlab.com/api/repository_files/#get-raw-file-from-repository
  */
 const fetchBlob = async (asset) => {
   const { owner, repo, branch = '' } = repository;
@@ -641,13 +679,23 @@ const fetchBlob = async (asset) => {
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitChangesOptions} options Commit options.
  * @returns {Promise<string>} Commit URL.
- * @see https://docs.gitlab.com/ee/api/commits.html#create-a-commit-with-multiple-files-and-actions
+ * @see https://docs.gitlab.com/api/commits.html#create-a-commit-with-multiple-files-and-actions
  * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/31102
- * @see https://docs.gitlab.com/ee/api/graphql/reference/#mutationcommitcreate
+ * @see https://docs.gitlab.com/api/graphql/reference/#mutationcommitcreate
  * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
  */
 const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
+
+  const actions = await Promise.all(
+    changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
+      action,
+      content: base64 ?? (typeof data !== 'string' ? await encodeBase64(data) : data),
+      encoding: base64 || typeof data !== 'string' ? 'base64' : 'text',
+      file_path: path,
+      previous_path: previousPath,
+    })),
+  );
 
   const result = /** @type {{ web_url: string }} */ (
     await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`, {
@@ -655,15 +703,7 @@ const commitChanges = async (changes, options) => {
       body: {
         branch,
         commit_message: createCommitMessage(changes, options),
-        actions: await Promise.all(
-          changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
-            action,
-            content: base64 ?? (typeof data !== 'string' ? await encodeBase64(data) : data),
-            encoding: base64 || typeof data !== 'string' ? 'base64' : 'text',
-            file_path: path,
-            previous_path: previousPath,
-          })),
-        ),
+        actions,
       },
     })
   );

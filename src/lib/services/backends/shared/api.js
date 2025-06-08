@@ -4,7 +4,7 @@ import { user } from '$lib/services/user';
 import { sendRequest } from '$lib/services/utils/networking';
 
 /**
- * @import { ApiEndpointConfig, AuthTokenResponse, FetchApiOptions } from '$lib/types/private';
+ * @import { ApiEndpointConfig, AuthTokens, FetchApiOptions } from '$lib/types/private';
  */
 
 /**
@@ -13,7 +13,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  * @param {string} args.clientId OAuth application ID.
  * @param {string} args.tokenURL OAuth token request URL.
  * @param {string} args.refreshToken OAuth refresh token.
- * @returns {Promise<AuthTokenResponse>} New access token and refresh token.
+ * @returns {Promise<AuthTokens>} New access token and refresh token.
  */
 export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) => {
   let response;

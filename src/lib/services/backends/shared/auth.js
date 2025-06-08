@@ -5,7 +5,7 @@ import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
 
 /**
- * @import { AuthTokenResponse } from '$lib/types/private';
+ * @import { AuthTokens } from '$lib/types/private';
  */
 
 export const inAuthPopup = writable(false);
@@ -16,7 +16,7 @@ export const inAuthPopup = writable(false);
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `github`.
  * @param {string} args.authURL Authentication site URL.
- * @returns {Promise<AuthTokenResponse>} Auth access token and refresh token.
+ * @returns {Promise<AuthTokens>} Auth access token and refresh token.
  * @throws {Error} When authentication failed or the popup window is closed before the auth process
  * is complete.
  * @see https://decapcms.org/docs/backends-overview/
@@ -118,7 +118,7 @@ const authorize = async ({ backendName, authURL }) => {
  * @param {string} args.siteDomain Domain of the site hosting the CMS.
  * @param {string} args.authURL Authorization site URL.
  * @param {string} args.scope Authorization scope.
- * @returns {Promise<AuthTokenResponse>} Auth access token and refresh token.
+ * @returns {Promise<AuthTokens>} Auth access token and refresh token.
  */
 export const initServerSideAuth = async ({ backendName, siteDomain, authURL, scope }) => {
   try {
@@ -173,7 +173,7 @@ const createAuthSecrets = async () => {
  * @param {string} args.clientId OAuth application ID.
  * @param {string} args.authURL Authorization site URL.
  * @param {string} args.scope Authorization scope.
- * @returns {Promise<AuthTokenResponse>} Auth access token and refresh token.
+ * @returns {Promise<AuthTokens>} Auth access token and refresh token.
  * @see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-with-proof-key-for-code-exchange-pkce
  */
 export const initClientSideAuth = async ({ backendName, clientId, authURL, scope }) => {
@@ -215,8 +215,8 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
  * @param {string} [args.token] OAuth access token.
  * @param {string} [args.refreshToken] OAuth refresh token.
  * @param {string} [args.error] Error message when an OAuth token is not available.
- * @param {string} [args.errorCode] Error code to be used to localize the error message in
- * Sveltia CMS.
+ * @param {string} [args.errorCode] Error code to be used to localize the error message in Sveltia
+ * CMS.
  */
 const sendMessage = ({ provider = 'unknown', token, refreshToken, error, errorCode }) => {
   const _state = error ? 'error' : 'success';

@@ -86,7 +86,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
   }
 
   if (!handle && showPicker) {
-    // This wil throw `AbortError` when the user dismissed the picker
+    // This will throw `AbortError` when the user dismissed the picker
     handle = await window.showDirectoryPicker();
 
     if (handle) {

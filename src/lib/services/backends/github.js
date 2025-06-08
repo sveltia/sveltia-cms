@@ -19,6 +19,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  * @import {
  * ApiEndpointConfig,
  * Asset,
+ * AuthTokens,
  * BackendService,
  * BackendServiceStatus,
  * BaseFileListItem,
@@ -172,11 +173,29 @@ const init = () => {
 };
 
 /**
+ * Retrieves the authenticated user’s profile information from GitHub REST API.
+ * @param {AuthTokens} tokens Authentication tokens.
+ * @returns {Promise<User>} User information.
+ * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
+ */
+const getUserProfile = async ({ token }) => {
+  const {
+    id,
+    name,
+    login,
+    email,
+    avatar_url: avatarURL,
+    html_url: profileURL,
+  } = /** @type {any} */ (await fetchAPI('/user', { token }));
+
+  return { backendName, id, name, login, email, avatarURL, profileURL, token };
+};
+
+/**
  * Retrieve the repository configuration and sign in with GitHub REST API.
  * @param {SignInOptions} options Options.
  * @returns {Promise<User | void>} User info, or nothing when the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
- * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
  * @todo Add `refreshToken` support.
  */
 const signIn = async ({ token, auto = false }) => {
@@ -197,25 +216,7 @@ const signIn = async ({ token, auto = false }) => {
     }));
   }
 
-  const {
-    id,
-    name,
-    login,
-    email,
-    avatar_url: avatarURL,
-    html_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', { token }));
-
-  return {
-    backendName,
-    token,
-    id,
-    name,
-    login,
-    email,
-    avatarURL,
-    profileURL,
-  };
+  return getUserProfile({ token });
 };
 
 /**
@@ -355,73 +356,109 @@ const fetchFileList = async (lastHash) => {
 };
 
 /**
+ * Get a query string for fetching file contents and metadata from the repository.
+ * @param {any[]} chunk Sliced `fetchingFileList`.
+ * @param {number} startIndex Start index.
+ * @returns {string} Query string.
+ */
+const getFileContentsQuery = (chunk, startIndex) => {
+  const { owner, repo, branch } = repository;
+
+  const innerQuery = chunk
+    .map(({ type, path, sha }, i) => {
+      const str = [];
+      const index = startIndex + i;
+
+      if (type !== 'asset') {
+        str.push(`
+          content_${index}: object(oid: "${sha}") {
+            ... on Blob { text }
+          }
+        `);
+      }
+
+      str.push(`
+        commit_${index}: ref(qualifiedName: "${branch}") {
+          target {
+            ... on Commit {
+              history(first: 1, path: "${path}") {
+                nodes {
+                  author {
+                    name
+                    email
+                    user {
+                      id: databaseId
+                      login
+                    }
+                  }
+                  committedDate
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      return str.join('');
+    })
+    .join('');
+
+  return `
+    query {
+      repository(owner: "${owner}", name: "${repo}") {
+        ${innerQuery}
+      }
+    }
+  `;
+};
+
+/**
+ * Parse the file contents from the API response.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @param {Record<string, any>} results Results from the API.
+ * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
+ */
+const parseFileContents = async (fetchingFiles, results) => {
+  const entries = fetchingFiles.map(({ path, sha, size }, index) => {
+    const {
+      author: { name, email, user: _user },
+      committedDate,
+    } = results[`commit_${index}`].target.history.nodes[0];
+
+    const data = {
+      sha,
+      // eslint-disable-next-line object-shorthand
+      size: /** @type {number} */ (size),
+      text: results[`content_${index}`]?.text,
+      meta: {
+        commitAuthor: {
+          name,
+          email,
+          id: _user?.id,
+          login: _user?.login,
+        },
+        commitDate: new Date(committedDate),
+      },
+    };
+
+    return [path, data];
+  });
+
+  return Object.fromEntries(entries);
+};
+
+/**
  * Fetch the metadata of entry/asset files as well as text file contents.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 const fetchFileContents = async (fetchingFiles) => {
-  const { owner, repo, branch } = repository;
   const fetchingFileList = structuredClone(fetchingFiles);
   /** @type {any[][]} */
   const chunks = [];
   const chunkSize = 250;
-  /** @type {any} */
+  /** @type {Record<string, any>} */
   const results = {};
-
-  /**
-   * Get a query string for a new API request.
-   * @param {any[]} chunk Sliced `fetchingFileList`.
-   * @param {number} startIndex Start index.
-   * @returns {string} Query string.
-   */
-  const getQuery = (chunk, startIndex) => {
-    const innerQuery = chunk
-      .map(({ type, path, sha }, i) => {
-        const str = [];
-        const index = startIndex + i;
-
-        if (type !== 'asset') {
-          str.push(`
-            content_${index}: object(oid: "${sha}") {
-              ... on Blob { text }
-            }
-          `);
-        }
-
-        str.push(`
-          commit_${index}: ref(qualifiedName: "${branch}") {
-            target {
-              ... on Commit {
-                history(first: 1, path: "${path}") {
-                  nodes {
-                    author {
-                      name
-                      email
-                      user {
-                        id: databaseId
-                        login
-                      }
-                    }
-                    committedDate
-                  }
-                }
-              }
-            }
-          }
-        `);
-
-        return str.join('');
-      })
-      .join('');
-
-    return `
-      query {
-        repository(owner: "${owner}", name: "${repo}") {
-          ${innerQuery}
-        }
-      }
-    `;
-  };
 
   dataLoadedProgress.set(0);
 
@@ -441,7 +478,7 @@ const fetchFileContents = async (fetchingFiles) => {
       await sleep(index * 500);
 
       const result = /** @type {{ repository: Record<string, any> }} */ (
-        await fetchGraphQL(getQuery(chunk, index * chunkSize))
+        await fetchGraphQL(getFileContentsQuery(chunk, index * chunkSize))
       );
 
       Object.assign(results, result.repository);
@@ -451,32 +488,7 @@ const fetchFileContents = async (fetchingFiles) => {
   window.clearInterval(dataLoadedProgressInterval);
   dataLoadedProgress.set(undefined);
 
-  return Object.fromEntries(
-    fetchingFiles.map(({ path, sha, size }, index) => {
-      const {
-        author: { name, email, user: _user },
-        committedDate,
-      } = results[`commit_${index}`].target.history.nodes[0];
-
-      const data = {
-        sha,
-        // eslint-disable-next-line object-shorthand
-        size: /** @type {number} */ (size),
-        text: results[`content_${index}`]?.text,
-        meta: {
-          commitAuthor: {
-            name,
-            email,
-            id: _user?.id,
-            login: _user?.login,
-          },
-          commitDate: new Date(committedDate),
-        },
-      };
-
-      return [path, data];
-    }),
-  );
+  return parseFileContents(fetchingFileList, results);
 };
 
 /**

@@ -18,6 +18,7 @@ import { prefs } from '$lib/services/user/prefs';
  * @import {
  * ApiEndpointConfig,
  * Asset,
+ * AuthTokens,
  * BackendService,
  * BaseFileListItem,
  * BaseFileListItemProps,
@@ -52,7 +53,7 @@ const apiConfig = { ...apiConfigPlaceholder };
  * @see https://github.com/go-gitea/gitea/pull/34139
  */
 const minSupportedVersion = 1.24;
-/** @type {any} */
+/** @type {Record<string, any> | null} */
 let repositoryResponseCache = null;
 /**
  * Send a request to Gitea REST API.
@@ -140,32 +141,12 @@ const init = () => {
 };
 
 /**
- * Retrieve the repository configuration and sign in with Gitea REST API.
- * @param {SignInOptions} options Options.
- * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
- * the sign-in flow cannot be started.
- * @throws {Error} When there was an authentication error.
+ * Retrieves the authenticated user’s profile information from Gitea REST API.
+ * @param {AuthTokens} tokens Authentication tokens.
+ * @returns {Promise<User>} User information.
  * @see https://docs.gitea.com/api/1.24/#tag/user/operation/userGetCurrent
  */
-const signIn = async ({ token, refreshToken, auto = false }) => {
-  if (!token) {
-    const { origin } = window.location;
-    const { clientId, authURL, tokenURL } = apiConfig;
-    const scope = 'read:repository,write:repository,read:user';
-    const inPopup = window.opener?.origin === origin && window.name === 'auth';
-
-    if (inPopup) {
-      // We are in the auth popup window; let's get the OAuth flow done
-      await handleClientSideAuthPopup({ backendName, clientId, tokenURL });
-    }
-
-    if (inPopup || auto) {
-      return undefined;
-    }
-
-    ({ token, refreshToken } = await initClientSideAuth({ backendName, clientId, authURL, scope }));
-  }
-
+const getUserProfile = async ({ token, refreshToken }) => {
   const {
     id,
     full_name: name,
@@ -184,17 +165,36 @@ const signIn = async ({ token, refreshToken, auto = false }) => {
     refreshToken = _user.refreshToken;
   }
 
-  return {
-    backendName,
-    token,
-    refreshToken,
-    id,
-    name,
-    login,
-    email,
-    avatarURL,
-    profileURL,
-  };
+  return { backendName, id, name, login, email, avatarURL, profileURL, token, refreshToken };
+};
+
+/**
+ * Retrieve the repository configuration and sign in with Gitea REST API.
+ * @param {SignInOptions} options Options.
+ * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
+ * the sign-in flow cannot be started.
+ * @throws {Error} When there was an authentication error.
+ */
+const signIn = async ({ token, refreshToken, auto = false }) => {
+  if (!token) {
+    const { origin } = window.location;
+    const { clientId, authURL, tokenURL } = apiConfig;
+    const scope = 'read:repository,write:repository,read:user';
+    const inPopup = window.opener?.origin === origin && window.name === 'auth';
+
+    if (inPopup) {
+      // We are in the auth popup window; let’s get the OAuth flow done
+      await handleClientSideAuthPopup({ backendName, clientId, tokenURL });
+    }
+
+    if (inPopup || auto) {
+      return undefined;
+    }
+
+    ({ token, refreshToken } = await initClientSideAuth({ backendName, clientId, authURL, scope }));
+  }
+
+  return getUserProfile({ token, refreshToken });
 };
 
 /**
@@ -233,16 +233,26 @@ const checkGiteaVersion = async () => {
 };
 
 /**
- * Check if the user has access to the current repository.
- * @throws {Error} If the user is not a collaborator of the repository.
+ * Get the repository information from Gitea REST API.
+ * @returns {Promise<Record<string, any>>} Repository information.
  * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGet
  */
-const checkRepositoryAccess = async () => {
+const getRepositoryInfo = async () => {
   const { owner, repo } = repository;
+
+  return /** @type {Promise<Record<string, any>>} */ (fetchAPI(`/repos/${owner}/${repo}`));
+};
+
+/**
+ * Check if the user has access to the current repository.
+ * @throws {Error} If the user is not a collaborator of the repository.
+ */
+const checkRepositoryAccess = async () => {
+  const { repo } = repository;
 
   try {
     // Cache the repository response to avoid multiple API calls
-    repositoryResponseCache = /** @type {any} */ (await fetchAPI(`/repos/${owner}/${repo}`));
+    repositoryResponseCache ??= await getRepositoryInfo();
 
     const { permissions } = repositoryResponseCache;
 
@@ -263,17 +273,19 @@ const checkRepositoryAccess = async () => {
 };
 
 /**
- * Fetch the repository's default branch name, which is typically `master` or `main`.
+ * Fetch the repository’s default branch name, which is typically `master` or `main`.
  * @returns {Promise<string>} Branch name.
  * @throws {Error} When the repository could not be found, or when the repository is empty.
  * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGet
  */
 const fetchDefaultBranchName = async () => {
-  const { owner, repo, baseURL = '' } = repository;
+  const { repo, baseURL = '' } = repository;
 
   try {
-    const { default_branch: branch } =
-      repositoryResponseCache ?? /** @type {any} */ (await fetchAPI(`/repos/${owner}/${repo}`));
+    // Cache the repository response to avoid multiple API calls
+    repositoryResponseCache ??= await getRepositoryInfo();
+
+    const { default_branch: branch } = repositoryResponseCache;
 
     if (!branch) {
       throw new Error('Failed to retrieve the default branch name.', {
@@ -293,7 +305,7 @@ const fetchDefaultBranchName = async () => {
 
 /**
  * Fetch the last commit on the repository.
- * @returns {Promise<{ hash: string, message: string }>} Commit's SHA-1 hash and message.
+ * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
  * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGetSingleCommit
  */
@@ -314,13 +326,14 @@ const fetchLastCommit = async () => {
 };
 
 /**
- * Fetch the repository's complete file list, and return it in the canonical format.
+ * Fetch the repository’s complete file list, and return it in the canonical format.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
  * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/GetTree
  */
 const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
+  const requestPath = `/repos/${owner}/${repo}/git/trees/${lastHash ?? branch}?recursive=1`;
   /** @type {PartialGitEntry[]} */
   const gitEntries = [];
   let page = 1;
@@ -328,9 +341,7 @@ const fetchFileList = async (lastHash) => {
   for (;;) {
     // 1000 items per page
     const result = /** @type {{ tree: PartialGitEntry[], truncated: boolean }} */ (
-      await fetchAPI(
-        `/repos/${owner}/${repo}/git/trees/${lastHash ?? branch}?recursive=1&page=${page}`,
-      )
+      await fetchAPI(`${requestPath}&page=${page}`)
     );
 
     gitEntries.push(...result.tree);
@@ -348,6 +359,37 @@ const fetchFileList = async (lastHash) => {
 };
 
 /**
+ * Parse the file contents from the API response.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @param {PartialContentsListItem[]} results Results from the API.
+ * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
+ */
+const parseFileContents = async (fetchingFiles, results) => {
+  const entries = await Promise.all(
+    fetchingFiles
+      .map(async ({ path, sha, size }, index) => {
+        const fileData = results[index];
+
+        const data = {
+          sha,
+          size: size ?? 0,
+          text:
+            fileData?.content && fileData.encoding === 'base64'
+              ? await decodeBase64(fileData.content)
+              : '',
+          // Omit commit author/data because it’s costly to fetch commit data for each file
+          meta: {},
+        };
+
+        return [path, data];
+      })
+      .filter((file) => !!file),
+  );
+
+  return Object.fromEntries(entries);
+};
+
+/**
  * Fetch the metadata of entry/asset files as well as text file contents.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
@@ -355,6 +397,7 @@ const fetchFileList = async (lastHash) => {
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
+  const requestPath = `/repos/${owner}/${repo}/file-contents?ref=${branch}`;
   const allPaths = fetchingFiles.filter(({ type }) => type !== 'asset').map(({ path }) => path);
   /** @type {PartialContentsListItem[]} */
   const results = [];
@@ -368,7 +411,7 @@ const fetchFileContents = async (fetchingFiles) => {
   // Use the new bulk API endpoint to fetch multiple files at once
   for (;;) {
     const result = /** @type {PartialContentsListItem[]} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/file-contents?ref=${branch}`, {
+      await fetchAPI(requestPath, {
         method: 'POST',
         body: {
           files: paths.splice(0, perPage),
@@ -386,28 +429,7 @@ const fetchFileContents = async (fetchingFiles) => {
 
   dataLoadedProgress.set(undefined);
 
-  return Object.fromEntries(
-    await Promise.all(
-      fetchingFiles
-        .map(async ({ path, sha, size }, index) => {
-          const fileData = results[index];
-
-          const data = {
-            sha,
-            size: size ?? 0,
-            text:
-              fileData?.content && fileData.encoding === 'base64'
-                ? await decodeBase64(fileData.content)
-                : '',
-            // Omit commit author/data because it’s costly to fetch commit data for each file
-            meta: {},
-          };
-
-          return [path, data];
-        })
-        .filter((file) => !!file),
-    ),
-  );
+  return parseFileContents(fetchingFiles, results);
 };
 
 /**
@@ -457,6 +479,15 @@ const commitChanges = async (changes, options) => {
   const { name, email } = /** @type {any} */ (get(user));
   const date = new Date().toJSON();
 
+  const files = await Promise.all(
+    changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
+      operation: action === 'move' ? 'update' : action,
+      path,
+      content: base64 ?? (await encodeBase64(data)),
+      from_path: previousPath,
+    })),
+  );
+
   const result = /** @type {{ commit: { html_url: string } }} */ (
     await fetchAPI(`/repos/${owner}/${repo}/contents`, {
       method: 'POST',
@@ -466,14 +497,7 @@ const commitChanges = async (changes, options) => {
         committer: { name, email },
         dates: { author: date, committer: date },
         message: commitMessage,
-        files: await Promise.all(
-          changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
-            operation: action === 'move' ? 'update' : action,
-            path,
-            content: base64 ?? (await encodeBase64(data)),
-            from_path: previousPath,
-          })),
-        ),
+        files,
       },
     })
   );

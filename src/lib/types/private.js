@@ -132,9 +132,11 @@
  */
 
 /**
- * OAuth token response type. `refreshToken` is optional because earlier versions of Sveltia CMS and
- * Sveltia CMS Authenticator did not support refresh tokens.
- * @typedef {{ token: string, refreshToken?: string }} AuthTokenResponse
+ * OAuth access token and refresh token.
+ * @typedef {object} AuthTokens
+ * @property {string} token User’s locally-cached OAuth access token. Git backends only.
+ * @property {string} [refreshToken] User’s locally-cached OAuth refresh token. Git backends only.
+ * This is optional because earlier versions of Sveltia CMS did not support refresh tokens.
  */
 
 /**
