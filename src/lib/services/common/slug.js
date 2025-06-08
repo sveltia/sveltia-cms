@@ -60,6 +60,149 @@ export const normalizeSlug = (string) => {
 };
 
 /**
+ * @typedef {object} ReplaceSubContext
+ * @property {string} identifierField Field name to identify the title.
+ * @property {string | undefined} basePath Base path for the entry file.
+ */
+
+/**
+ * @typedef {object} ReplaceContext
+ * @property {FillSlugTemplateOptions & ReplaceSubContext} replaceSubContext Context for
+ * `replaceSub`.
+ * @property {object} getFieldConfigArgs Arguments for `getFieldConfig`.
+ * @property {string} getFieldConfigArgs.collectionName Collection name.
+ * @property {object} getFieldConfigArgs.valueMap Value map for the collection.
+ * @property {boolean} getFieldConfigArgs.isIndexFile Whether the slug is for an index file.
+ */
+
+/**
+ * Replacer subroutine.
+ * @param {string} tag Field name or one of special tags.
+ * @param {FillSlugTemplateOptions & ReplaceSubContext} context Context for replacement.
+ * @returns {any} Replaced value.
+ */
+const replaceSub = (tag, context) => {
+  const {
+    type,
+    content: valueMap,
+    currentSlug,
+    entryFilePath,
+    locale,
+    dateTimeParts = getDateTimeParts({ timeZone: 'UTC' }),
+    identifierField,
+    basePath,
+  } = context;
+
+  if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
+    return dateTimeParts[tag];
+  }
+
+  if (tag === 'slug' && currentSlug) {
+    return currentSlug;
+  }
+
+  if (tag === 'uuid') {
+    return generateUUID();
+  }
+
+  if (tag === 'uuid_short') {
+    return generateUUID('short');
+  }
+
+  if (tag === 'uuid_shorter') {
+    return generateUUID('shorter');
+  }
+
+  if (type === 'preview_path') {
+    if (tag === 'locale') {
+      return locale;
+    }
+  }
+
+  if (type === 'preview_path' || type === 'media_folder') {
+    if (!entryFilePath) {
+      return '';
+    }
+
+    if (tag === 'dirname') {
+      return entryFilePath.replace(basePath ?? '', '').match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
+    }
+
+    if (tag === 'filename') {
+      return /** @type {string} */ (entryFilePath.split('/').pop()).split('.').shift();
+    }
+
+    if (tag === 'extension') {
+      return /** @type {string} */ (entryFilePath.split('/').pop()).split('.').pop();
+    }
+  }
+
+  let value;
+
+  if (tag.startsWith('fields.')) {
+    value = valueMap[tag.replace(/^fields\./, '')];
+  } else if (tag === 'slug') {
+    value = getEntrySummaryFromContent(valueMap, { identifierField });
+  } else {
+    value = valueMap[tag];
+  }
+
+  return value;
+};
+
+/**
+ * Replacer.
+ * @param {string} placeholder Field name or one of special tags. May contain transformations.
+ * @param {ReplaceContext} context Context for replacement.
+ * @returns {string} Replaced string.
+ */
+const replace = (placeholder, { replaceSubContext, getFieldConfigArgs }) => {
+  const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
+  let value = replaceSub(tag, replaceSubContext);
+  let hasDefaultTransformation = false;
+
+  transformations.forEach((tf, index) => {
+    const { defaultValue } = tf.match(defaultTransformationRegex)?.groups ?? {};
+
+    if (defaultValue !== undefined) {
+      hasDefaultTransformation = true;
+
+      // Support a template tag for the `default` transformation like
+      // `{{fields.slug | default('{{fields.title}}')}}`
+      const { innerTag } = defaultValue.match(/^{{(?<innerTag>.+?)}}$/)?.groups ?? {};
+
+      if (innerTag !== undefined) {
+        transformations[index] = `default('${replaceSub(innerTag, replaceSubContext) ?? ''}')`;
+      }
+    }
+  });
+
+  // Fall back with a random ID unless the `default` transformation is defined
+  if (value === undefined && !hasDefaultTransformation) {
+    return generateUUID('short');
+  }
+
+  if (transformations.length) {
+    value = applyTransformations({
+      fieldConfig: getFieldConfig({ ...getFieldConfigArgs, keyPath: tag }),
+      value,
+      transformations,
+    });
+  }
+
+  if (value !== undefined) {
+    value = normalizeSlug(String(value));
+  }
+
+  if (value) {
+    return String(value);
+  }
+
+  // Use a random ID as a fallback
+  return generateUUID('short');
+};
+
+/**
  * Fill the given slug template.
  * @param {string} template Template string literal containing tags like `{{title}}`.
  * @param {FillSlugTemplateOptions} options Options.
@@ -68,19 +211,9 @@ export const normalizeSlug = (string) => {
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  */
-export const fillSlugTemplate = (
-  template,
-  {
-    type,
-    collection,
-    content: valueMap,
-    currentSlug,
-    entryFilePath,
-    locale,
-    dateTimeParts = getDateTimeParts({ timeZone: 'UTC' }),
-    isIndexFile = false,
-  },
-) => {
+export const fillSlugTemplate = (template, options) => {
+  const { collection, content: valueMap, currentSlug, locale, isIndexFile = false } = options;
+
   const {
     name: collectionName,
     identifier_field: identifierField = 'title',
@@ -92,125 +225,15 @@ export const fillSlugTemplate = (
       ? /** @type {EntryCollection} */ (collection)._file.basePath
       : undefined;
 
-  const getFieldConfigArgs = { collectionName, valueMap, isIndexFile };
-
-  /**
-   * Replacer subroutine.
-   * @param {string} tag Field name or one of special tags.
-   * @returns {any} Replaced value.
-   */
-  const replaceSub = (tag) => {
-    if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
-      return dateTimeParts[tag];
-    }
-
-    if (tag === 'slug' && currentSlug) {
-      return currentSlug;
-    }
-
-    if (tag === 'uuid') {
-      return generateUUID();
-    }
-
-    if (tag === 'uuid_short') {
-      return generateUUID('short');
-    }
-
-    if (tag === 'uuid_shorter') {
-      return generateUUID('shorter');
-    }
-
-    if (type === 'preview_path') {
-      if (tag === 'locale') {
-        return locale;
-      }
-    }
-
-    if (type === 'preview_path' || type === 'media_folder') {
-      if (!entryFilePath) {
-        return '';
-      }
-
-      if (tag === 'dirname') {
-        return entryFilePath.replace(basePath ?? '', '').match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
-      }
-
-      if (tag === 'filename') {
-        return /** @type {string} */ (entryFilePath.split('/').pop()).split('.').shift();
-      }
-
-      if (tag === 'extension') {
-        return /** @type {string} */ (entryFilePath.split('/').pop()).split('.').pop();
-      }
-    }
-
-    let value;
-
-    if (tag.startsWith('fields.')) {
-      value = valueMap[tag.replace(/^fields\./, '')];
-    } else if (tag === 'slug') {
-      value = getEntrySummaryFromContent(valueMap, { identifierField });
-    } else {
-      value = valueMap[tag];
-    }
-
-    return value;
-  };
-
-  /**
-   * Replacer.
-   * @param {string} placeholder Field name or one of special tags. May contain transformations.
-   * @returns {string} Replaced string.
-   */
-  const replace = (placeholder) => {
-    const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
-    let value = replaceSub(tag);
-    let hasDefaultTransformation = false;
-
-    transformations.forEach((tf, index) => {
-      const { defaultValue } = tf.match(defaultTransformationRegex)?.groups ?? {};
-
-      if (defaultValue !== undefined) {
-        hasDefaultTransformation = true;
-
-        // Support a template tag for the `default` transformation like
-        // `{{fields.slug | default('{{fields.title}}')}}`
-        const { innerTag } = defaultValue.match(/^{{(?<innerTag>.+?)}}$/)?.groups ?? {};
-
-        if (innerTag !== undefined) {
-          transformations[index] = `default('${replaceSub(innerTag) ?? ''}')`;
-        }
-      }
-    });
-
-    // Fall back with a random ID unless the `default` transformation is defined
-    if (value === undefined && !hasDefaultTransformation) {
-      return generateUUID('short');
-    }
-
-    if (transformations.length) {
-      value = applyTransformations({
-        fieldConfig: getFieldConfig({ ...getFieldConfigArgs, keyPath: tag }),
-        value,
-        transformations,
-      });
-    }
-
-    if (value !== undefined) {
-      value = normalizeSlug(String(value));
-    }
-
-    if (value) {
-      return String(value);
-    }
-
-    // Use a random ID as a fallback
-    return generateUUID('short');
+  /** @type {ReplaceContext} */
+  const context = {
+    replaceSubContext: { ...options, identifierField, basePath },
+    getFieldConfigArgs: { collectionName, valueMap, isIndexFile },
   };
 
   // Use a negative lookahead assertion to support a template tag for the `default` transformation
   // like `{{fields.slug | default('{{fields.title}}')}}`
-  let slug = template.replace(/{{(.+?)}}(?!'\))/g, (_match, tag) => replace(tag)).trim();
+  let slug = template.replace(/{{(.+?)}}(?!'\))/g, (_match, tag) => replace(tag, context)).trim();
 
   // Truncate a long slug if needed
   if (typeof slugMaxLength === 'number') {

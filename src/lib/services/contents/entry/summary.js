@@ -11,6 +11,7 @@ import { applyTransformations } from '$lib/services/common/transformations';
 
 /**
  * @import {
+ *CommitAuthor,
  * Entry,
  * EntryCollection,
  * FlattenedEntryContent,
@@ -69,6 +70,98 @@ export const getEntrySummaryFromContent = (
 };
 
 /**
+ * @typedef {object} ReplacerSubContext
+ * @property {string} slug Entry slug.
+ * @property {string} entryPath Entry path.
+ * @property {string | undefined} basePath Base path for the entry.
+ * @property {Date | undefined} commitDate Commit date.
+ * @property {CommitAuthor | undefined} commitAuthor Commit author.
+ */
+
+/**
+ * @typedef {object} ReplaceContext
+ * @property {FlattenedEntryContent} content Entry content.
+ * @property {string} collectionName Collection name.
+ * @property {ReplacerSubContext} replaceSubContext Context for the `replaceSub` function.
+ * @property {InternalLocaleCode} defaultLocale Default locale.
+ */
+
+/**
+ * Replacer subroutine.
+ * @param {string} tag Field name or one of special tags.
+ * @param {ReplacerSubContext} context Context.
+ * @returns {any} Summary.
+ */
+const replaceSub = (tag, context) => {
+  const { slug, entryPath, basePath, commitDate, commitAuthor } = context;
+
+  if (tag === 'slug') {
+    return slug;
+  }
+
+  if (tag === 'dirname') {
+    return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(basePath ?? '', ''));
+  }
+
+  if (tag === 'filename') {
+    return /** @type {string} */ (entryPath.split('/').pop()).split('.').shift();
+  }
+
+  if (tag === 'extension') {
+    return /** @type {string} */ (entryPath.split('/').pop()).split('.').pop();
+  }
+
+  if (tag === 'commit_date') {
+    return commitDate ?? '';
+  }
+
+  if (tag === 'commit_author') {
+    return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
+  }
+
+  return undefined;
+};
+
+/**
+ * Replacer.
+ * @param {string} placeholder Field name or one of special tags. May contain transformations.
+ * @param {ReplaceContext} context Context.
+ * @returns {string} Replaced string.
+ */
+const replace = (placeholder, context) => {
+  const { content: valueMap, collectionName, replaceSubContext, defaultLocale } = context;
+  const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
+  const keyPath = tag.replace(/^fields\./, '');
+  const getFieldConfigArgs = { collectionName, valueMap, keyPath };
+  /** @type {any} */
+  let value = replaceSub(tag, replaceSubContext);
+
+  if (value === undefined) {
+    value = getFieldDisplayValue({ ...getFieldConfigArgs, locale: defaultLocale });
+  }
+
+  if (value === undefined) {
+    return '';
+  }
+
+  if (value instanceof Date && !transformations.length) {
+    const { year, month, day } = getDateTimeParts({ date: value });
+
+    return `${year}-${month}-${day}`;
+  }
+
+  if (transformations.length) {
+    value = applyTransformations({
+      fieldConfig: getFieldConfig({ ...getFieldConfigArgs }),
+      value,
+      transformations,
+    });
+  }
+
+  return String(value);
+};
+
+/**
  * Get the given entry’s summary that can be displayed in the entry list and other places. Format it
  * with the summary template if necessary, or simply use the `title` or similar field in the entry.
  * @param {InternalCollection} collection Entry’s collection.
@@ -115,79 +208,18 @@ export const getEntrySummary = (
     );
   }
 
-  /**
-   * Replacer subroutine.
-   * @param {string} tag Field name or one of special tags.
-   * @returns {any} Summary.
-   */
-  const replaceSub = (tag) => {
-    if (tag === 'slug') {
-      return slug;
-    }
-
-    if (tag === 'dirname') {
-      return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(basePath ?? '', ''));
-    }
-
-    if (tag === 'filename') {
-      return /** @type {string} */ (entryPath.split('/').pop()).split('.').shift();
-    }
-
-    if (tag === 'extension') {
-      return /** @type {string} */ (entryPath.split('/').pop()).split('.').pop();
-    }
-
-    if (tag === 'commit_date') {
-      return commitDate ?? '';
-    }
-
-    if (tag === 'commit_author') {
-      return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
-    }
-
-    return undefined;
-  };
-
-  /**
-   * Replacer.
-   * @param {string} placeholder Field name or one of special tags. May contain transformations.
-   * @returns {string} Replaced string.
-   */
-  const replace = (placeholder) => {
-    const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
-    const valueMap = content;
-    const keyPath = tag.replace(/^fields\./, '');
-    const getFieldConfigArgs = { collectionName, valueMap, keyPath };
-    /** @type {any} */
-    let value = replaceSub(tag);
-
-    if (value === undefined) {
-      value = getFieldDisplayValue({ ...getFieldConfigArgs, locale: defaultLocale });
-    }
-
-    if (value === undefined) {
-      return '';
-    }
-
-    if (value instanceof Date && !transformations.length) {
-      const { year, month, day } = getDateTimeParts({ date: value });
-
-      return `${year}-${month}-${day}`;
-    }
-
-    if (transformations.length) {
-      value = applyTransformations({
-        fieldConfig: getFieldConfig({ ...getFieldConfigArgs }),
-        value,
-        transformations,
-      });
-    }
-
-    return String(value);
+  /** @type {ReplaceContext} */
+  const replaceContext = {
+    content,
+    collectionName,
+    replaceSubContext: { slug, entryPath, commitDate, commitAuthor, basePath },
+    defaultLocale,
   };
 
   return sanitizeEntrySummary(
-    summaryTemplate.replace(/{{(.+?)}}/g, (_match, placeholder) => replace(placeholder)),
+    summaryTemplate.replace(/{{(.+?)}}/g, (_match, placeholder) =>
+      replace(placeholder, replaceContext),
+    ),
     { allowMarkdown },
   );
 };

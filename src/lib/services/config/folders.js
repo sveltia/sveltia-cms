@@ -81,6 +81,20 @@ export const getAllEntryFolders = (config) => {
 };
 
 /**
+ * Replace `{{media_folder}}` and `{{public_folder}}` template tags.
+ * @param {string} folder Original folder path.
+ * @param {object} context Context for replacement.
+ * @param {string} context.globalMediaFolder Normalized global `media_folder` option.
+ * @param {string} context.globalPublicFolder Normalized global `public_folder` option.
+ * @returns {string} Replaced folder path.
+ */
+const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =>
+  folder
+    .trim()
+    .replace('{{media_folder}}', globalMediaFolder)
+    .replace('{{public_folder}}', globalPublicFolder);
+
+/**
  * Get a normalized asset folder information given the arguments.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
@@ -103,19 +117,11 @@ const normalizeAssetFolder = ({
   globalMediaFolder,
   globalPublicFolder,
 }) => {
-  /**
-   * Replace `{{media_folder}}` and `{{public_folder}}` template tags.
-   * @param {string} folder Original folder path.
-   * @returns {string} Replaced folder path.
-   */
-  const replaceTags = (folder) =>
-    folder
-      .trim()
-      .replace('{{media_folder}}', globalMediaFolder)
-      .replace('{{public_folder}}', globalPublicFolder);
+  const globalFolders = { globalMediaFolder, globalPublicFolder };
 
-  mediaFolder = replaceTags(mediaFolder);
-  publicFolder = publicFolder !== undefined ? replaceTags(publicFolder) : mediaFolder;
+  mediaFolder = replaceTags(mediaFolder, globalFolders);
+  publicFolder =
+    publicFolder !== undefined ? replaceTags(publicFolder, globalFolders) : mediaFolder;
 
   const entryRelative = !(mediaFolder.startsWith('/') || mediaFolder.startsWith(globalMediaFolder));
 

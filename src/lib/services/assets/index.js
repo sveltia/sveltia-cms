@@ -391,6 +391,31 @@ export const getCollectionsByAsset = (asset) =>
     .filter((collection) => !!collection);
 
 /**
+ * Find an asset.
+ * @param {InternalCollection | InternalCollectionFile} input Collection or single collection file.
+ * @param {object} context Context.
+ * @param {string} context.path Saved relative path.
+ * @param {Entry} context.entry Associated entry to be used to help locate an asset from a relative
+ * path. Can be `undefined` when editing a new draft.
+ * @returns {Asset | undefined} Found asset.
+ */
+const getAsset = ({ _i18n }, { path, entry }) => {
+  const { locales } = entry;
+  const { defaultLocale } = _i18n;
+  const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
+  const { path: entryFilePath, content: entryContent } = locales[locale];
+
+  if (!entryFilePath || !entryContent) {
+    return undefined;
+  }
+
+  const { entryFolder } = entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)?.groups ?? {};
+  const resolvedPath = resolvePath(`${entryFolder}/${path}`);
+
+  return get(allAssets).find((asset) => asset.path === resolvedPath);
+};
+
+/**
  * Get an asset by a relative public path typically stored as an image field value.
  * @param {object} args Arguments.
  * @param {string} args.path Saved relative path.
@@ -403,37 +428,14 @@ const getAssetByRelativePath = ({ path, entry }) => {
     return undefined;
   }
 
-  const { locales } = entry;
-
-  /**
-   * Find an asset.
-   * @param {InternalCollection | InternalCollectionFile} input Collection or single collection
-   * file.
-   * @returns {Asset | undefined} Found asset.
-   */
-  const getAsset = ({ _i18n }) => {
-    const { defaultLocale } = _i18n;
-    const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
-    const { path: entryFilePath, content: entryContent } = locales[locale];
-
-    if (!entryFilePath || !entryContent) {
-      return undefined;
-    }
-
-    const { entryFolder } = entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)?.groups ?? {};
-    const resolvedPath = resolvePath(`${entryFolder}/${path}`);
-
-    return get(allAssets).find((asset) => asset.path === resolvedPath);
-  };
-
   const assets = getAssociatedCollections(entry).map((_collection) => {
     const collectionFiles = getFilesByEntry(_collection, entry);
 
     if (collectionFiles.length) {
-      return collectionFiles.map(getAsset);
+      return collectionFiles.map((file) => getAsset(file, { path, entry }));
     }
 
-    return getAsset(_collection);
+    return getAsset(_collection, { path, entry });
   });
 
   return (

@@ -42,6 +42,21 @@ import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/w
  */
 
 /**
+ * Parse the value as a list and add the items to the key-value map.
+ * @param {object} args Arguments.
+ * @param {FlattenedEntryContent} args.newContent An object holding a new content key-value map.
+ * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
+ * @param {string} args.value Dynamic default value.
+ */
+const fillList = ({ newContent, keyPath, value }) => {
+  newContent[keyPath] = [];
+
+  value.split(/,\s*/).forEach((val, index) => {
+    newContent[`${keyPath}.${index}`] = val;
+  });
+};
+
+/**
  * Parse the given dynamic default value.
  * @param {object} args Arguments.
  * @param {FlattenedEntryContent} args.newContent An object holding a new content key-value map.
@@ -53,17 +68,6 @@ import { getDefaultValue as getDefaultUuidValue } from '$lib/services/contents/w
  */
 const parseDynamicDefaultValue = ({ newContent, keyPath, fieldConfig, value }) => {
   const { widget: widgetName = 'string' } = fieldConfig;
-
-  /**
-   * Parse the value as a list and add the items to the key-value map.
-   */
-  const fillList = () => {
-    newContent[keyPath] = [];
-
-    value.split(/,\s*/).forEach((val, index) => {
-      newContent[`${keyPath}.${index}`] = val;
-    });
-  };
 
   if (widgetName === 'boolean') {
     newContent[keyPath] = value === 'true';
@@ -77,7 +81,7 @@ const parseDynamicDefaultValue = ({ newContent, keyPath, fieldConfig, value }) =
 
     // Handle simple list
     if (!hasSubFields) {
-      fillList();
+      fillList({ newContent, keyPath, value });
 
       return;
     }
@@ -110,7 +114,7 @@ const parseDynamicDefaultValue = ({ newContent, keyPath, fieldConfig, value }) =
     const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
 
     if (multiple) {
-      fillList();
+      fillList({ newContent, keyPath, value });
 
       return;
     }
