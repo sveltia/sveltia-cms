@@ -2,8 +2,8 @@ import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import * as TOML from 'smol-toml';
 import YAML from 'yaml';
-import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file';
 import { getCollection } from '$lib/services/contents/collection';
+import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file';
 
 /**
  * @import { BaseEntryListItem, EntryCollection, FileCollection } from '$lib/types/private';

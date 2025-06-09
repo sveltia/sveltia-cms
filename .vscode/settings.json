@@ -1,10 +1,11 @@
 {
-  "editor.codeActionsOnSave": ["source.formatDocument", "source.organizeImports", "source.fixAll"],
+  "editor.codeActionsOnSave": ["source.formatDocument", "source.fixAll"],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "javascript.preferences.importModuleSpecifier": "non-relative",
   "javascript.validate.enable": true,
   "eslint.validate": ["javascript", "svelte"],
+  "eslint.codeActionsOnSave.mode": "all",
   "scss.lint.unknownAtRules": "ignore",
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

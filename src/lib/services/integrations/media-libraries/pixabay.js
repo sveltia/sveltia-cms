@@ -1,5 +1,5 @@
-import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { locale as appLocale } from 'svelte-i18n';
 
 /**
  * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';

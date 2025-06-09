@@ -14,15 +14,6 @@
   } from 'lexical';
   import { untrack } from 'svelte';
   import {
-    RASTER_IMAGE_EXTENSION_REGEX,
-    SUPPORTED_IMAGE_TYPES,
-    VECTOR_IMAGE_EXTENSION_REGEX,
-  } from '$lib/services/utils/media/image';
-  import {
-    EditorComponent,
-    getComponentDef,
-  } from '$lib/services/contents/widgets/markdown/component';
-  import {
     BUTTON_NAME_MAP,
     customComponents,
     DEFAULT_BUTTONS,
@@ -30,6 +21,15 @@
     DEFAULT_MODES,
     NODE_NAME_MAP,
   } from '$lib/services/contents/widgets/markdown';
+  import {
+    EditorComponent,
+    getComponentDef,
+  } from '$lib/services/contents/widgets/markdown/component';
+  import {
+    RASTER_IMAGE_EXTENSION_REGEX,
+    SUPPORTED_IMAGE_TYPES,
+    VECTOR_IMAGE_EXTENSION_REGEX,
+  } from '$lib/services/utils/media/image';
   /**
    * @import { WidgetEditorProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';

@@ -2,15 +2,15 @@ import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 import merge from 'deepmerge';
-import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
+import { _ } from 'svelte-i18n';
 import YAML from 'yaml';
-import { prefs } from '$lib/services/user/prefs';
-import { allEntryFolders } from '$lib/services/contents';
-import { fetchSiteConfig } from '$lib/services/config/loader';
-import { getAllAssetFolders, getAllEntryFolders } from '$lib/services/config/folders';
-import { allBackendServices, gitBackendServices } from '$lib/services/backends';
 import { allAssetFolders } from '$lib/services/assets';
+import { allBackendServices, gitBackendServices } from '$lib/services/backends';
+import { getAllAssetFolders, getAllEntryFolders } from '$lib/services/config/folders';
+import { fetchSiteConfig } from '$lib/services/config/loader';
+import { allEntryFolders } from '$lib/services/contents';
+import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';

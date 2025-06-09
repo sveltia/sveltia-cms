@@ -1,6 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
-import { locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { locale as appLocale } from 'svelte-i18n';
 import { siteConfig } from '$lib/services/config';
 
 /**

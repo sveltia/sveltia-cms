@@ -3,14 +3,14 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import { allBackendServices } from '$lib/services/backends';
+  import { siteConfig } from '$lib/services/config';
   import {
     signInAutomatically,
     signInError,
     signInManually,
     unauthenticated,
   } from '$lib/services/user/auth';
-  import { siteConfig } from '$lib/services/config';
-  import { allBackendServices } from '$lib/services/backends';
 
   let isLocalHost = $state(false);
   let isLocalBackendSupported = $state(false);

@@ -2,8 +2,8 @@
 
 import { decodeBase64, encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
-import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { _ } from 'svelte-i18n';
 import {
   API_CONFIG_INFO_PLACEHOLDER,
   REPOSITORY_INFO_PLACEHOLDER,

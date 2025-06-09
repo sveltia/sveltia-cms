@@ -1,5 +1,5 @@
-import { locale as appLocale } from 'svelte-i18n';
 import { derived, writable } from 'svelte/store';
+import { locale as appLocale } from 'svelte-i18n';
 import { allAssets } from '$lib/services/assets';
 import { allEntries } from '$lib/services/contents';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';

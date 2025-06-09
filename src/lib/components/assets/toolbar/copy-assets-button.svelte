@@ -2,8 +2,8 @@
   import { Alert, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import { SUPPORTED_IMAGE_TYPES, transformImage } from '$lib/services/utils/media/image';
   import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
+  import { SUPPORTED_IMAGE_TYPES, transformImage } from '$lib/services/utils/media/image';
 
   /**
    * @import { Asset, AssetDetails } from '$lib/types/private';

@@ -2,8 +2,8 @@
   import { Button, Infobar } from '@sveltia/ui';
   import { IndexedDB } from '@sveltia/utils/storage';
   import { _ } from 'svelte-i18n';
-  import { backend } from '$lib/services/backends';
   import { showMobileSignInDialog } from '$lib/services/app/onboarding';
+  import { backend } from '$lib/services/backends';
 
   /** @type {IndexedDB | undefined} */
   let uiSettingsDB;

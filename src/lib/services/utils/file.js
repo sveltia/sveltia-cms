@@ -1,8 +1,8 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import sanitize from 'sanitize-filename';
-import { _, locale as appLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { _, locale as appLocale } from 'svelte-i18n';
 
 /**
  * Create a regular expression that matches the given path.

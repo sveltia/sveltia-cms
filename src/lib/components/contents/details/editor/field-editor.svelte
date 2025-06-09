@@ -5,8 +5,8 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { setContext } from 'svelte';
-  import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
+  import { _ } from 'svelte-i18n';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';

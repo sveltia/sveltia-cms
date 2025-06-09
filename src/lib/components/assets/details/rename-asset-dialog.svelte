@@ -2,13 +2,13 @@
   import { Dialog, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import { moveAssets } from '$lib/services/assets/data/move';
   import {
     getAssetDetails,
     getAssetsByDirName,
     renamingAsset,
     showAssetOverlay,
   } from '$lib/services/assets';
+  import { moveAssets } from '$lib/services/assets/data/move';
 
   /**
    * @import { Entry } from '$lib/types/private';

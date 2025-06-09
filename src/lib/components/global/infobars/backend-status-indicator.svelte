@@ -2,8 +2,8 @@
   import { Button, Infobar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { siteConfig } from '$lib/services/config';
   import { backend } from '$lib/services/backends';
+  import { siteConfig } from '$lib/services/config';
 
   /**
    * @import { BackendServiceStatus } from '$lib/types/private';

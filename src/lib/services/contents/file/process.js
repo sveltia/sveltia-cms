@@ -2,9 +2,9 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
-import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
-import { parseEntryFile } from '$lib/services/contents/file/parse';
 import { getCollection } from '$lib/services/contents/collection';
+import { parseEntryFile } from '$lib/services/contents/file/parse';
+import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
 
 /**
  * @import {

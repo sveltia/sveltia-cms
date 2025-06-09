@@ -3,11 +3,11 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
-import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { _ } from 'svelte-i18n';
 import { applyTransformations } from '$lib/services/common/transformations';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
  * @import {

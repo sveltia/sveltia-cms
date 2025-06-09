@@ -1,7 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 import merge from 'deepmerge';
-import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { _ } from 'svelte-i18n';
 import YAML from 'yaml';
 
 const SUPPORTED_TYPES = ['text/yaml', 'application/yaml', 'application/json'];

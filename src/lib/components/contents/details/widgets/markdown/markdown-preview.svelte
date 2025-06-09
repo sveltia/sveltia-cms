@@ -7,8 +7,8 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import markedBidi from 'marked-bidi';
-  import { entryDraft } from '$lib/services/contents/draft';
   import { getMediaFieldURL } from '$lib/services/assets';
+  import { entryDraft } from '$lib/services/contents/draft';
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';

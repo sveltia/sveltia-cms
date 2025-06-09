@@ -1,8 +1,8 @@
 import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
-import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
+import { _ } from 'svelte-i18n';
 
 /**
  * @import { AuthTokens } from '$lib/types/private';

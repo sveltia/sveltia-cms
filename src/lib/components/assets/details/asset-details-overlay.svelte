@@ -5,10 +5,10 @@
   import { marked } from 'marked';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { getAssetBlob, isMediaKind, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
-  import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
+  import { getAssetBlob, isMediaKind, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();

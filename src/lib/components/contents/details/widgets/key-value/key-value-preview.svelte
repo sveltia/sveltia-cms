@@ -7,8 +7,8 @@
   import equal from 'fast-deep-equal';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 
   /**
    * @import { Writable } from 'svelte/store';

@@ -8,13 +8,13 @@
   import equal from 'fast-deep-equal';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
+  import { entryDraft } from '$lib/services/contents/draft';
   import {
     getPairs,
     savePairs,
     validatePairs,
   } from '$lib/services/contents/widgets/key-value/helper';
-  import { entryDraft } from '$lib/services/contents/draft';
-  import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
 
   /**
    * @import { Writable } from 'svelte/store';

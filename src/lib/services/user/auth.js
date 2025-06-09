@@ -1,7 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
-import { _ } from 'svelte-i18n';
 import { get, writable } from 'svelte/store';
+import { _ } from 'svelte-i18n';
 import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';

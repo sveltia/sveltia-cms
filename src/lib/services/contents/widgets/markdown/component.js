@@ -2,8 +2,8 @@
 
 import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount, tick } from 'svelte';
-import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { _ } from 'svelte-i18n';
 import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';
 
 /**

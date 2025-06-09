@@ -1,7 +1,7 @@
 <script>
   import { Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
   import { writable } from 'svelte/store';
+  import { _ } from 'svelte-i18n';
   import { entryDraft } from '$lib/services/contents/draft';
   import { entryEditorSettings } from '$lib/services/contents/draft/editor';
   import { DEFAULT_I18N_CONFIG, getLocaleLabel } from '$lib/services/contents/i18n';

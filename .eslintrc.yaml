@@ -28,6 +28,25 @@ rules:
   import/no-mutable-exports: off
   import/no-unresolved: off
   import/prefer-default-export: off
+  import/order:
+    - error
+    - groups:
+        - builtin
+        - external
+        - internal
+        - parent
+        - sibling
+        - index
+      pathGroups:
+        - pattern: "$lib/**"
+          group: internal
+          position: after
+      pathGroupsExcludedImportTypes:
+        - builtin
+      newlines-between: never
+      alphabetize:
+        order: asc
+        caseInsensitive: true
   jsdoc/no-undefined-types: off
   jsdoc/require-jsdoc:
     - warn

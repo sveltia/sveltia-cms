@@ -1,5 +1,5 @@
-import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { _ } from 'svelte-i18n';
 import { user } from '$lib/services/user';
 import { sendRequest } from '$lib/services/utils/networking';
 

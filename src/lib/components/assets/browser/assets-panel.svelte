@@ -5,10 +5,10 @@
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
-  import { isSmallScreen } from '$lib/services/user/env';
-  import { normalize } from '$lib/services/search';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import { normalize } from '$lib/services/search';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { Asset, SelectedResource, ViewType } from '$lib/types/private';
