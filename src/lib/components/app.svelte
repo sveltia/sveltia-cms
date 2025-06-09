@@ -81,12 +81,14 @@
 
 <svelte:body
   onmousedown={(event) => {
-    // Open external links in a new browser tab, internal links in the same tab
-    if (
-      /** @type {HTMLElement | null} */ (event.target)?.matches('a') &&
-      /** @type {HTMLAnchorElement} */ (event.target).origin !== window.location.origin
-    ) {
-      /** @type {HTMLAnchorElement} */ (event.target).target = '_blank';
+    if (/** @type {HTMLElement | null} */ (event.target)?.matches('a')) {
+      const link = /** @type {HTMLAnchorElement} */ (event.target);
+      const { origin, pathname } = link;
+
+      // Open external links and links to different paths in a new tab
+      if (origin !== window.location.origin || pathname !== window.location.pathname) {
+        link.target = '_blank';
+      }
     }
   }}
 />
