@@ -29,7 +29,7 @@
   import { normalize } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
-  import { supportedImageTypes } from '$lib/services/utils/media/image';
+  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -62,7 +62,7 @@
     /* eslint-disable prefer-const */
     open = $bindable(false),
     kind,
-    accept = kind === 'image' ? supportedImageTypes.join(',') : undefined,
+    accept = kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined,
     canEnterURL = true,
     entryDraft,
     fieldConfig,

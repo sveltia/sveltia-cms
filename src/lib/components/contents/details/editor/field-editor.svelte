@@ -14,7 +14,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges } from '$lib/services/contents/draft/update';
   import { isFieldRequired } from '$lib/services/contents/entry/fields';
-  import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
 
   /**
    * @import { Component } from 'svelte';
@@ -128,7 +128,7 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalValues = $derived($entryDraft?.originalValues);
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
+    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));

@@ -3,7 +3,7 @@
   import { previews } from '$lib/components/contents/details/widgets';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/draft/editor';
-  import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
@@ -48,7 +48,7 @@
     getExpanderKeys({ collectionName, fileName, valueMap, keyPath, isIndexFile }),
   );
   const { i18nEnabled, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
+    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');

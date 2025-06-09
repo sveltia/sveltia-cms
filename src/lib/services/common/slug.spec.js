@@ -1,7 +1,7 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
-import { defaultI18nConfig } from '$lib/services/contents/i18n';
+import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 
 /**
@@ -21,7 +21,7 @@ describe('Test fillSlugTemplate()', async () => {
       format: 'yaml-frontmatter',
       basePath: 'content/posts',
     },
-    _i18n: defaultI18nConfig,
+    _i18n: DEFAULT_I18N_CONFIG,
     _thumbnailFieldNames: [],
   };
 

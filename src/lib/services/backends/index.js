@@ -65,7 +65,7 @@ export const isLastCommitPublished = writable(true);
  * Regular expression to match Git configuration files.
  * @type {RegExp}
  */
-export const gitConfigFileRegex = /^(?:.+\/)?(\.git(?:attributes|ignore|keep))$/;
+export const GIT_CONFIG_FILE_REGEX = /^(?:.+\/)?(\.git(?:attributes|ignore|keep))$/;
 
 /**
  * List of Git configuration files in the repository that we need, such as `.gitattributes`,

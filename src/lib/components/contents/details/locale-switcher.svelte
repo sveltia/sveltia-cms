@@ -4,7 +4,7 @@
   import { writable } from 'svelte/store';
   import { entryDraft } from '$lib/services/contents/draft';
   import { entryEditorSettings } from '$lib/services/contents/draft/editor';
-  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG, getLocaleLabel } from '$lib/services/contents/i18n';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
@@ -30,7 +30,7 @@
 
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
-  const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const listedLocales = $derived(
     $isSmallScreen || $isMediumScreen
       ? [...allLocales]

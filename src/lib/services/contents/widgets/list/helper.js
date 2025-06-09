@@ -1,5 +1,5 @@
 import { escapeRegExp } from '@sveltia/utils/string';
-import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
  * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
@@ -73,7 +73,7 @@ export const formatSummary = ({
   hasSingleSubField,
   index,
 }) => {
-  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
+  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
 
   if (!summaryTemplate) {
     if (hasSingleSubField) {
@@ -101,7 +101,7 @@ export const formatSummary = ({
       }
 
       const fieldPath = `${keyPath}.${index}.${fieldName}`;
-      const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: fieldPath });
+      const fieldConfig = getField({ ...getFieldArgs, keyPath: fieldPath });
 
       return fieldConfig?.widget !== 'hidden' ? fieldValue : null;
     };
@@ -115,7 +115,7 @@ export const formatSummary = ({
           return false;
         }
 
-        const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: key });
+        const fieldConfig = getField({ ...getFieldArgs, keyPath: key });
 
         // If we can get field config, check if it's hidden
         // If we can't get field config, assume it's not hidden and allow it
@@ -132,10 +132,7 @@ export const formatSummary = ({
 
     if (hasSingleSubField) {
       // For single-field lists, check if the requested field name matches the actual field name
-      const listFieldConfig = /** @type {ListField} */ (
-        getFieldConfig({ ...getFieldConfigArgs, keyPath })
-      );
-
+      const listFieldConfig = /** @type {ListField} */ (getField({ ...getFieldArgs, keyPath }));
       const singleFieldConfig = listFieldConfig?.field;
 
       if (!singleFieldConfig || singleFieldConfig.name !== fieldName) {
@@ -144,7 +141,7 @@ export const formatSummary = ({
     }
 
     return getFieldDisplayValue({
-      ...getFieldConfigArgs,
+      ...getFieldArgs,
       keyPath: hasSingleSubField ? `${keyPath}.${index}` : _keyPath,
       locale,
       transformations,

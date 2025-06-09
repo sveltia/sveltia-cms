@@ -1,7 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
-import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 import { validateStringField } from '$lib/services/contents/widgets/string/helper';
 import { getRegex } from '$lib/services/utils/misc';
@@ -44,14 +44,14 @@ const validityProxyHandler = {
 const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
   const { collection, collectionFile, files, validities, isIndexFile } = draft;
 
-  const getFieldConfigArgs = {
+  const getFieldArgs = {
     collectionName: collection.name,
     fileName: collectionFile?.name,
     valueMap,
     isIndexFile,
   };
 
-  const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
+  const fieldConfig = getField({ ...getFieldArgs, keyPath });
 
   if (!fieldConfig) {
     return undefined;
@@ -146,7 +146,7 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
     // `field.keyN`, we should validate only once against all these values. The key can be
     // empty, so use `.*` in the regex instead of `.+`
     const _keyPath = /** @type {string} */ (keyPath.match(/(.+?)(?:\.[^.]*)?$/)?.[1]);
-    const parentFieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath });
+    const parentFieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
 
     if (_keyPath in validities[locale] || parentFieldConfig?.widget !== 'keyvalue') {
       return undefined;

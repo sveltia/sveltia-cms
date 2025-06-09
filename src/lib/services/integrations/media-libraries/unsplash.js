@@ -11,7 +11,7 @@ import { get } from 'svelte/store';
 /**
  * @see https://unsplash.com/documentation#supported-languages
  */
-const supportedLocales = [
+const SUPPORTED_LOCALES = [
   'af',
   'sq',
   'am',
@@ -123,8 +123,8 @@ const supportedLocales = [
   'zu',
 ];
 
-const endpoint = 'https://api.unsplash.com';
-const creditLinkParams = 'utm_source=sveltia-cms&utm_medium=referral';
+const ENDPOINT = 'https://api.unsplash.com';
+const CREDIT_LINK_PARAMS = 'utm_source=sveltia-cms&utm_medium=referral';
 
 /**
  * Search images or fetch curated pictures if no query is given.
@@ -154,13 +154,13 @@ const search = async (query, { apiKey }) => {
       const params = new URLSearchParams(
         /** @type {Record<string, any>} */ ({
           query,
-          lang: supportedLocales.includes(locale) ? locale : 'en',
+          lang: SUPPORTED_LOCALES.includes(locale) ? locale : 'en',
           page,
           per_page: 30,
         }),
       );
 
-      const response = await fetch(`${endpoint}/search/photos?${params.toString()}`, { headers });
+      const response = await fetch(`${ENDPOINT}/search/photos?${params.toString()}`, { headers });
 
       if (!response.ok) {
         return Promise.reject();
@@ -184,7 +184,7 @@ const search = async (query, { apiKey }) => {
       }),
     );
 
-    const response = await fetch(`${endpoint}/photos?${params.toString()}`, { headers });
+    const response = await fetch(`${ENDPOINT}/photos?${params.toString()}`, { headers });
 
     if (!response.ok) {
       return Promise.reject();
@@ -208,8 +208,8 @@ const search = async (query, { apiKey }) => {
       fileName: `${name.split(/\s+/).join('-').toLowerCase()}-${id}-unsplash.jpg`,
       kind: 'image',
       credit:
-        `Photo by <a href="https://unsplash.com/@${username}?${creditLinkParams}">${name}</a> on ` +
-        `<a href="https://unsplash.com/?${creditLinkParams}">Unsplash</a>`,
+        `Photo by <a href="https://unsplash.com/@${username}?${CREDIT_LINK_PARAMS}">${name}</a> on ` +
+        `<a href="https://unsplash.com/?${CREDIT_LINK_PARAMS}">Unsplash</a>`,
     }),
   );
 };

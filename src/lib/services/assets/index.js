@@ -43,13 +43,13 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
-export const mediaKinds = ['image', 'video', 'audio'];
-export const assetKinds = [...mediaKinds, 'document', 'other'];
+export const MEDIA_KINDS = ['image', 'video', 'audio'];
+export const ASSET_KINDS = [...MEDIA_KINDS, 'document', 'other'];
 /**
  * Regular expression that matches common document file extensions.
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
  */
-export const documentExtensions = /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/i;
+export const DOC_EXTENSION_REGEX = /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/i;
 /**
  * @type {Writable<Asset[]>}
  */
@@ -166,7 +166,7 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
  * @param {string} kind Kind, e.g. `image` or `video`.
  * @returns {boolean} Result.
  */
-export const isMediaKind = (kind) => mediaKinds.includes(kind);
+export const isMediaKind = (kind) => MEDIA_KINDS.includes(kind);
 
 /**
  * Whether the given asset is previewable.
@@ -229,12 +229,12 @@ export const canEditAsset = (asset) => {
 /**
  * Determine the asset’s kind from the file extension.
  * @param {string} name File name or path.
- * @returns {AssetKind} One of {@link assetKinds}.
+ * @returns {AssetKind} One of {@link ASSET_KINDS}.
  */
 export const getAssetKind = (name) =>
   /** @type {AssetKind} */ (
     mime.getType(name)?.match(/^(?<type>image|audio|video)\//)?.groups?.type ??
-      (documentExtensions.test(name) ? 'document' : 'other')
+      (DOC_EXTENSION_REGEX.test(name) ? 'document' : 'other')
   );
 
 /**
@@ -475,6 +475,7 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
     ),
   ].filter((folder) => !!folder);
 
+  // Use `some` to stop scanning folders as soon as the asset is found
   scanningFolders.some((folder) => {
     let { internalPath } = folder;
 

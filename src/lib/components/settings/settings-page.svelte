@@ -13,7 +13,7 @@
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
 
-  const routeRegex = /^\/settings(?:\/(?<panelKey>.+))?$/;
+  const ROUTE_REGEX = /^\/settings(?:\/(?<panelKey>.+))?$/;
 
   /** @type {{ key: string, icon: string, component: import('svelte').Component } | undefined} */
   let selectedPanel = $state(undefined);
@@ -26,7 +26,7 @@
    */
   const navigate = () => {
     const { path } = parseLocation();
-    const match = path.match(routeRegex);
+    const match = path.match(ROUTE_REGEX);
 
     if (!match?.groups) {
       return; // Different page
@@ -44,7 +44,7 @@
 
 <svelte:window
   onhashchange={(event) => {
-    updateContentFromHashChange(event, navigate, routeRegex);
+    updateContentFromHashChange(event, navigate, ROUTE_REGEX);
   }}
 />
 

@@ -4,7 +4,10 @@ import { encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import { apiConfigPlaceholder, repositoryInfoPlaceholder } from '$lib/services/backends/shared';
+import {
+  API_CONFIG_INFO_PLACEHOLDER,
+  REPOSITORY_INFO_PLACEHOLDER,
+} from '$lib/services/backends/shared';
 import { fetchAPIWithAuth } from '$lib/services/backends/shared/api';
 import {
   handleClientSideAuthPopup,
@@ -38,15 +41,31 @@ import { sendRequest } from '$lib/services/utils/networking';
  * } from '$lib/types/private';
  */
 
+/**
+ * @typedef {object} GitLabUserInfo
+ * @property {string} [id] GitLab user ID.
+ * @property {string} [username] GitLab user username.
+ */
+
+/**
+ * @typedef {object} GitLabCommit
+ * @property {GitLabUserInfo | null} author Commit author’s GitLab user info.
+ * @property {string} authorName Commit author’s full name.
+ * @property {string} authorEmail Commit author’s email.
+ * @property {string} committedDate Committed date.
+ */
+
 const backendName = 'gitlab';
 const label = 'GitLab';
 const statusDashboardURL = 'https://status.gitlab.com/';
 const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
-const apiRootDefault = 'https://gitlab.com/api/v4';
+const DEFAULT_API_ROOT = 'https://gitlab.com/api/v4';
+const DEFAULT_AUTH_ROOT = 'https://gitlab.com';
+const DEFAULT_AUTH_PATH = 'oauth/authorize';
 /** @type {RepositoryInfo} */
-const repository = { ...repositoryInfoPlaceholder };
+const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /** @type {ApiEndpointConfig} */
-const apiConfig = { ...apiConfigPlaceholder };
+const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
 
 /**
  * Check the GitLab service status.
@@ -130,10 +149,10 @@ const init = () => {
   const {
     repo: projectPath,
     branch,
-    base_url: authRoot = 'https://gitlab.com',
-    auth_endpoint: authPath = 'oauth/authorize',
+    base_url: authRoot = DEFAULT_AUTH_ROOT,
+    auth_endpoint: authPath = DEFAULT_AUTH_PATH,
     app_id: clientId = '',
-    api_root: restApiRoot = apiRootDefault,
+    api_root: restApiRoot = DEFAULT_API_ROOT,
     graphql_api_root: graphqlApiRoot = restApiRoot,
   } = backend;
 
@@ -164,7 +183,7 @@ const init = () => {
       branch,
       baseURL,
       databaseName: `${backendName}:${owner}/${repo}`,
-      isSelfHosted: restApiRoot !== apiRootDefault,
+      isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
     getBaseURLs(baseURL, branch),
   );
@@ -440,20 +459,6 @@ const fetchFileList = async () => {
     .filter(({ type }) => type === 'blob')
     .map(({ path, sha }) => ({ path, sha, size: 0, name: getPathInfo(path).basename }));
 };
-
-/**
- * @typedef {object} GitLabUserInfo
- * @property {string} [id] GitLab user ID.
- * @property {string} [username] GitLab user username.
- */
-
-/**
- * @typedef {object} GitLabCommit
- * @property {GitLabUserInfo | null} author Commit author’s GitLab user info.
- * @property {string} authorName Commit author’s full name.
- * @property {string} authorEmail Commit author’s email.
- * @property {string} committedDate Committed date.
- */
 
 /**
  * Fetch the blobs for the given file paths. This function retrieves the raw text contents of files

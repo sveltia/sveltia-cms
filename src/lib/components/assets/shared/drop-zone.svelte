@@ -6,7 +6,7 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { getListFormatter } from '$lib/services/contents/i18n';
   import { hasMouse } from '$lib/services/user/env';
-  import { supportedImageTypes } from '$lib/services/utils/media/image';
+  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -86,7 +86,7 @@
 </script>
 
 {#snippet typeMismatchAlert()}
-  {#if accept === supportedImageTypes.join(',')}
+  {#if accept === SUPPORTED_IMAGE_TYPES.join(',')}
     {$_('dropped_image_type_mismatch')}
   {:else}
     {$_('dropped_file_type_mismatch', {

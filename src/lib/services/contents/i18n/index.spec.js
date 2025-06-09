@@ -1,6 +1,10 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
-import { defaultI18nConfig, getCanonicalLocale, getI18nConfig } from '$lib/services/contents/i18n';
+import {
+  DEFAULT_I18N_CONFIG,
+  getCanonicalLocale,
+  getI18nConfig,
+} from '$lib/services/contents/i18n';
 
 /**
  * @import { Collection, CollectionFile } from '$lib/types/public';
@@ -86,12 +90,14 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithoutI18n],
     });
 
-    expect(getI18nConfig(collectionWithoutI18n)).toEqual(defaultI18nConfig);
+    expect(getI18nConfig(collectionWithoutI18n)).toEqual(DEFAULT_I18N_CONFIG);
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(defaultI18nConfig);
+    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
+      DEFAULT_I18N_CONFIG,
+    );
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
-      defaultI18nConfig,
+      DEFAULT_I18N_CONFIG,
     );
   });
 
@@ -107,12 +113,14 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithoutI18n],
     });
 
-    expect(getI18nConfig(collectionWithoutI18n)).toEqual(defaultI18nConfig);
+    expect(getI18nConfig(collectionWithoutI18n)).toEqual(DEFAULT_I18N_CONFIG);
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(defaultI18nConfig);
+    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
+      DEFAULT_I18N_CONFIG,
+    );
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
-      defaultI18nConfig,
+      DEFAULT_I18N_CONFIG,
     );
   });
 
@@ -205,10 +213,12 @@ describe('Test getI18nConfig()', () => {
       omitDefaultLocaleFromFileName: false,
     });
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(defaultI18nConfig);
+    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
+      DEFAULT_I18N_CONFIG,
+    );
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
-      defaultI18nConfig,
+      DEFAULT_I18N_CONFIG,
     );
   });
 
@@ -285,7 +295,7 @@ describe('Test getI18nConfig()', () => {
     });
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithPartialI18nOverride)).toEqual(
-      defaultI18nConfig,
+      DEFAULT_I18N_CONFIG,
     );
 
     expect(
@@ -339,7 +349,7 @@ describe('Test getI18nConfig()', () => {
     });
 
     expect(getI18nConfig(collectionWithoutI18n, collectionFileWithCompleteI18nOverride)).toEqual(
-      defaultI18nConfig,
+      DEFAULT_I18N_CONFIG,
     );
 
     expect(

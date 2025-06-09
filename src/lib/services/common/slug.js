@@ -5,11 +5,11 @@ import { truncate } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import {
   applyTransformations,
-  defaultTransformationRegex,
+  DEFAULT_TRANSFORMATION_REGEX,
 } from '$lib/services/common/transformations';
 import { siteConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { renameIfNeeded } from '$lib/services/utils/file';
 
@@ -19,6 +19,22 @@ import { renameIfNeeded } from '$lib/services/utils/file';
  * FillSlugTemplateOptions,
  * InternalSiteConfig,
  * } from '$lib/types/private';
+ */
+
+/**
+ * @typedef {object} ReplaceSubContext
+ * @property {string} identifierField Field name to identify the title.
+ * @property {string | undefined} basePath Base path for the entry file.
+ */
+
+/**
+ * @typedef {object} ReplaceContext
+ * @property {FillSlugTemplateOptions & ReplaceSubContext} replaceSubContext Context for
+ * `replaceSub`.
+ * @property {object} getFieldArgs Arguments for `getField`.
+ * @property {string} getFieldArgs.collectionName Collection name.
+ * @property {object} getFieldArgs.valueMap Value map for the collection.
+ * @property {boolean} getFieldArgs.isIndexFile Whether the slug is for an index file.
  */
 
 /**
@@ -58,22 +74,6 @@ export const normalizeSlug = (string) => {
   // Make the string lowercase; replace all the spaces with replacers (hyphens by default)
   return slug.toLocaleLowerCase().trim().replaceAll(/\s+/g, sanitizeReplacement);
 };
-
-/**
- * @typedef {object} ReplaceSubContext
- * @property {string} identifierField Field name to identify the title.
- * @property {string | undefined} basePath Base path for the entry file.
- */
-
-/**
- * @typedef {object} ReplaceContext
- * @property {FillSlugTemplateOptions & ReplaceSubContext} replaceSubContext Context for
- * `replaceSub`.
- * @property {object} getFieldConfigArgs Arguments for `getFieldConfig`.
- * @property {string} getFieldConfigArgs.collectionName Collection name.
- * @property {object} getFieldConfigArgs.valueMap Value map for the collection.
- * @property {boolean} getFieldConfigArgs.isIndexFile Whether the slug is for an index file.
- */
 
 /**
  * Replacer subroutine.
@@ -156,13 +156,13 @@ const replaceSub = (tag, context) => {
  * @param {ReplaceContext} context Context for replacement.
  * @returns {string} Replaced string.
  */
-const replace = (placeholder, { replaceSubContext, getFieldConfigArgs }) => {
+const replace = (placeholder, { replaceSubContext, getFieldArgs }) => {
   const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
   let value = replaceSub(tag, replaceSubContext);
   let hasDefaultTransformation = false;
 
   transformations.forEach((tf, index) => {
-    const { defaultValue } = tf.match(defaultTransformationRegex)?.groups ?? {};
+    const { defaultValue } = tf.match(DEFAULT_TRANSFORMATION_REGEX)?.groups ?? {};
 
     if (defaultValue !== undefined) {
       hasDefaultTransformation = true;
@@ -184,7 +184,7 @@ const replace = (placeholder, { replaceSubContext, getFieldConfigArgs }) => {
 
   if (transformations.length) {
     value = applyTransformations({
-      fieldConfig: getFieldConfig({ ...getFieldConfigArgs, keyPath: tag }),
+      fieldConfig: getField({ ...getFieldArgs, keyPath: tag }),
       value,
       transformations,
     });
@@ -228,7 +228,7 @@ export const fillSlugTemplate = (template, options) => {
   /** @type {ReplaceContext} */
   const context = {
     replaceSubContext: { ...options, identifierField, basePath },
-    getFieldConfigArgs: { collectionName, valueMap, isIndexFile },
+    getFieldArgs: { collectionName, valueMap, isIndexFile },
   };
 
   // Use a negative lookahead assertion to support a template tag for the `default` transformation

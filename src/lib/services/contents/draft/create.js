@@ -6,7 +6,7 @@ import { isCollectionIndexFile } from '$lib/services/contents/collection/index-f
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
-import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { getBooleanFieldDefaultValueMap } from '$lib/services/contents/widgets/boolean/helper';
 import { getCodeFieldDefaultValueMap } from '$lib/services/contents/widgets/code/helper';
 import { getDateTimeFieldDefaultValueMap } from '$lib/services/contents/widgets/date-time/helper';
@@ -128,7 +128,7 @@ const parseDynamicDefaultValue = ({ newContent, keyPath, fieldConfig, value }) =
  * @type {Record<string, (args: { fieldConfig: any, keyPath: FieldKeyPath, locale: LocaleCode }) =>
  * Record<string, any>>}
  */
-const getDefaultValueMapFunctions = {
+const GET_DEFAULT_VALUE_MAP_FUNCTIONS = {
   boolean: getBooleanFieldDefaultValueMap,
   code: getCodeFieldDefaultValueMap,
   datetime: getDateTimeFieldDefaultValueMap,
@@ -182,10 +182,10 @@ const populateDefaultValue = ({ newContent, keyPath, fieldConfig, locale, dynami
     return;
   }
 
-  if (widgetName in getDefaultValueMapFunctions) {
+  if (widgetName in GET_DEFAULT_VALUE_MAP_FUNCTIONS) {
     Object.assign(
       newContent,
-      getDefaultValueMapFunctions[widgetName]({ fieldConfig, keyPath, locale }),
+      GET_DEFAULT_VALUE_MAP_FUNCTIONS[widgetName]({ fieldConfig, keyPath, locale }),
     );
 
     return;
@@ -230,7 +230,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
  * @param {object} [args.target] Target object.
  * @param {() => FlattenedEntryContent} [args.getValueMap] Optional function to get an object
  * holding the current entry values. It will be used for the `valueMap` argument of
- * {@link getFieldConfig}. If omitted, the proxy target will be used instead.
+ * {@link getField}. If omitted, the proxy target will be used instead.
  * @returns {any} Created proxy.
  */
 export const createProxy = ({
@@ -267,8 +267,8 @@ export const createProxy = ({
       }
 
       const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
-      const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
-      const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
+      const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
+      const fieldConfig = getField({ ...getFieldArgs, keyPath });
 
       if (!fieldConfig) {
         return true;
@@ -300,7 +300,7 @@ export const createProxy = ({
                 !Object.keys(content).some((_keyPath) =>
                   _keyPath.startsWith(`${parentKeyPath}.`),
                 ) &&
-                !getFieldConfig({ ...getFieldConfigArgs, keyPath: parentKeyPath })
+                !getField({ ...getFieldArgs, keyPath: parentKeyPath })
               ) {
                 return;
               }
@@ -461,11 +461,11 @@ export const duplicateDraft = () => {
     // Remove the canonical slug
     delete valueMap[canonicalSlugKey];
 
-    const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
+    const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
 
     // Reset some unique values
     Object.keys(valueMap).forEach((keyPath) => {
-      const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath });
+      const fieldConfig = getField({ ...getFieldArgs, keyPath });
 
       if (fieldConfig?.widget === 'uuid') {
         if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {

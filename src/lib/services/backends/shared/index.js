@@ -5,7 +5,7 @@
 /**
  * @type {RepositoryInfo}
  */
-export const repositoryInfoPlaceholder = {
+export const REPOSITORY_INFO_PLACEHOLDER = {
   service: '',
   label: '',
   owner: '',
@@ -21,7 +21,7 @@ export const repositoryInfoPlaceholder = {
 /**
  * @type {ApiEndpointConfig}
  */
-export const apiConfigPlaceholder = {
+export const API_CONFIG_INFO_PLACEHOLDER = {
   clientId: '',
   authURL: '',
   tokenURL: '',

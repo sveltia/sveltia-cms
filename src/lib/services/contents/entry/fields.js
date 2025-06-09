@@ -1,7 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 import {
   applyTransformations,
-  dateTransformationRegex,
+  DATE_TRANSFORMATION_REGEX,
 } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
@@ -44,7 +44,7 @@ export const fieldConfigCacheMap = new Map();
  * index file used specifically in Hugo.
  * @returns {Field | undefined} Field configuration.
  */
-export const getFieldConfig = ({
+export const getField = ({
   collectionName,
   fileName = undefined,
   valueMap = {},
@@ -165,7 +165,7 @@ export const getFieldDisplayValue = ({
   transformations,
   isIndexFile = false,
 }) => {
-  const fieldConfig = getFieldConfig({ collectionName, fileName, valueMap, keyPath, isIndexFile });
+  const fieldConfig = getField({ collectionName, fileName, valueMap, keyPath, isIndexFile });
   let value = valueMap[keyPath];
 
   // If the field doesn’t exist in `valueMap` and transformations are applied, return empty string
@@ -176,7 +176,7 @@ export const getFieldDisplayValue = ({
   if (fieldConfig?.widget === 'datetime') {
     // If the `date` transformation is provided, do nothing; it should be used instead of the field
     // `format` option, so the keep the original value for `applyTransformations()`
-    if (!transformations?.some((tf) => dateTransformationRegex.test(tf))) {
+    if (!transformations?.some((tf) => DATE_TRANSFORMATION_REGEX.test(tf))) {
       value = getDateTimeFieldDisplayValue({
         locale,
         // eslint-disable-next-line object-shorthand
@@ -275,7 +275,7 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
 
   if (resolveRef) {
     const isIndexFile = isCollectionIndexFile(collection, entry);
-    const fieldConfig = getFieldConfig({ collectionName, keyPath: key, isIndexFile });
+    const fieldConfig = getField({ collectionName, keyPath: key, isIndexFile });
 
     // Resolve the displayed value for a relation field
     if (fieldConfig?.widget === 'relation') {

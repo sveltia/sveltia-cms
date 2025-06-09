@@ -6,7 +6,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
-import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/fields';
+import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**
@@ -17,7 +17,7 @@ import { getRegex } from '$lib/services/utils/misc';
 /**
  * Regular expression to match `![alt](src "title")`.
  */
-const markdownImageRegEx = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
+const MARKDOWN_IMAGE_REGEX = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
 
 /**
  * @type {Writable<Entry[]>}
@@ -119,7 +119,7 @@ export const getEntriesByAssetURL = async (
                 collections.map(async (collection) => {
                   const collectionName = collection.name;
 
-                  const getFieldConfigArgs = {
+                  const getFieldArgs = {
                     collectionName,
                     valueMap: content,
                     keyPath,
@@ -134,7 +134,7 @@ export const getEntriesByAssetURL = async (
                    */
                   const hasAsset = async (collectionFile) => {
                     const fileName = collectionFile?.name;
-                    const field = getFieldConfig({ ...getFieldConfigArgs, fileName });
+                    const field = getField({ ...getFieldArgs, fileName });
 
                     if (!field) {
                       return false;
@@ -157,7 +157,7 @@ export const getEntriesByAssetURL = async (
 
                     // Search images in markdown body
                     if (widgetName === 'markdown') {
-                      const matches = [...value.matchAll(markdownImageRegEx)];
+                      const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
 
                       if (matches.length) {
                         return (

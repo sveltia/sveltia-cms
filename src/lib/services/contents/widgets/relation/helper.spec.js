@@ -23,7 +23,7 @@ vi.mock('$lib/services/contents/collection/index-file', () => ({
   isCollectionIndexFile: vi.fn(),
 }));
 vi.mock('$lib/services/contents/entry/fields', () => ({
-  getFieldConfig: vi.fn(),
+  getField: vi.fn(),
   getFieldDisplayValue: vi.fn(),
 }));
 vi.mock('$lib/services/contents/entry/summary', () => ({
@@ -46,11 +46,7 @@ describe('Test getOptions()', async () => {
   const { getCollection } = await import('$lib/services/contents/collection');
   const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
   const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
-
-  const { getFieldConfig, getFieldDisplayValue } = await import(
-    '$lib/services/contents/entry/fields'
-  );
-
+  const { getField, getFieldDisplayValue } = await import('$lib/services/contents/entry/fields');
   const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
   const locale = '_default';
   /** @type {LocalizedEntry} */
@@ -239,7 +235,7 @@ describe('Test getOptions()', async () => {
       // @ts-ignore - Using simplified mock collection for testing
       vi.mocked(getCollection).mockReturnValue(mockCollection);
       vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-      vi.mocked(getFieldConfig).mockReturnValue(undefined);
+      vi.mocked(getField).mockReturnValue(undefined);
 
       // Smart mock that returns values based on the keyPath
       vi.mocked(getFieldDisplayValue).mockImplementation(({ keyPath, valueMap }) => {
@@ -420,7 +416,7 @@ describe('Test getOptions()', async () => {
 
     describe('Wildcard and list field handling', () => {
       test('should handle simple list fields with wildcards', () => {
-        vi.mocked(getFieldConfig).mockReturnValue({
+        vi.mocked(getField).mockReturnValue({
           name: 'cities',
           widget: 'list',
           fields: [
@@ -444,7 +440,7 @@ describe('Test getOptions()', async () => {
       });
 
       test('should handle single subfield list fields', () => {
-        vi.mocked(getFieldConfig).mockReturnValue({
+        vi.mocked(getField).mockReturnValue({
           name: 'skills',
           widget: 'list',
           field: { name: 'skill', widget: 'string' },
@@ -469,7 +465,7 @@ describe('Test getOptions()', async () => {
       });
 
       test('should handle complex list fields with multiple subfields', () => {
-        vi.mocked(getFieldConfig).mockReturnValue({
+        vi.mocked(getField).mockReturnValue({
           name: 'cities',
           widget: 'list',
           fields: [
@@ -763,7 +759,7 @@ describe('Test getOptions()', async () => {
       vi.mocked(getCollection).mockReturnValue(mockCollection);
       vi.mocked(getEntriesByCollection).mockReturnValue(comprehensiveMemberEntries);
       vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-      vi.mocked(getFieldConfig).mockReturnValue(undefined);
+      vi.mocked(getField).mockReturnValue(undefined);
       vi.mocked(getFieldDisplayValue).mockReturnValue('display-value');
       vi.mocked(getEntrySummaryFromContent).mockReturnValue('summary');
     });
@@ -1142,7 +1138,7 @@ describe('Test getOptions()', async () => {
       vi.mocked(getCollection).mockReturnValue(mockCollection);
       vi.mocked(getEntriesByCollection).mockReturnValue(comprehensiveMemberEntries);
       vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-      vi.mocked(getFieldConfig).mockReturnValue(undefined);
+      vi.mocked(getField).mockReturnValue(undefined);
       vi.mocked(getFieldDisplayValue).mockReturnValue('display-value');
       vi.mocked(getEntrySummaryFromContent).mockReturnValue('summary');
     });

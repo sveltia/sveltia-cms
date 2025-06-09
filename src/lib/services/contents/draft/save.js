@@ -17,18 +17,18 @@ import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import {
   contentUpdatesToast,
-  updatesToastDefaultState,
+  UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
 import { validateEntry } from '$lib/services/contents/draft/validate';
-import { getFieldConfig, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
 import { user } from '$lib/services/user';
-import { fullDateTimeRegEx } from '$lib/services/utils/date';
+import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
 import {
   createPath,
   encodeFilePath,
@@ -272,7 +272,7 @@ export const copyProperty = ({
   if (
     isTomlOutput &&
     typeof value === 'string' &&
-    fullDateTimeRegEx.test(value) &&
+    FULL_DATE_TIME_REGEX.test(value) &&
     field?.widget === 'datetime' &&
     !parseDateTimeConfig(/** @type {DateTimeField} */ (field)).format
   ) {
@@ -334,7 +334,7 @@ const finalizeContent = ({
   const { omit_empty_optional_fields: omitEmptyOptionalFields = false } =
     get(siteConfig)?.output ?? {};
 
-  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
+  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
   const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };
 
   // Add the slug first
@@ -344,7 +344,7 @@ const finalizeContent = ({
 
   // Move the listed properties to a new object
   createKeyPathList(fields).forEach((keyPath) => {
-    const field = getFieldConfig({ ...getFieldConfigArgs, keyPath });
+    const field = getField({ ...getFieldArgs, keyPath });
 
     if (keyPath in unsortedMap) {
       copyProperty({ ...copyArgs, key: keyPath, field });
@@ -1013,7 +1013,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     !!get(backend)?.isGit && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
 
   contentUpdatesToast.set({
-    ...updatesToastDefaultState,
+    ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
     published,
     count: 1,

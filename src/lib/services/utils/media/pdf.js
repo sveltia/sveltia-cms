@@ -11,17 +11,17 @@ import { exportCanvasAsBlob, resizeCanvas } from '$lib/services/utils/media/imag
  * the UNPKG URL, making it faster to load the script without waiting for a redirect.
  * @see https://github.com/mozilla/pdf.js
  */
-const pdfjsDistURL = getUnpkgURL('pdfjs-dist');
-const pdfjsModuleURL = `${pdfjsDistURL}/build/pdf.min.mjs`;
-const pdfjsWorkerURL = `${pdfjsDistURL}/build/pdf.worker.min.mjs`;
+const PDFJS_DIST_URL = getUnpkgURL('pdfjs-dist');
+const PDFJS_MODULE_URL = `${PDFJS_DIST_URL}/build/pdf.min.mjs`;
+const PDFJS_WORKER_URL = `${PDFJS_DIST_URL}/build/pdf.worker.min.mjs`;
 
-const pdfjsGetDocOptions = {
+const PDFJS_GET_DOC_OPTIONS = {
   isEvalSupported: false,
   disableAutoFetch: true,
-  cMapUrl: `${pdfjsDistURL}/cmaps/`,
-  iccUrl: `${pdfjsDistURL}/iccs/`,
-  standardFontDataUrl: `${pdfjsDistURL}/standard_fonts/`,
-  wasmUrl: `${pdfjsDistURL}/wasm/`,
+  cMapUrl: `${PDFJS_DIST_URL}/cmaps/`,
+  iccUrl: `${PDFJS_DIST_URL}/iccs/`,
+  standardFontDataUrl: `${PDFJS_DIST_URL}/standard_fonts/`,
+  wasmUrl: `${PDFJS_DIST_URL}/wasm/`,
 };
 
 /**
@@ -46,8 +46,8 @@ export const renderPDF = async (
   // Lazily load the PDF.js library
   if (!pdfjs) {
     try {
-      pdfjs = await import(/* @vite-ignore */ pdfjsModuleURL);
-      pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerURL;
+      pdfjs = await import(/* @vite-ignore */ PDFJS_MODULE_URL);
+      pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
     } catch {
       throw new Error('Failed to load PDF.js library');
     }
@@ -58,7 +58,7 @@ export const renderPDF = async (
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
 
   try {
-    const pdfDocument = await pdfjs.getDocument({ ...pdfjsGetDocOptions, url }).promise;
+    const pdfDocument = await pdfjs.getDocument({ ...PDFJS_GET_DOC_OPTIONS, url }).promise;
     const pdfPage = await pdfDocument.getPage(1);
     const viewport = pdfPage.getViewport({ scale: 1 });
 

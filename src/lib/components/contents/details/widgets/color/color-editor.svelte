@@ -38,8 +38,8 @@
   const { allowInput = false, enableAlpha = false } = $derived(fieldConfig);
 
   const id = $props.id();
-  const rgbRegex = /^#[0-9a-f]{6}$/;
-  const rgbaRegex = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/;
+  const RGB_REGEX = /^#[0-9a-f]{6}$/;
+  const RGBA_REGEX = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/;
 
   /**
    * Update {@link inputValue} and {@link inputAlphaValue} based on {@link currentValue}.
@@ -50,7 +50,7 @@
     }
 
     const { rgb: newValue, a: newAlphaHexValue = 'ff' } =
-      currentValue.match(rgbaRegex)?.groups ?? {};
+      currentValue.match(RGBA_REGEX)?.groups ?? {};
 
     // Avoid a cycle dependency & infinite loop
     if (newValue && inputValue !== newValue) {
@@ -71,7 +71,7 @@
    * Update {@link currentValue} based on {@link inputValue} and {@link inputAlphaValue}.
    */
   const setCurrentValue = () => {
-    let newValue = rgbRegex.test(inputValue) ? inputValue : '';
+    let newValue = RGB_REGEX.test(inputValue) ? inputValue : '';
 
     if (newValue && enableAlpha) {
       newValue += inputAlphaValue.toString(16).padStart(2, '0');

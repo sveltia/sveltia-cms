@@ -2,7 +2,11 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { allAssets, getAssetFoldersByPath } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
-import { gitConfigFileRegex, gitConfigFiles, isLastCommitPublished } from '$lib/services/backends';
+import {
+  GIT_CONFIG_FILE_REGEX,
+  gitConfigFiles,
+  isLastCommitPublished,
+} from '$lib/services/backends';
 import {
   allEntries,
   dataLoaded,
@@ -58,7 +62,7 @@ export const createFileList = (files) => {
     if (name.startsWith('.')) {
       // Correct Git config files that we need, such as `.gitattributes` and `.gitkeep`, to enable
       // some features like Git LFS tracking and assets folder creation
-      if (gitConfigFileRegex.test(name)) {
+      if (GIT_CONFIG_FILE_REGEX.test(name)) {
         configFiles.push({ ...fileInfo, type: 'config' });
       }
     } else {

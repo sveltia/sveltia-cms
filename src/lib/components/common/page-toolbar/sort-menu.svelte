@@ -1,7 +1,7 @@
 <script>
   import { Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { getFieldConfig } from '$lib/services/contents/entry/fields';
+  import { getField } from '$lib/services/contents/entry/fields';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -44,7 +44,7 @@
             label={$_(
               dateFields.includes(key) ||
                 (!!collectionName &&
-                  getFieldConfig({ collectionName, keyPath: key })?.widget === 'datetime')
+                  getField({ collectionName, keyPath: key })?.widget === 'datetime')
                 ? `${order}_date`
                 : order,
               { values: { label: _label } },

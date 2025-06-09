@@ -30,7 +30,7 @@ let backupDB = undefined;
 /**
  * Default for {@link backupToastState}.
  */
-const backupToastDefaultState = {
+const BACKUP_TOAST_DEFAULT_STATE = {
   saved: false,
   restored: false,
   deleted: false,
@@ -43,7 +43,7 @@ export const restoreDialogState = writable({ show: false });
 /**
  * @type {Writable<{ saved: boolean, restored: boolean, deleted: boolean }>}
  */
-export const backupToastState = writable({ ...backupToastDefaultState });
+export const backupToastState = writable({ ...BACKUP_TOAST_DEFAULT_STATE });
 
 /**
  * Delete a draft stored in IndexedDB.
@@ -237,7 +237,7 @@ export const showBackupToastIfNeeded = async () => {
  * Reset {@link backupToastState}.
  */
 export const resetBackupToastState = () => {
-  backupToastState.set({ ...backupToastDefaultState });
+  backupToastState.set({ ...BACKUP_TOAST_DEFAULT_STATE });
 };
 
 backend.subscribe((_backend) => {

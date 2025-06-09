@@ -8,7 +8,7 @@
   import { getAssociatedCollections } from '$lib/services/contents/entry';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
 
   /**
    * @import {
@@ -41,7 +41,7 @@
 </script>
 
 {#snippet resultRow(/** @type {RowArgs} */ { collection, collectionFile })}
-  {@const { defaultLocale } = (collectionFile ?? collection)._i18n ?? defaultI18nConfig}
+  {@const { defaultLocale } = (collectionFile ?? collection)._i18n ?? DEFAULT_I18N_CONFIG}
   {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
   {#if content}
     <GridRow

@@ -10,7 +10,7 @@ import {
 } from '$lib/services/assets';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
 
 /**
  * @import { Asset, Entry, EntryCollection } from '$lib/types/private';
@@ -94,7 +94,7 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
             typeof value === 'string' &&
             (relative ? !/^[/@]/.test(value) : true) &&
             ['image', 'file'].includes(
-              getFieldConfig({ collectionName, keyPath, isIndexFile })?.widget ?? 'string',
+              getField({ collectionName, keyPath, isIndexFile })?.widget ?? 'string',
             )
           ) {
             const asset = getAssetByPath({ value, entry, collectionName, fileName });

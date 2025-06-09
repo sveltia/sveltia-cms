@@ -12,7 +12,7 @@ const apiKeyPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * Supported source languages listed in the DeepL API document.
  * @see https://developers.deepl.com/docs/resources/supported-languages
  */
-const sourceLanguages = [
+const SOURCE_LANGUAGES = [
   'AR',
   'BG',
   'CS',
@@ -49,7 +49,7 @@ const sourceLanguages = [
  * Supported target languages listed in the DeepL API document.
  * @see https://developers.deepl.com/docs/resources/supported-languages
  */
-const targetLanguages = [
+const TARGET_LANGUAGES = [
   'AR',
   'BG',
   'CS',
@@ -96,7 +96,7 @@ const targetLanguages = [
 const getSourceLanguage = (locale) => {
   const [language] = locale.toUpperCase().split('-');
 
-  if (sourceLanguages.includes(language)) {
+  if (SOURCE_LANGUAGES.includes(language)) {
     return language;
   }
 
@@ -111,7 +111,7 @@ const getSourceLanguage = (locale) => {
 const getTargetLanguage = (locale) => {
   let language = locale.toUpperCase();
 
-  if (targetLanguages.includes(language)) {
+  if (TARGET_LANGUAGES.includes(language)) {
     return language;
   }
 
@@ -127,7 +127,7 @@ const getTargetLanguage = (locale) => {
 
   [language] = language.split('-');
 
-  if (targetLanguages.includes(language)) {
+  if (TARGET_LANGUAGES.includes(language)) {
     return language;
   }
 

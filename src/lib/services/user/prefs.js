@@ -8,7 +8,7 @@ import { get, writable } from 'svelte/store';
  * @import { Preferences } from '$lib/types/private';
  */
 
-const storageKey = 'sveltia-cms.prefs';
+const STORAGE_KEY = 'sveltia-cms.prefs';
 
 /**
  * @type {Writable<{ type: string } | undefined>}
@@ -22,7 +22,7 @@ export const prefs = writable({}, (set) => {
 
   (async () => {
     try {
-      const _prefs = (await LocalStorage.get(storageKey)) ?? {};
+      const _prefs = (await LocalStorage.get(STORAGE_KEY)) ?? {};
 
       _prefs.apiKeys ??= {};
       _prefs.useDraftBackup ??= true;
@@ -45,8 +45,8 @@ prefs.subscribe((newPrefs) => {
 
   (async () => {
     try {
-      if (!equal(newPrefs, await LocalStorage.get(storageKey))) {
-        await LocalStorage.set(storageKey, newPrefs);
+      if (!equal(newPrefs, await LocalStorage.get(STORAGE_KEY))) {
+        await LocalStorage.set(STORAGE_KEY, newPrefs);
       }
     } catch {
       //

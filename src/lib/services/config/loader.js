@@ -4,7 +4,7 @@ import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
 
-const supportedTypes = ['text/yaml', 'application/yaml', 'application/json'];
+const SUPPORTED_TYPES = ['text/yaml', 'application/yaml', 'application/json'];
 
 /**
  * Fetch a single configuration file.
@@ -18,7 +18,7 @@ const fetchFile = async ({ href, type = 'application/yaml' }) => {
   /** @type {Response} */
   let response;
 
-  if (!supportedTypes.includes(type)) {
+  if (!SUPPORTED_TYPES.includes(type)) {
     throw new Error(get(_)('config.error.parse_failed'), {
       cause: new Error(get(_)('config.error.parse_failed_unsupported_type')),
     });

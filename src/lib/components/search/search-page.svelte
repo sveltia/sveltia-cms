@@ -11,14 +11,14 @@
   import { searchMode, searchTerms } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
 
-  const routeRegex = /^\/search\/(?<terms>.+)$/;
+  const ROUTE_REGEX = /^\/search\/(?<terms>.+)$/;
 
   /**
    * Navigate to the search page given the URL hash.
    */
   const navigate = () => {
     const { path } = parseLocation();
-    const { terms } = path.match(routeRegex)?.groups ?? {};
+    const { terms } = path.match(ROUTE_REGEX)?.groups ?? {};
 
     if (terms && terms !== $searchTerms) {
       $searchTerms = terms;

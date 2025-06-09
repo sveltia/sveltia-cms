@@ -4,7 +4,10 @@ import { decodeBase64, encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import { apiConfigPlaceholder, repositoryInfoPlaceholder } from '$lib/services/backends/shared';
+import {
+  API_CONFIG_INFO_PLACEHOLDER,
+  REPOSITORY_INFO_PLACEHOLDER,
+} from '$lib/services/backends/shared';
 import { fetchAPIWithAuth } from '$lib/services/backends/shared/api';
 import { handleClientSideAuthPopup, initClientSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
@@ -42,17 +45,19 @@ import { prefs } from '$lib/services/user/prefs';
 
 const backendName = 'gitea';
 const label = 'Gitea';
-const apiRootDefault = 'https://gitea.com/api/v1';
+const DEFAULT_API_ROOT = 'https://gitea.com/api/v1';
+const DEFAULT_AUTH_ROOT = 'https://gitea.com';
+const DEFAULT_AUTH_PATH = 'login/oauth/authorize';
 /** @type {RepositoryInfo} */
-const repository = { ...repositoryInfoPlaceholder };
+const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /** @type {ApiEndpointConfig} */
-const apiConfig = { ...apiConfigPlaceholder };
+const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
 /**
  * Minimum supported Gitea version. We require at least 1.24 to use the new `file-contents` API
  * endpoint.
  * @see https://github.com/go-gitea/gitea/pull/34139
  */
-const minSupportedVersion = 1.24;
+const MIN_GITEA_VERSION = 1.24;
 /** @type {Record<string, any> | null} */
 let repositoryResponseCache = null;
 /**
@@ -94,10 +99,10 @@ const init = () => {
   const {
     repo: projectPath,
     branch,
-    base_url: authRoot = 'https://gitea.com',
-    auth_endpoint: authPath = 'login/oauth/authorize',
+    base_url: authRoot = DEFAULT_AUTH_ROOT,
+    auth_endpoint: authPath = DEFAULT_AUTH_PATH,
     app_id: clientId = '',
-    api_root: restApiRoot = apiRootDefault,
+    api_root: restApiRoot = DEFAULT_API_ROOT,
   } = backend;
 
   const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
@@ -116,7 +121,7 @@ const init = () => {
       branch,
       baseURL,
       databaseName: `${backendName}:${owner}/${repo}`,
-      isSelfHosted: restApiRoot !== apiRootDefault,
+      isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
     getBaseURLs(baseURL, branch),
   );
@@ -221,11 +226,11 @@ const checkGiteaVersion = async () => {
   }
 
   // Otherwise it’s Gitea, so we can just compare the version number
-  if (Number.parseFloat(version) < minSupportedVersion) {
+  if (Number.parseFloat(version) < MIN_GITEA_VERSION) {
     throw new Error('Unsupported Gitea version', {
       cause: new Error(
         get(_)('backend_unsupported_version', {
-          values: { name: label, version: minSupportedVersion },
+          values: { name: label, version: MIN_GITEA_VERSION },
         }),
       ),
     });

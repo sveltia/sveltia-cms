@@ -14,23 +14,22 @@
   } from 'lexical';
   import { untrack } from 'svelte';
   import {
-    rasterImageExtensionRegex,
-    supportedImageTypes,
-    vectorImageExtensionRegex,
+    RASTER_IMAGE_EXTENSION_REGEX,
+    SUPPORTED_IMAGE_TYPES,
+    VECTOR_IMAGE_EXTENSION_REGEX,
   } from '$lib/services/utils/media/image';
   import {
     EditorComponent,
     getComponentDef,
   } from '$lib/services/contents/widgets/markdown/component';
   import {
-    buttonNameMap,
+    BUTTON_NAME_MAP,
     customComponents,
-    defaultButtons,
-    defaultComponents,
-    defaultModes,
-    modeNameMap,
+    DEFAULT_BUTTONS,
+    DEFAULT_COMPONENTS,
+    DEFAULT_MODES,
+    NODE_NAME_MAP,
   } from '$lib/services/contents/widgets/markdown';
-
   /**
    * @import { WidgetEditorProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';
@@ -63,13 +62,13 @@
 
   const {
     // Widget-specific options
-    modes: _modes = [...defaultModes],
-    buttons: _buttons = [...defaultButtons],
-    editor_components: _editorComponents = [...defaultComponents],
+    modes: _modes = [...DEFAULT_MODES],
+    buttons: _buttons = [...DEFAULT_BUTTONS],
+    editor_components: _editorComponents = [...DEFAULT_COMPONENTS],
     linked_images: linkedImagesEnabled = true,
     minimal = false,
   } = $derived(fieldConfig);
-  const modes = $derived(_modes.map((name) => modeNameMap[name]).filter(Boolean));
+  const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
   const buttons = $derived(
     [
       ..._buttons,
@@ -77,7 +76,7 @@
       ...(_editorComponents.includes('code-block') ? ['code-block'] : []),
     ]
       // @ts-ignore
-      .map((name) => buttonNameMap[name])
+      .map((name) => BUTTON_NAME_MAP[name])
       .filter(Boolean),
   );
   const builtinComponentDefs = $derived(
@@ -164,7 +163,7 @@
     let images = [];
 
     const fileIndex = [...pastedItems].findIndex(
-      ({ kind, type }) => kind === 'file' && supportedImageTypes.includes(type),
+      ({ kind, type }) => kind === 'file' && SUPPORTED_IMAGE_TYPES.includes(type),
     );
 
     const htmlIndex = [...pastedItems].findIndex(
@@ -201,7 +200,7 @@
         if (/^https?:/.test(img.src)) {
           const name = new URL(img.src).pathname.split('/').pop() ?? '';
 
-          if (rasterImageExtensionRegex.test(name) || vectorImageExtensionRegex.test(name)) {
+          if (RASTER_IMAGE_EXTENSION_REGEX.test(name) || VECTOR_IMAGE_EXTENSION_REGEX.test(name)) {
             fileName = name;
           }
         }
@@ -211,7 +210,7 @@
     } else {
       // Handle pasted local files
       images = [...clipboardData.files]
-        .filter(({ type }) => supportedImageTypes.includes(type))
+        .filter(({ type }) => SUPPORTED_IMAGE_TYPES.includes(type))
         .map((file) => ({ file }));
     }
 
@@ -246,7 +245,7 @@
     if (droppedFiles?.length) {
       // Handle dropped local files
       images = [...droppedFiles]
-        .filter(({ type }) => supportedImageTypes.includes(type))
+        .filter(({ type }) => SUPPORTED_IMAGE_TYPES.includes(type))
         .map((file) => ({ file }));
     } else {
       // Handle dropped remote files: The clipboard doesn’t contain the file itself but the HTML may
@@ -267,7 +266,7 @@
           if (dataMatcher) {
             const type = dataMatcher.groups?.type ?? '';
 
-            if (supportedImageTypes.includes(type)) {
+            if (SUPPORTED_IMAGE_TYPES.includes(type)) {
               try {
                 const blob = await (await fetch(src)).blob();
                 const { year, month, day, hour, minute, second } = getDateTimeParts();

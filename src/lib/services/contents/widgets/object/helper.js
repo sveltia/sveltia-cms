@@ -1,4 +1,4 @@
-import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
  * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
@@ -27,7 +27,7 @@ export const formatSummary = ({
   locale,
   summaryTemplate,
 }) => {
-  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
+  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
 
   if (!summaryTemplate) {
     return (
@@ -39,7 +39,7 @@ export const formatSummary = ({
           key.startsWith(`${keyPath}.`) &&
           typeof value === 'string' &&
           !!value.trim() &&
-          getFieldConfig({ ...getFieldConfigArgs, keyPath: key })?.widget !== 'hidden',
+          getField({ ...getFieldArgs, keyPath: key })?.widget !== 'hidden',
       )?.[1] ||
       ''
     );
@@ -49,7 +49,7 @@ export const formatSummary = ({
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
 
     return getFieldDisplayValue({
-      ...getFieldConfigArgs,
+      ...getFieldArgs,
       keyPath: `${keyPath}.${tag.replace(/^fields\./, '')}`,
       locale,
       transformations,

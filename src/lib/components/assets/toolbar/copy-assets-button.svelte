@@ -2,7 +2,7 @@
   import { Alert, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import { supportedImageTypes, transformImage } from '$lib/services/utils/media/image';
+  import { SUPPORTED_IMAGE_TYPES, transformImage } from '$lib/services/utils/media/image';
   import { getAssetBlob, getAssetDetails } from '$lib/services/assets';
 
   /**
@@ -59,7 +59,7 @@
       return true;
     }
 
-    if (supportedImageTypes.includes(type)) {
+    if (SUPPORTED_IMAGE_TYPES.includes(type)) {
       return typeof navigator.clipboard.write === 'function';
     }
 
@@ -94,7 +94,7 @@
       return;
     }
 
-    if (!supportedImageTypes.includes(type)) {
+    if (!SUPPORTED_IMAGE_TYPES.includes(type)) {
       throw new Error('Unsupported type');
     }
 

@@ -9,7 +9,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { allAssetFolders, allAssets } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
-import { gitConfigFileRegex, gitConfigFiles } from '$lib/services/backends';
+import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends';
 import { createFileList } from '$lib/services/backends/shared/fetch';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
@@ -71,7 +71,7 @@ const scanDir = async (dirHandle, context) => {
 
   for await (const [name, handle] of dirHandle.entries()) {
     // Skip hidden files and directories, except for Git configuration files
-    if (name.startsWith('.') && !gitConfigFileRegex.test(name)) {
+    if (name.startsWith('.') && !GIT_CONFIG_FILE_REGEX.test(name)) {
       continue;
     }
 

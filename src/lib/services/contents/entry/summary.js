@@ -5,13 +5,13 @@ import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { applyTransformations } from '$lib/services/common/transformations';
 
 /**
  * @import {
- *CommitAuthor,
+ * CommitAuthor,
  * Entry,
  * EntryCollection,
  * FlattenedEntryContent,
@@ -19,6 +19,23 @@ import { applyTransformations } from '$lib/services/common/transformations';
  * InternalLocaleCode,
  * RawEntryContent,
  * } from '$lib/types/private';
+ */
+
+/**
+ * @typedef {object} ReplacerSubContext
+ * @property {string} slug Entry slug.
+ * @property {string} entryPath Entry path.
+ * @property {string | undefined} basePath Base path for the entry.
+ * @property {Date | undefined} commitDate Commit date.
+ * @property {CommitAuthor | undefined} commitAuthor Commit author.
+ */
+
+/**
+ * @typedef {object} ReplaceContext
+ * @property {FlattenedEntryContent} content Entry content.
+ * @property {string} collectionName Collection name.
+ * @property {ReplacerSubContext} replaceSubContext Context for the `replaceSub` function.
+ * @property {InternalLocaleCode} defaultLocale Default locale.
  */
 
 /**
@@ -70,23 +87,6 @@ export const getEntrySummaryFromContent = (
 };
 
 /**
- * @typedef {object} ReplacerSubContext
- * @property {string} slug Entry slug.
- * @property {string} entryPath Entry path.
- * @property {string | undefined} basePath Base path for the entry.
- * @property {Date | undefined} commitDate Commit date.
- * @property {CommitAuthor | undefined} commitAuthor Commit author.
- */
-
-/**
- * @typedef {object} ReplaceContext
- * @property {FlattenedEntryContent} content Entry content.
- * @property {string} collectionName Collection name.
- * @property {ReplacerSubContext} replaceSubContext Context for the `replaceSub` function.
- * @property {InternalLocaleCode} defaultLocale Default locale.
- */
-
-/**
  * Replacer subroutine.
  * @param {string} tag Field name or one of special tags.
  * @param {ReplacerSubContext} context Context.
@@ -132,12 +132,12 @@ const replace = (placeholder, context) => {
   const { content: valueMap, collectionName, replaceSubContext, defaultLocale } = context;
   const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
   const keyPath = tag.replace(/^fields\./, '');
-  const getFieldConfigArgs = { collectionName, valueMap, keyPath };
+  const getFieldArgs = { collectionName, valueMap, keyPath };
   /** @type {any} */
   let value = replaceSub(tag, replaceSubContext);
 
   if (value === undefined) {
-    value = getFieldDisplayValue({ ...getFieldConfigArgs, locale: defaultLocale });
+    value = getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
   }
 
   if (value === undefined) {
@@ -152,7 +152,7 @@ const replace = (placeholder, context) => {
 
   if (transformations.length) {
     value = applyTransformations({
-      fieldConfig: getFieldConfig({ ...getFieldConfigArgs }),
+      fieldConfig: getField({ ...getFieldArgs }),
       value,
       transformations,
     });

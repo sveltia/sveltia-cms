@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   fieldConfigCacheMap,
-  getFieldConfig,
+  getField,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
 
@@ -13,7 +13,7 @@ vi.mock('$lib/services/contents/collection', () => ({
 
 const mockGetCollection = vi.mocked(getCollection);
 
-describe('Test getFieldConfig()', () => {
+describe('Test getField()', () => {
   // Comprehensive mock collection that covers all test scenarios
   const mockCollection = {
     name: 'posts',
@@ -151,7 +151,7 @@ describe('Test getFieldConfig()', () => {
     test('should return undefined for non-existent collection', () => {
       mockGetCollection.mockReturnValue(undefined);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'nonexistent',
         keyPath: 'title',
       });
@@ -164,7 +164,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'title',
       });
@@ -176,7 +176,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'author.name',
       });
@@ -188,7 +188,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'nonexistent',
       });
@@ -202,7 +202,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockFileCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'config',
         fileName: 'site-config',
         keyPath: 'title',
@@ -215,7 +215,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockFileCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'config',
         keyPath: 'title',
       });
@@ -227,7 +227,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockFileCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'config',
         fileName: 'nonexistent',
         keyPath: 'title',
@@ -243,7 +243,7 @@ describe('Test getFieldConfig()', () => {
       mockGetCollection.mockReturnValue(mockCollection);
 
       // Access list item by index
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'tags.0',
         valueMap: {},
@@ -257,7 +257,7 @@ describe('Test getFieldConfig()', () => {
       mockGetCollection.mockReturnValue(mockCollection);
 
       // Access nested field in list item
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'images.0.alt',
         valueMap: {},
@@ -271,7 +271,7 @@ describe('Test getFieldConfig()', () => {
       mockGetCollection.mockReturnValue(mockCollection);
 
       // Access field in typed list item
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'blocks.0.content',
         valueMap: { 'blocks.0.type': 'text' },
@@ -284,7 +284,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'widget.label',
         valueMap: { 'widget.type': 'button' },
@@ -298,7 +298,7 @@ describe('Test getFieldConfig()', () => {
       mockGetCollection.mockReturnValue(mockCollection);
 
       // Try to access with wrong subfield name
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'tags.0.wrong_field',
         valueMap: {},
@@ -315,7 +315,7 @@ describe('Test getFieldConfig()', () => {
         mockGetCollection.mockReturnValue(mockCollection);
 
         // Test text type
-        const textResult = getFieldConfig({
+        const textResult = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap: { 'blocks.0.type': 'text' },
@@ -324,7 +324,7 @@ describe('Test getFieldConfig()', () => {
         expect(textResult).toEqual({ name: 'content', widget: 'markdown' });
 
         // Test image type
-        const imageResult = getFieldConfig({
+        const imageResult = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.src',
           valueMap: { 'blocks.0.type': 'image' },
@@ -344,7 +344,7 @@ describe('Test getFieldConfig()', () => {
         };
 
         // Test first item (text)
-        const result0 = getFieldConfig({
+        const result0 = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap,
@@ -353,7 +353,7 @@ describe('Test getFieldConfig()', () => {
         expect(result0).toEqual({ name: 'content', widget: 'markdown' });
 
         // Test second item (image)
-        const result1 = getFieldConfig({
+        const result1 = getField({
           collectionName: 'posts',
           keyPath: 'blocks.1.src',
           valueMap,
@@ -362,7 +362,7 @@ describe('Test getFieldConfig()', () => {
         expect(result1).toEqual({ name: 'src', widget: 'image' });
 
         // Test third item (text again)
-        const result2 = getFieldConfig({
+        const result2 = getField({
           collectionName: 'posts',
           keyPath: 'blocks.2.content',
           valueMap,
@@ -375,7 +375,7 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'blocksWithCustomType.0.content',
           valueMap: { 'blocksWithCustomType.0.blockType': 'text' },
@@ -388,7 +388,7 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap: { 'blocks.0.type': 'unknown' },
@@ -401,7 +401,7 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap: {}, // No type specified
@@ -416,7 +416,7 @@ describe('Test getFieldConfig()', () => {
 
         // When accessing the type field itself, it should return undefined since `type` is not a
         // field in any of the types
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.type',
           valueMap: { 'blocks.0.type': 'text' },
@@ -432,7 +432,7 @@ describe('Test getFieldConfig()', () => {
         mockGetCollection.mockReturnValue(mockCollection);
 
         // Test text type
-        const textResult = getFieldConfig({
+        const textResult = getField({
           collectionName: 'posts',
           keyPath: 'widget.content',
           valueMap: { 'widget.type': 'text' },
@@ -441,7 +441,7 @@ describe('Test getFieldConfig()', () => {
         expect(textResult).toEqual({ name: 'content', widget: 'string' });
 
         // Test button type
-        const buttonResult = getFieldConfig({
+        const buttonResult = getField({
           collectionName: 'posts',
           keyPath: 'widget.label',
           valueMap: { 'widget.type': 'button' },
@@ -454,7 +454,7 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'widget.content',
           valueMap: { 'widget.type': 'unknown' },
@@ -467,7 +467,7 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'widget.content',
           valueMap: {}, // No type specified
@@ -482,7 +482,7 @@ describe('Test getFieldConfig()', () => {
 
         // When accessing the type field itself, it should return undefined since `type` is not a
         // field in any of the types
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'widget.type',
           valueMap: { 'widget.type': 'text' },
@@ -495,7 +495,7 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'widget.nonexistent',
           valueMap: { 'widget.type': 'text' },
@@ -570,7 +570,7 @@ describe('Test getFieldConfig()', () => {
         };
 
         // Test nested object field within typed list
-        const headerResult = getFieldConfig({
+        const headerResult = getField({
           collectionName: 'posts',
           keyPath: 'complexContent.0.header.subtitle',
           valueMap,
@@ -579,7 +579,7 @@ describe('Test getFieldConfig()', () => {
         expect(headerResult).toEqual({ name: 'subtitle', widget: 'string' });
 
         // Test nested list field within typed list
-        const itemResult = getFieldConfig({
+        const itemResult = getField({
           collectionName: 'posts',
           keyPath: 'complexContent.0.items.0.url',
           valueMap,
@@ -593,7 +593,7 @@ describe('Test getFieldConfig()', () => {
         mockGetCollection.mockReturnValue(mockCollection);
 
         // Missing intermediate type should result in undefined
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'complexContent.0.header.subtitle',
           valueMap: {
@@ -615,7 +615,7 @@ describe('Test getFieldConfig()', () => {
           'complexContent.0.header.type': 'simple',
         };
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'complexContent.0.header.title',
           valueMap,
@@ -630,7 +630,7 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap: { 'blocks.0.type': '' },
@@ -643,13 +643,13 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result1 = getFieldConfig({
+        const result1 = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap: { 'blocks.0.type': null },
         });
 
-        const result2 = getFieldConfig({
+        const result2 = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap: { 'blocks.0.type': undefined },
@@ -663,7 +663,7 @@ describe('Test getFieldConfig()', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap: {
@@ -681,7 +681,7 @@ describe('Test getFieldConfig()', () => {
         mockGetCollection.mockReturnValue(mockCollection);
 
         // Type names should be case-sensitive
-        const result = getFieldConfig({
+        const result = getField({
           collectionName: 'posts',
           keyPath: 'blocks.0.content',
           valueMap: { 'blocks.0.type': 'TEXT' }, // Wrong case
@@ -709,8 +709,8 @@ describe('Test getFieldConfig()', () => {
           valueMap: { 'blocks.0.type': 'image' },
         };
 
-        getFieldConfig(args1);
-        getFieldConfig(args2);
+        getField(args1);
+        getField(args2);
 
         // Should have called `getCollection` twice due to different cache keys
         expect(mockGetCollection).toHaveBeenCalledTimes(2);
@@ -729,10 +729,10 @@ describe('Test getFieldConfig()', () => {
         };
 
         // First call
-        getFieldConfig(args);
+        getField(args);
 
         // Second call with same valueMap object
-        getFieldConfig(args);
+        getField(args);
 
         // Should only call `getCollection` once due to caching
         expect(mockGetCollection).toHaveBeenCalledTimes(1);
@@ -755,8 +755,8 @@ describe('Test getFieldConfig()', () => {
           valueMap: { 'blocks.0.type': 'text' },
         };
 
-        getFieldConfig(args1);
-        getFieldConfig(args2);
+        getField(args1);
+        getField(args2);
 
         // Should only call `getCollection` once due to JSON.stringify cache key
         expect(mockGetCollection).toHaveBeenCalledTimes(1);
@@ -769,7 +769,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'description',
         isIndexFile: true,
@@ -782,7 +782,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'title',
         isIndexFile: true,
@@ -803,12 +803,12 @@ describe('Test getFieldConfig()', () => {
       };
 
       // First call
-      const result1 = getFieldConfig(args);
+      const result1 = getField(args);
 
       expect(mockGetCollection).toHaveBeenCalledTimes(1);
 
       // Second call should use cache
-      const result2 = getFieldConfig(args);
+      const result2 = getField(args);
 
       expect(mockGetCollection).toHaveBeenCalledTimes(1); // No additional call
       expect(result1).toBe(result2);
@@ -823,13 +823,13 @@ describe('Test getFieldConfig()', () => {
       };
 
       // First call
-      const result1 = getFieldConfig(args);
+      const result1 = getField(args);
 
       expect(mockGetCollection).toHaveBeenCalledTimes(1);
       expect(result1).toBeUndefined();
 
       // Second call should use cache
-      const result2 = getFieldConfig(args);
+      const result2 = getField(args);
 
       expect(mockGetCollection).toHaveBeenCalledTimes(1); // No additional call
       expect(result2).toBeUndefined();
@@ -840,8 +840,8 @@ describe('Test getFieldConfig()', () => {
       mockGetCollection.mockReturnValue(mockCollection);
 
       // Different `keyPath` should create different cache entries
-      getFieldConfig({ collectionName: 'posts', keyPath: 'title' });
-      getFieldConfig({ collectionName: 'posts', keyPath: 'body' });
+      getField({ collectionName: 'posts', keyPath: 'title' });
+      getField({ collectionName: 'posts', keyPath: 'body' });
 
       expect(mockGetCollection).toHaveBeenCalledTimes(2);
     });
@@ -852,7 +852,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'sections.0.content.items.0',
         valueMap: {},
@@ -865,7 +865,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'blocksWithCustomType.0.content',
         valueMap: { 'blocksWithCustomType.0.blockType': 'text' },
@@ -880,7 +880,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: '',
       });
@@ -891,7 +891,7 @@ describe('Test getFieldConfig()', () => {
     test('should handle null/undefined collections gracefully', () => {
       mockGetCollection.mockReturnValue(undefined);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'title',
       });
@@ -910,7 +910,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(emptyCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'title',
       });
@@ -922,7 +922,7 @@ describe('Test getFieldConfig()', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'emptyList.0',
         valueMap: {},
@@ -938,13 +938,13 @@ describe('Test getFieldConfig()', () => {
       mockGetCollection.mockReturnValue(mockCollection);
 
       // Test various numeric indices
-      const result0 = getFieldConfig({
+      const result0 = getField({
         collectionName: 'posts',
         keyPath: 'itemsList.0.title',
         valueMap: {},
       });
 
-      const result10 = getFieldConfig({
+      const result10 = getField({
         collectionName: 'posts',
         keyPath: 'itemsList.10.value',
         valueMap: {},
@@ -960,7 +960,7 @@ describe('Test getFieldConfig()', () => {
 
       // The current implementation keeps the field for numeric keys in multi-field lists and
       // continues to the next part of the path
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'itemsList.0.title',
         valueMap: {},
@@ -974,7 +974,7 @@ describe('Test getFieldConfig()', () => {
       mockGetCollection.mockReturnValue(mockCollection);
 
       // When type is not specified in valueMap, should return undefined
-      const result = getFieldConfig({
+      const result = getField({
         collectionName: 'posts',
         keyPath: 'blocks.0.content',
         valueMap: {}, // No type specified

@@ -5,7 +5,7 @@
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { assetKinds, selectedAssets } from '$lib/services/assets';
+  import { ASSET_KINDS, selectedAssets } from '$lib/services/assets';
   import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
@@ -29,7 +29,7 @@
     disabled={!hasMultipleAssets}
     {currentView}
     noneLabel={$_('all')}
-    filters={assetKinds.map((type) => ({ label: $_(type), field: 'fileType', pattern: type }))}
+    filters={ASSET_KINDS.map((type) => ({ label: $_(type), field: 'fileType', pattern: type }))}
     aria-controls="asset-list"
   />
   <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />

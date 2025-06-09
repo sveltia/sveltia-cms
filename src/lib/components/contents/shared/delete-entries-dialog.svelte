@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { getAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { deleteEntries } from '$lib/services/contents/collection/data';
+  import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';

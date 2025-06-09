@@ -11,7 +11,7 @@ import { get } from 'svelte/store';
 /**
  * @see https://www.pexels.com/api/documentation/#photos-search__parameters__locale
  */
-const supportedLocales = [
+const SUPPORTED_LOCALES = [
   'en-US',
   'pt-BR',
   'es-ES',
@@ -42,7 +42,7 @@ const supportedLocales = [
   'ru-RU',
 ];
 
-const endpoint = 'https://api.pexels.com/v1';
+const ENDPOINT = 'https://api.pexels.com/v1';
 
 /**
  * Search images or fetch curated pictures if no query is given.
@@ -72,13 +72,13 @@ const search = async (query, { apiKey }) => {
       const params = new URLSearchParams(
         /** @type {Record<string, any>} */ ({
           query,
-          locale: supportedLocales.find((code) => code.split('-')[0] === locale) || 'en-US',
+          locale: SUPPORTED_LOCALES.find((code) => code.split('-')[0] === locale) || 'en-US',
           page,
           per_page: 80,
         }),
       );
 
-      const response = await fetch(`${endpoint}/search?${params.toString()}`, { headers });
+      const response = await fetch(`${ENDPOINT}/search?${params.toString()}`, { headers });
 
       if (!response.ok) {
         return Promise.reject();
@@ -102,7 +102,7 @@ const search = async (query, { apiKey }) => {
       }),
     );
 
-    const response = await fetch(`${endpoint}/curated?${params.toString()}`, { headers });
+    const response = await fetch(`${ENDPOINT}/curated?${params.toString()}`, { headers });
 
     if (!response.ok) {
       return Promise.reject();

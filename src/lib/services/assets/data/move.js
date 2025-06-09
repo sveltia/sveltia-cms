@@ -1,127 +1,81 @@
-import { getHash } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
-import { get, writable } from 'svelte/store';
+import { get } from 'svelte/store';
 import {
   allAssetFolders,
   allAssets,
   focusedAsset,
   getAssetBlob,
-  getAssetKind,
   getAssetPublicURL,
-  getAssetsByDirName,
   getCollectionsByAsset,
   globalAssetFolder,
   overlaidAsset,
 } from '$lib/services/assets';
+import { assetUpdatesToast } from '$lib/services/assets/data';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { updatesToastDefaultState } from '$lib/services/contents/collection/data';
+import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { createSavingEntryData, getSlugs } from '$lib/services/contents/draft/save';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
-import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import {
  * Asset,
- * CommitAction,
- * CommitChangesOptions,
  * Entry,
  * EntryDraft,
  * FileChange,
  * InternalCollectionFile,
  * InternalSiteConfig,
  * MovingAsset,
- * UpdatesToastState,
- * UploadingAssets,
  * } from '$lib/types/private';
  */
 
 /**
- * @type {Writable<UpdatesToastState>}
+ * Updates the asset and entry stores after moving or renaming assets.
+ * @param {object} args Arguments.
+ * @param {'move' | 'rename'} args.action The action performed, either 'move' or 'rename'.
+ * @param {MovingAsset[]} args.movingAssets The list of assets being moved or renamed.
+ * @param {Asset[]} args.savingAssets The updated asset objects to be saved in the store.
+ * @param {Entry[]} args.savingEntries The updated entry objects to be saved in the store.
  */
-export const assetUpdatesToast = writable({ ...updatesToastDefaultState });
-
-/**
- * Upload/save the given assets to the backend.
- * @param {UploadingAssets} uploadingAssets Assets to be uploaded.
- * @param {CommitChangesOptions} options Options for the backend handler.
- */
-export const saveAssets = async (uploadingAssets, options) => {
-  const { files, folder, originalAsset } = uploadingAssets;
-
-  const assetNamesInSameFolder =
-    folder?.internalPath !== undefined
-      ? getAssetsByDirName(folder.internalPath).map((a) => a.name.normalize())
-      : [];
-
-  const savingFileList = files.map((file) => {
-    const name =
-      originalAsset?.name ?? renameIfNeeded(sanitizeFileName(file.name), assetNamesInSameFolder);
-
-    if (!assetNamesInSameFolder.includes(name)) {
-      assetNamesInSameFolder.push(name);
-    }
-
-    return {
-      action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
-      name,
-      path: [folder?.internalPath, name].join('/'),
-      file,
-    };
-  });
-
-  await get(backend)?.commitChanges(
-    savingFileList.map(({ action, path, file }) => ({ action, path, data: file })),
-    options,
-  );
-
-  /** @type {Asset[]} */
-  const newAssets = await Promise.all(
-    savingFileList.map(
-      async ({ name, path, file }) =>
-        /** @type {Asset} */ ({
-          blobURL: URL.createObjectURL(file),
-          name,
-          path,
-          sha: await getHash(file),
-          size: file.size,
-          kind: getAssetKind(name),
-          text: undefined,
-          folder,
-        }),
-    ),
-  );
+const updateStores = ({ action, movingAssets, savingAssets, savingEntries }) => {
+  const savingAssetsPaths = movingAssets.map((a) => a.asset.path); // old paths
+  const savingEntryIds = savingEntries.map((e) => e.id);
 
   allAssets.update((assets) => [
-    ...assets.filter((a) => !newAssets.some((na) => na.path === a.path)),
-    ...newAssets,
+    ...assets.filter((a) => !savingAssetsPaths.includes(a.path)),
+    ...savingAssets,
   ]);
 
-  const _focusedAsset = get(focusedAsset);
-  const _overlaidAsset = get(overlaidAsset);
+  allEntries.update((entries) => [
+    ...entries.filter((e) => !savingEntryIds.includes(e.id)),
+    ...savingEntries,
+  ]);
+
+  const _allAssets = get(allAssets);
+  const focusedAssetPath = get(focusedAsset)?.path;
+  const _focusedAsset = movingAssets.find((a) => a.asset.path === focusedAssetPath);
+  const overlaidAssetPath = get(overlaidAsset)?.path;
+  const _overlaidAsset = movingAssets.find((a) => a.asset.path === overlaidAssetPath);
 
   // Replace the existing asset
   if (_focusedAsset) {
-    focusedAsset.set(get(allAssets).find((a) => a.path === _focusedAsset.path));
+    focusedAsset.set(_allAssets.find((a) => a.path === _focusedAsset.path));
   }
 
   // Replace the existing asset
   if (_overlaidAsset) {
-    overlaidAsset.set(get(allAssets).find((a) => a.path === _overlaidAsset.path));
+    overlaidAsset.set(_allAssets.find((a) => a.path === _overlaidAsset.path));
   }
 
-  const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
-
   assetUpdatesToast.set({
-    ...updatesToastDefaultState,
-    saved: true,
-    published: !!get(backend)?.isGit && autoDeployEnabled === true,
-    count: files.length,
+    ...UPDATE_TOAST_DEFAULT_STATE,
+    moved: action === 'move',
+    renamed: action === 'rename',
+    count: movingAssets.length,
   });
 };
 
@@ -276,62 +230,5 @@ export const moveAssets = async (action, movingAssets) => {
     });
   }
 
-  const savingAssetsPaths = movingAssets.map((a) => a.asset.path); // old paths
-  const savingEntryIds = savingEntries.map((e) => e.id);
-
-  allAssets.update((assets) => [
-    ...assets.filter((a) => !savingAssetsPaths.includes(a.path)),
-    ...savingAssets,
-  ]);
-
-  allEntries.update((entries) => [
-    ...entries.filter((e) => !savingEntryIds.includes(e.id)),
-    ...savingEntries,
-  ]);
-
-  const __focusedAsset = movingAssets.find((a) => a.asset.path === get(focusedAsset)?.path);
-  const __overlaidAsset = movingAssets.find((a) => a.asset.path === get(overlaidAsset)?.path);
-
-  // Replace the existing asset
-  if (__focusedAsset) {
-    focusedAsset.set(get(allAssets).find((a) => a.path === __focusedAsset.path));
-  }
-
-  // Replace the existing asset
-  if (__overlaidAsset) {
-    overlaidAsset.set(get(allAssets).find((a) => a.path === __overlaidAsset.path));
-  }
-
-  assetUpdatesToast.set({
-    ...updatesToastDefaultState,
-    moved: action === 'move',
-    renamed: action === 'rename',
-    count: movingAssets.length,
-  });
-};
-
-/**
- * Delete the given assets.
- * @param {Asset[]} assets List of assets to be deleted.
- * @todo Update entries to remove these asset paths. If an asset is used for a required field, show
- * an error message and abort the operation.
- */
-export const deleteAssets = async (assets) => {
-  await get(backend)?.commitChanges(
-    assets.map(({ path }) => ({ action: 'delete', path })),
-    { commitType: 'deleteMedia' },
-  );
-
-  allAssets.update((_allAssets) => _allAssets.filter((asset) => !assets.includes(asset)));
-
-  // Clear asset info in the sidebar
-  focusedAsset.update((_focusedAsset) =>
-    assets.some(({ path }) => _focusedAsset?.path === path) ? undefined : _focusedAsset,
-  );
-
-  assetUpdatesToast.set({
-    ...updatesToastDefaultState,
-    deleted: true,
-    count: assets.length,
-  });
+  updateStores({ action, movingAssets, savingAssets, savingEntries });
 };

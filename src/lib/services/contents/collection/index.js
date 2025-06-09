@@ -11,6 +11,7 @@ import { getI18nConfig } from '$lib/services/contents/i18n';
  * EntryCollection,
  * FileCollection,
  * InternalCollection,
+ * InternalI18nOptions,
  * } from '$lib/types/private';
  * @import { Collection, CollectionFile, FieldKeyPath } from '$lib/types/public';
  */
@@ -57,6 +58,43 @@ const getThumbnailFieldNames = (rawCollection) => {
 };
 
 /**
+ * Parse an entry collection and add additional properties.
+ * @param {Collection} rawCollection Raw collection definition.
+ * @param {InternalI18nOptions} _i18n I18n options of the collection.
+ * @returns {EntryCollection} Parsed entry collection with additional properties.
+ */
+const parseEntryCollection = (rawCollection, _i18n) => ({
+  ...rawCollection,
+  _i18n,
+  _type: 'entry',
+  _file: getFileConfig({ rawCollection, _i18n }),
+  _thumbnailFieldNames: getThumbnailFieldNames(rawCollection),
+});
+
+/**
+ * Parse a file collection and add additional properties.
+ * @param {Collection} rawCollection Raw collection definition.
+ * @param {InternalI18nOptions} _i18n I18n options of the collection.
+ * @param {CollectionFile[]} files List of files in the collection.
+ * @returns {FileCollection} Parsed file collection with additional properties.
+ */
+const parseFileCollection = (rawCollection, _i18n, files) => ({
+  ...rawCollection,
+  _i18n,
+  _type: 'file',
+  _fileMap: files?.length
+    ? Object.fromEntries(
+        files.map((file) => {
+          const __i18n = getI18nConfig(rawCollection, file);
+          const __file = getFileConfig({ rawCollection, file, _i18n: __i18n });
+
+          return [file.name, { ...file, _file: __file, _i18n: __i18n }];
+        }),
+      )
+    : {},
+});
+
+/**
  * Get a collection by name.
  * @param {string} name Collection name.
  * @returns {InternalCollection | undefined} Collection, including some extra, normalized
@@ -80,43 +118,22 @@ export const getCollection = (name) => {
     return undefined;
   }
 
-  const { folder, files } = rawCollection;
+  const { folder, files = [] } = rawCollection;
 
   // Normalize folder/file paths by removing leading/trailing slashes
   if (isEntryCollection) {
     rawCollection.folder = stripSlashes(/** @type {string} */ (folder));
   } else {
-    /** @type {CollectionFile[]} */ (files).forEach((f) => {
+    files.forEach((f) => {
       f.file = stripSlashes(f.file);
     });
   }
 
   const _i18n = getI18nConfig(rawCollection);
 
-  /** @type {InternalCollection} */
   const collection = isEntryCollection
-    ? /** @type {EntryCollection} */ ({
-        ...rawCollection,
-        _i18n,
-        _type: /** @type {CollectionType} */ ('entry'),
-        _file: getFileConfig({ rawCollection, _i18n }),
-        _thumbnailFieldNames: getThumbnailFieldNames(rawCollection),
-      })
-    : /** @type {FileCollection} */ ({
-        ...rawCollection,
-        _i18n,
-        _type: /** @type {CollectionType} */ ('file'),
-        _fileMap: /** @type {CollectionFile[]} */ (files)?.length
-          ? Object.fromEntries(
-              files.map((file) => {
-                const __i18n = getI18nConfig(rawCollection, file);
-                const __file = getFileConfig({ rawCollection, file, _i18n: __i18n });
-
-                return [file.name, { ...file, _file: __file, _i18n: __i18n }];
-              }),
-            )
-          : {},
-      });
+    ? parseEntryCollection(rawCollection, _i18n)
+    : parseFileCollection(rawCollection, _i18n, files);
 
   collectionCacheMap.set(name, collection);
 

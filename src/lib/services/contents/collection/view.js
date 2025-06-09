@@ -10,7 +10,7 @@ import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
 import { getFilesByEntry } from '$lib/services/contents/collection/files';
-import { getFieldConfig, getPropertyValue } from '$lib/services/contents/entry/fields';
+import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
 import { prefs } from '$lib/services/user/prefs';
@@ -35,7 +35,7 @@ import { getRegex } from '$lib/services/utils/misc';
 /**
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
-const defaultSortableFields = ['title', 'name', 'date', 'author', 'description'];
+const DEFAULT_SORTABLE_FIELDS = ['title', 'name', 'date', 'author', 'description'];
 
 /**
  * View settings for the selected entry collection.
@@ -78,7 +78,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
     );
   }
 
-  const fieldConfig = getFieldConfig({ collectionName, keyPath: key });
+  const fieldConfig = getField({ collectionName, keyPath: key });
 
   const type =
     { slug: String, commit_author: String, commit_date: Date }[key] ??
@@ -291,7 +291,7 @@ export const getSortableFields = (collection) => {
       }
     }
   } else {
-    fields = [...defaultSortableFields];
+    fields = [...DEFAULT_SORTABLE_FIELDS];
 
     if (customIdField) {
       fields.unshift(customIdField);
@@ -300,7 +300,7 @@ export const getSortableFields = (collection) => {
   }
 
   // Make sure the fields exist
-  fields = unique(fields).filter((keyPath) => !!getFieldConfig({ collectionName, keyPath }));
+  fields = unique(fields).filter((keyPath) => !!getField({ collectionName, keyPath }));
 
   return {
     fields,
@@ -333,7 +333,7 @@ const getSortFieldLabel = (collection, key) => {
 
         const keyPath = arr.slice(0, index + 1).join('.');
 
-        return getFieldConfig({ collectionName: collection.name, keyPath })?.label || _key;
+        return getField({ collectionName: collection.name, keyPath })?.label || _key;
       })
       .filter(Boolean)
       .join(' – ');

@@ -16,7 +16,7 @@ import { siteConfig } from '$lib/services/config';
  * The default, normalized i18n configuration with no locales defined.
  * @type {InternalI18nOptions}
  */
-export const defaultI18nConfig = {
+export const DEFAULT_I18N_CONFIG = {
   i18nEnabled: false,
   saveAllLocales: true,
   allLocales: ['_default'],

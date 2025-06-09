@@ -8,7 +8,7 @@ import {
   copyFromLocaleToast,
   translatorApiKeyDialogState,
 } from '$lib/services/contents/draft/editor';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -110,13 +110,13 @@ export const copyDefaultLocaleValues = (content) => {
 
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const defaultLocaleValues = currentValues[defaultLocale];
-  const getFieldConfigArgs = { collectionName, fileName, isIndexFile };
+  const getFieldArgs = { collectionName, fileName, isIndexFile };
   /** @type {string[]} */
   const keys = unique([...Object.keys(content), ...Object.keys(defaultLocaleValues)]);
   const newContent = /** @type {FlattenedEntryContent} */ ({});
 
   keys.forEach((keyPath) => {
-    const canDuplicate = getFieldConfig({ ...getFieldConfigArgs, keyPath })?.i18n === 'duplicate';
+    const canDuplicate = getField({ ...getFieldArgs, keyPath })?.i18n === 'duplicate';
 
     newContent[keyPath] =
       (canDuplicate ? defaultLocaleValues[keyPath] : undefined) ?? content[keyPath];
@@ -192,12 +192,12 @@ export const copyFromLocale = async (
   );
 
   const valueMap = currentValues[sourceLocale];
-  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
+  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
 
   const copingFields = Object.fromEntries(
     Object.entries(valueMap).filter(([_keyPath, sourceLocaleValue]) => {
       const targetLocaleValue = currentValues[targetLocale][_keyPath];
-      const field = getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath });
+      const field = getField({ ...getFieldArgs, keyPath: _keyPath });
 
       if (
         (keyPath && !_keyPath.startsWith(keyPath)) ||
@@ -315,11 +315,11 @@ export const revertChanges = (locale = '', keyPath = '') => {
    * @param {boolean} reset Whether ro remove the current value.
    */
   const revert = (_locale, valueMap, reset = false) => {
-    const getFieldConfigArgs = { collectionName: collection.name, fileName, valueMap, isIndexFile };
+    const getFieldArgs = { collectionName: collection.name, fileName, valueMap, isIndexFile };
 
     Object.entries(valueMap).forEach(([_keyPath, value]) => {
       if (!keyPath || _keyPath.startsWith(keyPath)) {
-        const fieldConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath });
+        const fieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
 
         if (_locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
           if (reset) {

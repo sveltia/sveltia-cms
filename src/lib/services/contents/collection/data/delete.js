@@ -1,30 +1,37 @@
-import { get, writable } from 'svelte/store';
+import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
+import {
+  contentUpdatesToast,
+  UPDATE_TOAST_DEFAULT_STATE,
+} from '$lib/services/contents/collection/data';
 
 /**
- * @import { Writable } from 'svelte/store';
- * @import { FileChange, UpdatesToastState } from '$lib/types/private';
+ * @import { FileChange } from '$lib/types/private';
  */
 
 /**
- * @type {UpdatesToastState}
+ * Updates the stores after deleting entries.
+ * @param {string[]} ids List of entry IDs.
+ * @param {string[]} assetPaths List of associated asset paths.
  */
-export const updatesToastDefaultState = {
-  saved: false,
-  moved: false,
-  renamed: false,
-  deleted: false,
-  published: false,
-  count: 1,
+const updateStores = (ids, assetPaths) => {
+  const _allEntries = get(allEntries);
+
+  allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));
+
+  contentUpdatesToast.set({
+    ...UPDATE_TOAST_DEFAULT_STATE,
+    deleted: true,
+    count: ids.length,
+  });
+
+  if (assetPaths.length) {
+    allAssets.update((assets) => assets.filter((asset) => !assetPaths.includes(asset.path)));
+  }
 };
-
-/**
- * @type {Writable<UpdatesToastState>}
- */
-export const contentUpdatesToast = writable({ ...updatesToastDefaultState });
 
 /**
  * Delete entries by slugs.
@@ -63,15 +70,5 @@ export const deleteEntries = async (ids, assetPaths = []) => {
     collection: get(selectedCollection),
   });
 
-  allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));
-
-  contentUpdatesToast.set({
-    ...updatesToastDefaultState,
-    deleted: true,
-    count: ids.length,
-  });
-
-  if (assetPaths.length) {
-    allAssets.update((assets) => assets.filter((asset) => !assetPaths.includes(asset.path)));
-  }
+  updateStores(ids, assetPaths);
 };

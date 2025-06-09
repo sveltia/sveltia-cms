@@ -573,7 +573,7 @@
 
 /**
  * Toast notification state for content/asset updates.
- * @typedef {object} UpdatesToastState
+ * @typedef {object} UpdateToastState
  * @property {number} count The number of items.
  * @property {boolean} saved Whether the items have been created or updated.
  * @property {boolean} moved Whether the items have been moved.

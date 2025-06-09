@@ -17,8 +17,8 @@
   import { getDefaultValues } from '$lib/services/contents/draft/create';
   import { syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
-  import { getFieldConfig } from '$lib/services/contents/entry/fields';
-  import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { getField } from '$lib/services/contents/entry/fields';
+  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/widgets/object/helper';
   import { isSmallScreen } from '$lib/services/user/env';
 
@@ -64,15 +64,14 @@
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const collectionFile = $derived($entryDraft?.collectionFile);
   const fileName = $derived($entryDraft?.fileName);
-  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
-  const getFieldConfigArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
+  const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   const hasValues = $derived(
     Object.entries(valueMap).some(
       ([_keyPath, value]) =>
         !!_keyPath.startsWith(`${keyPath}.`) &&
-        (value !== null ||
-          getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath })?.widget === 'object'),
+        (value !== null || getField({ ...getFieldArgs, keyPath: _keyPath })?.widget === 'object'),
     ),
   );
   const canEdit = $derived(locale === defaultLocale || i18n !== false);
@@ -160,8 +159,7 @@
    * Format the summary template.
    * @returns {string} Formatted summary.
    */
-  const _formatSummary = () =>
-    formatSummary({ ...getFieldConfigArgs, keyPath, locale, summaryTemplate });
+  const _formatSummary = () => formatSummary({ ...getFieldArgs, keyPath, locale, summaryTemplate });
 
   onMount(() => {
     // Initialize the expander state

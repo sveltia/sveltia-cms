@@ -4,9 +4,9 @@ import { siteConfig } from '$lib/services/config';
 import { allStockAssetProviders } from '$lib/services/integrations/media-libraries';
 import {
   optimizeSVG,
-  rasterImageConversionFormats,
-  rasterImageExtensionRegex,
-  rasterImageFormats,
+  RASTER_IMAGE_CONVERSION_FORMATS,
+  RASTER_IMAGE_EXTENSION_REGEX,
+  RASTER_IMAGE_FORMATS,
   transformImage,
 } from '$lib/services/utils/media/image';
 
@@ -105,14 +105,16 @@ export const transformFile = async (file, transformations) => {
       transformation = /** @type {Record<string, any>} */ (transformations)[subType];
     } else if (
       'raster_image' in transformations &&
-      /** @type {string[]} */ (rasterImageFormats).includes(subType)
+      /** @type {string[]} */ (RASTER_IMAGE_FORMATS).includes(subType)
     ) {
       transformation = transformations.raster_image;
     }
 
     if (transformation) {
       const { format, quality, width, height } = transformation;
-      const newFormat = format && rasterImageConversionFormats.includes(format) ? format : 'webp';
+
+      const newFormat =
+        format && RASTER_IMAGE_CONVERSION_FORMATS.includes(format) ? format : 'webp';
 
       const blob = await transformImage(file, {
         format: newFormat,
@@ -123,8 +125,8 @@ export const transformFile = async (file, transformations) => {
 
       const newFileName =
         blob.type === `image/${newFormat}`
-          ? rasterImageExtensionRegex.test(file.name)
-            ? file.name.replace(rasterImageExtensionRegex, newFormat)
+          ? RASTER_IMAGE_EXTENSION_REGEX.test(file.name)
+            ? file.name.replace(RASTER_IMAGE_EXTENSION_REGEX, newFormat)
             : file.name.concat(newFormat)
           : // Failed to transform
             file.name;

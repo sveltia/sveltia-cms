@@ -3,7 +3,7 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
-import { getFieldConfig, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
@@ -208,7 +208,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     .map(({ refEntry, content }) => {
       const { slug, locales } = refEntry;
       const isIndexFile = isCollectionIndexFile(collection, refEntry);
-      const getFieldConfigArgs = { collectionName, fileName, isIndexFile };
+      const getFieldArgs = { collectionName, fileName, isIndexFile };
 
       /**
        * Wrapper for {@link getFieldDisplayValue}.
@@ -218,7 +218,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
        */
       const getDisplayValue = (keyPath, _locale) =>
         getFieldDisplayValue({
-          ...getFieldConfigArgs,
+          ...getFieldArgs,
           keyPath,
           valueMap: _locale ? locales[_locale].content : content,
           locale: _locale ?? locale,
@@ -283,11 +283,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
       allFieldNames.forEach((fieldName) => {
         if (fieldName.includes('*')) {
           const baseFieldName = fieldName.replace(/\.\*.*$/, '');
-
-          const fieldConfigForList = getFieldConfig({
-            ...getFieldConfigArgs,
-            keyPath: baseFieldName,
-          });
+          const fieldConfigForList = getField({ ...getFieldArgs, keyPath: baseFieldName });
 
           listFieldConfigs.set(fieldName, {
             baseFieldName,

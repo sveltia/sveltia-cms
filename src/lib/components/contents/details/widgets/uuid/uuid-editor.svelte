@@ -7,7 +7,7 @@
   import { TextInput } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { defaultI18nConfig } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
   import { getDefaultValue } from '$lib/services/contents/widgets/uuid/helper';
 
   /**
@@ -36,7 +36,7 @@
 
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
-  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
 
   // Generate the default value here instead of in `create.js` because `getDefaultValues()` doesn’t
   // i18n-duplicate the value

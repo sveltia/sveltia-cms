@@ -20,7 +20,7 @@
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/draft/editor';
-  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG, getLocaleLabel } from '$lib/services/contents/i18n';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   let restoring = false;
@@ -38,7 +38,7 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const { showPreview } = $derived($entryEditorSettings ?? {});
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
+    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
   const paneStateKey = $derived(

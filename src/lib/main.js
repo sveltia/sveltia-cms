@@ -45,7 +45,7 @@ const unsupportedFuncNames = [
   'resolveWidget',
 ];
 
-const compatibilityURL = 'https://github.com/sveltia/sveltia-cms#compatibility';
+const COMPATIBILITY_URL = 'https://github.com/sveltia/sveltia-cms#compatibility';
 let initialized = false;
 
 /**
@@ -175,7 +175,7 @@ const CMS = new Proxy(
 
       if (message) {
         // eslint-disable-next-line no-console
-        console.error(`${message} See %s for compatibility information.`, key, compatibilityURL);
+        console.error(`${message} See %s for compatibility information.`, key, COMPATIBILITY_URL);
 
         // eslint-disable-next-line jsdoc/require-description
         /** @returns {void} */

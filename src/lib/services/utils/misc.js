@@ -1,5 +1,5 @@
 // cspell:disable-next-line
-const fullRegexPattern = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuy]*))?$/;
+const FULL_REGEX_PATTERN = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuy]*))?$/;
 
 /**
  * Returns a RegExp object based on the provided pattern. If the pattern is already a RegExp, it
@@ -16,7 +16,7 @@ export const getRegex = (input) => {
   if (typeof input === 'string') {
     // Parse the regex to support simple pattern, e.g `.{12,}`, and complete expression, e.g.
     // `/^.{0,280}$/s`
-    const { pattern, flags } = input.match(fullRegexPattern)?.groups ?? {};
+    const { pattern, flags } = input.match(FULL_REGEX_PATTERN)?.groups ?? {};
 
     if (pattern) {
       try {

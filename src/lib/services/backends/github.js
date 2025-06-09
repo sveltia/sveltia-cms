@@ -4,7 +4,10 @@ import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
-import { apiConfigPlaceholder, repositoryInfoPlaceholder } from '$lib/services/backends/shared';
+import {
+  API_CONFIG_INFO_PLACEHOLDER,
+  REPOSITORY_INFO_PLACEHOLDER,
+} from '$lib/services/backends/shared';
 import { fetchAPIWithAuth } from '$lib/services/backends/shared/api';
 import { initServerSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
@@ -38,11 +41,14 @@ const backendName = 'github';
 const label = 'GitHub';
 const statusDashboardURL = 'https://www.githubstatus.com/';
 const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
-const apiRootDefault = 'https://api.github.com';
+const DEFAULT_API_ROOT = 'https://api.github.com';
+const DEFAULT_AUTH_ROOT = 'https://api.netlify.com';
+const DEFAULT_AUTH_PATH = 'auth';
+const DEFAULT_ORIGIN = 'https://github.com';
 /** @type {RepositoryInfo} */
-const repository = { ...repositoryInfoPlaceholder };
+const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /** @type {ApiEndpointConfig} */
-const apiConfig = { ...apiConfigPlaceholder };
+const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
 
 /**
  * Check the GitHub service status.
@@ -122,9 +128,9 @@ const init = () => {
   const {
     repo: projectPath,
     branch,
-    base_url: authRoot = 'https://api.netlify.com',
-    auth_endpoint: authPath = 'auth',
-    api_root: restApiRoot = apiRootDefault,
+    base_url: authRoot = DEFAULT_AUTH_ROOT,
+    auth_endpoint: authPath = DEFAULT_AUTH_PATH,
+    api_root: restApiRoot = DEFAULT_API_ROOT,
     graphql_api_root: graphqlApiRoot = restApiRoot,
   } = backend;
 
@@ -132,8 +138,8 @@ const init = () => {
   // Developers may misconfigure custom API roots, so we use the origin to redefine them
   const restApiOrigin = new URL(restApiRoot).origin;
   const graphqlApiOrigin = new URL(graphqlApiRoot).origin;
-  const isSelfHosted = restApiRoot !== apiRootDefault;
-  const origin = isSelfHosted ? restApiOrigin : 'https://github.com';
+  const isSelfHosted = restApiRoot !== DEFAULT_API_ROOT;
+  const origin = isSelfHosted ? restApiOrigin : DEFAULT_ORIGIN;
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
   const baseURL = `${origin}/${owner}/${repo}`;
 

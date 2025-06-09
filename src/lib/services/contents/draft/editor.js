@@ -3,7 +3,7 @@ import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { entryDraft } from '$lib/services/contents/draft';
-import { getFieldConfig } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -90,7 +90,7 @@ export const syncExpanderStates = (stateMap) => {
 /**
  * Get a list of keys for the expander states, given the key path. The returned keys could include
  * nested lists and objects.
- * @param {object} args Partial arguments for {@link getFieldConfig}.
+ * @param {object} args Partial arguments for {@link getField}.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
@@ -108,11 +108,11 @@ export const getExpanderKeys = ({
   isIndexFile = false,
 }) => {
   const keys = new Set();
-  const getFieldConfigArgs = { collectionName, fileName, valueMap, isIndexFile };
+  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
 
   keyPath.split('.').forEach((_keyPart, index, arr) => {
     const _keyPath = arr.slice(0, index + 1).join('.');
-    const config = getFieldConfig({ ...getFieldConfigArgs, keyPath: _keyPath });
+    const config = getField({ ...getFieldArgs, keyPath: _keyPath });
     const endingWithNumber = /\.\d+$/.test(_keyPath);
 
     if (config?.widget === 'object') {
@@ -125,7 +125,7 @@ export const getExpanderKeys = ({
       keys.add(endingWithNumber ? _keyPath : `${_keyPath}#`);
     } else if (index > 0) {
       const parentKeyPath = arr.slice(0, index).join('.');
-      const parentConfig = getFieldConfig({ ...getFieldConfigArgs, keyPath: parentKeyPath });
+      const parentConfig = getField({ ...getFieldArgs, keyPath: parentKeyPath });
 
       if (parentConfig?.widget === 'object' && /** @type {ObjectField} */ (parentConfig).fields) {
         keys.add(`${parentKeyPath}.${parentConfig.name}#`);
@@ -142,7 +142,7 @@ export const getExpanderKeys = ({
 
 /**
  * Expand any invalid fields, including the parent list/object(s).
- * @param {object} args Partial arguments for {@link getFieldConfig}.
+ * @param {object} args Partial arguments for {@link getField}.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File collection only.
  * @param {LocaleContentMap} args.currentValues Field values.

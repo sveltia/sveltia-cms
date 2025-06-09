@@ -15,7 +15,7 @@ import { user } from '$lib/services/user';
  * Default commit message templates.
  * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
  */
-const defaultCommitMessages = {
+const DEFAULT_COMMIT_MESSAGES = {
   create: 'Create {{collection}} “{{slug}}”',
   update: 'Update {{collection}} “{{slug}}”',
   delete: 'Delete {{collection}} “{{slug}}”',
@@ -46,7 +46,7 @@ export const createCommitMessage = (
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection?.label_singular || collection?.label || collection?.name || '';
   // @ts-ignore
-  let message = customCommitMessages[commitType] || defaultCommitMessages[commitType] || '';
+  let message = customCommitMessages[commitType] || DEFAULT_COMMIT_MESSAGES[commitType] || '';
 
   if (['create', 'update', 'delete'].includes(commitType)) {
     message = message

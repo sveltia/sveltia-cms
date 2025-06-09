@@ -31,7 +31,7 @@
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { isSmallScreen } from '$lib/services/user/env';
 
-  const routeRegex = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
+  const ROUTE_REGEX = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
 
   let isIndexPage = $state(false);
 
@@ -45,7 +45,7 @@
    */
   const navigate = async () => {
     const { path } = parseLocation();
-    const match = path.match(routeRegex);
+    const match = path.match(ROUTE_REGEX);
 
     isIndexPage = false;
 
@@ -118,7 +118,7 @@
 
 <svelte:window
   onhashchange={(event) => {
-    updateContentFromHashChange(event, navigate, routeRegex);
+    updateContentFromHashChange(event, navigate, ROUTE_REGEX);
   }}
 />
 

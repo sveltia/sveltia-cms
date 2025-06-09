@@ -10,17 +10,17 @@ import { loadModule } from '$lib/services/app/dependencies';
  */
 
 /** @type {RasterImageFormat[]} */
-export const rasterImageFormats = ['avif', 'gif', 'jpeg', 'png', 'webp'];
-export const rasterImageTypes = rasterImageFormats.map((format) => `image/${format}`);
-export const rasterImageExtensionRegex = /\b(?:avif|gif|jpe?g|png|webp)$/i;
+export const RASTER_IMAGE_FORMATS = ['avif', 'gif', 'jpeg', 'png', 'webp'];
+export const RASTER_IMAGE_TYPES = RASTER_IMAGE_FORMATS.map((format) => `image/${format}`);
+export const RASTER_IMAGE_EXTENSION_REGEX = /\b(?:avif|gif|jpe?g|png|webp)$/i;
 /** @type {VectorImageFormat[]} */
-export const vectorImageFormats = ['svg'];
-export const vectorImageTypes = ['image/svg+xml'];
-export const vectorImageExtensionRegex = /\b(?:svg)$/i;
-export const supportedImageFormats = [...rasterImageFormats, ...vectorImageFormats];
-export const supportedImageTypes = [...rasterImageTypes, ...vectorImageTypes];
+export const VECTOR_IMAGE_FORMATS = ['svg'];
+export const VECTOR_IMAGE_TYPES = ['image/svg+xml'];
+export const VECTOR_IMAGE_EXTENSION_REGEX = /\b(?:svg)$/i;
+export const SUPPORTED_IMAGE_FORMATS = [...RASTER_IMAGE_FORMATS, ...VECTOR_IMAGE_FORMATS];
+export const SUPPORTED_IMAGE_TYPES = [...RASTER_IMAGE_TYPES, ...VECTOR_IMAGE_TYPES];
 /** @type {RasterImageConversionFormat[]} */
-export const rasterImageConversionFormats = ['webp'];
+export const RASTER_IMAGE_CONVERSION_FORMATS = ['webp'];
 
 /**
  * Calculate the size of resized canvas.
@@ -144,7 +144,7 @@ export const exportCanvasAsBlob = async (canvas, { format = 'webp', quality = 85
 
   if (
     !(await checkIfEncodingIsSupported(format)) &&
-    /** @type {string[]} */ (rasterImageConversionFormats).includes(format)
+    /** @type {string[]} */ (RASTER_IMAGE_CONVERSION_FORMATS).includes(format)
   ) {
     const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -161,6 +161,64 @@ export const exportCanvasAsBlob = async (canvas, { format = 'webp', quality = 85
   }
 
   return canvas.convertToBlob({ type, quality: quality / 100 });
+};
+
+/**
+ * Get an image source from a Blob or File. If the Blob is a video, create a `<video>` element, and
+ * return it. If it’s an image, create an `<img>` element and return it.
+ * @param {File | Blob} blob File or blob to be converted to an image source.
+ * @returns {Promise<{ source: CanvasImageSource, naturalWidth: number, naturalHeight: number }>}
+ * Canvas image source and its natural dimensions.
+ */
+const createImageSource = async (blob) => {
+  const blobURL = URL.createObjectURL(blob);
+  /** @type {number} */
+  let naturalWidth = 0;
+  /** @type {number} */
+  let naturalHeight = 0;
+
+  const source = await new Promise((resolve) => {
+    if (blob.type.startsWith('video/')) {
+      const video = document.createElement('video');
+
+      video.addEventListener(
+        'canplay',
+        async () => {
+          video.pause();
+          ({ videoWidth: naturalWidth, videoHeight: naturalHeight } = video);
+          resolve(video);
+        },
+        { once: true },
+      );
+
+      video.muted = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.src = blobURL;
+
+      // Add `<video>` to DOM or it won’t be rendered on canvas
+      video.style.opacity = '0';
+      video.style.pointerEvents = 'none';
+      document.body.appendChild(video);
+    } else {
+      const image = new Image();
+
+      image.addEventListener(
+        'load',
+        () => {
+          ({ naturalWidth, naturalHeight } = image);
+          resolve(image);
+        },
+        { once: true },
+      );
+
+      image.src = blobURL;
+    }
+  });
+
+  URL.revokeObjectURL(blobURL);
+
+  return { source, naturalWidth, naturalHeight };
 };
 
 /**
@@ -188,48 +246,7 @@ export const transformImage = async (
     ({ width: naturalWidth, height: naturalHeight } = source);
   } catch {
     // Fall back to `<img>` or `<video>` when thrown; this includes SVG
-    const blobURL = URL.createObjectURL(blob);
-
-    source = await new Promise((resolve) => {
-      if (blob.type.startsWith('video/')) {
-        const video = document.createElement('video');
-
-        video.addEventListener(
-          'canplay',
-          async () => {
-            video.pause();
-            ({ videoWidth: naturalWidth, videoHeight: naturalHeight } = video);
-            resolve(video);
-          },
-          { once: true },
-        );
-
-        video.muted = true;
-        video.autoplay = true;
-        video.playsInline = true;
-        video.src = blobURL;
-
-        // Add `<video>` to DOM or it won’t be rendered on canvas
-        video.style.opacity = '0';
-        video.style.pointerEvents = 'none';
-        document.body.appendChild(video);
-      } else {
-        const image = new Image();
-
-        image.addEventListener(
-          'load',
-          () => {
-            ({ naturalWidth, naturalHeight } = image);
-            resolve(image);
-          },
-          { once: true },
-        );
-
-        image.src = blobURL;
-      }
-    });
-
-    URL.revokeObjectURL(blobURL);
+    ({ source, naturalWidth, naturalHeight } = await createImageSource(blob));
   }
 
   width ??= naturalWidth;

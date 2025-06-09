@@ -27,7 +27,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { hasMouse } from '$lib/services/user/env';
   import { formatSize } from '$lib/services/utils/file';
-  import { supportedImageTypes } from '$lib/services/utils/media/image';
+  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
    * @import {
@@ -241,7 +241,7 @@
 <DropZone
   bind:this={dropZone}
   disabled={readonly}
-  accept={accept ?? (isImageWidget ? supportedImageTypes.join(',') : undefined)}
+  accept={accept ?? (isImageWidget ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
   onDrop={({ files }) => {
     if (files.length) {
       onResourceSelect({

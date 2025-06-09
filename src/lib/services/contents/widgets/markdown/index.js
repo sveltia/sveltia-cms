@@ -12,13 +12,13 @@
  * The default `modes` property options.
  * @type {RichTextEditorMode[]}
  */
-export const defaultModes = ['rich_text', 'raw'];
+export const DEFAULT_MODES = ['rich_text', 'raw'];
 
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
  * @type {Record<RichTextEditorMode, TextEditorMode>}
  */
-export const modeNameMap = {
+export const NODE_NAME_MAP = {
   rich_text: 'rich-text',
   raw: 'plain-text',
 };
@@ -27,7 +27,7 @@ export const modeNameMap = {
  * The default `buttons` property options.
  * @type {RichTextEditorButtonName[]}
  */
-export const defaultButtons = [
+export const DEFAULT_BUTTONS = [
   'bold',
   'italic',
   'code',
@@ -48,7 +48,7 @@ export const defaultButtons = [
  * @type {Record<RichTextEditorButtonName | 'code-block', TextEditorInlineType |
  * TextEditorBlockType>}
  */
-export const buttonNameMap = {
+export const BUTTON_NAME_MAP = {
   bold: 'bold',
   italic: 'italic',
   code: 'code',
@@ -69,7 +69,7 @@ export const buttonNameMap = {
  * The default `editor_components` property options.
  * @type {RichTextEditorComponentName[]}
  */
-export const defaultComponents = ['code-block', 'image'];
+export const DEFAULT_COMPONENTS = ['code-block', 'image'];
 
 /**
  * Custom components registered using `CMS.registerEditorComponent`.

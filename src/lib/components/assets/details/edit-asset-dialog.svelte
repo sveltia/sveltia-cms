@@ -2,7 +2,7 @@
   import { Dialog, Switch, TextArea } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { editingAsset, getAssetBlob, showAssetOverlay } from '$lib/services/assets';
-  import { saveAssets } from '$lib/services/assets/data';
+  import { saveAssets } from '$lib/services/assets/data/create';
 
   /**
    * @import { Asset } from '$lib/types/private';

@@ -11,7 +11,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
-  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG, getLocaleLabel } from '$lib/services/contents/i18n';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
@@ -41,7 +41,7 @@
   const originalEntry = $derived($entryDraft?.originalEntry);
   const originalValues = $derived($entryDraft?.originalValues ?? {});
   const { i18nEnabled, saveAllLocales, allLocales, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? defaultI18nConfig,
+    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
   const isLocaleEnabled = $derived($entryDraft?.currentLocales[$thisPane?.locale ?? '']);
   const isOnlyLocale = $derived(

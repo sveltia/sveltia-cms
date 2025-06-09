@@ -52,10 +52,10 @@ vi.mock('$lib/services/contents/i18n', () => ({
 }));
 
 vi.mock('$lib/services/utils/date', () => ({
-  dateFormatOptions: { year: 'numeric', month: '2-digit', day: '2-digit' },
-  dateRegex: /^\d{4}-\d{2}-\d{2}$/,
-  timeFormatOptions: { hour: '2-digit', minute: '2-digit' },
-  timeSuffixRegex: /[+-]\d{2}:\d{2}$/,
+  DATE_FORMAT_OPTIONS: { year: 'numeric', month: '2-digit', day: '2-digit' },
+  DATE_REGEX: /^\d{4}-\d{2}-\d{2}$/,
+  TIME_FORMAT_OPTIONS: { hour: '2-digit', minute: '2-digit' },
+  TIME_SUFFIX_REGEX: /[+-]\d{2}:\d{2}$/,
 }));
 
 // Set up default mock return values

@@ -21,7 +21,7 @@
   import { getAssetFolder } from '$lib/services/assets';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
-  import { deleteEntries } from '$lib/services/contents/collection/data';
+  import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { canCreateEntry } from '$lib/services/contents/collection/entries';
   import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft, duplicateDraft } from '$lib/services/contents/draft/create';
@@ -31,7 +31,7 @@
   import { getEntryPreviewURL } from '$lib/services/contents/entry';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { defaultI18nConfig, getLocaleLabel } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG, getLocaleLabel } from '$lib/services/contents/i18n';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
@@ -63,7 +63,7 @@
   const originalEntry = $derived($entryDraft?.originalEntry);
   const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const showSaveOptions = $derived(!!$backend?.isGit && typeof autoDeployEnabled === 'boolean');
-  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? defaultI18nConfig);
+  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const collectionName = $derived(collection?.name);
   const fileName = $derived(collectionFile?.name);
   const collectionLabel = $derived(collection?.label || collectionName);

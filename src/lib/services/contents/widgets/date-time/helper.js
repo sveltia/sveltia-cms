@@ -2,10 +2,10 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
 import { getCanonicalLocale } from '$lib/services/contents/i18n';
 import {
-  dateFormatOptions,
-  dateRegex,
-  timeFormatOptions,
-  timeSuffixRegex,
+  DATE_FORMAT_OPTIONS,
+  DATE_REGEX,
+  TIME_FORMAT_OPTIONS,
+  TIME_SUFFIX_REGEX,
 } from '$lib/services/utils/date';
 
 /**
@@ -281,22 +281,22 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
   }
 
   if (timeOnly) {
-    return date.toLocaleTimeString(canonicalLocale, timeFormatOptions);
+    return date.toLocaleTimeString(canonicalLocale, TIME_FORMAT_OPTIONS);
   }
 
   if (dateOnly) {
     return date.toLocaleDateString(canonicalLocale, {
-      ...dateFormatOptions,
+      ...DATE_FORMAT_OPTIONS,
       timeZone:
-        utc || dateRegex.test(currentValue) || timeSuffixRegex.test(currentValue)
+        utc || DATE_REGEX.test(currentValue) || TIME_SUFFIX_REGEX.test(currentValue)
           ? 'UTC'
           : undefined,
     });
   }
 
   return date.toLocaleString(canonicalLocale, {
-    ...dateFormatOptions,
-    ...timeFormatOptions,
+    ...DATE_FORMAT_OPTIONS,
+    ...TIME_FORMAT_OPTIONS,
     timeZone: utc ? 'UTC' : undefined,
     timeZoneName: utc ? undefined : 'short',
   });

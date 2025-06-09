@@ -8,7 +8,7 @@ import { get } from 'svelte/store';
 /**
  * @see https://pixabay.com/api/docs/#api_search_images
  */
-const supportedLocales = [
+const SUPPORTED_LOCALES = [
   'cs',
   'da',
   'de',
@@ -37,7 +37,7 @@ const supportedLocales = [
   'zh',
 ];
 
-const endpoint = 'https://pixabay.com/api';
+const ENDPOINT = 'https://pixabay.com/api';
 
 /**
  * Search images or fetch curated pictures if no query is given.
@@ -55,7 +55,7 @@ const search = async (query, { apiKey }) => {
     /** @type {Record<string, any>} */ ({
       key: apiKey,
       q: query,
-      lang: supportedLocales.includes(locale) ? locale : 'en',
+      lang: SUPPORTED_LOCALES.includes(locale) ? locale : 'en',
       image_type: 'photo',
       min_width: 1280,
       editors_choice: !query,
@@ -64,7 +64,7 @@ const search = async (query, { apiKey }) => {
     }),
   );
 
-  const response = await fetch(`${endpoint}/?${params.toString()}`);
+  const response = await fetch(`${ENDPOINT}/?${params.toString()}`);
 
   if (!response.ok) {
     return Promise.reject();

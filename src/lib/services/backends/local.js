@@ -40,7 +40,7 @@ const repository = new Proxy(/** @type {any} */ ({}), {
   get: (_obj, key) => (remoteRepository ?? repositoryProps)[key],
 });
 
-const rootDirHandleKey = 'root_dir_handle';
+const ROOT_DIR_HANDLE_KEY = 'root_dir_handle';
 /**
  * @type {IndexedDB | null | undefined}
  */
@@ -68,7 +68,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
   }
 
   /** @type {FileSystemDirectoryHandle | null} */
-  let handle = forceReload ? null : ((await rootDirHandleDB?.get(rootDirHandleKey)) ?? null);
+  let handle = forceReload ? null : ((await rootDirHandleDB?.get(ROOT_DIR_HANDLE_KEY)) ?? null);
 
   if (handle) {
     if ((await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') {
@@ -93,7 +93,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
       // This will throw `NotFoundError` when it’s not a project root directory
       await handle.getDirectoryHandle('.git');
       // If it looks fine, cache the directory handle
-      await rootDirHandleDB?.set(rootDirHandleKey, handle);
+      await rootDirHandleDB?.set(ROOT_DIR_HANDLE_KEY, handle);
     }
   }
 
@@ -141,7 +141,7 @@ const signIn = async ({ auto = false }) => {
  * directory handle.
  */
 const signOut = async () => {
-  await rootDirHandleDB?.delete(rootDirHandleKey);
+  await rootDirHandleDB?.delete(ROOT_DIR_HANDLE_KEY);
 };
 
 /**
