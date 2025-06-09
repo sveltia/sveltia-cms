@@ -10,7 +10,7 @@
   import { getFilesByEntry } from '$lib/services/contents/collection/files';
   import { getAssociatedCollections } from '$lib/services/contents/entry';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '$lib/services/utils/date';
+  import { DATE_TIME_FORMAT_OPTIONS } from '$lib/services/utils/date';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media/video';
 
@@ -133,10 +133,7 @@
     <section>
       <h4>{$_('sort_keys.commit_date')}</h4>
       <p>
-        {commitDate.toLocaleString($appLocale ?? undefined, {
-          ...DATE_FORMAT_OPTIONS,
-          ...TIME_FORMAT_OPTIONS,
-        })}
+        {commitDate.toLocaleString($appLocale ?? undefined, DATE_TIME_FORMAT_OPTIONS)}
       </p>
     </section>
   {/if}

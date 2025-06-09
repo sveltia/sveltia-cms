@@ -19,3 +19,9 @@ export const DATE_FORMAT_OPTIONS = { year: 'numeric', month: 'short', day: 'nume
  * @type {Intl.DateTimeFormatOptions}
  */
 export const TIME_FORMAT_OPTIONS = { hour: 'numeric', minute: 'numeric', hour12: true };
+
+/**
+ * Standard date/time format options.
+ * @type {Intl.DateTimeFormatOptions}
+ */
+export const DATE_TIME_FORMAT_OPTIONS = { ...DATE_FORMAT_OPTIONS, ...TIME_FORMAT_OPTIONS };

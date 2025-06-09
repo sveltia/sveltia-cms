@@ -34,7 +34,7 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * AssetKind,
  * Entry,
  * InternalCollection,
- * InternalCollectionFile,
+ * InternalI18nOptions,
  * InternalImageTransformationOptions,
  * InternalSiteConfig,
  * ProcessedAssets,
@@ -392,14 +392,14 @@ export const getCollectionsByAsset = (asset) =>
 
 /**
  * Find an asset.
- * @param {InternalCollection | InternalCollectionFile} input Collection or single collection file.
  * @param {object} context Context.
  * @param {string} context.path Saved relative path.
  * @param {Entry} context.entry Associated entry to be used to help locate an asset from a relative
  * path. Can be `undefined` when editing a new draft.
+ * @param {InternalI18nOptions} context._i18n I18n options for the collection or collection file.
  * @returns {Asset | undefined} Found asset.
  */
-const getAsset = ({ _i18n }, { path, entry }) => {
+const getAsset = ({ path, entry, _i18n }) => {
   const { locales } = entry;
   const { defaultLocale } = _i18n;
   const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
@@ -432,10 +432,10 @@ const getAssetByRelativePath = ({ path, entry }) => {
     const collectionFiles = getFilesByEntry(_collection, entry);
 
     if (collectionFiles.length) {
-      return collectionFiles.map((file) => getAsset(file, { path, entry }));
+      return collectionFiles.map((file) => getAsset({ path, entry, _i18n: file._i18n }));
     }
 
-    return getAsset(_collection, { path, entry });
+    return getAsset({ path, entry, _i18n: _collection._i18n });
   });
 
   return (
@@ -475,8 +475,8 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
     ),
   ].filter((folder) => !!folder);
 
-  // Use `some` to stop scanning folders as soon as the asset is found
-  scanningFolders.some((folder) => {
+  // Use `find` to stop scanning folders as soon as the asset is found
+  scanningFolders.find((folder) => {
     let { internalPath } = folder;
 
     // Deal with template tags like `/assets/images/{{slug}}`

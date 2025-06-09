@@ -67,7 +67,7 @@ let repositoryResponseCache = null;
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
- * @see https://docs.gitea.com/api/1.24/
+ * @see https://docs.gitea.com/api/next/
  */
 const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, apiConfig);
 
@@ -149,7 +149,7 @@ const init = () => {
  * Retrieve the authenticated user’s profile information from Gitea REST API.
  * @param {AuthTokens} tokens Authentication tokens.
  * @returns {Promise<User>} User information.
- * @see https://docs.gitea.com/api/1.24/#tag/user/operation/userGetCurrent
+ * @see https://docs.gitea.com/api/next/#tag/user/operation/userGetCurrent
  */
 const getUserProfile = async ({ token, refreshToken }) => {
   const {
@@ -212,7 +212,7 @@ const signOut = async () => undefined;
  * Check if the Gitea version is supported.
  * @throws {Error} When the Gitea version is unsupported. Also when we detect Forgejo, which is a
  * hard fork of Gitea that we do not support yet.
- * @see https://docs.gitea.com/api/1.24/#tag/miscellaneous/operation/getVersion
+ * @see https://docs.gitea.com/api/next/#tag/miscellaneous/operation/getVersion
  * @see https://github.com/sveltia/sveltia-cms/issues/381
  */
 const checkGiteaVersion = async () => {
@@ -240,7 +240,7 @@ const checkGiteaVersion = async () => {
 /**
  * Get the repository information from Gitea REST API.
  * @returns {Promise<Record<string, any>>} Repository information.
- * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGet
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 const getRepositoryInfo = async () => {
   const { owner, repo } = repository;
@@ -251,6 +251,7 @@ const getRepositoryInfo = async () => {
 /**
  * Check if the user has access to the current repository.
  * @throws {Error} If the user is not a collaborator of the repository.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 const checkRepositoryAccess = async () => {
   const { repo } = repository;
@@ -281,7 +282,7 @@ const checkRepositoryAccess = async () => {
  * Fetch the repository’s default branch name, which is typically `master` or `main`.
  * @returns {Promise<string>} Branch name.
  * @throws {Error} When the repository could not be found, or when the repository is empty.
- * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGet
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 const fetchDefaultBranchName = async () => {
   const { repo, baseURL = '' } = repository;
@@ -312,7 +313,7 @@ const fetchDefaultBranchName = async () => {
  * Fetch the last commit on the repository.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
- * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGetSingleCommit
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetSingleCommit
  */
 const fetchLastCommit = async () => {
   const { owner, repo, branch } = repository;
@@ -334,7 +335,7 @@ const fetchLastCommit = async () => {
  * Fetch the repository’s complete file list, and return it in the canonical format.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
- * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/GetTree
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/GetTree
  */
 const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
@@ -458,7 +459,7 @@ const fetchFiles = async () => {
  * Fetch an asset as a Blob via the API.
  * @param {Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
- * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGetRawFile
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetRawFile
  */
 const fetchBlob = async (asset) => {
   const { owner, repo, branch = '' } = repository;
@@ -476,7 +477,7 @@ const fetchBlob = async (asset) => {
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitChangesOptions} options Commit options.
  * @returns {Promise<string>} Commit URL.
- * @see https://docs.gitea.com/api/1.24/#tag/repository/operation/repoChangeFiles
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoChangeFiles
  */
 const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;

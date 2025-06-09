@@ -39,8 +39,8 @@ import { sendRequest } from '$lib/services/utils/networking';
 
 const backendName = 'github';
 const label = 'GitHub';
-const statusDashboardURL = 'https://www.githubstatus.com/';
-const statusCheckURL = 'https://www.githubstatus.com/api/v2/status.json';
+const STATUS_DASHBOARD_URL = 'https://www.githubstatus.com/';
+const STATUS_CHECK_URL = 'https://www.githubstatus.com/api/v2/status.json';
 const DEFAULT_API_ROOT = 'https://api.github.com';
 const DEFAULT_AUTH_ROOT = 'https://api.netlify.com';
 const DEFAULT_AUTH_PATH = 'auth';
@@ -59,7 +59,7 @@ const checkStatus = async () => {
   try {
     const {
       status: { indicator },
-    } = /** @type {{ status: { indicator: string }}} */ (await sendRequest(statusCheckURL));
+    } = /** @type {{ status: { indicator: string }}} */ (await sendRequest(STATUS_CHECK_URL));
 
     if (indicator === 'none') {
       return 'none';
@@ -615,7 +615,7 @@ export default {
   name: backendName,
   label,
   repository,
-  statusDashboardURL,
+  statusDashboardURL: STATUS_DASHBOARD_URL,
   checkStatus,
   init,
   signIn,

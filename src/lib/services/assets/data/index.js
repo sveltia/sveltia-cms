@@ -7,6 +7,7 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
  */
 
 /**
+ * A writable store to manage the state of the asset updates toast notification.
  * @type {Writable<UpdateToastState>}
  */
 export const assetUpdatesToast = writable({ ...UPDATE_TOAST_DEFAULT_STATE });

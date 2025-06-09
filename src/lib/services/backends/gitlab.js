@@ -57,8 +57,8 @@ import { sendRequest } from '$lib/services/utils/networking';
 
 const backendName = 'gitlab';
 const label = 'GitLab';
-const statusDashboardURL = 'https://status.gitlab.com/';
-const statusCheckURL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
+const STATUS_DASHBOARD_URL = 'https://status.gitlab.com/';
+const STATUS_CHECK_URL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
 const DEFAULT_API_ROOT = 'https://gitlab.com/api/v4';
 const DEFAULT_AUTH_ROOT = 'https://gitlab.com';
 const DEFAULT_AUTH_PATH = 'oauth/authorize';
@@ -79,7 +79,7 @@ const checkStatus = async () => {
         status_overall: { status_code: status },
       },
     } = /** @type {{ result: { status_overall: { status_code: number } } }} */ (
-      await sendRequest(statusCheckURL)
+      await sendRequest(STATUS_CHECK_URL)
     );
 
     if (status === 100) {
@@ -724,7 +724,7 @@ export default {
   name: backendName,
   label,
   repository,
-  statusDashboardURL,
+  statusDashboardURL: STATUS_DASHBOARD_URL,
   checkStatus,
   init,
   signIn,

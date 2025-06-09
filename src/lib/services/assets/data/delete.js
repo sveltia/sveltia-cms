@@ -10,7 +10,7 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
 
 /**
  * Update the asset stores after deleting assets.
- * @param {Asset[]} assets List of assets to be deleted.
+ * @param {Asset[]} assets List of assets that have been deleted.
  */
 const updateStores = (assets) => {
   allAssets.update((_allAssets) => _allAssets.filter((asset) => !assets.includes(asset)));
@@ -28,7 +28,7 @@ const updateStores = (assets) => {
 };
 
 /**
- * Delete the given assets.
+ * Delete the given assets from the backend and update the asset stores.
  * @param {Asset[]} assets List of assets to be deleted.
  * @todo Update entries to remove these asset paths. If an asset is used for a required field, show
  * an error message and abort the operation.
