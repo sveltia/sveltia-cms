@@ -2,7 +2,7 @@
 const FULL_REGEX_PATTERN = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuy]*))?$/;
 
 /**
- * Returns a RegExp object based on the provided pattern. If the pattern is already a RegExp, it
+ * Return a RegExp object based on the provided pattern. If the pattern is already a RegExp, it
  * returns it as is. If the pattern is a string, it converts it to a RegExp. If the pattern is
  * neither, it returns undefined.
  * @param {any} input Input pattern which can be a string or RegExp.

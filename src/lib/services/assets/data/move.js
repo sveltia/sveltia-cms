@@ -34,7 +34,7 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  */
 
 /**
- * Updates the asset and entry stores after moving or renaming assets.
+ * Update the asset and entry stores after moving or renaming assets.
  * @param {object} args Arguments.
  * @param {'move' | 'rename'} args.action The action performed, either 'move' or 'rename'.
  * @param {MovingAsset[]} args.movingAssets The list of assets being moved or renamed.

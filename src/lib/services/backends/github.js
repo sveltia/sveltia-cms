@@ -101,7 +101,7 @@ const fetchGraphQL = async (query, variables = {}) =>
   /** @type {Promise<object>} */ (fetchAPI('/graphql', { body: { query, variables } }));
 
 /**
- * Generates base URLs for accessing the repository’s resources.
+ * Generate base URLs for accessing the repository’s resources.
  * @param {string} baseURL The name of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
  * the site configuration.
@@ -179,7 +179,7 @@ const init = () => {
 };
 
 /**
- * Retrieves the authenticated user’s profile information from GitHub REST API.
+ * Retrieve the authenticated user’s profile information from GitHub REST API.
  * @param {AuthTokens} tokens Authentication tokens.
  * @returns {Promise<User>} User information.
  * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user

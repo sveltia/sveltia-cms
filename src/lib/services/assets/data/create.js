@@ -18,7 +18,7 @@ import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
  */
 
 /**
- * Creates a list of file objects to be uploaded, ensuring that names are unique and sanitized.
+ * Create a list of file objects to be uploaded, ensuring that names are unique and sanitized.
  * @param {UploadingAssets} uploadingAssets Assets to be uploaded.
  * @returns {{ action: CommitAction, name: string, path: string, file: File }[]} An array of objects
  * representing the files to be uploaded, each containing the action type, name, path, and file
@@ -50,8 +50,8 @@ const createFileList = (uploadingAssets) => {
 };
 
 /**
- * Updates the asset stores with new assets, ensuring that focused and overlaid assets are
- * refreshed, and displays a toast notification about the asset updates.
+ * Update the asset stores with new assets, ensuring that focused and overlaid assets are refreshed,
+ * and displays a toast notification about the asset updates.
  * @param {Asset[]} newAssets An array of new assets to be merged into the existing assets store.
  * @param {File[]} files An array of files that were uploaded, used to update the toast
  * notification.

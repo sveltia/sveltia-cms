@@ -13,7 +13,7 @@ import {
  */
 
 /**
- * Updates the stores after deleting entries.
+ * Update the stores after deleting entries.
  * @param {string[]} ids List of entry IDs.
  * @param {string[]} assetPaths List of associated asset paths.
  */

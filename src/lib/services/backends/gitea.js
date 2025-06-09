@@ -72,7 +72,7 @@ let repositoryResponseCache = null;
 const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, apiConfig);
 
 /**
- * Generates base URLs for accessing the repository’s resources.
+ * Generate base URLs for accessing the repository’s resources.
  * @param {string} baseURL The name of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
  * the site configuration.
@@ -146,7 +146,7 @@ const init = () => {
 };
 
 /**
- * Retrieves the authenticated user’s profile information from Gitea REST API.
+ * Retrieve the authenticated user’s profile information from Gitea REST API.
  * @param {AuthTokens} tokens Authentication tokens.
  * @returns {Promise<User>} User information.
  * @see https://docs.gitea.com/api/1.24/#tag/user/operation/userGetCurrent

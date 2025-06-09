@@ -39,7 +39,7 @@ const normalizeFieldName = (fieldName) => {
 };
 
 /**
- * Determines the type of list field based on the field configuration.
+ * Determine the type of list field based on the field configuration.
  * @param {any} fieldConfig Field configuration object.
  * @returns {object} Object with boolean flags for different list field types.
  */
@@ -63,7 +63,7 @@ const getListFieldTypes = (fieldConfig) => {
 };
 
 /**
- * Gets the replacement value for a field name based on standard field types.
+ * Get the replacement value for a field name based on standard field types.
  * @param {string} fieldName The field name to get replacement for.
  * @param {any} context Context object containing `slug`, `locale`, and `getDisplayValue` function.
  * @param {any} fallbackContext Fallback context for additional content.
@@ -95,7 +95,7 @@ const getFieldReplacement = (fieldName, context, fallbackContext) => {
 };
 
 /**
- * Replaces all template tags in the given strings with actual values.
+ * Replace all template tags in the given strings with actual values.
  * @param {any} templates Object containing `label`, `value`, and `searchValue` templates.
  * @param {string[]} fieldNames Array of field names to replace.
  * @param {any} context Context object for replacements.
