@@ -10,6 +10,7 @@ extends:
   - plugin:svelte/recommended
   - plugin:svelte/prettier
 plugins:
+  - eslint-plugin-unused-imports
   - jsdoc
 ignorePatterns:
   - "*.cjs"
@@ -49,6 +50,7 @@ rules:
       alphabetize:
         order: asc
         caseInsensitive: true
+  unused-imports/no-unused-imports: error
   jsdoc/no-undefined-types: off
   jsdoc/require-jsdoc:
     - warn

@@ -1,7 +1,9 @@
 {
-  // We need to use the legacy array syntax for the `editor.codeActionsOnSave` setting because the
-  // order matters. Unused imports should be removed before imports are organized by ESLint.
-  "editor.codeActionsOnSave": ["source.organizeImports", "source.formatDocument", "source.fixAll"],
+  "editor.codeActionsOnSave": {
+    // We cannot use `source.organizeImports` because it conflicts with ESLint’s import sorting
+    "source.formatDocument": "explicit",
+    "source.fixAll": "explicit"
+  },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "javascript.preferences.importModuleSpecifier": "non-relative",

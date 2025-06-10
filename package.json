@@ -68,6 +68,7 @@
     "eslint-plugin-jsdoc": "^50.7.1",
     "eslint-plugin-package-json": "^0.33.2",
     "eslint-plugin-svelte": "^2.46.1",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "jsonc-eslint-parser": "^2.4.0",
     "postcss": "^8.5.4",
     "postcss-html": "^1.8.0",
