@@ -212,7 +212,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better security
 
-- Avoids vulnerabilities in dependencies through constant updates, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unpatched for a long time.[^33]
+- Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unpatched for a long time.[^33]
 - Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158]
 - We have enabled [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/).
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration.[^108]
@@ -1366,7 +1366,7 @@ Due Q4 2025
 
 ### Future
 
-- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor,[^10] singletons,[^233] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of the features may be included in v2.0)
+- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor,[^10] singletons,[^233] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a Git service account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation, content writing, translation, etc.
