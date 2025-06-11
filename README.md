@@ -1,4 +1,4 @@
-# Sveltia CMS
+# Sveltia CMS: Netlify/Decap CMS alternative
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility.
 
@@ -1366,7 +1366,7 @@ Due Q4 2025
 
 ### Future
 
-- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor[^10] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor,[^10] singleton,[^233] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of the features may be included in v2.0)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a Git service account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation, content writing, translation, etc.
@@ -1860,3 +1860,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^231]: Netlify/Decap CMS [#3704](https://github.com/decaporg/decap-cms/issues/3704)
 
 [^232]: Netlify/Decap CMS [#7457](https://github.com/decaporg/decap-cms/issues/7457)
+
+[^233]: Netlify/Decap CMS [#535](https://github.com/decaporg/decap-cms/issues/535)
