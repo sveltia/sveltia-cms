@@ -66,7 +66,7 @@
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jsdoc": "^50.7.1",
-    "eslint-plugin-package-json": "^0.33.2",
+    "eslint-plugin-package-json": "^0.35.1",
     "eslint-plugin-svelte": "^2.46.1",
     "eslint-plugin-unused-imports": "^4.1.4",
     "jsonc-eslint-parser": "^2.4.0",
@@ -77,8 +77,8 @@
     "sass": "^1.89.2",
     "stylelint": "^16.20.0",
     "stylelint-config-recommended-scss": "^15.0.1",
-    "stylelint-scss": "^6.12.0",
-    "svelte": "5.33.18",
+    "stylelint-scss": "^6.12.1",
+    "svelte": "5.33.19",
     "svelte-check": "^4.2.1",
     "svelte-i18n": "^4.0.1",
     "svelte-preprocess": "^6.0.3",
@@ -97,6 +97,11 @@
     "onlyBuiltDependencies": [
       "esbuild",
       "svelte-preprocess"
-    ]
+    ],
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2025-5889"
+      ]
+    }
   }
 }
