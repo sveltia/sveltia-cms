@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 220+ issues, or 440+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 220+ issues, or 445+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -1501,7 +1501,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^52]: Netlify/Decap CMS [#6970](https://github.com/decaporg/decap-cms/discussions/6970), [#7147](https://github.com/decaporg/decap-cms/issues/7147)
 
-[^53]: Netlify/Decap CMS [#512](https://github.com/decaporg/decap-cms/issues/512), [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6707](https://github.com/decaporg/decap-cms/issues/6707)
+[^53]: Netlify/Decap CMS [#512](https://github.com/decaporg/decap-cms/issues/512), [#5673](https://github.com/decaporg/decap-cms/issues/5673), [#6707](https://github.com/decaporg/decap-cms/issues/6707), [#7501](https://github.com/decaporg/decap-cms/issues/7501)
 
 [^54]: Netlify/Decap CMS [#1347](https://github.com/decaporg/decap-cms/issues/1347), [#1559](https://github.com/decaporg/decap-cms/issues/1559), [#4629](https://github.com/decaporg/decap-cms/issues/4629), [#4837](https://github.com/decaporg/decap-cms/issues/4837), [#6287](https://github.com/decaporg/decap-cms/issues/6287), [#6826](https://github.com/decaporg/decap-cms/issues/6826) — Decap CMS 3.0 updated the Slate editor in an attempt to fix the problems, but the IME issues remain unresolved when using a mobile/tablet browser.
 
@@ -1537,7 +1537,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^70]: Netlify/Decap CMS [#6482](https://github.com/decaporg/decap-cms/issues/6482)
 
-[^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7000](https://github.com/decaporg/decap-cms/issues/7000), [#7001](https://github.com/decaporg/decap-cms/issues/7001), [#7152](https://github.com/decaporg/decap-cms/issues/7152), [#7220](https://github.com/decaporg/decap-cms/issues/7220), [#7283](https://github.com/decaporg/decap-cms/issues/7283), [#7316](https://github.com/decaporg/decap-cms/issues/7316), [#7429](https://github.com/decaporg/decap-cms/issues/7429), [#7465](https://github.com/decaporg/decap-cms/issues/7465)
+[^71]: Netlify/Decap CMS [#6999](https://github.com/decaporg/decap-cms/issues/6999), [#7000](https://github.com/decaporg/decap-cms/issues/7000), [#7001](https://github.com/decaporg/decap-cms/issues/7001), [#7152](https://github.com/decaporg/decap-cms/issues/7152), [#7220](https://github.com/decaporg/decap-cms/issues/7220), [#7283](https://github.com/decaporg/decap-cms/issues/7283), [#7316](https://github.com/decaporg/decap-cms/issues/7316), [#7429](https://github.com/decaporg/decap-cms/issues/7429), [#7465](https://github.com/decaporg/decap-cms/issues/7465), [#7500](https://github.com/decaporg/decap-cms/issues/7500)
 
 [^72]: Netlify/Decap CMS [#7047](https://github.com/decaporg/decap-cms/issues/7047)
 
