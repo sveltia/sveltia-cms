@@ -64,7 +64,7 @@ export const getComponentDef = (name) => {
     image: {
       ...imageProps,
       id: 'image',
-      pattern: /\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)/,
+      pattern: /!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)/,
       toBlock: (props) => {
         const { src, alt, title } = escapeAllChars(props);
 
