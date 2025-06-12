@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 220+ issues, or 445+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 225+ issues, or 450+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -144,7 +144,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![220 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250602)<br>
+![225 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250612)<br>
 
 ## Differentiators
 
@@ -427,7 +427,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
 - Markdown
-  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS, including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] extra HTML comments when pasting,[^229] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
+  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS,[^235] including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] extra HTML comments when pasting,[^229] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A Markdown field plays well with a variable type List field.[^202]
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
@@ -466,16 +466,16 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI.[^28] Markdown is supported in the value.
     - Compatibility note: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively, which have different meaning in Sveltia CMS.
 - File and Image
-  - The new `accept` option allows files to be filtered by a comma-separated list of unique file type specifiers, in the same way as the HTML [`accept` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept) for `<input type="file">`.[^216]
-    - By default, the Image widget only accepts an AVIF, GIF, JPEG, PNG, WebP or SVG image. BMP, HEIC, JPEG XL, PSD, TIFF and other less common or non-standard files are excluded.[^217]
-    - The File widget has no default restriction.
-  - Provides a reimagined all-in-one asset selection dialog for File and Image fields.
+  - Provides a reimagined all-in-one asset selection dialog for File and Image fields.[^234]
     - Entry, file, [collection](#using-a-custom-media-folder-for-a-collection) and global assets are listed on separate tabs for easy selection.[^19]
     - A new asset can be uploaded by dragging & dropping it into the dialog.[^20]
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo.[^8] More stock photo providers will be added in the future.
   - Users can also simply drag and drop a file onto a File/Image field to attach it without having to open the Select File dialog.
   - Large images automatically fit in the Preview Pane instead of being displayed at their original size, which can easily exceed the width of the pane.
+  - The new `accept` option allows files to be filtered by a comma-separated list of unique file type specifiers, in the same way as the HTML [`accept` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept) for `<input type="file">`.[^216]
+    - By default, the Image widget only accepts an AVIF, GIF, JPEG, PNG, WebP or SVG image. BMP, HEIC, JPEG XL, PSD, TIFF and other less common or non-standard files are excluded.[^217]
+    - The File widget has no default restriction.
   - If the `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path.[^140] Other dynamic template tags such as `{{filename}}` will also be populated as expected.[^141]
   - The CMS prevents the same file from being uploaded twice. It compares the hashes and selects an existing asset instead.
 - List and Object
@@ -1541,7 +1541,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^72]: Netlify/Decap CMS [#7047](https://github.com/decaporg/decap-cms/issues/7047)
 
-[^73]: Netlify/Decap CMS [#6993](https://github.com/decaporg/decap-cms/issues/6993), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7127](https://github.com/decaporg/decap-cms/issues/7127), [#7128](https://github.com/decaporg/decap-cms/issues/7128), [#7237](https://github.com/decaporg/decap-cms/issues/7237), [#7251](https://github.com/decaporg/decap-cms/issues/7251), [#7361](https://github.com/decaporg/decap-cms/issues/7361), [#7391](https://github.com/decaporg/decap-cms/issues/7391), [#7393](https://github.com/decaporg/decap-cms/issues/7393), [#7470](https://github.com/decaporg/decap-cms/issues/7470), [#7475](https://github.com/decaporg/decap-cms/issues/7475), [#7480](https://github.com/decaporg/decap-cms/issues/7480)
+[^73]: Netlify/Decap CMS [#6993](https://github.com/decaporg/decap-cms/issues/6993), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7127](https://github.com/decaporg/decap-cms/issues/7127), [#7128](https://github.com/decaporg/decap-cms/issues/7128), [#7237](https://github.com/decaporg/decap-cms/issues/7237), [#7251](https://github.com/decaporg/decap-cms/issues/7251), [#7361](https://github.com/decaporg/decap-cms/issues/7361), [#7391](https://github.com/decaporg/decap-cms/issues/7391), [#7393](https://github.com/decaporg/decap-cms/issues/7393), [#7470](https://github.com/decaporg/decap-cms/issues/7470), [#7475](https://github.com/decaporg/decap-cms/issues/7475), [#7480](https://github.com/decaporg/decap-cms/issues/7480), [#7503](https://github.com/decaporg/decap-cms/issues/7503), [#7504](https://github.com/decaporg/decap-cms/issues/7504)
 
 [^74]: Netlify/Decap CMS [#4209](https://github.com/decaporg/decap-cms/issues/4209)
 
@@ -1862,3 +1862,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^232]: Netlify/Decap CMS [#7457](https://github.com/decaporg/decap-cms/issues/7457)
 
 [^233]: Netlify/Decap CMS [#535](https://github.com/decaporg/decap-cms/issues/535)
+
+[^234]: Netlify/Decap CMS [#2019](https://github.com/decaporg/decap-cms/issues/2019) — Rather than relying on a third-party library, we built our own asset browser that integrates more seamlessly with the rest of the CMS.
+
+[^235]: Netlify/Decap CMS [#6905](https://github.com/decaporg/decap-cms/discussions/6905) — We use Lexical created by Facebook (Meta).
