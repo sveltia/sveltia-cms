@@ -566,6 +566,7 @@
  * @property {string} path File path.
  * @property {string} [previousPath] Original path to a file being moved. Required when the commit
  * `action` is `move`.
+ * @property {string} [previousSha] Original SHA-1 commit hash of a file being updated or deleted.
  * @property {string} [slug] Entry slug or `undefined` for an asset.
  * @property {string | File} [data] File data.
  * @property {string} [base64] Base64 of the data.

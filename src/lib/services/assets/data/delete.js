@@ -36,7 +36,7 @@ const updateStores = (assets) => {
  */
 export const deleteAssets = async (assets) => {
   await get(backend)?.commitChanges(
-    assets.map(({ path }) => ({ action: 'delete', path })),
+    assets.map(({ path, sha }) => ({ action: 'delete', path, previousSha: sha })),
     { commitType: 'deleteMedia' },
   );
 

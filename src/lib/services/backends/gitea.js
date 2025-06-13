@@ -506,11 +506,12 @@ const commitChanges = async (changes, options) => {
   const date = new Date().toJSON();
 
   const files = await Promise.all(
-    changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
+    changes.map(async ({ action, path, previousPath, previousSha, data = '', base64 }) => ({
       operation: action === 'move' ? 'update' : action,
       path,
       content: base64 ?? (await encodeBase64(data)),
       from_path: previousPath,
+      sha: previousSha,
     })),
   );
 

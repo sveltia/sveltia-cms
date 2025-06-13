@@ -106,6 +106,7 @@ export const moveAssets = async (action, movingAssets) => {
         action: 'move',
         path: newPath,
         previousPath: asset.path,
+        previousSha: asset.sha,
         data: new File([asset.file ?? (await getAssetBlob(asset))], newName),
       });
 

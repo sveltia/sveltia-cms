@@ -900,6 +900,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     const localizedEntry = savingEntry.locales[defaultLocale];
     const { slug, path, content } = localizedEntry;
     const renamed = !isNew && (originalSlugs?.[defaultLocale] ?? originalSlugs?._) !== slug;
+    const { path: previousPath, sha: previousSha } = originalEntry?.locales[defaultLocale] ?? {};
 
     const data = await formatEntryFile({
       content: i18nEnabled
@@ -919,7 +920,8 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       action: isNew ? 'create' : renamed ? 'move' : 'update',
       slug,
       path,
-      previousPath: renamed ? originalEntry?.locales[defaultLocale].path : undefined,
+      previousPath: renamed ? previousPath : undefined,
+      previousSha: isNew ? undefined : previousSha,
       data,
     });
 
@@ -936,6 +938,8 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
             originalLocales[locale] &&
             (originalSlugs?.[locale] ?? originalSlugs?._) !== slug;
 
+          const { path: previousPath, sha: previousSha } = originalEntry?.locales[locale] ?? {};
+
           const data = await formatEntryFile({
             content: serializeContent({ draft, locale, valueMap: content }),
             _file,
@@ -945,13 +949,19 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
             action: isNew || !originalLocales[locale] ? 'create' : renamed ? 'move' : 'update',
             slug,
             path,
-            previousPath: renamed ? originalEntry?.locales[locale]?.path : undefined,
+            previousPath: renamed ? previousPath : undefined,
+            previousSha: isNew ? undefined : previousSha,
             data,
           });
 
           localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
         } else if (!isNew && originalLocales[locale]) {
-          changes.push({ action: 'delete', slug, path });
+          changes.push({
+            action: 'delete',
+            slug,
+            path,
+            previousSha: originalEntry?.locales[locale]?.sha,
+          });
         }
 
         return true;
