@@ -64,14 +64,14 @@ const MIN_GITEA_VERSION = 1.24;
  * @see https://codeberg.org/forgejo/forgejo/pulls/8139
  */
 const MIN_FORGEJO_VERSION = 12.0;
-/** @type {Record<string, any> | null} */
-let repositoryResponseCache = null;
 /**
  * Flag to indicate if the backend is Forgejo. This is used to determine which API endpoints to use,
  * as Forgejo has some differences in the API compared to Gitea.
  * @type {boolean}
  */
 let isForgejo = false;
+/** @type {Record<string, any> | null} */
+let repositoryResponseCache = null;
 /**
  * Send a request to Gitea/Forgejo REST API.
  * @param {string} path Endpoint.
