@@ -285,6 +285,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Fields in non-default locales are validated as expected.[^13]
   - No internal error is thrown when changing the locale.[^103]
   - Duplicating an entry duplicates all locale content, not just the default locale.[^170]
+  - Copying content from a Markdown field in another locale works as expected.[^236]
 
 ### Better collections
 
@@ -1866,3 +1867,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^234]: Netlify/Decap CMS [#2019](https://github.com/decaporg/decap-cms/issues/2019) — Rather than relying on a third-party library, we built our own asset browser that integrates more seamlessly with the rest of the CMS.
 
 [^235]: Netlify/Decap CMS [#6905](https://github.com/decaporg/decap-cms/discussions/6905) — We use Lexical created by Facebook (Meta).
+
+[^236]: Netlify/Decap CMS [#7507](https://github.com/decaporg/decap-cms/issues/7507)
