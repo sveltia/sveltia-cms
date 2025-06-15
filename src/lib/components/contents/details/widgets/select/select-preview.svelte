@@ -39,8 +39,8 @@
   const getLabel = (value) =>
     hasLabels
       ? /** @type {{ label: string, value: string }[]} */ (options).find((o) => o.value === value)
-          ?.label || value
-      : value;
+          ?.label || String(value)
+      : String(value);
 </script>
 
 {#if multiple && Array.isArray(currentValue) && currentValue.length}
