@@ -325,7 +325,7 @@ const analyzeListFields = (allFieldNames, getFieldArgs) => {
     });
 
   // Group entries by base field name
-  listFieldConfigs.entries().forEach(([fieldName, config]) => {
+  [...listFieldConfigs.entries()].forEach(([fieldName, config]) => {
     const { baseFieldName } = config;
 
     if (!baseFieldGroups.has(baseFieldName)) {
