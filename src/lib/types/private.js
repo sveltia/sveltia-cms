@@ -802,7 +802,7 @@
  * Select/Relation field editor’s selector option.
  * @typedef {object} SelectFieldSelectorOption
  * @property {string} label Option label.
- * @property {string} value Option value.
+ * @property {any} value Option value.
  * @property {string} [searchValue] Option value specifically for filtering.
  */
 

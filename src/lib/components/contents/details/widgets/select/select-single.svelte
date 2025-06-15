@@ -25,11 +25,26 @@
   } = $props();
 
   const { dropdown_threshold: dropdownThreshold = 5 } = $derived(fieldConfig);
+  /** @type {string | undefined} */
+  let valueType = $state(undefined);
+
+  $effect(() => {
+    if (!valueType) {
+      valueType = options[0]?.value !== undefined ? typeof options[0]?.value : 'string';
+    }
+  });
 
   $effect(() => {
     // Allow to deselect an option if the field is optional
-    if (!required && !options.some(({ value }) => value === '')) {
-      options.unshift({ label: $_('unselected_option'), value: '', searchValue: '' });
+    if (!required && !options.some(({ value }) => !value)) {
+      options = [
+        {
+          label: $_('unselected_option'),
+          value: valueType === 'number' ? null : '',
+          searchValue: '',
+        },
+        ...options,
+      ];
     }
   });
 </script>
@@ -44,7 +59,7 @@
     aria-errormessage="{fieldId}-error"
   >
     {#each options as { label, value, searchValue } (value)}
-      <Option {label} {value} {searchValue} selected={value === currentValue} wrap />
+      <Option {label} {value} {valueType} {searchValue} selected={value === currentValue} wrap />
     {/each}
   </Select>
 {:else}
@@ -59,7 +74,7 @@
     }}
   >
     {#each options as { label, value } (value)}
-      <Radio {label} {value} checked={value === currentValue} />
+      <Radio {label} {value} {valueType} checked={value === currentValue} />
     {/each}
   </RadioGroup>
 {/if}
