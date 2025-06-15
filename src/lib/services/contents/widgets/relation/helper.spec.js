@@ -752,6 +752,236 @@ describe('Test getOptions()', async () => {
         expect(isCollectionIndexFileSpy).toHaveBeenCalled();
       });
     });
+
+    describe('File collection list field example (from Decap CMS docs)', () => {
+      // Mock data for file collection with cities list
+      /** @type {Entry[]} */
+      const citiesFileCollectionEntries = [
+        {
+          id: 'cities-file',
+          sha: 'sha-cities',
+          slug: 'cities',
+          subPath: 'cities',
+          locales: {
+            _default: {
+              ...localizedEntryProps,
+              content: flatten({
+                cities: [
+                  { id: 'nyc', name: 'New York City' },
+                  { id: 'bos', name: 'Boston' },
+                  { id: 'sf', name: 'San Francisco' },
+                  { id: 'la', name: 'Los Angeles' },
+                  { id: 'chi', name: 'Chicago' },
+                ],
+              }),
+            },
+          },
+        },
+      ];
+
+      /** @type {EntryCollection} */
+      const citiesFileCollection = {
+        name: 'relation_files',
+        identifier_field: 'title',
+        _type: 'file',
+        _i18n: {
+          defaultLocale: '_default',
+          i18nEnabled: false,
+          allLocales: ['_default'],
+          initialLocales: ['_default'],
+          structure: 'single_file',
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+          omitDefaultLocaleFromFileName: false,
+        },
+        _file: {
+          format: 'yaml',
+          extension: 'yml',
+        },
+        _thumbnailFieldNames: [],
+      };
+
+      beforeEach(() => {
+        // Reset mocks to use the standard behavior
+        vi.mocked(getCollection).mockReturnValue(citiesFileCollection);
+        vi.mocked(getEntriesByCollection).mockReturnValue(citiesFileCollectionEntries);
+        vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+        vi.mocked(getEntrySummaryFromContent).mockReturnValue('cities-summary');
+
+        // Mock getField to return list field configuration for cities
+        vi.mocked(getField).mockImplementation(({ keyPath }) => {
+          if (keyPath === 'cities') {
+            return {
+              name: 'cities',
+              widget: 'list',
+              fields: [
+                { name: 'id', widget: 'string' },
+                { name: 'name', widget: 'string' },
+              ],
+            };
+          }
+
+          return undefined;
+        });
+      });
+      test('should correctly parse file collection list field example from Decap CMS docs', () => {
+        // Use the same field config as working tests but for file collection
+        vi.mocked(getField).mockReturnValue({
+          name: 'cities',
+          widget: 'list',
+          fields: [
+            { name: 'id', widget: 'string' },
+            { name: 'name', widget: 'string' },
+          ],
+        });
+
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'city',
+          collection: 'relation_files',
+          file: 'cities',
+          search_fields: ['cities.*.name'],
+          display_fields: ['cities.*.name'],
+          value_field: 'cities.*.id',
+        };
+
+        const result = getOptions(locale, fieldConfig, citiesFileCollectionEntries);
+
+        // Should create separate options for each city in the list
+        expect(result).toHaveLength(5);
+
+        // Check that we get actual city names, not 'display-value'
+        const labels = result.map((r) => r.label);
+
+        // The labels should be the actual city names from our test data
+        expect(labels).toContain('New York City');
+        expect(labels).toContain('Boston');
+        expect(labels).toContain('San Francisco');
+        expect(labels).toContain('Los Angeles');
+        expect(labels).toContain('Chicago');
+
+        // Values should be the city IDs
+        const values = result.map((r) => r.value);
+
+        expect(values).toContain('nyc');
+        expect(values).toContain('bos');
+        expect(values).toContain('sf');
+        expect(values).toContain('la');
+        expect(values).toContain('chi');
+      });
+
+      test('should handle missing file in file collection', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'city',
+          collection: 'relation_files',
+          file: 'nonexistent-file',
+          search_fields: ['cities.*.name'],
+          display_fields: ['cities.*.name'],
+          value_field: 'cities.*.id',
+        };
+
+        const result = getOptions(locale, fieldConfig, citiesFileCollectionEntries);
+
+        // Should return empty array when file doesn't match
+        expect(result).toHaveLength(0);
+      });
+
+      test('should handle empty cities list in file collection', () => {
+        const emptyFileCollectionEntries = [
+          {
+            ...citiesFileCollectionEntries[0],
+            locales: {
+              _default: {
+                ...citiesFileCollectionEntries[0].locales._default,
+                content: flatten({ cities: [] }),
+              },
+            },
+          },
+        ];
+
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'city',
+          collection: 'relation_files',
+          file: 'cities',
+          search_fields: ['cities.*.name'],
+          display_fields: ['cities.*.name'],
+          value_field: 'cities.*.id',
+        };
+
+        const result = getOptions(locale, fieldConfig, emptyFileCollectionEntries);
+
+        expect(result).toHaveLength(0);
+      });
+
+      test('should handle malformed cities data in file collection', () => {
+        const malformedFileCollectionEntries = [
+          {
+            ...citiesFileCollectionEntries[0],
+            locales: {
+              _default: {
+                ...citiesFileCollectionEntries[0].locales._default,
+                content: flatten({
+                  cities: [
+                    { id: 'nyc' }, // missing name
+                    { name: 'Boston' }, // missing id
+                    { id: 'sf', name: 'San Francisco' }, // complete
+                  ],
+                }),
+              },
+            },
+          },
+        ];
+
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'city',
+          collection: 'relation_files',
+          file: 'cities',
+          search_fields: ['cities.*.name'],
+          display_fields: ['cities.*.name'],
+          value_field: 'cities.*.id',
+        };
+
+        const result = getOptions(locale, fieldConfig, malformedFileCollectionEntries);
+
+        // Should still handle the data, but entries with missing required fields are filtered out
+        expect(result).toHaveLength(2);
+
+        // Find the complete entry
+        const completeEntry = result.find((r) => r.label === 'San Francisco');
+
+        expect(completeEntry).toBeDefined();
+        expect(completeEntry?.value).toBe('sf');
+      });
+
+      test('should handle broken getField implementation with file collections', () => {
+        // Mock getField to return undefined (simulating broken field config)
+        vi.mocked(getField).mockReturnValue(undefined);
+
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'city',
+          collection: 'relation_files',
+          file: 'cities',
+          search_fields: ['cities.*.name'],
+          display_fields: ['cities.*.name'],
+          value_field: 'cities.*.id',
+        };
+
+        const result = getOptions(locale, fieldConfig, citiesFileCollectionEntries);
+
+        // Should still work but might not parse the list structure correctly
+        // This tests the fallback behavior when field config is missing
+        expect(result).toBeDefined();
+        expect(Array.isArray(result)).toBe(true);
+      });
+    });
   });
 
   describe('getReferencedOptionLabel function', () => {

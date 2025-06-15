@@ -7,12 +7,48 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
- * @import { Entry, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { FieldKeyPath, RelationField } from '$lib/types/public';
+ * @import {
+ * Entry,
+ * FlattenedEntryContent,
+ * InternalCollection,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
+ * @import {
+ * Field,
+ * FieldKeyPath,
+ * ListField,
+ * RelationField,
+ * RelationFieldFilterOptions,
+ * } from '$lib/types/public';
  */
 
 /**
  * @typedef {{ label: string, value: any, searchValue: string }} RelationOption
+ */
+
+/**
+ * @typedef {object} ReplacementContext
+ * @property {string} slug The slug of the entry.
+ * @property {InternalLocaleCode} locale The current locale.
+ * @property {(keyPath: FieldKeyPath, _locale?: InternalLocaleCode) => string} getDisplayValue
+ * Function to get the display value of a field.
+ */
+
+/**
+ * @typedef {object} FallbackContext
+ * @property {FlattenedEntryContent} content Content of the entry.
+ * @property {Record<InternalLocaleCode, FlattenedEntryContent>} locales Locales of the entry.
+ * @property {InternalLocaleCode} defaultLocale Default locale of the entry.
+ * @property {FieldKeyPath} identifierField Identifier field for the entry.
+ */
+
+/**
+ * @typedef {object} TemplateStrings
+ * @property {string} _valueField Normalized value field template.
+ * @property {string} _displayField Normalized display field template.
+ * @property {string} _searchField Normalized search field template.
+ * @property {string[]} allFieldNames All field names extracted from templates.
+ * @property {boolean} hasListFields Whether any field names include a list wildcard (*).
  */
 
 /**
@@ -40,8 +76,9 @@ const normalizeFieldName = (fieldName) => {
 
 /**
  * Determine the type of list field based on the field configuration.
- * @param {any} fieldConfig Field configuration object.
- * @returns {object} Object with boolean flags for different list field types.
+ * @param {Field | undefined} fieldConfig Field configuration object.
+ * @returns {{ isSimpleListField: boolean, isSingleSubfieldListField: boolean }} Object with boolean
+ * flags for different list field types.
  */
 const getListFieldTypes = (fieldConfig) => {
   if (!fieldConfig) {
@@ -52,9 +89,9 @@ const getListFieldTypes = (fieldConfig) => {
   }
 
   const isListWidget = fieldConfig.widget === 'list';
-  const hasField = !!fieldConfig.field;
-  const hasFields = !!fieldConfig.fields;
-  const hasTypes = !!fieldConfig.types;
+  const hasField = isListWidget ? !!(/** @type {ListField} */ (fieldConfig).field) : false;
+  const hasFields = isListWidget ? !!(/** @type {ListField} */ (fieldConfig).fields) : false;
+  const hasTypes = isListWidget ? !!(/** @type {ListField} */ (fieldConfig).types) : false;
 
   return {
     isSimpleListField: isListWidget && !hasField && !hasFields && !hasTypes,
@@ -65,8 +102,9 @@ const getListFieldTypes = (fieldConfig) => {
 /**
  * Get the replacement value for a field name based on standard field types.
  * @param {string} fieldName The field name to get replacement for.
- * @param {any} context Context object containing `slug`, `locale`, and `getDisplayValue` function.
- * @param {any} fallbackContext Fallback context for additional content.
+ * @param {ReplacementContext} context Context object containing `slug`, `locale`, and
+ * `getDisplayValue` function.
+ * @param {FallbackContext} fallbackContext Fallback context for additional content.
  * @returns {string} The replacement value.
  */
 const getFieldReplacement = (fieldName, context, fallbackContext) => {
@@ -96,11 +134,12 @@ const getFieldReplacement = (fieldName, context, fallbackContext) => {
 
 /**
  * Replace all template tags in the given strings with actual values.
- * @param {any} templates Object containing `label`, `value`, and `searchValue` templates.
+ * @param {RelationOption} templates Object containing `label`, `value`, and `searchValue`
+ * templates.
  * @param {string[]} fieldNames Array of field names to replace.
- * @param {any} context Context object for replacements.
- * @param {any} fallbackContext Fallback context for additional content.
- * @returns {any} Object with replaced `label`, `value`, and `searchValue`.
+ * @param {ReplacementContext} context Context object for replacements.
+ * @param {FallbackContext} fallbackContext Fallback context for additional content.
+ * @returns {RelationOption} Object with replaced `label`, `value`, and `searchValue`.
  */
 const replaceTemplateFields = (templates, fieldNames, context, fallbackContext) => {
   let { label, value, searchValue } = templates;
@@ -110,41 +149,26 @@ const replaceTemplateFields = (templates, fieldNames, context, fallbackContext) 
 
     label = label.replaceAll(`{{${fieldName}}}`, replacement);
     value = value.replaceAll(`{{${fieldName}}}`, replacement);
-    searchValue = searchValue.replaceAll(`{{${fieldName}}}`, replacement);
+    searchValue = searchValue?.replaceAll(`{{${fieldName}}}`, replacement) ?? '';
   });
 
   return { label, value, searchValue };
 };
 
 /**
- * Get options for a Relation field.
- * @param {InternalLocaleCode} locale Current locale.
- * @param {RelationField} fieldConfig Field configuration.
- * @param {Entry[]} refEntries Referenced entries.
- * @returns {RelationOption[]} Options.
+ * Extract field names from template strings.
+ * @param {string} template Template string with field names in {{}} brackets.
+ * @returns {string[]} Array of field names.
  */
-export const getOptions = (locale, fieldConfig, refEntries) => {
-  const cacheKey = JSON.stringify({ locale, fieldConfig, refEntries });
-  const cache = optionCacheMap.get(cacheKey);
+const extractFieldNames = (template) => [...template.matchAll(/{{(.+?)}}/g)].map((m) => m[1]);
 
-  if (cache) {
-    return cache;
-  }
-
-  const { collection: collectionName, file: fileName, filters } = fieldConfig;
-  const collection = getCollection(collectionName);
-
-  if (!collection) {
-    optionCacheMap.set(cacheKey, []);
-
-    return [];
-  }
-
-  const {
-    identifier_field: identifierField = 'title',
-    _i18n: { defaultLocale },
-  } = collection;
-
+/**
+ * Normalize and prepare field templates for processing.
+ * @param {RelationField} fieldConfig Field configuration.
+ * @param {string} identifierField Default identifier field.
+ * @returns {TemplateStrings} Normalized field templates.
+ */
+const prepareFieldTemplates = (fieldConfig, identifierField) => {
   /**
    * @example 'userId'
    * @example 'name.first'
@@ -185,12 +209,33 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
    * Canonical, templatized search field.
    */
   const _searchField = searchFields.map(normalizeFieldName).join(' ');
-  /**
-   * Entry filters.
-   */
-  const entryFilters = filters ?? [];
 
-  const options = refEntries
+  const allFieldNames = unique([
+    ...extractFieldNames(_displayField),
+    ...extractFieldNames(_valueField),
+    ...extractFieldNames(_searchField),
+  ]);
+
+  return {
+    _valueField,
+    _displayField,
+    _searchField,
+    allFieldNames,
+    hasListFields: allFieldNames.some((name) => name.includes('*')),
+  };
+};
+
+/**
+ * Filter entries based on file name and entry filters.
+ * @param {Entry[]} refEntries Reference entries.
+ * @param {InternalLocaleCode} locale Current locale.
+ * @param {string} [fileName] File name to filter by.
+ * @param {RelationFieldFilterOptions[]} [entryFilters] Entry filters to apply.
+ * @returns {{ refEntry: Entry, content: FlattenedEntryContent }[]} Filtered entries with content.
+ */
+const filterAndPrepareEntries = (refEntries, locale, fileName = undefined, entryFilters = []) =>
+  refEntries
+    .filter((refEntry) => !fileName || fileName === refEntry.slug)
     .map((refEntry) => {
       // Fall back to the default locale if needed
       const { content } = refEntry.locales[locale] ?? refEntry.locales._default ?? {};
@@ -204,199 +249,465 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
     .filter(
       ({ hasContent, content }) =>
         hasContent && entryFilters.every(({ field, values }) => values.includes(content[field])),
-    )
-    .map(({ refEntry, content }) => {
-      const { slug, locales } = refEntry;
-      const isIndexFile = isCollectionIndexFile(collection, refEntry);
-      const getFieldArgs = { collectionName, fileName, isIndexFile };
+    );
 
-      /**
-       * Wrapper for {@link getFieldDisplayValue}.
-       * @param {FieldKeyPath} keyPath Field key path.
-       * @param {InternalLocaleCode} [_locale] Target locale.
-       * @returns {string} Display value.
-       */
-      const getDisplayValue = (keyPath, _locale) =>
-        getFieldDisplayValue({
-          ...getFieldArgs,
-          keyPath,
-          valueMap: _locale ? locales[_locale].content : content,
-          locale: _locale ?? locale,
-        });
+/**
+ * Create a single relation option for non-list fields.
+ * @param {object} params Parameters.
+ * @param {TemplateStrings} params.templates Template strings.
+ * @param {string[]} params.allFieldNames All field names to replace.
+ * @param {ReplacementContext} params.context Replacement context.
+ * @param {FallbackContext} params.fallbackContext Fallback context.
+ * @returns {RelationOption} Single relation option.
+ */
+const createSimpleOption = ({ templates, allFieldNames, context, fallbackContext }) => {
+  const { slug } = context;
+  const { _displayField, _valueField, _searchField } = templates;
+  const { content, locales, defaultLocale, identifierField } = fallbackContext;
 
-      // Extract all field names from templates
-      const allFieldNames = unique([
-        ...[..._displayField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-        ...[..._valueField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-        ...[..._searchField.matchAll(/{{(.+?)}}/g)].map((m) => m[1]),
-      ]);
+  const replacers = Object.fromEntries(
+    allFieldNames.map((fieldName) => [
+      fieldName,
+      getFieldReplacement(fieldName, context, fallbackContext),
+    ]),
+  );
 
-      // Check if any field has wildcards (list fields)
-      const hasListFields = allFieldNames.some((name) => name.includes('*'));
+  let label = _displayField;
+  let value = _valueField;
+  let searchValue = _searchField;
 
-      if (!hasListFields) {
-        // Simple case: no list fields, create single option
-        const replacers = Object.fromEntries(
-          allFieldNames.map((fieldName) => {
-            const context = { slug, locale, getDisplayValue };
-            const fallbackContext = { content, locales, defaultLocale, identifierField };
+  Object.entries(replacers).forEach(([key, val]) => {
+    label = label.replaceAll(`{{${key}}}`, val);
+    value = value.replaceAll(`{{${key}}}`, val);
+    searchValue = searchValue.replaceAll(`{{${key}}}`, val);
+  });
 
-            return [fieldName, getFieldReplacement(fieldName, context, fallbackContext)];
-          }),
-        );
+  // Handle empty label fallback
+  if (!label || label.trim() === '') {
+    label =
+      getEntrySummaryFromContent(content, { identifierField }) ||
+      getEntrySummaryFromContent(locales[defaultLocale]?.content || {}, { identifierField }) ||
+      slug;
+  }
 
-        let label = _displayField;
-        let value = _valueField;
-        let searchValue = _searchField;
+  return {
+    label: label || '',
+    value: value || slug,
+    searchValue: searchValue || label || '',
+  };
+};
 
-        Object.entries(replacers).forEach(([key, val]) => {
-          label = label.replaceAll(`{{${key}}}`, val);
-          value = value.replaceAll(`{{${key}}}`, val);
-          searchValue = searchValue.replaceAll(`{{${key}}}`, val);
-        });
+/**
+ * Analyze list field configurations and group them by base field name.
+ * @param {string[]} allFieldNames All field names.
+ * @param {object} getFieldArgs Arguments for getField function.
+ * @param {string} getFieldArgs.collectionName Collection name.
+ * @param {string} [getFieldArgs.fileName] File name.
+ * @param {boolean} getFieldArgs.isIndexFile Whether the file is an index file.
+ * @returns {Map<string, [string, any][]>} Grouped list field configurations.
+ */
+const analyzeListFields = (allFieldNames, getFieldArgs) => {
+  const listFieldConfigs = new Map();
+  const baseFieldGroups = new Map();
 
-        // Handle empty label fallback
-        if (!label || label.trim() === '') {
-          label =
-            getEntrySummaryFromContent(content, { identifierField }) ||
-            getEntrySummaryFromContent(locales[defaultLocale]?.content || {}, {
-              identifierField,
-            }) ||
-            slug;
-        }
+  // Analyze all list fields and get their configurations
+  allFieldNames
+    .filter((fieldName) => fieldName.includes('*'))
+    .forEach((fieldName) => {
+      const baseFieldName = fieldName.replace(/\.\*.*$/, '');
+      const fieldConfigForList = getField({ ...getFieldArgs, keyPath: baseFieldName });
 
-        return [
-          {
-            label: label || '',
-            value: value || slug,
-            searchValue: searchValue || label || '',
-          },
-        ];
-      }
-
-      // Complex case: handle list fields
-      /** @type {RelationOption[]} */
-      const results = [];
-      const listFieldConfigs = new Map();
-
-      // First, analyze all list fields and get their configurations
-      allFieldNames.forEach((fieldName) => {
-        if (fieldName.includes('*')) {
-          const baseFieldName = fieldName.replace(/\.\*.*$/, '');
-          const fieldConfigForList = getField({ ...getFieldArgs, keyPath: baseFieldName });
-
-          listFieldConfigs.set(fieldName, {
-            baseFieldName,
-            fieldConfig: fieldConfigForList,
-            ...getListFieldTypes(fieldConfigForList),
-          });
-        }
+      listFieldConfigs.set(fieldName, {
+        baseFieldName,
+        fieldConfig: fieldConfigForList,
+        ...getListFieldTypes(fieldConfigForList),
       });
+    });
 
-      // Handle different list field scenarios
-      const listFieldEntries = Array.from(listFieldConfigs.entries());
+  // Group entries by base field name
+  listFieldConfigs.entries().forEach(([fieldName, config]) => {
+    const { baseFieldName } = config;
 
-      if (listFieldEntries.length === 1) {
-        const [fieldName, config] = listFieldEntries[0];
+    if (!baseFieldGroups.has(baseFieldName)) {
+      baseFieldGroups.set(baseFieldName, []);
+    }
 
-        if (config.isSingleSubfieldListField) {
-          // Single subfield list: join all values into one option (e.g., `skills.*`)
-          const regex = new RegExp(`^${escapeRegExp(config.baseFieldName)}\\.\\d+$`);
+    baseFieldGroups.get(baseFieldName).push([fieldName, config]);
+  });
 
-          const values = Object.entries(content)
-            .filter(([k]) => regex.test(k))
-            .map(([, v]) => v);
+  return baseFieldGroups;
+};
 
-          const joinedValue = values.join(' ');
+/**
+ * Process single subfield list fields (e.g., `skills.*`).
+ * @param {object} params Parameters.
+ * @param {string} params.baseFieldName Base field name.
+ * @param {[string, any][]} params.groupEntries Group entries.
+ * @param {FlattenedEntryContent} params.content Entry content.
+ * @param {TemplateStrings} params.templates Template strings.
+ * @param {string[]} params.allFieldNames All field names.
+ * @param {ReplacementContext} params.context Replacement context.
+ * @param {FallbackContext} params.fallbackContext Fallback context.
+ * @returns {RelationOption} Single option with joined values.
+ */
+const processSingleSubfieldList = ({
+  baseFieldName,
+  groupEntries,
+  content,
+  templates,
+  allFieldNames,
+  context,
+  fallbackContext,
+}) => {
+  const { _displayField, _valueField, _searchField } = templates;
+  const regex = new RegExp(`^${escapeRegExp(baseFieldName)}\\.\\d+$`);
 
-          const templates = {
-            label: _displayField.replaceAll(`{{${fieldName}}}`, joinedValue),
-            value: _valueField.replaceAll(`{{${fieldName}}}`, joinedValue),
-            searchValue: _searchField.replaceAll(`{{${fieldName}}}`, joinedValue),
-          };
+  const values = Object.entries(content)
+    .filter(([k]) => regex.test(k))
+    .map(([, v]) => v);
 
-          const { label, value, searchValue } = replaceTemplateFields(
-            templates,
-            allFieldNames.filter((name) => !name.includes('.*')),
-            { slug, locale, getDisplayValue },
-            { content, locales, defaultLocale, identifierField },
-          );
+  const joinedValue = values.join(' ');
 
-          return [
-            {
-              label: label || '',
-              value: value || slug,
-              searchValue: searchValue || label || '',
-            },
-          ];
-        }
+  // Replace all wildcards for this base field
+  const processedTemplates = {
+    label: _displayField,
+    value: _valueField,
+    searchValue: _searchField,
+  };
 
-        // Complex list field: create separate option for each list item (e.g., `cities.*.name`)
-        const subFieldMatch = fieldName.match(/^([^.]+)\.\*\.([^.]+)$/);
+  groupEntries.forEach(([fieldName]) => {
+    processedTemplates.label = processedTemplates.label.replaceAll(`{{${fieldName}}}`, joinedValue);
+    processedTemplates.value = processedTemplates.value.replaceAll(`{{${fieldName}}}`, joinedValue);
+    processedTemplates.searchValue = processedTemplates.searchValue.replaceAll(
+      `{{${fieldName}}}`,
+      joinedValue,
+    );
+  });
 
-        if (subFieldMatch) {
-          const [, baseFieldNameForList, subKey] = subFieldMatch;
+  const { label, value, searchValue } = replaceTemplateFields(
+    processedTemplates,
+    allFieldNames.filter((name) => !name.includes('*')),
+    context,
+    fallbackContext,
+  );
 
-          const regex = new RegExp(
-            `^${escapeRegExp(baseFieldNameForList)}\\.\\d+\\.${escapeRegExp(subKey)}$`,
-          );
+  return {
+    label: label || '',
+    value: value || context.slug,
+    searchValue: searchValue || label || '',
+  };
+};
 
-          const listValues = Object.entries(content)
-            .filter(([k]) => regex.test(k))
-            .map(([k, v]) => {
-              const indexRegex = new RegExp(
-                `^${escapeRegExp(baseFieldNameForList)}\\.([0-9]+)\\.${escapeRegExp(subKey)}$`,
-              );
+/**
+ * Process complex list fields (e.g., `cities.*.name`).
+ * @param {object} params Parameters.
+ * @param {[string, any][]} params.groupEntries Group entries.
+ * @param {FlattenedEntryContent} params.content Entry content.
+ * @param {TemplateStrings} params.templates Template strings.
+ * @param {string[]} params.allFieldNames All field names.
+ * @param {ReplacementContext} params.context Replacement context.
+ * @param {FallbackContext} params.fallbackContext Fallback context.
+ * @returns {RelationOption[]} Array of options, one for each list item.
+ */
+const processComplexListField = ({
+  groupEntries,
+  content,
+  templates,
+  allFieldNames,
+  context,
+  fallbackContext,
+}) => {
+  const { _displayField, _valueField, _searchField } = templates;
+  /** @type {RelationOption[]} */
+  const results = [];
 
-              const indexMatch = k.match(indexRegex);
+  // Find a field that has the pattern we can use to extract the list
+  const complexField = groupEntries.find(([fieldName]) =>
+    fieldName.match(/^([^.]+)\.\*\.([^.]+)$/),
+  );
 
-              return { index: parseInt(indexMatch?.[1] || '0', 10), value: v };
-            })
-            .sort((a, b) => a.index - b.index);
+  if (!complexField) {
+    return [];
+  }
 
-          listValues.forEach(({ value: listValue }) => {
-            const templates = {
-              label: _displayField.replaceAll(`{{${fieldName}}}`, listValue),
-              value: _valueField.replaceAll(`{{${fieldName}}}`, listValue),
-              searchValue: _searchField.replaceAll(`{{${fieldName}}}`, listValue),
-            };
+  const [fieldName] = complexField;
+  const subFieldMatch = fieldName.match(/^([^.]+)\.\*\.([^.]+)$/);
 
-            const { label, value, searchValue } = replaceTemplateFields(
-              templates,
-              allFieldNames.filter((name) => !name.includes('.*')),
-              { slug, locale, getDisplayValue },
-              { content, locales, defaultLocale, identifierField },
-            );
+  if (!subFieldMatch) {
+    return [];
+  }
 
-            results.push({
-              label: label || '',
-              value: value || slug,
-              searchValue: searchValue || label || '',
-            });
-          });
+  const [, baseFieldNameForList, subKey] = subFieldMatch;
 
-          return results;
-        }
+  const regex = new RegExp(
+    `^${escapeRegExp(baseFieldNameForList)}\\.\\d+\\.${escapeRegExp(subKey)}$`,
+  );
+
+  const listValues = Object.entries(content)
+    .filter(([k]) => regex.test(k))
+    .map(([k, v]) => {
+      const escapedBase = escapeRegExp(baseFieldNameForList);
+      const escapedSub = escapeRegExp(subKey);
+      const pattern = `^${escapedBase}\\.([0-9]+)\\.${escapedSub}$`;
+      const indexRegex = new RegExp(pattern);
+      const indexMatch = k.match(indexRegex);
+
+      return { index: parseInt(indexMatch?.[1] || '0', 10), value: v };
+    })
+    .sort((a, b) => a.index - b.index);
+
+  listValues.forEach(({ index }) => {
+    // Replace all wildcards for this base field with the current list item
+    const processedTemplates = {
+      label: _displayField,
+      value: _valueField,
+      searchValue: _searchField,
+    };
+
+    groupEntries.forEach(([wildcardFieldName]) => {
+      const wildcardMatch = wildcardFieldName.match(/^([^.]+)\.\*\.([^.]+)$/);
+
+      if (wildcardMatch) {
+        const [, , subFieldKey] = wildcardMatch;
+        const currentItemValue = content[`${baseFieldNameForList}.${index}.${subFieldKey}`] || '';
+
+        processedTemplates.label = processedTemplates.label.replaceAll(
+          `{{${wildcardFieldName}}}`,
+          currentItemValue,
+        );
+        processedTemplates.value = processedTemplates.value.replaceAll(
+          `{{${wildcardFieldName}}}`,
+          currentItemValue,
+        );
+        processedTemplates.searchValue = processedTemplates.searchValue.replaceAll(
+          `{{${wildcardFieldName}}}`,
+          currentItemValue,
+        );
       }
+    });
 
-      // Fallback for complex multi-list scenarios or unhandled cases
-      const templates = { label: _displayField, value: _valueField, searchValue: _searchField };
+    const { label, value, searchValue } = replaceTemplateFields(
+      processedTemplates,
+      allFieldNames.filter((name) => !name.includes('*')),
+      context,
+      fallbackContext,
+    );
 
-      const { label, value, searchValue } = replaceTemplateFields(
+    results.push({
+      label: label || '',
+      value: value || context.slug,
+      searchValue: searchValue || label || '',
+    });
+  });
+
+  return results;
+};
+
+/**
+ * Process all list fields for an entry.
+ * @param {object} params Parameters.
+ * @param {Map<string, [string, any][]>} params.baseFieldGroups Grouped configs.
+ * @param {FlattenedEntryContent} params.content Entry content.
+ * @param {TemplateStrings} params.templates Template strings.
+ * @param {string[]} params.allFieldNames All field names.
+ * @param {ReplacementContext} params.context Replacement context.
+ * @param {FallbackContext} params.fallbackContext Fallback context.
+ * @returns {{ results: RelationOption[], hasProcessedListFields: boolean }} Results.
+ */
+const processListFields = ({
+  baseFieldGroups,
+  content,
+  templates,
+  allFieldNames,
+  context,
+  fallbackContext,
+}) => {
+  /** @type {RelationOption[]} */
+  const results = [];
+  let hasProcessedListFields = false;
+
+  baseFieldGroups.forEach((groupEntries, baseFieldName) => {
+    if (groupEntries.length === 0) {
+      return;
+    }
+
+    const [, firstConfig] = groupEntries[0];
+
+    if (firstConfig.isSingleSubfieldListField) {
+      const option = processSingleSubfieldList({
+        baseFieldName,
+        groupEntries,
+        content,
         templates,
         allFieldNames,
-        { slug, locale, getDisplayValue },
-        { content, locales, defaultLocale, identifierField },
-      );
+        context,
+        fallbackContext,
+      });
 
-      return [
-        {
-          label: label || '',
-          value: value || slug,
-          searchValue: searchValue || label || '',
-        },
-      ];
-    })
+      results.push(option);
+      hasProcessedListFields = true;
+    } else {
+      const options = processComplexListField({
+        groupEntries,
+        content,
+        templates,
+        allFieldNames,
+        context,
+        fallbackContext,
+      });
+
+      results.push(...options);
+      hasProcessedListFields = true;
+    }
+  });
+
+  return { results, hasProcessedListFields };
+};
+
+/**
+ * Process a single entry to generate relation options.
+ * @param {object} params Parameters.
+ * @param {Entry} params.refEntry Reference entry.
+ * @param {FlattenedEntryContent} params.content Entry content.
+ * @param {InternalCollection} params.collection Collection configuration.
+ * @param {TemplateStrings} params.templates Template strings.
+ * @param {string[]} params.allFieldNames All field names.
+ * @param {boolean} params.hasListFields Whether entry has list fields.
+ * @param {string} params.collectionName Collection name.
+ * @param {string} [params.fileName] File name.
+ * @param {InternalLocaleCode} params.locale Current locale.
+ * @param {string} params.identifierField Identifier field.
+ * @param {InternalLocaleCode} params.defaultLocale Default locale.
+ * @returns {RelationOption[]} Array of relation options.
+ */
+const processEntry = ({
+  refEntry,
+  content,
+  collection,
+  templates,
+  allFieldNames,
+  hasListFields,
+  collectionName,
+  fileName,
+  locale,
+  identifierField,
+  defaultLocale,
+}) => {
+  const { slug, locales } = refEntry;
+  const isIndexFile = isCollectionIndexFile(collection, refEntry);
+  const getFieldArgs = { collectionName, fileName, isIndexFile };
+
+  /**
+   * Wrapper for {@link getFieldDisplayValue}.
+   * @param {FieldKeyPath} keyPath Field key path.
+   * @param {InternalLocaleCode} [_locale] Target locale.
+   * @returns {string} Display value.
+   */
+  const getDisplayValue = (keyPath, _locale) =>
+    getFieldDisplayValue({
+      ...getFieldArgs,
+      keyPath,
+      valueMap: _locale ? locales[_locale].content : content,
+      locale: _locale ?? locale,
+    });
+
+  const context = { slug, locale, getDisplayValue };
+  const fallbackContext = { content, locales, defaultLocale, identifierField };
+
+  if (!hasListFields) {
+    return [createSimpleOption({ templates, allFieldNames, context, fallbackContext })];
+  }
+
+  // Handle list fields
+  const baseFieldGroups = analyzeListFields(allFieldNames, getFieldArgs);
+
+  const { results, hasProcessedListFields } = processListFields({
+    baseFieldGroups,
+    content,
+    templates,
+    allFieldNames,
+    context,
+    fallbackContext,
+  });
+
+  if (hasProcessedListFields) {
+    return results;
+  }
+
+  const { _displayField, _valueField, _searchField } = templates;
+
+  // Fallback for complex multi-list scenarios or unhandled cases
+  const processedTemplates = {
+    label: _displayField,
+    value: _valueField,
+    searchValue: _searchField,
+  };
+
+  const { label, value, searchValue } = replaceTemplateFields(
+    processedTemplates,
+    allFieldNames,
+    context,
+    fallbackContext,
+  );
+
+  return [
+    {
+      label: label || '',
+      value: value || slug,
+      searchValue: searchValue || label || '',
+    },
+  ];
+};
+
+/**
+ * Get options for a Relation field.
+ * @param {InternalLocaleCode} locale Current locale.
+ * @param {RelationField} fieldConfig Field configuration.
+ * @param {Entry[]} refEntries Referenced entries.
+ * @returns {RelationOption[]} Options.
+ */
+export const getOptions = (locale, fieldConfig, refEntries) => {
+  const cacheKey = JSON.stringify({ locale, fieldConfig, refEntries });
+  const cache = optionCacheMap.get(cacheKey);
+
+  if (cache) {
+    return cache;
+  }
+
+  const { collection: collectionName, file: fileName, filters } = fieldConfig;
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    optionCacheMap.set(cacheKey, []);
+    return [];
+  }
+
+  const {
+    identifier_field: identifierField = 'title',
+    _i18n: { defaultLocale },
+  } = collection;
+
+  const entryFilters = filters ?? [];
+  const templates = prepareFieldTemplates(fieldConfig, identifierField);
+  const { allFieldNames, hasListFields } = templates;
+  const filteredEntries = filterAndPrepareEntries(refEntries, locale, fileName, entryFilters);
+
+  const options = filteredEntries
+    .map(({ refEntry, content }) =>
+      processEntry({
+        refEntry,
+        content,
+        collection,
+        templates,
+        allFieldNames,
+        hasListFields,
+        collectionName,
+        fileName,
+        locale,
+        identifierField,
+        defaultLocale,
+      }),
+    )
     .flat(1)
     .sort((a, b) => compare(a.label, b.label));
 
