@@ -16,10 +16,8 @@ import { getI18nConfig } from '$lib/services/contents/i18n';
  * @param {InternalSiteConfig} config Site configuration.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
-export const getAllEntryFolders = (config) => {
-  const validCollections = config.collections.filter(({ hide, divider }) => !hide && !divider);
-
-  const entryCollectionFolders = validCollections
+export const getAllEntryFolders = ({ collections }) => {
+  const entryCollectionFolders = collections
     .filter(({ folder }) => typeof folder === 'string')
     .map((collection) => {
       const { name: collectionName, folder } = collection;
@@ -40,7 +38,7 @@ export const getAllEntryFolders = (config) => {
     })
     .sort((a, b) => compare(a.folderPath ?? '', b.folderPath ?? ''));
 
-  const fileCollectionFolders = validCollections
+  const fileCollectionFolders = collections
     .filter(({ files }) => Array.isArray(files))
     .map((collection) => {
       const { name: collectionName, files } = collection;
