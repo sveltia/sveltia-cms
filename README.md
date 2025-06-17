@@ -658,7 +658,7 @@ Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS user
 Or try one of the starter kits for popular frameworks created by community members:
 
 - Astro
-  - [astro-sveltia-cms](https://github.com/majesticostudio/astro-sveltia-cms), [astro-starter](https://github.com/zankhq/astro-starter) and [astros](https://github.com/zankhq/astros) by [@zanhk](https://github.com/zanhk)
+  - [astros](https://github.com/zankhq/astros) by [@zanhk](https://github.com/zanhk)
   - [Astro i18n Starter](https://github.com/yacosta738/astro-cms) by [@yacosta738](https://github.com/yacosta738)
 - Eleventy (11ty)
   - [Eleventy starter template](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
