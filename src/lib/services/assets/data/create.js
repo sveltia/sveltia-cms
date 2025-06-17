@@ -43,7 +43,7 @@ const createFileList = (uploadingAssets) => {
     return {
       action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
       name,
-      path: [folder?.internalPath, name].join('/'),
+      path: originalAsset?.path ?? [folder?.internalPath, name].join('/'),
       file,
     };
   });
