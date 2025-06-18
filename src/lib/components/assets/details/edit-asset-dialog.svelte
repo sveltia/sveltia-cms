@@ -74,6 +74,7 @@
   bind:open
   okLabel={$_('save')}
   okDisabled={currentValue === originalValue}
+  okShortcuts="Accel+S"
   onOk={() => {
     saveAsset();
   }}
