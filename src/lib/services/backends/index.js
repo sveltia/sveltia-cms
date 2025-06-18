@@ -30,7 +30,9 @@ export const allBackendServices = {
  * requires a Git backend service to be configured.
  * @type {BackendName[]}
  */
-export const validBackendNames = ['github', 'gitlab', 'gitea', 'test-repo'];
+export const validBackendNames = /** @type {BackendName[]} */ (
+  Object.keys(allBackendServices).filter((name) => name !== 'local')
+);
 
 /**
  * List of all the Git backend services.
