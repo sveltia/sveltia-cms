@@ -89,7 +89,19 @@ export const getField = ({
     } else if (field) {
       const isNumericKey = /^\d+$/.test(key);
       const keyPathArraySub = keyPathArray.slice(0, index);
+      const { widget = 'text' } = field;
 
+      // Handle Select and Relation widgets with numeric keys, e.g. `authors.0`
+      if (isNumericKey && ['select', 'relation'].includes(widget)) {
+        // For single Select/Relation, numeric access is not allowed
+        if (!(/** @type {SelectField | RelationField} */ (field).multiple)) {
+          field = undefined;
+        }
+
+        return;
+      }
+
+      // Handle all other widgets (List, Object, etc.)
       const {
         field: subField,
         fields: subFields,

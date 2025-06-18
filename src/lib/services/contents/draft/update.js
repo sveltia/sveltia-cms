@@ -1,4 +1,4 @@
-import { unique } from '@sveltia/utils/array';
+import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
@@ -99,9 +99,8 @@ export const updateListField = (locale, keyPath, manipulate) => {
 };
 
 /**
- * Populate the given localized content with values from the default locale if the corresponding
- * field’s i18n configuration is `duplicate`.
- * @param {FlattenedEntryContent} content Original content.
+ * Populate the given localized content with values from the default locale.
+ * @param {FlattenedEntryContent} content Original content for the current locale.
  * @returns {FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = (content) => {
@@ -109,26 +108,36 @@ export const copyDefaultLocaleValues = (content) => {
     /** @type {EntryDraft} */ (get(entryDraft));
 
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
-  const defaultLocaleValues = currentValues[defaultLocale];
-  const getFieldArgs = { collectionName, fileName, isIndexFile };
+  /** @type {FlattenedEntryContent} */
+  const newContent = { ...toRaw(content), ...toRaw(currentValues[defaultLocale]) };
+  const getFieldArgs = { collectionName, fileName, valueMap: newContent, isIndexFile };
   /** @type {string[]} */
-  const keys = unique([...Object.keys(content), ...Object.keys(defaultLocaleValues)]);
-  const newContent = /** @type {FlattenedEntryContent} */ ({});
+  const noI18nFieldKeys = [];
 
-  keys.forEach((keyPath) => {
-    const canDuplicate = getField({ ...getFieldArgs, keyPath })?.i18n === 'duplicate';
+  // Process the merged content
+  Object.keys(newContent).forEach((keyPath) => {
+    const field = getField({ ...getFieldArgs, keyPath });
 
-    newContent[keyPath] =
-      (canDuplicate ? defaultLocaleValues[keyPath] : undefined) ?? content[keyPath];
+    if (!field) {
+      return;
+    }
 
-    // Remove unnecessary `null` from parent, which is used for an optional or variable types object
-    // (search “enable validation” in the codebase for these cases)
-    if (keyPath.includes('.')) {
-      const parentKeyPath = keyPath.split('.').slice(0, -1).join('.');
+    const { widget = 'text', i18n = false } = field;
 
-      if (newContent[parentKeyPath] === null) {
-        delete newContent[parentKeyPath];
-      }
+    // Reset the field value to the default value or an empty string if the field is a text-like
+    // widget and i18n is enabled, because the content would likely be translated by the user.
+    // Otherwise, the content would be copied from the default locale.
+    if (['text', 'string', 'markdown'].includes(widget) && [true, 'translate'].includes(i18n)) {
+      newContent[keyPath] = content[keyPath] ?? '';
+    }
+
+    // Remove the field if i18n is disabled
+    if (
+      [false, 'none'].includes(i18n) ||
+      noI18nFieldKeys.some((key) => new RegExp(`^${escapeRegExp(key)}\\b`).test(keyPath))
+    ) {
+      delete newContent[keyPath];
+      noI18nFieldKeys.push(keyPath);
     }
   });
 

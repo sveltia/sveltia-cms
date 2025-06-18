@@ -114,6 +114,17 @@ describe('Test getField()', () => {
         widget: 'list',
         // Missing field, fields, or types
       },
+      {
+        name: 'category',
+        widget: 'select',
+        options: ['blog', 'news', 'tutorial'],
+      },
+      {
+        name: 'cities',
+        widget: 'select',
+        multiple: true,
+        options: ['new-york', 'london', 'tokyo', 'paris'],
+      },
     ],
     index_file: {
       fields: [{ name: 'description', widget: 'text' }],
@@ -978,6 +989,109 @@ describe('Test getField()', () => {
         collectionName: 'posts',
         keyPath: 'blocks.0.content',
         valueMap: {}, // No type specified
+      });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('Select widget tests', () => {
+    test('should return field config for single select widget', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'category',
+        valueMap: {},
+      });
+
+      expect(result).toEqual({
+        name: 'category',
+        widget: 'select',
+        options: ['blog', 'news', 'tutorial'],
+      });
+    });
+
+    test('should return field config for multiple select widget', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'cities',
+        valueMap: {},
+      });
+
+      expect(result).toEqual({
+        name: 'cities',
+        widget: 'select',
+        multiple: true,
+        options: ['new-york', 'london', 'tokyo', 'paris'],
+      });
+    });
+
+    test('should return field config for multiple select widget accessed by index', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      // Multiple select can be accessed with index like cities.0
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'cities.0',
+        valueMap: {},
+      });
+
+      expect(result).toEqual({
+        name: 'cities',
+        widget: 'select',
+        multiple: true,
+        options: ['new-york', 'london', 'tokyo', 'paris'],
+      });
+    });
+
+    test('should return field config for multiple select widget accessed by higher index', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      // Multiple select can be accessed with any numeric index
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'cities.2',
+        valueMap: {},
+      });
+
+      expect(result).toEqual({
+        name: 'cities',
+        widget: 'select',
+        multiple: true,
+        options: ['new-york', 'london', 'tokyo', 'paris'],
+      });
+    });
+
+    test('should return undefined for single select widget accessed by index', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      // Single select should not be accessible with index
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'category.0',
+        valueMap: {},
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should return undefined for non-numeric access on multiple select', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      // Non-numeric keys should not work with multiple select
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'cities.invalid',
+        valueMap: {},
       });
 
       expect(result).toBeUndefined();
