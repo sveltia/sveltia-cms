@@ -8,6 +8,7 @@ import test from '$lib/services/backends/test';
 /**
  * @import { Readable, Writable } from 'svelte/store';
  * @import { BackendService, BaseConfigListItem } from '$lib/types/private';
+ * @import { BackendName } from '$lib/types/public';
  */
 
 /**
@@ -22,6 +23,14 @@ export const allBackendServices = {
   local,
   'test-repo': test,
 };
+
+/**
+ * List of valid backend service names. This is used to validate the backend name in the site
+ * configuration. Note that the `local` backend is not included here, as it’s a special case that
+ * requires a Git backend service to be configured.
+ * @type {BackendName[]}
+ */
+export const validBackendNames = ['github', 'gitlab', 'gitea', 'test-repo'];
 
 /**
  * List of all the Git backend services.

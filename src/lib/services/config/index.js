@@ -6,7 +6,7 @@ import { get, writable } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import YAML from 'yaml';
 import { allAssetFolders } from '$lib/services/assets';
-import { allBackendServices, gitBackendServices } from '$lib/services/backends';
+import { gitBackendServices, validBackendNames } from '$lib/services/backends';
 import { getAllAssetFolders, getAllEntryFolders } from '$lib/services/config/folders';
 import { fetchSiteConfig } from '$lib/services/config/loader';
 import { allEntryFolders } from '$lib/services/contents';
@@ -66,7 +66,7 @@ const validate = (config) => {
     throw new Error(get(_)('config.error.missing_backend_name'));
   }
 
-  if (!(config.backend.name in allBackendServices)) {
+  if (!validBackendNames.includes(config.backend.name)) {
     throw new Error(
       get(_)('config.error.unsupported_backend', { values: { name: config.backend.name } }),
     );
