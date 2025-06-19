@@ -84,13 +84,14 @@ export const getAllEntryFolders = ({ collections }) => {
  * @param {object} context Context for replacement.
  * @param {string} context.globalMediaFolder Normalized global `media_folder` option.
  * @param {string} context.globalPublicFolder Normalized global `public_folder` option.
- * @returns {string} Replaced folder path.
+ * @returns {string} Replaced folder path with a leading slash so it won’t be treated as relative.
  */
 const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =>
   folder
     .trim()
-    .replace('{{media_folder}}', globalMediaFolder)
-    .replace('{{public_folder}}', globalPublicFolder);
+    .replace('{{media_folder}}', `/${globalMediaFolder}`)
+    .replace('{{public_folder}}', `/${globalPublicFolder}`)
+    .replace('//', '/');
 
 /**
  * Get a normalized asset folder information given the arguments.
@@ -121,7 +122,7 @@ const normalizeAssetFolder = ({
   publicFolder =
     publicFolder !== undefined ? replaceTags(publicFolder, globalFolders) : mediaFolder;
 
-  const entryRelative = !(mediaFolder.startsWith('/') || mediaFolder.startsWith(globalMediaFolder));
+  const entryRelative = !mediaFolder.startsWith('/');
 
   return {
     collectionName,
@@ -184,6 +185,29 @@ export const getAllAssetFolders = (config) => {
    */
   const assetFolders = [];
 
+  /**
+   * Add an asset folder for a collection or collection file if it’s not the same as the global
+   * asset folder.
+   * @param {any} args Arguments for {@link normalizeAssetFolder}.
+   */
+  const addFolderIfNeeded = (args) => {
+    if (args.mediaFolder === undefined) {
+      return;
+    }
+
+    const folder = normalizeAssetFolder(args);
+
+    if (
+      !folder.entryRelative &&
+      folder.internalPath === globalMediaFolder &&
+      folder.publicPath === globalPublicFolder
+    ) {
+      return;
+    }
+
+    assetFolders.push(folder);
+  };
+
   collections.forEach((collection) => {
     const {
       divider = false,
@@ -208,16 +232,12 @@ export const getAllAssetFolders = (config) => {
     // When specifying a `path` on an entry collection, `media_folder` defaults to an empty string
     const mediaFolder = _mediaFolder === undefined && entryPath !== undefined ? '' : _mediaFolder;
 
-    if (mediaFolder !== undefined) {
-      assetFolders.push(
-        normalizeAssetFolder({
-          ...normalizeFolderArgs,
-          mediaFolder,
-          publicFolder,
-          baseFolder,
-        }),
-      );
-    }
+    addFolderIfNeeded({
+      ...normalizeFolderArgs,
+      mediaFolder,
+      publicFolder,
+      baseFolder,
+    });
 
     collectionFiles?.forEach((file) => {
       const {
@@ -227,17 +247,13 @@ export const getAllAssetFolders = (config) => {
         public_folder: filePublicFolder,
       } = file;
 
-      if (fileMediaFolder !== undefined) {
-        assetFolders.push(
-          normalizeAssetFolder({
-            ...normalizeFolderArgs,
-            fileName,
-            mediaFolder: fileMediaFolder,
-            publicFolder: filePublicFolder,
-            baseFolder: getPathInfo(filePath).dirname,
-          }),
-        );
-      }
+      addFolderIfNeeded({
+        ...normalizeFolderArgs,
+        fileName,
+        mediaFolder: fileMediaFolder,
+        publicFolder: filePublicFolder,
+        baseFolder: getPathInfo(filePath).dirname,
+      });
     });
   });
 

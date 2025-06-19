@@ -26,7 +26,7 @@
   import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
   import { hasMouse } from '$lib/services/user/env';
-  import { formatSize } from '$lib/services/utils/file';
+  import { createPath, formatSize } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -97,6 +97,35 @@
     !required &&
       (!context || !['markdown-editor-component', 'single-field-list-widget'].includes(context)),
   );
+
+  /**
+   * Get the path to display for the asset or file. For an unsaved file, this will be the same as
+   * the final path in most cases, but it could be different if a file with the same name already
+   * exists in the assets folder, and the new file is renamed to avoid conflicts.
+   * @returns {string} The path to display. If the folder could not be determined, it will only
+   * return the file name.
+   * @todo Handle template tags and relative paths if possible.
+   */
+  const fileDisplayPath = $derived.by(() => {
+    if (!currentValue) {
+      return '';
+    }
+
+    if (file) {
+      const { publicPath, entryRelative, hasTemplateTags } =
+        $entryDraft?.files[currentValue].folder ?? {};
+
+      const _folder = entryRelative || hasTemplateTags ? '' : publicPath || '';
+
+      return createPath([_folder, decodeURI(file.name.normalize())]);
+    }
+
+    if (!currentValue.startsWith('blob:')) {
+      return decodeURI(currentValue);
+    }
+
+    return '';
+  });
 
   /**
    * Get the blob URL of an unsaved file that matches the given file.
@@ -278,11 +307,7 @@
             aria-labelledby="{fieldId}-label"
             aria-errormessage="{fieldId}-error"
           >
-            {#if file}
-              {decodeURI(file.name.normalize())}
-            {:else if !currentValue.startsWith('blob:')}
-              {decodeURI(currentValue)}
-            {/if}
+            {fileDisplayPath}
           </div>
         {/if}
         <div role="none">

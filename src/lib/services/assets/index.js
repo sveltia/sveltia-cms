@@ -558,9 +558,14 @@ export const getAssetPublicURL = (
   { pathOnly = false, allowSpecial = false, entry = undefined } = {},
 ) => {
   const { publicPath, entryRelative, hasTemplateTags } =
-    get(allAssetFolders).find(({ collectionName }) =>
-      getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
-    ) ?? get(globalAssetFolder);
+    asset.folder.collectionName === undefined
+      ? // Use the global asset folder
+        asset.folder
+      : // Search for the asset folder instead of using `asset.folder` directly, as an asset can be
+        // used for multiple collections, and the public path can be different for each
+        (get(allAssetFolders).find(({ collectionName }) =>
+          getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
+        ) ?? get(globalAssetFolder));
 
   // Cannot determine the URL if it’s relative to an entry, unless the asset is in the same folder
   if (entryRelative) {
