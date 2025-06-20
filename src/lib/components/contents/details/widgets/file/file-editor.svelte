@@ -102,8 +102,8 @@
    * Get the path to display for the asset or file. For an unsaved file, this will be the same as
    * the final path in most cases, but it could be different if a file with the same name already
    * exists in the assets folder, and the new file is renamed to avoid conflicts.
-   * @returns {string} The path to display. If the folder could not be determined, it will only
-   * return the file name.
+   * @type {string} The path to display. If the folder could not be determined, it will only be the
+   * file name.
    * @todo Handle template tags and relative paths if possible.
    */
   const fileDisplayPath = $derived.by(() => {
