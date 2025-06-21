@@ -8,10 +8,11 @@ import {
   overlaidAsset,
 } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
+import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
-import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
+import { formatFileName } from '$lib/services/utils/file';
 
 /**
  * @import { Asset, CommitAction, CommitChangesOptions, UploadingAssets } from '$lib/types/private';
@@ -26,6 +27,7 @@ import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
  */
 const createFileList = (uploadingAssets) => {
   const { files, folder, originalAsset } = uploadingAssets;
+  const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
 
   const assetNamesInSameFolder =
     folder?.internalPath !== undefined
@@ -33,17 +35,18 @@ const createFileList = (uploadingAssets) => {
       : [];
 
   return files.map((file) => {
-    const name =
-      originalAsset?.name ?? renameIfNeeded(sanitizeFileName(file.name), assetNamesInSameFolder);
+    const fileName =
+      originalAsset?.name ??
+      formatFileName(file.name, { slugificationEnabled, assetNamesInSameFolder });
 
-    if (!assetNamesInSameFolder.includes(name)) {
-      assetNamesInSameFolder.push(name);
+    if (!assetNamesInSameFolder.includes(fileName)) {
+      assetNamesInSameFolder.push(fileName);
     }
 
     return {
       action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
-      name,
-      path: originalAsset?.path ?? [folder?.internalPath, name].join('/'),
+      name: fileName,
+      path: originalAsset?.path ?? [folder?.internalPath, fileName].join('/'),
       file,
     };
   });

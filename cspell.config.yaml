@@ -84,6 +84,8 @@ words:
   - Shiki
   - sindresorhus
   - singleline
+  - slugification
+  - slugified
   - smol
   - strikethrough
   - stylelint

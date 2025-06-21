@@ -91,6 +91,10 @@
  * Configuration for the default media library.
  * @typedef {object} DefaultMediaLibraryConfig
  * @property {number} [max_file_size] Maximum file size in bytes that can be accepted for uploading.
+ * @property {boolean} [slugify_filename] Whether to rename an original asset file when saving it,
+ * according to the global `slug` option. Default: `false`, meaning that the original file name is
+ * kept by default, while Netlify/Decap CMS forces to slugify file names. If set to `true`, for
+ * example, `Hello World (1).webp` would be `hello-world-1.webp`.
  * @property {FileTransformations} [transformations] File transformation option map. The key is an
  * original format like `png` or `jpeg`. It can also be `raster_image` that matches any supported
  * raster image format.

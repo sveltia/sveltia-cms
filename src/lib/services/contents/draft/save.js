@@ -11,6 +11,7 @@ import {
   getAssetsByDirName,
   globalAssetFolder,
 } from '$lib/services/assets';
+import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
 import { backend, isLastCommitPublished } from '$lib/services/backends';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
@@ -29,13 +30,7 @@ import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/he
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
 import { user } from '$lib/services/user';
 import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
-import {
-  createPath,
-  encodeFilePath,
-  renameIfNeeded,
-  resolvePath,
-  sanitizeFileName,
-} from '$lib/services/utils/file';
+import { createPath, encodeFilePath, formatFileName, resolvePath } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -708,6 +703,7 @@ const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
  * @param {FlattenedEntryContent} args.content Localized content.
  * @param {FileChange[]} args.changes Changeset.
  * @param {Asset[]} args.savingAssets List of assets to be saved.
+ * @param {boolean} args.slugificationEnabled Whether the file name slugification is enabled.
  * @param {boolean} args.encodingEnabled Whether the file path encoding is enabled.
  */
 const replaceBlobURL = async ({
@@ -720,6 +716,7 @@ const replaceBlobURL = async ({
   content,
   changes,
   savingAssets,
+  slugificationEnabled,
   encodingEnabled,
 }) => {
   const sha = await getHash(file);
@@ -731,33 +728,33 @@ const replaceBlobURL = async ({
     assetFolderPaths: { resolvedInternalPath, resolvedPublicPath },
   } = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
 
-  let assetName = '';
+  let fileName = '';
 
   // Check if the file has already been added for other field or locale
   if (dupFile) {
-    assetName = dupFile.name;
+    fileName = dupFile.name;
   } else {
-    assetName = renameIfNeeded(sanitizeFileName(file.name), assetNamesInSameFolder);
+    fileName = formatFileName(file.name, { slugificationEnabled, assetNamesInSameFolder });
 
-    const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${assetName}` : assetName;
+    const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${fileName}` : fileName;
 
-    assetNamesInSameFolder.push(assetName);
+    assetNamesInSameFolder.push(fileName);
     changes.push({ action: 'create', path: assetPath, data: file });
 
     savingAssets.push({
       ...savingAssetProps,
       blobURL,
-      name: assetName,
+      name: fileName,
       path: assetPath,
       sha,
       size: file.size,
-      kind: getAssetKind(assetName),
+      kind: getAssetKind(fileName),
     });
   }
 
   let publicURL = resolvedPublicPath
-    ? `${resolvedPublicPath === '/' ? '' : resolvedPublicPath}/${assetName}`
-    : assetName;
+    ? `${resolvedPublicPath === '/' ? '' : resolvedPublicPath}/${fileName}`
+    : fileName;
 
   if (encodingEnabled) {
     publicURL = encodeFilePath(publicURL);
@@ -791,8 +788,17 @@ const createBaseSavingEntryData = async ({
   const changes = [];
   /** @type {Asset[]} */
   const savingAssets = [];
+  const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
   const { encode_file_path: encodingEnabled = false } = get(siteConfig)?.output ?? {};
-  const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets, encodingEnabled };
+
+  const replaceBlobBaseArgs = {
+    draft,
+    defaultLocaleSlug,
+    changes,
+    savingAssets,
+    slugificationEnabled,
+    encodingEnabled,
+  };
 
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(

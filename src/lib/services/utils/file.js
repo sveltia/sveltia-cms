@@ -3,6 +3,7 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import sanitize from 'sanitize-filename';
 import { get } from 'svelte/store';
 import { _, locale as appLocale } from 'svelte-i18n';
+import { slugify } from '$lib/services/common/slug';
 
 /**
  * Create a regular expression that matches the given path.
@@ -52,13 +53,6 @@ export const encodeFilePath = (path) => {
  * @returns {string} Decoded path.
  */
 export const decodeFilePath = (path) => decodeURIComponent(path);
-
-/**
- * Sanitize the given file name for upload.
- * @param {string} name Original name.
- * @returns {string} Normalized name.
- */
-export const sanitizeFileName = (name) => sanitize(name.normalize());
 
 /**
  * Format the given file size in bytes, KB, MB, GB or TB.
@@ -123,6 +117,30 @@ export const renameIfNeeded = (name, otherNames) => {
   const number = Number(dupName.match(regex)?.groups?.num ?? 0) + 1;
 
   return `${slug}-${number}${extension ? `.${extension}` : ''}`;
+};
+
+/**
+ * Format the file name for uploading, ensuring it is sanitized and optionally slugified.
+ * @param {string} originalName The original file name.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.slugificationEnabled] Whether to slugify the file name.
+ * @param {string[]} [options.assetNamesInSameFolder] List of asset names in the same folder to
+ * avoid name conflicts.
+ * @returns {string} The formatted file name, sanitized and possibly slugified.
+ */
+export const formatFileName = (
+  originalName,
+  { slugificationEnabled = false, assetNamesInSameFolder = [] } = {},
+) => {
+  let fileName = sanitize(originalName.normalize());
+
+  if (slugificationEnabled) {
+    const { filename, extension } = getPathInfo(fileName);
+
+    fileName = `${slugify(filename)}${extension ? `.${extension}` : ''}`;
+  }
+
+  return renameIfNeeded(fileName, assetNamesInSameFolder);
 };
 
 /**
