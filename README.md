@@ -482,6 +482,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
   - The `summary` template tags support [transformations](https://decapcms.org/docs/summary-strings/), e.g. `{{fields.date | date('YYYY-MM-DD')}}`.
+  - The `collapse` option accepts the value `auto` to automatically collapse the widget if any of its subfields are filled out. The same applies to the `minimize_collapsed` option of the List widget.
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
@@ -523,6 +524,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - Default media library
     - It comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images selected by users for upload are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
     - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
+    - Unlike Netlify/Decap CMS, files are uploaded with their original names. Uppercase letters and spaces are not converted to lowercase letters and hyphens.[^97] If you want to slugify filenames according to the [`slug` option](https://decapcms.org/docs/configuration-options/#slug-type), use the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
   - Other integrations
     - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8] Developers can [disable them](#disabling-stock-assets) if needed.
     - More integration options, including Amazon S3 and Cloudflare R2/Images/Stream, would be added in the future.
@@ -532,7 +534,6 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
 - These entry-relative assets are automatically deleted when the associated entry is deleted because these are not available for other entries.[^22] When you’re [working with a local repository](#working-with-a-local-git-repository), the empty enclosing folder is also deleted.
 - Hidden files (dot files) don’t appear in the Asset Library.[^47]
 - Users can add assets using the Quick Add button in the upper right corner of the application.
-- Files are uploaded with their original names, without converting uppercase letters and spaces to lowercase letters and hyphens.[^97]
 
 ### Better customization
 
@@ -1033,7 +1034,8 @@ Sveltia CMS has added support for multiple media libraries with the new `media_l
 media_libraries:
   default:
     config:
-      max_file_size: 1024000
+      max_file_size: 1024000 # default: Infinity
+      slugify_filename: true # default: false
       transformations:
         # See the next section
   cloudinary:
