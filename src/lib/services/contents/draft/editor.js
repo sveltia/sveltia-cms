@@ -1,4 +1,5 @@
 import { IndexedDB } from '@sveltia/utils/storage';
+import { escapeRegExp } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
@@ -68,6 +69,37 @@ export const entryEditorSettings = writable();
  * @type {Writable<SelectAssetsView | undefined>}
  */
 export const selectAssetsView = writable();
+
+/**
+ * Get the initial object/list expander state based on the `collapsed` option. If `collapsed` is set
+ * to `auto`, it checks if there are any values in the object. Otherwise, it uses the `collapsed`
+ * option directly, which defaults to `false` (expanded).
+ * @param {object} args Arguments.
+ * @param {string} args.key Key path of the item. For the List widget, it’s a key path of the list
+ * item, e.g. `authors.0`. For the Object widget, it’s a key path of the object with the `#` suffix,
+ * e.g. `details#`.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {boolean | 'auto'} [args.collapsed] The `collapsed` option value.
+ * @returns {boolean} Whether th expander should be expanded.
+ */
+export const getInitialExpanderState = ({ key, locale, collapsed = false }) => {
+  const _draft = get(entryDraft);
+  const currentState = _draft?.expanderStates?._[key];
+
+  if (currentState !== undefined) {
+    return currentState;
+  }
+
+  if (collapsed === 'auto') {
+    const valueMap = _draft?.currentValues?.[locale] ?? {};
+    // Regular expression to match any non-nested subfields, with the `#` key suffix removed
+    const regex = new RegExp(`^${escapeRegExp(key.replace(/#$/, ''))}\\.[^\\.]+$`);
+
+    return !Object.entries(valueMap).some(([keyPath, value]) => regex.test(keyPath) && !!value);
+  }
+
+  return !collapsed;
+};
 
 /**
  * Sync the field object/list expander states between locales.

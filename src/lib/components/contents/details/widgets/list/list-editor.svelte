@@ -25,7 +25,7 @@
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/create';
-  import { syncExpanderStates } from '$lib/services/contents/draft/editor';
+  import { getInitialExpanderState, syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { updateListField } from '$lib/services/contents/draft/update';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
   import { formatSummary } from '$lib/services/contents/widgets/list/helper';
@@ -67,7 +67,7 @@
     i18n,
     // Widget-specific options
     allow_add: allowAdd = true,
-    collapsed = false,
+    collapsed,
     summary,
     minimize_collapsed: minimizeCollapsed = false,
     label_singular: labelSingular,
@@ -92,9 +92,7 @@
   const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
-  const parentExpanded = $derived(
-    $state.snapshot($entryDraft?.expanderStates?._[parentExpandedKeyPath]) ?? true,
-  );
+  const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
   /** @type {Record<string, any>[]} */
   const items = $derived(
     unflatten(
@@ -112,10 +110,26 @@
     items.map((_item, index) => {
       const key = `${keyPath}.${index}`;
 
-      return [key, $state.snapshot($entryDraft?.expanderStates?._[key]) ?? true];
+      return [key, $entryDraft?.expanderStates?._[key] ?? true];
     }),
   );
   const hasMaxItems = $derived(items.length >= max);
+
+  /**
+   * Initialize the expander state.
+   */
+  const initializeExpanderState = () => {
+    syncExpanderStates({
+      [parentExpandedKeyPath]: minimizeCollapsed === 'auto' ? !items.length : !minimizeCollapsed,
+      ...Object.fromEntries(
+        items.map((__, index) => {
+          const key = `${keyPath}.${index}`;
+
+          return [key, getInitialExpanderState({ key, locale, collapsed })];
+        }),
+      ),
+    });
+  };
 
   /**
    * Update {@link inputValue} when {@link currentValue} is updated.
@@ -194,6 +208,9 @@
       valueList.splice(index, 0, newItem);
       expanderStateList.splice(index, 0, true);
     });
+
+    // Expand the parent if it is collapsed to show the newly added item
+    syncExpanderStates({ [parentExpandedKeyPath]: true });
   };
 
   /**
@@ -256,18 +273,7 @@
 
   onMount(() => {
     mounted = true;
-
-    // Initialize the expander state
-    syncExpanderStates({
-      [parentExpandedKeyPath]: !minimizeCollapsed,
-      ...Object.fromEntries(
-        items.map((__, index) => {
-          const key = `${keyPath}.${index}`;
-
-          return [key, $state.snapshot($entryDraft?.expanderStates?._[key]) ?? !collapsed];
-        }),
-      ),
-    });
+    initializeExpanderState();
   });
 
   $effect(() => {

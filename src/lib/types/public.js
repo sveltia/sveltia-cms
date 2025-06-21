@@ -443,8 +443,12 @@
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
  * field value.
  * @property {string} [summary] Template of a label to be displayed on a collapsed list item.
- * @property {boolean} [collapsed] Whether to collapse the UI by default. Default: `false`.
- * @property {boolean} [minimize_collapsed] Whether to collapse the entire UI. Default: `false`.
+ * @property {boolean | 'auto'} [collapsed] Whether to collapse the list items by default. Default:
+ * `false`. If set to `auto`, the UI is collapsed if the item has any filled subfields and expanded
+ * if all the subfields are empty.
+ * @property {boolean | 'auto'} [minimize_collapsed] Whether to collapse the entire list. Default:
+ * `false`. If set to `auto`, the UI is collapsed if the list has any items and expanded if it’s
+ * empty.
  * @property {Field} [field] Single field to be included in a list item.
  * @property {Field[]} [fields] Set of fields to be included in a list item.
  * @property {boolean} [root] Whether to save the field value at the top-level of the data file
@@ -545,7 +549,9 @@
  * @typedef {object} ObjectFieldProps
  * @property {'object'} widget Widget name.
  * @property {Record<string, any>} [default] Default values.
- * @property {boolean} [collapsed] Whether to collapse the UI by default. Default: `false`.
+ * @property {boolean | 'auto'} [collapsed] Whether to collapse the object by default. Default:
+ * `false`. If set to `auto`, the UI is collapsed if the object has any filled subfields and
+ * expanded if all the subfields are empty.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
  * @property {Field[]} fields Set of fields to be included.
  * @see https://decapcms.org/docs/widgets/#object

@@ -15,7 +15,7 @@
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/create';
-  import { syncExpanderStates } from '$lib/services/contents/draft/editor';
+  import { getInitialExpanderState, syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
   import { getField } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
@@ -53,7 +53,7 @@
     name: fieldName,
     i18n = false,
     // Widget-specific options
-    collapsed = false,
+    collapsed,
     summary,
     fields,
     types,
@@ -76,9 +76,7 @@
   );
   const canEdit = $derived(locale === defaultLocale || i18n !== false);
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
-  const parentExpanded = $derived(
-    $state.snapshot($entryDraft?.expanderStates?._[parentExpandedKeyPath]) ?? true,
-  );
+  const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
   const typeConfig = $derived(
@@ -87,6 +85,15 @@
   const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
   const summaryTemplate = $derived(hasVariableTypes ? typeConfig?.summary || summary : summary);
   const addButtonDisabled = $derived(locale !== defaultLocale && i18n === 'duplicate');
+
+  /**
+   * Initialize the expander state.
+   */
+  const initializeExpanderState = () => {
+    const key = parentExpandedKeyPath;
+
+    syncExpanderStates({ [key]: getInitialExpanderState({ key, locale, collapsed }) });
+  };
 
   /**
    * Add the object’s subfields to the entry draft with the default values populated.
@@ -162,11 +169,7 @@
   const _formatSummary = () => formatSummary({ ...getFieldArgs, keyPath, locale, summaryTemplate });
 
   onMount(() => {
-    // Initialize the expander state
-    syncExpanderStates({
-      [parentExpandedKeyPath]:
-        $state.snapshot($entryDraft?.expanderStates?._[parentExpandedKeyPath]) ?? !collapsed,
-    });
+    initializeExpanderState();
   });
 </script>
 
