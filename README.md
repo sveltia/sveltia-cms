@@ -482,7 +482,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
 - List and Object
   - The `summary` is displayed correctly when it refers to a Relation field[^36] or a simple List field.
   - The `summary` template tags support [transformations](https://decapcms.org/docs/summary-strings/), e.g. `{{fields.date | date('YYYY-MM-DD')}}`.
-  - The `collapse` option accepts the value `auto` to automatically collapse the widget if any of its subfields are filled out. The same applies to the `minimize_collapsed` option for the List widget.
+  - The `collapsed` option accepts the value `auto` to automatically collapse the widget if any of its subfields are filled out. The same applies to the `minimize_collapsed` option for the List widget.
 - Markdown, String and Text
   - A required field containing only spaces or line breaks will result in a validation error, as if no characters were entered.
 - Relation and Select
