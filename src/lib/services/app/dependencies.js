@@ -15,8 +15,8 @@ export const getUnpkgURL = (name) => {
 /**
  * Load an ES module of a third-party library from UNPKG.
  * @param {string} library Library name.
- * @param {string} path Absolute path of the module.
+ * @param {string} path Absolute path of the module file to be loaded without the leading slash.
  * @returns {Promise<any>} Module.
  */
 export const loadModule = async (library, path) =>
-  import(/* @vite-ignore */ `${getUnpkgURL(library)}${path}`);
+  import(/* @vite-ignore */ `${getUnpkgURL(library)}/${path}`);

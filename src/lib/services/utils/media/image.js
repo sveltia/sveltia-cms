@@ -151,7 +151,7 @@ export const exportCanvasAsBlob = async (canvas, { format = 'webp', quality = 85
 
     try {
       /** @type {import('@jsquash/webp').encode} */
-      const encode = (await loadModule(`@jsquash/${format}`, '/encode.js?module')).default;
+      const encode = (await loadModule(`@jsquash/${format}`, 'encode.js?module')).default;
       const buffer = await encode(imageData, { quality });
 
       return new Blob([buffer], { type });
@@ -277,7 +277,7 @@ export const optimizeSVG = async (blob) => {
 
   try {
     /** @type {import('svgo')} */
-    const { optimize } = await loadModule('svgo', '/dist/svgo.browser.js');
+    const { optimize } = await loadModule('svgo', 'dist/svgo.browser.js');
     const { data } = optimize(string);
 
     return new Blob([data], { type: blob.type });
