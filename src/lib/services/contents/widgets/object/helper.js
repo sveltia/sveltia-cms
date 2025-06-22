@@ -1,5 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 import { flatten } from 'flat';
+import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
 import {
   getField,
   getFieldDisplayValue,
@@ -22,21 +23,53 @@ import {
  * @returns {Record<FieldKeyPath, any>} Default value map.
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, locale }) => {
-  const { default: defaultValue, types } = /** @type {ObjectField} */ (fieldConfig);
+  const {
+    default: defaultValue,
+    fields: subFields,
+    types,
+  } = /** @type {ObjectField} */ (fieldConfig);
+
   const required = isFieldRequired({ fieldConfig, locale });
-  /** @type {Record<FieldKeyPath, any>} */
+  /** @type {FlattenedEntryContent} */
   const content = {};
 
+  // If the default value is a valid object, flatten it and prefix keys
   if (isObject(defaultValue)) {
     // Flatten the object and prefix keys with the key path and index
     Object.entries(flatten(defaultValue)).forEach(([key, val]) => {
       content[`${keyPath}.${key}`] = val;
     });
+
+    return content;
   }
 
-  // Hack to enable validation for an empty object
-  if ((!required || Array.isArray(types)) && !Object.keys(content).length) {
+  if (!required || Array.isArray(types)) {
+    // Enable validation - for optional fields or fields with variable types
     content[keyPath] = null;
+
+    return content;
+  }
+
+  // For required fields without object-level default values and without types,
+  // populate default values from subfields if they exist and have defaults
+  if (subFields && subFields.length > 0) {
+    subFields.forEach((_subField) => {
+      populateDefaultValue({
+        content,
+        keyPath: [keyPath, _subField.name].join('.'),
+        fieldConfig: _subField,
+        locale,
+        dynamicValues: {},
+      });
+    });
+
+    // Remove empty string values that were added by populateDefaultValue
+    // We only want to keep meaningful defaults, not empty strings
+    Object.keys(content).forEach((key) => {
+      if (content[key] === '') {
+        delete content[key];
+      }
+    });
   }
 
   return content;

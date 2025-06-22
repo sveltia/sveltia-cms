@@ -3,7 +3,8 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
-import { createProxy, getDefaultValues } from '$lib/services/contents/draft/create';
+import { createProxy } from '$lib/services/contents/draft/create';
+import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import {
   copyFromLocaleToast,
   translatorApiKeyDialogState,
