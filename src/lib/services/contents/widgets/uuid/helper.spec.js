@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { getDefaultValue } from './helper.js';
+import { getInitialValue } from './helper.js';
 
 /**
  * @import { UuidField } from '$lib/types/public';
@@ -17,7 +17,7 @@ const baseFieldConfig = {
   name: 'id',
 };
 
-describe('Test getDefaultValue()', () => {
+describe('Test getInitialValue()', () => {
   test('should return UUID without prefix when use_b32_encoding is false', () => {
     /** @type {UuidField} */
     const fieldConfig = {
@@ -25,7 +25,7 @@ describe('Test getDefaultValue()', () => {
       use_b32_encoding: false,
     };
 
-    const result = getDefaultValue(fieldConfig);
+    const result = getInitialValue(fieldConfig);
 
     expect(result).toBe('mock-uuid-1234-5678');
   });
@@ -37,7 +37,7 @@ describe('Test getDefaultValue()', () => {
       use_b32_encoding: true,
     };
 
-    const result = getDefaultValue(fieldConfig);
+    const result = getInitialValue(fieldConfig);
 
     expect(result).toBe('mock-random-id');
   });
@@ -51,7 +51,7 @@ describe('Test getDefaultValue()', () => {
       use_b32_encoding: false,
     };
 
-    const result = getDefaultValue(fieldConfig);
+    const result = getInitialValue(fieldConfig);
 
     expect(result).toBe('user-mock-uuid-1234-5678');
   });
@@ -64,7 +64,7 @@ describe('Test getDefaultValue()', () => {
       use_b32_encoding: true,
     };
 
-    const result = getDefaultValue(fieldConfig);
+    const result = getInitialValue(fieldConfig);
 
     expect(result).toBe('id-mock-random-id');
   });
@@ -77,7 +77,7 @@ describe('Test getDefaultValue()', () => {
       use_b32_encoding: false,
     };
 
-    const result = getDefaultValue(fieldConfig);
+    const result = getInitialValue(fieldConfig);
 
     expect(result).toBe('mock-uuid-1234-5678');
   });

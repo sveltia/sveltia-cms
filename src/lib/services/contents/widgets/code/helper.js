@@ -2,39 +2,34 @@ import { isObject } from '@sveltia/utils/object';
 
 /**
  * @import { CodeField, FieldKeyPath } from '$lib/types/public';
+ * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
  */
 
 /**
  * Get the default value map for a Code field.
- * @param {object} args Arguments.
- * @param {CodeField} args.fieldConfig Field configuration.
- * @param {FieldKeyPath} args.keyPath Field key path.
- * @returns {Record<string, any>} Default value map.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments.
+ * @returns {Record<FieldKeyPath, any>} Default value map.
  */
-export const getCodeFieldDefaultValueMap = ({ fieldConfig, keyPath }) => {
-  /** @type {Record<string, any>} */
-  const content = {};
-
+export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   const {
     default: defaultValue,
     output_code_only: outputCodeOnly = false,
     keys: outputKeys = { code: 'code', lang: 'lang' },
   } = /** @type {CodeField} */ (fieldConfig);
 
+  const value = dynamicValue !== undefined ? dynamicValue : defaultValue;
+
   if (outputCodeOnly) {
-    content[keyPath] = typeof defaultValue === 'string' ? defaultValue : '';
-  } else {
-    const obj = isObject(defaultValue)
-      ? /** @type {Record<string, any>} */ (defaultValue)
-      : undefined;
-
-    const code = obj ? obj[outputKeys.code] : /** @type {string | undefined} */ (defaultValue);
-    const lang = obj ? obj[outputKeys.lang] : '';
-
-    content[keyPath] = {};
-    content[`${keyPath}.${outputKeys.code}`] = typeof code === 'string' ? code : '';
-    content[`${keyPath}.${outputKeys.lang}`] = typeof lang === 'string' ? lang : '';
+    return { [keyPath]: typeof value === 'string' ? value : '' };
   }
 
-  return content;
+  const obj = isObject(value) ? /** @type {Record<string, any>} */ (value) : undefined;
+  const code = obj?.[outputKeys.code] ?? value;
+  const lang = obj?.[outputKeys.lang] ?? '';
+
+  return {
+    [keyPath]: {},
+    [`${keyPath}.${outputKeys.code}`]: typeof code === 'string' ? code : '',
+    [`${keyPath}.${outputKeys.lang}`]: typeof lang === 'string' ? lang : '',
+  };
 };

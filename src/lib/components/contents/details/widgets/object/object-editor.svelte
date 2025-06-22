@@ -14,12 +14,11 @@
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
-  import { getDefaultValues } from '$lib/services/contents/draft/create';
   import { getInitialExpanderState, syncExpanderStates } from '$lib/services/contents/draft/editor';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update';
   import { getField } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
-  import { formatSummary } from '$lib/services/contents/widgets/object/helper';
+  import { formatSummary, getDefaultValueMap } from '$lib/services/contents/widgets/object/helper';
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
@@ -117,10 +116,7 @@
     }
 
     const newValueMap = copyDefaultLocaleValues(
-      Object.fromEntries(
-        Object.entries(getDefaultValues(subFields, locale)) //
-          .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
-      ),
+      getDefaultValueMap({ fieldConfig, keyPath, locale }),
     );
 
     Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {

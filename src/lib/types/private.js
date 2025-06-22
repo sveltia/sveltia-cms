@@ -807,6 +807,15 @@
  */
 
 /**
+ * @typedef {object} GetDefaultValueMapFuncArgs
+ * @property {Field} fieldConfig Field configuration.
+ * @property {FieldKeyPath} keyPath Field key path, e.g. `author.name`.
+ * @property {LocaleCode} locale Locale code.
+ * @property {string} [dynamicValue] Dynamic default value parsed from the URL query string.
+ * @see https://decapcms.org/docs/dynamic-default-values/
+ */
+
+/**
  * Options for the `fillSlugTemplate` method.
  * @typedef {object} FillSlugTemplateOptions
  * @property {'preview_path' | 'media_folder'} [type] Slug type.

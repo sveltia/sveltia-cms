@@ -8,7 +8,7 @@
   import { onMount } from 'svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
-  import { getDefaultValue } from '$lib/services/contents/widgets/uuid/helper';
+  import { getInitialValue } from '$lib/services/contents/widgets/uuid/helper';
 
   /**
    * @import { WidgetEditorProps } from '$lib/types/private';
@@ -43,7 +43,7 @@
   onMount(() => {
     if (!currentValue) {
       if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
-        currentValue = getDefaultValue(fieldConfig);
+        currentValue = getInitialValue(fieldConfig);
       }
     }
   });

@@ -1,8 +1,350 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
-import { formatSummary } from '$lib/services/contents/widgets/object/helper';
+import { formatSummary, getDefaultValueMap } from '$lib/services/contents/widgets/object/helper';
 
 vi.mock('$lib/services/config');
+
+/**
+ * @import { ObjectField } from '$lib/types/public';
+ */
+
+/** @type {Pick<ObjectField, 'widget' | 'name'>} */
+const baseFieldConfig = {
+  widget: 'object',
+  name: 'test_object',
+};
+
+describe('Test getDefaultValueMap()', () => {
+  describe('required field behavior', () => {
+    test('should return empty object for required field without default', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'content', widget: 'text' },
+        ],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({});
+    });
+
+    test('should return keyPath with null for optional field without default', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: false,
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'content', widget: 'text' },
+        ],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({ metadata: null });
+    });
+
+    test('should return keyPath with null for field with variable types', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        fields: [], // ObjectField requires fields property
+        types: [
+          {
+            name: 'article',
+            label: 'Article',
+            widget: 'object',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'gallery',
+            label: 'Gallery',
+            widget: 'object',
+            fields: [{ name: 'images', widget: 'list' }],
+          },
+        ],
+      };
+
+      const keyPath = 'content';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({ content: null });
+    });
+  });
+
+  describe('default value handling', () => {
+    test('should flatten and prefix object default values without keyPath null', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: {
+          title: 'Default Title',
+          author: {
+            name: 'John Doe',
+            email: 'john@example.com',
+          },
+          published: true,
+          tags: ['tech', 'coding'],
+        },
+        fields: [
+          { name: 'title', widget: 'string' },
+          {
+            name: 'author',
+            widget: 'object',
+            fields: [
+              { name: 'name', widget: 'string' },
+              { name: 'email', widget: 'string' },
+            ],
+          },
+          { name: 'published', widget: 'boolean' },
+          { name: 'tags', widget: 'list' },
+        ],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({
+        'metadata.title': 'Default Title',
+        'metadata.author.name': 'John Doe',
+        'metadata.author.email': 'john@example.com',
+        'metadata.published': true,
+        'metadata.tags.0': 'tech',
+        'metadata.tags.1': 'coding',
+      });
+    });
+
+    test('should return empty object for empty object default', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: {},
+        fields: [{ name: 'title', widget: 'string' }],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({});
+    });
+
+    test('should handle nested object with mixed data types', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: {
+          config: {
+            enabled: true,
+            count: 42,
+            ratio: 3.14,
+            labels: {
+              primary: 'Main',
+              secondary: 'Alt',
+            },
+          },
+          list: ['item1', 'item2'],
+        },
+        fields: [
+          { name: 'config', widget: 'object' },
+          { name: 'list', widget: 'list' },
+        ],
+      };
+
+      const keyPath = 'settings';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({
+        'settings.config.enabled': true,
+        'settings.config.count': 42,
+        'settings.config.ratio': 3.14,
+        'settings.config.labels.primary': 'Main',
+        'settings.config.labels.secondary': 'Alt',
+        'settings.list.0': 'item1',
+        'settings.list.1': 'item2',
+      });
+    });
+
+    test('should return empty object for non-object default values', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        // @ts-expect-error - Testing invalid type
+        default: 'not-an-object',
+        fields: [{ name: 'title', widget: 'string' }],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({});
+    });
+
+    test('should return empty object for null default values', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        // @ts-expect-error - Testing invalid type
+        default: null,
+        fields: [{ name: 'title', widget: 'string' }],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({});
+    });
+
+    test('should return empty object for array default values', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: ['not', 'an', 'object'],
+        fields: [{ name: 'title', widget: 'string' }],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({});
+    });
+  });
+
+  describe('different key paths', () => {
+    test('should handle simple key path', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: { title: 'Test' },
+        fields: [{ name: 'title', widget: 'string' }],
+      };
+
+      const keyPath = 'simple';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({
+        'simple.title': 'Test',
+      });
+    });
+
+    test('should handle nested key path', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: { title: 'Test' },
+        fields: [{ name: 'title', widget: 'string' }],
+      };
+
+      const keyPath = 'parent.child.metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({
+        'parent.child.metadata.title': 'Test',
+      });
+    });
+  });
+
+  describe('dynamicValue parameter', () => {
+    test('should ignore dynamicValue parameter as documented', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: { title: 'Default Title' },
+        fields: [{ name: 'title', widget: 'string' }],
+      };
+
+      const keyPath = 'metadata';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: '{"title":"Dynamic Title"}',
+      });
+
+      // dynamicValue should be ignored as per the JSDoc comment
+      expect(result).toEqual({
+        'metadata.title': 'Default Title',
+      });
+    });
+  });
+
+  describe('edge cases', () => {
+    test('should return empty object for undefined default value', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        fields: [{ name: 'title', widget: 'string' }],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({});
+    });
+
+    test('should handle object field without subfields', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: { title: 'Test' },
+        fields: [],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({
+        'metadata.title': 'Test',
+      });
+    });
+
+    test('should handle complex nested structures', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        default: {
+          level1: {
+            level2: {
+              level3: {
+                deep: 'value',
+                array: [{ item: 'first' }, { item: 'second' }],
+              },
+            },
+          },
+        },
+        fields: [{ name: 'level1', widget: 'object' }],
+      };
+
+      const keyPath = 'root';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({
+        'root.level1.level2.level3.deep': 'value',
+        'root.level1.level2.level3.array.0.item': 'first',
+        'root.level1.level2.level3.array.1.item': 'second',
+      });
+    });
+  });
+});
 
 describe('Test formatSummary() — comprehensive tests', async () => {
   // @ts-ignore

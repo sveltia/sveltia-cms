@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getBooleanFieldDefaultValueMap } from './helper.js';
+import { getDefaultValueMap } from './helper.js';
 
 /**
  * @import { BooleanField } from '$lib/types/public';
@@ -11,7 +11,7 @@ const baseFieldConfig = {
   name: 'isEnabled',
 };
 
-describe('Test getBooleanFieldDefaultValueMap()', () => {
+describe('Test getDefaultValueMap()', () => {
   test('should return true when default value is true', () => {
     /** @type {BooleanField} */
     const fieldConfig = {
@@ -20,7 +20,7 @@ describe('Test getBooleanFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getBooleanFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ isEnabled: true });
   });
@@ -33,7 +33,7 @@ describe('Test getBooleanFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getBooleanFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -45,7 +45,7 @@ describe('Test getBooleanFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getBooleanFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -59,7 +59,7 @@ describe('Test getBooleanFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getBooleanFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -73,7 +73,7 @@ describe('Test getBooleanFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getBooleanFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -87,7 +87,7 @@ describe('Test getBooleanFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getBooleanFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -101,7 +101,7 @@ describe('Test getBooleanFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getBooleanFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -115,8 +115,142 @@ describe('Test getBooleanFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'settings.notifications.email';
-    const result = getBooleanFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ 'settings.notifications.email': true });
+  });
+
+  describe('with dynamicValue', () => {
+    test('should return true when dynamicValue is "true"', () => {
+      /** @type {BooleanField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: false,
+      };
+
+      const keyPath = 'isEnabled';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: 'true',
+      });
+
+      expect(result).toEqual({ isEnabled: true });
+    });
+
+    test('should return false when dynamicValue is "false"', () => {
+      /** @type {BooleanField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: true,
+      };
+
+      const keyPath = 'isEnabled';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: 'false',
+      });
+
+      expect(result).toEqual({ isEnabled: false });
+    });
+
+    test('should return false when dynamicValue is any other string', () => {
+      /** @type {BooleanField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: true,
+      };
+
+      const keyPath = 'isEnabled';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: 'something-else',
+      });
+
+      expect(result).toEqual({ isEnabled: false });
+    });
+
+    test('should prioritize dynamicValue over default', () => {
+      /** @type {BooleanField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: false,
+      };
+
+      const keyPath = 'isEnabled';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: 'true',
+      });
+
+      expect(result).toEqual({ isEnabled: true });
+    });
+
+    test('should handle dynamicValue when no default exists', () => {
+      /** @type {BooleanField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+      };
+
+      const keyPath = 'isEnabled';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: 'true',
+      });
+
+      expect(result).toEqual({ isEnabled: true });
+    });
+
+    test('should handle empty dynamicValue', () => {
+      /** @type {BooleanField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: true,
+      };
+
+      const keyPath = 'isEnabled';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: '',
+      });
+
+      expect(result).toEqual({ isEnabled: false });
+    });
+
+    test('should handle undefined dynamicValue', () => {
+      /** @type {BooleanField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: true,
+      };
+
+      const keyPath = 'isEnabled';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: undefined,
+      });
+
+      expect(result).toEqual({ isEnabled: true });
+    });
   });
 });

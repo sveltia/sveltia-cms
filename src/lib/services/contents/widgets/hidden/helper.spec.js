@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { getHiddenFieldDefaultValueMap } from './helper.js';
+import { getDefaultValueMap } from './helper.js';
 
 /**
  * @import { HiddenField } from '$lib/types/public';
@@ -20,7 +20,7 @@ const baseFieldConfig = {
   name: 'test_hidden',
 };
 
-describe('Test getHiddenFieldDefaultValueMap()', () => {
+describe('Test getDefaultValueMap()', () => {
   // Mock Date to have consistent datetime values
   const mockDate = new Date('2023-06-15T10:30:00.000Z');
 
@@ -41,7 +41,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'count';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ count: 42 });
   });
@@ -55,7 +55,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'enabled';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ enabled: true });
   });
@@ -69,7 +69,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'config';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ config: { key: 'value' } });
   });
@@ -83,7 +83,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'identifier';
     const locale = 'en';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ identifier: 'prefix-en-suffix' });
   });
@@ -97,7 +97,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'timestamp';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ timestamp: 'created-2023-06-15T10:30:00.000Z' });
   });
@@ -111,7 +111,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'identifier';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ identifier: 'id-full-uuid-1234-5678-90ab-cdef' });
   });
@@ -125,7 +125,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'identifier';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ identifier: 'id-short-uuid-123' });
   });
@@ -139,7 +139,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'identifier';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ identifier: 'id-shorter-uuid' });
   });
@@ -153,7 +153,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'composite';
     const locale = 'fr';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({
       composite: 'fr-2023-06-15T10:30:00.000Z-short-uuid-123',
@@ -169,7 +169,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'test';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ test: 'prefix--suffix' });
   });
@@ -183,7 +183,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'static';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ static: 'static-value' });
   });
@@ -197,7 +197,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'empty';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ empty: '' });
   });
@@ -210,7 +210,7 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'undefined';
     const locale = '_default';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ undefined });
   });
@@ -224,8 +224,93 @@ describe('Test getHiddenFieldDefaultValueMap()', () => {
 
     const keyPath = 'meta.hidden.id';
     const locale = 'ja';
-    const result = getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
 
     expect(result).toEqual({ 'meta.hidden.id': 'ja-value' });
+  });
+
+  describe('with dynamicValue', () => {
+    test('should prioritize dynamicValue over default', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'default-value',
+      };
+
+      const keyPath = 'test_hidden';
+      const locale = '_default';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale,
+        dynamicValue: 'dynamic-value',
+      });
+
+      expect(result).toEqual({ test_hidden: 'dynamic-value' });
+    });
+
+    test('should process template tags in dynamicValue', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'default-{{datetime}}',
+      };
+
+      const keyPath = 'test_hidden';
+      const locale = '_default';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale,
+        dynamicValue: 'created-{{datetime}}-{{locale}}',
+      });
+
+      expect(result).toEqual({
+        test_hidden: 'created-2023-06-15T10:30:00.000Z-_default',
+      });
+    });
+    test('should handle undefined dynamicValue', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'default',
+      };
+
+      const keyPath = 'test_hidden';
+      const locale = 'ja';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale,
+        dynamicValue: '{{locale}}-{{datetime}}-{{uuid}}-{{uuid_short}}-{{uuid_shorter}}',
+      });
+
+      expect(result).toEqual({
+        test_hidden:
+          'ja-2023-06-15T10:30:00.000Z-full-uuid-1234-5678-90ab-cdef-short-uuid-123-shorter-uuid',
+      });
+    });
+    test('should handle undefined dynamicValue', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'default-value',
+      };
+
+      const keyPath = 'test_hidden';
+      const locale = '_default';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale,
+        dynamicValue: '',
+      });
+
+      expect(result).toEqual({ test_hidden: '' });
+    });
   });
 });

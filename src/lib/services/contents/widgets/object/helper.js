@@ -1,9 +1,46 @@
-import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { isObject } from '@sveltia/utils/object';
+import { flatten } from 'flat';
+import {
+  getField,
+  getFieldDisplayValue,
+  isFieldRequired,
+} from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
+ * @import {
+ * FlattenedEntryContent,
+ * GetDefaultValueMapFuncArgs,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
+ * @import { FieldKeyPath, ObjectField } from '$lib/types/public';
  */
+
+/**
+ * Get the default value map for an Object field.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments. Note that `dynamicValue` is not used here, as
+ * Object fields do not support dynamic values.
+ * @returns {Record<FieldKeyPath, any>} Default value map.
+ */
+export const getDefaultValueMap = ({ fieldConfig, keyPath, locale }) => {
+  const { default: defaultValue, types } = /** @type {ObjectField} */ (fieldConfig);
+  const required = isFieldRequired({ fieldConfig, locale });
+  /** @type {Record<FieldKeyPath, any>} */
+  const content = {};
+
+  if (isObject(defaultValue)) {
+    // Flatten the object and prefix keys with the key path and index
+    Object.entries(flatten(defaultValue)).forEach(([key, val]) => {
+      content[`${keyPath}.${key}`] = val;
+    });
+  }
+
+  // Hack to enable validation for an empty object
+  if ((!required || Array.isArray(types)) && !Object.keys(content).length) {
+    content[keyPath] = null;
+  }
+
+  return content;
+};
 
 /**
  * Format the summary template of an Object field.

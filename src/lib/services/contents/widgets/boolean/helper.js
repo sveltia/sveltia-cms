@@ -1,16 +1,30 @@
 /**
- * @import { FieldKeyPath, BooleanField } from '$lib/types/public';
+ * @import { BooleanField, FieldKeyPath } from '$lib/types/public';
+ * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
  */
 
 /**
- * Get the default value map for a Boolean field.
- * @param {object} args Arguments.
- * @param {BooleanField} args.fieldConfig Field configuration.
- * @param {FieldKeyPath} args.keyPath Field key path.
- * @returns {Record<string, boolean>} Default value map.
+ * Get the default value for a Boolean field.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments.
+ * @returns {boolean} Default value.
  */
-export const getBooleanFieldDefaultValueMap = ({ fieldConfig, keyPath }) => {
-  const { default: defaultValue } = fieldConfig;
+const getDefaultValue = ({ fieldConfig, dynamicValue }) => {
+  if (dynamicValue !== undefined) {
+    return dynamicValue === 'true';
+  }
 
-  return { [keyPath]: typeof defaultValue === 'boolean' ? defaultValue : false };
+  const { default: defaultValue } = /** @type {BooleanField} */ (fieldConfig);
+
+  if (typeof defaultValue === 'boolean') {
+    return defaultValue;
+  }
+
+  return false;
 };
+
+/**
+ * Get the default value map for a Boolean field.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments.
+ * @returns {Record<FieldKeyPath, boolean>} Default value map.
+ */
+export const getDefaultValueMap = (args) => ({ [args.keyPath]: getDefaultValue(args) });

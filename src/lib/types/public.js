@@ -648,6 +648,7 @@
  * UUID field properties.
  * @typedef {object} UuidFieldProps
  * @property {'uuid'} widget Widget name.
+ * @property {string} [default] Default value.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32. Default: `false`.
  * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`.

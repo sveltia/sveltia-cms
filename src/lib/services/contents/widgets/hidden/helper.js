@@ -1,24 +1,24 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
 /**
- * @import { InternalLocaleCode } from '$lib/types/private';
+ * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
  * @import { FieldKeyPath, HiddenField } from '$lib/types/public';
  */
 
 /**
  * Get the default value for a Hidden field.
- * @param {HiddenField} fieldConfig Field configuration.
- * @param {InternalLocaleCode} locale Locale code.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments.
  * @returns {any} Default value.
  */
-const getDefaultValue = (fieldConfig, locale) => {
-  const { default: defaultValue } = fieldConfig;
+const getDefaultValue = ({ fieldConfig, locale, dynamicValue }) => {
+  const { default: defaultValue } = /** @type {HiddenField} */ (fieldConfig);
+  const value = dynamicValue ?? defaultValue;
 
-  if (typeof defaultValue !== 'string') {
-    return defaultValue;
+  if (typeof value !== 'string') {
+    return value;
   }
 
-  return defaultValue.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
+  return value.replaceAll(/{{(.+?)}}/g, (_match, tag) => {
     if (tag === 'locale') {
       return locale;
     }
@@ -45,12 +45,7 @@ const getDefaultValue = (fieldConfig, locale) => {
 
 /**
  * Get the default value map for a Hidden field.
- * @param {object} args Arguments.
- * @param {HiddenField} args.fieldConfig Field configuration.
- * @param {FieldKeyPath} args.keyPath Field key path.
- * @param {InternalLocaleCode} args.locale Locale code.
- * @returns {Record<string, any>} Default value map.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments.
+ * @returns {Record<FieldKeyPath, any>} Default value map.
  */
-export const getHiddenFieldDefaultValueMap = ({ fieldConfig, keyPath, locale }) => ({
-  [keyPath]: getDefaultValue(fieldConfig, locale),
-});
+export const getDefaultValueMap = (args) => ({ [args.keyPath]: getDefaultValue(args) });

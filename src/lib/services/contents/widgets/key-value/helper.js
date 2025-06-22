@@ -1,20 +1,26 @@
 import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { isFieldRequired } from '$lib/services/contents/entry/fields';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+ * @import {
+ * EntryDraft,
+ * GetDefaultValueMapFuncArgs,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
  * @import { FieldKeyPath, KeyValueField } from '$lib/types/public';
  */
 
 /**
  * Get the default value for a KeyValue field.
- * @param {KeyValueField} fieldConfig Field configuration.
- * @returns {Record<string, string>} Default value.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments.
+ * @returns {Record<string, any>} Default value.
  */
-const getDefaultValue = (fieldConfig) => {
-  const { default: defaultValue, required = true } = fieldConfig;
+const getDefaultValue = ({ fieldConfig, locale }) => {
+  const { default: defaultValue } = /** @type {KeyValueField} */ (fieldConfig);
+  const required = isFieldRequired({ fieldConfig, locale });
 
   if (defaultValue && isObject(defaultValue)) {
     return defaultValue;
@@ -29,20 +35,34 @@ const getDefaultValue = (fieldConfig) => {
 
 /**
  * Get the default value map for a KeyValue field.
- * @param {object} args Arguments.
- * @param {KeyValueField} args.fieldConfig Field configuration.
- * @param {FieldKeyPath} args.keyPath Field key path.
- * @returns {Record<string, string>} Default value map.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments.
+ * @returns {Record<FieldKeyPath, string>} Default value map.
  */
-export const getKeyValueFieldDefaultValueMap = ({ fieldConfig, keyPath }) => {
-  /** @type {Record<string, string>}  */
-  const content = {};
+export const getDefaultValueMap = (args) => {
+  const { keyPath, dynamicValue } = args;
+  /** @type {Record<string, any> | undefined} */
+  let valueMap;
 
-  Object.entries(getDefaultValue(fieldConfig)).forEach(([key, val]) => {
-    content[`${keyPath}.${key}`] = String(val);
-  });
+  if (dynamicValue !== undefined) {
+    try {
+      const jsonValue = JSON.parse(dynamicValue);
 
-  return content;
+      if (isObject(jsonValue)) {
+        // Valid JSON object, use it (even if empty)
+        valueMap = /** @type {Record<string, any>} */ (jsonValue);
+      }
+    } catch {
+      // Invalid JSON
+    }
+  }
+
+  valueMap ??= getDefaultValue(args);
+
+  return Object.fromEntries(
+    Object.entries(valueMap)
+      .filter(([, val]) => typeof val === 'string')
+      .map(([key, val]) => [`${keyPath}.${key}`, val]),
+  );
 };
 
 /**

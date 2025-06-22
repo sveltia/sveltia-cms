@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getCodeFieldDefaultValueMap } from './helper.js';
+import { getDefaultValueMap } from './helper.js';
 
 /**
  * @import { CodeField } from '$lib/types/public';
@@ -11,7 +11,7 @@ const baseFieldConfig = {
   name: 'test_code',
 };
 
-describe('Test getCodeFieldDefaultValueMap()', () => {
+describe('Test getDefaultValueMap()', () => {
   test('should return code-only format when output_code_only is true', () => {
     /** @type {CodeField} */
     const fieldConfig = {
@@ -21,7 +21,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: 'console.log("hello");',
@@ -37,7 +37,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: '',
@@ -54,7 +54,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
@@ -76,7 +76,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
@@ -98,7 +98,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
@@ -119,7 +119,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
@@ -140,7 +140,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
@@ -161,7 +161,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
@@ -179,7 +179,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
@@ -196,7 +196,7 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
@@ -220,12 +220,125 @@ describe('Test getCodeFieldDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getCodeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({
       script: {},
       'script.code': '',
       'script.lang': '',
+    });
+  });
+
+  describe('with dynamicValue', () => {
+    test('should prioritize dynamicValue over default for code-only format', () => {
+      /** @type {CodeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'console.log("default");',
+        output_code_only: true,
+      };
+
+      const keyPath = 'script';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: 'console.log("dynamic");',
+      });
+
+      expect(result).toEqual({
+        script: 'console.log("dynamic");',
+      });
+    });
+
+    test('should handle string dynamicValue for object format', () => {
+      /** @type {CodeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: { code: 'console.log("default");', lang: 'javascript' },
+        output_code_only: false,
+      };
+
+      const keyPath = 'script';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: 'console.log("dynamic");',
+      });
+
+      expect(result).toEqual({
+        script: {},
+        'script.code': 'console.log("dynamic");',
+        'script.lang': '',
+      });
+    });
+
+    test('should handle dynamicValue when no default exists', () => {
+      /** @type {CodeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        output_code_only: true,
+      };
+
+      const keyPath = 'script';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: 'console.log("new");',
+      });
+
+      expect(result).toEqual({
+        script: 'console.log("new");',
+      });
+    });
+
+    test('should handle undefined dynamicValue', () => {
+      /** @type {CodeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'console.log("default");',
+        output_code_only: true,
+      };
+
+      const keyPath = 'script';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: undefined,
+      });
+
+      expect(result).toEqual({
+        script: 'console.log("default");',
+      });
+    });
+
+    test('should handle empty string dynamicValue for code-only format', () => {
+      /** @type {CodeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'console.log("default");',
+        output_code_only: true,
+      };
+
+      const keyPath = 'script';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: '',
+      });
+
+      expect(result).toEqual({
+        script: '',
+      });
     });
   });
 });

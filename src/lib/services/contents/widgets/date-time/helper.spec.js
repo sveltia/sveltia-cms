@@ -3,8 +3,8 @@ import {
   getCurrentDateTime,
   getCurrentValue,
   getDate,
-  getDateTimeFieldDefaultValueMap,
   getDateTimeFieldDisplayValue,
+  getDefaultValueMap,
   getInputValue,
   parseDateTimeConfig,
 } from './helper.js';
@@ -323,7 +323,7 @@ describe('getCurrentValue', () => {
   });
 });
 
-describe('getDateTimeFieldDefaultValueMap', () => {
+describe('getDefaultValueMap', () => {
   test('should return default value map with empty string', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
@@ -331,7 +331,7 @@ describe('getDateTimeFieldDefaultValueMap', () => {
     };
 
     const keyPath = 'test.field';
-    const result = getDateTimeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ 'test.field': '' });
   });
@@ -344,7 +344,7 @@ describe('getDateTimeFieldDefaultValueMap', () => {
     };
 
     const keyPath = 'test.field';
-    const result = getDateTimeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ 'test.field': '2023-12-25' });
   });
@@ -357,7 +357,7 @@ describe('getDateTimeFieldDefaultValueMap', () => {
     };
 
     const keyPath = 'test.field';
-    const result = getDateTimeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result['test.field']).toBeDefined();
     expect(typeof result['test.field']).toBe('string');
@@ -374,9 +374,108 @@ describe('getDateTimeFieldDefaultValueMap', () => {
     };
 
     const keyPath = 'test.field';
-    const result = getDateTimeFieldDefaultValueMap({ fieldConfig, keyPath });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
     expect(result).toEqual({ 'test.field': '' });
+  });
+
+  describe('with dynamicValue', () => {
+    test('should prioritize dynamicValue over default', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: '2024-01-01',
+      });
+
+      expect(result).toEqual({ 'test.field': '2024-01-01' });
+    });
+
+    test('should handle {{now}} in dynamicValue', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: '{{now}}',
+      });
+
+      expect(result['test.field']).toBeDefined();
+      expect(typeof result['test.field']).toBe('string');
+      expect(result['test.field']).not.toBe('{{now}}');
+    });
+
+    test('should handle empty string dynamicValue', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: '',
+      });
+
+      expect(result).toEqual({ 'test.field': '' });
+    });
+
+    test('should handle undefined dynamicValue', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: undefined,
+      });
+
+      expect(result).toEqual({ 'test.field': '2023-12-25' });
+    });
+
+    test('should handle ISO datetime string in dynamicValue', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: '2024-01-01T10:30:00.000Z',
+      });
+
+      expect(result).toEqual({ 'test.field': '2024-01-01T10:30:00.000Z' });
+    });
   });
 });
 
