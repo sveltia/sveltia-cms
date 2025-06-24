@@ -312,8 +312,15 @@ export const copyFromLocale = async (
  * or Object, this will likely match multiple fields.
  */
 export const revertChanges = (locale = '', keyPath = '') => {
-  const { collection, collectionFile, fileName, currentValues, originalValues, isIndexFile } =
-    /** @type {EntryDraft} */ (get(entryDraft));
+  const {
+    collection,
+    collectionName,
+    collectionFile,
+    fileName,
+    currentValues,
+    originalValues,
+    isIndexFile,
+  } = /** @type {EntryDraft} */ (get(entryDraft));
 
   const { allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
   const locales = locale ? [locale] : allLocales;
@@ -325,7 +332,7 @@ export const revertChanges = (locale = '', keyPath = '') => {
    * @param {boolean} reset Whether ro remove the current value.
    */
   const revert = (_locale, valueMap, reset = false) => {
-    const getFieldArgs = { collectionName: collection.name, fileName, valueMap, isIndexFile };
+    const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
 
     Object.entries(valueMap).forEach(([_keyPath, value]) => {
       if (!keyPath || _keyPath.startsWith(keyPath)) {

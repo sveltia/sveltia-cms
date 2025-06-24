@@ -253,11 +253,11 @@
  * @property {FileExtension} extension File extension.
  * @property {FileFormat} format File format.
  * @property {string} [basePath] Normalized `folder` collection option, relative to the project root
- * folder. Folder collection only.
- * @property {string} [subPath] Normalized `path` collection option, relative to `basePath`. Folder
+ * folder. Entry collection only.
+ * @property {string} [subPath] Normalized `path` collection option, relative to `basePath`. Entry
  * collection only.
  * @property {RegExp} [fullPathRegEx] Regular expression that matches full entry paths, taking the
- * i18n structure into account. Folder collection only.
+ * i18n structure into account. Entry collection only.
  * @property {string} [fullPath] File path of the default locale. File collection only.
  * @property {[string, string]} [fmDelimiters] Front matter delimiters.
  * @property {boolean} [yamlQuote] YAML quote configuration. DEPRECATED in favor of the global YAML

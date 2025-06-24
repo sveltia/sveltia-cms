@@ -42,10 +42,10 @@ const validityProxyHandler = {
  * @returns {EntryValidityState | undefined} Field validity.
  */
 const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
-  const { collection, collectionFile, files, validities, isIndexFile } = draft;
+  const { collection, collectionName, collectionFile, files, validities, isIndexFile } = draft;
 
   const getFieldArgs = {
-    collectionName: collection.name,
+    collectionName,
     fileName: collectionFile?.name,
     valueMap,
     isIndexFile,

@@ -7,7 +7,6 @@ import { getI18nConfig } from '$lib/services/contents/i18n';
 /**
  * @import { Writable } from 'svelte/store';
  * @import {
- * CollectionType,
  * EntryCollection,
  * FileCollection,
  * InternalCollection,
@@ -146,11 +145,11 @@ export const getCollection = (name) => {
  * @returns {number} Index.
  */
 export const getCollectionIndex = (collectionName) => {
-  if (collectionName) {
-    return get(siteConfig)?.collections.findIndex(({ name }) => name === collectionName) ?? -1;
+  if (!collectionName) {
+    return -1;
   }
 
-  return -1;
+  return get(siteConfig)?.collections.findIndex(({ name }) => name === collectionName) ?? -1;
 };
 
 /**

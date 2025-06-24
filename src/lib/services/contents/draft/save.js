@@ -122,10 +122,12 @@ const createEntryPath = ({ draft, locale, slug }) => {
     return originalEntry.locales[locale].path;
   }
 
+  const entryCollection = /** @type {EntryCollection} */ (collection);
+
   const {
     _file: { basePath, subPath, extension },
     index_file: indexFile,
-  } = /** @type {EntryCollection} */ (collection);
+  } = entryCollection;
 
   /**
    * Support folder collections path.
@@ -135,7 +137,7 @@ const createEntryPath = ({ draft, locale, slug }) => {
     ? /** @type {string} */ (indexFile?.name)
     : subPath
       ? fillSlugTemplate(subPath, {
-          collection,
+          collection: entryCollection,
           locale,
           content: currentValues[defaultLocale],
           currentSlug: slug,
@@ -388,7 +390,7 @@ const finalizeContent = ({
  * @returns {RawEntryContent} Modified and unflattened content.
  */
 const serializeContent = ({ draft, locale, valueMap }) => {
-  const { collection, collectionFile, fields, isIndexFile } = draft;
+  const { collection, collectionName, collectionFile, fields, isIndexFile } = draft;
 
   const {
     _file,
@@ -398,7 +400,7 @@ const serializeContent = ({ draft, locale, valueMap }) => {
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
   const content = finalizeContent({
-    collectionName: collection.name,
+    collectionName,
     fileName: collectionFile?.name,
     fields,
     locale,

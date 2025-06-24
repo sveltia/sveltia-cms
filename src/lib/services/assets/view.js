@@ -11,7 +11,7 @@ import {
   uploadingAssets,
 } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
-import { siteConfig } from '$lib/services/config';
+import { getCollection } from '$lib/services/contents/collection';
 import { prefs } from '$lib/services/user/prefs';
 import { getRegex } from '$lib/services/utils/misc';
 
@@ -54,7 +54,7 @@ export const getFolderLabelByCollection = ({ collectionName, fileName, internalP
     return get(_)(internalPath === undefined ? 'all_assets' : 'global_assets');
   }
 
-  const collection = get(siteConfig)?.collections.find(({ name }) => name === collectionName);
+  const collection = getCollection(collectionName);
   const collectionLabel = collection?.label || collection?.name || collectionName;
 
   if (!fileName) {
