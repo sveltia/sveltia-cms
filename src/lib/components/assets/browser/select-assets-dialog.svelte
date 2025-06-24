@@ -333,7 +333,7 @@
           selectedResource = undefined;
         }}
       >
-        <OptionGroup label={$_('assets_dialog.location.repository')}>
+        <OptionGroup label={$_('asset_location.repository')}>
           {#each Object.entries(allDefaultLibraryFolders) as [id, { enabled }] (id)}
             {#if enabled}
               {@const name = `default-${id}`}
@@ -346,7 +346,7 @@
           {/each}
         </OptionGroup>
         {#if canEnterURL || !!Object.keys(allCloudStorageServices).length}
-          <OptionGroup label={$_('assets_dialog.location.external_locations')}>
+          <OptionGroup label={$_('asset_location.external')}>
             {#if canEnterURL}
               <Option name="enter-url" label={$_('assets_dialog.enter_url')} />
             {/if}
@@ -357,7 +357,7 @@
           </OptionGroup>
         {/if}
         {#if enabledStockAssetProviderEntries.length}
-          <OptionGroup label={$_('assets_dialog.location.stock_photos')}>
+          <OptionGroup label={$_('asset_location.stock_photos')}>
             {#each enabledStockAssetProviderEntries as [serviceId, { serviceLabel }] (serviceId)}
               <Option name={serviceId} label={serviceLabel} />
             {/each}

@@ -157,8 +157,14 @@ export const strings = {
   },
 
   // Library
+  singletons: 'シングルトン',
   content_library: 'コンテンツライブラリ',
   asset_library: 'アセットライブラリ',
+  asset_location: {
+    repository: 'あなたのサイト',
+    external: '外部の場所',
+    stock_photos: 'ストックフォト',
+  },
   collection_assets: 'コレクションアセット',
   entry_list: 'エントリーリスト',
   file_list: 'ファイルリスト',
@@ -499,11 +505,6 @@ export const strings = {
     search_for_file: 'ファイルを検索',
     search_for_image: '画像を検索',
     locations: '場所',
-    location: {
-      repository: 'あなたのサイト',
-      external_locations: '外部の場所',
-      stock_photos: 'ストックフォト',
-    },
     folder: {
       field: 'フィールドアセット',
       entry: 'エントリーアセット',

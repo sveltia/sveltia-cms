@@ -1,5 +1,5 @@
 <script>
-  import { Divider, Icon, Listbox, Option } from '@sveltia/ui';
+  import { Divider, Icon, Listbox, Option, OptionGroup } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
@@ -25,38 +25,40 @@
     />
   {/if}
   <Listbox aria-label={$_('collection_list')} aria-controls="collection-container">
-    {#each collections as { name, label, icon, files, divider = false } (name)}
-      {#await sleep() then}
-        {#if divider}
-          <Divider />
-        {:else}
-          <Option
-            label={label || name}
-            selected={$isSmallScreen ? false : $selectedCollection?.name === name}
-            onSelect={() => {
-              goto(`/collections/${name}`, { transitionType: 'forwards' });
-            }}
-          >
-            {#snippet startIcon()}
-              <Icon name={icon || 'edit_note'} />
-            {/snippet}
-            {#snippet endIcon()}
-              {#key $allEntries}
-                {@const count = (files ?? getEntriesByCollection(name)).length}
-                <span
-                  class="count"
-                  aria-label="({$_(
-                    count > 1 ? 'many_entries' : count === 1 ? 'one_entry' : 'no_entries',
-                    { values: { count } },
-                  )})"
-                >
-                  {numberFormatter.format(count)}
-                </span>
-              {/key}
-            {/snippet}
-          </Option>
-        {/if}
-      {/await}
-    {/each}
+    <OptionGroup label={$_('collections')}>
+      {#each collections as { name, label, icon, files, divider = false } (name)}
+        {#await sleep() then}
+          {#if divider}
+            <Divider />
+          {:else}
+            <Option
+              label={label || name}
+              selected={$isSmallScreen ? false : $selectedCollection?.name === name}
+              onSelect={() => {
+                goto(`/collections/${name}`, { transitionType: 'forwards' });
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name={icon || 'edit_note'} />
+              {/snippet}
+              {#snippet endIcon()}
+                {#key $allEntries}
+                  {@const count = (files ?? getEntriesByCollection(name)).length}
+                  <span
+                    class="count"
+                    aria-label="({$_(
+                      count > 1 ? 'many_entries' : count === 1 ? 'one_entry' : 'no_entries',
+                      { values: { count } },
+                    )})"
+                  >
+                    {numberFormatter.format(count)}
+                  </span>
+                {/key}
+              {/snippet}
+            </Option>
+          {/if}
+        {/await}
+      {/each}
+    </OptionGroup>
   </Listbox>
 </div>

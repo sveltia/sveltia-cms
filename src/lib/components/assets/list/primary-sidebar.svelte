@@ -1,5 +1,5 @@
 <script>
-  import { Icon, Listbox, Option } from '@sveltia/ui';
+  import { Icon, Listbox, Option, OptionGroup } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { _, locale as appLocale } from 'svelte-i18n';
@@ -41,92 +41,95 @@
     />
   {/if}
   <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
-    {#each folders as folder ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
-      {#await sleep() then}
-        {@const { collectionName, internalPath, entryRelative, hasTemplateTags } = folder}
-        {@const collection = collectionName ? getCollection(collectionName) : undefined}
-        <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
-        {@const uploadDisabled = entryRelative || hasTemplateTags}
-        {@const selected = equal($selectedAssetFolder, folder)}
-        <Option
-          selected={$isSmallScreen ? false : selected}
-          label={$appLocale ? getFolderLabelByCollection(folder) : ''}
-          onSelect={() => {
-            goto(`/assets/${internalPath ?? '-/all'}`, {
-              transitionType: 'forwards',
-              // An internal path can be shared by multiple collections, files and fields. Pass the
-              // folder info as history state so we can distinguish these different asset folders
-              // while keeping the URL clean.
-              state: { folder },
-            });
-          }}
-          ondragover={(event) => {
-            event.preventDefault();
+    <OptionGroup label={$_('asset_location.repository')}>
+      {#each folders as folder ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
+        {#await sleep() then}
+          {@const { collectionName, internalPath, entryRelative, hasTemplateTags } = folder}
+          {@const collection = collectionName ? getCollection(collectionName) : undefined}
+          <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
+          {@const uploadDisabled = entryRelative || hasTemplateTags}
+          {@const selected = equal($selectedAssetFolder, folder)}
+          <Option
+            selected={$isSmallScreen ? false : selected}
+            label={$appLocale ? getFolderLabelByCollection(folder) : ''}
+            onSelect={() => {
+              goto(`/assets/${internalPath ?? '-/all'}`, {
+                transitionType: 'forwards',
+                // An internal path can be shared by multiple collections, files and fields. Pass
+                // the folder info as history state so we can distinguish these different asset
+                // folders while keeping the URL clean.
+                state: { folder },
+              });
+            }}
+            ondragover={(event) => {
+              event.preventDefault();
 
-            if (uploadDisabled) {
-              return;
-            }
+              if (uploadDisabled) {
+                return;
+              }
 
-            if (internalPath === undefined || selected) {
-              /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
-            } else {
-              /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';
-              /** @type {HTMLElement} */ (event.target).classList.add('dragover');
-            }
-          }}
-          ondragleave={(event) => {
-            event.preventDefault();
+              if (internalPath === undefined || selected) {
+                /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
+              } else {
+                /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';
+                /** @type {HTMLElement} */ (event.target).classList.add('dragover');
+              }
+            }}
+            ondragleave={(event) => {
+              event.preventDefault();
 
-            if (uploadDisabled) {
-              return;
-            }
+              if (uploadDisabled) {
+                return;
+              }
 
-            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-          }}
-          ondragend={(event) => {
-            event.preventDefault();
+              /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+            }}
+            ondragend={(event) => {
+              event.preventDefault();
 
-            if (uploadDisabled) {
-              return;
-            }
+              if (uploadDisabled) {
+                return;
+              }
 
-            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-          }}
-          ondrop={(event) => {
-            event.preventDefault();
+              /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+            }}
+            ondrop={(event) => {
+              event.preventDefault();
 
-            if (uploadDisabled) {
-              return;
-            }
+              if (uploadDisabled) {
+                return;
+              }
 
-            /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-            // @todo Move the assets while updating entries using the files, after showing a
-            // confirmation dialog.
-          }}
-        >
-          {#snippet startIcon()}
-            <Icon name={collection?.icon || 'folder'} />
-          {/snippet}
-          {#snippet endIcon()}
-            {#key $allAssets}
-              {#await sleep() then}
-                {@const count = (
-                  internalPath !== undefined ? getAssetsByFolder(folder) : $allAssets
-                ).length}
-                <span
-                  class="count"
-                  aria-label="({$_(
-                    count > 1 ? 'many_assets' : count === 1 ? 'one_asset' : 'no_assets',
-                    { values: { count } },
-                  )})"
-                >
-                  {numberFormatter.format(count)}
-                </span>
-              {/await}
-            {/key}
-          {/snippet}
-        </Option>
-      {/await}
-    {/each}
+              /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+              // @todo Move the assets while updating entries using the files, after showing a
+              // confirmation dialog.
+            }}
+          >
+            {#snippet startIcon()}
+              <Icon name={collection?.icon || 'folder'} />
+            {/snippet}
+            {#snippet endIcon()}
+              {#key $allAssets}
+                {#await sleep() then}
+                  {@const count = (
+                    internalPath !== undefined ? getAssetsByFolder(folder) : $allAssets
+                  ).length}
+                  <span
+                    class="count"
+                    aria-label="({$_(
+                      count > 1 ? 'many_assets' : count === 1 ? 'one_asset' : 'no_assets',
+                      { values: { count } },
+                    )})"
+                  >
+                    {numberFormatter.format(count)}
+                  </span>
+                {/await}
+              {/key}
+            {/snippet}
+          </Option>
+        {/await}
+      {/each}
+    </OptionGroup>
+    <!-- @todo Add external locations, including Cloudinary and Uploadcare -->
   </Listbox>
 </div>

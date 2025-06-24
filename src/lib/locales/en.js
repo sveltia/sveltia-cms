@@ -156,8 +156,14 @@ export const strings = {
   },
 
   // Library
+  singletons: 'Singletons',
   content_library: 'Content Library',
   asset_library: 'Asset Library',
+  asset_location: {
+    repository: 'Your Site',
+    external: 'External Locations',
+    stock_photos: 'Stock Photos',
+  },
   collection_assets: 'Collection Assets',
   entry_list: 'Entry List',
   file_list: 'File List',
@@ -498,11 +504,6 @@ export const strings = {
     search_for_file: 'Search for Files',
     search_for_image: 'Search for Images',
     locations: 'Locations',
-    location: {
-      repository: 'Your Site',
-      external_locations: 'External Locations',
-      stock_photos: 'Stock Photos',
-    },
     folder: {
       field: 'Field Assets',
       entry: 'Entry Assets',
