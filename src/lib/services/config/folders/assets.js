@@ -1,82 +1,23 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, stripSlashes } from '@sveltia/utils/string';
-import { getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
- * @import {
- * AssetFolderInfo,
- * EntryFolderInfo,
- * InternalLocaleCode,
- * InternalSiteConfig,
- * } from '$lib/types/private';
+ * @import { AssetFolderInfo, InternalSiteConfig } from '$lib/types/private';
+ * @import { CollectionFile } from '$lib/types/public';
  */
 
 /**
- * Get all entry folders.
- * @param {InternalSiteConfig} config Site configuration.
- * @returns {EntryFolderInfo[]} Entry folders.
+ * @typedef {object} GlobalFolders
+ * @property {string} globalMediaFolder Normalized global `media_folder` option.
+ * @property {string} globalPublicFolder Normalized global `public_folder` option.
  */
-export const getAllEntryFolders = ({ collections }) => {
-  const entryCollectionFolders = collections
-    .filter(({ folder }) => typeof folder === 'string')
-    .map((collection) => {
-      const { name: collectionName, folder } = collection;
-      const folderPath = stripSlashes(/** @type {string} */ (folder));
-      const { i18nEnabled, structure, allLocales } = getI18nConfig(collection);
-      const i18nRootMultiFolder = i18nEnabled && structure === 'multiple_folders_i18n_root';
 
-      return {
-        collectionName,
-        folderPath,
-        folderPathMap: Object.fromEntries(
-          allLocales.map((locale) => [
-            locale,
-            i18nRootMultiFolder ? `${locale}/${folderPath}` : folderPath,
-          ]),
-        ),
-      };
-    })
-    .sort((a, b) => compare(a.folderPath ?? '', b.folderPath ?? ''));
-
-  const fileCollectionFolders = collections
-    .filter(({ files }) => Array.isArray(files))
-    .map((collection) => {
-      const { name: collectionName, files } = collection;
-
-      return (files ?? []).map((file) => {
-        /** @type {Record<InternalLocaleCode, string>} */
-        const filePathMap = (() => {
-          const path = stripSlashes(file.file);
-
-          if (!path.includes('{{locale}}')) {
-            return { _default: path };
-          }
-
-          const _i18n = getI18nConfig(collection, file);
-          const { allLocales, defaultLocale, omitDefaultLocaleFromFileName } = _i18n;
-
-          return Object.fromEntries(
-            allLocales.map((locale) => [
-              locale,
-              omitDefaultLocaleFromFileName && locale === defaultLocale
-                ? path.replace('.{{locale}}', '')
-                : path.replace('{{locale}}', locale),
-            ]),
-          );
-        })();
-
-        return {
-          collectionName,
-          fileName: file.name,
-          filePathMap,
-        };
-      });
-    })
-    .flat(1)
-    .sort((a, b) => compare(Object.values(a.filePathMap)[0], Object.values(b.filePathMap)[0]));
-
-  return [...entryCollectionFolders, ...fileCollectionFolders];
-};
+/**
+ * Collection-level and file-level asset folders.
+ * @type {AssetFolderInfo[]}
+ * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
+ */
+const assetFolders = [];
 
 /**
  * Replace `{{media_folder}}` and `{{public_folder}}` template tags.
@@ -103,8 +44,7 @@ const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =>
  * collection file.
  * @param {string | undefined} args.baseFolder `folder` option for the collection or base directory
  * of the collection file.
- * @param {string} args.globalMediaFolder Normalized global `media_folder` option.
- * @param {string} args.globalPublicFolder Normalized global `public_folder` option.
+ * @param {GlobalFolders} args.globalFolders Global folders information.
  * @returns {AssetFolderInfo} Normalized asset folder information.
  */
 const normalizeAssetFolder = ({
@@ -113,11 +53,8 @@ const normalizeAssetFolder = ({
   mediaFolder,
   publicFolder,
   baseFolder,
-  globalMediaFolder,
-  globalPublicFolder,
+  globalFolders,
 }) => {
-  const globalFolders = { globalMediaFolder, globalPublicFolder };
-
   mediaFolder = replaceTags(mediaFolder, globalFolders);
   publicFolder =
     publicFolder !== undefined ? replaceTags(publicFolder, globalFolders) : mediaFolder;
@@ -137,6 +74,57 @@ const normalizeAssetFolder = ({
     entryRelative,
     hasTemplateTags: /{{.+?}}/.test(mediaFolder),
   };
+};
+
+/**
+ * Add an asset folder for a collection or collection file if it’s not the same as the global
+ * asset folder.
+ * @param {any} args Arguments for {@link normalizeAssetFolder}.
+ */
+const addFolderIfNeeded = (args) => {
+  if (args.mediaFolder === undefined) {
+    return;
+  }
+
+  const folder = normalizeAssetFolder(args);
+  const { globalMediaFolder, globalPublicFolder } = args.globalFolders;
+
+  if (
+    !folder.entryRelative &&
+    folder.internalPath === globalMediaFolder &&
+    folder.publicPath === globalPublicFolder
+  ) {
+    return;
+  }
+
+  assetFolders.push(folder);
+};
+
+/**
+ * Iterate through files in a file collection and add their folders.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {CollectionFile[]} args.files Files in a file collection.
+ * @param {GlobalFolders} args.globalFolders Global folders information.
+ */
+const iterateFiles = ({ collectionName, files, globalFolders }) => {
+  files.forEach((file) => {
+    const {
+      name: fileName,
+      file: filePath,
+      media_folder: fileMediaFolder,
+      public_folder: filePublicFolder,
+    } = file;
+
+    addFolderIfNeeded({
+      collectionName,
+      fileName,
+      mediaFolder: fileMediaFolder,
+      publicFolder: filePublicFolder,
+      baseFolder: getPathInfo(filePath).dirname,
+      globalFolders,
+    });
+  });
 };
 
 /**
@@ -178,35 +166,7 @@ export const getAllAssetFolders = (config) => {
     hasTemplateTags: false,
   };
 
-  /**
-   * Collection-level and file-level asset folders.
-   * @type {AssetFolderInfo[]}
-   * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
-   */
-  const assetFolders = [];
-
-  /**
-   * Add an asset folder for a collection or collection file if it’s not the same as the global
-   * asset folder.
-   * @param {any} args Arguments for {@link normalizeAssetFolder}.
-   */
-  const addFolderIfNeeded = (args) => {
-    if (args.mediaFolder === undefined) {
-      return;
-    }
-
-    const folder = normalizeAssetFolder(args);
-
-    if (
-      !folder.entryRelative &&
-      folder.internalPath === globalMediaFolder &&
-      folder.publicPath === globalPublicFolder
-    ) {
-      return;
-    }
-
-    assetFolders.push(folder);
-  };
+  const globalFolders = { globalMediaFolder, globalPublicFolder };
 
   collections.forEach((collection) => {
     const {
@@ -228,33 +188,20 @@ export const getAllAssetFolders = (config) => {
       return;
     }
 
-    const normalizeFolderArgs = { collectionName, globalMediaFolder, globalPublicFolder };
     // When specifying a `path` on an entry collection, `media_folder` defaults to an empty string
     const mediaFolder = _mediaFolder === undefined && entryPath !== undefined ? '' : _mediaFolder;
 
     addFolderIfNeeded({
-      ...normalizeFolderArgs,
+      collectionName,
       mediaFolder,
       publicFolder,
       baseFolder,
+      globalFolders,
     });
 
-    collectionFiles?.forEach((file) => {
-      const {
-        name: fileName,
-        file: filePath,
-        media_folder: fileMediaFolder,
-        public_folder: filePublicFolder,
-      } = file;
-
-      addFolderIfNeeded({
-        ...normalizeFolderArgs,
-        fileName,
-        mediaFolder: fileMediaFolder,
-        publicFolder: filePublicFolder,
-        baseFolder: getPathInfo(filePath).dirname,
-      });
-    });
+    if (collectionFiles?.length) {
+      iterateFiles({ collectionName, files: collectionFiles, globalFolders });
+    }
   });
 
   assetFolders.sort((a, b) => compare(a.internalPath ?? '', b.internalPath ?? ''));
