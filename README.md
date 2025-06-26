@@ -10,7 +10,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
 
 ![Stock photo integration: Pexels, Pixabay, Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250405)<br>
 
-![Full-fledged Asset Library; first-class internationalization support; translation API integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250405)<br>
+![Full-fledged Asset Library; first-class internationalization support; translation API integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250625)<br>
 
 ![Built-in image optimizer for WebP and SVG; mobile & tablet support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250409)<br>
 
@@ -274,7 +274,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
-  - [Integrates Cloud Translation API](#translating-entry-fields-with-one-click) to allow translation of text fields from another locale with one click.
+  - [Integrates a translation service](#translating-entry-fields-with-one-click) to allow translation of text fields from another locale with one click.
     - Earlier versions of Sveltia CMS included DeepL integration, but it’s disabled for now [due to API limitations](https://github.com/sveltia/sveltia-cms/issues/437).
     - More translation services will be added in the future.
   - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian.[^146]
@@ -908,7 +908,7 @@ Sveltia CMS comes with a handy Google Cloud Translation API integration so that 
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Sign in or sign up for [Google Cloud](https://cloud.google.com/) and create a new project.
-1. Enable [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com).
+1. Enable the [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com).
 1. Create a [new API key](https://console.cloud.google.com/apis/credentials) and copy it.
 1. Open an entry in Sveltia CMS.
 1. Click on the Translation button on the pane header or each field, right next to the 3-dot menu.
