@@ -5,7 +5,7 @@
 const serviceId = 'google';
 const serviceLabel = 'Google Cloud Translation';
 const developerURL = 'https://console.cloud.google.com/apis/library/translate.googleapis.com';
-const apiKeyURL = 'https://console.cloud.google.com/apis/credentials';
+const apiKeyURL = 'https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials';
 const apiKeyPattern = /AIza[0-9A-Za-z-_]{35}/;
 
 /**

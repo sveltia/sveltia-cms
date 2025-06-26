@@ -909,7 +909,7 @@ Sveltia CMS comes with a handy Google Cloud Translation API integration so that 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Sign in or sign up for [Google Cloud](https://cloud.google.com/) and create a new project.
 1. Enable the [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com).
-1. Create a [new API key](https://console.cloud.google.com/apis/credentials) and copy it.
+1. Create a [new API key](https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials) and copy it.
 1. Open an entry in Sveltia CMS.
 1. Click on the Translation button on the pane header or each field, right next to the 3-dot menu.
 1. Paste your key when prompted.
