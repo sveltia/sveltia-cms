@@ -3,13 +3,13 @@
  */
 
 const serviceId = 'google';
-const serviceLabel = 'Google Translate';
+const serviceLabel = 'Google Cloud Translation';
 const developerURL = 'https://console.cloud.google.com/apis/library/translate.googleapis.com';
 const apiKeyURL = 'https://console.cloud.google.com/apis/credentials';
 const apiKeyPattern = /AIza[0-9A-Za-z-_]{35}/;
 
 /**
- * Supported source/target languages for Google Translate API.
+ * Supported source/target languages for Google Cloud Translation API.
  * @see https://cloud.google.com/translate/docs/languages
  */
 const SUPPORTED_LANGUAGES = [
@@ -67,7 +67,7 @@ const normalizeLanguage = (locale) => {
 };
 
 /**
- * Translate the given text with Google Translate API using the basic model and HTML format.
+ * Translate the given text with Google Cloud Translation API using the basic model and HTML format.
  * @param {string[]} texts Array of original texts.
  * @param {TranslateOptions} options Options.
  * @returns {Promise<string[]>} Translated strings in the original order.
@@ -88,7 +88,7 @@ const translate = async (texts, { sourceLocale, targetLocale, apiKey }) => {
     throw new Error('Target locale is not supported.');
   }
 
-  // Google Translate API v2 endpoint
+  // Cloud Translation API v2 endpoint
   const url = 'https://translation.googleapis.com/language/translate/v2';
 
   const requestBody = {

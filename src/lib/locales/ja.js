@@ -669,9 +669,9 @@ export const strings = {
         },
       },
       translator: {
-        field_label: '{service} API 認証キー',
+        field_label: '{service} API キー',
         description:
-          '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された認証キー</a> をここに入力すると、テキストエントリー項目の素早い翻訳が可能となります。',
+          '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行されたキー</a> をここに入力すると、テキストエントリー項目の素早い翻訳が可能となります。',
       },
     },
     media: {

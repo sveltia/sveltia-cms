@@ -1284,7 +1284,7 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://images.unsplash.com https://api.unsplash.com
     ```
-- Google Translate:
+- Google Cloud Translation:
   - `connect-src`
     ```
     https://translation.googleapis.com
