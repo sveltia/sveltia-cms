@@ -193,7 +193,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry. Or just hit the `Ctrl+S` (Windows/Linux) or `Command+S` (macOS) key to save your time.
   - The editor closes automatically when an entry is saved. This behaviour can be changed in the application settings.
 - Uploading files can be done with drag and drop.[^20]
-- Users can upload multiple files at once to the Asset Library.[^5]
+- Users can upload multiple files at once to the Asset Library.
 - Users can delete multiple entries and assets at once.
 - Instant full-text search with results sorted by relevance helps you find entries faster.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
@@ -275,7 +275,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
   - [Integrates a translation service](#translating-entry-fields-with-one-click) to allow translation of text fields from another locale with one click.
-    - Earlier versions of Sveltia CMS included DeepL integration, but it’s disabled for now [due to API limitations](https://github.com/sveltia/sveltia-cms/issues/437).
+    - Earlier versions of Sveltia CMS included DeepL integration, but it’s disabled for now [due to an API limitation](https://github.com/sveltia/sveltia-cms/issues/437).
     - More translation services will be added in the future.
   - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian.[^146]
   - It’s possible to [disable non-default locale content](#disabling-non-default-locale-content).[^15]
@@ -518,7 +518,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - Replace existing assets.
   - Download one or more selected assets at once.
   - Delete one or more selected assets at once.
-  - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library.[^5]
+  - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library.
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
 - Enhancements to media libraries:
@@ -1345,7 +1345,17 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 Due Q4 2025
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
-- Tackling some more Netlify/Decap CMS issues
+- Tackling some more Netlify/Decap CMS issues:
+  - [Directory navigation in the asset library](https://github.com/sveltia/sveltia-cms/issues/420)[^240] (#5 top-voted feature of Netlify/Decap CMS)
+  - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239] (#14)
+  - [Singletons](https://github.com/sveltia/sveltia-cms/issues/435)[^233] (#23)
+  - [Git LFS support for GitHub backend](https://github.com/sveltia/sveltia-cms/discussions/353)[^244] (#26)
+  - Advanced Relation fields[^242], including cascade updates/deletes[^243] and [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
+  - Cloudinary and Uploadcare issues, including existing file selection[^247]
+  - [Automatic file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
+  - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
+  - Thorough site config validation[^246]
+  - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
 - Accessibility audit
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
 - Developer documentation (implementation guide)
@@ -1361,7 +1371,7 @@ Due Q4 2025
 
 ### Future
 
-- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor,[^10] singletons,[^233] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
+- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] manual entry sorting,[^125] config editor,[^10] offline support,[^238] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
 - Exploring features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a Git service account (Git Gateway alternative), post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation, content writing, translation, etc.
@@ -1399,8 +1409,6 @@ This software is provided “as is” without any express or implied warranty. W
 [^3]: Netlify/Decap CMS [#1040](https://github.com/decaporg/decap-cms/issues/1040)
 
 [^4]: Netlify/Decap CMS [#3671](https://github.com/decaporg/decap-cms/issues/3671)
-
-[^5]: Netlify/Decap CMS [#1032](https://github.com/decaporg/decap-cms/issues/1032)
 
 [^6]: Netlify/Decap CMS [#3240](https://github.com/decaporg/decap-cms/issues/3240)
 
@@ -1856,7 +1864,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^232]: Netlify/Decap CMS [#7457](https://github.com/decaporg/decap-cms/issues/7457)
 
-[^233]: Netlify/Decap CMS [#535](https://github.com/decaporg/decap-cms/issues/535)
+[^233]: Netlify/Decap CMS [#535](https://github.com/decaporg/decap-cms/issues/535), [#1284](https://github.com/decaporg/decap-cms/issues/1284), [#3846](https://github.com/decaporg/decap-cms/issues/3846)
 
 [^234]: Netlify/Decap CMS [#2019](https://github.com/decaporg/decap-cms/issues/2019) — Rather than relying on a third-party library, we built our own asset browser that integrates more seamlessly with the rest of the CMS.
 
@@ -1865,3 +1873,25 @@ This software is provided “as is” without any express or implied warranty. W
 [^236]: Netlify/Decap CMS [#7507](https://github.com/decaporg/decap-cms/issues/7507)
 
 [^237]: Netlify/Decap CMS [#7375](https://github.com/decaporg/decap-cms/issues/7375), [#7518](https://github.com/decaporg/decap-cms/issues/7518)
+
+[^238]: Netlify/Decap CMS [#1502](https://github.com/decaporg/decap-cms/issues/1502)
+
+[^239]: Netlify/Decap CMS [#213](https://github.com/decaporg/decap-cms/issues/213), [#1032](https://github.com/decaporg/decap-cms/issues/1032), [#3244](https://github.com/decaporg/decap-cms/issues/3244), [#6730](https://github.com/decaporg/decap-cms/issues/6730), [#7459](https://github.com/decaporg/decap-cms/discussions/7459)
+
+[^240]: Netlify/Decap CMS [#2113](https://github.com/decaporg/decap-cms/issues/2113), [#3240](https://github.com/decaporg/decap-cms/issues/3240), [#4208](https://github.com/decaporg/decap-cms/issues/4208)
+
+[^241]: Netlify/Decap CMS [#857](https://github.com/decaporg/decap-cms/issues/857)
+
+[^242]: Netlify/Decap CMS [#192](https://github.com/decaporg/decap-cms/issues/192)
+
+[^243]: Netlify/Decap CMS [#717](https://github.com/decaporg/decap-cms/issues/717), [#5750](https://github.com/decaporg/decap-cms/issues/5750), [#6895](https://github.com/decaporg/decap-cms/issues/6895)
+
+[^244]: Netlify/Decap CMS [#1206](https://github.com/decaporg/decap-cms/issues/1206)
+
+[^245]: Netlify/Decap CMS [#1769](https://github.com/decaporg/decap-cms/issues/1769)
+
+[^246]: Netlify/Decap CMS [#1074](https://github.com/decaporg/decap-cms/issues/1074), [#1693](https://github.com/decaporg/decap-cms/issues/1693), [#3803](https://github.com/decaporg/decap-cms/issues/3803)
+
+[^247]: Netlify/Decap CMS [#1794](https://github.com/decaporg/decap-cms/issues/1794), [#2966](https://github.com/decaporg/decap-cms/issues/2966)
+
+[^248]: Netlify/Decap CMS [#836](https://github.com/decaporg/decap-cms/issues/836), [#3524](https://github.com/decaporg/decap-cms/issues/3524)
