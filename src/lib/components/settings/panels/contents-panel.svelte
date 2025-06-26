@@ -42,7 +42,7 @@
   {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
     {@const { serviceLabel, developerURL, apiKeyURL } = service}
     <section>
-      <h4>{$_('prefs.contents.translator.title', { values: { service: serviceLabel } })}</h4>
+      <h4>{serviceLabel}</h4>
       <p>
         {@html DOMPurify.sanitize(
           $_('prefs.contents.translator.description', {

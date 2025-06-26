@@ -665,7 +665,6 @@ export const strings = {
         },
       },
       translator: {
-        title: '{service} Translator',
         field_label: '{service} API Authentication Key',
         description:
           'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your Authentication Key</a> here to enable quick translation of text entry fields.',

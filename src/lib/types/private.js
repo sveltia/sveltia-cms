@@ -190,6 +190,14 @@
  */
 
 /**
+ * Translate function options.
+ * @typedef {object} TranslateOptions
+ * @property {string} sourceLocale Source language.
+ * @property {string} targetLocale Target language.
+ * @property {string} apiKey API authentication key.
+ */
+
+/**
  * Translation service.
  * @typedef {object} TranslationService
  * @property {string} serviceId Service ID.
@@ -201,8 +209,8 @@
  * language that matches the given locale code.
  * @property {(locale: string) => string | undefined} getTargetLanguage Get a supported target
  * language that matches the given locale code.
- * @property {(texts: string[], options: { sourceLocale: string, targetLocale: string,
- * apiKey: string }) => Promise<string[]>} translate Function to translate strings.
+ * @property {(texts: string[], options: TranslateOptions) => Promise<string[]>} translate Function
+ * to translate strings.
  */
 
 /**

@@ -1,7 +1,9 @@
 import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten, unflatten } from 'flat';
+import { marked } from 'marked';
 import { get } from 'svelte/store';
+import TurndownService from 'turndown';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
@@ -18,6 +20,16 @@ import { prefs } from '$lib/services/user/prefs';
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, ListField } from '$lib/types/public';
  */
+
+/**
+ * Initialize a Turndown service instance for converting HTML to Markdown.
+ * @see https://github.com/mixmark-io/turndown
+ */
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  bulletListMarker: '-',
+  codeBlockStyle: 'fenced',
+});
 
 /**
  * Update a flatten object with new properties by adding, updating and deleting properties.
@@ -204,28 +216,34 @@ export const copyFromLocale = async (
   const valueMap = currentValues[sourceLocale];
   const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
 
+  /**
+   * @type {Record<FieldKeyPath, { value: string, isMarkdown: boolean }>}
+   */
   const copingFields = Object.fromEntries(
-    Object.entries(valueMap).filter(([_keyPath, sourceLocaleValue]) => {
-      const targetLocaleValue = currentValues[targetLocale][_keyPath];
-      const field = getField({ ...getFieldArgs, keyPath: _keyPath });
+    Object.entries(valueMap)
+      .map(([_keyPath, value]) => {
+        const targetLocaleValue = currentValues[targetLocale][_keyPath];
+        const field = getField({ ...getFieldArgs, keyPath: _keyPath });
+        const widget = field?.widget ?? 'string';
 
-      if (
-        (keyPath && !_keyPath.startsWith(keyPath)) ||
-        typeof sourceLocaleValue !== 'string' ||
-        !sourceLocaleValue ||
-        !['markdown', 'text', 'string', 'list'].includes(field?.widget ?? 'string') ||
-        // prettier-ignore
-        (field?.widget === 'list' &&
+        if (
+          (keyPath && !_keyPath.startsWith(keyPath)) ||
+          typeof value !== 'string' ||
+          !value ||
+          !['markdown', 'text', 'string', 'list'].includes(widget) ||
+          // prettier-ignore
+          (widget === 'list' &&
           (/** @type {ListField} */ (field).field ?? /** @type {ListField} */ (field).fields)) ||
-        (!translate && sourceLocaleValue === targetLocaleValue) ||
-        // Skip populated fields when translating all the fields
-        (!keyPath && translate && !!targetLocaleValue)
-      ) {
-        return false;
-      }
+          (!translate && value === targetLocaleValue) ||
+          // Skip populated fields when translating all the fields
+          (!keyPath && translate && !!targetLocaleValue)
+        ) {
+          return null;
+        }
 
-      return true;
-    }),
+        return [_keyPath, { value, isMarkdown: widget === 'markdown' }];
+      })
+      .filter((entry) => !!entry),
   );
 
   const count = Object.keys(copingFields).length;
@@ -271,26 +289,34 @@ export const copyFromLocale = async (
     updateToast('info', 'translation.started');
 
     try {
-      const translatedValues = await _translator.translate(Object.values(copingFields), {
-        apiKey,
-        sourceLocale,
-        targetLocale,
-      });
+      const translatedValues = await _translator.translate(
+        Object.entries(copingFields).map(([, { value, isMarkdown }]) =>
+          // Convert the value from Markdown to HTML if the field is a markdown field, because the
+          // translator API expects HTML input
+          isMarkdown ? /** @type {string} */ (marked.parse(value)) : value,
+        ),
+        { apiKey, sourceLocale, targetLocale },
+      );
 
-      Object.keys(copingFields).forEach((_keyPath, index) => {
-        currentValues[targetLocale][_keyPath] = translatedValues[index];
+      Object.entries(copingFields).forEach(([_keyPath, { isMarkdown }], index) => {
+        const value = translatedValues[index];
+
+        // Convert the value back to Markdown if the field is a markdown field
+        currentValues[targetLocale][_keyPath] = isMarkdown
+          ? // @ts-ignore Silence a false type error
+            turndownService.turndown(value)
+          : value;
       });
 
       updateToast('success', `translation.complete.${countType}`);
     } catch (/** @type {any} */ ex) {
       // @todo Show a detailed error message.
-      // @see https://www.deepl.com/docs-api/api-access/error-handling/
       updateToast('error', 'translation.error');
       // eslint-disable-next-line no-console
       console.error(ex);
     }
   } else {
-    Object.entries(copingFields).forEach(([_keyPath, value]) => {
+    Object.entries(copingFields).forEach(([_keyPath, { value }]) => {
       currentValues[targetLocale][_keyPath] = value;
     });
 

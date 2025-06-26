@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import deepl from './deepl';
+import google from './google';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -11,9 +11,9 @@ import deepl from './deepl';
  * @type {Record<string, TranslationService>}
  */
 export const allTranslationServices = {
-  deepl,
+  google,
 };
 /**
  * @type {Writable<TranslationService>}
  */
-export const translator = writable(deepl);
+export const translator = writable(google);

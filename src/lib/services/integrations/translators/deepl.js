@@ -1,5 +1,8 @@
+// DeepL integration is disabled for now due to its CORS policy
+// @see https://github.com/sveltia/sveltia-cms/issues/437
+
 /**
- * @import { TranslationService } from '$lib/types/private';
+ * @import { TranslateOptions, TranslationService } from '$lib/types/private';
  */
 
 const serviceId = 'deepl';
@@ -138,10 +141,7 @@ const getTargetLanguage = (locale) => {
  * Translate the given text with DeepL API. Note that the API request uses the GET method, because
  * POST doesn’t work due to a CORS issue. Too long URL params may lead to an HTTP error.
  * @param {string[]} texts Array of original texts.
- * @param {object} options Options.
- * @param {string} options.sourceLocale Source language.
- * @param {string} options.targetLocale Target language.
- * @param {string} options.apiKey API authentication key.
+ * @param {TranslateOptions} options Options.
  * @returns {Promise<string[]>} Translated strings in the original order.
  * @throws {Error} When the source or target locale is not supported.
  * @see https://developers.deepl.com/docs/api-reference/translate

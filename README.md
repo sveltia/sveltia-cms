@@ -10,7 +10,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
 
 ![Stock photo integration: Pexels, Pixabay, Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250405)<br>
 
-![Full-fledged Asset Library; first-class internationalization support; DeepL integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250405)<br>
+![Full-fledged Asset Library; first-class internationalization support; translation API integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250405)<br>
 
 ![Built-in image optimizer for WebP and SVG; mobile & tablet support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250409)<br>
 
@@ -68,7 +68,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
   - [Specifying default sort field and direction](#specifying-default-sort-field-and-direction)
   - [Including Hugo’s special index file in a folder collection](#including-hugos-special-index-file-in-a-folder-collection)
   - [Using keyboard shortcuts](#using-keyboard-shortcuts)
-  - [Using DeepL to translate entry fields](#using-deepl-to-translate-entry-fields)
+  - [Translating entry fields with one click](#translating-entry-fields-with-one-click)
   - [Localizing entry slugs](#localizing-entry-slugs)
   - [Disabling non-default locale content](#disabling-non-default-locale-content)
   - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
@@ -274,7 +274,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
-  - [Integrates DeepL](#using-deepl-to-translate-entry-fields) to allow translation of text fields from another locale with one click. More translation services will be added in the future.
+  - [Integrates Cloud Translation API](#translating-entry-fields-with-one-click) to allow translation of text fields from another locale with one click.
+    - Earlier versions of Sveltia CMS included DeepL integration, but it’s disabled for now [due to API limitations](https://github.com/sveltia/sveltia-cms/issues/437).
+    - More translation services will be added in the future.
   - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian.[^146]
   - It’s possible to [disable non-default locale content](#disabling-non-default-locale-content).[^15]
   - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
@@ -900,25 +902,20 @@ Note that the special index file is placed right under the `folder`, regardless 
 
 Standard keyboard shortcuts are also available in the Markdown editor, including `Ctrl+B`/`Command+B` for bold text, `Ctrl+I`/`Command+I` for italics, and `Tab` to indent a list item.
 
-### Using DeepL to translate entry fields
+### Translating entry fields with one click
 
-Sveltia CMS comes with a handy DeepL integration so that you can translate any text field from another locale without leaving the Content Editor. To enable the high quality, AI-powered, quick translation feature:
+Sveltia CMS comes with a handy Google Cloud Translation API integration so that you can translate any text field from another locale without leaving the Content Editor. To enable the quick translation feature:
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
-1. Sign up for [DeepL API](https://www.deepl.com/pro-api/) and copy your Authentication Key from DeepL’s Account page.
+1. Sign in or sign up for [Google Cloud](https://cloud.google.com/) and create a new project.
+1. Enable [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com).
+1. Create a [new API key](https://console.cloud.google.com/apis/credentials) and copy it.
 1. Open an entry in Sveltia CMS.
 1. Click on the Translation button on the pane header or each field, right next to the 3-dot menu.
 1. Paste your key when prompted.
 1. The field(s) will be automatically translated.
 
 Note that the Translation button on the pane header only translates empty fields, while in-field Translation buttons override any filled text.
-
-If you have upgraded to DeepL API Pro, provide your new Authentication Key:
-
-1. Click the Account button in the upper right corner, then click Settings.
-1. Select the Contents tab.
-1. Replace your free API key ending with `:fx` with the new paid API key in the DeepL API Authentication Key field.
-1. Close the Settings dialog.
 
 ### Localizing entry slugs
 
@@ -1287,15 +1284,10 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://images.unsplash.com https://api.unsplash.com
     ```
-- DeepL API Free:
+- Google Translate:
   - `connect-src`
     ```
-    https://api-free.deepl.com
-    ```
-- DeepL API Pro:
-  - `connect-src`
-    ```
-    https://api.deepl.com
+    https://translation.googleapis.com
     ```
 - YouTube:
   - `frame-src`
