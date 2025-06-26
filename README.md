@@ -530,6 +530,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - Other integrations
     - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8] Developers can [disable them](#disabling-stock-assets) if needed.
     - More integration options, including Amazon S3 and Cloudflare R2/Images/Stream, would be added in the future.
+- Assets stored in the subfolders of `media_folder` are scanned recursively and displayed in the Asset Library.[^249]
 - The global `media_folder` can be an empty string (or `.` or `/`) if you want to store assets in the root folder.
 - PDF documents are displayed with a thumbnail image in both the Asset Library and the Select File dialog, making it easier to find the file you’re looking for.[^38]
 - Assets stored in an entry-relative media folder are displayed in the Asset Library.[^142]
@@ -1356,6 +1357,7 @@ Due Q4 2025
   - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
+  - and a few more bugs
 - Accessibility audit
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
 - Developer documentation (implementation guide)
@@ -1878,7 +1880,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^239]: Netlify/Decap CMS [#213](https://github.com/decaporg/decap-cms/issues/213), [#1032](https://github.com/decaporg/decap-cms/issues/1032), [#3244](https://github.com/decaporg/decap-cms/issues/3244), [#6730](https://github.com/decaporg/decap-cms/issues/6730), [#7459](https://github.com/decaporg/decap-cms/discussions/7459)
 
-[^240]: Netlify/Decap CMS [#2113](https://github.com/decaporg/decap-cms/issues/2113), [#3240](https://github.com/decaporg/decap-cms/issues/3240), [#4208](https://github.com/decaporg/decap-cms/issues/4208)
+[^240]: Netlify/Decap CMS [#2113](https://github.com/decaporg/decap-cms/issues/2113), [#3240](https://github.com/decaporg/decap-cms/issues/3240)
 
 [^241]: Netlify/Decap CMS [#857](https://github.com/decaporg/decap-cms/issues/857)
 
@@ -1895,3 +1897,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^247]: Netlify/Decap CMS [#1794](https://github.com/decaporg/decap-cms/issues/1794), [#2966](https://github.com/decaporg/decap-cms/issues/2966)
 
 [^248]: Netlify/Decap CMS [#836](https://github.com/decaporg/decap-cms/issues/836), [#3524](https://github.com/decaporg/decap-cms/issues/3524)
+
+[^249]: Netlify/Decap CMS [#4208](https://github.com/decaporg/decap-cms/issues/4208)
