@@ -91,6 +91,7 @@ export const saveBackup = async (draft) => {
 
   const {
     collectionName,
+    fileName,
     originalEntry,
     currentLocales = {},
     currentSlugs = {},
@@ -98,7 +99,7 @@ export const saveBackup = async (draft) => {
     files,
   } = draft;
 
-  const slug = originalEntry?.slug || '';
+  const slug = fileName ?? originalEntry?.slug ?? '';
 
   if (get(entryDraftModified)) {
     /** @type {EntryDraftBackup} */
