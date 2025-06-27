@@ -3,7 +3,7 @@ import { getMediaFieldURL } from '$lib/services/assets';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
-import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
@@ -182,7 +182,7 @@ export const getEntriesByAssetURL = async (
                     return false;
                   };
 
-                  const collectionFiles = getFilesByEntry(collection, entry);
+                  const collectionFiles = getCollectionFilesByEntry(collection, entry);
 
                   if (collectionFiles.length) {
                     return (await Promise.all(collectionFiles.map(hasAsset))).includes(true);

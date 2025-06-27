@@ -2,7 +2,7 @@ import { derived, writable } from 'svelte/store';
 import { locale as appLocale } from 'svelte-i18n';
 import { allAssets } from '$lib/services/assets';
 import { allEntries } from '$lib/services/contents';
-import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
@@ -73,7 +73,7 @@ export const entrySearchResults = derived(
               points += 10;
             }
 
-            points += getFilesByEntry(collection, entry).filter((file) =>
+            points += getCollectionFilesByEntry(collection, entry).filter((file) =>
               hasMatch(file.label || file.name),
             ).length;
 

@@ -1,6 +1,7 @@
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 /**
@@ -13,6 +14,23 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  */
 
 /**
+ * Get a file collection file by its name.
+ * @param {InternalCollection | string} collection Collection or collection name.
+ * @param {string} fileName File name.
+ * @returns {InternalCollectionFile | undefined} File collection file.
+ */
+export const getCollectionFile = (collection, fileName) => {
+  /** @type {InternalCollection | undefined} */
+  const _collection = typeof collection === 'string' ? getCollection(collection) : collection;
+
+  if (!_collection || _collection._type !== 'file') {
+    return undefined;
+  }
+
+  return /** @type {FileCollection} */ (_collection)?._fileMap[fileName];
+};
+
+/**
  * Get a file collection’s file configurations that matches the given entry. One file can
  * theoretically appear in multiple collections files depending on the configuration, so that the
  * result is an array.
@@ -20,7 +38,7 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * @param {Entry} entry Entry.
  * @returns {InternalCollectionFile[]} Collection files.
  */
-export const getFilesByEntry = (collection, entry) => {
+export const getCollectionFilesByEntry = (collection, entry) => {
   const _fileMap = collection.files
     ? /** @type {FileCollection} */ (collection)._fileMap
     : undefined;
@@ -42,12 +60,12 @@ export const getFilesByEntry = (collection, entry) => {
  * @returns {Entry | undefined} File.
  * @see https://decapcms.org/docs/collection-file/
  */
-export const getFile = (collectionName, fileName) =>
+export const getCollectionFileEntry = (collectionName, fileName) =>
   get(allEntries).find((entry) =>
     getAssociatedCollections(entry).some(
       (collection) =>
         collection.name === collectionName &&
-        getFilesByEntry(collection, entry).some((file) => file.name === fileName),
+        getCollectionFilesByEntry(collection, entry).some((file) => file.name === fileName),
     ),
   );
 
@@ -57,7 +75,7 @@ export const getFile = (collectionName, fileName) =>
  * @param {string | undefined} fileName Collection file name.
  * @returns {number} Index.
  */
-export const getFileIndex = (collectionName, fileName) => {
+export const getCollectionFileIndex = (collectionName, fileName) => {
   if (collectionName && fileName) {
     return (
       get(siteConfig)

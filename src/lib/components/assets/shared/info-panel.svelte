@@ -7,7 +7,7 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { defaultAssetDetails, getAssetDetails, isMediaKind } from '$lib/services/assets';
-  import { getFilesByEntry } from '$lib/services/contents/collection/files';
+  import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
   import { getAssociatedCollections } from '$lib/services/contents/entry';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { DATE_TIME_FORMAT_OPTIONS } from '$lib/services/utils/date';
@@ -143,11 +143,11 @@
       {#await sleep() then}
         {#each getAssociatedCollections(entry) as collection (collection.name)}
           {@const collectionLabel = collection.label || collection.name}
-          {#each getFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
+          {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
             {@render usedEntryLink({
-              link: `/collections/${collection.name}/entries/${collectionFile.name}`,
+              link: `/collections/${collection.name}/entries/${file.name}`,
               collectionLabel,
-              entryLabel: collectionFile.label || collectionFile.name,
+              entryLabel: file.label || file.name,
             })}
           {:else}
             {#key $appLocale}

@@ -9,7 +9,7 @@ import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
-import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
@@ -406,7 +406,7 @@ export const entryGroups = derived(
     let entries = [..._listedEntries];
 
     // Reset the groups if the current collection is empty or a file collection
-    if (!entries.length || !!getFilesByEntry(collection, entries[0]).length) {
+    if (!entries.length || !!getCollectionFilesByEntry(collection, entries[0]).length) {
       set([]);
     } else {
       entries = sortEntries(entries, collection, _currentView.sort);

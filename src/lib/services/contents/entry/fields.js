@@ -4,6 +4,7 @@ import {
   DATE_TRANSFORMATION_REGEX,
 } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
+import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
@@ -13,7 +14,6 @@ import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 /**
  * @import {
  * Entry,
- * FileCollection,
  * FlattenedEntryContent,
  * InternalLocaleCode,
  * } from '$lib/types/private';
@@ -58,10 +58,7 @@ export const getField = ({
   }
 
   const collection = getCollection(collectionName);
-
-  const collectionFile = fileName
-    ? /** @type {FileCollection} */ (collection)?._fileMap?.[fileName]
-    : undefined;
+  const collectionFile = fileName ? getCollectionFile(collectionName, fileName) : undefined;
 
   // For entry collections, `fileName` is ignored and `collectionFile` will be `undefined`
   // Only fail if we explicitly need a file collection but can't find the file

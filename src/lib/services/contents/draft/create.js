@@ -1,6 +1,7 @@
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
+import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
@@ -13,7 +14,6 @@ import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/w
 /**
  * @import {
  * EntryDraft,
- * FileCollection,
  * FlattenedEntryContent,
  * InternalCollection,
  * InternalCollectionFile,
@@ -42,10 +42,7 @@ export const createProxy = ({
   getValueMap = undefined,
 }) => {
   const collection = getCollection(collectionName);
-
-  const collectionFile = fileName
-    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
-    : undefined;
+  const collectionFile = fileName ? getCollectionFile(collectionName, fileName) : undefined;
 
   if (!collection || (fileName && !collectionFile)) {
     return undefined;

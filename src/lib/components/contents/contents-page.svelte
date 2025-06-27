@@ -23,7 +23,7 @@
     selectedCollection,
   } from '$lib/services/contents/collection';
   import { contentUpdatesToast } from '$lib/services/contents/collection/data';
-  import { getFile } from '$lib/services/contents/collection/files';
+  import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
@@ -113,7 +113,7 @@
     if (_fileMap) {
       // File collection
       if (routeType === 'entries' && subPath) {
-        const originalEntry = getFile(collectionName, subPath);
+        const originalEntry = getCollectionFileEntry(collectionName, subPath);
         const collectionFile = _fileMap[subPath];
 
         if (originalEntry) {

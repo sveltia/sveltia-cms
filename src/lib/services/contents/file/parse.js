@@ -3,10 +3,11 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import * as TOML from 'smol-toml';
 import YAML from 'yaml';
 import { getCollection } from '$lib/services/contents/collection';
+import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file';
 
 /**
- * @import { BaseEntryListItem, EntryCollection, FileCollection } from '$lib/types/private';
+ * @import { BaseEntryListItem, EntryCollection } from '$lib/types/private';
  * @import { FrontMatterFormat } from '$lib/types/public';
  */
 
@@ -55,10 +56,7 @@ const detectFrontMatterFormat = (text) => {
  */
 export const parseEntryFile = async ({ text = '', path, folder: { collectionName, fileName } }) => {
   const collection = getCollection(collectionName);
-
-  const collectionFile = fileName
-    ? /** @type {FileCollection} */ (collection)?._fileMap[fileName]
-    : undefined;
+  const collectionFile = fileName ? getCollectionFile(collectionName, fileName) : undefined;
 
   if (!collection) {
     throw new Error('Collection not found');

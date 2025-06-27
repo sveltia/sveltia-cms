@@ -6,11 +6,11 @@
 <script>
   import SelectEditor from '$lib/components/contents/details/widgets/select/select-editor.svelte';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-  import { getFile } from '$lib/services/contents/collection/files';
+  import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
-   * @import { Entry, WidgetEditorProps } from '$lib/types/private';
+   * @import { WidgetEditorProps } from '$lib/types/private';
    * @import { RelationField, SelectField } from '$lib/types/public';
    */
 
@@ -42,7 +42,7 @@
   } = $derived(fieldConfig);
   const refEntries = $derived(
     fileName
-      ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
+      ? [getCollectionFileEntry(collectionName, fileName)].filter((entry) => !!entry)
       : getEntriesByCollection(collectionName),
   );
   /** @type {SelectField} */

@@ -11,7 +11,7 @@ import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
-import { getFilesByEntry } from '$lib/services/contents/collection/files';
+import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import {
@@ -429,7 +429,7 @@ const getAssetByRelativePath = ({ path, entry }) => {
   }
 
   const assets = getAssociatedCollections(entry).map((_collection) => {
-    const collectionFiles = getFilesByEntry(_collection, entry);
+    const collectionFiles = getCollectionFilesByEntry(_collection, entry);
 
     if (collectionFiles.length) {
       return collectionFiles.map((file) => getAsset({ path, entry, _i18n: file._i18n }));

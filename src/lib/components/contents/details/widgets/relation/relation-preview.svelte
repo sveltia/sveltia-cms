@@ -5,12 +5,12 @@
 -->
 <script>
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-  import { getFile } from '$lib/services/contents/collection/files';
+  import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
   import { getListFormatter } from '$lib/services/contents/i18n';
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
-   * @import { Entry, WidgetPreviewProps } from '$lib/types/private';
+   * @import { WidgetPreviewProps } from '$lib/types/private';
    * @import { RelationField } from '$lib/types/public';
    */
 
@@ -39,7 +39,7 @@
   const listFormatter = $derived(getListFormatter(locale));
   const refEntries = $derived(
     fileName
-      ? /** @type {Entry[]} */ ([getFile(collectionName, fileName)].filter(Boolean))
+      ? [getCollectionFileEntry(collectionName, fileName)].filter((entry) => !!entry)
       : getEntriesByCollection(collectionName),
   );
   const options = $derived(getOptions(locale, fieldConfig, refEntries));

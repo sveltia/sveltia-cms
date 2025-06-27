@@ -13,7 +13,7 @@
   } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
-  import { getFileIndex } from '$lib/services/contents/collection/files';
+  import { getCollectionFileIndex } from '$lib/services/contents/collection/files';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
@@ -24,7 +24,8 @@
     ...$allAssetFolders
       .sort(
         (a, b) =>
-          getFileIndex(a.collectionName, a.fileName) - getFileIndex(b.collectionName, b.fileName),
+          getCollectionFileIndex(a.collectionName, a.fileName) -
+          getCollectionFileIndex(b.collectionName, b.fileName),
       )
       .sort((a, b) => getCollectionIndex(a.collectionName) - getCollectionIndex(b.collectionName)),
   ]);
