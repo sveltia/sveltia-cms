@@ -115,17 +115,25 @@ const authorize = async ({ backendName, authURL }) => {
  * Initialize the server-side Authorization Code Flow.
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `github`.
- * @param {string} args.siteDomain Domain of the site hosting the CMS.
+ * @param {string | undefined} args.siteDomain Domain of the site hosting the CMS. Could be
+ * `undefined` if the `site_domain` option is not specified in the backend configuration.
  * @param {string} args.authURL Authorization site URL.
  * @param {string} args.scope Authorization scope.
  * @returns {Promise<AuthTokens>} Auth access token and refresh token.
  */
 export const initServerSideAuth = async ({ backendName, siteDomain, authURL, scope }) => {
+  const { hostname } = window.location;
+
+  // If the site domain is not specified, use the current hostname. If the hostname is `localhost`,
+  // use `cms.netlify.com` as the default site domain.
+  // @see https://decapcms.org/docs/backends-overview/
+  siteDomain ??= hostname === 'localhost' ? 'cms.netlify.com' : hostname;
+
   try {
     // `siteDomain` may contain non-ASCII characters. When authenticating with Netlify, such
     // internationalized domain names (IDNs) must be written in Punycode. Use `URL` for conversion,
     // e.g `日本語.jp` -> `xn--wgv71a119e.jp`
-    if (new URL(authURL).origin === 'https://api.netlify.com') {
+    if (siteDomain !== 'localhost' && new URL(authURL).origin === 'https://api.netlify.com') {
       siteDomain = new URL(`https://${siteDomain}`).hostname;
     }
   } catch {

@@ -210,8 +210,7 @@ const signIn = async ({ token, auto = false }) => {
   }
 
   if (!token) {
-    const { hostname } = window.location;
-    const { site_domain: siteDomain = hostname } = get(siteConfig)?.backend ?? {};
+    const { site_domain: siteDomain } = get(siteConfig)?.backend ?? {};
     const { authURL } = apiConfig;
 
     ({ token } = await initServerSideAuth({

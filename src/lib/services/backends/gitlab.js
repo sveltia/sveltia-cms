@@ -246,16 +246,12 @@ const getUserProfile = async ({ token, refreshToken }) => {
  */
 const signIn = async ({ token, refreshToken, auto = false }) => {
   if (!token) {
-    const { origin, hostname } = window.location;
-
-    const { site_domain: siteDomain = hostname, auth_type: authType } =
-      get(siteConfig)?.backend ?? {};
-
+    const { site_domain: siteDomain, auth_type: authType } = get(siteConfig)?.backend ?? {};
     const { clientId, authURL, tokenURL } = apiConfig;
     const authArgs = { backendName, authURL, scope: 'api' };
 
     if (authType === 'pkce') {
-      const inPopup = window.opener?.origin === origin && window.name === 'auth';
+      const inPopup = window.opener?.origin === window.location.origin && window.name === 'auth';
 
       if (inPopup) {
         // We are in the auth popup window; let’s get the OAuth flow done
