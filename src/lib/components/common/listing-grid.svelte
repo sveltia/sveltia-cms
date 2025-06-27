@@ -119,8 +119,6 @@
   }
 
   .list-view {
-    --icon-size: 36px;
-
     @media (width < 768px) {
       padding: 0;
     }

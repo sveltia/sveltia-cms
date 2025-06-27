@@ -13,7 +13,10 @@
   } from '$lib/services/assets';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
-  import { getCollectionFileIndex } from '$lib/services/contents/collection/files';
+  import {
+    getCollectionFile,
+    getCollectionFileIndex,
+  } from '$lib/services/contents/collection/files';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
@@ -45,8 +48,11 @@
     <OptionGroup label={$_('asset_location.repository')}>
       {#each folders as folder ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
         {#await sleep() then}
-          {@const { collectionName, internalPath, entryRelative, hasTemplateTags } = folder}
+          {@const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } =
+            folder}
           {@const collection = collectionName ? getCollection(collectionName) : undefined}
+          {@const collectionFile =
+            collection && fileName ? getCollectionFile(collection, fileName) : undefined}
           <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
           {@const uploadDisabled = entryRelative || hasTemplateTags}
           {@const selected = equal($selectedAssetFolder, folder)}
@@ -107,7 +113,7 @@
             }}
           >
             {#snippet startIcon()}
-              <Icon name={collection?.icon || 'folder'} />
+              <Icon name={collectionFile?.icon || collection?.icon || 'folder'} />
             {/snippet}
             {#snippet endIcon()}
               {#key $allAssets}

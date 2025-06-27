@@ -1,5 +1,5 @@
 <script>
-  import { EmptyState, GridCell, GridRow, InfiniteScroll, TruncatedText } from '@sveltia/ui';
+  import { EmptyState, GridCell, GridRow, Icon, InfiniteScroll, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
   import ListContainer from '$lib/components/common/list-container.svelte';
@@ -20,7 +20,7 @@
       aria-rowcount={$selectedCollection.files.length}
     >
       <InfiniteScroll items={$selectedCollection.files} itemKey="name">
-        {#snippet renderItem(/** @type {CollectionFile} */ { name, label })}
+        {#snippet renderItem(/** @type {CollectionFile} */ { name, label, icon })}
           {#await sleep() then}
             <GridRow
               onclick={() => {
@@ -31,6 +31,9 @@
             >
               <GridCell class="title">
                 <div role="none" class="label">
+                  {#if icon}
+                    <Icon name={icon} />
+                  {/if}
                   <TruncatedText lines={2}>
                     {label || name}
                   </TruncatedText>
@@ -47,3 +50,21 @@
     </EmptyState>
   {/if}
 </ListContainer>
+
+<style lang="scss">
+  .label {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    :global(.icon) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--sui-control-medium-border-radius);
+      width: var(--icon-size);
+      height: var(--icon-size);
+      background-color: var(--sui-secondary-background-color);
+    }
+  }
+</style>

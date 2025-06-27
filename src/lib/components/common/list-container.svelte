@@ -26,6 +26,8 @@
 
 <style lang="scss">
   .list-container {
+    --icon-size: 36px;
+
     flex: auto;
     position: relative;
     height: 100%;
