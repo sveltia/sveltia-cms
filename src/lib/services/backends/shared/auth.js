@@ -133,7 +133,7 @@ export const initServerSideAuth = async ({ backendName, siteDomain, authURL, sco
     // `siteDomain` may contain non-ASCII characters. When authenticating with Netlify, such
     // internationalized domain names (IDNs) must be written in Punycode. Use `URL` for conversion,
     // e.g `日本語.jp` -> `xn--wgv71a119e.jp`
-    if (siteDomain !== 'localhost' && new URL(authURL).origin === 'https://api.netlify.com') {
+    if (new URL(authURL).origin === 'https://api.netlify.com') {
       siteDomain = new URL(`https://${siteDomain}`).hostname;
     }
   } catch {
