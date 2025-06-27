@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 225+ issues, or 455+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 225+ issues, or 460+ if including duplicates, have been effectively solved in Sveltia CMS
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -410,6 +410,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
 - DateTime
   - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry.[^90]
   - User’s local time is not saved in UTC unless the `picker_utc` option is `true`.[^150]
+  - The widget doesn’t throw a `RangeError` for formatting days of the month.[^250]
 - Hidden
   - The `default` value supports the following template tags:
     - `{{locale}}`: The current locale code.[^101]
@@ -1899,3 +1900,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^248]: Netlify/Decap CMS [#836](https://github.com/decaporg/decap-cms/issues/836), [#3524](https://github.com/decaporg/decap-cms/issues/3524)
 
 [^249]: Netlify/Decap CMS [#4208](https://github.com/decaporg/decap-cms/issues/4208)
+
+[^250]: Netlify/Decap CMS [#6609](https://github.com/decaporg/decap-cms/issues/6609), [#6802](https://github.com/decaporg/decap-cms/issues/6802), [#6824](https://github.com/decaporg/decap-cms/issues/6824), [#6832](https://github.com/decaporg/decap-cms/issues/6832), [#6848](https://github.com/decaporg/decap-cms/issues/6848), [#6851](https://github.com/decaporg/decap-cms/issues/6851), [#7287](https://github.com/decaporg/decap-cms/issues/7287), [#7522](https://github.com/decaporg/decap-cms/issues/7522)
