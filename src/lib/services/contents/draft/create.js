@@ -42,7 +42,9 @@ export const createProxy = ({
   getValueMap = undefined,
 }) => {
   const collection = getCollection(collectionName);
-  const collectionFile = fileName ? getCollectionFile(collectionName, fileName) : undefined;
+
+  const collectionFile =
+    collection && fileName ? getCollectionFile(collection, fileName) : undefined;
 
   if (!collection || (fileName && !collectionFile)) {
     return undefined;

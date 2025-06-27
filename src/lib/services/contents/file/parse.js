@@ -56,7 +56,9 @@ const detectFrontMatterFormat = (text) => {
  */
 export const parseEntryFile = async ({ text = '', path, folder: { collectionName, fileName } }) => {
   const collection = getCollection(collectionName);
-  const collectionFile = fileName ? getCollectionFile(collectionName, fileName) : undefined;
+
+  const collectionFile =
+    collection && fileName ? getCollectionFile(collection, fileName) : undefined;
 
   if (!collection) {
     throw new Error('Collection not found');

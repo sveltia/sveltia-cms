@@ -58,7 +58,9 @@ export const getField = ({
   }
 
   const collection = getCollection(collectionName);
-  const collectionFile = fileName ? getCollectionFile(collectionName, fileName) : undefined;
+
+  const collectionFile =
+    collection && fileName ? getCollectionFile(collection, fileName) : undefined;
 
   // For entry collections, `fileName` is ignored and `collectionFile` will be `undefined`
   // Only fail if we explicitly need a file collection but can't find the file
