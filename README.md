@@ -129,7 +129,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 225+ issues, or 465+ if including duplicates, have been effectively solved in Sveltia CMS
+  - So far, 225+ issues, or 465+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right!)
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -1388,9 +1388,9 @@ Due Q4 2025
 
 ## Trivia
 
+- As mentioned in the [Motivation](#motivation) section, Sveltia CMS is a complete rewrite of Netlify CMS. We rarely look at the predecessor’s code and don’t use any of it. This is why Sveltia CMS is free of their bugs.
 - The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. And now we are completely rewriting it in Svelte. So this is effectively the second time the application has gone through a framework migration.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for improved DX, but also for our rapid application development.
-- As mentioned in the [Motivation](#motivation) section, Sveltia CMS is a complete rewrite of Netlify CMS. We rarely look at the predecessor’s code and don’t use any of it. This is why Sveltia CMS is free of their bugs.
 
 ## Related links
 
