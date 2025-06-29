@@ -67,6 +67,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
   - [Using a custom media folder for a collection](#using-a-custom-media-folder-for-a-collection)
   - [Specifying default sort field and direction](#specifying-default-sort-field-and-direction)
   - [Including Hugo’s special index file in a folder collection](#including-hugos-special-index-file-in-a-folder-collection)
+  - [Using singletons](#using-singletons)
   - [Using keyboard shortcuts](#using-keyboard-shortcuts)
   - [Translating entry fields with one click](#translating-entry-fields-with-one-click)
   - [Localizing entry slugs](#localizing-entry-slugs)
@@ -129,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 225+ issues, or 465+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right!)
+  - So far, 225+ issues, or 465+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -293,6 +294,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Configuration
   - Provides some new options, including:
     - `icon`: [Choose a custom icon for each collection](#using-a-custom-icon-for-a-collection).[^3]
+      - The option can also be used for individual files within a file collection. The specified icon will then appear in the file list.
     - `thumbnail`: Specify the field name for a thumbnail displayed on the entry list, like `thumbnail: featuredImage`.[^130]
       - A nested field can be specified using dot notation, e.g. `heroImage.src`.
       - A wildcard in the field name is also supported, e.g. `images.*.src`.
@@ -314,6 +316,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the entry slug, e.g. `{{date | date('YYYYMMDD-HHmm', 'utc')}}`. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/278#issuecomment-2565313420))
     - The `date` transformation returns an empty string if an invalid date is given.[^176]
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
+  - Sveltia CMS supports [singletons](#using-singletons), a simple form of a file collection.[^233]
   - The collection `label` defaults to the `name` value according to the [Decap CMS document](https://decapcms.org/docs/configuration-options/#collections), while Netlify/Decap CMS actually throws a configuration error if the `label` option is omitted.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
@@ -892,6 +895,45 @@ collections:
 
 Note that the special index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, but the index file remains at `content/posts/_index.md`.
 
+### Using singletons
+
+The singleton collection is an unnamed, non-nested variant of a [file collection](https://decapcms.org/docs/collection-file/) that can be used to manage static data files. Singleton files appear in the content library’s sidebar under the “Files” group, and users can open the Content Editor directly without navigating to a file list.
+
+To create this special file collection, add the new `singletons` option, along with an array of file definitions, to the root level of your site configuration:
+
+```yaml
+collections:
+  # Conventional file collection
+  - name: pages
+    label: Pages
+    files:
+      - name: home
+        label: Home Page
+        file: content/home.yaml
+        ...
+      - name: about
+        label: Site Settings
+        file: content/settings.yaml
+        ...
+
+# Singleton collection
+singletons:
+  - name: home
+    label: Home Page
+    file: content/home.yaml
+    icon: home # You can specify an icon
+    ...
+  - name: divider-1
+    divider: true # You can also add dividers
+  - name: about
+    label: Site Settings
+    file: content/settings.yaml
+    icon: settings
+    ...
+```
+
+If you want to reference a singleton file with a Relation field, use `_singletons` as the `collection` name.
+
 ### Using keyboard shortcuts
 
 - View the Content Library: `Alt+1`
@@ -1349,7 +1391,6 @@ Due Q4 2025
 - Tackling some more Netlify/Decap CMS issues:
   - [Directory navigation in the asset library](https://github.com/sveltia/sveltia-cms/issues/420)[^240] (#5 top-voted feature of Netlify/Decap CMS)
   - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239] (#14)
-  - [Singletons](https://github.com/sveltia/sveltia-cms/issues/435)[^233] (#23)
   - [Git LFS support for GitHub backend](https://github.com/sveltia/sveltia-cms/discussions/353)[^244] (#26)
   - Advanced Relation fields[^242], including cascade updates/deletes[^243] and [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - Cloudinary and Uploadcare issues, including existing file selection[^247]
