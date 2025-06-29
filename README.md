@@ -903,7 +903,7 @@ To create this special file collection, add the new `singletons` option, along w
 
 ```yaml
 collections:
-  # Conventional file collection
+  # A conventional file collection
   - name: data
     label: Data
     files:
@@ -916,7 +916,7 @@ collections:
         file: content/settings.yaml
         ...
 
-# Singleton collection
+# ... can be converted to the singleton collection
 singletons:
   - name: home
     label: Home Page
