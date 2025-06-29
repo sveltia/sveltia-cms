@@ -227,7 +227,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Sveltia CMS also won’t cause peer dependency conflicts mainly due to legacy third-party React UI libraries.[^175][^237] We build the app using [our own Svelte UI component library](https://github.com/sveltia/sveltia-ui) to reduce reliance on third parties.
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - The [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) is automatically added to HTML to prevent the admin page from being indexed by search engines.[^174] Developers are still encouraged to manually add `<meta name="robots" content="noindex">` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.
-- Initializing the CMS twice (due to the incorrect placement of `CMS_MANUAL_INIT`) will not result in a `NotFoundError`.[^251]
+- Initializing the CMS twice (due to the incorrect or missing placement of `CMS_MANUAL_INIT`) will not result in a `NotFoundError`.[^251]
 
 ### Better configuration
 
