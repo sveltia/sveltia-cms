@@ -5,7 +5,10 @@ import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import { applyTransformations } from '$lib/services/common/transformations';
+import {
+  applyTransformations,
+  DATE_TRANSFORMATION_REGEX,
+} from '$lib/services/common/transformations';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
@@ -137,7 +140,12 @@ const replace = (placeholder, context) => {
   let value = replaceSub(tag, replaceSubContext);
 
   if (value === undefined) {
-    value = getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
+    // If the `date` transformation is defined, e.g. `{{publish_date | date('YYYY-MM')}}`, use the
+    // raw field value from the entry content. Otherwise, use the field display value. This is to
+    // avoid applying the transformation to the display value, which leads to unexpected results.
+    value = transformations.some((t) => DATE_TRANSFORMATION_REGEX.test(t))
+      ? valueMap[keyPath]
+      : getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
   }
 
   if (value === undefined) {
