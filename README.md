@@ -904,14 +904,14 @@ To create this special file collection, add the new `singletons` option, along w
 ```yaml
 collections:
   # Conventional file collection
-  - name: pages
-    label: Pages
+  - name: data
+    label: Data
     files:
       - name: home
         label: Home Page
         file: content/home.yaml
         ...
-      - name: about
+      - name: settings
         label: Site Settings
         file: content/settings.yaml
         ...
@@ -925,7 +925,7 @@ singletons:
     ...
   - name: divider-1
     divider: true # You can also add dividers
-  - name: about
+  - name: settings
     label: Site Settings
     file: content/settings.yaml
     icon: settings
