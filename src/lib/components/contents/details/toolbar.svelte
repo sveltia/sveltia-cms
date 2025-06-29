@@ -21,8 +21,10 @@
   import { getAssetFolder } from '$lib/services/assets';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
+  import { getCollectionLabel } from '$lib/services/contents/collection';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { canCreateEntry } from '$lib/services/contents/collection/entries';
+  import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
   import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft, duplicateDraft } from '$lib/services/contents/draft/create';
   import { copyFromLocaleToast, entryEditorSettings } from '$lib/services/contents/draft/editor';
@@ -66,8 +68,14 @@
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const collectionName = $derived(collection?.name);
   const fileName = $derived(collectionFile?.name);
-  const collectionLabel = $derived(collection?.label || collectionName);
-  const collectionLabelSingular = $derived(collection?.label_singular || collectionLabel);
+  const collectionLabel = $derived(
+    // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
+    $appLocale && collection ? getCollectionLabel(collection) : '',
+  );
+  const collectionLabelSingular = $derived(
+    // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
+    $appLocale && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
+  );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
   const modified = $derived(isNew || $entryDraftModified);
   const errorCount = $derived(
@@ -88,6 +96,14 @@
   );
 
   /**
+   * Go back to the previous page. If the entry is a singleton file, go to the collections list.
+   * Otherwise, go to the collection entries list.
+   */
+  const _goBack = () => {
+    goBack(collectionName === '_singletons' ? '/collections' : `/collections/${collectionName}`);
+  };
+
+  /**
    * Save the entry draft.
    * @param {object} [options] Options.
    * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
@@ -103,7 +119,7 @@
       const savedEntry = await saveEntry({ skipCI });
 
       if ($prefs?.closeOnSave ?? true) {
-        goBack(`/collections/${collectionName}`);
+        _goBack();
         $entryDraft = null;
       } else {
         if (isNew) {
@@ -173,7 +189,7 @@
     aria-label={$_('cancel_editing')}
     useShortcut={$prefs.closeWithEscape}
     onclick={() => {
-      goBack(`/collections/${collectionName}`);
+      _goBack();
     }}
   />
   <h2 role="none">
@@ -182,7 +198,7 @@
         {$_('create_entry_title', { values: { name: collectionLabelSingular } })}
       {:else}
         {@const entrySummary = collectionFile
-          ? collectionFile.label || collectionFile.name
+          ? getCollectionFileLabel(collectionFile)
           : collection && originalEntry && $appLocale
             ? getEntrySummary(collection, originalEntry)
             : ''}
@@ -329,7 +345,7 @@
       );
     }
 
-    goBack(`/collections/${collectionName}`);
+    _goBack();
   }}
   onClose={() => {
     menuButton.focus();

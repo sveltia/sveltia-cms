@@ -1,4 +1,5 @@
 import { compare, stripSlashes } from '@sveltia/utils/string';
+import { isValidCollectionFile } from '$lib/services/contents/collection/files';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
@@ -10,9 +11,13 @@ import { getI18nConfig } from '$lib/services/contents/i18n';
  * Get a collection file folder information.
  * @param {Collection} collection Collection.
  * @param {CollectionFile} file Collection file.
- * @returns {EntryFolderInfo} Collection file folder information.
+ * @returns {EntryFolderInfo | undefined} Collection file folder information.
  */
 const getCollectionFileFolder = (collection, file) => {
+  if (!isValidCollectionFile(file)) {
+    return undefined;
+  }
+
   /** @type {Record<InternalLocaleCode, string>} */
   const filePathMap = (() => {
     const path = stripSlashes(file.file);
@@ -89,7 +94,26 @@ const getFileCollectionFolders = ({ collections }) =>
       (collection.files ?? []).map((file) => getCollectionFileFolder(collection, file)),
     )
     .flat(1)
+    .filter((file) => !!file)
     .sort(compareFilePath);
+
+/**
+ * Get singleton collection folders.
+ * @param {InternalSiteConfig} config Site configuration.
+ * @returns {EntryFolderInfo[]} Entry folders.
+ */
+const getSingletonCollectionFolders = ({ singletons }) => {
+  if (!Array.isArray(singletons) || !singletons.length) {
+    return [];
+  }
+
+  const singletonCollection = { name: '_singletons', files: singletons };
+
+  return singletons
+    .map((file) => getCollectionFileFolder(singletonCollection, file))
+    .filter((file) => !!file)
+    .sort(compareFilePath);
+};
 
 /**
  * Get all entry folders.
@@ -99,4 +123,5 @@ const getFileCollectionFolders = ({ collections }) =>
 export const getAllEntryFolders = (config) => [
   ...getEntryCollectionFolders(config),
   ...getFileCollectionFolders(config),
+  ...getSingletonCollectionFolders(config),
 ];

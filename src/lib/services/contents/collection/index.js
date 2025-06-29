@@ -1,6 +1,8 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
+import { _ } from 'svelte-i18n';
 import { siteConfig } from '$lib/services/config';
+import { isValidCollectionFile } from '$lib/services/contents/collection/files';
 import { getFileConfig } from '$lib/services/contents/file';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 
@@ -71,27 +73,54 @@ const parseEntryCollection = (rawCollection, _i18n) => ({
 });
 
 /**
- * Parse a file collection and add additional properties.
+ * Parse a file/singleton collection and add additional properties.
  * @param {Collection} rawCollection Raw collection definition.
  * @param {InternalI18nOptions} _i18n I18n options of the collection.
  * @param {CollectionFile[]} files List of files in the collection.
- * @returns {FileCollection} Parsed file collection with additional properties.
+ * @returns {FileCollection} Parsed file/singleton collection with additional properties.
  */
 const parseFileCollection = (rawCollection, _i18n, files) => ({
   ...rawCollection,
   _i18n,
-  _type: 'file',
-  _fileMap: files?.length
-    ? Object.fromEntries(
-        files.map((file) => {
-          const __i18n = getI18nConfig(rawCollection, file);
-          const __file = getFileConfig({ rawCollection, file, _i18n: __i18n });
+  _type: rawCollection.name === '_singletons' ? 'singleton' : 'file',
+  _fileMap: Object.fromEntries(
+    files.filter(isValidCollectionFile).map((file) => {
+      const __i18n = getI18nConfig(rawCollection, file);
+      const __file = getFileConfig({ rawCollection, file, _i18n: __i18n });
 
-          return [file.name, { ...file, _file: __file, _i18n: __i18n }];
-        }),
-      )
-    : {},
+      return [file.name, { ...file, _file: __file, _i18n: __i18n }];
+    }),
+  ),
 });
+
+/**
+ * Get the pseudo singleton file collection. This is a collection that contains all singleton files
+ * defined in the site configuration. It is used to handle singletons as a collection, allowing for
+ * easier access and management.
+ * @returns {InternalCollection | undefined} Singleton collection, or `undefined` if no singletons
+ * are defined.
+ */
+export const getSingletonCollection = () => {
+  const singletons = get(siteConfig)?.singletons;
+
+  if (!Array.isArray(singletons)) {
+    return undefined;
+  }
+
+  const files = singletons
+    .filter((file) => isValidCollectionFile(file))
+    .map((file) => ({ ...file, file: stripSlashes(file.file) }));
+
+  if (!files.length) {
+    return undefined;
+  }
+
+  /** @type {Collection} */
+  const rawCollection = { name: '_singletons', files };
+  const _i18n = getI18nConfig(rawCollection);
+
+  return parseFileCollection(rawCollection, _i18n, files);
+};
 
 /**
  * Get a collection by name.
@@ -104,6 +133,14 @@ export const getCollection = (name) => {
 
   if (cache) {
     return cache;
+  }
+
+  if (name === '_singletons') {
+    const collection = getSingletonCollection();
+
+    collectionCacheMap.set(name, collection);
+
+    return collection;
   }
 
   const rawCollection = get(siteConfig)?.collections.find((c) => c.name === name);
@@ -124,7 +161,9 @@ export const getCollection = (name) => {
     rawCollection.folder = stripSlashes(/** @type {string} */ (folder));
   } else {
     files.forEach((f) => {
-      f.file = stripSlashes(f.file);
+      if (f.file) {
+        f.file = stripSlashes(f.file);
+      }
     });
   }
 
@@ -140,6 +179,28 @@ export const getCollection = (name) => {
 };
 
 /**
+ * Get the label for a collection. If the collection is a singleton, it returns a localized label
+ * for files. Otherwise, it returns the collection's label or name.
+ * @param {InternalCollection} collection Collection object.
+ * @param {object} [options] Options for label formatting.
+ * @param {boolean} [options.useSingular] Whether to use a singular form of the label.
+ * @returns {string} Human-readable label for the collection.
+ */
+export const getCollectionLabel = (collection, { useSingular = false } = {}) => {
+  const { _type, name, label, label_singular: singularLabel } = collection;
+
+  if (_type === 'singleton') {
+    return get(_)('files');
+  }
+
+  if (useSingular && singularLabel) {
+    return singularLabel;
+  }
+
+  return label || name;
+};
+
+/**
  * Get the index of a collection with the given name.
  * @param {string | undefined} collectionName Collection name.
  * @returns {number} Index.
@@ -147,6 +208,11 @@ export const getCollection = (name) => {
 export const getCollectionIndex = (collectionName) => {
   if (!collectionName) {
     return -1;
+  }
+
+  // Singleton collection is always at the end
+  if (collectionName === '_singletons') {
+    return 9999999;
   }
 
   return get(siteConfig)?.collections.findIndex(({ name }) => name === collectionName) ?? -1;

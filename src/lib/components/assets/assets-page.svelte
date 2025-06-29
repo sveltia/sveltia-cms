@@ -3,7 +3,7 @@
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
   import EditAssetDialog from '$lib/components/assets/details/edit-asset-dialog.svelte';
   import RenameAssetDialog from '$lib/components/assets/details/rename-asset-dialog.svelte';
@@ -36,7 +36,8 @@
   let isIndexPage = $state(false);
 
   const selectedAssetFolderLabel = $derived(
-    $selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : '',
+    // `$appLocale` is a key, because `getFolderLabelByCollection` can return a localized label
+    $appLocale && $selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : '',
   );
 
   /**

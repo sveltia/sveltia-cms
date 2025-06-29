@@ -6,25 +6,24 @@
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
+  import { isValidCollectionFile } from '$lib/services/contents/collection/files';
 
   /**
    * @import { CollectionFile } from '$lib/types/public';
    */
+
+  const files = $derived($selectedCollection?.files?.filter(isValidCollectionFile) ?? []);
 </script>
 
 <ListContainer aria-label={$_('file_list')}>
-  {#if $selectedCollection?.files?.length}
-    <ListingGrid
-      viewType="list"
-      aria-label={$_('files')}
-      aria-rowcount={$selectedCollection.files.length}
-    >
-      <InfiniteScroll items={$selectedCollection.files} itemKey="name">
+  {#if files?.length}
+    <ListingGrid viewType="list" aria-label={$_('files')} aria-rowcount={files.length}>
+      <InfiniteScroll items={files} itemKey="name">
         {#snippet renderItem(/** @type {CollectionFile} */ { name, label, icon })}
           {#await sleep() then}
             <GridRow
               onclick={() => {
-                goto(`/collections/${$selectedCollection.name}/entries/${name}`, {
+                goto(`/collections/${$selectedCollection?.name}/entries/${name}`, {
                   transitionType: 'forwards',
                 });
               }}

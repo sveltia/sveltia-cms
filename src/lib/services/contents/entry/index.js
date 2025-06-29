@@ -34,7 +34,7 @@ export const getAssociatedCollections = (entry) =>
  * @param {Entry} entry Entry.
  * @param {InternalLocaleCode} locale Locale.
  * @param {InternalCollection} collection Collection.
- * @param {InternalCollectionFile} [collectionFile] Collection file. File collection only.
+ * @param {InternalCollectionFile} [collectionFile] Collection file. File/singleton collection only.
  * @returns {string | undefined} URL on the live site.
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {

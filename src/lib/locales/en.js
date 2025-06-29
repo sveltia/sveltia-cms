@@ -7,6 +7,7 @@ export const strings = {
   collections: 'Collections',
   contents: 'Contents',
   entries: 'Entries',
+  files: 'Files',
   assets: 'Assets',
   media: 'Media',
   workflow: 'Workflow',
@@ -156,7 +157,6 @@ export const strings = {
   },
 
   // Library
-  singletons: 'Singletons',
   content_library: 'Content Library',
   asset_library: 'Asset Library',
   asset_location: {
@@ -184,6 +184,7 @@ export const strings = {
     'You’re now viewing the “{folder}” asset folder, which has one asset.',
   viewing_x_asset_folder_no_assets:
     'You’re now viewing the “{folder}” asset folder, which has no assets yet.',
+  singleton_selected_announcement: 'Press Enter to edit the “{file}” file.',
   collection_not_found: 'Collection not found',
   file_not_found: 'File not found.',
   x_of_x_selected: '{selected} of {total} selected',
@@ -363,6 +364,7 @@ export const strings = {
   edit_entry_announcement:
     'You’re now editing the “{entry}” entry in the “{collection}” collection.',
   edit_file_announcement: 'You’re now editing the “{file}” file in the “{collection}” collection.',
+  edit_singleton_announcement: 'You’re now editing the “{file}” file.',
   save_and_publish: 'Save and Publish',
   save_without_publishing: 'Save without Publishing',
   show_editor_options: 'Show Editor Options',

@@ -579,9 +579,10 @@
  * @property {'relation'} widget Widget name.
  * @property {any | any[]} [default] Default value(s), which should match the options. When
  * `multiple` is `false`, it should be a single value that matches the `value_field` option.
- * @property {string} collection Referenced collection name.
- * @property {string} [file] Referenced file identifier for a file collection. Required if the
- * `collection` is a file collection.
+ * @property {string} collection Referenced collection name. Use `_singletons` for the singleton
+ * collection.
+ * @property {string} [file] Referenced file identifier for a file/singleton collection. Required if
+ * the `collection` is defined.
  * @property {FieldKeyPath | string} [value_field] Field name to be stored as the value, or
  * `{{slug}}` (entry slug). It can contain a locale prefix like `{{locale}}/{{slug}}` if i18n is
  * enabled. Default: `{{slug}}`.
@@ -690,8 +691,8 @@
 /**
  * Global, collection-level or collection file-level i18n options.
  * @typedef {object} I18nOptions
- * @property {I18nFileStructure} structure File structure for entry collections. File collections
- * must define the structure using `{{locale}}` in the `file` option.
+ * @property {I18nFileStructure} structure File structure for entry collections. File/singleton
+ * collection must define the structure using `{{locale}}` in the `file` option.
  * @property {LocaleCode[]} locales List of all available locales.
  * @property {LocaleCode} [default_locale] Default locale. Default: first locale in the `locales`
  * option.
@@ -709,15 +710,15 @@
  * https://github.com/sveltia/sveltia-cms#localizing-entry-slugs for details.
  * @property {boolean} [omit_default_locale_from_filename] Whether to exclude the default locale
  * from entry filenames. Default: `false`. This option applies to entry collections with the
- * `multiple_files` i18n structure enabled, as well as to file collection items with the `file` path
- * ending with `.{{locale}}.<extension>`, aiming to support Zola’s multilingual sites:
+ * `multiple_files` i18n structure enabled, as well as to file/singleton collection items with the
+ * `file` path ending with `.{{locale}}.<extension>`, aiming to support Zola’s multilingual sites:
  * https://www.getzola.org/documentation/content/multilingual/.
  * @see https://decapcms.org/docs/i18n/
  * @see https://github.com/decaporg/decap-cms/issues/6932
  */
 
 /**
- * Single file in a file collection.
+ * Single file in a file/singleton collection.
  * @typedef {object} CollectionFile
  * @property {string} name Unique identifier for the file.
  * @property {string} [label] Label to be displayed in the editor UI. Default: `name` option value.
@@ -736,6 +737,9 @@
  * format. This overrides the collection-level `frontmatter_delimiter` option. Default: depends on
  * the front matter type.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
+ * @property {boolean} [divider] A special option to make this file a divider UI in the singleton
+ * file list. Default: `false`. Not supported in a file collection. If `true`, other options will be
+ * ignored, but you still have to provide a unique `name`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.
  * @see https://decapcms.org/docs/collection-file/
@@ -910,7 +914,8 @@
  * format is used for file output. Default: `false`. DEPRECATED in favor of the global YAML format
  * options.
  * @property {boolean} [divider] A special option to make this collection a divider UI in the
- * collection list. Other options will be ignored, but you’ll still need `name`. Default: `false`.
+ * collection list. Default: `false`. If `true`, other options will be ignored, but you still have
+ * to provide a unique `name`.
  * @property {FieldKeyPath | FieldKeyPath[]} [thumbnail] A field key path to be used to find an
  * entry thumbnail displayed on the entry list. A nested field can be specified using dot notation,
  * e.g. `heroImage.src`. A wildcard in the key path is also supported, e.g. `images.*.src`. Multiple
@@ -1070,6 +1075,9 @@
  * @property {boolean} [show_preview_links] Whether to show site preview links. Default: `true`.
  * @property {SlugOptions} [slug] Entry slug options.
  * @property {Collection[]} collections Set of collections.
+ * @property {CollectionFile[]} [singletons] Set of singleton files, such as the site configuration
+ * file or the homepage file. They are not part of any collection and can be accessed directly
+ * through the collection list.
  * @property {I18nOptions} [i18n] Global i18n options.
  * @property {EditorOptions} [editor] Editor view options.
  * @property {OutputOptions} [output] Data output options.

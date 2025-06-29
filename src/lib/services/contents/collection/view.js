@@ -350,7 +350,7 @@ export const sortFields = derived(
   // Include `appLocale` as a dependency because `getSortFieldLabel()` may return a localized label
   [selectedCollection, allEntries, appLocale],
   ([collection, _allEntries], set) => {
-    // Disable sorting for file collections
+    // Disable sorting for file/singleton collection
     if (!collection?.folder) {
       set([]);
 
@@ -405,7 +405,7 @@ export const entryGroups = derived(
     /** @type {Entry[]} */
     let entries = [..._listedEntries];
 
-    // Reset the groups if the current collection is empty or a file collection
+    // Reset the groups if the current collection is empty or a file/singleton collection
     if (!entries.length || !!getCollectionFilesByEntry(collection, entries[0]).length) {
       set([]);
     } else {

@@ -72,7 +72,7 @@ export const getEntryThumbnail = async (collection, entry) => {
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
  * @param {string} args.collectionName Name of a collection that the entry belongs to.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {boolean} [args.relative] Whether to only collect assets stored at a relative path.
  * @returns {Asset[]} Assets.
  */

@@ -19,11 +19,15 @@
   } from '$lib/services/app/navigation';
   import {
     getCollection,
+    getCollectionLabel,
     getFirstCollection,
     selectedCollection,
   } from '$lib/services/contents/collection';
   import { contentUpdatesToast } from '$lib/services/contents/collection/data';
-  import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
+  import {
+    getCollectionFileEntry,
+    getCollectionFileLabel,
+  } from '$lib/services/contents/collection/files';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/draft/editor';
@@ -86,8 +90,8 @@
       return; // Not Found
     }
 
-    const { name: collectionName, label, files } = $selectedCollection;
-    const collectionLabel = label || collectionName;
+    const { name: collectionName, files } = $selectedCollection;
+    const collectionLabel = getCollectionLabel($selectedCollection);
 
     const _fileMap = files
       ? /** @type {FileCollection} */ ($selectedCollection)._fileMap
@@ -111,7 +115,7 @@
     $showContentOverlay = true;
 
     if (_fileMap) {
-      // File collection
+      // File/singleton collection
       if (routeType === 'entries' && subPath) {
         const originalEntry = getCollectionFileEntry(collectionName, subPath);
         const collectionFile = _fileMap[subPath];
@@ -132,10 +136,10 @@
           });
         }
 
-        $announcedPageStatus = $_('edit_file_announcement', {
+        $announcedPageStatus = $_(`edit_${collection._type}_announcement`, {
           values: {
             collection: collectionLabel,
-            file: collectionFile.label || collectionFile.name,
+            file: getCollectionFileLabel(collectionFile),
           },
         });
       }
@@ -193,7 +197,11 @@
     {#if !$isSmallScreen || !isIndexPage}
       <PageContainerMainArea
         aria-label={$_('x_collection', {
-          values: { collection: $selectedCollection?.label || $selectedCollection?.name },
+          values: {
+            collection:
+              // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
+              $appLocale && $selectedCollection ? getCollectionLabel($selectedCollection) : '',
+          },
         })}
         aria-description={$selectedCollection?.description}
       >

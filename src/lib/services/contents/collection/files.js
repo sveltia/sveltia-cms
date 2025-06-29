@@ -7,31 +7,49 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
 /**
  * @import {
  * Entry,
- * FileCollection,
  * InternalCollection,
  * InternalCollectionFile,
+ * InternalSiteConfig,
  * } from '$lib/types/private';
+ * @import { CollectionFile } from '$lib/types/public';
  */
 
 /**
- * Get a file collection file by its name.
+ * Check if the given collection file is valid. A valid file must have a string `file` property, not
+ * be a `divider`, and have `fields` defined as an array.
+ * @param {CollectionFile} file File definition.
+ * @returns {boolean} Whether the file is valid.
+ */
+export const isValidCollectionFile = (file) =>
+  typeof file.file === 'string' && !file.divider && Array.isArray(file.fields);
+
+/**
+ * Get a file in a file/singleton collection by its name.
  * @param {InternalCollection | string} collection Collection or collection name.
  * @param {string} fileName File name.
- * @returns {InternalCollectionFile | undefined} File collection file.
+ * @returns {InternalCollectionFile | undefined} Collection file.
  */
 export const getCollectionFile = (collection, fileName) => {
   /** @type {InternalCollection | undefined} */
   const _collection = typeof collection === 'string' ? getCollection(collection) : collection;
 
-  if (!_collection || _collection._type !== 'file') {
+  if (!_collection || !('_fileMap' in _collection)) {
     return undefined;
   }
 
-  return /** @type {FileCollection} */ (_collection)?._fileMap[fileName];
+  return _collection._fileMap[fileName];
 };
 
 /**
- * Get a file collection’s file configurations that matches the given entry. One file can
+ * Get a human-readable label for a collection file. If the file has a `label` property, it is used;
+ * otherwise, the `name` property is used.
+ * @param {InternalCollectionFile} file Collection file.
+ * @returns {string} File label.
+ */
+export const getCollectionFileLabel = (file) => file.label || file.name;
+
+/**
+ * Get a file/singleton collection’s file configurations that matches the given entry. One file can
  * theoretically appear in multiple collections files depending on the configuration, so that the
  * result is an array.
  * @param {InternalCollection} collection Collection.
@@ -39,22 +57,18 @@ export const getCollectionFile = (collection, fileName) => {
  * @returns {InternalCollectionFile[]} Collection files.
  */
 export const getCollectionFilesByEntry = (collection, entry) => {
-  const _fileMap = collection.files
-    ? /** @type {FileCollection} */ (collection)._fileMap
-    : undefined;
-
-  if (!_fileMap) {
+  if (!('_fileMap' in collection)) {
     // It’s an entry collection
     return [];
   }
 
-  return Object.values(_fileMap).filter(
+  return Object.values(collection._fileMap).filter(
     ({ _file, _i18n }) => _file.fullPath === entry.locales[_i18n.defaultLocale]?.path,
   );
 };
 
 /**
- * Get a file collection entry that matches the given collection name and file name.
+ * Get a file/singleton collection entry that matches the given collection name and file name.
  * @param {string} collectionName Collection name.
  * @param {string} fileName Collection file name.
  * @returns {Entry | undefined} File.
@@ -77,9 +91,15 @@ export const getCollectionFileEntry = (collectionName, fileName) =>
  */
 export const getCollectionFileIndex = (collectionName, fileName) => {
   if (collectionName && fileName) {
+    const { collections, singletons } = /** @type {InternalSiteConfig} */ (get(siteConfig));
+
+    if (collectionName === '_singletons') {
+      return singletons?.findIndex(({ name }) => name === fileName) ?? -1;
+    }
+
     return (
-      get(siteConfig)
-        ?.collections.find(({ name }) => name === collectionName)
+      collections
+        .find(({ name }) => name === collectionName)
         ?.files?.findIndex(({ name }) => name === fileName) ?? -1
     );
   }

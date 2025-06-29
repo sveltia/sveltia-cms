@@ -45,7 +45,9 @@ export const getI18nConfig = (collection, file) => {
   if (isObject(_siteConfig.i18n)) {
     config = /** @type {I18nOptions} */ (_siteConfig.i18n);
 
-    if (collection.i18n) {
+    // Check if the collection has its own i18n configuration. The singleton collection doesn’t have
+    // its own i18n configuration, so it will inherit the global one if defined.
+    if (collection.i18n || collection.name === '_singletons') {
       if (isObject(collection.i18n)) {
         Object.assign(config, collection.i18n);
       }

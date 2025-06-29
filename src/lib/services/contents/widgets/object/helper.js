@@ -79,7 +79,7 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, locale }) => {
  * Format the summary template of an Object field.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {FlattenedEntryContent} args.valueMap Entry content.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special

@@ -4,7 +4,11 @@
   import { locale as appLocale } from 'svelte-i18n';
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
+  import { getCollectionLabel } from '$lib/services/contents/collection';
+  import {
+    getCollectionFileLabel,
+    getCollectionFilesByEntry,
+  } from '$lib/services/contents/collection/files';
   import { getAssociatedCollections } from '$lib/services/contents/entry';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -22,7 +26,8 @@
   /**
    * @typedef {object} RowArgs
    * @property {InternalCollection} collection Collection.
-   * @property {InternalCollectionFile} [collectionFile] Collection file. File collection only.
+   * @property {InternalCollectionFile} [collectionFile] Collection file. File/singleton collection
+   * only.
    */
 
   /**
@@ -61,13 +66,15 @@
         {/if}
       </GridCell>
       <GridCell class="collection">
-        {collection.label || collection.name}
+        {#key $appLocale}
+          {getCollectionLabel(collection)}
+        {/key}
       </GridCell>
       <GridCell class="title">
         <div role="none" class="label">
           <TruncatedText lines={2}>
             {#if collectionFile}
-              {collectionFile.label || collectionFile.name}
+              {getCollectionFileLabel(collectionFile)}
             {:else}
               {#key $appLocale}
                 {@html getEntrySummary(collection, entry, {

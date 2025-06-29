@@ -176,8 +176,8 @@ export const moveAssets = async (action, movingAssets) => {
 
               /**
                * Add saving entry data to the stack.
-               * @param {InternalCollectionFile} [collectionFile] Collection file. File collection
-               * only.
+               * @param {InternalCollectionFile} [collectionFile] Collection file. File/singleton
+               * collection only.
                */
               const addSavingEntryData = async (collectionFile) => {
                 const { fields: regularFields = [] } = collectionFile ?? collection;

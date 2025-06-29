@@ -132,7 +132,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
   // Skip Hugo’s special `_index.md` file that shouldn’t appear in a collection. Localized index
   // files like `_index.en.md` are also excluded by default. Exceptions:
-  // 1. The collection is a file collection
+  // 1. The collection is a file/singleton collection
   // 2. The collection is an entry collection and index file inclusion is enabled
   // 3. The collection is an entry collection and the `path` option value ends with `_index` and the
   // extension is `md`

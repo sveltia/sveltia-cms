@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
+import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user';
 
 /**
@@ -44,7 +45,7 @@ export const createCommitMessage = (
   const { login = '', name = '' } = /** @type {User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
-  const collectionLabel = collection?.label_singular || collection?.label || collection?.name || '';
+  const collectionLabel = collection ? getCollectionLabel(collection, { useSingular: true }) : '';
   // @ts-ignore
   let message = customCommitMessages[commitType] || DEFAULT_COMMIT_MESSAGES[commitType] || '';
 

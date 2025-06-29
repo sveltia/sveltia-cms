@@ -303,7 +303,7 @@ export const copyProperty = ({
  * the built-in method uses insertion order for string key ordering.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {Field[]} args.fields Field list of a collection or a file.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.

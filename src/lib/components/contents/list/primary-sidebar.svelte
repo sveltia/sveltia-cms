@@ -2,6 +2,7 @@
   import { Divider, Icon, Listbox, Option, OptionGroup } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
+  import SingletonOption from '$lib/components/contents/list/singleton-option.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
@@ -12,6 +13,7 @@
 
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
   const collections = $derived($siteConfig?.collections.filter(({ hide }) => !hide) ?? []);
+  const singletons = $derived($siteConfig?.singletons ?? []);
 </script>
 
 <div role="none" class="primary-sidebar">
@@ -39,7 +41,7 @@
               }}
             >
               {#snippet startIcon()}
-                <Icon name={icon || 'edit_note'} />
+                <Icon name={icon || 'bookmark_manager'} />
               {/snippet}
               {#snippet endIcon()}
                 {#key $allEntries}
@@ -60,5 +62,15 @@
         {/await}
       {/each}
     </OptionGroup>
+    {#if singletons.length}
+      <!-- Use the user-friendly “Files” label instead of “Singletons” -->
+      <OptionGroup label={$_('files')}>
+        {#each singletons as file (file.name)}
+          {#await sleep() then}
+            <SingletonOption {file} />
+          {/await}
+        {/each}
+      </OptionGroup>
+    {/if}
   </Listbox>
 </div>

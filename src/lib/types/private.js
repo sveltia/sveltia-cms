@@ -266,7 +266,7 @@
  * collection only.
  * @property {RegExp} [fullPathRegEx] Regular expression that matches full entry paths, taking the
  * i18n structure into account. Entry collection only.
- * @property {string} [fullPath] File path of the default locale. File collection only.
+ * @property {string} [fullPath] File path of the default locale. File/singleton collection only.
  * @property {[string, string]} [fmDelimiters] Front matter delimiters.
  * @property {boolean} [yamlQuote] YAML quote configuration. DEPRECATED in favor of the global YAML
  * format options.
@@ -288,9 +288,9 @@
  * Collection-level or file-level entry folder information.
  * @typedef {object} EntryFolderInfo
  * @property {string} collectionName Collection name.
- * @property {string} [fileName] Collection file name. File collection only.
+ * @property {string} [fileName] Collection file name. File/singleton collection only.
  * @property {Record<InternalLocaleCode, string>} [filePathMap] File path map. The key is a locale,
- * and the value is the corresponding file path. File collection only.
+ * and the value is the corresponding file path. File/singleton collection only.
  * @property {string} [folderPath] Folder path. Entry collection only.
  * @property {Record<InternalLocaleCode, string>} [folderPathMap] Folder path map. Entry collection
  * only. Paths in `folderPathMap` are prefixed with a locale if the `multiple_folders_i18n_root`
@@ -302,7 +302,7 @@
  * @typedef {object} AssetFolderInfo
  * @property {string | undefined} collectionName Collection name or `undefined` for the All Assets
  * and Global Assets folders.
- * @property {string} [fileName] Collection file name. File collection only.
+ * @property {string} [fileName] Collection file name. File/singleton collection only.
  * @property {FieldKeyPath} [keyPath] Field key path.
  * @property {string | undefined} internalPath Folder path on the repository/filesystem, relative to
  * the project root directory. It can be a partial path if the collection’s `media_folder` property
@@ -358,8 +358,10 @@
  */
 
 /**
- * Collection type. Note: Sveltia CMS calls a folder collection an entry collection.
- * @typedef {'entry' | 'file'} CollectionType
+ * Collection type. A folder collection in Netlify/Decap CMS is called an entry collection in
+ * Sveltia CMS. We also support a special singleton collection type that is used for single files
+ * not associated with any collection, such as a site configuration file.
+ * @typedef {'entry' | 'file' | 'singleton'} CollectionType
  */
 
 /**
@@ -384,14 +386,14 @@
  */
 
 /**
- * Extra properties for a file collection.
+ * Extra properties for a file/singleton collection.
  * @typedef {object} FileCollectionExtraProps
  * @property {Record<string, InternalCollectionFile>} _fileMap File map with normalized collection
  * file definitions. The key is a file identifier.
  */
 
 /**
- * A file collection definition.
+ * A file/singleton collection definition.
  * @typedef {Collection & CollectionExtraProps & FileCollectionExtraProps} FileCollection
  */
 
@@ -437,8 +439,8 @@
  * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
  * collections could have entries with the same slug.
  * @property {string} slug The slug of the default locale.
- * @property {string} subPath File name for a file collection, or file path without an extension for
- * an entry collection. Same as `slug` in most cases.
+ * @property {string} subPath File name for a file/singleton collection, or file path without an
+ * extension for an entry collection. Same as `slug` in most cases.
  * @property {LocalizedEntryMap} locales Localized entry map.
  */
 
@@ -523,10 +525,11 @@
  * @property {boolean} isIndexFile Whether the corresponding entry is the collection’s special index
  * file used specifically in Hugo.
  * @property {boolean} canPreview Whether the entry draft can show the preview pane.
- * @property {string} collectionName Collection name.
- * @property {InternalCollection} collection Collection details.
- * @property {string} [fileName] Collection file name. File collection only.
- * @property {InternalCollectionFile} [collectionFile] File details. File collection only.
+ * @property {string} collectionName Collection name, or `_singletons` for a singleton file.
+ * @property {InternalCollection} collection Collection details, or pseudo-collection for a
+ * singleton file.
+ * @property {string} [fileName] Collection file name. File/singleton collection only.
+ * @property {InternalCollectionFile} [collectionFile] File details. File/singleton collection only.
  * @property {Field[]} fields Field definition for the collection or collection file. If index file
  * inclusion is enabled and the draft is the index file, it will be the index file’s fields.
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.

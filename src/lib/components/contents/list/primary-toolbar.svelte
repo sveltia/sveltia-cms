@@ -9,12 +9,12 @@
   } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
-  import { _ } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
-  import { selectedCollection } from '$lib/services/contents/collection';
+  import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
   import { canCreateEntry, selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { isSmallScreen } from '$lib/services/user/env';
@@ -33,14 +33,16 @@
     });
 
   const name = $derived($selectedCollection?.name ?? '');
-  const label = $derived($selectedCollection?.label);
   const description = $derived($selectedCollection?.description);
   const isEntryCollection = $derived($selectedCollection?._type === 'entry');
   const canCreate = $derived($selectedCollection?.create ?? false);
   const canDelete = $derived($selectedCollection?.delete ?? true);
   const limit = $derived($selectedCollection?.limit ?? Infinity);
   const createDisabled = $derived(!canCreateEntry($selectedCollection));
-  const collectionLabel = $derived(label || name || '');
+  const collectionLabel = $derived(
+    // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
+    $appLocale && $selectedCollection ? getCollectionLabel($selectedCollection) : name,
+  );
 </script>
 
 {#if $selectedCollection}

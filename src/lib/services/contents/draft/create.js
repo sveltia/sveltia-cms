@@ -135,7 +135,8 @@ export const createProxy = ({
  * Create an entry draft.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection that the entry belongs to.
- * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
+ * only.
  * @param {any} [args.originalEntry] Entry to be edited, or a partial {@link Entry} object.
  * @param {Record<string, string>} [args.dynamicValues] Dynamic default values for a new entry
  * passed through URL parameters.

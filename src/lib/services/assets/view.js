@@ -11,7 +11,8 @@ import {
   uploadingAssets,
 } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
-import { getCollection } from '$lib/services/contents/collection';
+import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
+import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
 import { prefs } from '$lib/services/user/prefs';
 import { getRegex } from '$lib/services/utils/misc';
 
@@ -55,14 +56,14 @@ export const getFolderLabelByCollection = ({ collectionName, fileName, internalP
   }
 
   const collection = getCollection(collectionName);
-  const collectionLabel = collection?.label || collection?.name || collectionName;
+  const collectionLabel = collection ? getCollectionLabel(collection) : collectionName;
 
   if (!fileName) {
     return collectionLabel;
   }
 
-  const file = collection?.files?.find(({ name }) => name === fileName);
-  const fileLabel = file?.label || file?.name || fileName;
+  const file = collection ? getCollectionFile(collection, fileName) : undefined;
+  const fileLabel = file ? getCollectionFileLabel(file) : fileName;
 
   return `${collectionLabel} › ${fileLabel}`;
 };

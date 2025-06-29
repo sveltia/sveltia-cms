@@ -1,5 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, stripSlashes } from '@sveltia/utils/string';
+import { isValidCollectionFile } from '$lib/services/contents/collection/files';
 
 /**
  * @import { AssetFolderInfo, InternalSiteConfig } from '$lib/types/private';
@@ -38,7 +39,7 @@ const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =>
  * Get a normalized asset folder information given the arguments.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {string} args.mediaFolder Raw `media_folder` option of the collection or collection file.
  * @param {string | undefined} args.publicFolder Raw `public_folder` option of the collection or
  * collection file.
@@ -101,14 +102,18 @@ const addFolderIfNeeded = (args) => {
 };
 
 /**
- * Iterate through files in a file collection and add their folders.
+ * Iterate through files in a file/singleton collection and add their folders.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {CollectionFile[]} args.files Files in a file collection.
+ * @param {CollectionFile[]} args.files Collection files.
  * @param {GlobalFolders} args.globalFolders Global folders information.
  */
 const iterateFiles = ({ collectionName, files, globalFolders }) => {
   files.forEach((file) => {
+    if (!isValidCollectionFile(file)) {
+      return;
+    }
+
     const {
       name: fileName,
       file: filePath,
@@ -137,6 +142,7 @@ export const getAllAssetFolders = (config) => {
     media_folder: _globalMediaFolder,
     public_folder: _globalPublicFolder,
     collections,
+    singletons,
   } = config;
 
   // Normalize the media folder: an empty string, `/` and `.` are all considered as the root folder
@@ -203,6 +209,11 @@ export const getAllAssetFolders = (config) => {
       iterateFiles({ collectionName, files: collectionFiles, globalFolders });
     }
   });
+
+  if (singletons?.length) {
+    // Singleton collection is always at the end
+    iterateFiles({ collectionName: '_singletons', files: singletons, globalFolders });
+  }
 
   assetFolders.sort((a, b) => compare(a.internalPath ?? '', b.internalPath ?? ''));
 

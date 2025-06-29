@@ -7,7 +7,11 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { defaultAssetDetails, getAssetDetails, isMediaKind } from '$lib/services/assets';
-  import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
+  import { getCollectionLabel } from '$lib/services/contents/collection';
+  import {
+    getCollectionFileLabel,
+    getCollectionFilesByEntry,
+  } from '$lib/services/contents/collection/files';
   import { getAssociatedCollections } from '$lib/services/contents/entry';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { DATE_TIME_FORMAT_OPTIONS } from '$lib/services/utils/date';
@@ -142,22 +146,22 @@
     {#each usedEntries as entry (entry.sha)}
       {#await sleep() then}
         {#each getAssociatedCollections(entry) as collection (collection.name)}
-          {@const collectionLabel = collection.label || collection.name}
-          {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
-            {@render usedEntryLink({
-              link: `/collections/${collection.name}/entries/${file.name}`,
-              collectionLabel,
-              entryLabel: file.label || file.name,
-            })}
-          {:else}
-            {#key $appLocale}
+          {#key $appLocale}
+            {@const collectionLabel = getCollectionLabel(collection)}
+            {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
+              {@render usedEntryLink({
+                link: `/collections/${collection.name}/entries/${file.name}`,
+                collectionLabel,
+                entryLabel: getCollectionFileLabel(file),
+              })}
+            {:else}
               {@render usedEntryLink({
                 link: `/collections/${collection.name}/entries/${entry.subPath}`,
                 collectionLabel,
                 entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
               })}
-            {/key}
-          {/each}
+            {/each}
+          {/key}
         {/each}
       {/await}
     {:else}

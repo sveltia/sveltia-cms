@@ -7,6 +7,7 @@ export const strings = {
   collections: 'コレクション',
   contents: 'コンテンツ',
   entries: 'エントリー',
+  files: 'ファイル',
   assets: 'アセット',
   media: 'メディア',
   workflow: 'ワークフロー',
@@ -157,7 +158,6 @@ export const strings = {
   },
 
   // Library
-  singletons: 'シングルトン',
   content_library: 'コンテンツライブラリ',
   asset_library: 'アセットライブラリ',
   asset_location: {
@@ -185,6 +185,7 @@ export const strings = {
     '「{folder}」アセットフォルダーを表示しています。ここにはひとつのアセットがあります。',
   viewing_x_asset_folder_no_assets:
     '「{folder}」アセットフォルダーを表示しています。ここにはまだアセットがありません。',
+  singleton_selected_announcement: '「{file}」ファイルを編集するには Enter キーを押してください。',
   collection_not_found: 'コレクションが見つかりませんでした',
   file_not_found: 'ファイルが見つかりませんでした',
   x_of_x_selected: '{total} 個のうち {selected} 個を選択中',
@@ -367,6 +368,7 @@ export const strings = {
   edit_entry_title: '{collection} › {entry}',
   edit_entry_announcement: '「{collection}」コレクションの「{entry}」エントリーを編集しています。',
   edit_file_announcement: '「{collection}」コレクションの「{file}」ファイルを編集しています。',
+  edit_singleton_announcement: '「{file}」ファイルを編集しています。',
   save_and_publish: '保存して公開',
   save_without_publishing: '公開せずに保存',
   show_editor_options: 'エディターオプションを表示',

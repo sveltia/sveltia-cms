@@ -36,7 +36,7 @@ export const fieldConfigCacheMap = new Map();
  * Get a field’s config object that matches the given field name (key path).
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values. This is
  * required when working with list/object widget variable types.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
@@ -63,8 +63,8 @@ export const getField = ({
     collection && fileName ? getCollectionFile(collection, fileName) : undefined;
 
   // For entry collections, `fileName` is ignored and `collectionFile` will be `undefined`
-  // Only fail if we explicitly need a file collection but can't find the file
-  if (!collection || (fileName && collection?._type === 'file' && !collectionFile)) {
+  // Only fail if we explicitly need a file/singleton collection but can't find the file
+  if (!collection || (fileName && collection?._type !== 'entry' && !collectionFile)) {
     fieldConfigCacheMap.set(cacheKey, undefined);
 
     return undefined;
@@ -158,7 +158,7 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
  * Get a field’s display value that matches the given field name (key path).
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.

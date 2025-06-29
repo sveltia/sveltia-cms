@@ -124,7 +124,7 @@ export const syncExpanderStates = (stateMap) => {
  * nested lists and objects.
  * @param {object} args Partial arguments for {@link getField}.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `testimonials.0.authors.2.foo`.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
@@ -176,7 +176,7 @@ export const getExpanderKeys = ({
  * Expand any invalid fields, including the parent list/object(s).
  * @param {object} args Partial arguments for {@link getField}.
  * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File collection only.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {LocaleContentMap} args.currentValues Field values.
  */
 export const expandInvalidFields = ({ collectionName, fileName, currentValues }) => {
