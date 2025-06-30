@@ -45,12 +45,11 @@ export const sendRequest = async (
     throw new Error('Failed to send the request', { cause: ex });
   }
 
-  const { ok, status } = response;
-
-  if (ok && responseType === 'raw') {
+  if (responseType === 'raw') {
     return response;
   }
 
+  const { ok, status } = response;
   /** @type {any} */
   let result;
 
