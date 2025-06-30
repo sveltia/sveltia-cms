@@ -843,6 +843,14 @@
  */
 
 /**
+ * Entry slug variants.
+ * @typedef {object} EntrySlugVariants
+ * @property {string} defaultLocaleSlug Default locale’s entry slug.
+ * @property {LocaleSlugMap | undefined} localizedSlugs Localized slug map.
+ * @property {string | undefined} canonicalSlug Canonical slug.
+ */
+
+/**
  * Supported image fit option.
  * @typedef {'scale-down' | 'contain'} ImageFitOption
  */

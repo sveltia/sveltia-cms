@@ -23,6 +23,7 @@ import {
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
+import { getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
@@ -41,11 +42,11 @@ import { createPath, encodeFilePath, formatFileName, resolvePath } from '$lib/se
  * Entry,
  * EntryCollection,
  * EntryDraft,
+ * EntrySlugVariants,
  * FileChange,
  * FillSlugTemplateOptions,
  * FlattenedEntryContent,
  * InternalLocaleCode,
- * LocaleSlugMap,
  * LocalizedEntryMap,
  * RawEntryContent,
  * RepositoryFileMetadata,
@@ -60,14 +61,6 @@ import { createPath, encodeFilePath, formatFileName, resolvePath } from '$lib/se
  * RelationField,
  * SelectField,
  * } from '$lib/types/public';
- */
-
-/**
- * Entry slug variants.
- * @typedef {object} EntrySlugVariants
- * @property {string} defaultLocaleSlug Default locale’s entry slug.
- * @property {LocaleSlugMap | undefined} localizedSlugs Localized slug map.
- * @property {string | undefined} canonicalSlug Canonical slug.
  */
 
 /**
@@ -416,170 +409,6 @@ const serializeContent = ({ draft, locale, valueMap }) => {
   }
 
   return content;
-};
-
-/**
- * Get the localized slug map. This only applies when the i18n structure is multiple files or
- * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
- * @param {object} args Arguments.
- * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
- * @returns {LocaleSlugMap | undefined} Localized slug map.
- */
-const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
-  const { collection, collectionFile, currentLocales, currentSlugs, currentValues, isIndexFile } =
-    draft;
-
-  const {
-    identifier_field: identifierField = 'title',
-    slug: slugTemplate = `{{${identifierField}}}`,
-  } = collection;
-
-  const {
-    _i18n: { defaultLocale, structure },
-  } = collectionFile ?? collection;
-
-  /**
-   * List of key paths that the value will be localized.
-   */
-  const localizingKeyPaths = [...slugTemplate.matchAll(/{{(?:fields\.)?(.+?)( \| localize)?}}/g)]
-    .filter(([, , localize]) => !!localize)
-    .map(([, keyPath]) => keyPath);
-
-  if (structure === 'single_file' || !localizingKeyPaths.length) {
-    return undefined;
-  }
-
-  const _collection = /** @type {EntryCollection} */ (collection);
-
-  return Object.fromEntries(
-    Object.entries(currentLocales).map(([locale]) => {
-      const slug =
-        locale === defaultLocale
-          ? defaultLocaleSlug
-          : (currentSlugs?.[locale] ??
-            currentSlugs?._ ??
-            fillSlugTemplate(slugTemplate, {
-              collection: _collection,
-              locale,
-              content: {
-                // Merge the default locale content and localized content
-                ...currentValues[defaultLocale],
-                ...Object.fromEntries(
-                  localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
-                ),
-              },
-              isIndexFile,
-            }));
-
-      return [locale, slug];
-    }),
-  );
-};
-
-/**
- * Get the canonical slug to be added to the content of each file when the slug is localized. It
- * helps Sveltia CMS and some frameworks to link localized files. The default property name is
- * `translationKey` used in Hugo’s multilingual support, and the default value is the default
- * locale’s slug.
- * @param {object} args Arguments.
- * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
- * @param {LocaleSlugMap | undefined} args.localizedSlugs Localized slug map.
- * @param {FillSlugTemplateOptions} args.fillSlugOptions Arguments for {@link fillSlugTemplate}.
- * @returns {string | undefined} Canonical slug.
- * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
- * @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
- */
-const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOptions }) => {
-  if (!localizedSlugs) {
-    return undefined;
-  }
-
-  const { collection, collectionFile } = draft;
-
-  const {
-    _i18n: {
-      canonicalSlug: { value: canonicalSlugTemplate },
-    },
-  } = collectionFile ?? collection;
-
-  if (canonicalSlugTemplate === '{{slug}}') {
-    return defaultLocaleSlug;
-  }
-
-  return fillSlugTemplate(canonicalSlugTemplate, {
-    ...fillSlugOptions,
-    currentSlug: defaultLocaleSlug,
-  });
-};
-
-/**
- * Get base options for {@link fillSlugTemplate}.
- * @param {object} args Arguments.
- * @param {EntryDraft} args.draft Entry draft.
- * @returns {FillSlugTemplateOptions} Options.
- */
-const getFillSlugOptions = ({ draft }) => {
-  const { collection, collectionFile, currentValues, isIndexFile } = draft;
-
-  const {
-    _i18n: { defaultLocale },
-  } = collectionFile ?? collection;
-
-  return {
-    // eslint-disable-next-line object-shorthand
-    collection: /** @type {EntryCollection} */ (collection),
-    content: currentValues[defaultLocale],
-    isIndexFile,
-  };
-};
-
-/**
- * Determine entry slugs.
- * @param {object} args Arguments.
- * @param {EntryDraft} args.draft Entry draft.
- * @returns {EntrySlugVariants} Slugs.
- */
-export const getSlugs = ({ draft }) => {
-  const { collection, collectionFile, fileName, currentSlugs, isIndexFile } = draft;
-
-  const {
-    identifier_field: identifierField = 'title',
-    slug: slugTemplate = `{{${identifierField}}}`,
-    index_file: indexFile,
-  } = collection;
-
-  if (isIndexFile) {
-    return {
-      defaultLocaleSlug: indexFile?.name ?? '_index',
-      localizedSlugs: undefined,
-      canonicalSlug: undefined,
-    };
-  }
-
-  const {
-    _i18n: { defaultLocale },
-  } = collectionFile ?? collection;
-
-  const fillSlugOptions = getFillSlugOptions({ draft });
-
-  const defaultLocaleSlug =
-    fileName ??
-    currentSlugs?.[defaultLocale] ??
-    currentSlugs?._ ??
-    fillSlugTemplate(slugTemplate, fillSlugOptions);
-
-  const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug });
-
-  const canonicalSlug = getCanonicalSlug({
-    draft,
-    defaultLocaleSlug,
-    localizedSlugs,
-    fillSlugOptions,
-  });
-
-  return { defaultLocaleSlug, localizedSlugs, canonicalSlug };
 };
 
 /**
@@ -973,6 +802,38 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
 };
 
 /**
+ * Update the application stores with the provided saving assets, entry, and deployment settings.
+ * @param {object} args Arguments.
+ * @param {Entry} args.savingEntry The entry object being saved.
+ * @param {Asset[]} args.savingAssets An array of asset objects being saved.
+ * @param {boolean | undefined} args.skipCI Whether to disable automatic deployments for the change.
+ */
+const updateStores = ({ savingEntry, savingAssets, skipCI }) => {
+  allEntries.update((entries) => [...entries.filter((e) => e.id !== savingEntry.id), savingEntry]);
+
+  const savingAssetsPaths = savingAssets.map((a) => a.path);
+
+  allAssets.update((assets) => [
+    ...assets.filter((a) => !savingAssetsPaths.includes(a.path)),
+    ...savingAssets,
+  ]);
+
+  const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
+
+  const published =
+    !!get(backend)?.isGit && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
+
+  contentUpdatesToast.set({
+    ...UPDATE_TOAST_DEFAULT_STATE,
+    saved: true,
+    published,
+    count: 1,
+  });
+
+  isLastCommitPublished.set(published);
+};
+
+/**
  * Save the entry draft.
  * @param {object} [options] Options.
  * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
@@ -1006,29 +867,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     throw new Error('saving_failed', { cause: ex.cause ?? ex });
   }
 
-  const savingAssetsPaths = savingAssets.map((a) => a.path);
-
-  allEntries.update((entries) => [...entries.filter((e) => e.id !== savingEntry.id), savingEntry]);
-
-  allAssets.update((assets) => [
-    ...assets.filter((a) => !savingAssetsPaths.includes(a.path)),
-    ...savingAssets,
-  ]);
-
-  const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
-
-  const published =
-    !!get(backend)?.isGit && (skipCI === undefined ? autoDeployEnabled === true : skipCI === false);
-
-  contentUpdatesToast.set({
-    ...UPDATE_TOAST_DEFAULT_STATE,
-    saved: true,
-    published,
-    count: 1,
-  });
-
-  isLastCommitPublished.set(published);
-
+  updateStores({ savingEntry, savingAssets, skipCI });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 
   return savingEntry;

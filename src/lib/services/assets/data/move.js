@@ -18,7 +18,8 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
-import { createSavingEntryData, getSlugs } from '$lib/services/contents/draft/save';
+import { createSavingEntryData } from '$lib/services/contents/draft/save';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 /**
