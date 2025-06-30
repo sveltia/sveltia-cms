@@ -62,7 +62,16 @@ export const signInAutomatically = async () => {
     (await LocalStorage.get('decap-cms-user')) ||
     (await LocalStorage.get('netlify-cms-user'));
 
-  let _user = isObject(userCache) && !!userCache.backendName ? userCache : undefined;
+  const hasUserCache = isObject(userCache);
+
+  // If the user has been signed out, the user cache is an empty object. In that case, we should not
+  // proceed with the sign-in process even if the Decap CMS or Netlify CMS user cache is found. This
+  // is to prevent the user from being signed in again automatically immediately after signing out.
+  if (hasUserCache && !Object.keys(userCache).length) {
+    return;
+  }
+
+  let _user = hasUserCache && userCache.backendName ? userCache : undefined;
 
   // Netlify/Decap CMS uses `proxy` as the backend name when running the local proxy server and
   // leaves it in local storage. Sveltia CMS uses `local` instead.
@@ -191,7 +200,11 @@ export const signInManually = async (_backendName) => {
  */
 export const signOut = async () => {
   await get(backend)?.signOut();
-  await LocalStorage.delete('sveltia-cms.user');
+
+  // Leave an empty user object in the local storage to prevent the user from being signed in
+  // again automatically in `signInAutomatically`.
+  await LocalStorage.set('sveltia-cms.user', {});
+
   backendName.set(undefined);
   user.set(undefined);
   unauthenticated.set(true);
