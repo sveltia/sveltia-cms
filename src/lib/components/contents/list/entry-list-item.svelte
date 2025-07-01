@@ -4,7 +4,10 @@
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
-  import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+  import {
+    getIndexFileIcon,
+    isCollectionIndexFile,
+  } from '$lib/services/contents/collection/index-file';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -90,7 +93,7 @@
           {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
         {/key}
         {#if isCollectionIndexFile(collection, entry)}
-          <Icon name="home" class="home" />
+          <Icon name={getIndexFileIcon(collection)} class="home" />
         {/if}
       </TruncatedText>
     </div>

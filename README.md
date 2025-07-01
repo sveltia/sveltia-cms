@@ -887,10 +887,12 @@ collections:
     fields: # Fields for regular entries
       ...
     index_file:
-      name: _index # File name, required
+      name: _index # File name without a locale or extension. Optional. Default: _index
+      label: Index File # Human-readable file label. Optional. Default: Index File
+      icon: home # Material Symbols icon name. Optional. Default: home
       fields: # Fields for the index file. If omitted, regular entry fields are used
         ...
-      editor:
+      editor: # Optional
         preview: false # Hide the preview pane if needed
 ```
 

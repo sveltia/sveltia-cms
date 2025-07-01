@@ -1,11 +1,14 @@
 <script>
   import { Button, Icon, Menu, MenuItem, SplitButton } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
+  import { _, locale as appLocale } from 'svelte-i18n';
   import { goto } from '$lib/services/app/navigation';
   import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { canCreateEntry } from '$lib/services/contents/collection/entries';
-  import { canCreateIndexFile } from '$lib/services/contents/collection/index-file';
+  import {
+    canCreateIndexFile,
+    getIndexFileLabel,
+  } from '$lib/services/contents/collection/index-file';
 
   /**
    * @typedef {object} Props
@@ -27,6 +30,10 @@
   const hasOptions = $derived(
     // Use `$allEntries` as a trigger to update the state when a new entry is created
     $allEntries && $selectedCollection ? canCreateIndexFile($selectedCollection) : false,
+  );
+  const indexFileLabel = $derived(
+    // `$appLocale` is a key, because `getIndexFileLabel` can return a localized label
+    $appLocale && $selectedCollection ? getIndexFileLabel($selectedCollection) : '',
   );
   const ButtonComponent = $derived(hasOptions ? SplitButton : Button);
 
@@ -55,7 +62,7 @@
     {#if hasOptions}
       <Menu>
         <MenuItem label={$_('entry')} onclick={() => openEditor()} />
-        <MenuItem label={$_('index_file')} onclick={() => openEditor(true)} />
+        <MenuItem label={indexFileLabel} onclick={() => openEditor(true)} />
       </Menu>
     {/if}
   {/snippet}

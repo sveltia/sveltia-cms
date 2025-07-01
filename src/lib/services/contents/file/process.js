@@ -4,6 +4,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { getIndexFileName } from '$lib/services/contents/collection/index-file';
 import { parseEntryFile } from '$lib/services/contents/file/parse';
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
 
@@ -140,7 +141,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
     isIndexFile(path) &&
     !(
       !!fileName ||
-      collection.index_file?.name === '_index' ||
+      getIndexFileName(collection) === '_index' ||
       (subPathTemplate?.split('/').pop() === '_index' && extension === 'md')
     )
   ) {

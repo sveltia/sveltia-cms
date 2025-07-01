@@ -20,6 +20,7 @@ import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
+import { getIndexFileName } from '$lib/services/contents/collection/index-file';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { expandInvalidFields } from '$lib/services/contents/draft/editor';
@@ -119,7 +120,6 @@ const createEntryPath = ({ draft, locale, slug }) => {
 
   const {
     _file: { basePath, subPath, extension },
-    index_file: indexFile,
   } = entryCollection;
 
   /**
@@ -127,7 +127,7 @@ const createEntryPath = ({ draft, locale, slug }) => {
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    */
   const path = isIndexFile
-    ? /** @type {string} */ (indexFile?.name)
+    ? /** @type {string} */ (getIndexFileName(entryCollection))
     : subPath
       ? fillSlugTemplate(subPath, {
           collection: entryCollection,

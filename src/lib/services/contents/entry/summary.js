@@ -3,13 +3,14 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 import {
   applyTransformations,
   DATE_TRANSFORMATION_REGEX,
 } from '$lib/services/common/transformations';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import {
+  getIndexFileLabel,
+  isCollectionIndexFile,
+} from '$lib/services/contents/collection/index-file';
 import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
@@ -189,7 +190,7 @@ export const getEntrySummary = (
   { locale, useTemplate = false, allowMarkdown = false } = {},
 ) => {
   if (isCollectionIndexFile(collection, entry)) {
-    return get(_)('index_file');
+    return getIndexFileLabel(collection);
   }
 
   const {

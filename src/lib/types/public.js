@@ -846,7 +846,12 @@
 /**
  * Index file inclusion options.
  * @typedef {object} CollectionIndexFile
- * @property {string} name Index file name. Use `_index` for Hugo’s special index file.
+ * @property {string} [name] Index file name without a locale or file extension. Default: `_index`,
+ * which is used for Hugo’s special index file.
+ * @property {string} [label] Label to be displayed in the editor UI. Default: Index File or its
+ * localized version.
+ * @property {string} [icon] Name of a Material Symbols icon to be displayed in the editor UI.
+ * Default: `home`.
  * @property {Field[]} [fields] Set of fields for the index file. If omitted, the regular entry
  * collection `fields` will be used instead.
  * @property {EditorOptions} [editor] Editor view options.
