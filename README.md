@@ -710,7 +710,7 @@ You can now open `https://[hostname]/admin/` as usual to start editing. There is
 
 Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
 
-To allow multiple users to edit content, simply invite people to your GitHub repository with the write role assigned. Please note, however, that Sveltia CMS hasn’t implemented any mechanisms to prevent conflicts in multi-user scenarios.
+To allow other people to edit content, simply invite them to your GitHub repository with the write role assigned. Please note, however, that Sveltia CMS hasn’t implemented any mechanisms to prevent conflicts in multi-user scenarios.
 
 Once you have migrated from the Git Gateway and Netlify Identity combo, you can remove the Netlify Identity Widget script tag from your HTML:
 
