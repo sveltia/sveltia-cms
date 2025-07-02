@@ -395,7 +395,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better widgets
 
-Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap. We have made significant improvements to these widgets while adding some new ones. Support for [custom widgets](https://decapcms.org/docs/custom-widgets/) will be added before the 1.0 release.
+Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS. We have made significant improvements to these widgets while adding some new ones. Support for [custom widgets](https://decapcms.org/docs/custom-widgets/) will be added before the 1.0 release.
 
 Note: The Date widget has been deprecated in Netlify CMS and removed from both Decap CMS and Sveltia CMS in favour of the DateTime widget, as noted in the [Compatibility](#compatibility) section.
 
@@ -434,8 +434,8 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
 - Map
-  - A search bar enables users to quickly locate a specific place on a map.[^252]
-  - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), it’s possible to use the user’s current location.
+  - A search bar enables users to quickly locate a specific place on the map.[^252]
+  - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), it’s possible to use the current location.
   - The value can be cleared if the field is optional.
   - The map’s zoom level is adjusted more intuitively using pinch gestures.
   - The map looks good in dark mode.
