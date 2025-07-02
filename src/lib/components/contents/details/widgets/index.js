@@ -14,6 +14,8 @@ import KeyValueEditor from '$lib/components/contents/details/widgets/key-value/k
 import KeyValuePreview from '$lib/components/contents/details/widgets/key-value/key-value-preview.svelte';
 import ListEditor from '$lib/components/contents/details/widgets/list/list-editor.svelte';
 import ListPreview from '$lib/components/contents/details/widgets/list/list-preview.svelte';
+import MapEditor from '$lib/components/contents/details/widgets/map/map-editor.svelte';
+import MapPreview from '$lib/components/contents/details/widgets/map/map-preview.svelte';
 import MarkdownEditor from '$lib/components/contents/details/widgets/markdown/markdown-editor.svelte';
 import MarkdownPreview from '$lib/components/contents/details/widgets/markdown/markdown-preview.svelte';
 import NumberEditor from '$lib/components/contents/details/widgets/number/number-editor.svelte';
@@ -44,6 +46,7 @@ export const editors = {
   image: FileEditor, // alias
   keyvalue: KeyValueEditor,
   list: ListEditor,
+  map: MapEditor,
   markdown: MarkdownEditor,
   number: NumberEditor,
   object: ObjectEditor,
@@ -66,6 +69,7 @@ export const previews = {
   image: FilePreview, // alias
   keyvalue: KeyValuePreview,
   list: ListPreview,
+  map: MapPreview,
   markdown: MarkdownPreview,
   number: NumberPreview,
   object: ObjectPreview,

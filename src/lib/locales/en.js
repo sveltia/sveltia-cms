@@ -52,6 +52,7 @@ export const strings = {
   restore: 'Restore',
   discard: 'Discard',
   searching: 'Searching…',
+  no_results: 'No results found.',
   global: 'Global',
   primary: 'Primary',
   secondary: 'Secondary',
@@ -563,6 +564,10 @@ export const strings = {
     empty_key: 'Key is required.',
     duplicate_key: 'Key must be unique.',
   },
+  use_your_location: 'Use Current Location',
+  geolocation_error_title: 'Geolocation Error',
+  geolocation_error_body: 'There was an error while retrieving your location.',
+  geolocation_unsupported: 'Geolocation is not supported by this browser.',
 
   // Content preview
   boolean: {

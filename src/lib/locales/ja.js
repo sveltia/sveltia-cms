@@ -52,6 +52,7 @@ export const strings = {
   restore: '復元',
   discard: '破棄',
   searching: '検索中…',
+  no_results: '結果が見つかりませんでした。',
   global: 'グローバル',
   primary: 'プライマリー',
   secondary: 'セカンダリー',
@@ -467,6 +468,10 @@ export const strings = {
       description: 'エントリーを保存中に問題が発生しました。後で再度お試しください。',
     },
   },
+  use_your_location: '現在地を使用',
+  geolocation_error_title: '位置情報エラー',
+  geolocation_error_body: 'あなたの現在地を取得できませんでした。',
+  geolocation_unsupported: 'お使いのブラウザーは位置情報 API をサポートしていません。',
 
   // Media details
   viewing_x_asset_details: '「{name}」アセットの詳細を表示しています。',
