@@ -130,7 +130,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 230+ issues, or 465+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
+  - So far, 230+ issues, or 470+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
     - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -395,7 +395,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better widgets
 
-Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS except Map. We have made significant improvements to these widgets while adding some new ones. The remaining Map widget will be added soon, followed by support for [custom widgets](https://decapcms.org/docs/custom-widgets/).
+Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap. We have made significant improvements to these widgets while adding some new ones. Support for [custom widgets](https://decapcms.org/docs/custom-widgets/) will be added before the 1.0 release.
 
 Note: The Date widget has been deprecated in Netlify CMS and removed from both Decap CMS and Sveltia CMS in favour of the DateTime widget, as noted in the [Compatibility](#compatibility) section.
 
@@ -433,6 +433,11 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
+- Map
+  - A search bar enables users to quickly locate a specific place on a map.[^252]
+  - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), it’s possible to use the user’s current location.
+  - The value can be cleared if the field is optional.
+  - The map’s zoom level is adjusted more intuitively using pinch gestures.
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS,[^235] including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] extra HTML comments when pasting,[^229] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
@@ -597,7 +602,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Forgejo backend](https://decapcms.org/docs/gitea-backend/) ([#381](https://github.com/sveltia/sveltia-cms/issues/381))
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
-- [Map](https://decapcms.org/docs/widgets/#map) widget
+- LineSting and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
 - [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, Object/List widgets, and the `default` field option
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
@@ -1304,6 +1309,15 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://gitea.com
     ```
+- OpenStreetMap (built-in Map widget)
+  - `img-src`
+    ```
+    https://*.openstreetmap.org
+    ```
+  - `connect-src`
+    ```
+    https://*.openstreetmap.org
+    ```
 - Pexels:
   - `img-src`
     ```
@@ -1951,3 +1965,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^250]: Netlify/Decap CMS [#6609](https://github.com/decaporg/decap-cms/issues/6609), [#6802](https://github.com/decaporg/decap-cms/issues/6802), [#6824](https://github.com/decaporg/decap-cms/issues/6824), [#6832](https://github.com/decaporg/decap-cms/issues/6832), [#6848](https://github.com/decaporg/decap-cms/issues/6848), [#6851](https://github.com/decaporg/decap-cms/issues/6851), [#7287](https://github.com/decaporg/decap-cms/issues/7287), [#7522](https://github.com/decaporg/decap-cms/issues/7522)
 
 [^251]: Netlify/Decap CMS [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7445](https://github.com/decaporg/decap-cms/issues/7445)
+
+[^252]: Netlify/Decap CMS [#6629](https://github.com/decaporg/decap-cms/issues/6629)
