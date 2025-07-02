@@ -438,6 +438,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), it’s possible to use the user’s current location.
   - The value can be cleared if the field is optional.
   - The map’s zoom level is adjusted more intuitively using pinch gestures.
+  - The map looks good in dark mode.
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS,[^235] including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] extra HTML comments when pasting,[^229] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
@@ -602,7 +603,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Forgejo backend](https://decapcms.org/docs/gitea-backend/) ([#381](https://github.com/sveltia/sveltia-cms/issues/381))
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
-- LineSting and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
+- LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
 - [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, Object/List widgets, and the `default` field option
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
