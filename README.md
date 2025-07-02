@@ -887,13 +887,14 @@ collections:
     fields: # Fields for regular entries
       ...
     index_file:
-      name: _index # File name without a locale or extension. Optional. Default: _index
-      label: Index File # Human-readable file label. Optional. Default: Index File
-      icon: home # Material Symbols icon name. Optional. Default: home
       fields: # Fields for the index file. If omitted, regular entry fields are used
         ...
-      editor: # Optional
-        preview: false # Hide the preview pane if needed
+      # All of the following options are optional
+      name: _index # File name without a locale or extension. Default: _index
+      label: Index File # Human-readable file label. Default: Index File
+      icon: home # Material Symbols icon name. Default: home
+      editor:
+        preview: false # Hide the preview pane if needed. Default: true
 ```
 
 Note that the special index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, but the index file remains at `content/posts/_index.md`.
