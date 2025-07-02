@@ -488,6 +488,9 @@ export const strings = {
   dimensions: '大きさ',
   duration: '再生時間',
   used_in: '使われているエントリー',
+  created_date: '作成日時',
+  location: '場所',
+  map_lat_lng: '緯度 {latitude}、経度 {longitude} の地図',
 
   // Widgets
   select_file: 'ファイルを選択',

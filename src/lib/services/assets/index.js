@@ -672,18 +672,16 @@ export const getAssetDetails = async (asset) => {
   const { blobBaseURL } = get(backend)?.repository ?? {};
   const blobURL = await getAssetBlobURL(asset);
   const url = getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true }) ?? blobURL;
-  let dimensions;
-  let duration;
+  let metaData = {};
 
   if (['image', 'video', 'audio'].includes(kind) && blobURL) {
-    ({ dimensions, duration } = await getMediaMetadata(blobURL, kind));
+    metaData = await getMediaMetadata(asset, blobURL, kind);
   }
 
   return {
+    ...metaData,
     publicURL: getAssetPublicURL(asset),
     repoBlobURL: blobBaseURL ? `${blobBaseURL}/${path}` : undefined,
-    dimensions,
-    duration,
     usedEntries: url ? await getEntriesByAssetURL(url) : [],
   };
 };

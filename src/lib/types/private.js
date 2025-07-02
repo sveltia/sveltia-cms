@@ -631,14 +631,31 @@
  */
 
 /**
+ * Media file dimensions.
+ * @typedef {object} MediaDimensions
+ * @property {number} width Media width in pixels.
+ * @property {number} height Media height in pixels.
+ */
+
+/**
+ * GPS coordinates.
+ * @typedef {object} GeoCoordinates
+ * @property {number} latitude Latitude in degrees.
+ * @property {number} longitude Longitude in degrees.
+ */
+
+/**
  * Asset details.
  * @typedef {object} AssetDetails
  * @property {string} [publicURL] The asset’s public URL on the live site.
  * @property {string} [repoBlobURL] Web-accessible URL on the Git repository. Git and local backends
  * only.
- * @property {{ width: number, height: number }} [dimensions] Media dimensions available for an
- * image, video or audio file.
+ * @property {MediaDimensions} [dimensions] Media dimensions available for an image or video file.
  * @property {number} [duration] Media duration available for a video or audio file, in seconds.
+ * @property {Date} [createdDate] Date and time when the media was created, extracted from an image
+ * file’s Exif data.
+ * @property {GeoCoordinates} [coordinates] GPS coordinates extracted from an image file’s Exif
+ * data.
  * @property {Entry[]} usedEntries List of entries using the asset.
  */
 

@@ -5,6 +5,7 @@
   import mime from 'mime';
   import { _, locale as appLocale } from 'svelte-i18n';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import StaticMap from '$lib/components/common/static-map.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { defaultAssetDetails, getAssetDetails, isMediaKind } from '$lib/services/assets';
   import { getCollectionLabel } from '$lib/services/contents/collection';
@@ -40,9 +41,18 @@
   let details = $state({ ...defaultAssetDetails });
 
   const { path, size, kind, commitAuthor, commitDate } = $derived(asset);
-  const { publicURL, repoBlobURL, dimensions, duration, usedEntries } = $derived(details);
+  const { publicURL, repoBlobURL, dimensions, duration, createdDate, coordinates, usedEntries } =
+    $derived(details);
   const { extension = '' } = $derived(getPathInfo(path));
   const canPreview = $derived(isMediaKind(kind) || path.endsWith('.pdf'));
+
+  /**
+   * Format the date to a localized string.
+   * @param {Date} date Date to format.
+   * @returns {string} Formatted date string.
+   */
+  const formatDate = (date) =>
+    date.toLocaleString($appLocale ?? undefined, DATE_TIME_FORMAT_OPTIONS);
 
   /**
    * Update the properties above.
@@ -127,20 +137,6 @@
       {/if}
     </p>
   </section>
-  {#if commitAuthor}
-    <section>
-      <h4>{$_('sort_keys.commit_author')}</h4>
-      <p>{commitAuthor.name || commitAuthor.login || commitAuthor.email}</p>
-    </section>
-  {/if}
-  {#if commitDate}
-    <section>
-      <h4>{$_('sort_keys.commit_date')}</h4>
-      <p>
-        {commitDate.toLocaleString($appLocale ?? undefined, DATE_TIME_FORMAT_OPTIONS)}
-      </p>
-    </section>
-  {/if}
   <section>
     <h4>{$_('used_in')}</h4>
     {#each usedEntries as entry (entry.sha)}
@@ -168,6 +164,30 @@
       <p>{$_('sort_keys.none')}</p>
     {/each}
   </section>
+  {#if commitAuthor}
+    <section>
+      <h4>{$_('sort_keys.commit_author')}</h4>
+      <p>{commitAuthor.name || commitAuthor.login || commitAuthor.email}</p>
+    </section>
+  {/if}
+  {#if commitDate}
+    <section>
+      <h4>{$_('sort_keys.commit_date')}</h4>
+      <p>{formatDate(commitDate)}</p>
+    </section>
+  {/if}
+  {#if createdDate}
+    <section>
+      <h4>{$_('created_date')}</h4>
+      <p>{formatDate(createdDate)}</p>
+    </section>
+  {/if}
+  {#if coordinates}
+    <section>
+      <h4>{$_('location')}</h4>
+      <StaticMap {coordinates} />
+    </section>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -187,7 +207,9 @@
     }
 
     section {
-      margin: 0 0 16px;
+      &:not(:last-child) {
+        margin: 0 0 16px;
+      }
 
       & > :global(*) {
         margin: 0 0 4px;

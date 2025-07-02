@@ -18,7 +18,7 @@
 
   /**
    * @import { GeoJSONStoreGeometries, TerraDraw } from 'terra-draw';
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { GeoCoordinates, WidgetEditorProps } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
    */
 
@@ -262,9 +262,7 @@
 
   /**
    * Set the location on the map editor.
-   * @param {object} args Arguments.
-   * @param {number} args.latitude Latitude of the location to set.
-   * @param {number} args.longitude Longitude of the location to set.
+   * @param {GeoCoordinates} coordinates GeoCoordinates of the location to set.
    */
   const setLocation = ({ latitude, longitude }) => {
     if (!draw) {
@@ -422,7 +420,7 @@
 </AlertDialog>
 
 <style lang="scss">
-  // @todo Copy minimal styles from Leaflet to avoid loading the whole CSS files
+  // @todo Copy minimal styles from Leaflet to avoid loading the whole CSS file
   @import 'node_modules/leaflet/dist/leaflet.css';
 
   .toolbar {

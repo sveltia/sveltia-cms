@@ -1,7 +1,11 @@
 import { loadModule } from '$lib/services/app/dependencies';
 
 /**
- * @import { ImageFitOption, InternalImageTransformationOptions } from '$lib/types/private';
+ * @import {
+ * ImageFitOption,
+ * InternalImageTransformationOptions,
+ * MediaDimensions,
+ * } from '$lib/types/private';
  * @import {
  * RasterImageConversionFormat,
  * RasterImageFormat,
@@ -24,7 +28,7 @@ export const RASTER_IMAGE_CONVERSION_FORMATS = ['webp'];
 
 /**
  * Calculate the size of resized canvas.
- * @param {{ width: number, height: number }} source Source dimensions.
+ * @param {MediaDimensions} source Source dimensions.
  * @param {{ width?: number, height?: number, fit?: ImageFitOption }} [target] Target dimensions and
  * fit option.
  * @returns {{ scale: number, width: number, height: number }} Scale and new width/height.
@@ -87,7 +91,7 @@ export const calculateResize = (
 /**
  * Resize a Canvas based on the given dimension.
  * @param {HTMLCanvasElement | OffscreenCanvas} canvas Canvas to be resized.
- * @param {{ width: number, height: number }} source Source dimensions.
+ * @param {MediaDimensions} source Source dimensions.
  * @param {{ width?: number, height?: number, fit?: ImageFitOption }} [target] Target dimensions and
  * fit option.
  * @returns {{ scale: number, width: number, height: number }} Scale and new width/height.

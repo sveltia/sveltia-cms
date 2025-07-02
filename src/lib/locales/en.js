@@ -482,6 +482,9 @@ export const strings = {
   dimensions: 'Dimensions',
   duration: 'Duration',
   used_in: 'Used in',
+  created_date: 'Created Date',
+  location: 'Location',
+  map_lat_lng: 'Map showing latitude {latitude}, longitude {longitude}',
 
   // Widgets
   select_file: 'Select File',
