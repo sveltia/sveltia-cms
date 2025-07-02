@@ -8,7 +8,7 @@
 <script>
   // cSpell:ignore Nominatim jsonv2
 
-  import { AlertDialog, Button, Listbox, Option, SearchBar } from '@sveltia/ui';
+  import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -361,18 +361,24 @@
 
 <!-- @todo Support LineString and Polygon types -->
 {#if geometryType === 'Point'}
-  <!-- @todo Replace this with <Combobox> -->
-  <div class="toolbar">
-    <SearchBar bind:value={searchQuery} {readonly} flex />
+  <div role="none" class="toolbar">
+    <!-- @todo Replace this with `<Combobox>` -->
+    <SearchBar bind:value={searchQuery} {readonly} flex placeholder={$_('find_place')} />
+    <!-- @todo Replace `title` with a native tooltip -->
     <Button
       variant="tertiary"
-      label={$_('use_your_location')}
+      iconic
+      title={$_('use_your_location')}
+      aria-label={$_('use_your_location')}
       disabled={readonly}
       onclick={() => {
         useCurrentLocation();
       }}
-    />
-
+    >
+      {#snippet startIcon()}
+        <Icon name="near_me" />
+      {/snippet}
+    </Button>
     {#if !required}
       <Button
         variant="tertiary"
@@ -386,11 +392,11 @@
   </div>
 
   {#if searching}
-    <div class="search-result searching">{$_('searching')}</div>
+    <div role="alert" class="search-result searching">{$_('searching')}</div>
   {:else if searchQuery}
     {#if searchResults}
       {#if searchResults.length}
-        <Listbox>
+        <Listbox aria-label={$_('search_results')}>
           {#each searchResults as result (result.place_id)}
             <Option
               label={result.display_name}
@@ -401,7 +407,7 @@
           {/each}
         </Listbox>
       {:else}
-        <div class="search-result no-result">{$_('no_results')}</div>
+        <div role="alert" class="search-result no-result">{$_('no_results')}</div>
       {/if}
     {/if}
   {/if}

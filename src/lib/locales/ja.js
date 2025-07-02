@@ -468,6 +468,7 @@ export const strings = {
       description: 'エントリーを保存中に問題が発生しました。後で再度お試しください。',
     },
   },
+  find_place: '場所を検索',
   use_your_location: '現在地を使用',
   geolocation_error_title: '位置情報エラー',
   geolocation_error_body: 'あなたの現在地を取得できませんでした。',

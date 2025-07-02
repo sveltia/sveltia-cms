@@ -39,7 +39,7 @@
 {#if otherLocales.length === 1}
   {@const [otherLocale] = otherLocales}
   {@const label = $_('translate_from_x', { values: { locale: getLocaleLabel(otherLocale) } })}
-  <!-- @todo Replace the native tooltip -->
+  <!-- @todo Replace `title` with a native tooltip -->
   <Button
     variant="ghost"
     {size}
