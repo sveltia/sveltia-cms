@@ -116,12 +116,12 @@
       await tick();
     }
 
-    const newValueMap = copyDefaultLocaleValues(
-      Object.fromEntries(
-        Object.entries(getDefaultValues(subFields, locale)) //
-          .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
-      ),
+    const newContent = Object.fromEntries(
+      Object.entries(getDefaultValues(subFields, locale)) //
+        .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
     );
+
+    const newValueMap = locale === defaultLocale ? newContent : copyDefaultLocaleValues(newContent);
 
     Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
