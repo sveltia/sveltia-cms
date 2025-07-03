@@ -1,21 +1,24 @@
+import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
 /**
  * @import { Entry, InternalCollection } from '$lib/types/private';
+ * @import { Collection } from '$lib/types/public';
  */
 
 /**
  * Get the collection’s index file name.
- * @param {InternalCollection} collection Collection.
+ * @param {InternalCollection | Collection} collection Collection.
  * @returns {string | undefined} File name if index file inclusion is enabled. Defaults to `_index`.
  * Otherwise `undefined`.
  */
 export const getIndexFileName = (collection) => {
-  const { _type, index_file: indexFile } = collection;
+  const { folder, index_file: indexFile } = collection;
+  const isEntryCollection = typeof folder === 'string';
 
-  if (_type === 'entry' && indexFile) {
+  if (isEntryCollection && indexFile && isObject(indexFile)) {
     return indexFile.name ?? '_index';
   }
 
