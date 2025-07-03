@@ -5,7 +5,7 @@ import {
 } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
@@ -70,9 +70,9 @@ export const getField = ({
     return undefined;
   }
 
-  const { index_file: { fields: indexFileFields } = {} } = collection;
   const { fields: regularFields = [] } = collectionFile ?? collection;
-  const fields = isIndexFile ? (indexFileFields ?? regularFields) : regularFields;
+  const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
+  const fields = indexFile?.fields ?? regularFields;
   const keyPathArray = keyPath.split('.');
   /** @type {Field | undefined} */
   let field;
@@ -82,7 +82,7 @@ export const getField = ({
       field = fields.find(({ name }) => name === key);
 
       // If using index file and field not found, try regular fields as fallback
-      if (!field && isIndexFile && indexFileFields) {
+      if (!field && indexFile?.fields) {
         field = regularFields.find(({ name }) => name === key);
       }
     } else if (field) {

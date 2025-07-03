@@ -10,7 +10,7 @@ import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getIndexFileName } from '$lib/services/contents/collection/index-file';
+import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
@@ -130,7 +130,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
     _entries.reverse();
   }
 
-  const indexFileName = getIndexFileName(collection);
+  const indexFileName = getIndexFile(collection)?.name;
 
   // Index file should always be at the top
   if (indexFileName) {

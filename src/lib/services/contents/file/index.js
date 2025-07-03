@@ -1,6 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
-import { getIndexFileName } from '$lib/services/contents/collection/index-file';
+import { getIndexFile } from '$lib/services/contents/collection/index-file';
 
 /**
  * @import { CustomFileFormat, FileConfig, InternalI18nOptions } from '$lib/types/private';
@@ -196,7 +196,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   const format = detectFileFormat({ format: __format, extension });
   const delimiter = file?.frontmatter_delimiter ?? _delimiter;
   const basePath = isEntryCollection ? stripSlashes(folder) : undefined;
-  const indexFileName = isEntryCollection ? getIndexFileName(rawCollection) : undefined;
+  const indexFileName = isEntryCollection ? getIndexFile(rawCollection)?.name : undefined;
 
   if (yamlQuote !== undefined && !yamlQuoteWarnedOnce) {
     yamlQuoteWarnedOnce = true;

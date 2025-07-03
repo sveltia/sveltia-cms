@@ -2,7 +2,7 @@ import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
@@ -152,26 +152,16 @@ export const createDraft = ({
   expanderStates,
   isIndexFile = isCollectionIndexFile(collection, originalEntry),
 }) => {
-  const {
-    name: collectionName,
-    editor: { preview: entryPreview } = {},
-    index_file: {
-      fields: indexFileFields,
-      editor: { preview: indexFilePreview = undefined } = {},
-    } = {},
-  } = collection;
-
+  const { name: collectionName, editor } = collection;
   const fileName = collectionFile?.name;
   const { id, slug, locales } = originalEntry;
   const isNew = id === undefined;
   const { fields: regularFields = [], _i18n } = collectionFile ?? collection;
-  const fields = isIndexFile ? (indexFileFields ?? regularFields) : regularFields;
+  const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
+  const fields = indexFile?.fields ?? regularFields;
 
   const canPreview =
-    (isIndexFile ? indexFilePreview : undefined) ??
-    entryPreview ??
-    get(siteConfig)?.editor?.preview ??
-    true;
+    indexFile?.editor?.preview ?? editor?.preview ?? get(siteConfig)?.editor?.preview ?? true;
 
   const {
     allLocales,

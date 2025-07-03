@@ -5,7 +5,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
-    getIndexFileIcon,
+    getIndexFile,
     isCollectionIndexFile,
   } from '$lib/services/contents/collection/index-file';
   import { listedEntries } from '$lib/services/contents/collection/view';
@@ -93,7 +93,7 @@
           {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
         {/key}
         {#if isCollectionIndexFile(collection, entry)}
-          <Icon name={getIndexFileIcon(collection)} class="home" />
+          <Icon name={getIndexFile(collection)?.icon} class="home" />
         {/if}
       </TruncatedText>
     </div>

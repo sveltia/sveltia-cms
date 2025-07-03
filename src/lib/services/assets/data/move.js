@@ -17,7 +17,7 @@ import { allEntries } from '$lib/services/contents';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { createSavingEntryData } from '$lib/services/contents/draft/save';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
@@ -159,19 +159,13 @@ export const moveAssets = async (action, movingAssets) => {
 
           await Promise.all(
             getAssociatedCollections(entry).map(async (collection) => {
+              const { name: collectionName, editor } = collection;
               const isIndexFile = isCollectionIndexFile(collection, entry);
-
-              const {
-                editor: { preview: entryPreview } = {},
-                index_file: {
-                  fields: indexFileFields,
-                  editor: { preview: indexFilePreview = undefined } = {},
-                } = {},
-              } = collection;
+              const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
 
               const canPreview =
-                (isIndexFile ? indexFilePreview : undefined) ??
-                entryPreview ??
+                indexFile?.editor?.preview ??
+                editor?.preview ??
                 _siteConfig?.editor?.preview ??
                 true;
 
@@ -182,7 +176,7 @@ export const moveAssets = async (action, movingAssets) => {
                */
               const addSavingEntryData = async (collectionFile) => {
                 const { fields: regularFields = [] } = collectionFile ?? collection;
-                const fields = isIndexFile ? (indexFileFields ?? regularFields) : regularFields;
+                const fields = indexFile?.fields ?? regularFields;
 
                 /** @type {EntryDraft} */
                 const draft = {
@@ -191,7 +185,7 @@ export const moveAssets = async (action, movingAssets) => {
                   isIndexFile,
                   canPreview,
                   collection,
-                  collectionName: collection.name,
+                  collectionName,
                   collectionFile,
                   fileName: collectionFile?.name,
                   fields,

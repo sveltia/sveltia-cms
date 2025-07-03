@@ -7,10 +7,7 @@ import {
   applyTransformations,
   DATE_TRANSFORMATION_REGEX,
 } from '$lib/services/common/transformations';
-import {
-  getIndexFileLabel,
-  isCollectionIndexFile,
-} from '$lib/services/contents/collection/index-file';
+import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
@@ -190,7 +187,7 @@ export const getEntrySummary = (
   { locale, useTemplate = false, allowMarkdown = false } = {},
 ) => {
   if (isCollectionIndexFile(collection, entry)) {
-    return getIndexFileLabel(collection);
+    return /** @type {string} */ (getIndexFile(collection)?.label);
   }
 
   const {

@@ -1,44 +1,54 @@
-import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
 /**
  * @import { Entry, InternalCollection } from '$lib/types/private';
- * @import { Collection } from '$lib/types/public';
+ * @import { Collection, CollectionIndexFile } from '$lib/types/public';
  */
 
 /**
- * Get the collection’s index file name.
- * @param {InternalCollection | Collection} collection Collection.
- * @returns {string | undefined} File name if index file inclusion is enabled. Defaults to `_index`.
- * Otherwise `undefined`.
+ * Get the localized label for the index file. Use `try-catch` to handle cases where svelte-i18n is
+ * not initialized during automated tests.
+ * @returns {string} Localized label for the index file.
  */
-export const getIndexFileName = (collection) => {
-  const { folder, index_file: indexFile } = collection;
-  const isEntryCollection = typeof folder === 'string';
-
-  if (isEntryCollection && indexFile && isObject(indexFile)) {
-    return indexFile.name ?? '_index';
+const getLocalizedLabel = () => {
+  try {
+    return get(_)('index_file');
+  } catch {
+    return 'Index File';
   }
-
-  return undefined;
 };
 
 /**
- * Get the collection’s index file label.
- * @param {InternalCollection} collection Collection.
- * @returns {string} Label for the index file. Defaults to Index File or its localized version.
+ * Get the collection’s index file configuration. This function returns the index file configuration
+ * if index file inclusion is enabled for the collection. If the index file is enabled but no
+ * specific configuration is provided, it returns a default configuration with the name `_index`,
+ * label as "Index File" (or its localized version), icon as `home`, and fields and editor inherited
+ * from the collection. If index file inclusion is not enabled, it returns `undefined`.
+ * @param {InternalCollection | Collection} collection Collection.
+ * @returns {CollectionIndexFile | undefined} Index file configuration if index file inclusion is
+ * enabled for the collection, otherwise `undefined`.
  */
-export const getIndexFileLabel = (collection) =>
-  collection.index_file?.label ?? get(_)('index_file');
+export const getIndexFile = (collection) => {
+  const { folder, index_file: indexFile } = collection;
+  const isEntryCollection = typeof folder === 'string';
 
-/**
- * Get the collection’s index file icon.
- * @param {InternalCollection} collection Collection.
- * @returns {string} Material Symbols icon name for the index file. Defaults to `home`.
- */
-export const getIndexFileIcon = (collection) => collection.index_file?.icon ?? 'home';
+  if (!isEntryCollection || !indexFile) {
+    return undefined;
+  }
+
+  const file = indexFile === true ? {} : indexFile;
+
+  return {
+    name: file.name ?? '_index',
+    label: file.label ?? getLocalizedLabel(),
+    icon: file.icon ?? 'home',
+    // The following properties are inherited from the collection file, collection or global config
+    fields: file.fields,
+    editor: file.editor,
+  };
+};
 
 /**
  * Check if index file inclusion (for Hugo) is enabled for the collection, and the given entry is
@@ -50,9 +60,13 @@ export const getIndexFileIcon = (collection) => collection.index_file?.icon ?? '
  * @see https://github.com/decaporg/decap-cms/issues/7381
  */
 export const isCollectionIndexFile = (collection, entry) => {
-  const name = getIndexFileName(collection);
+  const indexFile = getIndexFile(collection);
 
-  return !!name && entry.slug === name;
+  if (!indexFile) {
+    return false;
+  }
+
+  return entry.slug === indexFile.name;
 };
 
 /**
@@ -61,7 +75,11 @@ export const isCollectionIndexFile = (collection, entry) => {
  * @returns {boolean} Result. It returns `false` if the index file already exists.
  */
 export const canCreateIndexFile = (collection) => {
-  const name = getIndexFileName(collection);
+  const indexFile = getIndexFile(collection);
 
-  return !!name && !getEntriesByCollection(collection.name).some(({ slug }) => slug === name);
+  if (!indexFile) {
+    return false;
+  }
+
+  return !getEntriesByCollection(collection.name).some(({ slug }) => slug === indexFile.name);
 };

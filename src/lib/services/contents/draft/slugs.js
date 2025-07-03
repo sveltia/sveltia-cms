@@ -1,5 +1,5 @@
 import { fillSlugTemplate } from '$lib/services/common/slug';
-import { getIndexFileName } from '$lib/services/contents/collection/index-file';
+import { getIndexFile } from '$lib/services/contents/collection/index-file';
 
 /**
  * @import {
@@ -144,7 +144,7 @@ export const getSlugs = ({ draft }) => {
 
   if (isIndexFile) {
     return {
-      defaultLocaleSlug: /** @type {string} */ (getIndexFileName(collection)),
+      defaultLocaleSlug: /** @type {string} */ (getIndexFile(collection)?.name),
       localizedSlugs: undefined,
       canonicalSlug: undefined,
     };

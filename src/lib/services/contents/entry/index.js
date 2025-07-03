@@ -6,7 +6,7 @@ import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 
 /**
  * @import {
@@ -40,7 +40,6 @@ export const getAssociatedCollections = (entry) =>
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
   const { show_preview_links: showLinks = true, _baseURL: baseURL } = get(siteConfig) ?? {};
   const { slug, path: entryFilePath, content } = entry.locales[locale] ?? {};
-  const { index_file: { fields: indexFileFields } = {} } = collection;
 
   const {
     preview_path: pathTemplate,
@@ -53,7 +52,8 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
   }
 
   const isIndexFile = isCollectionIndexFile(collection, entry);
-  const fields = isIndexFile ? (indexFileFields ?? regularFields) : regularFields;
+  const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
+  const fields = indexFile?.fields ?? regularFields;
   /** @type {Record<string, string> | undefined} */
   let dateTimeParts;
 

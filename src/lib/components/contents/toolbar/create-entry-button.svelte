@@ -5,10 +5,7 @@
   import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { canCreateEntry } from '$lib/services/contents/collection/entries';
-  import {
-    canCreateIndexFile,
-    getIndexFileLabel,
-  } from '$lib/services/contents/collection/index-file';
+  import { canCreateIndexFile, getIndexFile } from '$lib/services/contents/collection/index-file';
 
   /**
    * @typedef {object} Props
@@ -32,8 +29,8 @@
     $allEntries && $selectedCollection ? canCreateIndexFile($selectedCollection) : false,
   );
   const indexFileLabel = $derived(
-    // `$appLocale` is a key, because `getIndexFileLabel` can return a localized label
-    $appLocale && $selectedCollection ? getIndexFileLabel($selectedCollection) : '',
+    // `$appLocale` is a key, because `getIndexFile` can return a localized label
+    $appLocale && $selectedCollection ? getIndexFile($selectedCollection)?.label : '',
   );
   const ButtonComponent = $derived(hasOptions ? SplitButton : Button);
 
