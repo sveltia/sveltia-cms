@@ -132,7 +132,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 230+ issues, or 470+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
-    - 200 issues, or 400 if including duplicates, by GA — We did it! 🎉
+    - 250 issues, or 500 if including duplicates, by GA — Almost there!
     - 400 issues, or 800 if including duplicates, in the future 💪
     - or every single issue that’s relevant, fixable, and worth dealing with 🔥
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
@@ -233,7 +233,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
-- Improved TypeScript support: We try to keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
+- Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
 
 ### Better backend support
 
@@ -612,9 +612,9 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 Due to the complexity, we have decided to defer the following features to the 2.0 release due early 2026. Netlify/Decap CMS has a number of open issues with these collaboration and beta features — we want to implement them the right way.
 
-- [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/) & [Deploy Preview Links](https://decapcms.org/docs/deploy-preview-links/)
-- [Open Authoring](https://decapcms.org/docs/open-authoring/)
-- [Nested Collections](https://decapcms.org/docs/collection-nested/) (beta)
+- [Editorial workflow](https://decapcms.org/docs/editorial-workflows/) with [deploy preview links](https://decapcms.org/docs/deploy-preview-links/)
+- [Open authoring](https://decapcms.org/docs/open-authoring/)
+- [Nested collections](https://decapcms.org/docs/collection-nested/) (beta)
 
 Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
@@ -902,6 +902,12 @@ collections:
         - { name: body, label: Body, widget: markdown }
 ```
 
+If the regular entry fields and index file fields are identical, you can simply write:
+
+```yaml
+index_file: true
+```
+
 Here is an example of full customization:
 
 ```yaml
@@ -913,12 +919,6 @@ index_file:
     ...
   editor:
     preview: false # Hide the preview pane if needed. Default: true
-```
-
-If the regular entry fields and index file fields are identical, you can simply write:
-
-```yaml
-index_file: true
 ```
 
 Note that the special index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, but the index file remains at `content/posts/_index.md`.
@@ -1447,9 +1447,9 @@ Due late 2025
 Due early 2026
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations):
-  - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/) & [Deploy Preview Links](https://decapcms.org/docs/deploy-preview-links/)
-  - [Open Authoring](https://decapcms.org/docs/open-authoring/)
-  - [Nested Collections](https://decapcms.org/docs/collection-nested/) (beta)
+  - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/) with [deploy preview links](https://decapcms.org/docs/deploy-preview-links/)
+  - [Open authoring](https://decapcms.org/docs/open-authoring/)
+  - [Nested collections](https://decapcms.org/docs/collection-nested/) (beta)
 - End-user documentation
 
 ### Future
