@@ -893,9 +893,9 @@ collections:
     folder: content/posts
     fields: # Fields for regular entries
       ...
+    # All of the index file inclusion options are optional.
+    # Use `index_file: true` or `index_file: {}` if you want to omit them all.
     index_file:
-      # All of the following options are optional.
-      # Use `index_file: true` or `index_file: {}` if you want to omit them all.
       name: _index # File name without a locale or extension. Default: _index
       label: Index File # Human-readable file label. Default: Index File
       icon: home # Material Symbols icon name. Default: home
