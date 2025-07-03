@@ -915,7 +915,7 @@ index_file:
     preview: false # Hide the preview pane if needed. Default: true
 ```
 
-If the regular fields and index file fields are the same, you can simply write:
+If the regular entry fields and index file fields are identical, you can simply write:
 
 ```yaml
 index_file: true
