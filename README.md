@@ -124,7 +124,7 @@ While Sveltia CMS was created to replace legacy Netlify CMS instances, it can al
 
 ## Development status
 
-Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in Q4 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in late 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
@@ -597,7 +597,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Current limitations
 
-These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due Q4 2025. Check the [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due late 2025. Check the [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
@@ -610,7 +610,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
-Due to the complexity, we have decided to defer the following features to the 2.0 release. Netlify/Decap CMS has a number of open issues with these collaboration and beta features — we want to implement them the right way.
+Due to the complexity, we have decided to defer the following features to the 2.0 release due early 2026. Netlify/Decap CMS has a number of open issues with these collaboration and beta features — we want to implement them the right way.
 
 - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/) & [Deploy Preview Links](https://decapcms.org/docs/deploy-preview-links/)
 - [Open Authoring](https://decapcms.org/docs/open-authoring/)
@@ -1406,7 +1406,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ### v1.0
 
-Due Q4 2025
+Due late 2025
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
@@ -1427,6 +1427,8 @@ Due Q4 2025
 - [Live demo site](https://github.com/sveltia/sveltia-cms/issues/1)
 
 ### v2.0
+
+Due early 2026
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations):
   - [Editorial Workflow](https://decapcms.org/docs/editorial-workflows/) & [Deploy Preview Links](https://decapcms.org/docs/deploy-preview-links/)
