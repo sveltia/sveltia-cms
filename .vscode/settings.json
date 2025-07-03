@@ -28,5 +28,8 @@
   },
   "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "yaml.schemas": {
+    "https://www.schemastore.org/github-issue-config.json": "/.github/ISSUE_TEMPLATE/config.yml"
   }
 }
