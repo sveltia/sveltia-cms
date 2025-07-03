@@ -894,8 +894,9 @@ collections:
     fields: # Fields for regular entries
       ...
     index_file:
-      # All of the following options are optional, but if you want to omit all the options, be sure
-      # to provide an empty object like `index_file: {}`, otherwise the feature will be disabled
+      # All of the following options are optional. However, if you want to omit them all,
+      # be sure to provide an empty object like `index_file: {}`. Otherwise the feature will
+      # not be enabled
       name: _index # File name without a locale or extension. Default: _index
       label: Index File # Human-readable file label. Default: Index File
       icon: home # Material Symbols icon name. Default: home
