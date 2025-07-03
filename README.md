@@ -531,6 +531,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - Upload multiple assets at once, including files in nested folders, by browsing or dragging and dropping them into the library.
   - Sort or filter assets by name or file type.
   - View asset details, including size, dimensions, commit author/date and a list of entries that use the selected asset.
+  - View some Exif metadata if available, including the creation date and GPS coordinates displayed on a map.
 - Enhancements to media libraries:
   - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
   - Default media library
