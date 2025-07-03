@@ -902,13 +902,7 @@ collections:
         - { name: body, label: Body, widget: markdown }
 ```
 
-If the regular entry fields and index file fields are identical, you can simply write:
-
-```yaml
-index_file: true
-```
-
-Here is an example of full customization:
+Here is an example of full customization. All options are optional.
 
 ```yaml
 index_file:
@@ -919,6 +913,12 @@ index_file:
     ...
   editor:
     preview: false # Hide the preview pane if needed. Default: true
+```
+
+If the regular entry fields and index file fields are identical and you don’t need any options, simply write:
+
+```yaml
+index_file: true
 ```
 
 Note that the special index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, but the index file remains at `content/posts/_index.md`.
