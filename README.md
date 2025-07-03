@@ -892,17 +892,33 @@ collections:
     label: Blog posts
     folder: content/posts
     fields: # Fields for regular entries
-      ...
-    # All of the index file inclusion options are optional.
-    # Use `index_file: true` or `index_file: {}` if you want to omit them all.
+      - { name: title, label: Title }
+      - { name: date, label: Published Date, widget: datetime }
+      - { name: description, label: Description }
+      - { name: body, label: Body, widget: markdown }
     index_file:
-      name: _index # File name without a locale or extension. Default: _index
-      label: Index File # Human-readable file label. Default: Index File
-      icon: home # Material Symbols icon name. Default: home
-      fields: # Fields for the index file. If omitted, regular entry fields are used
-        ...
-      editor:
-        preview: false # Hide the preview pane if needed. Default: true
+      fields: # Fields for the index file
+        - { name: title, label: Title }
+        - { name: body, label: Body, widget: markdown }
+```
+
+Here is an example of full customization:
+
+```yaml
+index_file:
+  name: _index # File name without a locale or extension. Default: _index
+  label: Index File # Human-readable file label. Default: Index File
+  icon: home # Material Symbols icon name. Default: home
+  fields: # Fields for the index file. If omitted, regular entry fields are used
+    ...
+  editor:
+    preview: false # Hide the preview pane if needed. Default: true
+```
+
+If the regular fields and index file fields are the same, you can simply write:
+
+```yaml
+index_file: true
 ```
 
 Note that the special index file is placed right under the `folder`, regardless of the collection’s [`path` option](https://decapcms.org/docs/collection-folder/#folder-collections-path). For example, if the `path` is `{{year}}/{{slug}}`, a regular entry would be saved as `content/posts/2025/title.md`, but the index file remains at `content/posts/_index.md`.
