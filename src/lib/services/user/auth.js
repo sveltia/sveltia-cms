@@ -11,6 +11,7 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
+ * @import { InternalSiteConfig } from '$lib/types/private';
  */
 
 /**
@@ -73,10 +74,16 @@ export const signInAutomatically = async () => {
 
   let _user = hasUserCache && userCache.backendName ? userCache : undefined;
 
-  // Netlify/Decap CMS uses `proxy` as the backend name when running the local proxy server and
-  // leaves it in local storage. Sveltia CMS uses `local` instead.
+  // Determine the backend name based on the user cache or site config. Use the local backend if the
+  // user cache is found and the backend name is `local`, which is used by Sveltia CMS, or `proxy`,
+  // which is used by Netlify/Decap CMS when running the local proxy server. Otherwise, simply use
+  // the backend name from the site config. This is to ensure that the user is signed in with the
+  // correct backend, especially when the user cache is from a different backend than the current
+  // site config.
   const _backendName =
-    _user?.backendName?.replace('proxy', 'local') ?? get(siteConfig)?.backend?.name;
+    _user?.backendName === 'local' || _user?.backendName === 'proxy'
+      ? 'local'
+      : /** @type {InternalSiteConfig} */ (get(siteConfig)).backend.name;
 
   backendName.set(_backendName);
 
