@@ -22,13 +22,15 @@ const getLocalizedLabel = () => {
 
 /**
  * Get the collection’s index file configuration. This function returns the index file configuration
- * if index file inclusion is enabled for the collection. If the index file is enabled but no
- * specific configuration is provided, it returns a default configuration with the name `_index`,
- * label as "Index File" (or its localized version), icon as `home`, and fields and editor inherited
- * from the collection. If index file inclusion is not enabled, it returns `undefined`.
+ * if index file inclusion is enabled for the collection. If no specific configuration is provided,
+ * it returns a default configuration with the `_index` file name, which is used for Hugo’s special
+ * index file.
  * @param {InternalCollection | Collection} collection Collection.
  * @returns {CollectionIndexFile | undefined} Index file configuration if index file inclusion is
  * enabled for the collection, otherwise `undefined`.
+ * @see https://gohugo.io/content-management/organization/#index-pages-_indexmd
+ * @see https://github.com/decaporg/decap-cms/issues/7381
+ * @see https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection
  */
 export const getIndexFile = (collection) => {
   const { folder, index_file: indexFile } = collection;
@@ -56,8 +58,6 @@ export const getIndexFile = (collection) => {
  * @param {InternalCollection} collection Collection.
  * @param {Entry} entry Entry.
  * @returns {boolean} Result.
- * @see https://gohugo.io/content-management/organization/#index-pages-_indexmd
- * @see https://github.com/decaporg/decap-cms/issues/7381
  */
 export const isCollectionIndexFile = (collection, entry) => {
   const indexFile = getIndexFile(collection);
