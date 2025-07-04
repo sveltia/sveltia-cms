@@ -52,6 +52,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
 - [Getting started](#getting-started)
   - [Installation \& setup](#installation--setup)
   - [Migration](#migration)
+    - [Editing the configuration file](#editing-the-configuration-file)
     - [Migrating from Git Gateway backend](#migrating-from-git-gateway-backend)
   - [Installing with npm](#installing-with-npm)
   - [Updates](#updates)
@@ -715,6 +716,10 @@ Next, let’s [test Sveltia CMS on your local machine](#working-with-a-local-git
 
 You can now open `https://[hostname]/admin/` as usual to start editing. There is even no authentication process if you’re already signed in with GitHub or GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
+#### Editing the configuration file
+
+For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. Editing `config.yml` is now much easier with autocomplete and validation.
+
 #### Migrating from Git Gateway backend
 
 Sveltia CMS does not support the Git Gateway backend due to performance limitations. If you don’t care about user management with Netlify Identity, you can use the [GitHub](https://decapcms.org/docs/github-backend/) or [GitLab](https://decapcms.org/docs/gitlab-backend/) backend instead. Make sure **you install an OAuth client** on GitHub or GitLab in addition to updating your configuration file. As noted in the document, Netlify is still able to facilitate the auth flow.
@@ -747,7 +752,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Enabling autocomplete and validation for the configuration file
 
-Sveltia CMS provides an up-to-date [JSON schema](https://json-schema.org/) for the site configuration file, so you can get autocomplete and validation in your favourite code editor while editing `config.yml`. The JSON schema for Netlify/Decap CMS is incomplete and outdated, so it’s not recommended to use it for Sveltia CMS.
+Sveltia CMS provides an up-to-date [JSON schema](https://json-schema.org/) for the site configuration file, so you can get autocomplete and validation in your favourite code editor while editing `config.yml`.
 
 If you use [Visual Studio Code](https://code.visualstudio.com/), you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following to the `.vscode/settings.json` file in your project:
 
