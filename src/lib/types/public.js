@@ -62,8 +62,14 @@
 
 /**
  * Raster image transformation option map.
- * @typedef {Record<RasterImageFormat | 'raster_image', RasterImageTransformationOptions>
- * } RasterImageTransformations
+ * @typedef {object} RasterImageTransformations
+ * @property {RasterImageTransformationOptions} [raster_image] Raster image transformation options
+ * that apply to any supported raster image format.
+ * @property {RasterImageTransformationOptions} [avif] AVIF image transformation options.
+ * @property {RasterImageTransformationOptions} [gif] GIF image transformation options.
+ * @property {RasterImageTransformationOptions} [jpeg] JPEG image transformation options.
+ * @property {RasterImageTransformationOptions} [png] PNG image transformation options.
+ * @property {RasterImageTransformationOptions} [webp] WebP image transformation options.
  */
 
 /**
@@ -74,7 +80,8 @@
 
 /**
  * Vector image transformation option map.
- * @typedef {Record<VectorImageFormat, VectorImageTransformationOptions>} VectorImageTransformations
+ * @typedef {object} VectorImageTransformations
+ * @property {VectorImageTransformationOptions} [svg] SVG image transformation options.
  */
 
 /**
