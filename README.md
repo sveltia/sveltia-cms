@@ -718,7 +718,7 @@ You can now open `https://[hostname]/admin/` as usual to start editing. There is
 
 #### Editing the configuration file
 
-For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. Editing `config.yml` is now much easier with autocomplete and validation.
+For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. If you have the YAML extension installed, VS Code may automatically apply the Netlify/Decap CMS schema to your YAML configuration file. To use the Sveltia CMS schema instead, you need to specify its URL.
 
 #### Migrating from Git Gateway backend
 
@@ -752,7 +752,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Enabling autocomplete and validation for the configuration file
 
-Sveltia CMS provides a [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is always up to date with the latest version of Sveltia CMS.
+Sveltia CMS provides a [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest version of Sveltia CMS. It’s available at `https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json`.
 
 If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following to your project’s [VS Code settings file](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) (`.vscode/settings.json`):
 
@@ -764,7 +764,7 @@ If you use VS Code, you can enable it for the YAML configuration file by install
 }
 ```
 
-If your configuration is in [JSON format](#providing-a-json-configuration-file), no extension is needed. Add the following to the same VS Code settings file:
+If your configuration is in JSON format (see the [next section](#providing-a-json-configuration-file)), no extension is needed. Just add the following to the same VS Code settings file:
 
 ```json
 {
@@ -777,9 +777,9 @@ If your configuration is in [JSON format](#providing-a-json-configuration-file),
 }
 ```
 
-The configuration file location [varies by framework](https://decapcms.org/docs/install-decap-cms/), so adjust the path accordingly. For example, if you use Astro, the file is located in the `/public/admin/` directory.
+The configuration file location [varies by framework](https://decapcms.org/docs/install-decap-cms/), so adjust the path accordingly. For example, if you use Astro, the file is typically located in the `/public/admin/` directory.
 
-If you use another code editor, check its documentation for how to enable JSON schema validation and autocomplete for YAML or JSON files. The schema URL is `https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json`.
+If you use another code editor, check its documentation for how to enable JSON schema validation and autocomplete for YAML or JSON files.
 
 ### Providing a JSON configuration file
 
