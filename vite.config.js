@@ -4,6 +4,7 @@ import { cp, mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { sveltePreprocess } from 'svelte-preprocess';
+import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
 
 /**
@@ -59,18 +60,53 @@ const copyPackageFiles = () => ({
 });
 
 /**
- * Generate TypeScript type declaration files from JSDoc comments.
+ * Generate TypeScript type declaration files from JSDoc comments. This produces `main.d.ts` and
+ * `types/public.d.ts`.
+ */
+const generateTypes = async () => {
+  const command =
+    'tsc src/lib/main.js --allowJs --declaration --emitDeclarationOnly --outDir package';
+
+  await new Promise((resolve) => {
+    exec(command, () => {
+      resolve(undefined);
+    });
+  });
+};
+
+/**
+ * Generate JSON schema for the Sveltia CMS site configuration from TypeScript types. This schema is
+ * used to validate the `config.yml` file within VS Code and other tools that support JSON schema
+ * validation.
+ * @see https://www.schemastore.org/netlify.json
+ * @see https://github.com/vega/ts-json-schema-generator
+ */
+const generateSchema = async () => {
+  const config = { path: 'package/types/public.d.ts', type: 'SiteConfig' };
+  const schema = createGenerator(config).createSchema(config.type);
+
+  schema.title = 'Sveltia CMS configuration file';
+  schema.description = 'JSON schema for the Sveltia CMS site configuration.';
+
+  const schemaString = JSON.stringify(schema, null, 2).concat('\n');
+
+  await mkdir('package/schema', { recursive: true });
+  await writeFile('package/schema/sveltia-cms.json', schemaString);
+};
+
+/**
+ * Generate extra files such as TypeScript type declaration and JSON schema.
  * @returns {import('vite').Plugin} Vite plugin.
  */
-const generateTypes = () => ({
-  name: 'generate-types',
+const generateExtraFiles = () => ({
+  name: 'generate-extra-files',
   buildStart: {
-    async: false,
+    async: true,
     sequential: false,
     // eslint-disable-next-line jsdoc/require-jsdoc
-    handler: () => {
-      // Produce `main.d.ts` and `types/public.d.ts`
-      exec('tsc src/lib/main.js --allowJs --declaration --emitDeclarationOnly --outDir package');
+    handler: async () => {
+      await generateTypes();
+      await generateSchema();
     },
   },
 });
@@ -118,7 +154,7 @@ export default defineConfig({
       },
     }),
     copyPackageFiles(),
-    generateTypes(),
+    generateExtraFiles(),
   ],
   test: {
     coverage: {
