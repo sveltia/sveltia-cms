@@ -57,6 +57,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
   - [Updates](#updates)
 - [Tips \& tricks](#tips--tricks)
   - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
+  - [Enabling autocomplete and validation for the configuration file](#enabling-autocomplete-and-validation-for-the-configuration-file)
   - [Providing a JSON configuration file](#providing-a-json-configuration-file)
   - [Providing multiple configuration files](#providing-multiple-configuration-files)
   - [Working around an authentication error](#working-around-an-authentication-error)
@@ -231,6 +232,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better configuration
 
+- We provide [our own JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the YAML configuration file, which enables autocomplete and validation in IDEs such as VS Code.[^253]
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
@@ -743,6 +745,22 @@ If you’ve chosen to install with npm, updating the package is your responsibil
 
 You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
 
+### Enabling autocomplete and validation for the configuration file
+
+Sveltia CMS provides an up-to-date [JSON schema](https://json-schema.org/) for the site configuration file, so you can get autocomplete and validation in your favourite code editor while editing `config.yml`. The JSON schema for Netlify/Decap CMS is incomplete and outdated, so it’s not recommended to use it for Sveltia CMS.
+
+If you use [Visual Studio Code](https://code.visualstudio.com/), you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following to the `.vscode/settings.json` file in your project:
+
+```json
+{
+  "yaml.schemas": {
+    "https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json": ["/static/admin/config.yml"]
+  }
+}
+```
+
+Change the path to your configuration file if it’s not `/static/admin/config.yml`.
+
 ### Providing a JSON configuration file
 
 Sveltia CMS supports a configuration file written in the JSON format in addition to the standard YAML format. This allows developers to programmatically generate the CMS configuration to enable bulk or complex collections. To do this, simply add a `<link>` tag to your HTML, just like a [custom YAML config link](https://decapcms.org/docs/configuration-options/#configuration-file), but with the type `application/json`:
@@ -831,7 +849,7 @@ fields:
 
 ### Adding dividers to the collection list
 
-Sveltia CMS allows developers to add dividers to the collection list to distinguish different types of collections. To do this, insert a fake collection with the `divider: true` option along with a random, unique `name`. In VS Code, you may get a validation error if `config.yml` is treated as a “Netlify YAML config” file. You can work around this by adding an empty `files` list as well:
+Sveltia CMS allows developers to add dividers to the collection list to distinguish different types of collections. To do this, insert a fake collection with the `divider: true` option along with a random, unique `name`. In VS Code, you may get a validation error if `config.yml` is treated as a “Netlify YAML config” file. You can work around this by [using our JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) or adding an empty `files` list:
 
 ```yaml
 collections:
@@ -1461,7 +1479,6 @@ Due early 2026
 - Search enhancements
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - Marketplace for custom widgets, etc.
-- VS Code extension for `config.yml` schema validation
 - Official starter templates for the most popular frameworks, including SvelteKit and Next.js
 - Contributor documentation
 - and so much more!
@@ -1988,3 +2005,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^251]: Netlify/Decap CMS [#6965](https://github.com/decaporg/decap-cms/issues/6965), [#7445](https://github.com/decaporg/decap-cms/issues/7445)
 
 [^252]: Netlify/Decap CMS [#6629](https://github.com/decaporg/decap-cms/issues/6629)
+
+[^253]: Netlify/Decap CMS [#6635](https://github.com/decaporg/decap-cms/issues/6635), [#7006](https://github.com/decaporg/decap-cms/issues/7006), [#7311](https://github.com/decaporg/decap-cms/issues/7311)
