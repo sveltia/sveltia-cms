@@ -85,8 +85,8 @@ const generateSchema = async () => {
   const config = { path: 'package/types/public.d.ts', type: 'SiteConfig' };
   const schema = createGenerator(config).createSchema(config.type);
 
-  schema.title = 'Sveltia CMS configuration file';
-  schema.description = 'JSON schema for the Sveltia CMS site configuration.';
+  schema.title = 'Sveltia CMS Configuration';
+  schema.description = 'Sveltia CMS site configuration file';
 
   const schemaString = JSON.stringify(schema, null, 2).concat('\n');
 
