@@ -122,6 +122,7 @@ export const getField = ({
         field = subFields.find(({ name }) => name === key);
       } else if (types && isNumericKey) {
         // List widget variable types
+        // @ts-ignore
         field = types.find(
           ({ name }) => name === valueMap[[...keyPathArraySub, key, typeKey].join('.')],
         );
