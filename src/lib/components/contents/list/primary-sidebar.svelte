@@ -7,12 +7,13 @@
   import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
   import { allEntries } from '$lib/services/contents';
-  import { getValidCollections, selectedCollection } from '$lib/services/contents/collection';
+  import { selectedCollection } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
-  const collections = $derived(getValidCollections({ visible: true }));
+  // @ts-ignore Dividers can be included in the collection list
+  const collections = $derived($siteConfig?.collections.filter(({ hide }) => !hide) ?? []);
   const singletons = $derived($siteConfig?.singletons ?? []);
 </script>
 
