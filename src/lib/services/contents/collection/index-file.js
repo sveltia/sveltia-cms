@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
 /**
@@ -33,10 +34,9 @@ const getLocalizedLabel = () => {
  * @see https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection
  */
 export const getIndexFile = (collection) => {
-  const { folder, index_file: indexFile } = collection;
-  const isEntryCollection = typeof folder === 'string';
+  const { index_file: indexFile } = collection;
 
-  if (!isEntryCollection || !indexFile) {
+  if (!isEntryCollection(collection) || !indexFile) {
     return undefined;
   }
 

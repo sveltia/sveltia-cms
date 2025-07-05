@@ -1,10 +1,11 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, stripSlashes } from '@sveltia/utils/string';
-import { isValidCollectionFile } from '$lib/services/contents/collection/files';
+import { getValidCollections } from '$lib/services/contents/collection';
+import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
 
 /**
  * @import { AssetFolderInfo, InternalSiteConfig } from '$lib/types/private';
- * @import { CollectionFile } from '$lib/types/public';
+ * @import { CollectionDivider, CollectionFile } from '$lib/types/public';
  */
 
 /**
@@ -105,15 +106,12 @@ const addFolderIfNeeded = (args) => {
  * Iterate through files in a file/singleton collection and add their folders.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {CollectionFile[]} args.files Collection files.
+ * @param {(CollectionFile | CollectionDivider)[]} args.files Collection files. May include
+ * dividers.
  * @param {GlobalFolders} args.globalFolders Global folders information.
  */
 const iterateFiles = ({ collectionName, files, globalFolders }) => {
-  files.forEach((file) => {
-    if (!isValidCollectionFile(file)) {
-      return;
-    }
-
+  getValidCollectionFiles(files).forEach((file) => {
     const {
       name: fileName,
       file: filePath,
@@ -174,9 +172,8 @@ export const getAllAssetFolders = (config) => {
 
   const globalFolders = { globalMediaFolder, globalPublicFolder };
 
-  collections.forEach((collection) => {
+  getValidCollections({ collections }).forEach((collection) => {
     const {
-      divider = false,
       name: collectionName,
       files: collectionFiles,
       // e.g. `content/posts`
@@ -189,10 +186,6 @@ export const getAllAssetFolders = (config) => {
       // `undefined`, `` (an empty string), `{{public_folder}}`, etc. or relative/absolute path
       public_folder: publicFolder,
     } = collection;
-
-    if (divider) {
-      return;
-    }
 
     // When specifying a `path` on an entry collection, `media_folder` defaults to an empty string
     const mediaFolder = _mediaFolder === undefined && entryPath !== undefined ? '' : _mediaFolder;

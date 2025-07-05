@@ -766,9 +766,6 @@
  * format. This overrides the collection-level `frontmatter_delimiter` option. Default: depends on
  * the front matter type.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
- * @property {boolean} [divider] A special option to make this file a divider UI in the singleton
- * file list. Default: `false`. Not supported in a file collection. If `true`, other options will be
- * ignored, but you still have to provide a unique `name`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.
  * @see https://decapcms.org/docs/collection-file/
@@ -888,6 +885,17 @@
  */
 
 /**
+ * A divider in the collection list and singleton list.
+ * @typedef {object} CollectionDivider
+ * @property {string} [name] Unique identifier for the divider. Can be omitted, but it must be
+ * unique across all the collections and singletons. This property is included here because in the
+ * previous version of Sveltia CMS, a divider was defined as a collection with the `divider` option
+ * set to `true`, and the `name` option was required.
+ * @property {boolean} divider Whether to make this collection a divider UI in the collection list.
+ * It must be `true` to be used as a divider.
+ */
+
+/**
  * A raw collection defined in the configuration file. Note: In Sveltia CMS, a folder collection is
  * called an entry collection.
  * @typedef {object} Collection
@@ -949,9 +957,6 @@
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`. DEPRECATED in favor of the global YAML format
  * options.
- * @property {boolean} [divider] A special option to make this collection a divider UI in the
- * collection list. Default: `false`. If `true`, other options will be ignored, but you still have
- * to provide a unique `name`.
  * @property {FieldKeyPath | FieldKeyPath[]} [thumbnail] A field key path to be used to find an
  * entry thumbnail displayed on the entry list. A nested field can be specified using dot notation,
  * e.g. `heroImage.src`. A wildcard in the key path is also supported, e.g. `images.*.src`. Multiple
@@ -1110,10 +1115,11 @@
  * Default: Sveltia logo.
  * @property {boolean} [show_preview_links] Whether to show site preview links. Default: `true`.
  * @property {SlugOptions} [slug] Entry slug options.
- * @property {Collection[]} collections Set of collections.
- * @property {CollectionFile[]} [singletons] Set of singleton files, such as the site configuration
- * file or the homepage file. They are not part of any collection and can be accessed directly
- * through the collection list.
+ * @property {(Collection | CollectionDivider)[]} collections Set of collections. The list can also
+ * contain dividers, which are used to group collections in the collection list.
+ * @property {(CollectionFile | CollectionDivider)[]} [singletons] Set of singleton files, such as
+ * the site configuration file or the homepage file. They are not part of any collection and can be
+ * accessed directly through the collection list. The list can also contain dividers.
  * @property {I18nOptions} [i18n] Global i18n options.
  * @property {EditorOptions} [editor] Editor view options.
  * @property {OutputOptions} [output] Data output options.

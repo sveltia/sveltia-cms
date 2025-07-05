@@ -1,5 +1,5 @@
 <script>
-  import { Divider, Icon, Option } from '@sveltia/ui';
+  import { Icon, Option } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { announcedPageStatus, goto } from '$lib/services/app/navigation';
 
@@ -19,7 +19,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { name, label, icon, divider = false } = $derived(file);
+  const { name, label, icon } = $derived(file);
 
   /** @type {boolean} */
   let selected = $state(false);
@@ -27,34 +27,30 @@
   let wrapper = $state();
 </script>
 
-{#if divider}
-  <Divider />
-{:else}
-  <div class="wrapper" bind:this={wrapper}>
-    <Option
-      bind:selected
-      label={label || name}
-      onSelect={() => {
-        // Announce the selected singleton file. The Content Editor will not open until
-        // the user presses Enter.
-        $announcedPageStatus = $_('singleton_selected_announcement', {
-          values: { file: label || name },
-        });
-      }}
-      onclick={() => {
-        goto(`/collections/_singletons/entries/${name}`, { transitionType: 'forwards' });
-        // Reset the selected state and remove the focused class from the option
-        // @todo Handle this in Sveltia UI
-        selected = false;
-        wrapper?.querySelector('[role="option"]')?.classList.remove('focused');
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name={icon || 'edit_document'} />
-      {/snippet}
-    </Option>
-  </div>
-{/if}
+<div class="wrapper" bind:this={wrapper}>
+  <Option
+    bind:selected
+    label={label || name}
+    onSelect={() => {
+      // Announce the selected singleton file. The Content Editor will not open until
+      // the user presses Enter.
+      $announcedPageStatus = $_('singleton_selected_announcement', {
+        values: { file: label || name },
+      });
+    }}
+    onclick={() => {
+      goto(`/collections/_singletons/entries/${name}`, { transitionType: 'forwards' });
+      // Reset the selected state and remove the focused class from the option
+      // @todo Handle this in Sveltia UI
+      selected = false;
+      wrapper?.querySelector('[role="option"]')?.classList.remove('focused');
+    }}
+  >
+    {#snippet startIcon()}
+      <Icon name={icon || 'edit_document'} />
+    {/snippet}
+  </Option>
+</div>
 
 <style lang="scss">
   .wrapper {

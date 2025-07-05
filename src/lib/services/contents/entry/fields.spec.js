@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { getCollection } from '$lib/services/contents/collection';
+import { getCollection, isEntryCollection } from '$lib/services/contents/collection';
 import {
   fieldConfigCacheMap,
   getField,
@@ -9,9 +9,11 @@ import {
 // Mock dependencies
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
+  isEntryCollection: vi.fn(),
 }));
 
 const mockGetCollection = vi.mocked(getCollection);
+const mockIsEntryCollection = vi.mocked(isEntryCollection);
 
 describe('Test getField()', () => {
   // Comprehensive mock collection that covers all test scenarios
@@ -151,6 +153,11 @@ describe('Test getField()', () => {
     // Clear cache before each test
     fieldConfigCacheMap.clear();
     vi.clearAllMocks();
+
+    // Setup default mock behavior
+    mockIsEntryCollection.mockImplementation(
+      (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
+    );
   });
 
   afterEach(() => {

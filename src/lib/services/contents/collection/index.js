@@ -2,19 +2,23 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import { siteConfig } from '$lib/services/config';
-import { isValidCollectionFile } from '$lib/services/contents/collection/files';
+import {
+  getValidCollectionFiles,
+  isValidCollectionFile,
+} from '$lib/services/contents/collection/files';
 import { getFileConfig } from '$lib/services/contents/file';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
  * @import { Writable } from 'svelte/store';
  * @import {
+ * CollectionType,
  * EntryCollection,
  * FileCollection,
  * InternalCollection,
  * InternalI18nOptions,
  * } from '$lib/types/private';
- * @import { Collection, CollectionFile, FieldKeyPath } from '$lib/types/public';
+ * @import { Collection, CollectionDivider, CollectionFile, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -26,6 +30,95 @@ export const selectedCollection = writable();
  * @type {Map<string, InternalCollection | undefined>}
  */
 export const collectionCacheMap = new Map();
+
+/**
+ * Check if the given collection is an entry collection. An entry collection is defined as one that
+ * has the `folder` property that is a string and does not have the `files` property.
+ * @param {Collection} collection Collection definition.
+ * @returns {boolean} Whether the collection is an entry collection.
+ */
+export const isEntryCollection = (collection) =>
+  typeof collection.folder === 'string' && !Array.isArray(collection.files);
+
+/**
+ * Check if the given collection is a file collection. A file collection is defined as one that has
+ * the `files` property that is an array and does not have the `folder` property.
+ * @param {Collection} collection Collection definition.
+ * @returns {boolean} Whether the collection is a file collection.
+ */
+export const isFileCollection = (collection) =>
+  collection.folder === undefined && Array.isArray(collection.files);
+
+/**
+ * Check if the given collection is a singleton collection. A singleton collection is a special type
+ * of file collection that has the name `_singletons`.
+ * @param {Collection} collection Collection definition.
+ * @returns {boolean} Whether the collection is a singleton collection.
+ */
+export const isSingletonCollection = (collection) =>
+  isFileCollection(collection) && collection.name === '_singletons';
+
+/**
+ * Check if the given collection is a valid entry or file collection. A valid collection must have a
+ * `folder` property for entry collections or a `files` property for file collections. It must not
+ * be a divider.
+ * @param {Collection | CollectionDivider} collection Collection definition or divider.
+ * @param {object} [options] Filter options.
+ * @param {boolean} [options.visible] Whether to filter out hidden collections. Defaults to `false`.
+ * @param {CollectionType} [options.type] Type of collections to filter by. If provided, only
+ * collections of this type will be returned.
+ * @returns {boolean} Whether the collection is valid.
+ */
+export const isValidCollection = (collection, { visible = undefined, type = undefined } = {}) => {
+  if ('divider' in collection) {
+    return false;
+  }
+
+  if (visible && collection.hide) {
+    return false;
+  }
+
+  if (type === 'entry') {
+    return isEntryCollection(collection);
+  }
+
+  if (type === 'file') {
+    return isFileCollection(collection);
+  }
+
+  if (type === 'singleton') {
+    return isSingletonCollection(collection);
+  }
+
+  return isEntryCollection(collection) || isFileCollection(collection);
+};
+
+/**
+ * Get a list of valid collections from the given collection definitions. This filters out dividers
+ * and invalid collections that do not have a `folder` property for entry collections or a `files`
+ * property for file collections.
+ * @param {object} [options] Options.
+ * @param {(Collection | CollectionDivider)[]} [options.collections] Collection definitions. May
+ * include dividers. Defaults to the collections defined in the site configuration.
+ * @param {boolean} [options.visible] Whether to filter out hidden collections. Defaults to `false`.
+ * @param {CollectionType} [options.type] Type of collections to filter by. If provided, only
+ * collections of this type will be returned.
+ * @returns {Collection[]} List of valid collections.
+ */
+export const getValidCollections = ({
+  collections = get(siteConfig)?.collections ?? [],
+  visible,
+  type,
+} = {}) =>
+  /** @type {Collection[]} */ (
+    collections.filter((collection) => isValidCollection(collection, { visible, type }))
+  );
+
+/**
+ * Get the first visible entry collection or file collection in the collection list.
+ * @returns {Collection | undefined} Found collection.
+ */
+export const getFirstCollection = () => getValidCollections({ visible: true })[0];
 
 /**
  * Get a list of field key paths to be used to find an entry thumbnail.
@@ -82,7 +175,7 @@ const parseEntryCollection = (rawCollection, _i18n) => ({
 const parseFileCollection = (rawCollection, _i18n, files) => ({
   ...rawCollection,
   _i18n,
-  _type: rawCollection.name === '_singletons' ? 'singleton' : 'file',
+  _type: isSingletonCollection(rawCollection) ? 'singleton' : 'file',
   _fileMap: Object.fromEntries(
     files.filter(isValidCollectionFile).map((file) => {
       const __i18n = getI18nConfig(rawCollection, file);
@@ -107,8 +200,7 @@ export const getSingletonCollection = () => {
     return undefined;
   }
 
-  const files = singletons
-    .filter((file) => isValidCollectionFile(file))
+  const files = getValidCollectionFiles(singletons) //
     .map((file) => ({ ...file, file: stripSlashes(file.file) }));
 
   if (!files.length) {
@@ -143,12 +235,12 @@ export const getCollection = (name) => {
     return collection;
   }
 
-  const rawCollection = get(siteConfig)?.collections.find((c) => c.name === name);
-  const isEntryCollection = typeof rawCollection?.folder === 'string';
-  const isFileCollection = !isEntryCollection && Array.isArray(rawCollection?.files);
+  const rawCollection = getValidCollections().find((c) => c.name === name);
+  const _isEntryCollection = rawCollection ? isEntryCollection(rawCollection) : false;
+  const _isFileCollection = rawCollection ? isFileCollection(rawCollection) : false;
 
   // Ignore invalid collection
-  if (!isEntryCollection && !isFileCollection) {
+  if (!rawCollection || (!_isEntryCollection && !_isFileCollection)) {
     collectionCacheMap.set(name, undefined);
 
     return undefined;
@@ -157,7 +249,7 @@ export const getCollection = (name) => {
   const { folder, files = [] } = rawCollection;
 
   // Normalize folder/file paths by removing leading/trailing slashes
-  if (isEntryCollection) {
+  if (_isEntryCollection) {
     rawCollection.folder = stripSlashes(/** @type {string} */ (folder));
   } else {
     files.forEach((f) => {
@@ -169,7 +261,7 @@ export const getCollection = (name) => {
 
   const _i18n = getI18nConfig(rawCollection);
 
-  const collection = isEntryCollection
+  const collection = _isEntryCollection
     ? parseEntryCollection(rawCollection, _i18n)
     : parseFileCollection(rawCollection, _i18n, files);
 
@@ -217,10 +309,3 @@ export const getCollectionIndex = (collectionName) => {
 
   return get(siteConfig)?.collections.findIndex(({ name }) => name === collectionName) ?? -1;
 };
-
-/**
- * Get the first visible entry collection or file collection in the collection list.
- * @returns {Collection | undefined} Found collection.
- */
-export const getFirstCollection = () =>
-  get(siteConfig)?.collections.find((c) => !c.hide && !c.divider);

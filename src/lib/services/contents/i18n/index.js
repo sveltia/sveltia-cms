@@ -2,6 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 import { locale as appLocale } from 'svelte-i18n';
 import { siteConfig } from '$lib/services/config';
+import { isSingletonCollection } from '$lib/services/contents/collection';
 
 /**
  * @import {
@@ -47,7 +48,7 @@ export const getI18nConfig = (collection, file) => {
 
     // Check if the collection has its own i18n configuration. The singleton collection doesn’t have
     // its own i18n configuration, so it will inherit the global one if defined.
-    if (collection.i18n || collection.name === '_singletons') {
+    if (collection.i18n || isSingletonCollection(collection)) {
       if (isObject(collection.i18n)) {
         Object.assign(config, collection.i18n);
       }

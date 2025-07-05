@@ -1,5 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 
 /**
@@ -188,15 +189,15 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     yaml_quote: yamlQuote,
   } = rawCollection;
 
-  const isEntryCollection = typeof folder === 'string';
+  const _isEntryCollection = isEntryCollection(rawCollection);
   const filePath = file?.file ? stripSlashes(file.file) : undefined;
   const __extension = filePath ? getPathInfo(filePath).extension : _extension;
   const __format = file?.format ?? _format;
   const extension = detectFileExtension({ format: __format, extension: __extension });
   const format = detectFileFormat({ format: __format, extension });
   const delimiter = file?.frontmatter_delimiter ?? _delimiter;
-  const basePath = isEntryCollection ? stripSlashes(folder) : undefined;
-  const indexFileName = isEntryCollection ? getIndexFile(rawCollection)?.name : undefined;
+  const basePath = _isEntryCollection ? stripSlashes(/** @type {string} */ (folder)) : undefined;
+  const indexFileName = _isEntryCollection ? getIndexFile(rawCollection)?.name : undefined;
 
   if (yamlQuote !== undefined && !yamlQuoteWarnedOnce) {
     yamlQuoteWarnedOnce = true;
@@ -212,7 +213,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     extension,
     format,
     basePath,
-    subPath: isEntryCollection ? subPath : undefined,
+    subPath: _isEntryCollection ? subPath : undefined,
     fullPathRegEx:
       basePath !== undefined
         ? getEntryPathRegEx({ extension, format, basePath, subPath, indexFileName, _i18n })

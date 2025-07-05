@@ -4,15 +4,10 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$lib/services/app/navigation';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
-  import { siteConfig } from '$lib/services/config';
+  import { getValidCollections } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
-  const entryCollections = $derived(
-    ($siteConfig?.collections ?? []).filter(
-      ({ folder, hide = false, divider = false }) =>
-        typeof folder === 'string' && !hide && !divider,
-    ),
-  );
+  const entryCollections = $derived(getValidCollections({ visible: true, type: 'entry' }));
 </script>
 
 <MenuButton

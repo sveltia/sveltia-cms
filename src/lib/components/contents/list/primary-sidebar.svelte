@@ -7,12 +7,12 @@
   import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
   import { allEntries } from '$lib/services/contents';
-  import { selectedCollection } from '$lib/services/contents/collection';
+  import { getValidCollections, selectedCollection } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
-  const collections = $derived($siteConfig?.collections.filter(({ hide }) => !hide) ?? []);
+  const collections = $derived(getValidCollections({ visible: true }));
   const singletons = $derived($siteConfig?.singletons ?? []);
 </script>
 
@@ -28,11 +28,10 @@
   {/if}
   <Listbox aria-label={$_('collection_list')} aria-controls="collection-container">
     <OptionGroup label={$_('collections')}>
-      {#each collections as { name, label, icon, files, divider = false } (name)}
+      {#each collections as collection, index (collection.name ?? index)}
         {#await sleep() then}
-          {#if divider}
-            <Divider />
-          {:else}
+          {#if !('divider' in collection)}
+            {@const { name, label, icon, files } = collection}
             <Option
               label={label || name}
               selected={$isSmallScreen ? false : $selectedCollection?.name === name}
@@ -58,6 +57,8 @@
                 {/key}
               {/snippet}
             </Option>
+          {:else if collection.divider}
+            <Divider />
           {/if}
         {/await}
       {/each}
@@ -65,9 +66,13 @@
     {#if singletons.length}
       <!-- Use the user-friendly “Files” label instead of “Singletons” -->
       <OptionGroup label={$_('files')}>
-        {#each singletons as file (file.name)}
+        {#each singletons as file, index (file.name ?? index)}
           {#await sleep() then}
-            <SingletonOption {file} />
+            {#if !('divider' in file)}
+              <SingletonOption {file} />
+            {:else if file.divider}
+              <Divider />
+            {/if}
           {/await}
         {/each}
       </OptionGroup>

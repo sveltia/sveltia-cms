@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { getCollection } from '$lib/services/contents/collection';
+import { getCollection, getValidCollections } from '$lib/services/contents/collection';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 /**
@@ -11,17 +11,27 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * InternalCollectionFile,
  * InternalSiteConfig,
  * } from '$lib/types/private';
- * @import { CollectionFile } from '$lib/types/public';
+ * @import { CollectionDivider, CollectionFile } from '$lib/types/public';
  */
 
 /**
  * Check if the given collection file is valid. A valid file must have a string `file` property, not
  * be a `divider`, and have `fields` defined as an array.
- * @param {CollectionFile} file File definition.
+ * @param {CollectionFile | CollectionDivider} file File definition or divider.
  * @returns {boolean} Whether the file is valid.
  */
 export const isValidCollectionFile = (file) =>
-  typeof file.file === 'string' && !file.divider && Array.isArray(file.fields);
+  !('divider' in file) && typeof file.file === 'string' && Array.isArray(file.fields);
+
+/**
+ * Get a list of valid collection files from the given file definitions. This filters out dividers
+ * and invalid files that do not have a string `file` property or do not have `fields` defined as an
+ * array.
+ * @param {(CollectionFile | CollectionDivider)[]} files File definitions. May include dividers.
+ * @returns {CollectionFile[]} List of valid collection files.
+ */
+export const getValidCollectionFiles = (files) =>
+  /** @type {CollectionFile[]} */ (files.filter((file) => isValidCollectionFile(file)));
 
 /**
  * Get a file in a file/singleton collection by its name.
@@ -94,11 +104,15 @@ export const getCollectionFileIndex = (collectionName, fileName) => {
     const { collections, singletons } = /** @type {InternalSiteConfig} */ (get(siteConfig));
 
     if (collectionName === '_singletons') {
-      return singletons?.findIndex(({ name }) => name === fileName) ?? -1;
+      if (Array.isArray(singletons)) {
+        return getValidCollectionFiles(singletons).findIndex((file) => file.name === fileName);
+      }
+
+      return -1;
     }
 
     return (
-      collections
+      getValidCollections({ collections })
         .find(({ name }) => name === collectionName)
         ?.files?.findIndex(({ name }) => name === fileName) ?? -1
     );

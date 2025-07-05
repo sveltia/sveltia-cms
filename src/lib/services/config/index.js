@@ -161,7 +161,7 @@ export const initSiteConfig = async (manualConfig) => {
 
     // Handle root collection folder variants, particularly for VitePress
     config.collections.forEach((collection) => {
-      if (collection.folder === '.' || collection.folder === '/') {
+      if ('folder' in collection && (collection.folder === '.' || collection.folder === '/')) {
         collection.folder = '';
       }
     });

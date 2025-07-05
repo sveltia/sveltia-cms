@@ -1,5 +1,9 @@
 import { compare, stripSlashes } from '@sveltia/utils/string';
-import { isValidCollectionFile } from '$lib/services/contents/collection/files';
+import { getValidCollections } from '$lib/services/contents/collection';
+import {
+  getValidCollectionFiles,
+  isValidCollectionFile,
+} from '$lib/services/contents/collection/files';
 import { getI18nConfig } from '$lib/services/contents/i18n';
 
 /**
@@ -61,8 +65,7 @@ const compareFilePath = (a, b) =>
  * @returns {EntryFolderInfo[]} Entry folders.
  */
 const getEntryCollectionFolders = ({ collections }) =>
-  collections
-    .filter(({ folder }) => typeof folder === 'string')
+  getValidCollections({ collections, type: 'entry', visible: true })
     .map((collection) => {
       const { name: collectionName, folder } = collection;
       const folderPath = stripSlashes(/** @type {string} */ (folder));
@@ -88,8 +91,7 @@ const getEntryCollectionFolders = ({ collections }) =>
  * @returns {EntryFolderInfo[]} Entry folders.
  */
 const getFileCollectionFolders = ({ collections }) =>
-  collections
-    .filter(({ files }) => Array.isArray(files))
+  getValidCollections({ collections, type: 'file', visible: true })
     .map((collection) =>
       (collection.files ?? []).map((file) => getCollectionFileFolder(collection, file)),
     )
@@ -103,13 +105,15 @@ const getFileCollectionFolders = ({ collections }) =>
  * @returns {EntryFolderInfo[]} Entry folders.
  */
 const getSingletonCollectionFolders = ({ singletons }) => {
-  if (!Array.isArray(singletons) || !singletons.length) {
+  const files = Array.isArray(singletons) ? getValidCollectionFiles(singletons) : [];
+
+  if (!files.length) {
     return [];
   }
 
-  const singletonCollection = { name: '_singletons', files: singletons };
+  const singletonCollection = { name: '_singletons', files };
 
-  return singletons
+  return files
     .map((file) => getCollectionFileFolder(singletonCollection, file))
     .filter((file) => !!file)
     .sort(compareFilePath);
