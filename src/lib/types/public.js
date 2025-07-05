@@ -55,7 +55,7 @@
  * Raster image transformation options.
  * @typedef {object} RasterImageTransformationOptions
  * @property {RasterImageConversionFormat} [format] New format. Default: `webp`.
- * @property {number} [quality] Image quality between 0 and 100. Default: 85.
+ * @property {number} [quality] Image quality between 0 and 100. Default: `85`.
  * @property {number} [width] Max width. Default: original width.
  * @property {number} [height] Max height. Default: original height.
  */
@@ -492,8 +492,8 @@
  * @property {'map'} widget Widget name.
  * @property {string} [default] Default value. Accepts a stringified single GeoJSON geometry object
  * that contains `type` and `coordinates` properties.
- * @property {number} [decimals] Precision of coordinates to be saved. Default: 7.
- * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: Point.
+ * @property {number} [decimals] Precision of coordinates to be saved. Default: `7`.
+ * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: `Point`.
  * @see https://decapcms.org/docs/widgets/#map
  */
 
@@ -555,9 +555,9 @@
  * @property {'number'} widget Widget name.
  * @property {number | string} [default] Default value.
  * @property {'int' | 'float' | string} [value_type] Type of value to be saved. Default: `int`.
- * @property {number} [min] Minimum value that can be entered in the input. Default: undefined.
- * @property {number} [max] Maximum value that can be entered in the input. Default: undefined.
- * @property {number} [step] Number to increase/decrease with the arrow key/button. Default: 1.
+ * @property {number} [min] Minimum value that can be entered in the input. Default: `-Infinity`.
+ * @property {number} [max] Maximum value that can be entered in the input. Default: `Infinity`.
+ * @property {number} [step] Number to increase/decrease with the arrow key/button. Default: `1`.
  * @see https://decapcms.org/docs/widgets/#number
  */
 
@@ -643,7 +643,7 @@
  * @property {'string'} [widget] Widget name.
  * @property {string} [default] Default value.
  * @property {'text' | 'url' | 'email'} [type] Data type. It’s useful when the input value needs a
- * validation. Default: text.
+ * validation. Default: `text`.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {string} [suffix] A string to be appended to the value. Default: empty string.
  * @see https://decapcms.org/docs/widgets/#string
@@ -696,7 +696,7 @@
  * Custom field properties.
  * @typedef {object} CustomFieldProps
  * @property {string} widget Widget name.
- * @see https://decapcms.org/docs/widgets/#image
+ * @see https://decapcms.org/docs/custom-widgets/
  */
 
 /**
@@ -1027,7 +1027,7 @@
  * backends only.
  * @property {boolean} [automatic_deployments] Whether to enable or disable automatic deployments
  * with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `false`, the
- * `[skip ci]` prefix will be added to commit messages. Git backends only. Default: undefined. See
+ * `[skip ci]` prefix will be added to commit messages. Git backends only. Default: `undefined`. See
  * https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments for details.
  * @see https://decapcms.org/docs/backends-overview/
  * @see https://decapcms.org/docs/github-backend/
@@ -1057,14 +1057,14 @@
  * JSON format options.
  * @typedef {object} JsonFormatOptions
  * @property {'space' | 'tab'} [indent_style] Indent style. Default: 'space'.
- * @property {number} [indent_size] Indent size. Default: 2.
+ * @property {number} [indent_size] Indent size. Default: `2`.
  * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
  */
 
 /**
  * YAML format options.
  * @typedef {object} YamlFormatOptions
- * @property {number} [indent_size] Indent size. Default: 2.
+ * @property {number} [indent_size] Indent size. Default: `2`.
  * @property {'none' | 'single' | 'double'} [quote] String value’s default quote type. Default:
  * 'none'.
  * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
