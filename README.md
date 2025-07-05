@@ -235,7 +235,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
-- We provide [our own JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in IDEs such as VS Code.[^253]
+- We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in IDEs such as VS Code.[^253]
 - Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
 
 ### Better backend support
@@ -400,8 +400,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS. We have made significant improvements to these widgets while adding some new ones. Support for [custom widgets](https://decapcms.org/docs/custom-widgets/) will be added before the 1.0 release.
 
-Note: The Date widget has been deprecated in Netlify CMS and removed from both Decap CMS and Sveltia CMS in favour of the DateTime widget, as noted in the [Compatibility](#compatibility) section.
-
 - Boolean
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error.[^45]
   - An optional Boolean field with no default value is also saved as `false` by default, rather than nothing.[^46]
@@ -438,7 +436,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
 - Map
   - A search bar enables users to quickly locate a specific place on the map.[^252]
-  - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), it’s possible to use the current location.
+  - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), users can get their current location.
   - The value can be cleared if the field is optional.
   - The map’s zoom level is adjusted more intuitively using pinch gestures.
   - The map looks good in dark mode.
@@ -569,7 +567,7 @@ Note: The Date widget has been deprecated in Netlify CMS and removed from both D
 
 We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern alternative. It’s ready to be used as a drop-in replacement for Netlify/Decap CMS in some casual use case scenarios with a [single line of code update](#migration).
 
-However, 100% feature parity is not planned, and some features are still missing or will not be added due to performance, deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
+However, 100% feature parity is never planned, and some features are still missing or will not be added due to performance, deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
 
 ### Features not to be implemented
 
@@ -600,7 +598,7 @@ However, 100% feature parity is not planned, and some features are still missing
 
 ### Current limitations
 
-These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due late 2025. Check the [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due late 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
@@ -646,7 +644,7 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 
 While Sveltia CMS is built with Svelte, the application is **framework-agnostic**. It’s a small, compiled, vanilla JavaScript bundle that manages content in a Git repository directly via an API. It doesn’t interact with the framework that builds your site.
 
-You can use the CMS with any framework or static site generator (SSG) that loads static files during the build process. This includes Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit, VitePress, and [more](https://decapcms.org/docs/install-decap-cms/).
+As with Netlify/Decap CMS, you can use Sveltia CMS with any framework or static site generator (SSG) that loads static files during the build process. This includes Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit, VitePress, and [more](https://decapcms.org/docs/install-decap-cms/).
 
 We have added support for features and file structures used in certain frameworks and i18n libraries, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, i18n support for Astro and Zola, and [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific requirements.
 
@@ -752,9 +750,9 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Enabling autocomplete and validation for the configuration file
 
-Sveltia CMS provides a [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest version of Sveltia CMS. It’s available at `https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json`.
+Sveltia CMS provides a [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest CMS version.
 
-If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following to your project’s [VS Code settings file](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) (`.vscode/settings.json`):
+If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following to your project’s [VS Code settings file](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) at `.vscode/settings.json`:
 
 ```json
 {
@@ -777,9 +775,9 @@ If your configuration is in JSON format (see the [next section](#providing-a-jso
 }
 ```
 
-The configuration file location [varies by framework](https://decapcms.org/docs/install-decap-cms/), so adjust the path accordingly. For example, if you use Astro, the file is typically located in the `/public/admin/` directory.
+The configuration file location varies by framework and project structure, so adjust the path accordingly. For example, if you use Astro, the file is typically located in the `/public/admin/` directory.
 
-If you use another code editor, check its documentation for how to enable JSON schema validation and autocomplete for YAML or JSON files.
+If you use another code editor, check its documentation for how to enable JSON schema support for YAML or JSON files. The schema URL is `https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json`.
 
 ### Providing a JSON configuration file
 
@@ -953,7 +951,7 @@ index_file:
     preview: false # Hide the preview pane if needed. Default: true
 ```
 
-If the regular entry fields and index file fields are identical and you don’t need any options, simply write:
+If your regular entry fields and index file fields are identical and you don’t need any options, simply write:
 
 ```yaml
 index_file: true
@@ -963,7 +961,7 @@ Note that the special index file is placed right under the `folder`, regardless 
 
 ### Using singletons
 
-The singleton collection is an unnamed, non-nested variant of a [file collection](https://decapcms.org/docs/collection-file/) that can be used to manage static data files. Singleton files appear in the content library’s sidebar under the “Files” group, and users can open the Content Editor directly without navigating to a file list.
+The singleton collection is an unnamed, non-nested variant of a [file collection](https://decapcms.org/docs/collection-file/) that can be used to manage static data files. Singleton files appear in the content library’s sidebar under the Files group, and users can open the Content Editor directly without navigating to a file list.
 
 To create this special file collection, add the new `singletons` option, along with an array of file definitions, to the root level of your site configuration:
 
@@ -1492,7 +1490,7 @@ Due early 2026
 
 ### Future
 
-- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] [manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214),[^125] config editor,[^10] offline support,[^238] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
+- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] [manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214),[^125] [config editor](https://github.com/sveltia/sveltia-cms/discussions/452),[^10] offline support,[^238] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
 - **Sveltia CMS Additions**: edge functions providing features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a Git service account (Git Gateway alternative), API key management, post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation, content writing, translation, etc.
@@ -1505,7 +1503,6 @@ Due early 2026
 
 ## Trivia
 
-- As mentioned in the [Motivation](#motivation) section, Sveltia CMS is a complete rewrite of Netlify CMS. We rarely look at the predecessor’s code and don’t use any of it. This is why Sveltia CMS is free of their bugs.
 - The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. And now we are completely rewriting it in Svelte. So this is effectively the second time the application has gone through a framework migration.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for improved DX, but also for our rapid application development.
 
