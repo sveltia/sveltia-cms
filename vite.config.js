@@ -13,6 +13,7 @@ import { defineConfig } from 'vite';
  */
 const copyPackageFiles = () => ({
   name: 'copy-package-files',
+  apply: 'build',
   buildStart: {
     async: true,
     sequential: false,
@@ -100,6 +101,7 @@ const generateSchema = async () => {
  */
 const generateExtraFiles = () => ({
   name: 'generate-extra-files',
+  apply: 'build',
   buildStart: {
     async: true,
     sequential: false,
