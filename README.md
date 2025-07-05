@@ -867,18 +867,18 @@ fields:
 
 ### Adding dividers to the collection list
 
-Sveltia CMS allows developers to add dividers to the collection list to distinguish different types of collections. To do this, insert a fake collection with the `divider: true` option along with a random, unique `name`. In VS Code, you may get a validation error if `config.yml` is treated as a “Netlify YAML config” file. You can work around this by [using our JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) or adding an empty `files` list:
+With Sveltia CMS, developers can add dividers to the collection list to distinguish between different types of collections. To do so, insert a new item with the `divider` option set to `true`. In VS Code, you may receive a validation error if `config.yml` is treated as a Netlify CMS configuration file. You can resolve this issue by [using our JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file).
 
 ```yaml
 collections:
   - name: products
     ...
   - divider: true
-    name: d1 # d2, d3, etc. Should be unique for each divider
-    files: []
   - name: pages
     ...
 ```
+
+The [singleton collection](#using-singletons) also supports dividers.
 
 ### Using a custom media folder for a collection
 
@@ -987,8 +987,7 @@ singletons:
     file: content/home.yaml
     icon: home # You can specify an icon
     ...
-  - name: divider-1
-    divider: true # You can also add dividers
+  - divider: true # You can also add dividers
   - name: settings
     label: Site Settings
     file: content/settings.yaml
