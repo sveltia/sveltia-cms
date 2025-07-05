@@ -123,7 +123,7 @@
  * @property {boolean} [use_transformations] Whether to include transformation segments in an output
  * URL. Default: `true`.
  * @property {boolean} [use_secure_url] Whether to use an HTTP URL. Default: `true`.
- * @property {Record<string, any>} [config] Options to be passed to Uploadcare, such as `multiple`.
+ * @property {Record<string, any>} [config] Options to be passed to Cloudinary, such as `multiple`.
  * The `cloud_name` and `api_key` options are required for the global `media_library` option. See
  * https://cloudinary.com/documentation/media_library_widget#2_set_the_configuration_options for a
  * full list of available options.
@@ -251,8 +251,8 @@
 /**
  * Options for a field accepting multiple values.
  * @typedef {object} MultiValueFieldProps
- * @property {number} [min] Minimum number of items that can be added. Default: 0.
- * @property {number} [max] Maximum number of items that can be added. Default: infinity.
+ * @property {number} [min] Minimum number of items that can be added. Default: `0`.
+ * @property {number} [max] Maximum number of items that can be added. Default: `Infinity`.
  */
 
 /**
@@ -260,11 +260,11 @@
  * @typedef {object} MultiOptionFieldProps
  * @property {boolean} [multiple] Whether to accept multiple values. Default: `false`.
  * @property {number} [min] Minimum number of items that can be selected. Ignored if `multiple` is
- * `false`. Default: 0.
+ * `false`. Default: `0`.
  * @property {number} [max] Maximum number of items that can be selected. Ignored if `multiple` is
- * `false`. Default: infinity.
+ * `false`. Default: `Infinity`.
  * @property {number} [dropdown_threshold] Maximum number of options to be displayed as radio
- * buttons (single-select) or checkboxes (multi-select) rather than a dropdown list. Default: 5.
+ * buttons (single-select) or checkboxes (multi-select) rather than a dropdown list. Default: `5`.
  */
 
 /**
@@ -303,9 +303,9 @@
  * Options for a field with a string-type input UI that counts the number of characters.
  * @typedef {object} CharCountProps
  * @property {number} [minlength] Minimum number of characters that can be entered in the input.
- * Default: 0.
+ * Default: `0`.
  * @property {number} [maxlength] Maximum number of characters that can be entered in the input.
- * Default: infinity.
+ * Default: `Infinity`.
  * @see https://github.com/sveltia/sveltia-cms/issues/141
  */
 
@@ -851,7 +851,7 @@
  * Nested collection options.
  * @typedef {object} NestedCollectionOptions
  * @property {number} [depth] Maximum depth to show nested items in the collection tree. Default:
- * infinity.
+ * `Infinity`.
  * @property {string} [summary] Summary template for a tree item. Default: `{{title}}`.
  * @see https://decapcms.org/docs/collection-nested/
  */
@@ -926,7 +926,7 @@
  * @property {string} [slug] Item slug template. Entry collection only. Default: `identifier_field`
  * option value.
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
- * Entry collection only. Default: infinity.
+ * Entry collection only. Default: `Infinity`.
  * @property {string} [summary] Entry summary template. Entry collection only. Default:
  * `identifier_field`.
  * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Entry
@@ -958,7 +958,7 @@
  * key paths can be specified as an array for fallbacks. If this option is omitted, the `name` of
  * any non-nested, non-empty field using the Image or File widget is used. Entry collection only.
  * @property {number} [limit] The maximum number of entries that can be created in the collection.
- * Entry collection only. Default: infinity.
+ * Entry collection only. Default: `Infinity`.
  * @see https://decapcms.org/docs/configuration-options/#collections
  * @see https://decapcms.org/docs/collection-folder/
  * @see https://decapcms.org/docs/collection-file/
