@@ -715,7 +715,7 @@ You can now open `https://[hostname]/admin/` as usual to start editing. There is
 
 #### Editing the configuration file
 
-For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. If you have the YAML extension installed, VS Code may automatically apply the Netlify CMS schema to `config.yml`. To use the Sveltia CMS schema instead, you need to specify its URL.
+For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. If you have the YAML extension installed, VS Code may automatically apply the outdated Netlify CMS config schema to `config.yml`. To use the latest Sveltia CMS config schema instead, you need to specify its URL.
 
 #### Migrating from Git Gateway backend
 
