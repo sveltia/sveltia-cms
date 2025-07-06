@@ -1208,6 +1208,7 @@ collections:
       - name: members
         label: Member List
         file: _data/members.yml
+        icon: group
         fields:
           - name: members
             label: Members
@@ -1221,13 +1222,34 @@ collections:
                 label: GitHub account
 ```
 
-Note: The `root` option is ignored if the collection or collection file contains multiple fields. You can still have subfields under the List field.
+It also works with a [singleton](#using-singletons):
+
+```yaml
+singletons:
+  - name: members
+    label: Member List
+    file: _data/members.yml
+    icon: group
+    fields:
+      - name: members
+        label: Members
+        label_singular: Member
+        widget: list
+        root: true # This does the trick
+        fields:
+          - name: name
+            label: Name
+          - name: github
+            label: GitHub account
+```
+
+Note: The `root` option is ignored if the file or singleton contains multiple fields. You can still have subfields under the List field.
 
 ### Changing the input type of a DateTime field
 
 It may be worth mentioning this topic here because the current [Decap CMS doc about the DateTime widget](https://decapcms.org/docs/widgets/#datetime) is unclear. By default, a DateTime field lets users pick both [date and time](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local), but developers can change the input type if needed.
 
-Use `time_format: false` to hide the time picker and make the input [date only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date):
+Set `time_format` to `false` to hide the time picker and make the input [date only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date):
 
 ```yaml
 - label: Start Date
@@ -1236,7 +1258,7 @@ Use `time_format: false` to hide the time picker and make the input [date only](
   time_format: false
 ```
 
-Use `date_format: false` to hide the date picker and make the input [time only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time):
+Set `date_format` to `false` to hide the date picker and make the input [time only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time):
 
 ```yaml
 - label: Start Time
@@ -1245,7 +1267,7 @@ Use `date_format: false` to hide the date picker and make the input [time only](
   date_format: false
 ```
 
-We understand that this configuration may be a bit confusing, but it’s necessary to maintain backward compatibility with Netlify CMS. We plan to improve the widget options and introduce new input types: year, [month](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/month) and [week](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/week).
+We understand that this configuration may be a bit confusing, but it’s necessary to maintain backward compatibility with Netlify CMS. We plan to add the `type` option to the DateTime widget and introduce new input types: year, [month](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/month) and [week](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/week).
 
 ### Rendering soft line breaks as hard line breaks in Markdown
 
