@@ -3,12 +3,14 @@
  */
 
 /**
- * The following type definitions are used both internally and externally, covering all the CMS
- * configuration options and JavaScript method arguments available on the `CMS` object. This file is
- * automatically converted into a TypeScript type declaration file (`public.d.ts`) during the build
- * process, which is then distributed via npm. The Netlify/Decap CMS equivalent can be found below,
- * although their types are incomplete and somewhat inaccurate.
+ * The following type definitions written in TypeScript-flavored JSDoc are used both internally and
+ * externally, covering all the CMS configuration options and JavaScript method arguments available
+ * on the `CMS` object. This file is automatically converted into a TypeScript type declaration file
+ * (`public.d.ts`) and JSON schema (`sveltia-cms.json`) during the build process (see
+ * `vite.config.js`), which are then distributed via npm. The outdated Netlify/Decap CMS equivalents
+ * can be found below.
  * @see https://github.com/decaporg/decap-cms/blob/main/packages/decap-cms-core/index.d.ts
+ * @see https://www.schemastore.org/netlify.json
  */
 
 /**
@@ -178,6 +180,7 @@
  * @property {UploadcareMediaLibrary} [uploadcare] Options for the Uploadcare media library.
  * @property {StockAssetMediaLibrary} [stock_assets] Options for the unified stock photo/video media
  * library.
+ * @see https://github.com/sveltia/sveltia-cms#configuring-multiple-media-libraries
  */
 
 /**
@@ -693,9 +696,18 @@
  */
 
 /**
+ * Name of a built-in widget. Sveltia CMS supports all the built-in widgets provided by Decap CMS as
+ * well as some new widgets.
+ * @typedef {'boolean' | 'code' | 'color' | 'compute' | 'datetime' | 'file' | 'hidden' | 'image' |
+ * 'keyvalue' | 'list' | 'map' | 'markdown' | 'number' | 'object' | 'relation' | 'select' | 'string'
+ * | 'text' | 'uuid'} BuiltInWidgetName
+ * @see https://decapcms.org/docs/widgets/
+ */
+
+/**
  * Custom field properties.
  * @typedef {object} CustomFieldProps
- * @property {string} widget Widget name.
+ * @property {Exclude<string, BuiltInWidgetName>} widget Widget name.
  * @see https://decapcms.org/docs/custom-widgets/
  */
 
@@ -770,10 +782,11 @@
  * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.
  * @see https://decapcms.org/docs/collection-file/
  * @see https://decapcms.org/docs/deploy-preview-links/
+ * @see https://github.com/sveltia/sveltia-cms#using-singletons
  */
 
 /**
- * Supported file extension.
+ * Supported file extension. Actually it can be any string.
  * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html' | string} FileExtension
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
@@ -882,6 +895,7 @@
  * collection `fields` will be used instead.
  * @property {EditorOptions} [editor] Editor view options.
  * @see https://github.com/decaporg/decap-cms/issues/7381
+ * @see https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection
  */
 
 /**
