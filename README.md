@@ -112,7 +112,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, with only occasional releases
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) without looking at the predecessor’s code, while closely monitoring and analyzing their issue tracker. This lets us make [hundreds of improvements](#differentiators) without getting stuck in the old system.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the Netlify/Decap CMS issue tracker. We don’t use any of the predecessor’s code. This allows us to make [hundreds of improvements](#differentiators) without getting stuck in the old system.
 
 While Sveltia CMS was created to replace legacy Netlify CMS instances, it can also be used as an alternative to other Netlify CMS successors. With its [solid i18n support](#better-i18n-support), we’re hoping our product will eventually be an appearing option for anyone looking for a free headless CMS.
 
@@ -229,13 +229,13 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Sveltia CMS also won’t cause peer dependency conflicts mainly due to legacy third-party React UI libraries.[^175][^237] We build the app using [our own Svelte UI component library](https://github.com/sveltia/sveltia-ui) to reduce reliance on third parties.
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from a root-relative URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`) that results in a 404 Not Found error.[^107]
 - The [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) is automatically added to HTML to prevent the admin page from being indexed by search engines.[^174] Developers are still encouraged to manually add `<meta name="robots" content="noindex">` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.
-- Initializing the CMS twice (due to the incorrect or missing placement of `CMS_MANUAL_INIT`) will not result in a `NotFoundError`.[^251]
+- Initializing the CMS twice (due to the incorrect or missing placement of `window.CMS_MANUAL_INIT`) will not result in a `NotFoundError`.[^251]
 
 ### Better configuration
 
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
-- We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in IDEs such as VS Code.[^253]
+- We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other code editors.[^253]
 - Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
 
 ### Better backend support
@@ -257,7 +257,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better i18n support
 
-Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect unparalleled internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for [Mozilla](https://www.mozilla.org/) and currently lives in the [most diverse city in the world](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
+Sveltia CMS has been built with a multilingual architecture from the very beginning. You can expect first-class internationalization (i18n) support, as it’s required by clients of maintainer [@kyoshino](https://github.com/kyoshino), who himself was a long-time Japanese localizer for [Mozilla](https://www.mozilla.org/) and currently lives in the [most diverse city in the world](https://en.wikipedia.org/wiki/Toronto) where 150+ languages are spoken.
 
 - Configuration
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
@@ -279,8 +279,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
   - [Integrates a translation service](#translating-entry-fields-with-one-click) to allow translation of text fields from another locale with one click.
-    - Earlier versions of Sveltia CMS included DeepL integration, but it’s disabled for now [due to an API limitation](https://github.com/sveltia/sveltia-cms/issues/437).
-    - More translation services will be added in the future.
   - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian.[^146]
   - It’s possible to [disable non-default locale content](#disabling-non-default-locale-content).[^15]
   - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
@@ -436,7 +434,7 @@ Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) 
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
 - Map
   - A search bar enables users to quickly locate a specific place on the map.[^252]
-  - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), users can get their current location.
+  - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), users can get their current location with one click.
   - The value can be cleared if the field is optional.
   - The map’s zoom level is adjusted more intuitively using pinch gestures.
   - The map looks good in dark mode.
@@ -632,7 +630,7 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 - I18n support
   - The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `save_all_locales` or `initial_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
 - Widgets
-  - The date/time format options for the DateTime widget are incompatible since Static CMS [switched to date-fns](https://staticjscms.netlify.app/docs/decap-migration-guide#dates) while Sveltia CMS continues to use Moment.js (and will soon switch to Day.js). Update your formats accordingly.
+  - The date/time format options for the DateTime widget are **not compatible** since Static CMS [switched to date-fns](https://staticjscms.netlify.app/docs/decap-migration-guide#dates) while Sveltia CMS continues to use Moment.js (and will soon switch to Day.js). Update your formats accordingly.
   - The KeyValue widget is implemented in Sveltia CMS with the same options.
   - The UUID widget is also implemented, but with different options.
   - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS, respectively. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
@@ -716,7 +714,7 @@ You can now open `https://[hostname]/admin/` as usual to start editing. There is
 
 #### Editing the configuration file
 
-For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. If you have the YAML extension installed, VS Code may automatically apply the Netlify/Decap CMS schema to your YAML configuration file. To use the Sveltia CMS schema instead, you need to specify its URL.
+For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. If you have the YAML extension installed, VS Code may automatically apply the Netlify CMS schema to `config.yml`. To use the Sveltia CMS schema instead, you need to specify its URL.
 
 #### Migrating from Git Gateway backend
 
@@ -740,7 +738,7 @@ For advanced users, we have also made the bundle available as an [npm package](h
 
 Updating Sveltia CMS is transparent, unless you include a specific version in the `<script>` source URL or use the npm package. Whenever you (re)load the CMS, the latest version will be served via [UNPKG](https://unpkg.com/). The CMS also periodically checks for updates and notifies you when a new version is available. After the product reaches GA, you could use a semantic version range (`^1.0.0`) like Netlify/Decap CMS.
 
-If you’ve chosen to install with npm, updating the package is your responsibility. We recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) or a service like [Dependabot](https://github.blog/2020-06-01-keep-all-your-packages-up-to-date-with-dependabot/) to keep dependencies up to date, otherwise you’ll miss important bug fixes and new features.
+If you’ve chosen to install with npm, updating the package is your responsibility. We strongly recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) or a service like [Dependabot](https://github.blog/2020-06-01-keep-all-your-packages-up-to-date-with-dependabot/) to keep dependencies up to date. Otherwise, you’ll miss important bug fixes and new features. (ProTip: We update our dependencies using `ncu -u && pnpm up`.)
 
 ## Tips & tricks
 
@@ -750,7 +748,7 @@ You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](
 
 ### Enabling autocomplete and validation for the configuration file
 
-Sveltia CMS provides a [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest CMS version.
+Sveltia CMS provides a full [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest CMS version.
 
 If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following to your project’s [VS Code settings file](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) at `.vscode/settings.json`:
 
@@ -1023,6 +1021,8 @@ Sveltia CMS comes with a handy Google Cloud Translation API integration so that 
 
 Note that the Translation button on the pane header only translates empty fields, while in-field Translation buttons override any filled text.
 
+Earlier versions of Sveltia CMS included DeepL integration, but it has been disabled [due to an API limitation](https://github.com/sveltia/sveltia-cms/issues/437). More translation services will be added in the future.
+
 ### Localizing entry slugs
 
 In Sveltia CMS, it’s possible to localize entry slugs (filenames) if the i18n structure is `multiple_files` or `multiple_folders`. All you need is the `localize` filter for `slug` template tags:
@@ -1183,7 +1183,7 @@ In case you’re not aware, [WebP](https://developers.google.com/speed/webp) off
 - The `width` and `height` options are the maximum width and height, respectively. If an image is larger than the specified dimension, it will be scaled down. Smaller images will not be resized.
 - File processing is a bit slow on Safari because [native WebP encoding](https://caniuse.com/mdn-api_htmlcanvaselement_toblob_type_parameter_webp) is [not supported](https://bugs.webkit.org/show_bug.cgi?id=183257) and the [jSquash](https://github.com/jamsinclair/jSquash) library is used instead.
 - AVIF conversion is not supported because no browser has native AVIF encoding support ([Chromium won’t fix it](https://issues.chromium.org/issues/40848792)) and the third-party library (and AVIF encoding in general) is very slow.
-- This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process.
+- This feature is not intended for creating image variants in different formats and sizes. It should be done with a framework during the build process. Popular frameworks like [Astro](https://docs.astro.build/en/guides/images/), [Eleventy](https://www.11ty.dev/docs/plugins/image/), [Hugo](https://gohugo.io/content-management/image-processing/), [Next.js](https://nextjs.org/docs/pages/api-reference/components/image) and [SvelteKit](https://svelte.dev/docs/kit/images) have built-in image processing capabilities.
 - We may add more transformation options in the future.
 
 ### Disabling stock assets
@@ -1245,7 +1245,7 @@ Use `date_format: false` to hide the date picker and make the input [time only](
   date_format: false
 ```
 
-We understand that this configuration may be a bit confusing, but it’s necessary to maintain backward compatibility with Netlify CMS. We plan to improve the widget options and introduce new input types: [month](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/month) and [week](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/week).
+We understand that this configuration may be a bit confusing, but it’s necessary to maintain backward compatibility with Netlify CMS. We plan to improve the widget options and introduce new input types: year, [month](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/month) and [week](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/week).
 
 ### Rendering soft line breaks as hard line breaks in Markdown
 
