@@ -959,41 +959,47 @@ Note that the special index file is placed right under the `folder`, regardless 
 
 ### Using singletons
 
-The singleton collection is an unnamed, non-nested variant of a [file collection](https://decapcms.org/docs/collection-file/) that can be used to manage static data files. Singleton files appear in the content library’s sidebar under the Files group, and users can open the Content Editor directly without navigating to a file list.
+The singleton collection is an unnamed, non-nested variant of a [file collection](https://decapcms.org/docs/collection-file/) that can be used to manage a set of pre-defined data files. Singleton files appear in the content library’s sidebar under the Files group, and users can open the Content Editor directly without navigating to a file list.
 
-To create this special file collection, add the new `singletons` option, along with an array of file definitions, to the root level of your site configuration:
+To create this special file collection, add the new `singletons` option, along with an array of file definitions, to the root level of your site configuration.
+
+This is a conventional file collection:
 
 ```yaml
 collections:
-  # A conventional file collection
   - name: data
     label: Data
     files:
       - name: home
         label: Home Page
         file: content/home.yaml
-        ...
+        icon: home
+        fields: ...
       - name: settings
         label: Site Settings
         file: content/settings.yaml
-        ...
+        icon: settings
+        fields: ...
+```
 
-# ... can be converted to the singleton collection
+It can be converted to the singleton collection like this:
+
+```yaml
 singletons:
   - name: home
     label: Home Page
     file: content/home.yaml
-    icon: home # You can specify an icon
-    ...
-  - divider: true # You can also add dividers
+    icon: home
+    fields: ...
+  - divider: true # You can add dividers
   - name: settings
     label: Site Settings
     file: content/settings.yaml
     icon: settings
-    ...
+    fields: ...
 ```
 
-If you want to reference a singleton file with a Relation field, use `_singletons` as the `collection` name.
+If you want to reference a singleton file with a Relation field, use `_singletons` (note an underscore prefix) as the `collection` name.
 
 ### Using keyboard shortcuts
 
