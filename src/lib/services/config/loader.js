@@ -61,6 +61,36 @@ const fetchFile = async ({ href, type = 'application/yaml' }) => {
 };
 
 /**
+ * Get the path to the configuration file. Depending on the server or framework configuration, a
+ * trailing slash may be removed from the CMS `/admin/` URL. In that case, we need to determine the
+ * correct path to the configuration file.
+ * @param {string} path Current `location.pathname` starting with a slash, like `/admin/`, `/admin`,
+ * or `/admin/index.html`.
+ * @returns {string} Path to the configuration file.
+ */
+export const getConfigPath = (path) => {
+  // If the path ends with a slash, like `/admin/`, we can safely assume it is a directory and
+  // append `config.yml`.
+  if (path.endsWith('/')) {
+    return `${path}config.yml`;
+  }
+
+  const parts = path.split('/');
+  const lastPart = parts.pop();
+
+  // If the last part of the path contains a dot, like `/admin/index.html`, we assume it is a file
+  // and append `config.yml` to the directory part of the path. For example, `/admin/index.html`
+  // becomes `/admin/config.yml`.
+  if (lastPart?.includes('.')) {
+    return `${parts.join('/')}/config.yml`;
+  }
+
+  // If the last part does not contain a dot, we assume it is a directory and append `config.yml`.
+  // For example, `/admin` becomes `/admin/config.yml`.
+  return `${path}/config.yml`;
+};
+
+/**
  * Fetch the YAML/JSON site configuration file(s) and return a parsed, merged object.
  * @returns {Promise<object>} Configuration.
  * @throws {Error} When fetching or parsing has failed.
@@ -72,12 +102,7 @@ export const fetchSiteConfig = async () => {
   ]).map(({ href, type }) => ({ href, type }));
 
   if (!links.length) {
-    links.push({
-      // Depending on the server or framework configuration, the trailing slash may be removed from
-      // the CMS `/admin/` URL. In that case, fetch the config file from a root-relative URL instead
-      // of a regular relative URL to avoid 404 Not Found.
-      href: window.location.pathname === '/admin' ? '/admin/config.yml' : './config.yml',
-    });
+    links.push({ href: getConfigPath(window.location.pathname) });
   }
 
   const objects = await Promise.all(links.map((link) => fetchFile(link)));
