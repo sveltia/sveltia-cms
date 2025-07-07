@@ -1,3 +1,4 @@
+import { getHash } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import sanitize from 'sanitize-filename';
@@ -180,4 +181,31 @@ export const resolvePath = (path) => {
   });
 
   return createPath(segments);
+};
+
+/**
+ * Get the size of the given file or blob.
+ * @param {File | Blob | string} input File or Blob object, or a string representing the file
+ * content.
+ * @returns {number} Size of the file in bytes.
+ */
+export const getFileSize = (input) => {
+  const file = typeof input === 'string' ? new Blob([input], { type: 'text/plain' }) : input;
+
+  return file.size;
+};
+
+/**
+ * Get the Git object ID (SHA-1 hash) of the given file or blob.
+ * @param {File | Blob | string} input File or Blob object, or a string representing the file
+ * content.
+ * @returns {Promise<string>} Git object ID (SHA-1 hash) of the file.
+ * @see https://stackoverflow.com/a/68806436
+ * @see https://github.com/Richienb/git-hash-object/blob/master/index.js
+ */
+export const getGitHash = async (input) => {
+  const file = typeof input === 'string' ? new Blob([input], { type: 'text/plain' }) : input;
+  const buffer = await file.arrayBuffer();
+
+  return getHash(new Blob([`blob ${buffer.byteLength}\0`, buffer]));
 };
