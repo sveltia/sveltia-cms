@@ -83,13 +83,22 @@ const generateTypes = async () => {
  * @see https://github.com/vega/ts-json-schema-generator
  */
 const generateSchema = async () => {
-  const config = { path: 'package/types/public.d.ts', type: 'SiteConfig' };
-  const schema = createGenerator(config).createSchema(config.type);
+  const config = {
+    path: 'package/types/public.d.ts',
+    type: 'SiteConfig',
+    // `markdownDescription` is a VS Code schema extension
+    // https://code.visualstudio.com/docs/languages/json#_json-schemas-and-settings
+    markdownDescription: true,
+  };
 
-  schema.title = 'Sveltia CMS Configuration';
-  schema.description = 'Sveltia CMS site configuration file';
+  const schema = {
+    ...createGenerator(config).createSchema(config.type),
+    title: 'Sveltia CMS Configuration',
+    description: 'Sveltia CMS site configuration file',
+  };
 
-  const schemaString = JSON.stringify(schema, null, 2).concat('\n');
+  // Remove unnecessary line breaks in `markdownDescription` originally present in JSDoc
+  const schemaString = JSON.stringify(schema, null, 2).replace(/\\n/g, ' ').concat('\n');
 
   await mkdir('package/schema', { recursive: true });
   await writeFile('package/schema/sveltia-cms.json', schemaString);
