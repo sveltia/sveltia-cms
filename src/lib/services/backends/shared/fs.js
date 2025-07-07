@@ -40,8 +40,10 @@ export const getHandleByPath = async (rootDirHandle, path) => {
   const pathParts = stripSlashes(path).split('/');
   const create = true;
 
-  for (const name of pathParts) {
-    handle = await (name.includes('.')
+  for await (const [index, name] of pathParts.entries()) {
+    // If the name contains a dot and it’s the last part of the path, treat it as a file. Otherwise,
+    // treat it as a directory. This is not a perfect solution, but it works for most cases.
+    handle = await (name.includes('.') && index === pathParts.length - 1
       ? /** @type {FileSystemDirectoryHandle} */ (handle).getFileHandle(name, { create })
       : /** @type {FileSystemDirectoryHandle} */ (handle).getDirectoryHandle(name, { create }));
   }
