@@ -372,7 +372,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Preview Pane comes with a minimal default style.[^168] It looks nice without a custom preview style or template.
 - For better performance, the Preview Pane doesn’t use an `<iframe>`.[^179]
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
-- Field labels will not disappear when a long value is entered into the field.[^254]
+- Field labels will not disappear when a long value is entered into the fields.[^254]
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
   - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option.
   - Our implementation doesn’t cause a module import error[^225] or broken image previews.[^188]
@@ -664,6 +664,7 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 ### Other notes
 
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
+- Some options added during the beta period may be changed or removed when the product reaches GA. While we’ll try to minimize breaking changes, please be aware that some of your configuration may need to be updated.
 
 ## Getting started
 
