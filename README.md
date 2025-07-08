@@ -132,7 +132,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 230+ issues, or 470+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
+  - So far, 230+ issues, or 475+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — Almost there!
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -372,6 +372,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Preview Pane comes with a minimal default style.[^168] It looks nice without a custom preview style or template.
 - For better performance, the Preview Pane doesn’t use an `<iframe>`.[^179]
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
+- Field labels will not disappear when a long value is entered into the field.[^254]
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
   - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option.
   - Our implementation doesn’t cause a module import error[^225] or broken image previews.[^188]
@@ -2052,3 +2053,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^252]: Netlify/Decap CMS [#6629](https://github.com/decaporg/decap-cms/issues/6629)
 
 [^253]: Netlify/Decap CMS [#6635](https://github.com/decaporg/decap-cms/issues/6635), [#7006](https://github.com/decaporg/decap-cms/issues/7006), [#7311](https://github.com/decaporg/decap-cms/issues/7311)
+
+[^254]: Netlify/Decap CMS [#7532](https://github.com/decaporg/decap-cms/issues/7532)
