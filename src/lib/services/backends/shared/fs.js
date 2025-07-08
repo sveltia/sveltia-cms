@@ -27,29 +27,63 @@ import { createPathRegEx } from '$lib/services/utils/file';
  * Get a file or directory handle at the given path.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {string} path Path to the file/directory.
+ * @param {'file' | 'directory'} [type] Type of the handle to retrieve.
  * @returns {Promise<FileSystemFileHandle | FileSystemDirectoryHandle>} Handle.
+ * @throws {Error} If the path is empty and the type is `file`.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/getFileHandle
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/getDirectoryHandle
  */
-export const getHandleByPath = async (rootDirHandle, path) => {
+const getHandleByPath = async (rootDirHandle, path, type = 'file') => {
+  const normalizedPath = stripSlashes(path ?? '');
   /** @type {FileSystemFileHandle | FileSystemDirectoryHandle} */
   let handle = rootDirHandle;
 
-  if (!path) {
-    return handle;
+  if (!normalizedPath) {
+    if (type === 'directory') {
+      return handle;
+    }
+
+    throw new Error('Path is required for file handle retrieval');
   }
 
-  const pathParts = stripSlashes(path).split('/');
+  const pathParts = normalizedPath.split('/');
+  const lastIndex = pathParts.length - 1;
   const create = true;
 
   for await (const [index, name] of pathParts.entries()) {
-    // If the name contains a dot and it’s the last part of the path, treat it as a file. Otherwise,
-    // treat it as a directory. This is not a perfect solution, but it works for most cases.
-    handle = await (name.includes('.') && index === pathParts.length - 1
+    // If the part is the last one and the type is `file`, we need to ensure that we get a file
+    // handle. Otherwise, we can get a directory handle.
+    handle = await (index === lastIndex && type === 'file'
       ? /** @type {FileSystemDirectoryHandle} */ (handle).getFileHandle(name, { create })
       : /** @type {FileSystemDirectoryHandle} */ (handle).getDirectoryHandle(name, { create }));
   }
 
   return handle;
 };
+
+/**
+ * Get a file handle at the given path. This function is used to retrieve a file handle for reading
+ * or writing a file. If the file does not exist, it will be created.
+ * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * @param {string} path Path to the file.
+ * @returns {Promise<FileSystemFileHandle>} Handle.
+ * @throws {Error} If the path is empty.
+ */
+export const getFileHandle = (rootDirHandle, path) =>
+  /** @type {Promise<FileSystemFileHandle>} */ (getHandleByPath(rootDirHandle, path, 'file'));
+
+/**
+ * Get a directory handle at the given path. This function is used to retrieve a directory handle
+ * for reading or writing files within a directory. If the directory does not exist, it will be
+ * created.
+ * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * @param {string} path Path to the directory.
+ * @returns {Promise<FileSystemDirectoryHandle>} Handle.
+ */
+export const getDirectoryHandle = (rootDirHandle, path) =>
+  /** @type {Promise<FileSystemDirectoryHandle>} */ (
+    getHandleByPath(rootDirHandle, path, 'directory')
+  );
 
 /**
  * Create a regular expression that matches the given path, taking template tags into account.
@@ -227,13 +261,10 @@ export const loadFiles = async (rootDirHandle) => {
  */
 const moveFile = async ({ rootDirHandle, previousPath, path }) => {
   const { dirname, basename } = getPathInfo(path);
-
-  const fileHandle = /** @type {FileSystemFileHandle} */ (
-    await getHandleByPath(rootDirHandle, previousPath)
-  );
+  const fileHandle = await getFileHandle(rootDirHandle, previousPath);
 
   if (dirname && dirname !== getPathInfo(previousPath).dirname) {
-    await fileHandle.move(await getHandleByPath(rootDirHandle, dirname), basename);
+    await fileHandle.move(await getDirectoryHandle(rootDirHandle, dirname), basename);
   } else {
     await fileHandle.move(basename);
   }
@@ -252,7 +283,7 @@ const moveFile = async ({ rootDirHandle, previousPath, path }) => {
  * @returns {Promise<File>} Written file.
  */
 const writeFile = async ({ rootDirHandle, fileHandle, path, data }) => {
-  fileHandle ??= /** @type {FileSystemFileHandle} */ (await getHandleByPath(rootDirHandle, path));
+  fileHandle ??= await getFileHandle(rootDirHandle, path);
 
   // The `createWritable` method is not yet supported by Safari
   // @see https://bugs.webkit.org/show_bug.cgi?id=254726
@@ -280,9 +311,7 @@ const writeFile = async ({ rootDirHandle, fileHandle, path, data }) => {
  * @param {string[]} pathSegments Array of directory path segments.
  */
 const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
-  let dirHandle = /** @type {FileSystemDirectoryHandle} */ (
-    await getHandleByPath(rootDirHandle, pathSegments.join('/'))
-  );
+  let dirHandle = await getDirectoryHandle(rootDirHandle, pathSegments.join('/'));
 
   for (;;) {
     /** @type {string[]} */
@@ -299,9 +328,7 @@ const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
     const dirName = /** @type {string} */ (pathSegments.pop());
 
     // Get the parent directory handle
-    dirHandle = /** @type {FileSystemDirectoryHandle} */ (
-      await getHandleByPath(rootDirHandle, pathSegments.join('/'))
-    );
+    dirHandle = await getDirectoryHandle(rootDirHandle, pathSegments.join('/'));
 
     await dirHandle.removeEntry(dirName);
   }
@@ -315,10 +342,7 @@ const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
  */
 const deleteFile = async ({ rootDirHandle, path }) => {
   const { dirname: dirPath = '', basename: fileName } = getPathInfo(stripSlashes(path));
-
-  const dirHandle = /** @type {FileSystemDirectoryHandle} */ (
-    await getHandleByPath(rootDirHandle, dirPath)
-  );
+  const dirHandle = await getDirectoryHandle(rootDirHandle, dirPath);
 
   await dirHandle.removeEntry(fileName);
 

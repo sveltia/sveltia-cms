@@ -1,10 +1,11 @@
-import { getHandleByPath, loadFiles, saveChanges } from '$lib/services/backends/shared/fs';
+import { getDirectoryHandle, loadFiles, saveChanges } from '$lib/services/backends/shared/fs';
 import { dataLoaded } from '$lib/services/contents';
 
 /**
  * @import { BackendService, FileChange, User } from '$lib/types/private';
  */
 
+const ROOT_DIR_NAME = 'sveltia-cms-test';
 const backendName = 'test-repo';
 const label = 'Test';
 /**
@@ -27,9 +28,7 @@ const init = () => undefined;
  */
 const signIn = async () => {
   try {
-    rootDirHandle = /** @type {FileSystemDirectoryHandle} */ (
-      await getHandleByPath(await navigator.storage.getDirectory(), 'sveltia-cms-test')
-    );
+    rootDirHandle = await getDirectoryHandle(await navigator.storage.getDirectory(), ROOT_DIR_NAME);
   } catch {
     // Directory handle could not be acquired for security reasons, but we can ignore the error
   }
