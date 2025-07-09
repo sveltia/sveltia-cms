@@ -113,7 +113,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, with only occasional releases
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the Netlify/Decap CMS issue tracker. We don’t use any of the predecessor’s code. This allows us to make [hundreds of improvements](#differentiators) without getting stuck in the old system.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any of their code. This allows us to make [hundreds of improvements](#differentiators) without getting stuck in the old system.
 
 While Sveltia CMS was created to replace legacy Netlify CMS instances, it can also be used as an alternative to other Netlify CMS successors. With its [solid i18n support](#better-i18n-support), we’re hoping our product will eventually be an appearing option for anyone looking for a free headless CMS.
 
@@ -321,7 +321,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - The `date` transformation returns an empty string if an invalid date is given.[^176]
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
   - Sveltia CMS supports [singletons](#using-singletons), a simple form of a file collection.[^233]
-  - A file collection supports files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_redirects` and `_headers`.
+  - A file collection supports files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_headers` and `_redirects`.
   - The collection `label` defaults to the `name` value according to the [Decap CMS document](https://decapcms.org/docs/configuration-options/#collections), while Netlify/Decap CMS actually throws a configuration error if the `label` option is omitted.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
@@ -374,7 +374,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Preview Pane comes with a minimal default style.[^168] It looks nice without a custom preview style or template.
 - For better performance, the Preview Pane doesn’t use an `<iframe>`.[^179]
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
-- Field labels will not disappear when a long value is entered into the fields.[^254]
+- Entering a long value into a field will not cause the field label to disappear.[^254]
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
   - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option.
   - Our implementation doesn’t cause a module import error[^225] or broken image previews.[^188]
@@ -1209,7 +1209,7 @@ media_libraries:
 
 ### Editing site deployment configuration files
 
-Sveltia CMS allows users to edit files without extensions. Examples include `_headers` and `_redirects`, which are used by some static site hosting providers, such as [Netlify](https://docs.netlify.com/routing/redirects/), [GitLab Pages](https://docs.gitlab.com/user/project/pages/redirects/) and [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/redirects/). Since the `body` field is saved without a field name when using the default `yaml-frontmatter` format, you can use the following configuration to edit these files in the Content Editor:
+Sveltia CMS allows users to edit files without extensions. Examples include `_headers` and `_redirects`, which are used by some static site hosting providers, such as [Netlify](https://docs.netlify.com/routing/redirects/), [GitLab Pages](https://docs.gitlab.com/user/project/pages/redirects/) and [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/redirects/). Since the `body` field is saved without the field name when using the default `yaml-frontmatter` format, you can use the following configuration to edit these files in the Content Editor:
 
 ```yaml
 collections:
@@ -1224,7 +1224,7 @@ collections:
         fields:
           - name: body
             label: Headers
-            widget: code
+            widget: code # Can also be `text`
             output_code_only: true
             allow_language_selection: false
       - name: redirects
@@ -1233,7 +1233,7 @@ collections:
         fields:
           - name: body
             label: Redirects
-            widget: code
+            widget: code # Can also be `text`
             output_code_only: true
             allow_language_selection: false
 ```
@@ -1427,7 +1427,7 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://gitea.com
     ```
-- OpenStreetMap (built-in Map widget)
+- OpenStreetMap: (used in the built-in Map widget)
   - `img-src`
     ```
     https://*.openstreetmap.org
