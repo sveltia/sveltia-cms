@@ -195,7 +195,7 @@ export const createDraft = ({
 
   entryDraft.set({
     createdAt: Date.now(),
-    isNew: isNew && !fileName,
+    isNew,
     isIndexFile,
     canPreview,
     collectionName,
