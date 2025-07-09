@@ -50,7 +50,7 @@ describe('Test getOptions()', async () => {
   const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
   const locale = '_default';
   /** @type {LocalizedEntry} */
-  const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
+  const localizedEntryProps = { slug: '', path: '', content: {} };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,14 +65,12 @@ describe('Test getOptions()', async () => {
   const comprehensiveMemberEntries = [
     {
       id: 'member-1',
-      sha: 'sha123',
       slug: 'melvin-lucas',
       subPath: 'melvin-lucas',
       locales: {
         _default: {
           slug: 'melvin-lucas',
           path: 'melvin-lucas.md',
-          sha: 'sha123',
           content: flatten({
             slug: 'member-melvin-lucas',
             name: {
@@ -123,7 +121,6 @@ describe('Test getOptions()', async () => {
     },
     {
       id: 'member-2',
-      sha: 'sha456',
       slug: 'elsie-mcbride',
       subPath: 'elsie-mcbride',
       locales: {
@@ -154,7 +151,6 @@ describe('Test getOptions()', async () => {
     },
     {
       id: 'member-3',
-      sha: 'sha789',
       slug: 'maxine-field',
       subPath: 'maxine-field',
       locales: {
@@ -185,7 +181,6 @@ describe('Test getOptions()', async () => {
     },
     {
       id: 'member-4',
-      sha: 'sha999',
       slug: 'incomplete-member',
       subPath: 'incomplete-member',
       locales: {
@@ -759,7 +754,6 @@ describe('Test getOptions()', async () => {
       const citiesFileCollectionEntries = [
         {
           id: 'cities-file',
-          sha: 'sha-cities',
           slug: 'cities',
           subPath: 'cities',
           locales: {

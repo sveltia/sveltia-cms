@@ -240,7 +240,6 @@ describe('isCollectionIndexFile()', () => {
     const entry = {
       id: 'entry-1',
       slug: '_index',
-      sha: 'sha123',
       subPath: '_index.md',
       locales: {},
     };
@@ -263,7 +262,6 @@ describe('isCollectionIndexFile()', () => {
     const entry = {
       id: 'entry-1',
       slug: '_index',
-      sha: 'sha123',
       subPath: '_index.md',
       locales: {},
     };
@@ -286,7 +284,6 @@ describe('isCollectionIndexFile()', () => {
     const entry = {
       id: 'entry-1',
       slug: 'regular-post',
-      sha: 'sha123',
       subPath: 'regular-post.md',
       locales: {},
     };
@@ -309,7 +306,6 @@ describe('isCollectionIndexFile()', () => {
     const entry = {
       id: 'entry-1',
       slug: 'home',
-      sha: 'sha123',
       subPath: 'home.md',
       locales: {},
     };
@@ -332,7 +328,6 @@ describe('isCollectionIndexFile()', () => {
     const entry = {
       id: 'entry-1',
       slug: '',
-      sha: 'sha123',
       subPath: '.md',
       locales: {},
     };
@@ -391,14 +386,12 @@ describe('canCreateIndexFile()', () => {
       {
         id: 'entry-1',
         slug: 'post-1',
-        sha: 'sha123',
         subPath: 'post-1.md',
         locales: {},
       },
       {
         id: 'entry-2',
         slug: 'post-2',
-        sha: 'sha456',
         subPath: 'post-2.md',
         locales: {},
       },
@@ -424,14 +417,12 @@ describe('canCreateIndexFile()', () => {
       {
         id: 'entry-1',
         slug: '_index', // Index file already exists
-        sha: 'sha123',
         subPath: '_index.md',
         locales: {},
       },
       {
         id: 'entry-2',
         slug: 'post-1',
-        sha: 'sha456',
         subPath: 'post-1.md',
         locales: {},
       },
@@ -459,14 +450,12 @@ describe('canCreateIndexFile()', () => {
       {
         id: 'entry-1',
         slug: 'home', // Custom index file already exists
-        sha: 'sha123',
         subPath: 'home.md',
         locales: {},
       },
       {
         id: 'entry-2',
         slug: 'post-1',
-        sha: 'sha456',
         subPath: 'post-1.md',
         locales: {},
       },
@@ -494,14 +483,12 @@ describe('canCreateIndexFile()', () => {
       {
         id: 'entry-1',
         slug: 'post-1',
-        sha: 'sha123',
         subPath: 'post-1.md',
         locales: {},
       },
       {
         id: 'entry-2',
         slug: 'post-2',
-        sha: 'sha456',
         subPath: 'post-2.md',
         locales: {},
       },
@@ -543,14 +530,12 @@ describe('canCreateIndexFile()', () => {
       {
         id: 'entry-1',
         slug: '_index',
-        sha: 'sha123',
         subPath: '_index.md',
         locales: {},
       },
       {
         id: 'entry-2',
         slug: '_index', // Duplicate slug (should not happen in practice)
-        sha: 'sha456',
         subPath: '_index.md',
         locales: {},
       },

@@ -292,7 +292,6 @@ describe('getCollectionFilesByEntry()', () => {
           content: {},
         },
       },
-      sha: 'abc123',
       i18n: { defaultLocale: 'en' },
       id: 'test-id',
     };
@@ -343,7 +342,6 @@ describe('getCollectionFilesByEntry()', () => {
           content: {},
         },
       },
-      sha: 'abc123',
       i18n: { defaultLocale: 'en' },
       id: 'test-id',
     };
@@ -373,7 +371,6 @@ describe('getCollectionFilesByEntry()', () => {
           content: {},
         },
       },
-      sha: 'abc123',
       i18n: { defaultLocale: 'en' },
       id: 'test-id',
     };
@@ -419,7 +416,6 @@ describe('getCollectionFileEntry()', () => {
           content: {},
         },
       },
-      sha: 'abc123',
       i18n: { defaultLocale: 'en' },
       id: 'test-id',
     };
@@ -467,7 +463,6 @@ describe('getCollectionFileEntry()', () => {
           content: {},
         },
       },
-      sha: 'abc123',
       i18n: { defaultLocale: 'en' },
       id: 'test-id',
     };

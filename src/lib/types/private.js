@@ -420,7 +420,6 @@
  * @typedef {object} LocalizedEntry
  * @property {string} slug Localized entry slug.
  * @property {string} path File path.
- * @property {string} sha SHA-1 hash for the file.
  * @property {FlattenedEntryContent} content Parsed, localized, flattened entry content.
  */
 
@@ -435,9 +434,6 @@
  * @typedef {object} EntryProps
  * @property {string} id Unique entry ID mainly used on the cross-collection search page, where the
  * `sha`, `slug` or `fileName` property may duplicate.
- * @property {string} sha SHA-1 hash from one of the locales. It serves as the ID of an entry, so it
- * can be used for keyed-`each` in Svelte. Avoid using `slug` as a loop key because different
- * collections could have entries with the same slug.
  * @property {string} slug The slug of the default locale.
  * @property {string} subPath File name for a file/singleton collection, or file path without an
  * extension for an entry collection. Same as `slug` in most cases.

@@ -31,12 +31,11 @@ describe('Test getEntrySummary()', () => {
   };
 
   /** @type {LocalizedEntry} */
-  const localizedEntryProps = { slug: '', path: '', sha: '', content: {} };
+  const localizedEntryProps = { slug: '', path: '', content: {} };
 
   /** @type {Entry} */
   const entry = {
     id: '',
-    sha: '',
     slug: 'net',
     subPath: 'net/index',
     locales: {

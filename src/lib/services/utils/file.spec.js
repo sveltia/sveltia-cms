@@ -1,13 +1,7 @@
 /* cSpell:disable */
 
 import { describe, expect, test } from 'vitest';
-import {
-  encodeFilePath,
-  formatFileName,
-  getBlob,
-  getFileSize,
-  getGitHash,
-} from '$lib/services/utils/file';
+import { encodeFilePath, formatFileName, getBlob, getGitHash } from '$lib/services/utils/file';
 
 describe('Test encodeFilePath()', () => {
   test('Encode', () => {
@@ -252,107 +246,6 @@ describe('Test getBlob()', () => {
     expect(result).toBe(binaryBlob); // Should return the same Blob object
     expect(result.size).toBe(5);
     expect(result.type).toBe('application/octet-stream');
-  });
-});
-
-describe('Test getFileSize()', () => {
-  test('Get size of string content', () => {
-    // Test with a simple string
-    const content = 'hello world';
-    const result = getFileSize(content);
-
-    // "hello world" is 11 bytes in UTF-8
-    expect(result).toBe(11);
-  });
-
-  test('Get size of empty string', () => {
-    // Test with empty string
-    const result = getFileSize('');
-
-    expect(result).toBe(0);
-  });
-  test('Get size of UTF-8 string with multibyte characters', () => {
-    // Test with Unicode characters that take multiple bytes
-    const content = '私の画像'; // Japanese characters
-    const result = getFileSize(content);
-    // Each Japanese character typically takes 3 bytes in UTF-8
-    // But let's verify the actual size
-    const expectedSize = new Blob([content], { type: 'text/plain' }).size;
-
-    expect(result).toBe(expectedSize);
-    expect(result).toBeGreaterThan(content.length); // More bytes than characters
-  });
-
-  test('Get size of File object', () => {
-    // Test with a File object
-    const content = 'hello world\n';
-    const file = new File([content], 'test.txt', { type: 'text/plain' });
-    const result = getFileSize(file);
-
-    expect(result).toBe(12); // "hello world\n" is 12 bytes
-    expect(result).toBe(file.size);
-  });
-
-  test('Get size of Blob object', () => {
-    // Test with a Blob object
-    const content = 'test content';
-    const blob = new Blob([content], { type: 'text/plain' });
-    const result = getFileSize(blob);
-
-    expect(result).toBe(12); // "test content" is 12 bytes
-    expect(result).toBe(blob.size);
-  });
-
-  test('Get size of binary Blob', () => {
-    // Test with binary content
-    const binaryData = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0xff]);
-    const blob = new Blob([binaryData]);
-    const result = getFileSize(blob);
-
-    expect(result).toBe(5); // 5 bytes
-    expect(result).toBe(blob.size);
-  });
-
-  test('Get size of large content', () => {
-    // Test with larger content
-    const largeContent = 'a'.repeat(10000);
-    const result = getFileSize(largeContent);
-
-    expect(result).toBe(10000);
-  });
-
-  test('Get size of image File object', () => {
-    // Test with a simple 1x1 pixel PNG image (base64 encoded)
-    const pngBase64 =
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-
-    const imageBytes = Uint8Array.from(atob(pngBase64), (c) => c.charCodeAt(0));
-    const imageFile = new File([imageBytes], 'test.png', { type: 'image/png' });
-    const result = getFileSize(imageFile);
-
-    expect(result).toBe(imageBytes.length);
-    expect(result).toBe(imageFile.size);
-    expect(result).toBeGreaterThan(0);
-  });
-
-  test('Get size of JSON string', () => {
-    // Test with JSON content
-    const jsonContent = JSON.stringify({ name: 'test', value: 123, array: [1, 2, 3] });
-    const result = getFileSize(jsonContent);
-    const expectedSize = new Blob([jsonContent], { type: 'application/json' }).size;
-
-    expect(result).toBe(expectedSize);
-  });
-
-  test('Get size of newline characters', () => {
-    // Test with various newline characters
-    const content1 = 'line1\nline2'; // Unix newline
-    const content2 = 'line1\r\nline2'; // Windows newline
-    const content3 = 'line1\rline2'; // Old Mac newline
-
-    expect(getFileSize(content1)).toBe(11); // 11 bytes
-    expect(getFileSize(content2)).toBe(12); // 12 bytes (extra \r)
-    expect(getFileSize(content3)).toBe(11); // 11 bytes
   });
 });
 

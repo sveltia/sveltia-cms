@@ -194,14 +194,6 @@ export const getBlob = (input) =>
   typeof input === 'string' ? new Blob([input], { type: 'text/plain' }) : input;
 
 /**
- * Get the size of the given file or blob.
- * @param {File | Blob | string} input File or Blob object, or a string representing the file
- * content.
- * @returns {number} Size of the file in bytes.
- */
-export const getFileSize = (input) => getBlob(input).size;
-
-/**
  * Get the Git object ID (SHA-1 hash) of the given file or blob.
  * @param {File | Blob | string} input File or Blob object, or a string representing the file
  * content.

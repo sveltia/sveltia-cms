@@ -682,7 +682,7 @@ const createBaseSavingEntryData = async ({
           }),
         );
 
-        return [locale, { slug, path, sha: '', content: toRaw(content) }];
+        return [locale, { slug, path, content: toRaw(content) }];
       }),
     ),
   );
@@ -724,7 +724,6 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
   /** @type {Entry} */
   const savingEntry = {
     id: originalEntry?.id ?? generateUUID(),
-    sha: '', // Populated later
     slug: defaultLocaleSlug,
     subPath: _file.fullPathRegEx
       ? (localizedEntryMap[defaultLocale].path.match(_file.fullPathRegEx)?.groups?.subPath ??
@@ -759,8 +758,6 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       previousPath: renamed ? originalEntry?.locales[defaultLocale].path : undefined,
       data,
     });
-
-    localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
   } else {
     await Promise.all(
       allLocales.map(async (locale) => {
@@ -785,8 +782,6 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
             previousPath: renamed ? originalEntry?.locales[locale]?.path : undefined,
             data,
           });
-
-          localizedEntry.sha = await getHash(new Blob([data], { type: 'text/plain' }));
         } else if (!isNew && originalLocales[locale]) {
           changes.push({ action: 'delete', slug, path });
         }
@@ -795,8 +790,6 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       }),
     );
   }
-
-  savingEntry.sha = savingEntry.locales[defaultLocale].sha;
 
   return { savingEntry, savingAssets, changes };
 };

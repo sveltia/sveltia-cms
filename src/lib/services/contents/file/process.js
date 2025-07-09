@@ -75,7 +75,6 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
   const {
     path,
-    sha,
     meta = {},
     folder: { collectionName, fileName, filePathMap },
   } = file;
@@ -174,7 +173,6 @@ const prepareEntry = async ({ file, entries, errors }) => {
   /** @type {Entry} */
   const entry = {
     id: '',
-    sha,
     slug: '',
     subPath,
     locales: {},
@@ -185,7 +183,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
     const slug = fileName || getSlug({ subPath, subPathTemplate });
 
     entry.slug = slug;
-    entry.locales._default = { slug, path, sha, content: flatten(rawContent) };
+    entry.locales._default = { slug, path, content: flatten(rawContent) };
   }
 
   if (i18nSingleFile) {
@@ -195,7 +193,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
     entry.locales = Object.fromEntries(
       allLocales
         .filter((_locale) => _locale in rawContent)
-        .map((_locale) => [_locale, { slug, path, sha, content: flatten(rawContent[_locale]) }]),
+        .map((_locale) => [_locale, { slug, path, content: flatten(rawContent[_locale]) }]),
     );
   }
 
@@ -211,7 +209,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
         : undefined;
 
     const slug = fileName || getSlug({ subPath, subPathTemplate });
-    const localizedEntry = { slug, path, sha, content: flatten(rawContent) };
+    const localizedEntry = { slug, path, content: flatten(rawContent) };
     // Use a temporary ID to locate all the localized files for the entry
     const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
     // Check if the entry has already been added for another locale
@@ -222,7 +220,6 @@ const prepareEntry = async ({ file, entries, errors }) => {
       existingEntry.locales[locale] = localizedEntry;
 
       if (locale === defaultLocale) {
-        existingEntry.sha = sha;
         existingEntry.slug = slug;
         existingEntry.subPath = subPath;
       }
@@ -235,7 +232,6 @@ const prepareEntry = async ({ file, entries, errors }) => {
 
     if (locale === defaultLocale) {
       entry.slug = slug;
-      entry.sha = sha;
     }
   }
 
