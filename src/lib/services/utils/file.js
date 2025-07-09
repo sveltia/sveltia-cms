@@ -184,16 +184,22 @@ export const resolvePath = (path) => {
 };
 
 /**
+ * Get the Blob object from the given file or blob input. If the input is a string, it is treated as
+ * the file content and converted to a Blob with `text/plain` MIME type.
+ * @param {File | Blob | string} input File or Blob object, or a string representing the file
+ * content.
+ * @returns {Blob} Blob object representing the file.
+ */
+export const getBlob = (input) =>
+  typeof input === 'string' ? new Blob([input], { type: 'text/plain' }) : input;
+
+/**
  * Get the size of the given file or blob.
  * @param {File | Blob | string} input File or Blob object, or a string representing the file
  * content.
  * @returns {number} Size of the file in bytes.
  */
-export const getFileSize = (input) => {
-  const file = typeof input === 'string' ? new Blob([input], { type: 'text/plain' }) : input;
-
-  return file.size;
-};
+export const getFileSize = (input) => getBlob(input).size;
 
 /**
  * Get the Git object ID (SHA-1 hash) of the given file or blob.
@@ -204,7 +210,7 @@ export const getFileSize = (input) => {
  * @see https://github.com/Richienb/git-hash-object/blob/master/index.js
  */
 export const getGitHash = async (input) => {
-  const file = typeof input === 'string' ? new Blob([input], { type: 'text/plain' }) : input;
+  const file = getBlob(input);
   const buffer = await file.arrayBuffer();
 
   return getHash(new Blob([`blob ${buffer.byteLength}\0`, buffer]));

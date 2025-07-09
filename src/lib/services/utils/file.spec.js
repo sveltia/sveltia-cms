@@ -1,7 +1,13 @@
 /* cSpell:disable */
 
 import { describe, expect, test } from 'vitest';
-import { encodeFilePath, formatFileName, getFileSize, getGitHash } from '$lib/services/utils/file';
+import {
+  encodeFilePath,
+  formatFileName,
+  getBlob,
+  getFileSize,
+  getGitHash,
+} from '$lib/services/utils/file';
 
 describe('Test encodeFilePath()', () => {
   test('Encode', () => {
@@ -134,6 +140,118 @@ describe('Test formatFileName()', () => {
     expect(formatFileName('My (Important) File - Copy [2023].pdf', options)).toEqual(
       'my-important-file-copy-2023.pdf',
     );
+  });
+});
+
+describe('Test getBlob()', () => {
+  test('Convert string to Blob', () => {
+    // Test with a simple string
+    const content = 'hello world';
+    const result = getBlob(content);
+
+    expect(result).toBeInstanceOf(Blob);
+    expect(result.size).toBe(11); // "hello world" is 11 bytes
+    expect(result.type).toBe('text/plain');
+  });
+
+  test('Convert empty string to Blob', () => {
+    // Test with empty string
+    const result = getBlob('');
+
+    expect(result).toBeInstanceOf(Blob);
+    expect(result.size).toBe(0);
+    expect(result.type).toBe('text/plain');
+  });
+
+  test('Convert UTF-8 string to Blob', () => {
+    // Test with Unicode characters
+    const content = '私の画像'; // Japanese characters
+    const result = getBlob(content);
+
+    expect(result).toBeInstanceOf(Blob);
+    expect(result.type).toBe('text/plain');
+    expect(result.size).toBeGreaterThan(content.length); // More bytes than characters
+  });
+
+  test('Return File object unchanged', () => {
+    // Test with a File object - should return it unchanged
+    const content = 'hello world\n';
+    const file = new File([content], 'test.txt', { type: 'text/plain' });
+    const result = getBlob(file);
+
+    expect(result).toBe(file); // Should return the same File object
+    expect(result).toBeInstanceOf(File);
+    expect(result.size).toBe(12);
+    expect(result.type).toBe('text/plain');
+  });
+
+  test('Return Blob object unchanged', () => {
+    // Test with a Blob object - should return it unchanged
+    const content = 'test content';
+    const blob = new Blob([content], { type: 'application/json' });
+    const result = getBlob(blob);
+
+    expect(result).toBe(blob); // Should return the same Blob object
+    expect(result).toBeInstanceOf(Blob);
+    expect(result.size).toBe(12);
+    expect(result.type).toBe('application/json');
+  });
+
+  test('Convert JSON string to Blob', () => {
+    // Test with JSON content
+    const jsonContent = JSON.stringify({ name: 'test', value: 123 });
+    const result = getBlob(jsonContent);
+
+    expect(result).toBeInstanceOf(Blob);
+    expect(result.type).toBe('text/plain');
+    expect(result.size).toBe(jsonContent.length);
+  });
+
+  test('Convert large string to Blob', () => {
+    // Test with larger content
+    const largeContent = 'a'.repeat(10000);
+    const result = getBlob(largeContent);
+
+    expect(result).toBeInstanceOf(Blob);
+    expect(result.type).toBe('text/plain');
+    expect(result.size).toBe(10000);
+  });
+
+  test('Convert string with newlines to Blob', () => {
+    // Test with various newline characters
+    const content1 = 'line1\nline2'; // Unix newline
+    const content2 = 'line1\r\nline2'; // Windows newline
+    const content3 = 'line1\rline2'; // Old Mac newline
+    const result1 = getBlob(content1);
+    const result2 = getBlob(content2);
+    const result3 = getBlob(content3);
+
+    expect(result1.size).toBe(11); // 11 bytes
+    expect(result2.size).toBe(12); // 12 bytes (extra \r)
+    expect(result3.size).toBe(11); // 11 bytes
+    expect(result1.type).toBe('text/plain');
+    expect(result2.type).toBe('text/plain');
+    expect(result3.type).toBe('text/plain');
+  });
+
+  test('Blob can be read back as text', async () => {
+    // Test that the created Blob can be read back as text
+    const originalContent = 'hello world test';
+    const blob = getBlob(originalContent);
+    const readBackContent = await blob.text();
+
+    expect(readBackContent).toBe(originalContent);
+  });
+
+  test('Binary Blob remains unchanged', () => {
+    // Test with binary content in a Blob
+    const binaryData = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0xff]);
+    const binaryBlob = new Blob([binaryData], { type: 'application/octet-stream' });
+    const result = getBlob(binaryBlob);
+
+    expect(result).toBe(binaryBlob); // Should return the same Blob object
+    expect(result.size).toBe(5);
+    expect(result.type).toBe('application/octet-stream');
   });
 });
 

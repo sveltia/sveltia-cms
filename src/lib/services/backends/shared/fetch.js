@@ -127,7 +127,7 @@ const getFileList = async ({ metaDB, lastHash, cachedFileEntries, fetchFileList 
  * Restore cached text and commit info to `allFiles` array.
  * @param {object} args Arguments.
  * @param {BaseFileListItem[]} args.allFiles The list of all files.
- * @param {Record<string, BaseFileListItemProps>} args.cachedFiles Cached files object.
+ * @param {RepositoryContentsMap} args.cachedFiles Cached files object.
  */
 const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
   allFiles.forEach(({ sha, path }, index) => {
@@ -178,7 +178,7 @@ const updateStores = ({ entries, assets, configFiles, errors = [] }) => {
  * @param {object} args Arguments.
  * @param {IndexedDB} args.cacheDB The cache database instance.
  * @param {BaseFileListItem[]} args.allFiles List of all files in the repository.
- * @param {Record<string, BaseFileListItemProps>} args.cachedFiles Cached files object.
+ * @param {RepositoryContentsMap} args.cachedFiles Cached files object.
  * @param {BaseFileListItem[]} args.fetchingFiles List of files being fetched.
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of newly fetched file data.
  */
@@ -245,6 +245,7 @@ export const fetchAndParseFiles = async ({
   }
 
   const { entryFiles, assetFiles, configFiles, allFiles } = fileList;
+  /** @type {RepositoryContentsMap} */
   const cachedFiles = Object.fromEntries(cachedFileEntries);
 
   restoreCachedFileData({ allFiles, cachedFiles });

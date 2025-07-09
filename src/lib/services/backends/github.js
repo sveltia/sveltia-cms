@@ -551,9 +551,9 @@ const commitChanges = async (changes, options) => {
   const additions = await Promise.all(
     changes
       .filter(({ action }) => ['create', 'update', 'move'].includes(action))
-      .map(async ({ path, data, base64 }) => ({
+      .map(async ({ path, data }) => ({
         path,
-        contents: base64 ?? (await encodeBase64(data ?? '')),
+        contents: await encodeBase64(data ?? ''),
       })),
   );
 

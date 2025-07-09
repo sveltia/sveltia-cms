@@ -689,10 +689,10 @@ const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
 
   const actions = await Promise.all(
-    changes.map(async ({ action, path, previousPath, data = '', base64 }) => ({
+    changes.map(async ({ action, path, previousPath, data = '' }) => ({
       action,
-      content: base64 ?? (typeof data !== 'string' ? await encodeBase64(data) : data),
-      encoding: base64 || typeof data !== 'string' ? 'base64' : 'text',
+      content: typeof data === 'string' ? data : await encodeBase64(data),
+      encoding: typeof data === 'string' ? 'text' : 'base64',
       file_path: path,
       previous_path: previousPath,
     })),

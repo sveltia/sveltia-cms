@@ -579,7 +579,6 @@
  * `action` is `move`.
  * @property {string} [slug] Entry slug or `undefined` for an asset.
  * @property {string | File} [data] File data.
- * @property {string} [base64] Base64 of the data.
  */
 
 /**

@@ -139,7 +139,7 @@
   </section>
   <section>
     <h4>{$_('used_in')}</h4>
-    {#each usedEntries as entry (entry.sha)}
+    {#each usedEntries as entry (entry.id)}
       {#await sleep() then}
         {#each getAssociatedCollections(entry) as collection (collection.name)}
           {#key $appLocale}
