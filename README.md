@@ -320,13 +320,14 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the entry slug, e.g. `{{date | date('YYYYMMDD-HHmm', 'utc')}}`. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/278#issuecomment-2565313420))
     - The `date` transformation returns an empty string if an invalid date is given.[^176]
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
-  - Sveltia CMS supports [singletons](#using-singletons), a simple form of a file collection.[^233]
-  - File collections support files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_headers` and `_redirects`.
+  - Enhancements to file collections:
+    - Sveltia CMS supports [singletons](#using-singletons), a simple form of a file collection.[^233]
+    - File collections support files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_headers` and `_redirects`.
+    - Each file in a file collection has the `format` and `frontmatter_delimiter` options, which can be used to specify the file format, making it possible to have `yaml-frontmatter`, `toml-frontmatter` and `json-frontmatter` side by side.[^218]
   - The collection `label` defaults to the `name` value according to the [Decap CMS document](https://decapcms.org/docs/configuration-options/#collections), while Netlify/Decap CMS actually throws a configuration error if the `label` option is omitted.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
-  - Each file in a file collection has the `format` and `frontmatter_delimiter` options, which can be used to specify the file format, making it possible to have `yaml-frontmatter`, `toml-frontmatter` and `json-frontmatter` side by side.[^218]
 - Entry slugs
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values.[^133]
