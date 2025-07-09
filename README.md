@@ -113,7 +113,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, with only occasional releases
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any of their code. This allows us to make [hundreds of improvements](#differentiators) without getting stuck in the old system.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any of their code. This allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
 
 While Sveltia CMS was created to replace legacy Netlify CMS instances, it can also be used as an alternative to other Netlify CMS successors. With its [solid i18n support](#better-i18n-support), we’re hoping our product will eventually be an appearing option for anyone looking for a free headless CMS.
 
@@ -321,7 +321,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - The `date` transformation returns an empty string if an invalid date is given.[^176]
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
   - Sveltia CMS supports [singletons](#using-singletons), a simple form of a file collection.[^233]
-  - A file collection supports files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_headers` and `_redirects`.
+  - File collections support files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_headers` and `_redirects`.
   - The collection `label` defaults to the `name` value according to the [Decap CMS document](https://decapcms.org/docs/configuration-options/#collections), while Netlify/Decap CMS actually throws a configuration error if the `label` option is omitted.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
@@ -1519,6 +1519,8 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ## Roadmap
 
+The list below gives you an idea of what we are working on and what we plan to implement in the future. It is not a complete list of all issues, but rather a summary of the most important features and improvements. Things may change as we progress, so please check back regularly.
+
 ### v1.0
 
 Due late 2025
@@ -1555,6 +1557,7 @@ Due early 2026
 
 - Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] [manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214),[^125] [config editor](https://github.com/sveltia/sveltia-cms/discussions/452),[^10] offline support,[^238] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
 - **Sveltia CMS Additions**: edge functions providing features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a Git service account (Git Gateway alternative), API key management, post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
+- View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation, content writing, translation, etc.
 - Search enhancements
