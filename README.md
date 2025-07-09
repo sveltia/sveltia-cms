@@ -400,7 +400,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better widgets
 
-Sveltia CMS supports all [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS. We have made significant improvements to these widgets while adding some new ones. Support for [custom widgets](https://decapcms.org/docs/custom-widgets/) will be added before the 1.0 release.
+Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS. We have improved these widgets significantly while adding some new ones. A few remaining [limitations](#current-limitations) will be addressed before the 1.0 release.
 
 - Boolean
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error.[^45]
