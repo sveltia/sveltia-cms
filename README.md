@@ -78,6 +78,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
   - [Configuring multiple media libraries](#configuring-multiple-media-libraries)
   - [Optimizing images for upload](#optimizing-images-for-upload)
   - [Disabling stock assets](#disabling-stock-assets)
+  - [Editing site deployment configuration files](#editing-site-deployment-configuration-files)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
   - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
   - [Rendering soft line breaks as hard line breaks in Markdown](#rendering-soft-line-breaks-as-hard-line-breaks-in-markdown)
@@ -320,6 +321,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - The `date` transformation returns an empty string if an invalid date is given.[^176]
     - Multiple transformations can be chained like `{{title | upper | truncate(20)}}`.
   - Sveltia CMS supports [singletons](#using-singletons), a simple form of a file collection.[^233]
+  - A file collection supports files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_redirects` and `_headers`.
   - The collection `label` defaults to the `name` value according to the [Decap CMS document](https://decapcms.org/docs/configuration-options/#collections), while Netlify/Decap CMS actually throws a configuration error if the `label` option is omitted.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
@@ -1205,6 +1207,37 @@ media_libraries:
     providers: []
 ```
 
+### Editing site deployment configuration files
+
+Sveltia CMS allows users to edit files without extensions. Examples include `_headers` and `_redirects`, which are used by some static site hosting providers, such as [Netlify](https://docs.netlify.com/routing/redirects/), [GitLab Pages](https://docs.gitlab.com/user/project/pages/redirects/) and [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/redirects/). Since the `body` field is saved without a field name when using the default `yaml-frontmatter` format, you can use the following configuration to edit these files in the Content Editor:
+
+```yaml
+collections:
+  - name: config
+    label: Site Configuration
+    editor:
+      preview: false
+    files:
+      - name: headers
+        label: Headers
+        file: static/_headers # The path varies by framework
+        fields:
+          - name: body
+            label: Headers
+            widget: code
+            output_code_only: true
+            allow_language_selection: false
+      - name: redirects
+        label: Redirects
+        file: static/_redirects # The path varies by framework
+        fields:
+          - name: body
+            label: Redirects
+            widget: code
+            output_code_only: true
+            allow_language_selection: false
+```
+
 ### Editing data files with a top-level list
 
 Sveltia CMS allows you to edit and save a list at the top-level of a data file, without a field name. All you need to do is create a single List field with the new `root` option set to `true`. The configuration below reproduces [this Jekyll data file example](https://jekyllrb.com/docs/datafiles/#example-list-of-members):
@@ -2056,3 +2089,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^253]: Netlify/Decap CMS [#6635](https://github.com/decaporg/decap-cms/issues/6635), [#7006](https://github.com/decaporg/decap-cms/issues/7006), [#7311](https://github.com/decaporg/decap-cms/issues/7311)
 
 [^254]: Netlify/Decap CMS [#7532](https://github.com/decaporg/decap-cms/issues/7532)
+
+[^255]: Netlify/Decap CMS [#7355](https://github.com/decaporg/decap-cms/discussions/7355)
