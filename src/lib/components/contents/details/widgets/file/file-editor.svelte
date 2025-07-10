@@ -470,8 +470,10 @@
           }
         }
       }
+    }
 
-      &.invalid {
+    &.invalid {
+      :global {
         button {
           border-color: var(--sui-error-border-color);
         }
