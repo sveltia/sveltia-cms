@@ -3,7 +3,6 @@
 /* eslint-disable no-restricted-syntax */
 
 import { unique } from '@sveltia/utils/array';
-import { getHash } from '@sveltia/utils/crypto';
 import { getPathInfo, readAsText } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
@@ -13,7 +12,7 @@ import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends';
 import { createFileList } from '$lib/services/backends/shared/fetch';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
-import { createPathRegEx } from '$lib/services/utils/file';
+import { createPathRegEx, getGitHash } from '$lib/services/utils/file';
 
 /**
  * @import { BaseFileListItem, BaseFileListItemProps, FileChange } from '$lib/types/private';
@@ -147,23 +146,6 @@ const scanDir = async (dirHandle, context) => {
 };
 
 /**
- * Asynchronously computes and returns the hash of a given file.
- * @param {File} file The file object to compute the hash for.
- * @returns {Promise<string>} The computed hash as a string, or an empty string if an error occurs.
- */
-const getFileHash = async (file) => {
-  try {
-    // Need `await` here to catch any exception
-    return await getHash(file);
-  } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
-  }
-
-  return '';
-};
-
-/**
  * Normalize a file list item to ensure it has the required properties. This function also computes
  * the SHA-1 hash of the file. The file path and name must be normalized, as certain non-ASCII
  * characters (e.g. Japanese) can be problematic particularly on macOS.
@@ -175,7 +157,7 @@ const normalizeFileListItem = async ({ file, path }) => ({
   path: path.normalize(),
   name: file.name.normalize(),
   size: file.size,
-  sha: await getFileHash(file),
+  sha: await getGitHash(file),
 });
 
 /**

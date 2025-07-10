@@ -29,6 +29,7 @@
   import { normalize } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
+  import { getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -181,7 +182,7 @@
       blobURL: blobURL ?? URL.createObjectURL(file),
       name,
       path: `${targetFolderPath}/${name}`,
-      sha: await getHash(file),
+      sha: await getGitHash(file),
       size,
       kind: getAssetKind(name),
       folder,

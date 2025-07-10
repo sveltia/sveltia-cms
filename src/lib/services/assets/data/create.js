@@ -1,4 +1,3 @@
-import { getHash } from '@sveltia/utils/crypto';
 import { get } from 'svelte/store';
 import {
   allAssets,
@@ -12,7 +11,7 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-librar
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
-import { formatFileName } from '$lib/services/utils/file';
+import { formatFileName, getGitHash } from '$lib/services/utils/file';
 
 /**
  * @import { Asset, CommitAction, CommitChangesOptions, UploadingAssets } from '$lib/types/private';
@@ -110,7 +109,7 @@ export const saveAssets = async (uploadingAssets, options) => {
           blobURL: URL.createObjectURL(file),
           name,
           path,
-          sha: await getHash(file),
+          sha: await getGitHash(file),
           size: file.size,
           kind: getAssetKind(name),
           text: undefined,

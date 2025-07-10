@@ -37,29 +37,29 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * Update the asset and entry stores after moving or renaming assets.
  * @param {object} args Arguments.
  * @param {'move' | 'rename'} args.action The action performed, either 'move' or 'rename'.
- * @param {MovingAsset[]} args.movingAssets The list of assets being moved or renamed.
- * @param {Asset[]} args.savingAssets The updated asset objects to be saved in the store.
- * @param {Entry[]} args.savingEntries The updated entry objects to be saved in the store.
+ * @param {MovingAsset[]} args.movedAssets The assets that have been moved or renamed.
+ * @param {Asset[]} args.savedAssets The assets that have been saved.
+ * @param {Entry[]} args.savedEntries The entries that have been saved.
  */
-const updateStores = ({ action, movingAssets, savingAssets, savingEntries }) => {
-  const savingAssetsPaths = movingAssets.map((a) => a.asset.path); // old paths
-  const savingEntryIds = savingEntries.map((e) => e.id);
+const updateStores = ({ action, movedAssets, savedAssets, savedEntries }) => {
+  const savedAssetsPaths = movedAssets.map((a) => a.asset.path); // old paths
+  const savedEntryIds = savedEntries.map((e) => e.id);
 
   allAssets.update((assets) => [
-    ...assets.filter((a) => !savingAssetsPaths.includes(a.path)),
-    ...savingAssets,
+    ...assets.filter((a) => !savedAssetsPaths.includes(a.path)),
+    ...savedAssets,
   ]);
 
   allEntries.update((entries) => [
-    ...entries.filter((e) => !savingEntryIds.includes(e.id)),
-    ...savingEntries,
+    ...entries.filter((e) => !savedEntryIds.includes(e.id)),
+    ...savedEntries,
   ]);
 
   const _allAssets = get(allAssets);
   const focusedAssetPath = get(focusedAsset)?.path;
-  const _focusedAsset = movingAssets.find((a) => a.asset.path === focusedAssetPath);
+  const _focusedAsset = movedAssets.find((a) => a.asset.path === focusedAssetPath);
   const overlaidAssetPath = get(overlaidAsset)?.path;
-  const _overlaidAsset = movingAssets.find((a) => a.asset.path === overlaidAssetPath);
+  const _overlaidAsset = movedAssets.find((a) => a.asset.path === overlaidAssetPath);
 
   // Replace the existing asset
   if (_focusedAsset) {
@@ -75,7 +75,7 @@ const updateStores = ({ action, movingAssets, savingAssets, savingEntries }) => 
     ...UPDATE_TOAST_DEFAULT_STATE,
     moved: action === 'move',
     renamed: action === 'rename',
-    count: movingAssets.length,
+    count: movedAssets.length,
   });
 };
 
@@ -214,14 +214,15 @@ export const moveAssets = async (action, movingAssets) => {
 
   const results = await get(backend)?.commitChanges(changes, { commitType: 'uploadMedia' });
 
-  // Update blob URLs for the local backend
-  if (Array.isArray(results)) {
-    savingAssets.forEach((asset, index) => {
-      if (results[index] instanceof File) {
-        asset.blobURL = URL.createObjectURL(/** @type {File} */ (results[index]));
-      }
-    });
-  }
+  updateStores({
+    action,
+    movedAssets: [...movingAssets],
+    savedAssets: savingAssets.map((asset, index) => {
+      const result = results?.[index];
+      const blobURL = result instanceof File ? URL.createObjectURL(result) : undefined;
 
-  updateStores({ action, movingAssets, savingAssets, savingEntries });
+      return { ...asset, blobURL };
+    }),
+    savedEntries: [...savingEntries],
+  });
 };

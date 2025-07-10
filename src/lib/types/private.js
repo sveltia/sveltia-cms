@@ -243,7 +243,7 @@
 /**
  * Base file info retrieved from a Git repository.
  * @typedef {object} RepositoryFileInfo
- * @property {string} sha SHA-1 hash for the file.
+ * @property {string} sha Git object ID (SHA-1 hash) for the file.
  * @property {number} size File size in bytes.
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {RepositoryFileMetadata} meta Metadata from the repository.
@@ -278,7 +278,7 @@
  * @property {File} [file] File object. Local backend only.
  * @property {string} path File path.
  * @property {string} name File name, without a path.
- * @property {string} sha SHA-1 hash for the file.
+ * @property {string} sha Git object ID (SHA-1 hash) for the file.
  * @property {number} size File size in bytes.
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {RepositoryFileMetadata} [meta] Metadata from the repository. Git backends only.
@@ -574,7 +574,9 @@
  * @property {string} [previousPath] Original path to a file being moved. Required when the commit
  * `action` is `move`.
  * @property {string} [slug] Entry slug or `undefined` for an asset.
- * @property {string | File} [data] File data.
+ * @property {string | File} [data] File data. `undefined` for a deleted file, or a file object for
+ * a new or updated file. It can also be a string for a text file like Markdown or HTML, which is
+ * automatically converted to a Blob.
  */
 
 /**
@@ -612,7 +614,7 @@
  * fetched or a local file being uploaded. Or `undefined` if the URL is not generated yet.
  * @property {string} name File name.
  * @property {string} path File path.
- * @property {string} sha SHA-1 hash for the file.
+ * @property {string} sha Git object ID (SHA-1 hash) for the file.
  * @property {number} size File size in bytes.
  * @property {AssetKind} kind Basic file type.
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.

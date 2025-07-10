@@ -26,7 +26,7 @@
   import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
   import { hasMouse } from '$lib/services/user/env';
-  import { createPath, formatSize } from '$lib/services/utils/file';
+  import { createPath, formatSize, getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -182,9 +182,9 @@
           file = await transformFile(file, transformations);
         }
 
-        const hash = await getHash(file);
+        const sha = await getGitHash(file);
         const { folder } = selectedResource;
-        const existingAsset = $allAssets.find((a) => a.sha === hash && equal(a.folder, folder));
+        const existingAsset = $allAssets.find((a) => a.sha === sha && equal(a.folder, folder));
 
         if (existingAsset) {
           // If the selected file has already been uploaded, use the existing asset instead of
