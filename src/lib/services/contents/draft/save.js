@@ -1,4 +1,4 @@
-import { generateUUID, getHash } from '@sveltia/utils/crypto';
+import { generateUUID } from '@sveltia/utils/crypto';
 import { getBlobRegex } from '@sveltia/utils/file';
 import { isObject, toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp, stripSlashes } from '@sveltia/utils/string';
@@ -32,7 +32,13 @@ import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/he
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
 import { user } from '$lib/services/user';
 import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
-import { createPath, encodeFilePath, formatFileName, resolvePath } from '$lib/services/utils/file';
+import {
+  createPath,
+  encodeFilePath,
+  formatFileName,
+  getGitHash,
+  resolvePath,
+} from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -550,7 +556,7 @@ const replaceBlobURL = async ({
   slugificationEnabled,
   encodingEnabled,
 }) => {
-  const sha = await getHash(file);
+  const sha = await getGitHash(file);
   const dupFile = savingAssets.find((f) => f.sha === sha);
 
   const {
