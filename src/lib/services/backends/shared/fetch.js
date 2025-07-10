@@ -67,7 +67,7 @@ export const createFileList = (files) => {
       }
     } else {
       const [entryFolder] = getEntryFoldersByPath(path);
-      const [assetFolder] = getAssetFoldersByPath(path, { matchSubFolders: true });
+      const [assetFolder] = getAssetFoldersByPath(path);
 
       // Correct entry files
       if (entryFolder) {

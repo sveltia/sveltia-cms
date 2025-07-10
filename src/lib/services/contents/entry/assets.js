@@ -5,7 +5,7 @@ import {
   allAssets,
   getAssetByPath,
   getAssetFolder,
-  getCollectionsByAsset,
+  getAssetFoldersByPath,
   getMediaFieldURL,
 } from '$lib/services/assets';
 import { getCollection } from '$lib/services/contents/collection';
@@ -99,7 +99,15 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
           ) {
             const asset = getAssetByPath({ value, entry, collectionName, fileName });
 
-            if (asset && getCollectionsByAsset(asset).some((c) => c.name === collectionName)) {
+            if (
+              asset &&
+              getAssetFoldersByPath(asset.path).some(
+                (f) =>
+                  f.collectionName === collectionName &&
+                  f.fileName === fileName &&
+                  (relative ? f.entryRelative : true),
+              )
+            ) {
               return asset;
             }
           }

@@ -1,12 +1,11 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { get } from 'svelte/store';
 import {
-  allAssetFolders,
   allAssets,
   focusedAsset,
   getAssetBlob,
+  getAssetFoldersByPath,
   getAssetPublicURL,
-  getCollectionsByAsset,
   globalAssetFolder,
   overlaidAsset,
 } from '$lib/services/assets';
@@ -88,7 +87,6 @@ const updateStores = ({ action, movingAssets, savingAssets, savingEntries }) => 
 export const moveAssets = async (action, movingAssets) => {
   const _siteConfig = /** @type {InternalSiteConfig} */ (get(siteConfig));
   const _globalAssetFolder = get(globalAssetFolder);
-  const _allAssetFolders = get(allAssetFolders);
   /** @type {FileChange[]} */
   const changes = [];
   /** @type {Entry[]} */
@@ -118,8 +116,8 @@ export const moveAssets = async (action, movingAssets) => {
       }
 
       const { publicPath } =
-        _allAssetFolders.find(({ collectionName }) =>
-          getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
+        getAssetFoldersByPath(asset.path).find(
+          ({ collectionName }) => collectionName !== undefined,
         ) ?? _globalAssetFolder;
 
       const updatedEntries = await getEntriesByAssetURL(assetURL, {

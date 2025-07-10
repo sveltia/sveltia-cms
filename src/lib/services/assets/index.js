@@ -346,11 +346,11 @@ export const getAssetFolder = ({ collectionName, fileName, keyPath }) =>
  * @param {string} path Asset path.
  * @param {object} [options] Options.
  * @param {boolean} [options.matchSubFolders] Whether to match assets stored in the subfolders of a
- * global/collection internal path. By default (`false`), for example, if the given `path` is
+ * global/collection internal path. Default: `true`. If `false`, for example, if the given `path` is
  * `images/products/image.jpg`, it matches the `images/products` folder but not `images`.
  * @returns {AssetFolderInfo[]} Asset folders.
  */
-export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) => {
+export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => {
   const { filename } = getPathInfo(path);
 
   // Exclude files with a leading `+` sign, which are Svelte page/layout files
@@ -379,16 +379,6 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = false } = {}) =>
     })
     .sort((a, b) => (b.internalPath ?? '').localeCompare(a.internalPath ?? '') ?? 0);
 };
-
-/**
- * Get a list of collections the given asset belongs to.
- * @param {Asset} asset Asset.
- * @returns {InternalCollection[]} Collections.
- */
-export const getCollectionsByAsset = (asset) =>
-  getAssetFoldersByPath(asset.path, { matchSubFolders: true })
-    .map(({ collectionName }) => (collectionName ? getCollection(collectionName) : undefined))
-    .filter((collection) => !!collection);
 
 /**
  * Find an asset.
@@ -563,8 +553,8 @@ export const getAssetPublicURL = (
         asset.folder
       : // Search for the asset folder instead of using `asset.folder` directly, as an asset can be
         // used for multiple collections, and the public path can be different for each
-        (get(allAssetFolders).find(({ collectionName }) =>
-          getCollectionsByAsset(asset).some((collection) => collection.name === collectionName),
+        (getAssetFoldersByPath(asset.path).find(
+          ({ collectionName }) => collectionName !== undefined,
         ) ?? get(globalAssetFolder));
 
   // Cannot determine the URL if it’s relative to an entry, unless the asset is in the same folder
