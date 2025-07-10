@@ -16,7 +16,7 @@ const baseFieldConfig = {
 
 describe('Test getDefaultValueMap()', () => {
   describe('required field behavior', () => {
-    test('should return empty object for required field without default', () => {
+    test('should return defaults for required field subfields without default', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -30,7 +30,10 @@ describe('Test getDefaultValueMap()', () => {
       const keyPath = 'metadata';
       const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({
+        'metadata.title': '',
+        'metadata.content': '',
+      });
     });
 
     test('should return keyPath with null for optional field without default', () => {
@@ -174,7 +177,7 @@ describe('Test getDefaultValueMap()', () => {
       });
     });
 
-    test('should return empty object for non-object default values', () => {
+    test('should return subfield defaults for non-object default values', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -187,10 +190,12 @@ describe('Test getDefaultValueMap()', () => {
       const keyPath = 'metadata';
       const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({
+        'metadata.title': '',
+      });
     });
 
-    test('should return empty object for null default values', () => {
+    test('should return subfield defaults for null default values', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -203,10 +208,12 @@ describe('Test getDefaultValueMap()', () => {
       const keyPath = 'metadata';
       const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({
+        'metadata.title': '',
+      });
     });
 
-    test('should return empty object for array default values', () => {
+    test('should return subfield defaults for array default values', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -218,7 +225,9 @@ describe('Test getDefaultValueMap()', () => {
       const keyPath = 'metadata';
       const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({
+        'metadata.title': '',
+      });
     });
   });
 
@@ -307,14 +316,14 @@ describe('Test getDefaultValueMap()', () => {
       });
     });
 
-    test('should populate only meaningful subfield defaults (not empty strings)', () => {
+    test('should populate subfield defaults including empty strings', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,
         required: true,
         fields: [
           { name: 'title', widget: 'string', default: 'Default Title' },
-          { name: 'content', widget: 'text', default: '' }, // Empty string should be ignored
+          { name: 'content', widget: 'text', default: '' }, // Empty string should be included
           { name: 'published', widget: 'boolean', default: false },
           { name: 'category', widget: 'string' }, // No default
         ],
@@ -325,11 +334,13 @@ describe('Test getDefaultValueMap()', () => {
 
       expect(result).toEqual({
         'post.title': 'Default Title',
+        'post.content': '',
         'post.published': false,
+        'post.category': '',
       });
     });
 
-    test('should return empty object when subfields only have empty string defaults', () => {
+    test('should include subfields with empty string defaults', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -344,7 +355,11 @@ describe('Test getDefaultValueMap()', () => {
       const keyPath = 'metadata';
       const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({
+        'metadata.title': '',
+        'metadata.content': '',
+        'metadata.category': '',
+      });
     });
 
     test('should handle subfields with different widget types and defaults', () => {
@@ -410,7 +425,9 @@ describe('Test getDefaultValueMap()', () => {
 
       expect(result).toEqual({
         'entry.title': 'Default Title',
+        'entry.content': '',
         'entry.published': false,
+        'entry.author': '',
         'entry.priority': 1,
       });
     });
@@ -443,7 +460,7 @@ describe('Test getDefaultValueMap()', () => {
   });
 
   describe('edge cases', () => {
-    test('should return empty object for undefined default value', () => {
+    test('should return subfield defaults for undefined default value', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -454,7 +471,9 @@ describe('Test getDefaultValueMap()', () => {
       const keyPath = 'metadata';
       const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({
+        'metadata.title': '',
+      });
     });
 
     test('should handle object field without subfields', () => {

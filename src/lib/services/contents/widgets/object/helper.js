@@ -62,14 +62,6 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, locale }) => {
         dynamicValues: {},
       });
     });
-
-    // Remove empty string values that were added by populateDefaultValue
-    // We only want to keep meaningful defaults, not empty strings
-    Object.keys(content).forEach((key) => {
-      if (content[key] === '') {
-        delete content[key];
-      }
-    });
   }
 
   return content;
