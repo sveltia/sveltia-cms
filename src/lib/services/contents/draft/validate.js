@@ -116,21 +116,23 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
       return undefined;
     }
 
-    const keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
+    const keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
 
-    const values =
-      Array.isArray(value) && value.length
-        ? value
-        : (valueEntries
-            .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-            .map(([, savedValue]) => savedValue)
-            .filter((val) => val !== undefined) ?? []);
+    // We need to check both the list itself and the items in the list because the list can be empty
+    // but still have items in the list, depending on the flattening condition. It means the data
+    // usually looks like `{ field.0: 'foo', field.1: 'bar' }`, but it can contain an empty list
+    // like `{ field: [], field.0: 'foo', field.1: 'bar' }` in some cases. Or it can be a simple
+    // list field like `{ field: ['foo', 'bar'] }` without the subfields.
+    const size =
+      Array.isArray(value) && !!value.length
+        ? value.length
+        : new Set(valueEntries.map(([key]) => key.match(keyPathRegex)?.[0]).filter(Boolean)).size;
 
-    if (required && !values.length) {
+    if (required && !size) {
       validity.valueMissing = true;
-    } else if (typeof min === 'number' && values.length < min) {
+    } else if (typeof min === 'number' && size < min) {
       validity.rangeUnderflow = true;
-    } else if (typeof max === 'number' && values.length > max) {
+    } else if (typeof max === 'number' && size > max) {
       validity.rangeOverflow = true;
     }
   }
