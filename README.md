@@ -1844,7 +1844,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^129]: Netlify/Decap CMS [#4961](https://github.com/decaporg/decap-cms/issues/4961), [#4979](https://github.com/decaporg/decap-cms/issues/4979), [#5545](https://github.com/decaporg/decap-cms/issues/5545), [#5778](https://github.com/decaporg/decap-cms/issues/5778), [#6279](https://github.com/decaporg/decap-cms/issues/6279), [#6464](https://github.com/decaporg/decap-cms/issues/6464), [#6810](https://github.com/decaporg/decap-cms/issues/6810), [#6922](https://github.com/decaporg/decap-cms/issues/6922), [#7118](https://github.com/decaporg/decap-cms/issues/7118), [#7293](https://github.com/decaporg/decap-cms/issues/7293) — A comment on one of the issues says the crash was due to Google Translate. Sveltia CMS has turned off Google Translate on the admin page.
 
-[^130]: Netlify/Decap CMS [#6571](https://github.com/decaporg/decap-cms/issues/6571)
+[^130]: Netlify/Decap CMS [#6571](https://github.com/decaporg/decap-cms/issues/6571), [#7539](https://github.com/decaporg/decap-cms/discussions/7539)
 
 [^131]: Netlify/Decap CMS [#4429](https://github.com/decaporg/decap-cms/issues/4429)
 
