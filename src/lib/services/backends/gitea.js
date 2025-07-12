@@ -54,7 +54,7 @@ import { prefs } from '$lib/services/user/prefs';
  */
 
 const backendName = 'gitea';
-const label = 'Gitea';
+const label = 'Gitea / Forgejo';
 const DEFAULT_API_ROOT = 'https://gitea.com/api/v1';
 const DEFAULT_AUTH_ROOT = 'https://gitea.com';
 const DEFAULT_AUTH_PATH = 'login/oauth/authorize';
@@ -68,10 +68,22 @@ const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
  * @see https://github.com/go-gitea/gitea/pull/34139
  */
 const MIN_GITEA_VERSION = 1.24;
+/**
+ * Minimum supported Forgejo version. We require at least 12.0 to use the new `git/blobs` API
+ * endpoint.
+ * @see https://codeberg.org/forgejo/forgejo/pulls/8139
+ */
+const MIN_FORGEJO_VERSION = 12;
+/**
+ * Flag to indicate if the backend is Forgejo. This is used to determine which API endpoints to use,
+ * as Gitea and Forgejo have different endpoints for fetching file contents.
+ * @type {boolean}
+ */
+let isForgejo = false;
 /** @type {Record<string, any> | null} */
 let repositoryResponseCache = null;
 /**
- * Send a request to Gitea REST API.
+ * Send a request to Gitea/Forgejo REST API.
  * @param {string} path Endpoint.
  * @param {FetchApiOptions} [options] Fetch options.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
@@ -95,9 +107,9 @@ const getBaseURLs = (baseURL, branch) => ({
 });
 
 /**
- * Initialize the Gitea backend.
+ * Initialize the Gitea/Forgejo backend.
  * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
- * not Gitea.
+ * not Gitea/Forgejo.
  */
 const init = () => {
   const { backend } = get(siteConfig) ?? {};
@@ -156,7 +168,7 @@ const init = () => {
 };
 
 /**
- * Retrieve the authenticated user’s profile information from Gitea REST API.
+ * Retrieve the authenticated user’s profile information.
  * @param {AuthTokens} tokens Authentication tokens.
  * @returns {Promise<User>} User information.
  * @see https://docs.gitea.com/api/next/#tag/user/operation/userGetCurrent
@@ -184,7 +196,7 @@ const getUserProfile = async ({ token, refreshToken }) => {
 };
 
 /**
- * Retrieve the repository configuration and sign in with Gitea REST API.
+ * Retrieve the repository configuration and sign in with the Gitea/Forgejo REST API.
  * @param {SignInOptions} options Options.
  * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
  * the sign-in flow cannot be started.
@@ -213,34 +225,34 @@ const signIn = async ({ token, refreshToken, auto = false }) => {
 };
 
 /**
- * Sign out from Gitea. Nothing to do here.
+ * Sign out from the backend. Nothing to do here.
  * @returns {Promise<void>}
  */
 const signOut = async () => undefined;
 
 /**
- * Check if the Gitea version is supported.
- * @throws {Error} When the Gitea version is unsupported. Also when we detect Forgejo, which is a
- * hard fork of Gitea that we do not support yet.
+ * Check if the version of the user’s Gitea/Forgejo instance is supported. The API endpoint requires
+ * authentication, meaning the user must be signed in before calling this function.
+ * @throws {Error} When the detected version is unsupported.
  * @see https://docs.gitea.com/api/next/#tag/miscellaneous/operation/getVersion
- * @see https://github.com/sveltia/sveltia-cms/issues/381
  */
-const checkGiteaVersion = async () => {
+const checkInstanceVersion = async () => {
   const { version } = /** @type {{ version: string }} */ (await fetchAPI('/version'));
 
-  // Check if it’s Forgejo. The `version` will look like `11.0.1-46-17b3302+gitea-1.22.0`
-  if (version.includes('+gitea-')) {
-    throw new Error('Unsupported Forgejo version', {
-      cause: new Error(get(_)('backend_unsupported_forgejo')),
-    });
-  }
+  // Check if the instance is Forgejo by looking for the `+gitea-` fork indicator in the version
+  // string. Forgejo versions look like `11.0.1-87-5e379c9+gitea-1.22.0`.
+  isForgejo = version.includes('+gitea-');
 
-  // Otherwise it’s Gitea, so we can just compare the version number
-  if (Number.parseFloat(version) < MIN_GITEA_VERSION) {
-    throw new Error('Unsupported Gitea version', {
+  const name = isForgejo ? 'Forgejo' : 'Gitea';
+  const minVersion = isForgejo ? MIN_FORGEJO_VERSION : MIN_GITEA_VERSION;
+
+  Object.assign(repository, { label: name });
+
+  if (Number.parseFloat(version) < minVersion) {
+    throw new Error(`Unsupported ${name} version`, {
       cause: new Error(
         get(_)('backend_unsupported_version', {
-          values: { name: label, version: MIN_GITEA_VERSION },
+          values: { name, version: minVersion },
         }),
       ),
     });
@@ -248,7 +260,7 @@ const checkGiteaVersion = async () => {
 };
 
 /**
- * Get the repository information from Gitea REST API.
+ * Get the repository information.
  * @returns {Promise<Record<string, any>>} Repository information.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
@@ -406,18 +418,34 @@ const parseFileContents = async (fetchingFiles, results) => {
 };
 
 /**
- * Fetch the metadata of entry/asset files as well as text file contents.
+ * Fetch the metadata of entry/asset files as well as text file contents. Gitea and Forgejo have
+ * different API endpoints for this, so we handle both cases here.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  * @see https://github.com/go-gitea/gitea/pull/34139
+ * @see https://codeberg.org/forgejo/forgejo/pulls/8139
  */
 const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
-  const requestPath = `/repos/${owner}/${repo}/file-contents?ref=${branch}`;
-  const allPaths = fetchingFiles.filter(({ type }) => type !== 'asset').map(({ path }) => path);
+
+  const requestPath = isForgejo
+    ? `/repos/${owner}/${repo}/git/blobs`
+    : `/repos/${owner}/${repo}/file-contents?ref=${branch}`;
+
+  // Forgejo uses `sha` as the identifier for files, while Gitea uses `path`
+  const idField = isForgejo ? 'sha' : 'path';
+
+  const allIds = fetchingFiles
+    .filter(({ type }) => type !== 'asset')
+    .map(({ [idField]: id }) => id);
+
+  if (!allIds.length) {
+    return {};
+  }
+
   /** @type {PartialContentsListItem[]} */
   const results = [];
-  const paths = [...allPaths];
+  const remainingIds = [...allIds];
 
   dataLoadedProgress.set(0);
 
@@ -426,19 +454,20 @@ const fetchFileContents = async (fetchingFiles) => {
 
   // Use the new bulk API endpoint to fetch multiple files at once
   for (;;) {
+    const slicedIds = remainingIds.splice(0, perPage);
+
     const result = /** @type {PartialContentsListItem[]} */ (
-      await fetchAPI(requestPath, {
-        method: 'POST',
-        body: {
-          files: paths.splice(0, perPage),
-        },
-      })
+      await (isForgejo
+        ? fetchAPI(`${requestPath}?shas=${slicedIds.join(',')}`)
+        : fetchAPI(requestPath, { method: 'POST', body: { files: slicedIds } }))
     );
 
     results.push(...result);
-    dataLoadedProgress.set(Math.ceil(((allPaths.length - paths.length) / allPaths.length) * 100));
+    dataLoadedProgress.set(
+      Math.ceil(((allIds.length - remainingIds.length) / allIds.length) * 100),
+    );
 
-    if (!paths.length) {
+    if (!remainingIds.length) {
       break;
     }
   }
@@ -453,7 +482,7 @@ const fetchFileContents = async (fetchingFiles) => {
  * the {@link allEntries} and {@link allAssets} stores.
  */
 const fetchFiles = async () => {
-  await checkGiteaVersion();
+  await checkInstanceVersion();
   await checkRepositoryAccess();
 
   await fetchAndParseFiles({

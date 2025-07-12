@@ -99,8 +99,6 @@ export const strings = {
   },
   backend_unsupported_version:
     '{name} バックエンドには {name} {version} 以降のバージョンが必要です。',
-  backend_unsupported_forgejo:
-    'Gitea バックエンドは API の違いにより Forgejo とは互換性がありません。',
   repository_no_access: 'あなたには「{repo}」レポジトリへのアクセス権がありません。',
   repository_not_found: '「{repo}」レポジトリは存在しません。',
   repository_empty: '「{repo}」レポジトリにはブランチがありません。',
