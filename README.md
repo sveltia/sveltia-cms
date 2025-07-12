@@ -14,7 +14,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
 
 ![Built-in image optimizer for WebP and SVG; mobile & tablet support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250409)<br>
 
-![Streamlined local and remote workflow; GitHub, GitLab & Gitea support; single-line migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250526)<br>
+![Streamlined local and remote workflow; GitHub, GitLab Gitea & Forgejo support; single-line migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250526)<br>
 
 ## Table of contents
 
@@ -178,7 +178,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57][^64] This number is remarkable because even though some Netlify/Decap CMS features are [omitted](#features-not-to-be-implemented) or [unimplemented](#current-limitations) in Sveltia CMS, we have added a lot of new features. That’s the power of [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) + [Vite](https://vite.dev/).
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation fields.[^14]
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
-- The Gitea backend is also faster because it utilizes an efficient API method introduced in Gitea 1.24.
+- The Gitea/Forgejo backend is also faster because it utilizes an efficient API method introduced in Gitea 1.24 and Forgejo 12.0.
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
 - Uses caching, lazy loading and infinite scrolling techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
@@ -247,12 +247,12 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once.[^24]
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
 - Service status checks are performed frequently and an incident notification is displayed prominently.
-- Users can quickly open the source file of an entry or asset in your repository using View on GitHub (or GitLab or Gitea) under the 3-dot menu when Developer Mode is enabled.
+- Users can quickly open the source file of an entry or asset in your repository via the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - The GitLab backend supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
-- Our Gitea backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
-- The OAuth access token is automatically renewed when using the GitLab or Gitea backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
+- Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
+- The OAuth access token is automatically renewed when using the GitLab or Gitea/Forgejo backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
@@ -605,7 +605,6 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
-- [Forgejo backend](https://decapcms.org/docs/gitea-backend/) ([#381](https://github.com/sveltia/sveltia-cms/issues/381))
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
 - LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
@@ -654,7 +653,7 @@ We have added support for features and file structures used in certain framework
 ### Backend support
 
 - The GitLab backend requires GitLab 16.3 or later.
-- The Gitea backend requires Gitea 1.24 or later. It’s not compatible with Forgejo at this time due to API differences. Support for Forgejo is tracked in [#381](https://github.com/sveltia/sveltia-cms/issues/381). The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` (public free service) instead of `https://try.gitea.io` (test instance).
+- The Gitea/Forgejo backend requires Gitea 1.24, Forgejo 12.0 or later. The default origin of the `base_url` and `api_root` [backend options](https://decapcms.org/docs/backends-overview/#backend-configuration) is set to `https://gitea.com` (public free service) instead of `https://try.gitea.io` (test instance).
 
 ### Browser support
 
@@ -673,7 +672,7 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 ### Installation & setup
 
-Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page and choose the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea](https://decapcms.org/docs/gitea-backend/) backend instead. Then migrate to Sveltia CMS as described below.
+Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page and choose the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) backend instead. Then migrate to Sveltia CMS as described below.
 
 Or try one of the starter kits for popular frameworks created by community members:
 
@@ -692,7 +691,7 @@ Unfortunately, we are unable to provide free installation and setup support at t
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
+Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea/Forgejo backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
 
 Open `/admin/index.html` locally with an editor like VS Code and replace the CMS `<script>` tag with the new one:
 
@@ -810,7 +809,7 @@ Limitation: YAML anchors, aliases and merge keys only work if they are in the sa
 
 ### Working around an authentication error
 
-If you get an “Authentication Aborted” error when trying to sign in to GitHub, GitLab or Gitea using the authorization code flow, you may need to check your site’s [`Cross-Origin-Opener-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy). The COOP header is not widely used, but it’s known to break the OAuth flow with a popup window. If that’s your case, changing `same-origin` to `same-origin-allow-popups` solves the problem. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/131))
+If you get an “Authentication Aborted” error when trying to sign in to GitHub, GitLab or Gitea/Forgejo using the authorization code flow, you may need to check your site’s [`Cross-Origin-Opener-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy). The COOP header is not widely used, but it’s known to break the OAuth flow with a popup window. If that’s your case, changing `same-origin` to `same-origin-allow-popups` solves the problem. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/131))
 
 ### Working with a local Git repository
 
@@ -818,7 +817,7 @@ Sveltia CMS has simplified the local repository workflow by removing the need fo
 
 Here are the workflow steps and tips:
 
-1. Make sure you have configured the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea](https://decapcms.org/docs/gitea-backend/) backend.
+1. Make sure you have configured the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) backend.
    - The Git Gateway backend mentioned in the Netlify/Decap CMS [local Git repository document](https://decapcms.org/docs/working-with-a-local-git-repository/) is not supported in Sveltia CMS, so `name: git-gateway` won’t work. Use `github`, `gitlab` or `gitea` for the `name` along with the `repo` definition. If you haven’t determined your repository name yet, just use a tentative name.
 1. Launch the local development server for your frontend framework, typically with `npm run dev` or `pnpm dev`.
 1. Open `http://localhost:[port]/admin/index.html` with Chrome or Edge.
@@ -1419,7 +1418,7 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://gitlab.com https://status-api.hostedstatus.com
     ```
-- Gitea: (If you’re running a self-hosted instance, use the origin instead.)
+- Gitea/Forgejo: (If you’re running a self-hosted instance, use the origin instead.)
   - `img-src`
     ```
     https://gitea.com
