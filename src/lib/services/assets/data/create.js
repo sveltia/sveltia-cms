@@ -9,12 +9,13 @@ import {
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
 import { backend } from '$lib/services/backends';
+import { saveChanges } from '$lib/services/common/save';
 import { siteConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
-import { formatFileName, getGitHash } from '$lib/services/utils/file';
+import { formatFileName } from '$lib/services/utils/file';
 
 /**
- * @import { Asset, CommitAction, CommitChangesOptions, UploadingAssets } from '$lib/types/private';
+ * @import { Asset, CommitAction, CommitOptions, UploadingAssets } from '$lib/types/private';
  */
 
 /**
@@ -54,16 +55,10 @@ const createFileList = (uploadingAssets) => {
 /**
  * Update the asset stores with new assets, ensuring that focused and overlaid assets are refreshed,
  * and displays a toast notification about the asset updates.
- * @param {Asset[]} newAssets An array of new assets to be merged into the existing assets store.
- * @param {File[]} files An array of files that were uploaded, used to update the toast
- * notification.
+ * @param {object} args Arguments.
+ * @param {number} args.count The number of files that were updated.
  */
-const updatedStores = (newAssets, files) => {
-  allAssets.update((assets) => [
-    ...assets.filter((a) => !newAssets.some((na) => na.path === a.path)),
-    ...newAssets,
-  ]);
-
+const updatedStores = ({ count }) => {
   const _focusedAsset = get(focusedAsset);
   const _overlaidAsset = get(overlaidAsset);
 
@@ -83,40 +78,35 @@ const updatedStores = (newAssets, files) => {
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
     published: !!get(backend)?.isGit && autoDeployEnabled === true,
-    count: files.length,
+    count,
   });
 };
 
 /**
  * Upload/save the given assets to the backend.
  * @param {UploadingAssets} uploadingAssets Assets to be uploaded.
- * @param {CommitChangesOptions} options Options for the backend handler.
+ * @param {CommitOptions} options Options for the backend handler.
  */
 export const saveAssets = async (uploadingAssets, options) => {
   const { files, folder } = uploadingAssets;
   const savingFileList = createFileList(uploadingAssets);
 
-  await get(backend)?.commitChanges(
-    savingFileList.map(({ action, path, file }) => ({ action, path, data: file })),
+  const savingAssets = savingFileList.map(
+    ({ name, path, file }) =>
+      /** @type {Asset} */ ({
+        name,
+        path,
+        size: file.size,
+        kind: getAssetKind(name),
+        folder,
+      }),
+  );
+
+  await saveChanges({
+    changes: savingFileList.map(({ action, path, file }) => ({ action, path, data: file })),
+    savingAssets,
     options,
-  );
+  });
 
-  /** @type {Asset[]} */
-  const newAssets = await Promise.all(
-    savingFileList.map(
-      async ({ name, path, file }) =>
-        /** @type {Asset} */ ({
-          blobURL: URL.createObjectURL(file),
-          name,
-          path,
-          sha: await getGitHash(file),
-          size: file.size,
-          kind: getAssetKind(name),
-          text: undefined,
-          folder,
-        }),
-    ),
-  );
-
-  updatedStores(newAssets, files);
+  updatedStores({ count: files.length });
 };

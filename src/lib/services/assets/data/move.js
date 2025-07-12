@@ -10,9 +10,8 @@ import {
   overlaidAsset,
 } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
-import { backend } from '$lib/services/backends';
+import { saveChanges } from '$lib/services/common/save';
 import { siteConfig } from '$lib/services/config';
-import { allEntries } from '$lib/services/contents';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
@@ -38,23 +37,8 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * @param {object} args Arguments.
  * @param {'move' | 'rename'} args.action The action performed, either 'move' or 'rename'.
  * @param {MovingAsset[]} args.movedAssets The assets that have been moved or renamed.
- * @param {Asset[]} args.savedAssets The assets that have been saved.
- * @param {Entry[]} args.savedEntries The entries that have been saved.
  */
-const updateStores = ({ action, movedAssets, savedAssets, savedEntries }) => {
-  const savedAssetsPaths = movedAssets.map((a) => a.asset.path); // old paths
-  const savedEntryIds = savedEntries.map((e) => e.id);
-
-  allAssets.update((assets) => [
-    ...assets.filter((a) => !savedAssetsPaths.includes(a.path)),
-    ...savedAssets,
-  ]);
-
-  allEntries.update((entries) => [
-    ...entries.filter((e) => !savedEntryIds.includes(e.id)),
-    ...savedEntries,
-  ]);
-
+const updateStores = ({ action, movedAssets }) => {
   const _allAssets = get(allAssets);
   const focusedAssetPath = get(focusedAsset)?.path;
   const _focusedAsset = movedAssets.find((a) => a.asset.path === focusedAssetPath);
@@ -105,6 +89,7 @@ export const moveAssets = async (action, movingAssets) => {
         action: 'move',
         path: newPath,
         previousPath: asset.path,
+        previousSha: asset.sha,
         data: new File([asset.file ?? (await getAssetBlob(asset))], newName),
       });
 
@@ -212,17 +197,12 @@ export const moveAssets = async (action, movingAssets) => {
     }),
   );
 
-  const results = await get(backend)?.commitChanges(changes, { commitType: 'uploadMedia' });
-
-  updateStores({
-    action,
-    movedAssets: [...movingAssets],
-    savedAssets: savingAssets.map((asset, index) => {
-      const result = results?.[index];
-      const blobURL = result instanceof File ? URL.createObjectURL(result) : undefined;
-
-      return { ...asset, blobURL };
-    }),
-    savedEntries: [...savingEntries],
+  await saveChanges({
+    changes,
+    savingEntries,
+    savingAssets,
+    options: { commitType: 'uploadMedia' },
   });
+
+  updateStores({ action, movedAssets: movingAssets });
 };

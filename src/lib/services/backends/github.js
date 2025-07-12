@@ -27,7 +27,8 @@ import { sendRequest } from '$lib/services/utils/networking';
  * BackendServiceStatus,
  * BaseFileListItem,
  * BaseFileListItemProps,
- * CommitChangesOptions,
+ * CommitOptions,
+ * CommitResults,
  * FetchApiOptions,
  * FileChange,
  * RepositoryContentsMap,
@@ -540,8 +541,8 @@ const fetchBlob = async (asset) => {
 /**
  * Save entries or assets remotely.
  * @param {FileChange[]} changes File changes to be saved.
- * @param {CommitChangesOptions} options Commit options.
- * @returns {Promise<string>} Commit URL.
+ * @param {CommitOptions} options Commit options.
+ * @returns {Promise<CommitResults>} Commit results, including the commit SHA and updated file SHAs.
  * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
  * @see https://docs.github.com/en/graphql/reference/mutations#createcommitonbranch
  */
@@ -561,13 +562,22 @@ const commitChanges = async (changes, options) => {
     .filter(({ action }) => ['move', 'delete'].includes(action))
     .map(({ previousPath, path }) => ({ path: previousPath ?? path }));
 
-  const result = /** @type {{ createCommitOnBranch: { commit: { url: string }} }} */ (
+  // Part of the query to fetch new file SHAs
+  const fileShaQuery = additions
+    .map(({ path }, index) => `file_${index}: file(path: "${path}") { oid }`)
+    .join(' ');
+
+  const {
+    createCommitOnBranch: { commit },
+  } = /** @type {{ createCommitOnBranch: { commit: Record<string, any> }}} */ (
     await fetchGraphQL(
       `
         mutation ($input: CreateCommitOnBranchInput!) {
           createCommitOnBranch(input: $input) {
             commit {
-              url
+              oid
+              committedDate
+              ${fileShaQuery}
             }
           }
         }
@@ -586,7 +596,13 @@ const commitChanges = async (changes, options) => {
     )
   );
 
-  return result.createCommitOnBranch.commit.url;
+  return {
+    sha: commit.oid,
+    date: new Date(commit.committedDate),
+    files: Object.fromEntries(
+      additions.map(({ path }, index) => [path, { sha: commit[`file_${index}`]?.oid }]),
+    ),
+  };
 };
 
 /**

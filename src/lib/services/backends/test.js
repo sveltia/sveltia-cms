@@ -2,7 +2,7 @@ import { getDirectoryHandle, loadFiles, saveChanges } from '$lib/services/backen
 import { dataLoaded } from '$lib/services/contents';
 
 /**
- * @import { BackendService, FileChange, User } from '$lib/types/private';
+ * @import { BackendService, CommitResults, FileChange, User } from '$lib/types/private';
  */
 
 const ROOT_DIR_NAME = 'sveltia-cms-test';
@@ -55,13 +55,14 @@ const fetchFiles = async () => {
 };
 
 /**
- * Save entries or assets locally. If the root directory handle is not available, do nothing; the
- * data will still be stored in the in-memory cache, allowing the user to continue using the app
- * without an error.
+ * Save entries or assets in the OPFS using the root directory handle acquired during sign-in. If
+ * the handle is not available, do nothing; the data will still be stored in the in-memory cache,
+ * allowing the user to continue using the app without an error.
  * @param {FileChange[]} changes File changes to be saved.
- * @returns {Promise<(?File)[]>} Created or updated files, if available.
+ * @returns {Promise<CommitResults>} Commit results, including a pseudo commit SHA, saved files, and
+ * their blob SHAs.
  */
-const commitChanges = async (changes) => (rootDirHandle ? saveChanges(rootDirHandle, changes) : []);
+const commitChanges = async (changes) => saveChanges(rootDirHandle, changes);
 
 /**
  * @type {BackendService}

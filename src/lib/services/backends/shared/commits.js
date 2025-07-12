@@ -5,7 +5,7 @@ import { user } from '$lib/services/user';
 
 /**
  * @import {
- * CommitChangesOptions,
+ * CommitOptions,
  * FileChange,
  * InternalSiteConfig,
  * User,
@@ -28,7 +28,7 @@ const DEFAULT_COMMIT_MESSAGES = {
 /**
  * Create a Git commit message.
  * @param {FileChange[]} changes File changes to be saved.
- * @param {CommitChangesOptions} options Commit options.
+ * @param {CommitOptions} options Commit options.
  * @returns {string} Formatted message.
  */
 export const createCommitMessage = (

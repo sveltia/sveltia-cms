@@ -1,21 +1,17 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import { getBlobRegex } from '@sveltia/utils/file';
 import { isObject, toRaw } from '@sveltia/utils/object';
+import { IndexedDB } from '@sveltia/utils/storage';
 import { compare, escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
-import {
-  allAssets,
-  getAssetKind,
-  getAssetsByDirName,
-  globalAssetFolder,
-} from '$lib/services/assets';
+import { getAssetKind, getAssetsByDirName, globalAssetFolder } from '$lib/services/assets';
 import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
 import { backend, isLastCommitPublished } from '$lib/services/backends';
+import { saveChanges } from '$lib/services/common/save';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { siteConfig } from '$lib/services/config';
-import { allEntries } from '$lib/services/contents';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
@@ -30,7 +26,6 @@ import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
-import { user } from '$lib/services/user';
 import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
 import {
   createPath,
@@ -44,8 +39,7 @@ import {
  * @import {
  * Asset,
  * AssetFolderInfo,
- * BackendService,
- * CommitAuthor,
+ * ChangeResults,
  * Entry,
  * EntryCollection,
  * EntryDraft,
@@ -56,8 +50,7 @@ import {
  * InternalLocaleCode,
  * LocalizedEntryMap,
  * RawEntryContent,
- * RepositoryFileMetadata,
- * User,
+ * RepositoryFileInfo,
  * } from '$lib/types/private';
  * @import {
  * DateTimeField,
@@ -80,15 +73,10 @@ import {
 
 /**
  * Properties for a saving asset.
- * @typedef {object} SavingAssetProps
+ * @typedef {object} SavingAsset
  * @property {string} collectionName Collection name.
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {AssetFolderInfo} folder Folder info.
- */
-
-/**
- * Properties for a saving asset.
- * @typedef {SavingAssetProps & RepositoryFileMetadata} SavingAsset
  */
 
 /**
@@ -513,18 +501,11 @@ const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
   });
 
   const { resolvedInternalPath } = assetFolderPaths;
-  const { email, name } = /** @type {User} */ (get(user));
 
   return {
     assetFolderPaths,
     assetNamesInSameFolder: getAssetsByDirName(resolvedInternalPath).map((a) => a.name.normalize()),
-    savingAssetProps: {
-      text: undefined,
-      collectionName,
-      folder,
-      commitAuthor: email ? /** @type {CommitAuthor} */ ({ name, email }) : undefined,
-      commitDate: new Date(), // Use the current datetime
-    },
+    savingAssetProps: { collectionName, folder },
   };
 };
 
@@ -738,10 +719,18 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     locales: Object.fromEntries(Object.entries(localizedEntryMap)),
   };
 
+  const databaseName = get(backend)?.repository?.databaseName;
+  const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
+
   if (!i18nEnabled || structure === 'single_file') {
     const localizedEntry = savingEntry.locales[defaultLocale];
     const { slug, path, content } = localizedEntry;
     const renamed = !isNew && (originalSlugs?.[defaultLocale] ?? originalSlugs?._) !== slug;
+    const previousPath = originalEntry?.locales[defaultLocale]?.path;
+
+    const previousSha = previousPath
+      ? /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(previousPath))?.sha
+      : undefined;
 
     const data = await formatEntryFile({
       content: i18nEnabled
@@ -761,7 +750,8 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       action: isNew ? 'create' : renamed ? 'move' : 'update',
       slug,
       path,
-      previousPath: renamed ? originalEntry?.locales[defaultLocale].path : undefined,
+      previousPath: renamed ? previousPath : undefined,
+      previousSha,
       data,
     });
   } else {
@@ -769,6 +759,11 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       allLocales.map(async (locale) => {
         const localizedEntry = savingEntry.locales[locale];
         const { slug, path, content } = localizedEntry ?? {};
+        const previousPath = originalEntry?.locales[locale]?.path;
+
+        const previousSha = previousPath
+          ? /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(previousPath))?.sha
+          : undefined;
 
         if (currentLocales[locale]) {
           const renamed =
@@ -785,11 +780,17 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
             action: isNew || !originalLocales[locale] ? 'create' : renamed ? 'move' : 'update',
             slug,
             path,
-            previousPath: renamed ? originalEntry?.locales[locale]?.path : undefined,
+            previousPath: renamed ? previousPath : undefined,
+            previousSha,
             data,
           });
         } else if (!isNew && originalLocales[locale]) {
-          changes.push({ action: 'delete', slug, path });
+          changes.push({
+            action: 'delete',
+            slug,
+            path,
+            previousSha,
+          });
         }
 
         return true;
@@ -801,22 +802,11 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
 };
 
 /**
- * Update the application stores with the provided saving assets, entry, and deployment settings.
+ * Update the application stores with deployment settings.
  * @param {object} args Arguments.
- * @param {Entry} args.savingEntry The entry object being saved.
- * @param {Asset[]} args.savingAssets An array of asset objects being saved.
  * @param {boolean | undefined} args.skipCI Whether to disable automatic deployments for the change.
  */
-const updateStores = ({ savingEntry, savingAssets, skipCI }) => {
-  allEntries.update((entries) => [...entries.filter((e) => e.id !== savingEntry.id), savingEntry]);
-
-  const savingAssetsPaths = savingAssets.map((a) => a.path);
-
-  allAssets.update((assets) => [
-    ...assets.filter((a) => !savingAssetsPaths.includes(a.path)),
-    ...savingAssets,
-  ]);
-
+const updateStores = ({ skipCI }) => {
   const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
 
   const published =
@@ -852,12 +842,19 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const slugs = getSlugs({ draft });
   const { defaultLocaleSlug } = slugs;
   const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
+  /** @type {ChangeResults} */
+  let results;
 
   try {
-    await /** @type {BackendService} */ (get(backend)).commitChanges(changes, {
-      commitType: isNew ? 'create' : 'update',
-      collection,
-      skipCI,
+    results = await saveChanges({
+      changes,
+      savingEntries: [savingEntry],
+      savingAssets,
+      options: {
+        commitType: isNew ? 'create' : 'update',
+        collection,
+        skipCI,
+      },
     });
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
@@ -866,8 +863,8 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     throw new Error('saving_failed', { cause: ex.cause ?? ex });
   }
 
-  updateStores({ savingEntry, savingAssets, skipCI });
+  updateStores({ skipCI });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 
-  return savingEntry;
+  return results.savedEntries[0];
 };

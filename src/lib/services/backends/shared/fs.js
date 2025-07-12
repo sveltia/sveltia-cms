@@ -12,10 +12,15 @@ import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends';
 import { createFileList } from '$lib/services/backends/shared/fetch';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
-import { createPathRegEx, getGitHash } from '$lib/services/utils/file';
+import { createPathRegEx, getBlob, getGitHash } from '$lib/services/utils/file';
 
 /**
- * @import { BaseFileListItem, BaseFileListItemProps, FileChange } from '$lib/types/private';
+ * @import {
+ * BaseFileListItem,
+ * BaseFileListItemProps,
+ * CommitResults,
+ * FileChange,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -363,24 +368,48 @@ const saveChange = async (rootDirHandle, { action, path, previousPath, data }) =
 };
 
 /**
- * Save entries or assets locally.
- * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * Save entries or assets in the file system.
+ * @param {FileSystemDirectoryHandle | undefined} rootDirHandle Root directory handle. This can be
+ * `undefined` if the directory handle could not be acquired earlier for security reasons. If the
+ * handle is not available, the changes will not be saved, but the user can still continue using the
+ * app without an error thanks to the in-memory cache.
  * @param {FileChange[]} changes File changes to be saved.
- * @returns {Promise<(?File)[]>} Created or updated files, if available.
+ * @returns {Promise<CommitResults>} Commit results, including a pseudo commit SHA, saved files, and
+ * their blob SHAs.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry
  */
-export const saveChanges = async (rootDirHandle, changes) =>
-  Promise.all(
+export const saveChanges = async (rootDirHandle, changes) => {
+  const entries = await Promise.all(
     changes.map(async (change) => {
-      try {
-        // Need `await` here to catch any exception
-        return await saveChange(rootDirHandle, change);
-      } catch (/** @type {any} */ ex) {
-        // eslint-disable-next-line no-console
-        console.error(ex);
+      const { path, data } = change;
+      /** @type {Blob | null} */
+      let file = null;
+
+      if (rootDirHandle) {
+        try {
+          file = await saveChange(rootDirHandle, change);
+        } catch (ex) {
+          // eslint-disable-next-line no-console
+          console.error(ex);
+        }
       }
 
-      return null;
+      if (!file) {
+        if (data !== undefined) {
+          file = getBlob(data);
+        } else {
+          return null;
+        }
+      }
+
+      return [path, { file, sha: await getGitHash(file) }];
     }),
   );
+
+  return {
+    // Use a hash of the current date as a pseudo SHA
+    sha: await getGitHash(new Date().toJSON()),
+    files: Object.fromEntries(entries.filter((entry) => !!entry)),
+  };
+};

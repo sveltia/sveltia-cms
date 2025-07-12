@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
-import { backend } from '$lib/services/backends';
+import { saveChanges } from '$lib/services/common/save';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import {
@@ -14,10 +14,11 @@ import {
 
 /**
  * Update the stores after deleting entries.
- * @param {string[]} ids List of entry IDs.
- * @param {string[]} assetPaths List of associated asset paths.
+ * @param {object} args Arguments.
+ * @param {string[]} args.ids List of entry IDs.
+ * @param {string[]} args.assetPaths List of associated asset paths.
  */
-const updateStores = (ids, assetPaths) => {
+const updateStores = ({ ids, assetPaths }) => {
   const _allEntries = get(allEntries);
 
   allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));
@@ -65,10 +66,13 @@ export const deleteEntries = async (ids, assetPaths = []) => {
     );
   }
 
-  await get(backend)?.commitChanges(changes, {
-    commitType: 'delete',
-    collection: get(selectedCollection),
+  await saveChanges({
+    changes,
+    options: {
+      commitType: 'delete',
+      collection: get(selectedCollection),
+    },
   });
 
-  updateStores(ids, assetPaths);
+  updateStores({ ids, assetPaths });
 };

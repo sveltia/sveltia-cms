@@ -115,12 +115,32 @@
  */
 
 /**
- * Options for the commit changes operation.
- * @typedef {object} CommitChangesOptions
+ * Options for a commit operation in the backend.
+ * @typedef {object} CommitOptions
  * @property {CommitType} commitType Commit type. Used only for Git backends.
  * @property {InternalCollection} [collection] Collection of the corresponding entry or asset.
  * @property {boolean} [skipCI] Whether to disable automatic deployments for the commit. Used only
  * for Git backends.
+ */
+
+/**
+ * Results of a commit operation.
+ * @typedef {object} CommitResults
+ * @property {string} sha Git object ID (SHA-1 hash) of the commit. It’s a pseudo hash for the local
+ * backend.
+ * @property {CommitAuthor} [author] Git committer info for a Git backend.
+ * @property {Date} [date] Commit date for a Git backend.
+ * @property {Record<string, { sha: string, file?: Blob }>} files Map of committed files. The key is
+ * a file path, and the value is an object containing the Git object ID of the updated file. The
+ * blob object is also included for the local backend.
+ */
+
+/**
+ * Change results containing the commit information, saved entries, and saved assets.
+ * @typedef {object} ChangeResults
+ * @property {CommitResults} commit Commit results.
+ * @property {Entry[]} savedEntries List of saved entries.
+ * @property {Asset[]} savedAssets List of saved assets.
  */
 
 /**
@@ -161,10 +181,9 @@
  * @property {() => Promise<void>} fetchFiles Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backends only.
- * @property {(changes: FileChange[], options: CommitChangesOptions) =>
- * Promise<string | (?File)[] | void>} commitChanges Function to save file changes, including
- * additions and deletions, and return the commit URL (Git backends only) or created/updated files
- * (local backend only).
+ * @property {(changes: FileChange[], options: CommitOptions) => Promise<CommitResults>
+ * } commitChanges Function to save file changes, including additions and deletions, and return the
+ * commit hash and a map of committed files.
  * @property {() => Promise<Response>} [triggerDeployment] Function to manually trigger a new
  * deployment on any connected CI/CD provider. GitHub only.
  */
@@ -573,6 +592,8 @@
  * @property {string} path File path.
  * @property {string} [previousPath] Original path to a file being moved. Required when the commit
  * `action` is `move`.
+ * @property {string} [previousSha] Git object ID (SHA-1 hash) for the original file being updated,
+ * moved or deleted.
  * @property {string} [slug] Entry slug or `undefined` for an asset.
  * @property {string | File} [data] File data. `undefined` for a deleted file, or a file object for
  * a new or updated file. It can also be a string for a text file like Markdown or HTML, which is

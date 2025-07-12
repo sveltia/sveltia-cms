@@ -7,6 +7,7 @@ import { siteConfig } from '$lib/services/config';
 /**
  * @import {
  * BackendService,
+ * CommitResults,
  * FileChange,
  * InternalSiteConfig,
  * RepositoryInfo,
@@ -155,10 +156,10 @@ const fetchFiles = async () => {
 /**
  * Save entries or assets locally.
  * @param {FileChange[]} changes File changes to be saved.
- * @returns {Promise<(?File)[]>} Created or updated files, if available.
+ * @returns {Promise<CommitResults>} Commit results, including a pseudo commit SHA, saved files, and
+ * their blob SHAs.
  */
-const commitChanges = async (changes) =>
-  saveChanges(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle), changes);
+const commitChanges = async (changes) => saveChanges(rootDirHandle, changes);
 
 /**
  * @type {BackendService}

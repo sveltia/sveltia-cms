@@ -20,6 +20,7 @@ import { siteConfig } from '$lib/services/config';
 import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';
 import { prefs } from '$lib/services/user/prefs';
+import { getGitHash } from '$lib/services/utils/file';
 import { sendRequest } from '$lib/services/utils/networking';
 
 /**
@@ -31,7 +32,8 @@ import { sendRequest } from '$lib/services/utils/networking';
  * BackendServiceStatus,
  * BaseFileListItem,
  * BaseFileListItemProps,
- * CommitChangesOptions,
+ * CommitOptions,
+ * CommitResults,
  * FetchApiOptions,
  * FileChange,
  * RepositoryContentsMap,
@@ -53,6 +55,12 @@ import { sendRequest } from '$lib/services/utils/networking';
  * @property {string} authorName Commit author’s full name.
  * @property {string} authorEmail Commit author’s email.
  * @property {string} committedDate Committed date.
+ */
+
+/**
+ * @typedef {object} CommitResponse
+ * @property {string} id Commit SHA-1 hash.
+ * @property {string} committed_date Commit date in ISO 8601 format.
  */
 
 const backendName = 'gitlab';
@@ -678,8 +686,8 @@ const fetchBlob = async (asset) => {
  * Save entries or assets remotely. Note that the `commitCreate` GraphQL mutation is broken and
  * images cannot be uploaded properly, so we use the REST API instead.
  * @param {FileChange[]} changes File changes to be saved.
- * @param {CommitChangesOptions} options Commit options.
- * @returns {Promise<string>} Commit URL.
+ * @param {CommitOptions} options Commit options.
+ * @returns {Promise<CommitResults>} Commit results, including the commit SHA and updated file SHAs.
  * @see https://docs.gitlab.com/api/commits.html#create-a-commit-with-multiple-files-and-actions
  * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/31102
  * @see https://docs.gitlab.com/api/graphql/reference/#mutationcommitcreate
@@ -698,7 +706,7 @@ const commitChanges = async (changes, options) => {
     })),
   );
 
-  const result = /** @type {{ web_url: string }} */ (
+  const { id: sha, committed_date: committedDate } = /** @type {CommitResponse} */ (
     await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`, {
       method: 'POST',
       body: {
@@ -709,7 +717,18 @@ const commitChanges = async (changes, options) => {
     })
   );
 
-  return result.web_url;
+  // Calculate the SHA-1 hash for each file because the GitLab REST API does not return file SHAs
+  const entries = await Promise.all(
+    changes.map(async ({ path, data }) =>
+      data === undefined ? null : [path, { sha: await getGitHash(data) }],
+    ),
+  );
+
+  return {
+    sha,
+    date: new Date(committedDate),
+    files: Object.fromEntries(entries.filter((entry) => !!entry)),
+  };
 };
 
 /**

@@ -1,7 +1,6 @@
-import { get } from 'svelte/store';
-import { allAssets, focusedAsset } from '$lib/services/assets';
+import { focusedAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
-import { backend } from '$lib/services/backends';
+import { saveChanges } from '$lib/services/common/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 
 /**
@@ -10,11 +9,10 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
 
 /**
  * Update the asset stores after deleting assets.
- * @param {Asset[]} assets List of assets that have been deleted.
+ * @param {object} args Arguments.
+ * @param {Asset[]} args.assets List of assets that have been deleted.
  */
-const updateStores = (assets) => {
-  allAssets.update((_allAssets) => _allAssets.filter((asset) => !assets.includes(asset)));
-
+const updateStores = ({ assets }) => {
   // Clear asset info in the sidebar
   focusedAsset.update((_focusedAsset) =>
     assets.some(({ path }) => _focusedAsset?.path === path) ? undefined : _focusedAsset,
@@ -35,10 +33,10 @@ const updateStores = (assets) => {
  * @todo Validate entry field constraints, such as required fields, before deleting the assets.
  */
 export const deleteAssets = async (assets) => {
-  await get(backend)?.commitChanges(
-    assets.map(({ path }) => ({ action: 'delete', path })),
-    { commitType: 'deleteMedia' },
-  );
+  await saveChanges({
+    changes: assets.map(({ path, sha }) => ({ action: 'delete', path, previousSha: sha })),
+    options: { commitType: 'deleteMedia' },
+  });
 
-  updateStores(assets);
+  updateStores({ assets });
 };
