@@ -1555,7 +1555,7 @@ Due early 2026
 
 ### Future
 
-- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] [manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214),[^125] [config editor](https://github.com/sveltia/sveltia-cms/discussions/452),[^10] offline support,[^238] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
+- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] [manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214),[^125] [tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455),[^256] [config editor](https://github.com/sveltia/sveltia-cms/discussions/452),[^10] offline support,[^238] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
 - **Sveltia CMS Additions**: edge functions providing features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a Git service account (Git Gateway alternative), API key management, post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
@@ -2094,3 +2094,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^254]: Netlify/Decap CMS [#7532](https://github.com/decaporg/decap-cms/issues/7532)
 
 [^255]: Netlify/Decap CMS [#7355](https://github.com/decaporg/decap-cms/discussions/7355)
+
+[^256]: Netlify/Decap CMS [#2845](https://github.com/decaporg/decap-cms/issues/2845)
