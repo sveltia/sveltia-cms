@@ -1,74 +1,17 @@
-import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp } from '@sveltia/utils/string';
-import equal from 'fast-deep-equal';
-import { get, writable } from 'svelte/store';
-import { backend } from '$lib/services/backends';
+import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import {
- * BackendService,
  * EntryDraft,
- * EntryEditorPane,
- * EntryEditorView,
  * FlattenedEntryContent,
  * InternalLocaleCode,
  * LocaleContentMap,
- * SelectAssetsView,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, ObjectField, ListField } from '$lib/types/public';
  */
-
-/**
- * @type {Writable<boolean>}
- */
-export const showContentOverlay = writable(false);
-/**
- * @type {Writable<boolean>}
- */
-export const showDuplicateToast = writable(false);
-/**
- * @type {Writable<{ show: boolean, multiple: boolean, resolve?: Function }>}
- */
-export const translatorApiKeyDialogState = writable({ show: false, multiple: false });
-/**
- * Copy/translation toast state.
- * @type {Writable<{
- * id: number | undefined,
- * show: boolean,
- * status: 'info' | 'success' | 'error',
- * message: string | undefined,
- * count: number,
- * sourceLocale: InternalLocaleCode | undefined,
- * }>}
- */
-export const copyFromLocaleToast = writable({
-  id: undefined,
-  show: false,
-  status: 'success',
-  message: undefined,
-  count: 1,
-  sourceLocale: undefined,
-});
-/**
- * @type {Writable<?EntryEditorPane>}
- */
-export const editorLeftPane = writable(null);
-/**
- * @type {Writable<?EntryEditorPane>}
- */
-export const editorRightPane = writable(null);
-/**
- * @type {Writable<EntryEditorView | undefined>}
- */
-export const entryEditorSettings = writable();
-/**
- * View settings for the Select Assets dialog.
- * @type {Writable<SelectAssetsView | undefined>}
- */
-export const selectAssetsView = writable();
 
 /**
  * Get the initial object/list expander state based on the `collapsed` option. If `collapsed` is set
@@ -202,53 +145,3 @@ export const expandInvalidFields = ({ collectionName, fileName, currentValues })
 
   syncExpanderStates(stateMap);
 };
-
-/**
- * Initialize {@link entryEditorSettings}, {@link selectAssetsView} and relevant subscribers.
- * @param {BackendService} _backend Backend service.
- */
-const initSettings = async ({ repository }) => {
-  const { databaseName } = repository ?? {};
-  const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
-  const storageKey = 'entry-view';
-
-  const settings = {
-    showPreview: true,
-    syncScrolling: true,
-    selectAssetsView: { type: 'grid' },
-    ...((await settingsDB?.get(storageKey)) ?? {}),
-  };
-
-  entryEditorSettings.set(settings);
-  selectAssetsView.set(settings.selectAssetsView);
-
-  entryEditorSettings.subscribe((_settings) => {
-    (async () => {
-      try {
-        if (!equal(_settings, await settingsDB?.get(storageKey))) {
-          await settingsDB?.set(storageKey, _settings);
-        }
-      } catch {
-        //
-      }
-    })();
-  });
-
-  selectAssetsView.subscribe((view) => {
-    if (!view || !Object.keys(view).length) {
-      return;
-    }
-
-    const savedView = get(entryEditorSettings)?.selectAssetsView ?? {};
-
-    if (!equal(view, savedView)) {
-      entryEditorSettings.update((_settings) => ({ ..._settings, selectAssetsView: view }));
-    }
-  });
-};
-
-backend.subscribe((_backend) => {
-  if (_backend && !get(entryEditorSettings)) {
-    initSettings(_backend);
-  }
-});

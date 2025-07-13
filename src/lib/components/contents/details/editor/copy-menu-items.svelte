@@ -2,7 +2,7 @@
   import { MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { copyFromLocale } from '$lib/services/contents/draft/update';
+  import { copyFromLocale } from '$lib/services/contents/draft/update/copy';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { translator } from '$lib/services/integrations/translators';
 
@@ -46,7 +46,12 @@
           $state.snapshot($entryDraft.currentValues[locale])[keyPath]) ||
       (translate && (!getSourceLanguage(locale) || !getTargetLanguage(otherLocale)))}
     onclick={() => {
-      copyFromLocale({ sourceLocale: otherLocale, targetLocale: locale, keyPath, translate });
+      copyFromLocale({
+        sourceLocale: otherLocale,
+        targetLocale: locale,
+        keyPath,
+        translate,
+      });
     }}
   />
 {/each}

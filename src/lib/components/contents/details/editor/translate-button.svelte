@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { copyFromLocale } from '$lib/services/contents/draft/update';
+  import { copyFromLocale } from '$lib/services/contents/draft/update/copy';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { translator } from '$lib/services/integrations/translators';
 
@@ -51,7 +51,12 @@
       !$entryDraft?.currentLocales[otherLocale] ||
       !getTargetLanguage(otherLocale)}
     onclick={() => {
-      copyFromLocale({ sourceLocale: otherLocale, targetLocale: locale, keyPath, translate: true });
+      copyFromLocale({
+        sourceLocale: otherLocale,
+        targetLocale: locale,
+        keyPath,
+        translate: true,
+      });
     }}
   >
     {#snippet startIcon()}

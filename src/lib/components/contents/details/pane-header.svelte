@@ -9,7 +9,8 @@
   import PreviewButton from '$lib/components/contents/details/preview-button.svelte';
   import { backend } from '$lib/services/backends';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { revertChanges, toggleLocale } from '$lib/services/contents/draft/update';
+  import { toggleLocale } from '$lib/services/contents/draft/update/locale';
+  import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { DEFAULT_I18N_CONFIG, getLocaleLabel } from '$lib/services/contents/i18n';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';

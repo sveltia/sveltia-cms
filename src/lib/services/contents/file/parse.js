@@ -7,7 +7,12 @@ import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file';
 
 /**
- * @import { BaseEntryListItem, EntryCollection } from '$lib/types/private';
+ * @import {
+ * BaseEntryListItem,
+ * EntryCollection,
+ * InternalCollection,
+ * InternalCollectionFile
+ * } from '$lib/types/private';
  * @import { FrontMatterFormat } from '$lib/types/public';
  */
 
@@ -49,6 +54,58 @@ const detectFrontMatterFormat = (text) => {
 };
 
 /**
+ * Parse front matter from a Markdown file.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
+ * only.
+ * @param {FrontMatterFormat} args.format Front matter format.
+ * @param {string} args.text File content.
+ * @returns {Record<string, any>} Parsed front matter and body.
+ * @throws {Error} When the front matter block could not be parsed.
+ */
+const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
+  const {
+    _file: { format: _format, fmDelimiters },
+  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+
+  const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
+    ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
+    : fmDelimiters) ?? ['---', '---'];
+
+  const sd = escapeRegExp(startDelimiter);
+  const ed = escapeRegExp(endDelimiter);
+  // Front matter matching: allow an empty head
+  const regex = new RegExp(`^${sd}\\n(?:(?<head>.*?)\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms');
+  const { head, body } = text.match(regex)?.groups ?? {};
+
+  if (!head && !body) {
+    // Support Markdown without a front matter block, particularly for VitePress
+    if (text) {
+      return { body: text };
+    }
+
+    throw new Error('No front matter block found');
+  }
+
+  let parsedHead = {};
+
+  if (format === 'yaml-frontmatter') {
+    parsedHead = parseYAML(head);
+  }
+
+  if (format === 'toml-frontmatter') {
+    parsedHead = parseTOML(head);
+  }
+
+  if (format === 'json-frontmatter') {
+    parsedHead = parseJSON(head);
+  }
+
+  return { ...parsedHead, body };
+};
+
+/**
  * Parse raw content with given file details.
  * @param {BaseEntryListItem} entry Entry file list item.
  * @returns {Promise<any>} Parsed content.
@@ -71,11 +128,10 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
   // Normalize line breaks
   text = text.trim().replace(/\r\n?/g, '\n');
 
-  const {
-    _file: { format: _format, fmDelimiters },
+  let {
+    _file: { format },
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
-  const format = _format === 'frontmatter' ? detectFrontMatterFormat(text) : _format;
   const customParser = customFileFormats[format]?.parser;
 
   if (customParser) {
@@ -83,7 +139,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
   }
 
   try {
-    if (/^ya?ml$/.test(format)) {
+    if (format === 'yaml' || format === 'yml') {
       return parseYAML(text);
     }
 
@@ -95,37 +151,12 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
       return parseJSON(text);
     }
 
+    if (format === 'frontmatter') {
+      format = detectFrontMatterFormat(text);
+    }
+
     if (/^(?:yaml|toml|json)-frontmatter$/.test(format)) {
-      const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
-        ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
-        : fmDelimiters) ?? ['---', '---'];
-
-      const sd = escapeRegExp(startDelimiter);
-      const ed = escapeRegExp(endDelimiter);
-      // Front matter matching: allow an empty head
-      const regex = new RegExp(`^${sd}\\n(?:(?<head>.*?)\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms');
-      const { head, body } = text.match(regex)?.groups ?? {};
-
-      if (!head && !body) {
-        // Support Markdown without a front matter block, particularly for VitePress
-        if (text) {
-          return { body: text };
-        }
-
-        throw new Error('No front matter block found');
-      }
-
-      if (format === 'yaml-frontmatter') {
-        return { ...parseYAML(head), body };
-      }
-
-      if (format === 'toml-frontmatter') {
-        return { ...parseTOML(head), body };
-      }
-
-      if (format === 'json-frontmatter') {
-        return { ...parseJSON(head), body };
-      }
+      return parseFrontMatter({ collection, collectionFile, format, text });
     }
   } catch (/** @type {any} */ ex) {
     throw new Error(`${path} could not be parsed due to ${ex.name}: ${ex.message}`);

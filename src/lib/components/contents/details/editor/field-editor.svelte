@@ -12,7 +12,7 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { editors } from '$lib/components/contents/details/widgets';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { revertChanges } from '$lib/services/contents/draft/update';
+  import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { isFieldRequired } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
 

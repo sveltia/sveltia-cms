@@ -5,7 +5,7 @@ import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { siteConfigVersion } from '$lib/services/config';
 import { entryDraft, entryDraftModified, i18nAutoDupEnabled } from '$lib/services/contents/draft';
-import { createProxy } from '$lib/services/contents/draft/create';
+import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
@@ -125,6 +125,68 @@ export const saveBackup = async (draft) => {
 };
 
 /**
+ * Restore a draft backup to the current entry draft.
+ * @param {object} args Arguments.
+ * @param {EntryDraftBackup} args.backup Backup to restore.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ */
+const restoreBackup = ({ backup, collectionName, fileName }) => {
+  const { currentLocales, currentSlugs, currentValues, files } = backup;
+
+  i18nAutoDupEnabled.set(false);
+
+  entryDraft.update((draft) => {
+    if (draft) {
+      draft.currentLocales = currentLocales;
+      draft.currentSlugs = currentSlugs;
+
+      Object.entries(currentValues).forEach(([locale, valueMap]) => {
+        Object.entries(valueMap).forEach(([keyPath, value]) => {
+          if (typeof value === 'string') {
+            [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
+              let cache = files[blobURL];
+
+              // Support `LegacyEntryFileMap`
+              // @todo Remove this before the 1.0 release
+              if (cache instanceof File) {
+                cache = { file: cache, folder: undefined };
+              }
+
+              if (cache) {
+                // Regenerate a blob URL
+                const newURL = URL.createObjectURL(cache.file);
+
+                valueMap[keyPath] = value.replaceAll(blobURL, newURL);
+                draft.files[newURL] = cache;
+              }
+            });
+          }
+        });
+
+        if (draft.currentValues[locale]) {
+          Object.assign(draft.currentValues[locale], valueMap);
+        } else {
+          draft.currentValues[locale] = createProxy({
+            draft: { collectionName, fileName },
+            locale,
+            target: structuredClone(valueMap),
+          });
+        }
+
+        if (!draft.originalValues[locale]) {
+          draft.originalValues[locale] = {};
+        }
+      });
+    }
+
+    return draft;
+  });
+
+  i18nAutoDupEnabled.set(true);
+};
+
+/**
  * Check if a draft backup is available, and restore it if requested by the user.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
@@ -142,7 +204,7 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
     return;
   }
 
-  const { timestamp, currentLocales, currentSlugs, currentValues, files } = backup;
+  const { timestamp } = backup;
 
   /** @type {boolean | undefined} */
   const doRestore = await new Promise((resolve) => {
@@ -155,56 +217,7 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
   }
 
   if (doRestore) {
-    i18nAutoDupEnabled.set(false);
-
-    entryDraft.update((draft) => {
-      if (draft) {
-        draft.currentLocales = currentLocales;
-        draft.currentSlugs = currentSlugs;
-
-        Object.entries(currentValues).forEach(([locale, valueMap]) => {
-          Object.entries(valueMap).forEach(([keyPath, value]) => {
-            if (typeof value === 'string') {
-              [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
-                let cache = files[blobURL];
-
-                // Support `LegacyEntryFileMap`
-                // @todo Remove this before the 1.0 release
-                if (cache instanceof File) {
-                  cache = { file: cache, folder: undefined };
-                }
-
-                if (cache) {
-                  // Regenerate a blob URL
-                  const newURL = URL.createObjectURL(cache.file);
-
-                  valueMap[keyPath] = value.replaceAll(blobURL, newURL);
-                  draft.files[newURL] = cache;
-                }
-              });
-            }
-          });
-
-          if (draft.currentValues[locale]) {
-            Object.assign(draft.currentValues[locale], valueMap);
-          } else {
-            draft.currentValues[locale] = createProxy({
-              draft: { collectionName, fileName },
-              locale,
-              target: structuredClone(valueMap),
-            });
-          }
-
-          if (!draft.originalValues[locale]) {
-            draft.originalValues[locale] = {};
-          }
-        });
-      }
-
-      return draft;
-    });
-
-    i18nAutoDupEnabled.set(true);
+    restoreBackup({ backup, collectionName, fileName });
   } else {
     await deleteBackup(collectionName, slug);
   }

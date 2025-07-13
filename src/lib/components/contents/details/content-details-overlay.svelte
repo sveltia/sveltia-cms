@@ -16,10 +16,10 @@
   import {
     editorLeftPane,
     editorRightPane,
-    entryEditorSettings,
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/draft/editor';
+  import { entryEditorSettings } from '$lib/services/contents/draft/editor/settings';
   import { DEFAULT_I18N_CONFIG, getLocaleLabel } from '$lib/services/contents/i18n';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
