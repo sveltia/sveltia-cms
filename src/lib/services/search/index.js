@@ -27,11 +27,94 @@ export const searchTerms = writable('');
  * @param {string} value Original value.
  * @returns {string} Normalized value.
  */
-export const normalize = (value) =>
-  value
+export const normalize = (value) => {
+  value = value.trim();
+
+  if (!value) {
+    return '';
+  }
+
+  return value
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase();
+};
+
+/**
+ * Check if the given label matches the search terms.
+ * @param {object} args Arguments.
+ * @param {string} args.value Value to check against.
+ * @param {string} args.terms Search terms.
+ * @returns {boolean} Result of the match check.
+ */
+const hasMatch = ({ value, terms }) => normalize(value).includes(terms);
+
+/**
+ * Scan an entry for matches against the search terms.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry to scan.
+ * @param {string} args.terms Search terms.
+ * @returns {number} Points scored for the entry based on matches.
+ */
+const scanEntry = ({ entry, terms }) => {
+  // Count the number of matches, weighting the collection name and title
+  let points = 0;
+  const collections = getAssociatedCollections(entry);
+
+  if (collections.length) {
+    collections.forEach((collection) => {
+      // Check if the collection label or name matches
+      if (hasMatch({ value: collection.label || collection.name, terms })) {
+        points += 10;
+      }
+
+      // Check if the file labels or names match
+      points += getCollectionFilesByEntry(collection, entry).filter((file) =>
+        hasMatch({ value: file.label || file.name, terms }),
+      ).length;
+    });
+
+    const [collection] = collections;
+    const summary = getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true });
+
+    // Check if the entry summary matches
+    if (hasMatch({ value: summary, terms })) {
+      points += 10;
+    }
+  }
+
+  // Check if the entry content matches
+  Object.values(entry.locales).forEach(({ content }) => {
+    points += Object.values(content).filter(
+      (value) =>
+        (typeof value === 'string' && !!value && hasMatch({ value, terms })) ||
+        (typeof value === 'number' && hasMatch({ value: String(value), terms })),
+    ).length;
+  });
+
+  return points;
+};
+
+/**
+ * Search entries based on the given search terms.
+ * @param {object} args Arguments.
+ * @param {Entry[]} args.entries All entries to search in.
+ * @param {string} args.terms Search terms.
+ * @returns {Entry[]} Search results sorted by relevance.
+ */
+const searchEntries = ({ entries, terms }) => {
+  terms = normalize(terms);
+
+  if (!entries.length || !terms) {
+    return [];
+  }
+
+  return entries
+    .map((entry) => ({ entry, points: scanEntry({ entry, terms }) }))
+    .filter(({ points }) => points > 0)
+    .sort((a, b) => b.points - a.points)
+    .map(({ entry }) => entry);
+};
 
 /**
  * Hold entry search results for the current search terms.
@@ -41,79 +124,30 @@ export const normalize = (value) =>
 export const entrySearchResults = derived(
   // Include `appLocale` as a dependency because `getEntrySummary()` may return a localized label
   [allEntries, searchTerms, appLocale],
-  ([_allEntries, _searchTerms], set) => {
-    const terms = _searchTerms ? normalize(_searchTerms) : '';
-    /**
-     * Check if the given label matches the search terms.
-     * @param {string} label Label.
-     * @returns {boolean} Result.
-     */
-    const hasMatch = (label) => normalize(label).includes(terms);
-
-    const entries = (() => {
-      if (!_allEntries.length || !terms) {
-        return [];
-      }
-
-      return _allEntries
-        .map((entry) => {
-          // Count the number of matches, weighting the collection name and title
-          let points = 0;
-
-          getAssociatedCollections(entry).forEach((collection) => {
-            if (hasMatch(collection.label || collection.name)) {
-              points += 10;
-            }
-
-            if (
-              hasMatch(
-                getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true }),
-              )
-            ) {
-              points += 10;
-            }
-
-            points += getCollectionFilesByEntry(collection, entry).filter((file) =>
-              hasMatch(file.label || file.name),
-            ).length;
-
-            Object.values(entry.locales).forEach(({ content }) => {
-              points += Object.values(content).filter(
-                (value) =>
-                  (typeof value === 'string' && !!value && hasMatch(value)) ||
-                  (typeof value === 'number' && hasMatch(String(value))),
-              ).length;
-            });
-          });
-
-          return { entry, points };
-        })
-        .filter(({ points }) => points > 0)
-        .sort((a, b) => b.points - a.points)
-        .map((result) => result.entry);
-    })();
-
-    set(entries);
-  },
+  ([entries, terms]) => searchEntries({ entries, terms }),
 );
+
+/**
+ * Search assets based on the given search terms.
+ * @param {object} args Arguments.
+ * @param {Asset[]} args.assets All assets to search in.
+ * @param {string} args.terms Search terms.
+ * @returns {Asset[]} Search results.
+ */
+const searchAssets = ({ assets, terms }) => {
+  terms = normalize(terms);
+
+  if (!assets.length || !terms) {
+    return [];
+  }
+
+  return assets.filter((asset) => hasMatch({ value: asset.name, terms }));
+};
 
 /**
  * Hold asset search results for the current search terms.
  * @type {Readable<Asset[]>}
  */
-export const assetSearchResults = derived(
-  [allAssets, searchTerms],
-  ([_allAssets, _searchTerms], set) => {
-    const terms = _searchTerms ? normalize(_searchTerms) : '';
-
-    const assets = (() => {
-      if (!_allAssets.length || !terms) {
-        return [];
-      }
-
-      return _allAssets.filter((asset) => normalize(asset.name).includes(terms));
-    })();
-
-    set(assets);
-  },
+export const assetSearchResults = derived([allAssets, searchTerms], ([assets, terms]) =>
+  searchAssets({ assets, terms }),
 );
