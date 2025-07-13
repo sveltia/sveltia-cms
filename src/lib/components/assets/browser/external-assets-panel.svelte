@@ -89,7 +89,7 @@
 
     try {
       searchResults = await search(query, { kind, apiKey, userName, password });
-    } catch (/** @type {any} */ ex) {
+    } catch (ex) {
       error = 'search_fetch_failed';
       // eslint-disable-next-line no-console
       console.error(ex);
@@ -123,7 +123,7 @@
       const file = new File([blob], fileName, { type: blob.type });
 
       onSelect?.({ file, credit });
-    } catch (/** @type {any} */ ex) {
+    } catch (ex) {
       error = 'image_fetch_failed';
       // eslint-disable-next-line no-console
       console.error(ex);

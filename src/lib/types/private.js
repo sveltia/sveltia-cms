@@ -84,7 +84,7 @@
  * @property {string} [blobBaseURL] Repository’s blob base URL with a branch name. Git backends
  * only.
  * @property {boolean} [isSelfHosted] Whether the repository is on a GitHub Enterprise Server or
- * GitLab Self-Managed, or self-hosted Gitea instance.
+ * GitLab Self-Managed, or self-hosted Gitea/Forgejo instance.
  * @property {string} [databaseName] IndexedDB database name. Git backends only.
  */
 
@@ -910,6 +910,18 @@
  * @property {File[]} oversizedFiles Files that cannot be uploaded due to the size limit.
  * @property {WeakMap<File, File>} transformedFileMap Mapping of transformed files and the
  * originals.
+ */
+
+/**
+ * Arguments for the `getField` function.
+ * @typedef {object} GetFieldArgs
+ * @property {string} collectionName Collection name.
+ * @property {string} [fileName] Collection file name. File/singleton collection only.
+ * @property {FlattenedEntryContent} [valueMap] Object holding current entry values. This is
+ * required when working with list/object widget variable types.
+ * @property {FieldKeyPath} keyPath Key path, e.g. `author.name`.
+ * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
  */
 
 export {};

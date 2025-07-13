@@ -65,7 +65,7 @@ export const getDate = (currentValue, fieldConfig) => {
     }
 
     return new Date(currentValue);
-  } catch (/** @type {any} */ ex) {
+  } catch (ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
 
@@ -145,7 +145,7 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
     }
 
     return `${inputValue}${timeSuffix}`;
-  } catch (/** @type {any} */ ex) {
+  } catch (ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
 
@@ -241,7 +241,7 @@ export const getInputValue = (currentValue, fieldConfig) => {
     }
 
     return `${dateStr}T${timeStr}`;
-  } catch (/** @type {any} */ ex) {
+  } catch (ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
 

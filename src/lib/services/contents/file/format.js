@@ -11,7 +11,7 @@ import { customFileFormats } from '$lib/services/contents/file';
 
 /**
  * Format the given object as a JSON document using the built-in method.
- * @param {any} obj Object to be formatted.
+ * @param {Record<string, any>} obj Object to be formatted.
  * @param {JsonFormatOptions} [options] Options.
  * @returns {string} Formatted document.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
@@ -31,7 +31,7 @@ export const formatJSON = (obj, options = get(siteConfig)?.output?.json ?? {}) =
 
 /**
  * Format the given object as a TOML document using a library.
- * @param {any} obj Object to be formatted.
+ * @param {Record<string, any>} obj Object to be formatted.
  * @returns {string} Formatted document.
  * @see https://github.com/squirrelchat/smol-toml
  */
@@ -39,7 +39,7 @@ export const formatTOML = (obj) => TOML.stringify(obj).trim();
 
 /**
  * Format the given object as a YAML document using a library.
- * @param {any} obj Object to be formatted.
+ * @param {Record<string, any>} obj Object to be formatted.
  * @param {YamlFormatOptions} [options] Options.
  * @param {object} [legacyOptions] Deprecated collection-level options.
  * @param {boolean} [legacyOptions.quote] Quote option.
@@ -98,7 +98,7 @@ export const formatEntryFile = async ({ content, _file }) => {
     if (format === 'json') {
       return `${formatJSON(content)}\n`;
     }
-  } catch (/** @type {any} */ ex) {
+  } catch (ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
 
@@ -128,7 +128,7 @@ export const formatEntryFile = async ({ content, _file }) => {
       if (format === 'json-frontmatter') {
         return `${sd}\n${formatJSON(content)}\n${ed}\n${body}\n`;
       }
-    } catch (/** @type {any} */ ex) {
+    } catch (ex) {
       // eslint-disable-next-line no-console
       console.error(ex);
     }

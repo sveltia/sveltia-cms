@@ -46,7 +46,7 @@
           $state.snapshot($entryDraft.currentValues[locale])[keyPath]) ||
       (translate && (!getSourceLanguage(locale) || !getTargetLanguage(otherLocale)))}
     onclick={() => {
-      copyFromLocale(otherLocale, locale, { keyPath, translate });
+      copyFromLocale({ sourceLocale: otherLocale, targetLocale: locale, keyPath, translate });
     }}
   />
 {/each}

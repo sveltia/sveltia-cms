@@ -91,7 +91,7 @@ export const getEntrySummaryFromContent = (
  * Replacer subroutine.
  * @param {string} tag Field name or one of special tags.
  * @param {ReplacerSubContext} context Context.
- * @returns {any} Summary.
+ * @returns {string | Date | undefined} Replaced value or `undefined` if the tag is not recognized.
  */
 const replaceSub = (tag, context) => {
   const { slug, entryPath, basePath, commitDate, commitAuthor } = context;
@@ -134,7 +134,6 @@ const replace = (placeholder, context) => {
   const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
   const keyPath = tag.replace(/^fields\./, '');
   const getFieldArgs = { collectionName, valueMap, keyPath };
-  /** @type {any} */
   let value = replaceSub(tag, replaceSubContext);
 
   if (value === undefined) {

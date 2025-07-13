@@ -15,13 +15,63 @@ import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/w
  * @import {
  * EntryDraft,
  * FlattenedEntryContent,
+ * GetFieldArgs,
  * InternalCollection,
  * InternalCollectionFile,
  * LocaleContentMap,
  * LocaleExpanderMap,
  * } from '$lib/types/private';
- * @import { FieldKeyPath, HiddenField, RelationField, UuidField } from '$lib/types/public';
+ * @import {
+ * Field,
+ * FieldKeyPath,
+ * HiddenField,
+ * LocaleCode,
+ * RelationField,
+ * UuidField,
+ * } from '$lib/types/public';
  */
+
+/**
+ * Copy the default locale value to other locales if the field’s i18n strategy is `duplicate`.
+ * @param {object} args Arguments.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {LocaleCode} args.sourceLocale Source locale.
+ * @param {any} args.value Value to copy to other locales.
+ */
+const copyDefaultLocaleValue = ({ getFieldArgs, fieldConfig, sourceLocale, value }) => {
+  const { keyPath } = getFieldArgs;
+
+  Object.entries(/** @type {EntryDraft} */ (get(entryDraft)).currentValues).forEach(
+    ([targetLocale, content]) => {
+      // Don’t duplicate the value if the parent object doesn’t exist
+      if (keyPath.includes('.')) {
+        const { path: parentKeyPath } = keyPath.match(/(?<path>.+?)\.[^.]*$/)?.groups ?? {};
+
+        if (
+          !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`)) &&
+          !getField({ ...getFieldArgs, keyPath: parentKeyPath })
+        ) {
+          return;
+        }
+      }
+
+      // Support special case for the Relation field: if the `value_field` option is something
+      // like `{{locale}}/{{slug}}`, replace the source locale in the value with target locale
+      if (fieldConfig.widget === 'relation') {
+        const { value_field: valueField = '{{slug}}' } = /** @type {RelationField} */ (fieldConfig);
+
+        if (valueField.startsWith('{{locale}}/')) {
+          value = value.replace(new RegExp(`^${sourceLocale}/`), `${targetLocale}/`);
+        }
+      }
+
+      if (targetLocale !== sourceLocale && content[keyPath] !== value) {
+        content[keyPath] = value;
+      }
+    },
+  );
+};
 
 /**
  * Create a Proxy that automatically copies a field value to other locale if the field’s i18n
@@ -68,8 +118,9 @@ export const createProxy = ({
       }
 
       const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
-      const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
-      const fieldConfig = getField({ ...getFieldArgs, keyPath });
+      /** @type {GetFieldArgs} */
+      const getFieldArgs = { collectionName, fileName, keyPath, valueMap, isIndexFile };
+      const fieldConfig = getField({ ...getFieldArgs });
 
       if (!fieldConfig) {
         return true;
@@ -91,39 +142,7 @@ export const createProxy = ({
         fieldConfig.i18n === 'duplicate' &&
         sourceLocale === defaultLocale
       ) {
-        Object.entries(/** @type {Record<string, any>} */ (get(entryDraft)).currentValues).forEach(
-          ([targetLocale, content]) => {
-            // Don’t duplicate the value if the parent object doesn’t exist
-            if (keyPath.includes('.')) {
-              const { path: parentKeyPath } = keyPath.match(/(?<path>.+?)\.[^.]*$/)?.groups ?? {};
-
-              if (
-                !Object.keys(content).some((_keyPath) =>
-                  _keyPath.startsWith(`${parentKeyPath}.`),
-                ) &&
-                !getField({ ...getFieldArgs, keyPath: parentKeyPath })
-              ) {
-                return;
-              }
-            }
-
-            // Support special case for the Relation field: if the `value_field` option is something
-            // like `{{locale}}/{{slug}}`, replace the source locale in the value with target locale
-            if (fieldConfig.widget === 'relation') {
-              const { value_field: valueField = '{{slug}}' } = /** @type {RelationField} */ (
-                fieldConfig
-              );
-
-              if (valueField.startsWith('{{locale}}/')) {
-                value = value.replace(new RegExp(`^${sourceLocale}/`), `${targetLocale}/`);
-              }
-            }
-
-            if (targetLocale !== sourceLocale && content[keyPath] !== value) {
-              content[keyPath] = value;
-            }
-          },
-        );
+        copyDefaultLocaleValue({ getFieldArgs, fieldConfig, sourceLocale, value });
       }
 
       return true;

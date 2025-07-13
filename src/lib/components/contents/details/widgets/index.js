@@ -34,7 +34,11 @@ import UuidEditor from '$lib/components/contents/details/widgets/uuid/uuid-edito
 import UuidPreview from '$lib/components/contents/details/widgets/uuid/uuid-preview.svelte';
 
 /**
- * @type {Record<string, any>}
+ * @import { Component } from 'svelte';
+ */
+
+/**
+ * @type {Record<string, Component>}
  */
 export const editors = {
   boolean: BooleanEditor,
@@ -57,7 +61,7 @@ export const editors = {
   uuid: UuidEditor,
 };
 /**
- * @type {Record<string, any>}
+ * @type {Record<string, Component>}
  */
 export const previews = {
   boolean: BooleanPreview,

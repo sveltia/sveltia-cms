@@ -58,6 +58,40 @@ import { sendRequest } from '$lib/services/utils/networking';
  */
 
 /**
+ * @typedef {object} UserProfile
+ * @property {number} id User ID.
+ * @property {string} name User’s full name.
+ * @property {string} username User’s login name.
+ * @property {string} email User’s email address.
+ * @property {string} avatar_url URL to the user’s avatar image.
+ * @property {string} web_url URL to the user’s profile page.
+ */
+
+/**
+ * @typedef {object} LastCommitResponse
+ * @property {object} project Project information.
+ * @property {object} project.repository Repository information.
+ * @property {object} project.repository.tree Tree information.
+ * @property {object} project.repository.tree.lastCommit Last commit information.
+ * @property {string} project.repository.tree.lastCommit.sha Commit SHA-1 hash.
+ * @property {string} project.repository.tree.lastCommit.message Commit message.
+ */
+
+/**
+ * @typedef {object} FileListResponse
+ * @property {object} project Project information.
+ * @property {object} project.repository Repository information.
+ * @property {object} project.repository.tree Tree information.
+ * @property {object} project.repository.tree.blobs Blobs information.
+ * @property {{ type: string, path: string, sha: string }[]} project.repository.tree.blobs.nodes
+ * List of file blobs.
+ * @property {object} project.repository.tree.blobs.pageInfo Pagination information.
+ * @property {string} project.repository.tree.blobs.pageInfo.endCursor Cursor for the next page.
+ * @property {boolean} project.repository.tree.blobs.pageInfo.hasNextPage Whether there are more
+ * pages to fetch.
+ */
+
+/**
  * @typedef {object} CommitResponse
  * @property {string} id Commit SHA-1 hash.
  * @property {string} committed_date Commit date in ISO 8601 format.
@@ -231,7 +265,7 @@ const getUserProfile = async ({ token, refreshToken }) => {
     email,
     avatar_url: avatarURL,
     web_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', { token, refreshToken }));
+  } = /** @type {UserProfile} */ (await fetchAPI('/user', { token, refreshToken }));
 
   const _user = get(user);
 
@@ -362,10 +396,7 @@ const fetchDefaultBranchName = async () => {
 const fetchLastCommit = async () => {
   const { owner, repo, branch } = repository;
 
-  /**
-   * @type {{ project: { repository: { tree: { lastCommit: { sha: string, message: string }} } } }}
-   */
-  const result = /** @type {any} */ (
+  const result = /** @type {LastCommitResponse} */ (
     await fetchGraphQL(`
       query {
         project(fullPath: "${owner}/${repo}") {
@@ -415,35 +446,29 @@ const fetchFileList = async () => {
 
   // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
   for (;;) {
-    const result = //
-      /**
-       * @type {{ project: { repository: { tree: { blobs: {
-       * nodes: { type: string, path: string, sha: string }[],
-       * pageInfo: { endCursor: string, hasNextPage: boolean }
-       * } } } } }}
-       */ (
-        await fetchGraphQL(`
-          query {
-            project(fullPath: "${owner}/${repo}") {
-              repository {
-                tree(ref: "${branch}", recursive: true) {
-                  blobs(after: "${cursor}") {
-                    nodes {
-                      type
-                      path
-                      sha
-                    }
-                    pageInfo {
-                      endCursor
-                      hasNextPage
-                    }
+    const result = /** @type {FileListResponse} */ (
+      await fetchGraphQL(`
+        query {
+          project(fullPath: "${owner}/${repo}") {
+            repository {
+              tree(ref: "${branch}", recursive: true) {
+                blobs(after: "${cursor}") {
+                  nodes {
+                    type
+                    path
+                    sha
+                  }
+                  pageInfo {
+                    endCursor
+                    hasNextPage
                   }
                 }
               }
             }
           }
-        `)
-      );
+        }
+      `)
+    );
 
     const {
       nodes,

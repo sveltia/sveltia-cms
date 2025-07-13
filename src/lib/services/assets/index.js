@@ -33,7 +33,6 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * AssetFolderInfo,
  * AssetKind,
  * Entry,
- * InternalCollection,
  * InternalI18nOptions,
  * InternalImageTransformationOptions,
  * InternalSiteConfig,

@@ -132,7 +132,7 @@ const scanDir = async (dirHandle, context) => {
         file = new File([file], file.name, { type, lastModified });
 
         fileList.push({ file, path });
-      } catch (/** @type {any} */ ex) {
+      } catch (ex) {
         // eslint-disable-next-line no-console
         console.error(ex);
       }
@@ -212,7 +212,7 @@ const readTextFile = async (entryFile) => {
 
   try {
     entryFile.text = await readAsText(/** @type {File} */ (file));
-  } catch (/** @type {any} */ ex) {
+  } catch (ex) {
     entryFile.text = '';
     // eslint-disable-next-line no-console
     console.error(ex);

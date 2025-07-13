@@ -440,37 +440,38 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
 
   const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
 
-  return {
-    resolvedInternalPath: resolvePath(
-      fillSlugTemplate(
-        createPath([
-          internalPath,
-          isMultiFolders || subPath?.includes('/') ? subPathFirstPart : undefined,
-        ]),
-        fillSlugOptions,
-      ),
+  const resolvedInternalPath = resolvePath(
+    fillSlugTemplate(
+      createPath([
+        internalPath,
+        isMultiFolders || subPath?.includes('/') ? subPathFirstPart : undefined,
+      ]),
+      fillSlugOptions,
     ),
-    resolvedPublicPath:
-      !isMultiFolders && /^\.?$/.test(publicPath)
-        ? // Dot-only public path is a special case; the final path stored as the field value will
-          // be `./image.png` rather than `image.png`
-          publicPath
-        : resolvePath(
-            fillSlugTemplate(
-              isMultiFolders
-                ? // When multiple folders are used for i18n, the file structure would look like
-                  // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md`
-                  // and the asset path would be `{collection}/{slug}/{file}.jpg`
-                  createPath([
-                    ...Array((subPath?.match(/\//g) ?? []).length + 1).fill('..'),
-                    publicPath,
-                    subPathFirstPart,
-                  ])
-                : publicPath,
-              fillSlugOptions,
-            ),
+  );
+
+  const resolvedPublicPath =
+    !isMultiFolders && /^\.?$/.test(publicPath)
+      ? // Dot-only public path is a special case; the final path stored as the field value will
+        // be `./image.png` rather than `image.png`
+        publicPath
+      : resolvePath(
+          fillSlugTemplate(
+            isMultiFolders
+              ? // When multiple folders are used for i18n, the file structure would look like
+                // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md`
+                // and the asset path would be `{collection}/{slug}/{file}.jpg`
+                createPath([
+                  ...Array((subPath?.match(/\//g) ?? []).length + 1).fill('..'),
+                  publicPath,
+                  subPathFirstPart,
+                ])
+              : publicPath,
+            fillSlugOptions,
           ),
-  };
+        );
+
+  return { resolvedInternalPath, resolvedPublicPath };
 };
 
 /**
@@ -678,14 +679,74 @@ const createBaseSavingEntryData = async ({
 };
 
 /**
- * Create saving entry data.
+ * Get the previous SHA of the file from the cache database.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.previousPath Previous file path.
+ * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
+ * @returns {Promise<string | undefined>} Previous SHA or `undefined` if not found.
+ */
+const getPreviousSha = async ({ previousPath, cacheDB }) => {
+  if (!previousPath) {
+    return undefined;
+  }
+
+  const cache = /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(previousPath));
+
+  return cache?.sha;
+};
+
+/**
+ * Get file change information for the entry draft, specifically for a single-file entry.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {EntrySlugVariants} args.slugs Entry slugs.
- * @returns {Promise<{ savingEntry: Entry, savingAssets: Asset[], changes: FileChange[] }>} Saving
- * entry, assets and file changes.
+ * @param {Entry} args.savingEntry Entry to be saved.
+ * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
+ * @returns {Promise<FileChange>} File change information.
  */
-export const createSavingEntryData = async ({ draft, slugs }) => {
+const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
+  const { collection, isNew, originalSlugs, originalEntry, collectionFile } = draft;
+
+  const {
+    _file,
+    _i18n: { i18nEnabled, defaultLocale },
+  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+
+  const { slug, path, content } = savingEntry.locales[defaultLocale];
+  const renamed = !isNew && (originalSlugs?.[defaultLocale] ?? originalSlugs?._) !== slug;
+  const previousPath = originalEntry?.locales[defaultLocale]?.path;
+
+  return {
+    action: isNew ? 'create' : renamed ? 'move' : 'update',
+    slug,
+    path,
+    previousPath: renamed ? previousPath : undefined,
+    previousSha: await getPreviousSha({ cacheDB, previousPath }),
+    data: await formatEntryFile({
+      content: i18nEnabled
+        ? Object.fromEntries(
+            Object.entries(savingEntry.locales)
+              .filter(([, le]) => !!le.content)
+              .map(([locale, le]) => [
+                locale,
+                serializeContent({ draft, locale, valueMap: le.content }),
+              ]),
+          )
+        : serializeContent({ draft, locale: '_default', valueMap: content }),
+      _file,
+    }),
+  };
+};
+
+/**
+ * Get file change information for the entry draft, specifically for a multi-file entry.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {Entry} args.savingEntry Entry to be saved.
+ * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @returns {Promise<FileChange | undefined>} File change information.
+ */
+const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }) => {
   const {
     collection,
     isNew,
@@ -696,6 +757,50 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     collectionFile,
   } = draft;
 
+  const { _file } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  const { slug, path, content } = savingEntry.locales[locale] ?? {};
+  const previousPath = originalEntry?.locales[locale]?.path;
+  const previousSha = await getPreviousSha({ cacheDB, previousPath });
+
+  if (currentLocales[locale]) {
+    const renamed =
+      !isNew && originalLocales[locale] && (originalSlugs?.[locale] ?? originalSlugs?._) !== slug;
+
+    return {
+      action: isNew || !originalLocales[locale] ? 'create' : renamed ? 'move' : 'update',
+      slug,
+      path,
+      previousPath: renamed ? previousPath : undefined,
+      previousSha,
+      data: await formatEntryFile({
+        content: serializeContent({ draft, locale, valueMap: content }),
+        _file,
+      }),
+    };
+  }
+
+  if (!isNew && originalLocales[locale]) {
+    return {
+      action: 'delete',
+      slug,
+      path,
+      previousSha,
+    };
+  }
+
+  return undefined;
+};
+
+/**
+ * Create saving entry data.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {EntrySlugVariants} args.slugs Entry slugs.
+ * @returns {Promise<{ savingEntry: Entry, savingAssets: Asset[], changes: FileChange[] }>} Saving
+ * entry, assets and file changes.
+ */
+export const createSavingEntryData = async ({ draft, slugs }) => {
+  const { collection, originalEntry, collectionFile } = draft;
   const { defaultLocaleSlug } = slugs;
 
   const {
@@ -721,79 +826,18 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
 
   const databaseName = get(backend)?.repository?.databaseName;
   const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
+  const getFileChangeArgs = { draft, savingEntry, cacheDB };
 
   if (!i18nEnabled || structure === 'single_file') {
-    const localizedEntry = savingEntry.locales[defaultLocale];
-    const { slug, path, content } = localizedEntry;
-    const renamed = !isNew && (originalSlugs?.[defaultLocale] ?? originalSlugs?._) !== slug;
-    const previousPath = originalEntry?.locales[defaultLocale]?.path;
-
-    const previousSha = previousPath
-      ? /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(previousPath))?.sha
-      : undefined;
-
-    const data = await formatEntryFile({
-      content: i18nEnabled
-        ? Object.fromEntries(
-            Object.entries(savingEntry.locales)
-              .filter(([, le]) => !!le.content)
-              .map(([locale, le]) => [
-                locale,
-                serializeContent({ draft, locale, valueMap: le.content }),
-              ]),
-          )
-        : serializeContent({ draft, locale: '_default', valueMap: content }),
-      _file,
-    });
-
-    changes.push({
-      action: isNew ? 'create' : renamed ? 'move' : 'update',
-      slug,
-      path,
-      previousPath: renamed ? previousPath : undefined,
-      previousSha,
-      data,
-    });
+    changes.push(await getSingleFileChange({ ...getFileChangeArgs }));
   } else {
     await Promise.all(
       allLocales.map(async (locale) => {
-        const localizedEntry = savingEntry.locales[locale];
-        const { slug, path, content } = localizedEntry ?? {};
-        const previousPath = originalEntry?.locales[locale]?.path;
+        const change = await getMultiFileChange({ ...getFileChangeArgs, locale });
 
-        const previousSha = previousPath
-          ? /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(previousPath))?.sha
-          : undefined;
-
-        if (currentLocales[locale]) {
-          const renamed =
-            !isNew &&
-            originalLocales[locale] &&
-            (originalSlugs?.[locale] ?? originalSlugs?._) !== slug;
-
-          const data = await formatEntryFile({
-            content: serializeContent({ draft, locale, valueMap: content }),
-            _file,
-          });
-
-          changes.push({
-            action: isNew || !originalLocales[locale] ? 'create' : renamed ? 'move' : 'update',
-            slug,
-            path,
-            previousPath: renamed ? previousPath : undefined,
-            previousSha,
-            data,
-          });
-        } else if (!isNew && originalLocales[locale]) {
-          changes.push({
-            action: 'delete',
-            slug,
-            path,
-            previousSha,
-          });
+        if (change) {
+          changes.push(change);
         }
-
-        return true;
       }),
     );
   }

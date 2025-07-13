@@ -77,7 +77,7 @@ const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {})
     } else {
       try {
         await handle.entries().next();
-      } catch (/** @type {any} */ ex) {
+      } catch (ex) {
         // The directory may have been (re)moved. Let the user pick the directory again
         handle = null;
         // eslint-disable-next-line no-console

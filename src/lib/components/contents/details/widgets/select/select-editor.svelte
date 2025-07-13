@@ -42,10 +42,14 @@
     multiple,
   } = $derived(fieldConfig);
   const Select = $derived(multiple ? SelectMultiple : SelectSingle);
-  /** @type {SelectFieldSelectorOption[]} */
   const options = $derived.by(() => {
-    const _options = fieldOptions.map((option) =>
-      isObject(option) ? /** @type {any} */ (option) : { label: option, value: option },
+    const _options = fieldOptions.map(
+      (option) =>
+        /** @type {SelectFieldSelectorOption} */ (
+          isObject(option)
+            ? /** @type {{ label: string, value: string }} */ (option)
+            : { label: option, value: option }
+        ),
     );
 
     if (sortOptions) {

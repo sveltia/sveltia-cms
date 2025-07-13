@@ -45,6 +45,16 @@ import { prefs } from '$lib/services/user/prefs';
  */
 
 /**
+ * @typedef {object} UserProfileResponse
+ * @property {number} id User ID.
+ * @property {string} full_name User’s full name.
+ * @property {string} login User’s login name.
+ * @property {string} email User’s email address.
+ * @property {string} avatar_url URL to the user’s avatar image.
+ * @property {string} html_url URL to the user’s profile page.
+ */
+
+/**
  * @typedef {object} CommitResponse
  * @property {object} commit Commit information, including the commit SHA and creation date.
  * @property {string} commit.sha Commit SHA.
@@ -181,7 +191,7 @@ const getUserProfile = async ({ token, refreshToken }) => {
     email,
     avatar_url: avatarURL,
     html_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', { token, refreshToken }));
+  } = /** @type {UserProfileResponse} */ (await fetchAPI('/user', { token, refreshToken }));
 
   const _user = get(user);
 
@@ -343,7 +353,9 @@ const fetchLastCommit = async () => {
   try {
     const {
       commit: { id: hash, message },
-    } = /** @type {any} */ (await fetchAPI(`/repos/${owner}/${repo}/branches/${branch}`));
+    } = /** @type {{ commit: { id: string, message: string }}} */ (
+      await fetchAPI(`/repos/${owner}/${repo}/branches/${branch}`)
+    );
 
     return { hash, message };
   } catch (error) {
@@ -450,7 +462,9 @@ const fetchFileContents = async (fetchingFiles) => {
   dataLoadedProgress.set(0);
 
   // Check how many files we can fetch at once (default is 30)
-  const { default_paging_num: perPage = 30 } = /** @type {any} */ (await fetchAPI('/settings/api'));
+  const { default_paging_num: perPage = 30 } = /** @type {{ default_paging_num: number }} */ (
+    await fetchAPI('/settings/api')
+  );
 
   // Use the new bulk API endpoint to fetch multiple files at once
   for (;;) {
@@ -521,7 +535,7 @@ const fetchBlob = async (asset) => {
 const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
   const commitMessage = createCommitMessage(changes, options);
-  const { name, email } = /** @type {any} */ (get(user));
+  const { name, email } = /** @type {User} */ (get(user));
   const date = new Date().toJSON();
 
   const files = await Promise.all(

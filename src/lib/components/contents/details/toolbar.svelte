@@ -55,7 +55,7 @@
   let showErrorDialog = $state(false);
   let errorMessage = $state('');
   let saving = $state(false);
-  /** @type {any} */
+  /** @type {MenuButton | undefined} */
   let menuButton = $state();
 
   const isNew = $derived($entryDraft?.isNew ?? true);
@@ -348,7 +348,7 @@
     _goBack();
   }}
   onClose={() => {
-    menuButton.focus();
+    menuButton?.focus();
   }}
 >
   {$_(
@@ -363,7 +363,7 @@
   bind:open={showErrorDialog}
   title={$_('saving_entry.error.title')}
   onClose={() => {
-    menuButton.focus();
+    menuButton?.focus();
   }}
 >
   {$_('saving_entry.error.description')}

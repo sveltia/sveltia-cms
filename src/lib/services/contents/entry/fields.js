@@ -15,6 +15,7 @@ import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
  * @import {
  * Entry,
  * FlattenedEntryContent,
+ * GetFieldArgs,
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import {
@@ -34,14 +35,7 @@ export const fieldConfigCacheMap = new Map();
 
 /**
  * Get a field’s config object that matches the given field name (key path).
- * @param {object} args Arguments.
- * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File/singleton collection only.
- * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values. This is
- * required when working with list/object widget variable types.
- * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
- * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
- * index file used specifically in Hugo.
+ * @param {GetFieldArgs} args Arguments.
  * @returns {Field | undefined} Field configuration.
  */
 export const getField = ({

@@ -6,6 +6,29 @@ import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/he
  * @import { DateTimeField, Field } from '$lib/types/public';
  */
 
+/**
+ * @typedef {object} DateTimeTransformationArgs
+ * @property {string} format The date format string to use for output.
+ * @property {string} [timeZone] The time zone to use (`utc` for UTC, otherwise local).
+ */
+
+/**
+ * @typedef {object} DefaultTransformationArgs
+ * @property {string} defaultValue The default value to return if the input value is falsy.
+ */
+
+/**
+ * @typedef {object} TernaryTransformationArgs
+ * @property {string} truthyValue The value to return if the input value is truthy.
+ * @property {string} falsyValue The value to return if the input value is falsy.
+ */
+
+/**
+ * @typedef {object} TruncateTransformationArgs
+ * @property {string} max The maximum length of the string.
+ * @property {string} [ellipsis] The string to append if truncation occurs.
+ */
+
 export const DATE_TRANSFORMATION_REGEX = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
 export const DEFAULT_TRANSFORMATION_REGEX = /^default\('(?<defaultValue>.+?)'\)$/;
 export const TERNARY_TRANSFORMATION_REGEX =
@@ -29,9 +52,7 @@ const applyLowerCaseTransformation = (value) => String(value).toLowerCase();
  * Transform the input value to a formatted string based on the provided format and time zone
  * options.
  * @param {any} value The input value to be transformed into a date string.
- * @param {object} args Transformation arguments.
- * @param {string} args.format The date format string to use for output.
- * @param {string} [args.timeZone] The time zone to use (`utc` for UTC, otherwise local).
+ * @param {DateTimeTransformationArgs} args Transformation arguments.
  * @param {DateTimeField} fieldConfig Field configuration containing date and time settings.
  * @returns {string} The formatted date string if valid, otherwise an empty string.
  */
@@ -58,8 +79,7 @@ const applyDateTransformation = (value, { format, timeZone }, fieldConfig) => {
  * Return the string representation of the given value if it is truthy; otherwise, returns the
  * provided default value.
  * @param {any} value The value to evaluate for truthiness.
- * @param {object} args Transformation arguments.
- * @param {string} args.defaultValue The default value to return if `value` is falsy.
+ * @param {DefaultTransformationArgs} args Transformation arguments.
  * @returns {string} The stringified value or the default value.
  */
 const applyDefaultTransformation = (value, { defaultValue }) =>
@@ -68,9 +88,7 @@ const applyDefaultTransformation = (value, { defaultValue }) =>
 /**
  * Return one of two values based on the truthiness of the input value.
  * @param {any} value The value to evaluate for truthiness.
- * @param {object} args Transformation arguments.
- * @param {string} args.truthyValue The value to return if `value` is truthy.
- * @param {string} args.falsyValue The value to return if `value` is falsy.
+ * @param {TernaryTransformationArgs} args Transformation arguments.
  * @returns {string} Returns `truthyValue` if `value` is truthy, otherwise returns `falsyValue`.
  */
 const ternaryTransformation = (value, { truthyValue, falsyValue }) =>
@@ -79,9 +97,7 @@ const ternaryTransformation = (value, { truthyValue, falsyValue }) =>
 /**
  * Truncate a string to a specified maximum length and append an ellipsis if truncation occurs.
  * @param {any} value The value to be truncated.
- * @param {object} args Transformation arguments.
- * @param {string} args.max The maximum length of the truncated string.
- * @param {string} [args.ellipsis] The string to append to the end if truncation occurs.
+ * @param {TruncateTransformationArgs} args Transformation arguments.
  * @returns {string} The truncated string with ellipsis if applicable.
  */
 const applyTruncateTransformation = (value, { max, ellipsis = '…' }) =>
@@ -110,7 +126,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
   if (dateTransformer?.groups) {
     return applyDateTransformation(
       value,
-      /** @type {any} */ (dateTransformer.groups),
+      /** @type {DateTimeTransformationArgs} */ (dateTransformer.groups),
       /** @type {DateTimeField} */ (fieldConfig ?? {}),
     );
   }
@@ -118,19 +134,28 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
   const defaultTransformer = transformation.match(DEFAULT_TRANSFORMATION_REGEX);
 
   if (defaultTransformer?.groups) {
-    return applyDefaultTransformation(value, /** @type {any} */ (defaultTransformer.groups));
+    return applyDefaultTransformation(
+      value,
+      /** @type {DefaultTransformationArgs} */ (defaultTransformer.groups),
+    );
   }
 
   const ternaryTransformer = transformation.match(TERNARY_TRANSFORMATION_REGEX);
 
   if (ternaryTransformer?.groups) {
-    return ternaryTransformation(value, /** @type {any} */ (ternaryTransformer.groups));
+    return ternaryTransformation(
+      value,
+      /** @type {TernaryTransformationArgs} */ (ternaryTransformer.groups),
+    );
   }
 
   const truncateTransformer = transformation.match(TRUNCATE_TRANSFORMATION_REGEX);
 
   if (truncateTransformer?.groups) {
-    return applyTruncateTransformation(value, /** @type {any} */ (truncateTransformer.groups));
+    return applyTruncateTransformation(
+      value,
+      /** @type {TruncateTransformationArgs} */ (truncateTransformer.groups),
+    );
   }
 
   return String(value);

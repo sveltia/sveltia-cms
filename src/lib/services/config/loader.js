@@ -26,7 +26,7 @@ const fetchFile = async ({ href, type = 'application/yaml' }) => {
 
   try {
     response = await fetch(href);
-  } catch (/** @type {any} */ ex) {
+  } catch (ex) {
     throw new Error(get(_)('config.error.fetch_failed'), { cause: ex });
   }
 
@@ -38,7 +38,7 @@ const fetchFile = async ({ href, type = 'application/yaml' }) => {
     });
   }
 
-  /** @type {any} */
+  /** @type {object} */
   let result;
 
   try {
@@ -47,7 +47,7 @@ const fetchFile = async ({ href, type = 'application/yaml' }) => {
     } else {
       result = YAML.parse(await response.text(), { merge: true });
     }
-  } catch (/** @type {any} */ ex) {
+  } catch (ex) {
     throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
   }
 
@@ -96,10 +96,9 @@ export const getConfigPath = (path) => {
  * @throws {Error} When fetching or parsing has failed.
  */
 export const fetchSiteConfig = async () => {
-  /** @type {{ href: string, type?: string }[]} */
   const links = /** @type {HTMLLinkElement[]} */ ([
     ...document.querySelectorAll('link[rel="cms-config-url"]'),
-  ]).map(({ href, type }) => ({ href, type }));
+  ]).map(({ href, type }) => /** @type {{ href: string, type?: string }} */ ({ href, type }));
 
   if (!links.length) {
     links.push({ href: getConfigPath(window.location.pathname) });

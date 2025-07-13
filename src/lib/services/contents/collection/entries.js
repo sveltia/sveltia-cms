@@ -11,7 +11,13 @@ import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { Entry, InternalCollection, InternalCollectionFile } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * FlattenedEntryContent,
+ * InternalCollection,
+ * InternalCollectionFile,
+ * } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -87,6 +93,82 @@ export const canCreateEntry = (collection) => {
 };
 
 /**
+ * Check if the field contains the asset.
+ * @param {object} args Arguments.
+ * @param {string} args.assetURL Asset’s public or blob URL.
+ * @param {string} [args.newURL] New URL to replace the found URL.
+ * @param {string} args.collectionName Collection name.
+ * @param {Entry} args.entry Entry.
+ * @param {FlattenedEntryContent} args.content Value map for the collection. This will be modified
+ * if the URL is replaced.
+ * @param {FieldKeyPath} args.keyPath Key path of the value in the collection.
+ * @param {string} args.value Value of the field.
+ * @param {boolean} args.isIndexFile Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
+ * @returns {Promise<boolean>} Result.
+ */
+const hasAsset = async ({
+  assetURL,
+  newURL,
+  collectionName,
+  entry,
+  content,
+  keyPath,
+  value,
+  isIndexFile,
+  collectionFile,
+}) => {
+  const fileName = collectionFile?.name;
+  const field = getField({ collectionName, fileName, valueMap: content, keyPath, isIndexFile });
+
+  if (!field) {
+    return false;
+  }
+
+  const isBlobURL = assetURL.startsWith('blob:');
+  const getURLArgs = { entry, collectionName, fileName };
+  const { widget: widgetName = 'string' } = field;
+
+  if (['image', 'file'].includes(widgetName)) {
+    const match = isBlobURL
+      ? (await getMediaFieldURL({ ...getURLArgs, value })) === assetURL
+      : value === assetURL;
+
+    if (match && newURL) {
+      content[keyPath] = newURL;
+    }
+
+    return match;
+  }
+
+  // Search images in markdown body
+  if (widgetName === 'markdown') {
+    const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
+
+    if (matches.length) {
+      return (
+        await Promise.all(
+          matches.map(async ([, src]) => {
+            const match =
+              (isBlobURL ? await getMediaFieldURL({ ...getURLArgs, value: src }) : src) ===
+              assetURL;
+
+            if (match && newURL) {
+              content[keyPath] = content[keyPath].replace(src, newURL);
+            }
+
+            return match;
+          }),
+        )
+      ).some(Boolean);
+    }
+  }
+
+  return false;
+};
+
+/**
  * Find entries by an asset URL, and replace the URL if needed.
  * @param {string} url Asset’s public or blob URL.
  * @param {object} [options] Options.
@@ -100,7 +182,6 @@ export const getEntriesByAssetURL = async (
 ) => {
   const baseURL = get(siteConfig)?._baseURL;
   const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
-  const isBlobURL = assetURL.startsWith('blob:');
 
   const results = await Promise.all(
     entries.map(async (entry) => {
@@ -117,78 +198,30 @@ export const getEntriesByAssetURL = async (
 
               const ___results = await Promise.all(
                 collections.map(async (collection) => {
-                  const collectionName = collection.name;
-
-                  const getFieldArgs = {
-                    collectionName,
-                    valueMap: content,
+                  const hasAssetArgs = {
+                    assetURL,
+                    newURL,
+                    collectionName: collection.name,
+                    entry,
+                    content,
                     keyPath,
+                    value,
                     isIndexFile: isCollectionIndexFile(collection, entry),
-                  };
-
-                  /**
-                   * Check if the field contains the asset.
-                   * @param {InternalCollectionFile} [collectionFile] Collection file. File
-                   * collection only.
-                   * @returns {Promise<boolean>} Result.
-                   */
-                  const hasAsset = async (collectionFile) => {
-                    const fileName = collectionFile?.name;
-                    const field = getField({ ...getFieldArgs, fileName });
-
-                    if (!field) {
-                      return false;
-                    }
-
-                    const getURLArgs = { entry, collectionName, fileName };
-                    const { widget: widgetName = 'string' } = field;
-
-                    if (['image', 'file'].includes(widgetName)) {
-                      const match = isBlobURL
-                        ? (await getMediaFieldURL({ ...getURLArgs, value })) === assetURL
-                        : value === assetURL;
-
-                      if (match && newURL) {
-                        content[keyPath] = newURL;
-                      }
-
-                      return match;
-                    }
-
-                    // Search images in markdown body
-                    if (widgetName === 'markdown') {
-                      const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
-
-                      if (matches.length) {
-                        return (
-                          await Promise.all(
-                            matches.map(async ([, src]) => {
-                              const match =
-                                (isBlobURL
-                                  ? await getMediaFieldURL({ ...getURLArgs, value: src })
-                                  : src) === assetURL;
-
-                              if (match && newURL) {
-                                content[keyPath] = content[keyPath].replace(src, newURL);
-                              }
-
-                              return match;
-                            }),
-                          )
-                        ).some(Boolean);
-                      }
-                    }
-
-                    return false;
                   };
 
                   const collectionFiles = getCollectionFilesByEntry(collection, entry);
 
                   if (collectionFiles.length) {
-                    return (await Promise.all(collectionFiles.map(hasAsset))).includes(true);
+                    return (
+                      await Promise.all(
+                        collectionFiles.map((collectionFile) =>
+                          hasAsset({ ...hasAssetArgs, collectionFile }),
+                        ),
+                      )
+                    ).includes(true);
                   }
 
-                  return hasAsset();
+                  return hasAsset({ ...hasAssetArgs });
                 }),
               );
 

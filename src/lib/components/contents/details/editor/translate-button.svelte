@@ -51,7 +51,7 @@
       !$entryDraft?.currentLocales[otherLocale] ||
       !getTargetLanguage(otherLocale)}
     onclick={() => {
-      copyFromLocale(otherLocale, locale, { keyPath, translate: true });
+      copyFromLocale({ sourceLocale: otherLocale, targetLocale: locale, keyPath, translate: true });
     }}
   >
     {#snippet startIcon()}

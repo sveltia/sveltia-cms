@@ -38,6 +38,26 @@ import { sendRequest } from '$lib/services/utils/networking';
  * } from '$lib/types/private';
  */
 
+/**
+ * @typedef {object} UserProfileResponse
+ * @property {number} id User ID.
+ * @property {string} name User’s full name.
+ * @property {string} login User’s login name.
+ * @property {string} email User’s email address.
+ * @property {string} avatar_url URL to the user’s avatar image.
+ * @property {string} html_url URL to the user’s profile page.
+ */
+
+/**
+ * @typedef {object} LastCommitResponse
+ * @property {object} repository Repository information.
+ * @property {object} repository.ref Reference information.
+ * @property {object} repository.ref.target Target commit.
+ * @property {object} repository.ref.target.history Commit history.
+ * @property {{ oid: string, message: string }[]} repository.ref.target.history.nodes Nodes in the
+ * commit history, containing the commit SHA-1 hash and message.
+ */
+
 const backendName = 'github';
 const label = 'GitHub';
 const STATUS_DASHBOARD_URL = 'https://www.githubstatus.com/';
@@ -193,7 +213,7 @@ const getUserProfile = async ({ token }) => {
     email,
     avatar_url: avatarURL,
     html_url: profileURL,
-  } = /** @type {any} */ (await fetchAPI('/user', { token }));
+  } = /** @type {UserProfileResponse} */ (await fetchAPI('/user', { token }));
 
   return { backendName, id, name, login, email, avatarURL, profileURL, token };
 };
@@ -301,11 +321,7 @@ const fetchDefaultBranchName = async () => {
 const fetchLastCommit = async () => {
   const { owner, repo, branch } = repository;
 
-  /**
-   * @type {{ repository: { ref: { target: { history: { nodes: [{ oid: string, message: string }] }
-   * } } } }}
-   */
-  const result = /** @type {any} */ (
+  const result = /** @type {LastCommitResponse} */ (
     await fetchGraphQL(`
       query {
         repository(owner: "${owner}", name: "${repo}") {

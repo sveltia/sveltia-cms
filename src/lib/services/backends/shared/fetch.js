@@ -254,20 +254,20 @@ export const fetchAndParseFiles = async ({
   const fetchedFileMap = fetchingFiles.length ? await fetchFileContents(fetchingFiles) : {};
 
   const { entries, errors } = await prepareEntries(
-    /** @type {BaseEntryListItem[]} */ (
-      entryFiles.map((file) => parseFile({ file, fetchedFileMap }))
+    entryFiles.map(
+      (file) => /** @type {BaseEntryListItem} */ (parseFile({ file, fetchedFileMap })),
     ),
   );
 
   updateStores({
     entries,
     assets: parseAssetFiles(
-      /** @type {BaseAssetListItem[]} */ (
-        assetFiles.map((file) => parseFile({ file, fetchedFileMap }))
+      assetFiles.map(
+        (file) => /** @type {BaseAssetListItem} */ (parseFile({ file, fetchedFileMap })),
       ),
     ),
-    configFiles: /** @type {BaseConfigListItem[]} */ (
-      configFiles.map((file) => parseFile({ file, fetchedFileMap }))
+    configFiles: configFiles.map(
+      (file) => /** @type {BaseConfigListItem} */ (parseFile({ file, fetchedFileMap })),
     ),
     errors,
   });

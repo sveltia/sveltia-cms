@@ -9,6 +9,18 @@ import { getValidCollectionFiles } from '$lib/services/contents/collection/files
  */
 
 /**
+ * @typedef {object} NormalizeAssetFolderArgs
+ * @property {string} collectionName Collection name.
+ * @property {string} [fileName] Collection file name. File/singleton collection only.
+ * @property {string} mediaFolder Raw `media_folder` option of the collection or collection file.
+ * @property {string | undefined} publicFolder Raw `public_folder` option of the collection or
+ * collection file.
+ * @property {string | undefined} baseFolder `folder` option for the collection or base directory of
+ * the collection file.
+ * @property {GlobalFolders} globalFolders Global folders information.
+ */
+
+/**
  * @typedef {object} GlobalFolders
  * @property {string} globalMediaFolder Normalized global `media_folder` option.
  * @property {string} globalPublicFolder Normalized global `public_folder` option.
@@ -38,15 +50,7 @@ const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =>
 
 /**
  * Get a normalized asset folder information given the arguments.
- * @param {object} args Arguments.
- * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File/singleton collection only.
- * @param {string} args.mediaFolder Raw `media_folder` option of the collection or collection file.
- * @param {string | undefined} args.publicFolder Raw `public_folder` option of the collection or
- * collection file.
- * @param {string | undefined} args.baseFolder `folder` option for the collection or base directory
- * of the collection file.
- * @param {GlobalFolders} args.globalFolders Global folders information.
+ * @param {NormalizeAssetFolderArgs} args Arguments.
  * @returns {AssetFolderInfo} Normalized asset folder information.
  */
 const normalizeAssetFolder = ({
@@ -81,7 +85,7 @@ const normalizeAssetFolder = ({
 /**
  * Add an asset folder for a collection or collection file if it’s not the same as the global
  * asset folder.
- * @param {any} args Arguments for {@link normalizeAssetFolder}.
+ * @param {NormalizeAssetFolderArgs} args Arguments for {@link normalizeAssetFolder}.
  */
 const addFolderIfNeeded = (args) => {
   if (args.mediaFolder === undefined) {
@@ -122,6 +126,7 @@ const iterateFiles = ({ collectionName, files, globalFolders }) => {
     addFolderIfNeeded({
       collectionName,
       fileName,
+      // @ts-ignore
       mediaFolder: fileMediaFolder,
       publicFolder: filePublicFolder,
       baseFolder: getPathInfo(filePath).dirname,
@@ -192,6 +197,7 @@ export const getAllAssetFolders = (config) => {
 
     addFolderIfNeeded({
       collectionName,
+      // @ts-ignore
       mediaFolder,
       publicFolder,
       baseFolder,

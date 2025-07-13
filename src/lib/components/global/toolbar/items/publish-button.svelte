@@ -36,7 +36,7 @@
       }
 
       $isLastCommitPublished = true;
-    } catch (/** @type {any} */ ex) {
+    } catch (ex) {
       toastStatus = 'error';
       showToast = true;
       // eslint-disable-next-line no-console

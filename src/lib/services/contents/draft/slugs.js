@@ -33,6 +33,44 @@ export const getFillSlugOptions = ({ draft }) => {
 };
 
 /**
+ * Get the localized slug for the given locale.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.locale Locale.
+ * @param {string[]} args.localizingKeyPaths List of key paths that the value will be localized.
+ * @returns {string} Localized slug.
+ */
+const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
+  const { collection, collectionFile, currentSlugs, currentValues, isIndexFile } = draft;
+
+  const {
+    identifier_field: identifierField = 'title',
+    slug: slugTemplate = `{{${identifierField}}}`,
+  } = collection;
+
+  const {
+    _i18n: { defaultLocale },
+  } = collectionFile ?? collection;
+
+  return (
+    currentSlugs?.[locale] ??
+    currentSlugs?._ ??
+    fillSlugTemplate(slugTemplate, {
+      collection,
+      locale,
+      content: {
+        // Merge the default locale content and localized content
+        ...currentValues[defaultLocale],
+        ...Object.fromEntries(
+          localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
+        ),
+      },
+      isIndexFile,
+    })
+  );
+};
+
+/**
  * Get the localized slug map. This only applies when the i18n structure is multiple files or
  * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
  * @param {object} args Arguments.
@@ -41,8 +79,7 @@ export const getFillSlugOptions = ({ draft }) => {
  * @returns {LocaleSlugMap | undefined} Localized slug map.
  */
 const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
-  const { collection, collectionFile, currentLocales, currentSlugs, currentValues, isIndexFile } =
-    draft;
+  const { collection, collectionFile, currentLocales } = draft;
 
   const {
     identifier_field: identifierField = 'title',
@@ -64,27 +101,12 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
     return undefined;
   }
 
-  const _collection = /** @type {EntryCollection} */ (collection);
-
   return Object.fromEntries(
     Object.entries(currentLocales).map(([locale]) => {
       const slug =
         locale === defaultLocale
           ? defaultLocaleSlug
-          : (currentSlugs?.[locale] ??
-            currentSlugs?._ ??
-            fillSlugTemplate(slugTemplate, {
-              collection: _collection,
-              locale,
-              content: {
-                // Merge the default locale content and localized content
-                ...currentValues[defaultLocale],
-                ...Object.fromEntries(
-                  localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
-                ),
-              },
-              isIndexFile,
-            }));
+          : getLocalizedSlug({ draft, locale, localizingKeyPaths });
 
       return [locale, slug];
     }),
