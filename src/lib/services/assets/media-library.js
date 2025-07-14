@@ -3,12 +3,11 @@ import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 import { allStockAssetProviders } from '$lib/services/integrations/media-libraries';
 import {
-  optimizeSVG,
   RASTER_IMAGE_CONVERSION_FORMATS,
   RASTER_IMAGE_EXTENSION_REGEX,
   RASTER_IMAGE_FORMATS,
-  transformImage,
 } from '$lib/services/utils/media/image';
+import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/transform';
 
 /**
  * @import {

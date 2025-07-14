@@ -23,14 +23,164 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
 /**
  * @import {
  * Asset,
+ * AssetFolderInfo,
  * Entry,
  * EntryDraft,
  * FileChange,
- * InternalCollectionFile,
  * InternalSiteConfig,
  * MovingAsset,
  * } from '$lib/types/private';
+ * @import { CollectionIndexFile } from '$lib/types/public';
  */
+
+/**
+ * Get base properties for the entry draft.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry to get base properties for.
+ * @returns {Partial<EntryDraft>} Base properties for the entry draft.
+ */
+const getDraftBaseProps = ({ entry }) => {
+  const { locales } = entry;
+
+  const originalLocales = Object.fromEntries(
+    Object.entries(locales).map(([locale]) => [locale, true]),
+  );
+
+  const originalSlugs = Object.fromEntries(
+    Object.entries(locales).map(([locale, { slug }]) => [locale, slug]),
+  );
+
+  const originalValues = Object.fromEntries(
+    Object.entries(locales).map(([locale, { content }]) => [locale, content]),
+  );
+
+  return {
+    createdAt: Date.now(),
+    isNew: false,
+    originalEntry: entry,
+    originalLocales,
+    currentLocales: structuredClone(originalLocales),
+    originalSlugs,
+    currentSlugs: structuredClone(originalSlugs),
+    originalValues,
+    currentValues: structuredClone(originalValues),
+    files: {},
+    validities: {},
+    expanderStates: {},
+  };
+};
+
+/**
+ * Add saving entry data to the stack.
+ * @param {object} args Arguments.
+ * @param {Record<string, any>} args.draftProps Entry draft properties.
+ * @param {CollectionIndexFile} [args.indexFile] Index file of the collection.
+ * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
+ * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
+ */
+const addSavingEntryData = async ({ draftProps, indexFile, savingEntries, changes }) => {
+  const { collection, collectionFile } = draftProps;
+  const { fields: regularFields = [] } = collectionFile ?? collection;
+
+  const draft = /** @type {EntryDraft} */ ({
+    ...draftProps,
+    fields: indexFile?.fields ?? regularFields,
+  });
+
+  const { savingEntry, changes: _changes } = await createSavingEntryData({
+    draft,
+    slugs: getSlugs({ draft }),
+  });
+
+  savingEntries.push(savingEntry);
+  changes.push(..._changes);
+};
+
+/**
+ * Collect changes for the given entry.
+ * @param {object} args Arguments.
+ * @param {InternalSiteConfig} args._siteConfig Site configuration.
+ * @param {Entry} args.entry Entry to collect changes for.
+ * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
+ * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
+ */
+const collectEntryChanges = async ({ _siteConfig, entry, savingEntries, changes }) => {
+  const draftBaseProps = getDraftBaseProps({ entry });
+
+  await Promise.all(
+    getAssociatedCollections(entry).map(async (collection) => {
+      const { name: collectionName, editor } = collection;
+      const isIndexFile = isCollectionIndexFile(collection, entry);
+      const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
+
+      const canPreview =
+        indexFile?.editor?.preview ?? editor?.preview ?? _siteConfig?.editor?.preview ?? true;
+
+      const collectionFiles = getCollectionFilesByEntry(collection, entry);
+      const addDataProps = { indexFile, savingEntries, changes };
+      /** @type {Partial<EntryDraft>} */
+      const draftProps = { ...draftBaseProps, collection, collectionName, isIndexFile, canPreview };
+
+      if (collectionFiles.length) {
+        await Promise.all(
+          collectionFiles.map((collectionFile) =>
+            addSavingEntryData({
+              ...addDataProps,
+              draftProps: { ...draftProps, collectionFile, fileName: collectionFile.name },
+            }),
+          ),
+        );
+      } else {
+        await addSavingEntryData({ ...addDataProps, draftProps });
+      }
+    }),
+  );
+};
+
+/**
+ * Collect changes for the given asset and update the entries that use it.
+ * @param {object} args Arguments.
+ * @param {InternalSiteConfig} args._siteConfig Site configuration.
+ * @param {AssetFolderInfo} args._globalAssetFolder Global asset folder.
+ * @param {string} args.newPath New path for the asset.
+ * @param {Asset} args.asset Asset to collect changes for.
+ * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
+ * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
+ */
+const collectEntryChangesFromAsset = async ({
+  _siteConfig,
+  _globalAssetFolder,
+  newPath,
+  asset,
+  savingEntries,
+  changes,
+}) => {
+  const assetURL = getAssetPublicURL(asset) ?? asset.blobURL;
+  const usedEntries = assetURL ? await getEntriesByAssetURL(assetURL) : [];
+
+  if (!assetURL || !usedEntries.length) {
+    return;
+  }
+
+  const { publicPath } =
+    getAssetFoldersByPath(asset.path).find(({ collectionName }) => collectionName !== undefined) ??
+    _globalAssetFolder;
+
+  const updatingEntries = await getEntriesByAssetURL(assetURL, {
+    entries: structuredClone(usedEntries),
+    newURL: newPath.replace(asset.folder.internalPath ?? '', publicPath ?? ''),
+  });
+
+  if (!updatingEntries.length) {
+    return;
+  }
+
+  await Promise.all(
+    updatingEntries.map(async (entry) =>
+      collectEntryChanges({ _siteConfig, entry, savingEntries, changes }),
+    ),
+  );
+};
 
 /**
  * Update the asset and entry stores after moving or renaming assets.
@@ -93,107 +243,14 @@ export const moveAssets = async (action, movingAssets) => {
         data: new File([asset.file ?? (await getAssetBlob(asset))], newName),
       });
 
-      const assetURL = getAssetPublicURL(asset) ?? asset.blobURL;
-      const usedEntries = assetURL ? await getEntriesByAssetURL(assetURL) : [];
-
-      if (!assetURL || !usedEntries.length) {
-        return;
-      }
-
-      const { publicPath } =
-        getAssetFoldersByPath(asset.path).find(
-          ({ collectionName }) => collectionName !== undefined,
-        ) ?? _globalAssetFolder;
-
-      const updatedEntries = await getEntriesByAssetURL(assetURL, {
-        entries: structuredClone(usedEntries),
-        newURL: newPath.replace(asset.folder.internalPath ?? '', publicPath ?? ''),
+      collectEntryChangesFromAsset({
+        _siteConfig,
+        _globalAssetFolder,
+        newPath,
+        asset,
+        savingEntries,
+        changes,
       });
-
-      await Promise.all(
-        updatedEntries.map(async (entry) => {
-          const { locales } = entry;
-
-          const currentLocales = Object.fromEntries(
-            Object.entries(locales).map(([locale]) => [locale, true]),
-          );
-
-          const currentSlugs = Object.fromEntries(
-            Object.entries(locales).map(([locale, { slug }]) => [locale, slug]),
-          );
-
-          const currentValues = Object.fromEntries(
-            Object.entries(locales).map(([locale, { content }]) => [locale, content]),
-          );
-
-          const draftProps = {
-            isNew: false,
-            originalEntry: entry,
-            originalLocales: currentLocales,
-            currentLocales,
-            originalSlugs: currentSlugs,
-            currentSlugs,
-            originalValues: currentValues,
-            currentValues,
-            files: {},
-            validities: {},
-            expanderStates: {},
-          };
-
-          await Promise.all(
-            getAssociatedCollections(entry).map(async (collection) => {
-              const { name: collectionName, editor } = collection;
-              const isIndexFile = isCollectionIndexFile(collection, entry);
-              const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
-
-              const canPreview =
-                indexFile?.editor?.preview ??
-                editor?.preview ??
-                _siteConfig?.editor?.preview ??
-                true;
-
-              /**
-               * Add saving entry data to the stack.
-               * @param {InternalCollectionFile} [collectionFile] Collection file. File/singleton
-               * collection only.
-               */
-              const addSavingEntryData = async (collectionFile) => {
-                const { fields: regularFields = [] } = collectionFile ?? collection;
-                const fields = indexFile?.fields ?? regularFields;
-
-                /** @type {EntryDraft} */
-                const draft = {
-                  ...draftProps,
-                  createdAt: Date.now(),
-                  isIndexFile,
-                  canPreview,
-                  collection,
-                  collectionName,
-                  collectionFile,
-                  fileName: collectionFile?.name,
-                  fields,
-                };
-
-                const { savingEntry, changes: savingEntryChanges } = await createSavingEntryData({
-                  draft,
-                  slugs: getSlugs({ draft }),
-                });
-
-                savingEntries.push(savingEntry);
-                changes.push(...savingEntryChanges);
-              };
-
-              const collectionFiles = getCollectionFilesByEntry(collection, entry);
-
-              if (collectionFiles.length) {
-                await Promise.all(collectionFiles.map(addSavingEntryData));
-              } else {
-                await addSavingEntryData();
-              }
-            }),
-          );
-        }),
-      );
     }),
   );
 

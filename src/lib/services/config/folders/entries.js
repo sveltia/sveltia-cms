@@ -12,6 +12,33 @@ import { getI18nConfig } from '$lib/services/contents/i18n';
  */
 
 /**
+ * Get a map of file paths for the given collection and file.
+ * @param {object} args Arguments.
+ * @param {Collection} args.collection Collection.
+ * @param {CollectionFile} args.file Collection file.
+ * @returns {Record<InternalLocaleCode, string>} Map of file paths for each locale.
+ */
+const getFilePathMap = ({ collection, file }) => {
+  const path = stripSlashes(file.file);
+
+  if (!path.includes('{{locale}}')) {
+    return { _default: path };
+  }
+
+  const _i18n = getI18nConfig(collection, file);
+  const { allLocales, defaultLocale, omitDefaultLocaleFromFileName } = _i18n;
+
+  return Object.fromEntries(
+    allLocales.map((locale) => [
+      locale,
+      omitDefaultLocaleFromFileName && locale === defaultLocale
+        ? path.replace('.{{locale}}', '')
+        : path.replace('{{locale}}', locale),
+    ]),
+  );
+};
+
+/**
  * Get a collection file folder information.
  * @param {Collection} collection Collection.
  * @param {CollectionFile} file Collection file.
@@ -22,31 +49,10 @@ const getCollectionFileFolder = (collection, file) => {
     return undefined;
   }
 
-  /** @type {Record<InternalLocaleCode, string>} */
-  const filePathMap = (() => {
-    const path = stripSlashes(file.file);
-
-    if (!path.includes('{{locale}}')) {
-      return { _default: path };
-    }
-
-    const _i18n = getI18nConfig(collection, file);
-    const { allLocales, defaultLocale, omitDefaultLocaleFromFileName } = _i18n;
-
-    return Object.fromEntries(
-      allLocales.map((locale) => [
-        locale,
-        omitDefaultLocaleFromFileName && locale === defaultLocale
-          ? path.replace('.{{locale}}', '')
-          : path.replace('{{locale}}', locale),
-      ]),
-    );
-  })();
-
   return {
     collectionName: collection.name,
     fileName: file.name,
-    filePathMap,
+    filePathMap: getFilePathMap({ collection, file }),
   };
 };
 

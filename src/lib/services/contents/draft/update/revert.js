@@ -3,20 +3,60 @@ import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
+ * @import {
+ * EntryDraft,
+ * GetFieldArgs,
+ * InternalLocaleCode,
+ * LocaleContentMap,
+ * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
- * @param {InternalLocaleCode} [locale] Target locale, e.g. `ja`. Can be empty if reverting
- * everything.
- * @param {FieldKeyPath} [keyPath] Flattened (dot-notated) object keys that will be used for
- * searching the source values. Omit this if copying all the fields. If the triggered widget is List
- * or Object, this will likely match multiple fields.
+ * @param {object} args Arguments.
+ * @param {FieldKeyPath} args.keyPath Field key path to revert. If empty, all the fields will be
+ * reverted.
+ * @param {InternalLocaleCode} args.locale Iterating locale.
+ * @param {boolean} args.isDefaultLocale Whether the locale is the default locale.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the {@link getField} function.
+ * @param {LocaleContentMap} args.currentValues Current values to revert. This will be modified.
+ * @param {boolean} [args.reset] Whether ro remove the current value.
  */
-export const revertChanges = (locale = '', keyPath = '') => {
+const revertFields = ({
+  locale,
+  isDefaultLocale,
+  keyPath,
+  getFieldArgs,
+  currentValues,
+  reset = false,
+}) => {
+  const { valueMap = {} } = getFieldArgs;
+
+  Object.entries(valueMap).forEach(([_keyPath, value]) => {
+    if (!keyPath || _keyPath.startsWith(keyPath)) {
+      const fieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
+
+      if (isDefaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
+        if (reset) {
+          delete currentValues[locale][_keyPath];
+        } else {
+          currentValues[locale][_keyPath] = value;
+        }
+      }
+    }
+  });
+};
+
+/**
+ * Revert the changes made to the given locale.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {FieldKeyPath} args.keyPath Field key path to revert. If empty, all the fields will be
+ * reverted.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ */
+const revertLocale = ({ draft, keyPath, locale }) => {
   const {
     collection,
     collectionName,
@@ -25,44 +65,46 @@ export const revertChanges = (locale = '', keyPath = '') => {
     currentValues,
     originalValues,
     isIndexFile,
-  } = /** @type {EntryDraft} */ (get(entryDraft));
+  } = draft;
 
-  const { allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
-  const locales = locale ? [locale] : allLocales;
+  const { defaultLocale } = (collectionFile ?? collection)._i18n;
+  const isDefaultLocale = locale === defaultLocale;
+  const revertArgs = { keyPath, locale, isDefaultLocale, currentValues };
+  /** @type {GetFieldArgs} */
+  const getFieldArgs = { collectionName, fileName, keyPath: '', isIndexFile };
 
-  /**
-   * Revert changes.
-   * @param {InternalLocaleCode} _locale Iterating locale.
-   * @param {FlattenedEntryContent} valueMap Flattened entry content.
-   * @param {boolean} reset Whether ro remove the current value.
-   */
-  const revert = (_locale, valueMap, reset = false) => {
-    const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
-
-    Object.entries(valueMap).forEach(([_keyPath, value]) => {
-      if (!keyPath || _keyPath.startsWith(keyPath)) {
-        const fieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
-
-        if (_locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
-          if (reset) {
-            delete currentValues[_locale][_keyPath];
-          } else {
-            currentValues[_locale][_keyPath] = value;
-          }
-        }
-      }
-    });
-  };
-
-  locales.forEach((_locale) => {
-    // Remove all the current values except for i18n-duplicate ones
-    revert(_locale, currentValues[_locale], true);
-    // Restore the original values
-    revert(_locale, originalValues[_locale], false);
+  // Remove all the current values except for i18n-duplicate ones
+  revertFields({
+    ...revertArgs,
+    getFieldArgs: { ...getFieldArgs, valueMap: currentValues[locale] },
+    reset: true,
   });
 
-  /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
-    ..._draft,
-    currentValues,
-  }));
+  // Restore the original values
+  revertFields({
+    ...revertArgs,
+    getFieldArgs: { ...getFieldArgs, valueMap: originalValues[locale] },
+  });
+};
+
+/**
+ * Revert the changes made to the given field or all the fields to the default value(s).
+ * @param {object} [args] Arguments.
+ * @param {InternalLocaleCode} [args.locale] Target locale, e.g. `ja`. Can be empty if reverting
+ * everything.
+ * @param {FieldKeyPath} [args.keyPath] Flattened (dot-notated) object keys that will be used for
+ * searching the source values. Omit this if copying all the fields. If the triggered widget is List
+ * or Object, this will likely match multiple fields.
+ */
+export const revertChanges = ({ locale: targetLocale = '', keyPath = '' } = {}) => {
+  const draft = /** @type {EntryDraft} */ (get(entryDraft));
+  const { collection, collectionFile, currentValues } = draft;
+  const { allLocales } = (collectionFile ?? collection)._i18n;
+  const locales = targetLocale ? [targetLocale] : allLocales;
+
+  locales.forEach((locale) => {
+    revertLocale({ draft, keyPath, locale });
+  });
+
+  entryDraft.update(() => ({ ...draft, currentValues }));
 };

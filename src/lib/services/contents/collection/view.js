@@ -30,7 +30,13 @@ import { getRegex } from '$lib/services/utils/misc';
  * SortingConditions,
  * SortOrder,
  * } from '$lib/types/private';
- * @import { DateTimeField, FieldKeyPath, NumberField, SortableFields } from '$lib/types/public';
+ * @import {
+ * DateTimeField,
+ * Field,
+ * FieldKeyPath,
+ * NumberField,
+ * SortableFields,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -51,6 +57,43 @@ export const currentView = writable({ type: 'list' });
  * @returns {string} Modified string.
  */
 const removeMarkdownChars = (str) => str.replace(/[_*`]+/g, '');
+
+/**
+ * @type {Record<string, StringConstructor | DateConstructor>}
+ */
+const specialProps = {
+  slug: String,
+  commit_author: String,
+  commit_date: Date,
+};
+
+/**
+ * Get the type of the given key, which can be a field key path or one of the entry metadata keys.
+ * @param {object} args Arguments.
+ * @param {string} args.key Key.
+ * @param {Field | undefined} args.fieldConfig Field configuration object.
+ * @returns {StringConstructor | BooleanConstructor | NumberConstructor | DateConstructor} Type of
+ * the key.
+ */
+const getType = ({ key, fieldConfig }) => {
+  if (key in specialProps) {
+    return specialProps[key];
+  }
+
+  if (fieldConfig?.widget === 'boolean') {
+    return Boolean;
+  }
+
+  if (fieldConfig?.widget === 'number') {
+    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
+
+    if (valueType === 'int' || valueType === 'float') {
+      return Number;
+    }
+  }
+
+  return String;
+};
 
 /**
  * Sort the given entries.
@@ -79,24 +122,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
   }
 
   const fieldConfig = getField({ collectionName, keyPath: key });
-
-  const type =
-    { slug: String, commit_author: String, commit_date: Date }[key] ??
-    (() => {
-      if (fieldConfig?.widget === 'boolean') {
-        return Boolean;
-      }
-
-      if (fieldConfig?.widget === 'number') {
-        const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
-
-        if (valueType === 'int' || valueType === 'float') {
-          return Number;
-        }
-      }
-
-      return String;
-    })();
+  const type = getType({ key, fieldConfig });
 
   const valueMap = Object.fromEntries(
     _entries.map((entry) => [entry.slug, getPropertyValue({ entry, locale, collectionName, key })]),

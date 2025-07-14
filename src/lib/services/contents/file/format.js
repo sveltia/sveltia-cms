@@ -70,6 +70,45 @@ export const formatYAML = (
 };
 
 /**
+ * Format front matter for the given entry content.
+ * @param {object} args Arguments.
+ * @param {RawEntryContent} args.content Entry content.
+ * @param {FileConfig} args._file File configuration.
+ * @returns {string} Formatted front matter.
+ */
+const formatFrontMatter = ({ content, _file }) => {
+  const { format, fmDelimiters, yamlQuote = false } = _file;
+  const [sd, ed] = fmDelimiters ?? ['---', '---'];
+  const body = typeof content.body === 'string' ? content.body : '';
+
+  delete content.body;
+
+  // Support Markdown without a front matter block, particularly for VitePress
+  if (!Object.keys(content).length) {
+    return `${body}\n`;
+  }
+
+  try {
+    if (format === 'frontmatter' || format === 'yaml-frontmatter') {
+      return `${sd}\n${formatYAML(content, undefined, { quote: yamlQuote })}\n${ed}\n${body}\n`;
+    }
+
+    if (format === 'toml-frontmatter') {
+      return `${sd}\n${formatTOML(content)}\n${ed}\n${body}\n`;
+    }
+
+    if (format === 'json-frontmatter') {
+      return `${sd}\n${formatJSON(content)}\n${ed}\n${body}\n`;
+    }
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  }
+
+  return '';
+};
+
+/**
  * Format raw entry content.
  * @param {object} entry File entry.
  * @param {RawEntryContent | Record<InternalLocaleCode, RawEntryContent>} entry.content Content
@@ -79,7 +118,7 @@ export const formatYAML = (
  * @returns {Promise<string>} Formatted string.
  */
 export const formatEntryFile = async ({ content, _file }) => {
-  const { format, fmDelimiters, yamlQuote = false } = _file;
+  const { format, yamlQuote = false } = _file;
   const customFormatter = customFileFormats[format]?.formatter;
 
   if (customFormatter) {
@@ -106,32 +145,7 @@ export const formatEntryFile = async ({ content, _file }) => {
   }
 
   if (/^(?:(?:yaml|toml|json)-)?frontmatter$/.test(format)) {
-    const [sd, ed] = fmDelimiters ?? ['---', '---'];
-    const body = typeof content.body === 'string' ? content.body : '';
-
-    delete content.body;
-
-    // Support Markdown without a front matter block, particularly for VitePress
-    if (!Object.keys(content).length) {
-      return `${body}\n`;
-    }
-
-    try {
-      if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-        return `${sd}\n${formatYAML(content, undefined, { quote: yamlQuote })}\n${ed}\n${body}\n`;
-      }
-
-      if (format === 'toml-frontmatter') {
-        return `${sd}\n${formatTOML(content)}\n${ed}\n${body}\n`;
-      }
-
-      if (format === 'json-frontmatter') {
-        return `${sd}\n${formatJSON(content)}\n${ed}\n${body}\n`;
-      }
-    } catch (ex) {
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    }
+    return formatFrontMatter({ content, _file });
   }
 
   return '';

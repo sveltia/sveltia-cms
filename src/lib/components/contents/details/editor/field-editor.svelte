@@ -200,7 +200,7 @@
                   label={$_('revert_changes')}
                   disabled={equal(currentValue, originalValue)}
                   onclick={() => {
-                    revertChanges(locale, keyPath);
+                    revertChanges({ locale, keyPath });
                   }}
                 />
               {/if}

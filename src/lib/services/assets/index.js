@@ -22,7 +22,7 @@ import {
   resolvePath,
 } from '$lib/services/utils/file';
 import { getMediaMetadata } from '$lib/services/utils/media';
-import { transformImage } from '$lib/services/utils/media/image';
+import { transformImage } from '$lib/services/utils/media/image/transform';
 import { renderPDF } from '$lib/services/utils/media/pdf';
 
 /**

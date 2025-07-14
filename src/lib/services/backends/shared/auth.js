@@ -11,6 +11,22 @@ import { _ } from 'svelte-i18n';
 export const inAuthPopup = writable(false);
 
 /**
+ * Open a popup window for authentication.
+ * @param {object} args Arguments.
+ * @param {string} args.authURL Authentication site URL.
+ * @returns {Window | null} Popup window object or `null` if the popup could not be opened.
+ */
+const openPopup = ({ authURL }) => {
+  const width = 600;
+  const height = 800;
+  const { availHeight, availWidth } = window.screen;
+  const top = availHeight / 2 - height / 2;
+  const left = availWidth / 2 - width / 2;
+
+  return window.open(authURL, 'auth', `width=${width},height=${height},top=${top},left=${left}`);
+};
+
+/**
  * Authenticate with a Git service provider through Netlify Identity or other 3rd party OAuth client
  * specified with the configuration file.
  * @param {object} args Arguments.
@@ -22,17 +38,7 @@ export const inAuthPopup = writable(false);
  * @see https://decapcms.org/docs/backends-overview/
  */
 const authorize = async ({ backendName, authURL }) => {
-  const width = 600;
-  const height = 800;
-  const { availHeight, availWidth } = window.screen;
-  const top = availHeight / 2 - height / 2;
-  const left = availWidth / 2 - width / 2;
-
-  const popup = window.open(
-    authURL,
-    'auth',
-    `width=${width},height=${height},top=${top},left=${left}`,
-  );
+  const popup = openPopup({ authURL });
 
   return new Promise((resolve, reject) => {
     /**

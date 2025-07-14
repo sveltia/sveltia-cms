@@ -100,7 +100,7 @@
               label={$_('revert_changes')}
               disabled={!canRevert}
               onclick={() => {
-                revertChanges($thisPane?.locale);
+                revertChanges({ locale: $thisPane?.locale });
               }}
             />
             {#if !saveAllLocales && $thisPane?.locale}

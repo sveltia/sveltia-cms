@@ -1,5 +1,6 @@
 import { getUnpkgURL } from '$lib/services/app/dependencies';
-import { exportCanvasAsBlob, resizeCanvas } from '$lib/services/utils/media/image';
+import { exportCanvasAsBlob } from '$lib/services/utils/media/image/encode';
+import { resizeCanvas } from '$lib/services/utils/media/image/resize';
 
 /**
  * @import { InternalImageTransformationOptions } from '$lib/types/private';
