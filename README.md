@@ -242,6 +242,8 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better backend support
 
+The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/), [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) and [Test](https://decapcms.org/docs/test-backend/) backends are available in Sveltia CMS. For [performance reasons](#features-not-to-be-implemented), we don’t support [Azure](https://decapcms.org/docs/azure-backend/), [Bitbucket](https://decapcms.org/docs/bitbucket-backend/) and [Git Gateway](https://decapcms.org/docs/git-gateway-backend/).
+
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`.[^95][^27] If a branch name is specified, it works as expected.[^232]
 - It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once.[^24]
