@@ -1,13 +1,13 @@
-import { getDefaultValueMap as getBooleanFieldDefaultValueMap } from '$lib/services/contents/widgets/boolean/helper';
-import { getDefaultValueMap as getCodeFieldDefaultValueMap } from '$lib/services/contents/widgets/code/helper';
-import { getDefaultValueMap as getDateTimeFieldDefaultValueMap } from '$lib/services/contents/widgets/date-time/helper';
-import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/widgets/hidden/helper';
-import { getDefaultValueMap as getKeyValueFieldDefaultValueMap } from '$lib/services/contents/widgets/key-value/helper';
-import { getDefaultValueMap as getListFieldDefaultValueMap } from '$lib/services/contents/widgets/list/helper';
-import { getDefaultValueMap as getMarkdownFieldDefaultValueMap } from '$lib/services/contents/widgets/markdown/helper';
-import { getDefaultValueMap as getNumberFieldDefaultValueMap } from '$lib/services/contents/widgets/number/helper';
-import { getDefaultValueMap as getObjectFieldDefaultValueMap } from '$lib/services/contents/widgets/object/helper';
-import { getDefaultValueMap as getSelectFieldDefaultValueMap } from '$lib/services/contents/widgets/select/helper';
+import { getDefaultValueMap as getBooleanFieldDefaultValueMap } from '$lib/services/contents/widgets/boolean/defaults';
+import { getDefaultValueMap as getCodeFieldDefaultValueMap } from '$lib/services/contents/widgets/code/defaults';
+import { getDefaultValueMap as getDateTimeFieldDefaultValueMap } from '$lib/services/contents/widgets/date-time/defaults';
+import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/widgets/hidden/defaults';
+import { getDefaultValueMap as getKeyValueFieldDefaultValueMap } from '$lib/services/contents/widgets/key-value/defaults';
+import { getDefaultValueMap as getListFieldDefaultValueMap } from '$lib/services/contents/widgets/list/defaults';
+import { getDefaultValueMap as getMarkdownFieldDefaultValueMap } from '$lib/services/contents/widgets/markdown/defaults';
+import { getDefaultValueMap as getNumberFieldDefaultValueMap } from '$lib/services/contents/widgets/number/defaults';
+import { getDefaultValueMap as getObjectFieldDefaultValueMap } from '$lib/services/contents/widgets/object/defaults';
+import { getDefaultValueMap as getSelectFieldDefaultValueMap } from '$lib/services/contents/widgets/select/defaults';
 
 /**
  * @import {

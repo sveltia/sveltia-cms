@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { getDefaultValueMap } from './helper.js';
+import { getDefaultValueMap } from './defaults';
 
 /**
  * @import { HiddenField } from '$lib/types/public';

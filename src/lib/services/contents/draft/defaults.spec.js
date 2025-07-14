@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { getDefaultValues, populateDefaultValue } from './defaults.js';
+import { getDefaultValues, populateDefaultValue } from './defaults';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
@@ -7,61 +7,61 @@ import { getDefaultValues, populateDefaultValue } from './defaults.js';
  */
 
 // Mock the widget helper modules
-vi.mock('$lib/services/contents/widgets/boolean/helper', () => ({
+vi.mock('$lib/services/contents/widgets/boolean/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue === 'true' ? true : (fieldConfig.default ?? false),
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/code/helper', () => ({
+vi.mock('$lib/services/contents/widgets/code/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/date-time/helper', () => ({
+vi.mock('$lib/services/contents/widgets/date-time/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/hidden/helper', () => ({
+vi.mock('$lib/services/contents/widgets/hidden/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/key-value/helper', () => ({
+vi.mock('$lib/services/contents/widgets/key-value/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || {},
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/list/helper', () => ({
+vi.mock('$lib/services/contents/widgets/list/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || [],
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/markdown/helper', () => ({
+vi.mock('$lib/services/contents/widgets/markdown/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/number/helper', () => ({
+vi.mock('$lib/services/contents/widgets/number/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue ? parseFloat(dynamicValue) : (fieldConfig.default ?? 0),
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/object/helper', () => ({
+vi.mock('$lib/services/contents/widgets/object/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || {},
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/select/helper', () => ({
+vi.mock('$lib/services/contents/widgets/select/defaults', () => ({
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),

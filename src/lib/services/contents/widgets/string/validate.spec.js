@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { validateStringField } from './helper.js';
+import { validateStringField } from './validate';
 
 /**
  * @import { StringField } from '$lib/types/public';

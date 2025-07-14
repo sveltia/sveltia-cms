@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { getInitialValue } from './helper.js';
+import { getInitialValue } from './helper';
 
 /**
  * @import { UuidField } from '$lib/types/public';

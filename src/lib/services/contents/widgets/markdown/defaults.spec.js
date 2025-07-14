@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getDefaultValueMap } from './helper.js';
+import { getDefaultValueMap } from './defaults';
 
 /**
  * @import { MarkdownField } from '$lib/types/public';

@@ -1,6 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n';
-  import { validateStringField } from '$lib/services/contents/widgets/string/helper';
+  import { validateStringField } from '$lib/services/contents/widgets/string/validate';
 
   /**
    * @import { StringField, TextField } from '$lib/types/public';

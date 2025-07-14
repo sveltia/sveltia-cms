@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getRegex } from './misc.js';
+import { getRegex } from './misc';
 
 describe('Test getRegex()', () => {
   test('returns RegExp object as is when input is already a RegExp', () => {

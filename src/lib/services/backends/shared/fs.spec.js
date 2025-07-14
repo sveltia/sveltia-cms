@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
-import { getFileHandle, getDirectoryHandle } from './fs.js';
+import { getFileHandle, getDirectoryHandle } from './fs';
 
 /**
  * @import { MockedFunction } from 'vitest';

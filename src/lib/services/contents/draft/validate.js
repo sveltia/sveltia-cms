@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
-import { validateStringField } from '$lib/services/contents/widgets/string/helper';
+import { validateStringField } from '$lib/services/contents/widgets/string/validate';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**

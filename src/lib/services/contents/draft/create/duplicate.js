@@ -2,7 +2,7 @@ import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
 import { showDuplicateToast } from '$lib/services/contents/draft/editor';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/widgets/hidden/helper';
+import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/widgets/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/widgets/uuid/helper';
 
 /**
