@@ -2,7 +2,7 @@
   import { Dialog, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
-  import { goto } from '$lib/services/app/navigation';
+  import { goto, parseLocation } from '$lib/services/app/navigation';
   import {
     getAssetDetails,
     getAssetsByDirName,
@@ -53,6 +53,25 @@
     }
   };
 
+  /**
+   * Rename the asset by moving it to a new path. Also, update the URL hash silently to reflect the
+   * new asset name if the rename dialog was opened in the asset details view.
+   */
+  const renameAsset = async () => {
+    if (!asset) {
+      return;
+    }
+
+    const oldPath = asset.path;
+    const newPath = `${dirname}/${newName}${extension ? `.${extension}` : ''}`;
+
+    await moveAssets('rename', [{ asset, path: newPath }]);
+
+    if (parseLocation().path === `/assets/${oldPath}`) {
+      await goto(`/assets/${newPath}`, { replaceState: true, notifyChange: false });
+    }
+  };
+
   $effect(() => {
     if (asset) {
       initState();
@@ -72,15 +91,8 @@
   bind:open
   okLabel={$_('rename')}
   okDisabled={newName === filename || invalid}
-  onOk={async () => {
-    if (asset) {
-      const path = `${dirname}/${newName}${extension ? `.${extension}` : ''}`;
-
-      // Perform a move operation to rename the asset
-      await moveAssets('rename', [{ asset, path }]);
-      // Update the URL to reflect the new asset name
-      await goto(`/assets/${path}`, { replaceState: true, notifyChange: false });
-    }
+  onOk={() => {
+    renameAsset();
   }}
   onClose={() => {
     $renamingAsset = undefined;
