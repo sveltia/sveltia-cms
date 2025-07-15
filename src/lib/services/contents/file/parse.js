@@ -81,11 +81,8 @@ const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
 
   if (!head && !body) {
     // Support Markdown without a front matter block, particularly for VitePress
-    if (text) {
-      return { body: text };
-    }
-
-    throw new Error('No front matter block found');
+    // The text can be an empty string, but it’s okay to return an empty body
+    return { body: text };
   }
 
   let parsedHead = {};
