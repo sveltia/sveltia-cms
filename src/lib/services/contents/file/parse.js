@@ -21,27 +21,29 @@ import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/conte
  * @param {string} str JSON document.
  * @returns {any} Parsed object.
  */
-const parseJSON = (str) => JSON.parse(str);
+export const parseJSON = (str) => JSON.parse(str);
+
 /**
  * Parse a TOML document using a library. The TOML parser returns date fields as `Date` objects, but
  * we need strings to match the JSON and YAML parsers, so we have to parse twice.
  * @param {string} str TOML document.
  * @returns {any} Parsed object.
  */
-const parseTOML = (str) => toRaw(TOML.parse(str));
+export const parseTOML = (str) => toRaw(TOML.parse(str));
+
 /**
  * Parse a YAML document using a library.
  * @param {string} str YAML document.
  * @returns {any} Parsed object.
  */
-const parseYAML = (str) => YAML.parse(str);
+export const parseYAML = (str) => YAML.parse(str);
 
 /**
  * Detect the Markdown front matter serialization format by checking a delimiter in the content.
  * @param {string} text File content.
  * @returns {FrontMatterFormat} Determined format.
  */
-const detectFrontMatterFormat = (text) => {
+export const detectFrontMatterFormat = (text) => {
   if (text.startsWith('+++')) {
     return 'toml-frontmatter';
   }
@@ -64,7 +66,7 @@ const detectFrontMatterFormat = (text) => {
  * @returns {Record<string, any>} Parsed front matter and body.
  * @throws {Error} When the front matter block could not be parsed.
  */
-const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
+export const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
   const {
     _file: { format: _format, fmDelimiters },
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
@@ -96,7 +98,8 @@ const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
   }
 
   if (format === 'json-frontmatter') {
-    parsedHead = parseJSON(head);
+    // For JSON front matter, we need to add the braces back since the regex strips them
+    parsedHead = parseJSON(`{${head}}`);
   }
 
   return { ...parsedHead, body };
