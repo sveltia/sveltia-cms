@@ -133,7 +133,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 230+ issues, or 475+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
+  - So far, 235+ issues, or 480+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — Almost there!
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -147,7 +147,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![230 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250629)<br>
+![235 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250715)<br>
 
 ## Differentiators
 
@@ -413,6 +413,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - The language switcher always appears in the user interface, so it’s easy to spot and change the selected language.
   - Dynamic loading of language modes work as expected.[^198]
   - A Code field under a List field work as expected, saving both code and language.[^181]
+  - A wrong initial value will not cause a crash with a `TypeError`.[^257]
 - Color
   - The widget doesn’t cause scrolling issues.[^128]
   - The preview shows both the RGB(A) hex value and the `rgb()` function notation.
@@ -2098,3 +2099,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^255]: Netlify/Decap CMS [#7355](https://github.com/decaporg/decap-cms/discussions/7355)
 
 [^256]: Netlify/Decap CMS [#2845](https://github.com/decaporg/decap-cms/issues/2845)
+
+[^257]: Netlify/Decap CMS [#4353](https://github.com/decaporg/decap-cms/issues/4353), [#7513](https://github.com/decaporg/decap-cms/issues/7513), [#7544](https://github.com/decaporg/decap-cms/issues/7544)
