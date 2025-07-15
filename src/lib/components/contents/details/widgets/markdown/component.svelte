@@ -120,35 +120,35 @@
     </Button>
   </header>
   {#if locale && keyPath}
-    {#each fields as { name, label: fieldLabel, widget = 'string', ...rest } (name)}
+    {#each fields as fieldConfig (fieldConfig.name)}
       {#await sleep() then}
         <!-- @todo Support `default` option -->
+        {@const { name: fieldName, label: fieldLabel = fieldName, widget = 'string' } = fieldConfig}
         {#if widget in editors && !unsupportedWidgets.includes(widget)}
           {@const SvelteComponent = editors[widget]}
           <section
             role="group"
             class="field"
-            aria-label={$_('x_field', { values: { field: fieldLabel ?? name } })}
+            aria-label={$_('x_field', { values: { field: fieldLabel } })}
             data-widget={widget}
-            data-key-path="{keyPath}:{name}"
+            data-key-path="{keyPath}:{fieldName}"
             onkeydowncapture={(event) => {
               // Allow to select all in any `TextInput` within the component below using Ctrl+A
               event.stopPropagation();
             }}
           >
             <header role="none">
-              <h4 role="none">{fieldLabel ?? name}</h4>
+              <h4 role="none">{fieldLabel}</h4>
             </header>
             <div role="none" class="widget-wrapper">
               <SvelteComponent
                 {locale}
-                keyPath="{keyPath}:{name}"
+                keyPath="{keyPath}:{fieldName}"
                 fieldId={generateElementId('field')}
-                fieldLabel={fieldLabel ?? name}
-                fieldConfig={{ name, widget }}
+                {fieldLabel}
+                {fieldConfig}
                 context="markdown-editor-component"
-                bind:currentValue={inputValues[name]}
-                {...rest}
+                bind:currentValue={inputValues[fieldName]}
               />
             </div>
           </section>
