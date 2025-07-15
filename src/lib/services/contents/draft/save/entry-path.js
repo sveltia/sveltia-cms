@@ -1,6 +1,7 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
+import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
  * @import { EntryCollection, EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -23,14 +24,10 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     _i18n: { defaultLocale, structure, omitDefaultLocaleFromFileName },
   } = collectionFile ?? collection;
 
-  const omitLocaleFromFileName = omitDefaultLocaleFromFileName && locale === defaultLocale;
-
   if (collectionFile) {
-    const path = stripSlashes(collectionFile.file);
+    const { _i18n, file } = collectionFile;
 
-    return omitLocaleFromFileName
-      ? path.replace('.{{locale}}', '')
-      : path.replace('{{locale}}', locale);
+    return getLocalePath({ _i18n, locale, path: stripSlashes(file) });
   }
 
   if (originalEntry?.locales[locale]?.slug === slug) {
@@ -61,9 +58,10 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   const pathOptions = {
     multiple_folders: `${basePath}/${locale}/${path}.${extension}`,
     multiple_folders_i18n_root: `${locale}/${basePath}/${path}.${extension}`,
-    multiple_files: omitLocaleFromFileName
-      ? `${basePath}/${path}.${extension}`
-      : `${basePath}/${path}.${locale}.${extension}`,
+    multiple_files:
+      omitDefaultLocaleFromFileName && locale === defaultLocale
+        ? `${basePath}/${path}.${extension}`
+        : `${basePath}/${path}.${locale}.${extension}`,
     single_file: `${basePath}/${path}.${extension}`,
   };
 

@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
+import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
  * @import { CustomFileFormat, FileConfig, InternalI18nOptions } from '$lib/types/private';
@@ -219,9 +220,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
         ? getEntryPathRegEx({ extension, format, basePath, subPath, indexFileName, _i18n })
         : undefined,
     fullPath: filePath
-      ? _i18n.omitDefaultLocaleFromFileName
-        ? filePath.replace('.{{locale}}', '')
-        : filePath.replace('{{locale}}', _i18n.defaultLocale)
+      ? getLocalePath({ _i18n, locale: _i18n.defaultLocale, path: filePath })
       : undefined,
     fmDelimiters: getFrontMatterDelimiters({ format, delimiter }),
     yamlQuote: !!yamlQuote,

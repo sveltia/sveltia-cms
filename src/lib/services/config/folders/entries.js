@@ -4,7 +4,7 @@ import {
   getValidCollectionFiles,
   isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
-import { getI18nConfig } from '$lib/services/contents/i18n';
+import { getI18nConfig, getLocalePath } from '$lib/services/contents/i18n';
 
 /**
  * @import { EntryFolderInfo, InternalLocaleCode, InternalSiteConfig } from '$lib/types/private';
@@ -26,15 +26,9 @@ const getFilePathMap = ({ collection, file }) => {
   }
 
   const _i18n = getI18nConfig(collection, file);
-  const { allLocales, defaultLocale, omitDefaultLocaleFromFileName } = _i18n;
 
   return Object.fromEntries(
-    allLocales.map((locale) => [
-      locale,
-      omitDefaultLocaleFromFileName && locale === defaultLocale
-        ? path.replace('.{{locale}}', '')
-        : path.replace('{{locale}}', locale),
-    ]),
+    _i18n.allLocales.map((locale) => [locale, getLocalePath({ _i18n, locale, path })]),
   );
 };
 
