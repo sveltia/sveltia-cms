@@ -2,6 +2,7 @@
   import { Dialog, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
+  import { goto } from '$lib/services/app/navigation';
   import {
     getAssetDetails,
     getAssetsByDirName,
@@ -71,11 +72,14 @@
   bind:open
   okLabel={$_('rename')}
   okDisabled={newName === filename || invalid}
-  onOk={() => {
+  onOk={async () => {
     if (asset) {
-      moveAssets('rename', [
-        { asset, path: `${dirname}/${newName}${extension ? `.${extension}` : ''}` },
-      ]);
+      const path = `${dirname}/${newName}${extension ? `.${extension}` : ''}`;
+
+      // Perform a move operation to rename the asset
+      await moveAssets('rename', [{ asset, path }]);
+      // Update the URL to reflect the new asset name
+      await goto(`/assets/${path}`, { replaceState: true, notifyChange: false });
     }
   }}
   onClose={() => {
