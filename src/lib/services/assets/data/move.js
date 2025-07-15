@@ -243,7 +243,7 @@ export const moveAssets = async (action, movingAssets) => {
         data: new File([asset.file ?? (await getAssetBlob(asset))], newName),
       });
 
-      collectEntryChangesFromAsset({
+      await collectEntryChangesFromAsset({
         _siteConfig,
         _globalAssetFolder,
         newPath,
