@@ -254,6 +254,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - The GitLab backend supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
+- Users can sign in directly with Git backends using a personal access token (PAT) without using an OAuth client. To do so, click the small arrow button next to the Sign In button, and select Use Personal Access Token.[^258]
 - The OAuth access token is automatically renewed when using the GitLab or Gitea/Forgejo backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
@@ -344,6 +345,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - [Default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
   - Sorting entries by a DateTime field works as expected.[^110]
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
+  - The `sortable_fields` option accepts a special `slug` value to allow sorting by entry slugs.
   - [Index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) allows users to edit Hugo’s special `_index.md` file, including localized ones like `_index.en.md`, within a folder collection.[^201] If the `index_file` option is not defined, these files will be hidden in a folder collection unless the `path` option is configured to end with `_index` and the `extension` is `md`.[^120]
   - A console error won’t be thrown when a collection doesn’t have the `title` field.[^152] In that case, an entry summary will be generated from a header in the Markdown `body` field, if exists, or from the entry slug, so the summary will never be an empty.[^161] This supports a typical VitePress and Docusaurus setup.[^230]
   - If there was an error while parsing an entry file, such as duplicate front matter keys, it won’t show up as a blank entry, and a clear error message will be displayed in the browser console.[^121]
@@ -2101,3 +2103,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^256]: Netlify/Decap CMS [#2845](https://github.com/decaporg/decap-cms/issues/2845)
 
 [^257]: Netlify/Decap CMS [#4353](https://github.com/decaporg/decap-cms/issues/4353), [#7513](https://github.com/decaporg/decap-cms/issues/7513), [#7544](https://github.com/decaporg/decap-cms/issues/7544)
+
+[^258]: Netlify/Decap CMS [#663](https://github.com/decaporg/decap-cms/issues/663), [#7466](https://github.com/decaporg/decap-cms/discussions/7466), [#7545](https://github.com/decaporg/decap-cms/issues/7545)
