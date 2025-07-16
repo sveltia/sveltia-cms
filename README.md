@@ -468,6 +468,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
     - An optional Object field (`required: false`) can be manually added or removed with a checkbox.[^88] If unadded or removed, the required subfields won’t trigger validation errors,[^16] and the field will be saved as `null`.
 - Relation
   - Field options are displayed with no additional API requests.[^14] The confusing `options_length` option, which defaults to 20, is therefore ignored.[^76]
+  - The widget reliably displays the selected option in the summary and all available options in the dropdown list.[^259]
   - `slug` can be used for `value_field` to show all available options instead of just one in some situations.[^91]
   - Template strings with a wildcard like `{{cities.*.name}}` can also be used for `value_field`.[^94]
   - `display_fields` is displayed in the Preview Pane instead of `value_field`.
@@ -2107,3 +2108,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^257]: Netlify/Decap CMS [#4353](https://github.com/decaporg/decap-cms/issues/4353), [#7513](https://github.com/decaporg/decap-cms/issues/7513), [#7544](https://github.com/decaporg/decap-cms/issues/7544)
 
 [^258]: Netlify/Decap CMS [#663](https://github.com/decaporg/decap-cms/issues/663), [#7466](https://github.com/decaporg/decap-cms/discussions/7466), [#7545](https://github.com/decaporg/decap-cms/issues/7545)
+
+[^259]: Netlify/Decap CMS [#7546](https://github.com/decaporg/decap-cms/issues/7546)
