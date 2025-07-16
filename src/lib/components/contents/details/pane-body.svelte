@@ -53,7 +53,9 @@
 
       const isIframe = thisPaneContentArea !== contentArea;
       const { x, y } = isIframe ? { x: 0, y: 0 } : thisPaneContentArea.getBoundingClientRect();
-      const { ownerDocument, scrollTop, scrollHeight } = thisPaneContentArea;
+      const { ownerDocument, scrollTop, scrollHeight, clientHeight } = thisPaneContentArea;
+      const scrollTopMax = scrollHeight - clientHeight;
+      const scrollRatio = scrollTop / scrollTopMax;
 
       // Find a field section at the top left corner of the content area
       const thisElement = /** @type {HTMLElement | undefined} */ (
@@ -62,8 +64,7 @@
 
       if (!thisElement) {
         // Calculate the scroll position based on the current scroll position of the this pane
-        thatPaneContentArea.scrollTop =
-          thatPaneContentArea.scrollHeight * (scrollTop / scrollHeight);
+        thatPaneContentArea.scrollTop = thatPaneContentArea.scrollHeight * scrollRatio;
 
         return;
       }
@@ -112,16 +113,18 @@
 
     if (iframe) {
       // Wait for the content to be loaded in the iframe
-      await sleep(500);
+      await sleep(250);
       thisPaneContentArea = /** @type {HTMLElement} */ (iframe?.contentDocument?.firstElementChild);
     } else {
       thisPaneContentArea = contentArea;
     }
 
-    thisPaneContentArea.scrollTop = 0;
-    // Add event listeners manually to use passive mode
-    thisPaneContentArea.addEventListener('wheel', syncScrollPosition, eventOptions);
-    thisPaneContentArea.addEventListener('touchmove', syncScrollPosition, eventOptions);
+    if (thisPaneContentArea) {
+      thisPaneContentArea.scrollTop = 0;
+      // Add event listeners manually to use passive mode
+      thisPaneContentArea.addEventListener('wheel', syncScrollPosition, eventOptions);
+      thisPaneContentArea.addEventListener('touchmove', syncScrollPosition, eventOptions);
+    }
   };
 
   $effect(() => {
