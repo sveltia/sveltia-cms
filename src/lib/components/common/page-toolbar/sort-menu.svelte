@@ -14,7 +14,7 @@
    * @property {string} aria-controls The `aria-controls` attribute for the menu.
    * @property {string} [label] Menu button label.
    * @property {boolean} [disabled] Whether to disable the button.
-   * @property {{ label: string, key: string }[]} [fields] Sorting fields.
+   * @property {{ label: string, key: string }[]} [sortKeys] Sort keys to display in the menu.
    * @property {string | undefined} [collectionName] Current collection name.
    */
 
@@ -25,7 +25,7 @@
     'aria-controls': ariaControls,
     label = '',
     disabled = false,
-    fields = [],
+    sortKeys = [],
     collectionName = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -38,7 +38,7 @@
 <MenuButton variant="ghost" label={label || $_('sort')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
     <Menu aria-label={$_('sorting_options')} aria-controls={ariaControls}>
-      {#each fields as { key, label: _label } (key)}
+      {#each sortKeys as { key, label: _label } (key)}
         {#each sortOrders as order (order)}
           <MenuItemRadio
             label={$_(

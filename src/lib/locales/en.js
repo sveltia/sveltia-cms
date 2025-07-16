@@ -197,6 +197,7 @@ export const strings = {
   sort_keys: {
     none: 'None',
     name: 'Name',
+    slug: 'Slug',
     commit_author: 'Updated by',
     commit_date: 'Updated on',
   },

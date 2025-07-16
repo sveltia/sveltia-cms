@@ -228,10 +228,10 @@ export const currentView = writable({ type: 'grid', showInfo: true });
 const assetListSettings = writable();
 
 /**
- * List of sort fields for the selected asset collection.
+ * List of available sort keys for the selected asset collection.
  * @type {Readable<{ key: string, label: string }[]>}
  */
-export const sortFields = derived(
+export const sortKeys = derived(
   // Include `appLocale` as a dependency because it returns a localized label
   [allAssets, appLocale],
   ([_allAssets], set) => {

@@ -198,6 +198,7 @@ export const strings = {
   sort_keys: {
     none: 'なし',
     name: '名前',
+    slug: 'スラッグ',
     commit_author: '更新者',
     commit_date: '更新日時',
   },

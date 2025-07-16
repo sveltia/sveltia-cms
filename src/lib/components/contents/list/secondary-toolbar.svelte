@@ -9,12 +9,8 @@
   import { getAssetFolder } from '$lib/services/assets';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
-  import {
-    currentView,
-    entryGroups,
-    listedEntries,
-    sortFields,
-  } from '$lib/services/contents/collection/view';
+  import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
+  import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
@@ -42,9 +38,9 @@
     {/if}
     <Spacer flex />
     <SortMenu
-      disabled={!hasMultipleEntries || !$sortFields.length}
+      disabled={!hasMultipleEntries || !$sortKeys.length}
       {currentView}
-      fields={$sortFields}
+      sortKeys={$sortKeys}
       {collectionName}
       aria-controls="entry-list"
     />

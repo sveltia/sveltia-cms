@@ -6,7 +6,7 @@
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { ASSET_KINDS, selectedAssets } from '$lib/services/assets';
-  import { assetGroups, currentView, listedAssets, sortFields } from '$lib/services/assets/view';
+  import { assetGroups, currentView, listedAssets, sortKeys } from '$lib/services/assets/view';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   const hasListedAssets = $derived(!!$listedAssets.length);
@@ -21,7 +21,7 @@
   <SortMenu
     disabled={!hasMultipleAssets}
     {currentView}
-    fields={$sortFields}
+    sortKeys={$sortKeys}
     aria-controls="asset-list"
   />
   <FilterMenu

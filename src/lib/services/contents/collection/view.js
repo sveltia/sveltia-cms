@@ -1,5 +1,3 @@
-import { unique } from '@sveltia/utils/array';
-import { isObject } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
@@ -11,6 +9,7 @@ import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
+import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
@@ -22,27 +21,14 @@ import { getRegex } from '$lib/services/utils/misc';
  * @import {
  * BackendService,
  * Entry,
- * EntryCollection,
  * EntryListView,
  * FilteringConditions,
  * GroupingConditions,
  * InternalCollection,
  * SortingConditions,
- * SortOrder,
  * } from '$lib/types/private';
- * @import {
- * DateTimeField,
- * Field,
- * FieldKeyPath,
- * NumberField,
- * SortableFields,
- * } from '$lib/types/public';
+ * @import { DateTimeField } from '$lib/types/public';
  */
-
-/**
- * @see https://decapcms.org/docs/configuration-options/#sortable_fields
- */
-const DEFAULT_SORTABLE_FIELDS = ['title', 'name', 'date', 'author', 'description'];
 
 /**
  * View settings for the selected entry collection.
@@ -57,43 +43,6 @@ export const currentView = writable({ type: 'list' });
  * @returns {string} Modified string.
  */
 const removeMarkdownChars = (str) => str.replace(/[_*`]+/g, '');
-
-/**
- * @type {Record<string, StringConstructor | DateConstructor>}
- */
-const specialProps = {
-  slug: String,
-  commit_author: String,
-  commit_date: Date,
-};
-
-/**
- * Get the type of the given key, which can be a field key path or one of the entry metadata keys.
- * @param {object} args Arguments.
- * @param {string} args.key Key.
- * @param {Field | undefined} args.fieldConfig Field configuration object.
- * @returns {StringConstructor | BooleanConstructor | NumberConstructor | DateConstructor} Type of
- * the key.
- */
-const getType = ({ key, fieldConfig }) => {
-  if (key in specialProps) {
-    return specialProps[key];
-  }
-
-  if (fieldConfig?.widget === 'boolean') {
-    return Boolean;
-  }
-
-  if (fieldConfig?.widget === 'number') {
-    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
-
-    if (valueType === 'int' || valueType === 'float') {
-      return Number;
-    }
-  }
-
-  return String;
-};
 
 /**
  * Sort the given entries.
@@ -122,7 +71,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
   }
 
   const fieldConfig = getField({ collectionName, keyPath: key });
-  const type = getType({ key, fieldConfig });
+  const type = getSortKeyType({ key, fieldConfig });
 
   const valueMap = Object.fromEntries(
     _entries.map((entry) => [entry.slug, getPropertyValue({ entry, locale, collectionName, key })]),
@@ -277,135 +226,8 @@ const groupEntries = (
  * View settings for all the folder collections.
  * @type {Writable<Record<string, EntryListView> | undefined>}
  */
-const entryListSettings = writable();
+export const entryListSettings = writable();
 
-/**
- * Get sortable fields for the given collection.
- * @param {EntryCollection} collection Collection.
- * @returns {{ fields: string[], default: SortingConditions }} A list of sortable fields and default
- * sort conditions.
- */
-export const getSortableFields = (collection) => {
-  const {
-    name: collectionName,
-    identifier_field: customIdField,
-    sortable_fields: customSortableFields,
-  } = collection;
-
-  /** @type {string[]} */
-  let fields = [];
-  /** @type {string | undefined} */
-  let defaultKey;
-  /** @type {SortOrder | undefined} */
-  let defaultOrder;
-
-  if (customSortableFields) {
-    if (Array.isArray(customSortableFields)) {
-      fields = customSortableFields;
-    }
-
-    if (isObject(customSortableFields)) {
-      const def = /** @type {SortableFields} */ (customSortableFields);
-
-      if (Array.isArray(def.fields)) {
-        fields = def.fields;
-      }
-
-      if (def.default && isObject(def.default)) {
-        defaultKey = def.default.field;
-        defaultOrder = ['descending', 'Descending'].includes(def.default.direction ?? '')
-          ? 'descending'
-          : 'ascending';
-      }
-    }
-  } else {
-    fields = [...DEFAULT_SORTABLE_FIELDS];
-
-    if (customIdField) {
-      fields.unshift(customIdField);
-      defaultKey = customIdField;
-    }
-  }
-
-  // Make sure the fields exist
-  fields = unique(fields).filter((keyPath) => !!getField({ collectionName, keyPath }));
-
-  return {
-    fields,
-    default: {
-      key: defaultKey ?? fields[0],
-      order: defaultOrder ?? 'ascending',
-    },
-  };
-};
-
-/**
- * Get a field’s label by key.
- * @param {EntryCollection} collection Collection.
- * @param {FieldKeyPath | string} key Field key path or one of other entry metadata property keys:
- * `slug`, `commit_author` and `commit_date`.
- * @returns {string} Label. For a nested field, it would be something like `Name – English`.
- */
-const getSortFieldLabel = (collection, key) => {
-  if (['name', 'commit_author', 'commit_date'].includes(key)) {
-    return get(_)(`sort_keys.${key}`);
-  }
-
-  if (key.includes('.')) {
-    return key
-      .split('.')
-      .map((_key, index, arr) => {
-        if (/^\d+$/.test(_key)) {
-          return undefined;
-        }
-
-        const keyPath = arr.slice(0, index + 1).join('.');
-
-        return getField({ collectionName: collection.name, keyPath })?.label || _key;
-      })
-      .filter(Boolean)
-      .join(' – ');
-  }
-
-  return collection.fields?.find(({ name }) => name === key)?.label || key;
-};
-
-/**
- * List of sort fields for the selected entry collection.
- * @type {Readable<{ key: string, label: string }[]>}
- */
-export const sortFields = derived(
-  // Include `appLocale` as a dependency because `getSortFieldLabel()` may return a localized label
-  [selectedCollection, allEntries, appLocale],
-  ([collection, _allEntries], set) => {
-    // Disable sorting for file/singleton collection
-    if (!collection?.folder) {
-      set([]);
-
-      return;
-    }
-
-    const _collection = /** @type {EntryCollection} */ (collection);
-    const { fields, default: defaultSort } = getSortableFields(_collection);
-    const view = get(entryListSettings)?.[_collection.name] ?? { type: 'list' };
-
-    view.sort ??= defaultSort;
-
-    if (_allEntries.every((entry) => !!entry.commitAuthor) && !fields.includes('author')) {
-      fields.push('commit_author');
-    }
-
-    if (_allEntries.every((entry) => !!entry.commitDate) && !fields.includes('date')) {
-      fields.push('commit_date');
-    }
-
-    set(fields.map((key) => ({ key, label: getSortFieldLabel(_collection, key) })));
-
-    if (!equal(view, get(currentView))) {
-      currentView.set(view);
-    }
-  },
-);
 /**
  * List of all the entries for the selected entry collection.
  * @type {Readable<Entry[]>}
@@ -420,6 +242,7 @@ export const listedEntries = derived(
     }
   },
 );
+
 /**
  * Sorted, filtered and grouped entries for the selected entry collection.
  * @type {Readable<{ name: string, entries: Entry[] }[]>}
