@@ -184,7 +184,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Uses caching, lazy loading and infinite scrolling techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS.[^39][^38]
 - No typing lag on input fields, especially within nested lists and objects.[^77]
-- The entry preview doesn’t use an `<iframe>` because it’s a performance overhead.[^179]
+- The entry preview doesn’t use an `<iframe>` by default because it’s a performance overhead.[^179]
 
 ### Better productivity
 
@@ -375,7 +375,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 ### Better content preview
 
 - The Preview Pane comes with a minimal default style.[^168] It looks nice without a custom preview style or template.
-- For better performance, the Preview Pane doesn’t use an `<iframe>`.[^179]
+- For better performance, the Preview Pane doesn’t use an `<iframe>` unless a custom preview stylesheet is registered.[^179]
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
 - Entering a long value into a field will not cause the field label to disappear.[^254]
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
@@ -613,7 +613,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
 - [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, Object/List widgets, and the `default` field option
-- [Custom previews](https://decapcms.org/docs/customization/) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
+- [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
 Due to the complexity, we have decided to defer the following features to the 2.0 release due early 2026. Netlify/Decap CMS has a number of open issues with these collaboration and beta features — we want to implement them the right way.
