@@ -254,7 +254,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - The GitLab backend supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
-- Users can sign in directly with Git backends using a personal access token (PAT) without using an OAuth client. To do so, click the small arrow button next to the Sign In button, and select Use Personal Access Token.[^258]
+- Users can sign in directly with a Git-based backend using a personal access token (PAT) instead of going through the regular OAuth flow. To do so, click the small arrow button next to the Sign In button, and select Use Personal Access Token.[^258]
 - The OAuth access token is automatically renewed when using the GitLab or Gitea/Forgejo backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
@@ -2107,6 +2107,6 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^257]: Netlify/Decap CMS [#4353](https://github.com/decaporg/decap-cms/issues/4353), [#7513](https://github.com/decaporg/decap-cms/issues/7513), [#7544](https://github.com/decaporg/decap-cms/issues/7544)
 
-[^258]: Netlify/Decap CMS [#663](https://github.com/decaporg/decap-cms/issues/663), [#7466](https://github.com/decaporg/decap-cms/discussions/7466), [#7545](https://github.com/decaporg/decap-cms/issues/7545)
+[^258]: Netlify/Decap CMS [#663](https://github.com/decaporg/decap-cms/issues/663), [#6729](https://github.com/decaporg/decap-cms/discussions/6729), [#7466](https://github.com/decaporg/decap-cms/discussions/7466), [#7545](https://github.com/decaporg/decap-cms/issues/7545)
 
 [^259]: Netlify/Decap CMS [#7546](https://github.com/decaporg/decap-cms/issues/7546)
