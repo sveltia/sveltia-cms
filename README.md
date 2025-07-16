@@ -756,6 +756,8 @@ If you’ve chosen to install with npm, updating the package is your responsibil
 
 You can host your Sveltia CMS-managed site anywhere, such as [Cloudflare Pages](https://pages.cloudflare.com/) or [GitHub Pages](https://pages.github.com/). But moving away from Netlify means you can no longer sign in with GitHub or GitLab via Netlify. Instead, you can use [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth), which can be easily deployed to Cloudflare Workers, or [any other 3rd party client](https://decapcms.org/docs/external-oauth-clients/) made for Netlify/Decap CMS.
 
+You can also generate a personal access token (PAT) on GitHub or GitLab, and use it to sign in. No OAuth client is needed. While this method is convenient for developers, it’s better to set up an OAuth client if your CMS instance is used by non-technical users because it’s more user-friendly and secure.
+
 ### Enabling autocomplete and validation for the configuration file
 
 Sveltia CMS provides a full [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest CMS version.
