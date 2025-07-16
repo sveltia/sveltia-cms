@@ -1,4 +1,5 @@
 import { mount } from 'svelte';
+import { customPreviewStyle } from '$lib/services/contents/draft/editor';
 import { customFileFormats } from '$lib/services/contents/file';
 import { customComponents } from '$lib/services/contents/widgets/markdown';
 import App from './components/app.svelte';
@@ -114,12 +115,19 @@ const registerEventListener = (eventListener) => {
  * @param {string} style File path or raw CSS string.
  * @param {object} [options] Options.
  * @param {boolean} [options.raw] Whether to use a CSS string.
+ * @throws {TypeError} If `style` is not a string, or `raw` is not a boolean.
  * @see https://decapcms.org/docs/customization/#registerpreviewstyle
  */
 const registerPreviewStyle = (style, { raw = false } = {}) => {
-  // eslint-disable-next-line no-console
-  console.error('Custom preview styles are not yet supported in Sveltia CMS.');
-  void [style, raw];
+  if (typeof style !== 'string') {
+    throw new TypeError('The `style` option for `CMS.registerPreviewStyle()` must be a string');
+  }
+
+  if (typeof raw !== 'boolean') {
+    throw new TypeError('The `raw` option for `CMS.registerPreviewStyle()` must be a boolean');
+  }
+
+  Object.assign(customPreviewStyle, raw ? { href: '', style } : { href: style, style: '' });
 };
 
 /**

@@ -125,7 +125,7 @@
 {/if}
 
 <style lang="scss">
-  section {
+  :global([role='document']) section {
     overflow: hidden;
     margin: 8px 0;
     padding: 8px 0;
