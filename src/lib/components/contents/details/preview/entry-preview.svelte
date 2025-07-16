@@ -101,7 +101,7 @@
 {/snippet}
 
 {#if useCustomPreviewStyle}
-  <iframe title={$_('content_preview')} bind:this={iframe}></iframe>
+  <iframe class="preview" title={$_('content_preview')} bind:this={iframe}></iframe>
 {:else}
   <div role="document" aria-label={$_('content_preview')}>
     {@render children()}
