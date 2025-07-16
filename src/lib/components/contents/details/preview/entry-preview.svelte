@@ -37,7 +37,7 @@
    * @type {boolean}
    * @see https://decapcms.org/docs/customization/
    */
-  const useCustomPreviewStyle = !!(customPreviewStyle.href || customPreviewStyle.style);
+  const useCustomPreviewStyle = !!customPreviewStyle.href;
 
   /**
    * Generate the HTML content for the iframe.
@@ -48,13 +48,7 @@
     <html lang="${sanitize(locale)}">
     <head>
       <meta charset="UTF-8">
-      ${
-        customPreviewStyle.href
-          ? `<link rel="stylesheet" href="${sanitize(customPreviewStyle.href)}">`
-          : // We have to escape the style tag or Svelte fails to compile the component
-            // eslint-disable-next-line no-useless-escape
-            `\<style\>${sanitize(customPreviewStyle.style)}</style>`
-      }
+      <link rel="stylesheet" href="${sanitize(customPreviewStyle.href)}">
     </head>
     <body></body>
     </html>

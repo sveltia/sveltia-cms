@@ -111,8 +111,8 @@ const registerEventListener = (eventListener) => {
 };
 
 /**
- * Register a custom preview style.
- * @param {string} style File path or raw CSS string.
+ * Register a custom preview stylesheet.
+ * @param {string} style URL, file path or raw CSS string.
  * @param {object} [options] Options.
  * @param {boolean} [options.raw] Whether to use a CSS string.
  * @throws {TypeError} If `style` is not a string, or `raw` is not a boolean.
@@ -127,7 +127,9 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
     throw new TypeError('The `raw` option for `CMS.registerPreviewStyle()` must be a boolean');
   }
 
-  Object.assign(customPreviewStyle, raw ? { href: '', style } : { href: style, style: '' });
+  customPreviewStyle.href = raw
+    ? URL.createObjectURL(new Blob([style], { type: 'text/css' }))
+    : style;
 };
 
 /**
