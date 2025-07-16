@@ -1,5 +1,5 @@
 <script>
-  import { Button } from '@sveltia/ui';
+  import { Button, Menu, MenuItem, PromptDialog, SplitButton } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -15,8 +15,10 @@
   let isLocalHost = $state(false);
   let isLocalBackendSupported = $state(false);
   let isBrave = $state(false);
+  let showTokenDialog = $state(false);
+  let token = $state('');
 
-  const configuredBackendName = $derived($siteConfig?.backend?.name);
+  const configuredBackendName = $derived(/** @type {string} */ ($siteConfig?.backend?.name));
   const configuredBackend = $derived(
     configuredBackendName ? allBackendServices[configuredBackendName] : null,
   );
@@ -45,15 +47,33 @@
       {$_('config.error.unsupported_backend', { values: { name: configuredBackendName } })}
     </div>
   {:else}
-    <Button
+    <SplitButton
       variant="primary"
+      popupPosition="bottom-right"
       label={isTestRepo
         ? $_('work_with_test_repo')
         : $_('sign_in_with_x', { values: { service: configuredBackend.label } })}
       onclick={async () => {
-        await signInManually(/** @type {string} */ (configuredBackendName));
+        await signInManually(configuredBackendName);
       }}
-    />
+    >
+      {#snippet popup()}
+        <Menu>
+          <MenuItem
+            label={$_('use_regular_authentication_flow')}
+            onclick={async () => {
+              await signInManually(configuredBackendName);
+            }}
+          />
+          <MenuItem
+            label={$_('use_personal_access_token')}
+            onclick={async () => {
+              showTokenDialog = true;
+            }}
+          />
+        </Menu>
+      {/snippet}
+    </SplitButton>
     {#if isLocalHost && !isTestRepo}
       <Button
         variant="primary"
@@ -95,6 +115,20 @@
   {/if}
 </div>
 
+<PromptDialog
+  bind:open={showTokenDialog}
+  bind:value={token}
+  title={$_('sign_in_using_pat_title')}
+  textboxAttrs={{ spellcheck: false, 'aria-label': $_('personal_access_token') }}
+  okLabel={$_('sign_in')}
+  okDisabled={!token.trim()}
+  onOk={async () => {
+    await signInManually(configuredBackendName, token.trim());
+  }}
+>
+  {$_('sign_in_using_pat_description')}
+</PromptDialog>
+
 <style lang="scss">
   .buttons {
     display: flex;
@@ -102,8 +136,22 @@
     align-items: center;
     gap: 16px;
 
-    :global(button) {
-      width: 240px;
+    :global {
+      .button {
+        width: 240px;
+      }
+
+      .split-button {
+        width: 240px;
+
+        button {
+          width: auto;
+        }
+
+        & > .button:first-child {
+          flex: auto;
+        }
+      }
     }
   }
 </style>

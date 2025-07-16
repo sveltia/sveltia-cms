@@ -73,6 +73,12 @@ export const strings = {
   loading_site_data: 'Loading Site Data…',
   loading_site_data_error: 'There was an error while loading site data.',
   sign_in_with_x: 'Sign In with {service}',
+  use_regular_authentication_flow: 'Use Regular Authentication Flow',
+  use_personal_access_token: 'Use Personal Access Token',
+  sign_in_using_pat_title: 'Sign In Using Personal Access Token',
+  sign_in_using_pat_description:
+    'Enter your token below. It must have read/write access to the repository content.',
+  personal_access_token: 'Personal Access Token',
   authorizing: 'Authorizing…',
   signing_in: 'Signing in…',
   work_with_local_repo: 'Work with Local Repository',

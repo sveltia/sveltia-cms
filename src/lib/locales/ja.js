@@ -73,6 +73,12 @@ export const strings = {
   loading_site_data: 'サイトデータを読み込んでいます…',
   loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',
   sign_in_with_x: '{service} でログイン',
+  use_regular_authentication_flow: '通常の認証フローを使用',
+  use_personal_access_token: '個人用アクセストークンを使用',
+  sign_in_using_pat_title: '個人用アクセストークンでログイン',
+  sign_in_using_pat_description:
+    '以下にトークンを入力してください。レポジトリコンテンツへの読み取り・書き込みアクセスが必要です。',
+  personal_access_token: '個人用アクセストークン',
   authorizing: '認証中…',
   signing_in: 'ログイン中…',
   work_with_local_repo: 'ローカルレポジトリで作業',

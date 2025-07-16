@@ -164,8 +164,9 @@ export const signInAutomatically = async () => {
 /**
  * Sign in with the given backend.
  * @param {string} _backendName Backend name to be used.
+ * @param {string} [token] Personal Access Token (PAT) to be used for authentication.
  */
-export const signInManually = async (_backendName) => {
+export const signInManually = async (_backendName, token) => {
   backendName.set(_backendName);
 
   const _backend = get(backend);
@@ -177,7 +178,7 @@ export const signInManually = async (_backendName) => {
   let _user;
 
   try {
-    _user = await _backend.signIn({ auto: false });
+    _user = await _backend.signIn({ token, auto: false });
   } catch (/** @type {any} */ ex) {
     unauthenticated.set(true);
     logError(ex);
