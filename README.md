@@ -1556,7 +1556,7 @@ Due late 2025
 
 Due early 2026
 
-- Implementing [a few deferred Netlify/Decap CMS features](#current-limitations)
+- Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections
 - End-user documentation
 
 ### Future
