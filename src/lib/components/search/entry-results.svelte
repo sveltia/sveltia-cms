@@ -5,7 +5,8 @@
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryResultItem from '$lib/components/search/entry-result-item.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
-  import { entrySearchResults, searchTerms } from '$lib/services/search';
+  import { searchTerms } from '$lib/services/search';
+  import { entrySearchResults } from '$lib/services/search/entries';
 
   /**
    * @import { Entry } from '$lib/types/private';

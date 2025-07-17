@@ -7,7 +7,7 @@
   import { _ } from 'svelte-i18n';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import { normalize } from '$lib/services/search';
+  import { normalize } from '$lib/services/search/util';
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**

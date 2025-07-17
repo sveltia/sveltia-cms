@@ -5,7 +5,8 @@
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import AssetResultItem from '$lib/components/search/asset-result-item.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
-  import { assetSearchResults, searchTerms } from '$lib/services/search';
+  import { searchTerms } from '$lib/services/search';
+  import { assetSearchResults } from '$lib/services/search/assets';
 
   /**
    * @import { Asset } from '$lib/types/private';

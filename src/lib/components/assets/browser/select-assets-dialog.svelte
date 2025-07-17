@@ -26,7 +26,7 @@
     allCloudStorageServices,
     allStockAssetProviders,
   } from '$lib/services/integrations/media-libraries';
-  import { normalize } from '$lib/services/search';
+  import { normalize } from '$lib/services/search/util';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
   import { getGitHash } from '$lib/services/utils/file';
