@@ -29,6 +29,13 @@ import { getRegex } from '$lib/services/utils/misc';
  */
 
 /**
+ * List of fields that may contain Markdown syntax and should be stripped before sorting. This
+ * includes `title`, `summary`, and `description`, which are commonly used in entry collections.
+ * @type {string[]}
+ */
+const markdownFieldKeys = ['title', 'summary', 'description'];
+
+/**
  * View settings for the selected entry collection.
  * @type {Writable<EntryListView>}
  */
@@ -82,10 +89,15 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
     }
 
     if (type === String) {
-      return compare(
-        removeMarkdownSyntax(aValue ? String(aValue) : ''),
-        removeMarkdownSyntax(bValue ? String(bValue) : ''),
-      );
+      const aValueStr = aValue ? String(aValue) : '';
+      const bValueStr = bValue ? String(bValue) : '';
+
+      // Strip Markdown syntax from the values in case of some text fields
+      if (markdownFieldKeys.includes(key)) {
+        return compare(removeMarkdownSyntax(aValueStr), removeMarkdownSyntax(bValueStr));
+      }
+
+      return compare(aValueStr, bValueStr);
     }
 
     return Number(aValue ?? 0) - Number(bValue ?? 0);
