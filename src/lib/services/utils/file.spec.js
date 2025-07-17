@@ -1,5 +1,3 @@
-/* cSpell:disable */
-
 import { describe, expect, test } from 'vitest';
 import { encodeFilePath, formatFileName, getBlob, getGitHash } from '$lib/services/utils/file';
 

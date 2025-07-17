@@ -88,12 +88,10 @@ describe('Test getRegex()', () => {
   });
 
   test('handles regex with all valid flags', () => {
-    // cSpell:disable-next-line
     const result = getRegex('/test/dgimsuy');
 
     expect(result).toBeInstanceOf(RegExp);
     expect(result?.source).toBe('test');
-    // cSpell:disable-next-line
     expect(result?.flags).toBe('dgimsuy');
   });
 
@@ -102,7 +100,6 @@ describe('Test getRegex()', () => {
 
     expect(result).toBeInstanceOf(RegExp);
     expect(result?.test('123-456-7890')).toBe(true);
-    // cSpell:disable-next-line
     expect(result?.test('abc-def-ghij')).toBe(false);
   });
 

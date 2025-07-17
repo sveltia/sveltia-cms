@@ -61,7 +61,6 @@ describe('Test applyTransformation()', () => {
 
   test('truncate', () => {
     const title =
-      // cspell:disable-next-line
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam pulvinar scelerisque';
 
     expect(
@@ -69,19 +68,13 @@ describe('Test applyTransformation()', () => {
         value: title,
         transformation: 'truncate(40)',
       }),
-    ).toBe(
-      // cspell:disable-next-line
-      'Lorem ipsum dolor sit amet, consectetur…',
-    );
+    ).toBe('Lorem ipsum dolor sit amet, consectetur…');
     expect(
       applyTransformation({
         value: title,
         transformation: "truncate(50, '***')",
       }),
-    ).toBe(
-      // cspell:disable-next-line
-      'Lorem ipsum dolor sit amet, consectetur adipiscing***',
-    );
+    ).toBe('Lorem ipsum dolor sit amet, consectetur adipiscing***');
     expect(
       applyTransformation({
         value: title,

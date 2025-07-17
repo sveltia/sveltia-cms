@@ -667,7 +667,6 @@ describe('Test getOptions()', async () => {
               content: flatten({
                 slug: 'special-chars',
                 name: {
-                  // cSpell:disable-next-line
                   first: 'João & María',
                   last: "O'Brien-Smith",
                 },

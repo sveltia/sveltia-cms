@@ -17,6 +17,7 @@ ignorePaths:
   - pnpm-lock.yaml
   - data/**/*.json
   - package/**
+  - "src/**/*.spec.js"
 words:
   - analyzing
   - astrolicious

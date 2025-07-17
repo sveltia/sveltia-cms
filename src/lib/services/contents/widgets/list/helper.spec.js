@@ -257,7 +257,6 @@ describe('Test formatSummary() — comprehensive tests', () => {
             valueMap: { ...basicValueMap, 'images.0.alt': 'hello world test' },
             summaryTemplate: '{{fields.alt | upper | truncate(10)}}',
           }),
-          // cSpell:disable-next-line
         ).toEqual('HELLO WORL…');
       });
     });

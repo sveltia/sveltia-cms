@@ -1,5 +1,3 @@
-/* cSpell:disable */
-
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
@@ -369,12 +367,9 @@ describe('Test fillSlugTemplate()', async () => {
   test('short slug', async () => {
     await setupSiteConfig();
 
-    const title =
-      // cspell:disable-next-line
-      'Lorem ipsum dolor sit amet, consectetur';
+    const title = 'Lorem ipsum dolor sit amet, consectetur';
 
     expect(fillSlugTemplate('{{title}}', { collection, content: { title } })).toEqual(
-      // cspell:disable-next-line
       'lorem-ipsum-dolor-sit-amet-consectetur',
     );
   });
@@ -383,11 +378,9 @@ describe('Test fillSlugTemplate()', async () => {
     await setupSiteConfig();
 
     const title =
-      // cspell:disable-next-line
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam pulvinar scelerisque';
 
     expect(fillSlugTemplate('{{title}}', { collection, content: { title } })).toEqual(
-      // cspell:disable-next-line
       'lorem-ipsum-dolor-sit-amet-consectetur-adipiscing',
     );
   });
@@ -461,13 +454,9 @@ describe('Test fillSlugTemplate()', async () => {
       fillSlugTemplate('{{title | truncate(40)}}', {
         collection,
         content: {
-          // cspell:disable-next-line
           title: 'lorem-ipsum-dolor-sit-amet-consectetur-adipiscing',
         },
       }),
-    ).toEqual(
-      // cspell:disable-next-line
-      'lorem-ipsum-dolor-sit-amet-consectetur-a…',
-    );
+    ).toEqual('lorem-ipsum-dolor-sit-amet-consectetur-a…');
   });
 });
