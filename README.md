@@ -244,7 +244,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/), [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) and [Test](https://decapcms.org/docs/test-backend/) backends are available in Sveltia CMS. For [performance reasons](#features-not-to-be-implemented), we don’t support [Azure](https://decapcms.org/docs/azure-backend/), [Bitbucket](https://decapcms.org/docs/bitbucket-backend/) and [Git Gateway](https://decapcms.org/docs/git-gateway-backend/).
 
-- Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.
+- Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.[^65]
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`.[^95][^27] If a branch name is specified, it works as expected.[^232]
 - It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once.[^24]
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
@@ -254,7 +254,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - The GitLab backend supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
-- Users can sign in directly with a Git-based backend using a personal access token (PAT) instead of going through the regular OAuth flow. To do so, click the small arrow button next to the Sign In button, and select Use Personal Access Token.[^258]
+- Users can sign in directly with a Git-based backend using a personal access token (PAT) instead of going through the regular OAuth flow.[^258] To do so, click the small arrow button next to the Sign In button, and select Use Personal Access Token.
 - The OAuth access token is automatically renewed when using the GitLab or Gitea/Forgejo backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
@@ -612,7 +612,6 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - Comprehensive site config validation
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) other than English and Japanese
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
-- Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
 - LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
 - [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, Object/List widgets, and the `default` field option
@@ -624,6 +623,7 @@ Due to the complexity, we have decided to defer the following features to the 2.
 - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/) with [deploy preview links](https://decapcms.org/docs/deploy-preview-links/)
 - [Open authoring](https://decapcms.org/docs/open-authoring/)
 - [Nested collections](https://decapcms.org/docs/collection-nested/) (beta)
+- Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
 
 Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
@@ -1535,9 +1535,9 @@ Due late 2025
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240] (#5 top-voted feature of Netlify/Decap CMS)
-  - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239] (#14)
-  - [Git LFS support for the GitHub backend](https://github.com/sveltia/sveltia-cms/discussions/353)[^244] (#26)
+  - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
+  - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239]
+  - [Git LFS support for the GitHub backend](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
   - Advanced Relation fields[^242], including cascade updates/deletes[^243] and [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - Several Cloudinary and Uploadcare media library issues, including selection of existing files[^247]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
@@ -1545,6 +1545,7 @@ Due late 2025
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
   - and a few more bugs
+- Migration from Moment.js to Day.js
 - Accessibility audit
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
 - Developer documentation (implementation guide)
@@ -1555,16 +1556,26 @@ Due late 2025
 
 Due early 2026
 
-- Implementing [a few deferred Netlify/Decap CMS features](#current-limitations):
-  - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/) with [deploy preview links](https://decapcms.org/docs/deploy-preview-links/)
-  - [Open authoring](https://decapcms.org/docs/open-authoring/)
-  - [Nested collections](https://decapcms.org/docs/collection-nested/) (beta)
+- Implementing [a few deferred Netlify/Decap CMS features](#current-limitations)
 - End-user documentation
 
 ### Future
 
-- Tackling many of the remaining Netlify/Decap CMS issues, including MDX support,[^122] [manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214),[^125] [tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455),[^256] [config editor](https://github.com/sveltia/sveltia-cms/discussions/452),[^10] offline support,[^238] and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) (some of them may be included in v2.0)
-- **Sveltia CMS Additions**: edge functions providing features that require server-side implementation, including user management (Netlify Identity alternative), roles,[^23] commits without a Git service account (Git Gateway alternative), API key management, post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166] and scheduled posts[^167]
+- Tackling many of the remaining Netlify/Decap CMS issues, including:
+  - MDX support[^122]
+  - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
+  - [Tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455)[^256]
+  - [Config editor](https://github.com/sveltia/sveltia-cms/discussions/452)[^10]
+  - Offline support[^238]
+  - and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+  - (some of them may be included in v2.0)
+- **Sveltia CMS Additions**: edge functions providing features that cannot be implemented client-side:
+  - User management (Netlify Identity alternative) with roles[^23]
+  - Sign-in without a Git service account (Git Gateway alternative)
+  - Post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166]
+  - Scheduled posts[^167]
+  - Credential management for service API keys, deploy hook URL, etc.
+- [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation, content writing, translation, etc.
