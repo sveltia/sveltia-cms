@@ -14,6 +14,7 @@ import { getField, getPropertyValue } from '$lib/services/contents/entry/fields'
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
 import { prefs } from '$lib/services/user/prefs';
+import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**
@@ -35,14 +36,6 @@ import { getRegex } from '$lib/services/utils/misc';
  * @type {Writable<EntryListView>}
  */
 export const currentView = writable({ type: 'list' });
-
-/**
- * Remove some Markdown syntax characters from the given string for proper sorting. This includes
- * bold, italic and code that might appear in the entry title.
- * @param {string} str Original string.
- * @returns {string} Modified string.
- */
-const removeMarkdownChars = (str) => str.replace(/[_*`]+/g, '');
 
 /**
  * Sort the given entries.
@@ -93,8 +86,8 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
 
     if (type === String) {
       return compare(
-        removeMarkdownChars(aValue ? String(aValue) : ''),
-        removeMarkdownChars(bValue ? String(bValue) : ''),
+        removeMarkdownSyntax(aValue ? String(aValue) : ''),
+        removeMarkdownSyntax(bValue ? String(bValue) : ''),
       );
     }
 
