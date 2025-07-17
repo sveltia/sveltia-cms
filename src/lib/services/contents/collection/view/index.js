@@ -77,6 +77,10 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
   const dateFieldConfig =
     fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
 
+  // Check if the field is a Markdown field: we use both the field config and a hardcoded key list
+  // to determine this, as some fields may be text fields that contain Markdown syntax.
+  const isMarkdownField = fieldConfig?.widget === 'markdown' || markdownFieldKeys.includes(key);
+
   _entries.sort((a, b) => {
     const aValue = valueMap[a.slug];
     const bValue = valueMap[b.slug];
@@ -93,7 +97,7 @@ const sortEntries = (entries, collection, { key, order } = {}) => {
       const bValueStr = bValue ? String(bValue) : '';
 
       // Strip Markdown syntax from the values in case of some text fields
-      if (markdownFieldKeys.includes(key)) {
+      if (isMarkdownField) {
         return compare(removeMarkdownSyntax(aValueStr), removeMarkdownSyntax(bValueStr));
       }
 
