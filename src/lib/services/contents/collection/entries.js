@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import { getMediaFieldURL } from '$lib/services/assets';
+import { getMediaFieldURL } from '$lib/services/assets/info';
 import { siteConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';

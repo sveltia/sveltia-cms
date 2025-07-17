@@ -1,4 +1,4 @@
-import { getAssetKind } from '$lib/services/assets';
+import { getAssetKind } from '$lib/services/assets/kinds';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**

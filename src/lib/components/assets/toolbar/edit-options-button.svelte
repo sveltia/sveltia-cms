@@ -1,14 +1,9 @@
 <script>
   import { Divider, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import {
-    canEditAsset,
-    defaultAssetDetails,
-    editingAsset,
-    getAssetDetails,
-    renamingAsset,
-    uploadingAssets,
-  } from '$lib/services/assets';
+  import { editingAsset, renamingAsset, uploadingAssets } from '$lib/services/assets';
+  import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/info';
+  import { canEditAsset } from '$lib/services/assets/kinds';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
   import { prefs } from '$lib/services/user/prefs';

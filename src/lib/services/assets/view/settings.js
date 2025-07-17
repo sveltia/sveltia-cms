@@ -1,7 +1,7 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
-import { selectedAssetFolder } from '$lib/services/assets';
+import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { currentView, defaultView } from '$lib/services/assets/view';
 import { backend } from '$lib/services/backends';
 

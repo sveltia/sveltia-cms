@@ -6,7 +6,8 @@
 -->
 <script>
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import { getMediaFieldURL, getMediaKind } from '$lib/services/assets';
+  import { getMediaFieldURL } from '$lib/services/assets/info';
+  import { getMediaKind } from '$lib/services/assets/kinds';
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**

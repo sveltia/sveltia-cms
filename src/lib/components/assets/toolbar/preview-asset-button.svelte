@@ -2,7 +2,7 @@
   import { Button } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import { goto } from '$lib/services/app/navigation';
-  import { canPreviewAsset } from '$lib/services/assets';
+  import { canPreviewAsset } from '$lib/services/assets/kinds';
 
   /**
    * @import { Asset } from '$lib/types/private';

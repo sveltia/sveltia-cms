@@ -7,7 +7,8 @@
   import EditOptionsButton from '$lib/components/assets/toolbar/edit-options-button.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
-  import { overlaidAsset, selectedAssetFolder } from '$lib/services/assets';
+  import { overlaidAsset } from '$lib/services/assets';
+  import { selectedAssetFolder } from '$lib/services/assets/folders';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const assets = $derived($overlaidAsset ? [$overlaidAsset] : []);

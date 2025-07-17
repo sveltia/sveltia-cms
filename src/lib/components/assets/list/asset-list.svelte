@@ -7,7 +7,8 @@
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
-  import { canCreateAsset, targetAssetFolder, uploadingAssets } from '$lib/services/assets';
+  import { uploadingAssets } from '$lib/services/assets';
+  import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
 
   /**

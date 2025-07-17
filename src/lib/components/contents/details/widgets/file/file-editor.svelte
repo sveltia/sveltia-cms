@@ -14,15 +14,10 @@
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import {
-    allAssets,
-    getAssetByPath,
-    getAssetFolder,
-    getAssetPublicURL,
-    getMediaFieldURL,
-    getMediaKind,
-    globalAssetFolder,
-  } from '$lib/services/assets';
+  import { allAssets, getAssetByPath } from '$lib/services/assets';
+  import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
+  import { getAssetPublicURL, getMediaFieldURL } from '$lib/services/assets/info';
+  import { getMediaKind } from '$lib/services/assets/kinds';
   import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
   import { hasMouse } from '$lib/services/user/env';

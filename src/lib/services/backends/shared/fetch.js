@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
-import { allAssets, getAssetFoldersByPath } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets';
+import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { parseAssetFiles } from '$lib/services/assets/parser';
 import {
   GIT_CONFIG_FILE_REGEX,

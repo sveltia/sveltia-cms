@@ -1,13 +1,9 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
-import {
-  allAssets,
-  getAssetByPath,
-  getAssetFolder,
-  getAssetFoldersByPath,
-  getMediaFieldURL,
-} from '$lib/services/assets';
+import { allAssets, getAssetByPath } from '$lib/services/assets';
+import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
+import { getMediaFieldURL } from '$lib/services/assets/info';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getField } from '$lib/services/contents/entry/fields';

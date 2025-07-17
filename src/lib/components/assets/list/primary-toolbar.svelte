@@ -9,13 +9,12 @@
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
+  import { focusedAsset, selectedAssets } from '$lib/services/assets';
   import {
     canCreateAsset,
-    focusedAsset,
     selectedAssetFolder,
-    selectedAssets,
     targetAssetFolder,
-  } from '$lib/services/assets';
+  } from '$lib/services/assets/folders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 

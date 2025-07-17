@@ -5,7 +5,8 @@
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { allAssets, getAssetFolder, uploadingAssets } from '$lib/services/assets';
+  import { allAssets, uploadingAssets } from '$lib/services/assets';
+  import { getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView } from '$lib/services/contents/collection/view';
   import { isLargeScreen } from '$lib/services/user/env';

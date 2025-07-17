@@ -5,12 +5,8 @@
   import { _, locale as appLocale } from 'svelte-i18n';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import {
-    allAssetFolders,
-    allAssets,
-    getAssetsByFolder,
-    selectedAssetFolder,
-  } from '$lib/services/assets';
+  import { allAssets, getAssetsByFolder } from '$lib/services/assets';
+  import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
   import {

@@ -1,4 +1,5 @@
-import { getAssetKind, getAssetsByDirName } from '$lib/services/assets';
+import { getAssetsByDirName } from '$lib/services/assets';
+import { getAssetKind } from '$lib/services/assets/kinds';
 import { fillSlugTemplate } from '$lib/services/common/slug';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getFillSlugOptions } from '$lib/services/contents/draft/slugs';

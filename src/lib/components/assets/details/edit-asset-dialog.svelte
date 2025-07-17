@@ -1,8 +1,9 @@
 <script>
   import { Dialog, Switch, TextArea } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
-  import { editingAsset, getAssetBlob, showAssetOverlay } from '$lib/services/assets';
+  import { editingAsset, showAssetOverlay } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
+  import { getAssetBlob } from '$lib/services/assets/info';
 
   /**
    * @import { Asset } from '$lib/types/private';

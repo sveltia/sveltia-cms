@@ -7,7 +7,7 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import markedBidi from 'marked-bidi';
-  import { getMediaFieldURL } from '$lib/services/assets';
+  import { getMediaFieldURL } from '$lib/services/assets/info';
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**

@@ -19,7 +19,9 @@
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { allAssets, getAssetFolder, getAssetKind, globalAssetFolder } from '$lib/services/assets';
+  import { allAssets } from '$lib/services/assets';
+  import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
+  import { getAssetKind } from '$lib/services/assets/kinds';
   import { getStockAssetMediaLibraryOptions } from '$lib/services/assets/media-library';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
   import {

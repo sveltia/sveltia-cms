@@ -1,15 +1,9 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { get } from 'svelte/store';
-import {
-  allAssets,
-  focusedAsset,
-  getAssetBlob,
-  getAssetFoldersByPath,
-  getAssetPublicURL,
-  globalAssetFolder,
-  overlaidAsset,
-} from '$lib/services/assets';
+import { allAssets, focusedAsset, overlaidAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
+import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
+import { getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
 import { saveChanges } from '$lib/services/common/save';
 import { siteConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';

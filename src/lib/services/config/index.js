@@ -5,7 +5,7 @@ import merge from 'deepmerge';
 import { get, writable } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import YAML from 'yaml';
-import { allAssetFolders } from '$lib/services/assets';
+import { allAssetFolders } from '$lib/services/assets/folders';
 import { gitBackendServices, validBackendNames } from '$lib/services/backends';
 import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';

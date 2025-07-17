@@ -1,12 +1,7 @@
 import { get } from 'svelte/store';
-import {
-  allAssets,
-  focusedAsset,
-  getAssetKind,
-  getAssetsByDirName,
-  overlaidAsset,
-} from '$lib/services/assets';
+import { allAssets, focusedAsset, getAssetsByDirName, overlaidAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
+import { getAssetKind } from '$lib/services/assets/kinds';
 import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
 import { backend } from '$lib/services/backends';
 import { saveChanges } from '$lib/services/common/save';

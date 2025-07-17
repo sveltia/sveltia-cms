@@ -7,7 +7,8 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import StaticMap from '$lib/components/common/static-map.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { defaultAssetDetails, getAssetDetails, isMediaKind } from '$lib/services/assets';
+  import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/info';
+  import { isMediaKind } from '$lib/services/assets/kinds';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import {
     getCollectionFileLabel,

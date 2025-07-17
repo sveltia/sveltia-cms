@@ -18,7 +18,7 @@
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
-  import { getAssetFolder } from '$lib/services/assets';
+  import { getAssetFolder } from '$lib/services/assets/folders';
   import { backend } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { getCollectionLabel } from '$lib/services/contents/collection';
