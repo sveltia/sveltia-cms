@@ -5,7 +5,8 @@ import { derived, get } from 'svelte/store';
 import { _, locale as appLocale } from 'svelte-i18n';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
-import { currentView, entryListSettings } from '$lib/services/contents/collection/view';
+import { currentView } from '$lib/services/contents/collection/view';
+import { entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { getField } from '$lib/services/contents/entry/fields';
 
 /**
