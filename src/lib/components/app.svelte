@@ -50,15 +50,18 @@
     const ncRoot = /** @type {HTMLElement | null} */ (document.querySelector('#nc-root'));
 
     if (!!ncRoot && window.getComputedStyle(ncRoot).position === 'static') {
-      const { top, height } = ncRoot.getBoundingClientRect();
+      // Wait for the next frame to ensure the element is rendered before calculating its position
+      window.requestAnimationFrame(() => {
+        const { top, height } = ncRoot.getBoundingClientRect();
 
-      if (height) {
-        ncRoot.style.position = 'relative';
-      } else {
-        // Make sure the CMS UI won’t overlap with a header
-        ncRoot.style.position = 'fixed';
-        ncRoot.style.inset = `${top}px 0 0 0`;
-      }
+        if (height) {
+          ncRoot.style.position = 'relative';
+        } else {
+          // Make sure the CMS UI won’t overlap with a header
+          ncRoot.style.position = 'fixed';
+          ncRoot.style.inset = `${top}px 0 0 0`;
+        }
+      });
     }
   });
 </script>
