@@ -4,7 +4,7 @@ import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, GetDefaultValueMapFuncArgs, } from '$lib/types/private';
+ * @import { FlattenedEntryContent, GetDefaultValueMapFuncArgs } from '$lib/types/private';
  * @import { FieldKeyPath, ObjectField } from '$lib/types/public';
  */
 

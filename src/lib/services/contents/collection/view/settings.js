@@ -7,7 +7,7 @@ import { currentView } from '$lib/services/contents/collection/view';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { BackendService, EntryListView, } from '$lib/types/private';
+ * @import { BackendService, EntryListView } from '$lib/types/private';
  */
 
 /**

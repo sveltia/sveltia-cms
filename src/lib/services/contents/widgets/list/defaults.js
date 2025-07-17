@@ -2,7 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import { flatten } from 'flat';
 
 /**
- * @import { GetDefaultValueMapFuncArgs, } from '$lib/types/private';
+ * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
  * @import { FieldKeyPath, ListField } from '$lib/types/public';
  */
 

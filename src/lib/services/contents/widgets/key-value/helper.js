@@ -3,7 +3,7 @@ import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, InternalLocaleCode, } from '$lib/types/private';
+ * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, KeyValueField } from '$lib/types/public';
  */
 

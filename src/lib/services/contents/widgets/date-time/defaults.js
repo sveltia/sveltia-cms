@@ -4,7 +4,7 @@ import {
 } from '$lib/services/contents/widgets/date-time/helper';
 
 /**
- * @import { GetDefaultValueMapFuncArgs, } from '$lib/types/private';
+ * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
  * @import { DateTimeField, FieldKeyPath } from '$lib/types/public';
  */
 

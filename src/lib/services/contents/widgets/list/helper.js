@@ -2,7 +2,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, InternalLocaleCode, } from '$lib/types/private';
+ * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { Field, FieldKeyPath, ListField } from '$lib/types/public';
  */
 

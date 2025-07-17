@@ -2,7 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { GetDefaultValueMapFuncArgs, } from '$lib/types/private';
+ * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
  * @import { FieldKeyPath, KeyValueField } from '$lib/types/public';
  */
 

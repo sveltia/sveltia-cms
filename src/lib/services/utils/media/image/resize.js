@@ -1,5 +1,5 @@
 /**
- * @import { ImageFitOption, MediaDimensions, } from '$lib/types/private';
+ * @import { ImageFitOption, MediaDimensions } from '$lib/types/private';
  */
 
 /**

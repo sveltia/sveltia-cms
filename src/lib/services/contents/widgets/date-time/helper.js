@@ -9,7 +9,7 @@ import {
 } from '$lib/services/utils/date';
 
 /**
- * @import { DateTimeFieldNormalizedProps, InternalLocaleCode, } from '$lib/types/private';
+ * @import { DateTimeFieldNormalizedProps, InternalLocaleCode } from '$lib/types/private';
  * @import { DateTimeField } from '$lib/types/public';
  */
 
