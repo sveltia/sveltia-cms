@@ -9,6 +9,7 @@
     "svelte.svelte-vscode",
     "vitest.explorer",
     "mervin.markdown-formatter",
-    "bierner.markdown-footnotes"
+    "bierner.markdown-footnotes",
+    "oxc.oxc-vscode"
   ]
 }
