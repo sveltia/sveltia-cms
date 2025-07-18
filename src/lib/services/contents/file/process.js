@@ -13,8 +13,11 @@ import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
  * BaseEntryListItem,
  * Entry,
  * EntryCollection,
+ * InternalCollection,
  * InternalLocaleCode,
+ * RawEntryContent,
  * } from '$lib/types/private';
+ * @import { Field } from '$lib/types/public';
  */
 
 /**
@@ -51,6 +54,227 @@ const getSlug = ({ subPath, subPathTemplate }) => {
 };
 
 /**
+ * Parse the raw content from the file and handle any errors.
+ * @param {BaseEntryListItem} file Entry file list item.
+ * @param {Error[]} errors List of parse errors.
+ * @returns {Promise<RawEntryContent | undefined>} Parsed content or undefined if parsing failed.
+ */
+const parseFileContent = async (file, errors) => {
+  try {
+    return await parseEntryFile(file);
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+    errors.push(ex);
+    return undefined;
+  }
+};
+
+/**
+ * Transform raw content to handle special cases like root list fields.
+ * @param {RawEntryContent} rawContent Raw content from the file.
+ * @param {Field[]} fields Collection fields.
+ * @param {boolean} i18nSingleFile Whether i18n single file structure is used.
+ * @returns {RawEntryContent | undefined} Transformed content or undefined if invalid.
+ */
+const transformRawContent = (rawContent, fields, i18nSingleFile) => {
+  // Handle a special case: top-level list field
+  if (hasRootListField(fields)) {
+    const fieldName = fields[0].name;
+
+    if (i18nSingleFile) {
+      if (!isObject(rawContent) || !Object.values(rawContent).every(Array.isArray)) {
+        return undefined;
+      }
+
+      return Object.fromEntries(
+        Object.entries(rawContent).map(([locale, content]) => [locale, { [fieldName]: content }]),
+      );
+    }
+
+    if (!Array.isArray(rawContent)) {
+      return undefined;
+    }
+
+    return { [fieldName]: rawContent };
+  }
+
+  return isObject(rawContent) ? rawContent : undefined;
+};
+
+/**
+ * Check if the file should be skipped based on Hugo index file rules.
+ * @param {string} path File path.
+ * @param {string | undefined} fileName Collection file name.
+ * @param {InternalCollection} collection Collection configuration.
+ * @param {string | undefined} subPathTemplate Sub path template.
+ * @param {string} extension File extension.
+ * @returns {boolean} True if the file should be skipped.
+ */
+const shouldSkipIndexFile = (path, fileName, collection, subPathTemplate, extension) => {
+  if (!isIndexFile(path)) {
+    return false;
+  }
+
+  // Skip Hugo’s special `_index.md` file that shouldn’t appear in a collection. Localized index
+  // files like `_index.en.md` are also excluded by default. Exceptions:
+  // 1. The collection is a file/singleton collection
+  // 2. The collection is an entry collection and index file inclusion is enabled
+  // 3. The collection is an entry collection and the `path` option value ends with `_index` and
+  // the extension is `md`
+  return !(
+    !!fileName ||
+    getIndexFile(collection)?.name === '_index' ||
+    (subPathTemplate?.split('/').pop() === '_index' && extension === 'md')
+  );
+};
+
+/**
+ * Extract subPath and locale information from the file path.
+ * @param {BaseEntryListItem} file Entry file list item.
+ * @param {string | undefined} fileName Collection file name.
+ * @param {RegExp | undefined} fullPathRegEx Full path regex for parsing.
+ * @param {InternalLocaleCode} defaultLocale Default locale.
+ * @param {boolean} isMultiFileStructure Whether using multi-file i18n structure.
+ * @returns {{ subPath: string | undefined, locale: InternalLocaleCode | undefined }} Path info.
+ */
+const extractPathInfo = (file, fileName, fullPathRegEx, defaultLocale, isMultiFileStructure) => {
+  const {
+    path,
+    folder: { filePathMap },
+  } = file;
+
+  if (fileName) {
+    if (isMultiFileStructure) {
+      const [locale, subPath] =
+        Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === path) ?? [];
+
+      return { subPath, locale };
+    }
+
+    return { subPath: path, locale: undefined };
+  }
+
+  if (!fullPathRegEx) {
+    return { subPath: undefined, locale: undefined };
+  }
+
+  // If the `omit_default_locale_from_filename` i18n option is enabled, the matching comes with
+  // the `locale` group being `undefined` for the default locale, so we need a fallback for it
+  const { subPath, locale = defaultLocale } = path.match(fullPathRegEx)?.groups ?? {};
+
+  return { subPath, locale };
+};
+
+/**
+ * Process entry for non-i18n collections.
+ * @param {Entry} entry Entry object to populate.
+ * @param {RawEntryContent} rawContent Raw content.
+ * @param {string} path File path.
+ * @param {string | undefined} fileName Collection file name.
+ * @param {string} subPath Sub path.
+ * @param {string | undefined} subPathTemplate Sub path template.
+ */
+const processNonI18nEntry = (entry, rawContent, path, fileName, subPath, subPathTemplate) => {
+  const slug = fileName || getSlug({ subPath, subPathTemplate });
+
+  entry.slug = slug;
+  entry.locales._default = { slug, path, content: flatten(rawContent) };
+};
+
+/**
+ * Process entry for single-file i18n structure.
+ * @param {Entry} entry Entry object to populate.
+ * @param {RawEntryContent} rawContent Raw content.
+ * @param {string} path File path.
+ * @param {string | undefined} fileName Collection file name.
+ * @param {string} subPath Sub path.
+ * @param {string | undefined} subPathTemplate Sub path template.
+ * @param {InternalLocaleCode[]} allLocales All available locales.
+ */
+const processI18nSingleFileEntry = (
+  entry,
+  rawContent,
+  path,
+  fileName,
+  subPath,
+  subPathTemplate,
+  allLocales,
+) => {
+  const slug = fileName || getSlug({ subPath, subPathTemplate });
+
+  entry.slug = slug;
+  entry.locales = Object.fromEntries(
+    allLocales
+      .filter((_locale) => _locale in rawContent)
+      .map((_locale) => [_locale, { slug, path, content: flatten(rawContent[_locale]) }]),
+  );
+};
+
+/**
+ * Process entry for multi-file i18n structure.
+ * @param {Entry} entry Entry object to populate.
+ * @param {RawEntryContent} rawContent Raw content.
+ * @param {string} path File path.
+ * @param {string | undefined} fileName Collection file name.
+ * @param {string} subPath Sub path.
+ * @param {string | undefined} subPathTemplate Sub path template.
+ * @param {InternalLocaleCode} locale Current locale.
+ * @param {InternalLocaleCode} defaultLocale Default locale.
+ * @param {string} collectionName Collection name.
+ * @param {string | undefined} canonicalSlugKey Canonical slug key.
+ * @param {Entry[]} entries Existing entries array.
+ * @returns {boolean} True if entry was added to existing entry, false if new entry should be added.
+ */
+const processI18nMultiFileEntry = (
+  entry,
+  rawContent,
+  path,
+  fileName,
+  subPath,
+  subPathTemplate,
+  locale,
+  defaultLocale,
+  collectionName,
+  canonicalSlugKey,
+  entries,
+) => {
+  // Support a canonical slug to link localized files
+  const canonicalSlug =
+    canonicalSlugKey && typeof rawContent[canonicalSlugKey] === 'string'
+      ? rawContent[canonicalSlugKey]
+      : undefined;
+
+  const slug = fileName || getSlug({ subPath, subPathTemplate });
+  const localizedEntry = { slug, path, content: flatten(rawContent) };
+  // Use a temporary ID to locate all the localized files for the entry
+  const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
+  // Check if the entry has already been added for another locale
+  const existingEntry = entries.find((e) => e.id === tempId);
+
+  // If found, add a new locale to the existing entry; don’t add another entry
+  if (existingEntry) {
+    existingEntry.locales[locale] = localizedEntry;
+
+    if (locale === defaultLocale) {
+      existingEntry.slug = slug;
+      existingEntry.subPath = subPath;
+    }
+
+    return true; // Entry was merged with existing
+  }
+
+  entry.id = tempId;
+  entry.locales[locale] = localizedEntry;
+
+  if (locale === defaultLocale) {
+    entry.slug = slug;
+  }
+
+  return false; // New entry should be added
+};
+
+/**
  * Prepare a new entry by processing the given file info and raw content.
  * @param {object} args Arguments.
  * @param {BaseEntryListItem} args.file Entry file list item.
@@ -58,16 +282,7 @@ const getSlug = ({ subPath, subPathTemplate }) => {
  * @param {Error[]} args.errors List of parse errors.
  */
 const prepareEntry = async ({ file, entries, errors }) => {
-  /** @type {Record<string, any> | undefined} */
-  let rawContent;
-
-  try {
-    rawContent = await parseEntryFile(file);
-  } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
-    errors.push(ex);
-  }
+  const rawContent = await parseFileContent(file, errors);
 
   if (!rawContent) {
     return;
@@ -76,7 +291,7 @@ const prepareEntry = async ({ file, entries, errors }) => {
   const {
     path,
     meta = {},
-    folder: { collectionName, fileName, filePathMap },
+    folder: { collectionName, fileName },
   } = file;
 
   const collection = getCollection(collectionName);
@@ -100,68 +315,31 @@ const prepareEntry = async ({ file, entries, errors }) => {
     },
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
-  // Handle a special case: top-level list field
-  if (hasRootListField(fields)) {
-    const fieldName = fields[0].name;
+  const transformedContent = transformRawContent(rawContent, fields, i18nSingleFile);
 
-    if (i18nSingleFile) {
-      if (!isObject(rawContent) || !Object.values(rawContent).every(Array.isArray)) {
-        return;
-      }
-
-      rawContent = Object.fromEntries(
-        Object.entries(rawContent).map(([locale, content]) => [locale, { [fieldName]: content }]),
-      );
-    } else {
-      if (!Array.isArray(rawContent)) {
-        return;
-      }
-
-      rawContent = { [fieldName]: rawContent };
-    }
-  }
-
-  if (!isObject(rawContent)) {
+  if (!transformedContent) {
     return;
   }
 
-  // Skip Hugo’s special `_index.md` file that shouldn’t appear in a collection. Localized index
-  // files like `_index.en.md` are also excluded by default. Exceptions:
-  // 1. The collection is a file/singleton collection
-  // 2. The collection is an entry collection and index file inclusion is enabled
-  // 3. The collection is an entry collection and the `path` option value ends with `_index` and the
-  // extension is `md`
-  if (
-    isIndexFile(path) &&
-    !(
-      !!fileName ||
-      getIndexFile(collection)?.name === '_index' ||
-      (subPathTemplate?.split('/').pop() === '_index' && extension === 'md')
-    )
-  ) {
+  if (shouldSkipIndexFile(path, fileName, collection, subPathTemplate, extension)) {
     return;
   }
 
-  /** @type {string | undefined} */
-  let subPath = undefined;
-  /** @type {InternalLocaleCode | undefined} */
-  let locale = undefined;
+  const isMultiFileStructure = i18nMultiFile || i18nMultiFolder || i18nRootMultiFolder;
 
-  if (fileName) {
-    if (i18nMultiFile || i18nMultiFolder || i18nRootMultiFolder) {
-      [locale, subPath] =
-        Object.entries(filePathMap ?? {}).find(([, locPath]) => locPath === path) ?? [];
-    } else {
-      subPath = path;
-    }
-  } else {
-    // If the `omit_default_locale_from_filename` i18n option is enabled, the matching comes with
-    // the `locale` group being `undefined` for the default locale, so we need a fallback for it
-    ({ subPath, locale = defaultLocale } =
-      path.match(/** @type {RegExp} */ (fullPathRegEx))?.groups ?? {});
-  }
+  const { subPath, locale } = extractPathInfo(
+    file,
+    fileName,
+    fullPathRegEx,
+    defaultLocale,
+    isMultiFileStructure,
+  );
 
   if (!subPath) {
+    return;
+  }
+
+  if (isMultiFileStructure && !locale) {
     return;
   }
 
@@ -175,58 +353,34 @@ const prepareEntry = async ({ file, entries, errors }) => {
   };
 
   if (!i18nEnabled) {
-    const slug = fileName || getSlug({ subPath, subPathTemplate });
-
-    entry.slug = slug;
-    entry.locales._default = { slug, path, content: flatten(rawContent) };
-  }
-
-  if (i18nSingleFile) {
-    const slug = fileName || getSlug({ subPath, subPathTemplate });
-
-    entry.slug = slug;
-    entry.locales = Object.fromEntries(
-      allLocales
-        .filter((_locale) => _locale in rawContent)
-        .map((_locale) => [_locale, { slug, path, content: flatten(rawContent[_locale]) }]),
+    processNonI18nEntry(entry, transformedContent, path, fileName, subPath, subPathTemplate);
+  } else if (i18nSingleFile) {
+    processI18nSingleFileEntry(
+      entry,
+      transformedContent,
+      path,
+      fileName,
+      subPath,
+      subPathTemplate,
+      allLocales,
     );
-  }
+  } else if (isMultiFileStructure && locale) {
+    const wasMerged = processI18nMultiFileEntry(
+      entry,
+      transformedContent,
+      path,
+      fileName,
+      subPath,
+      subPathTemplate,
+      locale,
+      defaultLocale,
+      collectionName,
+      canonicalSlugKey,
+      entries,
+    );
 
-  if (i18nMultiFile || i18nMultiFolder || i18nRootMultiFolder) {
-    if (!locale) {
-      return;
-    }
-
-    // Support a canonical slug to link localized files
-    const canonicalSlug =
-      canonicalSlugKey && typeof rawContent[canonicalSlugKey] === 'string'
-        ? rawContent[canonicalSlugKey]
-        : undefined;
-
-    const slug = fileName || getSlug({ subPath, subPathTemplate });
-    const localizedEntry = { slug, path, content: flatten(rawContent) };
-    // Use a temporary ID to locate all the localized files for the entry
-    const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
-    // Check if the entry has already been added for another locale
-    const existingEntry = entries.find((e) => e.id === tempId);
-
-    // If found, add a new locale to the existing entry; don’t add another entry
-    if (existingEntry) {
-      existingEntry.locales[locale] = localizedEntry;
-
-      if (locale === defaultLocale) {
-        existingEntry.slug = slug;
-        existingEntry.subPath = subPath;
-      }
-
-      return;
-    }
-
-    entry.id = tempId;
-    entry.locales[locale] = localizedEntry;
-
-    if (locale === defaultLocale) {
-      entry.slug = slug;
+    if (wasMerged) {
+      return; // Entry was merged with existing, don’t add to entries array
     }
   }
 
