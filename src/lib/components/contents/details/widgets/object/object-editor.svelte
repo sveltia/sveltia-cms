@@ -21,7 +21,7 @@
   } from '$lib/services/contents/draft/editor/expanders';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update/locale';
   import { getField } from '$lib/services/contents/entry/fields';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { formatSummary } from '$lib/services/contents/widgets/object/helper';
   import { isSmallScreen } from '$lib/services/user/env';
 

@@ -7,7 +7,7 @@ import {
   isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
 import { getFileConfig } from '$lib/services/contents/file';
-import { normalizeI18nConfig } from '$lib/services/contents/i18n';
+import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
 
 /**
  * @import { Writable } from 'svelte/store';

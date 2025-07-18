@@ -14,7 +14,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { isFieldRequired } from '$lib/services/contents/entry/fields';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
    * @import { Component } from 'svelte';

@@ -2,7 +2,7 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 import { fillSlugTemplate, slugify } from '$lib/services/common/slug';
-import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
+import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
 /**
  * @import { InternalCollection } from '$lib/types/private';

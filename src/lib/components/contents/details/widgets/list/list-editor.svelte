@@ -30,7 +30,7 @@
     syncExpanderStates,
   } from '$lib/services/contents/draft/editor/expanders';
   import { updateListField } from '$lib/services/contents/draft/update/list';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n';
+  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { formatSummary } from '$lib/services/contents/widgets/list/helper';
   import { isSmallScreen } from '$lib/services/user/env';
 

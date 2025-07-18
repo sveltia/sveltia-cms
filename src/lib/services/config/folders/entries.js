@@ -4,7 +4,8 @@ import {
   getValidCollectionFiles,
   isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
-import { getLocalePath, normalizeI18nConfig } from '$lib/services/contents/i18n';
+import { getLocalePath } from '$lib/services/contents/i18n';
+import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
 
 /**
  * @import { EntryFolderInfo, InternalLocaleCode, InternalSiteConfig } from '$lib/types/private';
