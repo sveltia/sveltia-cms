@@ -22,7 +22,7 @@ export const ASSET_KINDS = [...MEDIA_KINDS, 'document', 'other'];
  * @type {RegExp}
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
  */
-export const DOC_EXTENSION_REGEX = /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xslx?)$/i;
+export const DOC_EXTENSION_REGEX = /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xlsx?)$/i;
 
 /**
  * Check if the given asset kind is media.
