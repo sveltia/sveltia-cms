@@ -33,13 +33,52 @@ describe('Test resolveAssetFolderPaths()', () => {
   };
 
   /** @type {InternalI18nOptions} */
-  const i18nMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders' };
+  const i18nMultiFolder = {
+    ...i18nBaseConfig,
+    structure: 'multiple_folders',
+    structureMap: {
+      i18nSingleFile: false,
+      i18nMultiFile: false,
+      i18nMultiFolder: true,
+      i18nRootMultiFolder: false,
+    },
+  };
+
   /** @type {InternalI18nOptions} */
-  const i18nRootMultiFolder = { ...i18nBaseConfig, structure: 'multiple_folders_i18n_root' };
+  const i18nRootMultiFolder = {
+    ...i18nBaseConfig,
+    structure: 'multiple_folders_i18n_root',
+    structureMap: {
+      i18nSingleFile: false,
+      i18nMultiFile: false,
+      i18nMultiFolder: false,
+      i18nRootMultiFolder: true,
+    },
+  };
+
   /** @type {InternalI18nOptions} */
-  const i18nMultiFile = { ...i18nBaseConfig, structure: 'multiple_files' };
+  const i18nMultiFile = {
+    ...i18nBaseConfig,
+    structure: 'multiple_files',
+    structureMap: {
+      i18nSingleFile: false,
+      i18nMultiFile: true,
+      i18nMultiFolder: false,
+      i18nRootMultiFolder: false,
+    },
+  };
+
   /** @type {InternalI18nOptions} */
-  const i18nSingleFile = { ...i18nBaseConfig, structure: 'single_file' };
+  const i18nSingleFile = {
+    ...i18nBaseConfig,
+    structure: 'single_file',
+    structureMap: {
+      i18nSingleFile: true,
+      i18nMultiFile: false,
+      i18nMultiFolder: false,
+      i18nRootMultiFolder: false,
+    },
+  };
 
   const _file = {
     extension: 'md',

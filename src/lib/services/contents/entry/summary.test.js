@@ -24,6 +24,12 @@ describe('Test getEntrySummary()', () => {
       initialLocales: ['en', 'de'],
       defaultLocale: 'de',
       structure: 'multiple_files',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
       omitDefaultLocaleFromFileName: false,
     },

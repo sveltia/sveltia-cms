@@ -93,12 +93,12 @@ const detectFileFormat = ({ extension, format }) => {
  * @returns {RegExp} Regular expression.
  */
 const getEntryPathRegEx = ({ extension, format, basePath, subPath, indexFileName, _i18n }) => {
-  const { i18nEnabled, structure, allLocales, defaultLocale, omitDefaultLocaleFromFileName } =
-    _i18n;
-
-  const i18nMultiFile = i18nEnabled && structure === 'multiple_files';
-  const i18nMultiFolder = i18nEnabled && structure === 'multiple_folders';
-  const i18nRootMultiFolder = i18nEnabled && structure === 'multiple_folders_i18n_root';
+  const {
+    allLocales,
+    defaultLocale,
+    omitDefaultLocaleFromFileName,
+    structureMap: { i18nMultiFile, i18nMultiFolder, i18nRootMultiFolder },
+  } = _i18n;
 
   /**
    * The path pattern in the middle, which should match the filename (without extension),

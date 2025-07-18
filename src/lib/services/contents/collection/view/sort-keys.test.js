@@ -53,6 +53,12 @@ describe('Test getSortConfig()', async () => {
       initialLocales: ['_default'],
       defaultLocale: '_default',
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
       omitDefaultLocaleFromFileName: false,
     },

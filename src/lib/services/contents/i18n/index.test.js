@@ -137,6 +137,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'fr'],
       initialLocales: ['en', 'fr'],
@@ -148,6 +154,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'fr'],
       initialLocales: ['en', 'fr'],
@@ -159,6 +171,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: false,
       allLocales: ['_default'],
       initialLocales: ['_default'],
@@ -183,6 +201,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'multiple_folders',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
       initialLocales: ['en', 'de', 'fr'],
@@ -194,6 +218,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
       structure: 'single_file', // Always single
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
       initialLocales: ['en', 'de', 'fr'],
@@ -205,6 +235,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: false,
       allLocales: ['_default'],
       initialLocales: ['_default'],
@@ -238,6 +274,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithPartialI18nOverride)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['fr'],
       initialLocales: ['fr'],
@@ -262,6 +304,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithCompleteI18nOverride)).toEqual({
       structure: 'multiple_folders',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['es'],
       initialLocales: ['es'],
@@ -286,6 +334,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithPartialI18nOverride)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['de'],
       initialLocales: ['de'],
@@ -303,6 +357,12 @@ describe('Test normalizeI18nConfig()', () => {
       normalizeI18nConfig(collectionWithPartialI18nOverride, collectionFileWithPartialI18nOverride),
     ).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['de'],
       initialLocales: ['de'],
@@ -319,6 +379,12 @@ describe('Test normalizeI18nConfig()', () => {
       ),
     ).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['de'],
       initialLocales: ['de'],
@@ -344,6 +410,12 @@ describe('Test normalizeI18nConfig()', () => {
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithCompleteI18nOverride)).toEqual(
       {
         structure: 'single_file', // Always single
+        structureMap: {
+          i18nSingleFile: true,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
         i18nEnabled: true,
         allLocales: ['es'],
         initialLocales: ['es'],
@@ -365,6 +437,12 @@ describe('Test normalizeI18nConfig()', () => {
       ),
     ).toEqual({
       structure: 'single_file', // Always single
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['es'],
       initialLocales: ['es'],
@@ -381,6 +459,12 @@ describe('Test normalizeI18nConfig()', () => {
       ),
     ).toEqual({
       structure: 'single_file', // Always single
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['es'],
       initialLocales: ['es'],
@@ -404,6 +488,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
       initialLocales: ['en', 'de', 'fr'],
@@ -427,6 +517,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
       initialLocales: ['en', 'de'],
@@ -450,6 +546,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
       initialLocales: ['en', 'de', 'fr'],
@@ -473,6 +575,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
       initialLocales: ['en'],
@@ -496,6 +604,12 @@ describe('Test normalizeI18nConfig()', () => {
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
       initialLocales: ['en', 'de'], // `en` should be included because it’s default

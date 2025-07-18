@@ -249,7 +249,12 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
 
   const {
     _file,
-    _i18n: { i18nEnabled, allLocales, defaultLocale, structure },
+    _i18n: {
+      i18nEnabled,
+      allLocales,
+      defaultLocale,
+      structureMap: { i18nSingleFile },
+    },
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
   const { localizedEntryMap, changes, savingAssets } = await createBaseSavingEntryData({
@@ -272,7 +277,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
   const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
   const getFileChangeArgs = { draft, savingEntry, cacheDB };
 
-  if (!i18nEnabled || structure === 'single_file') {
+  if (!i18nEnabled || i18nSingleFile) {
     changes.push(await getSingleFileChange({ ...getFileChangeArgs }));
   } else {
     await Promise.all(

@@ -41,6 +41,12 @@ describe('Test getFileConfig()', () => {
     initialLocales: ['_default'],
     defaultLocale: '_default',
     structure: 'single_file',
+    structureMap: {
+      i18nSingleFile: false,
+      i18nMultiFile: false,
+      i18nMultiFolder: false,
+      i18nRootMultiFolder: false,
+    },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
   };
@@ -52,6 +58,12 @@ describe('Test getFileConfig()', () => {
     initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
     structure: 'single_file',
+    structureMap: {
+      i18nSingleFile: true,
+      i18nMultiFile: false,
+      i18nMultiFolder: false,
+      i18nRootMultiFolder: false,
+    },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
   };
@@ -63,6 +75,12 @@ describe('Test getFileConfig()', () => {
     initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
     structure: 'multiple_files',
+    structureMap: {
+      i18nSingleFile: false,
+      i18nMultiFile: true,
+      i18nMultiFolder: false,
+      i18nRootMultiFolder: false,
+    },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
   };
@@ -74,6 +92,12 @@ describe('Test getFileConfig()', () => {
     initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
     structure: 'multiple_folders',
+    structureMap: {
+      i18nSingleFile: false,
+      i18nMultiFile: false,
+      i18nMultiFolder: true,
+      i18nRootMultiFolder: false,
+    },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
   };
@@ -85,6 +109,12 @@ describe('Test getFileConfig()', () => {
     initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
     structure: 'multiple_folders_i18n_root',
+    structureMap: {
+      i18nSingleFile: false,
+      i18nMultiFile: false,
+      i18nMultiFolder: false,
+      i18nRootMultiFolder: true,
+    },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
   };

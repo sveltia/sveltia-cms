@@ -24,6 +24,12 @@ export const DEFAULT_I18N_CONFIG = {
   initialLocales: ['_default'],
   defaultLocale: '_default',
   structure: 'single_file',
+  structureMap: {
+    i18nSingleFile: false,
+    i18nMultiFile: false,
+    i18nMultiFolder: false,
+    i18nRootMultiFolder: false,
+  },
   canonicalSlug: {
     key: 'translationKey',
     value: '{{slug}}',
@@ -111,6 +117,13 @@ export const normalizeI18nConfig = (collection, file) => {
       ? 'multiple_files'
       : 'single_file';
 
+  const structureMap = {
+    i18nSingleFile: i18nEnabled && structure === 'single_file',
+    i18nMultiFile: i18nEnabled && structure === 'multiple_files',
+    i18nMultiFolder: i18nEnabled && structure === 'multiple_folders',
+    i18nRootMultiFolder: i18nEnabled && structure === 'multiple_folders_i18n_root',
+  };
+
   return {
     i18nEnabled,
     saveAllLocales,
@@ -118,13 +131,14 @@ export const normalizeI18nConfig = (collection, file) => {
     defaultLocale,
     initialLocales,
     structure,
+    structureMap,
     canonicalSlug: {
       key: canonicalSlugKey,
       value: canonicalSlugTemplate,
     },
     omitDefaultLocaleFromFileName:
       _omitDefaultLocaleFromFileName &&
-      (file ? /\.{{locale}}\.[a-zA-Z0-9]+$/.test(file.file) : structure === 'multiple_files'),
+      (file ? /\.{{locale}}\.[a-zA-Z0-9]+$/.test(file.file) : structureMap.i18nMultiFile),
   };
 };
 

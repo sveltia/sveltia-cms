@@ -359,6 +359,15 @@
  */
 
 /**
+ * @typedef {object} I18nFileStructureMap
+ * @property {boolean} i18nSingleFile Whether the i18n structure is a single file.
+ * @property {boolean} i18nMultiFile Whether the i18n structure is multiple files.
+ * @property {boolean} i18nMultiFolder Whether the i18n structure is multiple folders.
+ * @property {boolean} i18nRootMultiFolder Whether the i18n structure is multiple folders with the
+ * locale in the root.
+ */
+
+/**
  * Internal i18n configuration of a collection or collection file.
  * @typedef {object} InternalI18nOptions
  * @property {boolean} i18nEnabled Whether i18n is enabled for the collection or collection file.
@@ -371,6 +380,7 @@
  * @property {InternalLocaleCode} defaultLocale Default locale, or `_default` if i18n is not
  * enabled.
  * @property {I18nFileStructure} structure File structure.
+ * @property {I18nFileStructureMap} structureMap I18n structure map.
  * @property {{ key: string, value: string }} canonicalSlug See `canonical_slug` above.
  * @property {boolean} omitDefaultLocaleFromFileName Whether to exclude the default locale from
  * entry filenames.

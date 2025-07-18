@@ -87,7 +87,10 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
   } = collection;
 
   const {
-    _i18n: { defaultLocale, structure },
+    _i18n: {
+      defaultLocale,
+      structureMap: { i18nSingleFile },
+    },
   } = collectionFile ?? collection;
 
   /**
@@ -97,7 +100,7 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
     .filter(([, , localize]) => !!localize)
     .map(([, keyPath]) => keyPath);
 
-  if (structure === 'single_file' || !localizingKeyPaths.length) {
+  if (i18nSingleFile || !localizingKeyPaths.length) {
     return undefined;
   }
 
