@@ -17,7 +17,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFile: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/file', () => ({
+vi.mock('$lib/services/contents/file/config', () => ({
   customFileFormats: {},
   getFrontMatterDelimiters: vi.fn(),
 }));
@@ -225,7 +225,7 @@ describe('Test parseFrontMatter()', () => {
   });
 
   test('parses YAML front matter', async () => {
-    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file');
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
     /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
 
@@ -259,7 +259,7 @@ describe('Test parseFrontMatter()', () => {
   });
 
   test('parses TOML front matter', async () => {
-    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file');
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
     /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['+++', '+++']);
 
@@ -293,7 +293,7 @@ describe('Test parseFrontMatter()', () => {
   });
 
   test('parses JSON front matter', async () => {
-    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file');
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
     /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['{', '}']);
 
@@ -328,7 +328,7 @@ describe('Test parseFrontMatter()', () => {
   });
 
   test('handles content without front matter', async () => {
-    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file');
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
     /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
 
@@ -361,7 +361,7 @@ describe('Test parseFrontMatter()', () => {
   });
 
   test('handles empty front matter', async () => {
-    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file');
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
     /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
 
@@ -393,7 +393,7 @@ describe('Test parseFrontMatter()', () => {
   });
 
   test('handles content with only front matter', async () => {
-    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file');
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
     /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
 
@@ -427,7 +427,7 @@ describe('Test parseFrontMatter()', () => {
   });
 
   test('handles custom delimiters', async () => {
-    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file');
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
     /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['===', '===']);
 
@@ -460,7 +460,7 @@ describe('Test parseFrontMatter()', () => {
   });
 
   test('works with collection only (no collectionFile)', async () => {
-    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file');
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
     /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
 
@@ -518,7 +518,7 @@ describe('Test parseEntryFile()', () => {
 
     const collectionModule = await import('$lib/services/contents/collection');
     const collectionFileModule = await import('$lib/services/contents/collection/files');
-    const fileModule = await import('$lib/services/contents/file');
+    const fileModule = await import('$lib/services/contents/file/config');
 
     getCollection = collectionModule.getCollection;
     getCollectionFile = collectionFileModule.getCollectionFile;

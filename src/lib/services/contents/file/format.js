@@ -2,7 +2,7 @@ import * as TOML from 'smol-toml';
 import { get } from 'svelte/store';
 import YAML from 'yaml';
 import { siteConfig } from '$lib/services/config';
-import { customFileFormats } from '$lib/services/contents/file';
+import { customFileFormats } from '$lib/services/contents/file/config';
 
 /**
  * @import { FileConfig, InternalLocaleCode, RawEntryContent } from '$lib/types/private';

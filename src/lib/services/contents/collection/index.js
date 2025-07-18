@@ -6,7 +6,7 @@ import {
   getValidCollectionFiles,
   isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
-import { getFileConfig } from '$lib/services/contents/file';
+import { getFileConfig } from '$lib/services/contents/file/config';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getFileConfig } from '$lib/services/contents/file';
+import { getFileConfig } from '$lib/services/contents/file/config';
 
 /**
  * @import { InternalI18nOptions } from '$lib/types/private';

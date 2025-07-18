@@ -25,7 +25,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   getValidCollectionFiles: vi.fn(),
   isValidCollectionFile: vi.fn(),
 }));
-vi.mock('$lib/services/contents/file', () => ({
+vi.mock('$lib/services/contents/file/config', () => ({
   getFileConfig: vi.fn(),
 }));
 vi.mock('$lib/services/contents/i18n', () => ({
