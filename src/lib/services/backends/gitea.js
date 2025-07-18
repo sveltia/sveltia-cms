@@ -380,13 +380,15 @@ const fetchFileList = async (lastHash) => {
 
   for (;;) {
     // 1000 items per page
-    const result = /** @type {{ tree: PartialGitEntry[], truncated: boolean }} */ (
+    const { tree, truncated } = /** @type {{ tree: PartialGitEntry[], truncated: boolean }} */ (
       await fetchAPI(`${requestPath}&page=${page}`)
     );
 
-    gitEntries.push(...result.tree);
+    if (tree) {
+      gitEntries.push(...tree);
+    }
 
-    if (result.truncated) {
+    if (tree && truncated) {
       page += 1;
     } else {
       break;
