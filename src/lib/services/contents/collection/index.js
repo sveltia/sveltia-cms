@@ -272,7 +272,7 @@ export const getCollection = (name) => {
 
 /**
  * Get the label for a collection. If the collection is a singleton, it returns a localized label
- * for files. Otherwise, it returns the collection's label or name.
+ * for files. Otherwise, it returns the collection’s label or name.
  * @param {InternalCollection} collection Collection object.
  * @param {object} [options] Options for label formatting.
  * @param {boolean} [options.useSingular] Whether to use a singular form of the label.

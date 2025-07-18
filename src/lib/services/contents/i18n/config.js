@@ -73,7 +73,7 @@ const mergeI18nConfigs = (collection, file) => {
   const config = /** @type {I18nOptions} */ ({ ...siteConfigValue.i18n });
   const hasCollectionI18n = collection.i18n || isSingletonCollection(collection);
 
-  // Check if the collection has its own i18n configuration. The singleton collection doesn't have
+  // Check if the collection has its own i18n configuration. The singleton collection doesn’t have
   // its own i18n configuration, so it will inherit the global one if defined.
   if (hasCollectionI18n) {
     if (isObject(collection.i18n)) {

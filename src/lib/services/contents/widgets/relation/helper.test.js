@@ -889,7 +889,7 @@ describe('Test getOptions()', async () => {
 
         const result = getOptions(locale, fieldConfig, citiesFileCollectionEntries);
 
-        // Should return empty array when file doesn't match
+        // Should return empty array when file doesn’t match
         expect(result).toHaveLength(0);
       });
 
@@ -1390,7 +1390,7 @@ describe('Test getOptions()', async () => {
 
       expect(options.length).toBeGreaterThan(0);
 
-      // Use the first option's value to test label resolution
+      // Use the first option’s value to test label resolution
       const firstOptionValue = options[0].value;
 
       const valueMap = {

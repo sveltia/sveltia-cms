@@ -87,8 +87,8 @@ export const formatSummary = ({
 
         const fieldConfig = getField({ ...getFieldArgs, keyPath: key });
 
-        // If we can get field config, check if it's hidden
-        // If we can't get field config, assume it's not hidden and allow it
+        // If we can get field config, check if it’s hidden
+        // If we can’t get field config, assume it’s not hidden and allow it
         return fieldConfig ? fieldConfig.widget !== 'hidden' : true;
       })?.[1] ||
       ''

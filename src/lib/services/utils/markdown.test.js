@@ -102,7 +102,7 @@ describe('removeMarkdownSyntax', () => {
   });
 
   test('should handle escaped markdown characters', () => {
-    // The function doesn't handle escaped characters - it still processes them
+    // The function doesn’t handle escaped characters - it still processes them
     expect(removeMarkdownSyntax('\\**not bold\\**')).toBe('\\not bold\\');
     expect(removeMarkdownSyntax('\\*not italic\\*')).toBe('\\not italic\\');
     expect(removeMarkdownSyntax('\\`not code\\`')).toBe('\\not code\\');
@@ -192,7 +192,7 @@ describe('removeMarkdownSyntax', () => {
   });
 
   test('should handle underscore prefixed strings with markdown', () => {
-    // Underscore prefixed strings - the prefix doesn't interfere with markdown processing
+    // Underscore prefixed strings - the prefix doesn’t interfere with markdown processing
     expect(removeMarkdownSyntax('_header **bold**')).toBe('_header bold');
     expect(removeMarkdownSyntax('_redirects *italic*')).toBe('_redirects italic');
     expect(removeMarkdownSyntax('_config `code`')).toBe('_config code');

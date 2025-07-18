@@ -57,7 +57,7 @@ export const getField = ({
     collection && fileName ? getCollectionFile(collection, fileName) : undefined;
 
   // For entry collections, `fileName` is ignored and `collectionFile` will be `undefined`
-  // Only fail if we explicitly need a file/singleton collection but can't find the file
+  // Only fail if we explicitly need a file/singleton collection but can’t find the file
   if (!collection || (fileName && collection?._type !== 'entry' && !collectionFile)) {
     fieldConfigCacheMap.set(cacheKey, undefined);
 

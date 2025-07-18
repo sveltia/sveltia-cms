@@ -82,7 +82,7 @@ function findTypeUsage(content, types) {
     usage[type] = 0;
   });
 
-  // Don't remove @param, @returns, etc. as they contain the type usage we want to find
+  // Don’t remove @param, @returns, etc. as they contain the type usage we want to find
   const contentForAnalysis = content
     // Only remove @import lines to avoid counting imports as usage - fixed quote matching
     .replace(/^\s*\*?\s*@import\s*\{[^}]+\}\s*from\s*['"`][^'"`]+['"`];?$/gm, '');

@@ -524,7 +524,7 @@ describe('Test getField()', () => {
     });
 
     describe('Complex nested variable types', () => {
-      // First, let's extend the mock collection with more complex nested scenarios
+      // First, let’s extend the mock collection with more complex nested scenarios
       beforeEach(() => {
         // Add a more complex nested structure to the mock
         const complexNestedField = {

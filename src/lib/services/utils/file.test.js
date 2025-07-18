@@ -51,7 +51,7 @@ describe('Test formatFileName()', () => {
       'test-2.jpg',
     );
 
-    // Test no conflict when file doesn't exist
+    // Test no conflict when file doesn’t exist
     expect(formatFileName('newfile.jpg', { assetNamesInSameFolder: existingFiles })).toEqual(
       'newfile.jpg',
     );

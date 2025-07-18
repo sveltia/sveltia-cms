@@ -21,7 +21,7 @@
     "forceConsistentCasingInFileNames": true,
     /**
      * Typecheck JS in `.svelte` and `.js` files by default.
-     * Disable this if you'd like to use dynamic types.
+     * Disable this if you’d like to use dynamic types.
      */
     "checkJs": true,
     // Strict checks

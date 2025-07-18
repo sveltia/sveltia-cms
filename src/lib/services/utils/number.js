@@ -16,7 +16,7 @@ export const toFixed = (number, decimals) => {
     return number;
   }
 
-  // Use proper mathematical rounding instead of JavaScript's native `toFixed`
+  // Use proper mathematical rounding instead of JavaScript’s native `toFixed`
   const factor = 10 ** decimals;
 
   return Math.round(number * factor) / factor;
