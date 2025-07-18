@@ -76,7 +76,7 @@ export const formatYAML = (
  * @param {FileConfig} args._file File configuration.
  * @returns {string} Formatted front matter.
  */
-const formatFrontMatter = ({ content, _file }) => {
+export const formatFrontMatter = ({ content, _file }) => {
   const { format, fmDelimiters, yamlQuote = false } = _file;
   const [sd, ed] = fmDelimiters ?? ['---', '---'];
   const body = typeof content.body === 'string' ? content.body : '';
