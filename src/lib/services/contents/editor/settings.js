@@ -27,7 +27,7 @@ const initSettings = async ({ repository }) => {
     showPreview: true,
     syncScrolling: true,
     selectAssetsView: { type: 'grid' },
-    ...((await settingsDB?.get(storageKey)) ?? {}),
+    ...(await settingsDB?.get(storageKey)),
   };
 
   entryEditorSettings.set(settings);

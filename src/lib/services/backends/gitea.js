@@ -334,7 +334,7 @@ const fetchDefaultBranchName = async () => {
     Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
 
     return branch;
-  } catch (error) {
+  } catch {
     throw new Error('Failed to retrieve the default branch name.', {
       cause: new Error(get(_)('repository_not_found', { values: { repo } })),
     });
@@ -358,7 +358,7 @@ const fetchLastCommit = async () => {
     );
 
     return { hash, message };
-  } catch (error) {
+  } catch {
     throw new Error('Failed to retrieve the last commit hash.', {
       cause: new Error(get(_)('branch_not_found', { values: { repo, branch } })),
     });

@@ -197,7 +197,7 @@
    */
   const getUnsavedAssets = async () =>
     Promise.all([
-      ...[...Object.entries($entryDraft?.files ?? {})].map(async ([blobURL, { file, folder }]) =>
+      ...Object.entries($entryDraft?.files ?? {}).map(async ([blobURL, { file, folder }]) =>
         convertFileItemToAsset({ file, blobURL, folder }),
       ),
       ...Object.values(droppedAssets),
