@@ -132,6 +132,7 @@ describe('assets/index', () => {
 
     it('should categorize files by size without transformations', async () => {
       const smallFile = new File(['small'], 'small.txt', { type: 'text/plain' });
+
       const largeFile = new File(['large content '.repeat(100000)], 'large.txt', {
         type: 'text/plain',
       });
