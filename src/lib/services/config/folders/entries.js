@@ -4,7 +4,7 @@ import {
   getValidCollectionFiles,
   isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
-import { getI18nConfig, getLocalePath } from '$lib/services/contents/i18n';
+import { getLocalePath, normalizeI18nConfig } from '$lib/services/contents/i18n';
 
 /**
  * @import { EntryFolderInfo, InternalLocaleCode, InternalSiteConfig } from '$lib/types/private';
@@ -25,7 +25,7 @@ const getFilePathMap = ({ collection, file }) => {
     return { _default: path };
   }
 
-  const _i18n = getI18nConfig(collection, file);
+  const _i18n = normalizeI18nConfig(collection, file);
 
   return Object.fromEntries(
     _i18n.allLocales.map((locale) => [locale, getLocalePath({ _i18n, locale, path })]),
@@ -69,7 +69,7 @@ const getEntryCollectionFolders = ({ collections }) =>
     .map((collection) => {
       const { name: collectionName, folder } = collection;
       const folderPath = stripSlashes(/** @type {string} */ (folder));
-      const { i18nEnabled, structure, allLocales } = getI18nConfig(collection);
+      const { i18nEnabled, structure, allLocales } = normalizeI18nConfig(collection);
       const i18nRootMultiFolder = i18nEnabled && structure === 'multiple_folders_i18n_root';
 
       return {

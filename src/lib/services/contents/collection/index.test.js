@@ -29,7 +29,7 @@ vi.mock('$lib/services/contents/file', () => ({
   getFileConfig: vi.fn(),
 }));
 vi.mock('$lib/services/contents/i18n', () => ({
-  getI18nConfig: vi.fn(),
+  normalizeI18nConfig: vi.fn(),
 }));
 
 describe('isEntryCollection()', () => {

@@ -7,7 +7,7 @@ import {
   isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
 import { getFileConfig } from '$lib/services/contents/file';
-import { getI18nConfig } from '$lib/services/contents/i18n';
+import { normalizeI18nConfig } from '$lib/services/contents/i18n';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -178,7 +178,7 @@ const parseFileCollection = (rawCollection, _i18n, files) => ({
   _type: isSingletonCollection(rawCollection) ? 'singleton' : 'file',
   _fileMap: Object.fromEntries(
     files.filter(isValidCollectionFile).map((file) => {
-      const __i18n = getI18nConfig(rawCollection, file);
+      const __i18n = normalizeI18nConfig(rawCollection, file);
       const __file = getFileConfig({ rawCollection, file, _i18n: __i18n });
 
       return [file.name, { ...file, _file: __file, _i18n: __i18n }];
@@ -209,7 +209,7 @@ export const getSingletonCollection = () => {
 
   /** @type {Collection} */
   const rawCollection = { name: '_singletons', files };
-  const _i18n = getI18nConfig(rawCollection);
+  const _i18n = normalizeI18nConfig(rawCollection);
 
   return parseFileCollection(rawCollection, _i18n, files);
 };
@@ -259,7 +259,7 @@ export const getCollection = (name) => {
     });
   }
 
-  const _i18n = getI18nConfig(rawCollection);
+  const _i18n = normalizeI18nConfig(rawCollection);
 
   const collection = _isEntryCollection
     ? parseEntryCollection(rawCollection, _i18n)

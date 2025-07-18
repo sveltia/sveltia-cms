@@ -38,7 +38,7 @@ export const DEFAULT_I18N_CONFIG = {
  * @returns {InternalI18nOptions} Config.
  * @see https://decapcms.org/docs/i18n/
  */
-export const getI18nConfig = (collection, file) => {
+export const normalizeI18nConfig = (collection, file) => {
   const _siteConfig = /** @type {InternalSiteConfig} */ (get(siteConfig));
   /** @type {I18nOptions | undefined} */
   let config;

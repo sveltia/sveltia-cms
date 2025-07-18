@@ -3,8 +3,8 @@ import { describe, expect, test, vi } from 'vitest';
 import {
   DEFAULT_I18N_CONFIG,
   getCanonicalLocale,
-  getI18nConfig,
   getLocalePath,
+  normalizeI18nConfig,
 } from '$lib/services/contents/i18n';
 
 /**
@@ -13,7 +13,7 @@ import {
 
 vi.mock('$lib/services/config');
 
-describe('Test getI18nConfig()', () => {
+describe('Test normalizeI18nConfig()', () => {
   const siteConfigBase = {
     backend: { name: 'github' },
     media_folder: 'static/images/uploads',
@@ -91,13 +91,13 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithoutI18n],
     });
 
-    expect(getI18nConfig(collectionWithoutI18n)).toEqual(DEFAULT_I18N_CONFIG);
+    expect(normalizeI18nConfig(collectionWithoutI18n)).toEqual(DEFAULT_I18N_CONFIG);
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
+    expect(normalizeI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
       DEFAULT_I18N_CONFIG,
     );
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
+    expect(normalizeI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
       DEFAULT_I18N_CONFIG,
     );
   });
@@ -114,13 +114,13 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithoutI18n],
     });
 
-    expect(getI18nConfig(collectionWithoutI18n)).toEqual(DEFAULT_I18N_CONFIG);
+    expect(normalizeI18nConfig(collectionWithoutI18n)).toEqual(DEFAULT_I18N_CONFIG);
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
+    expect(normalizeI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
       DEFAULT_I18N_CONFIG,
     );
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
+    expect(normalizeI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
       DEFAULT_I18N_CONFIG,
     );
   });
@@ -135,7 +135,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithI18n],
     });
 
-    expect(getI18nConfig(collectionWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['en', 'fr'],
@@ -146,7 +146,7 @@ describe('Test getI18nConfig()', () => {
       omitDefaultLocaleFromFileName: false,
     });
 
-    expect(getI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['en', 'fr'],
@@ -157,7 +157,7 @@ describe('Test getI18nConfig()', () => {
       omitDefaultLocaleFromFileName: false,
     });
 
-    expect(getI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: false,
       allLocales: ['_default'],
@@ -181,7 +181,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithI18n],
     });
 
-    expect(getI18nConfig(collectionWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'multiple_folders',
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -192,7 +192,7 @@ describe('Test getI18nConfig()', () => {
       omitDefaultLocaleFromFileName: false,
     });
 
-    expect(getI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
       structure: 'single_file', // Always single
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -203,7 +203,7 @@ describe('Test getI18nConfig()', () => {
       omitDefaultLocaleFromFileName: false,
     });
 
-    expect(getI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: false,
       allLocales: ['_default'],
@@ -214,11 +214,11 @@ describe('Test getI18nConfig()', () => {
       omitDefaultLocaleFromFileName: false,
     });
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
+    expect(normalizeI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
       DEFAULT_I18N_CONFIG,
     );
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
+    expect(normalizeI18nConfig(collectionWithoutI18n, collectionFileWithoutI18n)).toEqual(
       DEFAULT_I18N_CONFIG,
     );
   });
@@ -236,7 +236,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithPartialI18nOverride],
     });
 
-    expect(getI18nConfig(collectionWithPartialI18nOverride)).toEqual({
+    expect(normalizeI18nConfig(collectionWithPartialI18nOverride)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['fr'],
@@ -260,7 +260,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithCompleteI18nOverride],
     });
 
-    expect(getI18nConfig(collectionWithCompleteI18nOverride)).toEqual({
+    expect(normalizeI18nConfig(collectionWithCompleteI18nOverride)).toEqual({
       structure: 'multiple_folders',
       i18nEnabled: true,
       allLocales: ['es'],
@@ -284,7 +284,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithPartialI18nOverride],
     });
 
-    expect(getI18nConfig(collectionWithI18n, collectionFileWithPartialI18nOverride)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithPartialI18nOverride)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['de'],
@@ -295,12 +295,12 @@ describe('Test getI18nConfig()', () => {
       omitDefaultLocaleFromFileName: false,
     });
 
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithPartialI18nOverride)).toEqual(
-      DEFAULT_I18N_CONFIG,
-    );
+    expect(
+      normalizeI18nConfig(collectionWithoutI18n, collectionFileWithPartialI18nOverride),
+    ).toEqual(DEFAULT_I18N_CONFIG);
 
     expect(
-      getI18nConfig(collectionWithPartialI18nOverride, collectionFileWithPartialI18nOverride),
+      normalizeI18nConfig(collectionWithPartialI18nOverride, collectionFileWithPartialI18nOverride),
     ).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
@@ -313,7 +313,10 @@ describe('Test getI18nConfig()', () => {
     });
 
     expect(
-      getI18nConfig(collectionWithCompleteI18nOverride, collectionFileWithPartialI18nOverride),
+      normalizeI18nConfig(
+        collectionWithCompleteI18nOverride,
+        collectionFileWithPartialI18nOverride,
+      ),
     ).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
@@ -338,23 +341,28 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithPartialI18nOverride],
     });
 
-    expect(getI18nConfig(collectionWithI18n, collectionFileWithCompleteI18nOverride)).toEqual({
-      structure: 'single_file', // Always single
-      i18nEnabled: true,
-      allLocales: ['es'],
-      initialLocales: ['es'],
-      defaultLocale: 'es',
-      saveAllLocales: true,
-      canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
-    });
-
-    expect(getI18nConfig(collectionWithoutI18n, collectionFileWithCompleteI18nOverride)).toEqual(
-      DEFAULT_I18N_CONFIG,
+    expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithCompleteI18nOverride)).toEqual(
+      {
+        structure: 'single_file', // Always single
+        i18nEnabled: true,
+        allLocales: ['es'],
+        initialLocales: ['es'],
+        defaultLocale: 'es',
+        saveAllLocales: true,
+        canonicalSlug,
+        omitDefaultLocaleFromFileName: false,
+      },
     );
 
     expect(
-      getI18nConfig(collectionWithPartialI18nOverride, collectionFileWithCompleteI18nOverride),
+      normalizeI18nConfig(collectionWithoutI18n, collectionFileWithCompleteI18nOverride),
+    ).toEqual(DEFAULT_I18N_CONFIG);
+
+    expect(
+      normalizeI18nConfig(
+        collectionWithPartialI18nOverride,
+        collectionFileWithCompleteI18nOverride,
+      ),
     ).toEqual({
       structure: 'single_file', // Always single
       i18nEnabled: true,
@@ -367,7 +375,10 @@ describe('Test getI18nConfig()', () => {
     });
 
     expect(
-      getI18nConfig(collectionWithCompleteI18nOverride, collectionFileWithCompleteI18nOverride),
+      normalizeI18nConfig(
+        collectionWithCompleteI18nOverride,
+        collectionFileWithCompleteI18nOverride,
+      ),
     ).toEqual({
       structure: 'single_file', // Always single
       i18nEnabled: true,
@@ -391,7 +402,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithI18n],
     });
 
-    expect(getI18nConfig(collectionWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -414,7 +425,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithI18n],
     });
 
-    expect(getI18nConfig(collectionWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -437,7 +448,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithI18n],
     });
 
-    expect(getI18nConfig(collectionWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -460,7 +471,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithI18n],
     });
 
-    expect(getI18nConfig(collectionWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -483,7 +494,7 @@ describe('Test getI18nConfig()', () => {
       collections: [collectionWithI18n],
     });
 
-    expect(getI18nConfig(collectionWithI18n)).toEqual({
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
