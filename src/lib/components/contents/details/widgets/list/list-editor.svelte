@@ -25,11 +25,11 @@
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
+  import { updateListField } from '$lib/services/contents/draft/update/list';
   import {
     getInitialExpanderState,
     syncExpanderStates,
-  } from '$lib/services/contents/draft/editor/expanders';
-  import { updateListField } from '$lib/services/contents/draft/update/list';
+  } from '$lib/services/contents/editor/expanders';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { formatSummary } from '$lib/services/contents/widgets/list/helper';
   import { isSmallScreen } from '$lib/services/user/env';

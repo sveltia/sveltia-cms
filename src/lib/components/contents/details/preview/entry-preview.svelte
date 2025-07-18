@@ -4,7 +4,7 @@
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { customPreviewStyle } from '$lib/services/contents/draft/editor';
+  import { customPreviewStyle } from '$lib/services/contents/editor';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';

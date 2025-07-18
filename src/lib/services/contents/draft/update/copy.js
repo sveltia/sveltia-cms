@@ -2,10 +2,7 @@ import { marked } from 'marked';
 import { get } from 'svelte/store';
 import TurndownService from 'turndown';
 import { entryDraft } from '$lib/services/contents/draft';
-import {
-  copyFromLocaleToast,
-  translatorApiKeyDialogState,
-} from '$lib/services/contents/draft/editor';
+import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs';

@@ -30,7 +30,7 @@
   } from '$lib/services/contents/collection/files';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
-  import { showContentOverlay } from '$lib/services/contents/draft/editor';
+  import { showContentOverlay } from '$lib/services/contents/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { isSmallScreen } from '$lib/services/user/env';
 

@@ -19,7 +19,7 @@
   import { canShowMobileSignInDialog } from '$lib/services/app/onboarding';
   import { showAssetOverlay } from '$lib/services/assets/view';
   import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
-  import { showContentOverlay } from '$lib/services/contents/draft/editor';
+  import { showContentOverlay } from '$lib/services/contents/editor';
   import { searchMode } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
 

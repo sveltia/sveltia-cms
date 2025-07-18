@@ -1,5 +1,5 @@
 import { mount } from 'svelte';
-import { customPreviewStyle } from '$lib/services/contents/draft/editor';
+import { customPreviewStyle } from '$lib/services/contents/editor';
 import { customFileFormats } from '$lib/services/contents/file';
 import { customComponents } from '$lib/services/contents/widgets/markdown';
 import App from './components/app.svelte';

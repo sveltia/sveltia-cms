@@ -2,10 +2,7 @@
   import { PromptDialog } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
-  import {
-    showContentOverlay,
-    translatorApiKeyDialogState,
-  } from '$lib/services/contents/draft/editor';
+  import { showContentOverlay, translatorApiKeyDialogState } from '$lib/services/contents/editor';
   import { translator } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/user/prefs';
 

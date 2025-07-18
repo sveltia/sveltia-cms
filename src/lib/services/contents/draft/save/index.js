@@ -8,10 +8,10 @@ import {
 } from '$lib/services/contents/collection/data';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
-import { expandInvalidFields } from '$lib/services/contents/draft/editor/expanders';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
+import { expandInvalidFields } from '$lib/services/contents/editor/expanders';
 
 /**
  * @import { ChangeResults, Entry, EntryDraft } from '$lib/types/private';

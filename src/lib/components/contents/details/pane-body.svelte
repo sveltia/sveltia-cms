@@ -5,8 +5,8 @@
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { entryEditorSettings } from '$lib/services/contents/draft/editor/settings';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
+  import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**

@@ -23,7 +23,7 @@
   import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
   import { getAssetKind } from '$lib/services/assets/kinds';
   import { getStockAssetMediaLibraryOptions } from '$lib/services/assets/media-library';
-  import { selectAssetsView, showContentOverlay } from '$lib/services/contents/draft/editor';
+  import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import {
     allCloudStorageServices,
     allStockAssetProviders,

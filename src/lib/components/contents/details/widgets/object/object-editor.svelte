@@ -15,11 +15,11 @@
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
+  import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update/locale';
   import {
     getInitialExpanderState,
     syncExpanderStates,
-  } from '$lib/services/contents/draft/editor/expanders';
-  import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update/locale';
+  } from '$lib/services/contents/editor/expanders';
   import { getField } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { formatSummary } from '$lib/services/contents/widgets/object/helper';

@@ -3,7 +3,7 @@ import { flushSync } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { siteConfig } from '$lib/services/config';
-import { showContentOverlay } from '$lib/services/contents/draft/editor';
+import { showContentOverlay } from '$lib/services/contents/editor';
 import { isSmallScreen } from '$lib/services/user/env';
 
 /**

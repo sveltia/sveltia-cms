@@ -3,7 +3,7 @@
   import { writable } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { entryEditorSettings } from '$lib/services/contents/draft/editor/settings';
+  import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';

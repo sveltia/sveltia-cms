@@ -28,10 +28,10 @@
   import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
-  import { copyFromLocaleToast } from '$lib/services/contents/draft/editor';
-  import { entryEditorSettings } from '$lib/services/contents/draft/editor/settings';
   import { saveEntry } from '$lib/services/contents/draft/save';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
+  import { copyFromLocaleToast } from '$lib/services/contents/editor';
+  import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getEntryPreviewURL } from '$lib/services/contents/entry';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
