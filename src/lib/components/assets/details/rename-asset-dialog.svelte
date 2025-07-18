@@ -3,9 +3,10 @@
   import { getPathInfo } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
   import { goto, parseLocation } from '$lib/services/app/navigation';
-  import { getAssetsByDirName, renamingAsset, showAssetOverlay } from '$lib/services/assets';
+  import { getAssetsByDirName, renamingAsset } from '$lib/services/assets';
   import { moveAssets } from '$lib/services/assets/data/move';
   import { getAssetDetails } from '$lib/services/assets/info';
+  import { showAssetOverlay } from '$lib/services/assets/view';
 
   /**
    * @import { Entry } from '$lib/types/private';

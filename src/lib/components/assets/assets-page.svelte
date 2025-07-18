@@ -20,10 +20,14 @@
     parseLocation,
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
-  import { allAssets, overlaidAsset, showAssetOverlay } from '$lib/services/assets';
+  import { allAssets, overlaidAsset } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
-  import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
+  import {
+    getFolderLabelByCollection,
+    listedAssets,
+    showAssetOverlay,
+  } from '$lib/services/assets/view';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const ROUTE_REGEX = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;

@@ -16,9 +16,16 @@ import { prefs } from '$lib/services/user/prefs';
  */
 
 /**
+ * Whether the asset details overlay is shown.
+ * @type {Writable<boolean>}
+ */
+export const showAssetOverlay = writable(false);
+
+/**
  * Whether to show the Upload Assets dialog.
  */
 export const showUploadAssetsDialog = writable(false);
+
 /**
  * @type {Readable<boolean>}
  */

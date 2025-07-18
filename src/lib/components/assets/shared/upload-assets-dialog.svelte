@@ -3,9 +3,9 @@
   import mime from 'mime';
   import { _ } from 'svelte-i18n';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import { showAssetOverlay, uploadingAssets } from '$lib/services/assets';
+  import { uploadingAssets } from '$lib/services/assets';
   import { targetAssetFolder } from '$lib/services/assets/folders';
-  import { showUploadAssetsDialog } from '$lib/services/assets/view';
+  import { showAssetOverlay, showUploadAssetsDialog } from '$lib/services/assets/view';
   import { hasMouse } from '$lib/services/user/env';
 
   /** @type {FilePicker | undefined} */

@@ -2,10 +2,10 @@
   import { Alert, ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import { processedAssets, showAssetOverlay, uploadingAssets } from '$lib/services/assets';
+  import { processedAssets, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
   import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
-  import { showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
+  import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { formatSize } from '$lib/services/utils/file';
 
   /** @type {File[]} */

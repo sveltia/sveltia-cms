@@ -8,9 +8,10 @@
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
-  import { overlaidAsset, showAssetOverlay } from '$lib/services/assets';
+  import { overlaidAsset } from '$lib/services/assets';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { isMediaKind } from '$lib/services/assets/kinds';
+  import { showAssetOverlay } from '$lib/services/assets/view';
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();

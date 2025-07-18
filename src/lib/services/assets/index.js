@@ -48,12 +48,6 @@ export const selectedAssets = writable([]);
 export const focusedAsset = writable();
 
 /**
- * Whether the asset details overlay is shown.
- * @type {Writable<boolean>}
- */
-export const showAssetOverlay = writable(false);
-
-/**
  * Asset to be displayed in `<AssetDetailsOverlay>`.
  * @type {Writable<Asset | undefined>}
  */
