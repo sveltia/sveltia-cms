@@ -452,7 +452,7 @@ describe('Test getEntryPreviewURL()', () => {
     expect(fillSlugTemplate).toHaveBeenCalledWith(
       '/posts/{{slug}}',
       expect.objectContaining({
-        currentSlug: '', // Empty slug for _index file (slug is ignored)
+        currentSlug: '_index',
         isIndexFile: true,
       }),
     );

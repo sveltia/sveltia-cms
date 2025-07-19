@@ -106,7 +106,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
       collection,
       content,
       locale,
-      currentSlug: isIndexFile ? '' : slug, // Ignore the `_index` slug for index file
+      currentSlug: slug,
       entryFilePath,
       dateTimeParts,
       isIndexFile,

@@ -114,6 +114,7 @@ const replaceSub = (tag, context) => {
     dateTimeParts = getDateTimeParts({ timeZone: 'UTC' }),
     identifierField,
     basePath,
+    isIndexFile = false,
   } = context;
 
   if (['year', 'month', 'day', 'hour', 'minute', 'second'].includes(tag)) {
@@ -121,6 +122,12 @@ const replaceSub = (tag, context) => {
   }
 
   if (tag === 'slug' && currentSlug) {
+    // Return an entry string instead of `_index` when generating the preview path for an index file
+    // @see https://github.com/sveltia/sveltia-cms/issues/468
+    if (type === 'preview_path' && isIndexFile) {
+      return '';
+    }
+
     return currentSlug;
   }
 
@@ -215,6 +222,14 @@ const replace = (placeholder, { replaceSubContext, getFieldArgs }) => {
 
   if (value) {
     return slugify(String(value));
+  }
+
+  const { type, isIndexFile } = replaceSubContext;
+
+  // Allow an empty slug when generating the preview path for an index file
+  // @see https://github.com/sveltia/sveltia-cms/issues/468
+  if (type === 'preview_path' && isIndexFile) {
+    return '';
   }
 
   // Use a random ID as a fallback
