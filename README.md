@@ -620,7 +620,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 Due to the complexity, we have decided to defer the following features to the 2.0 release due early 2026. Netlify/Decap CMS has a number of open issues with these collaboration and beta features — we want to implement them the right way.
 
-- [Editorial workflow](https://decapcms.org/docs/editorial-workflows/) with [deploy preview links](https://decapcms.org/docs/deploy-preview-links/)
+- [Editorial workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open authoring](https://decapcms.org/docs/open-authoring/)
 - [Nested collections](https://decapcms.org/docs/collection-nested/) (beta)
 - Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
