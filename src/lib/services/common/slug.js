@@ -155,7 +155,10 @@ const replaceSub = (tag, context) => {
     }
 
     if (tag === 'dirname') {
-      return entryFilePath.replace(basePath ?? '', '').match(/(.+?)(?:\/[^/]+)?$/)?.[1] ?? '';
+      const pathAfterBase = entryFilePath.replace(basePath ?? '', '');
+      const lastSlashIndex = pathAfterBase.lastIndexOf('/');
+
+      return lastSlashIndex > 0 ? pathAfterBase.substring(0, lastSlashIndex) : '';
     }
 
     if (tag === 'filename') {
@@ -220,20 +223,13 @@ const replace = (placeholder, { replaceSubContext, getFieldArgs }) => {
     });
   }
 
-  if (value) {
-    return slugify(String(value));
+  // Return the value as is when generating the preview path or media folder path
+  if (replaceSubContext.type) {
+    return String(value);
   }
 
-  const { type, isIndexFile } = replaceSubContext;
-
-  // Allow an empty slug when generating the preview path for an index file
-  // @see https://github.com/sveltia/sveltia-cms/issues/468
-  if (type === 'preview_path' && isIndexFile) {
-    return '';
-  }
-
-  // Use a random ID as a fallback
-  return generateUUID('short');
+  // Slugify the value for a slug or filename
+  return slugify(String(value));
 };
 
 /**
