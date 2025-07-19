@@ -11,12 +11,18 @@ import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/coll
 /**
  * @import {
  * Entry,
+ * FlattenedEntryContent,
  * InternalCollection,
  * InternalCollectionFile,
  * InternalLocaleCode,
  * } from '$lib/types/private';
- * @import { DateTimeField } from '$lib/types/public';
+ * @import { DateTimeField, Field } from '$lib/types/public';
  */
+
+/**
+ * Regular expression to match date and time template placeholders in entry file path templates.
+ */
+const DATE_TIME_TEMPLATE_REGEX = /{{(?:year|month|day|hour|minute|second)}}/;
 
 /**
  * Get a list of collections the given entry belongs to. One entry can theoretically appear in
@@ -30,12 +36,40 @@ export const getAssociatedCollections = (entry) =>
     .filter((collection) => !!collection);
 
 /**
+ * Determine date and time parts from the given entry content.
+ * @param {object} args Arguments.
+ * @param {string} [args.dateFieldName] Date field name.
+ * @param {Field[]} args.fields Fields.
+ * @param {FlattenedEntryContent} args.content Entry content.
+ * @returns {Record<string, string> | undefined} Date and time parts.
+ */
+const extractDateTime = ({ dateFieldName, fields, content }) => {
+  const fieldConfig = dateFieldName
+    ? fields.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
+    : fields.find(({ widget }) => widget === 'datetime');
+
+  const fieldValue = fieldConfig ? content[fieldConfig.name] : undefined;
+
+  if (!fieldConfig || !fieldValue) {
+    return undefined;
+  }
+
+  const { format, picker_utc: utc = false } = /** @type {DateTimeField} */ (fieldConfig);
+
+  return getDateTimeParts({
+    date: (utc ? moment.utc : moment)(fieldValue, format).toDate(),
+    timeZone: utc ? 'UTC' : undefined,
+  });
+};
+
+/**
  * Get the given entry file’s web-accessible URL on the live site.
  * @param {Entry} entry Entry.
  * @param {InternalLocaleCode} locale Locale.
  * @param {InternalCollection} collection Collection.
  * @param {InternalCollectionFile} [collectionFile] Collection file. File/singleton collection only.
  * @returns {string | undefined} URL on the live site.
+ * @see https://decapcms.org/docs/deploy-preview-links/
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
   const { show_preview_links: showLinks = true, _baseURL: baseURL } = get(siteConfig) ?? {};
@@ -57,23 +91,13 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
   /** @type {Record<string, string> | undefined} */
   let dateTimeParts;
 
-  if (/{{(?:year|month|day|hour|minute|second)}}/g.test(pathTemplate)) {
-    const fieldConfig = dateFieldName
-      ? fields.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
-      : fields.find(({ widget }) => widget === 'datetime');
+  if (DATE_TIME_TEMPLATE_REGEX.test(pathTemplate)) {
+    dateTimeParts = extractDateTime({ dateFieldName, fields, content });
 
-    const fieldValue = fieldConfig ? content[fieldConfig.name] : undefined;
-
-    if (!fieldConfig || !fieldValue) {
+    // Cannot generate a URL if the date and time parts are not available
+    if (!dateTimeParts) {
       return undefined;
     }
-
-    const { format, picker_utc: utc = false } = /** @type {DateTimeField} */ (fieldConfig);
-
-    dateTimeParts = getDateTimeParts({
-      date: (utc ? moment.utc : moment)(fieldValue, format).toDate(),
-      timeZone: utc ? 'UTC' : undefined,
-    });
   }
 
   try {
