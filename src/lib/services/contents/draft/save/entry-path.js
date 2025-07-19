@@ -1,5 +1,5 @@
 import { stripSlashes } from '@sveltia/utils/string';
-import { fillSlugTemplate } from '$lib/services/common/slug';
+import { fillTemplate } from '$lib/services/common/template';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getLocalePath } from '$lib/services/contents/i18n';
 
@@ -47,7 +47,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   const path = isIndexFile
     ? /** @type {string} */ (getIndexFile(entryCollection)?.name)
     : subPath
-      ? fillSlugTemplate(subPath, {
+      ? fillTemplate(subPath, {
           collection: entryCollection,
           locale,
           content: currentValues[defaultLocale],

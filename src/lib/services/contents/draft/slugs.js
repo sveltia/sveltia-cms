@@ -1,4 +1,4 @@
-import { fillSlugTemplate } from '$lib/services/common/slug';
+import { fillTemplate } from '$lib/services/common/template';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 
 /**
@@ -6,16 +6,16 @@ import { getIndexFile } from '$lib/services/contents/collection/index-file';
  * EntryCollection,
  * EntryDraft,
  * EntrySlugVariants,
- * FillSlugTemplateOptions,
+ * FillTemplateOptions,
  * LocaleSlugMap,
  * } from '$lib/types/private';
  */
 
 /**
- * Get base options for {@link fillSlugTemplate}.
+ * Get base options for {@link fillTemplate}.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @returns {FillSlugTemplateOptions} Options.
+ * @returns {FillTemplateOptions} Options.
  */
 export const getFillSlugOptions = ({ draft }) => {
   const { collection, collectionFile, currentValues, isIndexFile } = draft;
@@ -55,7 +55,7 @@ const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
   return (
     currentSlugs?.[locale] ??
     currentSlugs?._ ??
-    fillSlugTemplate(slugTemplate, {
+    fillTemplate(slugTemplate, {
       collection,
       locale,
       content: {
@@ -125,7 +125,7 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @param {LocaleSlugMap | undefined} args.localizedSlugs Localized slug map.
- * @param {FillSlugTemplateOptions} args.fillSlugOptions Arguments for {@link fillSlugTemplate}.
+ * @param {FillTemplateOptions} args.fillSlugOptions Arguments for {@link fillTemplate}.
  * @returns {string | undefined} Canonical slug.
  * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
  * @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
@@ -147,7 +147,7 @@ const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOp
     return defaultLocaleSlug;
   }
 
-  return fillSlugTemplate(canonicalSlugTemplate, {
+  return fillTemplate(canonicalSlugTemplate, {
     ...fillSlugOptions,
     currentSlug: defaultLocaleSlug,
   });
@@ -185,7 +185,7 @@ export const getSlugs = ({ draft }) => {
     fileName ??
     currentSlugs?.[defaultLocale] ??
     currentSlugs?._ ??
-    fillSlugTemplate(slugTemplate, fillSlugOptions);
+    fillTemplate(slugTemplate, fillSlugOptions);
 
   const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug });
 

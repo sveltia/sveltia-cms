@@ -10,7 +10,7 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
-import { fillSlugTemplate } from '$lib/services/common/slug';
+import { fillTemplate } from '$lib/services/common/template';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
@@ -223,7 +223,7 @@ const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
 
       const { content, path: entryFilePath } = entry.locales[collection._i18n.defaultLocale];
 
-      internalPath = fillSlugTemplate(internalPath, {
+      internalPath = fillTemplate(internalPath, {
         type: 'media_folder',
         collection,
         content: flatten(content),

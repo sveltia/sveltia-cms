@@ -1,6 +1,6 @@
 import { getAssetsByDirName } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
-import { fillSlugTemplate } from '$lib/services/common/slug';
+import { fillTemplate } from '$lib/services/common/template';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import {
@@ -18,7 +18,7 @@ import {
  * EntryCollection,
  * EntryDraft,
  * FileChange,
- * FillSlugTemplateOptions,
+ * FillTemplateOptions,
  * FlattenedEntryContent,
  * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
@@ -44,7 +44,7 @@ import {
  * Get the internal/public asset path configuration for the entry assets.
  * @param {object} args Arguments.
  * @param {AssetFolderInfo} args.folder Asset folder associated with a new file.
- * @param {FillSlugTemplateOptions} args.fillSlugOptions Arguments for {@link fillSlugTemplate}.
+ * @param {FillTemplateOptions} args.fillSlugOptions Arguments for {@link fillTemplate}.
  * @returns {ResolvedAssetFolderPaths} Determined paths.
  */
 export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
@@ -57,8 +57,8 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
 
   if (!entryRelative) {
     return {
-      resolvedInternalPath: fillSlugTemplate(internalPath, fillSlugOptions),
-      resolvedPublicPath: fillSlugTemplate(publicPath, fillSlugOptions),
+      resolvedInternalPath: fillTemplate(internalPath, fillSlugOptions),
+      resolvedPublicPath: fillTemplate(publicPath, fillSlugOptions),
     };
   }
 
@@ -76,7 +76,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
   const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';
 
   const resolvedInternalPath = resolvePath(
-    fillSlugTemplate(
+    fillTemplate(
       createPath([
         internalPath,
         isMultiFolders || subPath?.includes('/') ? subPathFirstPart : undefined,
@@ -91,7 +91,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
         // be `./image.png` rather than `image.png`
         publicPath
       : resolvePath(
-          fillSlugTemplate(
+          fillTemplate(
             isMultiFolders
               ? // When multiple folders are used for i18n, the file structure would look like
                 // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md`

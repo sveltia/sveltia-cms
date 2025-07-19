@@ -2,7 +2,7 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
 import { get } from 'svelte/store';
 import { backend } from '$lib/services/backends';
-import { fillSlugTemplate } from '$lib/services/common/slug';
+import { fillTemplate } from '$lib/services/common/template';
 import { siteConfig } from '$lib/services/config';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
@@ -101,7 +101,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
   }
 
   try {
-    const path = fillSlugTemplate(pathTemplate, {
+    const path = fillTemplate(pathTemplate, {
       type: 'preview_path',
       collection,
       content,

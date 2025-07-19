@@ -9,7 +9,7 @@ import { getEntryPreviewURL } from '$lib/services/contents/entry/index';
 // Mock the dependencies
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents/collection/index-file');
-vi.mock('$lib/services/common/slug');
+vi.mock('$lib/services/common/template');
 
 describe('Test getEntryPreviewURL()', () => {
   beforeEach(() => {
@@ -147,14 +147,14 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('posts/test-entry');
+    vi.mocked(fillTemplate).mockReturnValue('posts/test-entry');
 
     const result = getEntryPreviewURL(mockEntry, 'en', mockCollection);
 
-    expect(fillSlugTemplate).toHaveBeenCalledWith(
+    expect(fillTemplate).toHaveBeenCalledWith(
       '/posts/{{slug}}',
       expect.objectContaining({
         type: 'preview_path',
@@ -182,10 +182,10 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('posts/test-entry');
+    vi.mocked(fillTemplate).mockReturnValue('posts/test-entry');
 
     const result = getEntryPreviewURL(mockEntry, 'en', mockCollection);
 
@@ -204,10 +204,10 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('/posts/test-entry');
+    vi.mocked(fillTemplate).mockReturnValue('/posts/test-entry');
 
     const result = getEntryPreviewURL(mockEntry, 'en', mockCollection);
 
@@ -226,14 +226,14 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('posts/テスト-エントリ');
+    vi.mocked(fillTemplate).mockReturnValue('posts/テスト-エントリ');
 
     const result = getEntryPreviewURL(mockEntry, 'ja', mockCollection);
 
-    expect(fillSlugTemplate).toHaveBeenCalledWith(
+    expect(fillTemplate).toHaveBeenCalledWith(
       '/posts/{{slug}}',
       expect.objectContaining({
         locale: 'ja',
@@ -261,14 +261,14 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('2024/01/test-entry');
+    vi.mocked(fillTemplate).mockReturnValue('2024/01/test-entry');
 
     const result = getEntryPreviewURL(mockEntry, 'en', collectionWithDatePath);
 
-    expect(fillSlugTemplate).toHaveBeenCalledWith(
+    expect(fillTemplate).toHaveBeenCalledWith(
       '/{{year}}/{{month}}/{{slug}}',
       expect.objectContaining({
         dateTimeParts: expect.objectContaining({
@@ -320,14 +320,14 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('2023/12/test-entry');
+    vi.mocked(fillTemplate).mockReturnValue('2023/12/test-entry');
 
     const result = getEntryPreviewURL(entryWithCustomDate, 'en', collectionWithCustomDateField);
 
-    expect(fillSlugTemplate).toHaveBeenCalledWith(
+    expect(fillTemplate).toHaveBeenCalledWith(
       '/{{year}}/{{month}}/{{slug}}',
       expect.objectContaining({
         dateTimeParts: expect.objectContaining({
@@ -399,10 +399,10 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('2024/01/test-entry');
+    vi.mocked(fillTemplate).mockReturnValue('2024/01/test-entry');
 
     const result = getEntryPreviewURL(mockEntry, 'en', collectionWithUTCDatePath);
 
@@ -442,14 +442,14 @@ describe('Test getEntryPreviewURL()', () => {
       fields: mockCollection.fields,
     });
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('posts');
+    vi.mocked(fillTemplate).mockReturnValue('posts');
 
     const result = getEntryPreviewURL(indexEntry, 'en', mockCollection);
 
-    expect(fillSlugTemplate).toHaveBeenCalledWith(
+    expect(fillTemplate).toHaveBeenCalledWith(
       '/posts/{{slug}}',
       expect.objectContaining({
         currentSlug: '_index',
@@ -505,14 +505,14 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('');
+    vi.mocked(fillTemplate).mockReturnValue('');
 
     const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, mockCollectionFile);
 
-    expect(fillSlugTemplate).toHaveBeenCalledWith(
+    expect(fillTemplate).toHaveBeenCalledWith(
       '/',
       expect.objectContaining({
         type: 'preview_path',
@@ -522,7 +522,7 @@ describe('Test getEntryPreviewURL()', () => {
     expect(result).toBe('https://example.com/');
   });
 
-  test('returns undefined when fillSlugTemplate throws error', async () => {
+  test('returns undefined when fillTemplate throws error', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).siteConfig = writable({
       show_preview_links: true,
@@ -534,10 +534,10 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate to throw an error
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate to throw an error
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockImplementation(() => {
+    vi.mocked(fillTemplate).mockImplementation(() => {
       throw new Error('Template error');
     });
 
@@ -568,10 +568,10 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('posts/test-entry');
+    vi.mocked(fillTemplate).mockReturnValue('posts/test-entry');
 
     const result = getEntryPreviewURL(entryWithEmptyContent, 'en', mockCollection);
 
@@ -590,10 +590,10 @@ describe('Test getEntryPreviewURL()', () => {
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
 
-    // Mock fillSlugTemplate
-    const { fillSlugTemplate } = await import('$lib/services/common/slug');
+    // Mock fillTemplate
+    const { fillTemplate } = await import('$lib/services/common/template');
 
-    vi.mocked(fillSlugTemplate).mockReturnValue('posts/test-entry');
+    vi.mocked(fillTemplate).mockReturnValue('posts/test-entry');
 
     const result = getEntryPreviewURL(mockEntry, 'en', mockCollection);
 
