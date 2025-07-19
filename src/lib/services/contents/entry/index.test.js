@@ -3,13 +3,7 @@ import { describe, expect, test, vi, beforeEach } from 'vitest';
 import { getEntryPreviewURL } from '$lib/services/contents/entry/index';
 
 /**
- * @import {
- * Entry,
- * InternalCollection,
- * InternalCollectionFile,
- * InternalLocaleCode,
- * } from '$lib/types/private';
- * @import { DateTimeField } from '$lib/types/public';
+ * @import { Entry, InternalCollection, InternalCollectionFile, } from '$lib/types/private';
  */
 
 // Mock the dependencies
