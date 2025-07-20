@@ -9,7 +9,7 @@ import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { parseAssetFiles } from '$lib/services/assets/parser';
-import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends/config';
+import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';

@@ -3,7 +3,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { allAssets } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
 import { isLastCommitPublished } from '$lib/services/backends';
-import { gitConfigFiles } from '$lib/services/backends/config';
+import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
