@@ -27,8 +27,14 @@ import { getBlob } from '$lib/services/utils/file';
  * @returns {CommitAuthor | undefined} Commit author information including `name`, `email`, `id`,
  * and `login`. `undefined` for the local and test-repo backends.
  */
-const getCommitAuthor = () => {
-  const { name, email, id, login } = /** @type {User} */ (get(user));
+export const getCommitAuthor = () => {
+  const userData = /** @type {User} */ (get(user));
+
+  if (!userData) {
+    return undefined;
+  }
+
+  const { name, email, id, login } = userData;
 
   if (!name || !email) {
     return undefined;
@@ -44,7 +50,7 @@ const getCommitAuthor = () => {
  * @param {FileChange[]} args.changes Committed changes.
  * @param {CommitResults} args.commit Commit results.
  */
-const updateCache = async ({ changes, commit }) => {
+export const updateCache = async ({ changes, commit }) => {
   const { databaseName } = get(backend)?.repository ?? {};
 
   if (!databaseName) {
@@ -96,7 +102,7 @@ const updateCache = async ({ changes, commit }) => {
  * @param {Entry[]} args.savedEntries Entries that have been saved.
  * @param {Asset[]} args.savedAssets Assets that have been saved.
  */
-const updateStores = ({ changes, savedEntries, savedAssets }) => {
+export const updateStores = ({ changes, savedEntries, savedAssets }) => {
   const savedEntryIds = savedEntries.map((e) => e.id);
 
   allEntries.update((entries) => [
