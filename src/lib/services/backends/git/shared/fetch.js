@@ -37,7 +37,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
  * file list.
  * @returns {Promise<BaseFileList>} The file list.
  */
-const getFileList = async ({ metaDB, lastHash, cachedFileEntries, fetchFileList }) => {
+export const getFileList = async ({ metaDB, lastHash, cachedFileEntries, fetchFileList }) => {
   const cachedHash = await metaDB.get('last_commit_hash');
   const gitConfigFetched = await metaDB.get('git_config_fetched');
 
@@ -68,7 +68,7 @@ const getFileList = async ({ metaDB, lastHash, cachedFileEntries, fetchFileList 
  * @param {BaseFileListItem[]} args.allFiles The list of all files.
  * @param {RepositoryContentsMap} args.cachedFiles Cached files object.
  */
-const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
+export const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
   allFiles.forEach(({ sha, path }, index) => {
     if (cachedFiles[path]?.sha === sha) {
       Object.assign(allFiles[index], cachedFiles[path]);
@@ -83,7 +83,7 @@ const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of fetched file metadata and content.
  * @returns {BaseFileListItem} Parsed file with additional metadata.
  */
-const parseFile = ({ file, fetchedFileMap }) => {
+export const parseFile = ({ file, fetchedFileMap }) => {
   // The `size` and `text` are only available in the 2nd request (`fetchFileContents`) for the
   // GitLab backend, so we need to set them here if they are not already defined
   const { meta, size, text } = fetchedFileMap[file.path] ?? {};
@@ -104,7 +104,7 @@ const parseFile = ({ file, fetchedFileMap }) => {
  * @param {BaseConfigListItem[]} args.configFiles List of Git config files.
  * @param {Error[]} [args.errors] List of errors encountered while parsing entries.
  */
-const updateStores = ({ entries, assets, configFiles, errors = [] }) => {
+export const updateStores = ({ entries, assets, configFiles, errors = [] }) => {
   allEntries.set(entries);
   allAssets.set(assets);
   gitConfigFiles.set(configFiles);
@@ -121,7 +121,13 @@ const updateStores = ({ entries, assets, configFiles, errors = [] }) => {
  * @param {BaseFileListItem[]} args.fetchingFiles List of files being fetched.
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of newly fetched file data.
  */
-const updateCache = async ({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap }) => {
+export const updateCache = async ({
+  cacheDB,
+  allFiles,
+  cachedFiles,
+  fetchingFiles,
+  fetchedFileMap,
+}) => {
   const usedPaths = allFiles.map(({ path }) => path);
   const unusedPaths = Object.keys(cachedFiles).filter((path) => !usedPaths.includes(path));
 

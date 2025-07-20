@@ -16,7 +16,7 @@ export const inAuthPopup = writable(false);
  * @param {string} args.authURL Authentication site URL.
  * @returns {Window | null} Popup window object or `null` if the popup could not be opened.
  */
-const openPopup = ({ authURL }) => {
+export const openPopup = ({ authURL }) => {
   const width = 600;
   const height = 800;
   const { availHeight, availWidth } = window.screen;
@@ -37,7 +37,7 @@ const openPopup = ({ authURL }) => {
  * is complete.
  * @see https://decapcms.org/docs/backends-overview/
  */
-const authorize = async ({ backendName, authURL }) => {
+export const authorize = async ({ backendName, authURL }) => {
   const popup = openPopup({ authURL });
 
   return new Promise((resolve, reject) => {
@@ -163,7 +163,7 @@ export const initServerSideAuth = async ({ backendName, siteDomain, authURL, sco
  * @returns {Promise<{ csrfToken: string, codeVerifier: string, codeChallenge: string}>} Secrets.
  * @see https://stackoverflow.com/questions/63309409/creating-a-code-verifier-and-challenge-for-pkce-auth-on-spotify-api-in-reactjs
  */
-const createAuthSecrets = async () => {
+export const createAuthSecrets = async () => {
   const codeVerifier = `${generateRandomId()}${generateRandomId()}`;
 
   const codeChallenge = btoa(
@@ -232,7 +232,7 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
  * @param {string} [args.errorCode] Error code to be used to localize the error message in Sveltia
  * CMS.
  */
-const sendMessage = ({ provider = 'unknown', token, refreshToken, error, errorCode }) => {
+export const sendMessage = ({ provider = 'unknown', token, refreshToken, error, errorCode }) => {
   const _state = error ? 'error' : 'success';
   const content = error ? { provider, error, errorCode } : { provider, token, refreshToken };
 
