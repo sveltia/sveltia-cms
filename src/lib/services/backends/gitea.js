@@ -4,11 +4,8 @@ import { decodeBase64, encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import {
-  API_CONFIG_INFO_PLACEHOLDER,
-  REPOSITORY_INFO_PLACEHOLDER,
-} from '$lib/services/backends/shared';
-import { fetchAPIWithAuth } from '$lib/services/backends/shared/api';
+import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
+import { apiConfig, fetchAPI } from '$lib/services/backends/shared/api';
 import { handleClientSideAuthPopup, initClientSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
@@ -27,7 +24,6 @@ import { prefs } from '$lib/services/user/prefs';
  * BaseFileListItemProps,
  * CommitOptions,
  * CommitResults,
- * FetchApiOptions,
  * FileChange,
  * RepositoryContentsMap,
  * RepositoryInfo,
@@ -70,8 +66,6 @@ const DEFAULT_AUTH_ROOT = 'https://gitea.com';
 const DEFAULT_AUTH_PATH = 'login/oauth/authorize';
 /** @type {RepositoryInfo} */
 const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
-/** @type {ApiEndpointConfig} */
-const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
 /**
  * Minimum supported Gitea version. We require at least 1.24 to use the new `file-contents` API
  * endpoint.
@@ -92,16 +86,6 @@ const MIN_FORGEJO_VERSION = 12;
 let isForgejo = false;
 /** @type {Record<string, any> | null} */
 let repositoryResponseCache = null;
-/**
- * Send a request to Gitea/Forgejo REST API.
- * @param {string} path Endpoint.
- * @param {FetchApiOptions} [options] Fetch options.
- * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
- * depending on the `responseType` option.
- * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
- * @see https://docs.gitea.com/api/next/
- */
-const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, apiConfig);
 
 /**
  * Generate base URLs for accessing the repository’s resources.

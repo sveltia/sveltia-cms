@@ -8,6 +8,32 @@ import { sendRequest } from '$lib/services/utils/networking';
  */
 
 /**
+ * Placeholder for API configuration information.
+ * @type {ApiEndpointConfig}
+ */
+const API_CONFIG_INFO_PLACEHOLDER = {
+  clientId: '',
+  authURL: '',
+  tokenURL: '',
+  authScheme: 'token',
+  origin: '',
+  restBaseURL: '',
+  graphqlBaseURL: '',
+};
+
+/**
+ * Configuration for API endpoints.
+ * @type {ApiEndpointConfig}
+ */
+export const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
+
+/**
+ * Variables to be used in GraphQL queries.
+ * @type {Record<string, any>}
+ */
+export const graphqlVars = {};
+
+/**
  * Refresh the OAuth access token using the refresh token.
  * @param {object} args Arguments.
  * @param {string} args.clientId OAuth application ID.
@@ -49,18 +75,21 @@ export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) =
 };
 
 /**
- * Send a request to Git-based API with authentication. This function is a wrapper around
- * `sendRequest` that automatically adds the `Authorization` header with the OAuth access token. It
- * also handles the case where the access token needs to be refreshed when the request fails with a
- * 401 Unauthorized status.
+ * Send a request to the REST or GraphQL API of a Git-based service with authentication. This
+ * function is a wrapper around {@link sendRequest} that automatically adds the `Authorization`
+ * header with the OAuth access token. It also handles the case where the access token needs to be
+ * refreshed when the request fails with a 401 Unauthorized status.
  * @param {string} path API endpoint path.
- * @param {FetchApiOptions} options Fetch options.
- * @param {ApiEndpointConfig} apiConfig API configuration.
+ * @param {FetchApiOptions} [options] Fetch options.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the API request, e.g. OAuth app access restrictions.
+ * @see https://docs.github.com/en/rest
+ * @see https://docs.gitlab.com/api/rest/
+ * @see https://gitea.com/api/swagger
+ * @see https://codeberg.org/api/swagger
  */
-export const fetchAPIWithAuth = async (
+export const fetchAPI = async (
   path,
   {
     method = 'GET',
@@ -69,9 +98,9 @@ export const fetchAPIWithAuth = async (
     responseType = 'json',
     token = undefined,
     refreshToken = undefined,
-  },
-  { clientId, tokenURL, restBaseURL, graphqlBaseURL, authScheme = 'token' },
+  } = {},
 ) => {
+  const { clientId, tokenURL, restBaseURL, graphqlBaseURL, authScheme = 'token' } = apiConfig;
   const _user = get(user);
   const isGraphQL = path === '/graphql';
   const baseURL = isGraphQL ? graphqlBaseURL : restBaseURL;
@@ -80,14 +109,7 @@ export const fetchAPIWithAuth = async (
   refreshToken ??= _user?.refreshToken;
   headers.Authorization = `${authScheme} ${token}`;
 
-  if (isGraphQL) {
-    method = 'POST';
-    // Remove line breaks and subsequent space characters; we must be careful as file paths may
-    // contain spaces
-    body.query = /** @type {string} */ (body.query).replace(/\n\s*/g, ' ');
-  }
-
-  const response = await sendRequest(
+  return sendRequest(
     `${baseURL}${path}`,
     { method, headers, body },
     {
@@ -97,10 +119,34 @@ export const fetchAPIWithAuth = async (
         : undefined,
     },
   );
+};
 
-  if (isGraphQL) {
-    return /** @type {{ data: object }} */ (response).data;
-  }
+/**
+ * Send a request to the GraphQL API of a Git-based service. This function is a wrapper around
+ * {@link fetchAPI} and automatically applies the common variables defined in {@link graphqlVars} to
+ * the query. Variables can also be passed as an argument to override the defaults.
+ * @param {string} query Query string.
+ * @param {Record<string, any>} [variables] Any variable to be applied.
+ * @returns {Promise<Record<string, any>>} Response data.
+ * @see https://docs.github.com/en/graphql
+ * @see https://docs.gitlab.com/api/graphql/
+ */
+export const fetchGraphQL = async (query, variables = {}) => {
+  // Normalize the query by removing line breaks and subsequent space characters. We must be careful
+  // as file paths may contain spaces.
+  query = query.replace(/\n\s*/g, ' ');
 
-  return response;
+  // Apply common variables defined in `graphqlVars` to the query
+  Object.entries(graphqlVars).forEach(([key, value]) => {
+    if (query.includes(`$${key}`)) {
+      variables[key] ??= value;
+    }
+  });
+
+  // Extract `data` from the response
+  const { data } = await /** @type {Promise<{ data: Record<string, any> }>} */ (
+    fetchAPI('/graphql', { method: 'POST', body: { query, variables } })
+  );
+
+  return data;
 };

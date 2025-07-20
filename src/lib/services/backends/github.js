@@ -5,11 +5,8 @@ import mime from 'mime';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/github/status';
-import {
-  API_CONFIG_INFO_PLACEHOLDER,
-  REPOSITORY_INFO_PLACEHOLDER,
-} from '$lib/services/backends/shared';
-import { fetchAPIWithAuth } from '$lib/services/backends/shared/api';
+import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
+import { apiConfig, fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/shared/api';
 import { initServerSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
@@ -28,7 +25,6 @@ import { prefs } from '$lib/services/user/prefs';
  * BaseFileListItemProps,
  * CommitOptions,
  * CommitResults,
- * FetchApiOptions,
  * FileChange,
  * RepositoryContentsMap,
  * RepositoryInfo,
@@ -65,42 +61,6 @@ const DEFAULT_AUTH_PATH = 'auth';
 const DEFAULT_ORIGIN = 'https://github.com';
 /** @type {RepositoryInfo} */
 const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
-/** @type {ApiEndpointConfig} */
-const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
-/**
- * Variables to be used in GraphQL queries.
- * @type {Record<string, any>}
- */
-const graphqlVars = {};
-/**
- * Send a request to GitHub REST/GraphQL API.
- * @param {string} path Endpoint.
- * @param {FetchApiOptions} [options] Fetch options.
- * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
- * depending on the `responseType` option.
- * @throws {Error} When there was an error in the API request, e.g. OAuth App access restrictions.
- * @see https://docs.github.com/en/rest
- */
-const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, apiConfig);
-
-/**
- * Send a request to GitHub GraphQL API.
- * @param {string} query Query string.
- * @param {Record<string, any>} [variables] Any variable to be applied.
- * @returns {Promise<Record<string, any>>} Response data.
- * @see https://docs.github.com/en/graphql
- */
-const fetchGraphQL = async (query, variables = {}) => {
-  Object.entries(graphqlVars).forEach(([key, value]) => {
-    if (query.includes(`$${key}`)) {
-      variables[key] ??= value;
-    }
-  });
-
-  return /** @type {Promise<Record<string, any>>} */ (
-    fetchAPI('/graphql', { body: { query, variables } })
-  );
-};
 
 /**
  * Generate base URLs for accessing the repository’s resources.

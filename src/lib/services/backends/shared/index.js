@@ -1,5 +1,5 @@
 /**
- * @import { ApiEndpointConfig, RepositoryInfo } from '$lib/types/private';
+ * @import { RepositoryInfo } from '$lib/types/private';
  */
 
 /**
@@ -16,17 +16,4 @@ export const REPOSITORY_INFO_PLACEHOLDER = {
   blobBaseURL: '',
   isSelfHosted: false,
   databaseName: '',
-};
-
-/**
- * @type {ApiEndpointConfig}
- */
-export const API_CONFIG_INFO_PLACEHOLDER = {
-  clientId: '',
-  authURL: '',
-  tokenURL: '',
-  authScheme: 'token',
-  origin: '',
-  restBaseURL: '',
-  graphqlBaseURL: '',
 };
