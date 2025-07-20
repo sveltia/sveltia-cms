@@ -66,6 +66,10 @@ const DEFAULT_API_ROOT = 'https://api.github.com';
 const DEFAULT_AUTH_ROOT = 'https://api.netlify.com';
 const DEFAULT_AUTH_PATH = 'auth';
 const DEFAULT_ORIGIN = 'https://github.com';
+/**
+ * Common variables used in GraphQL queries.
+ */
+const COMMON_VARIABLES = ['owner', 'repo', 'branch'];
 /** @type {RepositoryInfo} */
 const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /** @type {ApiEndpointConfig} */
@@ -114,12 +118,21 @@ const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, a
 /**
  * Send a request to GitHub GraphQL API.
  * @param {string} query Query string.
- * @param {object} [variables] Any variable to be applied.
- * @returns {Promise<object>} Response data.
+ * @param {Record<string, any>} [variables] Any variable to be applied.
+ * @returns {Promise<Record<string, any>>} Response data.
  * @see https://docs.github.com/en/graphql
  */
-const fetchGraphQL = async (query, variables = {}) =>
-  /** @type {Promise<object>} */ (fetchAPI('/graphql', { body: { query, variables } }));
+const fetchGraphQL = async (query, variables = {}) => {
+  COMMON_VARIABLES.forEach((key) => {
+    if (query.includes(`$${key}`)) {
+      variables[key] ??= /** @type {Record<string, any>} */ (repository)[key];
+    }
+  });
+
+  return /** @type {Promise<Record<string, any>>} */ (
+    fetchAPI('/graphql', { body: { query, variables } })
+  );
+};
 
 /**
  * Generate base URLs for accessing the repository’s resources.
@@ -274,24 +287,26 @@ const checkRepositoryAccess = async () => {
   }
 };
 
+const FETCH_DEFAULT_BRANCH_NAME_QUERY = `
+  query($owner: String!, $repo: String!) {
+    repository(owner: $owner, name: $repo) {
+      defaultBranchRef {
+        name
+      }
+    }
+  }
+`;
+
 /**
  * Fetch the repository’s default branch name, which is typically `master` or `main`.
  * @returns {Promise<string>} Branch name.
  * @throws {Error} When the repository could not be found, or when the repository is empty.
  */
 const fetchDefaultBranchName = async () => {
-  const { owner, repo, baseURL = '' } = repository;
+  const { repo, baseURL = '' } = repository;
 
   const result = /** @type {{ repository: { defaultBranchRef?: { name: string } } }} */ (
-    await fetchGraphQL(`
-      query {
-        repository(owner: "${owner}", name: "${repo}") {
-          defaultBranchRef {
-            name
-          }
-        }
-      }
-    `)
+    await fetchGraphQL(FETCH_DEFAULT_BRANCH_NAME_QUERY)
   );
 
   if (!result.repository) {
@@ -313,34 +328,33 @@ const fetchDefaultBranchName = async () => {
   return branch;
 };
 
+const FETCH_LAST_COMMIT_QUERY = `
+  query($owner: String!, $repo: String!, $branch: String!) {
+    repository(owner: $owner, name: $repo) {
+      ref(qualifiedName: $branch) {
+        target {
+          ... on Commit {
+            history(first: 1) {
+              nodes {
+                oid
+                message
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 /**
  * Fetch the last commit on the repository.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
  */
 const fetchLastCommit = async () => {
-  const { owner, repo, branch } = repository;
-
-  const result = /** @type {LastCommitResponse} */ (
-    await fetchGraphQL(`
-      query {
-        repository(owner: "${owner}", name: "${repo}") {
-          ref(qualifiedName: "${branch}") {
-            target {
-              ... on Commit {
-                history(first: 1) {
-                  nodes {
-                    oid
-                    message
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    `)
-  );
+  const { repo, branch } = repository;
+  const result = /** @type {LastCommitResponse} */ (await fetchGraphQL(FETCH_LAST_COMMIT_QUERY));
 
   if (!result.repository) {
     throw new Error('Failed to retrieve the last commit hash.', {
@@ -384,8 +398,6 @@ const fetchFileList = async (lastHash) => {
  * @returns {string} Query string.
  */
 const getFileContentsQuery = (chunk, startIndex) => {
-  const { owner, repo, branch } = repository;
-
   const innerQuery = chunk
     .map(({ type, path, sha }, i) => {
       const str = [];
@@ -393,17 +405,17 @@ const getFileContentsQuery = (chunk, startIndex) => {
 
       if (type !== 'asset') {
         str.push(`
-          content_${index}: object(oid: "${sha}") {
+          content_${index}: object(oid: ${JSON.stringify(sha)}) {
             ... on Blob { text }
           }
         `);
       }
 
       str.push(`
-        commit_${index}: ref(qualifiedName: "${branch}") {
+        commit_${index}: ref(qualifiedName: $branch) {
           target {
             ... on Commit {
-              history(first: 1, path: "${path}") {
+              history(first: 1, path: ${JSON.stringify(path)}) {
                 nodes {
                   author {
                     name
@@ -426,8 +438,8 @@ const getFileContentsQuery = (chunk, startIndex) => {
     .join('');
 
   return `
-    query {
-      repository(owner: "${owner}", name: "${repo}") {
+    query($owner: String!, $repo: String!, $branch: String!) {
+      repository(owner: $owner, name: $repo) {
         ${innerQuery}
       }
     }
@@ -580,36 +592,35 @@ const commitChanges = async (changes, options) => {
 
   // Part of the query to fetch new file SHAs
   const fileShaQuery = additions
-    .map(({ path }, index) => `file_${index}: file(path: "${path}") { oid }`)
+    .map(({ path }, index) => `file_${index}: file(path: ${JSON.stringify(path)}) { oid }`)
     .join(' ');
+
+  const query = `
+    mutation($input: CreateCommitOnBranchInput!) {
+      createCommitOnBranch(input: $input) {
+        commit {
+          oid
+          committedDate
+          ${fileShaQuery}
+        }
+      }
+    }
+  `;
+
+  const input = {
+    branch: {
+      repositoryNameWithOwner: `${owner}/${repo}`,
+      branchName: branch,
+    },
+    expectedHeadOid: (await fetchLastCommit()).hash,
+    fileChanges: { additions, deletions },
+    message: { headline: createCommitMessage(changes, options) },
+  };
 
   const {
     createCommitOnBranch: { commit },
   } = /** @type {{ createCommitOnBranch: { commit: Record<string, any> }}} */ (
-    await fetchGraphQL(
-      `
-        mutation ($input: CreateCommitOnBranchInput!) {
-          createCommitOnBranch(input: $input) {
-            commit {
-              oid
-              committedDate
-              ${fileShaQuery}
-            }
-          }
-        }
-      `,
-      {
-        input: {
-          branch: {
-            repositoryNameWithOwner: `${owner}/${repo}`,
-            branchName: branch,
-          },
-          expectedHeadOid: (await fetchLastCommit()).hash,
-          fileChanges: { additions, deletions },
-          message: { headline: createCommitMessage(changes, options) },
-        },
-      },
-    )
+    await fetchGraphQL(query, { input })
   );
 
   return {

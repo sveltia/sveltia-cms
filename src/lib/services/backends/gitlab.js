@@ -68,7 +68,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  */
 
 /**
- * @typedef {object} LastCommitResponse
+ * @typedef {object} FetchLastCommitResponse
  * @property {object} project Project information.
  * @property {object} project.repository Repository information.
  * @property {object} project.repository.tree Tree information.
@@ -78,7 +78,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  */
 
 /**
- * @typedef {object} FileListResponse
+ * @typedef {object} FetchFileListResponse
  * @property {object} project Project information.
  * @property {object} project.repository Repository information.
  * @property {object} project.repository.tree Tree information.
@@ -89,6 +89,28 @@ import { sendRequest } from '$lib/services/utils/networking';
  * @property {string} project.repository.tree.blobs.pageInfo.endCursor Cursor for the next page.
  * @property {boolean} project.repository.tree.blobs.pageInfo.hasNextPage Whether there are more
  * pages to fetch.
+ */
+
+/**
+ * @typedef {object} BlobItem
+ * @property {string} size Size of the blob in bytes.
+ * @property {string} rawTextBlob Raw text content of the blob.
+ */
+
+/**
+ * @typedef {object} FetchBlobsResponse
+ * @property {object} project Project information.
+ * @property {object} project.repository Repository information.
+ * @property {object} project.repository.blobs Blobs information.
+ * @property {BlobItem[]} project.repository.blobs.nodes List of file blobs with their sizes and raw
+ * text contents.
+ */
+
+/**
+ * @typedef {object} FetchCommitsResponse
+ * @property {object} project Project information.
+ * @property {Record<string, { lastCommit: GitLabCommit }>} project.repository Mapping of file paths
+ * to their last commit information.
  */
 
 /**
@@ -156,12 +178,25 @@ const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, a
 /**
  * Send a request to GitLab GraphQL API.
  * @param {string} query Query string.
- * @param {object} [variables] Any variable to be applied.
- * @returns {Promise<object>} Response data.
+ * @param {Record<string, any>} [variables] Any variable to be applied.
+ * @returns {Promise<Record<string, any>>} Response data.
  * @see https://docs.gitlab.com/api/graphql/
  */
-const fetchGraphQL = async (query, variables = {}) =>
-  /** @type {Promise<object>} */ (fetchAPI('/graphql', { body: { query, variables } }));
+const fetchGraphQL = async (query, variables = {}) => {
+  const { owner, repo, branch } = repository;
+
+  if (query.includes('$fullPath')) {
+    variables.fullPath ??= `${owner}/${repo}`;
+  }
+
+  if (query.includes('$branch')) {
+    variables.branch ??= branch;
+  }
+
+  return /** @type {Promise<Record<string, any>>} */ (
+    fetchAPI('/graphql', { body: { query, variables } })
+  );
+};
 
 /**
  * Generate base URLs for accessing the repository’s resources.
@@ -347,6 +382,16 @@ const checkRepositoryAccess = async () => {
   }
 };
 
+const FETCH_DEFAULT_BRANCH_NAME_QUERY = `
+  query($fullPath: String!) {
+    project(fullPath: $fullPath) {
+      repository {
+        rootRef
+      }
+    }
+  }
+`;
+
 /**
  * Fetch the repository’s default branch name, which is typically `master` or `main`.
  * @returns {Promise<string>} Branch name.
@@ -354,18 +399,10 @@ const checkRepositoryAccess = async () => {
  * @see https://docs.gitlab.com/api/graphql/reference/#repository
  */
 const fetchDefaultBranchName = async () => {
-  const { owner, repo, baseURL = '' } = repository;
+  const { repo, baseURL = '' } = repository;
 
   const result = /** @type {{ project: { repository?: { rootRef: string } } }} */ (
-    await fetchGraphQL(`
-      query {
-        project(fullPath: "${owner}/${repo}") {
-          repository {
-            rootRef
-          }
-        }
-      }
-    `)
+    await fetchGraphQL(FETCH_DEFAULT_BRANCH_NAME_QUERY)
   );
 
   if (!result.project) {
@@ -387,6 +424,21 @@ const fetchDefaultBranchName = async () => {
   return branch;
 };
 
+const FETCH_LAST_COMMIT_QUERY = `
+  query($fullPath: String!, $branch: String!) {
+    project(fullPath: $fullPath) {
+      repository {
+        tree(ref: $branch) {
+          lastCommit {
+            sha
+            message
+          }
+        }
+      }
+    }
+  }
+`;
+
 /**
  * Fetch the last commit on the repository.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
@@ -394,23 +446,10 @@ const fetchDefaultBranchName = async () => {
  * @see https://docs.gitlab.com/api/graphql/reference/#tree
  */
 const fetchLastCommit = async () => {
-  const { owner, repo, branch } = repository;
+  const { repo, branch } = repository;
 
-  const result = /** @type {LastCommitResponse} */ (
-    await fetchGraphQL(`
-      query {
-        project(fullPath: "${owner}/${repo}") {
-          repository {
-            tree(ref: "${branch}") {
-              lastCommit {
-                sha
-                message
-              }
-            }
-          }
-        }
-      }
-    `)
+  const result = /** @type {FetchLastCommitResponse} */ (
+    await fetchGraphQL(FETCH_LAST_COMMIT_QUERY)
   );
 
   if (!result.project) {
@@ -432,6 +471,28 @@ const fetchLastCommit = async () => {
   return { hash, message };
 };
 
+const FETCH_FILE_LIST_QUERY = `
+  query($fullPath: String!, $branch: String!, $cursor: String!) {
+    project(fullPath: $fullPath) {
+      repository {
+        tree(ref: $branch, recursive: true) {
+          blobs(after: $cursor) {
+            nodes {
+              type
+              path
+              sha
+            }
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
@@ -439,35 +500,14 @@ const fetchLastCommit = async () => {
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
 const fetchFileList = async () => {
-  const { owner, repo, branch } = repository;
   /** @type {{ type: string, path: string, sha: string }[]} */
   const blobs = [];
   let cursor = '';
 
   // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
   for (;;) {
-    const result = /** @type {FileListResponse} */ (
-      await fetchGraphQL(`
-        query {
-          project(fullPath: "${owner}/${repo}") {
-            repository {
-              tree(ref: "${branch}", recursive: true) {
-                blobs(after: "${cursor}") {
-                  nodes {
-                    type
-                    path
-                    sha
-                  }
-                  pageInfo {
-                    endCursor
-                    hasNextPage
-                  }
-                }
-              }
-            }
-          }
-        }
-      `)
+    const result = /** @type {FetchFileListResponse} */ (
+      await fetchGraphQL(FETCH_FILE_LIST_QUERY, { cursor })
     );
 
     const {
@@ -489,23 +529,36 @@ const fetchFileList = async () => {
     .map(({ path, sha }) => ({ path, sha, size: 0, name: getPathInfo(path).basename }));
 };
 
+const FETCH_BLOBS_QUERY = `
+  query($fullPath: String!, $branch: String!, $paths: [String!]!) {
+    project(fullPath: $fullPath) {
+      repository {
+        blobs(ref: $branch, paths: $paths) {
+          nodes {
+            size
+            rawTextBlob
+          }
+        }
+      }
+    }
+  }
+`;
+
 /**
  * Fetch the blobs for the given file paths. This function retrieves the raw text contents of files
  * in the repository using the GitLab GraphQL API. It handles pagination by fetching a fixed number
  * of paths at a time, ensuring that the complexity score of the query does not exceed the limit. It
  * also updates the `dataLoadedProgress` store to reflect the progress of data loading.
  * @param {string[]} allPaths List of all file paths to fetch.
- * @returns {Promise<{ size: string, rawTextBlob: string }[]>} Fetched blobs with their sizes and
- * raw text contents.
+ * @returns {Promise<BlobItem[]>} Fetched blobs with their sizes and raw text contents.
  * @see https://docs.gitlab.com/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/api/graphql/reference/#tree
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
  * @see https://docs.gitlab.com/api/graphql/#limits
  */
 const fetchBlobs = async (allPaths) => {
-  const { owner, repo, branch } = repository;
   const paths = [...allPaths];
-  /** @type {{ size: string, rawTextBlob: string }[]} */
+  /** @type {BlobItem[]} */
   const blobs = [];
 
   dataLoadedProgress.set(0);
@@ -515,30 +568,11 @@ const fetchBlobs = async (allPaths) => {
   // 15 + (2 * node size) so 100 paths = 215 complexity, where the max number of records is 100 and
   // max complexity is 250 or 300
   for (;;) {
-    const result = //
-      /**
-       * @type {{ project: { repository: { blobs: {
-       * nodes: { size: string, rawTextBlob: string }[]
-       * } } } }}
-       */ (
-        await fetchGraphQL(
-          `
-            query ($paths: [String!]!) {
-              project(fullPath: "${owner}/${repo}") {
-                repository {
-                  blobs(ref: "${branch}", paths: $paths) {
-                    nodes {
-                      size
-                      rawTextBlob
-                    }
-                  }
-                }
-              }
-            }
-          `,
-          { paths: paths.splice(0, 100) },
-        )
-      );
+    const currentPaths = paths.splice(0, 100);
+
+    const result = /** @type {FetchBlobsResponse} */ (
+      await fetchGraphQL(FETCH_BLOBS_QUERY, { paths: currentPaths })
+    );
 
     blobs.push(...result.project.repository.blobs.nodes);
     dataLoadedProgress.set(Math.ceil(((allPaths.length - paths.length) / allPaths.length) * 100));
@@ -554,6 +588,28 @@ const fetchBlobs = async (allPaths) => {
 };
 
 /**
+ * Generate the inner GraphQL query for fetching the last commit information of a file at the
+ * specified path.
+ * @param {string} path File path.
+ * @param {number} index Index of the path in the current batch.
+ * @returns {string} GraphQL query string for fetching the last commit information of the file at
+ * the specified path.
+ */
+const getFetchCommitsInnerQuery = (path, index) => `
+  tree_${index}: tree(ref: $branch, path: ${JSON.stringify(path)}) {
+    lastCommit {
+      author {
+        id
+        username
+      }
+      authorName
+      authorEmail
+      committedDate
+    }
+  }
+`;
+
+/**
  * Fetch commit information for each file in the repository. This function retrieves the last commit
  * information for each file path using the GitLab GraphQL API. It handles pagination by fetching a
  * fixed number of paths at a time, ensuring that the complexity score of the query does not exceed
@@ -563,48 +619,25 @@ const fetchBlobs = async (allPaths) => {
  * @returns {Promise<GitLabCommit[]>} Fetched commit information for each file.
  */
 const fetchCommits = async (allPaths) => {
-  const { owner, repo, branch } = repository;
   const paths = [...allPaths];
   /** @type {GitLabCommit[]} */
   const commits = [];
 
   // The complexity score of this query is 5 + (18 * node size) so 13 paths = 239 complexity
   for (;;) {
-    const result = //
-      /**
-       * @type {{ project: { repository: { [tree_index: string]: {
-       * lastCommit: GitLabCommit
-       * } } } } }}
-       */ (
-        await fetchGraphQL(
-          `
-            query {
-              project(fullPath: "${owner}/${repo}") {
-                repository {
-                  ${paths
-                    .splice(0, 13)
-                    .map(
-                      (path, index) => `
-                        tree_${index}: tree(ref: "${branch}", path: "${path}") {
-                          lastCommit {
-                            author {
-                              id
-                              username
-                            }
-                            authorName
-                            authorEmail
-                            committedDate
-                          }
-                        }
-                      `,
-                    )
-                    .join('')}
-                }
-              }
-            }
-          `,
-        )
-      );
+    const currentPaths = paths.splice(0, 13);
+
+    const query = `
+      query($fullPath: String!, $branch: String!) {
+        project(fullPath: $fullPath) {
+          repository {
+            ${currentPaths.map(getFetchCommitsInnerQuery).join('')}
+          }
+        }
+      }
+    `;
+
+    const result = /** @type {FetchCommitsResponse} */ (await fetchGraphQL(query));
 
     commits.push(...Object.values(result.project.repository).map(({ lastCommit }) => lastCommit));
 
@@ -619,7 +652,7 @@ const fetchCommits = async (allPaths) => {
 /**
  * Parse the file contents from the API response.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
- * @param {{ size: string, rawTextBlob: string }[]} blobs File sizes and raw text blobs.
+ * @param {BlobItem[]} blobs File sizes and raw text blobs.
  * @param {GitLabCommit[]} commits Commit information for each file.
  * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
  */
