@@ -873,11 +873,14 @@ describe('Backend Save', () => {
       // Verify that console.debug was called twice (for changes and commit results)
       expect(consoleSpy).toHaveBeenCalledTimes(2);
       expect(consoleSpy).toHaveBeenCalledWith('Commit changes:', changes);
-      expect(consoleSpy).toHaveBeenCalledWith('Commit results:', expect.objectContaining({
-        author: expect.any(Object),
-        sha: 'commit123',
-        date: expect.any(Date),
-      }));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Commit results:',
+        expect.objectContaining({
+          author: expect.any(Object),
+          sha: 'commit123',
+          date: expect.any(Date),
+        }),
+      );
 
       // Clean up
       consoleSpy.mockRestore();
