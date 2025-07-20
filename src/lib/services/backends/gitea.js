@@ -4,9 +4,10 @@ import { decodeBase64, encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+import { signIn, signOut } from '$lib/services/backends/gitea/auth';
+import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/gitea/constants';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
 import { apiConfig, fetchAPI } from '$lib/services/backends/shared/api';
-import { handleClientSideAuthPopup, initClientSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
 import { siteConfig } from '$lib/services/config';
@@ -18,7 +19,6 @@ import { prefs } from '$lib/services/user/prefs';
  * @import {
  * ApiEndpointConfig,
  * Asset,
- * AuthTokens,
  * BackendService,
  * BaseFileListItem,
  * BaseFileListItemProps,
@@ -27,7 +27,6 @@ import { prefs } from '$lib/services/user/prefs';
  * FileChange,
  * RepositoryContentsMap,
  * RepositoryInfo,
- * SignInOptions,
  * User,
  * } from '$lib/types/private';
  */
@@ -41,16 +40,6 @@ import { prefs } from '$lib/services/user/prefs';
  */
 
 /**
- * @typedef {object} UserProfileResponse
- * @property {number} id User ID.
- * @property {string} full_name User’s full name.
- * @property {string} login User’s login name.
- * @property {string} email User’s email address.
- * @property {string} avatar_url URL to the user’s avatar image.
- * @property {string} html_url URL to the user’s profile page.
- */
-
-/**
  * @typedef {object} CommitResponse
  * @property {object} commit Commit information, including the commit SHA and creation date.
  * @property {string} commit.sha Commit SHA.
@@ -59,8 +48,6 @@ import { prefs } from '$lib/services/user/prefs';
  * SHA.
  */
 
-const backendName = 'gitea';
-const label = 'Gitea / Forgejo';
 const DEFAULT_API_ROOT = 'https://gitea.com/api/v1';
 const DEFAULT_AUTH_ROOT = 'https://gitea.com';
 const DEFAULT_AUTH_PATH = 'login/oauth/authorize';
@@ -108,7 +95,7 @@ const getBaseURLs = (baseURL, branch) => ({
 const init = () => {
   const { backend } = get(siteConfig) ?? {};
 
-  if (backend?.name !== backendName) {
+  if (backend?.name !== BACKEND_NAME) {
     return undefined;
   }
 
@@ -130,13 +117,13 @@ const init = () => {
   Object.assign(
     repository,
     /** @type {RepositoryInfo} */ ({
-      service: backendName,
-      label,
+      service: BACKEND_NAME,
+      label: BACKEND_LABEL,
       owner,
       repo,
       branch,
       baseURL,
-      databaseName: `${backendName}:${owner}/${repo}`,
+      databaseName: `${BACKEND_NAME}:${owner}/${repo}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
     getBaseURLs(baseURL, branch),
@@ -160,69 +147,6 @@ const init = () => {
 
   return repository;
 };
-
-/**
- * Retrieve the authenticated user’s profile information.
- * @param {AuthTokens} tokens Authentication tokens.
- * @returns {Promise<User>} User information.
- * @see https://docs.gitea.com/api/next/#tag/user/operation/userGetCurrent
- */
-const getUserProfile = async ({ token, refreshToken }) => {
-  const {
-    id,
-    full_name: name,
-    login,
-    email,
-    avatar_url: avatarURL,
-    html_url: profileURL,
-  } = /** @type {UserProfileResponse} */ (await fetchAPI('/user', { token, refreshToken }));
-
-  const _user = get(user);
-
-  // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
-  // the user info
-  if (_user?.token && _user.token !== token) {
-    token = _user.token;
-    refreshToken = _user.refreshToken;
-  }
-
-  return { backendName, id, name, login, email, avatarURL, profileURL, token, refreshToken };
-};
-
-/**
- * Retrieve the repository configuration and sign in with the Gitea/Forgejo REST API.
- * @param {SignInOptions} options Options.
- * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
- * the sign-in flow cannot be started.
- * @throws {Error} When there was an authentication error.
- */
-const signIn = async ({ token, refreshToken, auto = false }) => {
-  if (!token) {
-    const { origin } = window.location;
-    const { clientId, authURL, tokenURL } = apiConfig;
-    const scope = 'read:repository,write:repository,read:user';
-    const inPopup = window.opener?.origin === origin && window.name === 'auth';
-
-    if (inPopup) {
-      // We are in the auth popup window; let’s get the OAuth flow done
-      await handleClientSideAuthPopup({ backendName, clientId, tokenURL });
-    }
-
-    if (inPopup || auto) {
-      return undefined;
-    }
-
-    ({ token, refreshToken } = await initClientSideAuth({ backendName, clientId, authURL, scope }));
-  }
-
-  return getUserProfile({ token, refreshToken });
-};
-
-/**
- * Sign out from the backend. Nothing to do here.
- * @returns {Promise<void>}
- */
-const signOut = async () => undefined;
 
 /**
  * Check if the version of the user’s Gitea/Forgejo instance is supported. The API endpoint requires
@@ -560,8 +484,8 @@ const commitChanges = async (changes, options) => {
  */
 export default {
   isGit: true,
-  name: backendName,
-  label,
+  name: BACKEND_NAME,
+  label: BACKEND_LABEL,
   repository,
   init,
   signIn,

@@ -4,14 +4,11 @@ import { encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+import { signIn, signOut } from '$lib/services/backends/gitlab/auth';
+import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/gitlab/constants';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/gitlab/status';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
 import { apiConfig, fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/shared/api';
-import {
-  handleClientSideAuthPopup,
-  initClientSideAuth,
-  initServerSideAuth,
-} from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
 import { siteConfig } from '$lib/services/config';
@@ -24,7 +21,6 @@ import { getGitHash } from '$lib/services/utils/file';
  * @import {
  * ApiEndpointConfig,
  * Asset,
- * AuthTokens,
  * BackendService,
  * BaseFileListItem,
  * BaseFileListItemProps,
@@ -33,8 +29,6 @@ import { getGitHash } from '$lib/services/utils/file';
  * FileChange,
  * RepositoryContentsMap,
  * RepositoryInfo,
- * SignInOptions,
- * User,
  * } from '$lib/types/private';
  */
 
@@ -50,16 +44,6 @@ import { getGitHash } from '$lib/services/utils/file';
  * @property {string} authorName Commit author’s full name.
  * @property {string} authorEmail Commit author’s email.
  * @property {string} committedDate Committed date.
- */
-
-/**
- * @typedef {object} UserProfile
- * @property {number} id User ID.
- * @property {string} name User’s full name.
- * @property {string} username User’s login name.
- * @property {string} email User’s email address.
- * @property {string} avatar_url URL to the user’s avatar image.
- * @property {string} web_url URL to the user’s profile page.
  */
 
 /**
@@ -114,8 +98,6 @@ import { getGitHash } from '$lib/services/utils/file';
  * @property {string} committed_date Commit date in ISO 8601 format.
  */
 
-const backendName = 'gitlab';
-const label = 'GitLab';
 const DEFAULT_API_ROOT = 'https://gitlab.com/api/v4';
 const DEFAULT_AUTH_ROOT = 'https://gitlab.com';
 const DEFAULT_AUTH_PATH = 'oauth/authorize';
@@ -143,7 +125,7 @@ const getBaseURLs = (baseURL, branch) => ({
 const init = () => {
   const { backend } = get(siteConfig) ?? {};
 
-  if (backend?.name !== backendName) {
+  if (backend?.name !== BACKEND_NAME) {
     return undefined;
   }
 
@@ -178,13 +160,13 @@ const init = () => {
   Object.assign(
     repository,
     /** @type {RepositoryInfo} */ ({
-      service: backendName,
-      label,
+      service: BACKEND_NAME,
+      label: BACKEND_LABEL,
       owner,
       repo,
       branch,
       baseURL,
-      databaseName: `${backendName}:${repoPath}`,
+      databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
     getBaseURLs(baseURL, branch),
@@ -215,79 +197,6 @@ const init = () => {
 
   return repository;
 };
-
-/**
- * Retrieve the authenticated user’s profile information from GitLab REST API.
- * @param {AuthTokens} tokens Authentication tokens.
- * @returns {Promise<User>} User information.
- * @see https://docs.gitlab.com/api/users.html#list-current-user
- */
-const getUserProfile = async ({ token, refreshToken }) => {
-  const {
-    id,
-    name,
-    username: login,
-    email,
-    avatar_url: avatarURL,
-    web_url: profileURL,
-  } = /** @type {UserProfile} */ (await fetchAPI('/user', { token, refreshToken }));
-
-  const _user = get(user);
-
-  // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
-  // the user info
-  if (_user?.token && _user.token !== token) {
-    token = _user.token;
-    refreshToken = _user.refreshToken;
-  }
-
-  return { backendName, id, name, login, email, avatarURL, profileURL, token, refreshToken };
-};
-
-/**
- * Retrieve the repository configuration and sign in with GitLab REST API.
- * @param {SignInOptions} options Options.
- * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
- * the sign-in flow cannot be started.
- * @throws {Error} When there was an authentication error.
- */
-const signIn = async ({ token, refreshToken, auto = false }) => {
-  if (!token) {
-    const { site_domain: siteDomain, auth_type: authType } = get(siteConfig)?.backend ?? {};
-    const { clientId, authURL, tokenURL } = apiConfig;
-    const authArgs = { backendName, authURL, scope: 'api' };
-
-    if (authType === 'pkce') {
-      const inPopup = window.opener?.origin === window.location.origin && window.name === 'auth';
-
-      if (inPopup) {
-        // We are in the auth popup window; let’s get the OAuth flow done
-        await handleClientSideAuthPopup({ backendName, clientId, tokenURL });
-      }
-
-      if (inPopup || auto) {
-        return undefined;
-      }
-
-      ({ token, refreshToken } = await initClientSideAuth({ ...authArgs, clientId }));
-    } else {
-      if (auto) {
-        return undefined;
-      }
-
-      // @todo Add `refreshToken` support
-      ({ token } = await initServerSideAuth({ ...authArgs, siteDomain }));
-    }
-  }
-
-  return getUserProfile({ token, refreshToken });
-};
-
-/**
- * Sign out from GitLab. Nothing to do here.
- * @returns {Promise<void>}
- */
-const signOut = async () => undefined;
 
 /**
  * Check if the user has access to the current repository.
@@ -725,8 +634,8 @@ const commitChanges = async (changes, options) => {
  */
 export default {
   isGit: true,
-  name: backendName,
-  label,
+  name: BACKEND_NAME,
+  label: BACKEND_LABEL,
   repository,
   statusDashboardURL: STATUS_DASHBOARD_URL,
   checkStatus,

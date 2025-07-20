@@ -4,10 +4,11 @@ import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+import { signIn, signOut } from '$lib/services/backends/github/auth';
+import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/github/constants';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/github/status';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
 import { apiConfig, fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/shared/api';
-import { initServerSideAuth } from '$lib/services/backends/shared/auth';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
 import { siteConfig } from '$lib/services/config';
@@ -19,7 +20,6 @@ import { prefs } from '$lib/services/user/prefs';
  * @import {
  * ApiEndpointConfig,
  * Asset,
- * AuthTokens,
  * BackendService,
  * BaseFileListItem,
  * BaseFileListItemProps,
@@ -28,19 +28,7 @@ import { prefs } from '$lib/services/user/prefs';
  * FileChange,
  * RepositoryContentsMap,
  * RepositoryInfo,
- * SignInOptions,
- * User,
  * } from '$lib/types/private';
- */
-
-/**
- * @typedef {object} UserProfileResponse
- * @property {number} id User ID.
- * @property {string} name User’s full name.
- * @property {string} login User’s login name.
- * @property {string} email User’s email address.
- * @property {string} avatar_url URL to the user’s avatar image.
- * @property {string} html_url URL to the user’s profile page.
  */
 
 /**
@@ -53,8 +41,6 @@ import { prefs } from '$lib/services/user/prefs';
  * commit history, containing the commit SHA-1 hash and message.
  */
 
-const backendName = 'github';
-const label = 'GitHub';
 const DEFAULT_API_ROOT = 'https://api.github.com';
 const DEFAULT_AUTH_ROOT = 'https://api.netlify.com';
 const DEFAULT_AUTH_PATH = 'auth';
@@ -83,7 +69,7 @@ const getBaseURLs = (baseURL, branch) => ({
 const init = () => {
   const { backend } = get(siteConfig) ?? {};
 
-  if (backend?.name !== backendName) {
+  if (backend?.name !== BACKEND_NAME) {
     return undefined;
   }
 
@@ -109,13 +95,13 @@ const init = () => {
   Object.assign(
     repository,
     /** @type {RepositoryInfo} */ ({
-      service: backendName,
-      label,
+      service: BACKEND_NAME,
+      label: BACKEND_LABEL,
       owner,
       repo,
       branch,
       baseURL,
-      databaseName: `${backendName}:${repoPath}`,
+      databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted,
     }),
     getBaseURLs(baseURL, branch),
@@ -142,58 +128,6 @@ const init = () => {
 
   return repository;
 };
-
-/**
- * Retrieve the authenticated user’s profile information from GitHub REST API.
- * @param {AuthTokens} tokens Authentication tokens.
- * @returns {Promise<User>} User information.
- * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
- */
-const getUserProfile = async ({ token }) => {
-  const {
-    id,
-    name,
-    login,
-    email,
-    avatar_url: avatarURL,
-    html_url: profileURL,
-  } = /** @type {UserProfileResponse} */ (await fetchAPI('/user', { token }));
-
-  return { backendName, id, name, login, email, avatarURL, profileURL, token };
-};
-
-/**
- * Retrieve the repository configuration and sign in with GitHub REST API.
- * @param {SignInOptions} options Options.
- * @returns {Promise<User | void>} User info, or nothing when the sign-in flow cannot be started.
- * @throws {Error} When there was an authentication error.
- * @todo Add `refreshToken` support.
- */
-const signIn = async ({ token, auto = false }) => {
-  if (auto && !token) {
-    return undefined;
-  }
-
-  if (!token) {
-    const { site_domain: siteDomain } = get(siteConfig)?.backend ?? {};
-    const { authURL } = apiConfig;
-
-    ({ token } = await initServerSideAuth({
-      backendName,
-      siteDomain,
-      authURL,
-      scope: 'repo,user',
-    }));
-  }
-
-  return getUserProfile({ token });
-};
-
-/**
- * Sign out from GitHub. Nothing to do here.
- * @returns {Promise<void>}
- */
-const signOut = async () => undefined;
 
 /**
  * Check if the user has access to the current repository.
@@ -586,8 +520,8 @@ const triggerDeployment = async () => {
  */
 export default {
   isGit: true,
-  name: backendName,
-  label,
+  name: BACKEND_NAME,
+  label: BACKEND_LABEL,
   repository,
   statusDashboardURL: STATUS_DASHBOARD_URL,
   checkStatus,
