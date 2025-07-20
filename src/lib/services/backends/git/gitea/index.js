@@ -24,7 +24,7 @@ import { prefs } from '$lib/services/user/prefs';
  * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
  * not Gitea/Forgejo.
  */
-const init = () => {
+export const init = () => {
   const { backend } = get(siteConfig) ?? {};
 
   if (backend?.name !== BACKEND_NAME) {

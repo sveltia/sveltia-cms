@@ -20,6 +20,13 @@ export const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 let repositoryInfoCache = null;
 
 /**
+ * Reset the repository info cache. Used for testing.
+ */
+export const resetRepositoryInfoCache = () => {
+  repositoryInfoCache = null;
+};
+
+/**
  * Generate base URLs for accessing the repository’s resources.
  * @param {string} baseURL The name of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
@@ -37,7 +44,7 @@ export const getBaseURLs = (baseURL, branch) => ({
  * @returns {Promise<Record<string, any>>} Repository information.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
-const getRepositoryInfo = async () => {
+export const getRepositoryInfo = async () => {
   const { owner, repo } = repository;
 
   repositoryInfoCache ??= await /** @type {Promise<Record<string, any>>} */ (

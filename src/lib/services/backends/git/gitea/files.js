@@ -35,7 +35,7 @@ import { dataLoadedProgress } from '$lib/services/contents';
  * @returns {Promise<BaseFileListItemProps[]>} File list.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/GetTree
  */
-const fetchFileList = async (lastHash) => {
+export const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
   const requestPath = `/repos/${owner}/${repo}/git/trees/${lastHash ?? branch}?recursive=1`;
   /** @type {PartialGitEntry[]} */
@@ -70,7 +70,7 @@ const fetchFileList = async (lastHash) => {
  * @param {PartialContentsListItem[]} results Results from the API.
  * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
  */
-const parseFileContents = async (fetchingFiles, results) => {
+export const parseFileContents = async (fetchingFiles, results) => {
   const entries = await Promise.all(
     fetchingFiles
       .map(async ({ path, sha, size }, index) => {
@@ -103,7 +103,7 @@ const parseFileContents = async (fetchingFiles, results) => {
  * @see https://github.com/go-gitea/gitea/pull/34139
  * @see https://codeberg.org/forgejo/forgejo/pulls/8139
  */
-const fetchFileContents = async (fetchingFiles) => {
+export const fetchFileContents = async (fetchingFiles) => {
   const { owner, repo, branch } = repository;
   const { isForgejo } = instance;
 
